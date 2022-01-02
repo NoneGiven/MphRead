@@ -266,11 +266,11 @@ namespace MphRead.Entities
                     }
                     Material material = model.Materials[mesh.MaterialId];
                     Vector3 emission = GetEmission(inst, material, mesh.MaterialId);
-                    Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node, _scene, recolor);
+                    Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node, recolor);
                     Vector4? color = null;
                     SelectionType selectionType = SelectionType.None;
                     int? bindingOverride = GetBindingOverride(inst, material, mesh.MaterialId);
-                    _scene.AddRenderItem(material, polygonId, alpha, emission, GetLightInfo(_scene), texcoordMatrix,
+                    _scene.AddRenderItem(material, polygonId, alpha, emission, GetLightInfo(), texcoordMatrix,
                         node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues, color,
                         PaletteOverride, selectionType, node.BillboardMode, _drawScale, bindingOverride);
                 }
@@ -312,7 +312,7 @@ namespace MphRead.Entities
         }
 
         protected override Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId,
-            Node node, Scene scene, int recolor)
+            Node node, int recolor)
         {
             if (_doubleDmgTimer > 0 && (Hunter != Hunter.Spire || !(inst == _gunModel && materialId == 0))
                 && material.Lighting > 0 && node.BillboardMode == BillboardMode.None)
@@ -337,7 +337,7 @@ namespace MphRead.Entities
                 product.M23 *= -1;
                 product.M32 *= -1;
                 product.M33 *= -1;
-                ulong frame = scene.FrameCount / 2;
+                ulong frame = _scene.FrameCount / 2;
                 float rotZ = ((int)(16 * ((781874935307L * (53248 * frame) >> 32) + 2048)) >> 20) * (360 / 4096f);
                 float rotY = ((int)(16 * ((781874935307L * (26624 * frame) + 0x80000000000) >> 32)) >> 20) * (360 / 4096f);
                 var rot = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(rotZ));
@@ -352,7 +352,7 @@ namespace MphRead.Entities
                 );
                 return product;
             }
-            return base.GetTexcoordMatrix(inst, material, materialId, node, scene, recolor);
+            return base.GetTexcoordMatrix(inst, material, materialId, node, recolor);
         }
 
         private void DrawShadow()
@@ -533,7 +533,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void GetDrawInfo(Scene scene)
+        public override void GetDrawInfo()
         {
         }
     }

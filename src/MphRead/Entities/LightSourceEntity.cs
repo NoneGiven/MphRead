@@ -15,7 +15,7 @@ namespace MphRead.Entities
         public Vector3 Light2Vector { get; }
         public Vector3 Light2Color { get; }
 
-        public LightSourceEntity(LightSourceEntityData data) : base(EntityType.LightSource)
+        public LightSourceEntity(LightSourceEntityData data, Scene scene) : base(EntityType.LightSource, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -30,20 +30,20 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
-            if (scene.ShowVolumes == VolumeDisplay.LightColor1 || scene.ShowVolumes == VolumeDisplay.LightColor2)
+            if (_scene.ShowVolumes == VolumeDisplay.LightColor1 || _scene.ShowVolumes == VolumeDisplay.LightColor2)
             {
                 Vector3 color = Vector3.Zero;
-                if (scene.ShowVolumes == VolumeDisplay.LightColor1 && _data.Light1Enabled != 0)
+                if (_scene.ShowVolumes == VolumeDisplay.LightColor1 && _data.Light1Enabled != 0)
                 {
                     color = Light1Color;
                 }
-                else if (scene.ShowVolumes == VolumeDisplay.LightColor2 && _data.Light2Enabled != 0)
+                else if (_scene.ShowVolumes == VolumeDisplay.LightColor2 && _data.Light2Enabled != 0)
                 {
                     color = Light2Color;
                 }
-                AddVolumeItem(Volume, color, scene);
+                AddVolumeItem(Volume, color);
             }
         }
     }

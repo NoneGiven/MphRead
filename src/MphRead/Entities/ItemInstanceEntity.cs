@@ -28,7 +28,8 @@ namespace MphRead.Entities
         public int DespawnTimer { get; set; } = -1;
         public ItemSpawnEntity? Owner { get; set; }
 
-        public ItemInstanceEntity(ItemInstanceEntityData data) : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance)
+        public ItemInstanceEntity(ItemInstanceEntityData data, Scene scene)
+            : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance, scene)
         {
             Position = data.Position;
             // todo: scan ID
@@ -42,18 +43,18 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
+            base.Initialize();
             if (ItemType == ItemType.ArtifactKey)
             {
                 Matrix4 transform = Matrix.GetTransform4(Vector3.UnitX, Vector3.UnitY, Position);
-                _effectEntry = scene.SpawnEffectGetEntry(144, transform); // artifactKeyEffect
+                _effectEntry = _scene.SpawnEffectGetEntry(144, transform); // artifactKeyEffect
                 _effectEntry.SetElementExtension(true);
             }
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             if (!_linkDone)
             {
@@ -76,7 +77,7 @@ namespace MphRead.Entities
                 if (Owner != null)
                 {
                     Owner.Item = null;
-                    if (!scene.Multiplayer)
+                    if (!_scene.Multiplayer)
                     {
                         // todo: room state
                         if (!Owner.AlwaysActive)
@@ -87,13 +88,13 @@ namespace MphRead.Entities
                 }
                 if (_effectEntry != null)
                 {
-                    scene.DetachEffectEntry(_effectEntry, setExpired: false);
+                    _scene.DetachEffectEntry(_effectEntry, setExpired: false);
                     _effectEntry = null;
                 }
                 return false;
             }
             // todo: play SFX
-            if (Owner == null && !scene.Multiplayer && PlayerEntity.MainPlayer.EquipInfo.Weapon != null)
+            if (Owner == null && !_scene.Multiplayer && PlayerEntity.MainPlayer.EquipInfo.Weapon != null)
             {
                 EquipInfo equip = PlayerEntity.MainPlayer.EquipInfo;
                 if (equip.ChargeLevel >= equip.Weapon.MinCharge * 2) // todo: FPS stuff
@@ -108,21 +109,21 @@ namespace MphRead.Entities
                     }
                 }
             }
-            return base.Process(scene);
+            return base.Process();
         }
 
-        public void OnPickedUp(Scene scene)
+        public void OnPickedUp()
         {
             DespawnTimer = 0;
-            Owner?.OnItemPickedUp(scene);
+            Owner?.OnItemPickedUp();
             // todo: update logbook
         }
 
-        public override void Destroy(Scene scene)
+        public override void Destroy()
         {
             if (_effectEntry != null)
             {
-                scene.UnlinkEffectEntry(_effectEntry);
+                _scene.UnlinkEffectEntry(_effectEntry);
             }
         }
     }
@@ -141,7 +142,8 @@ namespace MphRead.Entities
 
     public class FhItemEntity : SpinningEntityBase
     {
-        public FhItemEntity(FhItemInstanceEntityData data) : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance)
+        public FhItemEntity(FhItemInstanceEntityData data, Scene scene)
+            : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance, scene)
         {
             // note: the actual height at creation is 1.0f greater than the spawner's,
             // but 0.5f is subtracted when drawing (after the floating calculation)
@@ -160,7 +162,8 @@ namespace MphRead.Entities
 
         private static ushort _nextItemRotation = 0;
 
-        public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, EntityType type) : base(type)
+        public SpinningEntityBase(float spinSpeed, Vector3 spinAxis,
+            EntityType type, Scene scene) : base(type, scene)
         {
             _spin = GetItemRotation();
             _spinSpeed = spinSpeed;
@@ -169,7 +172,8 @@ namespace MphRead.Entities
             _floatModelIndex = -1;
         }
 
-        public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, int spinModelIndex, EntityType type) : base(type)
+        public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, int spinModelIndex,
+            EntityType type, Scene scene) : base(type, scene)
         {
             _spin = GetItemRotation();
             _spinSpeed = spinSpeed;
@@ -178,7 +182,8 @@ namespace MphRead.Entities
             _floatModelIndex = -1;
         }
 
-        public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, int spinModelIndex, int floatModelIndex, EntityType type) : base(type)
+        public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, int spinModelIndex, int floatModelIndex,
+            EntityType type, Scene scene) : base(type, scene)
         {
             _spin = GetItemRotation();
             _spinSpeed = spinSpeed;
@@ -187,10 +192,10 @@ namespace MphRead.Entities
             _floatModelIndex = floatModelIndex;
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
-            _spin = (float)(_spin + scene.FrameTime * 360 * _spinSpeed) % 360;
-            return base.Process(scene);
+            _spin = (float)(_spin + _scene.FrameTime * 360 * _spinSpeed) % 360;
+            return base.Process();
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)

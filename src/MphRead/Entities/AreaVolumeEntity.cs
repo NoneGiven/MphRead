@@ -15,7 +15,7 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0xFF, 0x00).AsVector4();
         public AreaVolumeEntityData Data => _data;
 
-        public AreaVolumeEntity(AreaVolumeEntityData data) : base(EntityType.AreaVolume)
+        public AreaVolumeEntity(AreaVolumeEntityData data, Scene scene) : base(EntityType.AreaVolume, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -26,25 +26,25 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
-            if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
+            base.Initialize();
+            if (_scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
             {
                 _parent = parent;
             }
-            if (scene.TryGetEntity(_data.ChildId, out EntityBase? child))
+            if (_scene.TryGetEntity(_data.ChildId, out EntityBase? child))
             {
                 _child = child;
             }
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
-            if (scene.ShowVolumes == VolumeDisplay.AreaInside || scene.ShowVolumes == VolumeDisplay.AreaExit)
+            if (_scene.ShowVolumes == VolumeDisplay.AreaInside || _scene.ShowVolumes == VolumeDisplay.AreaExit)
             {
-                Vector3 color = scene.ShowVolumes == VolumeDisplay.AreaInside ? _insideEventColor : _exitEventColor;
-                AddVolumeItem(_volume, color, scene);
+                Vector3 color = _scene.ShowVolumes == VolumeDisplay.AreaInside ? _insideEventColor : _exitEventColor;
+                AddVolumeItem(_volume, color);
             }
         }
 
@@ -70,7 +70,7 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0xFF, 0x00).AsVector4();
         public FhAreaVolumeEntityData Data => _data;
 
-        public FhAreaVolumeEntity(FhAreaVolumeEntityData data) : base(EntityType.AreaVolume)
+        public FhAreaVolumeEntity(FhAreaVolumeEntityData data, Scene scene) : base(EntityType.AreaVolume, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -81,12 +81,12 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
-            if (scene.ShowVolumes == VolumeDisplay.AreaInside || scene.ShowVolumes == VolumeDisplay.AreaExit)
+            if (_scene.ShowVolumes == VolumeDisplay.AreaInside || _scene.ShowVolumes == VolumeDisplay.AreaExit)
             {
-                Vector3 color = scene.ShowVolumes == VolumeDisplay.AreaInside ? _insideEventColor : _exitEventColor;
-                AddVolumeItem(_volume, color, scene);
+                Vector3 color = _scene.ShowVolumes == VolumeDisplay.AreaInside ? _insideEventColor : _exitEventColor;
+                AddVolumeItem(_volume, color);
             }
         }
     }

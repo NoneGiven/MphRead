@@ -12,31 +12,31 @@ namespace MphRead.Entities
         public bool Availability => _data.Availability != 0;
         public ushort Cooldown { get; set; }
 
-        public PlayerSpawnEntity(PlayerSpawnEntityData data) : base(EntityType.PlayerSpawn)
+        public PlayerSpawnEntity(PlayerSpawnEntityData data, Scene scene) : base(EntityType.PlayerSpawn, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
+            base.Initialize();
             SetTransform(_data.Header.FacingVector, _data.Header.UpVector, _data.Header.Position);
             // todo: room state
             _active = _data.Active != 0;
             AddPlaceholderModel();
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             if (Cooldown > 0)
             {
                 Cooldown--;
             }
-            return base.Process(scene);
+            return base.Process();
         }
 
-        public override void HandleMessage(MessageInfo info, Scene scene)
+        public override void HandleMessage(MessageInfo info)
         {
             if (info.Message == Message.Activate || (info.Message == Message.SetActive && (int)info.Param1 != 0))
             {

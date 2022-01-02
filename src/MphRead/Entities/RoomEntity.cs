@@ -24,7 +24,7 @@ namespace MphRead.Entities
         public RoomMetadata Metadata => _meta;
 
         public RoomEntity(string name, RoomMetadata meta, CollisionInstance collision, NodeData? nodeData,
-            int layerMask, int roomId) : base(EntityType.Room)
+            int layerMask, int roomId, Scene scene) : base(EntityType.Room, scene)
         {
             ModelInstance inst = Read.GetRoomModelInstance(name);
             _models.Add(inst);
@@ -97,17 +97,17 @@ namespace MphRead.Entities
             RoomId = roomId;
         }
 
-        protected override void GetCollisionDrawInfo(Scene scene)
+        protected override void GetCollisionDrawInfo()
         {
-            RoomCollision.Info.GetDrawInfo(RoomCollision.Info.Points, Type, scene);
+            RoomCollision.Info.GetDrawInfo(RoomCollision.Info.Points, Type, _scene);
         }
 
-        public override void GetDrawInfo(Scene scene)
+        public override void GetDrawInfo()
         {
             if (!Hidden)
             {
                 ModelInstance inst = _models[0];
-                UpdateTransforms(inst, 0, scene);
+                UpdateTransforms(inst, 0);
                 for (int i = 0; i < Nodes.Count; i++)
                 {
                     Node pnode = Nodes[i];
@@ -115,7 +115,7 @@ namespace MphRead.Entities
                     {
                         continue;
                     }
-                    if (scene.ShowAllNodes)
+                    if (_scene.ShowAllNodes)
                     {
                         GetItems(inst, pnode);
                     }
@@ -137,7 +137,7 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                if (scene.ShowForceFields)
+                if (_scene.ShowForceFields)
                 {
                     for (int i = 0; i < _forceFields.Count; i++)
                     {
@@ -158,16 +158,16 @@ namespace MphRead.Entities
                     }
                 }
             }
-            if (scene.ShowCollision && (scene.ColEntDisplay == EntityType.All || scene.ColEntDisplay == Type))
+            if (_scene.ShowCollision && (_scene.ColEntDisplay == EntityType.All || _scene.ColEntDisplay == Type))
             {
-                GetCollisionDrawInfo(scene);
+                GetCollisionDrawInfo();
             }
-            if (_nodeData != null && scene.ShowNodeData)
+            if (_nodeData != null && _scene.ShowNodeData)
             {
                 Debug.Assert(_emptyMatrixStack != null);
                 Debug.Assert(_models.Count == 2);
                 ModelInstance inst = _models[1];
-                int polygonId = scene.GetNextPolygonId();
+                int polygonId = _scene.GetNextPolygonId();
                 for (int i = 0; i < _nodeData.Data.Count; i++)
                 {
                     IReadOnlyList<IReadOnlyList<NodeData3>> str1 = _nodeData.Data[i];
@@ -198,7 +198,7 @@ namespace MphRead.Entities
                             continue;
                         }
                         Material material = model.Materials[mesh.MaterialId];
-                        scene.AddRenderItem(material, polygonId, 1, Vector3.Zero, GetLightInfo(scene), Matrix4.Identity,
+                        _scene.AddRenderItem(material, polygonId, 1, Vector3.Zero, GetLightInfo(), Matrix4.Identity,
                             transform, mesh.ListId, 0, _emptyMatrixStack, color, null, SelectionType.None, node.BillboardMode);
                     }
                 }
@@ -224,16 +224,16 @@ namespace MphRead.Entities
                     float alpha = 1.0f;
                     if (portal != null)
                     {
-                        polygonId = scene.GetNextPolygonId();
-                        alpha = GetPortalAlpha(portal.Position, scene.CameraPosition);
+                        polygonId = _scene.GetNextPolygonId();
+                        alpha = GetPortalAlpha(portal.Position, _scene.CameraPosition);
                     }
                     else if (material.RenderMode == RenderMode.Translucent)
                     {
-                        polygonId = scene.GetNextPolygonId();
+                        polygonId = _scene.GetNextPolygonId();
                     }
-                    Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node, scene);
+                    Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node);
                     SelectionType selectionType = Selection.CheckSelection(this, inst, node, mesh);
-                    scene.AddRenderItem(material, polygonId, alpha, emission: Vector3.Zero, GetLightInfo(scene),
+                    _scene.AddRenderItem(material, polygonId, alpha, emission: Vector3.Zero, GetLightInfo(),
                         texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
                         overrideColor: null, paletteOverride: null, selectionType, node.BillboardMode);
                 }
@@ -246,9 +246,9 @@ namespace MphRead.Entities
             return MathF.Min(between / 8, 1);
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
-            if (scene.ShowVolumes == VolumeDisplay.Portal)
+            if (_scene.ShowVolumes == VolumeDisplay.Portal)
             {
                 for (int i = 0; i < _portals.Count; i++)
                 {
@@ -259,27 +259,27 @@ namespace MphRead.Entities
                     {
                         verts[j] = portal.Points[j];
                     }
-                    float alpha = GetPortalAlpha(portal.Position, scene.CameraPosition);
+                    float alpha = GetPortalAlpha(portal.Position, _scene.CameraPosition);
                     Vector4 color = portal.IsForceField
                         ? new Vector4(16 / 31f, 16 / 31f, 1f, alpha)
                         : new Vector4(16 / 31f, 1f, 16 / 31f, alpha);
-                    scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Ngon, verts, count, noLines: true);
+                    _scene.AddRenderItem(CullingMode.Neither, _scene.GetNextPolygonId(), color, RenderItemType.Ngon, verts, count, noLines: true);
                 }
             }
-            else if (scene.ShowVolumes == VolumeDisplay.KillPlane && !_meta.FirstHunt)
+            else if (_scene.ShowVolumes == VolumeDisplay.KillPlane && !_meta.FirstHunt)
             {
                 Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(4);
-                verts[0] = new Vector3(10000f, scene.KillHeight, 10000f);
-                verts[1] = new Vector3(10000f, scene.KillHeight, -10000f);
-                verts[2] = new Vector3(-10000f, scene.KillHeight, -10000f);
-                verts[3] = new Vector3(-10000f, scene.KillHeight, 10000f);
+                verts[0] = new Vector3(10000f, _scene.KillHeight, 10000f);
+                verts[1] = new Vector3(10000f, _scene.KillHeight, -10000f);
+                verts[2] = new Vector3(-10000f, _scene.KillHeight, -10000f);
+                verts[3] = new Vector3(-10000f, _scene.KillHeight, 10000f);
                 var color = new Vector4(1f, 0f, 1f, 0.5f);
-                scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Quad, verts, noLines: true);
+                _scene.AddRenderItem(CullingMode.Neither, _scene.GetNextPolygonId(), color, RenderItemType.Quad, verts, noLines: true);
             }
-            else if ((scene.ShowVolumes == VolumeDisplay.CameraLimit || scene.ShowVolumes == VolumeDisplay.PlayerLimit) && _meta.HasLimits)
+            else if ((_scene.ShowVolumes == VolumeDisplay.CameraLimit || _scene.ShowVolumes == VolumeDisplay.PlayerLimit) && _meta.HasLimits)
             {
-                Vector3 minLimit = scene.ShowVolumes == VolumeDisplay.CameraLimit ? _meta.CameraMin : _meta.PlayerMin;
-                Vector3 maxLimit = scene.ShowVolumes == VolumeDisplay.CameraLimit ? _meta.CameraMax : _meta.PlayerMax;
+                Vector3 minLimit = _scene.ShowVolumes == VolumeDisplay.CameraLimit ? _meta.CameraMin : _meta.PlayerMin;
+                Vector3 maxLimit = _scene.ShowVolumes == VolumeDisplay.CameraLimit ? _meta.CameraMax : _meta.PlayerMax;
                 Vector3[] bverts = ArrayPool<Vector3>.Shared.Rent(8);
                 Vector3 point0 = minLimit;
                 var sideX = new Vector3(maxLimit.X - minLimit.X, 0, 0);
@@ -293,8 +293,8 @@ namespace MphRead.Entities
                 bverts[5] = point0 + sideY + sideZ;
                 bverts[6] = point0 + sideX + sideY;
                 bverts[7] = point0 + sideX + sideY + sideZ;
-                Vector4 color = scene.ShowVolumes == VolumeDisplay.CameraLimit ? new Vector4(1, 0, 0.69f, 0.5f) : new Vector4(1, 0, 0, 0.5f);
-                scene.AddRenderItem(CullingMode.Neither, scene.GetNextPolygonId(), color, RenderItemType.Box, bverts, 8);
+                Vector4 color = _scene.ShowVolumes == VolumeDisplay.CameraLimit ? new Vector4(1, 0, 0.69f, 0.5f) : new Vector4(1, 0, 0, 0.5f);
+                _scene.AddRenderItem(CullingMode.Neither, _scene.GetNextPolygonId(), color, RenderItemType.Box, bverts, 8);
             }
         }
 

@@ -10,7 +10,7 @@ namespace MphRead.Entities
         // flag base has a model in Bounty, but is invisible in Capture
         protected override Vector4? OverrideColor { get; } = new ColorRgb(15, 207, 255).AsVector4();
 
-        public FlagBaseEntity(FlagBaseEntityData data, GameMode mode) : base(EntityType.FlagBase)
+        public FlagBaseEntity(FlagBaseEntityData data, Scene scene) : base(EntityType.FlagBase, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -18,6 +18,7 @@ namespace MphRead.Entities
             _volume = CollisionVolume.Move(_data.Volume, Position);
             // note: an explicit mode check is necessary because e.g. Sic Transit has OctolithFlags/FlagBases
             // enabled in Defender mode according to their layer masks, but they don't appear in-game
+            GameMode mode = scene.GameMode;
             if (mode == GameMode.Capture)
             {
                 AddPlaceholderModel();
@@ -28,11 +29,11 @@ namespace MphRead.Entities
             }
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
-            if (scene.ShowVolumes == VolumeDisplay.FlagBase)
+            if (_scene.ShowVolumes == VolumeDisplay.FlagBase)
             {
-                AddVolumeItem(_volume, Vector3.One, scene);
+                AddVolumeItem(_volume, Vector3.One);
             }
         }
     }

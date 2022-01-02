@@ -8,12 +8,13 @@ namespace MphRead.Entities
         private readonly Matrix4 _circleScale;
         private readonly CollisionVolume _volume;
 
-        public NodeDefenseEntity(NodeDefenseEntityData data, GameMode mode) : base(EntityType.NodeDefense)
+        public NodeDefenseEntity(NodeDefenseEntityData data, Scene scene) : base(EntityType.NodeDefense, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.Volume, Position);
+            GameMode mode = scene.GameMode;
             if (mode == GameMode.Defender || mode == GameMode.Nodes)
             {
                 SetUpModel("koth_data_flow");
@@ -35,11 +36,11 @@ namespace MphRead.Entities
             return transform;
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
-            if (scene.ShowVolumes == VolumeDisplay.DefenseNode)
+            if (_scene.ShowVolumes == VolumeDisplay.DefenseNode)
             {
-                AddVolumeItem(_volume, Vector3.One, scene);
+                AddVolumeItem(_volume, Vector3.One);
             }
         }
     }

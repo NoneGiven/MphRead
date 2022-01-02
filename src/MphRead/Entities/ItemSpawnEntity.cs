@@ -20,7 +20,7 @@ namespace MphRead.Entities
         // used if there is no base model
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xC8, 0x00, 0xC8).AsVector4();
 
-        public ItemSpawnEntity(ItemSpawnEntityData data) : base(EntityType.ItemSpawn)
+        public ItemSpawnEntity(ItemSpawnEntityData data, Scene scene) : base(EntityType.ItemSpawn, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -40,13 +40,13 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
-            scene.TryGetEntity(_data.NotifyEntityId, out _pickupNotifyEntity);
+            base.Initialize();
+            _scene.TryGetEntity(_data.NotifyEntityId, out _pickupNotifyEntity);
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             if (!_linkDone)
             {
@@ -64,7 +64,7 @@ namespace MphRead.Entities
             }
             if (Item == null && _spawnCooldown == 0 && (_data.MaxSpawnCount == 0 || _spawnCount < _data.MaxSpawnCount))
             {
-                Item = SpawnItem(_data.ItemType, Position.AddY(0.65f), scene);
+                Item = SpawnItem(_data.ItemType, Position.AddY(0.65f), _scene);
                 if (Item != null)
                 {
                     _spawnCooldown = (ushort)(_data.SpawnInterval * 2); // todo: FPS stuff
@@ -84,18 +84,18 @@ namespace MphRead.Entities
                     _playKeySfx = false;
                 }
             }
-            return base.Process(scene);
+            return base.Process();
         }
 
-        public void OnItemPickedUp(Scene scene)
+        public void OnItemPickedUp()
         {
             if (_data.CollectedMessage != Message.None)
             {
-                scene.SendMessage(_data.CollectedMessage, this, _pickupNotifyEntity, _data.CollectedMsgParam1, _data.CollectedMsgParam2);
+                _scene.SendMessage(_data.CollectedMessage, this, _pickupNotifyEntity, _data.CollectedMsgParam1, _data.CollectedMsgParam2);
             }
         }
 
-        public override void HandleMessage(MessageInfo info, Scene scene)
+        public override void HandleMessage(MessageInfo info)
         {
             if (info.Message == Message.Activate || (info.Message == Message.SetActive && (int)info.Param1 != 0))
             {
@@ -117,9 +117,9 @@ namespace MphRead.Entities
             {
                 if (info.Sender.Type == EntityType.EnemySpawn && ((EnemySpawnEntity)info.Sender).Data.EnemyType == EnemyType.Hunter)
                 {
-                    for (int i = 0; i < scene.Entities.Count; i++)
+                    for (int i = 0; i < _scene.Entities.Count; i++)
                     {
-                        EntityBase entity = scene.Entities[i];
+                        EntityBase entity = _scene.Entities[i];
                         if (entity.Type != EntityType.Player)
                         {
                             continue;
@@ -160,7 +160,7 @@ namespace MphRead.Entities
             ItemInstanceEntity? item = null;
             if (type != ItemType.None && (!chance.HasValue || Rng.GetRandomInt2(100) < chance.Value))
             {
-                item = new ItemInstanceEntity(new ItemInstanceEntityData(position, type, despawnTime));
+                item = new ItemInstanceEntity(new ItemInstanceEntityData(position, type, despawnTime), scene);
                 scene.AddEntity(item);
             }
             return item;
@@ -174,7 +174,7 @@ namespace MphRead.Entities
 
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xC8, 0x00, 0xC8).AsVector4();
 
-        public FhItemSpawnEntity(FhItemSpawnEntityData data) : base(EntityType.ItemSpawn)
+        public FhItemSpawnEntity(FhItemSpawnEntityData data, Scene scene) : base(EntityType.ItemSpawn, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -182,22 +182,22 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             // todo: FH item spawning logic
             if (_spawn)
             {
-                FhItemEntity item = SpawnItem(Position, _data.ItemType);
-                scene.AddEntity(item);
+                FhItemEntity item = SpawnItem(Position, _data.ItemType, _scene);
+                _scene.AddEntity(item);
                 _spawn = false;
             }
-            return base.Process(scene);
+            return base.Process();
         }
 
         // todo: FH entity node ref
-        public static FhItemEntity SpawnItem(Vector3 position, FhItemType itemType)
+        public static FhItemEntity SpawnItem(Vector3 position, FhItemType itemType, Scene scene)
         {
-            return new FhItemEntity(new FhItemInstanceEntityData(position, itemType));
+            return new FhItemEntity(new FhItemInstanceEntityData(position, itemType), scene);
         }
     }
 }

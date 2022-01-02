@@ -16,7 +16,7 @@ namespace MphRead.Entities.Enemies
 
         public SpawnerModelType ModelType { get; private set; }
 
-        public Enemy40Entity(EnemyInstanceEntityData data) : base(data)
+        public Enemy40Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);
@@ -24,7 +24,7 @@ namespace MphRead.Entities.Enemies
         }
 
         // this happens in the spawner's set_entity_refs in-game
-        protected override bool EnemyInitialize(Scene scene)
+        protected override bool EnemyInitialize()
         {
             Transform = _data.Spawner.Transform; // todo: spawner linked entity
             _boundingRadius = Fixed.ToFloat(3072);
@@ -59,7 +59,7 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        protected override void EnemyProcess(Scene scene)
+        protected override void EnemyProcess()
         {
             // todo: ent col
             if (_spawner.Flags.TestFlag(SpawnerFlags.Active) && !_spawner.Flags.TestFlag(SpawnerFlags.Suspended))
@@ -108,7 +108,7 @@ namespace MphRead.Entities.Enemies
             }
         }
 
-        protected override bool EnemyTakeDamage(EntityBase? source, Scene scene)
+        protected override bool EnemyTakeDamage(EntityBase? source)
         {
             if (_health == 0 && ModelType == SpawnerModelType.Spawner)
             {

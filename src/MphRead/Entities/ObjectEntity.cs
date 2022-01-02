@@ -30,7 +30,7 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x22, 0x8B, 0x22).AsVector4();
         public ObjectEntityData Data => _data;
 
-        public ObjectEntity(ObjectEntityData data) : base(EntityType.Object)
+        public ObjectEntity(ObjectEntityData data, Scene scene) : base(EntityType.Object, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -118,31 +118,31 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
+            base.Initialize();
             if (_data.EffectId > 0)
             {
-                scene.LoadEffect(_data.EffectId);
+                _scene.LoadEffect(_data.EffectId);
             }
             if (_data.LinkedEntity != -1)
             {
-                if (scene.TryGetEntity(_data.LinkedEntity, out EntityBase? parent))
+                if (_scene.TryGetEntity(_data.LinkedEntity, out EntityBase? parent))
                 {
                     _parent = parent;
                 }
             }
         }
 
-        public override void Destroy(Scene scene)
+        public override void Destroy()
         {
             if (_effectEntry != null)
             {
-                scene.UnlinkEffectEntry(_effectEntry);
+                _scene.UnlinkEffectEntry(_effectEntry);
             }
         }
 
-        private void UpdateState(int state, Scene scene)
+        private void UpdateState(int state)
         {
             if (_state == state)
             {
@@ -228,24 +228,24 @@ namespace MphRead.Entities
             }
             else
             {
-                RemoveEffect(scene);
+                RemoveEffect();
                 // todo: scan ID
             }
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
-            base.Process(scene);
+            base.Process();
             if (_data.ModelId == 46) // SniperTarget
             {
                 if (_state != 2)
                 {
                     // todo: check distance to player
-                    Vector3 between = scene.CameraPosition - Position;
+                    Vector3 between = _scene.CameraPosition - Position;
                     // todo: send message to the associated volume
                     if (Vector3.Dot(between, between) >= 15 * 15)
                     {
-                        UpdateState(1, scene);
+                        UpdateState(1);
                         if (_models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
                         {
                             Debug.Assert(_meta != null);
@@ -254,7 +254,7 @@ namespace MphRead.Entities
                     }
                     else
                     {
-                        UpdateState(0, scene);
+                        UpdateState(0);
                     }
                 }
             }
@@ -262,7 +262,7 @@ namespace MphRead.Entities
             {
                 if (_state == 1 && _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
                 {
-                    UpdateState(2, scene);
+                    UpdateState(2);
                 }
             }
             else if (_data.ModelId >= 47 && _data.ModelId <= 52) // SecretSwitch
@@ -270,7 +270,7 @@ namespace MphRead.Entities
                 // todo: update audio
                 if (_state == 1 && _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
                 {
-                    UpdateState(0, scene);
+                    UpdateState(0);
                 }
             }
             if (_state == 0 && _data.EffectId == 0) // skdebug
@@ -279,14 +279,14 @@ namespace MphRead.Entities
             }
             if (!_flags.TestFlag(ObjectFlags.EntityLinked))
             {
-                if (_data.LinkedEntity != -1 && scene.TryGetEntity(_data.LinkedEntity, out EntityBase? entity))
+                if (_data.LinkedEntity != -1 && _scene.TryGetEntity(_data.LinkedEntity, out EntityBase? entity))
                 {
                     _parent = entity;
                     _invTransform = _transform * _parent.CollisionTransform.Inverted();
                 }
                 _flags |= ObjectFlags.EntityLinked;
             }
-            ShouldDraw = !_scanVisorOnly || scene.ScanVisor;
+            ShouldDraw = !_scanVisorOnly || _scene.ScanVisor;
             if (_parent != null)
             {
                 // todo: visible position stuff (get vecs)
@@ -311,7 +311,7 @@ namespace MphRead.Entities
                 else if (_data.EffectFlags.TestFlag(ObjEffFlags.UseEffectVolume))
                 {
                     // todo: add an option to disable this check
-                    processEffect = _effectVolume.TestPoint(scene.CameraPosition);
+                    processEffect = _effectVolume.TestPoint(_scene.CameraPosition);
                 }
                 else if (_flags.TestFlag(ObjectFlags.IsVisible))
                 {
@@ -340,11 +340,11 @@ namespace MphRead.Entities
                             {
                                 if (!_effectActive)
                                 {
-                                    RemoveEffect(scene);
+                                    RemoveEffect();
                                 }
                                 else
                                 {
-                                    _effectEntry = scene.SpawnEffectGetEntry(_data.EffectId, Transform);
+                                    _effectEntry = _scene.SpawnEffectGetEntry(_data.EffectId, Transform);
                                     _effectEntry.SetElementExtension(true);
                                 }
                             }
@@ -368,7 +368,7 @@ namespace MphRead.Entities
                                 );
                             }
                             EntityBase? owner = _parent == null ? null : this;
-                            scene.SpawnEffect(_data.EffectId, spawnTransform, owner: owner);
+                            _scene.SpawnEffect(_data.EffectId, spawnTransform, owner: owner);
                         }
                         _effectIntervalTimer = _effectInterval;
                     }
@@ -386,26 +386,26 @@ namespace MphRead.Entities
             return true;
         }
 
-        private void RemoveEffect(Scene scene)
+        private void RemoveEffect()
         {
             if (_effectEntry != null)
             {
                 if (_data.EffectFlags.TestFlag(ObjEffFlags.DestroyEffect))
                 {
-                    scene.UnlinkEffectEntry(_effectEntry);
+                    _scene.UnlinkEffectEntry(_effectEntry);
                 }
                 else
                 {
-                    scene.DetachEffectEntry(_effectEntry, setExpired: false);
+                    _scene.DetachEffectEntry(_effectEntry, setExpired: false);
                 }
             }
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
-            if (_data.EffectId > 0 && scene.ShowVolumes == VolumeDisplay.Object)
+            if (_data.EffectId > 0 && _scene.ShowVolumes == VolumeDisplay.Object)
             {
-                AddVolumeItem(_effectVolume, Vector3.UnitX, scene);
+                AddVolumeItem(_effectVolume, Vector3.UnitX);
             }
         }
     }

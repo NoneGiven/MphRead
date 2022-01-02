@@ -75,7 +75,7 @@ namespace MphRead
             }
             else if (info.Target != null)
             {
-                info.Target.HandleMessage(info, this);
+                info.Target.HandleMessage(info);
             }
         }
 

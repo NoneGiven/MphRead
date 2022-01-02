@@ -22,7 +22,7 @@ namespace MphRead.Entities
 
         private EntityBase? _messageTarget = null;
 
-        public CameraSequenceEntity(CameraSequenceEntityData data) : base(EntityType.CameraSequence)
+        public CameraSequenceEntity(CameraSequenceEntityData data, Scene scene) : base(EntityType.CameraSequence, scene)
         {
             Data = data;
             Id = data.Header.EntityId;
@@ -39,9 +39,9 @@ namespace MphRead.Entities
             Active = false;
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
+            base.Initialize();
             // these would override the keyframe refs if they were used, but they aren't
             Debug.Assert(Data.PlayerId1 == 0);
             Debug.Assert(Data.PlayerId2 == 0);
@@ -49,46 +49,46 @@ namespace MphRead.Entities
             Debug.Assert(Data.Entity2 == -1);
             if (Data.MessageTargetId != -1)
             {
-                scene.TryGetEntity(Data.MessageTargetId, out _messageTarget);
+                _scene.TryGetEntity(Data.MessageTargetId, out _messageTarget);
             }
             foreach (CameraSequenceKeyframe keyframe in Sequence.Keyframes)
             {
-                keyframe.PositionEntity = GetKeyframeRef(keyframe.PosEntityType, keyframe.PosEntityId, scene);
-                keyframe.TargetEntity = GetKeyframeRef(keyframe.TargetEntityType, keyframe.TargetEntityId, scene);
-                keyframe.MessageTarget = GetKeyframeRef(keyframe.MessageTargetType, keyframe.MessageTargetId, scene);
+                keyframe.PositionEntity = GetKeyframeRef(keyframe.PosEntityType, keyframe.PosEntityId);
+                keyframe.TargetEntity = GetKeyframeRef(keyframe.TargetEntityType, keyframe.TargetEntityId);
+                keyframe.MessageTarget = GetKeyframeRef(keyframe.MessageTargetType, keyframe.MessageTargetId);
             }
         }
 
-        private EntityBase? GetKeyframeRef(short type, ushort id, Scene scene)
+        private EntityBase? GetKeyframeRef(short type, ushort id)
         {
             if (type == (short)EntityType.Player)
             {
                 Debug.Assert(id < PlayerEntity.MaxPlayers);
                 return PlayerEntity.Players[id];
             }
-            if (type != -1 && scene.TryGetEntity(id, out EntityBase? entity))
+            if (type != -1 && _scene.TryGetEntity(id, out EntityBase? entity))
             {
                 return entity;
             }
             return null;
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             if (Active)
             {
-                if (scene.ActiveCutscene == -1)
+                if (_scene.ActiveCutscene == -1)
                 {
-                    scene.StartCutscene(Data.SequenceId);
+                    _scene.StartCutscene(Data.SequenceId);
                 }
-                else if (scene.ActiveCutscene != Data.SequenceId)
+                else if (_scene.ActiveCutscene != Data.SequenceId)
                 {
                     Active = false;
                 }
             }
-            else if (scene.ActiveCutscene == Data.SequenceId)
+            else if (_scene.ActiveCutscene == Data.SequenceId)
             {
-                scene.EndCutscene(resetFade: true);
+                _scene.EndCutscene(resetFade: true);
             }
             // todo: delay timer and other stuff at the entity level
             if (Active && (_sequenceFlags & 1) == 0 && Sequence.Keyframes.Count != 0)
@@ -96,11 +96,11 @@ namespace MphRead.Entities
                 CameraSequenceKeyframe curFrame = Sequence.Keyframes[_keyframeIndex];
                 float frameLength = curFrame.HoldTime + curFrame.MoveTime;
                 float fadeOutStart = frameLength - curFrame.FadeOutTime;
-                CalculateFrameValues(scene);
+                CalculateFrameValues();
                 if (_keyframeElapsed < 1 / 30f && curFrame.MessageId != 0)
                 {
                     // game sets the keyframe as the sender
-                    scene.SendMessage((Message)curFrame.MessageId, this, curFrame.TargetEntity, curFrame.MessageParam, 0);
+                    _scene.SendMessage((Message)curFrame.MessageId, this, curFrame.TargetEntity, curFrame.MessageParam, 0);
                 }
                 FadeType fadeType = FadeType.None;
                 float fadeTime = 0;
@@ -117,17 +117,17 @@ namespace MphRead.Entities
                 }
                 if (fadeType != FadeType.None)
                 {
-                    scene.SetFade(fadeType, fadeTime, overwrite: false);
+                    _scene.SetFade(fadeType, fadeTime, overwrite: false);
                 }
                 // todo: transition timer stuff for handoffs
                 if (curFrame.HoldTime == 0 && curFrame.MoveTime == 0)
                 {
                     // make zero-length frames last for 2 frames (equivalent to 1 frame in game)
-                    _keyframeElapsed += scene.FrameTime / 2;
+                    _keyframeElapsed += _scene.FrameTime / 2;
                 }
                 else
                 {
-                    _keyframeElapsed += scene.FrameTime;
+                    _keyframeElapsed += _scene.FrameTime;
                 }
                 if (_keyframeElapsed >= frameLength)
                 {
@@ -140,16 +140,16 @@ namespace MphRead.Entities
                         if (Data.Loop == 0 && !Sequence.Loop)
                         {
                             Active = false;
-                            scene.EndCutscene();
+                            _scene.EndCutscene();
                         }
                     }
                 }
             }
             // todo: player input restrictions, etc.
-            return base.Process(scene);
+            return base.Process();
         }
 
-        private void CalculateFrameValues(Scene scene)
+        private void CalculateFrameValues()
         {
             // todo: set camera shake to 0 once that exists
             Vector3 finalPosition;
@@ -293,7 +293,7 @@ namespace MphRead.Entities
             }
             finalFov = MathHelper.DegreesToRadians(finalFov * 2);
             finalRoll = MathHelper.DegreesToRadians(finalRoll);
-            scene.SetCamera(finalPosition, finalToTarget, finalFov, finalRoll);
+            _scene.SetCamera(finalPosition, finalToTarget, finalFov, finalRoll);
         }
 
         private void AddEntityPosition(CameraSequenceKeyframe keyframe, ref Vector3 position, ref Vector3 toTarget)

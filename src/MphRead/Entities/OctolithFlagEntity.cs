@@ -8,11 +8,12 @@ namespace MphRead.Entities
         private readonly Vector3 _basePosition = Vector3.Zero;
         private bool _bounty = false;
 
-        public OctolithFlagEntity(OctolithFlagEntityData data, GameMode mode) : base(EntityType.OctolithFlag)
+        public OctolithFlagEntity(OctolithFlagEntityData data, Scene scene) : base(EntityType.OctolithFlag, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
+            GameMode mode = scene.GameMode;
             Recolor = mode == GameMode.Capture ? data.TeamId : 2;
             _bounty = mode != GameMode.Capture;
             if (mode == GameMode.Capture || mode == GameMode.Bounty || mode == GameMode.BountyTeams)

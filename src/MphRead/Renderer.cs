@@ -176,6 +176,7 @@ namespace MphRead
             _keyboardState = keyboardState;
             _mouseState = mouseState;
             _setTitle = setTitle;
+            PlayerEntity.Construct(this);
         }
 
         // called before load
@@ -187,8 +188,13 @@ namespace MphRead
                 throw new ProgramException("Cannot load more than one room in a scene.");
             }
             _roomLoaded = true;
+            GameMode = mode;
             (RoomEntity room, RoomMetadata meta, CollisionInstance collision, IReadOnlyList<EntityBase> entities)
-                = SceneSetup.LoadRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId, this);
+                = SceneSetup.LoadRoom(name, this, playerCount, bossFlags, nodeLayerMask, entityLayerId);
+            if (GameMode == GameMode.None)
+            {
+                GameMode = meta.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;
+            }
             _entities.Add(room);
             InitEntity(room);
             _room = room;
@@ -235,10 +241,6 @@ namespace MphRead
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
             _cameraMode = CameraMode.Roam;
-            if (mode != GameMode.None)
-            {
-                GameMode = mode;
-            }
             _roomId = room.RoomId;
         }
 
@@ -246,7 +248,7 @@ namespace MphRead
         public EntityBase AddModel(string name, int recolor = 0, bool firstHunt = false, MetaDir dir = MetaDir.Models, Vector3? pos = null)
         {
             ModelInstance model = Read.GetModelInstance(name, firstHunt, dir);
-            var entity = new ModelEntity(model, recolor);
+            var entity = new ModelEntity(model, this, recolor);
             _entities.Add(entity);
             if (entity.Id != -1)
             {
@@ -269,7 +271,7 @@ namespace MphRead
                 _entityMap.Add(entity.Id, entity);
             }
             // important to call in this order because the entity may add models (at least in development)
-            entity.Initialize(this);
+            entity.Initialize();
             InitEntity(entity);
         }
 
@@ -277,13 +279,7 @@ namespace MphRead
         {
             if (_roomLoaded)
             {
-                // todo: eventually replace with new entity
-                var entity = PlayerEntityOld.Spawn(hunter, recolor, position, facing);
-                if (entity != null)
-                {
-                    _entities.Add(entity);
-                    InitEntity(entity);
-                }
+                // todo?: add this functionality back
             }
             else
             {
@@ -326,7 +322,7 @@ namespace MphRead
             int count = _entities.Count;
             for (int i = 0; i < count; i++)
             {
-                _entities[i].Initialize(this);
+                _entities[i].Initialize();
             }
             // todo: probably revisit this
             foreach (PlayerEntity player in PlayerEntity.Players)
@@ -334,7 +330,7 @@ namespace MphRead
                 if (player.LoadFlags.TestFlag(LoadFlags.SlotActive))
                 {
                     _entities.Add(player);
-                    player.Initialize(this);
+                    player.Initialize();
                     InitEntity(player);
                 }
             }
@@ -974,7 +970,7 @@ namespace MphRead
                     {
                         // called after load -- entity needs init
                         EntityBase entity = AddModel(item.Name, item.Recolor, item.FirstHunt);
-                        entity.Initialize(this);
+                        entity.Initialize();
                     }
                     catch (ProgramException) { }
                 }
@@ -995,7 +991,7 @@ namespace MphRead
             {
                 return;
             }
-            entity.Destroy(this);
+            entity.Destroy();
             RemoveEntity(entity);
             foreach (ModelInstance inst in entity.GetModels())
             {
@@ -1197,18 +1193,18 @@ namespace MphRead
             }
             for (int i = 0; i < _beamEffectMax; i++)
             {
-                _inactiveBeamEffects.Enqueue(new BeamEffectEntity());
+                _inactiveBeamEffects.Enqueue(new BeamEffectEntity(this));
             }
             for (int i = 0; i < _bombMax; i++)
             {
-                _inactiveBombs.Enqueue(new BombEntity());
+                _inactiveBombs.Enqueue(new BombEntity(this));
             }
         }
 
         public BeamEffectEntity InitBeamEffect(BeamEffectEntityData data)
         {
             BeamEffectEntity entry = _inactiveBeamEffects.Dequeue();
-            entry.Spawn(data, this);
+            entry.Spawn(data);
             return entry;
         }
 
@@ -2043,17 +2039,17 @@ namespace MphRead
             for (int i = 0; i < _entities.Count; i++)
             {
                 EntityBase entity = _entities[i];
-                if (!entity.Process(this))
+                if (!entity.Process())
                 {
                     // todo: need to handle destroying vs. unloading etc.
-                    entity.Destroy(this);
+                    entity.Destroy();
                     _destroyedEntities.Add(entity);
                 }
             }
 
             if (_room != null)
             {
-                _room.GetDrawInfo(this);
+                _room.GetDrawInfo();
             }
             for (int i = 0; i < _entities.Count; i++)
             {
@@ -2067,7 +2063,7 @@ namespace MphRead
                 {
                     player.Draw();
                     // skdebug
-                    entity.GetDisplayVolumes(this);
+                    entity.GetDisplayVolumes();
                 }
             }
             for (int i = 0; i < _entities.Count; i++)
@@ -2079,11 +2075,11 @@ namespace MphRead
                 }
                 if (entity.ShouldDraw)
                 {
-                    entity.GetDrawInfo(this);
+                    entity.GetDrawInfo();
                 }
                 if (_showVolumes != VolumeDisplay.None)
                 {
-                    entity.GetDisplayVolumes(this);
+                    entity.GetDisplayVolumes();
                 }
             }
 
@@ -2756,21 +2752,7 @@ namespace MphRead
 
         public void OnKeyDown(KeyboardKeyEventArgs e)
         {
-            if (e.Key == Keys.E && e.Alt)
-            {
-                if (Selection.Entity != null && Selection.Entity.Type == EntityType.Player)
-                {
-                    ((PlayerEntityOld)Selection.Entity).Shoot = true;
-                }
-            }
-            else if (e.Key == Keys.B && e.Alt)
-            {
-                if (Selection.Entity != null && Selection.Entity.Type == EntityType.Player)
-                {
-                    ((PlayerEntityOld)Selection.Entity).Bomb = true;
-                }
-            }
-            else if (Selection.OnKeyDown(e, this))
+            if (Selection.OnKeyDown(e, this))
             {
                 return;
             }

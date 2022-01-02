@@ -23,14 +23,14 @@ namespace MphRead.Entities
         private ModelInstance? _trailModel = null;
         private int _bindingId = 0;
 
-        public BombEntity() : base(EntityType.Bomb)
+        public BombEntity(Scene scene) : base(EntityType.Bomb, scene)
         {
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
             Debug.Assert(Owner != null);
-            base.Initialize(scene);
+            base.Initialize();
             int effectId = 0;
             if (BombType == BombType.Stinglarva)
             {
@@ -69,7 +69,7 @@ namespace MphRead.Entities
             }
             if (effectId != 0)
             {
-                Effect = scene.SpawnEffectGetEntry(effectId, Transform);
+                Effect = _scene.SpawnEffectGetEntry(effectId, Transform);
                 Effect.SetElementExtension(true);
             }
             if (_trailModel != null)
@@ -80,11 +80,11 @@ namespace MphRead.Entities
                     recolor--;
                 }
                 Material material = _trailModel.Model.Materials[0];
-                _bindingId = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, recolor);
+                _bindingId = _scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, recolor);
             }
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             Debug.Assert(Owner != null);
             if (!Flags.TestFlag(BombFlags.Exploded))
@@ -114,19 +114,19 @@ namespace MphRead.Entities
                 _models.Clear();
                 if (Effect != null)
                 {
-                    scene.UnlinkEffectEntry(Effect);
+                    _scene.UnlinkEffectEntry(Effect);
                 }
                 if (BombType == BombType.Stinglarva)
                 {
-                    scene.SpawnEffect(128, Transform);
+                    _scene.SpawnEffect(128, Transform);
                 }
                 else if (BombType == BombType.Lockjaw)
                 {
-                    scene.SpawnEffect(146, Transform);
+                    _scene.SpawnEffect(146, Transform);
                 }
                 else if (BombType == BombType.MorphBall)
                 {
-                    scene.SpawnEffect(145, Transform);
+                    _scene.SpawnEffect(145, Transform);
                 }
             }
             if (Effect != null)
@@ -137,28 +137,28 @@ namespace MphRead.Entities
                     element.Transform = Transform;
                 }
             }
-            return base.Process(scene);
+            return base.Process();
         }
 
-        public override void GetDrawInfo(Scene scene)
+        public override void GetDrawInfo()
         {
             Debug.Assert(Owner != null);
             if (BombType == BombType.Lockjaw)
             {
                 if (BombIndex == 1)
                 {
-                    DrawLockjawTrail(Position, Owner.SyluxBombs[0]!.Position, Fixed.ToFloat(614), 10, scene);
+                    DrawLockjawTrail(Position, Owner.SyluxBombs[0]!.Position, Fixed.ToFloat(614), 10);
                 }
                 else if (BombIndex == 2)
                 {
-                    DrawLockjawTrail(Position, Owner.SyluxBombs[1]!.Position, Fixed.ToFloat(614), 10, scene);
-                    DrawLockjawTrail(Position, Owner.SyluxBombs[0]!.Position, Fixed.ToFloat(614), 10, scene);
+                    DrawLockjawTrail(Position, Owner.SyluxBombs[1]!.Position, Fixed.ToFloat(614), 10);
+                    DrawLockjawTrail(Position, Owner.SyluxBombs[0]!.Position, Fixed.ToFloat(614), 10);
                 }
             }
-            base.GetDrawInfo(scene);
+            base.GetDrawInfo();
         }
 
-        private void DrawLockjawTrail(Vector3 point1, Vector3 point2, float height, int segments, Scene scene)
+        private void DrawLockjawTrail(Vector3 point1, Vector3 point2, float height, int segments)
         {
             Debug.Assert(_trailModel != null);
             if (segments < 2)
@@ -198,11 +198,11 @@ namespace MphRead.Entities
                 uvsAndVerts[4 * i + 3] = new Vector3(x, y + height, z);
             }
             Material material = _trailModel.Model.Materials[0];
-            scene.AddRenderItem(RenderItemType.TrailMulti, alpha: 1, scene.GetNextPolygonId(), Vector3.One, material.XRepeat, material.YRepeat,
+            _scene.AddRenderItem(RenderItemType.TrailMulti, alpha: 1, _scene.GetNextPolygonId(), Vector3.One, material.XRepeat, material.YRepeat,
                 material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(point1), uvsAndVerts, _bindingId, trailCount: count);
         }
 
-        public override void Destroy(Scene scene)
+        public override void Destroy()
         {
             if (BombType == BombType.Lockjaw)
             {
@@ -217,7 +217,7 @@ namespace MphRead.Entities
             _trailModel = null;
             if (Effect != null)
             {
-                scene.UnlinkEffectEntry(Effect);
+                _scene.UnlinkEffectEntry(Effect);
             }
             Effect = null;
             Owner = null;

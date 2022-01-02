@@ -22,11 +22,11 @@ namespace MphRead.Entities
     {
         private int _lifespan = 0;
 
-        public BeamEffectEntity() : base(EntityType.BeamEffect)
+        public BeamEffectEntity(Scene scene) : base(EntityType.BeamEffect, scene)
         {
         }
 
-        public void Spawn(BeamEffectEntityData data, Scene scene)
+        public void Spawn(BeamEffectEntityData data)
         {
             // already loaded by scene setup
             ModelInstance model;
@@ -59,22 +59,22 @@ namespace MphRead.Entities
             Transform = data.Transform;
             if (data.Type == 0)
             {
-                scene.SpawnEffect(78, data.Transform.ClearScale()); // iceWave
+                _scene.SpawnEffect(78, data.Transform.ClearScale()); // iceWave
             }
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             if (_lifespan-- <= 0)
             {
                 return false;
             }
-            return base.Process(scene);
+            return base.Process();
         }
 
-        public override void Destroy(Scene scene)
+        public override void Destroy()
         {
-            scene.UnlinkBeamEffect(this);
+            _scene.UnlinkBeamEffect(this);
         }
 
         public static BeamEffectEntity? Create(BeamEffectEntityData data, Scene scene)

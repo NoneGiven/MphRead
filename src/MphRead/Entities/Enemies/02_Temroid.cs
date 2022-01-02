@@ -19,18 +19,18 @@ namespace MphRead.Entities.Enemies
 
         public bool Field1D0 => _field1D0;
 
-        public Enemy02Entity(EnemyInstanceEntityData data) : base(data)
+        public Enemy02Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);
             _spawner = spawner;
-            _stateProcesses = new Action<Scene>[11]
+            _stateProcesses = new Action[11]
             {
                 State00, State01, State02, State03, State04, State05, State06, State07, State08, State09, State10
             };
         }
 
-        protected override bool EnemyInitialize(Scene scene)
+        protected override bool EnemyInitialize()
         {
             Flags |= EnemyFlags.Visible;
             Flags |= EnemyFlags.OnRadar;
@@ -55,19 +55,19 @@ namespace MphRead.Entities.Enemies
             _idlePoints[2].Z += facing.Z * idleZ + facing.X * idleX;
             _idlePoints[3].X -= facing.Z * idleX;
             _idlePoints[3].Z += facing.X * idleX;
-            Func21648A4(scene);
+            Func21648A4();
             return true;
         }
 
         // todo: function names
-        private void Func21648A4(Scene scene)
+        private void Func21648A4()
         {
             if ((_state1 == 0 || _state1 == 7 || _state1 == 10) && _state2 != 0 && _state2 != 7 && _state2 != 10)
             {
                 int count = 0;
-                for (int i = 0; i < scene.Entities.Count; i++)
+                for (int i = 0; i < _scene.Entities.Count; i++)
                 {
-                    EntityBase entity = scene.Entities[i];
+                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type == EntityType.EnemyInstance && entity is Enemy02Entity temroid && temroid.Field1D0)
                     {
                         count++;
@@ -104,20 +104,20 @@ namespace MphRead.Entities.Enemies
                 _models[0].SetAnimation(11, AnimFlags.NoLoop);
                 _field1B8 = 0;
                 _field1BC = Position;
-                Vector3 facing = (scene.CameraPosition - Position).Normalized(); // todo: use player position with Y + 0.5f
+                Vector3 facing = (_scene.CameraPosition - Position).Normalized(); // todo: use player position with Y + 0.5f
                 SetTransform(facing, UpVector, Position);
                 _speed = -(facing * 0.3f).WithY(0) / 2; // todo: FPS stuff
             }
             else if (_state2 == 4)
             {
                 _models[0].SetAnimation(12, AnimFlags.NoLoop);
-                Vector3 facing = (scene.CameraPosition - Position).Normalized(); // todo: use player position with Y + 0.5f
+                Vector3 facing = (_scene.CameraPosition - Position).Normalized(); // todo: use player position with Y + 0.5f
                 _speed = (facing * 0.3f).WithY(0) / 2; // todo: FPS stuff   
             }
             else if (_state2 == 5)
             {
                 _models[0].SetAnimation(3);
-                Vector3 facing = (scene.CameraPosition - Position).Normalized(); // todo: use player position with Y + 0.5f
+                Vector3 facing = (_scene.CameraPosition - Position).Normalized(); // todo: use player position with Y + 0.5f
                 _speed = facing / 2 / 2; // todo: FPS stuff
                 _field170 = 20 * 2; // todo: FPS stuff
             }
@@ -226,13 +226,13 @@ namespace MphRead.Entities.Enemies
             SetTransform(-player.FacingVector, UpVector, position);
         }
 
-        protected override void EnemyProcess(Scene scene)
+        protected override void EnemyProcess()
         {
-            CallStateProcess(scene);
+            CallStateProcess();
             // todo: handle collision with doors
             var results = new CollisionResult[8];
             int colCount = CollisionDetection.CheckInRadius(Position, _boundingRadius, limit: 8,
-                getSimpleNormal: false, TestFlags.None, scene, results);
+                getSimpleNormal: false, TestFlags.None, _scene, results);
 
             // sktodo: convert this to float math
             static float DoThing(float value, float factor)
@@ -283,7 +283,7 @@ namespace MphRead.Entities.Enemies
             }
         }
 
-        private void State00(Scene scene)
+        private void State00()
         {
             Vector3 between = _idlePoints[_field1A4] - Position;
             if (between.LengthSquared < 1 && ++_field1A4 >= 4)
@@ -291,24 +291,24 @@ namespace MphRead.Entities.Enemies
                 _field1A4 = 0;
             }
             Func216469C(_idlePoints[_field1A4], Position, sign: 1);
-            State02(scene);
+            State02();
         }
 
-        private void State01(Scene scene)
+        private void State01()
         {
-            Func216469C(scene.CameraPosition, Position, sign: 1); // todo: use main player position
-            State02(scene);
+            Func216469C(_scene.CameraPosition, Position, sign: 1); // todo: use main player position
+            State02();
         }
 
-        private void State02(Scene scene)
+        private void State02()
         {
             if ((HitPlayers & 1) != 0) // todo: use player slot index
             {
                 // todo: damage player
             }
-            if (CallSubroutine(Metadata.Enemy02Subroutines, this, scene))
+            if (CallSubroutine(Metadata.Enemy02Subroutines, this))
             {
-                Func21648A4(scene);
+                Func21648A4();
             }
         }
 
@@ -322,42 +322,42 @@ namespace MphRead.Entities.Enemies
             _speed.Y = _field1BC.Y + MathF.Sin(_field1B8) / 2 - Position.Y;
         }
 
-        private void State03(Scene scene)
+        private void State03()
         {
             UpdateHeight(sign: 1);
-            State02(scene);
+            State02();
         }
 
-        private void State04(Scene scene)
+        private void State04()
         {
             UpdateHeight(sign: -1);
-            State02(scene);
+            State02();
         }
 
-        private void State05(Scene scene)
+        private void State05()
         {
-            if (CallSubroutine(Metadata.Enemy02Subroutines, this, scene))
+            if (CallSubroutine(Metadata.Enemy02Subroutines, this))
             {
-                Func21648A4(scene);
+                Func21648A4();
             }
         }
 
-        private void State06(Scene scene)
+        private void State06()
         {
             Func216469C(Position, _idlePoints[0], sign: -1);
-            if (CallSubroutine(Metadata.Enemy02Subroutines, this, scene))
+            if (CallSubroutine(Metadata.Enemy02Subroutines, this))
             {
-                Func21648A4(scene);
+                Func21648A4();
             }
         }
 
-        private void State07(Scene scene)
+        private void State07()
         {
             Func216469C(_idlePoints[0], Position, sign: 1);
-            State02(scene);
+            State02();
         }
 
-        private void State08(Scene scene)
+        private void State08()
         {
             int animId = _models[0].AnimInfo.Index[0];
             Vector3 facing = FacingVector;
@@ -365,7 +365,7 @@ namespace MphRead.Entities.Enemies
             bool morphing = false;
             bool unmorphing = false;
             bool altForm = false;
-            Vector3 playerPos = scene.CameraPosition;
+            Vector3 playerPos = _scene.CameraPosition;
             Vector3 playerFacing = Vector3.UnitZ;
             if (morphing)
             {
@@ -395,7 +395,7 @@ namespace MphRead.Entities.Enemies
                 AnimationInfo animInfo = _models[0].AnimInfo;
                 int frameCount = animInfo.FrameCount[0];
                 int animFrame = animInfo.Frame[0];
-                Vector3 cameraPos = scene.CameraPosition; // todo: use player camera info
+                Vector3 cameraPos = _scene.CameraPosition; // todo: use player camera info
                 Vector3 postion = (playerPos.AddY(0.625f) * (frameCount - animFrame) + (cameraPos + playerFacing / 2) * animFrame) / frameCount;
                 SetTransform(facing.Normalized(), UpVector, postion);
             }
@@ -435,37 +435,37 @@ namespace MphRead.Entities.Enemies
                 // todo: damage player
                 _drainDamageTimer = 8 * 2; // todo: FPS stuff
             }
-            if (CallSubroutine(Metadata.Enemy02Subroutines, this, scene))
+            if (CallSubroutine(Metadata.Enemy02Subroutines, this))
             {
                 // todo: update main player's attached enemy reference
-                Func21648A4(scene);
+                Func21648A4();
             }
         }
 
-        private void State09(Scene scene)
+        private void State09()
         {
-            if (CallSubroutine(Metadata.Enemy02Subroutines, this, scene))
+            if (CallSubroutine(Metadata.Enemy02Subroutines, this))
             {
-                Func21648A4(scene);
+                Func21648A4();
             }
         }
 
-        private void State10(Scene scene)
+        private void State10()
         {
-            State02(scene);
+            State02();
         }
 
-        private bool Behavior00(Scene scene)
+        private bool Behavior00()
         {
             return _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended);
         }
 
-        private bool Behavior01(Scene scene)
+        private bool Behavior01()
         {
             return true; // todo: return whether main player has no attached enemy
         }
 
-        private bool Behavior02(Scene scene)
+        private bool Behavior02()
         {
             if (_field170 > 0)
             {
@@ -475,7 +475,7 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        private bool Behavior03(Scene scene)
+        private bool Behavior03()
         {
             // todo: use player slot index
             // todo: also test if player has an attached enemy
@@ -487,30 +487,30 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        private bool Behavior04(Scene scene)
+        private bool Behavior04()
         {
             return _framesSinceDamage == 1;
         }
 
-        private bool Behavior05(Scene scene)
+        private bool Behavior05()
         {
             // todo: use player position
             CollisionResult result = default;
-            if (CollisionDetection.CheckBetweenPoints(Position, scene.CameraPosition, TestFlags.None, scene, ref result))
+            if (CollisionDetection.CheckBetweenPoints(Position, _scene.CameraPosition, TestFlags.None, _scene, ref result))
             {
                 return false;
             }
-            Vector3 between = scene.CameraPosition - Position;
+            Vector3 between = _scene.CameraPosition - Position;
             return between.LengthSquared < 42.25f;
         }
 
-        private bool Behavior06(Scene scene)
+        private bool Behavior06()
         {
             Vector3 between = _idlePoints[0] - Position;
             return between.LengthSquared < 1;
         }
 
-        private bool Behavior07(Scene scene)
+        private bool Behavior07()
         {
             if (!_hitByBomb)
             {
@@ -520,102 +520,102 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        private bool Behavior08(Scene scene)
+        private bool Behavior08()
         {
             return false; // todo: return whether the player's health is 0
         }
 
-        private bool Behavior09(Scene scene)
+        private bool Behavior09()
         {
             // todo: use player position
             CollisionResult result = default;
-            return CollisionDetection.CheckBetweenPoints(Position, scene.CameraPosition, TestFlags.None, scene, ref result);
+            return CollisionDetection.CheckBetweenPoints(Position, _scene.CameraPosition, TestFlags.None, _scene, ref result);
         }
 
-        private bool Behavior10(Scene scene)
+        private bool Behavior10()
         {
             // todo: use player position
-            Vector3 between = scene.CameraPosition - Position;
+            Vector3 between = _scene.CameraPosition - Position;
             return between.LengthSquared < 100;
         }
 
-        private bool Behavior11(Scene scene)
+        private bool Behavior11()
         {
             return false; // todo: return whether main player has an attached enemy
         }
 
-        private bool Behavior12(Scene scene)
+        private bool Behavior12()
         {
             // todo: use player position
-            Vector3 between = scene.CameraPosition - Position;
+            Vector3 between = _scene.CameraPosition - Position;
             return between.LengthSquared < 25;
         }
 
         #region Boilerplate
 
-        public static bool Behavior00(Enemy02Entity enemy, Scene scene)
+        public static bool Behavior00(Enemy02Entity enemy)
         {
-            return enemy.Behavior00(scene);
+            return enemy.Behavior00();
         }
 
-        public static bool Behavior01(Enemy02Entity enemy, Scene scene)
+        public static bool Behavior01(Enemy02Entity enemy)
         {
-            return enemy.Behavior01(scene);
+            return enemy.Behavior01();
         }
 
-        public static bool Behavior02(Enemy02Entity enemy, Scene scene)
+        public static bool Behavior02(Enemy02Entity enemy)
         {
-            return enemy.Behavior02(scene);
+            return enemy.Behavior02();
         }
 
-        public static bool Behavior03(Enemy02Entity enemy, Scene scene)
+        public static bool Behavior03(Enemy02Entity enemy)
         {
-            return enemy.Behavior03(scene);
+            return enemy.Behavior03();
         }
 
-        public static bool Behavior04(Enemy02Entity enemy, Scene scene)
+        public static bool Behavior04(Enemy02Entity enemy)
         {
-            return enemy.Behavior04(scene);
+            return enemy.Behavior04();
         }
 
-        public static bool Behavior05(Enemy02Entity enemy, Scene scene)
+        public static bool Behavior05(Enemy02Entity enemy)
         {
-            return enemy.Behavior05(scene);
+            return enemy.Behavior05();
         }
 
-        public static bool Behavior06(Enemy02Entity enemy, Scene scene)
+        public static bool Behavior06(Enemy02Entity enemy)
         {
-            return enemy.Behavior06(scene);
+            return enemy.Behavior06();
         }
 
-        public static bool Behavior07(Enemy02Entity enemy, Scene scene)
+        public static bool Behavior07(Enemy02Entity enemy)
         {
-            return enemy.Behavior07(scene);
+            return enemy.Behavior07();
         }
 
-        public static bool Behavior08(Enemy02Entity enemy, Scene scene)
+        public static bool Behavior08(Enemy02Entity enemy)
         {
-            return enemy.Behavior08(scene);
+            return enemy.Behavior08();
         }
 
-        public static bool Behavior09(Enemy02Entity enemy, Scene scene)
+        public static bool Behavior09(Enemy02Entity enemy)
         {
-            return enemy.Behavior09(scene);
+            return enemy.Behavior09();
         }
 
-        public static bool Behavior10(Enemy02Entity enemy, Scene scene)
+        public static bool Behavior10(Enemy02Entity enemy)
         {
-            return enemy.Behavior10(scene);
+            return enemy.Behavior10();
         }
 
-        public static bool Behavior11(Enemy02Entity enemy, Scene scene)
+        public static bool Behavior11(Enemy02Entity enemy)
         {
-            return enemy.Behavior11(scene);
+            return enemy.Behavior11();
         }
 
-        public static bool Behavior12(Enemy02Entity enemy, Scene scene)
+        public static bool Behavior12(Enemy02Entity enemy)
         {
-            return enemy.Behavior12(scene);
+            return enemy.Behavior12();
         }
 
         #endregion

@@ -11,8 +11,8 @@ namespace MphRead
     {
         // todo: artifact flags
         public static (RoomEntity, RoomMetadata, CollisionInstance, IReadOnlyList<EntityBase>)
-            LoadRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
-                BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1, Scene? scene = null)
+            LoadRoom(string name, Scene scene, int playerCount = 0, BossFlags bossFlags = BossFlags.None,
+            int nodeLayerMask = 0, int entityLayerId = -1)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
             int areaId = Metadata.GetAreaInfo(roomId);
@@ -20,6 +20,7 @@ namespace MphRead
             {
                 throw new ProgramException("No room with this name is known.");
             }
+            GameMode mode = scene.GameMode;
             if (mode == GameMode.None)
             {
                 mode = metadata.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;
@@ -52,7 +53,7 @@ namespace MphRead
             {
                 nodeLayerMask = GetNodeLayer(mode, metadata.NodeLayer, playerCount);
             }
-            IReadOnlyList<EntityBase> entities = LoadEntities(metadata, areaId, entityLayerId, mode);
+            IReadOnlyList<EntityBase> entities = LoadEntities(metadata, areaId, entityLayerId, scene);
             CollisionInstance collision = Collision.GetCollision(metadata, nodeLayerMask);
             NodeData? nodeData = null;
             if (metadata.NodePath != null)
@@ -60,7 +61,7 @@ namespace MphRead
                 nodeData = ReadNodeData.ReadData(Path.Combine(@"", metadata.NodePath));
             }
             LoadResources(scene);
-            var room = new RoomEntity(name, metadata, collision, nodeData, nodeLayerMask, roomId);
+            var room = new RoomEntity(name, metadata, collision, nodeData, nodeLayerMask, roomId, scene);
             return (room, metadata, collision, entities);
         }
 
@@ -93,7 +94,7 @@ namespace MphRead
             return nodeLayerMask;
         }
 
-        private static IReadOnlyList<EntityBase> LoadEntities(RoomMetadata metadata, int areaId, int layerId, GameMode mode)
+        private static IReadOnlyList<EntityBase> LoadEntities(RoomMetadata metadata, int areaId, int layerId, Scene scene)
         {
             var results = new List<EntityBase>();
             if (metadata.EntityPath == null)
@@ -106,111 +107,111 @@ namespace MphRead
             {
                 if (entity.Type == EntityType.Platform)
                 {
-                    results.Add(new PlatformEntity(((Entity<PlatformEntityData>)entity).Data));
+                    results.Add(new PlatformEntity(((Entity<PlatformEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.FhPlatform)
                 {
-                    results.Add(new FhPlatformEntity(((Entity<FhPlatformEntityData>)entity).Data));
+                    results.Add(new FhPlatformEntity(((Entity<FhPlatformEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.Object)
                 {
-                    results.Add(new ObjectEntity(((Entity<ObjectEntityData>)entity).Data));
+                    results.Add(new ObjectEntity(((Entity<ObjectEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.PlayerSpawn || entity.Type == EntityType.FhPlayerSpawn)
                 {
-                    results.Add(new PlayerSpawnEntity(((Entity<PlayerSpawnEntityData>)entity).Data));
+                    results.Add(new PlayerSpawnEntity(((Entity<PlayerSpawnEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.Door)
                 {
-                    results.Add(new DoorEntity(((Entity<DoorEntityData>)entity).Data));
+                    results.Add(new DoorEntity(((Entity<DoorEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.FhDoor)
                 {
-                    results.Add(new FhDoorEntity(((Entity<FhDoorEntityData>)entity).Data));
+                    results.Add(new FhDoorEntity(((Entity<FhDoorEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.ItemSpawn)
                 {
-                    results.Add(new ItemSpawnEntity(((Entity<ItemSpawnEntityData>)entity).Data));
+                    results.Add(new ItemSpawnEntity(((Entity<ItemSpawnEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.FhItemSpawn)
                 {
-                    results.Add(new FhItemSpawnEntity(((Entity<FhItemSpawnEntityData>)entity).Data));
+                    results.Add(new FhItemSpawnEntity(((Entity<FhItemSpawnEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.EnemySpawn)
                 {
-                    results.Add(new EnemySpawnEntity(((Entity<EnemySpawnEntityData>)entity).Data));
+                    results.Add(new EnemySpawnEntity(((Entity<EnemySpawnEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.FhEnemySpawn)
                 {
-                    results.Add(new FhEnemySpawnEntity(((Entity<FhEnemySpawnEntityData>)entity).Data));
+                    results.Add(new FhEnemySpawnEntity(((Entity<FhEnemySpawnEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.TriggerVolume)
                 {
-                    results.Add(new TriggerVolumeEntity(((Entity<TriggerVolumeEntityData>)entity).Data));
+                    results.Add(new TriggerVolumeEntity(((Entity<TriggerVolumeEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.FhTriggerVolume)
                 {
-                    results.Add(new FhTriggerVolumeEntity(((Entity<FhTriggerVolumeEntityData>)entity).Data));
+                    results.Add(new FhTriggerVolumeEntity(((Entity<FhTriggerVolumeEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.AreaVolume)
                 {
-                    results.Add(new AreaVolumeEntity(((Entity<AreaVolumeEntityData>)entity).Data));
+                    results.Add(new AreaVolumeEntity(((Entity<AreaVolumeEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.FhAreaVolume)
                 {
-                    results.Add(new FhAreaVolumeEntity(((Entity<FhAreaVolumeEntityData>)entity).Data));
+                    results.Add(new FhAreaVolumeEntity(((Entity<FhAreaVolumeEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.JumpPad)
                 {
-                    results.Add(new JumpPadEntity(((Entity<JumpPadEntityData>)entity).Data));
+                    results.Add(new JumpPadEntity(((Entity<JumpPadEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.FhJumpPad)
                 {
-                    results.Add(new FhJumpPadEntity(((Entity<FhJumpPadEntityData>)entity).Data));
+                    results.Add(new FhJumpPadEntity(((Entity<FhJumpPadEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.PointModule || entity.Type == EntityType.FhPointModule)
                 {
-                    results.Add(new PointModuleEntity(((Entity<PointModuleEntityData>)entity).Data));
+                    results.Add(new PointModuleEntity(((Entity<PointModuleEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.MorphCamera)
                 {
-                    results.Add(new MorphCameraEntity(((Entity<MorphCameraEntityData>)entity).Data));
+                    results.Add(new MorphCameraEntity(((Entity<MorphCameraEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.FhMorphCamera)
                 {
-                    results.Add(new FhMorphCameraEntity(((Entity<FhMorphCameraEntityData>)entity).Data));
+                    results.Add(new FhMorphCameraEntity(((Entity<FhMorphCameraEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.OctolithFlag)
                 {
-                    results.Add(new OctolithFlagEntity(((Entity<OctolithFlagEntityData>)entity).Data, mode));
+                    results.Add(new OctolithFlagEntity(((Entity<OctolithFlagEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.FlagBase)
                 {
-                    results.Add(new FlagBaseEntity(((Entity<FlagBaseEntityData>)entity).Data, mode));
+                    results.Add(new FlagBaseEntity(((Entity<FlagBaseEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
-                    results.Add(new TeleporterEntity(((Entity<TeleporterEntityData>)entity).Data, areaId, mode != GameMode.SinglePlayer));
+                    results.Add(new TeleporterEntity(((Entity<TeleporterEntityData>)entity).Data, areaId, scene));
                 }
                 else if (entity.Type == EntityType.NodeDefense)
                 {
-                    results.Add(new NodeDefenseEntity(((Entity<NodeDefenseEntityData>)entity).Data, mode));
+                    results.Add(new NodeDefenseEntity(((Entity<NodeDefenseEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.LightSource)
                 {
-                    results.Add(new LightSourceEntity(((Entity<LightSourceEntityData>)entity).Data));
+                    results.Add(new LightSourceEntity(((Entity<LightSourceEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.Artifact)
                 {
-                    results.Add(new ArtifactEntity(((Entity<ArtifactEntityData>)entity).Data));
+                    results.Add(new ArtifactEntity(((Entity<ArtifactEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.CameraSequence)
                 {
-                    results.Add(new CameraSequenceEntity(((Entity<CameraSequenceEntityData>)entity).Data));
+                    results.Add(new CameraSequenceEntity(((Entity<CameraSequenceEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {
-                    results.Add(new ForceFieldEntity(((Entity<ForceFieldEntityData>)entity).Data));
+                    results.Add(new ForceFieldEntity(((Entity<ForceFieldEntityData>)entity).Data, scene));
                 }
                 else
                 {
@@ -709,13 +710,13 @@ namespace MphRead
             }
         }
 
-        public static BeamProjectileEntity[] CreateBeamList(int size)
+        public static BeamProjectileEntity[] CreateBeamList(int size, Scene scene)
         {
             Debug.Assert(size > 0);
             var beams = new BeamProjectileEntity[size];
             for (int i = 0; i < size; i++)
             {
-                beams[i] = new BeamProjectileEntity();
+                beams[i] = new BeamProjectileEntity(scene);
             }
             return beams;
         }

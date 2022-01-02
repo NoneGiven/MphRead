@@ -15,14 +15,14 @@ namespace MphRead.Entities.Enemies
         private EquipInfo? _equipInfo;
 
         // todo?: technically this has a custom draw function, but I don't think we need it (unless it's possible to observe the damage flash)
-        public Enemy49Entity(EnemyInstanceEntityData data) : base(data)
+        public Enemy49Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
         {
             var spawner = data.Spawner as ForceFieldEntity;
             Debug.Assert(spawner != null);
             _forceField = spawner;
         }
 
-        protected override bool EnemyInitialize(Scene scene)
+        protected override bool EnemyInitialize()
         {
             Vector3 position = _forceField.Data.Header.Position.ToFloatVector();
             _vec1 = _forceField.Data.Header.UpVector.ToFloatVector();
@@ -89,17 +89,17 @@ namespace MphRead.Entities.Enemies
             BeamEffectiveness[index] = effectiveness;
         }
 
-        protected override void EnemyProcess(Scene scene)
+        protected override void EnemyProcess()
         {
             // this is called twice per tick, so the animation plays twice as fast
             if (Active)
             {
                 for (int i = 0; i < _models.Count; i++)
                 {
-                    UpdateAnimFrames(_models[i], scene);
+                    UpdateAnimFrames(_models[i]);
                 }
             }
-            if (Vector3.Dot(scene.CameraPosition - _initialPosition, _vec2) < 0)
+            if (Vector3.Dot(_scene.CameraPosition - _initialPosition, _vec2) < 0)
             {
                 _vec2 *= -1;
                 Vector3 position = _initialPosition + _vec2 * Fixed.ToFloat(409);
@@ -114,7 +114,7 @@ namespace MphRead.Entities.Enemies
                     Debug.Assert(_equipInfo != null);
                     Vector3 spawnDir = (_targetPosition - Position).Normalized();
                     Vector3 spawnPos = Position + spawnDir * 0.1f;
-                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, scene);
+                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, _scene);
                 }
                 if (_shotFrames == 0)
                 {
@@ -173,7 +173,7 @@ namespace MphRead.Entities.Enemies
             }
         }
 
-        protected override bool EnemyTakeDamage(EntityBase? source, Scene scene)
+        protected override bool EnemyTakeDamage(EntityBase? source)
         {
             if (_health > 0)
             {
@@ -184,19 +184,19 @@ namespace MphRead.Entities.Enemies
             }
             else
             {
-                scene.SendMessage(Message.Unlock, this, _owner, 0, 0);
+                _scene.SendMessage(Message.Unlock, this, _owner, 0, 0);
             }
             return false;
         }
 
-        public void LockHit(EntityBase source, Scene scene)
+        public void LockHit(EntityBase source)
         {
             // todo: check if beam owner is main player
             var beamSource = (BeamProjectileEntity)source;
             if (_shotFrames == 0 && GetEffectiveness(beamSource.WeaponType) == Effectiveness.Zero)
             {
                 _shotFrames = _forceField.Data.Type == 7 ? (byte)60 : (byte)1;
-                _targetPosition = scene.CameraPosition; // todo: get_vecs on beam owner
+                _targetPosition = _scene.CameraPosition; // todo: get_vecs on beam owner
                 _models[0].SetAnimation(2, AnimFlags.NoLoop);
             }
         }

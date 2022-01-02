@@ -17,7 +17,7 @@ namespace MphRead.Entities
 
         private ushort _cooldownTimer = 0;
 
-        public JumpPadEntity(JumpPadEntityData data) : base(EntityType.JumpPad)
+        public JumpPadEntity(JumpPadEntityData data, Scene scene) : base(EntityType.JumpPad, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -36,19 +36,19 @@ namespace MphRead.Entities
             beamInst.Active = Active;
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
+            base.Initialize();
             if (_data.ParentId != -1)
             {
-                if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
+                if (_scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
                 {
                     _parent = parent;
                 }
             }
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             if (_parent != null)
             {
@@ -66,9 +66,9 @@ namespace MphRead.Entities
             }
             if (Active && _cooldownTimer == 0)
             {
-                for (int i = 0; i < scene.Entities.Count; i++)
+                for (int i = 0; i < _scene.Entities.Count; i++)
                 {
-                    EntityBase entity = scene.Entities[i];
+                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Player)
                     {
                         continue;
@@ -106,7 +106,7 @@ namespace MphRead.Entities
             {
                 _cooldownTimer--;
             }
-            return base.Process(scene);
+            return base.Process();
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
@@ -118,11 +118,11 @@ namespace MphRead.Entities
             return base.GetModelTransform(inst, index);
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
-            if (scene.ShowVolumes == VolumeDisplay.JumpPad)
+            if (_scene.ShowVolumes == VolumeDisplay.JumpPad)
             {
-                AddVolumeItem(_volume, Vector3.UnitY, scene);
+                AddVolumeItem(_volume, Vector3.UnitY);
             }
         }
 
@@ -140,7 +140,7 @@ namespace MphRead.Entities
 
         private readonly CollisionVolume _volume;
 
-        public FhJumpPadEntity(FhJumpPadEntityData data) : base(EntityType.JumpPad)
+        public FhJumpPadEntity(FhJumpPadEntityData data, Scene scene) : base(EntityType.JumpPad, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -167,11 +167,11 @@ namespace MphRead.Entities
             return base.GetModelTransform(inst, index);
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
-            if (scene.ShowVolumes == VolumeDisplay.JumpPad)
+            if (_scene.ShowVolumes == VolumeDisplay.JumpPad)
             {
-                AddVolumeItem(_volume, Vector3.UnitY, scene);
+                AddVolumeItem(_volume, Vector3.UnitY);
             }
         }
     }

@@ -33,7 +33,7 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x00, 0x00, 0x8B).AsVector4();
 
         // todo: enemy and item spawners should preload the models and effects that will be used when they spawn their entities
-        public EnemySpawnEntity(EnemySpawnEntityData data) : base(EntityType.EnemySpawn)
+        public EnemySpawnEntity(EnemySpawnEntityData data, Scene scene) : base(EntityType.EnemySpawn, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -48,28 +48,28 @@ namespace MphRead.Entities
             // todo: start suspended, update based on range/node ref (w/ "camera is player" option)
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
+            base.Initialize();
             if (_data.EntityId1 != -1)
             {
-                scene.TryGetEntity(_data.EntityId1, out _entity1);
+                _scene.TryGetEntity(_data.EntityId1, out _entity1);
             }
             if (_data.EntityId2 != -1)
             {
-                scene.TryGetEntity(_data.EntityId2, out _entity2);
+                _scene.TryGetEntity(_data.EntityId2, out _entity2);
             }
             if (_data.EntityId3 != -1)
             {
-                scene.TryGetEntity(_data.EntityId3, out _entity3);
+                _scene.TryGetEntity(_data.EntityId3, out _entity3);
             }
             // todo: linked entity
             if (_data.SpawnerHealth > 0)
             {
-                EnemyInstanceEntity? enemy = SpawnEnemy(this, EnemyType.Spawner);
+                EnemyInstanceEntity? enemy = SpawnEnemy(this, EnemyType.Spawner, _scene);
                 if (enemy != null)
                 {
-                    scene.AddEntity(enemy);
+                    _scene.AddEntity(enemy);
                 }
             }
         }
@@ -80,11 +80,11 @@ namespace MphRead.Entities
             Flags |= SpawnerFlags.Active;
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             if (!Flags.TestFlag(SpawnerFlags.Active))
             {
-                return base.Process(scene);
+                return base.Process();
             }
             // todo: linked ent
             if (_cooldownTimer > 0)
@@ -97,7 +97,7 @@ namespace MphRead.Entities
             }
             if (Flags.TestFlag(SpawnerFlags.Suspended))
             {
-                return base.Process(scene);
+                return base.Process();
             }
             bool inRange = true; // todo: do range check
             if (!inRange)
@@ -116,13 +116,13 @@ namespace MphRead.Entities
                     }
                     else
                     {
-                        spawned = SpawnEnemy(this, _data.EnemyType);
+                        spawned = SpawnEnemy(this, _data.EnemyType, _scene);
                     }
                     if (spawned == null)
                     {
                         break;
                     }
-                    scene.AddEntity(spawned);
+                    _scene.AddEntity(spawned);
                     if (Flags.TestFlag(SpawnerFlags.HasModel))
                     {
                         Flags |= SpawnerFlags.PlayAnimation;
@@ -138,9 +138,9 @@ namespace MphRead.Entities
             }
             if (_data.SpawnLimit > 0 && _activeCount >= _data.SpawnLimit && _spawnedCount == 0)
             {
-                DeactivateAndSendMessages(scene);
+                DeactivateAndSendMessages();
             }
-            return base.Process(scene);
+            return base.Process();
         }
 
         private PlayerEntity? SpawnHunter()
@@ -149,25 +149,25 @@ namespace MphRead.Entities
             return null;
         }
 
-        private void DeactivateAndSendMessages(Scene scene)
+        private void DeactivateAndSendMessages()
         {
             Flags &= ~SpawnerFlags.Active;
             // todo: room state/story save
             if (_entity1 != null)
             {
-                scene.SendMessage(_data.Message1, this, _entity1, -1, 0);
+                _scene.SendMessage(_data.Message1, this, _entity1, -1, 0);
             }
             if (_entity2 != null)
             {
-                scene.SendMessage(_data.Message2, this, _entity2, -1, 0);
+                _scene.SendMessage(_data.Message2, this, _entity2, -1, 0);
             }
             if (_entity3 != null)
             {
-                scene.SendMessage(_data.Message3, this, _entity3, -1, 0);
+                _scene.SendMessage(_data.Message3, this, _entity3, -1, 0);
             }
         }
 
-        public override void HandleMessage(MessageInfo info, Scene scene)
+        public override void HandleMessage(MessageInfo info)
         {
             if (info.Message == Message.Destroyed)
             {
@@ -193,7 +193,7 @@ namespace MphRead.Entities
                 }
                 if (!Flags.TestFlag(SpawnerFlags.Active) && _spawnedCount == 0)
                 {
-                    DeactivateAndSendMessages(scene);
+                    DeactivateAndSendMessages();
                 }
             }
             else if (info.Message == Message.Activate)
@@ -221,39 +221,39 @@ namespace MphRead.Entities
         }
 
         // todo: entity node ref
-        public static EnemyInstanceEntity? SpawnEnemy(EntityBase spawner, EnemyType type)
+        public static EnemyInstanceEntity? SpawnEnemy(EntityBase spawner, EnemyType type, Scene scene)
         {
             if (type == EnemyType.WarWasp)
             {
-                return new Enemy00Entity(new EnemyInstanceEntityData(type, spawner));
+                return new Enemy00Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
             if (type == EnemyType.Zoomer)
             {
-                return new Enemy01Entity(new EnemyInstanceEntityData(type, spawner));
+                return new Enemy01Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
             if (type == EnemyType.Temroid)
             {
-                return new Enemy02Entity(new EnemyInstanceEntityData(type, spawner));
+                return new Enemy02Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
             if (type == EnemyType.FireSpawn)
             {
-                return new Enemy39Entity(new EnemyInstanceEntityData(type, spawner));
+                return new Enemy39Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
             if (type == EnemyType.Spawner)
             {
-                return new Enemy40Entity(new EnemyInstanceEntityData(type, spawner));
+                return new Enemy40Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
             if (type == EnemyType.ForceFieldLock)
             {
-                return new Enemy49Entity(new EnemyInstanceEntityData(type, spawner));
+                return new Enemy49Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
             if (type == EnemyType.HitZone)
             {
-                return new Enemy50Entity(new EnemyInstanceEntityData(type, spawner));
+                return new Enemy50Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
             if (type == EnemyType.CarnivorousPlant)
             {
-                return new Enemy51Entity(new EnemyInstanceEntityData(type, spawner));
+                return new Enemy51Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
             //throw new ProgramException("Invalid enemy type."); // also make non-nullable
             return null;
@@ -266,7 +266,7 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x00, 0x00, 0x8B).AsVector4();
 
         // todo: FH enemy spawning
-        public FhEnemySpawnEntity(FhEnemySpawnEntityData data) : base(EntityType.EnemySpawn)
+        public FhEnemySpawnEntity(FhEnemySpawnEntityData data, Scene scene) : base(EntityType.EnemySpawn, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
