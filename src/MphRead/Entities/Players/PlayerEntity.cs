@@ -181,8 +181,8 @@ namespace MphRead.Entities
         private readonly Vector3[] _spireAltVecs = new Vector3[16];
         private readonly Vector3[] _kandenSegPos = new Vector3[5];
         private readonly Matrix4[] _kandenSegMtx = new Matrix4[5];
-        private byte _syluxBombCount = 0;
-        private readonly BombEntity?[] _syluxBombs = new BombEntity?[3];
+        public byte SyluxBombCount { get; set; } = 0;
+        public BombEntity?[] SyluxBombs { get; } = new BombEntity?[3];
 
         // todo: these settings can change
         public static int MainPlayerIndex { get; set; } = 0;
@@ -207,15 +207,12 @@ namespace MphRead.Entities
         private int[] _ammo = new int[2];
         private readonly int[] _ammoRecovery = new int[2];
         private readonly bool[] _tickedAmmoRecovery = new bool[2];
+        public int Health => _health;
         private readonly BeamType[] _weaponSlots = new BeamType[3];
         private readonly AvailableArray _availableWeapons = new AvailableArray();
         private readonly AvailableArray _availableCharges = new AvailableArray();
         private AbilityFlags _abilities;
         private readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(16); // in-game: 5
-        // todo: deal with bombs
-        public BombEntity[] Bombs { get; } = new BombEntity[3];
-        public int BombMax { get; private set; }
-        public int BombCount { get; set; }
         public EquipInfo EquipInfo { get; } = new EquipInfo();
         private WeaponInfo EquipWeapon => EquipInfo.Weapon;
         public BeamType CurrentWeapon { get; private set; }
@@ -223,11 +220,12 @@ namespace MphRead.Entities
         public BeamType WeaponSelection { get; private set; }
         public readonly Effectiveness[] BeamEffectiveness = new Effectiveness[9];
         public GunAnimation GunAnimation { get; private set; }
-        private byte _bombCooldown = 0;
-        private byte _bombRefillTimer = 0;
-        private byte _bombAmount = 0;
-        private byte _bombOveruse = 0;
+        private ushort _bombCooldown = 0;
+        private ushort _bombRefillTimer = 0;
+        private byte _bombAmmo = 0;
+        private ushort _bombOveruse = 0;
         private ushort _boostCharge = 0;
+        private ushort _boostDamage = 0;
         private ushort _altAttackCooldown = 0;
         private ushort _altAttackTime = 0;
         private float _altSpinSpeed = 0;
@@ -241,7 +239,7 @@ namespace MphRead.Entities
         public PlayerValues Values { get; private set; }
         public bool IsPrimeHunter { get; set; } // todo: use game state
 
-        private const int _mbTrailSegments = 9;
+        private const int _mbTrailSegments = 9 * 2;
         private static readonly Matrix4[,] _mbTrailMatrices = new Matrix4[MaxPlayers, _mbTrailSegments];
         private static readonly float[,] _mbTrailAlphas = new float[MaxPlayers, _mbTrailSegments];
         private static readonly int[] _mbTrailIndices = new int[MaxPlayers];
@@ -254,6 +252,7 @@ namespace MphRead.Entities
         // todo: visualize
         private CollisionVolume _volumeUnxf; // todo: names
         private CollisionVolume _volume;
+        public CollisionVolume Volume => _volume;
 
         private Vector3 _gunVec1; // facing? (aim?)
         private Vector3 _gunVec2; // right? (turn?)
@@ -290,20 +289,20 @@ namespace MphRead.Entities
         private Vector3 _field4E8; // stores gun vec 2
         private float _field4EC = 0;
         private float _field4F0 = 0;
-        private float _field524 = 0;
+        private float _altTiltX = 0;
         private float _field528 = 0;
-        private float _field52C = 0;
-        private float _field530 = 0;
-        private float _field534 = 0;
+        private float _altTiltZ = 0;
+        private float _altSpinRot = 0;
+        private float _altWobble = 0;
         private byte _field53E = 0;
         private byte _field551 = 0;
         private byte _field552 = 0;
         private byte _field553 = 0;
         private byte _field6D0 = 0;
-        private float _field6F4 = 0; // set from other fields when entering alt form
-        private float _field6F8 = 0;
-        private float _field6FC = 0;
-        private float _field700 = 0;
+        private float _altRollFbX = 0; // set from other fields when entering alt form
+        private float _altRollFbZ = 0;
+        private float _altRollLrX = 0;
+        private float _altRollLrZ = 0;
 
         public EnemySpawnEntity? EnemySpawner => _enemySpawner;
         public EnemyInstanceEntity? AttachedEnemy { get; set; } = null;
@@ -329,7 +328,7 @@ namespace MphRead.Entities
         public Vector3 IdlePosition { get; private set; }
         private ushort _accelerationTimer = 0;
         private float _hSpeedCap = 0;
-        private float _hspeedMag = 0; // todo: all FPS stuff with speed
+        private float _hSpeedMag = 0; // todo: all FPS stuff with speed
         private float _gravity = 0;
         private int _slipperiness = 0; // from stand_ter_flags
         private Terrain _standTerrain; // from stand_ter_flags
@@ -352,8 +351,8 @@ namespace MphRead.Entities
             set => _bipedModel2.AnimInfo.Flags[0] = value;
         }
 
-        private short _jumpPadControlLock = 0;
-        private short _jumpPadControlLockMin = 0;
+        private ushort _jumpPadControlLock = 0;
+        private ushort _jumpPadControlLockMin = 0;
         private ushort _timeSinceJumpPad = 0;
         private Vector3 _jumpPadAccel;
 
@@ -510,7 +509,7 @@ namespace MphRead.Entities
             _field553 = 0;
             _bombCooldown = 0;
             _bombRefillTimer = 0;
-            _bombAmount = 3;
+            _bombAmmo = 3;
             _field53E = 1;
             _damageInvulnTimer = 0;
             _spawnInvulnTimer = 0;
@@ -541,8 +540,8 @@ namespace MphRead.Entities
             {
                 _spireAltNodes[0] = _altModel.Model.GetNodeByName("L_Rock01");
                 _spireAltNodes[1] = _altModel.Model.GetNodeByName("R_Rock01");
-                _spireAltNodes[2] = _altModel.Model.GetNodeByName("R_POS_ROT");
-                _spireAltNodes[3] = _altModel.Model.GetNodeByName("R_POS_ROT_1");
+                _spireAltNodes[2] = _altModel.Model.GetNodeByName("R_POS_ROT"); // parent of 0
+                _spireAltNodes[3] = _altModel.Model.GetNodeByName("R_POS_ROT_1"); // parent of 1
             }
             else
             {
@@ -586,9 +585,9 @@ namespace MphRead.Entities
             else if (Hunter == Hunter.Sylux)
             {
                 _abilities |= AbilityFlags.Bombs;
-                _syluxBombs[0] = null;
-                _syluxBombs[1] = null;
-                _syluxBombs[2] = null;
+                SyluxBombs[0] = null;
+                SyluxBombs[1] = null;
+                SyluxBombs[2] = null;
             }
             else if (Hunter == Hunter.Noxus)
             {
@@ -702,7 +701,7 @@ namespace MphRead.Entities
             _bombCooldown = 0;
             _bombOveruse = 0;
             _bombRefillTimer = 0;
-            _bombAmount = 3;
+            _bombAmmo = 3;
             _field53E = 1;
             _damageInvulnTimer = 0;
             if (IsBot && !_scene.Multiplayer)
@@ -807,7 +806,7 @@ namespace MphRead.Entities
             if (IsAltForm)
             {
                 Vector3 row0 = _modelTransform.Row0.Xyz;
-                if (Vector3.Dot(Vector3.UnitY, row0) < 0.5f && _hspeedMag >= Fixed.ToFloat(1269))
+                if (Vector3.Dot(Vector3.UnitY, row0) < 0.5f && _hSpeedMag >= Fixed.ToFloat(1269))
                 {
                     Vector3 cross = Vector3.Cross(row0, Vector3.UnitY).Normalized();
                     var cross2 = Vector3.Cross(cross, row0);
@@ -1484,7 +1483,7 @@ namespace MphRead.Entities
                                 }
                                 _frozenGfxTimer = (ushort)(_frozenTimer + 5 * 2); // todo: FPS stuff
                             }
-                            EndAltFormAttack();
+                            EndAltAttack();
                         }
                     }
                     if (beam.Afflictions.TestFlag(Affliction.Disrupt) && !flags.TestFlag(DamageFlags.Halfturret))
@@ -1518,7 +1517,7 @@ namespace MphRead.Entities
                 }
                 if (IsMainPlayer && !IsAltForm)
                 {
-                    // tood: play SFX
+                    // todo: play SFX
                 }
             }
             _timeSinceDamage = 0;
@@ -1665,11 +1664,13 @@ namespace MphRead.Entities
             if (KandenAltNodeDistances[0] == 0 && KandenAltNodeDistances[1] == 0
                 && KandenAltNodeDistances[2] == 0 && KandenAltNodeDistances[3] == 0)
             {
-                IReadOnlyList<RawNode> nodes = Read.GetModelInstance("KandenAlt_lod0").Model.RawNodes;
+                Model model = Read.GetModelInstance("KandenAlt_lod0").Model;
+                model.ComputeNodeMatrices(0);
+                IReadOnlyList<Node> nodes = model.Nodes;
                 for (int i = 0; i < 4; i++)
                 {
-                    Vector3 pos1 = nodes[i].Transform.Four.ToFloatVector();
-                    Vector3 pos2 = nodes[i + 1].Transform.Four.ToFloatVector();
+                    Vector3 pos1 = nodes[i].Transform.Row3.Xyz;
+                    Vector3 pos2 = nodes[i + 1].Transform.Row3.Xyz;
                     KandenAltNodeDistances[i] = Vector3.Distance(pos1, pos2);
                 }
             }
@@ -1797,7 +1798,7 @@ namespace MphRead.Entities
         public readonly int StrafeSpeedFactor;
         public readonly int AirSpeedFactor;
         public readonly int StandSpeedFactor;
-        public readonly int Field3C;
+        public readonly int RollAltTraction;
         public readonly int AltColRadius;
         public readonly int AltColYPos;
         public readonly ushort BoostChargeMin;
@@ -1865,19 +1866,19 @@ namespace MphRead.Entities
         public readonly int Field114;
         public readonly int Field118;
         public readonly int JumpPadSlideFactor;
-        public readonly int Field120;
-        public readonly int Field124;
-        public readonly int Field128;
-        public readonly int AltSpinSpeed;
-        public readonly int Field130;
-        public readonly int Field134;
-        public readonly int Field138;
-        public readonly int Field13C;
-        public readonly int Field140;
-        public readonly int Field144;
-        public readonly int Field148;
-        public readonly int Field14C;
-        public readonly short Field150;
+        public readonly int AltTiltAngleCap;
+        public readonly int AltMinWobble;
+        public readonly int AltMaxWobble;
+        public readonly int AltMinSpinAccel;
+        public readonly int AltMaxSpinAccel;
+        public readonly int AltMinSpinSpeed;
+        public readonly int AltMaxSpinSpeed;
+        public readonly int AltTiltAngleMax;
+        public readonly int AltBounceWobble;
+        public readonly int AltBounceTilt;
+        public readonly int AltBounceSpin;
+        public readonly int AltAttackKnockbackAccel;
+        public readonly short AltAttackKnockbackTime;
         public readonly ushort AltAttackStartup;
         public readonly int Field154;
         public readonly int Field158;
@@ -1888,7 +1889,7 @@ namespace MphRead.Entities
 
         public PlayerValues(Hunter hunter, int walkBipedTraction, int strafeBipedTraction, int walkSpeedCap, int strafeSpeedCap,
             int altMinHSpeed, int boostSpeedCap, int bipedGravity, int altAirGravity, int altGroundGravity, int jumpSpeed, int walkSpeedFactor,
-            int altGroundSpeedFactor, int strafeSpeedFactor, int airSpeedFactor, int standSpeedFactor, int field3C, int altColRadius,
+            int altGroundSpeedFactor, int strafeSpeedFactor, int airSpeedFactor, int standSpeedFactor, int rollAltTraction, int altColRadius,
             int altColYPos, ushort boostChargeMin, ushort boostChargeMax, int boostSpeedMin, int boostSpeedMax, int altHSpeedCapIncrement,
             int field58, int field5C, int walkBobMax, int aimDistance, ushort viewSwayTime, ushort padding6A, int normalFov, int field70,
             int aimYOffset, int field78, int field7C, int field80, int field84, int field88, int field8C, int field90, int minPickupHeight,
@@ -1898,9 +1899,10 @@ namespace MphRead.Entities
             short fieldE0, short spawnInvulnerability, ushort aimMinTouchTime, ushort paddingE6, int fieldE8, int fieldEC, int swayStartTime,
             int swayIncrement, int swayLimit, int gunIdleTime, short mpAmmoCap, byte ammoRecharge, byte padding103, ushort energyTank,
             short field106, byte altGroundedNoGrav, byte padding109, ushort padding10A, int fallDamageSpeed, int fallDamageMax, int field114,
-            int field118, int jumpPadSlideFactor, int field120, int field124, int field128, int altSpinSpeed, int field130, int field134,
-            int field138, int field13C, int field140, int field144, int field148, int field14C, short field150, ushort altAttackStartup,
-            int field154, int field158, int lungeHSpeed, int lungeVSpeed, ushort altAttackDamage, short altAttackCooldown)
+            int field118, int jumpPadSlideFactor, int altTiltAngleCap, int altMinWobble, int altMaxWobble, int altMinSpinAccel, int altMaxSpinAccel,
+            int altMinSpinSpeed, int altMaxSpinSpeed, int altTiltAngleMax, int altBounceWobble, int altBounceTilt, int altBounceSpin, int altAttackKnockbackAccel,
+            short altAttackKnockbackTime, ushort altAttackStartup, int field154, int field158, int lungeHSpeed, int lungeVSpeed,
+            ushort altAttackDamage, short altAttackCooldown)
         {
             Hunter = hunter;
             WalkBipedTraction = walkBipedTraction;
@@ -1918,7 +1920,7 @@ namespace MphRead.Entities
             StrafeSpeedFactor = strafeSpeedFactor;
             AirSpeedFactor = airSpeedFactor;
             StandSpeedFactor = standSpeedFactor;
-            Field3C = field3C;
+            RollAltTraction = rollAltTraction;
             AltColRadius = altColRadius;
             AltColYPos = altColYPos;
             BoostChargeMin = boostChargeMin;
@@ -1986,19 +1988,19 @@ namespace MphRead.Entities
             Field114 = field114;
             Field118 = field118;
             JumpPadSlideFactor = jumpPadSlideFactor;
-            Field120 = field120;
-            Field124 = field124;
-            Field128 = field128;
-            AltSpinSpeed = altSpinSpeed;
-            Field130 = field130;
-            Field134 = field134;
-            Field138 = field138;
-            Field13C = field13C;
-            Field140 = field140;
-            Field144 = field144;
-            Field148 = field148;
-            Field14C = field14C;
-            Field150 = field150;
+            AltTiltAngleCap = altTiltAngleCap;
+            AltMinWobble = altMinWobble;
+            AltMaxWobble = altMaxWobble;
+            AltMinSpinAccel = altMinSpinAccel;
+            AltMaxSpinAccel = altMaxSpinAccel;
+            AltMinSpinSpeed = altMinSpinSpeed;
+            AltMaxSpinSpeed = altMaxSpinSpeed;
+            AltTiltAngleMax = altTiltAngleMax;
+            AltBounceWobble = altBounceWobble;
+            AltBounceTilt = altBounceTilt;
+            AltBounceSpin = altBounceSpin;
+            AltAttackKnockbackAccel = altAttackKnockbackAccel;
+            AltAttackKnockbackTime = altAttackKnockbackTime;
             AltAttackStartup = altAttackStartup;
             Field154 = field154;
             Field158 = field158;

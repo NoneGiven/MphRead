@@ -1046,19 +1046,16 @@ namespace MphRead.Effects
 
         private void SetVecsBC()
         {
-            Matrix3 identity = Matrix3.Identity;
-            var vec1 = new Vector3(identity.M11, identity.M21, identity.M31);
-            var vec2 = new Vector3(identity.M13, identity.M23, identity.M33);
-            EffectVec1 = vec1;
-            EffectVec2 = vec2;
+            EffectVec1 = Vector3.UnitX;
+            EffectVec2 = Vector3.UnitZ;
         }
 
         private void SetVecsC0(Matrix4 viewMatrix)
         {
             // sktodo: move view matrix transform to the shader
             Matrix3 identity = Matrix3.Identity;
-            var vec1 = new Vector3(-identity.M12, -identity.M22, -identity.M32);
-            var vec2 = new Vector3(viewMatrix.M13, viewMatrix.M23, viewMatrix.M33);
+            var vec1 = new Vector3(-identity.M12, -identity.M22, -identity.M32); // -Vector3.UnitY
+            var vec2 = new Vector3(viewMatrix.M13, viewMatrix.M23, viewMatrix.M33); // Vector3.UnitZ
             EffectVec1 = vec1;
             EffectVec2 = vec2;
         }
@@ -1122,15 +1119,16 @@ namespace MphRead.Effects
                 Vector3 ev1 = EffectVec1 * Scale;
                 Vector3 ev2 = EffectVec2 * Scale;
 
-                float v19 = (-ev1.X / 2) + (ev2.X / 2);
-                float v22 = (-ev1.Y / 2) + (ev2.Y / 2);
-                float v23 = (-ev1.Z / 2) + (ev2.Z / 2);
+                Vector3 position = Matrix.Vec3MultMtx4(Position, Owner.Transform.ClearTranslation());
+                float v19 = position.X + (-ev1.X / 2) + (ev2.X / 2);
+                float v22 = position.Y + (-ev1.Y / 2) + (ev2.Y / 2);
+                float v23 = position.Z + (-ev1.Z / 2) + (ev2.Z / 2);
 
                 // top left
                 float x = v19 / scaleFactor;
                 float y = v22 / scaleFactor;
                 float z = v23 / scaleFactor;
-                Vertex0 = new Vector3(x, y, z);
+                Vertex0 = new Vector3(x, y, z) - position;
                 Texcoord0 = new Vector2(0, 1);
 
                 // top right
@@ -1140,7 +1138,7 @@ namespace MphRead.Effects
                 x = v24 / scaleFactor;
                 y = v26 / scaleFactor;
                 z = v29 / scaleFactor;
-                Vertex1 = new Vector3(x, y, z);
+                Vertex1 = new Vector3(x, y, z) - position;
                 Texcoord1 = new Vector2(1, 1);
 
                 // bottom right
@@ -1150,7 +1148,7 @@ namespace MphRead.Effects
                 x = v25 / scaleFactor;
                 y = v27 / scaleFactor;
                 z = v30 / scaleFactor;
-                Vertex2 = new Vector3(x, y, z);
+                Vertex2 = new Vector3(x, y, z) - position;
                 Texcoord2 = new Vector2(1, 0);
 
                 // bottom left
@@ -1160,7 +1158,7 @@ namespace MphRead.Effects
                 x = v34 / scaleFactor;
                 y = v28 / scaleFactor;
                 z = v33 / scaleFactor;
-                Vertex3 = new Vector3(x, y, z);
+                Vertex3 = new Vector3(x, y, z) - position;
                 Texcoord3 = new Vector2(0, 0);
             }
         }
@@ -1187,23 +1185,27 @@ namespace MphRead.Effects
                 float sin2 = MathF.Sin(angle2);
                 float cos2 = MathF.Cos(angle2);
 
-                float v20 = (EffectVec1.X * sin2 + EffectVec2.X * cos2) * Scale;
-                float v24 = (EffectVec1.Y * sin2 + EffectVec2.Y * cos2) * Scale;
-                float v25 = (EffectVec1.Z * sin2 + EffectVec2.Z * cos2) * Scale;
+                Vector3 vec1 = EffectVec1;
+                Vector3 vec2 = EffectVec2;
 
-                float v26 = (EffectVec1.X * sin1 + EffectVec2.X * cos1) * Scale;
-                float v28 = (EffectVec1.Y * sin1 + EffectVec2.Y * cos1) * Scale;
-                float v29 = (EffectVec1.Z * sin1 + EffectVec2.Z * cos1) * Scale;
+                float v20 = (vec1.X * sin2 + vec2.X * cos2) * Scale;
+                float v24 = (vec1.Y * sin2 + vec2.Y * cos2) * Scale;
+                float v25 = (vec1.Z * sin2 + vec2.Z * cos2) * Scale;
 
-                float v27 = (-v20 / 2) + (v26 / 2);
-                float v30 = (-v24 / 2) + (v28 / 2);
-                float v31 = (-v25 / 2) + (v29 / 2);
+                float v26 = (vec1.X * sin1 + vec2.X * cos1) * Scale;
+                float v28 = (vec1.Y * sin1 + vec2.Y * cos1) * Scale;
+                float v29 = (vec1.Z * sin1 + vec2.Z * cos1) * Scale;
+
+                Vector3 position = Matrix.Vec3MultMtx4(Position, Owner.Transform.ClearTranslation());
+                float v27 = position.X + (-v20 / 2) + (v26 / 2);
+                float v30 = position.Y + (-v24 / 2) + (v28 / 2);
+                float v31 = position.Z + (-v25 / 2) + (v29 / 2);
 
                 // top left
                 float x = v27 / scaleFactor;
                 float y = v30 / scaleFactor;
                 float z = v31 / scaleFactor;
-                Vertex0 = new Vector3(x, y, z);
+                Vertex0 = new Vector3(x, y, z) - position;
                 Texcoord0 = new Vector2(0, 1);
 
                 // top right
@@ -1213,7 +1215,7 @@ namespace MphRead.Effects
                 x = v39 / scaleFactor;
                 y = v38 / scaleFactor;
                 z = v33 / scaleFactor;
-                Vertex1 = new Vector3(x, y, z);
+                Vertex1 = new Vector3(x, y, z) - position;
                 Texcoord1 = new Vector2(1, 1);
 
                 // bottom right
@@ -1223,7 +1225,7 @@ namespace MphRead.Effects
                 x = v40 / scaleFactor;
                 y = v41 / scaleFactor;
                 z = v35 / scaleFactor;
-                Vertex2 = new Vector3(x, y, z);
+                Vertex2 = new Vector3(x, y, z) - position;
                 Texcoord2 = new Vector2(1, 0);
 
                 // bottom left
@@ -1233,7 +1235,7 @@ namespace MphRead.Effects
                 x = v42 / scaleFactor;
                 y = v43 / scaleFactor;
                 z = v36 / scaleFactor;
-                Vertex3 = new Vector3(x, y, z);
+                Vertex3 = new Vector3(x, y, z) - position;
                 Texcoord3 = new Vector2(0, 0);
             }
         }
@@ -1408,11 +1410,23 @@ namespace MphRead.Effects
                 {
                     scaleT = material.ScaleT;
                 }
-                var transform = Matrix4.CreateTranslation(Position);
+                Matrix4 transform;
                 if (Owner.Flags.TestFlag(EffElemFlags.UseTransform))
                 {
-                    transform = Owner.Transform * transform;
+                    if (BillboardMode != BillboardMode.None)
+                    {
+                        Vector3 position = Matrix.Vec3MultMtx4(Position, Owner.Transform.ClearTranslation());
+                        transform = Matrix4.CreateTranslation(position + Owner.Transform.Row3.Xyz);
+                    }
+                    else
+                    {
+                        transform = Matrix4.CreateTranslation(Position) * Owner.Transform;
+                    } 
                 }
+                else
+                {
+                    transform = Matrix4.CreateTranslation(Position);
+                } 
                 scene.AddRenderItem(RenderItemType.Particle, Alpha, scene.GetNextPolygonId(), Color, xRepeat, yRepeat,
                     scaleS, scaleT, transform, uvsAndVerts, bindingId, BillboardMode);
             }

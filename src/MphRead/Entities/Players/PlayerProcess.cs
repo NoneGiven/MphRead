@@ -168,23 +168,23 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    _bombAmount = 3;
+                    _bombAmmo = 3;
                 }
             }
             else if (Hunter == Hunter.Sylux)
             {
                 if (_bombCooldown > 0)
                 {
-                    _bombAmount = 0;
+                    _bombAmmo = 0;
                 }
                 else
                 {
-                    _bombAmount = (byte)(3 - _syluxBombCount);
+                    _bombAmmo = (byte)(3 - SyluxBombCount);
                 }
             }
             else
             {
-                _bombAmount = 1;
+                _bombAmmo = 1;
             }
             if (_bombCooldown > 0)
             {
@@ -241,7 +241,7 @@ namespace MphRead.Entities
             else
             {
                 _targetAlpha = 1;
-                if ((Hunter == Hunter.Trace || IsPrimeHunter) && _hspeedMag < 0.05f && Speed.Y < 0.05f && Speed.Y > -0.05f)
+                if ((Hunter == Hunter.Trace || IsPrimeHunter) && _hSpeedMag < 0.05f && Speed.Y < 0.05f && Speed.Y > -0.05f)
                 {
                     if (_cloakTimer >= 30 * 2) // todo: FPS stuff
                     {
@@ -294,7 +294,7 @@ namespace MphRead.Entities
                     _targetAlpha = 1;
                 }
             }
-            else if (IsMorphing || IsUnmorphing)
+            else if (IsAltForm || IsMorphing)
             {
                 _curAlpha -= 2 / 31f / 2; // todo FPS stuff
                 if (_curAlpha < 0)
@@ -321,7 +321,7 @@ namespace MphRead.Entities
                 TryEquipWeapon(_weaponSlots[slot]);
             }
             ProcessInput();
-            if (Flags1.TestFlag(PlayerFlags1.Boosting) && _hspeedMag <= Fixed.ToFloat(Values.AltMinHSpeed))
+            if (Flags1.TestFlag(PlayerFlags1.Boosting) && _hSpeedMag <= Fixed.ToFloat(Values.AltMinHSpeed))
             {
                 Flags1 &= ~PlayerFlags1.Boosting;
             }
@@ -548,7 +548,7 @@ namespace MphRead.Entities
                     _furlEffect = null;
                 }
             }
-            if (Hunter == Hunter.Samus && _scene.FrameCount % 2 == 0) // todo: FPS stuff
+            if (Hunter == Hunter.Samus)
             {
                 UpdateMorphBallTrail();
             }
@@ -788,6 +788,31 @@ namespace MphRead.Entities
             }
             // todo?: something for wifi
             return true;
+        }
+
+        public void ActivateJumpPad(JumpPadEntity jumpPad, Vector3 vector, ushort lockTime)
+        {
+            Speed = vector;
+            _jumpPadAccel = vector;
+            _lastJumpPad = jumpPad;
+            Flags1 |= PlayerFlags1.UsedJumpPad;
+            _jumpPadControlLock = lockTime;
+            _jumpPadControlLockMin = Math.Max(lockTime, (ushort)(5 * 2)); // todo: FPS stuff
+            _timeSinceJumpPad = 0;
+            Flags1 &= ~PlayerFlags1.UsedJump;
+            Flags1 |= PlayerFlags1.Standing;
+            if (IsAltForm)
+            {
+                float accelY = _jumpPadAccel.Y;
+                float altGrav = Fixed.ToFloat(Values.AltAirGravity);
+                float bipedGrav = Fixed.ToFloat(Values.BipedGravity);
+                float altFactor = -accelY / altGrav;
+                float bipedFactor = -accelY / bipedGrav;
+                float lockInc = ((accelY * bipedFactor) + (bipedGrav * (bipedFactor * bipedFactor) / 2)
+                    - ((accelY * altFactor) + (altGrav * (altFactor * altFactor) / 2)))
+                    / accelY + 2;
+                _jumpPadControlLock += (ushort)(lockInc * 2); // todo: FPS stuff
+            }
         }
 
         private void PickUpItems(Scene scene)
@@ -1115,31 +1140,178 @@ namespace MphRead.Entities
 
         private void UpdateAltTransform()
         {
-            // sktodo
             if (Hunter == Hunter.Noxus)
             {
-
+                _altWobble += (5 - _altWobble) / 32 / 2; // todo: FPS stuff
+                _altWobble = Math.Clamp(_altWobble, Fixed.ToFloat(Values.AltMinWobble), Fixed.ToFloat(Values.AltMaxWobble));
+                _altTiltX -= _altTiltX / 8 / 2; // todo: FPS stuff
+                _altTiltZ -= _altTiltZ / 8 / 2; // todo: FPS stuff
+                _altTiltX += -(_altTiltX + Fixed.ToFloat(25) * (Speed.X - PrevSpeed.X)) / 32 / 2; // todo: FPS stuff
+                _altTiltZ += -(_altTiltZ + Fixed.ToFloat(25) * (Speed.Z - PrevSpeed.Z)) / 32 / 2; // todo: FPS stuff
+                _field528 = 0;
+                float minSpinAccel = Fixed.ToFloat(Values.AltMinSpinAccel);
+                float maxSpinAccel = Fixed.ToFloat(Values.AltMaxSpinAccel);
+                _altSpinSpeed += (minSpinAccel
+                    + (_altAttackTime * (maxSpinAccel - minSpinAccel) / (Values.AltAttackStartup * 2))
+                    - _altSpinSpeed) / 32 / 2; // todo: FPS stuff
+                _altSpinSpeed = Math.Clamp(_altSpinSpeed, Fixed.ToFloat(Values.AltMinSpinSpeed), Fixed.ToFloat(Values.AltMaxSpinSpeed));
+                _altSpinRot += _altSpinSpeed / 2; // todo: FPS stuff
+                while (_altSpinRot > 360)
+                {
+                    _altSpinRot -= 360;
+                }
+                var rotX = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_altWobble));
+                var rotY = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_altSpinRot));
+                Matrix4 transform = rotX * rotY;
+                float mag = MathF.Sqrt(_altTiltX * _altTiltX + _altTiltZ * _altTiltZ);
+                if (mag != 0)
+                {
+                    var axis = new Vector3(_altTiltZ / mag, 0, -_altTiltX / mag);
+                    float angle = mag * Fixed.ToFloat(Values.AltTiltAngleMax);
+                    angle = MathF.Min(angle, Fixed.ToFloat(Values.AltTiltAngleCap));
+                    var rotAxis = Matrix4.CreateFromAxisAngle(axis, MathHelper.DegreesToRadians(angle));
+                    transform *= rotAxis;
+                }
+                _modelTransform = transform;
             }
             else if (Hunter == Hunter.Kanden)
             {
-
+                UpdateStinglarvaSegments();
             }
             else if (Hunter == Hunter.Samus || Hunter == Hunter.Spire)
             {
-
+                Vector3 axis = Vector3.Zero;
+                float altRadius = Fixed.ToFloat(Values.AltColRadius);
+                if (Hunter == Hunter.Spire || Flags1.TestFlag(PlayerFlags1.CollidingEntity))
+                {
+                    // todo: FPS stuff
+                    axis.X = altRadius * (Speed.Z / 2);
+                    axis.Z = -altRadius * (Speed.X / 2);
+                }
+                else
+                {
+                    axis.X = altRadius * (Position.Z - PrevPosition.Z);
+                    axis.Z = -altRadius * (Position.X - PrevPosition.X);
+                }
+                float mag = axis.Length;
+                if (mag > 0)
+                {
+                    axis /= mag;
+                    float angle = mag / (altRadius * altRadius);
+                    var rotMtx = Matrix4.CreateFromAxisAngle(axis, angle);
+                    Matrix4 transform = _modelTransform * rotMtx;
+                    if (Hunter == Hunter.Samus)
+                    {
+                        if (Vector3.Dot(transform.Row0.Xyz, axis) < 0)
+                        {
+                            axis *= -1;
+                        }
+                        axis = Vector3.Cross(transform.Row0.Xyz, axis);
+                        float mbAngle = axis.Length;
+                        if (mbAngle > 0)
+                        {
+                            if (mbAngle > 0.125f)
+                            {
+                                float div = Math.Min(angle / Fixed.ToFloat(3216), 1);
+                                mbAngle *= div / 8;
+                            }
+                            rotMtx = Matrix4.CreateFromAxisAngle(axis, mbAngle);
+                            transform *= rotMtx;
+                        }
+                    }
+                    transform.Row2.Xyz = Vector3.Cross(transform.Row0.Xyz, transform.Row1.Xyz);
+                    transform.Row1.Xyz = Vector3.Cross(transform.Row2.Xyz, transform.Row0.Xyz);
+                    transform.Row0.Xyz = transform.Row0.Xyz.Normalized();
+                    transform.Row1.Xyz = transform.Row1.Xyz.Normalized();
+                    transform.Row2.Xyz = transform.Row2.Xyz.Normalized();
+                    if (Hunter == Hunter.Spire)
+                    {
+                        for (int i = 0; i < _spireAltVecs.Length; i++)
+                        {
+                            _spireAltVecs[i] = Matrix.Vec3MultMtx3(Metadata.SpireAltVectors[i], transform);
+                        }
+                    }
+                    _modelTransform = transform;
+                }
             }
             else
             {
+                _modelTransform = GetTransformMatrix(new Vector3(_field80, 0, _field84), Vector3.UnitY);
+            }
+        }
 
+        private void UpdateStinglarvaSegments()
+        {
+            const int cycle = 13 * 2; // todo: FPS stuff
+            float angle = 359f * (_scene.FrameCount % cycle) / (cycle - 1);
+            float factor = 0.3f * MathF.Sin(MathHelper.DegreesToRadians(angle)) * _hSpeedMag;
+            _kandenSegPos[0] = Position.AddX(_field78 * factor).AddZ(_field7C * factor);
+            Vector3 dir;
+            if (Speed.LengthSquared > 0.02f)
+            {
+                dir = new Vector3(Speed.X + _field80 / 4, Speed.Y, Speed.Z + _field84 / 4);
+            }
+            else
+            {
+                dir = new Vector3(_field80, 0, _field84);
+            }
+            dir = dir.Normalized();
+            if (Vector3.Dot(dir, _kandenSegMtx[0].Row2.Xyz) < Fixed.ToFloat(-5))
+            {
+                dir.X += Fixed.ToFloat(5);
+            }
+            dir = _kandenSegMtx[0].Row2.Xyz + 0.3f * (dir - _kandenSegMtx[0].Row2.Xyz);
+            dir = dir.Normalized();
+            if (dir.X != 0 || dir.Z != 0)
+            {
+                _kandenSegMtx[0] = GetTransformMatrix(dir, Vector3.UnitY);
+            }
+            else
+            {
+                var facing = new Vector3(-_field70, 0, -_field74);
+                var up = new Vector3(dir.X, dir.Y, 0);
+                _kandenSegMtx[0] = GetTransformMatrix(facing, up);
+            }
+            _kandenSegMtx[0].Row3.Xyz = _kandenSegPos[0];
+            Debug.Assert(_kandenSegPos.Length == _kandenSegMtx.Length);
+            for (int i = 1; i < _kandenSegPos.Length; i++)
+            {
+                angle += 85;
+                while (angle >= 360)
+                {
+                    angle -= 360;
+                }
+                factor = 0.12f * MathF.Sin(MathHelper.DegreesToRadians(angle)) * _hSpeedMag;
+                Vector3 segPos = _kandenSegPos[i];
+                segPos = segPos.AddX(_field78 * factor).AddZ(_field7C * factor);
+                _kandenSegPos[i] = segPos;
+                dir = (_kandenSegPos[i - 1] - segPos).Normalized();
+                Matrix4 prevMtx = _kandenSegMtx[i - 1];
+                float dot = Vector3.Dot(dir, prevMtx.Row2.Xyz);
+                if (dot < Fixed.ToFloat(2896))
+                {
+                    var axis = Vector3.Cross(dir, prevMtx.Row2.Xyz);
+                    float mag = axis.Length;
+                    axis /= mag;
+                    float atan = MathF.Atan2(mag, dot);
+                    atan -= MathHelper.DegreesToRadians(45);
+                    var rotMtx = Matrix4.CreateFromAxisAngle(axis, atan);
+                    dir = Matrix.Vec3MultMtx3(dir, rotMtx);
+                }
+                _kandenSegMtx[i] = GetTransformMatrix(dir, _kandenSegMtx[0].Row1.Xyz);
+                float dist = KandenAltNodeDistances[i - 1];
+                dir *= dist;
+                _kandenSegPos[i] = _kandenSegPos[i - 1] - dir;
+                _kandenSegMtx[i].Row3.Xyz = _kandenSegPos[i];
             }
         }
 
         private void EnterAltForm()
         {
-            _field6F4 = _field70;
-            _field6F8 = _field74;
-            _field6FC = _gunVec2.X;
-            _field700 = _gunVec2.Z;
+            _altRollFbX = _field70;
+            _altRollFbZ = _field74;
+            _altRollLrX = _gunVec2.X;
+            _altRollLrZ = _gunVec2.Z;
             Flags1 |= PlayerFlags1.Morphing;
             var vec = new Vector3(_field70, 0, _field74);
             Func2015D34(Values.AltGroundedNoGrav != 0 ? 2 : 1, vec);
@@ -1155,12 +1327,12 @@ namespace MphRead.Entities
             }
             else if (Hunter == Hunter.Noxus)
             {
-                _altSpinSpeed = Fixed.ToFloat(Values.AltSpinSpeed);
-                _field524 = 0;
+                _altSpinSpeed = Fixed.ToFloat(Values.AltMinSpinAccel);
+                _altTiltX = 0;
                 _field528 = 0;
-                _field52C = 0;
-                _field530 = 0;
-                _field534 = 0;
+                _altTiltZ = 0;
+                _altSpinRot = 0;
+                _altWobble = 0;
                 // animation frames updated later based on attack timer
                 _altModel.SetAnimation((int)NoxusAltAnim.Extend, AnimFlags.Paused);
             }
@@ -1213,7 +1385,7 @@ namespace MphRead.Entities
             SetBipedAnimation(PlayerAnimation.Unmorph, AnimFlags.NoLoop);
             if (Flags2.TestFlag(PlayerFlags2.AltAttack))
             {
-                EndAltFormAttack();
+                EndAltAttack();
             }
             UpdateZoom(false);
             EquipInfo.ChargeLevel = 0;
@@ -1253,9 +1425,9 @@ namespace MphRead.Entities
                     Debug.Assert(_kandenSegPos.Length == _kandenSegMtx.Length);
                     for (int i = 1; i < _kandenSegPos.Length; i++)
                     {
-                        float dist = KandenAltNodeDistances[i - 1];
+                        float dist = -KandenAltNodeDistances[i - 1];
                         _kandenSegPos[i] = _kandenSegPos[i - 1] + facing * dist;
-                        Matrix4 matrix = _kandenSegMtx[i - 1];
+                        Matrix4 matrix = _kandenSegMtx[0];
                         matrix.Row3.Xyz = _kandenSegPos[i];
                         _kandenSegMtx[i] = matrix;
                     }
@@ -1291,30 +1463,6 @@ namespace MphRead.Entities
                 _volumeUnxf = bipedVolume;
             }
             // todo: stop SFX
-        }
-
-        private void EndAltFormAttack()
-        {
-            if (Hunter == Hunter.Samus)
-            {
-                Flags1 &= ~PlayerFlags1.Boosting;
-            }
-            else if (Hunter == Hunter.Trace || Hunter == Hunter.Weavel)
-            {
-                // todo: if bot and encounter state, set cooldown to 10 * 2
-                // else...
-                _altAttackCooldown = (ushort)(Values.AltAttackCooldown * 2); // todo: FPS stuff
-            }
-            else if (Hunter == Hunter.Noxus)
-            {
-                if (_altAttackTime > 0)
-                {
-                    // todo: update SFX
-                    _altModel.SetAnimation((int)NoxusAltAnim.Extend, AnimFlags.Paused);
-                    _altAttackTime = 0;
-                }
-            }
-            Flags2 &= ~PlayerFlags2.AltAttack;
         }
 
         private void CreateBurnEffect()

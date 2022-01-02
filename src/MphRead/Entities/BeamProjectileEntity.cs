@@ -216,7 +216,7 @@ namespace MphRead.Entities
             }
             if (Flags.TestFlag(BeamFlags.SurfaceCollision))
             {
-                // btodo: collide with doors and force fields
+                // sktodo: collide with doors
                 CollisionResult colRes = default;
                 if (CollisionDetection.CheckBetweenPoints(BackPosition, Position, TestFlags.AffectsBeams, scene, ref colRes)
                     && colRes.Distance < minDist)
@@ -351,13 +351,17 @@ namespace MphRead.Entities
                 else
                 {
                     bool reflected = anyRes.Flags.TestFlag(CollisionFlags.ReflectBeams);
-                    // btodo: if colliding with platform or object, check beam reflection + send event
+                    if (anyRes.EntityCollision != null)
+                    {
+                        scene.SendMessage(Message.BeamCollideWith, this, anyRes.EntityCollision.Entity, anyRes, 0);
+                        anyRes.EntityCollision.Entity.CheckBeamReflection(ref reflected);
+                    }
                     if ((!Flags.TestFlag(BeamFlags.Ricochet) && !reflected)
                         || DrawFuncId == 8 || anyRes.Terrain >= Terrain.Acid)
                     {
                         if (!noColEff || Flags.TestFlag(BeamFlags.ForceEffect))
                         {
-                            bool noSplat = anyRes.Terrain == Terrain.Lava; // btodo: or if entity collision
+                            bool noSplat = anyRes.Terrain == Terrain.Lava || anyRes.EntityCollision != null;
                             SpawnCollisionEffect(anyRes, noSplat, scene);
                         }
                         OnCollision(anyRes, colWith: null, scene);

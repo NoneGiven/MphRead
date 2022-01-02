@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
@@ -29,7 +30,7 @@ namespace MphRead.Entities
                     continue;
                 }
                 var other = (PlayerEntity)entity;
-                if (!other.LoadFlags.TestFlag(LoadFlags.Active) || other._health == 0)
+                if (!other.LoadFlags.TestFlag(LoadFlags.Active) || other.Health == 0)
                 {
                     continue;
                 }
@@ -41,8 +42,174 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
-                // sktodo
+                Vector3 between = _volume.SpherePosition - other.Volume.SpherePosition;
+                float distSqr = between.LengthFast;
+                if (distSqr == 0)
+                {
+                    between = Vector3.UnitX;
+                    distSqr = 1;
+                }
+                float radii = _volume.SphereRadius + other.Volume.SphereRadius;
+                if (distSqr < radii * radii)
+                {
+                    float dist = MathF.Sqrt(distSqr);
+                    between /= dist;
+                    float dot = Vector3.Dot(Speed, between);
+                    Speed -= between * dot;
+                    Vector3 posAdd = between * (radii - dist);
+                    Position += posAdd;
+                    _volume = CollisionVolume.Move(_volume, _volume.SpherePosition + posAdd);
+                    float kbAccel = Fixed.ToFloat(Values.AltAttackKnockbackAccel);
+                    if (Hunter == Hunter.Noxus && IsAltForm)
+                    {
+                        other.Acceleration = new Vector3(between.X * -kbAccel, 0, between.Z * -kbAccel);
+                        other._accelerationTimer = (ushort)(Values.AltAttackKnockbackTime * 2); // todo: FPS stuff
+                    }
+                    if (other.Hunter == Hunter.Noxus && other.IsAltForm)
+                    {
+                        Acceleration = new Vector3(between.X * kbAccel, 0, between.Z * kbAccel);
+                        _accelerationTimer = (ushort)(Values.AltAttackKnockbackTime * 2); // todo: FPS stuff
+                    }
+                    if (Flags1.TestFlag(PlayerFlags1.Boosting))
+                    {
+                        other.TakeDamage(_boostDamage, DamageFlags.NoDmgInvuln, Speed, this);
+                        EndAltAttack();
+                    }
+                    if (other.Flags1.TestFlag(PlayerFlags1.Boosting))
+                    {
+                        TakeDamage(other._boostDamage, DamageFlags.NoDmgInvuln, other.Speed, other);
+                        other.EndAltAttack();
+                    }
+                    if (_deathaltTimer > 0)
+                    {
+                        other.TakeDamage(200, DamageFlags.Deathalt | DamageFlags.NoDmgInvuln, Speed, this);
+                    }
+                    if (other._deathaltTimer > 0)
+                    {
+                        TakeDamage(200, DamageFlags.Deathalt | DamageFlags.NoDmgInvuln, other.Speed, other);
+                    }
+                    CheckAltAttackHit2(this, other, halfturret: false);
+                    CheckAltAttackHit2(other, this, halfturret: false);
+                }
+                CheckAltAttackHit1(this, other, halfturret: false);
             }
+        }
+
+        // todo: more visualization
+        private static void CheckAltAttackHit1(PlayerEntity attacker, PlayerEntity target, bool halfturret)
+        {
+            // the game assumes the hunter is noxus based on the alt attack timer
+            if (attacker.Hunter == Hunter.Spire && attacker.Flags2.TestFlag(PlayerFlags2.AltAttack))
+            {
+                bool hit = false;
+                if (halfturret)
+                {
+                    // todo: check collision with halfturret
+                }
+                else
+                {
+                    CollisionResult unused = default;
+                    hit = CollisionDetection.CheckSphereOverlapVolume(target.Volume, attacker._spireRockPosL, 0.5f, ref unused)
+                        || CollisionDetection.CheckSphereOverlapVolume(target.Volume, attacker._spireRockPosR, 0.5f, ref unused);
+                }
+                if (hit)
+                {
+                    Vector3 dir = Vector3.Zero;
+                    if (!halfturret)
+                    {
+                        float x = target.Position.X - attacker.Position.X;
+                        float z = target.Position.Z - attacker.Position.Z;
+                        float factor = MathF.Sqrt(x * x + z * z) * 4;
+                        dir.X = x / factor;
+                        dir.Z = z / factor;
+                    }
+                    ushort damage = attacker.Values.AltAttackDamage;
+                    // todo: if attacker is bot with encounter state, uses alternate damage value
+                    DamageFlags flags = DamageFlags.NoSfx | DamageFlags.NoDmgInvuln;
+                    if (halfturret)
+                    {
+                        flags |= DamageFlags.Halfturret;
+                    }
+                    target.TakeDamage(damage, flags, dir, attacker);
+                    // todo: play SFX
+                }
+            }
+            else if (attacker.Hunter == Hunter.Noxus && attacker._altAttackTime >= attacker.Values.AltAttackStartup * 2) // todo: FPS stuff
+            {
+                Vector3 between;
+                if (halfturret)
+                {
+                    // todo: get vector to halfturret
+                    between = target.Volume.SpherePosition - attacker.Volume.SpherePosition; // skdebug
+                }
+                else
+                {
+                    between = target.Volume.SpherePosition - attacker.Volume.SpherePosition;
+                }
+                float radius = target.Volume.SphereRadius;
+                if (between.Y > -radius && between.Y < radius)
+                {
+                    float hMagSqr = between.X * between.X + between.Z * between.Z;
+                    float radAddSqr = radius + 1.8f;
+                    radAddSqr *= radAddSqr;
+                    if (hMagSqr < radAddSqr)
+                    {
+                        float factor = MathF.Sqrt(hMagSqr) * 8;
+                        var dir = new Vector3(between.X / factor, 0, between.Z / factor);
+                        target.Acceleration = dir;
+                        target._accelerationTimer = 8 * 2; // todo: FPS stuff
+                        ushort damage = attacker.Values.AltAttackDamage;
+                        // todo: if attacker is bot with encounter state, uses alternate damage value
+                        DamageFlags flags = DamageFlags.NoSfx | DamageFlags.NoDmgInvuln;
+                        if (halfturret)
+                        {
+                            flags |= DamageFlags.Halfturret;
+                        }
+                        target.TakeDamage(damage, flags, dir, attacker);
+                        // todo: play SFX
+                        target._scene.SpawnEffect(235, Vector3.UnitX, Vector3.UnitY, target.Position); // noxHit
+                        attacker.EndAltAttack();
+                    }
+                }
+            }
+        }
+
+        private static void CheckAltAttackHit2(PlayerEntity attacker, PlayerEntity target, bool halfturret)
+        {
+            if (attacker.Hunter != Hunter.Trace && attacker.Hunter != Hunter.Weavel
+                || !attacker.Flags2.TestFlag(PlayerFlags2.AltAttack))
+            {
+                return;
+            }
+            // the game has a calculation + condition which is unnecessary since it also passes if Trace or Weavel (always true)
+            // --> possibly meant to account for usages where this is called outside the already passed collision check
+            Vector3 dir = Vector3.Zero;
+            if (attacker.Hunter == Hunter.Trace)
+            {
+                dir.X = attacker.Speed.X;
+                dir.Z = attacker.Speed.Z;
+            }
+            else
+            {
+                dir.X = attacker._field70;
+                dir.Z = attacker._field74;
+            }
+            if (!halfturret)
+            {
+                float kbAccel = Fixed.ToFloat(attacker.Values.AltAttackKnockbackAccel);
+                target.Acceleration = new Vector3(dir.X * kbAccel, -0.1f, dir.Z * kbAccel);
+                target._accelerationTimer = (ushort)(attacker.Values.AltAttackKnockbackTime * 2); // todo: FPS stuff
+            }
+            ushort damage = attacker.Values.AltAttackDamage;
+            // todo: if attacker is bot with encounter state, uses alternate damage value
+            DamageFlags flags = DamageFlags.NoSfx | DamageFlags.NoDmgInvuln;
+            if (halfturret)
+            {
+                flags |= DamageFlags.Halfturret;
+            }
+            target.TakeDamage(damage, flags, dir, attacker);
+            // todo: play SFX
+            attacker.EndAltAttack();
         }
 
         private void CheckCollision()
@@ -72,8 +239,7 @@ namespace MphRead.Entities
                     MathF.Max(MathF.Max(Single.MinValue, point1.Y), point2.Y) + margin,
                     MathF.Max(MathF.Max(Single.MinValue, point1.Z), point2.Z) + margin
                 );
-                point2.Y = Position.Y + Fixed.ToFloat(Values.MaxPickupHeight);
-                limitMin.Y = MathF.Min(limitMin.Y, point2.Y);
+                limitMin.Y = MathF.Min(limitMin.Y, Position.Y + Fixed.ToFloat(Values.MaxPickupHeight));
             }
             else
             {
@@ -117,7 +283,45 @@ namespace MphRead.Entities
                 }
                 if (Hunter == Hunter.Kanden)
                 {
-                    // todo: handle kanden alt
+                    float altRadius = Fixed.ToFloat(Values.AltColRadius);
+                    for (int i = 1; i < _kandenSegPos.Length; i++)
+                    {
+                        point2 = _kandenSegPos[i].AddY(Fixed.ToFloat(Values.AltColYPos));
+                        count = CollisionDetection.CheckSphereBetweenPoints(candidates, point2, point2, altRadius,
+                            limit: 40, includeOffset: true, TestFlags.AffectsPlayers, _scene, results);
+                        for (int j = 0; j < count; j++)
+                        {
+                            CollisionResult result = results[j];
+                            if (result.Field0 == 1)
+                            {
+                                Vector3 edge = result.EdgePoint2 - result.EdgePoint1;
+                                Debug.Assert(edge != Vector3.Zero);
+                                Vector3 between = point2 - result.EdgePoint1;
+                                float dot = Vector3.Dot(between, edge);
+                                float div = Math.Clamp(dot / edge.LengthSquared, 0, 1);
+                                between = result.EdgePoint1 + edge * div;
+                                between = point2 - between;
+                                float magSqr = between.LengthSquared;
+                                if (magSqr > 0 && magSqr < altRadius * altRadius)
+                                {
+                                    float mag = MathF.Sqrt(magSqr);
+                                    if (altRadius - mag > 0)
+                                    {
+                                        float yInc = between.Y / mag * (altRadius - mag);
+                                        _kandenSegPos[i].Y += yInc;
+                                    }
+                                }
+                            }
+                            else if (result.Field0 == 0)
+                            {
+                                float dot = altRadius + result.Plane.W - Vector3.Dot(point2, result.Plane.Xyz);
+                                if (dot > 0)
+                                {
+                                    _kandenSegPos[i] += result.Plane.Xyz * dot;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             else
@@ -130,13 +334,84 @@ namespace MphRead.Entities
                     HandleCollision(results[i]);
                 }
             }
-            // todo: collide with doors and force fields
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.Door)
+                {
+                    continue;
+                }
+                var door = (DoorEntity)entity;
+                if (door.Flags.TestFlag(DoorFlags.Open))
+                {
+                    continue;
+                }
+                Vector3 lockPos = door.LockPosition;
+                Vector3 doorFacing = door.FacingVector;
+                Vector3 between = Position - lockPos;
+                float dot = Vector3.Dot(between, doorFacing);
+                if (dot <= 1.25f && dot >= -1.25f)
+                {
+                    between -= doorFacing * dot;
+                    if (between.LengthSquared < door.RadiusSquared)
+                    {
+                        CollisionResult doorResult = default;
+                        doorResult.Field0 = 0;
+                        doorResult.Plane = new Vector4(doorFacing);
+                        doorResult.EntityCollision = null;
+                        doorResult.Flags = CollisionFlags.None;
+                        if (Vector3.Dot(PrevPosition - lockPos, doorFacing) < 0)
+                        {
+                            doorResult.Plane.Xyz *= -1;
+                        }
+                        doorResult.Plane.W = doorResult.Plane.X * (lockPos.X + 0.4f * doorResult.Plane.X)
+                            + doorResult.Plane.Y * (lockPos.Y + 0.4f * doorResult.Plane.Y)
+                            + doorResult.Plane.Z * (lockPos.Z + 0.4f * doorResult.Plane.Z);
+                        HandleCollision(doorResult);
+                    }
+                }
+            }
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.ForceField)
+                {
+                    continue;
+                }
+                var forceField = (ForceFieldEntity)entity;
+                if (!forceField.Active)
+                {
+                    continue;
+                }
+                float dot1 = Vector3.Dot(Position, forceField.Plane.Xyz) - forceField.Plane.W;
+                float dot2 = Vector3.Dot(PrevPosition, forceField.Plane.Xyz) - forceField.Plane.W;
+                if (dot1 < 1 && dot1 > -1 || dot2 < 1 && dot2 > -1)
+                {
+                    Vector3 between = Volume.SpherePosition - forceField.Position;
+                    float dotH = Vector3.Dot(between, forceField.UpVector);
+                    float dotW = Vector3.Dot(between, forceField.RightVector);
+                    if (dotH <= forceField.Height && dotH >= -forceField.Height
+                        && dotW <= forceField.Width && dotW >= -forceField.Width)
+                    {
+                        CollisionResult ffResult = default;
+                        ffResult.Field0 = 0;
+                        ffResult.EntityCollision = null;
+                        ffResult.Flags = CollisionFlags.None;
+                        ffResult.Plane = forceField.Plane;
+                        if (dot2 < 0)
+                        {
+                            ffResult.Plane.Xyz *= -1;
+                        }
+                        HandleCollision(ffResult);
+                    }
+                }
+            }
             DamageResult dmgRes = default;
             dmgRes.Damage = 1;
             dmgRes.TakeDamage = _terrainDamage;
             if (_collidedEntCol != null)
             {
-                // todo: query collision damage from entity
+                _collidedEntCol.Entity.CheckContactDamage(ref dmgRes);
             }
             if (dmgRes.TakeDamage)
             {
@@ -366,7 +641,7 @@ namespace MphRead.Entities
                     // --> compensate for halved gravity so we can't go up steeper slopes
                     // todo?: the response when moving into walls laterally is also not accurate ("wall sliding")
                     // --> needs a hack; just doubling it results in jittering
-                    position.Y += result.Plane.Y * v2 * (result.Plane.Y > 0 ? 0.5f : 2) * 2; // todo: FPS stuff
+                    position.Y += result.Plane.Y * v2 * (result.Plane.Y > 0 ? 0.5f / 2 : 2 * 2); // todo: FPS stuff
                 }
                 float dot = Vector3.Dot(Speed, result.Plane.Xyz);
                 if (dot < 0)
@@ -387,7 +662,18 @@ namespace MphRead.Entities
                     }
                     if (Hunter == Hunter.Noxus && IsAltForm && v165)
                     {
-                        // sktodo: Vhoscythe bounce
+                        float magSqr = PrevSpeed.X * result.Plane.X + PrevSpeed.Z * result.Plane.Z;
+                        if (magSqr < 0)
+                        {
+                            float tilt = Fixed.ToFloat(Values.AltBounceTilt) * -magSqr;
+                            _altTiltX += result.Plane.X * tilt;
+                            _altTiltZ += result.Plane.Z * tilt;
+                            _altWobble += Fixed.ToFloat(Values.AltBounceWobble) * -magSqr;
+                            _altSpinSpeed -= Fixed.ToFloat(Values.AltBounceSpin) * -magSqr;
+                            var rotMtx = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(40));
+                            Vector3 axis = Matrix.Vec3MultMtx3(result.Plane.Xyz, rotMtx);
+                            Speed = Speed.AddX(axis.X * (-magSqr / 2)).AddZ(axis.Z * (-magSqr / 2));
+                        }
                     }
                     Speed += result.Plane.Xyz * -dot;
                     if (!v163 && !IsAltForm && result.Field0 != 1)
@@ -406,7 +692,59 @@ namespace MphRead.Entities
             }
             if (IsAltForm)
             {
-                // sktodo: handle alt form
+                if (Hunter == Hunter.Spire && result.Field0 == 0)
+                {
+                    for (int i = 0; i < _spireAltVecs.Length; i++)
+                    {
+                        Vector3 vec = Position + _spireAltVecs[i];
+                        float dot = result.Plane.W - Vector3.Dot(vec, result.Plane.Xyz);
+                        if (dot >= 0)
+                        {
+                            Debug.Assert(vec != Position);
+                            v164 = true;
+                            // todo: revisit these calculations and improve the wall climbing "stickiness" issue
+                            // --> related to the need for a hack to get pushed out more by horizontal collision (without jittering)
+                            Position += result.Plane.Xyz * dot;
+                            vec = new Vector3(Position.X - vec.X, 0, Position.Z - vec.Z).Normalized();
+                            vec.X *= dot / 4;
+                            vec.Z *= dot / 4;
+                            vec.X *= _hSpeedMag + 0.1f;
+                            vec.Z *= _hSpeedMag + 0.1f;
+                            Speed += vec / 2;
+                            if (result.Plane.Y > Fixed.ToFloat(-357) && Speed.Y < 0.15f)
+                            {
+                                v166 = true;
+                                float yFactor = _hSpeedMag / 2;
+                                if (Speed.Y < 0.01f)
+                                {
+                                    yFactor += 0.3f;
+                                }
+                                Speed = Speed.AddY(4 * dot * yFactor / 2);
+                                Speed = Speed.WithY(Math.Min(Speed.Y, 0.15f));
+                            }
+                        }
+                    }
+                }
+                else if (Hunter == Hunter.Sylux && result.Field0 == 0 && result.Plane.Y > Fixed.ToFloat(3138)
+                    && !Flags1.TestFlag(PlayerFlags1.NoUnmorphPrevious))
+                {
+                    Vector3 pos = Position.AddY(Fixed.ToFloat(Values.AltColYPos) - Fixed.ToFloat(Values.AltColRadius) - 0.3f);
+                    float dot = result.Plane.W - Vector3.Dot(pos, result.Plane.Xyz);
+                    if (dot >= 0)
+                    {
+                        v164 = true;
+                        Speed = Speed.AddY(Fixed.ToFloat(Values.AltAirGravity));
+                        if (Speed.Y < 0.25f)
+                        {
+                            if (Speed.Y < 0)
+                            {
+                                Speed = Speed.WithY(Speed.Y * Fixed.ToFloat(4034));
+                            }
+                            Speed = Speed.AddY(dot * 0.2f);
+                            Speed = Speed.WithY(Math.Min(Speed.Y, 0.25f));
+                        }
+                    }
+                }
             }
             if (result.EntityCollision != null)
             {

@@ -397,7 +397,7 @@ namespace MphRead.Utility
                         Field43 = 255,
                         Locked = door.Locked,
                         LayerMask = 0xFFFF,
-                        ModelId = 0,
+                        DoorType = DoorType.Standard,
                         NodeName = door.NodeName,
                         PaletteId = 9,
                         Position = door.Position,
@@ -1959,7 +1959,7 @@ namespace MphRead.Utility
         {
             writer.WriteString(entity.DoorNodeName, 16);
             writer.Write(entity.PaletteId);
-            writer.Write(entity.ModelId);
+            writer.Write((uint)entity.DoorType);
             writer.Write(entity.ConnectorId);
             writer.Write(entity.TargetLayerId);
             writer.WriteByte(entity.Locked);

@@ -312,6 +312,12 @@ namespace MphRead
 
         public static void LoadEffectiveness(int value, Effectiveness[] dest)
         {
+            Debug.Assert(value >= 0);
+            LoadEffectiveness((uint)value, dest);
+        }
+
+        public static void LoadEffectiveness(uint value, Effectiveness[] dest)
+        {
             Debug.Assert(dest.Length == 9);
             dest[0] = (Effectiveness)(value & 3);
             dest[1] = (Effectiveness)((value >> 2) & 3);

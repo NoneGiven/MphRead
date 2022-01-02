@@ -84,15 +84,15 @@ namespace MphRead
         public readonly ItemType ItemType;
         public readonly uint Unused1D0; // always 0
         public readonly uint Unused1D4; // always UInt32.MaxValue
-        public readonly uint BeamHitMsgTarget;
+        public readonly int BeamHitMsgTarget;
         public readonly Message BeamHitMessage;
         public readonly uint BeamHitMsgParam1;
         public readonly uint BeamHitMsgParam2;
-        public readonly uint PlayerColMsgTarget;
+        public readonly int PlayerColMsgTarget;
         public readonly Message PlayerColMessage;
         public readonly uint PlayerColMsgParam1;
         public readonly uint PlayerColMsgParam2;
-        public readonly uint DeadMsgTarget;
+        public readonly int DeadMsgTarget;
         public readonly Message DeadMessage;
         public readonly uint DeadMsgParam1;
         public readonly uint DeadMsgParam2;
@@ -173,7 +173,7 @@ namespace MphRead
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
         public readonly uint PaletteId;
-        public readonly uint ModelId;
+        public readonly DoorType DoorType;
         public readonly uint ConnectorId;
         public readonly byte TargetLayerId;
         public readonly byte Locked; // boolean

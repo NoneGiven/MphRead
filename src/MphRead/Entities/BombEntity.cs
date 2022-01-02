@@ -11,9 +11,13 @@ namespace MphRead.Entities
         public BombFlags Flags { get; private set; }
         public PlayerEntity? Owner { get; private set; }
         public BombType BombType { get; private set; }
-        public int BombIndex { get; private set; }
+        public int BombIndex { get; set; }
 
         public int Countdown { get; set; }
+        public float Radius { get; set; }
+        public float SelfRadius { get; set; }
+        public ushort Damage { get; set; }
+        public ushort EnemyDamage { get; set; }
 
         public EffectEntry? Effect { get; private set; }
         private ModelInstance? _trailModel = null;
@@ -46,9 +50,9 @@ namespace MphRead.Entities
                 }
                 Countdown = 900 * 2;
                 effectId = Metadata.SyluxBombEffects[Recolor];
-                if (Owner.BombCount == 2)
+                if (Owner.SyluxBombCount == 2)
                 {
-                    BombEntity firstBomb = Owner.Bombs[0];
+                    BombEntity firstBomb = Owner.SyluxBombs[0]!;
                     Vector3 between = firstBomb.Position - Position;
                     // todo: also check for collision blocker
                     if (between.LengthSquared >= 100)
@@ -91,12 +95,12 @@ namespace MphRead.Entities
                     Flags |= BombFlags.Exploding;
                 }
                 // todo: collision and damage check stuff
-                if (BombType == BombType.Lockjaw && Owner.BombCount == 3)
+                if (BombType == BombType.Lockjaw && Owner.SyluxBombCount == 3)
                 {
                     // todo: if there's a target, detonation doesn't happen immediately
                     for (int i = 0; i < 3; i++)
                     {
-                        Owner.Bombs[i].Countdown = 1;
+                        Owner.SyluxBombs[i]!.Countdown = 1;
                     }
                 }
             }
@@ -143,12 +147,12 @@ namespace MphRead.Entities
             {
                 if (BombIndex == 1)
                 {
-                    DrawLockjawTrail(Position, Owner.Bombs[0].Position, Fixed.ToFloat(614), 10, scene);
+                    DrawLockjawTrail(Position, Owner.SyluxBombs[0]!.Position, Fixed.ToFloat(614), 10, scene);
                 }
                 else if (BombIndex == 2)
                 {
-                    DrawLockjawTrail(Position, Owner.Bombs[1].Position, Fixed.ToFloat(614), 10, scene);
-                    DrawLockjawTrail(Position, Owner.Bombs[0].Position, Fixed.ToFloat(614), 10, scene);
+                    DrawLockjawTrail(Position, Owner.SyluxBombs[1]!.Position, Fixed.ToFloat(614), 10, scene);
+                    DrawLockjawTrail(Position, Owner.SyluxBombs[0]!.Position, Fixed.ToFloat(614), 10, scene);
                 }
             }
             base.GetDrawInfo(scene);
@@ -200,12 +204,15 @@ namespace MphRead.Entities
 
         public override void Destroy(Scene scene)
         {
-            Debug.Assert(Owner != null);
-            for (int i = BombIndex; i < Owner.BombMax - 1; i++)
+            if (BombType == BombType.Lockjaw)
             {
-                Owner.Bombs[i] = Owner.Bombs[i + 1];
+                Debug.Assert(Owner != null);
+                for (int i = BombIndex; i < Owner.SyluxBombCount - 1; i++)
+                {
+                    Owner.SyluxBombs[i] = Owner.SyluxBombs[i + 1];
+                }
+                Owner.SyluxBombCount--;
             }
-            Owner.BombCount--;
             _models.Clear();
             _trailModel = null;
             if (Effect != null)
@@ -216,7 +223,7 @@ namespace MphRead.Entities
             Owner = null;
         }
 
-        public static void Spawn(PlayerEntity owner, Matrix4 transform, Scene scene)
+        public static BombEntity? Spawn(PlayerEntity owner, Matrix4 transform, Scene scene)
         {
             BombType type = BombType.MorphBall;
             if (owner.Hunter == Hunter.Kanden)
@@ -231,16 +238,15 @@ namespace MphRead.Entities
             if (bomb == null)
             {
                 Debug.Assert(false, "Failed to spawn bomb");
-                return;
+                return null;
             }
-            owner.Bombs[owner.BombCount] = bomb;
             bomb.Owner = owner;
             bomb.BombType = type;
-            bomb.BombIndex = owner.BombCount++;
             bomb.Transform = transform;
             bomb.Recolor = owner.Recolor;
             bomb.Flags = BombFlags.None;
             scene.AddEntity(bomb);
+            return bomb;
         }
     }
 

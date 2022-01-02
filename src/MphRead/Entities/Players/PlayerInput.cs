@@ -544,7 +544,475 @@ namespace MphRead.Entities
 
         private void ProcessAlt()
         {
-            // sktodo
+            Vector3 speedDelta = Vector3.Zero;
+            int animId = -1;
+            AnimFlags animFlags = AnimFlags.None;
+            Flags1 |= PlayerFlags1.UsedJump;
+            if (_frozenTimer == 0 && _health > 0)
+            {
+                // sktodo: update camera vecs and flags bit 29
+                _altRollFbX = 0;
+                _altRollFbZ = 1;
+                _altRollLrX = 1;
+                _altRollLrZ = 0;
+                // todo?: field35C targeting(?) stuff
+                if (Values.AltGroundedNoGrav != 0)
+                {
+                    // Trace, Sylux, Weavel
+                    // todo: aim
+                    if (!Controls.KeyboardAim)
+                    {
+                    }
+                    else
+                    {
+                    }
+                    if (!Flags2.TestFlag(PlayerFlags2.BipedLock) && (Hunter != Hunter.Trace || !Flags2.TestFlag(PlayerFlags2.AltAttack)))
+                    {
+                        // unimpl-controls: the game also tests for either the free strafe flag, or the strafe button held
+                        // and later, for up/down, it tests for either flag, or the look button not held
+
+                        void MoveRightLeft(int walkAnim, int sign)
+                        {
+                            Flags1 |= PlayerFlags1.Strafing;
+                            Flags1 |= PlayerFlags1.MovingBiped;
+                            if (Flags1.TestFlag(PlayerFlags1.Standing))
+                            {
+                                Flags1 |= PlayerFlags1.Walking;
+                            }
+                            else
+                            {
+                                Flags1 &= ~PlayerFlags1.Walking;
+                            }
+                            float traction = Fixed.ToFloat(Values.StrafeBipedTraction);
+                            if (_jumpPadControlLockMin > 0)
+                            {
+                                traction *= Fixed.ToFloat(Values.JumpPadSlideFactor);
+                            }
+                            speedDelta.X -= _field78 * traction * sign;
+                            speedDelta.Z -= _field7C * traction * sign;
+                            if (!EquipInfo.Zoomed)
+                            {
+                                // todo: update field684 (using sign)
+                            }
+                            if (Hunter == Hunter.Trace || Hunter == Hunter.Weavel)
+                            {
+                                animId = walkAnim;
+                                animFlags = AnimFlags.None;
+                            }
+                        }
+
+                        void MoveForwardBack(int walkAnim, int sign)
+                        {
+                            Flags1 |= PlayerFlags1.MovingBiped;
+                            if (Flags1.TestFlag(PlayerFlags1.Standing))
+                            {
+                                Flags1 |= PlayerFlags1.Walking;
+                            }
+                            else
+                            {
+                                Flags1 &= ~PlayerFlags1.Walking;
+                            }
+                            float traction = Fixed.ToFloat(Values.WalkBipedTraction);
+                            if (_jumpPadControlLockMin > 0)
+                            {
+                                traction *= Fixed.ToFloat(Values.JumpPadSlideFactor);
+                            }
+                            else if (Flags1.TestFlag(PlayerFlags1.Standing) && _slipperiness != 0)
+                            {
+                                traction *= Metadata.TractionFactors[_slipperiness];
+                            }
+                            speedDelta.X += _field70 * traction * sign;
+                            speedDelta.Z += _field74 * traction * sign;
+                            if (!EquipInfo.Zoomed)
+                            {
+                                // todo: update field688 (using sign)
+                            }
+                            if (Hunter == Hunter.Trace || Hunter == Hunter.Weavel)
+                            {
+                                animId = walkAnim;
+                                animFlags = AnimFlags.None;
+                            }
+                        }
+
+                        if (Controls.MoveRight.IsDown)
+                        {
+                            MoveRightLeft(walkAnim: 4, sign: 1); // TraceAltAnim.MoveRight or WeavelAltAnim.MoveRight
+                        }
+                        else if (Controls.MoveLeft.IsDown)
+                        {
+                            MoveRightLeft(walkAnim: 2, sign: -1); // TraceAltAnim.MoveLeft or WeavelAltAnim.MoveLeft
+                        }
+                        // todo: update HUD x shift
+                        // todo: update field684
+                        if (Controls.MoveUp.IsDown)
+                        {
+                            MoveForwardBack(walkAnim: 3, sign: 1); // TraceAltAnim.MoveForward or WeavelAltAnim.MoveForward
+                        }
+                        else if (Controls.MoveDown.IsDown)
+                        {
+                            MoveForwardBack(walkAnim: 5, sign: -1); // TraceAltAnim.MoveBackward or WeavelAltAnim.MoveBackward
+                        }
+                        // todo: update HUD y shift
+                        // todo: update field684
+                        // unimpl-controls: in the up/down code path, the game processes aim reset if that flag is off
+                    }
+                }
+                else
+                {
+                    // Samus, Kanden, Spire, Noxus
+                    // todo: touch roll
+                    float traction = Fixed.ToFloat(Values.RollAltTraction);
+                    if (_jumpPadControlLockMin > 0)
+                    {
+                        traction *= Fixed.ToFloat(Values.JumpPadSlideFactor);
+                    }
+                    if (Controls.MoveUp.IsDown)
+                    {
+                        speedDelta.X += _altRollFbX * traction;
+                        speedDelta.Z += _altRollFbZ * traction;
+                    }
+                    else if (Controls.MoveDown.IsDown)
+                    {
+                        speedDelta.X -= _altRollFbX * traction;
+                        speedDelta.Z -= _altRollFbZ * traction;
+                    }
+                    if (Controls.MoveLeft.IsDown)
+                    {
+                        speedDelta.X += _altRollLrX * traction;
+                        speedDelta.Z += _altRollLrZ * traction;
+                    }
+                    else if (Controls.MoveRight.IsDown)
+                    {
+                        speedDelta.X -= _altRollLrX * traction;
+                        speedDelta.Z -= _altRollLrZ * traction;
+                    }
+                }
+                if (!IsMorphing)
+                {
+                    if (_abilities.TestFlag(AbilityFlags.Bombs) && Controls.AltAttack.IsPressed
+                        && _bombAmmo > 0 && _bombCooldown == 0 && _field35C == null)
+                    {
+                        SpawnBomb();
+                    }
+                    if (_abilities.TestFlag(AbilityFlags.NoxusAltAttack))
+                    {
+                        if (Controls.AltAttack.IsDown)
+                        {
+                            if (Controls.AltAttack.IsPressed)
+                            {
+                                _altAttackTime = 1;
+                                _altModel.SetAnimation((int)NoxusAltAnim.Extend, AnimFlags.NoLoop);
+                            }
+                            else if (_altAttackTime > 0)
+                            {
+                                _altAttackTime++;
+                                if (_altAttackTime == 7 * 2) // todo: FPS stuff
+                                {
+                                    // todo: play SFX
+                                }
+                                else
+                                {
+                                    int startupTime = Values.AltAttackStartup * 2; // todo: FPS stuff
+                                    if (_altAttackTime == startupTime / 2)
+                                    {
+                                        // todo: play SFX
+                                    }
+                                    else if (_altAttackTime >= startupTime)
+                                    {
+                                        _altAttackTime = (ushort)startupTime;
+                                        Flags2 |= PlayerFlags2.AltAttack;
+                                    }
+                                }
+                            }
+                            _altModel.AnimInfo.Frame[0] = (_altAttackTime / 2 * _altModel.AnimInfo.FrameCount[0] - 1)
+                                / Values.AltAttackStartup; // todo: FPS stuff ^
+                        }
+                        else
+                        {
+                            EndAltAttack();
+                        }
+                    }
+                    if (_abilities.TestFlag(AbilityFlags.SpireAltAttack))
+                    {
+                        if (Flags2.TestFlag(PlayerFlags2.AltAttack))
+                        {
+                            if (_altModel.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
+                            {
+                                EndAltAttack();
+                            }
+                        }
+                        else if (Controls.AltAttack.IsPressed)
+                        {
+                            Flags2 |= PlayerFlags2.AltAttack;
+                            _altModel.SetAnimation((int)SpireAltAnim.Attack, AnimFlags.NoLoop);
+                            // todo: play SFX
+                            _spireRockPosR = Position;
+                            _spireRockPosL = Position;
+                            _spireAltUp = _fieldC0;
+                            var cross = Vector3.Cross(FacingVector, _spireAltUp);
+                            _spireAltFacing = Vector3.Cross(_spireAltUp, cross).Normalized();
+                        }
+                    }
+                    if (_abilities.TestFlag(AbilityFlags.TraceAltAttack))
+                    {
+                        if (Flags2.TestFlag(PlayerFlags2.AltAttack) || _altAttackCooldown > 0)
+                        {
+                            if (Flags1.TestFlag(PlayerFlags1.Standing))
+                            {
+                                EndAltAttack();
+                            }
+                        }
+                        else if (Controls.AltAttack.IsPressed)
+                        {
+                            Flags2 |= PlayerFlags2.AltAttack;
+                            float attackHSpeed = Fixed.ToFloat(Values.LungeHSpeed);
+                            float attackVSpeed = Fixed.ToFloat(Values.LungeVSpeed);
+                            float accelX = _field70 * attackHSpeed;
+                            float accelZ = _field74 * attackHSpeed;
+                            if (_field70 * Speed.X + _field74 * Speed.Z < attackHSpeed)
+                            {
+                                Speed = Speed.WithX(accelX).WithZ(accelZ);
+                            }
+                            _accelerationTimer = 6 * 2; // todo: FPS stuff
+                            Acceleration = new Vector3(accelX, 0, accelZ);
+                            if (Speed.Y < attackVSpeed)
+                            {
+                                float newYSpeed = Speed.Y + attackVSpeed;
+                                if (newYSpeed > attackVSpeed)
+                                {
+                                    newYSpeed = attackVSpeed;
+                                }
+                                Speed = Speed.WithY(newYSpeed);
+                            }
+                            animId = (int)TraceAltAnim.Attack;
+                            animFlags = AnimFlags.NoLoop;
+                            // todo: play SFX
+                        }
+                    }
+                    if (_abilities.TestFlag(AbilityFlags.WeavelAltAttack))
+                    {
+                        if (Flags2.TestFlag(PlayerFlags2.AltAttack) || _altAttackCooldown > 0)
+                        {
+                            if (Flags1.TestFlag(PlayerFlags1.Standing))
+                            {
+                                EndAltAttack();
+                            }
+                        }
+                        else if (Controls.AltAttack.IsPressed)
+                        {
+                            Flags2 |= PlayerFlags2.AltAttack;
+                            // todo: if bot with encounter state, use alternate values
+                            float attackHSpeed = Fixed.ToFloat(Values.LungeHSpeed);
+                            float attackVSpeed = Fixed.ToFloat(Values.LungeVSpeed);
+                            if (_field70 * Speed.X + _field74 * Speed.Z < attackHSpeed)
+                            {
+                                Speed = Speed.WithX(_field70 * attackHSpeed).WithZ(_field74 * attackHSpeed);
+                            }
+                            if (Speed.Y < attackVSpeed)
+                            {
+                                float newYSpeed = Speed.Y + attackVSpeed;
+                                if (newYSpeed > attackVSpeed)
+                                {
+                                    newYSpeed = attackVSpeed;
+                                }
+                                Speed = Speed.WithY(newYSpeed);
+                            }
+                            animId = (int)WeavelAltAnim.Attack;
+                            animFlags = AnimFlags.NoLoop;
+                            // todo: play SFX
+                        }
+                    }
+                    if (_abilities.TestFlag(AbilityFlags.Boost) && AttachedEnemy == null)
+                    {
+                        // todo: touch boost
+                        // else...
+                        if (Controls.Boost.IsDown)
+                        {
+                            // todo: play SFX
+                            if (_boostCharge < Values.BoostChargeMax * 2) // todo: FPS stuff
+                            {
+                                _boostCharge++;
+                            }
+                        }
+                        else
+                        {
+                            if (_boostCharge > 0)
+                            {
+                                // todo: transition SFX
+                            }
+                            if (_boostCharge > Values.BoostChargeMin * 2) // todo: FPS stuff
+                            {
+                                float boostHCap = Fixed.ToFloat(Values.BoostSpeedCap) * _boostCharge
+                                    / (Values.BoostChargeMax * 2); // todo: FPS stuff
+                                if (_hSpeedCap < boostHCap)
+                                {
+                                    _hSpeedCap = boostHCap;
+                                }
+                                float factor = Fixed.ToFloat(Values.BoostSpeedMin)
+                                    + _boostCharge * (Fixed.ToFloat(Values.BoostSpeedMax) - Fixed.ToFloat(Values.BoostSpeedMin))
+                                    / (Values.BoostChargeMax * 2); // todo: FPS stuff
+                                Speed = Speed.AddX(_field70 * factor).AddZ(_field74 * factor);
+                                _altAttackCooldown = (ushort)(Values.AltAttackCooldown * 2); // todo: FPS stuff
+                                Flags1 |= PlayerFlags1.Boosting;
+                                _boostDamage = (ushort)(Values.AltAttackDamage * _boostCharge / (Values.BoostChargeMax * 2)); // todo: FPS stuff
+                                if (IsMainPlayer)
+                                {
+                                    // todo: update HUD
+                                }
+                                if (_boostEffect != null)
+                                {
+                                    _scene.UnlinkEffectEntry(_boostEffect);
+                                    _boostEffect = null;
+                                }
+                                _boostEffect = _scene.SpawnEffectGetEntry(136, _gunVec2, FacingVector, Position); // samusDash
+                                if (_boostEffect != null)
+                                {
+                                    _boostEffect.SetElementExtension(true);
+                                }
+                            }
+                            _boostCharge = 0;
+                        }
+                    }
+                }
+                float magBefore = MathF.Sqrt(Speed.X * Speed.X + Speed.Z * Speed.Z);
+                Speed += speedDelta; // todo: FPS stuff?
+                float magAfter = MathF.Sqrt(Speed.X * Speed.X + Speed.Z * Speed.Z);
+                if (magAfter > magBefore && magAfter > _hSpeedCap)
+                {
+                    float factor;
+                    if (magBefore <= _hSpeedCap)
+                    {
+                        factor = _hSpeedCap / magAfter;
+                    }
+                    else
+                    {
+                        factor = magBefore / magAfter;
+                    }
+                    Speed = Speed.WithX(Speed.X * factor).WithZ(Speed.Z * factor);
+                }
+                if (_field35C != null)
+                {
+                    Speed = Speed.WithX(0).WithZ(0);
+                }
+                else if (AttachedEnemy != null)
+                {
+                    Speed = Speed.WithX(Speed.X / 2).WithZ(Speed.Z / 2);
+                }
+                // todo: or if main player in cam seq which forces alt
+                if (_abilities.TestFlag(AbilityFlags.AltForm) && Controls.Morph.IsPressed)
+                {
+                    // the game doesn't require pressed here, but presumably the control scheme would have the pressed flag
+                    // the game doesn't check the ability flag here
+                    TrySwitchForms();
+                }
+                if (Hunter == Hunter.Trace || Hunter == Hunter.Weavel)
+                {
+                    AnimationInfo info = _altModel.AnimInfo;
+                    if (animId != -1)
+                    {
+                        if ((info.Index[0] != 1 || info.Flags[0].TestFlag(AnimFlags.Ended)) && animId != info.Index[0])
+                        {
+                            _altModel.SetAnimation(animId, animFlags);
+                        }
+                    }
+                    else if (info.Index[0] != 0 && (!info.Flags[0].TestFlag(AnimFlags.NoLoop) || info.Flags[0].TestFlag(AnimFlags.Ended)))
+                    {
+                        _altModel.SetAnimation(0);
+                    }
+                }
+            }
+            ProcessMovement();
+            UpdateCamera();
+        }
+
+        private void SpawnBomb()
+        {
+            // todo?: wi-fi condition and alternate function for spawning Lockjaw bombs
+            Matrix4 transform = Matrix4.Identity;
+            if (Hunter == Hunter.Kanden)
+            {
+                Matrix4 segMtx = _kandenSegMtx[4];
+                transform = GetTransformMatrix(segMtx.Row2.Xyz, segMtx.Row1.Xyz, _kandenSegPos[4]);
+            }
+            else
+            {
+                if (Hunter == Hunter.Sylux && SyluxBombCount >= 3)
+                {
+                    SyluxBombs[2]!.Countdown = 0;
+                    SyluxBombs[1]!.Countdown = 0;
+                    SyluxBombs[0]!.Countdown = 0;
+                    return;
+                }
+                transform = GetTransformMatrix(Vector3.UnitZ, Vector3.UnitY, Position.AddY(Fixed.ToFloat(-1000)));
+            }
+            var bomb = BombEntity.Spawn(this, transform, _scene);
+            if (bomb != null)
+            {
+                if (Hunter == Hunter.Sylux)
+                {
+                    SyluxBombs[SyluxBombCount] = bomb;
+                    bomb.BombIndex = SyluxBombCount++;
+                    // todo?: wifi stuff
+                }
+                // todo: node ref
+                bomb.Radius = Fixed.ToFloat(Values.BombRadius);
+                bomb.SelfRadius = Fixed.ToFloat(Values.BombSelfRadius);
+                // todo: if bot and encounter state, set damage values
+                // else...
+                bomb.Damage = (ushort)Values.BombDamage;
+                bomb.EnemyDamage = (ushort)Values.BombEnemyDamage;
+                if (_doubleDmgTimer > 0)
+                {
+                    bomb.Damage *= 2;
+                    bomb.EnemyDamage *= 2;
+                }
+                if (_bombAmmo >= 2)
+                {
+                    _bombRefillTimer = (ushort)(Values.BombRefillTime * 2); // todo: FPS stuff
+                }
+                _bombAmmo--;
+                _bombCooldown = (ushort)(Values.BombCooldown * 2); // todo: FPS stuff
+                if (Hunter == Hunter.Kanden)
+                {
+                    _altModel.SetAnimation((int)KandenAltAnim.TailOut, AnimFlags.NoLoop);
+                }
+                else if (Hunter == Hunter.Sylux && SyluxBombCount == 3)
+                {
+                    // todo: FPS stuff
+                    _bombOveruse += 27 * 2;
+                    if (_bombOveruse >= 100 * 2)
+                    {
+                        _bombCooldown = 150 * 2;
+                    }
+                }
+                // todo: play SFX
+            }
+        }
+
+        private void EndAltAttack()
+        {
+            if (Hunter == Hunter.Samus)
+            {
+                Flags1 &= ~PlayerFlags1.Boosting;
+            }
+            else if (Hunter == Hunter.Trace || Hunter == Hunter.Weavel)
+            {
+                if (Flags2.TestFlag(PlayerFlags2.AltAttack))
+                {
+                    // todo: if bot and encounter state, set a 10f cooldown
+                    _altAttackCooldown = (ushort)(Values.AltAttackCooldown * 2); // todo: FPS stuff
+                }
+            }
+            else if (Hunter == Hunter.Noxus)
+            {
+                if (_altAttackTime > 0)
+                {
+                    // todo: stop/play SFX
+                    _altModel.SetAnimation((int)NoxusAltAnim.Extend, AnimFlags.Paused);
+                    _altAttackTime = 0;
+                }
+            }
+            Flags2 &= ~PlayerFlags2.AltAttack;
         }
 
         private void ProcessMovement()
@@ -558,7 +1026,7 @@ namespace MphRead.Entities
             float hSpeedMag = hSpeed.Length;
             if (hSpeedMag == 0)
             {
-                _hspeedMag = 0;
+                _hSpeedMag = 0;
             }
             else
             {
@@ -588,13 +1056,13 @@ namespace MphRead.Entities
                     {
                         _hSpeedCap = altMin;
                     }
-                    else if (_hspeedMag > _hSpeedCap)
+                    else if (_hSpeedMag > _hSpeedCap)
                     {
                         _hSpeedCap -= Fixed.ToFloat(Values.AltHSpeedCapIncrement); // todo: FPS stuff?
                     }
                     else
                     {
-                        _hSpeedCap = _hspeedMag;
+                        _hSpeedCap = _hSpeedMag;
                     }
                 }
                 else
@@ -606,7 +1074,7 @@ namespace MphRead.Entities
                 {
                     _hSpeedCap = 0.4f; // todo: FPS stuff?
                 }
-                _hspeedMag = hSpeedMag;
+                _hSpeedMag = hSpeedMag;
             }
             // todo: check how much of this overwrites stuff done above
             Vector3 facing = FacingVector;
@@ -691,7 +1159,7 @@ namespace MphRead.Entities
                 speedFactor += (1 - speedFactor) * Metadata.SlipSpeedFactors[_slipperiness];
                 if (!Flags1.TestFlag(PlayerFlags1.MovingBiped))
                 {
-                    slideSfxPct = _hspeedMag / _hSpeedCap * (16 - 1 / 4096f);
+                    slideSfxPct = _hSpeedMag / _hSpeedCap * (16 - 1 / 4096f);
                 }
             }
             // todo: play SFX (with slideSfxPct)
@@ -767,7 +1235,7 @@ namespace MphRead.Entities
             {
                 for (int i = 1; i < _kandenSegPos.Length; i++)
                 {
-                    _kandenSegPos[i] = _kandenSegPos[i].AddY(-0.1f);
+                    _kandenSegPos[i] = _kandenSegPos[i].AddY(-0.1f / 2); // todo: FPS stuff
                 }
             }
             if (_standingEntCol != null)
@@ -902,7 +1370,7 @@ namespace MphRead.Entities
         {
             KeyboardState keyboardSnap = keyboardState.GetSnapshot();
             MouseState mouseSnap = mouseState.GetSnapshot();
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 1; i++) // skdebug
             {
                 PlayerEntity player = Players[i];
                 KeyboardState? prevKeyboardSnap = player.Input.KeyboardState;

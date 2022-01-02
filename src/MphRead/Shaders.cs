@@ -43,8 +43,9 @@ vec3 light_calc(vec3 light_vec, vec3 light_col, vec3 normal_vec, vec3 dif_col, v
 
 void main()
 {
+    mat4 stack_mtx = mtx_stack[int(gl_MultiTexCoord0.z)];
     // view_inv_mtx is set for billboard transforms
-    mat4 model_mtx = mtx_stack[int(gl_MultiTexCoord0.z)] * view_inv_mtx;
+    mat4 model_mtx = stack_mtx * view_inv_mtx;
     gl_Position = proj_mtx * view_mtx * model_mtx * gl_Vertex;
     vec4 vtx_color = show_colors ? gl_Color : vec4(1.0);
     vec3 normal = normalize(mat3(model_mtx) * gl_Normal);
@@ -72,7 +73,8 @@ void main()
         else if (texgen_mode == 2 || texgen_mode == 3) {
             mat4 tex_mul = tex_mtx;
             if (texgen_mode == 2) {
-                tex_mul = transpose(tex_mtx * (use_light ? view_mtx : mat4(1.0)) * mat4(mat3(model_mtx)));
+                // texgen uses the node transform, which doesn't have billboard transform applied
+                tex_mul = transpose(tex_mtx * (use_light ? view_mtx : mat4(1.0)) * mat4(mat3(stack_mtx)));
             }
             mat2x4 texgen_mtx = mat2x4(
                 vec4(tex_mul[0][0], tex_mul[0][1], tex_mul[0][2], gl_MultiTexCoord0.x),
@@ -122,7 +124,7 @@ void main()
     // mat_mode: 0 - modulate, 1 - decal, 2 - toon
     vec4 col;
     if (use_texture) {
-        vec4 texcolor = use_pal_override ? pal_override_color : texture2D(tex, texcoord);
+        vec4 texcolor = use_pal_override ? vec4(pal_override_color.xyz, texture2D(tex, texcoord).w) : texture2D(tex, texcoord);
         if (mat_mode == 1) {
             col = vec4(
                 (texcolor.r * texcolor.a + color.r * (1 - texcolor.a)),

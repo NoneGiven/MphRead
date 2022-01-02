@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Microsoft.VisualBasic;
 using MphRead.Effects;
+using MphRead.Formats;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
@@ -16,7 +18,7 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x2F, 0x4F, 0x4F).AsVector4();
 
         public PlatformFlags Flags { get; private set; }
-        public PlatStateBits StateBits => _stateBits;
+        public PlatStateFlags StateFlags => _stateFlags;
         private readonly List<int> _effectNodeIds = new List<int>() { -1, -1, -1, -1 };
         private readonly List<EffectEntry?> _effects = new List<EffectEntry?>() { null, null, null, null };
         private const int _nozzleEffectId = 182; // nozzleJet
@@ -29,12 +31,25 @@ namespace MphRead.Entities
         private readonly Vector3 _beamSpawnPos;
         private readonly Vector3 _beamSpawnDir;
 
-        private uint _health = 0;
-        private uint _halfHealth = 0;
+        private int _health = 0;
+        private int _halfHealth = 0;
+        private readonly Effectiveness[] _beamEffectiveness = new Effectiveness[9];
+
+        private ushort _timeSincePlayerCol = 0;
+        private bool _playerCol = false;
         private PlatformEntity? _parent = null;
+        private EntityBase? _scanMessageTarget = null;
+        private EntityBase? _hitMessageTarget = null;
+        private EntityBase? _playerColMessageTarget = null;
+        private EntityBase? _deathMessageTarget = null;
+        private readonly EntityBase?[] _lifetimeMessageTargets = new EntityBase?[4];
+        private readonly Message[] _lifetimeMessages = new Message[4];
+        private readonly uint[] _lifetimeMessageParam1s = new uint[4];
+        private readonly uint[] _lifetimeMessageParam2s = new uint[4];
+        private readonly int[] _lifetimeMessageIndices = new int[4];
 
         private PlatAnimFlags _animFlags = PlatAnimFlags.None;
-        private PlatStateBits _stateBits = PlatStateBits.None;
+        private PlatStateFlags _stateFlags = PlatStateFlags.None;
         private PlatformState _state = PlatformState.Inactive;
         private int _fromIndex = 0;
         private int _toIndex = 1;
@@ -69,15 +84,16 @@ namespace MphRead.Entities
             Flags = data.Flags;
             if (Flags.TestFlag(PlatformFlags.Breakable))
             {
-                Flags |= PlatformFlags.NoBeamColEffect;
+                Flags |= PlatformFlags.BeamColEffect;
                 Flags |= PlatformFlags.HideOnSleep;
                 Flags |= PlatformFlags.BeamTarget;
             }
-            _health = data.Health;
+            _health = (int)data.Health;
             if (Flags.TestFlag(PlatformFlags.SyluxShip))
             {
                 _halfHealth = _health / 2;
             }
+            Metadata.LoadEffectiveness(_data.Effectiveness, _beamEffectiveness);
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _curPosition = Position;
             _posOffset = data.PositionOffset.ToFloatVector();
@@ -122,7 +138,7 @@ namespace MphRead.Entities
                     inst.SetAnimation(-1);
                 }
             }
-            _beamInterval = (int)data.BeamInterval * 2;
+            _beamInterval = (int)data.BeamInterval * 2; // todo: FPS stuff
             if (data.BeamId > -1)
             {
                 // todo: ammo pointer
@@ -212,18 +228,44 @@ namespace MphRead.Entities
             }
             if (_data.BeamId == 0 && Flags.TestFlag(PlatformFlags.BeamSpawner))
             {
-                scene.LoadEffect(183);
-                scene.LoadEffect(184);
-                scene.LoadEffect(185);
+                scene.LoadEffect(183); // syluxMissile
+                scene.LoadEffect(184); // syluxMissileCol
+                scene.LoadEffect(185); // syluxMissileFlash
             }
+            scene.TryGetEntity(_data.ScanMsgTarget, out _scanMessageTarget);
+            scene.TryGetEntity(_data.BeamHitMsgTarget, out _hitMessageTarget);
+            scene.TryGetEntity(_data.PlayerColMsgTarget, out _playerColMessageTarget);
+            scene.TryGetEntity(_data.DeadMsgTarget, out _deathMessageTarget);
+            scene.TryGetEntity(_data.LifetimeMsg1Target, out EntityBase? lifetimeMessageTarget);
+            _lifetimeMessageTargets[0] = lifetimeMessageTarget;
+            scene.TryGetEntity(_data.LifetimeMsg2Target, out lifetimeMessageTarget);
+            _lifetimeMessageTargets[1] = lifetimeMessageTarget;
+            scene.TryGetEntity(_data.LifetimeMsg3Target, out lifetimeMessageTarget);
+            _lifetimeMessageTargets[2] = lifetimeMessageTarget;
+            scene.TryGetEntity(_data.LifetimeMsg4Target, out lifetimeMessageTarget);
+            _lifetimeMessageTargets[3] = lifetimeMessageTarget;
+            _lifetimeMessages[0] = _data.LifetimeMessage1;
+            _lifetimeMessages[1] = _data.LifetimeMessage2;
+            _lifetimeMessages[2] = _data.LifetimeMessage3;
+            _lifetimeMessages[3] = _data.LifetimeMessage4;
+            _lifetimeMessageParam1s[0] = _data.LifetimeMsg1Param1;
+            _lifetimeMessageParam1s[1] = _data.LifetimeMsg2Param1;
+            _lifetimeMessageParam1s[2] = _data.LifetimeMsg3Param1;
+            _lifetimeMessageParam1s[3] = _data.LifetimeMsg4Param1;
+            _lifetimeMessageParam2s[0] = _data.LifetimeMsg1Param2;
+            _lifetimeMessageParam2s[1] = _data.LifetimeMsg2Param2;
+            _lifetimeMessageParam2s[2] = _data.LifetimeMsg3Param2;
+            _lifetimeMessageParam2s[3] = _data.LifetimeMsg4Param2;
+            _lifetimeMessageIndices[0] = _data.LifetimeMsg1Index;
+            _lifetimeMessageIndices[1] = _data.LifetimeMsg2Index;
+            _lifetimeMessageIndices[2] = _data.LifetimeMsg3Index;
+            _lifetimeMessageIndices[3] = _data.LifetimeMsg4Index;
             if (_data.ParentId != -1)
             {
-                if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
+                if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent) && parent.Type == EntityType.Platform)
                 {
-                    if (parent.Type == EntityType.Platform)
-                    {
-                        _parent = (PlatformEntity)parent;
-                    }
+                    // only relevant for SyluxShip/Turret
+                    _parent = (PlatformEntity)parent;
                 }
             }
         }
@@ -265,7 +307,7 @@ namespace MphRead.Entities
         {
             if (wake)
             {
-                _stateBits |= PlatStateBits.Awake;
+                _stateFlags |= PlatStateFlags.Awake;
                 if (instant)
                 {
                     SetPlatAnimation(PlatAnimId.InstantWake, AnimFlags.None);
@@ -278,11 +320,11 @@ namespace MphRead.Entities
             }
             else
             {
-                if (_stateBits.TestFlag(PlatStateBits.Awake))
+                if (_stateFlags.TestFlag(PlatStateFlags.Awake))
                 {
-                    _stateBits |= PlatStateBits.WasAwake;
+                    _stateFlags |= PlatStateFlags.WasAwake;
                 }
-                _stateBits &= ~PlatStateBits.Awake;
+                _stateFlags &= ~PlatStateFlags.Awake;
                 if (instant)
                 {
                     SetPlatAnimation(PlatAnimId.InstantSleep, AnimFlags.None);
@@ -294,8 +336,16 @@ namespace MphRead.Entities
                 }
                 if (Flags.TestFlag(PlatformFlags.HideOnSleep))
                 {
-                    // todo: disable collision, stop sfx, room state
+                    for (int i = 0; i < EntityCollision.Length; i++)
+                    {
+                        EntityCollision? entCol = EntityCollision[i];
+                        if (entCol != null)
+                        {
+                            entCol.Collision.Active = false;
+                        }
+                    }
                     _animFlags &= ~PlatAnimFlags.Draw;
+                    // todo: stop sfx, room state
                 }
             }
         }
@@ -306,20 +356,23 @@ namespace MphRead.Entities
             // todo: more room state
             if (_state == PlatformState.Inactive)
             {
-                // todo: messaging
+                if (Flags.TestFlag(PlatformFlags.DripMoat))
+                {
+                    scene.SendMessage(Message.DripMoatPlatform, this, PlayerEntity.MainPlayer, 1, 0);
+                }
                 if (_data.PositionCount >= 2)
                 {
                     UpdateMovement();
                     _state = PlatformState.Waiting;
                     _moveTimer = 0;
-                    _stateBits |= PlatStateBits.Activated;
+                    _stateFlags |= PlatStateFlags.Activated;
                     if (_fromIndex == _data.PositionCount - 1)
                     {
-                        _stateBits |= PlatStateBits.Reverse;
+                        _stateFlags |= PlatStateFlags.Reverse;
                     }
                     else
                     {
-                        _stateBits &= ~PlatStateBits.Reverse;
+                        _stateFlags &= ~PlatStateFlags.Reverse;
                     }
                 }
             }
@@ -331,7 +384,11 @@ namespace MphRead.Entities
             {
                 _state = PlatformState.Inactive;
                 _animFlags &= ~PlatAnimFlags.Active;
-                // todo: more room state, messaging
+                // todo: more room state
+                if (Flags.TestFlag(PlatformFlags.DripMoat))
+                {
+                    scene.SendMessage(Message.DripMoatPlatform, this, PlayerEntity.MainPlayer, 0, 0);
+                }
             }
         }
 
@@ -339,12 +396,12 @@ namespace MphRead.Entities
         {
             if (active)
             {
-                _stateBits |= PlatStateBits.Activated;
+                _stateFlags |= PlatStateFlags.Activated;
                 Activate();
             }
             else
             {
-                _stateBits &= ~PlatStateBits.Activated;
+                _stateFlags &= ~PlatStateFlags.Activated;
                 Deactivate();
             }
         }
@@ -353,7 +410,11 @@ namespace MphRead.Entities
         {
             UpdateLinkedInverse(0);
             // todo: visible position stuff
-            // ptodo: player bonk stuff
+            if (++_timeSincePlayerCol >= 3 * 2) // todo: FPS stuff
+            {
+                _timeSincePlayerCol = 3 * 2;
+                _playerCol = false;
+            }
             if (!_animFlags.TestFlag(PlatAnimFlags.DisableReflect))
             {
                 bool isTurret = false;
@@ -361,14 +422,14 @@ namespace MphRead.Entities
                 if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parent != null)
                 {
                     isTurret = true;
-                    if (_stateBits.TestFlag(PlatStateBits.Awake)
+                    if (_stateFlags.TestFlag(PlatStateFlags.Awake)
                         && _models[0].AnimInfo.Index[0] == GetAnimation(PlatAnimId.InstantWake))
                     {
                         turretAiming = true;
                     }
                 }
                 if (Flags.TestFlag(PlatformFlags.SyluxShip)
-                    && (isTurret || _stateBits.TestFlag(PlatStateBits.Awake) || _stateBits.TestFlag(PlatStateBits.WasAwake)))
+                    && (isTurret || _stateFlags.TestFlag(PlatStateFlags.Awake) || _stateFlags.TestFlag(PlatStateFlags.WasAwake)))
                 {
                     Vector3 target = Vector3.Zero;
                     if (isTurret)
@@ -413,7 +474,7 @@ namespace MphRead.Entities
                     _curRotation = rotation.Normalized();
                     if (_data.MovementType == 0)
                     {
-                        UpdateState();
+                        UpdateState(scene);
                         _curPosition += _velocity;
                     }
                 }
@@ -428,7 +489,7 @@ namespace MphRead.Entities
                     }
                     else if (_data.MovementType == 0)
                     {
-                        UpdateState();
+                        UpdateState(scene);
                         _curPosition += _velocity;
                         _movePercent += _moveIncrement;
                         _curRotation = ComputeRotationSin(_fromRotation, _toRotation, _movePercent);
@@ -450,15 +511,15 @@ namespace MphRead.Entities
                     spawnBeam = false;
                 }
                 else if (_parent != null
-                    && !_parent.StateBits.TestFlag(PlatStateBits.Awake) && !_parent.StateBits.TestFlag(PlatStateBits.WasAwake))
+                    && !_parent.StateFlags.TestFlag(PlatStateFlags.Awake) && !_parent.StateFlags.TestFlag(PlatStateFlags.WasAwake))
                 {
                     spawnBeam = false;
                 }
             }
-            _stateBits |= PlatStateBits.Awake;
+            _stateFlags |= PlatStateFlags.Awake;
             // btodo: 0 is valid for Sylux turret missiles, but without collision handling those would eat up the effect lists
             if (spawnBeam && _animFlags.TestFlag(PlatAnimFlags.Draw) && !_animFlags.TestFlag(PlatAnimFlags.DisableReflect)
-                && _stateBits.TestFlag(PlatStateBits.Awake) && Flags.TestFlag(PlatformFlags.BeamSpawner) && _data.BeamId > 0)
+                && _stateFlags.TestFlag(PlatStateFlags.Awake) && Flags.TestFlag(PlatformFlags.BeamSpawner) && _data.BeamId > 0)
             {
                 if (--_beamIntervalTimer <= 0)
                 {
@@ -489,9 +550,9 @@ namespace MphRead.Entities
             {
                 SetPlatAnimation(_currentAnim, AnimFlags.None);
                 _currentAnim = -2;
-                _stateBits &= ~PlatStateBits.WasAwake;
+                _stateFlags &= ~PlatStateFlags.WasAwake;
             }
-            // sktodo
+            // todo: SFX and other stuff
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects
             Model model = _models[0].Model;
             for (int i = 0; i < 4; i++)
@@ -518,10 +579,12 @@ namespace MphRead.Entities
             {
                 Transform = GetTransform();
             }
-            UpdateCollisionTransform(0, CollisionTransform); // todo: for some reason, the game uses an inverse view matrix when using animation
+            // todo?: for some reason, the game uses an inverse view matrix when using animation
+            UpdateCollisionTransform(0, CollisionTransform);
             return true;
         }
 
+        // todo: use more flags
         public override void GetDrawInfo(Scene scene)
         {
             if (_animFlags.TestFlag(PlatAnimFlags.Draw) || _models[0].IsPlaceholder)
@@ -543,7 +606,7 @@ namespace MphRead.Entities
         {
             UpdatePosition();
             Vector3 velocity = _posList[_toIndex] - _posList[_fromIndex];
-            float speed = _stateBits.TestFlag(PlatStateBits.Reverse) ? _backwardSpeed : _forwardSpeed;
+            float speed = _stateFlags.TestFlag(PlatStateFlags.Reverse) ? _backwardSpeed : _forwardSpeed;
             float factor;
             if (_data.ForCutscene != 0)
             {
@@ -663,24 +726,6 @@ namespace MphRead.Entities
             ).Normalized();
         }
 
-        private void ProcessLifetimeEvent(int index, Message message, short targetId, uint param1)
-        {
-            if (_fromIndex == index && targetId == Id)
-            {
-                if (message == Message.Activate || (message == Message.SetActive && param1 != 0))
-                {
-                    Activate();
-                    _beamIntervalTimer = _beamInterval;
-                    _beamIntervalIndex = 15;
-                    _beamActive = false;
-                }
-                else if (message == Message.SetActive && param1 == 0)
-                {
-                    Deactivate();
-                }
-            }
-        }
-
         public void Recoil()
         {
             if (_state == PlatformState.Moving && !Flags.TestFlag(PlatformFlags.NoRecoil) && _data.ForCutscene == 0)
@@ -691,7 +736,7 @@ namespace MphRead.Entities
             }
         }
 
-        private void UpdateState()
+        private void UpdateState(Scene scene)
         {
             if (_state == PlatformState.Moving)
             {
@@ -712,12 +757,20 @@ namespace MphRead.Entities
                 else
                 {
                     _fromIndex = _toIndex;
-                    // ptodo: remove debug code
-                    ProcessLifetimeEvent(_data.LifetimeMsg1Index, _data.LifetimeMessage1, _data.LifetimeMsg1Target, _data.LifetimeMsg1Param1);
-                    ProcessLifetimeEvent(_data.LifetimeMsg2Index, _data.LifetimeMessage2, _data.LifetimeMsg2Target, _data.LifetimeMsg2Param1);
-                    ProcessLifetimeEvent(_data.LifetimeMsg3Index, _data.LifetimeMessage3, _data.LifetimeMsg3Target, _data.LifetimeMsg3Param1);
-                    ProcessLifetimeEvent(_data.LifetimeMsg4Index, _data.LifetimeMessage4, _data.LifetimeMsg4Target, _data.LifetimeMsg4Param1);
-                    // todo: messaging, room state
+                    for (int i = 0; i < _lifetimeMessages.Length; i++)
+                    {
+                        if (_lifetimeMessageIndices[i] == _fromIndex)
+                        {
+                            Message message = _lifetimeMessages[i];
+                            EntityBase? target = _lifetimeMessageTargets[i];
+                            if (message != Message.None && target != null)
+                            {
+                                scene.SendMessage(message, this, target,
+                                    _lifetimeMessageParam1s[i], _lifetimeMessageParam2s[i]);
+                            }
+                        }
+                    }
+                    // todo: room state etc.
                     if (_state != PlatformState.Inactive)
                     {
                         _state = PlatformState.Waiting;
@@ -737,37 +790,37 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    if (_stateBits.TestFlag(PlatStateBits.Activated))
+                    if (_stateFlags.TestFlag(PlatStateFlags.Activated))
                     {
                         if (_data.ReverseType == 0)
                         {
                             // reverse when reaching last position
-                            if (_stateBits.TestFlag(PlatStateBits.Reverse))
+                            if (_stateFlags.TestFlag(PlatStateFlags.Reverse))
                             {
                                 if (_fromIndex == 0)
                                 {
-                                    _stateBits &= ~PlatStateBits.Reverse;
+                                    _stateFlags &= ~PlatStateFlags.Reverse;
                                 }
                             }
                             else if (_fromIndex == _data.PositionCount - 1)
                             {
-                                _stateBits |= PlatStateBits.Reverse;
+                                _stateFlags |= PlatStateFlags.Reverse;
                             }
-                            _toIndex = _fromIndex + (_stateBits.TestFlag(PlatStateBits.Reverse) ? -1 : 1);
+                            _toIndex = _fromIndex + (_stateFlags.TestFlag(PlatStateFlags.Reverse) ? -1 : 1);
                             _state = PlatformState.Moving;
                         }
                         else if (_data.ReverseType == 1)
                         {
                             // wrap around from last position to first
-                            int index = _fromIndex + (_stateBits.TestFlag(PlatStateBits.Reverse) ? -1 : 1);
+                            int index = _fromIndex + (_stateFlags.TestFlag(PlatStateFlags.Reverse) ? -1 : 1);
                             _toIndex = index % _data.PositionCount;
                             _state = PlatformState.Moving;
                         }
                         else if (_data.ReverseType == 2)
                         {
                             // deactivate when reaching last position and wait for another activation to reverse
-                            if ((_stateBits.TestFlag(PlatStateBits.Reverse) && _fromIndex == 0)
-                                || (!_stateBits.TestFlag(PlatStateBits.Reverse) && _fromIndex == _data.PositionCount - 1))
+                            if ((_stateFlags.TestFlag(PlatStateFlags.Reverse) && _fromIndex == 0)
+                                || (!_stateFlags.TestFlag(PlatStateFlags.Reverse) && _fromIndex == _data.PositionCount - 1))
                             {
                                 Deactivate();
                                 if (Flags.TestFlag(PlatformFlags.SleepAtEnd))
@@ -777,7 +830,7 @@ namespace MphRead.Entities
                             }
                             if (_state != PlatformState.Inactive)
                             {
-                                _toIndex = _fromIndex + (_stateBits.TestFlag(PlatStateBits.Reverse) ? -1 : 1);
+                                _toIndex = _fromIndex + (_stateFlags.TestFlag(PlatStateFlags.Reverse) ? -1 : 1);
                                 _state = PlatformState.Moving;
                             }
                         }
@@ -866,6 +919,226 @@ namespace MphRead.Entities
                 _curPosition.X, _curPosition.Y, _curPosition.Z, 1
             );
         }
+
+        public override void CheckContactDamage(ref DamageResult result)
+        {
+            result.Damage = _data.ContactDamage;
+            // probably not important in practice, but this logic could lead to weird behavior from not updating TakeDamage
+            if (!Flags.TestFlag(PlatformFlags.Hazard))
+            {
+                result.TakeDamage = false;
+            }
+            else if (Flags.TestFlag(PlatformFlags.ContactDamage))
+            {
+                result.TakeDamage = true;
+            }
+        }
+
+        public override void CheckBeamReflection(ref bool result)
+        {
+            // similarly non-airtight logic here
+            if (!Flags.TestFlag(PlatformFlags.BeamReflection) || _animFlags.TestFlag(PlatAnimFlags.DisableReflect))
+            {
+                if (!Flags.TestFlag(PlatformFlags.DamageReflect1))
+                {
+                    result = false;
+                }
+                else if (Flags.TestFlag(PlatformFlags.DamageReflect2))
+                {
+                    result = true;
+                }
+            }
+            else
+            {
+                result = true;
+            }
+        }
+
+        public override void HandleMessage(MessageInfo info, Scene scene)
+        {
+            void OnActivate()
+            {
+                Activate();
+                _beamIntervalTimer = _beamInterval;
+                _beamIntervalIndex = 15;
+                _beamActive = false;
+            }
+
+            // the game updates unused flags for SamusShip
+            if (!Flags.TestFlag(PlatformFlags.SamusShip))
+            {
+                if (StateFlags.TestFlag(PlatStateFlags.Awake))
+                {
+                    if (info.Message == Message.Activate)
+                    {
+                        OnActivate();
+                    }
+                    else if (info.Message == Message.SetActive)
+                    {
+                        if ((int)info.Param1 != 0)
+                        {
+                            OnActivate();
+                        }
+                        else
+                        {
+                            Deactivate();
+                        }
+                    }
+                    else if (info.Message == Message.Damage)
+                    {
+                        _health = (int)info.Param1;
+                    }
+                    else if (info.Message == Message.SetSeekPlayerY)
+                    {
+                        _animFlags &= ~PlatAnimFlags.SeekPlayerHeight;
+                        if ((int)info.Param1 != 0)
+                        {
+                            _animFlags |= PlatAnimFlags.SeekPlayerHeight;
+                        }
+                    }
+                    else if (info.Message == Message.SetBeamReflection)
+                    {
+                        _animFlags &= ~PlatAnimFlags.DisableReflect;
+                        if ((int)info.Param1 != 0)
+                        {
+                            _animFlags |= PlatAnimFlags.DisableReflect;
+                        }
+                    }
+                    else if (info.Message == Message.PlatformSleep)
+                    {
+                        SleepWake(wake: false, instant: false);
+                        Deactivate();
+                    }
+                    else if (info.Message == Message.BeamCollideWith)
+                    {
+                        if (_health > 0)
+                        {
+                            if (_data.BeamHitMessage != Message.None && _hitMessageTarget != null)
+                            {
+                                scene.SendMessage(_data.BeamHitMessage, this, _hitMessageTarget,
+                                    _data.BeamHitMsgParam1, _data.BeamHitMsgParam2);
+                            }
+                            int effectId = 0;
+                            if (!Flags.TestFlag(PlatformFlags.BeamColEffect)
+                                || Flags.TestFlag(PlatformFlags.BeamReflection) && !_animFlags.TestFlag(PlatAnimFlags.DisableReflect))
+                            {
+                                effectId = _data.ResistEffectId;
+                            }
+                            else
+                            {
+                                var beam = (BeamProjectileEntity)info.Sender;
+                                if (_beamEffectiveness[(int)beam.Weapon] == Effectiveness.Zero)
+                                {
+                                    effectId = _data.ResistEffectId;
+                                }
+                                else
+                                {
+                                    effectId = _data.DamageEffectId;
+                                    _health -= (int)beam.Damage;
+                                    if (_health <= _halfHealth)
+                                    {
+                                        if (_halfHealth > 0)
+                                        {
+                                            // SyluxShip/Turret at half health
+                                            for (int i = 0; i < _lifetimeMessages.Length; i++)
+                                            {
+                                                Message message = _lifetimeMessages[i];
+                                                EntityBase? target = _lifetimeMessageTargets[i];
+                                                if (message != Message.None && target != null)
+                                                {
+                                                    scene.SendMessage(message, this, target,
+                                                        _lifetimeMessageParam1s[i], _lifetimeMessageParam2s[i]);
+                                                }
+                                            }
+                                            _halfHealth = 0;
+                                        }
+                                        else
+                                        {
+                                            // destroyed
+                                            effectId = _data.DeadEffectId;
+                                            if (Flags.TestFlag(PlatformFlags.Breakable))
+                                            {
+                                                scene.SendMessage(Message.PlatformSleep, this, this, 0, 0);
+                                                // todo: play SFX
+                                            }
+                                            // todo: use visible pos
+                                            Vector3 spawnPos = Position.AddY(1);
+                                            ItemSpawnEntity.SpawnItemDrop(_data.ItemType, spawnPos, _data.ItemChance, scene);
+                                            if (_data.DeadMessage != Message.None && _deathMessageTarget != null)
+                                            {
+                                                scene.SendMessage(_data.DeadMessage, this, _deathMessageTarget,
+                                                    _data.DeadMsgParam1, _data.DeadMsgParam2);
+                                            }
+                                            _health = 0;
+                                        }
+                                    }
+                                }
+                                if (effectId != 0)
+                                {
+                                    var result = (CollisionResult)info.Param1;
+                                    Debug.Assert(result.EntityCollision != null);
+                                    Vector3 spawnPos = result.Position;
+                                    Vector3 spawnUp = result.Plane.Xyz;
+                                    spawnPos = Matrix.Vec3MultMtx4(spawnPos, result.EntityCollision.Inverse1);
+                                    spawnUp = Matrix.Vec3MultMtx4(spawnUp, result.EntityCollision.Inverse1);
+                                    Vector3 spawnFacing;
+                                    if (spawnUp.Z <= -0.9f || spawnUp.Z >= 0.9f)
+                                    {
+                                        spawnFacing = Vector3.Cross(Vector3.UnitX, spawnUp).Normalized();
+                                    }
+                                    else
+                                    {
+                                        spawnFacing = Vector3.Cross(Vector3.UnitZ, spawnUp).Normalized();
+                                    }
+                                    scene.SpawnEffect(effectId, spawnFacing, spawnUp, spawnPos, owner: result.EntityCollision.Entity);
+                                }
+                            }
+                        }
+                    }
+                    else if (info.Message == Message.PlayerCollideWith)
+                    {
+                        bool alreadyColliding = _playerCol;
+                        _timeSincePlayerCol = 0;
+                        _playerCol = true;
+                        if (_data.PlayerColMessage != Message.None && _playerColMessageTarget != null && !alreadyColliding
+                            && !(Flags.TestFlag(PlatformFlags.StandingColOnly) && (int)info.Param2 == 0))
+                        {
+                            scene.SendMessage(_data.PlayerColMessage, this, _playerColMessageTarget,
+                                _data.PlayerColMsgParam1, _data.PlayerColMsgParam2);
+                        }
+                    }
+                }
+                else if (info.Message == Message.PlatformWakeup)
+                {
+                    SleepWake(wake: true, instant: false);
+                    if ((int)info.Param1 != 0)
+                    {
+                        OnActivate();
+                    }
+                }
+                if (info.Message == Message.SetPlatformIndex)
+                {
+                    int index = (int)info.Param1 - 1;
+                    if (_fromIndex != index)
+                    {
+                        if (_state == PlatformState.Inactive)
+                        {
+                            _fromIndex = index;
+                            UpdatePosition();
+                            Deactivate();
+                            _velocity = Vector3.Zero;
+                            _movePercent = 0;
+                            _moveIncrement = 0;
+                        }
+                        else if ((int)info.Param2 != 0)
+                        {
+                            _fromIndex = index;
+                            UpdatePosition();
+                        }
+                    }
+                }
+            }
+        }
     }
 
     [Flags]
@@ -897,16 +1170,16 @@ namespace MphRead.Entities
         Hazard = 0x1,
         ContactDamage = 0x2,
         BeamSpawner = 0x4,
-        NoBeamColEffect = 0x8,
-        DamagedReflect1 = 0x10,
-        DamagedReflect2 = 0x20,
+        BeamColEffect = 0x8,
+        DamageReflect1 = 0x10,
+        DamageReflect2 = 0x20,
         StandingColOnly = 0x40,
         StartSleep = 0x80,
         SleepAtEnd = 0x100,
-        Bit09 = 0x200,
-        Bit10 = 0x400,
-        Bit11 = 0x800,
-        Bit12 = 0x1000,
+        DripMoat = 0x200,
+        SkipNodeRef = 0x400,
+        DrawIfNodeRef = 0x800,
+        DrawAlways = 0x1000,
         HideOnSleep = 0x2000,
         SyluxShip = 0x4000,
         Bit15 = 0x8000,
@@ -916,7 +1189,7 @@ namespace MphRead.Entities
         SamusShip = 0x80000,
         Breakable = 0x100000,
         Bit21 = 0x200000,
-        Bit22 = 0x400000,
+        DrawIfCull = 0x400000,
         NoRecoil = 0x800000,
         Bit24 = 0x1000000,
         Bit25 = 0x2000000,
@@ -929,7 +1202,7 @@ namespace MphRead.Entities
     }
 
     [Flags]
-    public enum PlatStateBits : uint
+    public enum PlatStateFlags : uint
     {
         None = 0x0,
         Awake = 0x1,

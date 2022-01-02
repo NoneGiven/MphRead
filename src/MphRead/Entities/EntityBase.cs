@@ -626,6 +626,14 @@ namespace MphRead.Entities
         {
         }
 
+        public virtual void CheckContactDamage(ref DamageResult result)
+        {
+        }
+
+        public virtual void CheckBeamReflection(ref bool result)
+        {
+        }
+
         protected bool IsVisible()
         {
             // sktodo: this
