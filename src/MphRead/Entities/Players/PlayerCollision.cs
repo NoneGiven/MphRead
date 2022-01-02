@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
@@ -29,7 +30,7 @@ namespace MphRead.Entities
                     continue;
                 }
                 var other = (PlayerEntity)entity;
-                if (!other.LoadFlags.TestFlag(LoadFlags.Active) || other._health == 0)
+                if (!other.LoadFlags.TestFlag(LoadFlags.Active) || other.Health == 0)
                 {
                     continue;
                 }
@@ -41,8 +42,172 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
-                // sktodo
+                Vector3 between = _volume.SpherePosition - other.Volume.SpherePosition;
+                float distSqr = between.LengthFast;
+                if (distSqr == 0)
+                {
+                    between = Vector3.UnitX;
+                    distSqr = 1;
+                }
+                float radii = _volume.SphereRadius + other.Volume.SphereRadius;
+                if (distSqr < radii * radii)
+                {
+                    float dist = MathF.Sqrt(distSqr);
+                    between /= dist;
+                    float dot = Vector3.Dot(Speed, between);
+                    Speed -= between * dot;
+                    Vector3 posAdd = between * (radii - dist);
+                    Position += posAdd;
+                    _volume = CollisionVolume.Move(_volume, _volume.SpherePosition + posAdd);
+                    float kbAccel = Fixed.ToFloat(Values.AltAttackKnockbackAccel);
+                    if (Hunter == Hunter.Noxus && IsAltForm)
+                    {
+                        other.Acceleration = new Vector3(between.X * -kbAccel, 0, between.Z * -kbAccel);
+                        other._accelerationTimer = (ushort)(Values.AltAttackKnockbackTime * 2); // todo: FPS stuff
+                    }
+                    if (other.Hunter == Hunter.Noxus && other.IsAltForm)
+                    {
+                        Acceleration = new Vector3(between.X * kbAccel, 0, between.Z * kbAccel);
+                        _accelerationTimer = (ushort)(Values.AltAttackKnockbackTime * 2); // todo: FPS stuff
+                    }
+                    if (Flags1.TestFlag(PlayerFlags1.Boosting))
+                    {
+                        other.TakeDamage(_boostDamage, DamageFlags.NoDmgInvuln, Speed, this);
+                        EndAltAttack();
+                    }
+                    if (other.Flags1.TestFlag(PlayerFlags1.Boosting))
+                    {
+                        TakeDamage(other._boostDamage, DamageFlags.NoDmgInvuln, other.Speed, other);
+                        other.EndAltAttack();
+                    }
+                    if (_deathaltTimer > 0)
+                    {
+                        other.TakeDamage(200, DamageFlags.Deathalt | DamageFlags.NoDmgInvuln, Speed, this);
+                    }
+                    if (other._deathaltTimer > 0)
+                    {
+                        TakeDamage(200, DamageFlags.Deathalt | DamageFlags.NoDmgInvuln, other.Speed, other);
+                    }
+                    CheckAltAttackHit2(this, other, halfturret: false);
+                    CheckAltAttackHit2(other, this, halfturret: false);
+                }
+                CheckAltAttackHit1(this, other, halfturret: false);
             }
+        }
+
+        // todo: more visualization
+        private static void CheckAltAttackHit1(PlayerEntity attacker, PlayerEntity target, bool halfturret)
+        {
+            // the game assumes the hunter is noxus based on the alt attack timer
+            if (attacker.Hunter == Hunter.Spire && attacker.Flags2.TestFlag(PlayerFlags2.AltAttack))
+            {
+                bool hit = false;
+                if (halfturret)
+                {
+                    // todo: check collision with halfturret
+                }
+                else
+                {
+                    CollisionResult unused = default;
+                    hit = CollisionDetection.CheckSphereOverlapVolume(target.Volume, attacker._spireRockPosL, 0.5f, ref unused)
+                        || CollisionDetection.CheckSphereOverlapVolume(target.Volume, attacker._spireRockPosR, 0.5f, ref unused);
+                }
+                if (hit)
+                {
+                    Vector3 dir = Vector3.Zero;
+                    if (!halfturret)
+                    {
+                        float factor = MathF.Sqrt(dir.X * dir.X + dir.Z * dir.Z) * 4;
+                        dir.X = (target.Position.X - attacker.Position.X) / factor;
+                        dir.Z = (target.Position.Z - attacker.Position.Z) / factor;
+                    }
+                    ushort damage = attacker.Values.AltAttackDamage;
+                    // todo: if attacker is bot with encounter state, uses alternate damage value
+                    DamageFlags flags = DamageFlags.NoSfx | DamageFlags.NoDmgInvuln;
+                    if (halfturret)
+                    {
+                        flags |= DamageFlags.Halfturret;
+                    }
+                    target.TakeDamage(damage, flags, dir, attacker);
+                    // todo: play SFX
+                }
+            }
+            else if (attacker.Hunter == Hunter.Noxus && attacker._altAttackTime >= attacker.Values.AltAttackStartup * 2) // todo: FPS stuff
+            {
+                Vector3 between;
+                if (halfturret)
+                {
+                    // todo: get vector to halfturret
+                    between = target.Volume.SpherePosition - attacker.Volume.SpherePosition; // skdebug
+                }
+                else
+                {
+                    between = target.Volume.SpherePosition - attacker.Volume.SpherePosition;
+                }
+                float radius = target.Volume.SphereRadius;
+                if (between.Y > -radius && between.Y < radius)
+                {
+                    float hMagSqr = between.X * between.Z + between.Z * between.Z;
+                    float radAddSqr = radius + 1.8f;
+                    radAddSqr *= radAddSqr;
+                    if (hMagSqr < radAddSqr)
+                    {
+                        float factor = MathF.Sqrt(hMagSqr) * 8;
+                        var dir = new Vector3(between.X / factor, 0, between.Z / factor);
+                        target.Acceleration = dir;
+                        target._accelerationTimer = 8 * 2; // todo: FPS stuff
+                        ushort damage = attacker.Values.AltAttackDamage;
+                        // todo: if attacker is bot with encounter state, uses alternate damage value
+                        DamageFlags flags = DamageFlags.NoSfx | DamageFlags.NoDmgInvuln;
+                        if (halfturret)
+                        {
+                            flags |= DamageFlags.Halfturret;
+                        }
+                        target.TakeDamage(damage, flags, dir, attacker);
+                        // todo: play SFX
+                        target._scene.SpawnEffect(235, Vector3.UnitX, Vector3.UnitY, target.Position); // noxHit
+                        attacker.EndAltAttack();
+                    }
+                }
+            }
+        }
+
+        private static void CheckAltAttackHit2(PlayerEntity attacker, PlayerEntity target, bool halfturret)
+        {
+            if (attacker.Hunter != Hunter.Trace && attacker.Hunter != Hunter.Weavel
+                || !attacker.Flags2.TestFlag(PlayerFlags2.AltAttack))
+            {
+                return;
+            }
+            // the game has a calculation + condition which is unnecessary since it also passes if Trace or Weavel (always true)
+            // --> possibly meant to account for usages where this is called outside the already passed collision check
+            Vector3 dir = Vector3.Zero;
+            if (attacker.Hunter == Hunter.Trace)
+            {
+                dir.X = attacker.Speed.X;
+                dir.Z = attacker.Speed.Z;
+            }
+            else
+            {
+                dir.X = attacker._field70;
+                dir.Z = attacker._field74;
+            }
+            if (!halfturret)
+            {
+                float kbAccel = Fixed.ToFloat(attacker.Values.AltAttackKnockbackAccel);
+                target.Acceleration = new Vector3(dir.X * kbAccel, -0.1f, dir.Z * kbAccel);
+                target._accelerationTimer = (ushort)(attacker.Values.AltAttackKnockbackTime * 2); // todo: FPS stuff
+            }
+            ushort damage = attacker.Values.AltAttackDamage;
+            // todo: if attacker is bot with encounter state, uses alternate damage value
+            DamageFlags flags = DamageFlags.NoSfx | DamageFlags.NoDmgInvuln;
+            if (halfturret)
+            {
+                flags |= DamageFlags.Halfturret;
+            }
+            target.TakeDamage(damage, flags, dir, attacker);
+            // todo: play SFX
+            attacker.EndAltAttack();
         }
 
         private void CheckCollision()

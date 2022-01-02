@@ -1483,7 +1483,7 @@ namespace MphRead.Entities
                                 }
                                 _frozenGfxTimer = (ushort)(_frozenTimer + 5 * 2); // todo: FPS stuff
                             }
-                            EndAltFormAttack();
+                            EndAltAttack();
                         }
                     }
                     if (beam.Afflictions.TestFlag(Affliction.Disrupt) && !flags.TestFlag(DamageFlags.Halfturret))
@@ -1877,8 +1877,8 @@ namespace MphRead.Entities
         public readonly int AltBounceWobble;
         public readonly int AltBounceTilt;
         public readonly int AltBounceSpin;
-        public readonly int Field14C;
-        public readonly short Field150;
+        public readonly int AltAttackKnockbackAccel;
+        public readonly short AltAttackKnockbackTime;
         public readonly ushort AltAttackStartup;
         public readonly int Field154;
         public readonly int Field158;
@@ -1899,9 +1899,10 @@ namespace MphRead.Entities
             short fieldE0, short spawnInvulnerability, ushort aimMinTouchTime, ushort paddingE6, int fieldE8, int fieldEC, int swayStartTime,
             int swayIncrement, int swayLimit, int gunIdleTime, short mpAmmoCap, byte ammoRecharge, byte padding103, ushort energyTank,
             short field106, byte altGroundedNoGrav, byte padding109, ushort padding10A, int fallDamageSpeed, int fallDamageMax, int field114,
-            int field118, int jumpPadSlideFactor, int altTiltAngleCap, int altMinWobble, int altMaxWobble, int altMinSpinAccel, int altMaxSpinAccel, int altMinSpinSpeed,
-            int altMaxSpinSpeed, int altTiltAngleMax, int altBounceWobble, int altBounceTilt, int altBounceSpin, int field14C, short field150, ushort altAttackStartup,
-            int field154, int field158, int lungeHSpeed, int lungeVSpeed, ushort altAttackDamage, short altAttackCooldown)
+            int field118, int jumpPadSlideFactor, int altTiltAngleCap, int altMinWobble, int altMaxWobble, int altMinSpinAccel, int altMaxSpinAccel,
+            int altMinSpinSpeed, int altMaxSpinSpeed, int altTiltAngleMax, int altBounceWobble, int altBounceTilt, int altBounceSpin, int altAttackKnockbackAccel,
+            short altAttackKnockbackTime, ushort altAttackStartup, int field154, int field158, int lungeHSpeed, int lungeVSpeed,
+            ushort altAttackDamage, short altAttackCooldown)
         {
             Hunter = hunter;
             WalkBipedTraction = walkBipedTraction;
@@ -1998,8 +1999,8 @@ namespace MphRead.Entities
             AltBounceWobble = altBounceWobble;
             AltBounceTilt = altBounceTilt;
             AltBounceSpin = altBounceSpin;
-            Field14C = field14C;
-            Field150 = field150;
+            AltAttackKnockbackAccel = altAttackKnockbackAccel;
+            AltAttackKnockbackTime = altAttackKnockbackTime;
             AltAttackStartup = altAttackStartup;
             Field154 = field154;
             Field158 = field158;

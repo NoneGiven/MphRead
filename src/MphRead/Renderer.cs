@@ -1985,7 +1985,7 @@ namespace MphRead
             item.ListId = 0;
             Debug.Assert(matrixStack.Count >= 16 * matrixStackCount);
             item.MatrixStackCount = matrixStackCount;
-            for (int i = 0; i < matrixStack.Count; i++)
+            for (int i = 0; i < 16 * matrixStackCount; i++)
             {
                 item.MatrixStack[i] = matrixStack[i];
             }
@@ -2963,7 +2963,7 @@ namespace MphRead
                 }
                 else
                 {
-                    _showColors = !_showColors;
+                    //_showColors = !_showColors;
                 }
             }
             else if (e.Key == Keys.Q)
@@ -2989,7 +2989,7 @@ namespace MphRead
                 }
                 else
                 {
-                    _wireframe = !_wireframe;
+                    //_wireframe = !_wireframe;
                 }
             }
             else if (e.Key == Keys.B && !e.Alt)

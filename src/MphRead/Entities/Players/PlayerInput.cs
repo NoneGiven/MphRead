@@ -1370,7 +1370,7 @@ namespace MphRead.Entities
         {
             KeyboardState keyboardSnap = keyboardState.GetSnapshot();
             MouseState mouseSnap = mouseState.GetSnapshot();
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 1; i++) // skdebug
             {
                 PlayerEntity player = Players[i];
                 KeyboardState? prevKeyboardSnap = player.Input.KeyboardState;

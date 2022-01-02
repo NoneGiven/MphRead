@@ -1385,7 +1385,7 @@ namespace MphRead.Entities
             SetBipedAnimation(PlayerAnimation.Unmorph, AnimFlags.NoLoop);
             if (Flags2.TestFlag(PlayerFlags2.AltAttack))
             {
-                EndAltFormAttack();
+                EndAltAttack();
             }
             UpdateZoom(false);
             EquipInfo.ChargeLevel = 0;
@@ -1463,30 +1463,6 @@ namespace MphRead.Entities
                 _volumeUnxf = bipedVolume;
             }
             // todo: stop SFX
-        }
-
-        private void EndAltFormAttack()
-        {
-            if (Hunter == Hunter.Samus)
-            {
-                Flags1 &= ~PlayerFlags1.Boosting;
-            }
-            else if (Hunter == Hunter.Trace || Hunter == Hunter.Weavel)
-            {
-                // todo: if bot and encounter state, set cooldown to 10 * 2
-                // else...
-                _altAttackCooldown = (ushort)(Values.AltAttackCooldown * 2); // todo: FPS stuff
-            }
-            else if (Hunter == Hunter.Noxus)
-            {
-                if (_altAttackTime > 0)
-                {
-                    // todo: update SFX
-                    _altModel.SetAnimation((int)NoxusAltAnim.Extend, AnimFlags.Paused);
-                    _altAttackTime = 0;
-                }
-            }
-            Flags2 &= ~PlayerFlags2.AltAttack;
         }
 
         private void CreateBurnEffect()
