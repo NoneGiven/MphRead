@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Microsoft.VisualBasic;
 using MphRead.Effects;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
@@ -72,12 +71,12 @@ namespace MphRead.Entities
         private float _movePercent = 0;
         private float _moveIncrement = 0;
 
-        private static readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(64); // in-game: 18
+        private static BeamProjectileEntity[] _beams = null!;
 
         public PlatformEntityData Data => _data;
         public Vector3 Velocity => _velocity;
 
-        public PlatformEntity(PlatformEntityData data) : base(EntityType.Platform)
+        public PlatformEntity(PlatformEntityData data, Scene scene) : base(EntityType.Platform, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -198,11 +197,12 @@ namespace MphRead.Entities
                     }
                 }
             }
+            _beams = SceneSetup.CreateBeamList(64, scene); // in-game: 18
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
+            base.Initialize();
             if (Flags.TestFlag(PlatformFlags.SamusShip))
             {
                 _effectNodeIds[0] = _models[0].Model.GetNodeIndexByName("R_Turret");
@@ -211,38 +211,38 @@ namespace MphRead.Entities
                 _effectNodeIds[3] = _models[0].Model.GetNodeIndexByName("R_Turret3");
                 if (_effectNodeIds[0] != -1 || _effectNodeIds[1] != -1 || _effectNodeIds[2] != -1 || _effectNodeIds[3] != -1)
                 {
-                    scene.LoadEffect(_nozzleEffectId);
+                    _scene.LoadEffect(_nozzleEffectId);
                 }
             }
             if (_data.ResistEffectId != 0)
             {
-                scene.LoadEffect(_data.ResistEffectId);
+                _scene.LoadEffect(_data.ResistEffectId);
             }
             if (_data.DamageEffectId != 0)
             {
-                scene.LoadEffect(_data.DamageEffectId);
+                _scene.LoadEffect(_data.DamageEffectId);
             }
             if (_data.DeadEffectId != 0)
             {
-                scene.LoadEffect(_data.DeadEffectId);
+                _scene.LoadEffect(_data.DeadEffectId);
             }
             if (_data.BeamId == 0 && Flags.TestFlag(PlatformFlags.BeamSpawner))
             {
-                scene.LoadEffect(183); // syluxMissile
-                scene.LoadEffect(184); // syluxMissileCol
-                scene.LoadEffect(185); // syluxMissileFlash
+                _scene.LoadEffect(183); // syluxMissile
+                _scene.LoadEffect(184); // syluxMissileCol
+                _scene.LoadEffect(185); // syluxMissileFlash
             }
-            scene.TryGetEntity(_data.ScanMsgTarget, out _scanMessageTarget);
-            scene.TryGetEntity(_data.BeamHitMsgTarget, out _hitMessageTarget);
-            scene.TryGetEntity(_data.PlayerColMsgTarget, out _playerColMessageTarget);
-            scene.TryGetEntity(_data.DeadMsgTarget, out _deathMessageTarget);
-            scene.TryGetEntity(_data.LifetimeMsg1Target, out EntityBase? lifetimeMessageTarget);
+            _scene.TryGetEntity(_data.ScanMsgTarget, out _scanMessageTarget);
+            _scene.TryGetEntity(_data.BeamHitMsgTarget, out _hitMessageTarget);
+            _scene.TryGetEntity(_data.PlayerColMsgTarget, out _playerColMessageTarget);
+            _scene.TryGetEntity(_data.DeadMsgTarget, out _deathMessageTarget);
+            _scene.TryGetEntity(_data.LifetimeMsg1Target, out EntityBase? lifetimeMessageTarget);
             _lifetimeMessageTargets[0] = lifetimeMessageTarget;
-            scene.TryGetEntity(_data.LifetimeMsg2Target, out lifetimeMessageTarget);
+            _scene.TryGetEntity(_data.LifetimeMsg2Target, out lifetimeMessageTarget);
             _lifetimeMessageTargets[1] = lifetimeMessageTarget;
-            scene.TryGetEntity(_data.LifetimeMsg3Target, out lifetimeMessageTarget);
+            _scene.TryGetEntity(_data.LifetimeMsg3Target, out lifetimeMessageTarget);
             _lifetimeMessageTargets[2] = lifetimeMessageTarget;
-            scene.TryGetEntity(_data.LifetimeMsg4Target, out lifetimeMessageTarget);
+            _scene.TryGetEntity(_data.LifetimeMsg4Target, out lifetimeMessageTarget);
             _lifetimeMessageTargets[3] = lifetimeMessageTarget;
             _lifetimeMessages[0] = _data.LifetimeMessage1;
             _lifetimeMessages[1] = _data.LifetimeMessage2;
@@ -262,7 +262,7 @@ namespace MphRead.Entities
             _lifetimeMessageIndices[3] = _data.LifetimeMsg4Index;
             if (_data.ParentId != -1)
             {
-                if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent) && parent.Type == EntityType.Platform)
+                if (_scene.TryGetEntity(_data.ParentId, out EntityBase? parent) && parent.Type == EntityType.Platform)
                 {
                     // only relevant for SyluxShip/Turret
                     _parent = (PlatformEntity)parent;
@@ -270,14 +270,14 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Destroy(Scene scene)
+        public override void Destroy()
         {
             for (int i = 0; i < _effects.Count; i++)
             {
                 EffectEntry? effectEntry = _effects[i];
                 if (effectEntry != null)
                 {
-                    scene.UnlinkEffectEntry(effectEntry);
+                    _scene.UnlinkEffectEntry(effectEntry);
                 }
             }
         }
@@ -358,7 +358,7 @@ namespace MphRead.Entities
             {
                 if (Flags.TestFlag(PlatformFlags.DripMoat))
                 {
-                    scene.SendMessage(Message.DripMoatPlatform, this, PlayerEntity.MainPlayer, 1, 0);
+                    _scene.SendMessage(Message.DripMoatPlatform, this, PlayerEntity.MainPlayer, 1, 0);
                 }
                 if (_data.PositionCount >= 2)
                 {
@@ -387,7 +387,7 @@ namespace MphRead.Entities
                 // todo: more room state
                 if (Flags.TestFlag(PlatformFlags.DripMoat))
                 {
-                    scene.SendMessage(Message.DripMoatPlatform, this, PlayerEntity.MainPlayer, 0, 0);
+                    _scene.SendMessage(Message.DripMoatPlatform, this, PlayerEntity.MainPlayer, 0, 0);
                 }
             }
         }
@@ -406,7 +406,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             UpdateLinkedInverse(0);
             // todo: visible position stuff
@@ -474,7 +474,7 @@ namespace MphRead.Entities
                     _curRotation = rotation.Normalized();
                     if (_data.MovementType == 0)
                     {
-                        UpdateState(scene);
+                        UpdateState();
                         _curPosition += _velocity;
                     }
                 }
@@ -489,7 +489,7 @@ namespace MphRead.Entities
                     }
                     else if (_data.MovementType == 0)
                     {
-                        UpdateState(scene);
+                        UpdateState();
                         _curPosition += _velocity;
                         _movePercent += _moveIncrement;
                         _curRotation = ComputeRotationSin(_fromRotation, _toRotation, _movePercent);
@@ -535,7 +535,7 @@ namespace MphRead.Entities
                     Matrix4 transform = GetTransform();
                     Vector3 spawnPos = Matrix.Vec3MultMtx4(_beamSpawnPos, transform);
                     Vector3 spawnDir = Matrix.Vec3MultMtx3(_beamSpawnDir, transform).Normalized();
-                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, scene);
+                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, _scene);
                     if (!_equipInfo.Weapon.Flags.TestFlag(WeaponFlags.RepeatFire))
                     {
                         _beamActive = false;
@@ -544,7 +544,7 @@ namespace MphRead.Entities
             }
             if (!_models[0].IsPlaceholder && _animFlags.TestFlag(PlatAnimFlags.HasAnim) && _currentAnim >= 0)
             {
-                UpdateAnimFrames(_models[0], scene);
+                UpdateAnimFrames(_models[0]);
             }
             if (_currentAnim != -2 && _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
             {
@@ -560,7 +560,7 @@ namespace MphRead.Entities
                 if (_effectNodeIds[i] >= 0 && _effects[i] == null)
                 {
                     Matrix4 transform = Matrix.GetTransform4(Vector3.UnitX, Vector3.UnitY, new Vector3(0, 2, 0));
-                    _effects[i] = scene.SpawnEffectGetEntry(_nozzleEffectId, transform);
+                    _effects[i] = _scene.SpawnEffectGetEntry(_nozzleEffectId, transform);
                     _effects[i]!.SetElementExtension(true);
                 }
                 if (_effects[i] != null)
@@ -585,11 +585,11 @@ namespace MphRead.Entities
         }
 
         // todo: use more flags
-        public override void GetDrawInfo(Scene scene)
+        public override void GetDrawInfo()
         {
             if (_animFlags.TestFlag(PlatAnimFlags.Draw) || _models[0].IsPlaceholder)
             {
-                base.GetDrawInfo(scene);
+                base.GetDrawInfo();
             }
         }
 
@@ -736,7 +736,7 @@ namespace MphRead.Entities
             }
         }
 
-        private void UpdateState(Scene scene)
+        private void UpdateState()
         {
             if (_state == PlatformState.Moving)
             {
@@ -765,7 +765,7 @@ namespace MphRead.Entities
                             EntityBase? target = _lifetimeMessageTargets[i];
                             if (message != Message.None && target != null)
                             {
-                                scene.SendMessage(message, this, target,
+                                _scene.SendMessage(message, this, target,
                                     _lifetimeMessageParam1s[i], _lifetimeMessageParam2s[i]);
                             }
                         }
@@ -954,7 +954,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override void HandleMessage(MessageInfo info, Scene scene)
+        public override void HandleMessage(MessageInfo info)
         {
             void OnActivate()
             {
@@ -1015,7 +1015,7 @@ namespace MphRead.Entities
                         {
                             if (_data.BeamHitMessage != Message.None && _hitMessageTarget != null)
                             {
-                                scene.SendMessage(_data.BeamHitMessage, this, _hitMessageTarget,
+                                _scene.SendMessage(_data.BeamHitMessage, this, _hitMessageTarget,
                                     _data.BeamHitMsgParam1, _data.BeamHitMsgParam2);
                             }
                             int effectId = 0;
@@ -1046,7 +1046,7 @@ namespace MphRead.Entities
                                                 EntityBase? target = _lifetimeMessageTargets[i];
                                                 if (message != Message.None && target != null)
                                                 {
-                                                    scene.SendMessage(message, this, target,
+                                                    _scene.SendMessage(message, this, target,
                                                         _lifetimeMessageParam1s[i], _lifetimeMessageParam2s[i]);
                                                 }
                                             }
@@ -1058,15 +1058,15 @@ namespace MphRead.Entities
                                             effectId = _data.DeadEffectId;
                                             if (Flags.TestFlag(PlatformFlags.Breakable))
                                             {
-                                                scene.SendMessage(Message.PlatformSleep, this, this, 0, 0);
+                                                _scene.SendMessage(Message.PlatformSleep, this, this, 0, 0);
                                                 // todo: play SFX
                                             }
                                             // todo: use visible pos
                                             Vector3 spawnPos = Position.AddY(1);
-                                            ItemSpawnEntity.SpawnItemDrop(_data.ItemType, spawnPos, _data.ItemChance, scene);
+                                            ItemSpawnEntity.SpawnItemDrop(_data.ItemType, spawnPos, _data.ItemChance, _scene);
                                             if (_data.DeadMessage != Message.None && _deathMessageTarget != null)
                                             {
-                                                scene.SendMessage(_data.DeadMessage, this, _deathMessageTarget,
+                                                _scene.SendMessage(_data.DeadMessage, this, _deathMessageTarget,
                                                     _data.DeadMsgParam1, _data.DeadMsgParam2);
                                             }
                                             _health = 0;
@@ -1090,7 +1090,7 @@ namespace MphRead.Entities
                                     {
                                         spawnFacing = Vector3.Cross(Vector3.UnitZ, spawnUp).Normalized();
                                     }
-                                    scene.SpawnEffect(effectId, spawnFacing, spawnUp, spawnPos, owner: result.EntityCollision.Entity);
+                                    _scene.SpawnEffect(effectId, spawnFacing, spawnUp, spawnPos, owner: result.EntityCollision.Entity);
                                 }
                             }
                         }
@@ -1103,7 +1103,7 @@ namespace MphRead.Entities
                         if (_data.PlayerColMessage != Message.None && _playerColMessageTarget != null && !alreadyColliding
                             && !(Flags.TestFlag(PlatformFlags.StandingColOnly) && (int)info.Param2 == 0))
                         {
-                            scene.SendMessage(_data.PlayerColMessage, this, _playerColMessageTarget,
+                            _scene.SendMessage(_data.PlayerColMessage, this, _playerColMessageTarget,
                                 _data.PlayerColMsgParam1, _data.PlayerColMsgParam2);
                         }
                     }
@@ -1230,7 +1230,7 @@ namespace MphRead.Entities
         private int _moveTimer;
         private Vector3 _velocity = Vector3.Zero;
 
-        public FhPlatformEntity(FhPlatformEntityData data) : base(EntityType.Platform)
+        public FhPlatformEntity(FhPlatformEntityData data, Scene scene) : base(EntityType.Platform, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -1253,7 +1253,7 @@ namespace MphRead.Entities
             _moveTimer = _delay;
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             // todo: collision and stuff
             Vector3 position = _position;
@@ -1313,7 +1313,7 @@ namespace MphRead.Entities
                 }
             }
             Position = position;
-            base.Process(scene);
+            base.Process();
             UpdateCollisionTransform(0, Transform);
             return true;
         }

@@ -11,7 +11,7 @@ namespace MphRead.Entities
 
         public const int StartId = 50;
 
-        public PointModuleEntity(PointModuleEntityData data) : base(EntityType.PointModule)
+        public PointModuleEntity(PointModuleEntityData data, Scene scene) : base(EntityType.PointModule, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -21,26 +21,26 @@ namespace MphRead.Entities
             inst.Active = false;
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
-            if (_data.NextId != 0 && scene.TryGetEntity(_data.NextId, out EntityBase? entity))
+            base.Initialize();
+            if (_data.NextId != 0 && _scene.TryGetEntity(_data.NextId, out EntityBase? entity))
             {
                 Next = (PointModuleEntity)entity;
             }
-            if (_data.PrevId != 0 && scene.TryGetEntity(_data.PrevId, out entity))
+            if (_data.PrevId != 0 && _scene.TryGetEntity(_data.PrevId, out entity))
             {
                 Prev = (PointModuleEntity)entity;
             }
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             if (_current == null && Id == StartId)
             {
                 SetCurrent();
             }
-            return base.Process(scene);
+            return base.Process();
         }
 
         public void SetCurrent()

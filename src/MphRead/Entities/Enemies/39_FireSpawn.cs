@@ -26,25 +26,25 @@ namespace MphRead.Entities.Enemies
 
         public Enemy39Values Values { get; private set; }
 
-        public Enemy39Entity(EnemyInstanceEntityData data) : base(data)
+        public Enemy39Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);
             _spawner = spawner;
-            _stateProcesses = new Action<Scene>[6]
+            _stateProcesses = new Action[6]
             {
                 State0, State1, State2, State3, State4, State5
             };
         }
 
-        protected override bool EnemyInitialize(Scene scene)
+        protected override bool EnemyInitialize()
         {
             Flags |= EnemyFlags.Visible;
             Flags |= EnemyFlags.Invincible;
             Flags |= EnemyFlags.OnRadar;
             Flags &= ~EnemyFlags.CollidePlayer;
             Vector3 position = _data.Spawner.Position;
-            Matrix4 transform = GetTransformMatrix((scene.CameraPosition - position).Normalized(), Vector3.UnitY); // todo: use player position
+            Matrix4 transform = GetTransformMatrix((_scene.CameraPosition - position).Normalized(), Vector3.UnitY); // todo: use player position
             transform.Row3.Xyz = position;
             Transform = transform;
             _boundingRadius = 1;
@@ -74,10 +74,10 @@ namespace MphRead.Entities.Enemies
             inst.SetAnimation(3, AnimFlags.Paused);
             _wristNodeL = inst.Model.GetNodeByName("Wrist_L");
             _wristNodeR = inst.Model.GetNodeByName("Wrist_R");
-            _hitZone = EnemySpawnEntity.SpawnEnemy(this, EnemyType.HitZone) as Enemy50Entity;
+            _hitZone = EnemySpawnEntity.SpawnEnemy(this, EnemyType.HitZone, _scene) as Enemy50Entity;
             if (_hitZone != null)
             {
-                scene.AddEntity(_hitZone);
+                _scene.AddEntity(_hitZone);
                 _hitZone.Transform = Transform.ClearScale();
                 Metadata.LoadEffectiveness(Values.Effectiveness, _hitZone.BeamEffectiveness);
                 _hitZone.Flags |= EnemyFlags.Invincible;
@@ -90,7 +90,7 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        protected override void EnemyProcess(Scene scene)
+        protected override void EnemyProcess()
         {
             ContactDamagePlayer(Values.ContactDamage, knockback: true);
             if (_state1 == 4)
@@ -101,26 +101,26 @@ namespace MphRead.Entities.Enemies
                 _wristPos[0] = _wristNodeL.Animation.Row3.Xyz;
                 _wristPos[1] = _wristNodeR.Animation.Row3.Xyz;
             }
-            CallStateProcess(scene);
+            CallStateProcess();
         }
 
         // todo: function names
-        private void State0(Scene scene)
+        private void State0()
         {
             // the Y component should really be set to zero before normalization -- this causes transform squashing
-            Vector3 facing = (scene.CameraPosition - Position).Normalized().WithY(0); // todo: use player position
+            Vector3 facing = (_scene.CameraPosition - Position).Normalized().WithY(0); // todo: use player position
             Matrix4 transform = GetTransformMatrix(facing, Vector3.UnitY);
             transform.Row3.Xyz = Position;
             Transform = transform;
-            CallSubroutine(Metadata.Enemy39Subroutines, this, scene);
+            CallSubroutine(Metadata.Enemy39Subroutines, this);
         }
 
-        private void State1(Scene scene)
+        private void State1()
         {
-            CallSubroutine(Metadata.Enemy39Subroutines, this, scene);
+            CallSubroutine(Metadata.Enemy39Subroutines, this);
         }
 
-        private void State2(Scene scene)
+        private void State2()
         {
             if (_tangibilityTimer == 5 * 2) // todo: FPS stuff
             {
@@ -136,18 +136,18 @@ namespace MphRead.Entities.Enemies
             {
                 _tangibilityTimer++;
             }
-            State0(scene);
+            State0();
         }
 
-        private void State3(Scene scene)
+        private void State3()
         {
-            State0(scene);
+            State0();
         }
 
-        private void State4(Scene scene)
+        private void State4()
         {
-            State0(scene);
-            if (_attackCount > 0 && _animFrameCount > 0 && scene.FrameCount != 0 && scene.FrameCount % 2 == 0)
+            State0();
+            if (_attackCount > 0 && _animFrameCount > 0 && _scene.FrameCount != 0 && _scene.FrameCount % 2 == 0)
             {
                 ModelInstance model = _models[0];
                 AnimationInfo anim = model.AnimInfo;
@@ -170,22 +170,22 @@ namespace MphRead.Entities.Enemies
                 }
                 if (_animFrameCount == 53)
                 {
-                    CreateEffect(scene);
+                    CreateEffect();
                 }
                 else if (_animFrameCount == 25)
                 {
                     _attackCount--;
                     _attackDelay = Values.AttackDelay * 2; // todo: FPS stuff
-                    Vector3 dir = scene.CameraPosition - _wristPos[_wristId]; // todo: use player position + 0.5 Y
+                    Vector3 dir = _scene.CameraPosition - _wristPos[_wristId]; // todo: use player position + 0.5 Y
                     dir = dir.Normalized();
                     EquipInfo equipInfo = _equipInfo[_wristId];
                     equipInfo.Weapon.UnchargedDamage = Values.BeamDamage;
                     equipInfo.Weapon.SplashDamage = Values.SplashDamage;
                     equipInfo.Weapon.HeadshotDamage = Values.BeamDamage;
-                    BeamProjectileEntity.Spawn(this, equipInfo, _wristPos[_wristId], dir, BeamSpawnFlags.None, scene);
+                    BeamProjectileEntity.Spawn(this, equipInfo, _wristPos[_wristId], dir, BeamSpawnFlags.None, _scene);
                     if (_effectEntry != null)
                     {
-                        scene.DetachEffectEntry(_effectEntry, setExpired: true);
+                        _scene.DetachEffectEntry(_effectEntry, setExpired: true);
                         _effectEntry = null;
                     }
                 }
@@ -200,19 +200,19 @@ namespace MphRead.Entities.Enemies
             }
         }
 
-        private void CreateEffect(Scene scene)
+        private void CreateEffect()
         {
             Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY);
             transform.Row3.Xyz = _wristPos[_wristId];
             int effectId = _spawner.Data.Fields.S06.EnemySubtype == 1 ? 96 : 94; // iceDemonHurl, lavaDemonHurl
-            _effectEntry = scene.SpawnEffectGetEntry(effectId, transform);
+            _effectEntry = _scene.SpawnEffectGetEntry(effectId, transform);
             if (_effectEntry != null)
             {
                 _effectEntry.SetElementExtension(true);
             }
         }
 
-        private void State5(Scene scene)
+        private void State5()
         {
             if (_tangibilityTimer == 18 * 2) // todo: FPS stuff
             {
@@ -228,12 +228,12 @@ namespace MphRead.Entities.Enemies
             {
                 _tangibilityTimer++;
             }
-            State0(scene);
+            State0();
         }
 
-        private bool Behavior0(Scene scene)
+        private bool Behavior0()
         {
-            if (!_activeVolume.TestPoint(scene.CameraPosition)) // todo: use player position
+            if (!_activeVolume.TestPoint(_scene.CameraPosition)) // todo: use player position
             {
                 return false;
             }
@@ -280,7 +280,7 @@ namespace MphRead.Entities.Enemies
             Position = position;
         }
 
-        private bool Behavior1(Scene scene)
+        private bool Behavior1()
         {
             if (_attackDelay > 0)
             {
@@ -293,7 +293,7 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        private bool Behavior2(Scene scene)
+        private bool Behavior2()
         {
             if (!_models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
             {
@@ -302,13 +302,13 @@ namespace MphRead.Entities.Enemies
             Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY);
             transform.Row3.Xyz = Position;
             int effectId = _spawner.Data.Fields.S06.EnemySubtype == 1 ? 133 : 93; // iceDemonDive, lavaDemonDive
-            scene.SpawnEffect(effectId, transform);
+            _scene.SpawnEffect(effectId, transform);
             _models[0].SetAnimation(3, AnimFlags.Paused);
             _tangibilityTimer = 0;
             return true;
         }
 
-        private bool Behavior3(Scene scene)
+        private bool Behavior3()
         {
             if (!_models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
             {
@@ -321,7 +321,7 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        private bool Behavior4(Scene scene)
+        private bool Behavior4()
         {
             if (_diveTimer > 0)
             {
@@ -331,12 +331,12 @@ namespace MphRead.Entities.Enemies
             Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY);
             transform.Row3.Xyz = Position;
             int effectId = _spawner.Data.Fields.S06.EnemySubtype == 1 ? 132 : 95; // iceDemonRise, lavaDemonRise
-            scene.SpawnEffect(effectId, transform);
+            _scene.SpawnEffect(effectId, transform);
             _models[0].SetAnimation(3, AnimFlags.NoLoop);
             return true;
         }
 
-        private bool Behavior5(Scene scene)
+        private bool Behavior5()
         {
             if (_attackCount > 0)
             {
@@ -345,9 +345,9 @@ namespace MphRead.Entities.Enemies
             return StartSubmerge();
         }
 
-        private bool Behavior6(Scene scene)
+        private bool Behavior6()
         {
-            if (_activeVolume.TestPoint(scene.CameraPosition)) // todo: use player position
+            if (_activeVolume.TestPoint(_scene.CameraPosition)) // todo: use player position
             {
                 return false;
             }
@@ -372,39 +372,39 @@ namespace MphRead.Entities.Enemies
 
         #region Boilerplate
 
-        public static bool Behavior0(Enemy39Entity enemy, Scene scene)
+        public static bool Behavior0(Enemy39Entity enemy)
         {
-            return enemy.Behavior0(scene);
+            return enemy.Behavior0();
         }
 
-        public static bool Behavior1(Enemy39Entity enemy, Scene scene)
+        public static bool Behavior1(Enemy39Entity enemy)
         {
-            return enemy.Behavior1(scene);
+            return enemy.Behavior1();
         }
 
-        public static bool Behavior2(Enemy39Entity enemy, Scene scene)
+        public static bool Behavior2(Enemy39Entity enemy)
         {
-            return enemy.Behavior2(scene);
+            return enemy.Behavior2();
         }
 
-        public static bool Behavior3(Enemy39Entity enemy, Scene scene)
+        public static bool Behavior3(Enemy39Entity enemy)
         {
-            return enemy.Behavior3(scene);
+            return enemy.Behavior3();
         }
 
-        public static bool Behavior4(Enemy39Entity enemy, Scene scene)
+        public static bool Behavior4(Enemy39Entity enemy)
         {
-            return enemy.Behavior4(scene);
+            return enemy.Behavior4();
         }
 
-        public static bool Behavior5(Enemy39Entity enemy, Scene scene)
+        public static bool Behavior5(Enemy39Entity enemy)
         {
-            return enemy.Behavior5(scene);
+            return enemy.Behavior5();
         }
 
-        public static bool Behavior6(Enemy39Entity enemy, Scene scene)
+        public static bool Behavior6(Enemy39Entity enemy)
         {
-            return enemy.Behavior6(scene);
+            return enemy.Behavior6();
         }
 
         #endregion

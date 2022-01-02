@@ -17,6 +17,8 @@ namespace MphRead.Entities
         public bool Hidden { get; set; }
         public float Alpha { get; set; } = 1.0f;
 
+        protected Scene _scene;
+
         protected float _drawScale = 1;
         protected Matrix4 _transform = Matrix4.Identity;
         protected Vector3 _scale = new Vector3(1, 1, 1);
@@ -115,12 +117,13 @@ namespace MphRead.Entities
         protected virtual Vector4? OverrideColor { get; } = null;
         protected virtual Vector4? PaletteOverride { get; set; } = null;
 
-        protected EntityBase(EntityType type)
+        protected EntityBase(EntityType type, Scene scene)
         {
             Type = type;
+            _scene = scene;
         }
 
-        public virtual void Initialize(Scene scene)
+        public virtual void Initialize()
         {
             _anyLighting |= _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
         }
@@ -218,7 +221,7 @@ namespace MphRead.Entities
             }
         }
 
-        public virtual void Destroy(Scene scene)
+        public virtual void Destroy()
         {
         }
 
@@ -227,23 +230,23 @@ namespace MphRead.Entities
             return Matrix4.CreateScale(inst.Model.Scale) * _transform;
         }
 
-        public virtual bool Process(Scene scene)
+        public virtual bool Process()
         {
             if (Active)
             {
                 for (int i = 0; i < _models.Count; i++)
                 {
-                    UpdateAnimFrames(_models[i], scene);
+                    UpdateAnimFrames(_models[i]);
                 }
             }
             return true;
         }
 
-        protected void UpdateAnimFrames(ModelInstance inst, Scene scene)
+        protected void UpdateAnimFrames(ModelInstance inst)
         {
-            if (inst.Active || scene.ShowAllEntities)
+            if (inst.Active || _scene.ShowAllEntities)
             {
-                if (scene.FrameCount != 0 && scene.FrameCount % 2 == 0)
+                if (_scene.FrameCount != 0 && _scene.FrameCount % 2 == 0)
                 {
                     inst.UpdateAnimFrames();
                 }
@@ -272,9 +275,9 @@ namespace MphRead.Entities
             return OverrideColor;
         }
 
-        protected virtual LightInfo GetLightInfo(Scene scene)
+        protected virtual LightInfo GetLightInfo()
         {
-            return new LightInfo(scene.Light1Vector, scene.Light1Color, scene.Light2Vector, scene.Light2Color);
+            return new LightInfo(_scene.Light1Vector, _scene.Light1Color, _scene.Light2Vector, _scene.Light2Color);
         }
 
         protected virtual int? GetBindingOverride(ModelInstance inst, Material material, int index)
@@ -282,18 +285,18 @@ namespace MphRead.Entities
             return null;
         }
 
-        protected virtual void UpdateTransforms(ModelInstance inst, int index, Scene scene)
+        protected virtual void UpdateTransforms(ModelInstance inst, int index)
         {
             Model model = inst.Model;
             model.AnimateMaterials(inst.AnimInfo);
             model.AnimateTextures(inst.AnimInfo);
             model.ComputeNodeMatrices(index: 0);
             Matrix4 transform = GetModelTransform(inst, index);
-            model.AnimateNodes(index: 0, UseNodeTransform || scene.TransformRoomNodes, transform, model.Scale, inst.AnimInfo);
+            model.AnimateNodes(index: 0, UseNodeTransform || _scene.TransformRoomNodes, transform, model.Scale, inst.AnimInfo);
             model.UpdateMatrixStack();
             // todo: could skip this unless a relevant material property changed this update (and we're going to draw this entity)
-            scene.UpdateMaterials(model, GetModelRecolor(inst, index));
-            if (scene.ShowCollision)
+            _scene.UpdateMaterials(model, GetModelRecolor(inst, index));
+            if (_scene.ShowCollision)
             {
                 // if collision is not shown, the "needs update" state will persist until it is
                 // --> this is fine since _colPoints are only for display, not detection
@@ -301,26 +304,26 @@ namespace MphRead.Entities
             }
         }
 
-        public virtual void GetDrawInfo(Scene scene)
+        public virtual void GetDrawInfo()
         {
             for (int i = 0; i < _models.Count; i++)
             {
                 ModelInstance inst = _models[i];
-                if ((!inst.Active && !scene.ShowAllEntities) || (inst.IsPlaceholder && !scene.ShowInvisibleEntities && !scene.ShowAllEntities))
+                if ((!inst.Active && !_scene.ShowAllEntities) || (inst.IsPlaceholder && !_scene.ShowInvisibleEntities && !_scene.ShowAllEntities))
                 {
                     continue;
                 }
-                UpdateTransforms(inst, i, scene);
+                UpdateTransforms(inst, i);
                 if (!Hidden)
                 {
                     // todo: hide attached effects
-                    int polygonId = scene.GetNextPolygonId();
+                    int polygonId = _scene.GetNextPolygonId();
                     GetItems(inst, i, inst.Model.Nodes[0], polygonId);
                 }
             }
-            if (scene.ShowCollision && (scene.ColEntDisplay == EntityType.All || scene.ColEntDisplay == Type))
+            if (_scene.ShowCollision && (_scene.ColEntDisplay == EntityType.All || _scene.ColEntDisplay == Type))
             {
-                GetCollisionDrawInfo(scene);
+                GetCollisionDrawInfo();
             }
 
             void GetItems(ModelInstance inst, int index, Node node, int polygonId)
@@ -338,11 +341,11 @@ namespace MphRead.Entities
                         }
                         Material material = model.Materials[mesh.MaterialId];
                         Vector3 emission = GetEmission(inst, material, mesh.MaterialId);
-                        Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node, scene);
+                        Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node);
                         Vector4? color = inst.IsPlaceholder ? GetOverrideColor(inst, index) : null;
                         SelectionType selectionType = Selection.CheckSelection(this, inst, node, mesh);
                         int? bindingOverride = GetBindingOverride(inst, material, mesh.MaterialId);
-                        scene.AddRenderItem(material, polygonId, Alpha, emission, GetLightInfo(scene), texcoordMatrix,
+                        _scene.AddRenderItem(material, polygonId, Alpha, emission, GetLightInfo(), texcoordMatrix,
                             node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues, color,
                             PaletteOverride, selectionType, node.BillboardMode, _drawScale, bindingOverride);
                     }
@@ -358,14 +361,14 @@ namespace MphRead.Entities
             }
         }
 
-        protected virtual void GetCollisionDrawInfo(Scene scene)
+        protected virtual void GetCollisionDrawInfo()
         {
             for (int i = 0; i < 2; i++)
             {
                 EntityCollision? entCol = EntityCollision[i];
                 if (entCol != null && entCol.Collision.Active)
                 {
-                    entCol.Collision.Info.GetDrawInfo(entCol.DrawPoints, Type, scene);
+                    entCol.Collision.Info.GetDrawInfo(entCol.DrawPoints, Type, _scene);
                 }
             }
         }
@@ -375,8 +378,7 @@ namespace MphRead.Entities
             return Vector3.Zero;
         }
 
-        protected virtual Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId,
-            Node node, Scene scene, int recolor = -1)
+        protected virtual Matrix4 GetTexcoordMatrix(ModelInstance inst, Material material, int materialId, Node node, int recolor = -1)
         {
             Model model = inst.Model;
             Matrix4 texcoordMatrix = Matrix4.Identity;
@@ -513,7 +515,7 @@ namespace MphRead.Entities
             return transform;
         }
 
-        protected void AddVolumeItem(CollisionVolume volume, Vector3 color, Scene scene)
+        protected void AddVolumeItem(CollisionVolume volume, Vector3 color)
         {
             if (!Selection.CheckVolume(this))
             {
@@ -589,8 +591,8 @@ namespace MphRead.Entities
                     }
                 }
             }
-            CullingMode cullingMode = volume.TestPoint(scene.CameraPosition) ? CullingMode.Front : CullingMode.Back;
-            scene.AddRenderItem(cullingMode, scene.GetNextPolygonId(), new Vector4(color, 0.5f), (RenderItemType)(volume.Type + 1), verts);
+            CullingMode cullingMode = volume.TestPoint(_scene.CameraPosition) ? CullingMode.Front : CullingMode.Back;
+            _scene.AddRenderItem(cullingMode, _scene.GetNextPolygonId(), new Vector4(color, 0.5f), (RenderItemType)(volume.Type + 1), verts);
         }
 
         private Vector3 GetDiscVertices(float radius, int index)
@@ -602,7 +604,7 @@ namespace MphRead.Entities
             );
         }
 
-        public virtual void GetDisplayVolumes(Scene scene)
+        public virtual void GetDisplayVolumes()
         {
         }
 
@@ -622,7 +624,7 @@ namespace MphRead.Entities
             return null;
         }
 
-        public virtual void HandleMessage(MessageInfo info, Scene scene)
+        public virtual void HandleMessage(MessageInfo info)
         {
         }
 
@@ -643,7 +645,7 @@ namespace MphRead.Entities
 
     public class ModelEntity : EntityBase
     {
-        public ModelEntity(ModelInstance model, int recolor = 0) : base(EntityType.Model)
+        public ModelEntity(ModelInstance model, Scene scene, int recolor = 0) : base(EntityType.Model, scene)
         {
             Recolor = recolor;
             _models.Add(model);

@@ -6,14 +6,14 @@ namespace MphRead.Entities.Enemies
     {
         private readonly EnemyInstanceEntity _enemyOwner;
 
-        public Enemy50Entity(EnemyInstanceEntityData data) : base(data)
+        public Enemy50Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
         {
             var owner = data.Spawner as EnemyInstanceEntity;
             Debug.Assert(owner != null);
             _enemyOwner = owner;
         }
 
-        protected override void EnemyProcess(Scene scene)
+        protected override void EnemyProcess()
         {
             Transform = _enemyOwner.Transform.ClearScale();
             if (_enemyOwner.EnemyType == EnemyType.FireSpawn)
@@ -23,7 +23,7 @@ namespace MphRead.Entities.Enemies
             }
         }
 
-        protected override bool EnemyTakeDamage(EntityBase? source, Scene scene)
+        protected override bool EnemyTakeDamage(EntityBase? source)
         {
             if (_enemyOwner.EnemyType != EnemyType.FireSpawn)
             {
@@ -45,7 +45,7 @@ namespace MphRead.Entities.Enemies
                 _enemyOwner.BeamEffectiveness[6] = BeamEffectiveness[6];
                 _enemyOwner.BeamEffectiveness[7] = BeamEffectiveness[7];
                 _enemyOwner.BeamEffectiveness[8] = BeamEffectiveness[8];
-                _enemyOwner.TakeDamage((uint)(_healthMax - _health), source, scene);
+                _enemyOwner.TakeDamage((uint)(_healthMax - _health), source);
                 _enemyOwner.BeamEffectiveness[0] = eff0;
                 _enemyOwner.BeamEffectiveness[1] = eff1;
                 _enemyOwner.BeamEffectiveness[2] = eff2;
@@ -66,7 +66,7 @@ namespace MphRead.Entities.Enemies
             _boundingRadius = boundingRadius;
         }
 
-        public override void HandleMessage(MessageInfo info, Scene scene)
+        public override void HandleMessage(MessageInfo info)
         {
             if (info.Message == Message.SetActive
                 && info.Sender is EnemyInstanceEntity enemy && enemy.EnemyType == EnemyType.FireSpawn)

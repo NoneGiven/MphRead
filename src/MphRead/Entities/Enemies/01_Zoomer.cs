@@ -23,7 +23,7 @@ namespace MphRead.Entities.Enemies
         private bool _seekingVolume = false;
         private CollisionVolume _homeVolume;
 
-        public Enemy01Entity(EnemyInstanceEntityData data) : base(data)
+        public Enemy01Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
         {
             // technically this enemy has one state function and one behavior, but they're no-ops
             var spawner = data.Spawner as EnemySpawnEntity;
@@ -31,7 +31,7 @@ namespace MphRead.Entities.Enemies
             _spawner = spawner;
         }
 
-        protected override bool EnemyInitialize(Scene scene)
+        protected override bool EnemyInitialize()
         {
             var facing = new Vector3(Rng.GetRandomInt2(4096) / 4096f, 0, Rng.GetRandomInt2(4096) / 4096f);
             if (facing.X == 0 && facing.Z == 0)
@@ -57,7 +57,7 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        protected override void EnemyProcess(Scene scene)
+        protected override void EnemyProcess()
         {
             // todo: owner ent col (although it's unused)
             ModelInstance model = _models[0];
@@ -95,7 +95,7 @@ namespace MphRead.Entities.Enemies
             Vector3 testPos = Position + UpVector * _boundingRadius;
             var results = new CollisionResult[8];
             int colCount = CollisionDetection.CheckInRadius(testPos, _boundingRadius, limit: 8,
-                getSimpleNormal: true, TestFlags.None, scene, results);
+                getSimpleNormal: true, TestFlags.None, _scene, results);
             if (colCount > 0)
             {
                 Vector3 facing = FacingVector;

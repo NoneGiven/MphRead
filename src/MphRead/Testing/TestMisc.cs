@@ -38,7 +38,7 @@ namespace MphRead.Testing
                         if (entity.Type == EntityType.CameraSequence)
                         {
                             CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
-                            var entityClass = new CameraSequenceEntity(data);
+                            var entityClass = new CameraSequenceEntity(data, scene: null!);
                             if (ids.Contains(data.SequenceId))
                             {
                                 continue;

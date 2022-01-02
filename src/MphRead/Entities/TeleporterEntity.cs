@@ -15,11 +15,13 @@ namespace MphRead.Entities
         // used for multiplayer teleporter destination -- todo: confirm 1P doesn't have any intra-room teleporters
         private readonly Vector4 _overrideColor2 = new ColorRgb(0xAA, 0xAA, 0xAA).AsVector4();
 
-        public TeleporterEntity(TeleporterEntityData data, int areaId, bool multiplayer) : base(EntityType.Teleporter)
+        // todo: areaId should also come from scene state
+        public TeleporterEntity(TeleporterEntityData data, int areaId, Scene scene) : base(EntityType.Teleporter, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
+            bool multiplayer = scene.Multiplayer;
             if (data.Invisible != 0)
             {
                 AddPlaceholderModel();
@@ -70,7 +72,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             // todo: set artifacts active based on state
             if (_data.ArtifactId < 8)
@@ -79,7 +81,7 @@ namespace MphRead.Entities
                 _models[2].Active = true;
                 _models[3].Active = true;
             }
-            return base.Process(scene);
+            return base.Process();
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
@@ -122,9 +124,9 @@ namespace MphRead.Entities
             return base.GetModelRecolor(inst, index);
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
-            if (scene.ShowVolumes == VolumeDisplay.Teleporter)
+            if (_scene.ShowVolumes == VolumeDisplay.Teleporter)
             {
                 CollisionVolume volume;
                 if (_data.Invisible != 0 || _data.ArtifactId < 8)
@@ -135,7 +137,7 @@ namespace MphRead.Entities
                 {
                     volume = new CollisionVolume(Position.AddY(1.5f), 1.0f);
                 }
-                AddVolumeItem(volume, Vector3.UnitX, scene);
+                AddVolumeItem(volume, Vector3.UnitX);
             }
         }
     }

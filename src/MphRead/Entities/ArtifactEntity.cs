@@ -11,7 +11,7 @@ namespace MphRead.Entities
         private EntityBase? _parent = null;
         private Vector3 _invPos;
 
-        public ArtifactEntity(ArtifactEntityData data) : base(EntityType.Artifact)
+        public ArtifactEntity(ArtifactEntityData data, Scene scene) : base(EntityType.Artifact, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -25,38 +25,38 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
+            base.Initialize();
             if (_data.LinkedEntityId != -1)
             {
-                if (scene.TryGetEntity(_data.LinkedEntityId, out EntityBase? parent))
+                if (_scene.TryGetEntity(_data.LinkedEntityId, out EntityBase? parent))
                 {
                     _parent = parent;
                 }
             }
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             if (_parent != null)
             {
                 if (!_invSetUp)
                 {
-                    _parent.GetDrawInfo(scene); // force update transforms
+                    _parent.GetDrawInfo(); // force update transforms
                     _invPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
                     _invSetUp = true;
                 }
                 Position = Matrix.Vec3MultMtx4(_invPos, _parent.CollisionTransform);
             }
-            return base.Process(scene);
+            return base.Process();
         }
 
-        protected override LightInfo GetLightInfo(Scene scene)
+        protected override LightInfo GetLightInfo()
         {
             if (_data.ModelId >= 8)
             {
-                Vector3 player = scene.CameraPosition;
+                Vector3 player = _scene.CameraPosition;
                 var vector1 = new Vector3(0, 1, 0);
                 Vector3 vector2 = new Vector3(player.X - Position.X, 0, player.Z - Position.Z).Normalized();
                 Matrix3 lightTransform = Matrix.GetTransform3(vector2, vector1);
@@ -67,7 +67,7 @@ namespace MphRead.Entities
                     Metadata.OctolithLightColor
                 );
             }
-            return base.GetLightInfo(scene);
+            return base.GetLightInfo();
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)

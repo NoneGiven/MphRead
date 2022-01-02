@@ -16,7 +16,7 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0x8C, 0x00).AsVector4();
         public TriggerVolumeEntityData Data => _data;
 
-        public TriggerVolumeEntity(TriggerVolumeEntityData data) : base(EntityType.TriggerVolume)
+        public TriggerVolumeEntity(TriggerVolumeEntityData data, Scene scene) : base(EntityType.TriggerVolume, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -28,26 +28,26 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
-            if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
+            base.Initialize();
+            if (_scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
             {
                 _parent = parent;
             }
-            if (scene.TryGetEntity(_data.ChildId, out EntityBase? child))
+            if (_scene.TryGetEntity(_data.ChildId, out EntityBase? child))
             {
                 _child = child;
             }
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
             if (_data.Subtype == TriggerType.Normal &&
-                (scene.ShowVolumes == VolumeDisplay.TriggerParent || scene.ShowVolumes == VolumeDisplay.TriggerChild))
+                (_scene.ShowVolumes == VolumeDisplay.TriggerParent || _scene.ShowVolumes == VolumeDisplay.TriggerChild))
             {
-                Vector3 color = scene.ShowVolumes == VolumeDisplay.TriggerParent ? _parentEventColor : _childEventColor;
-                AddVolumeItem(_volume, color, scene);
+                Vector3 color = _scene.ShowVolumes == VolumeDisplay.TriggerParent ? _parentEventColor : _childEventColor;
+                AddVolumeItem(_volume, color);
             }
         }
 
@@ -61,7 +61,7 @@ namespace MphRead.Entities
             return _child;
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             // todo: add "cutscene triggers active" toggle and use this code w/ parent/child refs
             //if (Id == 17 && Active && _volume.TestPoint(scene.CameraPosition))
@@ -73,7 +73,7 @@ namespace MphRead.Entities
             //        trigger.SetActive(true);
             //    } 
             //}
-            return base.Process(scene);
+            return base.Process();
         }
     }
 
@@ -110,7 +110,7 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0x8C, 0x00).AsVector4();
         public FhTriggerVolumeEntityData Data => _data;
 
-        public FhTriggerVolumeEntity(FhTriggerVolumeEntityData data) : base(EntityType.TriggerVolume)
+        public FhTriggerVolumeEntity(FhTriggerVolumeEntityData data, Scene scene) : base(EntityType.TriggerVolume, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -121,26 +121,26 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
-            if (scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
+            base.Initialize();
+            if (_scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
             {
                 _parent = parent;
             }
-            if (scene.TryGetEntity(_data.ChildId, out EntityBase? child))
+            if (_scene.TryGetEntity(_data.ChildId, out EntityBase? child))
             {
                 _child = child;
             }
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
             if (_data.Subtype != FhTriggerType.Threshold &&
-                (scene.ShowVolumes == VolumeDisplay.TriggerParent || scene.ShowVolumes == VolumeDisplay.TriggerChild))
+                (_scene.ShowVolumes == VolumeDisplay.TriggerParent || _scene.ShowVolumes == VolumeDisplay.TriggerChild))
             {
-                Vector3 color = scene.ShowVolumes == VolumeDisplay.TriggerParent ? _parentEventColor : _childEventColor;
-                AddVolumeItem(_volume, color, scene);
+                Vector3 color = _scene.ShowVolumes == VolumeDisplay.TriggerParent ? _parentEventColor : _childEventColor;
+                AddVolumeItem(_volume, color);
             }
         }
 

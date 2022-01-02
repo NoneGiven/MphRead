@@ -26,7 +26,7 @@ namespace MphRead.Entities
         public new bool Active => _active;
         public Enemy49Entity? Lock => _lock;
 
-        public ForceFieldEntity(ForceFieldEntityData data) : base(EntityType.ForceField)
+        public ForceFieldEntity(ForceFieldEntityData data, Scene scene) : base(EntityType.ForceField, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -55,23 +55,23 @@ namespace MphRead.Entities
             inst.SetAnimation(0);
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
+            base.Initialize();
             if (_active && _data.Type != 9)
             {
-                _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock) as Enemy49Entity;
+                _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock, _scene) as Enemy49Entity;
                 if (_lock != null)
                 {
-                    scene.AddEntity(_lock);
+                    _scene.AddEntity(_lock);
                 }
             }
-            scene.LoadEffect(77);
+            _scene.LoadEffect(77); // deathMech1
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
-            base.Process(scene);
+            base.Process();
             if (_active)
             {
                 if (Alpha < 1)
@@ -94,7 +94,7 @@ namespace MphRead.Entities
             return true;
         }
 
-        public override void HandleMessage(MessageInfo info, Scene scene)
+        public override void HandleMessage(MessageInfo info)
         {
             if (info.Message == Message.Unlock)
             {
@@ -113,10 +113,10 @@ namespace MphRead.Entities
                 // todo: scan ID, room state
                 if (_lock == null && _data.Type != 9)
                 {
-                    _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock) as Enemy49Entity;
+                    _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock, _scene) as Enemy49Entity;
                     if (_lock != null)
                     {
-                        scene.AddEntity(_lock);
+                        _scene.AddEntity(_lock);
                     }
                 }
             }

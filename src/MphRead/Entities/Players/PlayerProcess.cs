@@ -8,16 +8,16 @@ namespace MphRead.Entities
 {
     public partial class PlayerEntity
     {
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
-            if (scene.Multiplayer && !LoadFlags.TestFlag(LoadFlags.Connected) && LoadFlags.TestFlag(LoadFlags.WasConnected))
+            if (_scene.Multiplayer && !LoadFlags.TestFlag(LoadFlags.Connected) && LoadFlags.TestFlag(LoadFlags.WasConnected))
             {
                 LoadFlags |= LoadFlags.Disconnected;
                 LoadFlags &= ~LoadFlags.Active;
             }
             if (!LoadFlags.TestFlag(LoadFlags.Active))
             {
-                if (scene.Multiplayer)
+                if (_scene.Multiplayer)
                 {
                     return false;
                 }
@@ -59,11 +59,11 @@ namespace MphRead.Entities
                     // todo: if we loaded into this room through a door or teleporter, respawn in the right place
                     // else...
                     int time = GetTimeUntilRespawn();
-                    if (IsMainPlayer && scene.Multiplayer) // todo: and some global is set
+                    if (IsMainPlayer && _scene.Multiplayer) // todo: and some global is set
                     {
                         // todo: set HUD model and draw messages
                     }
-                    if (!scene.Multiplayer || time <= 0 || IsBot) // todo: or input, or something with wi-fi, or forced
+                    if (!_scene.Multiplayer || time <= 0 || IsBot) // todo: or input, or something with wi-fi, or forced
                     {
                         // todo?: something with wifi
                         // else...
@@ -219,7 +219,7 @@ namespace MphRead.Entities
             }
             else if (_deathaltEffect != null)
             {
-                scene.UnlinkEffectEntry(_deathaltEffect);
+                _scene.UnlinkEffectEntry(_deathaltEffect);
                 _deathaltEffect = null;
             }
             if (Flags2.TestFlag(PlayerFlags2.Cloaking))
@@ -438,7 +438,7 @@ namespace MphRead.Entities
             UpdateGunAnimation();
             _gunModel.UpdateAnimFrames();
             // todo: update weapon SFX
-            PickUpItems(scene);
+            PickUpItems();
             if (!IsAltForm)
             {
                 UpdateAimVecs();
@@ -511,12 +511,12 @@ namespace MphRead.Entities
             }
             if (_frozenTimer == 0)
             {
-                UpdateAnimFrames(_bipedModel1, _scene);
-                UpdateAnimFrames(_bipedModel2, _scene);
+                UpdateAnimFrames(_bipedModel1);
+                UpdateAnimFrames(_bipedModel2);
             }
             if (IsAltForm || IsMorphing && _frozenTimer == 0)
             {
-                UpdateAnimFrames(_altModel, _scene);
+                UpdateAnimFrames(_altModel);
             }
             if (_boostEffect != null)
             {
@@ -649,7 +649,7 @@ namespace MphRead.Entities
             }
             if (Flags1.TestFlag(PlayerFlags1.DrawGunSmoke))
             {
-                UpdateAnimFrames(_gunSmokeModel, _scene);
+                UpdateAnimFrames(_gunSmokeModel);
             }
             if (_health == 0)
             {
@@ -815,7 +815,7 @@ namespace MphRead.Entities
             }
         }
 
-        private void PickUpItems(Scene scene)
+        private void PickUpItems()
         {
             // todo: also return if the following are all true - cur camseq, block input flag set, IsMainPlayer
             if (_health == 0 || (IsBot && !_scene.Multiplayer) || IgnoreItemPickups)
@@ -969,7 +969,7 @@ namespace MphRead.Entities
                 }
                 if (pickedUp)
                 {
-                    item.OnPickedUp(scene);
+                    item.OnPickedUp();
                 }
             }
         }
@@ -1752,12 +1752,12 @@ namespace MphRead.Entities
             _light2Vector = light2Vector.Normalized();
         }
 
-        protected override LightInfo GetLightInfo(Scene scene)
+        protected override LightInfo GetLightInfo()
         {
             return new LightInfo(_light1Vector, _light1Color, _light2Vector, _light2Color);
         }
 
-        public override void HandleMessage(MessageInfo info, Scene scene)
+        public override void HandleMessage(MessageInfo info)
         {
             if (info.Message == Message.Damage)
             {
@@ -1824,42 +1824,42 @@ namespace MphRead.Entities
             }
         }
 
-        public override void Destroy(Scene scene)
+        public override void Destroy()
         {
             // todo: stop SFX
             if (_furlEffect != null)
             {
-                scene.UnlinkEffectEntry(_furlEffect);
+                _scene.UnlinkEffectEntry(_furlEffect);
                 _furlEffect = null;
             }
             if (_boostEffect != null)
             {
-                scene.UnlinkEffectEntry(_boostEffect);
+                _scene.UnlinkEffectEntry(_boostEffect);
                 _boostEffect = null;
             }
             if (_burnEffect != null)
             {
-                scene.UnlinkEffectEntry(_burnEffect);
+                _scene.UnlinkEffectEntry(_burnEffect);
                 _burnEffect = null;
             }
             if (_chargeEffect != null)
             {
-                scene.UnlinkEffectEntry(_chargeEffect);
+                _scene.UnlinkEffectEntry(_chargeEffect);
                 _chargeEffect = null;
             }
             if (_muzzleEffect != null)
             {
-                scene.UnlinkEffectEntry(_muzzleEffect);
+                _scene.UnlinkEffectEntry(_muzzleEffect);
                 _muzzleEffect = null;
             }
             if (_doubleDmgEffect != null)
             {
-                scene.UnlinkEffectEntry(_doubleDmgEffect);
+                _scene.UnlinkEffectEntry(_doubleDmgEffect);
                 _doubleDmgEffect = null;
             }
             if (_deathaltEffect != null)
             {
-                scene.UnlinkEffectEntry(_deathaltEffect);
+                _scene.UnlinkEffectEntry(_deathaltEffect);
                 _deathaltEffect = null;
             }
         }

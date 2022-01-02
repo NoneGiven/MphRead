@@ -10,7 +10,7 @@ namespace MphRead.Entities
         private readonly CollisionVolume _volume;
         private static readonly Vector3 _volumeColor = new Vector3(1, 1, 0);
 
-        public MorphCameraEntity(MorphCameraEntityData data) : base(EntityType.MorphCamera)
+        public MorphCameraEntity(MorphCameraEntityData data, Scene scene) : base(EntityType.MorphCamera, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -19,11 +19,11 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
-            if (scene.ShowVolumes == VolumeDisplay.MorphCamera)
+            if (_scene.ShowVolumes == VolumeDisplay.MorphCamera)
             {
-                AddVolumeItem(_volume, _volumeColor, scene);
+                AddVolumeItem(_volume, _volumeColor);
             }
         }
     }
@@ -36,7 +36,7 @@ namespace MphRead.Entities
         private readonly CollisionVolume _volume;
         private static readonly Vector3 _volumeColor = new Vector3(1, 1, 0);
 
-        public FhMorphCameraEntity(FhMorphCameraEntityData data) : base(EntityType.MorphCamera)
+        public FhMorphCameraEntity(FhMorphCameraEntityData data, Scene scene) : base(EntityType.MorphCamera, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -45,11 +45,11 @@ namespace MphRead.Entities
             AddPlaceholderModel();
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
-            if (scene.ShowVolumes == VolumeDisplay.MorphCamera)
+            if (_scene.ShowVolumes == VolumeDisplay.MorphCamera)
             {
-                AddVolumeItem(_volume, _volumeColor, scene);
+                AddVolumeItem(_volume, _volumeColor);
             }
         }
     }

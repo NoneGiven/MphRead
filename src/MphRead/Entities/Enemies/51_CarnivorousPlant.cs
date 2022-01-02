@@ -7,14 +7,14 @@ namespace MphRead.Entities.Enemies
     {
         private readonly EnemySpawnEntity _spawner;
 
-        public Enemy51Entity(EnemyInstanceEntityData data) : base(data)
+        public Enemy51Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);
             _spawner = spawner;
         }
 
-        protected override bool EnemyInitialize(Scene scene)
+        protected override bool EnemyInitialize()
         {
             Transform = _data.Spawner.Transform;
             _prevPos = Position;
@@ -29,7 +29,7 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        protected override void EnemyProcess(Scene scene)
+        protected override void EnemyProcess()
         {
             ContactDamagePlayer(_spawner.Data.Fields.S07.EnemyDamage, knockback: false);
         }

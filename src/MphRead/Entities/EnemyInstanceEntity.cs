@@ -33,7 +33,7 @@ namespace MphRead.Entities
         protected Vector3 _prevPos = Vector3.Zero;
         protected Vector3 _speed = Vector3.Zero;
         protected float _boundingRadius = 0;
-        protected Action<Scene>[]? _stateProcesses;
+        protected Action[]? _stateProcesses;
 
         public readonly Effectiveness[] BeamEffectiveness = new Effectiveness[9];
         private bool _onlyMoveHurtVolume = false;
@@ -43,21 +43,25 @@ namespace MphRead.Entities
         public EnemyType EnemyType => _data.Type;
         public EntityBase? Owner => _owner;
 
-        protected static readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(64); // in-game: 64
+        protected static BeamProjectileEntity[] _beams = null!;
 
-        public EnemyInstanceEntity(EnemyInstanceEntityData data) : base(EntityType.EnemyInstance)
+        public EnemyInstanceEntity(EnemyInstanceEntityData data, Scene scene) : base(EntityType.EnemyInstance, scene)
         {
             _data = data;
+            if (_beams == null)
+            {
+                _beams = SceneSetup.CreateBeamList(64, scene); // in-game: 64
+            } 
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
+            base.Initialize();
             // todo: set other properties, etc.
             _owner = _data.Spawner;
             Metadata.LoadEffectiveness(_data.Type, BeamEffectiveness);
             Flags = EnemyFlags.CollidePlayer | EnemyFlags.CollideBeam;
-            if (EnemyInitialize(scene) && _data.Spawner is EnemySpawnEntity spawner)
+            if (EnemyInitialize() && _data.Spawner is EnemySpawnEntity spawner)
             {
                 // todo: linked entity collision transform -- although I don't think this is ever used for enemies/spawners
             }
@@ -80,7 +84,7 @@ namespace MphRead.Entities
             }
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             bool inRange = true; // todo: should default to false, but with logic for view mode/"camera is player"
             if (_data.Type == EnemyType.Spawner || Flags.TestFlag(EnemyFlags.NoMaxDistance))
@@ -107,24 +111,24 @@ namespace MphRead.Entities
                     // todo: positional audio, node ref
                     HitPlayers = 0;
                     // todo: player collision
-                    EnemyProcess(scene);
+                    EnemyProcess();
                     if (!Flags.TestFlag(EnemyFlags.Static))
                     {
                         UpdateHurtVolume();
                     }
                     // todo: node ref
-                    base.Process(scene);
+                    base.Process();
                     return true;
                 }
-                scene.SendMessage(Message.Destroyed, this, _owner, 0, 0);
+                _scene.SendMessage(Message.Destroyed, this, _owner, 0, 0);
                 if (_owner is EnemySpawnEntity spawner)
                 {
                     Vector3 pos = _hurtVolume.GetCenter().AddY(0.5f);
-                    ItemSpawnEntity.SpawnItemDrop(spawner.Data.ItemType, pos, spawner.Data.ItemChance, scene);
+                    ItemSpawnEntity.SpawnItemDrop(spawner.Data.ItemType, pos, spawner.Data.ItemChance, _scene);
                 }
                 return false;
             }
-            scene.SendMessage(Message.Destroyed, this, _owner, 1, 0);
+            _scene.SendMessage(Message.Destroyed, this, _owner, 1, 0);
             return false;
         }
 
@@ -152,18 +156,18 @@ namespace MphRead.Entities
             }
         }
 
-        public override void GetDrawInfo(Scene scene)
+        public override void GetDrawInfo()
         {
             if (_health > 0 && Flags.TestFlag(EnemyFlags.Visible))
             {
-                if (!EnemyGetDrawInfo(scene))
+                if (!EnemyGetDrawInfo())
                 {
                     // todo: is_visible
                     if (_framesSinceDamage < 10)
                     {
                         PaletteOverride = Metadata.RedPalette;
                     }
-                    base.GetDrawInfo(scene);
+                    base.GetDrawInfo();
                     PaletteOverride = null;
                 }
             }
@@ -172,19 +176,19 @@ namespace MphRead.Entities
         /// <summary>
         /// Must return true if overriden.
         /// </summary>
-        protected virtual bool EnemyInitialize(Scene scene)
+        protected virtual bool EnemyInitialize()
         {
             return false;
         }
 
-        protected virtual void EnemyProcess(Scene scene)
+        protected virtual void EnemyProcess()
         {
         }
 
         /// <summary>
         /// Must return true if overriden.
         /// </summary>
-        protected virtual bool EnemyGetDrawInfo(Scene scene)
+        protected virtual bool EnemyGetDrawInfo()
         {
             return false;
         }
@@ -198,7 +202,7 @@ namespace MphRead.Entities
         {
         }
 
-        public void TakeDamage(uint damage, EntityBase? source, Scene scene)
+        public void TakeDamage(uint damage, EntityBase? source)
         {
             ushort prevHealth = _health;
             Effectiveness effectiveness = Effectiveness.Normal;
@@ -242,7 +246,7 @@ namespace MphRead.Entities
                     _health -= (ushort)damage;
                 }
             }
-            if (EnemyTakeDamage(source, scene))
+            if (EnemyTakeDamage(source))
             {
                 _health = prevHealth;
                 unaffected = true;
@@ -255,16 +259,16 @@ namespace MphRead.Entities
                     // 115 - ineffectivePsycho
                     Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY);
                     transform.Row3.Xyz = _hurtVolume.GetCenter();
-                    EffectEntry effect = scene.SpawnEffectGetEntry(115, transform);
+                    EffectEntry effect = _scene.SpawnEffectGetEntry(115, transform);
                     effect.SetReadOnlyField(0, _boundingRadius);
-                    scene.DetachEffectEntry(effect, setExpired: false);
+                    _scene.DetachEffectEntry(effect, setExpired: false);
                 }
             }
             else
             {
                 if (beamSource != null)
                 {
-                    beamSource.SpawnDamageEffect(effectiveness, scene);
+                    beamSource.SpawnDamageEffect(effectiveness);
                 }
                 if (dead)
                 {
@@ -286,7 +290,7 @@ namespace MphRead.Entities
                         effectId = Metadata.GetEnemyDeathEffect(EnemyType);
                     }
                     Matrix4 transform = Transform.ClearScale();
-                    scene.SpawnEffect(effectId, transform);
+                    _scene.SpawnEffect(effectId, transform);
                 }
                 else
                 {
@@ -306,7 +310,7 @@ namespace MphRead.Entities
                         // 3 - blastCapHit
                         Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY);
                         transform.Row3.Xyz = Position;
-                        scene.SpawnEffect(3, transform);
+                        _scene.SpawnEffect(3, transform);
                         break;
                     }
                 }
@@ -323,18 +327,18 @@ namespace MphRead.Entities
         /// <summary>
         /// When overridden, must return true when unaffected by damage and false otherwise.
         /// </summary>
-        protected virtual bool EnemyTakeDamage(EntityBase? source, Scene scene)
+        protected virtual bool EnemyTakeDamage(EntityBase? source)
         {
             return false;
         }
 
-        protected void CallStateProcess(Scene scene)
+        protected void CallStateProcess()
         {
             Debug.Assert(_stateProcesses != null && _state1 >= 0 && _state1 < _stateProcesses.Length);
-            _stateProcesses[_state1].Invoke(scene);
+            _stateProcesses[_state1].Invoke();
         }
 
-        protected bool CallSubroutine<T>(IReadOnlyList<EnemySubroutine<T>> subroutines, T enemy, Scene scene) where T : EnemyInstanceEntity
+        protected bool CallSubroutine<T>(IReadOnlyList<EnemySubroutine<T>> subroutines, T enemy) where T : EnemyInstanceEntity
         {
             Debug.Assert(enemy == this);
             EnemySubroutine<T> subroutine = subroutines[_state1];
@@ -343,7 +347,7 @@ namespace MphRead.Entities
                 return false;
             }
             int index = 0;
-            while (!subroutine.Behaviors[index].Function.Invoke(enemy, scene))
+            while (!subroutine.Behaviors[index].Function.Invoke(enemy))
             {
                 index++;
                 if (index >= subroutine.Behaviors.Count)
@@ -362,11 +366,11 @@ namespace MphRead.Entities
             return false;
         }
 
-        public override void GetDisplayVolumes(Scene scene)
+        public override void GetDisplayVolumes()
         {
-            if (scene.ShowVolumes == VolumeDisplay.EnemyHurt)
+            if (_scene.ShowVolumes == VolumeDisplay.EnemyHurt)
             {
-                AddVolumeItem(_hurtVolume, Vector3.UnitX, scene);
+                AddVolumeItem(_hurtVolume, Vector3.UnitX);
             }
         }
 
@@ -402,9 +406,9 @@ namespace MphRead.Entities
     public readonly struct EnemyBehavior<T> where T : EnemyInstanceEntity
     {
         public readonly byte NextState;
-        public readonly Func<T, Scene, bool> Function;
+        public readonly Func<T, bool> Function;
 
-        public EnemyBehavior(byte nextState, Func<T, Scene, bool> function)
+        public EnemyBehavior(byte nextState, Func<T, bool> function)
         {
             NextState = nextState;
             Function = function;

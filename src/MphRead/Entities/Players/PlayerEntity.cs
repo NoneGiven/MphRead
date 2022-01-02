@@ -154,7 +154,6 @@ namespace MphRead.Entities
 
     public partial class PlayerEntity : EntityBase
     {
-        private Scene _scene = null!;
         private readonly ModelInstance[] _bipedModelLods = new ModelInstance[2];
         private ModelInstance _bipedModel1 = null!; // legs
         private ModelInstance _bipedModel2 = null!; // torso
@@ -190,10 +189,8 @@ namespace MphRead.Entities
         public static int MaxPlayers { get; set; } = 4;
         public static int PlayersCreated { get; set; } = 0;
         public static PlayerEntity MainPlayer => Players[MainPlayerIndex];
-        public static IReadOnlyList<PlayerEntity> Players { get; } = new PlayerEntity[4]
-        {
-            new PlayerEntity(0), new PlayerEntity(1), new PlayerEntity(2), new PlayerEntity(3)
-        };
+        public static readonly PlayerEntity[] _players = new PlayerEntity[4];
+        public static IReadOnlyList<PlayerEntity> Players => _players;
         private bool IsMainPlayer => this == MainPlayer && !FreeCamera;
 
         private const int UA = 0;
@@ -212,7 +209,7 @@ namespace MphRead.Entities
         private readonly AvailableArray _availableWeapons = new AvailableArray();
         private readonly AvailableArray _availableCharges = new AvailableArray();
         private AbilityFlags _abilities;
-        private readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(16); // in-game: 5
+        private readonly BeamProjectileEntity[] _beams;
         public EquipInfo EquipInfo { get; } = new EquipInfo();
         private WeaponInfo EquipWeapon => EquipInfo.Weapon;
         public BeamType CurrentWeapon { get; private set; }
@@ -409,9 +406,21 @@ namespace MphRead.Entities
         public bool IgnoreItemPickups { get; set; }
         public static bool FreeCamera { get; set; } = true;
 
-        private PlayerEntity(int slotIndex) : base(EntityType.Player)
+        private PlayerEntity(int slotIndex, Scene scene) : base(EntityType.Player, scene)
         {
             SlotIndex = slotIndex;
+            _beams = SceneSetup.CreateBeamList(16, scene); // in-game: 5
+        }
+
+        public static void Construct(Scene scene)
+        {
+            for (int i = 0; i < _players.Length; i++)
+            {
+                if (_players[i] == null)
+                {
+                    _players[i] = new PlayerEntity(i, scene);
+                }
+            }
         }
 
         public static PlayerEntity? Create(Hunter hunter, int recolor)
@@ -432,9 +441,8 @@ namespace MphRead.Entities
             return player;
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            _scene = scene;
             _models.Clear();
             _bipedModelLods[0] = Read.GetModelInstance(Metadata.HunterModels[Hunter][0]);
             _bipedModelLods[1] = Read.GetModelInstance(Metadata.HunterModels[Hunter][1]);
@@ -456,16 +464,16 @@ namespace MphRead.Entities
             _models.Add(_doubleDmgModel);
             _trailModel = Read.GetModelInstance("trail");
             Material material = _trailModel.Model.Materials[0];
-            _trailBindingId1 = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
+            _trailBindingId1 = _scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
             material = _trailModel.Model.Materials[1];
-            _trailBindingId2 = scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
-            _doubleDmgBindingId = scene.BindGetTexture(_doubleDmgModel.Model, 0, 0, 0);
-            base.Initialize(scene);
+            _trailBindingId2 = _scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
+            _doubleDmgBindingId = _scene.BindGetTexture(_doubleDmgModel.Model, 0, 0, 0);
+            base.Initialize();
             // todo: respawn node ref
             // todo: update controls
             EquipInfo.Beams = _beams;
             Values = Metadata.PlayerValues[(int)Hunter];
-            if (scene.Multiplayer)
+            if (_scene.Multiplayer)
             {
                 _healthMax = (ushort)(2 * Values.EnergyTank - 1);
                 _ammoMax[UA] = _ammoMax[Missiles] = Values.MpAmmoCap;
@@ -1213,7 +1221,7 @@ namespace MphRead.Entities
                     }
                     if (!IsMainPlayer)
                     {
-                        beam.SpawnDamageEffect(effectiveness, _scene);
+                        beam.SpawnDamageEffect(effectiveness);
                     }
                 }
                 else if (source.Type == EntityType.Player)

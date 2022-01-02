@@ -17,7 +17,7 @@ namespace MphRead.Entities
         private bool Unlocked => Flags.TestFlag(DoorFlags.Unlocked);
         public Vector3 LockPosition => (_transform * _lockTransform).Row3.Xyz;
 
-        public DoorEntity(DoorEntityData data) : base(EntityType.Door)
+        public DoorEntity(DoorEntityData data, Scene scene) : base(EntityType.Door, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -64,13 +64,13 @@ namespace MphRead.Entities
             // todo: connector/room IDs, node refs, ports
         }
 
-        public override void Initialize(Scene scene)
+        public override void Initialize()
         {
-            base.Initialize(scene);
-            scene.LoadEffect(114); // lockDefeat - todo: load in entity setup
+            base.Initialize();
+            _scene.LoadEffect(114); // lockDefeat - todo: load in entity setup
         }
 
-        public override bool Process(Scene scene)
+        public override bool Process()
         {
             if (Unlocked && _lock.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
             {
@@ -83,7 +83,7 @@ namespace MphRead.Entities
                 Flags &= ~DoorFlags.ShotOpen;
             }
             // todo: only update this when not in room transition
-            if (ShouldOpen(scene))
+            if (ShouldOpen())
             {
                 Flags |= DoorFlags.ShouldOpen;
             }
@@ -138,8 +138,8 @@ namespace MphRead.Entities
             {
                 // todo: play SFX
             }
-            UpdateAnimFrames(_models[0], scene);
-            UpdateAnimFrames(_models[1], scene);
+            UpdateAnimFrames(_models[0]);
+            UpdateAnimFrames(_models[1]);
             bool activatePortal = false;
             if (Flags.TestFlag(DoorFlags.ShouldOpen))
             {
@@ -190,7 +190,7 @@ namespace MphRead.Entities
                 && (AnimInfo.Index[0] != 0 || AnimInfo.Flags[0].TestFlag(AnimFlags.Ended)))
             {
                 // todo: bits 8/9 and 10 are basically a counter and a bool, and we should just replace them with that
-                if (Flags.TestFlag(DoorFlags.Bit10) && scene.FrameCount > 3 * 2) // todo: FPS stuff
+                if (Flags.TestFlag(DoorFlags.Bit10) && _scene.FrameCount > 3 * 2) // todo: FPS stuff
                 {
                     // todo: play SFX
                 }
@@ -211,15 +211,15 @@ namespace MphRead.Entities
             return true;
         }
 
-        private bool ShouldOpen(Scene scene)
+        private bool ShouldOpen()
         {
             if (Locked || !Flags.TestFlag(DoorFlags.ShotOpen))
             {
                 return false;
             }
-            for (int i = 0; i < scene.Entities.Count; i++)
+            for (int i = 0; i < _scene.Entities.Count; i++)
             {
-                EntityBase entity = scene.Entities[i];
+                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.Player)
                 {
                     continue;
@@ -237,7 +237,7 @@ namespace MphRead.Entities
             return false;
         }
 
-        public void Lock(bool updateState, Scene scene)
+        public void Lock(bool updateState)
         {
             Flags |= DoorFlags.Locked;
             if (updateState)
@@ -246,60 +246,60 @@ namespace MphRead.Entities
             }
         }
 
-        public void Unlock(bool updateState, bool sfxBool, Scene scene)
+        public void Unlock(bool updateState, bool sfxBool)
         {
             // todo: return if in room transition
             Flags |= DoorFlags.Unlocked;
             // todo: something with SFX
             _lock.SetAnimation(1, AnimFlags.NoLoop);
-            scene.SpawnEffect(114, UpVector, FacingVector, LockPosition); // lockDefeat
+            _scene.SpawnEffect(114, UpVector, FacingVector, LockPosition); // lockDefeat
             if (updateState)
             {
                 // todo: if 1P mode, update room state
             }
         }
 
-        public override void HandleMessage(MessageInfo info, Scene scene)
+        public override void HandleMessage(MessageInfo info)
         {
             if (info.Message == Message.Unlock)
             {
-                Unlock(updateState: true, sfxBool: false, scene);
+                Unlock(updateState: true, sfxBool: false);
             }
             else if (info.Message == Message.Lock)
             {
-                Lock(updateState: true, scene);
+                Lock(updateState: true);
             }
             else if (info.Message == Message.UnlockConnectors)
             {
-                for (int i = 0; i < scene.Entities.Count; i++)
+                for (int i = 0; i < _scene.Entities.Count; i++)
                 {
-                    EntityBase entity = scene.Entities[i];
+                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type == EntityType.Door && entity.Id == -1)
                     {
-                        ((DoorEntity)entity).Unlock(updateState: true, sfxBool: false, scene);
+                        ((DoorEntity)entity).Unlock(updateState: true, sfxBool: false);
                     }
                 }
             }
             else if (info.Message == Message.LockConnectors)
             {
-                for (int i = 0; i < scene.Entities.Count; i++)
+                for (int i = 0; i < _scene.Entities.Count; i++)
                 {
-                    EntityBase entity = scene.Entities[i];
+                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type == EntityType.Door && entity.Id == -1)
                     {
-                        ((DoorEntity)entity).Lock(updateState: true, scene);
+                        ((DoorEntity)entity).Lock(updateState: true);
                     }
                 }
             }
         }
 
-        public override void Destroy(Scene scene)
+        public override void Destroy()
         {
             // todo: stop SFX
-            base.Destroy(scene);
+            base.Destroy();
         }
 
-        public override void GetDrawInfo(Scene scene)
+        public override void GetDrawInfo()
         {
             // todo?: is_visible
             _lock.Active = false;
@@ -308,7 +308,7 @@ namespace MphRead.Entities
             {
                 _lock.Active = true;
             }
-            base.GetDrawInfo(scene);
+            base.GetDrawInfo();
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
@@ -334,7 +334,7 @@ namespace MphRead.Entities
     {
         private readonly FhDoorEntityData _data;
 
-        public FhDoorEntity(FhDoorEntityData data) : base(EntityType.Door)
+        public FhDoorEntity(FhDoorEntityData data, Scene scene) : base(EntityType.Door, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
