@@ -1180,12 +1180,58 @@ namespace MphRead.Entities
             }
             else if (Hunter == Hunter.Samus || Hunter == Hunter.Spire)
             {
-                // sktodo
+                Vector3 axis = Vector3.Zero;
+                float altRadius = Fixed.ToFloat(Values.AltColRadius);
                 if (Hunter == Hunter.Spire || Flags1.TestFlag(PlayerFlags1.CollidingEntity))
                 {
+                    // todo: FPS stuff
+                    axis.X = altRadius * (Speed.Z / 2);
+                    axis.Z = -altRadius * (Speed.X / 2);
                 }
                 else
                 {
+                    axis.X = altRadius * (Position.Z - PrevPosition.Z);
+                    axis.Z = -altRadius * (Position.X - PrevPosition.X);
+                }
+                float mag = axis.Length;
+                if (mag > 0)
+                {
+                    axis /= mag;
+                    float angle = mag / (altRadius * altRadius);
+                    var rotMtx = Matrix4.CreateFromAxisAngle(axis, angle);
+                    Matrix4 transform = _modelTransform * rotMtx;
+                    if (Hunter == Hunter.Samus)
+                    {
+                        if (Vector3.Dot(transform.Row0.Xyz, axis) < 0)
+                        {
+                            axis *= -1;
+                        }
+                        axis = Vector3.Cross(transform.Row0.Xyz, axis);
+                        float mbAngle = axis.Length;
+                        if (mbAngle > 0)
+                        {
+                            if (mbAngle > 0.125f)
+                            {
+                                float div = Math.Min(angle / Fixed.ToFloat(3216), 1);
+                                mbAngle *= div / 8;
+                            }
+                            rotMtx = Matrix4.CreateFromAxisAngle(axis, mbAngle);
+                            transform *= rotMtx;
+                        }
+                    }
+                    transform.Row2.Xyz = Vector3.Cross(transform.Row0.Xyz, transform.Row1.Xyz);
+                    transform.Row1.Xyz = Vector3.Cross(transform.Row2.Xyz, transform.Row0.Xyz);
+                    transform.Row0.Xyz = transform.Row0.Xyz.Normalized();
+                    transform.Row1.Xyz = transform.Row1.Xyz.Normalized();
+                    transform.Row2.Xyz = transform.Row2.Xyz.Normalized();
+                    if (Hunter == Hunter.Spire)
+                    {
+                        for (int i = 0; i < _spireAltVecs.Length; i++)
+                        {
+                            _spireAltVecs[i] = Matrix.Vec3MultMtx3(Metadata.SpireAltVectors[i], transform);
+                        }
+                    }
+                    _modelTransform = transform;
                 }
             }
             else

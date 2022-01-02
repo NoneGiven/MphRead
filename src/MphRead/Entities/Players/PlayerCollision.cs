@@ -454,7 +454,7 @@ namespace MphRead.Entities
             }
             if (IsAltForm)
             {
-                // sktodo: handle alt form
+                // skhere
             }
             if (result.EntityCollision != null)
             {

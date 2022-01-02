@@ -6,6 +6,26 @@ namespace MphRead
 {
     public static partial class Metadata
     {
+        public static readonly Vector3[] SpireAltVectors = new Vector3[16]
+        {
+            new Vector3(Fixed.ToFloat(262), Fixed.ToFloat(-2465), Fixed.ToFloat(-1417)),
+            new Vector3(Fixed.ToFloat(724), Fixed.ToFloat(3129), Fixed.ToFloat(192)),
+            new Vector3(Fixed.ToFloat(2772), Fixed.ToFloat(-770), Fixed.ToFloat(-311)),
+            new Vector3(Fixed.ToFloat(-2289), Fixed.ToFloat(-700), Fixed.ToFloat(1884)),
+            new Vector3(Fixed.ToFloat(1224), Fixed.ToFloat(-2617), Fixed.ToFloat(774)),
+            new Vector3(Fixed.ToFloat(-450), Fixed.ToFloat(2183), Fixed.ToFloat(2150)),
+            new Vector3(Fixed.ToFloat(2469), Fixed.ToFloat(1224), Fixed.ToFloat(-966)),
+            new Vector3(Fixed.ToFloat(-2236), Fixed.ToFloat(-1044), Fixed.ToFloat(-1540)),
+            new Vector3(Fixed.ToFloat(-1519), Fixed.ToFloat(-2510), Fixed.ToFloat(512)),
+            new Vector3(Fixed.ToFloat(-937), Fixed.ToFloat(2838), Fixed.ToFloat(-950)),
+            new Vector3(Fixed.ToFloat(2355), Fixed.ToFloat(892), Fixed.ToFloat(1273)),
+            new Vector3(Fixed.ToFloat(-2695), Fixed.ToFloat(1212), Fixed.ToFloat(-262)),
+            new Vector3(Fixed.ToFloat(733), Fixed.ToFloat(-1290), Fixed.ToFloat(2633)),
+            new Vector3(Fixed.ToFloat(-516), Fixed.ToFloat(602), Fixed.ToFloat(2875)),
+            new Vector3(Fixed.ToFloat(663), Fixed.ToFloat(1290), Fixed.ToFloat(-2723)),
+            new Vector3(Fixed.ToFloat(-536), Fixed.ToFloat(-737), Fixed.ToFloat(-3047))
+        };
+
         public static readonly float[] SlipSpeedFactors = new float[4]
         {
             0, -0.5f, 0.9f, 0.94f
