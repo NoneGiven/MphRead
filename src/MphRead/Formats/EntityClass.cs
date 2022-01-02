@@ -105,15 +105,15 @@ namespace MphRead.Editor
         public ItemType ItemType { get; set; }
         public uint Unused1D0 { get; set; } // always 0
         public uint Unused1D4 { get; set; } // always UInt32.MaxValue
-        public uint BeamHitMsgTarget { get; set; }
+        public int BeamHitMsgTarget { get; set; }
         public Message BeamHitMessage { get; set; }
         public uint BeamHitMsgParam1 { get; set; }
         public uint BeamHitMsgParam2 { get; set; }
-        public uint PlayerColMsgTarget { get; set; }
+        public int PlayerColMsgTarget { get; set; }
         public Message PlayerColMessage { get; set; }
         public uint PlayerColMsgParam1 { get; set; }
         public uint PlayerColMsgParam2 { get; set; }
-        public uint DeadMsgTarget { get; set; }
+        public int DeadMsgTarget { get; set; }
         public Message DeadMessage { get; set; }
         public uint DeadMsgParam1 { get; set; }
         public uint DeadMsgParam2 { get; set; }

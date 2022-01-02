@@ -790,7 +790,7 @@ namespace MphRead.Formats
                 {
                     EntityCollision? entCol = entity.EntityCollision[j];
                     // sktodo: handle FH collision
-                    if (entCol == null || entCol.Collision.Info.FirstHunt)
+                    if (entCol == null || !entCol.Collision.Active || entCol.Collision.Info.FirstHunt)
                     {
                         continue;
                     }

@@ -322,7 +322,7 @@ namespace MphRead.Memory
         public int Unused64 { get => ReadInt32(_off19); set => WriteInt32(_off19, value); }
 
         private const int _off20 = 0x68;
-        public PlatStateBits StateBits { get => (PlatStateBits)ReadUInt32(_off20); set => WriteUInt32(_off20, (uint)value); }
+        public PlatStateFlags StateFlags { get => (PlatStateFlags)ReadUInt32(_off20); set => WriteUInt32(_off20, (uint)value); }
 
         private const int _off21 = 0x6C;
         public int CollisionBits { get => ReadInt32(_off21); set => WriteInt32(_off21, value); }

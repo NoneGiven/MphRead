@@ -411,7 +411,7 @@ namespace MphRead.Entities
             dmgRes.TakeDamage = _terrainDamage;
             if (_collidedEntCol != null)
             {
-                // sktodo: query collision damage from entity
+                _collidedEntCol.Entity.CheckContactDamage(ref dmgRes);
             }
             if (dmgRes.TakeDamage)
             {
