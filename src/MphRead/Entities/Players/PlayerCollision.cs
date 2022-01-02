@@ -334,7 +334,57 @@ namespace MphRead.Entities
                     HandleCollision(results[i]);
                 }
             }
-            // sktodo: collide with doors and force fields
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.Door)
+                {
+                    continue;
+                }
+                var door = (DoorEntity)entity;
+                if (door.Flags.TestFlag(DoorFlags.Open))
+                {
+                    continue;
+                }
+                Vector3 lockPos = door.LockPosition;
+                Vector3 doorFacing = door.FacingVector;
+                Vector3 between = Position - lockPos;
+                float dot = Vector3.Dot(between, doorFacing);
+                if (dot <= 1.25f && dot >= -1.25f)
+                {
+                    between -= doorFacing * dot;
+                    if (between.LengthSquared < door.RadiusSquared)
+                    {
+                        CollisionResult doorResult = default;
+                        doorResult.Field0 = 0;
+                        doorResult.Plane = new Vector4(doorFacing);
+                        doorResult.EntityCollision = null;
+                        doorResult.Flags = CollisionFlags.None;
+                        if (Vector3.Dot(PrevPosition - lockPos, doorFacing) < 0)
+                        {
+                            doorResult.Plane.Xyz *= -1;
+                        }
+                        doorResult.Plane.W = doorResult.Plane.X * (lockPos.X + 0.4f * doorResult.Plane.X)
+                            + doorResult.Plane.Y * (lockPos.Y + 0.4f * doorResult.Plane.Y)
+                            + doorResult.Plane.Z * (lockPos.Z + 0.4f * doorResult.Plane.Z);
+                        HandleCollision(doorResult);
+                    }
+                }
+            }
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.ForceField)
+                {
+                    continue;
+                }
+                var forceField = (ForceFieldEntity)entity;
+                if (!forceField.Active)
+                {
+                    continue;
+                }
+                // skhere
+            }
             DamageResult dmgRes = default;
             dmgRes.Damage = 1;
             dmgRes.TakeDamage = _terrainDamage;

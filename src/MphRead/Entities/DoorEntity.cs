@@ -15,6 +15,7 @@ namespace MphRead.Entities
 
         private bool Locked => Flags.TestFlag(DoorFlags.Locked);
         private bool Unlocked => Flags.TestFlag(DoorFlags.Unlocked);
+        public Vector3 LockPosition => (_transform * _lockTransform).Row3.Xyz;
 
         public DoorEntity(DoorEntityData data) : base(EntityType.Door)
         {
@@ -251,7 +252,7 @@ namespace MphRead.Entities
             Flags |= DoorFlags.Unlocked;
             // todo: something with SFX
             _lock.SetAnimation(1, AnimFlags.NoLoop);
-            scene.SpawnEffect(114, UpVector, FacingVector, _lockTransform.Row3.Xyz); // lockDefeat
+            scene.SpawnEffect(114, UpVector, FacingVector, LockPosition); // lockDefeat
             if (updateState)
             {
                 // todo: if 1P mode, update room state
