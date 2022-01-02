@@ -330,7 +330,7 @@ namespace MphRead.Entities
         public Vector3 IdlePosition { get; private set; }
         private ushort _accelerationTimer = 0;
         private float _hSpeedCap = 0;
-        private float _hspeedMag = 0; // todo: all FPS stuff with speed
+        private float _hSpeedMag = 0; // todo: all FPS stuff with speed
         private float _gravity = 0;
         private int _slipperiness = 0; // from stand_ter_flags
         private Terrain _standTerrain; // from stand_ter_flags
@@ -808,7 +808,7 @@ namespace MphRead.Entities
             if (IsAltForm)
             {
                 Vector3 row0 = _modelTransform.Row0.Xyz;
-                if (Vector3.Dot(Vector3.UnitY, row0) < 0.5f && _hspeedMag >= Fixed.ToFloat(1269))
+                if (Vector3.Dot(Vector3.UnitY, row0) < 0.5f && _hSpeedMag >= Fixed.ToFloat(1269))
                 {
                     Vector3 cross = Vector3.Cross(row0, Vector3.UnitY).Normalized();
                     var cross2 = Vector3.Cross(cross, row0);
@@ -1666,11 +1666,13 @@ namespace MphRead.Entities
             if (KandenAltNodeDistances[0] == 0 && KandenAltNodeDistances[1] == 0
                 && KandenAltNodeDistances[2] == 0 && KandenAltNodeDistances[3] == 0)
             {
-                IReadOnlyList<RawNode> nodes = Read.GetModelInstance("KandenAlt_lod0").Model.RawNodes;
+                Model model = Read.GetModelInstance("KandenAlt_lod0").Model;
+                model.ComputeNodeMatrices(0);
+                IReadOnlyList<Node> nodes = model.Nodes;
                 for (int i = 0; i < 4; i++)
                 {
-                    Vector3 pos1 = nodes[i].Transform.Four.ToFloatVector();
-                    Vector3 pos2 = nodes[i + 1].Transform.Four.ToFloatVector();
+                    Vector3 pos1 = nodes[i].Transform.Row3.Xyz;
+                    Vector3 pos2 = nodes[i + 1].Transform.Row3.Xyz;
                     KandenAltNodeDistances[i] = Vector3.Distance(pos1, pos2);
                 }
             }

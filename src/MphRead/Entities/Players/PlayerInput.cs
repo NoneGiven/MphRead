@@ -1026,7 +1026,7 @@ namespace MphRead.Entities
             float hSpeedMag = hSpeed.Length;
             if (hSpeedMag == 0)
             {
-                _hspeedMag = 0;
+                _hSpeedMag = 0;
             }
             else
             {
@@ -1056,13 +1056,13 @@ namespace MphRead.Entities
                     {
                         _hSpeedCap = altMin;
                     }
-                    else if (_hspeedMag > _hSpeedCap)
+                    else if (_hSpeedMag > _hSpeedCap)
                     {
                         _hSpeedCap -= Fixed.ToFloat(Values.AltHSpeedCapIncrement); // todo: FPS stuff?
                     }
                     else
                     {
-                        _hSpeedCap = _hspeedMag;
+                        _hSpeedCap = _hSpeedMag;
                     }
                 }
                 else
@@ -1074,7 +1074,7 @@ namespace MphRead.Entities
                 {
                     _hSpeedCap = 0.4f; // todo: FPS stuff?
                 }
-                _hspeedMag = hSpeedMag;
+                _hSpeedMag = hSpeedMag;
             }
             // todo: check how much of this overwrites stuff done above
             Vector3 facing = FacingVector;
@@ -1159,7 +1159,7 @@ namespace MphRead.Entities
                 speedFactor += (1 - speedFactor) * Metadata.SlipSpeedFactors[_slipperiness];
                 if (!Flags1.TestFlag(PlayerFlags1.MovingBiped))
                 {
-                    slideSfxPct = _hspeedMag / _hSpeedCap * (16 - 1 / 4096f);
+                    slideSfxPct = _hSpeedMag / _hSpeedCap * (16 - 1 / 4096f);
                 }
             }
             // todo: play SFX (with slideSfxPct)
@@ -1235,7 +1235,7 @@ namespace MphRead.Entities
             {
                 for (int i = 1; i < _kandenSegPos.Length; i++)
                 {
-                    _kandenSegPos[i] = _kandenSegPos[i].AddY(-0.1f);
+                    _kandenSegPos[i] = _kandenSegPos[i].AddY(-0.1f / 2); // todo: FPS stuff
                 }
             }
             if (_standingEntCol != null)

@@ -196,6 +196,7 @@ namespace MphRead.Entities
             {
                 _altModel.Model.Nodes[i].Animation = _kandenSegMtx[i];
             }
+            _altModel.Model.UpdateMatrixStack();
             UpdateMaterials(_altModel, Recolor);
             GetDrawItems(_altModel, _altModel.Model.Nodes[0], _curAlpha);
         }

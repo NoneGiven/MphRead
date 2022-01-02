@@ -116,7 +116,45 @@ namespace MphRead.Entities
                 }
                 if (Hunter == Hunter.Kanden)
                 {
-                    // todo: handle kanden alt
+                    float altRadius = Fixed.ToFloat(Values.AltColRadius);
+                    for (int i = 1; i < _kandenSegPos.Length; i++)
+                    {
+                        point2 = _kandenSegPos[i].AddY(Fixed.ToFloat(Values.AltColYPos));
+                        count = CollisionDetection.CheckSphereBetweenPoints(candidates, point2, point1, altRadius,
+                            limit: 40, includeOffset: true, TestFlags.AffectsPlayers, _scene, results);
+                        for (int j = 0; j < count; j++)
+                        {
+                            CollisionResult result = results[j];
+                            if (result.Field0 == 1)
+                            {
+                                Vector3 edge = result.EdgePoint2 - result.EdgePoint1;
+                                Debug.Assert(edge != Vector3.Zero);
+                                Vector3 between = point2 - result.EdgePoint1;
+                                float dot = Vector3.Dot(between, edge);
+                                float div = Math.Clamp(dot / edge.LengthSquared, 0, 1);
+                                between = result.EdgePoint1 + edge * div;
+                                between = point2 - between;
+                                float magSqr = between.LengthSquared;
+                                if (magSqr > 0 && magSqr < altRadius * altRadius)
+                                {
+                                    float mag = MathF.Sqrt(magSqr);
+                                    if (altRadius - mag > 0)
+                                    {
+                                        float yInc = between.Y / mag * (altRadius - mag);
+                                        _kandenSegPos[i].Y += yInc;
+                                    }
+                                }
+                            }
+                            else if (result.Field0 == 0)
+                            {
+                                float dot = altRadius + result.Plane.W - Vector3.Dot(point2, result.Plane.Xyz);
+                                if (dot > 0)
+                                {
+                                    _kandenSegPos[i] += result.Plane.Xyz * dot;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             else

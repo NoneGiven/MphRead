@@ -241,7 +241,7 @@ namespace MphRead.Entities
             else
             {
                 _targetAlpha = 1;
-                if ((Hunter == Hunter.Trace || IsPrimeHunter) && _hspeedMag < 0.05f && Speed.Y < 0.05f && Speed.Y > -0.05f)
+                if ((Hunter == Hunter.Trace || IsPrimeHunter) && _hSpeedMag < 0.05f && Speed.Y < 0.05f && Speed.Y > -0.05f)
                 {
                     if (_cloakTimer >= 30 * 2) // todo: FPS stuff
                     {
@@ -321,7 +321,7 @@ namespace MphRead.Entities
                 TryEquipWeapon(_weaponSlots[slot]);
             }
             ProcessInput();
-            if (Flags1.TestFlag(PlayerFlags1.Boosting) && _hspeedMag <= Fixed.ToFloat(Values.AltMinHSpeed))
+            if (Flags1.TestFlag(PlayerFlags1.Boosting) && _hSpeedMag <= Fixed.ToFloat(Values.AltMinHSpeed))
             {
                 Flags1 &= ~PlayerFlags1.Boosting;
             }
@@ -1155,13 +1155,12 @@ namespace MphRead.Entities
             }
             else if (Hunter == Hunter.Samus || Hunter == Hunter.Spire)
             {
+                // sktodo
                 if (Hunter == Hunter.Spire || Flags1.TestFlag(PlayerFlags1.CollidingEntity))
                 {
-                    // skhere
                 }
                 else
                 {
-
                 }
             }
             else
@@ -1172,7 +1171,69 @@ namespace MphRead.Entities
 
         private void UpdateStinglarvaSegments()
         {
-            // sktodo
+            const int cycle = 13 * 2; // todo: FPS stuff
+            float angle = 359f * (_scene.FrameCount % cycle) / (cycle - 1);
+            float factor = 0.3f * MathF.Sin(MathHelper.DegreesToRadians(angle)) * _hSpeedMag;
+            _kandenSegPos[0] = Position.AddX(_field78 * factor).AddZ(_field7C * factor);
+            Vector3 dir;
+            if (Speed.LengthSquared > 0.02f)
+            {
+                dir = new Vector3(Speed.X + _field80 / 4, Speed.Y, Speed.Z + _field84 / 4);
+            }
+            else
+            {
+                dir = new Vector3(_field80, 0, _field84);
+            }
+            dir = dir.Normalized();
+            if (Vector3.Dot(dir, _kandenSegMtx[0].Row2.Xyz) < Fixed.ToFloat(-5))
+            {
+                dir.X += Fixed.ToFloat(5);
+            }
+            dir = _kandenSegMtx[0].Row2.Xyz + 0.3f * (dir - _kandenSegMtx[0].Row2.Xyz);
+            dir = dir.Normalized();
+            if (dir.X != 0 || dir.Z != 0)
+            {
+                _kandenSegMtx[0] = GetTransformMatrix(dir, Vector3.UnitY);
+            }
+            else
+            {
+                var facing = new Vector3(-_field70, 0, -_field74);
+                var up = new Vector3(dir.X, dir.Y, 0);
+                _kandenSegMtx[0] = GetTransformMatrix(facing, up);
+            }
+            _kandenSegMtx[0].Row3.Xyz = _kandenSegPos[0];
+            Debug.Assert(_kandenSegPos.Length == _kandenSegMtx.Length);
+            for (int i = 1; i < _kandenSegPos.Length; i++)
+            {
+                angle += 85;
+                while (angle >= 360)
+                {
+                    angle -= 360;
+                }
+                factor = 0.12f * MathF.Sin(MathHelper.DegreesToRadians(angle)) * _hSpeedMag;
+                Vector3 segPos = _kandenSegPos[i];
+                segPos = segPos.AddX(_field78 * factor).AddZ(_field7C * factor);
+                _kandenSegPos[i] = segPos;
+                dir = (_kandenSegPos[i - 1] - segPos).Normalized();
+                Matrix4 prevMtx = _kandenSegMtx[i - 1];
+                float dot = Vector3.Dot(dir, prevMtx.Row2.Xyz);
+                if (dot < Fixed.ToFloat(2896))
+                {
+                    var axis = Vector3.Cross(dir, prevMtx.Row2.Xyz);
+                    float mag = axis.Length;
+                    axis /= mag;
+                    float atan = MathF.Atan2(mag, dot);
+                    atan -= MathHelper.DegreesToRadians(45);
+                    var rotMtx = Matrix4.CreateFromAxisAngle(axis, angle);
+                    dir = Matrix.Vec3MultMtx3(dir, rotMtx);
+                }
+                _kandenSegMtx[i] = GetTransformMatrix(dir, _kandenSegMtx[0].Row1.Xyz);
+                float dist = KandenAltNodeDistances[i - 1];
+                dir *= dist;
+                _kandenSegPos[i] = _kandenSegPos[i - 1] - dir;
+                _kandenSegMtx[i].Row3.Xyz = _kandenSegPos[i];
+            }
+            // skhere
         }
 
         private void EnterAltForm()
@@ -1294,9 +1355,9 @@ namespace MphRead.Entities
                     Debug.Assert(_kandenSegPos.Length == _kandenSegMtx.Length);
                     for (int i = 1; i < _kandenSegPos.Length; i++)
                     {
-                        float dist = KandenAltNodeDistances[i - 1];
+                        float dist = -KandenAltNodeDistances[i - 1];
                         _kandenSegPos[i] = _kandenSegPos[i - 1] + facing * dist;
-                        Matrix4 matrix = _kandenSegMtx[i - 1];
+                        Matrix4 matrix = _kandenSegMtx[0];
                         matrix.Row3.Xyz = _kandenSegPos[i];
                         _kandenSegMtx[i] = matrix;
                     }
