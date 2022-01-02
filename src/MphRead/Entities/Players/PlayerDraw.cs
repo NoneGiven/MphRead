@@ -204,24 +204,22 @@ namespace MphRead.Entities
         private void UpdateSpireAltAttack()
         {
             Matrix4 transform = GetTransformMatrix(_spireAltFacing, _spireAltUp);
-            _spireAltNodes[2]!.BeforeTransform = transform;
-            _spireAltNodes[3]!.BeforeTransform = transform;
-            _altModel.Model.AnimateNodes(index: 0, useNodeTransform: false, Matrix4.Identity, Vector3.One, _altModel.AnimInfo);
-            _spireAltNodes[2]!.BeforeTransform = null;
-            _spireAltNodes[3]!.BeforeTransform = null;
-            Matrix4 animation = _spireAltNodes[0]!.Animation;
-            animation.Row3.Xyz += Position;
-            _spireAltNodes[0]!.Animation = animation;
-            _spireRockPosL = animation.Row3.Xyz;
-            animation = _spireAltNodes[1]!.Animation;
-            animation.Row3.Xyz += Position;
-            _spireAltNodes[1]!.Animation = animation;
-            _spireRockPosR = animation.Row3.Xyz;
+            _altModel.Model.AnimateNodes(index: 0, useNodeTransform: false, transform, Vector3.One, _altModel.AnimInfo);
+            _spireRockPosL = _spireAltNodes[0]!.Animation.Row3.Xyz + Position;
+            _spireRockPosR = _spireAltNodes[1]!.Animation.Row3.Xyz + Position;
         }
 
         private void DrawSpireAltAttack()
         {
             _altModel.Model.Nodes[0].Animation = _modelTransform;
+            for (int i = 1; i < _altModel.Model.Nodes.Count; i++)
+            {
+                Node node = _altModel.Model.Nodes[i];
+                Matrix4 animation = node.Animation;
+                animation.Row3.Xyz += _modelTransform.Row3.Xyz;
+                node.Animation = animation;
+            }
+            _altModel.Model.UpdateMatrixStack();
             UpdateMaterials(_altModel, Recolor);
             GetDrawItems(_altModel, _altModel.Model.Nodes[0], _curAlpha);
         }

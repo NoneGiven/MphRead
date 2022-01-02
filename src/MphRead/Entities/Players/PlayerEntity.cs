@@ -540,8 +540,8 @@ namespace MphRead.Entities
             {
                 _spireAltNodes[0] = _altModel.Model.GetNodeByName("L_Rock01");
                 _spireAltNodes[1] = _altModel.Model.GetNodeByName("R_Rock01");
-                _spireAltNodes[2] = _altModel.Model.GetNodeByName("R_POS_ROT");
-                _spireAltNodes[3] = _altModel.Model.GetNodeByName("R_POS_ROT_1");
+                _spireAltNodes[2] = _altModel.Model.GetNodeByName("R_POS_ROT"); // parent of 0
+                _spireAltNodes[3] = _altModel.Model.GetNodeByName("R_POS_ROT_1"); // parent of 1
             }
             else
             {

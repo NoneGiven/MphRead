@@ -476,7 +476,7 @@ namespace MphRead.Entities
                             if (result.Plane.Y > Fixed.ToFloat(-357) && Speed.Y < 0.15f)
                             {
                                 v166 = true;
-                                float yFactor = _hSpeedMag;
+                                float yFactor = _hSpeedMag / 2;
                                 if (Speed.Y < 0.01f)
                                 {
                                     yFactor += 0.3f;
