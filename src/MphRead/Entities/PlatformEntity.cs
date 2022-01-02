@@ -552,7 +552,7 @@ namespace MphRead.Entities
                 _currentAnim = -2;
                 _stateFlags &= ~PlatStateFlags.WasAwake;
             }
-            // sktodo
+            // todo: SFX and other stuff
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects
             Model model = _models[0].Model;
             for (int i = 0; i < 4; i++)
