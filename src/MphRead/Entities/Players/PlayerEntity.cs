@@ -181,8 +181,8 @@ namespace MphRead.Entities
         private readonly Vector3[] _spireAltVecs = new Vector3[16];
         private readonly Vector3[] _kandenSegPos = new Vector3[5];
         private readonly Matrix4[] _kandenSegMtx = new Matrix4[5];
-        private byte _syluxBombCount = 0;
-        private readonly BombEntity?[] _syluxBombs = new BombEntity?[3];
+        public byte SyluxBombCount { get; set; } = 0;
+        public BombEntity?[] SyluxBombs { get; } = new BombEntity?[3];
 
         // todo: these settings can change
         public static int MainPlayerIndex { get; set; } = 0;
@@ -212,10 +212,6 @@ namespace MphRead.Entities
         private readonly AvailableArray _availableCharges = new AvailableArray();
         private AbilityFlags _abilities;
         private readonly BeamProjectileEntity[] _beams = SceneSetup.CreateBeamList(16); // in-game: 5
-        // todo: deal with bombs
-        public BombEntity[] Bombs { get; } = new BombEntity[3];
-        public int BombMax { get; private set; }
-        public int BombCount { get; set; }
         public EquipInfo EquipInfo { get; } = new EquipInfo();
         private WeaponInfo EquipWeapon => EquipInfo.Weapon;
         public BeamType CurrentWeapon { get; private set; }
@@ -587,9 +583,9 @@ namespace MphRead.Entities
             else if (Hunter == Hunter.Sylux)
             {
                 _abilities |= AbilityFlags.Bombs;
-                _syluxBombs[0] = null;
-                _syluxBombs[1] = null;
-                _syluxBombs[2] = null;
+                SyluxBombs[0] = null;
+                SyluxBombs[1] = null;
+                SyluxBombs[2] = null;
             }
             else if (Hunter == Hunter.Noxus)
             {

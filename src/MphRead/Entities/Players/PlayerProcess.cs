@@ -179,7 +179,7 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    _bombAmmo = (byte)(3 - _syluxBombCount);
+                    _bombAmmo = (byte)(3 - SyluxBombCount);
                 }
             }
             else

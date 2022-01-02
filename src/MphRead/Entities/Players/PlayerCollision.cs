@@ -120,7 +120,7 @@ namespace MphRead.Entities
                     for (int i = 1; i < _kandenSegPos.Length; i++)
                     {
                         point2 = _kandenSegPos[i].AddY(Fixed.ToFloat(Values.AltColYPos));
-                        count = CollisionDetection.CheckSphereBetweenPoints(candidates, point2, point1, altRadius,
+                        count = CollisionDetection.CheckSphereBetweenPoints(candidates, point2, point2, altRadius,
                             limit: 40, includeOffset: true, TestFlags.AffectsPlayers, _scene, results);
                         for (int j = 0; j < count; j++)
                         {

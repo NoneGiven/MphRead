@@ -936,11 +936,11 @@ namespace MphRead.Entities
             }
             else
             {
-                if (Hunter == Hunter.Sylux && _syluxBombCount >= 3)
+                if (Hunter == Hunter.Sylux && SyluxBombCount >= 3)
                 {
-                    _syluxBombs[2]!.Countdown = 0;
-                    _syluxBombs[1]!.Countdown = 0;
-                    _syluxBombs[0]!.Countdown = 0;
+                    SyluxBombs[2]!.Countdown = 0;
+                    SyluxBombs[1]!.Countdown = 0;
+                    SyluxBombs[0]!.Countdown = 0;
                     return;
                 }
                 transform = GetTransformMatrix(Vector3.UnitZ, Vector3.UnitY, Position.AddY(Fixed.ToFloat(-1000)));
@@ -950,8 +950,8 @@ namespace MphRead.Entities
             {
                 if (Hunter == Hunter.Sylux)
                 {
-                    _syluxBombs[_syluxBombCount] = bomb;
-                    bomb.BombIndex = _syluxBombCount++;
+                    SyluxBombs[SyluxBombCount] = bomb;
+                    bomb.BombIndex = SyluxBombCount++;
                     // todo?: wifi stuff
                 }
                 // todo: node ref
@@ -976,7 +976,7 @@ namespace MphRead.Entities
                 {
                     _altModel.SetAnimation((int)KandenAltAnim.TailOut, AnimFlags.NoLoop);
                 }
-                else if (Hunter == Hunter.Sylux && _syluxBombCount == 3)
+                else if (Hunter == Hunter.Sylux && SyluxBombCount == 3)
                 {
                     // todo: FPS stuff
                     _bombOveruse += 27 * 2;
