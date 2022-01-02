@@ -383,7 +383,28 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
-                // skhere
+                float dot1 = Vector3.Dot(Position, forceField.Plane.Xyz) - forceField.Plane.W;
+                float dot2 = Vector3.Dot(PrevPosition, forceField.Plane.Xyz) - forceField.Plane.W;
+                if (dot1 < 1 && dot1 > -1 || dot2 < 1 && dot2 > -1)
+                {
+                    Vector3 between = Volume.SpherePosition - forceField.Position;
+                    float dotH = Vector3.Dot(between, forceField.UpVector);
+                    float dotW = Vector3.Dot(between, forceField.RightVector);
+                    if (dotH <= forceField.Height && dotH >= -forceField.Height
+                        && dotW <= forceField.Width && dotW >= -forceField.Width)
+                    {
+                        CollisionResult ffResult = default;
+                        ffResult.Field0 = 0;
+                        ffResult.EntityCollision = null;
+                        ffResult.Flags = CollisionFlags.None;
+                        ffResult.Plane = forceField.Plane;
+                        if (dot2 < 0)
+                        {
+                            ffResult.Plane.Xyz *= -1;
+                        }
+                        HandleCollision(ffResult);
+                    }
+                }
             }
             DamageResult dmgRes = default;
             dmgRes.Damage = 1;
