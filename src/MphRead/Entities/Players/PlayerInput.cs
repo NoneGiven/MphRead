@@ -1163,7 +1163,8 @@ namespace MphRead.Entities
                 }
             }
             // todo: play SFX (with slideSfxPct)
-            Speed = Speed.WithX(Speed.X * speedFactor).WithZ(Speed.Z * speedFactor);
+            Vector3 speedMul = Speed.WithX(Speed.X * speedFactor).WithZ(Speed.Z * speedFactor);
+            Speed += (speedMul - Speed) / 2; // todo: FPS stuff
             if (Flags1.TestFlag(PlayerFlags1.UsedJumpPad))
             {
                 Speed = Speed.AddX(_jumpPadAccel.X / 2); // todo: FPS stuff
