@@ -851,7 +851,7 @@ namespace MphRead.Entities
                                 float factor = Fixed.ToFloat(Values.BoostSpeedMin)
                                     + _boostCharge * (Fixed.ToFloat(Values.BoostSpeedMax) - Fixed.ToFloat(Values.BoostSpeedMin))
                                     / (Values.BoostChargeMax * 2); // todo: FPS stuff
-                                Speed = Speed.AddX(_field70 * factor).AddZ(_field74 * factor);
+                                speedDelta = speedDelta.AddX(_field70 * factor).AddZ(_field74 * factor);
                                 _altAttackCooldown = (ushort)(Values.AltAttackCooldown * 2); // todo: FPS stuff
                                 Flags1 |= PlayerFlags1.Boosting;
                                 _boostDamage = (ushort)(Values.AltAttackDamage * _boostCharge / (Values.BoostChargeMax * 2)); // todo: FPS stuff
@@ -1056,13 +1056,13 @@ namespace MphRead.Entities
                     {
                         _hSpeedCap = altMin;
                     }
-                    else if (_hSpeedMag > _hSpeedCap)
+                    else if (hSpeedMag >= _hSpeedCap)
                     {
-                        _hSpeedCap -= Fixed.ToFloat(Values.AltHSpeedCapIncrement); // todo: FPS stuff?
+                        _hSpeedCap -= Fixed.ToFloat(Values.AltHSpeedCapIncrement) / 2; // todo: FPS stuff
                     }
                     else
                     {
-                        _hSpeedCap = _hSpeedMag;
+                        _hSpeedCap = hSpeedMag;
                     }
                 }
                 else
