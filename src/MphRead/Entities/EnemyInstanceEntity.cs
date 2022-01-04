@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
+using MphRead.Formats;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -51,7 +52,7 @@ namespace MphRead.Entities
             if (_beams == null)
             {
                 _beams = SceneSetup.CreateBeamList(64, scene); // in-game: 64
-            } 
+            }
         }
 
         public override void Initialize()
@@ -359,11 +360,74 @@ namespace MphRead.Entities
             return true;
         }
 
-        protected bool HandleBlockingCollision(Vector3 position, CollisionVolume volume, bool updateSpeed,
-            Action<bool>? a6 = null, Action<bool>? a7 = null)
+        protected bool HandleBlockingCollision(Vector3 position, CollisionVolume volume, bool updateSpeed)
         {
-            // sktodo: this
-            return false;
+            bool a = false;
+            bool b = false;
+            return HandleBlockingCollision(position, volume, updateSpeed, ref a, ref b);
+        }
+
+        protected bool HandleBlockingCollision(Vector3 position, CollisionVolume volume, bool updateSpeed, ref bool a6, ref bool a7)
+        {
+            int count = 0;
+            var results = new CollisionResult[30];
+            Vector3 pointOne = Vector3.Zero;
+            Vector3 pointTwo = Vector3.Zero;
+            if (volume.Type == VolumeType.Cylinder)
+            {
+                pointOne = _prevPos.AddY(0.5f);
+                pointTwo = Position.AddY(0.5f);
+                count = CollisionDetection.CheckSphereBetweenPoints(pointOne, pointTwo, volume.CylinderRadius, limit: 30,
+                    includeOffset: false, TestFlags.None, _scene, results);
+            }
+            else
+            {
+                count = CollisionDetection.CheckInRadius(position, _boundingRadius, limit: 30,
+                    getSimpleNormal: false, TestFlags.None, _scene, results);
+            }
+            a6 = false;
+            if (count == 0)
+            {
+                return false;
+            }
+            for (int i = 0; i < count; i++)
+            {
+                CollisionResult result = results[i];
+                float v18;
+                if (result.Field0 != 0)
+                {
+                    v18 = _boundingRadius - result.Field14;
+                }
+                else if (volume.Type == VolumeType.Cylinder)
+                {
+                    v18 = _boundingRadius + result.Plane.W - Vector3.Dot(pointTwo, result.Plane.Xyz);
+                }
+                else
+                {
+                    v18 = _boundingRadius + result.Plane.W - Vector3.Dot(position, result.Plane.Xyz);
+                }
+                if (v18 > 0)
+                {
+                    if (result.Plane.Y < 0.1f && result.Plane.Y > -0.1f)
+                    {
+                        a7 = true;
+                    }
+                    else
+                    {
+                        a6 = true;
+                    }
+                    Position += result.Plane.Xyz * v18;
+                    if (updateSpeed)
+                    {
+                        float dot = Vector3.Dot(_speed, result.Plane.Xyz);
+                        if (dot < 0)
+                        {
+                            _speed += result.Plane.Xyz * -dot;
+                        }
+                    }
+                }
+            }
+            return true;
         }
 
         public override void GetDisplayVolumes()
