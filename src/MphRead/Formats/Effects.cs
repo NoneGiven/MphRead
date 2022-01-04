@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using MphRead.Entities;
+using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
 namespace MphRead.Effects
@@ -736,7 +737,7 @@ namespace MphRead.Effects
         public List<int> TextureBindingIds { get; } = new List<int>();
         public List<EffectParticle> Particles { get; } = new List<EffectParticle>(); // todo: pre-size?
 
-        public EntityBase? Owner { get; set; }
+        public EntityCollision? EntityCollision { get; set; }
         public EffectEntry? EffectEntry { get; set; }
         public Model Model { get; set; } = null!;
         public List<Node> Nodes { get; } = new List<Node>(); // todo: pre-size?

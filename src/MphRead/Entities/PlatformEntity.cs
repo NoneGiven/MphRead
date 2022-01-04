@@ -43,8 +43,8 @@ namespace MphRead.Entities
         private EntityBase? _deathMessageTarget = null;
         private readonly EntityBase?[] _lifetimeMessageTargets = new EntityBase?[4];
         private readonly Message[] _lifetimeMessages = new Message[4];
-        private readonly uint[] _lifetimeMessageParam1s = new uint[4];
-        private readonly uint[] _lifetimeMessageParam2s = new uint[4];
+        private readonly int[] _lifetimeMessageParam1s = new int[4];
+        private readonly int[] _lifetimeMessageParam2s = new int[4];
         private readonly int[] _lifetimeMessageIndices = new int[4];
 
         private PlatAnimFlags _animFlags = PlatAnimFlags.None;
@@ -1090,7 +1090,7 @@ namespace MphRead.Entities
                                     {
                                         spawnFacing = Vector3.Cross(Vector3.UnitZ, spawnUp).Normalized();
                                     }
-                                    _scene.SpawnEffect(effectId, spawnFacing, spawnUp, spawnPos, owner: result.EntityCollision.Entity);
+                                    _scene.SpawnEffect(effectId, spawnFacing, spawnUp, spawnPos, entCol: result.EntityCollision);
                                 }
                             }
                         }

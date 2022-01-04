@@ -1289,14 +1289,19 @@ namespace MphRead.Entities
                     colRes.Position.Z + colRes.Plane.Z / 8
                 );
                 Vector3 vec1 = WeaponType == BeamType.Imperialist ? -Direction : colRes.Plane.Xyz;
-                // btodo: handle entity collision
+                if (colRes.EntityCollision != null)
+                {
+                    spawnPos = Matrix.Vec3MultMtx4(spawnPos, colRes.EntityCollision.Inverse1);
+                    vec1 = Matrix.Vec3MultMtx4(vec1, colRes.EntityCollision.Inverse1);
+                }
                 Vector3 vec2 = GetCrossVector(vec1);
                 Matrix4 transform = GetTransformMatrix(vec2, vec1);
                 transform.Row3.Xyz = spawnPos;
                 // somehwat redundant logic, game uses "511" bits which accomplish the same thing as this terrain type check
                 if (_scene.GameMode != GameMode.SinglePlayer || colRes.Terrain <= Terrain.Lava)
                 {
-                    var ent = BeamEffectEntity.Create(new BeamEffectEntityData(CollisionEffect, noSplat, transform), _scene);
+                    var ent = BeamEffectEntity.Create(
+                        new BeamEffectEntityData(CollisionEffect, noSplat, transform, colRes.EntityCollision), _scene);
                     if (ent != null)
                     {
                         if (SplashDamage > 0)
@@ -1310,7 +1315,8 @@ namespace MphRead.Entities
                 if (_scene.GameMode == GameMode.SinglePlayer && splatEffect != 255)
                 {
                     splatEffect += 3;
-                    var ent = BeamEffectEntity.Create(new BeamEffectEntityData(splatEffect, noSplat, transform), _scene);
+                    var ent = BeamEffectEntity.Create(
+                        new BeamEffectEntityData(splatEffect, noSplat, transform, colRes.EntityCollision), _scene);
                     if (ent != null)
                     {
                         _scene.AddEntity(ent);

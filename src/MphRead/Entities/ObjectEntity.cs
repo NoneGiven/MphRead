@@ -367,8 +367,8 @@ namespace MphRead.Entities
                                     new Vector4(offset) + spawnTransform.Row3
                                 );
                             }
-                            EntityBase? owner = _parent == null ? null : this;
-                            _scene.SpawnEffect(_data.EffectId, spawnTransform, owner: owner);
+                            EntityCollision? entCol = _parent == null ? null : EntityCollision[0];
+                            _scene.SpawnEffect(_data.EffectId, spawnTransform, entCol: entCol);
                         }
                         _effectIntervalTimer = _effectInterval;
                     }

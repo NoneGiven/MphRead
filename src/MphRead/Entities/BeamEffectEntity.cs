@@ -1,3 +1,4 @@
+using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -9,12 +10,14 @@ namespace MphRead.Entities
         // in game this is treated as an anim ID for icewave/sniperbeam/cylburn, but all of those only have one animation anyway
         public readonly bool NoSplat;
         public readonly Matrix4 Transform;
+        public readonly EntityCollision? EntityCollision;
 
-        public BeamEffectEntityData(int type, bool noSplat, Matrix4 transform)
+        public BeamEffectEntityData(int type, bool noSplat, Matrix4 transform, EntityCollision? entCol = null)
         {
             Type = type;
             NoSplat = noSplat;
             Transform = transform;
+            EntityCollision = entCol;
         }
     }
 
@@ -96,7 +99,7 @@ namespace MphRead.Entities
                         effectId = 98;
                     }
                 }
-                scene.SpawnEffect(effectId, data.Transform);
+                scene.SpawnEffect(effectId, data.Transform, entCol: data.EntityCollision);
                 return null;
             }
             return scene.InitBeamEffect(data);
