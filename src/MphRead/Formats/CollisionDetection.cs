@@ -83,6 +83,7 @@ namespace MphRead.Formats
         private static bool CheckBetweenPoints(IReadOnlyList<CollisionCandidate>? candidates, Vector3 point1, Vector3 point2,
             TestFlags flags, Scene scene, ref CollisionResult result, bool hasCandidates)
         {
+            _seenData.Clear();
             bool collided = false;
             ushort mask = 0;
             bool includeEntities = !flags.TestFlag(TestFlags.AffectsScan);
@@ -125,9 +126,13 @@ namespace MphRead.Formats
                 {
                     // todo: counter
                     CollisionData data = info.Data[info.DataIndices[candidate.Entry.DataStartIndex + j]];
-                    if (((ushort)data.Flags & mask) != 0)
+                    if (((ushort)data.Flags & mask) != 0 || _seenData.Contains(data))
                     {
                         continue;
+                    }
+                    if (candidate.EntityCollision == null)
+                    {
+                        _seenData.Add(data);
                     }
                     Vector4 plane = info.Planes[data.PlaneIndex];
                     float dot1 = Vector3.Dot(transPoint1, plane.Xyz) - plane.W;
@@ -360,12 +365,12 @@ namespace MphRead.Formats
         }
 
         // todo: revisit this approach
-        private static readonly HashSet<CollisionData> _temp = new HashSet<CollisionData>(64);
+        private static readonly HashSet<CollisionData> _seenData = new HashSet<CollisionData>(64);
 
         public static int CheckSphereBetweenPoints(IReadOnlyList<CollisionCandidate>? candidates, Vector3 point1, Vector3 point2, float radius,
             int limit, bool includeOffset, TestFlags flags, Scene scene, CollisionResult[] results, bool hasCandidates)
         {
-            _temp.Clear();
+            _seenData.Clear();
             int count = 0;
             ushort mask = 0;
             bool includeEntities = !flags.TestFlag(TestFlags.AffectsScan);
@@ -410,13 +415,13 @@ namespace MphRead.Formats
                         break;
                     }
                     CollisionData data = info.Data[info.DataIndices[candidate.Entry.DataStartIndex + j]];
-                    if (((ushort)data.Flags & mask) != 0 || _temp.Contains(data))
+                    if (((ushort)data.Flags & mask) != 0 || _seenData.Contains(data))
                     {
                         continue;
                     }
                     if (candidate.EntityCollision == null)
                     {
-                        _temp.Add(data);
+                        _seenData.Add(data);
                     }
                     Vector4 plane = info.Planes[data.PlaneIndex];
                     float dot1 = Vector3.Dot(transPoint1, plane.Xyz) - plane.W;
@@ -534,6 +539,7 @@ namespace MphRead.Formats
         public static int CheckInRadius(Vector3 point, float radius, int limit, bool getSimpleNormal,
             TestFlags flags, Scene scene, CollisionResult[] results)
         {
+            _seenData.Clear();
             int count = 0;
             ushort mask = 0;
             if (flags.TestFlag(TestFlags.AffectsPlayers))
@@ -561,9 +567,13 @@ namespace MphRead.Formats
                     }
                     // todo: counter
                     CollisionData data = info.Data[info.DataIndices[candidate.Entry.DataStartIndex + j]];
-                    if (((ushort)data.Flags & mask) != 0)
+                    if (((ushort)data.Flags & mask) != 0 || _seenData.Contains(data))
                     {
                         continue;
+                    }
+                    if (candidate.EntityCollision == null)
+                    {
+                        _seenData.Add(data);
                     }
                     Vector4 plane = info.Planes[data.PlaneIndex];
                     float dot = Vector3.Dot(point, plane.Xyz) - plane.W;
