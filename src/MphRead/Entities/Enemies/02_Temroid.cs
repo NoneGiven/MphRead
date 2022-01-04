@@ -302,7 +302,7 @@ namespace MphRead.Entities.Enemies
 
         private void State02()
         {
-            if ((HitPlayers & (1 << PlayerEntity.MainPlayer.SlotIndex)) != 0)
+            if (HitPlayers[PlayerEntity.MainPlayer.SlotIndex])
             {
                 // todo: damage player
             }
@@ -477,8 +477,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior03()
         {
-            if (_health == 0 || (HitPlayers & (1 << PlayerEntity.MainPlayer.SlotIndex)) == 0
-                || PlayerEntity.MainPlayer.AttachedEnemy != null)
+            if (_health == 0 || !HitPlayers[PlayerEntity.MainPlayer.SlotIndex] || PlayerEntity.MainPlayer.AttachedEnemy != null)
             {
                 return false;
             }

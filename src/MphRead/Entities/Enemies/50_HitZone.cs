@@ -76,13 +76,13 @@ namespace MphRead.Entities.Enemies
                     Flags |= EnemyFlags.CollidePlayer;
                     Flags |= EnemyFlags.CollideBeam;
                     // todo?: main player slot index for consistency?
-                    HitPlayers = 1;
+                    HitPlayers[0] = true;
                 }
                 else
                 {
                     Flags &= ~EnemyFlags.CollidePlayer;
                     Flags &= ~EnemyFlags.CollideBeam;
-                    HitPlayers = 0;
+                    ClearHitPlayers();
                 }
             }
         }

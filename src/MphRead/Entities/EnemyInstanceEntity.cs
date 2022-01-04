@@ -30,7 +30,7 @@ namespace MphRead.Entities
         protected CollisionVolume _hurtVolumeInit = default;
         protected byte _state1 = 0; // todo: names ("next?")
         protected byte _state2 = 0;
-        public int HitPlayers { get; set; }
+        public bool[] HitPlayers { get; } = new bool[4];
         protected Vector3 _prevPos = Vector3.Zero;
         protected Vector3 _speed = Vector3.Zero;
         protected float _boundingRadius = 0;
@@ -83,6 +83,14 @@ namespace MphRead.Entities
             {
                 _noIneffectiveEffect = true;
             }
+        }
+
+        public void ClearHitPlayers()
+        {
+            HitPlayers[0] = false;
+            HitPlayers[1] = false;
+            HitPlayers[2] = false;
+            HitPlayers[3] = false;
         }
 
         public override bool Process()
@@ -150,7 +158,7 @@ namespace MphRead.Entities
                         DoMovement();
                     }
                     // todo: positional audio, node ref
-                    HitPlayers = 0;
+                    ClearHitPlayers();
                     for (int i = 0; i < _scene.Entities.Count; i++)
                     {
                         EntityBase entity = _scene.Entities[i];
@@ -161,7 +169,7 @@ namespace MphRead.Entities
                         var player = (PlayerEntity)entity;
                         if (player.Health > 0)
                         {
-                            HitPlayers |= 1 << player.SlotIndex;
+                            HitPlayers[player.SlotIndex] = true;
                             CollisionResult hitRes = default;
                             if (Flags.TestFlag(EnemyFlags.CollidePlayer)
                                 && CollisionDetection.CheckVolumesOverlap(player.Volume, HurtVolume, ref hitRes))
@@ -193,7 +201,7 @@ namespace MphRead.Entities
 
         protected void ContactDamagePlayer(uint damage, bool knockback)
         {
-            // todo: test hit bits against main player, do damage + knockback
+            // sktodo: test hit bits against main player, do damage + knockback
         }
 
         private void DoMovement()

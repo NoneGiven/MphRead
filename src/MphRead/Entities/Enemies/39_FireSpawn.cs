@@ -128,10 +128,10 @@ namespace MphRead.Entities.Enemies
                 _hitZone.Flags |= EnemyFlags.CollidePlayer;
                 _hitZone.Flags |= EnemyFlags.CollideBeam;
                 // todo?: main player slot index for consistency?
-                _hitZone.HitPlayers = 1;
+                _hitZone.HitPlayers[0] = true;
                 Flags |= EnemyFlags.CollidePlayer;
                 Flags |= EnemyFlags.CollideBeam;
-                HitPlayers = 1; // also here
+                HitPlayers[0] = true; // also here
             }
             if (_tangibilityTimer <= 5 * 2)
             {
@@ -220,10 +220,10 @@ namespace MphRead.Entities.Enemies
                 Debug.Assert(_hitZone != null);
                 _hitZone.Flags &= ~EnemyFlags.CollidePlayer;
                 _hitZone.Flags &= ~EnemyFlags.CollideBeam;
-                _hitZone.HitPlayers = 0;
+                _hitZone.ClearHitPlayers();
                 Flags &= ~EnemyFlags.CollidePlayer;
                 Flags &= ~EnemyFlags.CollideBeam;
-                HitPlayers = 0;
+                ClearHitPlayers();
             }
             if (_tangibilityTimer <= 18 * 2)
             {
