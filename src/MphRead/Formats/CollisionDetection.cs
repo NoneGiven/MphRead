@@ -418,15 +418,17 @@ namespace MphRead.Formats
                     float dot1 = Vector3.Dot(transPoint1, plane.Xyz) - plane.W;
                     if (dot1 <= 0)
                     {
+                        // plane is behind the starting point
                         continue;
                     }
                     float dot2 = Vector3.Dot(transPoint2, plane.Xyz) - plane.W;
                     if (dot2 > radius)
                     {
+                        // plane is more than radius units ahead of the ending point
                         continue;
                     }
                     float pct = 1;
-                    if (dot1 != dot2)
+                    if (MathF.Abs(dot1 - dot2) >= 1 / 4096f)
                     {
                         pct = Math.Clamp(dot1 / (dot1 - dot2), 0, 1);
                     }
@@ -453,6 +455,10 @@ namespace MphRead.Formats
                         if (dotDiff < -0.03125f)
                         {
                             fullCollision = false;
+                            // bug? - the first edge that we're outside of by the 0.03 margin may only be partially outside,
+                            // so after the radius check we return this face as collided without testing any of the other edges,
+                            // which we might be way outside of and thus not actually colliding with the face (e.g. High Ground)
+                            // --> this may be compensated for by the some collision handling routines, but not all?
                             if (includeOffset && dotDiff >= -radius)
                             {
                                 // unimpl-collision: see note below

@@ -512,7 +512,7 @@ namespace MphRead.Entities
                 }
                 else if (edge.Y != 0)
                 {
-                    v11 = (yTop - result.EdgePoint1.Y) / edge.Y;
+                    v11 = (yBot - result.EdgePoint1.Y) / edge.Y;
                     v2 = 0; // gets assigned later
                 }
                 else
@@ -553,7 +553,7 @@ namespace MphRead.Entities
                     {
                         v162 = (yBot - result.EdgePoint1.Y) / edge.Y;
                     }
-                    if (Fixed.ToInt(v11) == Fixed.ToInt(v162))
+                    if (MathF.Abs(v11 - v162) < 1 / 4096f)
                     {
                         return;
                     }
