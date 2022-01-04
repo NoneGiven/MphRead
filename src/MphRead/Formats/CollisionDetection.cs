@@ -1435,13 +1435,13 @@ namespace MphRead.Formats
             {
                 return false;
             }
-            float v11 = (plane.W - (plane.X * cylBot.X + plane.Y * cylBot.Y + plane.Z * cylBot.Z)) / sum;
-            if (v11 < 0 || v11 > 1)
+            float dist = (plane.W - (plane.X * cylBot.X + plane.Y * cylBot.Y + plane.Z * cylBot.Z)) / sum;
+            if (dist < 0 || dist > 1)
             {
                 return false;
             }
-            result.Position = cylBot + v11 * (cylTop - cylBot);
-            result.Distance = v11;
+            result.Position = cylBot + dist * (cylTop - cylBot);
+            result.Distance = dist;
             result.EntityCollision = null;
             return true;
         }

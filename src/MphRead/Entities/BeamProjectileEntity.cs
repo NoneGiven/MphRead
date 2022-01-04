@@ -216,7 +216,6 @@ namespace MphRead.Entities
             }
             if (Flags.TestFlag(BeamFlags.SurfaceCollision))
             {
-                // sktodo: collide with doors
                 CollisionResult colRes = default;
                 if (CollisionDetection.CheckBetweenPoints(BackPosition, Position, TestFlags.AffectsBeams, _scene, ref colRes)
                     && colRes.Distance < minDist)
@@ -231,28 +230,66 @@ namespace MphRead.Entities
                 for (int i = 0; i < _scene.Entities.Count; i++)
                 {
                     EntityBase entity = _scene.Entities[i];
-                    if (entity.Type == EntityType.ForceField)
+                    if (entity.Type != EntityType.Door)
                     {
-                        // todo: some of these properties are compatible with the entity moving, some aren't
-                        var forceField = (ForceFieldEntity)entity;
-                        if (forceField.Active
-                            && CollisionDetection.CheckCylinderIntersectPlane(BackPosition, Position, forceField.Plane, ref colRes)
-                            && colRes.Distance < minDist)
+                        continue;
+                    }
+                    var door = (DoorEntity)entity;
+                    if (door.Flags.TestFlag(DoorFlags.Open))
+                    {
+                        continue;
+                    }
+                    Vector3 doorFacing = door.FacingVector;
+                    Vector3 lockPos = door.LockPosition;
+                    var plane = new Vector4(doorFacing, 0);
+                    if (Vector3.Dot(BackPosition - lockPos, doorFacing) < 0)
+                    {
+                        plane *= -1;
+                    }
+                    Vector3 wvec = plane.Xyz * (lockPos + 0.4f * plane.Xyz);
+                    plane.W = wvec.X + wvec.Y + wvec.Z;
+                    if (CollisionDetection.CheckCylinderIntersectPlane(BackPosition, Position, plane, ref colRes)
+                        && colRes.Distance < minDist)
+                    {
+                        Vector3 between = colRes.Position - lockPos;
+                        if (between.LengthSquared < door.RadiusSquared)
                         {
-                            Vector3 between = colRes.Position - forceField.Position;
-                            float dot = Vector3.Dot(between, forceField.FieldUpVector);
-                            if (dot <= forceField.Height && dot >= -forceField.Height)
+                            minDist = colRes.Distance;
+                            anyRes = colRes;
+                            colWith = door;
+                            noColEff = false;
+                            anyRes.Field0 = 0;
+                            anyRes.Plane = plane;
+                            anyRes.Flags = CollisionFlags.None;
+                        }
+                    }
+                }
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.ForceField)
+                    {
+                        continue;
+                    }
+                    // todo: some of these properties are compatible with the entity moving, some aren't
+                    var forceField = (ForceFieldEntity)entity;
+                    if (forceField.Active
+                        && CollisionDetection.CheckCylinderIntersectPlane(BackPosition, Position, forceField.Plane, ref colRes)
+                        && colRes.Distance < minDist)
+                    {
+                        Vector3 between = colRes.Position - forceField.Position;
+                        float dot = Vector3.Dot(between, forceField.FieldUpVector);
+                        if (dot <= forceField.Height && dot >= -forceField.Height)
+                        {
+                            dot = Vector3.Dot(between, forceField.FieldRightVector);
+                            if (dot <= forceField.Width && dot >= -forceField.Width)
                             {
-                                dot = Vector3.Dot(between, forceField.FieldRightVector);
-                                if (dot <= forceField.Width && dot >= -forceField.Width)
-                                {
-                                    minDist = colRes.Distance;
-                                    anyRes = colRes;
-                                    colWith = forceField;
-                                    noColEff = false;
-                                    anyRes.Field0 = 0;
-                                    anyRes.Plane = forceField.Plane;
-                                }
+                                minDist = colRes.Distance;
+                                anyRes = colRes;
+                                colWith = forceField;
+                                noColEff = false;
+                                anyRes.Field0 = 0;
+                                anyRes.Plane = forceField.Plane;
                             }
                         }
                     }
@@ -336,6 +373,35 @@ namespace MphRead.Entities
                         }
                         ricochet = false;
                     }
+                    else if (colWith.Type == EntityType.Door)
+                    {
+                        var door = (DoorEntity)colWith;
+                        SpawnCollisionEffect(anyRes, noSplat: true);
+                        OnCollision(anyRes, colWith);
+                        // todo: update SFX
+                        if (Owner?.Type == EntityType.Player)
+                        {
+                            var player = (PlayerEntity)Owner;
+                            if (player.IsMainPlayer || PlayerEntity.FreeCamera) // skdebug
+                            {
+                                if (door.Flags.TestFlag(DoorFlags.Locked) && !door.Flags.TestFlag(DoorFlags.ShowLock))
+                                {
+                                    if (door.Data.PaletteId == (int)WeaponType)
+                                    {
+                                        door.Unlock(updateState: true, sfxBool: true);
+                                    }
+                                    else if (!_scene.Multiplayer)
+                                    {
+                                        // todo: handle messages like this
+                                        _scene.SendMessage(Message.ShowWarning, this, null, 40, 90 * 2, 5 * 2); // todo: FPS stuff
+                                    }
+                                }
+                                // todo: don't do this if in room transition
+                                door.Flags |= DoorFlags.ShotOpen;
+                            }
+                        }
+                        ricochet = false;
+                    }
                     else if (colWith.Type == EntityType.ForceField)
                     {
                         var forceField = (ForceFieldEntity)colWith;
@@ -345,6 +411,7 @@ namespace MphRead.Entities
                             OnCollision(anyRes, colWith);
                             // todo: update SFX
                             forceField.Lock?.LockHit(this);
+                            ricochet = false;
                         }
                     }
                 }

@@ -11,11 +11,12 @@ namespace MphRead.Entities
 
         public float Radius { get; }
         public float RadiusSquared { get; }
-        public DoorFlags Flags { get; private set; } = DoorFlags.None;
+        public DoorFlags Flags { get; set; } = DoorFlags.None;
 
         private bool Locked => Flags.TestFlag(DoorFlags.Locked);
         private bool Unlocked => Flags.TestFlag(DoorFlags.Unlocked);
         public Vector3 LockPosition => (_transform * _lockTransform).Row3.Xyz;
+        public DoorEntityData Data => _data;
 
         public DoorEntity(DoorEntityData data, Scene scene) : base(EntityType.Door, scene)
         {

@@ -191,7 +191,7 @@ namespace MphRead.Entities
         public static PlayerEntity MainPlayer => Players[MainPlayerIndex];
         public static readonly PlayerEntity[] _players = new PlayerEntity[4];
         public static IReadOnlyList<PlayerEntity> Players => _players;
-        private bool IsMainPlayer => this == MainPlayer && !FreeCamera;
+        public bool IsMainPlayer => this == MainPlayer && !FreeCamera;
 
         private const int UA = 0;
         private const int Missiles = 1;
