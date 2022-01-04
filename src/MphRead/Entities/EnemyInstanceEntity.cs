@@ -135,12 +135,12 @@ namespace MphRead.Entities
                             {
                                 inRange = true;
                                 break;
-                            } 
+                            }
                         }
                     }
                     else
                     {
-                        inRange = CheckInRange(PlayerEntity.MainPlayer.Position);
+                        inRange = CheckInRange(PlayerEntity.Main.Position);
                     }
                 }
             }
@@ -167,16 +167,15 @@ namespace MphRead.Entities
                             continue;
                         }
                         var player = (PlayerEntity)entity;
-                        if (player.Health > 0)
+                        CollisionResult hitRes = default;
+                        if (player.Health > 0 && CollisionDetection.CheckVolumesOverlap(player.Volume, HurtVolume, ref hitRes))
                         {
                             HitPlayers[player.SlotIndex] = true;
-                            CollisionResult hitRes = default;
-                            if (Flags.TestFlag(EnemyFlags.CollidePlayer)
-                                && CollisionDetection.CheckVolumesOverlap(player.Volume, HurtVolume, ref hitRes))
+                            if (Flags.TestFlag(EnemyFlags.CollidePlayer))
                             {
                                 player.HandleCollision(hitRes);
                             }
-                        } 
+                        }
                     }
                     EnemyProcess();
                     if (!Flags.TestFlag(EnemyFlags.Static))
@@ -199,9 +198,20 @@ namespace MphRead.Entities
             return false;
         }
 
-        protected void ContactDamagePlayer(uint damage, bool knockback)
+        protected bool ContactDamagePlayer(uint damage, bool knockback)
         {
-            // sktodo: test hit bits against main player, do damage + knockback
+            if (!HitPlayers[PlayerEntity.Main.SlotIndex])
+            {
+                return false;
+            }
+            PlayerEntity.Main.TakeDamage(damage, DamageFlags.None, _speed, this);
+            if (knockback)
+            {
+                Vector3 between = PlayerEntity.Main.Volume.SpherePosition - Position;
+                float factor = between.Length * 5;
+                PlayerEntity.Main.Speed = PlayerEntity.Main.Speed.AddX(between.X / factor).AddZ(between.Z / factor);
+            }
+            return true;
         }
 
         private void DoMovement()

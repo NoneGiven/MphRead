@@ -158,7 +158,7 @@ namespace MphRead.Entities.Enemies
 
         private void State4()
         {
-            if (HitPlayers[PlayerEntity.MainPlayer.SlotIndex])
+            if (HitPlayers[PlayerEntity.Main.SlotIndex])
             {
                 // todo: damage player
                 _stepCount = 0;
@@ -168,7 +168,7 @@ namespace MphRead.Entities.Enemies
 
         private void State5()
         {
-            if (HitPlayers[PlayerEntity.MainPlayer.SlotIndex])
+            if (HitPlayers[PlayerEntity.Main.SlotIndex])
             {
                 // todo: damage player
             }

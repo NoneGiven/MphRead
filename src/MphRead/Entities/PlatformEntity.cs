@@ -358,7 +358,7 @@ namespace MphRead.Entities
             {
                 if (Flags.TestFlag(PlatformFlags.DripMoat))
                 {
-                    _scene.SendMessage(Message.DripMoatPlatform, this, PlayerEntity.MainPlayer, 1, 0);
+                    _scene.SendMessage(Message.DripMoatPlatform, this, PlayerEntity.Main, 1, 0);
                 }
                 if (_data.PositionCount >= 2)
                 {
@@ -387,7 +387,7 @@ namespace MphRead.Entities
                 // todo: more room state
                 if (Flags.TestFlag(PlatformFlags.DripMoat))
                 {
-                    _scene.SendMessage(Message.DripMoatPlatform, this, PlayerEntity.MainPlayer, 0, 0);
+                    _scene.SendMessage(Message.DripMoatPlatform, this, PlayerEntity.Main, 0, 0);
                 }
             }
         }
@@ -439,7 +439,7 @@ namespace MphRead.Entities
                         {
                             if (PlayerEntity.PlayerCount > 0)
                             {
-                                PlayerEntity mainPlayer = PlayerEntity.MainPlayer;
+                                PlayerEntity mainPlayer = PlayerEntity.Main;
                                 target = new Vector3(
                                     mainPlayer.Position.X - _curPosition.X,
                                     mainPlayer.Position.Y + 1 - _curPosition.Y,
@@ -456,7 +456,7 @@ namespace MphRead.Entities
                     }
                     else if (PlayerEntity.PlayerCount > 0)
                     {
-                        PlayerEntity mainPlayer = PlayerEntity.MainPlayer;
+                        PlayerEntity mainPlayer = PlayerEntity.Main;
                         target = new Vector3(
                             mainPlayer.Position.X - _curPosition.X,
                             0,
@@ -497,7 +497,7 @@ namespace MphRead.Entities
                     if (_animFlags.TestFlag(PlatAnimFlags.SeekPlayerHeight) && PlayerEntity.PlayerCount > 0)
                     {
                         // also never true in-game
-                        PlayerEntity mainPlayer = PlayerEntity.MainPlayer;
+                        PlayerEntity mainPlayer = PlayerEntity.Main;
                         float offset = (mainPlayer.Position.Y - _curPosition.Y) * Fixed.ToFloat(20);
                         _curPosition.Y += offset;
                     }

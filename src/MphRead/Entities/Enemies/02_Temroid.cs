@@ -213,9 +213,9 @@ namespace MphRead.Entities.Enemies
 
         protected override void Detach()
         {
-            if (PlayerEntity.MainPlayer.AttachedEnemy == this)
+            if (PlayerEntity.Main.AttachedEnemy == this)
             {
-                PlayerEntity.MainPlayer.AttachedEnemy = null;
+                PlayerEntity.Main.AttachedEnemy = null;
             }
             _field1D0 = false;
         }
@@ -302,7 +302,7 @@ namespace MphRead.Entities.Enemies
 
         private void State02()
         {
-            if (HitPlayers[PlayerEntity.MainPlayer.SlotIndex])
+            if (HitPlayers[PlayerEntity.Main.SlotIndex])
             {
                 // todo: damage player
             }
@@ -477,11 +477,11 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior03()
         {
-            if (_health == 0 || !HitPlayers[PlayerEntity.MainPlayer.SlotIndex] || PlayerEntity.MainPlayer.AttachedEnemy != null)
+            if (_health == 0 || !HitPlayers[PlayerEntity.Main.SlotIndex] || PlayerEntity.Main.AttachedEnemy != null)
             {
                 return false;
             }
-            PlayerEntity.MainPlayer.AttachedEnemy = this;
+            PlayerEntity.Main.AttachedEnemy = this;
             return true;
         }
 

@@ -188,10 +188,10 @@ namespace MphRead.Entities
         public static int PlayerCount { get; set; } = 0; // todo: update this
         public static int MaxPlayers { get; set; } = 4;
         public static int PlayersCreated { get; set; } = 0;
-        public static PlayerEntity MainPlayer => Players[MainPlayerIndex];
+        public static PlayerEntity Main => Players[MainPlayerIndex];
         public static readonly PlayerEntity[] _players = new PlayerEntity[4];
         public static IReadOnlyList<PlayerEntity> Players => _players;
-        public bool IsMainPlayer => this == MainPlayer && !FreeCamera;
+        public bool IsMainPlayer => this == Main && !FreeCamera;
 
         private const int UA = 0;
         private const int Missiles = 1;
@@ -1245,7 +1245,7 @@ namespace MphRead.Entities
                 ignoreDamage = true;
                 damage = 0;
             }
-            if (!ignoreDamage && flags.TestFlag(DamageFlags.Headshot) && attacker == MainPlayer) // todo: and not on wifi
+            if (!ignoreDamage && flags.TestFlag(DamageFlags.Headshot) && attacker == Main) // todo: and not on wifi
             {
                 // todo: draw HUD string
             }
@@ -1281,7 +1281,7 @@ namespace MphRead.Entities
             // todo?: something for wifi
             if (attacker != null)
             {
-                if (attacker == MainPlayer)
+                if (attacker == Main)
                 {
                     // todo: update HUD
                 }
