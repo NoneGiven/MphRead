@@ -131,11 +131,7 @@ namespace MphRead.Entities
             }
             if (Effect != null)
             {
-                for (int i = 0; i < Effect.Elements.Count; i++)
-                {
-                    EffectElementEntry element = Effect.Elements[i];
-                    element.Transform = Transform;
-                }
+                Effect.Transform(Position, Transform);
             }
             return base.Process();
         }

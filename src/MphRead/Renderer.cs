@@ -1307,7 +1307,7 @@ namespace MphRead
             entry.Func39Called = false;
             entry.Funcs = element.Funcs;
             entry.Actions = element.Actions;
-            entry.Position = Vector3.Zero;
+            entry.OwnTransform = Matrix4.Identity;
             entry.Transform = Matrix4.Identity;
             entry.ParticleAmount = 0;
             entry.Expired = false;
@@ -1407,7 +1407,6 @@ namespace MphRead
         private void SpawnEffect(int effectId, Matrix4 transform, bool child, EffectEntry? entry, EntityCollision? entCol)
         {
             Effect effect = Read.LoadEffect(effectId); // should already be loaded
-            var position = new Vector3(transform.Row3);
             for (int i = 0; i < effect.Elements.Count; i++)
             {
                 EffectElement elementDef = effect.Elements[i];
@@ -1417,14 +1416,13 @@ namespace MphRead
                     element.EffectEntry = entry;
                     entry.Elements.Add(element);
                 }
-                element.Position = position;
                 if (element.Flags.TestFlag(EffElemFlags.SpawnUnitVecs))
                 {
                     Vector3 vec1 = Vector3.UnitY;
                     Vector3 vec2 = Vector3.UnitX;
-                    transform = Matrix.GetTransform4(vec2, vec1, position);
+                    transform = Matrix.GetTransform4(vec2, vec1, transform.Row3.Xyz);
                 }
-                element.Transform = transform;
+                element.Transform = element.OwnTransform = transform;
                 for (int j = 0; j < elementDef.Particles.Count; j++)
                 {
                     Particle particleDef = elementDef.Particles[j];
@@ -1482,10 +1480,12 @@ namespace MphRead
                     }
                     if (element.EntityCollision != null)
                     {
-                        // sktodo: this
-                        element.Transform = element.EntityCollision.Transform;
-                        element.Position = element.Transform.Row3.Xyz;
+                        element.Transform = element.OwnTransform * element.EntityCollision.Transform;
                     }
+                    else
+                    {
+                        element.Transform = element.OwnTransform;
+                    } 
                     var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
                     if (_frameCount % 2 == (ulong)element.Parity
                         && element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))

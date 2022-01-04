@@ -1292,7 +1292,7 @@ namespace MphRead.Entities
                 if (colRes.EntityCollision != null)
                 {
                     spawnPos = Matrix.Vec3MultMtx4(spawnPos, colRes.EntityCollision.Inverse1);
-                    vec1 = Matrix.Vec3MultMtx4(vec1, colRes.EntityCollision.Inverse1);
+                    vec1 = Matrix.Vec3MultMtx3(vec1, colRes.EntityCollision.Inverse1);
                 }
                 Vector3 vec2 = GetCrossVector(vec1);
                 Matrix4 transform = GetTransformMatrix(vec2, vec1);
