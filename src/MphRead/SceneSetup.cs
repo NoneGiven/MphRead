@@ -25,6 +25,7 @@ namespace MphRead
             {
                 mode = metadata.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;
             }
+            scene.GameMode = mode;
             if (playerCount < 1 || playerCount > 4)
             {
                 if (mode == GameMode.SinglePlayer)

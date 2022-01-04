@@ -133,7 +133,7 @@ namespace MphRead
         private bool _roomLoaded = false;
         private RoomEntity? _room = null;
         private int _roomId = -1;
-        public GameMode GameMode { get; private set; } = GameMode.SinglePlayer;
+        public GameMode GameMode { get; set; } = GameMode.SinglePlayer;
         public int PlayerCount { get; private set; } = 1;
         public bool Multiplayer => GameMode != GameMode.SinglePlayer;
         public int RoomId => _roomId;

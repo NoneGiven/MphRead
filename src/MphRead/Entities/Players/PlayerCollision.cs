@@ -419,7 +419,7 @@ namespace MphRead.Entities
             _volume = CollisionVolume.Move(_volumeUnxf, Position);
         }
 
-        private void HandleCollision(CollisionResult result)
+        public void HandleCollision(CollisionResult result)
         {
             bool v163 = false;
             bool v164 = false;

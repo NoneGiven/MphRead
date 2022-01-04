@@ -30,7 +30,7 @@ namespace MphRead.Entities
         protected CollisionVolume _hurtVolumeInit = default;
         protected byte _state1 = 0; // todo: names ("next?")
         protected byte _state2 = 0;
-        public byte HitPlayers { get; set; }
+        public int HitPlayers { get; set; }
         protected Vector3 _prevPos = Vector3.Zero;
         protected Vector3 _speed = Vector3.Zero;
         protected float _boundingRadius = 0;
@@ -87,14 +87,54 @@ namespace MphRead.Entities
 
         public override bool Process()
         {
-            bool inRange = true; // todo: should default to false, but with logic for view mode/"camera is player"
+            bool inRange = false;
             if (_data.Type == EnemyType.Spawner || Flags.TestFlag(EnemyFlags.NoMaxDistance))
             {
                 inRange = true;
             }
             else
             {
-                // todo: check range
+                float distSqr = 35f * 35f;
+                if (Owner?.Type == EntityType.EnemySpawn)
+                {
+                    var spawner = (EnemySpawnEntity)Owner;
+                    distSqr = spawner.Data.EnemyActiveDistance.FloatValue;
+                    distSqr *= distSqr;
+                }
+
+                bool CheckInRange(Vector3 pos)
+                {
+                    Vector3 between = Position - pos;
+                    return between.LengthSquared < distSqr && between.Y > -15 && between.Y < 15;
+                }
+                if (PlayerEntity.FreeCamera) // skdebug
+                {
+                    inRange = CheckInRange(_scene.CameraPosition);
+                }
+                if (!inRange)
+                {
+                    if (_scene.Multiplayer)
+                    {
+                        for (int i = 0; i < _scene.Entities.Count; i++)
+                        {
+                            EntityBase entity = _scene.Entities[i];
+                            if (entity.Type != EntityType.Player)
+                            {
+                                continue;
+                            }
+                            var player = (PlayerEntity)entity;
+                            if (player.Health > 0 && CheckInRange(player.Position))
+                            {
+                                inRange = true;
+                                break;
+                            } 
+                        }
+                    }
+                    else
+                    {
+                        inRange = CheckInRange(PlayerEntity.MainPlayer.Position);
+                    }
+                }
             }
             if (inRange)
             {
@@ -111,7 +151,25 @@ namespace MphRead.Entities
                     }
                     // todo: positional audio, node ref
                     HitPlayers = 0;
-                    // todo: player collision
+                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    {
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type != EntityType.Player)
+                        {
+                            continue;
+                        }
+                        var player = (PlayerEntity)entity;
+                        if (player.Health > 0)
+                        {
+                            HitPlayers |= 1 << player.SlotIndex;
+                            CollisionResult hitRes = default;
+                            if (Flags.TestFlag(EnemyFlags.CollidePlayer)
+                                && CollisionDetection.CheckVolumesOverlap(player.Volume, HurtVolume, ref hitRes))
+                            {
+                                player.HandleCollision(hitRes);
+                            }
+                        } 
+                    }
                     EnemyProcess();
                     if (!Flags.TestFlag(EnemyFlags.Static))
                     {

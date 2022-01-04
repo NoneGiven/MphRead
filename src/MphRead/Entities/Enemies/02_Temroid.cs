@@ -302,7 +302,7 @@ namespace MphRead.Entities.Enemies
 
         private void State02()
         {
-            if ((HitPlayers & 1) != 0) // todo: use player slot index
+            if ((HitPlayers & (1 << PlayerEntity.MainPlayer.SlotIndex)) != 0)
             {
                 // todo: damage player
             }
@@ -477,13 +477,12 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior03()
         {
-            // todo: use player slot index
-            // todo: also test if player has an attached enemy
-            if ((HitPlayers & 1) == 0 || _health == 0)
+            if (_health == 0 || (HitPlayers & (1 << PlayerEntity.MainPlayer.SlotIndex)) == 0
+                || PlayerEntity.MainPlayer.AttachedEnemy != null)
             {
                 return false;
             }
-            // todo: update main player's attached enemy reference
+            PlayerEntity.MainPlayer.AttachedEnemy = this;
             return true;
         }
 

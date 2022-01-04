@@ -1157,6 +1157,12 @@ namespace MphRead.Formats
             }
         }
 
+        public static bool CheckVolumesOverlap(CollisionVolume one, CollisionVolume two, ref CollisionResult result)
+        {
+            // sktodo
+            return false;
+        }
+
         public static bool CheckSphereOverlapVolume(CollisionVolume other, Vector3 pos, float radius, ref CollisionResult result)
         {
             if (other.Type == VolumeType.Cylinder)

@@ -127,10 +127,11 @@ namespace MphRead.Entities.Enemies
                 Debug.Assert(_hitZone != null);
                 _hitZone.Flags |= EnemyFlags.CollidePlayer;
                 _hitZone.Flags |= EnemyFlags.CollideBeam;
+                // todo?: main player slot index for consistency?
                 _hitZone.HitPlayers = 1;
                 Flags |= EnemyFlags.CollidePlayer;
                 Flags |= EnemyFlags.CollideBeam;
-                HitPlayers = 1;
+                HitPlayers = 1; // also here
             }
             if (_tangibilityTimer <= 5 * 2)
             {
