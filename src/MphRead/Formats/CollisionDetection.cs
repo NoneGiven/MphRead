@@ -56,6 +56,10 @@ namespace MphRead.Formats
     {
         private static readonly List<CollisionCandidate> _activeItems = new List<CollisionCandidate>(2048);
         private static readonly Queue<CollisionCandidate> _inactiveItems = new Queue<CollisionCandidate>(2048);
+        // due to using linked lists, the game checks collision with room candidates in the reverse order as they were found,
+        // then checks collision with entity candidates in the reverse order as they were found,
+        // so we need this temporary collection to add everything to _activeItems in the right order
+        private static readonly Stack<CollisionCandidate> _tempItems = new Stack<CollisionCandidate>(2048);
 
         public static void Init()
         {
@@ -747,7 +751,7 @@ namespace MphRead.Formats
                                 item.Collision = info;
                                 item.Entry = entry;
                                 item.EntityCollision = null;
-                                _activeItems.Add(item);
+                                _tempItems.Push(item);
                             }
                             xIndex++;
                         }
@@ -758,6 +762,10 @@ namespace MphRead.Formats
                     zIndex = minZPart;
                     yIndex++;
                 }
+            }
+            while (_tempItems.Count > 0)
+            {
+                _activeItems.Add(_tempItems.Pop());
             }
         }
 
@@ -831,7 +839,7 @@ namespace MphRead.Formats
                                         item.Collision = info;
                                         item.Entry = entry;
                                         item.EntityCollision = entCol;
-                                        _activeItems.Add(item);
+                                        _tempItems.Push(item);
                                     }
                                     xIndex++;
                                 }
@@ -844,6 +852,10 @@ namespace MphRead.Formats
                         }
                     }
                 }
+            }
+            while (_tempItems.Count > 0)
+            {
+                _activeItems.Add(_tempItems.Pop());
             }
         }
 
@@ -1079,7 +1091,7 @@ namespace MphRead.Formats
                         item.Collision = info;
                         item.Entry = entry;
                         item.EntityCollision = null;
-                        _activeItems.Add(item);
+                        _tempItems.Push(item);
                     }
                 }
                 if (curX == endX && curY == endY && curZ == endZ)
@@ -1128,6 +1140,10 @@ namespace MphRead.Formats
                     }
                     xNext += xInc;
                 }
+            }
+            while (_tempItems.Count > 0)
+            {
+                _activeItems.Add(_tempItems.Pop());
             }
         }
 
