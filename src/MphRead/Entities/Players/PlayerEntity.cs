@@ -897,7 +897,7 @@ namespace MphRead.Entities
             {
                 return false;
             }
-            WeaponInfo info = Weapons.Current[(int)BeamType.Missile];
+            WeaponInfo info = Weapons.Current[(int)beam];
             byte ammoType = info.AmmoType;
             bool hasAmmo = beam == BeamType.PowerBeam || _ammo[ammoType] >= info.AmmoCost;
             if (!silent && (!hasAmmo || !_availableWeapons[beam] || GunAnimation == GunAnimation.UpDown))

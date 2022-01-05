@@ -323,7 +323,8 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // btodo: collide with players, collide with enemy beams
+            // sktodo: collide with players
+            // btodo: collide with halfturret and enemy beams
             if (minDist >= 0 && minDist <= 1)
             {
                 float amt = Fixed.ToFloat(204);
@@ -336,7 +337,8 @@ namespace MphRead.Entities
                 // btodo: sfx and stuff
                 if (colWith != null)
                 {
-                    // btodo: handle collision with all entities
+                    // sktodo: handle collision with players
+                    // btodo: handle collision with halfturret and enemy beams
                     if (colWith.Type == EntityType.EnemyInstance)
                     {
                         var enemy = (EnemyInstanceEntity)colWith;
@@ -417,6 +419,7 @@ namespace MphRead.Entities
                 }
                 else
                 {
+                    // collided with room, platform, or object collision
                     bool reflected = anyRes.Flags.TestFlag(CollisionFlags.ReflectBeams);
                     if (anyRes.EntityCollision != null)
                     {
@@ -431,6 +434,7 @@ namespace MphRead.Entities
                             bool noSplat = anyRes.Terrain == Terrain.Lava || anyRes.EntityCollision != null;
                             SpawnCollisionEffect(anyRes, noSplat);
                         }
+                        // todo: play SFX
                         OnCollision(anyRes, colWith: null);
                         ricochet = false;
                     }
@@ -497,10 +501,12 @@ namespace MphRead.Entities
                 Debug.Assert(Equip != null);
                 Debug.Assert(Owner != null);
                 CheckSplashDamage(colWith);
+                // skdebug
                 if (Weapon == BeamType.OmegaCannon)
                 {
                     _scene.SetFade(FadeType.FadeInWhite, 15 * (1 / 30f), overwrite: false);
                 }
+                // note: when hitting halfturret, colWith has been replaced with the turret's owning player by this point
                 if (RicochetWeapon != null && (colWith == null || colWith.Type != EntityType.Player))
                 {
                     Vector3 factor = Velocity * 7;
@@ -1252,7 +1258,7 @@ namespace MphRead.Entities
                 : weapon.MinChargeSpread + ((weapon.ChargedSpread - weapon.MinChargeSpread) * chargePct);
             angle /= 4096f;
             Debug.Assert(angle == 60);
-            // btodo: collision check with player and halfturret
+            CheckIceWaveCollision(angle);
             Vector3 vec1 = Direction;
             Vector3 vec2;
             if (vec1.X != 0 || vec1.Z != 0)
@@ -1272,6 +1278,91 @@ namespace MphRead.Entities
             {
                 _scene.AddEntity(ent);
             }
+        }
+
+        // todo: visualize & investigate shadow freeze bug
+        private void CheckIceWaveCollision(float angle)
+        {
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.Player || Owner == entity)
+                {
+                    continue;
+                }
+                var player = (PlayerEntity)entity;
+                if (player.Health == 0)
+                {
+                    continue;
+                }
+                Vector3 between = player.Position - Position;
+                float dot = Vector3.Dot(between, Direction);
+                between += Direction * -dot;
+                float mag = between.Length;
+                if (mag < MaxDistance)
+                {
+                    between /= mag;
+                    if (Vector3.Dot(between, Up) > MathF.Cos(angle))
+                    {
+                        Vector3 dir = GetDamageDirection(Position, player.Position);
+                        player.TakeDamage((int)Damage, DamageFlags.NoDmgInvuln, dir, this);
+                    }
+                }
+                if (player.Flags2.TestFlag(PlayerFlags2.Halfturret))
+                {
+                    // btodo: check for collision with halfturret
+                }
+            }
+        }
+
+        private Vector3 GetDamageDirection(Vector3 beamPos, Vector3 targetPos)
+        {
+            if (DamageDirType == 1)
+            {
+                // multiply velocity (or unit Y if not moving) by magnitude -- unused?
+                Vector3 direction = Vector3.UnitY;
+                if (Velocity != Vector3.Zero)
+                {
+                    direction = Velocity.Normalized();
+                }
+                return direction * DamageDirMag;
+            }
+            if (DamageDirType == 2)
+            {
+                // normalize vector between, halve Y, minimum 0.03 Y (or 0.03 Y if not moving), multiply by magnitude
+                Vector3 direction = targetPos - beamPos;
+                if (direction != Vector3.Zero)
+                {
+                    direction = direction.Normalized();
+                    direction.Y /= 2;
+                    if (direction.Y < 0.03f)
+                    {
+                        direction.Y = 0.03f;
+                    }
+                }
+                else
+                {
+                    direction = new Vector3(0, 0.03f, 0);
+                }
+                return direction * DamageDirMag;
+            }
+            if (DamageDirType == 3)
+            {
+                // normalize horizontal vector between, multiply by magnitude
+                Vector3 direction = (targetPos - beamPos).WithY(0);
+                if (direction != Vector3.Zero)
+                {
+                    direction = direction.Normalized();
+                    direction *= DamageDirMag;
+                }
+                return direction;
+            }
+            if (DamageDirType == 4)
+            {
+                //unit Y multiplied by magnitude -- unused?
+                return new Vector3(0, DamageDirMag, 0);
+            }
+            return Vector3.Zero;
         }
 
         private void SpawnCollisionEffect(CollisionResult colRes, bool noSplat)
