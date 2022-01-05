@@ -725,7 +725,7 @@ namespace MphRead.Entities
             _field4E8 = Vector3.Zero;
             _modelTransform = Matrix4.Identity;
             _timeSinceMorphCamera = UInt16.MaxValue;
-            SetBipedAnimation(PlayerAnimation.Idle, AnimFlags.None); // skdebug
+            SetBipedAnimation(PlayerAnimation.Spawn, AnimFlags.None);
             _altModel.SetAnimation(0, AnimFlags.Paused);
             SetGunAnimation(GunAnimation.Idle, AnimFlags.NoLoop);
             _gunSmokeModel.SetAnimation(0);
