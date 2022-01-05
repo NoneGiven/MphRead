@@ -138,10 +138,10 @@ namespace MphRead.Entities.Enemies
 
         private void State1()
         {
-            // todo: use player position
-            if (Position != _scene.CameraPosition)
+            Vector3 playerPos = PlayerEntity.Main.Position;
+            if (Position != playerPos)
             {
-                SetTransform((_scene.CameraPosition - Position).Normalized(), Vector3.UnitY, Position);
+                SetTransform((playerPos - Position).Normalized(), Vector3.UnitY, Position);
             }
             CallSubroutine(Metadata.Enemy00Subroutines, this);
         }
@@ -160,7 +160,7 @@ namespace MphRead.Entities.Enemies
         {
             if (HitPlayers[PlayerEntity.Main.SlotIndex])
             {
-                // todo: damage player
+                PlayerEntity.Main.TakeDamage(25, DamageFlags.None, direction: null, this);
                 _stepCount = 0;
             }
             CallSubroutine(Metadata.Enemy00Subroutines, this);
@@ -170,7 +170,7 @@ namespace MphRead.Entities.Enemies
         {
             if (HitPlayers[PlayerEntity.Main.SlotIndex])
             {
-                // todo: damage player
+                PlayerEntity.Main.TakeDamage(25, DamageFlags.None, direction: null, this);
             }
             CallSubroutine(Metadata.Enemy00Subroutines, this);
         }
@@ -253,7 +253,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior03()
         {
-            if (_movementType == 3 || !_homeVolume.TestPoint(_scene.CameraPosition)) // todo: use player position
+            if (_movementType == 3 || !_homeVolume.TestPoint(PlayerEntity.Main.Position))
             {
                 return false;
             }
@@ -293,9 +293,9 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             _speed = Vector3.Zero;
-            // todo: use player position
-            Vector3 facing = _scene.CameraPosition - Position;
-            if (Position != _scene.CameraPosition)
+            Vector3 playerPos = PlayerEntity.Main.Position;
+            Vector3 facing = playerPos - Position;
+            if (Position != playerPos)
             {
                 facing = facing.Normalized();
             }
@@ -315,7 +315,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior08()
         {
-            if (_homeVolume.TestPoint(_scene.CameraPosition)) // todo: use player position  
+            if (_homeVolume.TestPoint(PlayerEntity.Main.Position))
             {
                 return false;
             }
@@ -359,7 +359,7 @@ namespace MphRead.Entities.Enemies
                 _attackDelay--;
                 return false;
             }
-            _attackTarget = _scene.CameraPosition; // todo: use player position
+            _attackTarget = PlayerEntity.Main.Position;
             _stepCount = 40 * 2; // todo: FPS stuff
             _models[0].SetAnimation(3, AnimFlags.NoLoop);
             // todo: play SFX
