@@ -108,8 +108,6 @@ namespace MphRead.Entities
         public Vector3 UpVector => Transform.Row1.Xyz.Normalized();
         public Vector3 FacingVector => Transform.Row2.Xyz.Normalized();
 
-        public virtual Vector3 TargetPosition => Position;
-
         protected bool _anyLighting = false;
         protected readonly List<ModelInstance> _models = new List<ModelInstance>();
 
