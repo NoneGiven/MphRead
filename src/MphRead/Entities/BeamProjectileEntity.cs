@@ -301,24 +301,25 @@ namespace MphRead.Entities
                 for (int i = 0; i < _scene.Entities.Count; i++)
                 {
                     EntityBase entity = _scene.Entities[i];
-                    if (entity.Type == EntityType.EnemyInstance)
+                    if (entity.Type != EntityType.EnemyInstance)
                     {
-                        CollisionResult res = default;
-                        var enemy = (EnemyInstanceEntity)entity;
-                        if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam)
-                            && CollisionDetection.CheckCylinderOverlapVolume(enemy.HurtVolume, BackPosition, Position, CylinderRadius, ref res))
+                        continue;
+                    }
+                    CollisionResult res = default;
+                    var enemy = (EnemyInstanceEntity)entity;
+                    if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam)
+                        && CollisionDetection.CheckCylinderOverlapVolume(enemy.HurtVolume, BackPosition, Position, CylinderRadius, ref res))
+                    {
+                        if (WeaponType == BeamType.OmegaCannon && enemy.EnemyType == EnemyType.GoreaMeteor)
                         {
-                            if (WeaponType == BeamType.OmegaCannon && enemy.EnemyType == EnemyType.GoreaMeteor)
-                            {
-                                enemy.TakeDamage(500, this);
-                            }
-                            else if (res.Distance < minDist)
-                            {
-                                minDist = res.Distance;
-                                anyRes = res;
-                                colWith = enemy;
-                                noColEff = false;
-                            }
+                            enemy.TakeDamage(500, this);
+                        }
+                        else if (res.Distance < minDist)
+                        {
+                            minDist = res.Distance;
+                            anyRes = res;
+                            colWith = enemy;
+                            noColEff = false;
                         }
                     }
                 }
