@@ -1180,6 +1180,11 @@ namespace MphRead.Entities
             }
         }
 
+        public void TakeDamage(int damage, DamageFlags flags, Vector3? direction, EntityBase? source)
+        {
+            TakeDamage((uint)damage, flags, direction, source);
+        }
+
         public void TakeDamage(uint damage, DamageFlags flags, Vector3? direction, EntityBase? source)
         {
             if (_health == 0)

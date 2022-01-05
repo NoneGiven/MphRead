@@ -104,70 +104,72 @@ namespace MphRead.Entities
 
         public override bool Process()
         {
-            if (Active)
+            if (!Active)
             {
-                if (_data.Subtype == TriggerType.Volume)
+                return base.Process();
+            }
+            if (_data.Subtype == TriggerType.Volume)
+            {
+                bool colliding = false;
+                TriggerFlags flags = _data.TriggerFlags;
+                for (int i = 0; i < _scene.Entities.Count; i++)
                 {
-                    bool colliding = false;
-                    TriggerFlags flags = _data.TriggerFlags;
-                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Player)
                     {
-                        EntityBase entity = _scene.Entities[i];
-                        if (entity.Type != EntityType.Player)
+                        continue;
+                    }
+                    var player = (PlayerEntity)entity;
+                    for (int j = 0; j < player.EquipInfo.Beams.Length; j++)
+                    {
+                        BeamProjectileEntity beam = player.EquipInfo.Beams[j];
+                        if (beam.Lifespan > 0)
                         {
-                            continue;
-                        }
-                        var player = (PlayerEntity)entity;
-                        for (int j = 0; j < player.EquipInfo.Beams.Length; j++)
-                        {
-                            BeamProjectileEntity beam = player.EquipInfo.Beams[j];
-                            if (beam.Lifespan > 0)
+                            CollisionResult discard = default;
+                            // bug Omega Cannon (and platform/enemy beams) can chekc against higher bits than intended
+                            if (((int)flags & (1 << (int)beam.WeaponType)) != 0
+                                && (beam.Flags.TestFlag(BeamFlags.Charged) || !flags.TestFlag(TriggerFlags.BeamCharged))
+                                && CollisionDetection.CheckCylinderOverlapVolume(_volume, beam.BackPosition, beam.Position,
+                                    radius: 0.1f, ref discard))
                             {
-                                CollisionResult discard = default;
-                                // bug Omega Cannon (and platform/enemy beams) can chekc against higher bits than intended
-                                if (((int)flags & (1 << (int)beam.WeaponType)) != 0
-                                    && (beam.Flags.TestFlag(BeamFlags.Charged) || !flags.TestFlag(TriggerFlags.BeamCharged))
-                                    && CollisionDetection.CheckCylinderOverlapVolume(_volume, beam.BackPosition, beam.Position,
-                                        radius: 0.1f, ref discard))
-                                {
-                                    Trigger();
-                                    colliding = true;
-                                    break;
-                                }
+                                Trigger();
+                                colliding = true;
+                                break;
                             }
                         }
-                        if ((!player.IsBot || flags.TestFlag(TriggerFlags.IncludeBots))
-                            && (player.IsAltForm && flags.TestFlag(TriggerFlags.PlayerAlt)
-                            || !player.IsAltForm && flags.TestFlag(TriggerFlags.PlayerBiped)))
-                        {
-                            Trigger();
-                            colliding = true;
-                            break;
-                        }
                     }
-                    if (!colliding && _data.CheckDelay != 0)
+                    if ((!player.IsBot || flags.TestFlag(TriggerFlags.IncludeBots))
+                        && (player.IsAltForm && flags.TestFlag(TriggerFlags.PlayerAlt)
+                        || !player.IsAltForm && flags.TestFlag(TriggerFlags.PlayerBiped))
+                        && player.LoadFlags.TestFlag(LoadFlags.Spawned) && _volume.TestPoint(player.Position))
                     {
-                        _delayTimer = _data.CheckDelay * 2; // todo: FPS stuff
+                        Trigger();
+                        colliding = true;
+                        break;
                     }
                 }
-                else if (_data.Subtype == TriggerType.Threshold)
+                if (!colliding && _data.CheckDelay != 0)
                 {
-                    if (_count == _data.TriggerThreshold && Trigger())
-                    {
-                        _count = 0;
-                    }
+                    _delayTimer = _data.CheckDelay * 2; // todo: FPS stuff
                 }
-                else if (_data.Subtype == TriggerType.Automatic)
+            }
+            else if (_data.Subtype == TriggerType.Threshold)
+            {
+                if (_count == _data.TriggerThreshold && Trigger())
                 {
-                    if (Trigger() && _data.DeactivateAfterUse != 0)
-                    {
-                        Deactivate();
-                    }
+                    _count = 0;
                 }
-                else if (_data.Subtype == TriggerType.StateBits)
+            }
+            else if (_data.Subtype == TriggerType.Automatic)
+            {
+                if (Trigger() && _data.DeactivateAfterUse != 0)
                 {
-                    // todo: check global state bits
+                    Deactivate();
                 }
+            }
+            else if (_data.Subtype == TriggerType.StateBits)
+            {
+                // todo: check global state bits
             }
             return base.Process();
         }

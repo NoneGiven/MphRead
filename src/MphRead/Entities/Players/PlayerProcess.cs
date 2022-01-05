@@ -1763,15 +1763,15 @@ namespace MphRead.Entities
         {
             if (info.Message == Message.Damage)
             {
-                TakeDamage((uint)info.Param1, DamageFlags.IgnoreInvuln, direction: null, source: null);
+                TakeDamage((int)info.Param1, DamageFlags.IgnoreInvuln, direction: null, source: null);
             }
             else if (info.Message == Message.Death)
             {
-                TakeDamage((uint)info.Param1, DamageFlags.Deathalt, direction: null, source: null);
+                TakeDamage((int)info.Param1, DamageFlags.Death, direction: null, source: null);
             }
             else if (info.Message == Message.Gravity)
             {
-                float gravity = (float)info.Param1;
+                float gravity = Fixed.ToFloat((int)info.Param1);
                 if (!Flags1.TestFlag(PlayerFlags1.Standing) && !Flags2.TestFlag(PlayerFlags2.AltAttack)
                     && gravity != 0 && _jumpPadControlLock == 0)
                 {
