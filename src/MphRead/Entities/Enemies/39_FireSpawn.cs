@@ -44,7 +44,7 @@ namespace MphRead.Entities.Enemies
             Flags |= EnemyFlags.OnRadar;
             Flags &= ~EnemyFlags.CollidePlayer;
             Vector3 position = _data.Spawner.Position;
-            Matrix4 transform = GetTransformMatrix((_scene.CameraPosition - position).Normalized(), Vector3.UnitY); // todo: use player position
+            Matrix4 transform = GetTransformMatrix((PlayerEntity.Main.Position - position).Normalized(), Vector3.UnitY);
             transform.Row3.Xyz = position;
             Transform = transform;
             _boundingRadius = 1;
@@ -108,7 +108,7 @@ namespace MphRead.Entities.Enemies
         private void State0()
         {
             // the Y component should really be set to zero before normalization -- this causes transform squashing
-            Vector3 facing = (_scene.CameraPosition - Position).Normalized().WithY(0); // todo: use player position
+            Vector3 facing = (PlayerEntity.Main.Position - Position).Normalized().WithY(0);
             Matrix4 transform = GetTransformMatrix(facing, Vector3.UnitY);
             transform.Row3.Xyz = Position;
             Transform = transform;
@@ -177,7 +177,7 @@ namespace MphRead.Entities.Enemies
                 {
                     _attackCount--;
                     _attackDelay = Values.AttackDelay * 2; // todo: FPS stuff
-                    Vector3 dir = _scene.CameraPosition - _wristPos[_wristId]; // todo: use player position + 0.5 Y
+                    Vector3 dir = PlayerEntity.Main.Position.AddY(0.5f) - _wristPos[_wristId];
                     dir = dir.Normalized();
                     EquipInfo equipInfo = _equipInfo[_wristId];
                     equipInfo.Weapon.UnchargedDamage = Values.BeamDamage;
@@ -234,7 +234,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior0()
         {
-            if (!_activeVolume.TestPoint(_scene.CameraPosition)) // todo: use player position
+            if (!_activeVolume.TestPoint(PlayerEntity.Main.Position))
             {
                 return false;
             }
@@ -348,7 +348,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior6()
         {
-            if (_activeVolume.TestPoint(_scene.CameraPosition)) // todo: use player position
+            if (_activeVolume.TestPoint(PlayerEntity.Main.Position))
             {
                 return false;
             }
