@@ -514,7 +514,7 @@ namespace MphRead.Utility
                     var volume = new CollisionVolume(Vector3.Zero, 1);
                     TriggerFlags flags = GetFlags(trigger.TriggerFlags, trigger.Subtype);
                     flags |= TriggerFlags.IncludeBots;
-                    TriggerType subtype = TriggerType.Normal;
+                    TriggerType subtype = TriggerType.Volume;
                     if (trigger.Subtype == FhTriggerType.Threshold)
                     {
                         subtype = TriggerType.Threshold;
@@ -708,7 +708,7 @@ namespace MphRead.Utility
             static FhTriggerFlags GetFlags(TriggerFlags mphFlags, TriggerType subtype)
             {
                 FhTriggerFlags flags = FhTriggerFlags.None;
-                if (subtype == TriggerType.Normal)
+                if (subtype == TriggerType.Volume)
                 {
                     if (mphFlags.TestFlag(TriggerFlags.PowerBeam) || mphFlags.TestFlag(TriggerFlags.VoltDriver)
                         || mphFlags.TestFlag(TriggerFlags.Missile) || mphFlags.TestFlag(TriggerFlags.Battlehammer)
@@ -955,7 +955,7 @@ namespace MphRead.Utility
                         Position = areaVolume.Position,
                         Sphere = volume,
                         Subtype = subtype,
-                        TriggerFlags = GetFlags(areaVolume.TriggerFlags, TriggerType.Normal),
+                        TriggerFlags = GetFlags(areaVolume.TriggerFlags, TriggerType.Volume),
                         Up = areaVolume.Up
                     });
                 }
@@ -990,7 +990,7 @@ namespace MphRead.Utility
                         Position = jumpPad.Position,
                         Speed = jumpPad.Speed,
                         Sphere = jumpPad.Volume,
-                        TriggerFlags = GetFlags(jumpPad.TriggerFlags, TriggerType.Normal),
+                        TriggerFlags = GetFlags(jumpPad.TriggerFlags, TriggerType.Volume),
                         Up = jumpPad.Up,
                         VolumeType = volumeType
                     });

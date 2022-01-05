@@ -210,8 +210,8 @@ namespace MphRead
         public readonly ushort SpawnDelay;
         public readonly short NotifyEntityId; // todo: parent? child?
         public readonly Message CollectedMessage;
-        public readonly uint CollectedMsgParam1;
-        public readonly uint CollectedMsgParam2;
+        public readonly int CollectedMsgParam1;
+        public readonly int CollectedMsgParam2;
     }
 
     // size: 50
@@ -244,13 +244,13 @@ namespace MphRead
         public readonly short ParentId;
         public readonly ushort Padding7E;
         public readonly Message ParentMessage;
-        public readonly uint ParentMsgParam1;
-        public readonly uint ParentMsgParam2;
+        public readonly int ParentMsgParam1;
+        public readonly int ParentMsgParam2;
         public readonly short ChildId;
         public readonly ushort Padding8E;
         public readonly Message ChildMessage;
-        public readonly uint ChildMsgParam1;
-        public readonly uint ChildMsgParam2;
+        public readonly int ChildMsgParam1;
+        public readonly int ChildMsgParam2;
     }
 
     // size: 272
@@ -268,11 +268,11 @@ namespace MphRead
         public readonly short ParentId;
         public readonly ushort PaddingF6;
         public readonly FhMessage ParentMessage;
-        public readonly uint ParentMsgParam1;
+        public readonly int ParentMsgParam1;
         public readonly short ChildId;
         public readonly ushort Padding102;
         public readonly FhMessage ChildMessage;
-        public readonly uint ChildMsgParam1;
+        public readonly int ChildMsgParam1;
 
         public FhRawCollisionVolume ActiveVolume
         {
@@ -303,13 +303,13 @@ namespace MphRead
         public readonly byte MessageDelay; // always 0 or 1
         public readonly ushort Unused6A; // always 0 or 1
         public readonly Message InsideMessage;
-        public readonly uint InsideMsgParam1; // seconds for escape sequence, gravity/jump assist values, etc.
-        public readonly uint InsideMsgParam2; // always 0 except for type 15, where it's always 2
+        public readonly int InsideMsgParam1; // seconds for escape sequence, gravity/jump assist values, etc.
+        public readonly int InsideMsgParam2; // always 0 except for type 15, where it's always 2
         public readonly short ParentId;
         public readonly ushort Padding7A;
         public readonly Message ExitMessage;
-        public readonly uint ExitMsgParam1; // always 0
-        public readonly uint ExitMsgParam2; // always 0
+        public readonly int ExitMsgParam1; // always 0
+        public readonly int ExitMsgParam2; // always 0
         public readonly short ChildId; // always the same as ParentId
         public readonly ushort Cooldown;
         public readonly uint Priority; // always 0 or 1
@@ -325,9 +325,9 @@ namespace MphRead
         public readonly FhRawCollisionVolume Sphere;
         public readonly FhRawCollisionVolume Cylinder;
         public readonly FhMessage InsideMessage;
-        public readonly uint InsideMsgParam1;
+        public readonly int InsideMsgParam1;
         public readonly FhMessage ExitMessage;
-        public readonly uint ExitMsgParam1;
+        public readonly int ExitMsgParam1;
         public readonly ushort Cooldown;
         public readonly ushort PaddingFA;
         public readonly FhTriggerFlags TriggerFlags;

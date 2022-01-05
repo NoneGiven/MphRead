@@ -304,7 +304,7 @@ namespace MphRead
 
     public enum TriggerType : uint
     {
-        Normal = 0,
+        Volume = 0,
         Threshold = 1,
         Relay = 2,
         Automatic = 3,

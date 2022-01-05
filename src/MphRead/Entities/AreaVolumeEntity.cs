@@ -57,6 +57,11 @@ namespace MphRead.Entities
         {
             return _child;
         }
+
+        public override bool Process()
+        {
+            return base.Process();
+        }
     }
 
     public class FhAreaVolumeEntity : EntityBase

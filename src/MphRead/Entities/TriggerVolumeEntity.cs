@@ -1,4 +1,6 @@
 using System;
+using MphRead.Formats;
+using OpenTK.Graphics.GL;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -13,6 +15,10 @@ namespace MphRead.Entities
         private readonly Vector3 _parentEventColor;
         private readonly Vector3 _childEventColor;
 
+        public new bool Active { get; set; }
+        private int _count = 0;
+        private int _delayTimer = 0;
+
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0x8C, 0x00).AsVector4();
         public TriggerVolumeEntityData Data => _data;
 
@@ -26,6 +32,10 @@ namespace MphRead.Entities
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.Volume, Position);
             AddPlaceholderModel();
+            // todo: room state
+            Active = data.Active != 0 || data.AlwaysActive != 0;
+            _delayTimer = _data.RepeatDelay * 2; // todo: FPS stuff
+            // todo: music event stuff
         }
 
         public override void Initialize()
@@ -43,7 +53,7 @@ namespace MphRead.Entities
 
         public override void GetDisplayVolumes()
         {
-            if (_data.Subtype == TriggerType.Normal &&
+            if (_data.Subtype == TriggerType.Volume &&
                 (_scene.ShowVolumes == VolumeDisplay.TriggerParent || _scene.ShowVolumes == VolumeDisplay.TriggerChild))
             {
                 Vector3 color = _scene.ShowVolumes == VolumeDisplay.TriggerParent ? _parentEventColor : _childEventColor;
@@ -61,19 +71,165 @@ namespace MphRead.Entities
             return _child;
         }
 
+        private bool Trigger()
+        {
+            if (_delayTimer > 0)
+            {
+                _delayTimer--;
+                return false;
+            }
+            if (_data.ParentMessage != Message.None)
+            {
+                if (_data.DeactivateAfterUse != 0)
+                {
+                    Deactivate();
+                }
+                _scene.SendMessage(_data.ParentMessage, this, _parent, _data.ParentMsgParam1, _data.ParentMsgParam2);
+            }
+            if (_data.ChildMessage != Message.None)
+            {
+                if (_data.DeactivateAfterUse != 0)
+                {
+                    Deactivate();
+                }
+                _scene.SendMessage(_data.ChildMessage, this, _child, _data.ChildMsgParam1, _data.ChildMsgParam2);
+            }
+            _delayTimer = _data.RepeatDelay * 2; // todo: FPS stuff
+            if (_data.Subtype == TriggerType.StateBits)
+            {
+                Active = false;
+            }
+            return true;
+        }
+
         public override bool Process()
         {
-            // todo: add "cutscene triggers active" toggle and use this code w/ parent/child refs
-            //if (Id == 17 && Active && _volume.TestPoint(scene.CameraPosition))
-            //{
-            //    if (scene.TryGetEntity(18, out EntityBase? entity) && entity.Type == EntityType.CameraSequence)
-            //    {
-            //        Active = false;
-            //        var trigger = (CameraSequenceEntity)entity;
-            //        trigger.SetActive(true);
-            //    } 
-            //}
+            if (Active)
+            {
+                if (_data.Subtype == TriggerType.Volume)
+                {
+                    bool colliding = false;
+                    TriggerFlags flags = _data.TriggerFlags;
+                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    {
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type != EntityType.Player)
+                        {
+                            continue;
+                        }
+                        var player = (PlayerEntity)entity;
+                        for (int j = 0; j < player.EquipInfo.Beams.Length; j++)
+                        {
+                            BeamProjectileEntity beam = player.EquipInfo.Beams[j];
+                            if (beam.Lifespan > 0)
+                            {
+                                CollisionResult discard = default;
+                                // bug Omega Cannon (and platform/enemy beams) can chekc against higher bits than intended
+                                if (((int)flags & (1 << (int)beam.WeaponType)) != 0
+                                    && (beam.Flags.TestFlag(BeamFlags.Charged) || !flags.TestFlag(TriggerFlags.BeamCharged))
+                                    && CollisionDetection.CheckCylinderOverlapVolume(_volume, beam.BackPosition, beam.Position,
+                                        radius: 0.1f, ref discard))
+                                {
+                                    Trigger();
+                                    colliding = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if ((!player.IsBot || flags.TestFlag(TriggerFlags.IncludeBots))
+                            && (player.IsAltForm && flags.TestFlag(TriggerFlags.PlayerAlt)
+                            || !player.IsAltForm && flags.TestFlag(TriggerFlags.PlayerBiped)))
+                        {
+                            Trigger();
+                            colliding = true;
+                            break;
+                        }
+                    }
+                    if (!colliding && _data.CheckDelay != 0)
+                    {
+                        _delayTimer = _data.CheckDelay * 2; // todo: FPS stuff
+                    }
+                }
+                else if (_data.Subtype == TriggerType.Threshold)
+                {
+                    if (_count == _data.TriggerThreshold && Trigger())
+                    {
+                        _count = 0;
+                    }
+                }
+                else if (_data.Subtype == TriggerType.Automatic)
+                {
+                    if (Trigger() && _data.DeactivateAfterUse != 0)
+                    {
+                        Deactivate();
+                    }
+                }
+                else if (_data.Subtype == TriggerType.StateBits)
+                {
+                    // todo: check global state bits
+                }
+            }
             return base.Process();
+        }
+
+        private void Deactivate()
+        {
+            Active = false;
+            // todo: room state
+        }
+
+        public override void HandleMessage(MessageInfo info)
+        {
+            if (_data.Subtype == TriggerType.Relay)
+            {
+                if (_parent != null)
+                {
+                    _scene.SendMessage(info.Message, info.Sender, _parent, info.Param1, info.Param2);
+                }
+                if (_child != null)
+                {
+                    _scene.SendMessage(info.Message, info.Sender, _child, info.Param1, info.Param2);
+                }
+            }
+            else
+            {
+                if (info.Message == Message.Trigger)
+                {
+                    if (_data.Subtype == TriggerType.Threshold)
+                    {
+                        if (_count < _data.TriggerThreshold)
+                        {
+                            _count++;
+                        }
+                        if (_count == _data.TriggerThreshold)
+                        {
+                            _delayTimer = _data.CheckDelay * 2; // todo: FPS stuff
+                        }
+                    }
+                }
+                else if (info.Message == Message.Activate)
+                {
+                    Active = true;
+                    // todo: room state
+                }
+                else if (info.Message == Message.SetActive)
+                {
+                    if ((int)info.Param1 != 0)
+                    {
+                        Active = true;
+                        // todo: room state
+                    }
+                    else
+                    {
+                        Active = false;
+                        if (_data.Subtype == TriggerType.Automatic)
+                        {
+                            _delayTimer = _data.RepeatDelay * 2; // todo: FPS stuff
+                        }
+                        // todo: room state
+                    }
+                }
+            }
         }
     }
 
