@@ -1581,12 +1581,12 @@ namespace MphRead.Entities
             // --> shouldn't matter since spawn points are meant to be together in the entity list
             for (int i = 0; i < _scene.Entities.Count && limit < 25; i++)
             {
-                EntityBase entity = _scene.Entities[i];
-                if (entity.Type != EntityType.PlayerSpawn)
+                EntityBase spawn = _scene.Entities[i];
+                if (spawn.Type != EntityType.PlayerSpawn)
                 {
                     continue;
                 }
-                var candidate = (PlayerSpawnEntity)entity;
+                var candidate = (PlayerSpawnEntity)spawn;
                 // skdebug - 1P spawns
                 if ((candidate.IsActive || !_scene.Room!.Metadata.Multiplayer) && candidate.Cooldown == 0
                     && (_scene.FrameCount > 0 || !candidate.Availability))
@@ -1595,16 +1595,20 @@ namespace MphRead.Entities
                     float minDistSqr = 100;
                     for (int j = 0; j < _scene.Entities.Count; j++)
                     {
-                        EntityBase player = _scene.Entities[i];
-                        if (player.Type != EntityType.Player)
+                        EntityBase entity = _scene.Entities[j];
+                        if (entity.Type != EntityType.Player)
                         {
                             continue;
                         }
-                        Vector3 between = candidate.Position - player.Position;
-                        float distSqr = Vector3.Dot(between, between);
-                        if (distSqr < minDistSqr)
+                        var player = (PlayerEntity)entity;
+                        if (player.Health > 0)
                         {
-                            minDistSqr = distSqr;
+                            Vector3 between = candidate.Position - player.Position;
+                            float distSqr = Vector3.Dot(between, between);
+                            if (distSqr < minDistSqr)
+                            {
+                                minDistSqr = distSqr;
+                            }
                         }
                     }
                     if (minDistSqr >= 100)
