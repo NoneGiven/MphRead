@@ -104,20 +104,20 @@ namespace MphRead.Entities.Enemies
                 _models[0].SetAnimation(11, AnimFlags.NoLoop);
                 _field1B8 = 0;
                 _field1BC = Position;
-                Vector3 facing = (_scene.CameraPosition - Position).Normalized(); // todo: use player position with Y + 0.5f
+                Vector3 facing = (PlayerEntity.Main.Position - Position).AddY(0.5f).Normalized();
                 SetTransform(facing, UpVector, Position);
                 _speed = -(facing * 0.3f).WithY(0) / 2; // todo: FPS stuff
             }
             else if (_state2 == 4)
             {
                 _models[0].SetAnimation(12, AnimFlags.NoLoop);
-                Vector3 facing = (_scene.CameraPosition - Position).Normalized(); // todo: use player position with Y + 0.5f
+                Vector3 facing = (PlayerEntity.Main.Position - Position).AddY(0.5f).Normalized();
                 _speed = (facing * 0.3f).WithY(0) / 2; // todo: FPS stuff   
             }
             else if (_state2 == 5)
             {
                 _models[0].SetAnimation(3);
-                Vector3 facing = (_scene.CameraPosition - Position).Normalized(); // todo: use player position with Y + 0.5f
+                Vector3 facing = (PlayerEntity.Main.Position - Position).AddY(0.5f).Normalized();
                 _speed = facing / 2 / 2; // todo: FPS stuff
                 _field170 = 20 * 2; // todo: FPS stuff
             }
@@ -139,9 +139,8 @@ namespace MphRead.Entities.Enemies
             else if (_state2 == 8)
             {
                 Vector3 facing;
-                bool altForm = false; // todo: check flags and get from main player
-                Vector3 playerFacing = Vector3.UnitZ;
-                if (altForm)
+                Vector3 playerFacing = PlayerEntity.Main.FacingVector;
+                if (PlayerEntity.Main.IsAltForm)
                 {
                     _models[0].SetAnimation(7);
                     facing = -playerFacing.WithY(0);
@@ -213,9 +212,9 @@ namespace MphRead.Entities.Enemies
 
         protected override void Detach()
         {
-            if (PlayerEntity.MainPlayer.AttachedEnemy == this)
+            if (PlayerEntity.Main.AttachedEnemy == this)
             {
-                PlayerEntity.MainPlayer.AttachedEnemy = null;
+                PlayerEntity.Main.AttachedEnemy = null;
             }
             _field1D0 = false;
         }
@@ -229,54 +228,71 @@ namespace MphRead.Entities.Enemies
         protected override void EnemyProcess()
         {
             CallStateProcess();
-            // todo: handle collision with doors
-            var results = new CollisionResult[8];
-            int colCount = CollisionDetection.CheckInRadius(Position, _boundingRadius, limit: 8,
-                getSimpleNormal: false, TestFlags.None, _scene, results);
-
-            // sktodo: convert this to float math
-            static float DoThing(float value, float factor)
+            if (_state1 != 8)
             {
-                int v31 = (int)(factor * 4096);
-                int v39 = (int)(value * 4096);
-                int v40 = v39 * v31;
-                int v41 = (int)((ulong)(v39 * (long)v31) >> 32);
-                int v42;
-                if (v41 < 0)
+                for (int i = 0; i < _scene.Entities.Count; i++)
                 {
-                    v42 = -((-v40 >> 12) | (-1048576 * (v41 + (v40 != 0 ? 1 : 0))));
-                }
-                else
-                {
-                    v42 = (v40 >> 12) | (v41 << 20);
-                }
-                return v42 / 4096f;
-            }
-
-            for (int i = 0; i < results.Length; i++)
-            {
-                CollisionResult result = results[i];
-                float rad;
-                if (result.Field0 == 0)
-                {
-                    rad = _boundingRadius + result.Plane.W - Vector3.Dot(Position, result.Plane.Xyz);
-                }
-                else
-                {
-                    rad = _boundingRadius - result.Field14;
-                }
-                if (rad > 0)
-                {
-                    var b = new Vector3(DoThing(result.Plane.X, rad), DoThing(result.Plane.Y, rad), DoThing(result.Plane.Z, rad));
-                    Position += b;
-                    float v44 = -Vector3.Dot(_speed, result.Plane.Xyz);
-                    if (v44 > 0)
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Door)
                     {
-                        var c = new Vector3(DoThing(result.Plane.X, v44), DoThing(result.Plane.Y, v44), DoThing(result.Plane.Z, v44));
-                        _speed += c;
-                        if (_state2 == 5)
+                        continue;
+                    }
+                    var door = (DoorEntity)entity;
+                    Vector3 doorFacing = door.FacingVector;
+                    Vector3 between = Position - door.LockPosition;
+                    float magSqr = between.LengthSquared;
+                    if (magSqr < door.RadiusSquared + _boundingRadius)
+                    {
+                        float dist = door.RadiusSquared + _boundingRadius - magSqr;
+                        if (dist > 0)
                         {
-                            _field170 = 0;
+                            if (Vector3.Dot(between, doorFacing) < 0)
+                            {
+                                dist *= -1;
+                            }
+                            Position += doorFacing * dist;
+                            // todo: FPS stuff
+                            Vector3 speed = _speed * 2;
+                            float dot = -Vector3.Dot(speed, doorFacing);
+                            if (dot > 0)
+                            {
+                                speed += doorFacing * dot / 2;
+                                if (_state2 == 5)
+                                {
+                                    _field170 = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+                var results = new CollisionResult[8];
+                int colCount = CollisionDetection.CheckInRadius(Position, _boundingRadius, limit: 8,
+                    getSimpleNormal: false, TestFlags.None, _scene, results);
+                for (int i = 0; i < colCount; i++)
+                {
+                    CollisionResult result = results[i];
+                    float dist;
+                    if (result.Field0 == 0)
+                    {
+                        dist = _boundingRadius + result.Plane.W - Vector3.Dot(Position, result.Plane.Xyz);
+                    }
+                    else
+                    {
+                        dist = _boundingRadius - result.Field14;
+                    }
+                    if (dist > 0)
+                    {
+                        Position += result.Plane.Xyz * dist;
+                        // todo: FPS stuff
+                        Vector3 speed = _speed * 2;
+                        float dot = -Vector3.Dot(speed, result.Plane.Xyz);
+                        if (dot > 0)
+                        {
+                            speed += result.Plane.Xyz * dot / 2;
+                            if (_state2 == 5)
+                            {
+                                _field170 = 0;
+                            }
                         }
                     }
                 }
@@ -296,15 +312,15 @@ namespace MphRead.Entities.Enemies
 
         private void State01()
         {
-            Func216469C(_scene.CameraPosition, Position, sign: 1); // todo: use main player position
+            Func216469C(_scene.CameraPosition, PlayerEntity.Main.Position, sign: 1);
             State02();
         }
 
         private void State02()
         {
-            if ((HitPlayers & 1) != 0) // todo: use player slot index
+            if (HitPlayers[PlayerEntity.Main.SlotIndex])
             {
-                // todo: damage player
+                PlayerEntity.Main.TakeDamage(15, DamageFlags.None, direction: null, this);
             }
             if (CallSubroutine(Metadata.Enemy02Subroutines, this))
             {
@@ -361,13 +377,9 @@ namespace MphRead.Entities.Enemies
         {
             int animId = _models[0].AnimInfo.Index[0];
             Vector3 facing = FacingVector;
-            // todo: get from main player
-            bool morphing = false;
-            bool unmorphing = false;
-            bool altForm = false;
-            Vector3 playerPos = _scene.CameraPosition;
-            Vector3 playerFacing = Vector3.UnitZ;
-            if (morphing)
+            Vector3 playerPos = PlayerEntity.Main.Position;
+            Vector3 playerFacing = PlayerEntity.Main.FacingVector;
+            if (PlayerEntity.Main.IsMorphing)
             {
                 if (facing.Y != 0)
                 {
@@ -382,7 +394,7 @@ namespace MphRead.Entities.Enemies
                 }
                 SetTransform(facing.Normalized(), UpVector, playerPos.AddY(0.625f));
             }
-            else if (unmorphing)
+            else if (PlayerEntity.Main.IsUnmorphing)
             {
                 if (facing.Y == 0)
                 {
@@ -395,11 +407,11 @@ namespace MphRead.Entities.Enemies
                 AnimationInfo animInfo = _models[0].AnimInfo;
                 int frameCount = animInfo.FrameCount[0];
                 int animFrame = animInfo.Frame[0];
-                Vector3 cameraPos = _scene.CameraPosition; // todo: use player camera info
+                Vector3 cameraPos = playerPos; // todo: use player camera info
                 Vector3 postion = (playerPos.AddY(0.625f) * (frameCount - animFrame) + (cameraPos + playerFacing / 2) * animFrame) / frameCount;
                 SetTransform(facing.Normalized(), UpVector, postion);
             }
-            else if (altForm)
+            else if (PlayerEntity.Main.IsAltForm)
             {
                 if (facing.Y != 0)
                 {
@@ -432,12 +444,12 @@ namespace MphRead.Entities.Enemies
             }
             else
             {
-                // todo: damage player
+                PlayerEntity.Main.TakeDamage(2, DamageFlags.NoDmgInvuln, direction: null, this);
                 _drainDamageTimer = 8 * 2; // todo: FPS stuff
             }
             if (CallSubroutine(Metadata.Enemy02Subroutines, this))
             {
-                // todo: update main player's attached enemy reference
+                PlayerEntity.Main.AttachedEnemy = null;
                 Func21648A4();
             }
         }
@@ -462,7 +474,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior01()
         {
-            return true; // todo: return whether main player has no attached enemy
+            return PlayerEntity.Main.AttachedEnemy == null;
         }
 
         private bool Behavior02()
@@ -477,13 +489,11 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior03()
         {
-            // todo: use player slot index
-            // todo: also test if player has an attached enemy
-            if ((HitPlayers & 1) == 0 || _health == 0)
+            if (_health == 0 || !HitPlayers[PlayerEntity.Main.SlotIndex] || PlayerEntity.Main.AttachedEnemy != null)
             {
                 return false;
             }
-            // todo: update main player's attached enemy reference
+            PlayerEntity.Main.AttachedEnemy = this;
             return true;
         }
 
@@ -494,9 +504,8 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior05()
         {
-            // todo: use player position
             CollisionResult result = default;
-            if (CollisionDetection.CheckBetweenPoints(Position, _scene.CameraPosition, TestFlags.None, _scene, ref result))
+            if (CollisionDetection.CheckBetweenPoints(Position, PlayerEntity.Main.Position, TestFlags.None, _scene, ref result))
             {
                 return false;
             }
@@ -522,32 +531,29 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior08()
         {
-            return false; // todo: return whether the player's health is 0
+            return PlayerEntity.Main.Health == 0;
         }
 
         private bool Behavior09()
         {
-            // todo: use player position
             CollisionResult result = default;
-            return CollisionDetection.CheckBetweenPoints(Position, _scene.CameraPosition, TestFlags.None, _scene, ref result);
+            return CollisionDetection.CheckBetweenPoints(Position, PlayerEntity.Main.Position, TestFlags.None, _scene, ref result);
         }
 
         private bool Behavior10()
         {
-            // todo: use player position
-            Vector3 between = _scene.CameraPosition - Position;
+            Vector3 between = PlayerEntity.Main.Position - Position;
             return between.LengthSquared < 100;
         }
 
         private bool Behavior11()
         {
-            return false; // todo: return whether main player has an attached enemy
+            return PlayerEntity.Main.AttachedEnemy != null;
         }
 
         private bool Behavior12()
         {
-            // todo: use player position
-            Vector3 between = _scene.CameraPosition - Position;
+            Vector3 between = PlayerEntity.Main.Position - Position;
             return between.LengthSquared < 25;
         }
 

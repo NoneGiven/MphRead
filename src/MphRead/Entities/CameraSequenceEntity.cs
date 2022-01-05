@@ -300,17 +300,16 @@ namespace MphRead.Entities
         {
             if (keyframe.PositionEntity != null)
             {
-                Vector3 entPos = keyframe.PositionEntity.TargetPosition;
+                keyframe.PositionEntity.GetVectors(out Vector3 entPos, out Vector3 entUp, out Vector3 entFacing);
                 if (keyframe.UseEntityTransform)
                 {
-                    // todo: revisit this hack once the player Z rotation thing is addressed
-                    Matrix4 entTransform = keyframe.PositionEntity.Transform.ClearScale();
-                    var transform = new Matrix3(
-                        entTransform.Row0.Xyz,
-                        entTransform.Row1.Xyz,
-                        entTransform.Row2.Xyz * (keyframe.PositionEntity.Type == EntityType.Player ? -1 : 1)
+                    Vector3 entRight = Vector3.Cross(entUp, entFacing).Normalized();
+                    entUp = Vector3.Cross(entFacing, entRight).Normalized();
+                    position = entPos + new Vector3(
+                        entRight.X * position.X + entUp.X * position.Y + entFacing.X * position.Z,
+                        entRight.Y * position.X + entUp.Y * position.Y + entFacing.Y * position.Z,
+                        entRight.Z * position.X + entUp.Z * position.Y + entFacing.Z * position.Z
                     );
-                    position = position * transform + entPos;
                 }
                 else
                 {
@@ -319,7 +318,7 @@ namespace MphRead.Entities
             }
             if (keyframe.TargetEntity != null)
             {
-                Vector3 entPos = keyframe.TargetEntity.TargetPosition;
+                keyframe.TargetEntity.GetPosition(out Vector3 entPos);
                 Vector3 between = (entPos - position).Normalized();
                 Vector3 cross1 = Vector3.Cross(Vector3.UnitY, between).Normalized();
                 var cross2 = Vector3.Cross(between, cross1);

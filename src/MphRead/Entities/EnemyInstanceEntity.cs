@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
+using MphRead.Formats;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -29,7 +30,7 @@ namespace MphRead.Entities
         protected CollisionVolume _hurtVolumeInit = default;
         protected byte _state1 = 0; // todo: names ("next?")
         protected byte _state2 = 0;
-        public byte HitPlayers { get; set; }
+        public bool[] HitPlayers { get; } = new bool[4];
         protected Vector3 _prevPos = Vector3.Zero;
         protected Vector3 _speed = Vector3.Zero;
         protected float _boundingRadius = 0;
@@ -51,7 +52,7 @@ namespace MphRead.Entities
             if (_beams == null)
             {
                 _beams = SceneSetup.CreateBeamList(64, scene); // in-game: 64
-            } 
+            }
         }
 
         public override void Initialize()
@@ -84,16 +85,76 @@ namespace MphRead.Entities
             }
         }
 
+        public override void GetPosition(out Vector3 position)
+        {
+            position = _hurtVolume.GetCenter();
+        }
+
+        public override void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
+        {
+            position = _hurtVolume.GetCenter();
+            up = UpVector;
+            facing = FacingVector;
+        }
+
+        public void ClearHitPlayers()
+        {
+            HitPlayers[0] = false;
+            HitPlayers[1] = false;
+            HitPlayers[2] = false;
+            HitPlayers[3] = false;
+        }
+
         public override bool Process()
         {
-            bool inRange = true; // todo: should default to false, but with logic for view mode/"camera is player"
+            bool inRange = false;
             if (_data.Type == EnemyType.Spawner || Flags.TestFlag(EnemyFlags.NoMaxDistance))
             {
                 inRange = true;
             }
             else
             {
-                // todo: check range
+                float distSqr = 35f * 35f;
+                if (Owner?.Type == EntityType.EnemySpawn)
+                {
+                    var spawner = (EnemySpawnEntity)Owner;
+                    distSqr = spawner.Data.EnemyActiveDistance.FloatValue;
+                    distSqr *= distSqr;
+                }
+
+                bool CheckInRange(Vector3 pos)
+                {
+                    Vector3 between = Position - pos;
+                    return between.LengthSquared < distSqr && between.Y > -15 && between.Y < 15;
+                }
+                if (PlayerEntity.FreeCamera) // skdebug
+                {
+                    inRange = CheckInRange(_scene.CameraPosition);
+                }
+                if (!inRange)
+                {
+                    if (_scene.Multiplayer)
+                    {
+                        for (int i = 0; i < _scene.Entities.Count; i++)
+                        {
+                            EntityBase entity = _scene.Entities[i];
+                            if (entity.Type != EntityType.Player)
+                            {
+                                continue;
+                            }
+                            var player = (PlayerEntity)entity;
+                            if (player.Health > 0 && CheckInRange(player.Position))
+                            {
+                                inRange = true;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        inRange = CheckInRange(PlayerEntity.Main.Position);
+                    }
+                }
             }
             if (inRange)
             {
@@ -109,8 +170,25 @@ namespace MphRead.Entities
                         DoMovement();
                     }
                     // todo: positional audio, node ref
-                    HitPlayers = 0;
-                    // todo: player collision
+                    ClearHitPlayers();
+                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    {
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type != EntityType.Player)
+                        {
+                            continue;
+                        }
+                        var player = (PlayerEntity)entity;
+                        CollisionResult hitRes = default;
+                        if (player.Health > 0 && CollisionDetection.CheckVolumesOverlap(player.Volume, HurtVolume, ref hitRes))
+                        {
+                            HitPlayers[player.SlotIndex] = true;
+                            if (Flags.TestFlag(EnemyFlags.CollidePlayer))
+                            {
+                                player.HandleCollision(hitRes);
+                            }
+                        }
+                    }
                     EnemyProcess();
                     if (!Flags.TestFlag(EnemyFlags.Static))
                     {
@@ -132,9 +210,20 @@ namespace MphRead.Entities
             return false;
         }
 
-        protected void ContactDamagePlayer(uint damage, bool knockback)
+        protected bool ContactDamagePlayer(uint damage, bool knockback)
         {
-            // todo: test hit bits against main player, do damage + knockback
+            if (!HitPlayers[PlayerEntity.Main.SlotIndex])
+            {
+                return false;
+            }
+            PlayerEntity.Main.TakeDamage(damage, DamageFlags.None, _speed, this);
+            if (knockback)
+            {
+                Vector3 between = PlayerEntity.Main.Volume.SpherePosition - Position;
+                float factor = between.Length * 5;
+                PlayerEntity.Main.Speed = PlayerEntity.Main.Speed.AddX(between.X / factor).AddZ(between.Z / factor);
+            }
+            return true;
         }
 
         private void DoMovement()
@@ -359,11 +448,74 @@ namespace MphRead.Entities
             return true;
         }
 
-        protected bool HandleBlockingCollision(Vector3 position, CollisionVolume volume, bool updateSpeed,
-            Action<bool>? a6 = null, Action<bool>? a7 = null)
+        protected bool HandleBlockingCollision(Vector3 position, CollisionVolume volume, bool updateSpeed)
         {
-            // sktodo: this
-            return false;
+            bool a = false;
+            bool b = false;
+            return HandleBlockingCollision(position, volume, updateSpeed, ref a, ref b);
+        }
+
+        protected bool HandleBlockingCollision(Vector3 position, CollisionVolume volume, bool updateSpeed, ref bool a6, ref bool a7)
+        {
+            int count = 0;
+            var results = new CollisionResult[30];
+            Vector3 pointOne = Vector3.Zero;
+            Vector3 pointTwo = Vector3.Zero;
+            if (volume.Type == VolumeType.Cylinder)
+            {
+                pointOne = _prevPos.AddY(0.5f);
+                pointTwo = Position.AddY(0.5f);
+                count = CollisionDetection.CheckSphereBetweenPoints(pointOne, pointTwo, volume.CylinderRadius, limit: 30,
+                    includeOffset: false, TestFlags.None, _scene, results);
+            }
+            else
+            {
+                count = CollisionDetection.CheckInRadius(position, _boundingRadius, limit: 30,
+                    getSimpleNormal: false, TestFlags.None, _scene, results);
+            }
+            a6 = false;
+            if (count == 0)
+            {
+                return false;
+            }
+            for (int i = 0; i < count; i++)
+            {
+                CollisionResult result = results[i];
+                float v18;
+                if (result.Field0 != 0)
+                {
+                    v18 = _boundingRadius - result.Field14;
+                }
+                else if (volume.Type == VolumeType.Cylinder)
+                {
+                    v18 = _boundingRadius + result.Plane.W - Vector3.Dot(pointTwo, result.Plane.Xyz);
+                }
+                else
+                {
+                    v18 = _boundingRadius + result.Plane.W - Vector3.Dot(position, result.Plane.Xyz);
+                }
+                if (v18 > 0)
+                {
+                    if (result.Plane.Y < 0.1f && result.Plane.Y > -0.1f)
+                    {
+                        a7 = true;
+                    }
+                    else
+                    {
+                        a6 = true;
+                    }
+                    Position += result.Plane.Xyz * v18;
+                    if (updateSpeed)
+                    {
+                        float dot = Vector3.Dot(_speed, result.Plane.Xyz);
+                        if (dot < 0)
+                        {
+                            _speed += result.Plane.Xyz * -dot;
+                        }
+                    }
+                }
+            }
+            return true;
         }
 
         public override void GetDisplayVolumes()

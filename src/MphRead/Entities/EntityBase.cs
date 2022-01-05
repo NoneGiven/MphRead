@@ -108,8 +108,6 @@ namespace MphRead.Entities
         public Vector3 UpVector => Transform.Row1.Xyz.Normalized();
         public Vector3 FacingVector => Transform.Row2.Xyz.Normalized();
 
-        public virtual Vector3 TargetPosition => Position;
-
         protected bool _anyLighting = false;
         protected readonly List<ModelInstance> _models = new List<ModelInstance>();
 
@@ -228,6 +226,18 @@ namespace MphRead.Entities
         protected virtual Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
             return Matrix4.CreateScale(inst.Model.Scale) * _transform;
+        }
+
+        public virtual void GetPosition(out Vector3 position)
+        {
+            position = Position;
+        }
+
+        public virtual void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
+        {
+            position = Position;
+            up = UpVector;
+            facing = FacingVector;
         }
 
         public virtual bool Process()

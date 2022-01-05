@@ -133,7 +133,7 @@ namespace MphRead
         private bool _roomLoaded = false;
         private RoomEntity? _room = null;
         private int _roomId = -1;
-        public GameMode GameMode { get; private set; } = GameMode.SinglePlayer;
+        public GameMode GameMode { get; set; } = GameMode.SinglePlayer;
         public int PlayerCount { get; private set; } = 1;
         public bool Multiplayer => GameMode != GameMode.SinglePlayer;
         public int RoomId => _roomId;
@@ -1290,7 +1290,7 @@ namespace MphRead
             UnlinkEffectEntry(entry);
         }
 
-        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element, EntityBase? owner, bool child)
+        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element, EntityCollision? entCol, bool child)
         {
             EffectElementEntry entry = _inactiveElements.Dequeue();
             entry.EffectName = effect.Name;
@@ -1307,7 +1307,7 @@ namespace MphRead
             entry.Func39Called = false;
             entry.Funcs = element.Funcs;
             entry.Actions = element.Actions;
-            entry.Position = Vector3.Zero;
+            entry.OwnTransform = Matrix4.Identity;
             entry.Transform = Matrix4.Identity;
             entry.ParticleAmount = 0;
             entry.Expired = false;
@@ -1315,7 +1315,7 @@ namespace MphRead
             entry.Acceleration = element.Acceleration;
             entry.ParticleDefinitions.AddRange(element.Particles);
             entry.Parity = (int)(_frameCount % 2);
-            entry.Owner = owner;
+            entry.EntityCollision = entCol;
             entry.RoField1 = 0;
             entry.RoField2 = 0;
             entry.RoField3 = 0;
@@ -1333,7 +1333,7 @@ namespace MphRead
                 UnlinkEffectParticle(particle);
             }
             _activeElements.Remove(element);
-            element.Owner = null;
+            element.EntityCollision = null;
             element.Model = null!;
             element.Nodes.Clear();
             element.EffectName = "";
@@ -1379,52 +1379,50 @@ namespace MphRead
             }
         }
 
-        public EffectEntry SpawnEffectGetEntry(int effectId, Vector3 facing, Vector3 up, Vector3 position, EntityBase? owner = null)
+        public EffectEntry SpawnEffectGetEntry(int effectId, Vector3 facing, Vector3 up, Vector3 position, EntityCollision? entCol = null)
         {
             Matrix4 transform = EntityBase.GetTransformMatrix(facing, up, position);
-            return SpawnEffectGetEntry(effectId, transform, owner);
+            return SpawnEffectGetEntry(effectId, transform, entCol);
         }
 
-        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform, EntityBase? owner = null)
+        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform, EntityCollision? entCol = null)
         {
             EffectEntry entry = InitEffectEntry();
             entry.EffectId = effectId;
-            SpawnEffect(effectId, transform, child: false, entry, owner);
+            SpawnEffect(effectId, transform, child: false, entry, entCol);
             return entry;
         }
 
-        public void SpawnEffect(int effectId, Vector3 facing, Vector3 up, Vector3 position, bool child = false, EntityBase? owner = null)
+        public void SpawnEffect(int effectId, Vector3 facing, Vector3 up, Vector3 position, bool child = false, EntityCollision? entCol = null)
         {
             Matrix4 transform = EntityBase.GetTransformMatrix(facing, up, position);
-            SpawnEffect(effectId, transform, child, entry: null, owner);
+            SpawnEffect(effectId, transform, child, entry: null, entCol);
         }
 
-        public void SpawnEffect(int effectId, Matrix4 transform, bool child = false, EntityBase? owner = null)
+        public void SpawnEffect(int effectId, Matrix4 transform, bool child = false, EntityCollision? entCol = null)
         {
-            SpawnEffect(effectId, transform, child, entry: null, owner);
+            SpawnEffect(effectId, transform, child, entry: null, entCol);
         }
 
-        private void SpawnEffect(int effectId, Matrix4 transform, bool child, EffectEntry? entry, EntityBase? owner)
+        private void SpawnEffect(int effectId, Matrix4 transform, bool child, EffectEntry? entry, EntityCollision? entCol)
         {
             Effect effect = Read.LoadEffect(effectId); // should already be loaded
-            var position = new Vector3(transform.Row3);
             for (int i = 0; i < effect.Elements.Count; i++)
             {
                 EffectElement elementDef = effect.Elements[i];
-                EffectElementEntry element = InitEffectElement(effect, elementDef, owner, child);
+                EffectElementEntry element = InitEffectElement(effect, elementDef, entCol, child);
                 if (entry != null)
                 {
                     element.EffectEntry = entry;
                     entry.Elements.Add(element);
                 }
-                element.Position = position;
                 if (element.Flags.TestFlag(EffElemFlags.SpawnUnitVecs))
                 {
                     Vector3 vec1 = Vector3.UnitY;
                     Vector3 vec2 = Vector3.UnitX;
-                    transform = Matrix.GetTransform4(vec2, vec1, position);
+                    transform = Matrix.GetTransform4(vec2, vec1, transform.Row3.Xyz);
                 }
-                element.Transform = transform;
+                element.Transform = element.OwnTransform = transform;
                 for (int j = 0; j < elementDef.Particles.Count; j++)
                 {
                     Particle particleDef = elementDef.Particles[j];
@@ -1480,11 +1478,14 @@ namespace MphRead
                             element.ExpirationTime += element.BufferTime - element.DrainTime;
                         }
                     }
-                    if (element.Owner != null)
+                    if (element.EntityCollision != null)
                     {
-                        element.Transform = element.Owner.Transform;
-                        element.Position = element.Transform.Row3.Xyz;
+                        element.Transform = element.OwnTransform * element.EntityCollision.Transform;
                     }
+                    else
+                    {
+                        element.Transform = element.OwnTransform;
+                    } 
                     var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
                     if (_frameCount % 2 == (ulong)element.Parity
                         && element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))

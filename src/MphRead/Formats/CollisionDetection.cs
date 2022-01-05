@@ -56,6 +56,10 @@ namespace MphRead.Formats
     {
         private static readonly List<CollisionCandidate> _activeItems = new List<CollisionCandidate>(2048);
         private static readonly Queue<CollisionCandidate> _inactiveItems = new Queue<CollisionCandidate>(2048);
+        // due to using linked lists, the game checks collision with room candidates in the reverse order as they were found,
+        // then checks collision with entity candidates in the reverse order as they were found,
+        // so we need this temporary collection to add everything to _activeItems in the right order
+        private static readonly Stack<CollisionCandidate> _tempItems = new Stack<CollisionCandidate>(2048);
 
         public static void Init()
         {
@@ -79,6 +83,7 @@ namespace MphRead.Formats
         private static bool CheckBetweenPoints(IReadOnlyList<CollisionCandidate>? candidates, Vector3 point1, Vector3 point2,
             TestFlags flags, Scene scene, ref CollisionResult result, bool hasCandidates)
         {
+            _seenData.Clear();
             bool collided = false;
             ushort mask = 0;
             bool includeEntities = !flags.TestFlag(TestFlags.AffectsScan);
@@ -121,9 +126,13 @@ namespace MphRead.Formats
                 {
                     // todo: counter
                     CollisionData data = info.Data[info.DataIndices[candidate.Entry.DataStartIndex + j]];
-                    if (((ushort)data.Flags & mask) != 0)
+                    if (((ushort)data.Flags & mask) != 0 || _seenData.Contains(data))
                     {
                         continue;
+                    }
+                    if (candidate.EntityCollision == null)
+                    {
+                        _seenData.Add(data);
                     }
                     Vector4 plane = info.Planes[data.PlaneIndex];
                     float dot1 = Vector3.Dot(transPoint1, plane.Xyz) - plane.W;
@@ -356,12 +365,12 @@ namespace MphRead.Formats
         }
 
         // todo: revisit this approach
-        private static readonly HashSet<CollisionData> _temp = new HashSet<CollisionData>(64);
+        private static readonly HashSet<CollisionData> _seenData = new HashSet<CollisionData>(64);
 
-        public static int CheckSphereBetweenPoints(IReadOnlyList<CollisionCandidate>? candidates, Vector3 point1, Vector3 point2, float radius,
+        private static int CheckSphereBetweenPoints(IReadOnlyList<CollisionCandidate>? candidates, Vector3 point1, Vector3 point2, float radius,
             int limit, bool includeOffset, TestFlags flags, Scene scene, CollisionResult[] results, bool hasCandidates)
         {
-            _temp.Clear();
+            _seenData.Clear();
             int count = 0;
             ushort mask = 0;
             bool includeEntities = !flags.TestFlag(TestFlags.AffectsScan);
@@ -406,27 +415,29 @@ namespace MphRead.Formats
                         break;
                     }
                     CollisionData data = info.Data[info.DataIndices[candidate.Entry.DataStartIndex + j]];
-                    if (((ushort)data.Flags & mask) != 0 || _temp.Contains(data))
+                    if (((ushort)data.Flags & mask) != 0 || _seenData.Contains(data))
                     {
                         continue;
                     }
                     if (candidate.EntityCollision == null)
                     {
-                        _temp.Add(data);
+                        _seenData.Add(data);
                     }
                     Vector4 plane = info.Planes[data.PlaneIndex];
                     float dot1 = Vector3.Dot(transPoint1, plane.Xyz) - plane.W;
                     if (dot1 <= 0)
                     {
+                        // plane is behind the starting point
                         continue;
                     }
                     float dot2 = Vector3.Dot(transPoint2, plane.Xyz) - plane.W;
                     if (dot2 > radius)
                     {
+                        // plane is more than radius units ahead of the ending point
                         continue;
                     }
                     float pct = 1;
-                    if (dot1 != dot2)
+                    if (MathF.Abs(dot1 - dot2) >= 1 / 4096f)
                     {
                         pct = Math.Clamp(dot1 / (dot1 - dot2), 0, 1);
                     }
@@ -453,6 +464,10 @@ namespace MphRead.Formats
                         if (dotDiff < -0.03125f)
                         {
                             fullCollision = false;
+                            // bug? - the first edge that we're outside of by the 0.03 margin may only be partially outside,
+                            // so after the radius check we return this face as collided without testing any of the other edges,
+                            // which we might be way outside of and thus not actually colliding with the face (e.g. High Ground)
+                            // --> this may be compensated for by the some collision handling routines, but not all?
                             if (includeOffset && dotDiff >= -radius)
                             {
                                 // unimpl-collision: see note below
@@ -524,6 +539,7 @@ namespace MphRead.Formats
         public static int CheckInRadius(Vector3 point, float radius, int limit, bool getSimpleNormal,
             TestFlags flags, Scene scene, CollisionResult[] results)
         {
+            _seenData.Clear();
             int count = 0;
             ushort mask = 0;
             if (flags.TestFlag(TestFlags.AffectsPlayers))
@@ -551,9 +567,13 @@ namespace MphRead.Formats
                     }
                     // todo: counter
                     CollisionData data = info.Data[info.DataIndices[candidate.Entry.DataStartIndex + j]];
-                    if (((ushort)data.Flags & mask) != 0)
+                    if (((ushort)data.Flags & mask) != 0 || _seenData.Contains(data))
                     {
                         continue;
+                    }
+                    if (candidate.EntityCollision == null)
+                    {
+                        _seenData.Add(data);
                     }
                     Vector4 plane = info.Planes[data.PlaneIndex];
                     float dot = Vector3.Dot(point, plane.Xyz) - plane.W;
@@ -741,7 +761,7 @@ namespace MphRead.Formats
                                 item.Collision = info;
                                 item.Entry = entry;
                                 item.EntityCollision = null;
-                                _activeItems.Add(item);
+                                _tempItems.Push(item);
                             }
                             xIndex++;
                         }
@@ -752,6 +772,10 @@ namespace MphRead.Formats
                     zIndex = minZPart;
                     yIndex++;
                 }
+            }
+            while (_tempItems.Count > 0)
+            {
+                _activeItems.Add(_tempItems.Pop());
             }
         }
 
@@ -825,7 +849,7 @@ namespace MphRead.Formats
                                         item.Collision = info;
                                         item.Entry = entry;
                                         item.EntityCollision = entCol;
-                                        _activeItems.Add(item);
+                                        _tempItems.Push(item);
                                     }
                                     xIndex++;
                                 }
@@ -838,6 +862,10 @@ namespace MphRead.Formats
                         }
                     }
                 }
+            }
+            while (_tempItems.Count > 0)
+            {
+                _activeItems.Add(_tempItems.Pop());
             }
         }
 
@@ -1073,7 +1101,7 @@ namespace MphRead.Formats
                         item.Collision = info;
                         item.Entry = entry;
                         item.EntityCollision = null;
-                        _activeItems.Add(item);
+                        _tempItems.Push(item);
                     }
                 }
                 if (curX == endX && curY == endY && curZ == endZ)
@@ -1122,6 +1150,10 @@ namespace MphRead.Formats
                     }
                     xNext += xInc;
                 }
+            }
+            while (_tempItems.Count > 0)
+            {
+                _activeItems.Add(_tempItems.Pop());
             }
         }
 
@@ -1210,7 +1242,7 @@ namespace MphRead.Formats
             return false;
         }
 
-        public static bool CheckCylindersOverlap(Vector3 oneTop, Vector3 oneBottom, Vector3 twoBottom, Vector3 twoVector,
+        public static bool CheckCylindersOverlap(Vector3 oneBottom, Vector3 oneTop, Vector3 twoBottom, Vector3 twoVector,
             float twoDot, float radii, ref CollisionResult result)
         {
             float v9 = 0;
@@ -1333,6 +1365,92 @@ namespace MphRead.Formats
             return true;
         }
 
+        private static bool CheckCylinderOverlapVolumeHelper(CollisionVolume other, Vector3 bottom, Vector3 vector,
+            float dot, float radius, ref CollisionResult result)
+        {
+            if (other.Type == VolumeType.Cylinder)
+            {
+                CollisionResult discard = default; // the game doesn't pass the result on
+                Vector3 top = bottom + vector * dot;
+                return CheckCylindersOverlap(bottom, top, other.CylinderPosition, other.CylinderVector,
+                    other.CylinderDot, other.CylinderRadius + radius, ref discard);
+            }
+            if (other.Type == VolumeType.Sphere)
+            {
+                Vector3 between = other.SpherePosition - bottom;
+                float dot1 = Vector3.Dot(between, vector);
+                if (dot1 <= dot + other.SphereRadius && dot1 >= -other.SphereRadius)
+                {
+                    between -= vector * dot1;
+                    float radii = other.SphereRadius + radius;
+                    float dot2 = Vector3.Dot(between, between);
+                    if (dot2 <= radii * radii)
+                    {
+                        result.Field0 = 2;
+                        result.EntityCollision = null;
+                        result.Flags = CollisionFlags.None;
+                        if (dot < 0)
+                        {
+                            result.Plane = new Vector4(-other.SpherePosition, 0);
+                            result.Field14 = -dot1;
+                        }
+                        else if (dot1 <= dot)
+                        {
+                            float mag = between.Length;
+                            result.Plane = new Vector4(between / mag, 0);
+                            result.Field14 = mag - radius;
+                        }
+                        else
+                        {
+                            result.Plane = new Vector4(other.SpherePosition, 0);
+                            result.Field14 = dot1 - dot;
+                        }
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static bool CheckVolumesOverlap(CollisionVolume one, CollisionVolume two, ref CollisionResult result)
+        {
+            if (two.Type == VolumeType.Box)
+            {
+                if (one.Type == VolumeType.Sphere)
+                {
+                    // will return correctly for sphere-box, but won't update result
+                    return CheckSphereOverlapVolume(two, one.SpherePosition, one.SphereRadius, ref result);
+                }
+                if (one.Type == VolumeType.Cylinder)
+                {
+                    // will always return false for cylinder-box
+                    return CheckCylinderOverlapVolumeHelper(two, one.CylinderPosition, one.CylinderVector,
+                        one.CylinderDot, one.CylinderRadius, ref result);
+                }
+                if (one.Type == VolumeType.Box)
+                {
+                    // will always return false for box-box
+                    return false;
+                }
+            }
+            else if (two.Type == VolumeType.Cylinder)
+            {
+                // will return correctly for sphere-cylinder
+                // will return correctly for cylinder-cylinder, but won't update result
+                // will always return false for box-cylinder
+                return CheckCylinderOverlapVolumeHelper(one, two.CylinderPosition, two.CylinderVector,
+                        two.CylinderDot, two.CylinderRadius, ref result);
+            }
+            else if (two.Type == VolumeType.Sphere)
+            {
+                // will return correctly for sphere-sphere
+                // will return correctly for cylinder-sphere
+                // will return correctly for box-sphere, but won't update result
+                return CheckSphereOverlapVolume(one, two.SpherePosition, two.SphereRadius, ref result);
+            }
+            return false;
+        }
+
         public static bool CheckCylinderOverlapSphere(Vector3 cylBot, Vector3 cylTop, Vector3 spherePos,
             float radii, ref CollisionResult result)
         {
@@ -1403,13 +1521,13 @@ namespace MphRead.Formats
             {
                 return false;
             }
-            float v11 = (plane.W - (plane.X * cylBot.X + plane.Y * cylBot.Y + plane.Z * cylBot.Z)) / sum;
-            if (v11 < 0 || v11 > 1)
+            float dist = (plane.W - (plane.X * cylBot.X + plane.Y * cylBot.Y + plane.Z * cylBot.Z)) / sum;
+            if (dist < 0 || dist > 1)
             {
                 return false;
             }
-            result.Position = cylBot + v11 * (cylTop - cylBot);
-            result.Distance = v11;
+            result.Position = cylBot + dist * (cylTop - cylBot);
+            result.Distance = dist;
             result.EntityCollision = null;
             return true;
         }

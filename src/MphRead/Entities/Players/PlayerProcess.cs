@@ -63,9 +63,9 @@ namespace MphRead.Entities
                     {
                         // todo: set HUD model and draw messages
                     }
-                    if (!_scene.Multiplayer || time <= 0 || IsBot) // todo: or input, or something with wi-fi, or forced
+                    if (!_scene.Multiplayer || Controls.Shoot.IsDown || time <= 0 || IsBot) // todo: or forced
                     {
-                        // todo?: something with wifi
+                        // todo?: something with wi-fi
                         // else...
                         PlayerSpawnEntity? respawn = GetRespawnPoint();
                         if (respawn != null)
@@ -1588,7 +1588,8 @@ namespace MphRead.Entities
                 }
                 var candidate = (PlayerSpawnEntity)entity;
                 // skdebug - 1P spawns
-                if ((candidate.IsActive || !_scene.Room!.Metadata.Multiplayer) && candidate.Cooldown == 0 && (_scene.FrameCount > 0 || !candidate.Availability))
+                if ((candidate.IsActive || !_scene.Room!.Metadata.Multiplayer) && candidate.Cooldown == 0
+                    && (_scene.FrameCount > 0 || !candidate.Availability))
                 {
                     // todo: if CTF mode, check team index
                     float minDistSqr = 100;
@@ -1621,6 +1622,7 @@ namespace MphRead.Entities
             if (valid.Count > 0)
             {
                 int index = (int)(_scene.FrameCount % (ulong)valid.Count);
+                index = 0; // skdebug
                 chosenSpawn = valid[index];
             }
             else

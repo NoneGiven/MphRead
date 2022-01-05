@@ -11,6 +11,7 @@ namespace MphRead.Entities
         private readonly ObjectEntityData _data;
         private CollisionVolume _effectVolume;
         private Matrix4 _prevTransform;
+        private Vector3 _visiblePosition;
 
         private ObjectFlags _flags = 0;
         private int _effectInterval = 0;
@@ -36,6 +37,7 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _prevTransform = Transform;
+            UpdateVisiblePosition();
             _flags = data.Flags;
             // todo: room state affecting animation ID
             _flags &= ~ObjectFlags.NoAnimation;
@@ -140,6 +142,33 @@ namespace MphRead.Entities
             {
                 _scene.UnlinkEffectEntry(_effectEntry);
             }
+        }
+
+        private void UpdateVisiblePosition()
+        {
+            _visiblePosition = Position;
+            if (_data.ModelId != -1)
+            {
+                Vector3 up = UpVector;
+                Vector3 facing = FacingVector;
+                Vector3 right = RightVector;
+                Vector3 offset = Metadata.ObjectVisPosOffsets[_data.ModelId];
+                _visiblePosition.X += right.X * offset.X + up.X * offset.Y + facing.X * offset.Z;
+                _visiblePosition.Y += right.Y * offset.X + up.Y * offset.Y + facing.Y * offset.Z;
+                _visiblePosition.Z += right.Z * offset.X + up.Z * offset.Y + facing.Z * offset.Z;
+            }
+        }
+
+        public override void GetPosition(out Vector3 position)
+        {
+            position = _visiblePosition;
+        }
+
+        public override void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
+        {
+            position = _visiblePosition;
+            up = UpVector;
+            facing = FacingVector;
         }
 
         private void UpdateState(int state)
@@ -289,8 +318,8 @@ namespace MphRead.Entities
             ShouldDraw = !_scanVisorOnly || _scene.ScanVisor;
             if (_parent != null)
             {
-                // todo: visible position stuff (get vecs)
                 Transform = _invTransform * _parent.CollisionTransform;
+                UpdateVisiblePosition();
             }
             if (Transform != _prevTransform)
             {
@@ -367,8 +396,8 @@ namespace MphRead.Entities
                                     new Vector4(offset) + spawnTransform.Row3
                                 );
                             }
-                            EntityBase? owner = _parent == null ? null : this;
-                            _scene.SpawnEffect(_data.EffectId, spawnTransform, owner: owner);
+                            EntityCollision? entCol = _parent == null ? null : EntityCollision[0];
+                            _scene.SpawnEffect(_data.EffectId, spawnTransform, entCol: entCol);
                         }
                         _effectIntervalTimer = _effectInterval;
                     }

@@ -86,36 +86,36 @@ namespace MphRead
         public readonly uint Unused1D4; // always UInt32.MaxValue
         public readonly int BeamHitMsgTarget;
         public readonly Message BeamHitMessage;
-        public readonly uint BeamHitMsgParam1;
-        public readonly uint BeamHitMsgParam2;
+        public readonly int BeamHitMsgParam1;
+        public readonly int BeamHitMsgParam2;
         public readonly int PlayerColMsgTarget;
         public readonly Message PlayerColMessage;
-        public readonly uint PlayerColMsgParam1;
-        public readonly uint PlayerColMsgParam2;
+        public readonly int PlayerColMsgParam1;
+        public readonly int PlayerColMsgParam2;
         public readonly int DeadMsgTarget;
         public readonly Message DeadMessage;
-        public readonly uint DeadMsgParam1;
-        public readonly uint DeadMsgParam2;
+        public readonly int DeadMsgParam1;
+        public readonly int DeadMsgParam2;
         public readonly ushort LifetimeMsg1Index;
         public readonly short LifetimeMsg1Target;
         public readonly Message LifetimeMessage1;
-        public readonly uint LifetimeMsg1Param1;
-        public readonly uint LifetimeMsg1Param2;
+        public readonly int LifetimeMsg1Param1;
+        public readonly int LifetimeMsg1Param2;
         public readonly ushort LifetimeMsg2Index;
         public readonly short LifetimeMsg2Target;
         public readonly Message LifetimeMessage2;
-        public readonly uint LifetimeMsg2Param1;
-        public readonly uint LifetimeMsg2Param2;
+        public readonly int LifetimeMsg2Param1;
+        public readonly int LifetimeMsg2Param2;
         public readonly ushort LifetimeMsg3Index;
         public readonly short LifetimeMsg3Target;
         public readonly Message LifetimeMessage3;
-        public readonly uint LifetimeMsg3Param1;
-        public readonly uint LifetimeMsg3Param2;
+        public readonly int LifetimeMsg3Param1;
+        public readonly int LifetimeMsg3Param2;
         public readonly ushort LifetimeMsg4Index;
         public readonly short LifetimeMsg4Target;
         public readonly Message LifetimeMessage4;
-        public readonly uint LifetimeMsg4Param1;
-        public readonly uint LifetimeMsg4Param2;
+        public readonly int LifetimeMsg4Param1;
+        public readonly int LifetimeMsg4Param2;
     }
 
     // size: 236

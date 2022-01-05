@@ -11,11 +11,12 @@ namespace MphRead.Entities
 
         public float Radius { get; }
         public float RadiusSquared { get; }
-        public DoorFlags Flags { get; private set; } = DoorFlags.None;
+        public DoorFlags Flags { get; set; } = DoorFlags.None;
 
         private bool Locked => Flags.TestFlag(DoorFlags.Locked);
         private bool Unlocked => Flags.TestFlag(DoorFlags.Unlocked);
         public Vector3 LockPosition => (_transform * _lockTransform).Row3.Xyz;
+        public DoorEntityData Data => _data;
 
         public DoorEntity(DoorEntityData data, Scene scene) : base(EntityType.Door, scene)
         {
@@ -68,6 +69,18 @@ namespace MphRead.Entities
         {
             base.Initialize();
             _scene.LoadEffect(114); // lockDefeat - todo: load in entity setup
+        }
+
+        public override void GetPosition(out Vector3 position)
+        {
+            position = LockPosition;
+        }
+
+        public override void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
+        {
+            position = LockPosition;
+            up = UpVector;
+            facing = FacingVector;
         }
 
         public override bool Process()

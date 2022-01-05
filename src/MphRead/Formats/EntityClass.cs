@@ -107,36 +107,36 @@ namespace MphRead.Editor
         public uint Unused1D4 { get; set; } // always UInt32.MaxValue
         public int BeamHitMsgTarget { get; set; }
         public Message BeamHitMessage { get; set; }
-        public uint BeamHitMsgParam1 { get; set; }
-        public uint BeamHitMsgParam2 { get; set; }
+        public int BeamHitMsgParam1 { get; set; }
+        public int BeamHitMsgParam2 { get; set; }
         public int PlayerColMsgTarget { get; set; }
         public Message PlayerColMessage { get; set; }
-        public uint PlayerColMsgParam1 { get; set; }
-        public uint PlayerColMsgParam2 { get; set; }
+        public int PlayerColMsgParam1 { get; set; }
+        public int PlayerColMsgParam2 { get; set; }
         public int DeadMsgTarget { get; set; }
         public Message DeadMessage { get; set; }
-        public uint DeadMsgParam1 { get; set; }
-        public uint DeadMsgParam2 { get; set; }
+        public int DeadMsgParam1 { get; set; }
+        public int DeadMsgParam2 { get; set; }
         public ushort LifetimeMsg1Index { get; set; }
         public short LifetimeMsg1Target { get; set; }
         public Message LifetimeMessage1 { get; set; }
-        public uint LifetimeMsg1Param1 { get; set; }
-        public uint LifetimeMsg1Param2 { get; set; }
+        public int LifetimeMsg1Param1 { get; set; }
+        public int LifetimeMsg1Param2 { get; set; }
         public ushort LifetimeMsg2Index { get; set; }
         public short LifetimeMsg2Target { get; set; }
         public Message LifetimeMessage2 { get; set; }
-        public uint LifetimeMsg2Param1 { get; set; }
-        public uint LifetimeMsg2Param2 { get; set; }
+        public int LifetimeMsg2Param1 { get; set; }
+        public int LifetimeMsg2Param2 { get; set; }
         public ushort LifetimeMsg3Index { get; set; }
         public short LifetimeMsg3Target { get; set; }
         public Message LifetimeMessage3 { get; set; }
-        public uint LifetimeMsg3Param1 { get; set; }
-        public uint LifetimeMsg3Param2 { get; set; }
+        public int LifetimeMsg3Param1 { get; set; }
+        public int LifetimeMsg3Param2 { get; set; }
         public ushort LifetimeMsg4Index { get; set; }
         public short LifetimeMsg4Target { get; set; }
         public Message LifetimeMessage4 { get; set; }
-        public uint LifetimeMsg4Param1 { get; set; }
-        public uint LifetimeMsg4Param2 { get; set; }
+        public int LifetimeMsg4Param1 { get; set; }
+        public int LifetimeMsg4Param2 { get; set; }
 
         public PlatformEntityEditor() : base(EntityType.Platform)
         {

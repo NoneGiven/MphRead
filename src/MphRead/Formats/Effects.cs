@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using MphRead.Entities;
+using MphRead.Formats.Collision;
 using OpenTK.Mathematics;
 
 namespace MphRead.Effects
@@ -610,8 +611,7 @@ namespace MphRead.Effects
             for (int i = 0; i < Elements.Count; i++)
             {
                 EffectElementEntry element = Elements[i];
-                element.Position = position;
-                element.Transform = transform;
+                element.OwnTransform = transform;
             }
         }
 
@@ -719,7 +719,7 @@ namespace MphRead.Effects
         public float Lifespan { get; set; }
         public EffElemFlags Flags { get; set; }
         public int DrawType { get; set; }
-        public Vector3 Position { get; set; }
+        public Matrix4 OwnTransform { get; set; }
         public Matrix4 Transform { get; set; }
         public Vector3 Acceleration { get; set; }
         public bool Func39Called { get; set; }
@@ -736,16 +736,16 @@ namespace MphRead.Effects
         public List<int> TextureBindingIds { get; } = new List<int>();
         public List<EffectParticle> Particles { get; } = new List<EffectParticle>(); // todo: pre-size?
 
-        public EntityBase? Owner { get; set; }
+        public EntityCollision? EntityCollision { get; set; }
         public EffectEntry? EffectEntry { get; set; }
         public Model Model { get; set; } = null!;
         public List<Node> Nodes { get; } = new List<Node>(); // todo: pre-size?
 
         protected override void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
         {
-            vec.X = Position.X;
-            vec.Y = Position.Y;
-            vec.Z = Position.Z;
+            vec.X = Transform.Row3.X;
+            vec.Y = Transform.Row3.Y;
+            vec.Z = Transform.Row3.Z;
         }
 
         protected override void FxFunc03(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec)
@@ -1255,7 +1255,7 @@ namespace MphRead.Effects
                 Vector4 ev4;
                 if (Owner.Flags.TestFlag(EffElemFlags.UseTransform))
                 {
-                    ev4 = new Vector4(Position + Owner.Position, 1);
+                    ev4 = new Vector4(Position + Owner.Transform.Row3.Xyz, 1);
                 }
                 else
                 {
