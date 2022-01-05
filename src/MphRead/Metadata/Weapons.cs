@@ -297,8 +297,7 @@ namespace MphRead
             BeamType.PowerBeam
         };
 
-        // todo: this needs to be able to change
-        public static IReadOnlyList<WeaponInfo> Current => Weapons1P;
+        public static IReadOnlyList<WeaponInfo> Current { get; set; } = null!;
 
         public static readonly IReadOnlyList<WeaponInfo> Weapons1P = new List<WeaponInfo>()
         {

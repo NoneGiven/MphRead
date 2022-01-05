@@ -24,6 +24,11 @@ namespace MphRead
             if (mode == GameMode.None)
             {
                 mode = metadata.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;
+                Weapons.Current = metadata.Multiplayer ? Weapons.WeaponsMP : Weapons.Weapons1P;
+            }
+            else
+            {
+                Weapons.Current = scene.Multiplayer ? Weapons.WeaponsMP : Weapons.Weapons1P;
             }
             scene.GameMode = mode;
             if (playerCount < 1 || playerCount > 4)
