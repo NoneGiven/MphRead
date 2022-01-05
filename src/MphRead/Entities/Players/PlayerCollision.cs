@@ -399,7 +399,7 @@ namespace MphRead.Entities
                         ffResult.Plane = forceField.Plane;
                         if (dot2 < 0)
                         {
-                            ffResult.Plane.Xyz *= -1;
+                            ffResult.Plane *= -1;
                         }
                         HandleCollision(ffResult);
                     }

@@ -8,7 +8,7 @@ namespace MphRead.Entities.Enemies
     {
         private Vector3 _vec1;
         private Vector3 _vec2;
-        private Vector3 _initialPosition;
+        private Vector3 _fieldPosition;
         private Vector3 _targetPosition;
         private readonly ForceFieldEntity _forceField;
         private byte _shotFrames = 0;
@@ -25,11 +25,11 @@ namespace MphRead.Entities.Enemies
         protected override bool EnemyInitialize()
         {
             Vector3 position = _forceField.Data.Header.Position.ToFloatVector();
+            _fieldPosition = position;
             _vec1 = _forceField.Data.Header.UpVector.ToFloatVector();
             _vec2 = _forceField.Data.Header.FacingVector.ToFloatVector();
             position += _vec2 * Fixed.ToFloat(409);
             SetTransform(_vec2, _vec1, position);
-            _initialPosition = Position;
             Flags |= EnemyFlags.NoMaxDistance;
             Flags |= EnemyFlags.Visible;
             Flags |= EnemyFlags.NoBombDamage;
@@ -99,10 +99,10 @@ namespace MphRead.Entities.Enemies
                     UpdateAnimFrames(_models[i]);
                 }
             }
-            if (Vector3.Dot(_scene.CameraPosition - _initialPosition, _vec2) < 0)
+            if (Vector3.Dot(PlayerEntity.Main.Position - _fieldPosition, _vec2) < 0) // todo: use camera info pos
             {
                 _vec2 *= -1;
-                Vector3 position = _initialPosition + _vec2 * Fixed.ToFloat(409);
+                Vector3 position = _fieldPosition + _vec2 * Fixed.ToFloat(409);
                 SetTransform(_vec2, _vec1, position);
                 _prevPos = Position;
             }
@@ -123,7 +123,7 @@ namespace MphRead.Entities.Enemies
             }
             float width = _forceField.Width - 0.3f;
             float height = _forceField.Height - 0.3f;
-            Vector3 between = Position - _initialPosition;
+            Vector3 between = Position - _fieldPosition;
             float rightPct = Vector3.Dot(between, _forceField.FieldRightVector) / width;
             float upPct = Vector3.Dot(between, _forceField.FieldUpVector) / height;
             // percentage of the lock's distance toward the "bounding oval"
@@ -138,9 +138,9 @@ namespace MphRead.Entities.Enemies
                 float rf = rightPct * inv * width;
                 float uf = upPct * inv * height;
                 Position = new Vector3(
-                    _initialPosition.X + _forceField.FieldRightVector.X * rf + _forceField.FieldUpVector.X * uf,
-                    _initialPosition.Y + _forceField.FieldRightVector.Y * rf + _forceField.FieldUpVector.Y * uf,
-                    _initialPosition.Z + _forceField.FieldRightVector.Z * rf + _forceField.FieldUpVector.Z * uf
+                    _fieldPosition.X + _forceField.FieldRightVector.X * rf + _forceField.FieldUpVector.X * uf,
+                    _fieldPosition.Y + _forceField.FieldRightVector.Y * rf + _forceField.FieldUpVector.Y * uf,
+                    _fieldPosition.Z + _forceField.FieldRightVector.Z * rf + _forceField.FieldUpVector.Z * uf
                 );
             }
             float magSqr = _speed.X * _speed.X + _speed.Y * _speed.Y + _speed.Z * _speed.Z;
@@ -179,7 +179,7 @@ namespace MphRead.Entities.Enemies
             {
                 if (source?.Type == EntityType.BeamProjectile)
                 {
-
+                    LockHit(source);
                 }
             }
             else
