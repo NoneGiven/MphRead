@@ -1283,6 +1283,7 @@ namespace MphRead.Entities
         // todo: visualize & investigate shadow freeze bug
         private void CheckIceWaveCollision(float angle)
         {
+            float angleCos = MathF.Cos(MathHelper.DegreesToRadians(angle));
             for (int i = 0; i < _scene.Entities.Count; i++)
             {
                 EntityBase entity = _scene.Entities[i];
@@ -1302,7 +1303,7 @@ namespace MphRead.Entities
                 if (mag < MaxDistance)
                 {
                     between /= mag;
-                    if (Vector3.Dot(between, Up) > MathF.Cos(angle))
+                    if (Vector3.Dot(between, Up) > angleCos)
                     {
                         Vector3 dir = GetDamageDirection(Position, player.Position);
                         player.TakeDamage((int)Damage, DamageFlags.NoDmgInvuln, dir, this);
