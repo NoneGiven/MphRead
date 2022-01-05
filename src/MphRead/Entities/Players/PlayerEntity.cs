@@ -180,6 +180,7 @@ namespace MphRead.Entities
         private readonly Vector3[] _spireAltVecs = new Vector3[16];
         private readonly Vector3[] _kandenSegPos = new Vector3[5];
         private readonly Matrix4[] _kandenSegMtx = new Matrix4[5];
+        public IReadOnlyList<Vector3> KandenSegPos => _kandenSegPos;
         public byte SyluxBombCount { get; set; } = 0;
         public BombEntity?[] SyluxBombs { get; } = new BombEntity?[3];
 
@@ -301,6 +302,8 @@ namespace MphRead.Entities
         private float _altRollLrX = 0;
         private float _altRollLrZ = 0;
 
+        private EntityBase? _halfturret = null; // todo: halfturret entity type
+        public EntityBase? Halfturret => _halfturret;
         public EnemySpawnEntity? EnemySpawner => _enemySpawner;
         public EnemyInstanceEntity? AttachedEnemy { get; set; } = null;
         private EntityBase? _field35C = null;

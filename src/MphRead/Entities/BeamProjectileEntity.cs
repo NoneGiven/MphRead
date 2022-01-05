@@ -324,8 +324,84 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // sktodo: collide with players
-            // btodo: collide with halfturret and enemy beams
+            bool hitHalfturret = false;
+            // todo: visualize player collision (and rename some "pickup" fields)
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.Player || Owner == entity)
+                {
+                    continue;
+                }
+                var player = (PlayerEntity)entity;
+                if (player.Health == 0)
+                {
+                    continue;
+                }
+                bool hasHalfturret = player.Hunter == Hunter.Weavel && player.Flags2.TestFlag(PlayerFlags2.Halfturret);
+                if ((Owner == player || hasHalfturret && Owner == player.Halfturret)
+                    && (!Flags.TestFlag(BeamFlags.SelfDamage) || Age < 1 / 30f * 4))
+                {
+                    continue;
+                }
+                bool hitPlayer = false;
+                CollisionResult playerRes = default;
+                float radii = player.Volume.SphereRadius + CylinderRadius;
+                if (player.IsAltForm)
+                {
+                    if (player.Hunter == Hunter.Kanden)
+                    {
+                        if (CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position,
+                            player.KandenSegPos[2], 1.6f, ref playerRes))
+                        {
+                            if (CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position,
+                                player.Volume.SpherePosition, radii, ref playerRes)
+                                || CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position,
+                                    player.KandenSegPos[1], radii, ref playerRes)
+                                || CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position,
+                                    player.KandenSegPos[2], radii, ref playerRes)
+                                || CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position,
+                                    player.KandenSegPos[3], radii, ref playerRes))
+                            {
+                                hitPlayer = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position,
+                            player.Volume.SpherePosition, radii, ref playerRes))
+                        {
+                            hitPlayer = true;
+                        }
+                    }
+                }
+                else
+                {
+                    float minY = Fixed.ToFloat(player.Values.MinPickupHeight);
+                    Vector3 playerBottom = player.Position.AddY(minY);
+                    float dot = Fixed.ToFloat(player.Values.MaxPickupHeight) - minY;
+                    if (CollisionDetection.CheckCylindersOverlap(BackPosition, Position, playerBottom, Vector3.UnitY,
+                        dot, radii, ref playerRes))
+                    {
+                        hitPlayer = true;
+                    }
+                }
+                if (hitPlayer && playerRes.Distance < minDist)
+                {
+                    minDist = playerRes.Distance;
+                    anyRes = playerRes;
+                    colWith = player;
+                    noColEff = false;
+                    hitHalfturret = false;
+                }
+                // todo?: else wifi check
+                if (hasHalfturret && Owner != player.Halfturret)
+                {
+                    // btodo: collide with halfturret
+                }
+            }
+            // btodo: collide with enemy beams
             if (minDist >= 0 && minDist <= 1)
             {
                 float amt = Fixed.ToFloat(204);
@@ -338,9 +414,104 @@ namespace MphRead.Entities
                 // btodo: sfx and stuff
                 if (colWith != null)
                 {
-                    // sktodo: handle collision with players
-                    // btodo: handle collision with halfturret and enemy beams
-                    if (colWith.Type == EntityType.EnemyInstance)
+                    // btodo: handle collision with enemy beams
+                    if (colWith.Type == EntityType.Player || colWith.Type == EntityType.Halfturret)
+                    {
+                        PlayerEntity player;
+                        if (colWith.Type == EntityType.Player)
+                        {
+                            player = (PlayerEntity)colWith;
+                        }
+                        else
+                        {
+                            player = (PlayerEntity)colWith; // btodo: use halfturret owner
+                        }
+                        DamageFlags damageFlags = DamageFlags.NoDmgInvuln;
+                        if (player.BeamEffectiveness[(int)WeaponType] == Effectiveness.Zero)
+                        {
+                            if (!_scene.Multiplayer && Owner == PlayerEntity.Main)
+                            {
+                                Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY, player.Position);
+                                EffectEntry effect = _scene.SpawnEffectGetEntry(115, transform); // ineffectivePsycho
+                                effect.SetReadOnlyField(0, 1); // radius
+                                _scene.DetachEffectEntry(effect, setExpired: false);
+                            }
+                        }
+                        else
+                        {
+                            if (hitHalfturret)
+                            {
+                                damageFlags |= DamageFlags.Halfturret;
+                            }
+                            Vector3 damageDir = GetDamageDirection(anyRes.Position, player.Position);
+                            float damage = 0;
+                            uint wholeDamage = 0;
+                            bool isHeadshot = false;
+                            if (!player.IsAltForm
+                                && anyRes.Position.Y - player.Position.Y >= Fixed.ToFloat(player.Values.MaxPickupHeight) - 0.3f)
+                            {
+                                if (WeaponType == BeamType.Imperialist)
+                                {
+                                    isHeadshot = true;
+                                }
+                                else
+                                {
+                                    Vector3 travel = Position - SpawnPosition;
+                                    isHeadshot = travel.LengthSquared <= 15 * 15;
+                                }
+                            }
+                            if (isHeadshot)
+                            {
+                                if (MaxDistance > 0)
+                                {
+                                    float pct = Vector3.Distance(Position, SpawnPosition) / MaxDistance;
+                                    damage = GetInterpolatedValue(DamageInterpolation, HeadshotDamage, 0, pct);
+                                }
+                                else
+                                {
+                                    damage = HeadshotDamage;
+                                }
+                                if (MathF.Abs(Damage - HeadshotDamage) > 1 / 4096f)
+                                {
+                                    damageFlags |= DamageFlags.Headshot;
+                                }
+                            }
+                            else
+                            {
+                                if (MaxDistance > 0)
+                                {
+                                    float pct = Vector3.Distance(Position, SpawnPosition) / MaxDistance;
+                                    damage = GetInterpolatedValue(DamageInterpolation, Damage, 0, pct);
+                                }
+                                else
+                                {
+                                    damage = Damage;
+                                }
+                            }
+                            wholeDamage = (uint)Math.Clamp(damage, 0, Int32.MaxValue);
+                            if (wholeDamage != 0)
+                            {
+                                player.TakeDamage(wholeDamage, damageFlags, damageDir, this);
+                            }
+                            if (Flags.TestFlag(BeamFlags.LifeDrain) && Owner.Type == EntityType.Player)
+                            {
+                                var ownerPlayer = (PlayerEntity)Owner;
+                                if (!ownerPlayer.IsPrimeHunter && ownerPlayer.TeamIndex != player.TeamIndex)
+                                {
+                                    // GainHealth checks if the player is alive
+                                    player.GainHealth(wholeDamage);
+                                }
+                            }
+                            if (!player.IsMainPlayer || player.IsAltForm || player.IsMorphing)
+                            {
+                                SpawnCollisionEffect(anyRes, noSplat: true);
+                            }
+                        }
+                        OnCollision(anyRes, colWith);
+                        // todo: update SFX
+                        ricochet = false;
+                    }
+                    else if (colWith.Type == EntityType.EnemyInstance)
                     {
                         var enemy = (EnemyInstanceEntity)colWith;
                         if (enemy.GetEffectiveness(WeaponType) == Effectiveness.Zero && (enemy.EnemyType == EnemyType.FireSpawn

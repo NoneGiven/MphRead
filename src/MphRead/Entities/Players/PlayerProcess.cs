@@ -1040,7 +1040,12 @@ namespace MphRead.Entities
 
         private static readonly int[] _healthPickupAmounts = new int[3] { 30, 60, 100 };
 
-        private void GainHealth(int health)
+        public void GainHealth(uint health)
+        {
+            GainHealth((int)health);
+        }
+
+        public void GainHealth(int health)
         {
             if (_health > 0)
             {
