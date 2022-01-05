@@ -71,6 +71,18 @@ namespace MphRead.Entities
             _scene.LoadEffect(114); // lockDefeat - todo: load in entity setup
         }
 
+        public override void GetPosition(out Vector3 position)
+        {
+            position = LockPosition;
+        }
+
+        public override void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
+        {
+            position = LockPosition;
+            up = UpVector;
+            facing = FacingVector;
+        }
+
         public override bool Process()
         {
             if (Unlocked && _lock.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))

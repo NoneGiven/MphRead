@@ -54,6 +54,13 @@ namespace MphRead.Entities
             }
         }
 
+        public override void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
+        {
+            position = Position;
+            up = Vector3.UnitY;
+            facing = Vector3.UnitZ;
+        }
+
         public override bool Process()
         {
             if (!_linkDone)

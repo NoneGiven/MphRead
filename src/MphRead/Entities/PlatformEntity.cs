@@ -70,6 +70,8 @@ namespace MphRead.Entities
         private Vector3 _velocity = Vector3.Zero;
         private float _movePercent = 0;
         private float _moveIncrement = 0;
+        private Vector3 _visiblePosition;
+        private Vector3 _prevVisiblePosition;
 
         private static BeamProjectileEntity[] _beams = null!;
 
@@ -268,6 +270,8 @@ namespace MphRead.Entities
                     _parent = (PlatformEntity)parent;
                 }
             }
+            Matrix4 transform = GetTransform();
+            _visiblePosition = transform.Row3.Xyz;
         }
 
         public override void Destroy()
@@ -280,6 +284,32 @@ namespace MphRead.Entities
                     _scene.UnlinkEffectEntry(effectEntry);
                 }
             }
+        }
+
+        public override void GetPosition(out Vector3 position)
+        {
+            GetVectors(out position, out _, out _);
+        }
+
+        public override void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
+        {
+            if (Flags.TestFlag(PlatformFlags.SamusShip))
+            {
+                Matrix4 transform = GetTransform();
+                Vector3 offset = Matrix.Vec3MultMtx3(new Vector3(0, 0.8f, 4.2f), transform);
+                position = transform.Row3.Xyz + offset;
+            }
+            else if (Flags.TestFlag(PlatformFlags.SyluxShip) && EntityCollision[0] != null)
+            {
+                Matrix4 transform = GetTransform();
+                position = Matrix.Vec3MultMtx4(_beamSpawnPos, transform);
+            }
+            else
+            {
+                position = _visiblePosition;
+            }
+            up = UpVector;
+            facing = FacingVector;
         }
 
         private void SetPlatAnimation(PlatAnimId id, AnimFlags flags)
@@ -409,7 +439,7 @@ namespace MphRead.Entities
         public override bool Process()
         {
             UpdateLinkedInverse(0);
-            // todo: visible position stuff
+            _prevVisiblePosition = _visiblePosition;
             if (++_timeSincePlayerCol >= 3 * 2) // todo: FPS stuff
             {
                 _timeSincePlayerCol = 3 * 2;
@@ -437,15 +467,12 @@ namespace MphRead.Entities
                         Debug.Assert(_parent != null);
                         if (turretAiming)
                         {
-                            if (PlayerEntity.PlayerCount > 0)
-                            {
-                                PlayerEntity mainPlayer = PlayerEntity.Main;
-                                target = new Vector3(
-                                    mainPlayer.Position.X - _curPosition.X,
-                                    mainPlayer.Position.Y + 1 - _curPosition.Y,
-                                    mainPlayer.Position.Z - _curPosition.Z
-                                );
-                            }
+                            PlayerEntity mainPlayer = PlayerEntity.Main;
+                            target = new Vector3(
+                                mainPlayer.Position.X - _visiblePosition.X,
+                                mainPlayer.Position.Y + 1 - _visiblePosition.Y,
+                                mainPlayer.Position.Z - _visiblePosition.Z
+                            );
                         }
                         else
                         {
@@ -454,13 +481,13 @@ namespace MphRead.Entities
                         }
                         target = target.Normalized();
                     }
-                    else if (PlayerEntity.PlayerCount > 0)
+                    else
                     {
                         PlayerEntity mainPlayer = PlayerEntity.Main;
                         target = new Vector3(
-                            mainPlayer.Position.X - _curPosition.X,
+                            mainPlayer.Position.X - _visiblePosition.X,
                             0,
-                            mainPlayer.Position.Z - _curPosition.Z
+                            mainPlayer.Position.Z - _visiblePosition.Z
                         ).Normalized();
                     }
                     Vector3 cross1 = Vector3.Cross(Vector3.UnitY, target).Normalized();
@@ -503,6 +530,7 @@ namespace MphRead.Entities
                     }
                 }
             }
+            _visiblePosition = GetTransform().Row3.Xyz;
             bool spawnBeam = true;
             if (!_models[0].IsPlaceholder && Flags.TestFlag(PlatformFlags.SyluxShip))
             {
@@ -1061,8 +1089,7 @@ namespace MphRead.Entities
                                                 _scene.SendMessage(Message.PlatformSleep, this, this, 0, 0);
                                                 // todo: play SFX
                                             }
-                                            // todo: use visible pos
-                                            Vector3 spawnPos = Position.AddY(1);
+                                            Vector3 spawnPos = _visiblePosition.AddY(1);
                                             ItemSpawnEntity.SpawnItemDrop(_data.ItemType, spawnPos, _data.ItemChance, _scene);
                                             if (_data.DeadMessage != Message.None && _deathMessageTarget != null)
                                             {

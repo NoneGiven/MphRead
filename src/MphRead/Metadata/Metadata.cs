@@ -949,6 +949,11 @@ namespace MphRead
             return GetObjectById((int)id);
         }
 
+        public static IReadOnlyList<Vector3> ObjectVisPosOffsets = new Vector3[54]
+        {
+
+        };
+
         public static readonly PlatformMetadata InvisiblePlat = new PlatformMetadata("N/A");
 
         private static readonly IReadOnlyList<PlatformMetadata?> _platforms = new List<PlatformMetadata?>()

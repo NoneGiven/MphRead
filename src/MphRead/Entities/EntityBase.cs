@@ -230,6 +230,18 @@ namespace MphRead.Entities
             return Matrix4.CreateScale(inst.Model.Scale) * _transform;
         }
 
+        public virtual void GetPosition(out Vector3 position)
+        {
+            position = Position;
+        }
+
+        public virtual void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
+        {
+            position = Position;
+            up = UpVector;
+            facing = FacingVector;
+        }
+
         public virtual bool Process()
         {
             if (Active)

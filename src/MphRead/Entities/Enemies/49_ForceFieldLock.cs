@@ -179,7 +179,7 @@ namespace MphRead.Entities.Enemies
             {
                 if (source?.Type == EntityType.BeamProjectile)
                 {
-                    
+
                 }
             }
             else
@@ -191,12 +191,11 @@ namespace MphRead.Entities.Enemies
 
         public void LockHit(EntityBase source)
         {
-            // todo: check if beam owner is main player
-            var beamSource = (BeamProjectileEntity)source;
-            if (_shotFrames == 0 && GetEffectiveness(beamSource.WeaponType) == Effectiveness.Zero)
+            var beam = (BeamProjectileEntity)source;
+            if (_shotFrames == 0 && GetEffectiveness(beam.WeaponType) == Effectiveness.Zero && beam.Owner == PlayerEntity.Main)
             {
-                _shotFrames = _forceField.Data.Type == 7 ? (byte)60 : (byte)1;
-                _targetPosition = _scene.CameraPosition; // todo: get_vecs on beam owner
+                _shotFrames = _forceField.Data.Type == 7 ? (byte)(30 * 2) : (byte)1; // todo: FPS stuff
+                beam.Owner.GetPosition(out _targetPosition);
                 _models[0].SetAnimation(2, AnimFlags.NoLoop);
             }
         }

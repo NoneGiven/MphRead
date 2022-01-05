@@ -760,6 +760,18 @@ namespace MphRead.Entities
             }
         }
 
+        public override void GetPosition(out Vector3 position)
+        {
+            position = Position.AddY(IsAltForm ? 0 : 0.5f);
+        }
+
+        public override void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
+        {
+            position = Position.AddY(IsAltForm ? 0 : 0.5f);
+            up = UpVector;
+            facing = FacingVector;
+        }
+
         private void SetBiped1Animation(PlayerAnimation anim, AnimFlags animFlags)
         {
             SetBipedAnimation(anim, animFlags, setBiped1: true, setBiped2: false, setIfMorphing: false);

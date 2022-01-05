@@ -85,6 +85,18 @@ namespace MphRead.Entities
             }
         }
 
+        public override void GetPosition(out Vector3 position)
+        {
+            position = _hurtVolume.GetCenter();
+        }
+
+        public override void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
+        {
+            position = _hurtVolume.GetCenter();
+            up = UpVector;
+            facing = FacingVector;
+        }
+
         public void ClearHitPlayers()
         {
             HitPlayers[0] = false;
