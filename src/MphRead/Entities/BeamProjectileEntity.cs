@@ -20,7 +20,6 @@ namespace MphRead.Entities
         public Vector3 BackPosition { get; set; }
         public Vector3 SpawnPosition { get; set; }
         public Vector3[] PastPositions { get; } = new Vector3[10];
-        public Vector3 VecCross { get; set; }
 
         public int DrawFuncId { get; set; }
         public float Age { get; set; }
@@ -33,6 +32,7 @@ namespace MphRead.Entities
         public float Homing { get; set; }
 
         public Vector3 Direction { get; set; }
+        public Vector3 Right { get; set; }
         public Vector3 Up { get; set; }
 
         public float Damage { get; set; }
@@ -959,9 +959,9 @@ namespace MphRead.Entities
                 if (effectId != 255)
                 {
                     Debug.Assert(effectId >= 3);
-                    Vector3 effVec1 = direction;
-                    Vector3 effVec2 = GetCrossVector(effVec1);
-                    Matrix4 transform = GetTransformMatrix(effVec2, effVec1);
+                    Vector3 effUp = direction;
+                    Vector3 effFacing = GetCrossVector(effUp);
+                    Matrix4 transform = GetTransformMatrix(effFacing, effUp);
                     transform.Row3.Xyz = position;
                     // the game does this by spawning a CBeamEffect, but that's unncessary for muzzle effects
                     scene.SpawnEffect(effectId - 3, transform);
@@ -1069,17 +1069,17 @@ namespace MphRead.Entities
             float ricochetLossV = GetAmount(weapon.UnchargedRicochetLossV, weapon.MinChargeRicochetLossV, weapon.ChargedRicochetLossV) / 4096f;
             int maxSpread = (int)GetAmount(weapon.UnchargedSpread, weapon.MinChargeSpread, weapon.ChargedSpread);
             WeaponInfo? ricochetWeapon = charged ? weapon.ChargedRicochetWeapon : weapon.UnchargedRicochetWeapon;
-            Vector3 vec1 = direction;
-            Vector3 vecC;
-            if (vec1.X != 0 || vec1.Z != 0)
+            Vector3 dirVec = direction;
+            Vector3 rightVec;
+            if (dirVec.X != 0 || dirVec.Z != 0)
             {
-                vecC = new Vector3(vec1.Z, 0, -vec1.X).Normalized();
+                rightVec = new Vector3(dirVec.Z, 0, -dirVec.X).Normalized();
             }
             else
             {
-                vecC = Vector3.UnitX;
+                rightVec = Vector3.UnitX;
             }
-            Vector3 vec2 = Vector3.Cross(vec1, vecC).Normalized();
+            Vector3 upVec = Vector3.Cross(dirVec, rightVec).Normalized();
             Vector3 velocity = Vector3.Zero;
             if (maxSpread <= 0)
             {
@@ -1129,9 +1129,9 @@ namespace MphRead.Entities
                 {
                     beam.PastPositions[j] = position;
                 }
-                beam.Direction = vec1;
-                beam.Up = vec2;
-                beam.VecCross = vecC;
+                beam.Direction = dirVec;
+                beam.Right = rightVec;
+                beam.Up = upVec;
                 beam.Damage = damage;
                 beam.HeadshotDamage = hsDamage;
                 beam.SplashDamage = splashDmg;
@@ -1164,9 +1164,9 @@ namespace MphRead.Entities
                     float cos1 = MathF.Cos(angle1);
                     float sin2 = MathF.Sin(angle2);
                     float cos2 = MathF.Cos(angle2);
-                    velocity.X = direction.X * cos1 + (beam.Up.X * cos2 + beam.VecCross.X * sin2) * sin1;
-                    velocity.Y = direction.Y * cos1 + (beam.Up.Y * cos2 + beam.VecCross.Y * sin2) * sin1;
-                    velocity.Z = direction.Z * cos1 + (beam.Up.Z * cos2 + beam.VecCross.Z * sin2) * sin1;
+                    velocity.X = direction.X * cos1 + (beam.Up.X * cos2 + beam.Right.X * sin2) * sin1;
+                    velocity.Y = direction.Y * cos1 + (beam.Up.Y * cos2 + beam.Right.Y * sin2) * sin1;
+                    velocity.Z = direction.Z * cos1 + (beam.Up.Z * cos2 + beam.Right.Z * sin2) * sin1;
                     velocity *= beam.Speed;
                 }
                 beam.Velocity = velocity;
@@ -1192,9 +1192,9 @@ namespace MphRead.Entities
                     int effectId = Metadata.BeamDrawEffects[beam.DrawFuncId];
                     if (effectId != 0)
                     {
-                        Vector3 effVec1 = beam.Direction;
-                        Vector3 effVec2 = GetCrossVector(effVec1);
-                        Matrix4 transform = GetTransformMatrix(effVec2, effVec1);
+                        Vector3 effUp = beam.Direction;
+                        Vector3 effFacing = GetCrossVector(effUp);
+                        Matrix4 transform = GetTransformMatrix(effFacing, effUp);
                         transform.Row3.Xyz = beam.Position;
                         beam.Effect = scene.SpawnEffectGetEntry(effectId, transform);
                         beam.Effect.SetElementExtension(true);
@@ -1259,19 +1259,19 @@ namespace MphRead.Entities
             angle /= 4096f;
             Debug.Assert(angle == 60);
             CheckIceWaveCollision(angle);
-            Vector3 vec1 = Direction;
-            Vector3 vec2;
-            if (vec1.X != 0 || vec1.Z != 0)
+            Vector3 up = Direction;
+            Vector3 facing;
+            if (up.X != 0 || up.Z != 0)
             {
-                var temp = Vector3.Cross(Vector3.UnitY, vec1);
-                vec2 = Vector3.Cross(vec1, temp).Normalized();
+                var temp = Vector3.Cross(Vector3.UnitY, up);
+                facing = Vector3.Cross(up, temp).Normalized();
             }
             else
             {
-                var temp = Vector3.Cross(Vector3.UnitX, vec1);
-                vec2 = Vector3.Cross(vec1, temp).Normalized();
+                var temp = Vector3.Cross(Vector3.UnitX, up);
+                facing = Vector3.Cross(up, temp).Normalized();
             }
-            Matrix4 transform = Matrix4.CreateScale(MaxDistance) * GetTransformMatrix(vec2, vec1);
+            Matrix4 transform = Matrix4.CreateScale(MaxDistance) * GetTransformMatrix(facing, up);
             transform.Row3.Xyz = Position;
             var ent = BeamEffectEntity.Create(new BeamEffectEntityData(type: 0, noSplat: false, transform), _scene);
             if (ent != null)
@@ -1280,7 +1280,7 @@ namespace MphRead.Entities
             }
         }
 
-        // todo: visualize & investigate shadow freeze bug
+        // todo: visualize (also shadow freeze bug)
         private void CheckIceWaveCollision(float angle)
         {
             float angleCos = MathF.Cos(MathHelper.DegreesToRadians(angle));
@@ -1296,14 +1296,19 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
+                // bug: the beam's up vector is factored out in order to do a lateral distance check (where "lateral" is relative to
+                // the beam's orientation), but that same stripped vector is used for the angle check below. the result is that instead
+                // of checking in a 60 degree cone, a 60 degree wedge of a cylinder with infinite height is checked (again, where
+                // "height" is rleative to the beam) -- this results in the shadow freeze glitch
+                // fix: use the normalized between vector with all its components in the dot product check
                 Vector3 between = player.Position - Position;
-                float dot = Vector3.Dot(between, Direction);
-                between += Direction * -dot;
+                float dot = Vector3.Dot(between, Up);
+                between += Up * -dot;
                 float mag = between.Length;
                 if (mag < MaxDistance)
                 {
                     between /= mag;
-                    if (Vector3.Dot(between, Up) > angleCos)
+                    if (Vector3.Dot(between, Direction) > angleCos)
                     {
                         Vector3 dir = GetDamageDirection(Position, player.Position);
                         player.TakeDamage((int)Damage, DamageFlags.NoDmgInvuln, dir, this);
@@ -1380,14 +1385,14 @@ namespace MphRead.Entities
                     colRes.Position.Y + colRes.Plane.Y / 8,
                     colRes.Position.Z + colRes.Plane.Z / 8
                 );
-                Vector3 vec1 = WeaponType == BeamType.Imperialist ? -Direction : colRes.Plane.Xyz;
+                Vector3 up = WeaponType == BeamType.Imperialist ? -Direction : colRes.Plane.Xyz;
                 if (colRes.EntityCollision != null)
                 {
                     spawnPos = Matrix.Vec3MultMtx4(spawnPos, colRes.EntityCollision.Inverse1);
-                    vec1 = Matrix.Vec3MultMtx3(vec1, colRes.EntityCollision.Inverse1);
+                    up = Matrix.Vec3MultMtx3(up, colRes.EntityCollision.Inverse1);
                 }
-                Vector3 vec2 = GetCrossVector(vec1);
-                Matrix4 transform = GetTransformMatrix(vec2, vec1);
+                Vector3 facing = GetCrossVector(up);
+                Matrix4 transform = GetTransformMatrix(facing, up);
                 transform.Row3.Xyz = spawnPos;
                 // somehwat redundant logic, game uses "511" bits which accomplish the same thing as this terrain type check
                 if (_scene.GameMode != GameMode.SinglePlayer || colRes.Terrain <= Terrain.Lava)
@@ -1487,13 +1492,13 @@ namespace MphRead.Entities
         {
             // following what the game does, but this should always be the same as SpawnPosition
             Vector3 spawnPos = PastPositions[8];
-            Vector3 vec1 = Position - spawnPos;
-            float magnitude = vec1.Length;
+            Vector3 up = Position - spawnPos;
+            float magnitude = up.Length;
             if (magnitude > 0)
             {
-                vec1.Normalize();
-                Vector3 vec2 = GetCrossVector(vec1);
-                Matrix4 transform = GetTransformMatrix(vec2, vec1);
+                up.Normalize();
+                Vector3 facing = GetCrossVector(up);
+                Matrix4 transform = GetTransformMatrix(facing, up);
                 transform.Row3.Xyz = spawnPos;
                 var ent = BeamEffectEntity.Create(new BeamEffectEntityData(type: 1, noSplat: false, transform), _scene);
                 if (ent != null)
@@ -1504,13 +1509,13 @@ namespace MphRead.Entities
             }
         }
 
-        private static Vector3 GetCrossVector(Vector3 vec1)
+        private static Vector3 GetCrossVector(Vector3 up)
         {
-            if (vec1.Z <= Fixed.ToFloat(-3686) || vec1.Z >= Fixed.ToFloat(3686))
+            if (up.Z <= Fixed.ToFloat(-3686) || up.Z >= Fixed.ToFloat(3686))
             {
-                return Vector3.Cross(Vector3.UnitX, vec1).Normalized();
+                return Vector3.Cross(Vector3.UnitX, up).Normalized();
             }
-            return Vector3.Cross(Vector3.UnitZ, vec1).Normalized();
+            return Vector3.Cross(Vector3.UnitZ, up).Normalized();
         }
 
         public static void StopChargeSfx(BeamType beam, Hunter hunter)
