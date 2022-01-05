@@ -657,7 +657,7 @@ namespace MphRead.Entities
             Speed = Vector3.Zero;
             if (respawn)
             {
-                pos = pos.AddY(0.5f); // skdebug
+                pos = pos.AddY(1);
             }
             SetTransform(facing, up, pos);
             PrevPosition = Position;

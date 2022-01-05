@@ -367,7 +367,7 @@ namespace MphRead.Formats
         // todo: revisit this approach
         private static readonly HashSet<CollisionData> _seenData = new HashSet<CollisionData>(64);
 
-        public static int CheckSphereBetweenPoints(IReadOnlyList<CollisionCandidate>? candidates, Vector3 point1, Vector3 point2, float radius,
+        private static int CheckSphereBetweenPoints(IReadOnlyList<CollisionCandidate>? candidates, Vector3 point1, Vector3 point2, float radius,
             int limit, bool includeOffset, TestFlags flags, Scene scene, CollisionResult[] results, bool hasCandidates)
         {
             _seenData.Clear();
@@ -1157,12 +1157,6 @@ namespace MphRead.Formats
             }
         }
 
-        public static bool CheckVolumesOverlap(CollisionVolume one, CollisionVolume two, ref CollisionResult result)
-        {
-            // sktodo: this
-            return false;
-        }
-
         public static bool CheckSphereOverlapVolume(CollisionVolume other, Vector3 pos, float radius, ref CollisionResult result)
         {
             if (other.Type == VolumeType.Cylinder)
@@ -1248,7 +1242,7 @@ namespace MphRead.Formats
             return false;
         }
 
-        public static bool CheckCylindersOverlap(Vector3 oneTop, Vector3 oneBottom, Vector3 twoBottom, Vector3 twoVector,
+        public static bool CheckCylindersOverlap(Vector3 oneBottom, Vector3 oneTop, Vector3 twoBottom, Vector3 twoVector,
             float twoDot, float radii, ref CollisionResult result)
         {
             float v9 = 0;
@@ -1369,6 +1363,92 @@ namespace MphRead.Formats
             result.Plane.Y = -d.Y;
             result.Plane.Z = -d.Z;
             return true;
+        }
+
+        private static bool CheckCylinderOverlapVolumeHelper(CollisionVolume other, Vector3 bottom, Vector3 vector,
+            float dot, float radius, ref CollisionResult result)
+        {
+            if (other.Type == VolumeType.Cylinder)
+            {
+                CollisionResult discard = default; // the game doesn't pass the result on
+                Vector3 top = bottom + vector * dot;
+                return CheckCylindersOverlap(bottom, top, other.CylinderPosition, other.CylinderVector,
+                    other.CylinderDot, other.CylinderRadius + radius, ref discard);
+            }
+            if (other.Type == VolumeType.Sphere)
+            {
+                Vector3 between = other.SpherePosition - bottom;
+                float dot1 = Vector3.Dot(between, vector);
+                if (dot1 <= dot + other.SphereRadius && dot1 >= -other.SphereRadius)
+                {
+                    between -= vector * dot1;
+                    float radii = other.SphereRadius + radius;
+                    float dot2 = Vector3.Dot(between, between);
+                    if (dot2 <= radii * radii)
+                    {
+                        result.Field0 = 2;
+                        result.EntityCollision = null;
+                        result.Flags = CollisionFlags.None;
+                        if (dot < 0)
+                        {
+                            result.Plane = new Vector4(-other.SpherePosition, 0);
+                            result.Field14 = -dot1;
+                        }
+                        else if (dot1 <= dot)
+                        {
+                            float mag = between.Length;
+                            result.Plane = new Vector4(between / mag, 0);
+                            result.Field14 = mag - radius;
+                        }
+                        else
+                        {
+                            result.Plane = new Vector4(other.SpherePosition, 0);
+                            result.Field14 = dot1 - dot;
+                        }
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static bool CheckVolumesOverlap(CollisionVolume one, CollisionVolume two, ref CollisionResult result)
+        {
+            if (two.Type == VolumeType.Box)
+            {
+                if (one.Type == VolumeType.Sphere)
+                {
+                    // will return correctly for sphere-box, but won't update result
+                    return CheckSphereOverlapVolume(two, one.SpherePosition, one.SphereRadius, ref result);
+                }
+                if (one.Type == VolumeType.Cylinder)
+                {
+                    // will always return false for cylinder-box
+                    return CheckCylinderOverlapVolumeHelper(two, one.CylinderPosition, one.CylinderVector,
+                        one.CylinderDot, one.CylinderRadius, ref result);
+                }
+                if (one.Type == VolumeType.Box)
+                {
+                    // will always return false for box-box
+                    return false;
+                }
+            }
+            else if (two.Type == VolumeType.Cylinder)
+            {
+                // will return correctly for sphere-cylinder
+                // will return correctly for cylinder-cylinder, but won't update result
+                // will always return false for box-cylinder
+                return CheckCylinderOverlapVolumeHelper(one, two.CylinderPosition, two.CylinderVector,
+                        two.CylinderDot, two.CylinderRadius, ref result);
+            }
+            else if (two.Type == VolumeType.Sphere)
+            {
+                // will return correctly for sphere-sphere
+                // will return correctly for cylinder-sphere
+                // will return correctly for box-sphere, but won't update result
+                return CheckSphereOverlapVolume(one, two.SpherePosition, two.SphereRadius, ref result);
+            }
+            return false;
         }
 
         public static bool CheckCylinderOverlapSphere(Vector3 cylBot, Vector3 cylTop, Vector3 spherePos,

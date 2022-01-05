@@ -452,7 +452,10 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    Debug.Assert(result.Field0 == 1);
+                    if (result.Field0 != 1)
+                    {
+                        return;
+                    }
                     Vector3 edge = result.EdgePoint2 - result.EdgePoint1;
                     Debug.Assert(edge != Vector3.Zero);
                     Vector3 between = altPos - result.EdgePoint1;
@@ -489,7 +492,10 @@ namespace MphRead.Entities
             }
             else
             {
-                Debug.Assert(result.Field0 == 1);
+                if (result.Field0 != 1)
+                {
+                    return;
+                }
                 float v11 = 0;
                 float v162 = 1;
                 bool v169 = false;
