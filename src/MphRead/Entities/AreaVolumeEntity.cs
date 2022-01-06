@@ -58,6 +58,11 @@ namespace MphRead.Entities
             }
         }
 
+        public override bool GetTargetable()
+        {
+            return false;
+        }
+
         public override void GetDisplayVolumes()
         {
             if (_scene.ShowVolumes == VolumeDisplay.AreaInside || _scene.ShowVolumes == VolumeDisplay.AreaExit)
@@ -234,8 +239,8 @@ namespace MphRead.Entities
                     if (beam.Lifespan > 0)
                     {
                         CollisionResult discard = default;
-                        // bug Omega Cannon (and platform/enemy beams) can chekc against higher bits than intended
-                        if (((int)flags & (1 << (int)beam.WeaponType)) != 0
+                        // bug Omega Cannon can check against a higher bit than intended
+                        if (((int)flags & (1 << (int)beam.Beam)) != 0
                             && (beam.Flags.TestFlag(BeamFlags.Charged) || !flags.TestFlag(TriggerFlags.BeamCharged)))
                         {
                             if (CollisionDetection.CheckCylinderOverlapVolume(_volume, beam.BackPosition, beam.Position,

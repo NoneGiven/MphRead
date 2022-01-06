@@ -192,7 +192,7 @@ namespace MphRead.Entities.Enemies
         public void LockHit(EntityBase source)
         {
             var beam = (BeamProjectileEntity)source;
-            if (_shotFrames == 0 && GetEffectiveness(beam.WeaponType) == Effectiveness.Zero && beam.Owner == PlayerEntity.Main)
+            if (_shotFrames == 0 && GetEffectiveness(beam.Beam) == Effectiveness.Zero && beam.Owner == PlayerEntity.Main)
             {
                 _shotFrames = _forceField.Data.Type == 7 ? (byte)(30 * 2) : (byte)1; // todo: FPS stuff
                 beam.Owner.GetPosition(out _targetPosition);

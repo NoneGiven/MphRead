@@ -40,8 +40,8 @@ namespace MphRead
 
     public class WeaponInfo
     {
-        public BeamType Weapon { get; }
-        public BeamType WeaponType { get; } // same as Weapon except for platform/enemy beams
+        public BeamType Beam { get; }
+        public BeamType BeamKind { get; } // same as Beam except for platform/enemy beams
         public IReadOnlyList<byte> DrawFuncIds { get; }
         public IReadOnlyList<ushort> Colors { get; }
         public byte Priority { get; }
@@ -122,12 +122,12 @@ namespace MphRead
         public ushort SmokeShotAmount { get; } // increase level by this amount when firing uncharged shot
         public ushort SmokeChargeAmount { get; } // increase level by this amount each frame while charging
 
-        public string Name => Metadata.WeaponNames[(int)Weapon];
+        public string Name => Metadata.WeaponNames[(int)Beam];
         public WeaponInfo? UnchargedRicochetWeapon => Weapons.GetRicochetWeapon(RicochetWeaponPtr[0]);
         public WeaponInfo? ChargedRicochetWeapon => Weapons.GetRicochetWeapon(RicochetWeaponPtr[1]);
         public string Description { get; }
 
-        public WeaponInfo(BeamType weapon, BeamType weaponType, byte[] drawFuncIds, ushort[] colors, byte priority, WeaponFlags flags,
+        public WeaponInfo(BeamType beam, BeamType beamType, byte[] drawFuncIds, ushort[] colors, byte priority, WeaponFlags flags,
             ushort splashDamage, ushort minChargeSplashDamage, ushort chargedSplashDamage, byte[] splashDmgTypes, byte shotCooldown,
             byte autofireCooldown, byte ammoType, byte[] beamTypes, byte[] muzzleEffects, byte[] dmgDirTypes, byte[] dmgInterp,
             Affliction[] afflictions, byte padding21, ushort minCharge, ushort fullCharge, ushort ammoCost, ushort minChargeCost, ushort chargeCost,
@@ -143,8 +143,8 @@ namespace MphRead
             ushort smokeMinimum, ushort smokeDrain, ushort smokeShotAmount, ushort smokeChargeAmount, string description)
         {
             Description = description;
-            Weapon = weapon;
-            WeaponType = weaponType;
+            Beam = beam;
+            BeamKind = beamType;
             DrawFuncIds = drawFuncIds;
             Colors = colors;
             Priority = priority;
@@ -303,8 +303,8 @@ namespace MphRead
         {
             new WeaponInfo(
                 description: "Power Beam 1P",
-                weapon: BeamType.PowerBeam,
-                weaponType: BeamType.PowerBeam,
+                beam: BeamType.PowerBeam,
+                beamType: BeamType.PowerBeam,
                 drawFuncIds: new byte[] { 0, 0 },
                 colors: new ushort[] { 9055, 21407 },
                 priority: 1,
@@ -387,8 +387,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Volt Driver 1P",
-                weapon: BeamType.VoltDriver,
-                weaponType: BeamType.VoltDriver,
+                beam: BeamType.VoltDriver,
+                beamType: BeamType.VoltDriver,
                 drawFuncIds: new byte[] { 1, 2 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -471,8 +471,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Missile 1P",
-                weapon: BeamType.Missile,
-                weaponType: BeamType.Missile,
+                beam: BeamType.Missile,
+                beamType: BeamType.Missile,
                 drawFuncIds: new byte[] { 7, 7 },
                 colors: new ushort[] { 32140, 32140 },
                 priority: 2,
@@ -555,8 +555,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Battlehamer 1P",
-                weapon: BeamType.Battlehamer,
-                weaponType: BeamType.Battlehamer,
+                beam: BeamType.Battlehamer,
+                beamType: BeamType.Battlehamer,
                 drawFuncIds: new byte[] { 10, 10 },
                 colors: new ushort[] { 16367, 16367 },
                 priority: 2,
@@ -639,8 +639,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Imperialist 1P",
-                weapon: BeamType.Imperialist,
-                weaponType: BeamType.Imperialist,
+                beam: BeamType.Imperialist,
+                beamType: BeamType.Imperialist,
                 drawFuncIds: new byte[] { 8, 8 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -723,8 +723,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Judicator 1P",
-                weapon: BeamType.Judicator,
-                weaponType: BeamType.Judicator,
+                beam: BeamType.Judicator,
+                beamType: BeamType.Judicator,
                 drawFuncIds: new byte[] { 3, 3 },
                 colors: new ushort[] { 32404, 32404 },
                 priority: 2,
@@ -807,8 +807,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Magmaul 1P",
-                weapon: BeamType.Magmaul,
-                weaponType: BeamType.Magmaul,
+                beam: BeamType.Magmaul,
+                beamType: BeamType.Magmaul,
                 drawFuncIds: new byte[] { 4, 5 },
                 colors: new ushort[] { 15711, 15711 },
                 priority: 2,
@@ -892,8 +892,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Shock Coil 1P",
-                weapon: BeamType.ShockCoil,
-                weaponType: BeamType.ShockCoil,
+                beam: BeamType.ShockCoil,
+                beamType: BeamType.ShockCoil,
                 drawFuncIds: new byte[] { 9, 9 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -976,8 +976,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Omega Cannon 1P",
-                weapon: BeamType.OmegaCannon,
-                weaponType: BeamType.OmegaCannon,
+                beam: BeamType.OmegaCannon,
+                beamType: BeamType.OmegaCannon,
                 drawFuncIds: new byte[] { 11, 11 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 5,
@@ -1060,8 +1060,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Power Beam 1P Affinity",
-                weapon: BeamType.PowerBeam,
-                weaponType: BeamType.PowerBeam,
+                beam: BeamType.PowerBeam,
+                beamType: BeamType.PowerBeam,
                 drawFuncIds: new byte[] { 0, 0 },
                 colors: new ushort[] { 9055, 21407 },
                 priority: 1,
@@ -1144,8 +1144,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Volt Driver 1P Affinity",
-                weapon: BeamType.VoltDriver,
-                weaponType: BeamType.VoltDriver,
+                beam: BeamType.VoltDriver,
+                beamType: BeamType.VoltDriver,
                 drawFuncIds: new byte[] { 1, 2 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -1228,8 +1228,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Missile 1P Affinity",
-                weapon: BeamType.Missile,
-                weaponType: BeamType.Missile,
+                beam: BeamType.Missile,
+                beamType: BeamType.Missile,
                 drawFuncIds: new byte[] { 7, 7 },
                 colors: new ushort[] { 32050, 32050 },
                 priority: 2,
@@ -1312,8 +1312,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Battlehammer 1P Affinity",
-                weapon: BeamType.Battlehamer,
-                weaponType: BeamType.Battlehamer,
+                beam: BeamType.Battlehamer,
+                beamType: BeamType.Battlehamer,
                 drawFuncIds: new byte[] { 10, 10 },
                 colors: new ushort[] { 16367, 16367 },
                 priority: 2,
@@ -1396,8 +1396,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Imperialist 1P Affinity",
-                weapon: BeamType.Imperialist,
-                weaponType: BeamType.Imperialist,
+                beam: BeamType.Imperialist,
+                beamType: BeamType.Imperialist,
                 drawFuncIds: new byte[] { 8, 8 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -1480,8 +1480,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Judicator 1P Affinity",
-                weapon: BeamType.Judicator,
-                weaponType: BeamType.Judicator,
+                beam: BeamType.Judicator,
+                beamType: BeamType.Judicator,
                 drawFuncIds: new byte[] { 3, 3 },
                 colors: new ushort[] { 32404, 32404 },
                 priority: 2,
@@ -1564,8 +1564,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Magmaul 1P Affinity",
-                weapon: BeamType.Magmaul,
-                weaponType: BeamType.Magmaul,
+                beam: BeamType.Magmaul,
+                beamType: BeamType.Magmaul,
                 drawFuncIds: new byte[] { 4, 5 },
                 colors: new ushort[] { 15711, 15711 },
                 priority: 2,
@@ -1649,8 +1649,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Shock Coil 1P Affinity",
-                weapon: BeamType.ShockCoil,
-                weaponType: BeamType.ShockCoil,
+                beam: BeamType.ShockCoil,
+                beamType: BeamType.ShockCoil,
                 drawFuncIds: new byte[] { 9, 9 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -1733,8 +1733,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Omega Cannon 1P Affinity",
-                weapon: BeamType.OmegaCannon,
-                weaponType: BeamType.OmegaCannon,
+                beam: BeamType.OmegaCannon,
+                beamType: BeamType.OmegaCannon,
                 drawFuncIds: new byte[] { 11, 11 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 5,
@@ -1821,8 +1821,8 @@ namespace MphRead
         {
             new WeaponInfo(
                 description: "Power Beam MP",
-                weapon: BeamType.PowerBeam,
-                weaponType: BeamType.PowerBeam,
+                beam: BeamType.PowerBeam,
+                beamType: BeamType.PowerBeam,
                 drawFuncIds: new byte[] { 0, 0 },
                 colors: new ushort[] { 9055, 21407 },
                 priority: 1,
@@ -1905,8 +1905,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Volt Driver MP",
-                weapon: BeamType.VoltDriver,
-                weaponType: BeamType.VoltDriver,
+                beam: BeamType.VoltDriver,
+                beamType: BeamType.VoltDriver,
                 drawFuncIds: new byte[] { 1, 2 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -1989,8 +1989,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Missile MP",
-                weapon: BeamType.Missile,
-                weaponType: BeamType.Missile,
+                beam: BeamType.Missile,
+                beamType: BeamType.Missile,
                 drawFuncIds: new byte[] { 7, 7 },
                 colors: new ushort[] { 32140, 32140 },
                 priority: 2,
@@ -2073,8 +2073,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Battlehammer MP",
-                weapon: BeamType.Battlehamer,
-                weaponType: BeamType.Battlehamer,
+                beam: BeamType.Battlehamer,
+                beamType: BeamType.Battlehamer,
                 drawFuncIds: new byte[] { 10, 10 },
                 colors: new ushort[] { 16367, 16367 },
                 priority: 2,
@@ -2157,8 +2157,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Imperialist MP",
-                weapon: BeamType.Imperialist,
-                weaponType: BeamType.Imperialist,
+                beam: BeamType.Imperialist,
+                beamType: BeamType.Imperialist,
                 drawFuncIds: new byte[] { 8, 8 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -2241,8 +2241,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Judicator MP",
-                weapon: BeamType.Judicator,
-                weaponType: BeamType.Judicator,
+                beam: BeamType.Judicator,
+                beamType: BeamType.Judicator,
                 drawFuncIds: new byte[] { 3, 3 },
                 colors: new ushort[] { 32404, 32404 },
                 priority: 2,
@@ -2325,8 +2325,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Magmaul MP",
-                weapon: BeamType.Magmaul,
-                weaponType: BeamType.Magmaul,
+                beam: BeamType.Magmaul,
+                beamType: BeamType.Magmaul,
                 drawFuncIds: new byte[] { 4, 5 },
                 colors: new ushort[] { 15711, 15711 },
                 priority: 2,
@@ -2410,8 +2410,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Shock Coil MP",
-                weapon: BeamType.ShockCoil,
-                weaponType: BeamType.ShockCoil,
+                beam: BeamType.ShockCoil,
+                beamType: BeamType.ShockCoil,
                 drawFuncIds: new byte[] { 9, 9 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -2494,8 +2494,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Omega Cannon MP",
-                weapon: BeamType.OmegaCannon,
-                weaponType: BeamType.OmegaCannon,
+                beam: BeamType.OmegaCannon,
+                beamType: BeamType.OmegaCannon,
                 drawFuncIds: new byte[] { 11, 11 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 5,
@@ -2578,8 +2578,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Power Beam MP Affinity",
-                weapon: BeamType.PowerBeam,
-                weaponType: BeamType.PowerBeam,
+                beam: BeamType.PowerBeam,
+                beamType: BeamType.PowerBeam,
                 drawFuncIds: new byte[] { 0, 0 },
                 colors: new ushort[] { 9055, 21407 },
                 priority: 1,
@@ -2662,8 +2662,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Volt Driver MP Affinity",
-                weapon: BeamType.VoltDriver,
-                weaponType: BeamType.VoltDriver,
+                beam: BeamType.VoltDriver,
+                beamType: BeamType.VoltDriver,
                 drawFuncIds: new byte[] { 1, 2 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -2746,8 +2746,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Missile MP Affinity",
-                weapon: BeamType.Missile,
-                weaponType: BeamType.Missile,
+                beam: BeamType.Missile,
+                beamType: BeamType.Missile,
                 drawFuncIds: new byte[] { 7, 7 },
                 colors: new ushort[] { 32050, 32050 },
                 priority: 2,
@@ -2830,8 +2830,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Battlehammer MP Affinity",
-                weapon: BeamType.Battlehamer,
-                weaponType: BeamType.Battlehamer,
+                beam: BeamType.Battlehamer,
+                beamType: BeamType.Battlehamer,
                 drawFuncIds: new byte[] { 10, 10 },
                 colors: new ushort[] { 16367, 16367 },
                 priority: 2,
@@ -2914,8 +2914,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Imperialist MP Affinity",
-                weapon: BeamType.Imperialist,
-                weaponType: BeamType.Imperialist,
+                beam: BeamType.Imperialist,
+                beamType: BeamType.Imperialist,
                 drawFuncIds: new byte[] { 8, 8 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -2998,8 +2998,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Judicator MP Affinity",
-                weapon: BeamType.Judicator,
-                weaponType: BeamType.Judicator,
+                beam: BeamType.Judicator,
+                beamType: BeamType.Judicator,
                 drawFuncIds: new byte[] { 3, 3 },
                 colors: new ushort[] { 32404, 32404 },
                 priority: 2,
@@ -3082,8 +3082,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Magmaul MP Affinity",
-                weapon: BeamType.Magmaul,
-                weaponType: BeamType.Magmaul,
+                beam: BeamType.Magmaul,
+                beamType: BeamType.Magmaul,
                 drawFuncIds: new byte[] { 4, 5 },
                 colors: new ushort[] { 15711, 15711 },
                 priority: 2,
@@ -3167,8 +3167,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Shock Coil MP Affinity",
-                weapon: BeamType.ShockCoil,
-                weaponType: BeamType.ShockCoil,
+                beam: BeamType.ShockCoil,
+                beamType: BeamType.ShockCoil,
                 drawFuncIds: new byte[] { 9, 9 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -3251,8 +3251,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Omega Cannon MP Affinity",
-                weapon: BeamType.OmegaCannon,
-                weaponType: BeamType.OmegaCannon,
+                beam: BeamType.OmegaCannon,
+                beamType: BeamType.OmegaCannon,
                 drawFuncIds: new byte[] { 11, 11 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 5,
@@ -3339,8 +3339,8 @@ namespace MphRead
         {
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.PowerBeam,
-                weaponType: BeamType.Enemy,
+                beam: BeamType.PowerBeam,
+                beamType: BeamType.Enemy,
                 drawFuncIds: new byte[] { 21, 21 },
                 colors: new ushort[] { 9055, 21407 },
                 priority: 1,
@@ -3424,8 +3424,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.VoltDriver,
-                weaponType: BeamType.Enemy,
+                beam: BeamType.VoltDriver,
+                beamType: BeamType.Enemy,
                 drawFuncIds: new byte[] { 2, 2 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -3509,8 +3509,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.Missile,
-                weaponType: BeamType.Enemy,
+                beam: BeamType.Missile,
+                beamType: BeamType.Enemy,
                 drawFuncIds: new byte[] { 7, 7 },
                 colors: new ushort[] { 32140, 32140 },
                 priority: 2,
@@ -3594,8 +3594,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.Battlehamer,
-                weaponType: BeamType.Enemy,
+                beam: BeamType.Battlehamer,
+                beamType: BeamType.Enemy,
                 drawFuncIds: new byte[] { 0, 0 },
                 colors: new ushort[] { 16367, 16367 },
                 priority: 2,
@@ -3678,8 +3678,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.Imperialist,
-                weaponType: BeamType.Enemy,
+                beam: BeamType.Imperialist,
+                beamType: BeamType.Enemy,
                 drawFuncIds: new byte[] { 8, 8 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -3763,8 +3763,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.Judicator,
-                weaponType: BeamType.Enemy,
+                beam: BeamType.Judicator,
+                beamType: BeamType.Enemy,
                 drawFuncIds: new byte[] { 3, 6 },
                 colors: new ushort[] { 32404, 32404 },
                 priority: 2,
@@ -3848,8 +3848,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.Magmaul,
-                weaponType: BeamType.Enemy,
+                beam: BeamType.Magmaul,
+                beamType: BeamType.Enemy,
                 drawFuncIds: new byte[] { 22, 22 },
                 colors: new ushort[] { 15711, 15711 },
                 priority: 2,
@@ -3933,8 +3933,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.ShockCoil,
-                weaponType: BeamType.Enemy,
+                beam: BeamType.ShockCoil,
+                beamType: BeamType.Enemy,
                 drawFuncIds: new byte[] { 9, 9 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -4018,8 +4018,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.PowerBeam,
-                weaponType: BeamType.Enemy,
+                beam: BeamType.PowerBeam,
+                beamType: BeamType.Enemy,
                 drawFuncIds: new byte[] { 14, 14 },
                 colors: new ushort[] { 9055, 21407 },
                 priority: 1,
@@ -4103,8 +4103,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.Magmaul,
-                weaponType: BeamType.Enemy,
+                beam: BeamType.Magmaul,
+                beamType: BeamType.Enemy,
                 drawFuncIds: new byte[] { 15, 15 },
                 colors: new ushort[] { 9055, 21407 },
                 priority: 1,
@@ -4188,8 +4188,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.PowerBeam,
-                weaponType: BeamType.Enemy,
+                beam: BeamType.PowerBeam,
+                beamType: BeamType.Enemy,
                 drawFuncIds: new byte[] { 16, 16 },
                 colors: new ushort[] { 9055, 21407 },
                 priority: 1,
@@ -4277,8 +4277,8 @@ namespace MphRead
         {
             new WeaponInfo(
                 description: "Cretaphid 1 Crystal",
-                weapon: BeamType.Battlehamer,
-                weaponType: BeamType.Missile,
+                beam: BeamType.Battlehamer,
+                beamType: BeamType.Missile,
                 drawFuncIds: new byte[] { 18, 18 },
                 colors: new ushort[] { 16367, 16367 },
                 priority: 2,
@@ -4362,8 +4362,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Cretaphid 2 Plasma",
-                weapon: BeamType.VoltDriver,
-                weaponType: BeamType.VoltDriver,
+                beam: BeamType.VoltDriver,
+                beamType: BeamType.VoltDriver,
                 drawFuncIds: new byte[] { 19, 19 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -4447,8 +4447,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Slench 1 Tear",
-                weapon: BeamType.Missile,
-                weaponType: BeamType.Missile,
+                beam: BeamType.Missile,
+                beamType: BeamType.Missile,
                 drawFuncIds: new byte[] { 12, 12 },
                 colors: new ushort[] { 32140, 32140 },
                 priority: 2,
@@ -4537,8 +4537,8 @@ namespace MphRead
         {
             new WeaponInfo(
                 description: "Sylux Ship Missile",
-                weapon: BeamType.Missile,
-                weaponType: BeamType.Platform,
+                beam: BeamType.Missile,
+                beamType: BeamType.Platform,
                 drawFuncIds: new byte[] { 20, 20 },
                 colors: new ushort[] { 32140, 32140 },
                 priority: 2,
@@ -4622,8 +4622,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.PowerBeam,
-                weaponType: BeamType.Platform,
+                beam: BeamType.PowerBeam,
+                beamType: BeamType.Platform,
                 drawFuncIds: new byte[] { 0, 0 },
                 colors: new ushort[] { 9055, 9055 },
                 priority: 1,
@@ -4707,8 +4707,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Platform Energy Beam",
-                weapon: BeamType.ShockCoil,
-                weaponType: BeamType.Platform,
+                beam: BeamType.ShockCoil,
+                beamType: BeamType.Platform,
                 drawFuncIds: new byte[] { 17, 17 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -4792,8 +4792,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Platform Arc Welder",
-                weapon: BeamType.ShockCoil,
-                weaponType: BeamType.Platform,
+                beam: BeamType.ShockCoil,
+                beamType: BeamType.Platform,
                 drawFuncIds: new byte[] { 9, 9 },
                 colors: new ushort[] { 32767, 32767 },
                 priority: 2,
@@ -4880,8 +4880,8 @@ namespace MphRead
         {
             new WeaponInfo(
                 description: "Judicator Player Ricochet",
-                weapon: BeamType.Judicator,
-                weaponType: BeamType.Judicator,
+                beam: BeamType.Judicator,
+                beamType: BeamType.Judicator,
                 drawFuncIds: new byte[] { 3, 3 },
                 colors: new ushort[] { 32404, 32404 },
                 priority: 2,
@@ -4964,8 +4964,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.Magmaul,
-                weaponType: BeamType.Enemy,
+                beam: BeamType.Magmaul,
+                beamType: BeamType.Enemy,
                 drawFuncIds: new byte[] { 4, 4 },
                 colors: new ushort[] { 575, 575 },
                 priority: 2,
@@ -5048,8 +5048,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.Judicator,
-                weaponType: BeamType.Enemy,
+                beam: BeamType.Judicator,
+                beamType: BeamType.Enemy,
                 drawFuncIds: new byte[] { 3, 3 },
                 colors: new ushort[] { 32404, 32404 },
                 priority: 2,
@@ -5132,8 +5132,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                weapon: BeamType.Magmaul,
-                weaponType: BeamType.Enemy,
+                beam: BeamType.Magmaul,
+                beamType: BeamType.Enemy,
                 drawFuncIds: new byte[] { 4, 4 },
                 colors: new ushort[] { 575, 575 },
                 priority: 2,

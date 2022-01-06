@@ -4058,10 +4058,10 @@ namespace MphRead.Memory
     public class CBeamProjectile : CEntity
     {
         private const int _off0 = 0x18;
-        public BeamType WeaponType { get => (BeamType)ReadByte(_off0); set => WriteByte(_off0, (byte)value); }
+        public BeamType Beam { get => (BeamType)ReadByte(_off0); set => WriteByte(_off0, (byte)value); }
 
         private const int _off1 = 0x19;
-        public BeamType Weapon { get => (BeamType)ReadByte(_off1); set => WriteByte(_off1, (byte)value); }
+        public BeamType BeamKind { get => (BeamType)ReadByte(_off1); set => WriteByte(_off1, (byte)value); }
 
         private const int _off2 = 0x1A;
         public byte DrawFuncId { get => ReadByte(_off2); set => WriteByte(_off2, value); }

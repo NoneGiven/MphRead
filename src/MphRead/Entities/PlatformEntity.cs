@@ -1055,7 +1055,8 @@ namespace MphRead.Entities
                             else
                             {
                                 var beam = (BeamProjectileEntity)info.Sender;
-                                if (_beamEffectiveness[(int)beam.Weapon] == Effectiveness.Zero)
+                                // bug?: checking BeamKind instead of Beam here
+                                if (_beamEffectiveness[(int)beam.BeamKind] == Effectiveness.Zero)
                                 {
                                     effectId = _data.ResistEffectId;
                                 }

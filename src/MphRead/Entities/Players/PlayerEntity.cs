@@ -314,6 +314,7 @@ namespace MphRead.Entities
         private EntityBase? _burnedBy = null;
         private EntityBase? _lastTarget = null;
         private EntityBase? _shockCoilTarget = null;
+        public EntityBase? ShockCoilTarget => _shockCoilTarget;
 
         public bool IsAltForm => Flags1.TestFlag(PlayerFlags1.AltForm);
         public bool IsMorphing => Flags1.TestFlag(PlayerFlags1.Morphing);
@@ -389,6 +390,7 @@ namespace MphRead.Entities
         private float _field44C = 0; // basically landing speed/force?
         private ushort _timeSinceHitTarget = 0;
         private ushort _shockCoilTimer = 0;
+        public ushort ShockCoilTimer => _shockCoilTimer;
         private ushort _timeSinceMorphCamera = 0;
         private ushort _horizColTimer = 0;
 
@@ -773,6 +775,11 @@ namespace MphRead.Entities
             position = Position.AddY(IsAltForm ? 0 : 0.5f);
             up = UpVector;
             facing = FacingVector;
+        }
+
+        public override bool GetTargetable()
+        {
+            return _health != 0;
         }
 
         private void SetBiped1Animation(PlayerAnimation anim, AnimFlags animFlags)
@@ -1217,7 +1224,7 @@ namespace MphRead.Entities
                 if (source.Type == EntityType.BeamProjectile)
                 {
                     beam = (BeamProjectileEntity)source;
-                    Effectiveness effectiveness = BeamEffectiveness[(int)beam.WeaponType]; // todo: how does this handle platform beams etc.?
+                    Effectiveness effectiveness = BeamEffectiveness[(int)beam.Beam];
                     if (effectiveness == Effectiveness.Zero)
                     {
                         return;
@@ -1318,7 +1325,7 @@ namespace MphRead.Entities
                 BeamType beamType = BeamType.Platform;
                 if (beam != null)
                 {
-                    beamType = beam.WeaponType;
+                    beamType = beam.Beam;
                 }
                 if (source == attacker || halfturret != null || bomb != null)
                 {

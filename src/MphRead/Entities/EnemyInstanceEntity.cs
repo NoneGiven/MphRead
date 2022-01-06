@@ -97,6 +97,11 @@ namespace MphRead.Entities
             facing = FacingVector;
         }
 
+        public override bool GetTargetable()
+        {
+            return _health != 0;
+        }
+
         public void ClearHitPlayers()
         {
             HitPlayers[0] = false;
@@ -306,7 +311,7 @@ namespace MphRead.Entities
                 {
                     return;
                 }
-                effectiveness = GetEffectiveness(beamSource.Weapon);
+                effectiveness = GetEffectiveness(beamSource.Beam);
             }
             bool unaffected = false;
             if (effectiveness == Effectiveness.Zero || Flags.TestFlag(EnemyFlags.Invincible)

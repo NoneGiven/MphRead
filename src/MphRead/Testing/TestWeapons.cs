@@ -27,7 +27,7 @@ namespace MphRead.Testing
             {
                 if (weap.Flags.TestFlag(WeaponFlags.AutoRelease))
                 {
-                    Console.WriteLine($"{weap.Weapon} ({weap.WeaponType})");
+                    Console.WriteLine($"{weap.Beam} ({weap.BeamKind})");
                     Console.WriteLine($"{weap.Flags}");
                     Console.WriteLine();
                 }
@@ -141,8 +141,8 @@ namespace MphRead.Testing
         {
             Console.WriteLine($@"            new WeaponInfo(
                 description: """",
-                weapon: BeamType.{weapon.Weapon},
-                weaponType: BeamType.{weapon.WeaponType},
+                weapon: BeamType.{weapon.Beam},
+                weaponType: BeamType.{weapon.BeamKind},
                 drawFuncIds: new byte[] {{ {weapon.DrawFuncIds[0]}, {weapon.DrawFuncIds[1]} }},
                 colors: new ushort[] {{ {weapon.Colors[0]}, {weapon.Colors[1]} }},
                 flags: {EnumToString(weapon.Flags)},
@@ -1092,8 +1092,8 @@ namespace MphRead.Testing
 
         public readonly struct RawWeaponInfo
         {
-            public readonly BeamType Weapon;
-            public readonly BeamType WeaponType; // same as Weapon except for platform/enemy beams
+            public readonly BeamType Beam;
+            public readonly BeamType BeamKind; // same as Beam except for platform/enemy beams
             [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
             public readonly byte[] DrawFuncIds;
             [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U2, SizeConst = 2)]

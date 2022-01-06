@@ -1803,7 +1803,7 @@ namespace MphRead.Entities
                     {
                         Debug.Assert(info.Sender.Type == EntityType.BeamProjectile);
                         var beam = (BeamProjectileEntity)info.Sender;
-                        if (beam.WeaponType == BeamType.ShockCoil)
+                        if (beam.Beam == BeamType.ShockCoil)
                         {
                             if (target == _shockCoilTarget)
                             {

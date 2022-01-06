@@ -12,8 +12,8 @@ namespace MphRead.Entities
     public class BeamProjectileEntity : EntityBase
     {
         public BeamFlags Flags { get; set; }
-        public BeamType Weapon { get; set; }
-        public BeamType WeaponType { get; set; }
+        public BeamType Beam { get; set; }
+        public BeamType BeamKind { get; set; }
 
         public Vector3 Velocity { get; set; }
         public Vector3 Acceleration { get; set; } // only used for gravity
@@ -310,7 +310,7 @@ namespace MphRead.Entities
                     if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam)
                         && CollisionDetection.CheckCylinderOverlapVolume(enemy.HurtVolume, BackPosition, Position, CylinderRadius, ref res))
                     {
-                        if (WeaponType == BeamType.OmegaCannon && enemy.EnemyType == EnemyType.GoreaMeteor)
+                        if (Beam == BeamType.OmegaCannon && enemy.EnemyType == EnemyType.GoreaMeteor)
                         {
                             enemy.TakeDamage(500, this);
                         }
@@ -427,7 +427,7 @@ namespace MphRead.Entities
                             player = (PlayerEntity)colWith; // btodo: use halfturret owner
                         }
                         DamageFlags damageFlags = DamageFlags.NoDmgInvuln;
-                        if (player.BeamEffectiveness[(int)WeaponType] == Effectiveness.Zero)
+                        if (player.BeamEffectiveness[(int)Beam] == Effectiveness.Zero)
                         {
                             if (!_scene.Multiplayer && Owner == PlayerEntity.Main)
                             {
@@ -450,7 +450,7 @@ namespace MphRead.Entities
                             if (!player.IsAltForm
                                 && anyRes.Position.Y - player.Position.Y >= Fixed.ToFloat(player.Values.MaxPickupHeight) - 0.3f)
                             {
-                                if (WeaponType == BeamType.Imperialist)
+                                if (Beam == BeamType.Imperialist)
                                 {
                                     isHeadshot = true;
                                 }
@@ -514,7 +514,7 @@ namespace MphRead.Entities
                     else if (colWith.Type == EntityType.EnemyInstance)
                     {
                         var enemy = (EnemyInstanceEntity)colWith;
-                        if (enemy.GetEffectiveness(WeaponType) == Effectiveness.Zero && (enemy.EnemyType == EnemyType.FireSpawn
+                        if (enemy.GetEffectiveness(Beam) == Effectiveness.Zero && (enemy.EnemyType == EnemyType.FireSpawn
                             || (enemy.Owner as EnemyInstanceEntity)?.EnemyType == EnemyType.FireSpawn))
                         {
                             // when ineffective + FireSpawn or HitZone owned by FireSpawn
@@ -560,7 +560,7 @@ namespace MphRead.Entities
                             {
                                 if (door.Flags.TestFlag(DoorFlags.Locked) && !door.Flags.TestFlag(DoorFlags.ShowLock))
                                 {
-                                    if (door.Data.PaletteId == (int)WeaponType)
+                                    if (door.Data.PaletteId == (int)Beam)
                                     {
                                         door.Unlock(updateState: true, sfxBool: true);
                                     }
@@ -674,7 +674,7 @@ namespace MphRead.Entities
                 Debug.Assert(Owner != null);
                 CheckSplashDamage(colWith);
                 // skdebug
-                if (Weapon == BeamType.OmegaCannon)
+                if (Beam == BeamType.OmegaCannon)
                 {
                     _scene.SetFade(FadeType.FadeInWhite, 15 * (1 / 30f), overwrite: false);
                 }
@@ -1063,7 +1063,7 @@ namespace MphRead.Entities
                 for (int i = 0; i < equip.Beams.Length; i++)
                 {
                     BeamProjectileEntity beam = equip.Beams[i];
-                    if (beam.Flags.TestFlag(BeamFlags.Continuous) && beam.WeaponType == equip.Weapon.WeaponType
+                    if (beam.Flags.TestFlag(BeamFlags.Continuous) && beam.BeamKind == equip.Weapon.BeamKind
                         && beam.Owner == owner && beam.Lifespan < equip.Weapon.UnchargedLifespan)
                     {
                         return beam;
@@ -1077,7 +1077,7 @@ namespace MphRead.Entities
                 {
                     return beam;
                 }
-                if (beam.Flags.TestFlag(BeamFlags.Continuous) && beam.WeaponType == equip.Weapon.WeaponType
+                if (beam.Flags.TestFlag(BeamFlags.Continuous) && beam.BeamKind == equip.Weapon.BeamKind
                     && beam.Owner == owner && beam.Lifespan < equip.Weapon.UnchargedLifespan)
                 {
                     return beam;
@@ -1215,13 +1215,12 @@ namespace MphRead.Entities
                 hsDamage = 150 * hsDamage / 100;
                 splashDmg = 150 * splashDmg / 100;
             }
-            if (weapon.Weapon == BeamType.Imperialist && !equip.Zoomed)
+            if (weapon.Beam == BeamType.Imperialist && !equip.Zoomed)
             {
                 damage /= 2;
                 hsDamage /= 2;
                 splashDmg /= 2;
             }
-            // btodo: Shock Coil damage based on frame stuff
             ushort damageInterpolation = weapon.DamageInterpolations[charged ? 1 : 0];
             float maxDist = GetAmount(weapon.UnchargedDistance, weapon.MinChargeDistance, weapon.ChargedDistance) / 4096f;
             Affliction afflictions = weapon.Afflictions[charged ? 1 : 0];
@@ -1280,8 +1279,8 @@ namespace MphRead.Entities
                     }
                 }
                 beam.Owner = owner;
-                beam.Weapon = weapon.Weapon;
-                beam.WeaponType = weapon.WeaponType;
+                beam.Beam = weapon.Beam;
+                beam.BeamKind = weapon.BeamKind;
                 beam.Flags = flags;
                 beam.Age = 0;
                 beam.InitialSpeed = beam.Speed = speed;
@@ -1372,9 +1371,38 @@ namespace MphRead.Entities
                         beam.Effect.SetElementExtension(true);
                     }
                 }
+                Debug.Assert(beam.Target == null);
+                if (beam.Flags.TestFlag(BeamFlags.Homing))
+                {
+                    for (int j = 0; j < _homingTargetTypes.Count; j++)
+                    {
+                        CheckHomingTargets(beam, weapon, _homingTargetTypes[j], scene);
+                    }
+                    if (beam.Beam == BeamType.ShockCoil && owner.Type == EntityType.Player)
+                    {
+                        var ownerPlayer = (PlayerEntity)owner;
+                        if ((scene.Multiplayer || !ownerPlayer.IsBot) && ownerPlayer.ShockCoilTarget == beam.Target)
+                        {
+                            // todo: FPS stuff
+                            ushort timer = ownerPlayer.ShockCoilTimer;
+                            if (timer >= 120 * 2)
+                            {
+                                beam.Damage += 4;
+                                beam.SplashDamage += 4;
+                                beam.HeadshotDamage += 4;
+                            }
+                            else
+                            {
+                                beam.Damage += timer / (30 * 2);
+                                beam.SplashDamage += timer / (30 * 2);
+                                beam.HeadshotDamage += timer / (30 * 2);
+                            }
+                        }
+                    }
+                }
                 // btodo: the latter two parts of this condition are just one code path
                 if (beam.Flags.TestFlag(BeamFlags.Homing)
-                    && weapon.Flags.TestFlag(WeaponFlags.Continuous) && beam.WeaponType == BeamType.Platform)
+                    && weapon.Flags.TestFlag(WeaponFlags.Continuous) && beam.BeamKind == BeamType.Platform)
                 {
                     // btodo: check for entities of other types
                     // btodo: implement the "get alive" check
@@ -1421,6 +1449,80 @@ namespace MphRead.Entities
                 scene.AddEntity(beam);
             }
             return result;
+        }
+
+        private static readonly IReadOnlyList<EntityType> _homingTargetTypes = new EntityType[5]
+        {
+            EntityType.Player,
+            EntityType.Halfturret,
+            EntityType.EnemyInstance,
+            EntityType.Door,
+            EntityType.Platform
+        };
+
+        private static void CheckHomingTargets(BeamProjectileEntity beam, WeaponInfo weapon, EntityType type, Scene scene)
+        {
+            Debug.Assert(beam.Owner != null);
+            if (type == EntityType.EnemyInstance && (beam.Owner.Type == EntityType.EnemyInstance || beam.Owner.Type == EntityType.Platform))
+            {
+                return;
+            }
+            for (int i = 0; i < scene.Entities.Count; i++)
+            {
+                EntityBase entity = scene.Entities[i];
+                if (entity.Type != type || entity == beam.Owner || !entity.GetTargetable())
+                {
+                    continue;
+                }
+                bool tryTarget = false;
+                if (type == EntityType.Player)
+                {
+                    var player = (PlayerEntity)entity;
+                    if (beam.Owner.Type != EntityType.Player)
+                    {
+                        tryTarget = true;
+                    }
+                    else
+                    {
+                        var ownerPlayer = (PlayerEntity)beam.Owner;
+                        tryTarget = player.TeamIndex != ownerPlayer.TeamIndex;
+                    }
+                }
+                else if (type == EntityType.Halfturret)
+                {
+                    // btodo: check halfturret owner
+                }
+                else if (type == EntityType.EnemyInstance)
+                {
+                    var enemy = (EnemyInstanceEntity)entity;
+                    EnemyFlags flags = enemy.Flags;
+                    if (flags.TestFlag(EnemyFlags.CollideBeam)
+                        && (!flags.TestFlag(EnemyFlags.NoHomingNc) || beam.Flags.TestFlag(BeamFlags.Continuous))
+                        && (!flags.TestFlag(EnemyFlags.NoHomingCo) || !beam.Flags.TestFlag(BeamFlags.Continuous)))
+                    {
+                        tryTarget = true;
+                    }
+                }
+                else if (type == EntityType.Platform)
+                {
+                    var platform = (PlatformEntity)entity;
+                    tryTarget = platform.Flags.TestFlag(PlatformFlags.BeamTarget);
+                }
+                else // if (type == EntityType.Door)
+                {
+                    tryTarget = true;
+                }
+                if (tryTarget)
+                {
+                    entity.GetPosition(out Vector3 position);
+                    Vector3 between = position - beam.Position;
+                    float distSqr = Vector3.Dot(between, between);
+                    if (weapon.Flags.TestFlag(WeaponFlags.Continuous))
+                    {
+
+                    }
+                }
+            }
         }
 
         private void SpawnIceWave(WeaponInfo weapon, float chargePct)
@@ -1557,7 +1659,7 @@ namespace MphRead.Entities
                     colRes.Position.Y + colRes.Plane.Y / 8,
                     colRes.Position.Z + colRes.Plane.Z / 8
                 );
-                Vector3 up = WeaponType == BeamType.Imperialist ? -Direction : colRes.Plane.Xyz;
+                Vector3 up = Beam == BeamType.Imperialist ? -Direction : colRes.Plane.Xyz;
                 if (colRes.EntityCollision != null)
                 {
                     spawnPos = Matrix.Vec3MultMtx4(spawnPos, colRes.EntityCollision.Inverse1);
@@ -1580,7 +1682,7 @@ namespace MphRead.Entities
                         _scene.AddEntity(ent);
                     }
                 }
-                byte splatEffect = _terSplat1P[(int)Weapon][(int)colRes.Terrain];
+                byte splatEffect = _terSplat1P[(int)Beam][(int)colRes.Terrain];
                 if (_scene.GameMode == GameMode.SinglePlayer && splatEffect != 255)
                 {
                     splatEffect += 3;
@@ -1611,7 +1713,7 @@ namespace MphRead.Entities
                     // 25 - sprEffectiveIce
                     // 26 - sprEffectiveMortar
                     // 27 - sprEffectiveGhost
-                    effectId = (int)WeaponType + 20;
+                    effectId = (int)Beam + 20;
                 }
                 else if (!_scene.Multiplayer)
                 {
@@ -1623,7 +1725,7 @@ namespace MphRead.Entities
                     // 17 - effectiveHitIce
                     // 18 - effectiveHitMortar
                     // 19 - effectiveHitGhost
-                    effectId = (int)WeaponType + 12;
+                    effectId = (int)Beam + 12;
                 }
                 else
                 {
@@ -1635,7 +1737,7 @@ namespace MphRead.Entities
                     // 159 - mpEffectiveIce
                     // 160 - mpEffectiveMortar
                     // 161 - mpEffectiveGhost
-                    effectId = (int)WeaponType + 154;
+                    effectId = (int)Beam + 154;
                 }
                 if (effectId > 0)
                 {

@@ -240,6 +240,11 @@ namespace MphRead.Entities
             facing = FacingVector;
         }
 
+        public virtual bool GetTargetable()
+        {
+            return true;
+        }
+
         public virtual bool Process()
         {
             if (Active)

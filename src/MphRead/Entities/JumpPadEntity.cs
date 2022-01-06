@@ -48,6 +48,11 @@ namespace MphRead.Entities
             }
         }
 
+        public override bool GetTargetable()
+        {
+            return false;
+        }
+
         public override bool Process()
         {
             if (_parent != null)
