@@ -310,11 +310,14 @@ namespace MphRead.Entities
                 for (int i = 0; i < 3; i++)
                 {
                     BeamType slotWeap = _weaponSlots[i];
-                    WeaponInfo slotInfo = Weapons.Current[(int)slotWeap];
-                    if (slotInfo.Priority > priority && ammo >= slotInfo.AmmoCost)
+                    if (slotWeap != BeamType.None)
                     {
-                        priority = slotInfo.Priority;
-                        slot = i;
+                        WeaponInfo slotInfo = Weapons.Current[(int)slotWeap];
+                        if (slotInfo.Priority > priority && ammo >= slotInfo.AmmoCost)
+                        {
+                            priority = slotInfo.Priority;
+                            slot = i;
+                        }
                     }
                 }
                 // todo: update HUD

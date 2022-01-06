@@ -114,6 +114,8 @@ namespace MphRead.Entities
             // the game does this every other frame at 30 fps and keeps 5 past positions; we do it every other frame at 60 fps and keep 10,
             // and use only every other position to draw each trail segment, which results in the beam trail updating at the same frequency
             // (relative to the projectile) and having the same amount of smear as in the game
+            // todo?: might need to revisit
+            // --> observed homing missile trail flickering(?) when curved, and judicator trail getting more opaque on final collision
             if (_scene.FrameCount % 2 == 0)
             {
                 for (int i = 9; i > 0; i--)
@@ -149,12 +151,50 @@ namespace MphRead.Entities
                 }
             }
             // todo: positional audio (w/ BeamKind check), node refs
-            // sktodo: handle destroyed event
+            if (Target != null)
+            {
+                for (int i = 0; i < _scene.MessageQueue.Count; i++)
+                {
+                    MessageInfo info = _scene.MessageQueue[i];
+                    if (info.Message == Message.Destroyed && info.ExecuteFrame == _scene.FrameCount && info.Sender == Target)
+                    {
+                        Target = null;
+                        break;
+                    }
+                }
+            }
             if (!Flags.TestFlag(BeamFlags.Continuous) || firstFrame)
             {
                 CheckCollision();
             }
-            // sktodo: target/homing stuff
+            if (Flags.TestFlag(BeamFlags.Homing) && !Flags.TestFlag(BeamFlags.Continuous) && Target != null)
+            {
+                Target.GetPosition(out Vector3 targetPos);
+                Vector3 acceleration = targetPos - Position;
+                if (acceleration != Vector3.Zero)
+                {
+                    acceleration = acceleration.Normalized();
+                }
+                else
+                {
+                    acceleration = Vector3.UnitX;
+                }
+                acceleration *= Speed;
+                if (Vector3.Dot(acceleration, Velocity) >= 0)
+                {
+                    acceleration -= Velocity;
+                    float accelMag = acceleration.Length;
+                    if (accelMag > Homing)
+                    {
+                        acceleration *= Homing / accelMag;
+                    }
+                    Velocity += acceleration;
+                }
+                else
+                {
+                    Target = null;
+                }
+            }
             // btodo: homing SFX
             if (Flags.TestFlag(BeamFlags.HasModel))
             {
@@ -1495,7 +1535,11 @@ namespace MphRead.Entities
                                     bool canTarget = false;
                                     if (type == EntityType.Player)
                                     {
-
+                                        var player = (PlayerEntity)entity;
+                                        if (!player.IsAltForm && !player.IsMorphing || div1 >= Fixed.ToFloat(4006))
+                                        {
+                                            canTarget = true;
+                                        }
                                     }
                                     else
                                     {

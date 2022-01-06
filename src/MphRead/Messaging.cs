@@ -5,7 +5,6 @@ namespace MphRead
 {
     public readonly struct MessageInfo
     {
-        public readonly ulong Id;
         public readonly Message Message;
         public readonly EntityBase Sender;
         public readonly EntityBase? Target;
@@ -15,7 +14,7 @@ namespace MphRead
         public readonly ulong QueuedFrame;
 
         public MessageInfo(Message message, EntityBase sender, EntityBase? target, object param1, object param2,
-            ulong executeFrame, ulong queuedFrame, ulong id)
+            ulong executeFrame, ulong queuedFrame)
         {
 
             Message = message;
@@ -25,15 +24,14 @@ namespace MphRead
             Param2 = param2;
             ExecuteFrame = executeFrame;
             QueuedFrame = queuedFrame;
-            Id = id;
         }
     }
 
     public partial class Scene
     {
-        private ulong _nextMessageId = 1;
         private const int _queueSize = 40;
         private readonly List<MessageInfo> _queue = new List<MessageInfo>(_queueSize);
+        public IReadOnlyList<MessageInfo> MessageQueue => _queue;
 
         public void SendMessage(Message message, EntityBase sender, EntityBase? target, object param1, object param2)
         {
@@ -56,7 +54,7 @@ namespace MphRead
 
         private void DispatchOrQueueMessage(Message message, EntityBase sender, EntityBase? target, object param1, object param2, ulong frame)
         {
-            var info = new MessageInfo(message, sender, target, param1, param2, frame, _frameCount, _nextMessageId++);
+            var info = new MessageInfo(message, sender, target, param1, param2, frame, _frameCount);
             if (frame <= _frameCount)
             {
                 DispatchMessage(info);
@@ -99,31 +97,6 @@ namespace MphRead
                     i--;
                 }
             }
-        }
-
-        public MessageInfo? FindMessage(Message message, MessageInfo? start = null)
-        {
-            int index = 0;
-            if (start.HasValue)
-            {
-                for (int i = 0; i < _queue.Count; i++)
-                {
-                    if (_queue[i].Id == start.Value.Id)
-                    {
-                        break;
-                    }
-                    index++;
-                }
-            }
-            for (int i = index; i < _queue.Count; i++)
-            {
-                MessageInfo info = _queue[i];
-                if (info.Message == message)
-                {
-                    return info;
-                }
-            }
-            return null;
         }
     }
 }
