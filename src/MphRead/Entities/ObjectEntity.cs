@@ -26,6 +26,7 @@ namespace MphRead.Entities
 
         private EntityBase? _parent = null;
         private Matrix4 _invTransform;
+        private EntityBase? _scanMsgTarget = null;
 
         // used for ID -1 (scan point, effect spawner)
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x22, 0x8B, 0x22).AsVector4();
@@ -133,6 +134,10 @@ namespace MphRead.Entities
                 {
                     _parent = parent;
                 }
+            }
+            if (_scene.TryGetEntity(_data.ScanMsgTarget, out EntityBase? target))
+            {
+                _scanMsgTarget = target;
             }
         }
 
@@ -271,9 +276,12 @@ namespace MphRead.Entities
                 {
                     // todo: check distance to player
                     Vector3 between = _scene.CameraPosition - Position;
-                    // todo: send message to the associated volume
                     if (Vector3.Dot(between, between) >= 15 * 15)
                     {
+                        if (_scanMsgTarget != null)
+                        {
+                            _scene.SendMessage(Message.SetActive, this, _scanMsgTarget, 1, 0);
+                        }
                         UpdateState(1);
                         if (_models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
                         {
@@ -283,6 +291,10 @@ namespace MphRead.Entities
                     }
                     else
                     {
+                        if (_scanMsgTarget != null)
+                        {
+                            _scene.SendMessage(Message.SetActive, this, _scanMsgTarget, 0, 0);
+                        }
                         UpdateState(0);
                     }
                 }
@@ -457,7 +469,7 @@ namespace MphRead.Entities
         None = 0x0,
         UseEffectVolume = 0x1,
         UseEffectOffset = 0x2,
-        RepeatScanMessage = 0x4,
+        RepeatScanMessage = 0x4, // todo: send scan message
         WeaponZoom = 0x8,
         AttachEffect = 0x10,
         DestroyEffect = 0x20,

@@ -747,7 +747,7 @@ namespace MphRead.Entities
             }
             if (Owner != null)
             {
-                // todo: send event
+                // sktodo: send event
             }
         }
 

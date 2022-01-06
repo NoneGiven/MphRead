@@ -2043,6 +2043,7 @@ namespace MphRead
                 EntityBase entity = _entities[i];
                 if (!entity.Process())
                 {
+                    SendMessage(Message.Destroyed, entity, null, 0, 0, delay: 1);
                     // todo: need to handle destroying vs. unloading etc.
                     entity.Destroy();
                     _destroyedEntities.Add(entity);

@@ -237,7 +237,7 @@ namespace MphRead.Entities
                 _scene.LoadEffect(184); // syluxMissileCol
                 _scene.LoadEffect(185); // syluxMissileFlash
             }
-            _scene.TryGetEntity(_data.ScanMsgTarget, out _scanMessageTarget);
+            _scene.TryGetEntity(_data.ScanMsgTarget, out _scanMessageTarget); // todo: send scan message
             _scene.TryGetEntity(_data.BeamHitMsgTarget, out _hitMessageTarget);
             _scene.TryGetEntity(_data.PlayerColMsgTarget, out _playerColMessageTarget);
             _scene.TryGetEntity(_data.DeadMsgTarget, out _deathMessageTarget);
