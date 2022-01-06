@@ -747,7 +747,8 @@ namespace MphRead.Entities
             }
             if (Owner != null)
             {
-                // sktodo: send event
+                _scene.SendMessage(Message.Impact, this, Owner, colWith, 0);
+                // todo: stop SFX
             }
         }
 
