@@ -80,11 +80,12 @@ namespace MphRead.Entities
                     return base.Process();
                 }
                 // todo: visualize pickup volumes
+                Vector3 position = Position.AddY(_heightOffset);
                 bool pickedUp = false;
                 float radii = player.Volume.SphereRadius + (_data.ModelId >= 8 ? 1 : 0.1f);
                 if (player.IsAltForm)
                 {
-                    Vector3 between = Position - player.Volume.SpherePosition;
+                    Vector3 between = position - player.Volume.SpherePosition;
                     if (Vector3.Dot(between, between) < radii * radii)
                     {
                         pickedUp = true;
@@ -92,10 +93,10 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    Vector3 between = Position - player.Position;
+                    Vector3 between = position - player.Position;
                     if (between.X * between.X + between.Z * between.Z < radii * radii)
                     {
-                        float diffY = Position.Y - player.Position.Y;
+                        float diffY = position.Y - player.Position.Y;
                         float maxY = Fixed.ToFloat(player.Values.MaxPickupHeight);
                         if (diffY <= maxY + 0.5f)
                         {
