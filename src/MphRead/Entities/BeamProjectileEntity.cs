@@ -718,13 +718,8 @@ namespace MphRead.Entities
             {
                 Debug.Assert(Equip != null);
                 Debug.Assert(Owner != null);
-                CheckSplashDamage(colWith);
-                // skdebug
-                if (Beam == BeamType.OmegaCannon)
-                {
-                    _scene.SetFade(FadeType.FadeInWhite, 15 * (1 / 30f), overwrite: false);
-                }
                 // note: when hitting halfturret, colWith has been replaced with the turret's owning player by this point
+                CheckSplashDamage(colWith);
                 if (RicochetWeapon != null && (colWith == null || colWith.Type != EntityType.Player))
                 {
                     Vector3 factor = Velocity * 7;
@@ -758,28 +753,77 @@ namespace MphRead.Entities
 
         private void CheckSplashDamage(EntityBase? colWith)
         {
-            // todo: iterate and check players
             for (int i = 0; i < _scene.Entities.Count; i++)
             {
                 EntityBase entity = _scene.Entities[i];
-                if (entity.Type == EntityType.EnemyInstance && entity != colWith)
+                if (entity.Type != EntityType.Player || entity == colWith)
                 {
-                    var enemy = (EnemyInstanceEntity)entity;
-                    if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam))
+                    continue;
+                }
+                var player = (PlayerEntity)entity;
+
+                void OmegaCannonFlash()
+                {
+                    if (Beam == BeamType.OmegaCannon && player == PlayerEntity.Main)
                     {
-                        CollisionResult res = default;
-                        float dist = Vector3.Distance(enemy.Position, Position);
-                        if (dist < BeamScale
-                            && !CollisionDetection.CheckBetweenPoints(Position, enemy.Position, TestFlags.AffectsBeams, _scene, ref res))
+                        _scene.SetFade(FadeType.FadeInWhite, 15 * (1 / 30f), overwrite: false);
+                    }
+                }
+
+                if (player.Health > 0)
+                {
+                    if (!player.Flags2.TestFlag(PlayerFlags2.Halfturret) || Owner != player.Halfturret)
+                    {
+                        CollisionResult discard = default;
+                        float dist = Vector3.Distance(player.Position, Position);
+                        // todo?: wifi conditions
+                        if (dist >= BeamScale
+                            || CollisionDetection.CheckBetweenPoints(Position, player.Position, TestFlags.AffectsBeams, _scene, ref discard))
                         {
-                            float damage = GetInterpolatedValue(SplashDamageType, SplashDamage, 0, dist / BeamScale);
-                            enemy.TakeDamage((uint)damage, this);
+                            OmegaCannonFlash();
+                        }
+                        else
+                        {
+                            Vector3 damageDir = GetDamageDirection(Position, player.Position);
+                            float ratio = dist / BeamScale;
+                            int damage = (int)GetInterpolatedValue(SplashDamageType, SplashDamage, 0, ratio);
+                            player.TakeDamage(damage, DamageFlags.NoDmgInvuln, damageDir, this);
                             if (Owner != null)
                             {
-                                _scene.SendMessage(Message.Impact, this, Owner, enemy, 0);
-                                // todo: stop beam SFX
+                                _scene.SendMessage(Message.Impact, this, Owner, player, 0);
+                                // todo: stop SFX
                             }
                         }
+                    }
+                }
+                else
+                {
+                    OmegaCannonFlash();
+                }
+            }
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.EnemyInstance || entity == colWith)
+                {
+                    continue;
+                }
+                var enemy = (EnemyInstanceEntity)entity;
+                if (!enemy.Flags.TestFlag(EnemyFlags.CollideBeam))
+                {
+                    continue;
+                }
+                CollisionResult res = default;
+                float dist = Vector3.Distance(enemy.Position, Position);
+                if (dist < BeamScale
+                    && !CollisionDetection.CheckBetweenPoints(Position, enemy.Position, TestFlags.AffectsBeams, _scene, ref res))
+                {
+                    float damage = GetInterpolatedValue(SplashDamageType, SplashDamage, 0, dist / BeamScale);
+                    enemy.TakeDamage((uint)damage, this);
+                    if (Owner != null)
+                    {
+                        _scene.SendMessage(Message.Impact, this, Owner, enemy, 0);
+                        // todo: stop beam SFX
                     }
                 }
             }
