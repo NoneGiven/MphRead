@@ -808,6 +808,12 @@ namespace MphRead.Entities
             }
         }
 
+        public void Teleport(Vector3 position, Vector3 facing)
+        {
+            _gunVec1 = facing;
+            Transform = GetTransformMatrix(facing, UpVector, position);
+        }
+
         private void ResetCameraInfo()
         {
             // todo: this

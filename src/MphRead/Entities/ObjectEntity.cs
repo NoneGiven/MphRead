@@ -193,8 +193,7 @@ namespace MphRead.Entities
             {
                 return;
             }
-            Debug.Assert(_meta != null);
-            int animId = _meta.AnimationIds[state];
+            int animId = _meta == null ? -1 : _meta.AnimationIds[state];
             if (animId < 0)
             {
                 _flags |= ObjectFlags.NoAnimation;
