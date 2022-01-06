@@ -227,8 +227,8 @@ namespace MphRead.Entities
                 chargePct = (EquipInfo.ChargeLevel - weapon.MinCharge) / (weapon.FullCharge - weapon.MinCharge);
             }
             Vector3 aimVector = _target.Position - muzzlePos;
-            float hMag = aimVector.X * aimVector.X + aimVector.Z * aimVector.Z;
-            float hMagSqr = hMag * hMag;
+            float hMagSqr = aimVector.X * aimVector.X + aimVector.Z * aimVector.Z;
+            float hMag = MathF.Sqrt(hMagSqr);
             float uncSpeed = Fixed.ToFloat(weapon.UnchargedSpeed);
             float speed = (Fixed.ToFloat(weapon.MinChargeSpeed) - uncSpeed) * chargePct;
             float uncGravity = Fixed.ToFloat(weapon.UnchargedGravity);
