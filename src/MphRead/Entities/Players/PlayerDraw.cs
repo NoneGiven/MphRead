@@ -224,25 +224,6 @@ namespace MphRead.Entities
             GetDrawItems(_altModel, _altModel.Model.Nodes[0], _curAlpha);
         }
 
-        private void UpdateTransforms(ModelInstance inst, Matrix4 transform, int recolor)
-        {
-            Model model = inst.Model;
-            model.AnimateMaterials(inst.AnimInfo);
-            model.AnimateTextures(inst.AnimInfo);
-            model.ComputeNodeMatrices(index: 0);
-            model.AnimateNodes(index: 0, UseNodeTransform, transform, model.Scale, inst.AnimInfo);
-            model.UpdateMatrixStack();
-            _scene.UpdateMaterials(model, recolor);
-        }
-
-        private void UpdateMaterials(ModelInstance inst, int recolor)
-        {
-            Model model = inst.Model;
-            model.AnimateMaterials(inst.AnimInfo);
-            model.AnimateTextures(inst.AnimInfo);
-            _scene.UpdateMaterials(model, recolor);
-        }
-
         private void GetDrawItems(ModelInstance inst, Node node, float alpha, int polygonId = -1, int recolor = -1)
         {
             if (alpha <= 0)

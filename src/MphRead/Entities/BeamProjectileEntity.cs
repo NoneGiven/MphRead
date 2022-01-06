@@ -499,6 +499,7 @@ namespace MphRead.Entities
                                 }
                                 else
                                 {
+                                    // todo: it's kind of lame that you can't get headshots at this range
                                     Vector3 travel = Position - SpawnPosition;
                                     isHeadshot = travel.LengthSquared <= 15 * 15;
                                 }

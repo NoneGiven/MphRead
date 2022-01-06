@@ -18,6 +18,7 @@ namespace MphRead
         public int ChildIndex { get; } 
         public int NextIndex { get; }
         public bool Enabled { get; set; }
+        public bool AnimIgnoreParent { get; set; }
         public bool AnimIgnoreChild { get; set; }
         public int MeshCount { get; }
         public int MeshId { get; }

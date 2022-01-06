@@ -1348,7 +1348,8 @@ namespace MphRead.Entities
             {
                 _altModel.SetAnimation((int)WeavelAltAnim.Idle);
                 Flags2 |= PlayerFlags2.Halfturret;
-                // todo: spawn halfturret
+                _halfturret = new HalfturretEntity(this, Recolor, _scene); // todo: pre-allocate or whatever
+                _scene.AddEntity(_halfturret);
             }
             else if (Hunter == Hunter.Samus)
             {
@@ -1380,7 +1381,13 @@ namespace MphRead.Entities
         {
             if (Flags2.TestFlag(PlayerFlags2.Halfturret))
             {
-                // todo: update health, destroy turret
+                Flags2 &= ~PlayerFlags2.Halfturret;
+                if (_halfturret?.Health > 0)
+                {
+                    GainHealth(_halfturret.Health);
+                }
+                _halfturret?.Die();
+                _halfturret = null; // todo: proper halfturret ref
             }
             Flags1 &= ~PlayerFlags1.Morphing;
             Flags1 |= PlayerFlags1.Unmorphing;

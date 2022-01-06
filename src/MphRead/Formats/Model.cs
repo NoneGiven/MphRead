@@ -547,7 +547,7 @@ namespace MphRead
                 if (group != null && group.Animations.TryGetValue(node.Name, out NodeAnimation animation))
                 {
                     transform = AnimateNode(group, animation, scale, info.NodeFrame);
-                    if (node.ParentIndex != -1)
+                    if (node.ParentIndex != -1 && !node.AnimIgnoreParent)
                     {
                         transform *= Nodes[node.ParentIndex].Animation;
                     }
@@ -564,6 +564,40 @@ namespace MphRead
                 else if (node.BeforeTransform.HasValue)
                 {
                     node.Animation = node.Animation * parentTansform * node.BeforeTransform.Value;
+                }
+                node.Animation *= parentTansform;
+                i = node.NextIndex;
+            }
+        }
+
+        // todo: merge this into one that works for everything
+        public void AnimateNodes2(int index, bool useNodeTransform, Matrix4 parentTansform, Vector3 scale, AnimationInfo info)
+        {
+            for (int i = index; i != -1;)
+            {
+                Node node = Nodes[i];
+                Matrix4 transform = useNodeTransform ? node.Transform : Matrix4.Identity;
+                NodeAnimationGroup? group = info.Node.Group;
+                if (group != null && group.Animations.TryGetValue(node.Name, out NodeAnimation animation))
+                {
+                    transform = AnimateNode(group, animation, scale, info.NodeFrame);
+                    if (node.ParentIndex != -1 && !node.AnimIgnoreParent)
+                    {
+                        transform *= Nodes[node.ParentIndex].Animation;
+                    }
+                }
+                node.Animation = transform;
+                if (node.AfterTransform.HasValue)
+                {
+                    node.Animation = node.AfterTransform.Value * node.Animation * parentTansform;
+                }
+                else if (node.BeforeTransform.HasValue)
+                {
+                    node.Animation = node.Animation * parentTansform * node.BeforeTransform.Value;
+                }
+                if (node.ChildIndex != -1 && !node.AnimIgnoreChild)
+                {
+                    AnimateNodes2(node.ChildIndex, useNodeTransform, parentTansform, scale, info);
                 }
                 node.Animation *= parentTansform;
                 i = node.NextIndex;

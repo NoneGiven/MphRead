@@ -9,10 +9,13 @@ namespace MphRead.Entities
         protected Vector3 _light1Color;
         protected Vector3 _light2Vector;
         protected Vector3 _light2Color;
+
         public Vector3 Light1Vector => _light1Vector;
         public Vector3 Light1Color => _light1Color;
         public Vector3 Light2Vector => _light2Vector;
         public Vector3 Light2Color => _light2Color;
+
+        protected bool _useRoomLights = false;
 
         public DynamicLightEntityBase(EntityType type, Scene scene) : base(type, scene)
         {
@@ -112,6 +115,10 @@ namespace MphRead.Entities
 
         protected override LightInfo GetLightInfo()
         {
+            if (_useRoomLights)
+            {
+                return base.GetLightInfo();
+            }
             return new LightInfo(_light1Vector, _light1Color, _light2Vector, _light2Color);
         }
     }

@@ -161,6 +161,7 @@ namespace MphRead.Entities
         private ModelInstance _gunModel = null!;
         private ModelInstance _gunSmokeModel = null!;
         private ModelInstance _doubleDmgModel = null!;
+        public ModelInstance DoubleDamageModel => _doubleDmgModel;
         private ModelInstance _altIceModel = null!;
         private ModelInstance _bipedIceModel = null!;
         private ModelInstance _trailModel = null!;
@@ -169,6 +170,7 @@ namespace MphRead.Entities
         private int _trailBindingId1 = 0;
         private int _trailBindingId2 = 0;
         private int _doubleDmgBindingId = 0;
+        public int DoubleDmgBindingId => _doubleDmgBindingId;
         private readonly Matrix4[] _bipedIceTransforms = new Matrix4[19];
 
         // todo?: could save space with a union
@@ -362,6 +364,7 @@ namespace MphRead.Entities
         private ushort _powerBeamAutofire = 0;
         private ushort _timeSinceInput = 0;
         private ushort _timeSinceShot = 0;
+        public ushort TimeSinceShot { get => _timeSinceShot; set => _timeSinceShot = value; }
         private ushort _timeSinceDamage = 0;
         private ushort _timeSincePickup = 0;
         private ushort _timeSinceHeal = 0;
@@ -370,6 +373,7 @@ namespace MphRead.Entities
         private ushort _spawnInvulnTimer = 0;
         private ushort _viewSwayTimer = 0;
         private ushort _doubleDmgTimer = 0;
+        public bool DoubleDamage => _doubleDmgTimer > 0;
         private ushort _cloakTimer = 0;
         private ushort _deathaltTimer = 0;
         private ushort _frozenTimer = 0;

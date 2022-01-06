@@ -319,27 +319,29 @@ namespace MphRead.Entities
             }
         }
 
-        public virtual void GetDrawInfo()
+        protected void UpdateTransforms(ModelInstance inst, Matrix4 transform, int recolor)
         {
-            for (int i = 0; i < _models.Count; i++)
-            {
-                ModelInstance inst = _models[i];
-                if ((!inst.Active && !_scene.ShowAllEntities) || (inst.IsPlaceholder && !_scene.ShowInvisibleEntities && !_scene.ShowAllEntities))
-                {
-                    continue;
-                }
-                UpdateTransforms(inst, i);
-                if (!Hidden)
-                {
-                    // todo: hide attached effects
-                    int polygonId = _scene.GetNextPolygonId();
-                    GetItems(inst, i, inst.Model.Nodes[0], polygonId);
-                }
-            }
-            if (_scene.ShowCollision && (_scene.ColEntDisplay == EntityType.All || _scene.ColEntDisplay == Type))
-            {
-                GetCollisionDrawInfo();
-            }
+            Model model = inst.Model;
+            model.AnimateMaterials(inst.AnimInfo);
+            model.AnimateTextures(inst.AnimInfo);
+            model.ComputeNodeMatrices(index: 0);
+            model.AnimateNodes(index: 0, UseNodeTransform, transform, model.Scale, inst.AnimInfo);
+            model.UpdateMatrixStack();
+            _scene.UpdateMaterials(model, recolor);
+        }
+
+        protected void UpdateMaterials(ModelInstance inst, int recolor)
+        {
+            Model model = inst.Model;
+            model.AnimateMaterials(inst.AnimInfo);
+            model.AnimateTextures(inst.AnimInfo);
+            _scene.UpdateMaterials(model, recolor);
+        }
+
+        protected void GetDrawItems(ModelInstance inst, int i)
+        {
+            int polygonId = _scene.GetNextPolygonId();
+            GetItems(inst, i, inst.Model.Nodes[0], polygonId);
 
             void GetItems(ModelInstance inst, int index, Node node, int polygonId)
             {
@@ -373,6 +375,28 @@ namespace MphRead.Entities
                 {
                     GetItems(inst, index, model.Nodes[node.NextIndex], polygonId);
                 }
+            }
+        }
+
+        public virtual void GetDrawInfo()
+        {
+            for (int i = 0; i < _models.Count; i++)
+            {
+                ModelInstance inst = _models[i];
+                if ((!inst.Active && !_scene.ShowAllEntities) || (inst.IsPlaceholder && !_scene.ShowInvisibleEntities && !_scene.ShowAllEntities))
+                {
+                    continue;
+                }
+                UpdateTransforms(inst, i);
+                if (!Hidden)
+                {
+                    // todo: hide attached effects
+                    GetDrawItems(inst, i);
+                }
+            }
+            if (_scene.ShowCollision && (_scene.ColEntDisplay == EntityType.All || _scene.ColEntDisplay == Type))
+            {
+                GetCollisionDrawInfo();
             }
         }
 
