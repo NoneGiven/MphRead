@@ -1163,7 +1163,16 @@ namespace MphRead.Entities
             int cost = (int)GetAmount(weapon.AmmoCost, weapon.MinChargeCost, weapon.ChargeCost);
             if (weapon.Flags.TestFlag(WeaponFlags.Continuous))
             {
-                // btodo: Shock Coil frame stuff for ammo cost
+                // game's cycle for Shock Coil: 0 0 0 1 0 0 1 0 0 1 0 0 1 0 0 0
+                //    our cycle for Shock Coil: 0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0
+                const int cycleLength = 16 * 2; // todo: FPS stuff
+                const int divisor = cycleLength * 2;
+                int rem = cost % divisor;
+                cost /= divisor;
+                if (rem != 0 && ((ulong)rem * scene.FrameCount % divisor) > (ulong)(divisor - rem))
+                {
+                    cost++;
+                }
             }
             int ammo = equip.GetAmmo?.Invoke() ?? -1;
             if (ammo >= 0 && cost > ammo)
