@@ -24,6 +24,7 @@ namespace MphRead.Entities
         public int DrawFuncId { get; set; }
         public float Age { get; set; }
         public float Lifespan { get; set; }
+        public ulong Parity { get; set; } // skdebug?
 
         public Vector3 Color { get; set; }
         public byte CollisionEffect { get; set; }
@@ -531,7 +532,7 @@ namespace MphRead.Entities
                                 }
                             }
                             wholeDamage = (uint)Math.Clamp(damage, 0, Int32.MaxValue);
-                            if (wholeDamage != 0)
+                            if (wholeDamage != 0 && (Beam != BeamType.ShockCoil || _scene.FrameCount % 2 == Parity)) // todo: FPS stuff
                             {
                                 player.TakeDamage(wholeDamage, damageFlags, damageDir, this);
                             }
@@ -581,8 +582,11 @@ namespace MphRead.Entities
                             }
                             if (damage > 0)
                             {
-                                enemy.TakeDamage((uint)damage, this);
-                                SpawnCollisionEffect(anyRes, noSplat: true);
+                                if (Beam != BeamType.ShockCoil || _scene.FrameCount % 2 == Parity) // todo: FPS stuff
+                                {
+                                    enemy.TakeDamage((uint)damage, this);
+                                    SpawnCollisionEffect(anyRes, noSplat: true);
+                                }
                                 OnCollision(anyRes, colWith);
                                 // todo: update SFX
                             }
@@ -1325,6 +1329,7 @@ namespace MphRead.Entities
                 beam.BeamKind = weapon.BeamKind;
                 beam.Flags = flags;
                 beam.Age = 0;
+                beam.Parity = scene.FrameCount % 2; // todo: FPS stuff
                 beam.InitialSpeed = beam.Speed = speed;
                 beam.FinalSpeed = finalSpeed;
                 beam.SpeedDecayTime = speedDecayTime;

@@ -1315,6 +1315,7 @@ namespace MphRead
             entry.Acceleration = element.Acceleration;
             entry.ParticleDefinitions.AddRange(element.Particles);
             entry.Parity = (int)(_frameCount % 2);
+            entry.EffectEntry = null;
             entry.EntityCollision = entCol;
             entry.RoField1 = 0;
             entry.RoField2 = 0;
