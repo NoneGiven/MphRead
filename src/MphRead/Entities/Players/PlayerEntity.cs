@@ -152,7 +152,7 @@ namespace MphRead.Entities
         Attack = 0
     }
 
-    public partial class PlayerEntity : EntityBase
+    public partial class PlayerEntity : DynamicLightEntityBase
     {
         private readonly ModelInstance[] _bipedModelLods = new ModelInstance[2];
         private ModelInstance _bipedModel1 = null!; // legs
@@ -201,11 +201,11 @@ namespace MphRead.Entities
         private int _health = 0;
         private int _healthRecovery = 0;
         private bool _tickedHealthRecovery = false; // used to update health every other frame
-        private int[] _ammoMax = new int[2];
-        private int[] _ammo = new int[2];
+        private readonly int[] _ammoMax = new int[2];
+        private readonly int[] _ammo = new int[2];
         private readonly int[] _ammoRecovery = new int[2];
         private readonly bool[] _tickedAmmoRecovery = new bool[2];
-        public int Health => _health;
+        public int Health { get => _health; set => _health = value; }
         private readonly BeamType[] _weaponSlots = new BeamType[3];
         private readonly AvailableArray _availableWeapons = new AvailableArray();
         private readonly AvailableArray _availableCharges = new AvailableArray();
@@ -241,10 +241,6 @@ namespace MphRead.Entities
         private static readonly Matrix4[,] _mbTrailMatrices = new Matrix4[MaxPlayers, _mbTrailSegments];
         private static readonly float[,] _mbTrailAlphas = new float[MaxPlayers, _mbTrailSegments];
         private static readonly int[] _mbTrailIndices = new int[MaxPlayers];
-        private Vector3 _light1Vector;
-        private Vector3 _light1Color;
-        private Vector3 _light2Vector;
-        private Vector3 _light2Color;
         private Matrix4 _modelTransform = Matrix4.Identity;
 
         // todo: visualize
@@ -264,6 +260,8 @@ namespace MphRead.Entities
         // something alt form angle related
         private float _field70 = 0;
         private float _field74 = 0;
+        public float Field70 => _field70;
+        public float Field74 => _field74;
         private float _field78 = 0;
         private float _field7C = 0;
         private float _field80 = 0;
@@ -302,8 +300,8 @@ namespace MphRead.Entities
         private float _altRollLrX = 0;
         private float _altRollLrZ = 0;
 
-        private EntityBase? _halfturret = null; // todo: halfturret entity type
-        public EntityBase? Halfturret => _halfturret;
+        private HalfturretEntity? _halfturret = null;
+        public HalfturretEntity? Halfturret => _halfturret;
         public EnemySpawnEntity? EnemySpawner => _enemySpawner;
         public EnemyInstanceEntity? AttachedEnemy { get; set; } = null;
         private EntityBase? _field35C = null;
@@ -312,6 +310,7 @@ namespace MphRead.Entities
         private JumpPadEntity? _lastJumpPad = null;
         private EnemySpawnEntity? _enemySpawner = null;
         private EntityBase? _burnedBy = null;
+        public EntityBase? BurnedBy => _burnedBy;
         private EntityBase? _lastTarget = null;
         private EntityBase? _shockCoilTarget = null;
         public EntityBase? ShockCoilTarget => _shockCoilTarget;
@@ -403,6 +402,7 @@ namespace MphRead.Entities
         private EffectEntry? _chargeEffect = null;
 
         private float _curAlpha = 1;
+        public float CurAlpha => _curAlpha;
         private float _targetAlpha = 1;
         private float _smokeAlpha = 0;
         private int _viewType = 0; // todo: update this and use an enum
@@ -812,6 +812,11 @@ namespace MphRead.Entities
         {
             _gunVec1 = facing;
             Transform = GetTransformMatrix(facing, UpVector, position);
+        }
+
+        public void OnHalfturretDied()
+        {
+            Flags2 &= ~PlayerFlags2.Halfturret;
         }
 
         private void ResetCameraInfo()

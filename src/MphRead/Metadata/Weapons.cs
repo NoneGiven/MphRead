@@ -293,7 +293,7 @@ namespace MphRead
             BeamType.ShockCoil,
             BeamType.Judicator,
             BeamType.Magmaul,
-            BeamType.Battlehamer,
+            BeamType.Battlehammer,
             BeamType.PowerBeam
         };
 
@@ -554,9 +554,9 @@ namespace MphRead
                 smokeChargeAmount: 25
             ),
             new WeaponInfo(
-                description: "Battlehamer 1P",
-                beam: BeamType.Battlehamer,
-                beamKind: BeamType.Battlehamer,
+                description: "Battlehammer 1P",
+                beam: BeamType.Battlehammer,
+                beamKind: BeamType.Battlehammer,
                 drawFuncIds: new byte[] { 10, 10 },
                 colors: new ushort[] { 16367, 16367 },
                 priority: 2,
@@ -1312,8 +1312,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Battlehammer 1P Affinity",
-                beam: BeamType.Battlehamer,
-                beamKind: BeamType.Battlehamer,
+                beam: BeamType.Battlehammer,
+                beamKind: BeamType.Battlehammer,
                 drawFuncIds: new byte[] { 10, 10 },
                 colors: new ushort[] { 16367, 16367 },
                 priority: 2,
@@ -2073,8 +2073,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Battlehammer MP",
-                beam: BeamType.Battlehamer,
-                beamKind: BeamType.Battlehamer,
+                beam: BeamType.Battlehammer,
+                beamKind: BeamType.Battlehammer,
                 drawFuncIds: new byte[] { 10, 10 },
                 colors: new ushort[] { 16367, 16367 },
                 priority: 2,
@@ -2830,8 +2830,8 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "Battlehammer MP Affinity",
-                beam: BeamType.Battlehamer,
-                beamKind: BeamType.Battlehamer,
+                beam: BeamType.Battlehammer,
+                beamKind: BeamType.Battlehammer,
                 drawFuncIds: new byte[] { 10, 10 },
                 colors: new ushort[] { 16367, 16367 },
                 priority: 2,
@@ -3594,7 +3594,7 @@ namespace MphRead
             ),
             new WeaponInfo(
                 description: "",
-                beam: BeamType.Battlehamer,
+                beam: BeamType.Battlehammer,
                 beamKind: BeamType.Enemy,
                 drawFuncIds: new byte[] { 0, 0 },
                 colors: new ushort[] { 16367, 16367 },
@@ -4277,7 +4277,7 @@ namespace MphRead
         {
             new WeaponInfo(
                 description: "Cretaphid 1 Crystal",
-                beam: BeamType.Battlehamer,
+                beam: BeamType.Battlehammer,
                 beamKind: BeamType.Missile,
                 drawFuncIds: new byte[] { 18, 18 },
                 colors: new ushort[] { 16367, 16367 },

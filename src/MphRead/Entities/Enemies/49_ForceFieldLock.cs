@@ -49,7 +49,7 @@ namespace MphRead.Entities.Enemies
                 SetEffectiveness(BeamType.Missile, Effectiveness.Normal);
                 break;
             case 3:
-                SetEffectiveness(BeamType.Battlehamer, Effectiveness.Normal);
+                SetEffectiveness(BeamType.Battlehammer, Effectiveness.Normal);
                 break;
             case 4:
                 SetEffectiveness(BeamType.Imperialist, Effectiveness.Normal);

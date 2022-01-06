@@ -127,7 +127,7 @@ namespace MphRead
         PowerBeam = 0,
         VoltDriver = 1,
         Missile = 2,
-        Battlehamer = 3,
+        Battlehammer = 3,
         Imperialist = 4,
         Judicator = 5,
         Magmaul = 6,
