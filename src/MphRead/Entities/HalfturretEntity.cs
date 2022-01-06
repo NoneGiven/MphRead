@@ -235,45 +235,37 @@ namespace MphRead.Entities
             float gravity = (Fixed.ToFloat(weapon.MinChargeGravity) - uncGravity) * chargePct;
             float v23 = hMagSqr * (uncGravity + gravity) / ((uncSpeed + speed) * (uncSpeed + speed));
             float v24 = v23 / 2;
-
-            Vector3 Normalize()
+            bool result = true;
+            if (v24 >= 1 / 4096f || v24 <= -1 / 4096f) // v24 != 0
             {
-                if (aimVector != Vector3.Zero)
+                if ((Fixed.ToInt(v23) & 1) == 1)
                 {
-                    aimVector = aimVector.Normalized();
+                    v23 -= 1 / 4096f;
                 }
-                else
+                float v26 = hMagSqr - 4 * v24 * (v24 - aimVector.Y);
+                if (v26 > 0)
                 {
-                    aimVector = Vector3.UnitX;
+                    aimVector.Y = (MathF.Sqrt(v26) - hMag) / v23 * hMag;
                 }
-                return aimVector;
+                else if (v26 > -1 / 4096f) // v26 == 0
+                {
+                    aimVector.Y = -hMag / v23 * hMag;
+                }
+                else // v26 < 0
+                {
+                    aimVector.Y = hMag;
+                    result = false;
+                }
             }
-
-            if (v24 < 1 / 4096f && v24 > -1 / 4096f) // v24 == 0
+            if (aimVector != Vector3.Zero)
             {
-                _aimVector = Normalize();
-                return true;
+                _aimVector = aimVector.Normalized();
             }
-            if ((Fixed.ToInt(v23) & 1) == 1)
+            else
             {
-                v23 -= 1 / 4096f;
+                _aimVector = Vector3.UnitX;
             }
-            float v26 = hMagSqr - 4 * v24 * (v24 - aimVector.Y);
-            if (v26 > 0)
-            {
-                aimVector.Y = (MathF.Sqrt(v26) - hMag) / v23 * hMag;
-                _aimVector = Normalize();
-                return true;
-            }
-            if (v26 > -1 / 4096f) // v26 == 0
-            {
-                aimVector.Y = -hMag / v23 * hMag;
-                _aimVector = Normalize();
-                return true;
-            }
-            aimVector.Y = hMag;
-            _aimVector = Normalize();
-            return false;
+            return result;
         }
 
         public void Die()
