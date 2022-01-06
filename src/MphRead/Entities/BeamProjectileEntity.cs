@@ -747,7 +747,7 @@ namespace MphRead.Entities
             }
             if (Owner != null)
             {
-                _scene.SendMessage(Message.Impact, this, Owner, colWith, 0);
+                _scene.SendMessage(Message.Impact, this, Owner, colWith ?? (object)0, 0);
                 // todo: stop SFX
             }
         }
