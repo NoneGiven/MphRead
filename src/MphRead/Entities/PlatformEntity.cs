@@ -140,6 +140,10 @@ namespace MphRead.Entities
                 }
             }
             _beamInterval = (int)data.BeamInterval * 2; // todo: FPS stuff
+            if (_beams == null)
+            {
+                _beams = SceneSetup.CreateBeamList(64, scene); // in-game: 18
+            }
             if (data.BeamId > -1)
             {
                 // todo: ammo pointer
@@ -199,7 +203,6 @@ namespace MphRead.Entities
                     }
                 }
             }
-            _beams = SceneSetup.CreateBeamList(64, scene); // in-game: 18
         }
 
         public override void Initialize()

@@ -1376,9 +1376,9 @@ namespace MphRead.Entities
                 Debug.Assert(beam.Target == null);
                 if (beam.Flags.TestFlag(BeamFlags.Homing))
                 {
-                    for (int j = 0; j < _homingTargetTypes.Count; j++)
+                    if (CheckHomingTargets(beam, weapon, scene))
                     {
-                        CheckHomingTargets(beam, weapon, _homingTargetTypes[j], scene);
+                        result |= BeamResultFlags.Homing;
                     }
                     if (beam.Beam == BeamType.ShockCoil && owner.Type == EntityType.Player)
                     {
@@ -1402,52 +1402,6 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                // btodo: the latter two parts of this condition are just one code path
-                if (beam.Flags.TestFlag(BeamFlags.Homing)
-                    && weapon.Flags.TestFlag(WeaponFlags.Continuous) && beam.BeamKind == BeamType.Platform)
-                {
-                    // btodo: check for entities of other types
-                    // btodo: implement the "get alive" check
-                    float tolerance = weapon.HomingTolerance / 4096f;
-                    float homingDistance = tolerance;
-                    for (int j = 0; j < scene.Entities.Count; j++)
-                    {
-                        EntityBase entity = scene.Entities[j];
-                        if (entity.Type == EntityType.Platform && entity != beam.Owner)
-                        {
-                            var platform = (PlatformEntity)entity;
-                            if (platform.Flags.TestFlag(PlatformFlags.BeamTarget))
-                            {
-                                Vector3 between = platform.Position - beam.Position;
-                                float dot1 = Vector3.Dot(between, between);
-                                float range = weapon.HomingRange / 4096f;
-                                if (dot1 <= range * range)
-                                {
-                                    float distance = between.Length;
-                                    if (distance > 0)
-                                    {
-                                        float dot2 = Vector3.Dot(between, beam.Velocity.Normalized());
-                                        float div1 = dot2 / distance;
-                                        if (div1 >= homingDistance)
-                                        {
-                                            float div2 = distance / range;
-                                            if (div2 > 1)
-                                            {
-                                                div2 = 1;
-                                            }
-                                            if (div1 >= tolerance + div2 * (Fixed.ToFloat(4094) - tolerance))
-                                            {
-                                                beam.Target = entity;
-                                                homingDistance = div1;
-                                                result |= BeamResultFlags.Homing;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
                 scene.AddEntity(beam);
             }
             return result;
@@ -1462,69 +1416,113 @@ namespace MphRead.Entities
             EntityType.Platform
         };
 
-        private static void CheckHomingTargets(BeamProjectileEntity beam, WeaponInfo weapon, EntityType type, Scene scene)
+        private static bool CheckHomingTargets(BeamProjectileEntity beam, WeaponInfo weapon, Scene scene)
         {
+            bool result = false;
             Debug.Assert(beam.Owner != null);
-            if (type == EntityType.EnemyInstance && (beam.Owner.Type == EntityType.EnemyInstance || beam.Owner.Type == EntityType.Platform))
+            float tolerance = Fixed.ToFloat(weapon.HomingTolerance);
+            float curDiv = tolerance;
+            for (int i = 0; i < _homingTargetTypes.Count; i++)
             {
-                return;
-            }
-            for (int i = 0; i < scene.Entities.Count; i++)
-            {
-                EntityBase entity = scene.Entities[i];
-                if (entity.Type != type || entity == beam.Owner || !entity.GetTargetable())
+                EntityType type = _homingTargetTypes[i];
+                if (type == EntityType.EnemyInstance
+                    && (beam.Owner.Type == EntityType.EnemyInstance || beam.Owner.Type == EntityType.Platform))
                 {
                     continue;
                 }
-                bool tryTarget = false;
-                if (type == EntityType.Player)
+                for (int j = 0; j < scene.Entities.Count; j++)
                 {
-                    var player = (PlayerEntity)entity;
-                    if (beam.Owner.Type != EntityType.Player)
+                    EntityBase entity = scene.Entities[j];
+                    if (entity.Type != type || entity == beam.Owner || !entity.GetTargetable())
+                    {
+                        continue;
+                    }
+                    bool tryTarget = false;
+                    if (type == EntityType.Player)
+                    {
+                        var player = (PlayerEntity)entity;
+                        if (beam.Owner.Type != EntityType.Player)
+                        {
+                            tryTarget = true;
+                        }
+                        else
+                        {
+                            var ownerPlayer = (PlayerEntity)beam.Owner;
+                            tryTarget = player.TeamIndex != ownerPlayer.TeamIndex;
+                        }
+                    }
+                    else if (type == EntityType.Halfturret)
+                    {
+                        // btodo: check halfturret owner
+                    }
+                    else if (type == EntityType.EnemyInstance)
+                    {
+                        var enemy = (EnemyInstanceEntity)entity;
+                        EnemyFlags flags = enemy.Flags;
+                        if (flags.TestFlag(EnemyFlags.CollideBeam)
+                            && (!flags.TestFlag(EnemyFlags.NoHomingNc) || beam.Flags.TestFlag(BeamFlags.Continuous))
+                            && (!flags.TestFlag(EnemyFlags.NoHomingCo) || !beam.Flags.TestFlag(BeamFlags.Continuous)))
+                        {
+                            tryTarget = true;
+                        }
+                    }
+                    else if (type == EntityType.Platform)
+                    {
+                        var platform = (PlatformEntity)entity;
+                        tryTarget = platform.Flags.TestFlag(PlatformFlags.BeamTarget);
+                    }
+                    else // if (type == EntityType.Door)
                     {
                         tryTarget = true;
                     }
-                    else
+                    if (tryTarget)
                     {
-                        var ownerPlayer = (PlayerEntity)beam.Owner;
-                        tryTarget = player.TeamIndex != ownerPlayer.TeamIndex;
-                    }
-                }
-                else if (type == EntityType.Halfturret)
-                {
-                    // btodo: check halfturret owner
-                }
-                else if (type == EntityType.EnemyInstance)
-                {
-                    var enemy = (EnemyInstanceEntity)entity;
-                    EnemyFlags flags = enemy.Flags;
-                    if (flags.TestFlag(EnemyFlags.CollideBeam)
-                        && (!flags.TestFlag(EnemyFlags.NoHomingNc) || beam.Flags.TestFlag(BeamFlags.Continuous))
-                        && (!flags.TestFlag(EnemyFlags.NoHomingCo) || !beam.Flags.TestFlag(BeamFlags.Continuous)))
-                    {
-                        tryTarget = true;
-                    }
-                }
-                else if (type == EntityType.Platform)
-                {
-                    var platform = (PlatformEntity)entity;
-                    tryTarget = platform.Flags.TestFlag(PlatformFlags.BeamTarget);
-                }
-                else // if (type == EntityType.Door)
-                {
-                    tryTarget = true;
-                }
-                if (tryTarget)
-                {
-                    entity.GetPosition(out Vector3 position);
-                    Vector3 between = position - beam.Position;
-                    float distSqr = Vector3.Dot(between, between);
-                    if (weapon.Flags.TestFlag(WeaponFlags.Continuous))
-                    {
+                        entity.GetPosition(out Vector3 position);
+                        Vector3 between = position - beam.Position;
+                        float distSqr = Vector3.Dot(between, between);
+                        float range = Fixed.ToFloat(weapon.HomingRange);
+                        if ((weapon.Flags.TestFlag(WeaponFlags.Continuous) && beam.BeamKind == BeamType.Platform
+                            || distSqr <= range * range) && distSqr > 0)
+                        {
+                            float dist = MathF.Sqrt(distSqr);
+                            Debug.Assert(beam.Velocity != Vector3.Zero);
+                            float dot = Vector3.Dot(between, beam.Velocity.Normalized());
+                            float div1 = dot / dist;
+                            if (div1 >= curDiv)
+                            {
+                                if (weapon.Flags.TestFlag(WeaponFlags.Continuous))
+                                {
+                                    bool canTarget = false;
+                                    if (type == EntityType.Player)
+                                    {
 
+                                    }
+                                    else
+                                    {
+                                        canTarget = true;
+                                    }
+                                    if (canTarget)
+                                    {
+                                        float div2 = Math.Min(dist / range, 1);
+                                        if (div1 >= tolerance + div2 * (Fixed.ToFloat(4094) - tolerance))
+                                        {
+                                            curDiv = div1;
+                                            beam.Target = entity;
+                                            result = true;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    curDiv = div1;
+                                    beam.Target = entity;
+                                }
+                            }
+                        }
                     }
                 }
             }
+            return result;
         }
 
         private void SpawnIceWave(WeaponInfo weapon, float chargePct)
