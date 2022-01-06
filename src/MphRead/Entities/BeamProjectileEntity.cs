@@ -148,12 +148,14 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // todo: beam SFX, node refs
+            // todo: positional audio (w/ BeamKind check), node refs
+            // sktodo: handle destroyed event
             if (!Flags.TestFlag(BeamFlags.Continuous) || firstFrame)
             {
                 CheckCollision();
             }
-            // btodo: target/homing stuff
+            // sktodo: target/homing stuff
+            // btodo: homing SFX
             if (Flags.TestFlag(BeamFlags.HasModel))
             {
                 UpdateAnimFrames(_models[0]);
@@ -1668,7 +1670,7 @@ namespace MphRead.Entities
                 Vector3 facing = GetCrossVector(up);
                 Matrix4 transform = GetTransformMatrix(facing, up);
                 transform.Row3.Xyz = spawnPos;
-                // somehwat redundant logic, game uses "511" bits which accomplish the same thing as this terrain type check
+                // the game uses BeamKind against "511" bits which accomplish the same thing as this terrain type check
                 if (_scene.GameMode != GameMode.SinglePlayer || colRes.Terrain <= Terrain.Lava)
                 {
                     var ent = BeamEffectEntity.Create(
@@ -1682,7 +1684,8 @@ namespace MphRead.Entities
                         _scene.AddEntity(ent);
                     }
                 }
-                byte splatEffect = _terSplat1P[(int)Beam][(int)colRes.Terrain];
+                // there are actually effect IDs to cover platform/enemy beams in these arrays (although most are 255)
+                byte splatEffect = _terSplat1P[(int)BeamKind][(int)colRes.Terrain];
                 if (_scene.GameMode == GameMode.SinglePlayer && splatEffect != 255)
                 {
                     splatEffect += 3;
@@ -1749,17 +1752,18 @@ namespace MphRead.Entities
         private static readonly IReadOnlyList<IReadOnlyList<byte>> _terSplat1P
             = new List<IReadOnlyList<byte>>()
             {
-                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 },
-                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 },
-                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 },
-                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 },
-                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 },
-                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 },
-                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 },
-                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 },
-                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 },
-                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 },
-                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 }
+                // metal, orange holo, green holo, blue holo, ice, snow, sand, rock, lava, acid, Gorea, unknown
+                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 }, // Power Beam
+                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 }, // Volt Driver
+                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 }, // Missile
+                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 }, // Battlehammer
+                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 }, // Imperialist
+                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 }, // Judicator
+                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 }, // Magmaul
+                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 }, // Shock Coil
+                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 }, // Omega Cannon
+                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 }, // Platform
+                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 } // Enemy
             };
 
         private void SpawnSniperBeam()
