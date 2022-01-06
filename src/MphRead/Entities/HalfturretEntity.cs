@@ -259,13 +259,13 @@ namespace MphRead.Entities
                 v23 -= 1 / 4096f;
             }
             float v26 = hMagSqr - 4 * v24 * (v24 - aimVector.Y);
-            if (v26 < 0)
+            if (v26 > 0)
             {
                 aimVector.Y = (MathF.Sqrt(v26) - hMag) / v23 * hMag;
                 _aimVector = Normalize();
                 return true;
             }
-            if (v26 < 1 / 4096f) // v26 == 0
+            if (v26 > -1 / 4096f) // v26 == 0
             {
                 aimVector.Y = -hMag / v23 * hMag;
                 _aimVector = Normalize();

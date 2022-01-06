@@ -142,6 +142,14 @@ namespace MphRead
             Z = new Fixed(z);
         }
 
+
+        public Vector3Fx(string x, string y, string z)
+        {
+            X = new Fixed(Int32.Parse(x.Replace("0x", ""), System.Globalization.NumberStyles.HexNumber));
+            Y = new Fixed(Int32.Parse(y.Replace("0x", ""), System.Globalization.NumberStyles.HexNumber));
+            Z = new Fixed(Int32.Parse(z.Replace("0x", ""), System.Globalization.NumberStyles.HexNumber));
+        }
+
         public Vector3 ToFloatVector()
         {
             return new Vector3(X.FloatValue, Y.FloatValue, Z.FloatValue);
