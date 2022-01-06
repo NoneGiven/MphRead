@@ -39,7 +39,7 @@ namespace MphRead.Entities
         public float Damage { get; set; }
         public float HeadshotDamage { get; set; }
         public float SplashDamage { get; set; }
-        public float BeamScale { get; set; }
+        public float SplashRadius { get; set; }
         public float MaxDistance { get; set; }
         public Affliction Afflictions { get; set; }
 
@@ -779,7 +779,7 @@ namespace MphRead.Entities
                         CollisionResult discard = default;
                         float dist = Vector3.Distance(player.Position, Position);
                         // todo?: wifi conditions
-                        if (dist >= BeamScale
+                        if (dist >= SplashRadius
                             || CollisionDetection.CheckBetweenPoints(Position, player.Position, TestFlags.AffectsBeams, _scene, ref discard))
                         {
                             OmegaCannonFlash();
@@ -787,7 +787,7 @@ namespace MphRead.Entities
                         else
                         {
                             Vector3 damageDir = GetDamageDirection(Position, player.Position);
-                            float ratio = dist / BeamScale;
+                            float ratio = dist / SplashRadius;
                             int damage = (int)GetInterpolatedValue(SplashDamageType, SplashDamage, 0, ratio);
                             player.TakeDamage(damage, DamageFlags.NoDmgInvuln, damageDir, this);
                             if (Owner != null)
@@ -817,10 +817,10 @@ namespace MphRead.Entities
                 }
                 CollisionResult res = default;
                 float dist = Vector3.Distance(enemy.Position, Position);
-                if (dist < BeamScale
+                if (dist < SplashRadius
                     && !CollisionDetection.CheckBetweenPoints(Position, enemy.Position, TestFlags.AffectsBeams, _scene, ref res))
                 {
-                    float damage = GetInterpolatedValue(SplashDamageType, SplashDamage, 0, dist / BeamScale);
+                    float damage = GetInterpolatedValue(SplashDamageType, SplashDamage, 0, dist / SplashRadius);
                     enemy.TakeDamage((uint)damage, this);
                     if (Owner != null)
                     {
@@ -1302,7 +1302,7 @@ namespace MphRead.Entities
             int damage = (int)GetAmount(weapon.UnchargedDamage, weapon.MinChargeDamage, weapon.ChargedDamage);
             int hsDamage = (int)GetAmount(weapon.HeadshotDamage, weapon.MinChargeHeadshotDamage, weapon.ChargedHeadshotDamage);
             int splashDmg = (int)GetAmount(weapon.SplashDamage, weapon.MinChargeSplashDamage, weapon.ChargedSplashDamage);
-            float scale = GetAmount(weapon.UnchargedScale, weapon.MinChargeScale, weapon.ChargedScale);
+            float splashRadius = GetAmount(weapon.UnchargedSplashRadius, weapon.MinChargeSplashRadius, weapon.ChargedSplashRadius) / 4096f;
             byte splashDmgType = weapon.SplashDamageTypes[charged ? 1 : 0];
             if (spawnFlags.TestFlag(BeamSpawnFlags.DoubleDamage))
             {
@@ -1408,7 +1408,7 @@ namespace MphRead.Entities
                 beam.Damage = damage;
                 beam.HeadshotDamage = hsDamage;
                 beam.SplashDamage = splashDmg;
-                beam.BeamScale = scale;
+                beam.SplashRadius = splashRadius;
                 beam.DamageInterpolation = damageInterpolation;
                 beam.MaxDistance = maxDist;
                 beam.Afflictions = afflictions;
@@ -1781,7 +1781,7 @@ namespace MphRead.Entities
                     {
                         if (SplashDamage > 0)
                         {
-                            ent.Scale = Scale;
+                            ent.Scale = new Vector3(SplashRadius);
                         }
                         _scene.AddEntity(ent);
                     }
