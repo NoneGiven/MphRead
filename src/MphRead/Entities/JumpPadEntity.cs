@@ -114,6 +114,28 @@ namespace MphRead.Entities
             return base.Process();
         }
 
+        public override void HandleMessage(MessageInfo info)
+        {
+            if (info.Message == Message.Activate)
+            {
+                Active = true;
+                // todo: room state
+            }
+            else if (info.Message == Message.SetActive)
+            {
+                if ((int)info.Param1 != 0)
+                {
+                    Active = true;
+                    // todo: room state
+                }
+                else
+                {
+                    Active = false;
+                    // todo: room state
+                }
+            }
+        }
+
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
         {
             if (index == 1)

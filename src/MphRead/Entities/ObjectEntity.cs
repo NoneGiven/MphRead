@@ -108,8 +108,7 @@ namespace MphRead.Entities
                     SetCollision(Collision.GetCollision(modelMeta), attach: inst);
                     if (modelMeta.ExtraCollisionPath != null)
                     {
-                        // ctodo: disable capsule shield collision when appropriate
-                        // --> in game, collision isn't even set up unless state starts at 2, but we should still set it up ("reactivation")
+                        // in game, collision isn't even set up unless state starts at 2, but we should still set it up ("reactivation")
                         SetCollision(Collision.GetCollision(modelMeta, extra: true), slot: 1);
                     }
                 }
@@ -176,6 +175,18 @@ namespace MphRead.Entities
             facing = FacingVector;
         }
 
+        public override void HandleMessage(MessageInfo info)
+        {
+            if (info.Message == Message.Activate)
+            {
+                UpdateState(2);
+            }
+            else if (info.Message == Message.SetActive)
+            {
+                UpdateState((int)info.Param1);
+            }
+        }
+
         private void UpdateState(int state)
         {
             if (_state == state)
@@ -197,7 +208,11 @@ namespace MphRead.Entities
                     {
                         // todo: play SFX
                         _models[0].SetAnimation(animId, 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node, AnimFlags.NoLoop);
-                        // todo: unlink/deactivate collision in slot 1
+                        EntityCollision? entCol = EntityCollision[1];
+                        if (entCol != null)
+                        {
+                            entCol.Collision.Active = false;
+                        }
                     }
                     needsUpdate = false;
                 }
