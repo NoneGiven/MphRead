@@ -1723,9 +1723,8 @@ namespace MphRead.Entities
                 {
                     _lastTarget = target;
                     _timeSinceHitTarget = 0;
-                    if (info.Sender != null)
+                    if (info.Sender.Type == EntityType.BeamProjectile)
                     {
-                        Debug.Assert(info.Sender.Type == EntityType.BeamProjectile);
                         var beam = (BeamProjectileEntity)info.Sender;
                         if (beam.Beam == BeamType.ShockCoil)
                         {
