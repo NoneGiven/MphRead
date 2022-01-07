@@ -1286,7 +1286,7 @@ namespace MphRead.Entities
                 else if (source.Type == EntityType.Bomb)
                 {
                     bomb = (BombEntity)source;
-                    // todo: set bomb's owner as attacker
+                    attacker = bomb.Owner;
                 }
             }
             bool ignoreDamage = false;

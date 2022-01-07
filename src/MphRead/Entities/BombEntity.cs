@@ -2,6 +2,7 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using MphRead.Effects;
+using MphRead.Formats;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -9,7 +10,7 @@ namespace MphRead.Entities
     public class BombEntity : EntityBase
     {
         public BombFlags Flags { get; private set; }
-        public PlayerEntity? Owner { get; private set; }
+        public PlayerEntity Owner { get; private set; } = null!;
         public BombType BombType { get; private set; }
         public int BombIndex { get; set; }
 
@@ -29,7 +30,6 @@ namespace MphRead.Entities
 
         public override void Initialize()
         {
-            Debug.Assert(Owner != null);
             base.Initialize();
             int effectId = 0;
             if (BombType == BombType.Stinglarva)
@@ -49,13 +49,15 @@ namespace MphRead.Entities
                     _trailModel = Read.GetModelInstance("arcWelder1");
                 }
                 Countdown = 900 * 2;
+                // bombStartSylux, bombStartSyluxR, bombStartSyluxP, bombStartSyluxW, bombStartSyluxO, or bombStartSyluxG
                 effectId = Metadata.SyluxBombEffects[Recolor];
                 if (Owner.SyluxBombCount == 2)
                 {
+                    CollisionResult colRes = default;
                     BombEntity firstBomb = Owner.SyluxBombs[0]!;
                     Vector3 between = firstBomb.Position - Position;
-                    // todo: also check for collision blocker
-                    if (between.LengthSquared >= 100)
+                    if (between.LengthSquared >= 100 || CollisionDetection.CheckBetweenPoints(firstBomb.Position, Position,
+                        TestFlags.AffectsPlayers, _scene, ref colRes))
                     {
                         Countdown = 1;
                         firstBomb.Countdown = 1;
@@ -65,7 +67,7 @@ namespace MphRead.Entities
             else if (BombType == BombType.MorphBall)
             {
                 Countdown = 43 * 2;
-                effectId = 9; // todo: use 119 if MP w/ 3+ players
+                effectId = _scene.Multiplayer && _scene.PlayerCount > 2 ? 119 : 9; // bombStartMP or bombStart
             }
             if (effectId != 0)
             {
@@ -86,7 +88,7 @@ namespace MphRead.Entities
 
         public override bool Process()
         {
-            Debug.Assert(Owner != null);
+            // sktodo
             if (!Flags.TestFlag(BombFlags.Exploded))
             {
                 Countdown--;
@@ -118,15 +120,15 @@ namespace MphRead.Entities
                 }
                 if (BombType == BombType.Stinglarva)
                 {
-                    _scene.SpawnEffect(128, Transform);
+                    _scene.SpawnEffect(128, Transform); // bombKanden
                 }
                 else if (BombType == BombType.Lockjaw)
                 {
-                    _scene.SpawnEffect(146, Transform);
+                    _scene.SpawnEffect(146, Transform); // bombSylux
                 }
                 else if (BombType == BombType.MorphBall)
                 {
-                    _scene.SpawnEffect(145, Transform);
+                    _scene.SpawnEffect(145, Transform); // bombBlue
                 }
             }
             if (Effect != null)
@@ -138,7 +140,7 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo()
         {
-            Debug.Assert(Owner != null);
+            // todo: is_visible
             if (BombType == BombType.Lockjaw)
             {
                 if (BombIndex == 1)
@@ -200,9 +202,9 @@ namespace MphRead.Entities
 
         public override void Destroy()
         {
+            // todo: SFX and stuff
             if (BombType == BombType.Lockjaw)
             {
-                Debug.Assert(Owner != null);
                 for (int i = BombIndex; i < Owner.SyluxBombCount - 1; i++)
                 {
                     Owner.SyluxBombs[i] = Owner.SyluxBombs[i + 1];
@@ -216,7 +218,7 @@ namespace MphRead.Entities
                 _scene.UnlinkEffectEntry(Effect);
             }
             Effect = null;
-            Owner = null;
+            Owner = null!;
         }
 
         public static BombEntity? Spawn(PlayerEntity owner, Matrix4 transform, Scene scene)
