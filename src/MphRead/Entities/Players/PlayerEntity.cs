@@ -302,8 +302,8 @@ namespace MphRead.Entities
         private float _altRollLrX = 0;
         private float _altRollLrZ = 0;
 
-        private HalfturretEntity? _halfturret = null;
-        public HalfturretEntity? Halfturret => _halfturret;
+        private HalfturretEntity _halfturret = null!;
+        public HalfturretEntity Halfturret => _halfturret;
         public EnemySpawnEntity? EnemySpawner => _enemySpawner;
         public EnemyInstanceEntity? AttachedEnemy { get; set; } = null;
         private EntityBase? _field35C = null;
@@ -447,7 +447,16 @@ namespace MphRead.Entities
             }
             player.LoadFlags |= LoadFlags.SlotActive;
             player.LoadFlags &= ~LoadFlags.Spawned;
+            player.CreateHalfturret();
             return player;
+        }
+
+        public void CreateHalfturret()
+        {
+            Debug.Assert(_halfturret == null);
+            _halfturret = new HalfturretEntity(this, _scene);
+            _halfturret.Create();
+            _scene.InitEntity(_halfturret);
         }
 
         public override void Initialize()
@@ -1231,7 +1240,7 @@ namespace MphRead.Entities
                 _damageInvulnTimer = (ushort)(Values.DamageInvuln * 2); // todo: FPS stuff
             }
             PlayerEntity? attacker = null;
-            EntityBase? halfturret = null;
+            bool fromHalfturret = false;
             BombEntity? bomb = null;
             BeamProjectileEntity? beam = null;
             if (source != null)
@@ -1250,8 +1259,8 @@ namespace MphRead.Entities
                     }
                     else if (beam.Owner?.Type == EntityType.Halfturret)
                     {
-                        // todo: set halfturret's owner as attacker
-                        halfturret = beam.Owner;
+                        attacker = ((HalfturretEntity)beam.Owner).Owner;
+                        fromHalfturret = true;
                     }
                     if (damage > 0)
                     {
@@ -1301,11 +1310,36 @@ namespace MphRead.Entities
             }
             if (Flags2.TestFlag(PlayerFlags2.Halfturret) && attacker != null && !ignoreDamage)
             {
-                // todo: update halfturret
+                _halfturret.OnTakeDamage(attacker, damage);
             }
-            if (flags.TestFlag(DamageFlags.Halfturret) && !ignoreDamage) // todo: and either main player or not wifi
+            if (flags.TestFlag(DamageFlags.Halfturret) && !ignoreDamage) // todo?: and either main player or not wifi
             {
-                // todo: update damage for halfturret
+                uint turretDamage;
+                if (_health > Halfturret.Health)
+                {
+                    turretDamage = damage - damage / 2;
+                }
+                else
+                {
+                    turretDamage = damage / 2;
+                }
+                if (_halfturret.Health <= turretDamage)
+                {
+                    _halfturret.Die();
+                }
+                else
+                {
+                    _halfturret.Health -= (int)turretDamage;
+                }
+                damage -= turretDamage;
+                // todo: if 1P bot with some AI flag, update damage value
+                // else...
+                if (_health <= damage)
+                {
+                    damage = (uint)(_health - 1);
+                }
+                _halfturret.TimeSinceDamage = 0;
+                // todo: update bot AI field
             }
             if (IsBot)
             {
@@ -1342,7 +1376,7 @@ namespace MphRead.Entities
                 {
                     beamType = beam.Beam;
                 }
-                if (source == attacker || halfturret != null || bomb != null)
+                if (source == attacker || fromHalfturret || bomb != null)
                 {
                     // halfturret, bomb, or direct hit by player (not beam)
                     // --> also if there's no source and no attacker
@@ -1358,7 +1392,7 @@ namespace MphRead.Entities
                 // todo: update HUD
                 if (Flags2.TestFlag(PlayerFlags2.Halfturret))
                 {
-                    // todo: destroy halfturret
+                    _halfturret.Die();
                 }
                 _healthRecovery = 0;
                 _ammoRecovery[0] = 0;
@@ -1515,7 +1549,7 @@ namespace MphRead.Entities
                         if (flags.TestFlag(DamageFlags.Halfturret))
                         {
                             // todo: play SFX
-                            // todo: update halfturret for freeze
+                            _halfturret.OnFrozen();
                         }
                         else // todo?: if wifi, only do this if main player
                         {
@@ -1549,7 +1583,7 @@ namespace MphRead.Entities
                     {
                         if (flags.TestFlag(DamageFlags.Halfturret))
                         {
-                            // todo: update halfturret for burn
+                            _halfturret.OnSetOnFire();
                         }
                         else // todo?: if wifi, only do this if main player
                         {

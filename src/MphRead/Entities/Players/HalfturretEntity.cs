@@ -12,12 +12,14 @@ namespace MphRead.Entities
         private EntityBase? _target = null;
 
         private int _health = 0;
-        public int Health => _health;
         private ushort _timeSinceDamage = UInt16.MaxValue;
         private ushort _timeSinceFrozen = 0;
         private ushort _freezeTimer = 0;
         private ushort _burnTimer = 0;
         private EffectEntry? _burnEffect = null;
+
+        public int Health { get => _health; set => _health = value; }
+        public ushort TimeSinceDamage { get => _timeSinceDamage; set => _timeSinceDamage = value; }
 
         private float _ySpeed = 0;
         private bool _grounded = false;
@@ -32,14 +34,22 @@ namespace MphRead.Entities
         private Node _baseNodeParent = null!;
         private ModelInstance _altIceModel = null!;
 
-        public HalfturretEntity(PlayerEntity owner, int recolor, Scene scene) : base(EntityType.Halfturret, scene)
+        public HalfturretEntity(PlayerEntity owner, Scene scene) : base(EntityType.Halfturret, scene)
         {
             Owner = owner;
-            Recolor = recolor; // todo: move to "create" method like the players use 
+        }
+
+        public void Create()
+        {
+            ModelInstance inst = SetUpModel("WeavelAlt_Turret_lod0");
+            _baseNode = inst.Model.GetNodeByName("TurretBase")!;
+            _baseNodeParent = inst.Model.Nodes[_baseNode.ParentIndex];
+            _altIceModel = SetUpModel("alt_ice");
         }
 
         public override void Initialize()
         {
+            Recolor = Owner.Recolor;
             base.Initialize();
             // todo: scan ID
             float minY = Fixed.ToFloat(Owner.Values.MinPickupHeight);
@@ -61,11 +71,7 @@ namespace MphRead.Entities
             _grounded = Owner.Flags1.TestFlag(PlayerFlags1.Standing);
             EquipInfo.Beams = Owner.EquipInfo.Beams;
             EquipInfo.Weapon = Weapons.Current[3]; // non-affinity Battlehammer
-            ModelInstance inst = SetUpModel("WeavelAlt_Turret_lod0");
-            inst.SetAnimation(1, AnimFlags.NoLoop);
-            _baseNode = inst.Model.GetNodeByName("TurretBase")!;
-            _altIceModel = SetUpModel("alt_ice");
-            _baseNodeParent = inst.Model.Nodes[_baseNode.ParentIndex];
+            _models[0].SetAnimation(1, AnimFlags.NoLoop);
             _light1Vector = Owner.Light1Vector;
             _light1Color = Owner.Light1Color;
             _light2Vector = Owner.Light2Vector;
@@ -79,6 +85,42 @@ namespace MphRead.Entities
             facing = FacingVector;
         }
 
+        public void OnTakeDamage(EntityBase attacker, uint damage)
+        {
+            _target = attacker;
+            _cooldownTimer = 30 * 2; // todo: FPS stuff
+            _cooldownFactor -= 61 * damage;
+            if (_cooldownFactor < 0.7f)
+            {
+                _cooldownFactor = 0.7f;
+            }
+        }
+
+        public void OnFrozen()
+        {
+            // todo: FPS stuff
+            if (_timeSinceFrozen > 60 * 2)
+            {
+                _freezeTimer = 75 * 2;
+            }
+            else if (_freezeTimer < 15 * 2)
+            {
+                _freezeTimer = 15 * 2;
+            }
+        }
+
+        public void OnSetOnFire()
+        {
+            _burnTimer = 150 * 2; // todo: FPS stuff
+            if (_burnEffect != null)
+            {
+                _scene.UnlinkEffectEntry(_burnEffect);
+                _burnEffect = null;
+            }
+            _burnEffect = _scene.SpawnEffectGetEntry(187, FacingVector.WithY(0), Vector3.UnitY, Position); // flamingAltForm
+            _burnEffect.SetElementExtension(true);
+        }
+
         public override bool Process()
         {
             if (_health == 0 || !Owner.Flags2.TestFlag(PlayerFlags2.Halfturret))
@@ -88,7 +130,7 @@ namespace MphRead.Entities
             if (_burnTimer > 0)
             {
                 _burnTimer--;
-                if (_burnTimer % (8 * 2) == 0) // todo:FPS stuff
+                if (_burnTimer % (8 * 2) == 0) // todo: FPS stuff
                 {
                     Owner.TakeDamage(1, DamageFlags.NoSfx | DamageFlags.Burn | DamageFlags.NoDmgInvuln | DamageFlags.Halfturret,
                         direction: null, Owner.BurnedBy);

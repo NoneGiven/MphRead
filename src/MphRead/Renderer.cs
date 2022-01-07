@@ -332,6 +332,7 @@ namespace MphRead
                     _entities.Add(player);
                     player.Initialize();
                     InitEntity(player);
+                    InitEntity(player.Halfturret);
                 }
             }
             OutputStart();
@@ -413,7 +414,7 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.FogMaxDistance, fogMax);
         }
 
-        private void InitEntity(EntityBase entity)
+        public void InitEntity(EntityBase entity)
         {
             foreach (ModelInstance inst in entity.GetModels())
             {
@@ -1486,7 +1487,7 @@ namespace MphRead
                     else
                     {
                         element.Transform = element.OwnTransform;
-                    } 
+                    }
                     var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
                     if (_frameCount % 2 == (ulong)element.Parity
                         && element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))

@@ -1054,7 +1054,20 @@ namespace MphRead.Entities
             {
                 if (Flags2.TestFlag(PlayerFlags2.Halfturret))
                 {
-                    // todo: split health with halfturret
+                    if (_health <= _halfturret.Health)
+                    {
+                        _health += health - health / 2;
+                        _halfturret.Health += health / 2;
+                    }
+                    else
+                    {
+                        _health += health / 2;
+                        _halfturret.Health += health - health / 2;
+                    }
+                    if (_halfturret.Health > 100)
+                    {
+                        _halfturret.Health = 100;
+                    }
                 }
                 else
                 {
@@ -1348,7 +1361,6 @@ namespace MphRead.Entities
             {
                 _altModel.SetAnimation((int)WeavelAltAnim.Idle);
                 Flags2 |= PlayerFlags2.Halfturret;
-                _halfturret = new HalfturretEntity(this, Recolor, _scene); // todo: pre-allocate or whatever
                 _scene.AddEntity(_halfturret);
             }
             else if (Hunter == Hunter.Samus)
@@ -1382,12 +1394,11 @@ namespace MphRead.Entities
             if (Flags2.TestFlag(PlayerFlags2.Halfturret))
             {
                 Flags2 &= ~PlayerFlags2.Halfturret;
-                if (_halfturret?.Health > 0)
+                if (_halfturret.Health > 0)
                 {
                     GainHealth(_halfturret.Health);
                 }
-                _halfturret?.Die();
-                _halfturret = null; // todo: proper halfturret ref
+                _halfturret.Die();
             }
             Flags1 &= ~PlayerFlags1.Morphing;
             Flags1 |= PlayerFlags1.Unmorphing;
