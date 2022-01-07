@@ -196,7 +196,7 @@ namespace MphRead.Entities
                     Target = null;
                 }
             }
-            // btodo: homing SFX
+            // todo: homing SFX
             if (Flags.TestFlag(BeamFlags.HasModel))
             {
                 UpdateAnimFrames(_models[0]);
@@ -212,7 +212,7 @@ namespace MphRead.Entities
                 colRes.Position = Position;
                 SpawnCollisionEffect(colRes, noSplat: true);
                 OnCollision(colRes, colWith: null);
-                // btodo: sfx etc.
+                // todo: sfx etc.
             }
             return true;
         }
@@ -464,7 +464,7 @@ namespace MphRead.Entities
                     anyRes.Position.Z + anyRes.Plane.Z * amt
                 );
                 bool ricochet = true;
-                // btodo: sfx and stuff
+                // todo: sfx and stuff
                 if (colWith != null)
                 {
                     // btodo: handle collision with enemy beams
@@ -715,7 +715,7 @@ namespace MphRead.Entities
                 }
                 PastPositions[0] = Position;
             }
-            // btodo: sfx
+            // todo: sfx
         }
 
         public void OnCollision(CollisionResult colRes, EntityBase? colWith)
