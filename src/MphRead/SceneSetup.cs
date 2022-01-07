@@ -15,7 +15,7 @@ namespace MphRead
             int nodeLayerMask = 0, int entityLayerId = -1)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
-            int areaId = Metadata.GetAreaInfo(roomId);
+            scene.AreaId = Metadata.GetAreaInfo(roomId);
             if (metadata == null)
             {
                 throw new ProgramException("No room with this name is known.");
@@ -48,7 +48,7 @@ namespace MphRead
                 {
                     // todo: finer state changes for target layer ID (forced fights);
                     // there are two doors with ID 3 in UNIT1_RM6, the rest are set in-game
-                    entityLayerId = ((int)bossFlags >> 2 * areaId) & 3;
+                    entityLayerId = ((int)bossFlags >> 2 * scene.AreaId) & 3;
                 }
                 else
                 {
@@ -59,7 +59,7 @@ namespace MphRead
             {
                 nodeLayerMask = GetNodeLayer(mode, metadata.NodeLayer, playerCount);
             }
-            IReadOnlyList<EntityBase> entities = LoadEntities(metadata, areaId, entityLayerId, scene);
+            IReadOnlyList<EntityBase> entities = LoadEntities(metadata, entityLayerId, scene);
             CollisionInstance collision = Collision.GetCollision(metadata, nodeLayerMask);
             NodeData? nodeData = null;
             if (metadata.NodePath != null)
@@ -100,7 +100,7 @@ namespace MphRead
             return nodeLayerMask;
         }
 
-        private static IReadOnlyList<EntityBase> LoadEntities(RoomMetadata metadata, int areaId, int layerId, Scene scene)
+        private static IReadOnlyList<EntityBase> LoadEntities(RoomMetadata metadata, int layerId, Scene scene)
         {
             var results = new List<EntityBase>();
             if (metadata.EntityPath == null)
@@ -197,7 +197,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
-                    results.Add(new TeleporterEntity(((Entity<TeleporterEntityData>)entity).Data, areaId, scene));
+                    results.Add(new TeleporterEntity(((Entity<TeleporterEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.NodeDefense)
                 {

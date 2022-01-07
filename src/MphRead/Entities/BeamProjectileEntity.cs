@@ -454,7 +454,34 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // btodo: collide with enemy beams
+            if (!_scene.Multiplayer)
+            {
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.BeamProjectile)
+                    {
+                        continue;
+                    }
+                    var other = (BeamProjectileEntity)entity;
+                    if (other.Owner == Owner || other.Flags.TestFlag(BeamFlags.Collided) || !other.Flags.TestFlag(BeamFlags.Destroyable)
+                        || other.Owner?.Type == EntityType.EnemyInstance && Owner.Type == EntityType.EnemyInstance)
+                    {
+                        continue;
+                    }
+                    CollisionResult beamRes = default;
+                    int radiusIndex = (int)(other.Flags & (BeamFlags.RadiusIndex1 | BeamFlags.RadiusIndex2)) >> 9;
+                    float radius = Metadata.BeamRadiusValues[radiusIndex];
+                    if (CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position, other.Position,
+                        radius, ref beamRes) && beamRes.Distance < minDist)
+                    {
+                        minDist = beamRes.Distance;
+                        anyRes = beamRes;
+                        colWith = other;
+                        noColEff = true;
+                    }
+                }
+            }
             if (minDist >= 0 && minDist <= 1)
             {
                 float amt = Fixed.ToFloat(204);
@@ -467,7 +494,6 @@ namespace MphRead.Entities
                 // todo: sfx and stuff
                 if (colWith != null)
                 {
-                    // btodo: handle collision with enemy beams
                     if (colWith.Type == EntityType.Player || colWith.Type == EntityType.Halfturret)
                     {
                         PlayerEntity player;
@@ -644,6 +670,65 @@ namespace MphRead.Entities
                             forceField.Lock?.LockHit(this);
                             ricochet = false;
                         }
+                    }
+                    else if (colWith.Type == EntityType.BeamProjectile)
+                    {
+                        var other = (BeamProjectileEntity)colWith;
+                        if (Flags.TestFlag(BeamFlags.ForceEffect))
+                        {
+                            SpawnCollisionEffect(anyRes, noSplat: true);
+                        }
+                        OnCollision(anyRes, colWith);
+                        // todo: update SFX
+                        if (other.Flags.TestFlag(BeamFlags.ForceEffect))
+                        {
+                            other.SpawnCollisionEffect(anyRes, noSplat: true);
+                        }
+                        if (other.DrawFuncId == 12) // Slench tear
+                        {
+                            // todo: play SFX
+                            ItemType item = ItemType.None;
+                            uint rand = Rng.GetRandomInt2(100);
+                            if (_scene.AreaId == 0) // Slench 1 (Alinos 1)
+                            {
+                                // 5% small missile, 5% medium health, 90% nothing
+                                if (rand < 5)
+                                {
+                                    item = ItemType.HealthMedium;
+                                }
+                                else if (rand < 10)
+                                {
+                                    item = ItemType.MissileSmall;
+                                }
+                            }
+                            else // Slench 2 (Arcterra 1), Slench 3 (Archives 2), Slench 4 (VDO 2)
+                            {
+                                // 50% small UA, 25% medium health, 25% nothing
+                                if (rand < 25)
+                                {
+                                    item = ItemType.HealthMedium;
+                                }
+                                else if (rand < 75)
+                                {
+                                    item = ItemType.UASmall;
+                                }
+                            }
+                            if (item != ItemType.None)
+                            {
+                                // todo: node ref
+                                ItemSpawnEntity.SpawnItemDrop(item, other.Position, chance: 100, _scene);
+                            }
+                        }
+                        else if (other.DrawFuncId == 11) // Omega Cannon
+                        {
+                            // todo: play SFX
+                        }
+                        else
+                        {
+                            // todo: play SFX
+                        }
+                        other.OnCollision(anyRes, this);
+                        ricochet = false;
                     }
                 }
                 else

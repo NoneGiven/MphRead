@@ -137,6 +137,7 @@ namespace MphRead
         public int PlayerCount { get; private set; } = 1;
         public bool Multiplayer => GameMode != GameMode.SinglePlayer;
         public int RoomId => _roomId;
+        public int AreaId { get; set; }
 
         public Matrix4 ViewMatrix => _viewMatrix;
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;

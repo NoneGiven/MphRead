@@ -23,8 +23,7 @@ namespace MphRead.Entities
         // used for multiplayer teleporter destination
         private readonly Vector4 _overrideColor2 = new ColorRgb(0xAA, 0xAA, 0xAA).AsVector4();
 
-        // todo: areaId should also come from scene state
-        public TeleporterEntity(TeleporterEntityData data, int areaId, Scene scene) : base(EntityType.Teleporter, scene)
+        public TeleporterEntity(TeleporterEntityData data, Scene scene) : base(EntityType.Teleporter, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -37,7 +36,7 @@ namespace MphRead.Entities
             }
             else
             {
-                Recolor = multiplayer ? 0 : areaId;
+                Recolor = multiplayer ? 0 : scene.AreaId;
                 string modelName;
                 if (data.ArtifactId >= 8)
                 {

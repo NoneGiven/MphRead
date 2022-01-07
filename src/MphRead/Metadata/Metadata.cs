@@ -1482,6 +1482,11 @@ namespace MphRead
             /* 246 */ ("enemyMortarProjectile", null)
         };
 
+        public static readonly IReadOnlyList<float> BeamRadiusValues = new float[4]
+        {
+            0.15f, 0.25f, 0.5f, 0.75f
+        };
+
         public static readonly IReadOnlyList<int> BeamDrawEffects = new List<int>()
         {
             0, 237, 137, 0, 211, 130, 0, 0, 0, 0, 134, 209, 64, 0, 102, 94, 96, 0, 116, 138, 183, 238, 246
