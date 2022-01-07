@@ -189,7 +189,7 @@ namespace MphRead.Entities
             if (_bombCooldown > 0)
             {
                 _bombCooldown--;
-                if (Hunter == Hunter.Kanden && _bombCooldown == 10 * 2)
+                if (Hunter == Hunter.Kanden && _bombCooldown == 10 * 2) // todo: FPS stuff
                 {
                     _altModel.SetAnimation((int)KandenAltAnim.TailIn, AnimFlags.NoLoop);
                 }
