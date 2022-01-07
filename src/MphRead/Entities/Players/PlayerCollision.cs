@@ -35,7 +35,38 @@ namespace MphRead.Entities
                 }
                 if (Flags2.TestFlag(PlayerFlags2.Halfturret))
                 {
-                    // todo: halfturret collision
+                    Vector3 toTurret = other.Volume.SpherePosition - _halfturret.Position;
+                    float radius = other.Volume.SphereRadius + 0.45f + 0.1f;
+                    if (toTurret.LengthSquared <= radius * radius)
+                    {
+                        CollisionResult turretRes = default;
+                        if (toTurret.Y < 0)
+                        {
+                            toTurret.Y = 0;
+                        }
+                        Debug.Assert(toTurret != Vector3.Zero);
+                        toTurret = toTurret.Normalized();
+                        turretRes.Field0 = 0;
+                        turretRes.Plane = new Vector4(toTurret);
+                        toTurret *= 0.45f;
+                        toTurret += _halfturret.Position;
+                        turretRes.Plane.W = Vector3.Dot(toTurret, turretRes.Plane.Xyz);
+                        other.HandleCollision(turretRes);
+                        if (other != this)
+                        {
+                            if (other.Flags1.TestFlag(PlayerFlags1.Boosting))
+                            {
+                                TakeDamage(other._boostDamage, DamageFlags.NoDmgInvuln | DamageFlags.Halfturret, other.Speed, other);
+                                other.EndAltAttack();
+                            }
+                            if (other._deathaltTimer > 0)
+                            {
+                                TakeDamage(200, DamageFlags.Deathalt | DamageFlags.NoDmgInvuln | DamageFlags.Halfturret, other.Speed, other);
+                            }
+                            CheckAltAttackHit2(other, this, halfturret: true);
+                        }
+                    }
+                    CheckAltAttackHit1(other, this, halfturret: true);
                 }
                 if (other == this)
                 {
@@ -100,14 +131,16 @@ namespace MphRead.Entities
             // the game assumes the hunter is noxus based on the alt attack timer
             if (attacker.Hunter == Hunter.Spire && attacker.Flags2.TestFlag(PlayerFlags2.AltAttack))
             {
+                CollisionResult unused = default;
                 bool hit = false;
                 if (halfturret)
                 {
-                    // todo: check collision with halfturret
+                    var otherVolume = new CollisionVolume(target.Halfturret.Position, 0.45f);
+                    hit = CollisionDetection.CheckSphereOverlapVolume(otherVolume, attacker._spireRockPosL, 0.5f, ref unused)
+                        || CollisionDetection.CheckSphereOverlapVolume(otherVolume, attacker._spireRockPosR, 0.5f, ref unused);
                 }
                 else
                 {
-                    CollisionResult unused = default;
                     hit = CollisionDetection.CheckSphereOverlapVolume(target.Volume, attacker._spireRockPosL, 0.5f, ref unused)
                         || CollisionDetection.CheckSphereOverlapVolume(target.Volume, attacker._spireRockPosR, 0.5f, ref unused);
                 }
@@ -138,8 +171,7 @@ namespace MphRead.Entities
                 Vector3 between;
                 if (halfturret)
                 {
-                    // todo: get vector to halfturret
-                    between = target.Volume.SpherePosition - attacker.Volume.SpherePosition; // skdebug
+                    between = target.Halfturret.Position - attacker.Volume.SpherePosition;
                 }
                 else
                 {
