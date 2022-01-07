@@ -1984,9 +1984,9 @@ namespace MphRead.Entities
             int swayIncrement, int swayLimit, int gunIdleTime, short mpAmmoCap, byte ammoRecharge, byte padding103, ushort energyTank,
             short field106, byte altGroundedNoGrav, byte padding109, ushort padding10A, int fallDamageSpeed, int fallDamageMax, int field114,
             int field118, int jumpPadSlideFactor, int altTiltAngleCap, int altMinWobble, int altMaxWobble, int altMinSpinAccel, int altMaxSpinAccel,
-            int altMinSpinSpeed, int altMaxSpinSpeed, int altTiltAngleMax, int altBounceWobble, int altBounceTilt, int altBounceSpin, int altAttackKnockbackAccel,
-            short altAttackKnockbackTime, ushort altAttackStartup, int field154, int field158, int lungeHSpeed, int lungeVSpeed,
-            ushort altAttackDamage, short altAttackCooldown)
+            int altMinSpinSpeed, int altMaxSpinSpeed, int altTiltAngleMax, int altBounceWobble, int altBounceTilt, int altBounceSpin,
+            int altAttackKnockbackAccel, short altAttackKnockbackTime, ushort altAttackStartup, int field154, int field158, int lungeHSpeed,
+            int lungeVSpeed, ushort altAttackDamage, short altAttackCooldown)
         {
             Hunter = hunter;
             WalkBipedTraction = walkBipedTraction;
