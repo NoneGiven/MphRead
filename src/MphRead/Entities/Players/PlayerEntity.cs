@@ -874,7 +874,7 @@ namespace MphRead.Entities
             {
                 // todo: set camera shake
             }
-            return true;
+            return hit;
         }
 
         public void OnHalfturretDied()
