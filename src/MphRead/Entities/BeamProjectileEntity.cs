@@ -441,7 +441,17 @@ namespace MphRead.Entities
                 // todo?: else wifi check
                 if (hasHalfturret && Owner != player.Halfturret)
                 {
-                    // btodo: collide with halfturret
+                    CollisionResult turretRes = default;
+                    float radius = CylinderRadius + 0.45f;
+                    if (CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position, player.Halfturret.Position,
+                        radius, ref turretRes) && turretRes.Distance < minDist)
+                    {
+                        minDist = turretRes.Distance;
+                        anyRes = turretRes;
+                        colWith = player.Halfturret;
+                        noColEff = false;
+                        hitHalfturret = true;
+                    }
                 }
             }
             // btodo: collide with enemy beams
@@ -467,7 +477,7 @@ namespace MphRead.Entities
                         }
                         else
                         {
-                            player = (PlayerEntity)colWith; // btodo: use halfturret owner
+                            player = ((HalfturretEntity)colWith).Owner;
                         }
                         DamageFlags damageFlags = DamageFlags.NoDmgInvuln;
                         if (player.BeamEffectiveness[(int)Beam] == Effectiveness.Zero)
@@ -1553,7 +1563,16 @@ namespace MphRead.Entities
                     }
                     else if (type == EntityType.Halfturret)
                     {
-                        // btodo: check halfturret owner
+                        var halfturret = (HalfturretEntity)entity;
+                        if (beam.Owner.Type != EntityType.Player)
+                        {
+                            tryTarget = true;
+                        }
+                        else
+                        {
+                            var ownerPlayer = (PlayerEntity)beam.Owner;
+                            tryTarget = halfturret.Owner.TeamIndex != ownerPlayer.TeamIndex;
+                        }
                     }
                     else if (type == EntityType.EnemyInstance)
                     {
@@ -1674,27 +1693,37 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
-                // bug: the beam's up vector is factored out in order to do a lateral distance check (where "lateral" is relative to
-                // the beam's orientation), but that same stripped vector is used for the angle check below. the result is that instead
-                // of checking in a 60 degree cone, a 60 degree wedge of a cylinder with infinite height is checked (again, where
-                // "height" is rleative to the beam) -- this results in the shadow freeze glitch
-                // fix: use the normalized between vector with all its components in the dot product check
-                Vector3 between = player.Position - Position;
-                float dot = Vector3.Dot(between, Up);
-                between += Up * -dot;
-                float mag = between.Length;
-                if (mag < MaxDistance)
-                {
-                    between /= mag;
-                    if (Vector3.Dot(between, Direction) > angleCos)
-                    {
-                        Vector3 dir = GetDamageDirection(Position, player.Position);
-                        player.TakeDamage((int)Damage, DamageFlags.NoDmgInvuln, dir, this);
-                    }
-                }
+                CheckIceWaveCollision(player, player.Position, angleCos, halfturret: false);
                 if (player.Flags2.TestFlag(PlayerFlags2.Halfturret))
                 {
-                    // btodo: check for collision with halfturret
+                    CheckIceWaveCollision(player, player.Halfturret.Position, angleCos, halfturret: true);
+                }
+            }
+        }
+
+        private void CheckIceWaveCollision(PlayerEntity player, Vector3 position, float angleCos, bool halfturret)
+        {
+            // bug: the beam's up vector is factored out in order to do a lateral distance check (where "lateral" is relative to
+            // the beam's orientation), but that same stripped vector is used for the angle check below. the result is that instead
+            // of checking in a 60 degree cone, a 60 degree wedge of a cylinder with infinite height is checked (again, where
+            // "height" is rleative to the beam) -- this results in the shadow freeze glitch
+            // fix: use the normalized between vector with all its components in the dot product check
+            Vector3 between = position - Position;
+            float dot = Vector3.Dot(between, Up);
+            between += Up * -dot;
+            float mag = between.Length;
+            if (mag < MaxDistance)
+            {
+                between /= mag;
+                if (Vector3.Dot(between, Direction) > angleCos)
+                {
+                    Vector3 dir = GetDamageDirection(Position, player.Position);
+                    DamageFlags flags = DamageFlags.NoDmgInvuln;
+                    if (halfturret)
+                    {
+                        flags |= DamageFlags.Halfturret;
+                    }
+                    player.TakeDamage((int)Damage, flags, dir, this);
                 }
             }
         }
