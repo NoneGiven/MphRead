@@ -827,6 +827,56 @@ namespace MphRead.Entities
             Transform = GetTransformMatrix(facing, UpVector, position);
         }
 
+        // todo: visualize
+        public bool CheckHitByBomb(BombEntity bomb, bool halfturret)
+        {
+            if (bomb.Owner == this
+                && (!bomb.Flags.TestFlag(BombFlags.Exploding) && !bomb.Flags.TestFlag(BombFlags.Exploded) || halfturret))
+            {
+                return false;
+            }
+            bool hit = false;
+            Vector3 between;
+            if (halfturret)
+            {
+                between = Halfturret.Position - bomb.Position;
+            }
+            else
+            {
+                between = Volume.SpherePosition - bomb.Position;
+            }
+            float distSqr = between.LengthSquared;
+            if (bomb.Owner == this)
+            {
+                float hitRadiusSqr = Fixed.ToFloat(Values.BombSelfRadiusSquared);
+                if (distSqr < hitRadiusSqr && between.Y > -Volume.SphereRadius)
+                {
+                    hit = true;
+                    float ySpeed = Fixed.ToFloat(Values.BombJumpSpeed);
+                    if (Speed.Y < ySpeed)
+                    {
+                        Speed = Speed.WithY(ySpeed);
+                    }
+                }
+            }
+            else if (distSqr <= bomb.Radius * bomb.Radius)
+            {
+                hit = true;
+                DamageFlags flags = DamageFlags.NoDmgInvuln;
+                if (halfturret)
+                {
+                    flags |= DamageFlags.Halfturret;
+                }
+                TakeDamage(bomb.Damage, flags, null, bomb);
+                _scene.SendMessage(Message.Impact, bomb, bomb.Owner, this, 0); // the game doesn't set anything as sender
+            }
+            if (hit)
+            {
+                // todo: set camera shake
+            }
+            return false;
+        }
+
         public void OnHalfturretDied()
         {
             Flags2 &= ~PlayerFlags2.Halfturret;

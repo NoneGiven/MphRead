@@ -2,6 +2,7 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using MphRead.Effects;
+using MphRead.Entities.Enemies;
 using MphRead.Formats;
 using OpenTK.Mathematics;
 
@@ -13,6 +14,9 @@ namespace MphRead.Entities
         public PlayerEntity Owner { get; private set; } = null!;
         public BombType BombType { get; private set; }
         public int BombIndex { get; set; }
+
+        private EntityBase? _target = null;
+        private Vector3 _speed = Vector3.Zero;
 
         public int Countdown { get; set; }
         public float Radius { get; set; }
@@ -51,7 +55,7 @@ namespace MphRead.Entities
                 Countdown = 900 * 2;
                 // bombStartSylux, bombStartSyluxR, bombStartSyluxP, bombStartSyluxW, bombStartSyluxO, or bombStartSyluxG
                 effectId = Metadata.SyluxBombEffects[Recolor];
-                if (Owner.SyluxBombCount == 2)
+                if (Owner.SyluxBombCount == 1)
                 {
                     CollisionResult colRes = default;
                     BombEntity firstBomb = Owner.SyluxBombs[0]!;
@@ -88,35 +92,195 @@ namespace MphRead.Entities
 
         public override bool Process()
         {
-            // sktodo
-            if (!Flags.TestFlag(BombFlags.Exploded))
+            EntityBase? hitEntity = null;
+            // todo: positional audio, node ref, SFX
+            if (Countdown > 0)
             {
                 Countdown--;
-                if (Countdown <= 0)
+            }
+            if (Countdown == 0)
+            {
+                Flags |= BombFlags.Exploding;
+            }
+            if (!Flags.TestFlag(BombFlags.Exploded))
+            {
+                for (int i = 0; i < _scene.Entities.Count; i++)
                 {
-                    Flags |= BombFlags.Exploding;
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Player)
+                    {
+                        continue;
+                    }
+                    var player = (PlayerEntity)entity;
+                    if (player == Owner || player.Health == 0 || player.TeamIndex == Owner.TeamIndex)
+                    {
+                        continue;
+                    }
+                    if (player.CheckHitByBomb(this, halfturret: false))
+                    {
+                        hitEntity = player;
+                        Flags |= BombFlags.Exploding;
+                    }
+                    if (player.Flags2.TestFlag(PlayerFlags2.Halfturret) && player.CheckHitByBomb(this, halfturret: true))
+                    {
+                        hitEntity = player;
+                        Flags |= BombFlags.Exploding;
+                    }
+                    if (_target != null)
+                    {
+                        continue;
+                    }
+                    if (BombType == BombType.Lockjaw)
+                    {
+                        LockjawCheckTargeting(player);
+                    }
+                    else if (BombType == BombType.Stinglarva)
+                    {
+                        Vector3 between = player.Position - Position;
+                        if (between.LengthSquared < 5 * 5)
+                        {
+                            _target = player;
+                            _speed = FacingVector * 0.3f;
+                        }
+                    }
                 }
-                // todo: collision and damage check stuff
-                if (BombType == BombType.Lockjaw && Owner.SyluxBombCount == 3)
+                if (BombType == BombType.Stinglarva && _target == null)
                 {
-                    // todo: if there's a target, detonation doesn't happen immediately
+                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    {
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type != EntityType.Halfturret)
+                        {
+                            continue;
+                        }
+                        var halfturret = (HalfturretEntity)entity;
+                        Vector3 between = halfturret.Position - Position;
+                        if (between.LengthSquared < 5 * 5)
+                        {
+                            _target = halfturret;
+                            _speed = FacingVector * 0.3f;
+                        }
+                    }
+                }
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.EnemyInstance)
+                    {
+                        continue;
+                    }
+                    var enemy = (EnemyInstanceEntity)entity;
+                    if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam) && (enemy.EnemyType != EnemyType.Temroid || enemy.State1 != 8)
+                        && enemy.CheckHitByBomb(this))
+                    {
+                        hitEntity = enemy;
+                        Flags |= BombFlags.Exploding;
+                    }
+                }
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.EnemyInstance)
+                    {
+                        continue;
+                    }
+                    var enemy = (EnemyInstanceEntity)entity;
+                    if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam) && enemy.EnemyType == EnemyType.Temroid && enemy.State1 == 8
+                        && ((Enemy02Entity)enemy).CheckTemroidHitByBomb(this))
+                    {
+                        hitEntity = enemy;
+                    }
+                }
+                if (Owner.IsAltForm)
+                {
+                    Owner.CheckHitByBomb(this, halfturret: false);
+                }
+                if (Flags.TestFlag(BombFlags.Exploding))
+                {
+                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    {
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type != EntityType.Door)
+                        {
+                            continue;
+                        }
+                        var door = (DoorEntity)entity;
+                        Vector3 doorFacing = door.FacingVector;
+                        Vector3 between = Position - door.LockPosition;
+                        float dot = Vector3.Dot(doorFacing, between);
+                        float radius = SelfRadius + 0.4f;
+                        if (dot < radius && dot > -radius)
+                        {
+                            between -= doorFacing * dot;
+                            if (between.LengthSquared <= door.RadiusSquared)
+                            {
+                                if (door.Flags.TestFlag(DoorFlags.Locked) && door.Data.PaletteId == 8)
+                                {
+                                    door.Unlock(updateState: true, sfxBool: true);
+                                }
+                                door.Flags |= DoorFlags.ShotOpen;
+                            }
+                        }
+                    }
+                }
+                if (BombType == BombType.Lockjaw && BombIndex == 0 && Owner.SyluxBombCount == 3
+                    && _target == null && hitEntity == null)
+                {
                     for (int i = 0; i < 3; i++)
                     {
-                        Owner.SyluxBombs[i]!.Countdown = 1;
+                        BombEntity? bomb = Owner.SyluxBombs[i];
+                        Debug.Assert(bomb != null);
+                        bomb.Countdown = 1;
+                        bomb._target = Owner;
+                    }
+                }
+            }
+            if (_target != null)
+            {
+                if (_target.GetTargetable())
+                {
+                    // sknext
+                }
+                else
+                {
+                    _target = null;
+                }
+            }
+            if (BombType == BombType.Lockjaw)
+            {
+                if (Owner.Health == 0)
+                {
+                    Flags |= BombFlags.Exploding;
+                    Countdown = 0;
+                }
+                if (hitEntity != null)
+                {
+                    for (int i = 0; i < Owner.SyluxBombCount; i++)
+                    {
+                        BombEntity? bomb = Owner.SyluxBombs[i];
+                        Debug.Assert(bomb != null);
+                        bomb._target = hitEntity;
+                        if (bomb.Countdown > 22 * 2) // the game compares against 22.5
+                        {
+                            bomb.Countdown = 22 * 2; // todo: FPS stuff
+                        }
                     }
                 }
             }
             if (Flags.TestFlag(BombFlags.Exploding))
             {
+                Flags &= ~BombFlags.Exploding;
                 if (Flags.TestFlag(BombFlags.Exploded))
                 {
                     return false;
                 }
                 Flags |= BombFlags.Exploded;
+                _target = null;
                 _models.Clear();
                 if (Effect != null)
                 {
                     _scene.UnlinkEffectEntry(Effect);
+                    Effect = null;
                 }
                 if (BombType == BombType.Stinglarva)
                 {
@@ -130,12 +294,24 @@ namespace MphRead.Entities
                 {
                     _scene.SpawnEffect(145, Transform); // bombBlue
                 }
+                Countdown = 0;
+                // todo: stop SFX
+                if (hitEntity == null)
+                {
+                    // if an entity was hit, this message was sent elsewhere
+                    _scene.SendMessage(Message.Impact, this, Owner, 0, 0); // the game doesn't set anything as sender
+                }
             }
             if (Effect != null)
             {
                 Effect.Transform(Position, Transform);
             }
             return base.Process();
+        }
+
+        private void LockjawCheckTargeting(PlayerEntity player)
+        {
+            // sknext
         }
 
         public override void GetDrawInfo()
@@ -207,7 +383,10 @@ namespace MphRead.Entities
             {
                 for (int i = BombIndex; i < Owner.SyluxBombCount - 1; i++)
                 {
-                    Owner.SyluxBombs[i] = Owner.SyluxBombs[i + 1];
+                    BombEntity? bomb = Owner.SyluxBombs[i + 1];
+                    Debug.Assert(bomb != null);
+                    Owner.SyluxBombs[i] = bomb;
+                    bomb.BombIndex = i;
                 }
                 Owner.SyluxBombCount--;
             }

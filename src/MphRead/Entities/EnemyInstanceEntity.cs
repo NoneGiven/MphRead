@@ -36,6 +36,9 @@ namespace MphRead.Entities
         protected float _boundingRadius = 0;
         protected Action[]? _stateProcesses;
 
+        public byte State1 => _state1;
+        public byte State2 => _state2;
+
         public readonly Effectiveness[] BeamEffectiveness = new Effectiveness[9];
         private bool _onlyMoveHurtVolume = false;
         private bool _noIneffectiveEffect = false;
@@ -294,6 +297,22 @@ namespace MphRead.Entities
 
         protected virtual void Detach()
         {
+        }
+
+        public bool CheckHitByBomb(BombEntity bomb)
+        {
+            if (Flags.TestFlag(EnemyFlags.Invincible))
+            {
+                return false;
+            }
+            Vector3 between = Position = bomb.Position;
+            if (between.LengthSquared > bomb.Radius * bomb.Radius)
+            {
+                return false;
+            }
+            TakeDamage(bomb.EnemyDamage, bomb);
+            _scene.SendMessage(Message.Impact, bomb, bomb.Owner, this, 0); // the game doesn't set anything as sender
+            return true;
         }
 
         public void TakeDamage(uint damage, EntityBase? source)
