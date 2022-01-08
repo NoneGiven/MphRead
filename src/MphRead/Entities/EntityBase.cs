@@ -28,6 +28,7 @@ namespace MphRead.Entities
         protected Node? _colAttachNode = null;
         private bool _drawColUpdated = true;
         public EntityCollision?[] EntityCollision { get; } = new EntityCollision?[2];
+        // todo: look into getting rid of this in favor of EntityCollision
         public Matrix4 CollisionTransform => _colAttachNode == null ? _transform : _colAttachNode.Animation;
 
         public Matrix4 Transform
