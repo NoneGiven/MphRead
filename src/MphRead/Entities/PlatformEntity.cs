@@ -38,6 +38,7 @@ namespace MphRead.Entities
         private ushort _timeSincePlayerCol = 0;
         private bool _playerCol = false;
         private PlatformEntity? _parent = null;
+        private EntityCollision? _parentEntCol = null;
         private EntityBase? _scanMessageTarget = null;
         private EntityBase? _hitMessageTarget = null;
         private EntityBase? _playerColMessageTarget = null;
@@ -274,6 +275,7 @@ namespace MphRead.Entities
                 {
                     // only relevant for SyluxShip/Turret
                     _parent = (PlatformEntity)parent;
+                    _parentEntCol = _parent.EntityCollision[0];
                 }
             }
             Matrix4 transform = GetTransform();
@@ -470,7 +472,7 @@ namespace MphRead.Entities
                     Vector3 target = Vector3.Zero;
                     if (isTurret)
                     {
-                        Debug.Assert(_parent != null);
+                        Debug.Assert(_parentEntCol != null);
                         if (turretAiming)
                         {
                             PlayerEntity mainPlayer = PlayerEntity.Main;
@@ -482,8 +484,7 @@ namespace MphRead.Entities
                         }
                         else
                         {
-                            target = Vector3.UnitZ;
-                            target = Matrix.Vec3MultMtx3(target, _parent.CollisionTransform);
+                            target = Matrix.Vec3MultMtx3(Vector3.UnitZ, _parentEntCol.Transform);
                         }
                         target = target.Normalized();
                     }
@@ -898,25 +899,22 @@ namespace MphRead.Entities
                 {
                     transform.Row3.Xyz += Matrix.Vec3MultMtx3(_posOffset, transform);
                 }
-                if (Flags.TestFlag(PlatformFlags.SyluxShip))
+                if (_parentEntCol != null)
                 {
-                    if (_parent != null)
+                    if (Flags.TestFlag(PlatformFlags.SyluxShip))
                     {
-                        transform.Row3.Xyz = Matrix.Vec3MultMtx4(transform.Row3.Xyz, _parent.CollisionTransform);
+                        transform.Row3.Xyz = Matrix.Vec3MultMtx4(transform.Row3.Xyz, _parentEntCol.Transform);
                     }
-                }
-                else if (_parent != null)
-                {
-                    transform *= _parent.CollisionTransform;
+                    else
+                    {
+                        transform *= _parentEntCol.Transform;
+                    }
                 }
             }
             else
             {
+                Debug.Assert(_parentEntCol == null);
                 transform = Transform;
-                if (_parent != null)
-                {
-                    //transform.Row3.Xyz = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform);
-                }
             }
             return transform;
         }
