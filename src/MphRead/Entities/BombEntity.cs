@@ -132,7 +132,7 @@ namespace MphRead.Entities
                     }
                     if (BombType == BombType.Lockjaw)
                     {
-                        LockjawCheckTargeting(player);
+                        LockjawCheckTargeting(player, ref hitEntity);
                     }
                     else if (BombType == BombType.Stinglarva)
                     {
@@ -309,9 +309,171 @@ namespace MphRead.Entities
             return base.Process();
         }
 
-        private void LockjawCheckTargeting(PlayerEntity player)
+        // todo: visualize
+        private void LockjawCheckTargeting(PlayerEntity player, ref EntityBase? hitEntity)
         {
-            // sknext
+            Vector3 targetPos;
+            if (player.IsAltForm)
+            {
+                targetPos = player.Volume.SpherePosition;
+            }
+            else
+            {
+                targetPos = player.Position.AddY(Fixed.ToFloat(player.Values.MinPickupHeight));
+            }
+            float cylHeight = Fixed.ToFloat(player.Values.MaxPickupHeight) - Fixed.ToFloat(player.Values.MinPickupHeight);
+            CollisionResult discard = default;
+            bool lineHitPlayer = false;
+            bool lineHitHalfturret = false;
+            if (BombIndex == 1)
+            {
+                BombEntity? bombZero = Owner.SyluxBombs[0];
+                Debug.Assert(bombZero != null);
+                if (player.IsAltForm && CollisionDetection.CheckCylinderOverlapSphere(Position, bombZero.Position,
+                        targetPos, player.Volume.SphereRadius, ref discard))
+                {
+                    // alt form between b1 and b0
+                    lineHitPlayer = true;
+                }
+                else if (!player.IsAltForm && CollisionDetection.CheckCylindersOverlap(Position, bombZero.Position,
+                        targetPos, Vector3.UnitY, cylHeight, player.Volume.SphereRadius, ref discard))
+                {
+                    // biped between b1 and b0
+                    lineHitPlayer = true;
+                }
+                else if (player.Flags2.TestFlag(PlayerFlags2.Halfturret) && CollisionDetection
+                    .CheckCylinderOverlapSphere(Position, bombZero.Position, player.Halfturret.Position, 0.45f, ref discard))
+                {
+                    // halfturret between b1 and b0
+                    lineHitHalfturret = true;
+                }
+            }
+            else if (BombIndex == 2)
+            {
+                BombEntity? bombZero = Owner.SyluxBombs[0];
+                BombEntity? bombOne = Owner.SyluxBombs[1];
+                Debug.Assert(bombZero != null);
+                Debug.Assert(bombOne != null);
+                if (player.IsAltForm && CollisionDetection.CheckCylinderOverlapSphere(Position, bombZero.Position,
+                        targetPos, player.Volume.SphereRadius, ref discard))
+                {
+                    // alt form between b2 and b0
+                    lineHitPlayer = true;
+                }
+                else if (!player.IsAltForm && CollisionDetection.CheckCylindersOverlap(Position, bombZero.Position,
+                        targetPos, Vector3.UnitY, cylHeight, player.Volume.SphereRadius, ref discard))
+                {
+                    // biped between b2 and b0
+                    lineHitPlayer = true;
+                }
+                if (player.IsAltForm && CollisionDetection.CheckCylinderOverlapSphere(Position, bombOne.Position,
+                        targetPos, player.Volume.SphereRadius, ref discard))
+                {
+                    // alt form between b2 and b1
+                    lineHitPlayer = true;
+                }
+                else if (!player.IsAltForm && CollisionDetection.CheckCylindersOverlap(Position, bombOne.Position,
+                        targetPos, Vector3.UnitY, cylHeight, player.Volume.SphereRadius, ref discard))
+                {
+                    // biped between b2 and b1
+                    lineHitPlayer = true;
+                }
+                else if (player.Flags2.TestFlag(PlayerFlags2.Halfturret))
+                {
+                    // halfturret between b2 and b0
+                    if (CollisionDetection.CheckCylinderOverlapSphere(Position, bombZero.Position,
+                        player.Halfturret.Position, 0.45f, ref discard))
+                    {
+                        // halfturret between b2 and b0
+                        lineHitHalfturret = true;
+                    }
+                    else if (CollisionDetection.CheckCylinderOverlapSphere(Position, bombOne.Position,
+                        player.Halfturret.Position, 0.45f, ref discard))
+                    {
+                        // halfturret between b2 and b1
+                        lineHitHalfturret = true;
+                    }
+                }
+            }
+            else if (Owner.SyluxBombCount == 3)
+            {
+                Debug.Assert(BombIndex == 0);
+                if (LockjawCheckSnare(player.Position))
+                {
+                    // player in snare
+                    hitEntity = player;
+                    for (int i = 0; i < Owner.SyluxBombCount; i++)
+                    {
+                        BombEntity? bomb = Owner.SyluxBombs[i];
+                        Debug.Assert(bomb != null);
+                        // todo: if 1P bot and encounter state, use alternate damage value
+                        // else...
+                        bomb.Damage = 60;
+                        bomb.EnemyDamage = 60;
+                    }
+                }
+                else if (player.Flags2.TestFlag(PlayerFlags2.Halfturret) && LockjawCheckSnare(player.Halfturret.Position))
+                {
+                    // halfturret in snare
+                    hitEntity = player.Halfturret;
+                    for (int i = 0; i < Owner.SyluxBombCount; i++)
+                    {
+                        BombEntity? bomb = Owner.SyluxBombs[i];
+                        Debug.Assert(bomb != null);
+                        bomb.Damage = 60;
+                        bomb.EnemyDamage = 60;
+                    }
+                }
+                return;
+            }
+            if (lineHitPlayer)
+            {
+                Debug.Assert(!lineHitHalfturret);
+                hitEntity = player;
+                // todo: if 1P bot and encounter state, use alternate damage value
+                // else...
+                player.TakeDamage(20, DamageFlags.NoDmgInvuln, null, this);
+            }
+            else if (lineHitHalfturret)
+            {
+                hitEntity = player.Halfturret;
+                player.TakeDamage(20, DamageFlags.NoDmgInvuln | DamageFlags.Halfturret, null, this);
+            }
+        }
+
+        private bool LockjawCheckSnare(Vector3 position)
+        {
+            BombEntity? bombZero = Owner.SyluxBombs[0];
+            BombEntity? bombOne = Owner.SyluxBombs[1];
+            BombEntity? bombTwo = Owner.SyluxBombs[2];
+            Debug.Assert(bombZero != null);
+            Debug.Assert(bombOne != null);
+            Debug.Assert(bombTwo != null);
+            Vector3 zeroToOne = bombOne.Position - bombZero.Position;
+            Vector3 oneToTwo = bombTwo.Position - bombOne.Position;
+            Vector3 cross1 = Vector3.Cross(oneToTwo, zeroToOne).Normalized();
+            Vector3 zeroToPosition = position - bombZero.Position;
+            float dot = Vector3.Dot(cross1, zeroToPosition);
+            if (dot > -0.75f && dot < 0.75f)
+            {
+                var cross2 = Vector3.Cross(zeroToPosition, zeroToOne);
+                if (Vector3.Dot(cross2, cross1) > 0)
+                {
+                    Vector3 oneToPosition = position - bombOne.Position;
+                    var cross3 = Vector3.Cross(oneToPosition, oneToTwo);
+                    if (Vector3.Dot(cross3, cross1) > 0)
+                    {
+                        Vector3 twoToPosition = position - bombTwo.Position;
+                        Vector3 twoToZero = bombZero.Position - bombTwo.Position;
+                        var cross4 = Vector3.Cross(twoToPosition, twoToZero);
+                        if (Vector3.Dot(cross4, cross1) > 0)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
         }
 
         public override void GetDrawInfo()
