@@ -507,7 +507,7 @@ namespace MphRead.Entities
                     Vector4 rotation = ChooseVectors(cross1, cross2, target);
                     if (!_models[0].IsPlaceholder)
                     {
-                        float pct = Fixed.ToFloat(_parentEntCol == null ? 64 : 256);
+                        float pct = Fixed.ToFloat(_parentEntCol == null ? 64 : 256) / 2; // todo: FPS stuff
                         rotation = ComputeRotationSin(_curRotation, rotation, pct);
                     }
                     _curRotation = rotation.Normalized();
@@ -630,7 +630,6 @@ namespace MphRead.Entities
             return true;
         }
 
-        // todo: use more flags
         public override void GetDrawInfo()
         {
             _animFlags &= ~PlatAnimFlags.WasDrawn;
