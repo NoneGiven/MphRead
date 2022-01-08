@@ -974,6 +974,53 @@ namespace MphRead.Entities
             }
         }
 
+        // skdebug
+        private void SwitchWeapon()
+        {
+            Debug.Assert(Input.KeyboardState != null);
+            BeamType beam = BeamType.None;
+            if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D1))
+            {
+                beam = BeamType.PowerBeam;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D2))
+            {
+                beam = BeamType.Missile;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D3))
+            {
+                beam = BeamType.VoltDriver;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D4))
+            {
+                beam = BeamType.Battlehammer;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D5))
+            {
+                beam = BeamType.Imperialist;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D6))
+            {
+                beam = BeamType.Judicator;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D7))
+            {
+                beam = BeamType.Magmaul;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D8))
+            {
+                beam = BeamType.ShockCoil;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D9))
+            {
+                beam = BeamType.OmegaCannon;
+            }
+            if (beam != BeamType.None && CurrentWeapon != beam)
+            {
+                TryEquipWeapon(beam, silent: false);
+            }
+        }
+
         private bool TryEquipWeapon(BeamType beam, bool silent = false)
         {
             int index = (int)beam;
