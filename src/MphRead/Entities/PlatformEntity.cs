@@ -510,7 +510,7 @@ namespace MphRead.Entities
                         float pct = Fixed.ToFloat(_parentEntCol == null ? 64 : 256) / 2; // todo: FPS stuff
                         rotation = ComputeRotationSin(_curRotation, rotation, pct);
                     }
-                    _curRotation = rotation.Normalized();
+                    _curRotation = rotation;
                     if (_data.MovementType == 0)
                     {
                         UpdateState();
@@ -741,8 +741,8 @@ namespace MphRead.Entities
                 inv = 1 / sqrt / 2f;
                 return new Vector4(
                     (vec2.X + vec1.Y) * inv,
-                    (vec3.Y + vec2.Z) * inv,
                     sqrt / 2f,
+                    (vec3.Y + vec2.Z) * inv,
                     (vec3.X - vec1.Z) * inv
                 );
             }
