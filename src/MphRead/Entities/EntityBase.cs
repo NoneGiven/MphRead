@@ -25,7 +25,7 @@ namespace MphRead.Entities
         protected Vector3 _rotation = Vector3.Zero;
         protected Vector3 _position = Vector3.Zero;
 
-        private Node? _colAttachNode = null;
+        protected Node? _colAttachNode = null;
         private bool _drawColUpdated = true;
         public EntityCollision?[] EntityCollision { get; } = new EntityCollision?[2];
         public Matrix4 CollisionTransform => _colAttachNode == null ? _transform : _colAttachNode.Animation;

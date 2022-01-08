@@ -619,8 +619,14 @@ namespace MphRead.Entities
             {
                 Transform = GetTransform();
             }
-            // todo?: for some reason, the game uses an inverse view matrix when using animation
-            UpdateCollisionTransform(0, CollisionTransform);
+            if (_animFlags.TestFlag(PlatAnimFlags.WasDrawn) && _colAttachNode != null)
+            {
+                UpdateCollisionTransform(0, _colAttachNode.Animation);
+            }
+            else
+            {
+                UpdateCollisionTransform(0, Transform);
+            } 
             return true;
         }
 
