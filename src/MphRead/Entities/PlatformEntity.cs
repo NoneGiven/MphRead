@@ -1105,7 +1105,10 @@ namespace MphRead.Entities
                             {
                                 var beam = (BeamProjectileEntity)info.Sender;
                                 // bug?: checking BeamKind instead of Beam here
-                                if (_beamEffectiveness[(int)beam.BeamKind] == Effectiveness.Zero)
+                                // the game does't do the bounds check, I guess assuming a platform can't be hit by a platform beam
+                                // --> in our case it can (seen with SyluxShip aiming bug at one point), so we'll handle it
+                                int index = (int)beam.BeamKind;
+                                if (index >= _beamEffectiveness.Length || _beamEffectiveness[index] == Effectiveness.Zero)
                                 {
                                     effectId = _data.ResistEffectId;
                                 }
