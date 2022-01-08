@@ -221,7 +221,7 @@ namespace MphRead.Entities
                                 door.Flags |= DoorFlags.ShotOpen;
                             }
                         }
-                    }
+                    }   
                 }
                 if (BombType == BombType.Lockjaw && BombIndex == 0 && Owner.SyluxBombCount == 3
                     && _target == null && hitEntity == null)
@@ -493,6 +493,7 @@ namespace MphRead.Entities
             }
             else
             {
+                // todo?: the tail bomb is visibly in the air when grounded
                 Debug.Assert(BombType == BombType.Stinglarva);
                 Vector3 between = (targetPos - Position).WithY(0);
                 float hMagSqr = between.X * between.X + between.Z * between.Z;
@@ -512,7 +513,7 @@ namespace MphRead.Entities
             {
                 CollisionResult result = results[i];
                 Debug.Assert(result.Field0 == 0);
-                float dotw = result.Plane.W - Vector3.Dot(Position, result.Plane.Xyz);
+                float dotw = result.Plane.W - Vector3.Dot(Position, result.Plane.Xyz) + 0.4f;
                 if (dotw > 0)
                 {
                     Position += result.Plane.Xyz * dotw;
