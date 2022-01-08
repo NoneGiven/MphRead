@@ -4621,7 +4621,7 @@ namespace MphRead
                 smokeChargeAmount: 25
             ),
             new WeaponInfo(
-                description: "",
+                description: "Platform Unused",
                 beam: BeamType.PowerBeam,
                 beamKind: BeamType.Platform,
                 drawFuncIds: new byte[] { 0, 0 },
