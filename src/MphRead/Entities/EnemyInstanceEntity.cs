@@ -61,7 +61,6 @@ namespace MphRead.Entities
         public override void Initialize()
         {
             base.Initialize();
-            // todo: set other properties, etc.
             _owner = _data.Spawner;
             Metadata.LoadEffectiveness(_data.Type, BeamEffectiveness);
             Flags = EnemyFlags.CollidePlayer | EnemyFlags.CollideBeam;
