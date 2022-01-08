@@ -36,8 +36,8 @@ namespace MphRead.Entities
         protected float _boundingRadius = 0;
         protected Action[]? _stateProcesses;
 
-        public byte State1 => _state1;
-        public byte State2 => _state2;
+        public byte StateA => _state1;
+        public byte StateB => _state2;
 
         public readonly Effectiveness[] BeamEffectiveness = new Effectiveness[9];
         private bool _onlyMoveHurtVolume = false;

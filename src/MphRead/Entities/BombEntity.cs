@@ -170,7 +170,7 @@ namespace MphRead.Entities
                         continue;
                     }
                     var enemy = (EnemyInstanceEntity)entity;
-                    if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam) && (enemy.EnemyType != EnemyType.Temroid || enemy.State1 != 8)
+                    if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam) && (enemy.EnemyType != EnemyType.Temroid || enemy.StateA != 8)
                         && enemy.CheckHitByBomb(this))
                     {
                         hitEntity = enemy;
@@ -185,7 +185,7 @@ namespace MphRead.Entities
                         continue;
                     }
                     var enemy = (EnemyInstanceEntity)entity;
-                    if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam) && enemy.EnemyType == EnemyType.Temroid && enemy.State1 == 8
+                    if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam) && enemy.EnemyType == EnemyType.Temroid && enemy.StateA == 8
                         && ((Enemy02Entity)enemy).CheckTemroidHitByBomb(this))
                     {
                         hitEntity = enemy;
