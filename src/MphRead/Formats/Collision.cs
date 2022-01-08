@@ -19,11 +19,11 @@ namespace MphRead.Formats.Collision
         public Vector3 CurrentCenter { get; set; }
         public float MaxDistance { get; set; }
         public EntityBase Entity { get; }
-        public CollisionInstance Collision { get; }
+        public CollisionInstance? Collision { get; }
 
         public List<Vector3> DrawPoints { get; } = new List<Vector3>();
 
-        public EntityCollision(CollisionInstance collision, EntityBase entity)
+        public EntityCollision(CollisionInstance? collision, EntityBase entity)
         {
             Collision = collision;
             Entity = entity;

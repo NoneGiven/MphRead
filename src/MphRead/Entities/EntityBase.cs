@@ -142,9 +142,12 @@ namespace MphRead.Entities
             _drawColUpdated = false;
             UpdateCollisionTransform(slot, Transform.ClearScale());
             UpdateLinkedInverse(slot);
-            for (int i = 0; i < entCol.Collision.Info.Points.Count; i++)
+            if (entCol.Collision != null)
             {
-                entCol.DrawPoints.Add(entCol.Collision.Info.Points[i]);
+                for (int i = 0; i < entCol.Collision.Info.Points.Count; i++)
+                {
+                    entCol.DrawPoints.Add(entCol.Collision.Info.Points[i]);
+                }
             }
             if (attach != null)
             {
@@ -154,6 +157,10 @@ namespace MphRead.Entities
 
         private void SetCollisionMaxAvg(EntityCollision entCol)
         {
+            if (entCol.Collision == null)
+            {
+                return;
+            }
             int count = entCol.Collision.Info.Points.Count;
             Vector3 avg = Vector3.Zero;
             for (int i = 0; i < count; i++)
@@ -206,7 +213,7 @@ namespace MphRead.Entities
                 for (int i = 0; i < 2; i++)
                 {
                     EntityCollision? entCol = EntityCollision[i];
-                    if (entCol != null)
+                    if (entCol?.Collision != null)
                     {
                         CollisionInfo collision = entCol.Collision.Info;
                         for (int j = 0; j < collision.Points.Count; j++)
@@ -405,7 +412,7 @@ namespace MphRead.Entities
             for (int i = 0; i < 2; i++)
             {
                 EntityCollision? entCol = EntityCollision[i];
-                if (entCol != null && entCol.Collision.Active)
+                if (entCol?.Collision != null && entCol.Collision.Active)
                 {
                     entCol.Collision.Info.GetDrawInfo(entCol.DrawPoints, Type, _scene);
                 }

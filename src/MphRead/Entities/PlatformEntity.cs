@@ -135,11 +135,15 @@ namespace MphRead.Entities
                 {
                     SetCollision(Collision.GetCollision(modelMeta), attach: inst);
                 }
-                // temporary
-                if (_meta.Name == "SyluxTurret")
-                {
-                    inst.SetAnimation(-1);
-                }
+            }
+            if (EntityCollision[0] == null)
+            {
+                // needed for child entities to track
+                Matrix4 transform = GetTransform();
+                var entCol = new EntityCollision(null, this);
+                EntityCollision[0] = entCol;
+                UpdateCollisionTransform(0, transform);
+                UpdateLinkedInverse(0);
             }
             _beamInterval = (int)data.BeamInterval * 2; // todo: FPS stuff
             if (_beams == null)
@@ -197,7 +201,7 @@ namespace MphRead.Entities
                 _currentAnim = -2;
                 if (_animFlags.TestFlag(PlatAnimFlags.HasAnim))
                 {
-                    if (_animFlags.TestFlag(PlatAnimFlags.Active))
+                    if (StateFlags.TestFlag(PlatStateFlags.Awake))
                     {
                         SetPlatAnimation(PlatAnimId.InstantWake, AnimFlags.None);
                     }
@@ -377,7 +381,7 @@ namespace MphRead.Entities
                     for (int i = 0; i < EntityCollision.Length; i++)
                     {
                         EntityCollision? entCol = EntityCollision[i];
-                        if (entCol != null)
+                        if (entCol?.Collision != null)
                         {
                             entCol.Collision.Active = false;
                         }

@@ -14,7 +14,7 @@ namespace MphRead.Entities
         private Vector3 _visiblePosition;
 
         private ObjectFlags _flags = 0;
-        private int _effectInterval = 0;
+        private readonly int _effectInterval = 0;
         private int _effectIntervalTimer = 0;
         private int _effectIntervalIndex = 0;
         private bool _effectProcessing = false;
@@ -22,10 +22,11 @@ namespace MphRead.Entities
         public bool _effectActive = false;
         private readonly bool _scanVisorOnly = false;
         private int _state = 0;
-        private ObjectMetadata? _meta;
+        private readonly ObjectMetadata? _meta;
 
         private EntityBase? _parent = null;
-        private Matrix4 _invTransform;
+        private EntityCollision? _parentEntCol = null;
+        private Matrix4 _invTransform = Matrix4.Identity;
         private EntityBase? _scanMsgTarget = null;
 
         // used for ID -1 (scan point, effect spawner)
@@ -127,13 +128,6 @@ namespace MphRead.Entities
             {
                 _scene.LoadEffect(_data.EffectId);
             }
-            if (_data.LinkedEntity != -1)
-            {
-                if (_scene.TryGetEntity(_data.LinkedEntity, out EntityBase? parent))
-                {
-                    _parent = parent;
-                }
-            }
             if (_scene.TryGetEntity(_data.ScanMsgTarget, out EntityBase? target))
             {
                 _scanMsgTarget = target;
@@ -208,7 +202,7 @@ namespace MphRead.Entities
                         // todo: play SFX
                         _models[0].SetAnimation(animId, 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node, AnimFlags.NoLoop);
                         EntityCollision? entCol = EntityCollision[1];
-                        if (entCol != null)
+                        if (entCol?.Collision != null)
                         {
                             entCol.Collision.Active = false;
                         }
@@ -217,6 +211,7 @@ namespace MphRead.Entities
                 }
                 else if (_data.ModelId == 46) // SniperTarget
                 {
+                    Debug.Assert(_meta != null);
                     if (state == 0)
                     {
                         if (_models[0].AnimInfo.Index[0] == _meta.AnimationIds[0])
@@ -337,14 +332,18 @@ namespace MphRead.Entities
                 if (_data.LinkedEntity != -1 && _scene.TryGetEntity(_data.LinkedEntity, out EntityBase? entity))
                 {
                     _parent = entity;
-                    _invTransform = _transform * _parent.EntityCollision[0]!.Inverse2;
+                    _parentEntCol = _parent.EntityCollision[0];
+                    if (_parentEntCol != null)
+                    {
+                        _invTransform = _transform * _parentEntCol.Inverse2;
+                    }
                 }
                 _flags |= ObjectFlags.EntityLinked;
             }
             ShouldDraw = !_scanVisorOnly || _scene.ScanVisor;
-            if (_parent != null)
+            if (_parentEntCol != null)
             {
-                Transform = _invTransform * _parent.CollisionTransform;
+                Transform = _invTransform * _parentEntCol.Transform;
                 UpdateVisiblePosition();
             }
             if (Transform != _prevTransform)
