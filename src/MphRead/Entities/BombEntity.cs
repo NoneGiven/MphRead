@@ -481,6 +481,7 @@ namespace MphRead.Entities
             Debug.Assert(_target != null);
             _target.GetPosition(out Vector3 targetPos);
             Vector3 prevPos = Position;
+            Vector3 newSpeed;
             if (BombType == BombType.Lockjaw)
             {
                 Vector3 between = targetPos - Position;
@@ -489,7 +490,7 @@ namespace MphRead.Entities
                 {
                     between /= MathF.Sqrt(magSqr);
                 }
-                _speed += (between - _speed) * 0.15f;
+                newSpeed = _speed + (between - _speed) * 0.15f;
             }
             else
             {
@@ -503,8 +504,9 @@ namespace MphRead.Entities
                 }
                 float deltaX = (between.X - _speed.X) * 0.05f;
                 float deltaZ = (between.Z - _speed.Z) * 0.05f;
-                _speed = new Vector3(_speed.X + deltaX, _speed.Y - 0.05f, _speed.Z + deltaZ);
+                newSpeed = new Vector3(_speed.X + deltaX, _speed.Y - 0.05f, _speed.Z + deltaZ);
             }
+            _speed += (newSpeed - _speed) / 2; // todo: FPS stuff
             Position += _speed / 2; // todo: FPS stuff
             var results = new CollisionResult[8];
             int count = CollisionDetection.CheckSphereBetweenPoints(prevPos, Position, 0.4f, limit: 8,
