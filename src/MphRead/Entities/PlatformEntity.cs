@@ -307,7 +307,7 @@ namespace MphRead.Entities
                 Vector3 offset = Matrix.Vec3MultMtx3(new Vector3(0, 0.8f, 4.2f), transform);
                 position = transform.Row3.Xyz + offset;
             }
-            else if (Flags.TestFlag(PlatformFlags.SyluxShip) && EntityCollision[0] != null)
+            else if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parentEntCol != null)
             {
                 Matrix4 transform = GetTransform();
                 position = Matrix.Vec3MultMtx4(_beamSpawnPos, transform);
@@ -457,7 +457,7 @@ namespace MphRead.Entities
             {
                 bool isTurret = false;
                 bool turretAiming = false;
-                if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parent != null)
+                if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parentEntCol != null)
                 {
                     isTurret = true;
                     if (_stateFlags.TestFlag(PlatStateFlags.Awake)
@@ -502,7 +502,7 @@ namespace MphRead.Entities
                     Vector4 rotation = ChooseVectors(cross1, cross2, target);
                     if (!_models[0].IsPlaceholder)
                     {
-                        float pct = Fixed.ToFloat(_parent == null ? 64 : 256);
+                        float pct = Fixed.ToFloat(_parentEntCol == null ? 64 : 256);
                         rotation = ComputeRotationSin(_curRotation, rotation, pct);
                     }
                     _curRotation = rotation.Normalized();
@@ -551,10 +551,10 @@ namespace MphRead.Entities
                     spawnBeam = false;
                 }
             }
-            _stateFlags |= PlatStateFlags.Awake;
-            // btodo: 0 is valid for Sylux turret missiles, but without collision handling those would eat up the effect lists
+            // todo: don't spawn beam when node ref is not visible, unless the flag for that is set
+            //_stateFlags |= PlatStateFlags.Awake; // skdebug?
             if (spawnBeam && _animFlags.TestFlag(PlatAnimFlags.Draw) && !_animFlags.TestFlag(PlatAnimFlags.DisableReflect)
-                && _stateFlags.TestFlag(PlatStateFlags.Awake) && Flags.TestFlag(PlatformFlags.BeamSpawner) && _data.BeamId > 0)
+                && _stateFlags.TestFlag(PlatStateFlags.Awake) && Flags.TestFlag(PlatformFlags.BeamSpawner) && _data.BeamId > -1)
             {
                 if (--_beamIntervalTimer <= 0)
                 {

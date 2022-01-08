@@ -305,7 +305,7 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
-            Vector3 between = Position = bomb.Position;
+            Vector3 between = Position - bomb.Position;
             if (between.LengthSquared > bomb.Radius * bomb.Radius)
             {
                 return false;
