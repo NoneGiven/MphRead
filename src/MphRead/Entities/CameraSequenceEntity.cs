@@ -100,7 +100,7 @@ namespace MphRead.Entities
                 if (_keyframeElapsed < 1 / 60f && curFrame.MessageId != 0) // todo: FPS stuff
                 {
                     // game sets the keyframe as the sender
-                    _scene.SendMessage((Message)curFrame.MessageId, this, curFrame.MessageTarget, curFrame.MessageParam, 0);
+                    _scene.SendMessage((Message)curFrame.MessageId, this, curFrame.MessageTarget, (int)curFrame.MessageParam, 0);
                 }
                 FadeType fadeType = FadeType.None;
                 float fadeTime = 0;
