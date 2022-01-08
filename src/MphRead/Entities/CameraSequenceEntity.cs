@@ -97,7 +97,7 @@ namespace MphRead.Entities
                 float frameLength = curFrame.HoldTime + curFrame.MoveTime;
                 float fadeOutStart = frameLength - curFrame.FadeOutTime;
                 CalculateFrameValues();
-                if (_keyframeElapsed < 1 / 30f && curFrame.MessageId != 0)
+                if (_keyframeElapsed < 1 / 60f && curFrame.MessageId != 0) // todo: FPS stuff
                 {
                     // game sets the keyframe as the sender
                     _scene.SendMessage((Message)curFrame.MessageId, this, curFrame.MessageTarget, curFrame.MessageParam, 0);

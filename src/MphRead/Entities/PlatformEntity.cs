@@ -59,7 +59,8 @@ namespace MphRead.Entities
         private int _recoilTimer;
         private readonly float _forwardSpeed;
         private readonly float _backwardSpeed;
-        private int _currentAnim = 0;
+        private int _currentAnimState = 0; // todo: names
+        private int _currentAnimId = 0;
 
         // todo: would be nice to have the ability to manipulate these transforms manually
         private readonly Vector3 _posOffset;
@@ -172,7 +173,7 @@ namespace MphRead.Entities
             if (Flags.TestFlag(PlatformFlags.SamusShip))
             {
                 SleepWake(wake: true, instant: true);
-                _currentAnim = -2;
+                _currentAnimState = -2;
                 // todo: room state for initial landed
                 // --> options are instant_wake and wake, but it seems like it should be instant_sleep?
                 SetPlatAnimation(PlatAnimId.InstantSleep, AnimFlags.None);
@@ -198,7 +199,7 @@ namespace MphRead.Entities
                 {
                     Deactivate();
                 }
-                _currentAnim = -2;
+                _currentAnimState = -2;
                 if (_animFlags.TestFlag(PlatAnimFlags.HasAnim))
                 {
                     if (StateFlags.TestFlag(PlatStateFlags.Awake))
@@ -332,7 +333,7 @@ namespace MphRead.Entities
 
         private void SetPlatAnimation(int index, AnimFlags flags)
         {
-            _currentAnim = index;
+            _currentAnimId = index;
             if (index >= 0)
             {
                 Debug.Assert(!_models[0].IsPlaceholder);
@@ -357,7 +358,7 @@ namespace MphRead.Entities
                 else
                 {
                     SetPlatAnimation(PlatAnimId.Wake, AnimFlags.NoLoop);
-                    _currentAnim = GetAnimation(PlatAnimId.InstantWake);
+                    _currentAnimState = GetAnimation(PlatAnimId.InstantWake);
                 }
             }
             else
@@ -374,7 +375,7 @@ namespace MphRead.Entities
                 else
                 {
                     SetPlatAnimation(PlatAnimId.Sleep, AnimFlags.NoLoop);
-                    _currentAnim = GetAnimation(PlatAnimId.InstantSleep);
+                    _currentAnimState = GetAnimation(PlatAnimId.InstantSleep);
                 }
                 if (Flags.TestFlag(PlatformFlags.HideOnSleep))
                 {
@@ -545,7 +546,7 @@ namespace MphRead.Entities
             bool spawnBeam = true;
             if (!_models[0].IsPlaceholder && Flags.TestFlag(PlatformFlags.SyluxShip))
             {
-                if (_currentAnim != -2)
+                if (_currentAnimState != -2)
                 {
                     spawnBeam = false;
                 }
@@ -581,14 +582,14 @@ namespace MphRead.Entities
                     }
                 }
             }
-            if (!_models[0].IsPlaceholder && _animFlags.TestFlag(PlatAnimFlags.HasAnim) && _currentAnim >= 0)
+            if (!_models[0].IsPlaceholder && _animFlags.TestFlag(PlatAnimFlags.HasAnim) && _currentAnimId >= 0)
             {
                 UpdateAnimFrames(_models[0]);
             }
-            if (_currentAnim != -2 && _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
+            if (_currentAnimState != -2 && _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
             {
-                SetPlatAnimation(_currentAnim, AnimFlags.None);
-                _currentAnim = -2;
+                SetPlatAnimation(_currentAnimState, AnimFlags.None);
+                _currentAnimState = -2;
                 _stateFlags &= ~PlatStateFlags.WasAwake;
             }
             // todo: SFX and other stuff
@@ -643,7 +644,7 @@ namespace MphRead.Entities
                         draw = false;
                     }
                 }
-                if (_animFlags.TestFlag(PlatAnimFlags.HasAnim) && _currentAnim < 0)
+                if (_animFlags.TestFlag(PlatAnimFlags.HasAnim) && _currentAnimId < 0)
                 {
                     draw = false;
                 }
@@ -1383,7 +1384,6 @@ namespace MphRead.Entities
                 }
             }
             Position = position;
-            base.Process();
             UpdateCollisionTransform(0, Transform);
             return true;
         }
