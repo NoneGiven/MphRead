@@ -622,9 +622,43 @@ namespace MphRead.Entities
         // todo: use more flags
         public override void GetDrawInfo()
         {
-            if (_animFlags.TestFlag(PlatAnimFlags.Draw) || _models[0].IsPlaceholder)
+            _animFlags &= ~PlatAnimFlags.WasDrawn;
+            if (_models[0].IsPlaceholder)
             {
                 base.GetDrawInfo();
+            }
+            else if (_animFlags.TestFlag(PlatAnimFlags.Draw))
+            {
+                bool draw = true;
+                // todo: use draw always, draw when node ref, and is_visible
+                if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parentEntCol != null)
+                {
+                    Debug.Assert(_parent != null);
+                    if (!_parent.StateFlags.TestFlag(PlatStateFlags.Awake) && !_parent.StateFlags.TestFlag(PlatStateFlags.WasAwake))
+                    {
+                        draw = false;
+                    }
+                }
+                if (_animFlags.TestFlag(PlatAnimFlags.HasAnim) && _currentAnim < 0)
+                {
+                    draw = false;
+                }
+                if (draw)
+                {
+                    base.GetDrawInfo();
+                    _animFlags |= PlatAnimFlags.WasDrawn;
+                }
+                if (Flags.TestFlag(PlatformFlags.SamusShip))
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        EffectEntry? effect = _effects[i];
+                        if (effect != null)
+                        {
+                            effect.SetDrawEnabled(draw);
+                        }
+                    }
+                }
             }
         }
 
