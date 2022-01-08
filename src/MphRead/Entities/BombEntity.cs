@@ -239,7 +239,7 @@ namespace MphRead.Entities
             {
                 if (_target.GetTargetable())
                 {
-                    // sknext
+                    ProcessTargeting();
                 }
                 else
                 {
@@ -476,6 +476,59 @@ namespace MphRead.Entities
             return false;
         }
 
+        private void ProcessTargeting()
+        {
+            Debug.Assert(_target != null);
+            _target.GetPosition(out Vector3 targetPos);
+            Vector3 prevPos = Position;
+            if (BombType == BombType.Lockjaw)
+            {
+                Vector3 between = targetPos - Position;
+                float magSqr = between.LengthSquared;
+                if (magSqr > 0)
+                {
+                    between /= MathF.Sqrt(magSqr);
+                }
+                _speed += (between - _speed) * 0.15f;
+            }
+            else
+            {
+                Debug.Assert(BombType == BombType.Stinglarva);
+                Vector3 between = (targetPos - Position).WithY(0);
+                float hMagSqr = between.X * between.X + between.Z * between.Z;
+                if (hMagSqr > 0)
+                {
+                    between /= MathF.Sqrt(hMagSqr);
+                }
+                float deltaX = (between.X - _speed.X) * 0.05f;
+                float deltaZ = (between.Z - _speed.Z) * 0.05f;
+                _speed = new Vector3(_speed.X + deltaX, _speed.Y - 0.05f, _speed.Z + deltaZ);
+            }
+            Position += _speed / 2; // todo: FPS stuff
+            var results = new CollisionResult[8];
+            int count = CollisionDetection.CheckSphereBetweenPoints(prevPos, Position, 0.4f, limit: 8,
+                includeOffset: false, TestFlags.None, _scene, results);
+            for (int i = 0; i < count; i++)
+            {
+                CollisionResult result = results[i];
+                Debug.Assert(result.Field0 == 0);
+                float dotw = result.Plane.W - Vector3.Dot(Position, result.Plane.Xyz);
+                if (dotw > 0)
+                {
+                    Position += result.Plane.Xyz * dotw;
+                    float dot = Vector3.Dot(_speed / 2, result.Plane.Xyz); // todo: FPS stuff
+                    if (dot < 0)
+                    {
+                        _speed += result.Plane.Xyz * -dot;
+                    }
+                }
+            }
+            if (BombType != BombType.Lockjaw && (_speed.X != 0 || _speed.Z != 0))
+            {
+                SetTransform(_speed.Normalized(), UpVector, Position);
+            }
+        }
+
         public override void GetDrawInfo()
         {
             // todo: is_visible
@@ -560,6 +613,7 @@ namespace MphRead.Entities
             }
             Effect = null;
             Owner = null!;
+            _scene.UnlinkBomb(this);
         }
 
         public static BombEntity? Spawn(PlayerEntity owner, Matrix4 transform, Scene scene)
