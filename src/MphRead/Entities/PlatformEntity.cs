@@ -29,6 +29,7 @@ namespace MphRead.Entities
         private readonly EquipInfo? _equipInfo;
         private readonly Vector3 _beamSpawnPos;
         private readonly Vector3 _beamSpawnDir;
+        private int _ammo = 0;
 
         private int _health = 0;
         private int _halfHealth = 0;
@@ -146,9 +147,11 @@ namespace MphRead.Entities
             }
             if (data.BeamId > -1)
             {
-                // todo: ammo pointer
+                _ammo = 1000;
                 Debug.Assert(data.BeamId < Weapons.PlatformWeapons.Count);
                 _equipInfo = new EquipInfo(Weapons.PlatformWeapons[data.BeamId], _beams);
+                _equipInfo.GetAmmo = () => _ammo;
+                _equipInfo.SetAmmo = (newAmmo) => _ammo = newAmmo;
                 _beamSpawnPos = data.BeamSpawnPos.ToFloatVector();
                 _beamSpawnDir = data.BeamSpawnDir.ToFloatVector();
                 _beamIntervalIndex = 15;

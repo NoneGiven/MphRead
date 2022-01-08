@@ -1304,13 +1304,15 @@ namespace MphRead.Entities
             int cost = (int)GetAmount(weapon.AmmoCost, weapon.MinChargeCost, weapon.ChargeCost);
             if (weapon.Flags.TestFlag(WeaponFlags.Continuous))
             {
-                // game's cycle for Shock Coil: 0 0 0 1 0 0 1 0 0 1 0 0 1 0 0 0
-                //    our cycle for Shock Coil: 0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0
-                const int cycleLength = 16 * 2; // todo: FPS stuff
-                const int divisor = cycleLength * 2;
-                int rem = cost % divisor;
-                cost /= divisor;
-                if (rem != 0 && ((ulong)rem * scene.FrameCount % divisor) > (ulong)(divisor - rem))
+                // todo?: figure out what the intent behind this actually is
+                // game's cycle for Shock Coil (10): 0 0 0 1 0 0 1 0 0 1 0 0 1 0 0 0
+                //    our cycle for Shock Coil (10): 0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0 0
+                // game's cycle for green beam (15): 0 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 0
+                //    our cycle for green beam (15): 0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0
+                //                                   0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0
+                ulong bits = (ulong)(cost & 31);
+                cost = (cost << 11) >> 16;
+                if (scene.FrameCount % 2 == 0 && bits != 0 && ((bits * (scene.FrameCount / 2)) & 31) > 32 - bits) // todo: FPS stuff
                 {
                     cost++;
                 }
