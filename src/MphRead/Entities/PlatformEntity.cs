@@ -174,9 +174,8 @@ namespace MphRead.Entities
             {
                 SleepWake(wake: true, instant: true);
                 _currentAnimState = -2;
-                // todo: room state for initial landed
-                // --> options are instant_wake and wake, but it seems like it should be instant_sleep?
-                SetPlatAnimation(PlatAnimId.InstantSleep, AnimFlags.None);
+                // todo: room state for initial landing
+                SetPlatAnimation(PlatAnimId.InstantWake, AnimFlags.None);
                 _animFlags |= PlatAnimFlags.Active;
             }
             else
