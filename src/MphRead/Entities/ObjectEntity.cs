@@ -337,7 +337,7 @@ namespace MphRead.Entities
                 if (_data.LinkedEntity != -1 && _scene.TryGetEntity(_data.LinkedEntity, out EntityBase? entity))
                 {
                     _parent = entity;
-                    _invTransform = _transform * _parent.CollisionTransform.Inverted();
+                    _invTransform = _transform * _parent.EntityCollision[0]!.Inverse2;
                 }
                 _flags |= ObjectFlags.EntityLinked;
             }
@@ -406,24 +406,26 @@ namespace MphRead.Entities
                         }
                         else if ((_data.EffectOnIntervals & (1 << _effectIntervalIndex)) != 0)
                         {
-                            // ptodo: mtxptr stuff
-                            Matrix4 spawnTransform = Transform;
+                            EntityCollision? entCol = _parent?.EntityCollision[0];
+                            Vector3 spawnFacing = FacingVector;
+                            Vector3 spawnUp = UpVector;
+                            Vector3 spawnPos = Position;
+                            if (entCol != null)
+                            {
+                                spawnPos = Matrix.Vec3MultMtx4(spawnPos, entCol.Inverse1);
+                                spawnUp = Matrix.Vec3MultMtx3(spawnUp, entCol.Inverse1);
+                                spawnFacing = Matrix.Vec3MultMtx3(spawnFacing, entCol.Inverse1);
+                            }
                             if (_data.EffectFlags.TestFlag(ObjEffFlags.UseEffectOffset))
                             {
                                 Vector3 offset = _data.EffectPositionOffset.ToFloatVector();
                                 offset.X *= Fixed.ToFloat(2 * (Rng.GetRandomInt1(0x1000u) - 2048));
                                 offset.Y *= Fixed.ToFloat(2 * (Rng.GetRandomInt1(0x1000u) - 2048));
                                 offset.Z *= Fixed.ToFloat(2 * (Rng.GetRandomInt1(0x1000u) - 2048));
-                                offset = Matrix.Vec3MultMtx3(offset, Transform.ClearScale());
-                                spawnTransform = new Matrix4(
-                                    spawnTransform.Row0,
-                                    spawnTransform.Row1,
-                                    spawnTransform.Row2,
-                                    new Vector4(offset) + spawnTransform.Row3
-                                );
+                                spawnPos += Matrix.Vec3MultMtx3(offset, GetTransformMatrix(spawnFacing, spawnUp));
                             }
-                            EntityCollision? entCol = _parent == null ? null : EntityCollision[0];
-                            _scene.SpawnEffect(_data.EffectId, spawnTransform, entCol: entCol);
+                            // todo: play SFX
+                            _scene.SpawnEffect(_data.EffectId, spawnFacing, spawnUp, spawnPos, entCol: entCol);
                         }
                         _effectIntervalTimer = _effectInterval;
                     }

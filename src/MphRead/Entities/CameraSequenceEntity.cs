@@ -59,14 +59,14 @@ namespace MphRead.Entities
             }
         }
 
-        private EntityBase? GetKeyframeRef(short type, ushort id)
+        private EntityBase? GetKeyframeRef(short type, short id)
         {
             if (type == (short)EntityType.Player)
             {
                 Debug.Assert(id < PlayerEntity.MaxPlayers);
                 return PlayerEntity.Players[id];
             }
-            if (type != -1 && _scene.TryGetEntity(id, out EntityBase? entity))
+            if (type != -1 && id != -1 && _scene.TryGetEntity(id, out EntityBase? entity))
             {
                 return entity;
             }
@@ -100,7 +100,7 @@ namespace MphRead.Entities
                 if (_keyframeElapsed < 1 / 30f && curFrame.MessageId != 0)
                 {
                     // game sets the keyframe as the sender
-                    _scene.SendMessage((Message)curFrame.MessageId, this, curFrame.TargetEntity, curFrame.MessageParam, 0);
+                    _scene.SendMessage((Message)curFrame.MessageId, this, curFrame.MessageTarget, curFrame.MessageParam, 0);
                 }
                 FadeType fadeType = FadeType.None;
                 float fadeTime = 0;

@@ -1198,11 +1198,11 @@ namespace MphRead
         public byte AfterFrameInfluence { get; } // flag bits 0/1
         public bool UseEntityTransform { get; }
         public short PosEntityType { get; }
-        public ushort PosEntityId { get; }
+        public short PosEntityId { get; }
         public short TargetEntityType { get; }
-        public ushort TargetEntityId { get; }
+        public short TargetEntityId { get; }
         public short MessageTargetType { get; }
-        public ushort MessageTargetId { get; }
+        public short MessageTargetId { get; }
         public ushort MessageId { get; }
         public ushort MessageParam { get; }
         public float Easing { get; } // always 0, 4096, or 4120 (1.00585938)
