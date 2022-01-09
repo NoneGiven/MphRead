@@ -421,7 +421,7 @@ namespace MphRead
         Gorea2 = 31,
         GoreaSealSphere2 = 32,
         GoreaMeteor = 33,
-        PsychoBit2 = 34,
+        PsychoBit2 = 34, // unused
         Voldrum2 = 35,
         Voldrum1 = 36,
         Quadtroid = 37,

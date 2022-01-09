@@ -255,6 +255,10 @@ namespace MphRead.Entities
             {
                 return new Enemy10Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
+            if (type == EnemyType.Shriekbat)
+            {
+                return new Enemy11Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
             if (type == EnemyType.FireSpawn)
             {
                 return new Enemy39Entity(new EnemyInstanceEntityData(type, spawner), scene);
