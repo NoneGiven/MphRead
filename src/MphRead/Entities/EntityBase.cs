@@ -267,12 +267,9 @@ namespace MphRead.Entities
 
         protected void UpdateAnimFrames(ModelInstance inst)
         {
-            if (inst.Active || _scene.ShowAllEntities)
+            if (_scene.FrameCount != 0 && _scene.FrameCount % 2 == 0)
             {
-                if (_scene.FrameCount != 0 && _scene.FrameCount % 2 == 0)
-                {
-                    inst.UpdateAnimFrames();
-                }
+                inst.UpdateAnimFrames();
             }
         }
 

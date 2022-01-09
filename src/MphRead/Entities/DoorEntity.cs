@@ -1,3 +1,4 @@
+using System;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -357,6 +358,7 @@ namespace MphRead.Entities
         }
     }
 
+    [Flags]
     public enum DoorFlags : ushort
     {
         None = 0,
