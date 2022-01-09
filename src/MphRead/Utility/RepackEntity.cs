@@ -494,7 +494,7 @@ namespace MphRead.Utility
                         mphSpawn.Volume0 = new CollisionVolume(Vector3.Zero, 1);
                         mphSpawn.Volume1 = enemySpawn.Cylinder;
                         mphSpawn.Position = Vector3.Zero;
-                        mphSpawn.Unknown00 = 0;
+                        mphSpawn.WeaveOffset = 0;
                         mphSpawn.Unknown01 = 0;
                     }
                     else if (enemySpawn.EnemyType == FhEnemyType.Zoomer)
@@ -2041,7 +2041,7 @@ namespace MphRead.Utility
                 writer.Write(entity.Unused70);
                 writer.Write(entity.Unused74);
                 writer.WriteVector3(entity.EnemyPosition);
-                writer.Write(entity.Unknown00);
+                writer.Write(entity.WeaveOffset);
                 writer.Write(entity.Unknown01);
                 for (int i = 0; i < 75; i++)
                 {

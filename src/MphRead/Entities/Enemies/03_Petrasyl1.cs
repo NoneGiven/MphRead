@@ -13,12 +13,12 @@ namespace MphRead.Entities.Enemies
         private Vector3 _idleLimits;
         private Vector3 _field194;
         private Vector3 _field1A0;
-        private float _rotYOffset = 0;
-        private float _rotYSpeed = 0;
+        private float _bobAngle = 0;
+        private float _bobOffset = 0;
+        private float _bobSpeed = 0;
         private ushort _field170 = 0;
         private ushort _field172 = 0;
         private bool _teleportInAtInitial = true;
-        private float _angleY = 0;
         private int _field18C = 0; // counter/steps in idle Z range
 
         public Enemy03Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
@@ -60,8 +60,8 @@ namespace MphRead.Entities.Enemies
             SetTransform(facing, Vector3.UnitY, position);
             _field194 = facing;
             _field1A0 = facing;
-            _rotYOffset = Fixed.ToFloat(Rng.GetRandomInt2(0x1800) + 2048) / 2; // [0.25, 1)
-            _rotYSpeed = Fixed.ToFloat(Rng.GetRandomInt2(0x6000)) + 1; // [1, 7)
+            _bobOffset = Fixed.ToFloat(Rng.GetRandomInt2(0x1800) + 2048) / 2; // [0.25, 1)
+            _bobSpeed = Fixed.ToFloat(Rng.GetRandomInt2(0x6000)) + 1; // [1, 7)
             _field170 = _field172 = 20 * 2; // todo: FPS stuff
             UpdateState();
             return true;
@@ -71,6 +71,7 @@ namespace MphRead.Entities.Enemies
         {
             if (_state2 == 0)
             {
+                // begin teleporting in
                 _models[0].SetAnimation(3, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node, AnimFlags.NoLoop);
                 if (_teleportInAtInitial)
                 {
@@ -89,6 +90,7 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state2 == 1)
             {
+                // finish teleporting in
                 _models[0].SetAnimation(0, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node);
                 Flags &= ~EnemyFlags.NoHomingNc;
                 Flags &= ~EnemyFlags.Invincible;
@@ -98,6 +100,7 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state2 == 2)
             {
+                // teleport out
                 _models[0].SetAnimation(4, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node, AnimFlags.NoLoop);
                 Flags |= EnemyFlags.NoHomingNc;
                 Flags |= EnemyFlags.Invincible;
@@ -123,13 +126,13 @@ namespace MphRead.Entities.Enemies
         private void State01()
         {
             // todo: play SFX
-            _angleY += _rotYSpeed / 2; // todo: FPS stuff
-            if (_angleY >= 360)
+            _bobAngle += _bobSpeed / 2; // todo: FPS stuff
+            if (_bobAngle >= 360)
             {
-                _angleY -= 360;
+                _bobAngle -= 360;
             }
-            float sin = MathF.Sin(MathHelper.DegreesToRadians(_angleY));
-            _speed.Y = _initialPos.Y + sin * _rotYOffset - Position.Y;
+            float sin = MathF.Sin(MathHelper.DegreesToRadians(_bobAngle));
+            _speed.Y = _initialPos.Y + sin * _bobOffset - Position.Y;
             _speed.Y /= 2; // todo: FPS stuff
             if (HitPlayers[PlayerEntity.Main.SlotIndex])
             {

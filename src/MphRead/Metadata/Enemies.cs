@@ -143,6 +143,20 @@ namespace MphRead
             })
         };
 
+        public static IReadOnlyList<EnemySubroutine<Enemy04Entity>> Enemy04Subroutines = new EnemySubroutine<Enemy04Entity>[2]
+        {
+            // state 0
+            new EnemySubroutine<Enemy04Entity>(new EnemyBehavior<Enemy04Entity>[1]
+            {
+                new EnemyBehavior<Enemy04Entity>(1, Enemy04Entity.Behavior01)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy04Entity>(new EnemyBehavior<Enemy04Entity>[1]
+            {
+                new EnemyBehavior<Enemy04Entity>(1, Enemy04Entity.Behavior00)
+            })
+        };
+
         public static IReadOnlyList<EnemySubroutine<Enemy39Entity>> Enemy39Subroutines = new EnemySubroutine<Enemy39Entity>[6]
         {
             // state 0
