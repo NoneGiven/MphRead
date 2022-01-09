@@ -171,6 +171,38 @@ namespace MphRead
             })
         };
 
+        public static IReadOnlyList<EnemySubroutine<Enemy06Entity>> Enemy06Subroutines = new EnemySubroutine<Enemy06Entity>[5]
+        {
+            // state 0
+            new EnemySubroutine<Enemy06Entity>(new EnemyBehavior<Enemy06Entity>[2]
+            {
+                new EnemyBehavior<Enemy06Entity>(1, Enemy06Entity.Behavior02),
+                new EnemyBehavior<Enemy06Entity>(2, Enemy06Entity.Behavior00)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy06Entity>(new EnemyBehavior<Enemy06Entity>[1]
+            {
+                new EnemyBehavior<Enemy06Entity>(2, Enemy06Entity.Behavior00)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy06Entity>(new EnemyBehavior<Enemy06Entity>[2]
+            {
+                new EnemyBehavior<Enemy06Entity>(3, Enemy06Entity.Behavior03),
+                new EnemyBehavior<Enemy06Entity>(4, Enemy06Entity.Behavior01)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy06Entity>(new EnemyBehavior<Enemy06Entity>[1]
+            {
+                new EnemyBehavior<Enemy06Entity>(4, Enemy06Entity.Behavior01)
+            }),
+            // state 4
+            new EnemySubroutine<Enemy06Entity>(new EnemyBehavior<Enemy06Entity>[2]
+            {
+                new EnemyBehavior<Enemy06Entity>(1, Enemy06Entity.Behavior02),
+                new EnemyBehavior<Enemy06Entity>(2, Enemy06Entity.Behavior00)
+            })
+        };
+
         public static IReadOnlyList<EnemySubroutine<Enemy39Entity>> Enemy39Subroutines = new EnemySubroutine<Enemy39Entity>[6]
         {
             // state 0
