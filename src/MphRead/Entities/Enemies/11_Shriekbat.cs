@@ -8,8 +8,8 @@ namespace MphRead.Entities.Enemies
     public class Enemy11Entity : EnemyInstanceEntity
     {
         private readonly EnemySpawnEntity _spawner;
-        private CollisionVolume _volume1;
-        private CollisionVolume _volume2;
+        private CollisionVolume _rangeVolume;
+        private CollisionVolume _activeVolume;
         private Vector3 _targetPos;
         private int _moveTimer = 0;
         private EffectEntry? _effect = null;
@@ -34,8 +34,8 @@ namespace MphRead.Entities.Enemies
             SetTransform((PlayerEntity.Main.Position - position).Normalized(), Vector3.UnitY, position);
             _boundingRadius = 1;
             _hurtVolumeInit = new CollisionVolume(_spawner.Data.Fields.S02.Volume0);
-            _volume1 = CollisionVolume.Move(_spawner.Data.Fields.S02.Volume1, position);
-            _volume2 = CollisionVolume.Move(_spawner.Data.Fields.S02.Volume2, position);
+            _rangeVolume = CollisionVolume.Move(_spawner.Data.Fields.S02.Volume1, position);
+            _activeVolume = CollisionVolume.Move(_spawner.Data.Fields.S02.Volume2, position);
             _targetPos = position + _spawner.Data.Fields.S02.PathVector.ToFloatVector();
             SetUpModel(Metadata.EnemyModelNames[11], animIndex: 4);
             return true;
@@ -141,7 +141,7 @@ namespace MphRead.Entities.Enemies
         // start moving down to starting position for attack
         private bool Behavior03()
         {
-            if (!_volume2.TestPoint(PlayerEntity.Main.Position))
+            if (!_activeVolume.TestPoint(PlayerEntity.Main.Position))
             {
                 return false;
             }
@@ -161,7 +161,7 @@ namespace MphRead.Entities.Enemies
         // wait for player to be in range
         private bool Behavior04()
         {
-            if (!_volume1.TestPoint(PlayerEntity.Main.Position))
+            if (!_rangeVolume.TestPoint(PlayerEntity.Main.Position))
             {
                 return false;
             }
