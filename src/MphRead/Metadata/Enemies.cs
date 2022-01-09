@@ -203,6 +203,101 @@ namespace MphRead
             })
         };
 
+        public static IReadOnlyList<EnemySubroutine<Enemy10Entity>> Enemy10Subroutines = new EnemySubroutine<Enemy10Entity>[6]
+        {
+            // state 0
+            new EnemySubroutine<Enemy10Entity>(new EnemyBehavior<Enemy10Entity>[2]
+            {
+                new EnemyBehavior<Enemy10Entity>(0, Enemy10Entity.Behavior01),
+                new EnemyBehavior<Enemy10Entity>(1, Enemy10Entity.Behavior03)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy10Entity>(new EnemyBehavior<Enemy10Entity>[5]
+            {
+                new EnemyBehavior<Enemy10Entity>(1, Enemy10Entity.Behavior01),
+                new EnemyBehavior<Enemy10Entity>(2, Enemy10Entity.Behavior06),
+                new EnemyBehavior<Enemy10Entity>(4, Enemy10Entity.Behavior07),
+                new EnemyBehavior<Enemy10Entity>(4, Enemy10Entity.Behavior08),
+                new EnemyBehavior<Enemy10Entity>(4, Enemy10Entity.Behavior09)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy10Entity>(new EnemyBehavior<Enemy10Entity>[1]
+            {
+                new EnemyBehavior<Enemy10Entity>(3, Enemy10Entity.Behavior00)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy10Entity>(new EnemyBehavior<Enemy10Entity>[2]
+            {
+                new EnemyBehavior<Enemy10Entity>(4, Enemy10Entity.Behavior04),
+                new EnemyBehavior<Enemy10Entity>(2, Enemy10Entity.Behavior05)
+            }),
+            // state 4
+            new EnemySubroutine<Enemy10Entity>(new EnemyBehavior<Enemy10Entity>[1]
+            {
+                new EnemyBehavior<Enemy10Entity>(0, Enemy10Entity.Behavior01)
+            }),
+            // state 5
+            new EnemySubroutine<Enemy10Entity>(new EnemyBehavior<Enemy10Entity>[1]
+            {
+                new EnemyBehavior<Enemy10Entity>(1, Enemy10Entity.Behavior02)
+            }),
+        };
+
+        public static IReadOnlyList<Enemy10Values> Enemy10Values = new Enemy10Values[3]
+        {
+            // Barbed War Wasp
+            new Enemy10Values()
+            {
+                HealthMax = 50,
+                BeamDamage = 3,
+                SplashDamage = 0,
+                ContactDamage = 15,
+                StepDistance1 = 1024,
+                StepDistance2 = 819,
+                StepDistance3 = 2457,
+                CircleIncrement = 6144,
+                Unknown18 = 0x3C001E,
+                MinShots = 1,
+                MaxShots = 2,
+                ScanId = 215,
+                Effectiveness = 0xEABA
+            },
+            // Red Barbed War Wasp
+            new Enemy10Values()
+            {
+                HealthMax = 120,
+                BeamDamage = 10,
+                SplashDamage = 2,
+                ContactDamage = 10,
+                StepDistance1 = 1433,
+                StepDistance2 = 1638,
+                StepDistance3 = 2457,
+                CircleIncrement = 6144,
+                Unknown18 = 0x3C001E,
+                MinShots = 1,
+                MaxShots = 3,
+                ScanId = 191,
+                Effectiveness = 0xCEAA
+            },
+            // Blue Barbed War Wasp
+            new Enemy10Values()
+            {
+                HealthMax = 120,
+                BeamDamage = 8,
+                SplashDamage = 0,
+                ContactDamage = 10,
+                StepDistance1 = 614,
+                StepDistance2 = 409,
+                StepDistance3 = 1024,
+                CircleIncrement = 6144,
+                Unknown18 = 0x3C001E,
+                MinShots = 1,
+                MaxShots = 1,
+                ScanId = 192,
+                Effectiveness = 0xF2AA
+            }
+        };
+
         public static IReadOnlyList<EnemySubroutine<Enemy39Entity>> Enemy39Subroutines = new EnemySubroutine<Enemy39Entity>[6]
         {
             // state 0
@@ -240,6 +335,7 @@ namespace MphRead
 
         public static IReadOnlyList<Enemy39Values> Enemy39Values = new Enemy39Values[2]
         {
+            // Fire Spawn
             new Enemy39Values()
             {
                 HealthMax = 600,
@@ -257,6 +353,7 @@ namespace MphRead
                 ScanId = 222,
                 Effectiveness = 0x8955
             },
+            // Arctic Spawn
             new Enemy39Values()
             {
                 HealthMax = 600,

@@ -30,6 +30,8 @@ namespace MphRead.Entities
         protected CollisionVolume _hurtVolumeInit = default;
         protected byte _state1 = 0; // todo: names ("next?")
         protected byte _state2 = 0;
+        // Barbed War Wasp needs to update this in between _state1 being set to _state2 and the subroutine being called
+        protected byte _subId = 0;
         public bool[] HitPlayers { get; } = new bool[4];
         protected Vector3 _prevPos = Vector3.Zero;
         protected Vector3 _speed = Vector3.Zero;
@@ -172,6 +174,7 @@ namespace MphRead.Entities
                 if (_health > 0)
                 {
                     _state1 = _state2;
+                    _subId = _state1;
                     if (!Flags.TestFlag(EnemyFlags.Static))
                     {
                         DoMovement();
@@ -452,7 +455,7 @@ namespace MphRead.Entities
         protected bool CallSubroutine<T>(IReadOnlyList<EnemySubroutine<T>> subroutines, T enemy) where T : EnemyInstanceEntity
         {
             Debug.Assert(enemy == this);
-            EnemySubroutine<T> subroutine = subroutines[_state1];
+            EnemySubroutine<T> subroutine = subroutines[_subId];
             if (subroutine.Behaviors.Count == 0)
             {
                 return false;

@@ -64,7 +64,7 @@ namespace MphRead
         public ushort AmmoCost { get; }
         public ushort MinChargeCost { get; }
         public ushort ChargeCost { get; }
-        public ushort UnchargedDamage { get; set; } // todo: yep
+        public ushort UnchargedDamage { get; set; } // sktodo: deal with this
         public ushort MinChargeDamage { get; }
         public ushort ChargedDamage { get; }
         public ushort HeadshotDamage { get; set; }

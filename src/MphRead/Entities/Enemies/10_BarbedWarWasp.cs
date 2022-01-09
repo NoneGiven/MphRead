@@ -5,9 +5,10 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
 {
-    public class Enemy00Entity : EnemyInstanceEntity
+    public class Enemy10Entity : EnemyInstanceEntity
     {
         private readonly EnemySpawnEntity _spawner;
+        private Enemy10Values _values;
         private uint _movementType; // todo: enum
         private CollisionVolume _movementVolume;
         private CollisionVolume _homeVolume;
@@ -16,43 +17,57 @@ namespace MphRead.Entities.Enemies
         private byte _pattern = 0; // todo: enum
         private byte _finalMoveIndex = 0;
         private int _stepCount = 0;
-        private ushort _attackDelay = 0;
-        private Vector3 _attackTarget;
         private Vector3 _moveTarget;
         private Vector3 _initialPos;
+        private Vector3 _aimVector;
         private readonly Vector3[] _movePositions = new Vector3[16];
         private byte _moveIndex = 0;
         private byte _maxMoveIndex = 0;
         private float _circleAngle = 0;
 
-        public Enemy00Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        private EquipInfo _equipInfo = null!;
+        private int _ammo = 1000;
+        private ushort _shotCount = 0;
+        private ushort _shotTimer = 0;
+
+        public Enemy10Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);
             _spawner = spawner;
-            _stateProcesses = new Action[7]
+            _stateProcesses = new Action[6]
             {
-                State0, State1, State2, State3, State4, State5, State6
+                State0, State1, State2, State3, State4, State5
             };
         }
 
+        // todo: this is mostly identical to War Wasp
         protected override bool EnemyInitialize()
         {
-            Matrix4 transform = GetTransformMatrix(_spawner.Data.Header.FacingVector.ToFloatVector(), Vector3.UnitY);
-            transform.Row3.Xyz = _spawner.Data.Header.Position.ToFloatVector();
-            Transform = transform;
-            _movementType = _spawner.Data.Fields.S01.WarWasp.MovementType;
-            _health = _healthMax = (ushort)(_movementType == 3 ? 8 : 40);
+            Recolor = (int)_spawner.Data.Fields.S06.EnemyVersion;
+            SetTransform(_spawner.FacingVector, Vector3.UnitY, _spawner.Position);
+            _movementType = _spawner.Data.Fields.S08.WarWasp.MovementType;
             Flags |= EnemyFlags.Visible;
             Flags |= EnemyFlags.OnRadar;
             _boundingRadius = 1;
             _hurtVolumeInit = new CollisionVolume(new Vector3(0, -0.45f, 0), 1.4f);
-            _homeVolume = CollisionVolume.Move(_spawner.Data.Fields.S01.WarWasp.Volume2, Position);
-            _movementVolume = CollisionVolume.Move(_spawner.Data.Fields.S01.WarWasp.Volume1, Position);
-            SetUpModel(Metadata.EnemyModelNames[0], animIndex: 1);
-            _stepDistance = 0.2f;
-            _attackDelay = 30 * 2; // todo: FPS stuff
-            _attackTarget = _initialPos = Position;
+            _values = Metadata.Enemy10Values[(int)_spawner.Data.Fields.S08.EnemySubtype];
+            _health = _healthMax = _values.HealthMax;
+            Metadata.LoadEffectiveness(_values.Effectiveness, BeamEffectiveness);
+            // todo: scan ID
+            _homeVolume = CollisionVolume.Move(_spawner.Data.Fields.S08.WarWasp.Volume2, Position);
+            _movementVolume = CollisionVolume.Move(_spawner.Data.Fields.S08.WarWasp.Volume1, Position);
+            WeaponInfo weapon = Weapons.EnemyWeapons[Recolor];
+            weapon.UnchargedDamage = _values.BeamDamage;
+            weapon.SplashDamage = _values.SplashDamage;
+            _equipInfo = new EquipInfo(weapon, _beams);
+            _equipInfo.GetAmmo = () => _ammo;
+            _equipInfo.SetAmmo = (newAmmo) => _ammo = newAmmo;
+            _shotCount = (ushort)(_values.MinShots + Rng.GetRandomInt2(_values.MaxShots + 1 - _values.MinShots));
+            _shotTimer = 30 * 2; // todo: FPS stuff
+            SetUpModel(Metadata.EnemyModelNames[10], animIndex: 1);
+            _stepDistance = Fixed.ToFloat(_values.StepDistance1);
+            _initialPos = Position;
             if (_movementType == 1)
             {
                 _moveIndex = 1;
@@ -69,11 +84,11 @@ namespace MphRead.Entities.Enemies
             }
             else if (_movementType == 2 || _movementType == 3)
             {
-                _maxMoveIndex = (byte)(_spawner.Data.Fields.S01.WarWasp.PositionCount - 1);
+                _maxMoveIndex = (byte)(_spawner.Data.Fields.S08.WarWasp.PositionCount - 1);
                 _finalMoveIndex = _maxMoveIndex;
                 for (int i = 0; i < 16; i++)
                 {
-                    _movePositions[i] = _spawner.Data.Fields.S01.WarWasp.MovementVectors[i].ToFloatVector() + Position;
+                    _movePositions[i] = _spawner.Data.Fields.S08.WarWasp.MovementVectors[i].ToFloatVector() + Position;
                 }
             }
             if (_movementType != 0)
@@ -95,15 +110,16 @@ namespace MphRead.Entities.Enemies
         private void StartMovingTowardPosition()
         {
             _moveTarget = _movePositions[_moveIndex];
-            StartMovingToward(_moveTarget, step: _movementType == 3 ? 0.25f : 0.2f);
+            StartMovingToward(_moveTarget, Fixed.ToFloat(_values.StepDistance1));
             SetTransform(_speed.Normalized(), Vector3.UnitY, Position);
         }
 
+        // todo: this is identical to War Wasp except for the increment
         private void MoveInCircle()
         {
             if (_movementType == 0)
             {
-                _circleAngle += 1.5f / 2; // todo: FPS stuff
+                _circleAngle += Fixed.ToFloat(_values.CircleIncrement) / 2; // todo: FPS stuff
                 if (_circleAngle >= 360)
                 {
                     _circleAngle -= 360;
@@ -117,14 +133,23 @@ namespace MphRead.Entities.Enemies
 
         protected override void EnemyProcess()
         {
-            if (_state1 != 4 && _state1 != 5)
+            if (HandleBlockingCollision(Position, _hurtVolume, updateSpeed: true) && _state1 == 3)
             {
-                ContactDamagePlayer(3, knockback: false);
+                _state2 = 5;
+                _subId = _state2;
+                StartMovingToward(_moveTarget, Fixed.ToFloat(_values.StepDistance3));
+                SetTransform(_speed.Normalized(), Vector3.UnitY, Position);
+                if (_models[0].AnimInfo.Index[0] == 2)
+                {
+                    _models[0].SetAnimation(1);
+                }
             }
+            ContactDamagePlayer(_values.ContactDamage, knockback: false);
             // todo: play SFX
             CallStateProcess();
         }
 
+        // todo: identical to Warp Wasp
         private void State0()
         {
             MoveInCircle();
@@ -132,9 +157,10 @@ namespace MphRead.Entities.Enemies
             {
                 SetTransform((_moveTarget - Position).Normalized(), Vector3.UnitY, Position);
             }
-            CallSubroutine(Metadata.Enemy00Subroutines, this);
+            CallSubroutine(Metadata.Enemy10Subroutines, this);
         }
 
+        // todo: identical to Warp Wasp
         private void State1()
         {
             Vector3 playerPos = PlayerEntity.Main.Position;
@@ -142,7 +168,7 @@ namespace MphRead.Entities.Enemies
             {
                 SetTransform((playerPos - Position).Normalized(), Vector3.UnitY, Position);
             }
-            CallSubroutine(Metadata.Enemy00Subroutines, this);
+            CallSubroutine(Metadata.Enemy10Subroutines, this);
         }
 
         private void State2()
@@ -152,69 +178,53 @@ namespace MphRead.Entities.Enemies
 
         private void State3()
         {
-            State1();
+            if (_shotCount > 0 && _shotTimer == 10 * 2) // todo: FPS stuff
+            {
+                // sktodo: deal with this
+                _equipInfo.Weapon.UnchargedDamage = _values.BeamDamage;
+                _equipInfo.Weapon.SplashDamage = _values.SplashDamage;
+                _equipInfo.Weapon.HeadshotDamage = _values.BeamDamage;
+                Vector3 spawnPos = Position.AddY(-0.5f);
+                BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, _aimVector, BeamSpawnFlags.None, _scene);
+                _shotCount--;
+                // todo: play SFX
+            }
+            else if (_shotTimer == 15 * 2) // todo: FPS stuff
+            {
+                _models[0].SetAnimation(2, AnimFlags.None | AnimFlags.Reverse);
+                _models[0].AnimInfo.Frame[0] = 15;
+            }
+            _shotTimer--;
+            CallSubroutine(Metadata.Enemy10Subroutines, this);
         }
 
         private void State4()
-        {
-            if (HitPlayers[PlayerEntity.Main.SlotIndex])
-            {
-                PlayerEntity.Main.TakeDamage(25, DamageFlags.None, direction: null, this);
-                _stepCount = 0;
-            }
-            CallSubroutine(Metadata.Enemy00Subroutines, this);
-        }
-
-        private void State5()
-        {
-            if (HitPlayers[PlayerEntity.Main.SlotIndex])
-            {
-                PlayerEntity.Main.TakeDamage(25, DamageFlags.None, direction: null, this);
-            }
-            CallSubroutine(Metadata.Enemy00Subroutines, this);
-        }
-
-        private void State6()
         {
             if (Position != _moveTarget)
             {
                 SetTransform((_moveTarget - Position).Normalized(), Vector3.UnitY, Position);
             }
-            CallSubroutine(Metadata.Enemy00Subroutines, this);
+            CallSubroutine(Metadata.Enemy10Subroutines, this);
+        }
+
+        private void State5()
+        {
+            CallSubroutine(Metadata.Enemy10Subroutines, this);
         }
 
         private bool Behavior00()
         {
-            if (_stepCount > 0)
+            if (_models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
             {
-                _stepCount--;
-                return false;
+                _aimVector = (PlayerEntity.Main.Position.AddY(0.5f) - Position).Normalized();
+                _models[0].SetAnimation(2, AnimFlags.NoLoop);
+                return true;
             }
-            StartMovingToward(_attackTarget, step: 1.2f);
-            return true;
+            return false;
         }
 
+        // todo: same as War Wasp Behavior02 except for the state comparison and replacement value in StartMovingToward
         private bool Behavior01()
-        {
-            _attackDelay = 30 * 2; // todo: FPS stuff
-            if (_stepCount > 0)
-            {
-                _stepCount--;
-                return false;
-            }
-            if (_movementType == 0)
-            {
-                _speed = Vector3.Zero;
-            }
-            else
-            {
-                StartMovingTowardPosition();
-                _models[0].SetAnimation(1);
-            }
-            return true;
-        }
-
-        private bool Behavior02()
         {
             if (_movementType == 0 && (_state1 == 0 || _state1 == 1))
             {
@@ -244,12 +254,33 @@ namespace MphRead.Entities.Enemies
                     _moveIndex--;
                 }
                 _moveTarget = _movePositions[_moveIndex];
-                StartMovingToward(_moveTarget, _state1 == 6 ? 0.2f : _stepDistance);
+                StartMovingToward(_moveTarget, _state1 == 4 ? Fixed.ToFloat(_values.StepDistance1) : _stepDistance);
                 SetTransform(_speed.Normalized(), Vector3.UnitY, Position);
             }
             return true;
         }
 
+        // todo: same as War Wasp Behavior01 except it doesn't have _attackDelay
+        private bool Behavior02()
+        {
+            if (_stepCount > 0)
+            {
+                _stepCount--;
+                return false;
+            }
+            if (_movementType == 0)
+            {
+                _speed = Vector3.Zero;
+            }
+            else
+            {
+                StartMovingTowardPosition();
+                _models[0].SetAnimation(1);
+            }
+            return true;
+        }
+
+        // todo: same as War Wasp Behavior03 except for the step distance
         private bool Behavior03()
         {
             if (_movementType == 3 || !_homeVolume.TestPoint(PlayerEntity.Main.Position))
@@ -258,33 +289,42 @@ namespace MphRead.Entities.Enemies
             }
             _finalMoveIndex = _moveIndex;
             _nextPattern = _pattern = 2;
-            _stepDistance = 0.15f;
+            _stepDistance = Fixed.ToFloat(_values.StepDistance2);
             return true;
         }
 
         private bool Behavior04()
         {
-            if (_stepCount > 0)
+            if (_shotCount > 0 || _shotTimer > 0)
             {
-                _stepCount--;
                 return false;
             }
-            StartMovingToward(_moveTarget, 1.2f);
+            _shotCount = (ushort)(_values.MinShots + Rng.GetRandomInt2(_values.MaxShots + 1 - _values.MinShots));
+            _shotTimer = 30 * 2; // todo: FPS stuff
+            if (_movementType == 0)
+            {
+                _speed = Vector3.Zero;
+            }
+            else
+            {
+                StartMovingTowardPosition();
+                _models[0].SetAnimation(1);
+            }
             return true;
         }
 
         private bool Behavior05()
         {
-            if (!HandleBlockingCollision(Position, _hurtVolume, updateSpeed: true))
+            if (_shotCount == 0 || _shotTimer > 0)
             {
                 return false;
             }
-            StartMovingToward(_moveTarget, 1.2f);
-            SetTransform(_speed.Normalized(), Vector3.UnitY, Position);
-            _models[0].SetAnimation(1);
+            _shotTimer = 30 * 2; // todo: FPS stuff
+            _models[0].SetAnimation(0, AnimFlags.NoLoop);
             return true;
         }
 
+        // todo: same as War Wasp Behavior06 except for setting the animation
         private bool Behavior06()
         {
             if (_movementType != 0 && _finalMoveIndex != _moveIndex)
@@ -299,9 +339,11 @@ namespace MphRead.Entities.Enemies
                 facing = facing.Normalized();
             }
             SetTransform(facing, Vector3.UnitY, Position);
+            _models[0].SetAnimation(0, AnimFlags.NoLoop);
             return true;
         }
 
+        // todo: same as War Wasp Behavior07
         private bool Behavior07()
         {
             if (_homeVolume.TestPoint(Position))
@@ -312,6 +354,7 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
+        // todo: same as War Wasp Behavior08    
         private bool Behavior08()
         {
             if (_homeVolume.TestPoint(PlayerEntity.Main.Position))
@@ -322,6 +365,19 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
+        // todo: same as War Wasp Behavior10
+        private bool Behavior09()
+        {
+            CollisionResult res = default;
+            if (!CollisionDetection.CheckBetweenPoints(Position, _scene.CameraPosition, TestFlags.None, _scene, ref res))
+            {
+                return false;
+            }
+            ReachTargetOrReversePattern();
+            return true;
+        }
+
+        // todo: same as War Wasp
         private void ReachTargetOrReversePattern()
         {
             _speed = _moveTarget - Position;
@@ -335,6 +391,7 @@ namespace MphRead.Entities.Enemies
             }
         }
 
+        // todo: same as War Wasp
         private void ReversePattern()
         {
             _pattern = _nextPattern;
@@ -351,88 +408,75 @@ namespace MphRead.Entities.Enemies
             StartMovingTowardPosition();
         }
 
-        private bool Behavior09()
-        {
-            if (_attackDelay > 0)
-            {
-                _attackDelay--;
-                return false;
-            }
-            _attackTarget = PlayerEntity.Main.Position;
-            _stepCount = 40 * 2; // todo: FPS stuff
-            _models[0].SetAnimation(3, AnimFlags.NoLoop);
-            // todo: play SFX
-            return true;
-        }
-
-        private bool Behavior10()
-        {
-            CollisionResult res = default;
-            if (!CollisionDetection.CheckBetweenPoints(Position, _scene.CameraPosition, TestFlags.None, _scene, ref res))
-            {
-                return false;
-            }
-            ReachTargetOrReversePattern();
-            return true;
-        }
-
         #region Boilerplate
 
-        public static bool Behavior00(Enemy00Entity enemy)
+        public static bool Behavior00(Enemy10Entity enemy)
         {
             return enemy.Behavior00();
         }
 
-        public static bool Behavior01(Enemy00Entity enemy)
+        public static bool Behavior01(Enemy10Entity enemy)
         {
             return enemy.Behavior01();
         }
 
-        public static bool Behavior02(Enemy00Entity enemy)
+        public static bool Behavior02(Enemy10Entity enemy)
         {
             return enemy.Behavior02();
         }
 
-        public static bool Behavior03(Enemy00Entity enemy)
+        public static bool Behavior03(Enemy10Entity enemy)
         {
             return enemy.Behavior03();
         }
 
-        public static bool Behavior04(Enemy00Entity enemy)
+        public static bool Behavior04(Enemy10Entity enemy)
         {
             return enemy.Behavior04();
         }
 
-        public static bool Behavior05(Enemy00Entity enemy)
+        public static bool Behavior05(Enemy10Entity enemy)
         {
             return enemy.Behavior05();
         }
 
-        public static bool Behavior06(Enemy00Entity enemy)
+        public static bool Behavior06(Enemy10Entity enemy)
         {
             return enemy.Behavior06();
         }
 
-        public static bool Behavior07(Enemy00Entity enemy)
+        public static bool Behavior07(Enemy10Entity enemy)
         {
             return enemy.Behavior07();
         }
 
-        public static bool Behavior08(Enemy00Entity enemy)
+        public static bool Behavior08(Enemy10Entity enemy)
         {
             return enemy.Behavior08();
         }
 
-        public static bool Behavior09(Enemy00Entity enemy)
+        public static bool Behavior09(Enemy10Entity enemy)
         {
             return enemy.Behavior09();
         }
 
-        public static bool Behavior10(Enemy00Entity enemy)
-        {
-            return enemy.Behavior10();
-        }
-
         #endregion
+    }
+
+    public struct Enemy10Values
+    {
+        public ushort HealthMax { get; set; }
+        public ushort BeamDamage { get; set; }
+        public ushort SplashDamage { get; set; }
+        public ushort ContactDamage { get; set; }
+        public int StepDistance1 { get; set; }
+        public int StepDistance2 { get; set; }
+        public int StepDistance3 { get; set; }
+        public int CircleIncrement { get; set; }
+        public int Unknown18 { get; set; } // functionless
+        public short MinShots { get; set; }
+        public short MaxShots { get; set; }
+        public int ScanId { get; set; }
+        public int Effectiveness { get; set; }
     }
 }

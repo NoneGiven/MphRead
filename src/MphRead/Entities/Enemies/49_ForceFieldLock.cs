@@ -13,6 +13,7 @@ namespace MphRead.Entities.Enemies
         private readonly ForceFieldEntity _forceField;
         private byte _shotFrames = 0;
         private EquipInfo? _equipInfo;
+        private int _ammo = -1;
 
         // todo?: technically this has a custom draw function, but I don't think we need it (unless it's possible to observe the damage flash)
         public Enemy49Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
@@ -69,8 +70,9 @@ namespace MphRead.Entities.Enemies
             };
             SetUpModel("ForceFieldLock");
             Recolor = _forceField.Recolor;
-            // todo: ammo pointer
             _equipInfo = new EquipInfo(Weapons.Weapons1P[(int)_forceField.Data.Type], _beams);
+            _equipInfo.GetAmmo = () => _ammo;
+            _equipInfo.SetAmmo = (newAmmo) => _ammo = newAmmo;
             return true;
         }
 

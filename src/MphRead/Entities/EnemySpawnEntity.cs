@@ -251,6 +251,10 @@ namespace MphRead.Entities
             {
                 return new Enemy06Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
+            if (type == EnemyType.BarbedWarWasp)
+            {
+                return new Enemy10Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
             if (type == EnemyType.FireSpawn)
             {
                 return new Enemy39Entity(new EnemyInstanceEntityData(type, spawner), scene);
