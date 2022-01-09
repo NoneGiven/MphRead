@@ -180,7 +180,6 @@ namespace MphRead.Entities.Enemies
         {
             if (_shotCount > 0 && _shotTimer == 10 * 2) // todo: FPS stuff
             {
-                // sktodo: deal with this
                 _equipInfo.Weapon.UnchargedDamage = _values.BeamDamage;
                 _equipInfo.Weapon.SplashDamage = _values.SplashDamage;
                 _equipInfo.Weapon.HeadshotDamage = _values.BeamDamage;
