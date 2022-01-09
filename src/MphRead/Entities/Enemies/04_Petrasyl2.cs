@@ -17,7 +17,6 @@ namespace MphRead.Entities.Enemies
         private float _bobSpeed = 0;
         private float _weaveAngle = 0;
         private ushort _field170 = 0;
-        private ushort _field172 = 0;
 
         public Enemy04Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
         {
@@ -44,7 +43,7 @@ namespace MphRead.Entities.Enemies
             _models[0].SetAnimation(2, slot: 1, SetFlags.Texcoord);
             Vector3 facing = _spawner.Data.Header.FacingVector.ToFloatVector().Normalized();
             Vector3 position = _spawner.Data.Fields.S04.Position.ToFloatVector() + _spawner.Data.Header.Position.ToFloatVector();
-            position = position.AddY(Fixed.ToFloat(5461)); // 5461
+            position = position.AddY(Fixed.ToFloat(5461));
             SetTransform(facing, Vector3.UnitY, position);
             _initialPos = position;
             _weaveOffset = Fixed.ToFloat(_spawner.Data.Fields.S04.WeaveOffset);
