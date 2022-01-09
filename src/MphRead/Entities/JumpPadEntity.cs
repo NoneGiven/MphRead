@@ -134,6 +134,7 @@ namespace MphRead.Entities
                     // todo: room state
                 }
             }
+            _models[1].Active = Active;
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)
