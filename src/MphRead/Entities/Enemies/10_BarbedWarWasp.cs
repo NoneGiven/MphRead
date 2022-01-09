@@ -44,7 +44,7 @@ namespace MphRead.Entities.Enemies
         // todo: this is mostly identical to War Wasp
         protected override bool EnemyInitialize()
         {
-            Recolor = (int)_spawner.Data.Fields.S06.EnemyVersion;
+            Recolor = (int)_spawner.Data.Fields.S08.EnemyVersion;
             SetTransform(_spawner.FacingVector, Vector3.UnitY, _spawner.Position);
             _movementType = _spawner.Data.Fields.S08.WarWasp.MovementType;
             Flags |= EnemyFlags.Visible;
