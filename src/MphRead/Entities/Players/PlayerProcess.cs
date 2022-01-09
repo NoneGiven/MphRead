@@ -70,7 +70,8 @@ namespace MphRead.Entities
                         PlayerSpawnEntity? respawn = GetRespawnPoint();
                         if (respawn != null)
                         {
-                            Spawn(respawn.Position, respawn.FacingVector, respawn.UpVector, respawn: true);
+                            Vector3 position = ForcedSpawnPos ?? respawn.Position;
+                            Spawn(position, respawn.FacingVector, respawn.UpVector, respawn: true);
                         }
                     }
                 }

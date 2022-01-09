@@ -536,7 +536,7 @@ namespace MphRead
         }
 
         // todo: document other replacements
-        // defualt = 0x2AAAA = 101010101010101010 (2/normal effectiveness for everything)
+        // default = 0x2AAAA = 101010101010101010 (2/normal effectiveness for everything)
         // replacements:
         // AlimbicTurretV10 - 0xEAAA - zero Omega Cannon, double Shock Coil
         // AlimbicTurretV14 - 0xEABA - zero Omega Cannon, double Missile/Shock Coil

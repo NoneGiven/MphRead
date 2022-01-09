@@ -287,6 +287,7 @@ namespace MphRead
                 var player = PlayerEntity.Create(hunter, recolor);
                 if (player != null)
                 {
+                    player.ForcedSpawnPos = position;
                     // todo: revisit flags
                     player.LoadFlags |= LoadFlags.SlotActive;
                     player.LoadFlags |= LoadFlags.Active;

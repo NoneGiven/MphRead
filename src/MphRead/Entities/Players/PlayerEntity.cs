@@ -414,6 +414,7 @@ namespace MphRead.Entities
         // debug/viewer
         public bool IgnoreItemPickups { get; set; }
         public static bool FreeCamera { get; set; } = true;
+        public Vector3? ForcedSpawnPos { get; set; }
 
         private PlayerEntity(int slotIndex, Scene scene) : base(EntityType.Player, scene)
         {
@@ -1017,6 +1018,10 @@ namespace MphRead.Entities
             }
             if (beam != BeamType.None && CurrentWeapon != beam)
             {
+                _availableWeapons[beam] = true;
+                _availableCharges[beam] = true;
+                _ammo[0] = 1000;
+                _ammo[1] = 1000;
                 TryEquipWeapon(beam, silent: false);
             }
         }
