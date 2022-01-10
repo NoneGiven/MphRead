@@ -76,7 +76,7 @@ namespace MphRead.Entities.Enemies
             _equipInfo.SetAmmo = (newAmmo) => _ammo = newAmmo;
             _field250 = (ushort)(_values.Field24 * 2); // todo: FPS stuff
             _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
-            _speedFactor = Fixed.ToFloat(_values.MinSpeedFactor1);
+            _speedFactor = Fixed.ToFloat(_values.MinSpeedFactor1) / 2;
             _state1 = _state2 = 9;
             Debug.Assert(_volume1.Type != VolumeType.Sphere);
             bool atHomePoint = false;
@@ -121,7 +121,7 @@ namespace MphRead.Entities.Enemies
             else
             {
                 UpdateMoveTarget(homePoint);
-                _speedFactor = Fixed.ToFloat(_values.MinSpeedFactor2); // sktodo: FPS stuff?
+                _speedFactor = Fixed.ToFloat(_values.MinSpeedFactor2) / 2;
             }
             _increaseSpeed = true;
             _shotCount = (ushort)(_values.MinShots + Rng.GetRandomInt2(_values.MaxShots + 1 - _values.MinShots));
@@ -194,7 +194,6 @@ namespace MphRead.Entities.Enemies
 
         private void UpdateMoveTarget(Vector3 targetPoint)
         {
-            // sktodo: FPS stuff?
             Vector3 facing = FacingVector;
             _moveTarget = targetPoint;
             _field2D8 = Position;
@@ -250,24 +249,24 @@ namespace MphRead.Entities.Enemies
                     _increaseSpeed = false;
                 }
             }
+            // todo: FPS stuff
             if (_increaseSpeed)
             {
-                _speedFactor += _speedInc / 2; // todo: FPS stuff
-                if (_speedFactor > max)
+                _speedFactor += _speedInc;
+                if (_speedFactor > max / 2)
                 {
-                    _speedFactor = max;
+                    _speedFactor = max / 2;
                 }
             }
             else
             {
-                _speedFactor -= _speedInc / 2; // todo: FPS stuff
-                if (_speedFactor < min)
+                _speedFactor -= _speedInc;
+                if (_speedFactor < min / 2)
                 {
-                    _speedFactor = min;
+                    _speedFactor = min / 2;
                 }
             }
             _speed = FacingVector * _speedFactor;
-            _speed /= 2; // todo: FPS stuff
         }
 
         private void State00()
@@ -375,12 +374,13 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
+            // todo: FPS stuff
             float minFactor = Fixed.ToFloat(_values.MinSpeedFactor2);
             float maxFactor = Fixed.ToFloat(_values.MaxSpeedFactor2);
-            _speedFactor = minFactor;
+            _speedFactor = minFactor / 2;
             _speedInc = (maxFactor - minFactor) * (1 / Fixed.ToFloat(_values.Field34));
+            _speedInc /= 2;
             _speed = facing * _speedFactor;
-            _speed /= 2; // todo: FPS stuff
             _field264 = facing;
             _models[0].SetAnimation(2);
             return true;
@@ -449,12 +449,13 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
+            // todo: FPS stuff
             float minFactor = Fixed.ToFloat(_values.MinSpeedFactor1);
             float maxFactor = Fixed.ToFloat(_values.MaxSpeedFactor1);
-            _speedFactor = minFactor;
+            _speedFactor = minFactor / 2;
             _speedInc = (maxFactor - minFactor) * (1 / Fixed.ToFloat(_values.Field34));
+            _speedInc /= 2;
             _speed = facing * _speedFactor;
-            _speed /= 2; // todo: FPS stuff
             _field264 = facing;
             return true;
         }
