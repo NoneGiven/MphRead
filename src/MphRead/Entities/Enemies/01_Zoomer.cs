@@ -59,7 +59,7 @@ namespace MphRead.Entities.Enemies
 
         protected override void EnemyProcess()
         {
-            // todo: owner ent col (although it's unused)
+            // todo?: owner ent col (although it's unused)
             ModelInstance model = _models[0];
             if (model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended) && model.AnimInfo.Index[0] != 0)
             {

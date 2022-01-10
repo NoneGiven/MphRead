@@ -357,6 +357,114 @@ namespace MphRead
             })
         };
 
+        public static IReadOnlyList<EnemySubroutine<Enemy18Entity>> Enemy18Subroutines = new EnemySubroutine<Enemy18Entity>[5]
+        {
+            // state 0
+            new EnemySubroutine<Enemy18Entity>(new EnemyBehavior<Enemy18Entity>[1]
+            {
+                new EnemyBehavior<Enemy18Entity>(1, Enemy18Entity.Behavior00)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy18Entity>(new EnemyBehavior<Enemy18Entity>[2]
+            {
+                new EnemyBehavior<Enemy18Entity>(2, Enemy18Entity.Behavior04),
+                new EnemyBehavior<Enemy18Entity>(4, Enemy18Entity.Behavior02)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy18Entity>(new EnemyBehavior<Enemy18Entity>[2]
+            {
+                new EnemyBehavior<Enemy18Entity>(3, Enemy18Entity.Behavior05),
+                new EnemyBehavior<Enemy18Entity>(4, Enemy18Entity.Behavior02)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy18Entity>(new EnemyBehavior<Enemy18Entity>[2]
+            {
+                new EnemyBehavior<Enemy18Entity>(4, Enemy18Entity.Behavior02),
+                new EnemyBehavior<Enemy18Entity>(2, Enemy18Entity.Behavior03)
+            }),
+            // state 4
+            new EnemySubroutine<Enemy18Entity>(new EnemyBehavior<Enemy18Entity>[1]
+            {
+                new EnemyBehavior<Enemy18Entity>(0, Enemy18Entity.Behavior01)
+            })
+        };
+
+        public static IReadOnlyList<Enemy18Values> Enemy18Values = new Enemy18Values[3]
+        {
+            // Alimbic Turret v1.0
+            new Enemy18Values()
+            {
+                HealthMax = 24,
+                BeamDamage = 2,
+                SplashDamage = 0,
+                ContactDamage = 5,
+                MinAngleY = -184320,
+                MaxAngleY = 184320,
+                AngleIncY = 4096,
+                MinAngleX = 0,
+                MaxAngleX = 245760,
+                AngleIncX = 4096,
+                ShotCooldown = 5,
+                DelayTime = 40,
+                MinShots = 1,
+                MaxShots = 2,
+                Unknown28 = 214,
+                Unknown2C = 4090,
+                Unknown2E = 0,
+                ShotOffset = 4096,
+                ScanId = 219,
+                Effectiveness = 0xEAAA
+            },
+            // Alimbic Turret v1.4
+            new Enemy18Values()
+            {
+                HealthMax = 80,
+                BeamDamage = 4,
+                SplashDamage = 2,
+                ContactDamage = 5,
+                MinAngleY = -184320,
+                MaxAngleY = 184320,
+                AngleIncY = 4096,
+                MinAngleX = 0,
+                MaxAngleX = 245760,
+                AngleIncX = 4096,
+                ShotCooldown = 3,
+                DelayTime = 30,
+                MinShots = 3,
+                MaxShots = 5,
+                Unknown28 = 214,
+                Unknown2C = 4090,
+                Unknown2E = 0,
+                ShotOffset = 4096,
+                ScanId = 196,
+                Effectiveness = 0xEABA
+            },
+            // Alimbic Turret v2.7
+            new Enemy18Values()
+            {
+                HealthMax = 120,
+                BeamDamage = 50,
+                SplashDamage = 0,
+                ContactDamage = 5,
+                MinAngleY = -184320,
+                MaxAngleY = 184320,
+                AngleIncY = 4096,
+                MinAngleX = 0,
+                MaxAngleX = 245760,
+                AngleIncX = 4096,
+                ShotCooldown = 3,
+                DelayTime = 90,
+                MinShots = 1,
+                MaxShots = 1,
+                Unknown28 = 214,
+                Unknown2C = 4090,
+                Unknown2E = 0,
+                ShotOffset = 4096,
+                ScanId = 197,
+                Effectiveness = 0xEABA
+            }
+        };
+
         public static IReadOnlyList<EnemySubroutine<Enemy39Entity>> Enemy39Subroutines = new EnemySubroutine<Enemy39Entity>[6]
         {
             // state 0

@@ -267,6 +267,10 @@ namespace MphRead.Entities
             {
                 return new Enemy16Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
+            if (type == EnemyType.AlimbicTurret)
+            {
+                return new Enemy18Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
             if (type == EnemyType.FireSpawn)
             {
                 return new Enemy39Entity(new EnemyInstanceEntityData(type, spawner), scene);

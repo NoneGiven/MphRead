@@ -22,7 +22,7 @@ namespace MphRead.Entities
     public class EnemyInstanceEntity : EntityBase
     {
         protected readonly EnemyInstanceEntityData _data;
-        protected ushort _framesSinceDamage = 510;
+        protected ushort _timeSinceDamage = 510;
         protected ushort _health = 20;
         protected ushort _healthMax = 20;
         protected EntityBase? _owner = null;
@@ -167,9 +167,9 @@ namespace MphRead.Entities
             }
             if (inRange)
             {
-                if (_framesSinceDamage < 510)
+                if (_timeSinceDamage < 510)
                 {
-                    _framesSinceDamage++;
+                    _timeSinceDamage++;
                 }
                 if (_health > 0)
                 {
@@ -262,7 +262,7 @@ namespace MphRead.Entities
                 if (!EnemyGetDrawInfo())
                 {
                     // todo: is_visible
-                    if (_framesSinceDamage < 10)
+                    if (_timeSinceDamage < 5 * 2) // todo: FPS stuff
                     {
                         PaletteOverride = Metadata.RedPalette;
                     }
@@ -408,7 +408,7 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    _framesSinceDamage = 0;
+                    _timeSinceDamage = 0;
                     // todo: play SFX
                     switch (_data.Type)
                     {
@@ -554,6 +554,18 @@ namespace MphRead.Entities
         public static Vector3 RotateVector(Vector3 vec, Vector3 axis, float angle)
         {
             return vec * Matrix3.CreateFromAxisAngle(axis, MathHelper.DegreesToRadians(angle));
+        }
+
+        public static bool SeekTargetVector(Vector3 target, ref Vector3 current, Vector3 axis, ref ushort steps, float angle)
+        {
+            if (Vector3.Dot(target, current) < MathF.Cos(MathHelper.DegreesToRadians(angle)) && steps > 0)
+            {
+                current = RotateVector(current, axis, angle).Normalized();
+                steps--;
+                return false;
+            }
+            current = target;
+            return true;
         }
     }
 

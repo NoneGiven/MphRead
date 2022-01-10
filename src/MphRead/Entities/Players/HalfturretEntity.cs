@@ -332,7 +332,7 @@ namespace MphRead.Entities
         public override void GetDrawInfo()
         {
             ModelInstance inst = _models[0];
-            Model? model = inst.Model;
+            Model model = inst.Model;
             AnimationInfo animInfo = inst.AnimInfo;
             // todo: is_visible
             if (_timeSinceDamage < Owner.Values.DamageFlashTime * 2) // todo: FPS stuff

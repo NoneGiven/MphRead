@@ -514,7 +514,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior04()
         {
-            return _framesSinceDamage == 1;
+            return _timeSinceDamage == 1;
         }
 
         private bool Behavior05()
