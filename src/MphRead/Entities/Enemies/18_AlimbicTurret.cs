@@ -317,11 +317,9 @@ namespace MphRead.Entities.Enemies
                 aimTransform *= transpose;
                 aimTransform.Row3.Xyz = Vector3.Zero;
             }
-            Matrix4 root = Matrix4.Identity; // GetTransformMatrix(FacingVector, upVector);s
             _rotNode.AfterTransform = aimTransform;
-            model.AnimateNodes2(index: 0, false, root, Vector3.One, animInfo);
+            model.AnimateNodes2(index: 0, false, Matrix4.Identity, Vector3.One, animInfo);
             _rotNode.AfterTransform = null;
-            root = Matrix4.CreateTranslation(Position);
             for (int i = 0; i < model.Nodes.Count; i++)
             {
                 Node node = model.Nodes[i];
@@ -376,19 +374,19 @@ namespace MphRead.Entities.Enemies
         public ushort BeamDamage { get; set; }
         public ushort SplashDamage { get; set; }
         public ushort ContactDamage { get; set; }
-        public int MinAngleY { get; set; } // min angle
-        public int MaxAngleY { get; set; } // max angle
-        public int AngleIncY { get; set; } // increment factor for angle
-        public int MinAngleX { get; set; } // min something
-        public int MaxAngleX { get; set; } // max something
-        public int AngleIncX { get; set; } // increment factor for something
+        public int MinAngleY { get; set; }
+        public int MaxAngleY { get; set; }
+        public int AngleIncY { get; set; }
+        public int MinAngleX { get; set; }
+        public int MaxAngleX { get; set; }
+        public int AngleIncX { get; set; }
         public ushort ShotCooldown { get; set; }
         public ushort DelayTime { get; set; }
         public ushort MinShots { get; set; }
         public ushort MaxShots { get; set; }
-        public int Unknown28 { get; set; } // unused?
-        public ushort Unknown2C { get; set; } // unused?
-        public ushort Unknown2E { get; set; } // unused?
+        public int Unused28 { get; set; }
+        public ushort Unused2C { get; set; }
+        public ushort Unused2E { get; set; }
         public int ShotOffset { get; set; }
         public int ScanId { get; set; }
         public int Effectiveness { get; set; }
