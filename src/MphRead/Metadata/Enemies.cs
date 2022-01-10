@@ -408,9 +408,9 @@ namespace MphRead
                 DelayTime = 40,
                 MinShots = 1,
                 MaxShots = 2,
-                Unknown28 = 214,
-                Unknown2C = 4090,
-                Unknown2E = 0,
+                Unused28 = 214,
+                Unused2C = 4090,
+                Unused2E = 0,
                 ShotOffset = 4096,
                 ScanId = 219,
                 Effectiveness = 0xEAAA
@@ -432,9 +432,9 @@ namespace MphRead
                 DelayTime = 30,
                 MinShots = 3,
                 MaxShots = 5,
-                Unknown28 = 214,
-                Unknown2C = 4090,
-                Unknown2E = 0,
+                Unused28 = 214,
+                Unused2C = 4090,
+                Unused2E = 0,
                 ShotOffset = 4096,
                 ScanId = 196,
                 Effectiveness = 0xEABA
@@ -456,12 +456,206 @@ namespace MphRead
                 DelayTime = 90,
                 MinShots = 1,
                 MaxShots = 1,
-                Unknown28 = 214,
-                Unknown2C = 4090,
-                Unknown2E = 0,
+                Unused28 = 214,
+                Unused2C = 4090,
+                Unused2E = 0,
                 ShotOffset = 4096,
                 ScanId = 197,
                 Effectiveness = 0xEABA
+            }
+        };
+
+        public static IReadOnlyList<EnemySubroutine<Enemy23Entity>> Enemy23Subroutines = new EnemySubroutine<Enemy23Entity>[11]
+        {
+            // state 0
+            new EnemySubroutine<Enemy23Entity>(new EnemyBehavior<Enemy23Entity>[2]
+            {
+                new EnemyBehavior<Enemy23Entity>(1, Enemy23Entity.Behavior01),
+                new EnemyBehavior<Enemy23Entity>(2, Enemy23Entity.Behavior07)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy23Entity>(new EnemyBehavior<Enemy23Entity>[1]
+            {
+                new EnemyBehavior<Enemy23Entity>(0, Enemy23Entity.Behavior05)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy23Entity>(new EnemyBehavior<Enemy23Entity>[3]
+            {
+                new EnemyBehavior<Enemy23Entity>(3, Enemy23Entity.Behavior08),
+                new EnemyBehavior<Enemy23Entity>(1, Enemy23Entity.Behavior09),
+                new EnemyBehavior<Enemy23Entity>(8, Enemy23Entity.Behavior10)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy23Entity>(new EnemyBehavior<Enemy23Entity>[4]
+            {
+                new EnemyBehavior<Enemy23Entity>(5, Enemy23Entity.Behavior11),
+                new EnemyBehavior<Enemy23Entity>(1, Enemy23Entity.Behavior09),
+                new EnemyBehavior<Enemy23Entity>(8, Enemy23Entity.Behavior10),
+                new EnemyBehavior<Enemy23Entity>(8, Enemy23Entity.Behavior12)
+            }),
+            // state 4
+            new EnemySubroutine<Enemy23Entity>(new EnemyBehavior<Enemy23Entity>[1]
+            {
+                new EnemyBehavior<Enemy23Entity>(6, Enemy23Entity.Behavior06)
+            }),
+            // state 5
+            new EnemySubroutine<Enemy23Entity>(new EnemyBehavior<Enemy23Entity>[1]
+            {
+                new EnemyBehavior<Enemy23Entity>(4, Enemy23Entity.Behavior00)
+            }),
+            // state 6
+            new EnemySubroutine<Enemy23Entity>(new EnemyBehavior<Enemy23Entity>[1]
+            {
+                new EnemyBehavior<Enemy23Entity>(2, Enemy23Entity.Behavior03)
+            }),
+            // state 7
+            new EnemySubroutine<Enemy23Entity>(new EnemyBehavior<Enemy23Entity>[1]
+            {
+                new EnemyBehavior<Enemy23Entity>(1, Enemy23Entity.Behavior01)
+            }),
+            // state 8
+            new EnemySubroutine<Enemy23Entity>(new EnemyBehavior<Enemy23Entity>[1]
+            {
+                new EnemyBehavior<Enemy23Entity>(7, Enemy23Entity.Behavior04)
+            }),
+            // state 9
+            new EnemySubroutine<Enemy23Entity>(new EnemyBehavior<Enemy23Entity>[1]
+            {
+                new EnemyBehavior<Enemy23Entity>(10, Enemy23Entity.Behavior04)
+            }),
+            // state 10
+            new EnemySubroutine<Enemy23Entity>(new EnemyBehavior<Enemy23Entity>[1]
+            {
+                new EnemyBehavior<Enemy23Entity>(1, Enemy23Entity.Behavior02)
+            })
+        };
+
+        public static IReadOnlyList<Enemy23Values> Enemy23Values = new Enemy23Values[5]
+        {
+            // Psycho Bit v1.0
+            new Enemy23Values()
+            {
+                HealthMax = 11,
+                BeamDamage = 1,
+                SplashDamage = 0,
+                ContactDamage = 10,
+                MinSpeedFactor1 = 409,
+                MaxSpeedFactor1 = 918,
+                MinSpeedFactor2 = 1638,
+                MaxSpeedFactor2 = 2252,
+                Field18 = -4096,
+                Unknown1C = 2457,
+                Unused20 = 40960,
+                Field24 = 40,
+                ShotTimer = 15,
+                Unused28 = 1638400,
+                MinShots = 1,
+                MaxShots = 2,
+                Field30 = 50,
+                AimSteps = 4,
+                Field34 = 26,
+                ScanId = 216,
+                Effectiveness = 0xEAAA
+            },
+            // Psycho Bit v1.4
+            new Enemy23Values()
+            {
+                HealthMax = 24,
+                BeamDamage = 2,
+                SplashDamage = 1,
+                ContactDamage = 10,
+                MinSpeedFactor1 = 614,
+                MaxSpeedFactor1 = 1228,
+                MinSpeedFactor2 = 2867,
+                MaxSpeedFactor2 = 3686,
+                Field18 = -4096,
+                Unknown1C = 3276,
+                Unused20 = 61440,
+                Field24 = 25,
+                ShotTimer = 8,
+                Unused28 = 1638400,
+                MinShots = 1,
+                MaxShots = 3,
+                Field30 = 60,
+                AimSteps = 4,
+                Field34 = 30,
+                ScanId = 216,
+                Effectiveness = 0xEABA
+            },
+            // Psycho Bit v2.0
+            new Enemy23Values()
+            {
+                HealthMax = 120,
+                BeamDamage = 10,
+                SplashDamage = 2,
+                ContactDamage = 10,
+                MinSpeedFactor1 = 614,
+                MaxSpeedFactor1 = 1228,
+                MinSpeedFactor2 = 2457,
+                MaxSpeedFactor2 = 3276,
+                Field18 = -4096,
+                Unknown1C = 4096,
+                Unused20 = 40960,
+                Field24 = 25,
+                ShotTimer = 40,
+                Unused28 = 1638400,
+                MinShots = 1,
+                MaxShots = 1,
+                Field30 = 60,
+                AimSteps = 4,
+                Field34 = 30,
+                ScanId = 208,
+                Effectiveness = 0xEAF2
+            },
+            // Psycho Bit v3.0
+            new Enemy23Values()
+            {
+                HealthMax = 120,
+                BeamDamage = 8,
+                SplashDamage = 2,
+                ContactDamage = 10,
+                MinSpeedFactor1 = 614,
+                MaxSpeedFactor1 = 1228,
+                MinSpeedFactor2 = 1638,
+                MaxSpeedFactor2 = 2048,
+                Field18 = -4096,
+                Unknown1C = 2048,
+                Unused20 = 40960,
+                Field24 = 25,
+                ShotTimer = 30,
+                Unused28 = 1638400,
+                MinShots = 1,
+                MaxShots = 2,
+                Field30 = 20,
+                AimSteps = 30,
+                Field34 = 10,
+                ScanId = 209,
+                Effectiveness = 0xCEF9
+            },
+            // Psycho Bit v4.0
+            new Enemy23Values()
+            {
+                HealthMax = 120,
+                BeamDamage = 8,
+                SplashDamage = 0,
+                ContactDamage = 10,
+                MinSpeedFactor1 = 614,
+                MaxSpeedFactor1 = 1228,
+                MinSpeedFactor2 = 1638,
+                MaxSpeedFactor2 = 2048,
+                Field18 = -4096,
+                Unknown1C = 4096,
+                Unused20 = 61440,
+                Field24 = 25,
+                ShotTimer = 40,
+                Unused28 = 1638400,
+                MinShots = 1,
+                MaxShots = 1,
+                Field30 = 20,
+                AimSteps = 30,
+                Field34 = 10,
+                ScanId = 207,
+                Effectiveness = 0xF2F9
             }
         };
 
@@ -680,6 +874,7 @@ namespace MphRead
         // AlimbicTurretV14 - 0xEABA - zero Omega Cannon, double Missile/Shock Coil
         // AlimbicTurretV27 - 0xEABA - zero Omega Cannon, double Missile/Shock Coil
         // PsychoBitV10 - 0xEAAA - zero Omega Cannon, double Shock Coil
+        // PsychoBitV14 - 0xEABA - zero Omega Cannon, double Missile/Shock Coil
         // PsychoBitV20 - 0xEAF2 - zero Volt Driver/Omega Cannon, double Missile/Battlehammer/Shock Coil
         // PsychoBitV30 - 0xCEF9 - zero Magmaul/Omega Cannon, double Missile/Battlehammer/Judicator/Shock Coil, half Power Beam
         // PsychoBitV40 - 0xF2F9 - zero Judicator/Omega Cannon, double Missile/Battlehammer/Magmaul/Shock Coil, half Power Beam
