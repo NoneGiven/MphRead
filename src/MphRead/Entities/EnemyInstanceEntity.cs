@@ -30,7 +30,7 @@ namespace MphRead.Entities
         protected CollisionVolume _hurtVolumeInit = default;
         protected byte _state1 = 0; // todo: names ("next?")
         protected byte _state2 = 0;
-        // Barbed War Wasp needs to update this in between _state1 being set to _state2 and the subroutine being called
+        // some enemies needs to update this in between _state1 being set to _state2 and the subroutine being called
         protected byte _subId = 0;
         public bool[] HitPlayers { get; } = new bool[4];
         protected Vector3 _prevPos = Vector3.Zero;

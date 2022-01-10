@@ -327,6 +327,36 @@ namespace MphRead
             })
         };
 
+        public static IReadOnlyList<EnemySubroutine<Enemy16Entity>> Enemy16Subroutines = new EnemySubroutine<Enemy16Entity>[4]
+        {
+            // state 0
+            new EnemySubroutine<Enemy16Entity>(new EnemyBehavior<Enemy16Entity>[3]
+            {
+                new EnemyBehavior<Enemy16Entity>(1, Enemy16Entity.Behavior06),
+                new EnemyBehavior<Enemy16Entity>(2, Enemy16Entity.Behavior05),
+                new EnemyBehavior<Enemy16Entity>(3, Enemy16Entity.Behavior03)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy16Entity>(new EnemyBehavior<Enemy16Entity>[3]
+            {
+                new EnemyBehavior<Enemy16Entity>(0, Enemy16Entity.Behavior04),
+                new EnemyBehavior<Enemy16Entity>(2, Enemy16Entity.Behavior05),
+                new EnemyBehavior<Enemy16Entity>(3, Enemy16Entity.Behavior03)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy16Entity>(new EnemyBehavior<Enemy16Entity>[2]
+            {
+                new EnemyBehavior<Enemy16Entity>(0, Enemy16Entity.Behavior02),
+                new EnemyBehavior<Enemy16Entity>(3, Enemy16Entity.Behavior03)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy16Entity>(new EnemyBehavior<Enemy16Entity>[2]
+            {
+                new EnemyBehavior<Enemy16Entity>(3, Enemy16Entity.Behavior00),
+                new EnemyBehavior<Enemy16Entity>(0, Enemy16Entity.Behavior01)
+            })
+        };
+
         public static IReadOnlyList<EnemySubroutine<Enemy39Entity>> Enemy39Subroutines = new EnemySubroutine<Enemy39Entity>[6]
         {
             // state 0
@@ -359,7 +389,7 @@ namespace MphRead
             new EnemySubroutine<Enemy39Entity>(new EnemyBehavior<Enemy39Entity>[1]
             {
                 new EnemyBehavior<Enemy39Entity>(0, Enemy39Entity.Behavior2)
-            }),
+            })
         };
 
         public static IReadOnlyList<Enemy39Values> Enemy39Values = new Enemy39Values[2]
