@@ -229,7 +229,7 @@ namespace MphRead.Entities
             }
             if (type == EnemyType.Zoomer)
             {
-                //return new Enemy01Entity(new EnemyInstanceEntityData(type, spawner), scene);
+                return new Enemy01Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
             if (type == EnemyType.Temroid)
             {
@@ -253,7 +253,7 @@ namespace MphRead.Entities
             }
             if (type == EnemyType.BarbedWarWasp)
             {
-                //return new Enemy10Entity(new EnemyInstanceEntityData(type, spawner), scene);
+                return new Enemy10Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
             if (type == EnemyType.Shriekbat)
             {
