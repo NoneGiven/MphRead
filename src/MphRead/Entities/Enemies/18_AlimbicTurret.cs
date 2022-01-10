@@ -30,7 +30,6 @@ namespace MphRead.Entities.Enemies
         private float _aimAngleStep = 0;
         private ushort _aimSteps = 0;
 
-        private Matrix4 _modelTransform = Matrix4.Identity;
         private Node _rotNode = null!;
         private Vector3 _rotNodePos;
 
@@ -290,6 +289,7 @@ namespace MphRead.Entities.Enemies
         // sktodo
         protected override bool EnemyGetDrawInfo()
         {
+            // todo: is_visible
             ModelInstance inst = _models[0];
             Model model = inst.Model;
             AnimationInfo animInfo = inst.AnimInfo;
@@ -297,7 +297,36 @@ namespace MphRead.Entities.Enemies
             {
                 PaletteOverride = Metadata.RedPalette;
             }
-            model.AnimateNodes2(index: 0, false, Transform, Vector3.One, animInfo);
+            Vector3 upVector = UpVector;
+            Matrix4 aimTransform;
+            if (_state1 == 0)
+            {
+                // patrol aiming
+                var rotX = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angleX));
+                var rotY = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angleY));
+                aimTransform = rotX * rotY;
+                _aimVec = Matrix.Vec3MultMtx4(_initialFacing, aimTransform);
+                var transpose = Matrix4.Transpose(Transform.ClearTranslation());
+                aimTransform *= transpose;
+            }
+            else
+            {
+                // aiming at target
+                aimTransform = GetTransformMatrix(_aimVec, upVector);
+                var transpose = Matrix4.Transpose(Transform.ClearTranslation());
+                aimTransform *= transpose;
+                aimTransform.Row3.Xyz = Vector3.Zero;
+            }
+            Matrix4 root = Matrix4.Identity; // GetTransformMatrix(FacingVector, upVector);s
+            _rotNode.AfterTransform = aimTransform;
+            model.AnimateNodes2(index: 0, false, root, Vector3.One, animInfo);
+            _rotNode.AfterTransform = null;
+            root = Matrix4.CreateTranslation(Position);
+            for (int i = 0; i < model.Nodes.Count; i++)
+            {
+                Node node = model.Nodes[i];
+                node.Animation *= Transform; // todo?: could do this in the shader
+            }
             model.UpdateMatrixStack();
             UpdateMaterials(inst, Recolor);
             GetDrawItems(inst, 0);
