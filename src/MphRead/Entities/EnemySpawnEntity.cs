@@ -280,6 +280,10 @@ namespace MphRead.Entities
             {
                 return new Enemy35Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
+            if (type == EnemyType.Voldrum1)
+            {
+                return new Enemy36Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
             if (type == EnemyType.FireSpawn)
             {
                 return new Enemy39Entity(new EnemyInstanceEntityData(type, spawner), scene);

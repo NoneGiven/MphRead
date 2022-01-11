@@ -77,7 +77,7 @@ namespace MphRead.Entities.Enemies
             _equipInfo.GetAmmo = () => _ammo;
             _equipInfo.SetAmmo = (newAmmo) => _ammo = newAmmo;
             _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
-            _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
+            _shotTimer = (ushort)(_values.ShotTime * 2); // todo: FPS stuff
             _speedFactor = Fixed.ToFloat(_values.MinSpeedFactor1) / 2;
             _state1 = _state2 = 9;
             Debug.Assert(_homeVolume.Type != VolumeType.Sphere);
@@ -170,7 +170,7 @@ namespace MphRead.Entities.Enemies
                     _speedFactor = 0;
                     _speedInc = 0;
                     _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
-                    _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
+                    _shotTimer = (ushort)(_values.ShotTime * 2); // todo: FPS stuff
                     _shotCount = (ushort)(_values.MinShots + Rng.GetRandomInt2(_values.MaxShots + 1 - _values.MinShots));
                     _aimVec = (PlayerEntity.Main.Position - Position).Normalized();
                     _models[0].SetAnimation(0, AnimFlags.NoLoop);
@@ -315,7 +315,7 @@ namespace MphRead.Entities.Enemies
                 BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, _aimVec, BeamSpawnFlags.None, _scene);
                 _shotCount--;
                 _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
-                _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
+                _shotTimer = (ushort)(_values.ShotTime * 2); // todo: FPS stuff
                 // todo: play SFX
                 _models[0].SetAnimation(0, AnimFlags.NoLoop);
             }
@@ -403,7 +403,7 @@ namespace MphRead.Entities.Enemies
             {
                 PickRoamTarget();
                 _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
-                _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
+                _shotTimer = (ushort)(_values.ShotTime * 2); // todo: FPS stuff
                 _reachedTarget = false;
                 return true;
             }
@@ -480,7 +480,7 @@ namespace MphRead.Entities.Enemies
                 _crossVec = Vector3.Cross(facing, _targetVec).Normalized();
                 _speed = Vector3.Zero;
                 _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
-                _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
+                _shotTimer = (ushort)(_values.ShotTime * 2); // todo: FPS stuff
                 return true;
             }
             if (_reachTargetHackTimer > 0)
@@ -533,7 +533,7 @@ namespace MphRead.Entities.Enemies
         {
             PickRoamTarget();
             _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
-            _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
+            _shotTimer = (ushort)(_values.ShotTime * 2); // todo: FPS stuff
             _models[0].SetAnimation(3);
             if (_effect != null)
             {
@@ -575,7 +575,7 @@ namespace MphRead.Entities.Enemies
             }
             PickRoamTarget();
             _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
-            _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
+            _shotTimer = (ushort)(_values.ShotTime * 2); // todo: FPS stuff
             _shotCount = (ushort)(_values.MinShots + Rng.GetRandomInt2(_values.MaxShots + 1 - _values.MinShots));
             if (_effect != null)
             {
@@ -594,7 +594,7 @@ namespace MphRead.Entities.Enemies
             }
             PickRoamTarget();
             _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
-            _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
+            _shotTimer = (ushort)(_values.ShotTime * 2); // todo: FPS stuff
             _shotCount = (ushort)(_values.MinShots + Rng.GetRandomInt2(_values.MaxShots + 1 - _values.MinShots));
             _damaged = false;
             if (_effect != null)
@@ -698,7 +698,7 @@ namespace MphRead.Entities.Enemies
         public int Unknown1C { get; set; } // functionless
         public int Unused20 { get; set; }
         public ushort DelayTime { get; set; }
-        public ushort ShotTimer { get; set; }
+        public ushort ShotTime { get; set; }
         public int Unused28 { get; set; }
         public ushort MinShots { get; set; }
         public ushort MaxShots { get; set; }

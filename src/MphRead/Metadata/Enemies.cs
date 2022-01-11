@@ -547,7 +547,7 @@ namespace MphRead
                 Unknown1C = 2457,
                 Unused20 = 40960,
                 DelayTime = 40,
-                ShotTimer = 15,
+                ShotTime = 15,
                 Unused28 = 1638400,
                 MinShots = 1,
                 MaxShots = 2,
@@ -572,7 +572,7 @@ namespace MphRead
                 Unknown1C = 3276,
                 Unused20 = 61440,
                 DelayTime = 25,
-                ShotTimer = 8,
+                ShotTime = 8,
                 Unused28 = 1638400,
                 MinShots = 1,
                 MaxShots = 3,
@@ -597,7 +597,7 @@ namespace MphRead
                 Unknown1C = 4096,
                 Unused20 = 40960,
                 DelayTime = 25,
-                ShotTimer = 40,
+                ShotTime = 40,
                 Unused28 = 1638400,
                 MinShots = 1,
                 MaxShots = 1,
@@ -622,7 +622,7 @@ namespace MphRead
                 Unknown1C = 2048,
                 Unused20 = 40960,
                 DelayTime = 25,
-                ShotTimer = 30,
+                ShotTime = 30,
                 Unused28 = 1638400,
                 MinShots = 1,
                 MaxShots = 2,
@@ -647,7 +647,7 @@ namespace MphRead
                 Unknown1C = 4096,
                 Unused20 = 61440,
                 DelayTime = 25,
-                ShotTimer = 40,
+                ShotTime = 40,
                 Unused28 = 1638400,
                 MinShots = 1,
                 MaxShots = 1,
@@ -698,6 +698,152 @@ namespace MphRead
             {
                 new EnemyBehavior<Enemy35Entity>(1, Enemy35Entity.Behavior02)
             })
+        };
+
+        public static IReadOnlyList<EnemySubroutine<Enemy36Entity>> Enemy36Subroutines = new EnemySubroutine<Enemy36Entity>[6]
+        {
+            // state 0
+            new EnemySubroutine<Enemy36Entity>(new EnemyBehavior<Enemy36Entity>[3]
+            {
+                new EnemyBehavior<Enemy36Entity>(1, Enemy36Entity.Behavior03),
+                new EnemyBehavior<Enemy36Entity>(2, Enemy36Entity.Behavior05),
+                new EnemyBehavior<Enemy36Entity>(1, Enemy36Entity.Behavior04)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy36Entity>(new EnemyBehavior<Enemy36Entity>[1]
+            {
+                new EnemyBehavior<Enemy36Entity>(0, Enemy36Entity.Behavior00)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy36Entity>(new EnemyBehavior<Enemy36Entity>[1]
+            {
+                new EnemyBehavior<Enemy36Entity>(3, Enemy36Entity.Behavior01)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy36Entity>(new EnemyBehavior<Enemy36Entity>[1]
+            {
+                new EnemyBehavior<Enemy36Entity>(4, Enemy36Entity.Behavior02)
+            }),
+            // state 4
+            new EnemySubroutine<Enemy36Entity>(new EnemyBehavior<Enemy36Entity>[1]
+            {
+                new EnemyBehavior<Enemy36Entity>(5, Enemy36Entity.Behavior00)
+            }),
+            // state 5
+            new EnemySubroutine<Enemy36Entity>(new EnemyBehavior<Enemy36Entity>[2]
+            {
+                new EnemyBehavior<Enemy36Entity>(1, Enemy36Entity.Behavior03),
+                new EnemyBehavior<Enemy36Entity>(1, Enemy36Entity.Behavior04)
+            })
+        };
+
+        public static IReadOnlyList<Enemy36Values> Enemy36Values = new Enemy36Values[5]
+        {
+            // Voldrum
+            new Enemy36Values()
+            {
+                HealthMax = 55,
+                BeamDamage = 2,
+                SplashDamage = 0,
+                ContactDamage = 7,
+                MinSpeedFactor = 819,
+                MaxSpeedFactor = 1433,
+                DoubleSpeedSteps = 15,
+                AimSteps = 10,
+                DelayTime = 40,
+                ShotTime = 15,
+                MinShots = 1,
+                MaxShots = 2,
+                JumpSpeed = 819,
+                RangeMaxCosine = -4096,
+                SpeedSteps = 7,
+                ScanId = 217,
+                Effectiveness = 0xEABA
+            },
+            // Heavy Voldrum
+            new Enemy36Values()
+            {
+                HealthMax = 100,
+                BeamDamage = 5,
+                SplashDamage = 1,
+                ContactDamage = 7,
+                MinSpeedFactor = 819,
+                MaxSpeedFactor = 1433,
+                DoubleSpeedSteps = 15,
+                AimSteps = 10,
+                DelayTime = 25,
+                ShotTime = 8,
+                MinShots = 2,
+                MaxShots = 3,
+                JumpSpeed = 819,
+                RangeMaxCosine = -4096,
+                SpeedSteps = 7,
+                ScanId = 217,
+                Effectiveness = 0xEABA
+            },
+            // Electro Voldrum
+            new Enemy36Values()
+            {
+                HealthMax = 150,
+                BeamDamage = 10,
+                SplashDamage = 2,
+                ContactDamage = 7,
+                MinSpeedFactor = 819,
+                MaxSpeedFactor = 1433,
+                DoubleSpeedSteps = 15,
+                AimSteps = 10,
+                DelayTime = 30,
+                ShotTime = 25,
+                MinShots = 1,
+                MaxShots = 1,
+                JumpSpeed = 819,
+                RangeMaxCosine = -4096,
+                SpeedSteps = 7,
+                ScanId = 193,
+                Effectiveness = 0xEAB2
+            },
+            // Magma Voldrum
+            new Enemy36Values()
+            {
+                HealthMax = 150,
+                BeamDamage = 8,
+                SplashDamage = 2,
+                ContactDamage = 7,
+                MinSpeedFactor = 1228,
+                MaxSpeedFactor = 2048,
+                DoubleSpeedSteps = 15,
+                AimSteps = 10,
+                DelayTime = 25,
+                ShotTime = 20,
+                MinShots = 1,
+                MaxShots = 2,
+                JumpSpeed = 819,
+                RangeMaxCosine = -4096,
+                SpeedSteps = 7,
+                ScanId = 194,
+                Effectiveness = 0xCEBA
+            },
+            // Ice Voldrum
+            new Enemy36Values()
+            {
+                HealthMax = 152,
+                BeamDamage = 8,
+                SplashDamage = 0,
+                ContactDamage = 7,
+                MinSpeedFactor = 409,
+                MaxSpeedFactor = 1024,
+                DoubleSpeedSteps = 15,
+                AimSteps = 10,
+                DelayTime = 25,
+                ShotTime = 40,
+                MinShots = 1,
+                MaxShots = 2,
+                JumpSpeed = 819,
+                RangeMaxCosine = -4096,
+                SpeedSteps = 7,
+                ScanId = 195,
+                Effectiveness = 0xF2BA
+            }
         };
 
         public static IReadOnlyList<EnemySubroutine<Enemy39Entity>> Enemy39Subroutines = new EnemySubroutine<Enemy39Entity>[6]

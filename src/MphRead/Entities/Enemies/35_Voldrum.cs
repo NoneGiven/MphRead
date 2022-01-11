@@ -7,33 +7,33 @@ namespace MphRead.Entities.Enemies
 {
     public class Enemy35Entity : EnemyInstanceEntity
     {
-        private readonly EnemySpawnEntity _spawner;
-        private CollisionVolume _homeVolume;
+        protected readonly EnemySpawnEntity _spawner;
+        protected CollisionVolume _homeVolume;
         private bool _handledRamCol = false;
         // for (unused) rehits? game uses a byte and decrements it instead of using a bool
         private bool _ramDamageNeeded = false;
         private ushort _ramDelay = 0;
-        private ushort _timeInAir = 0;
-        private bool _airborne = false;
-        private bool _grounded = false;
+        protected ushort _timeInAir = 0;
+        protected bool _airborne = false;
+        protected bool _grounded = false;
 
         private Vector3 _moveTarget;
-        private Vector3 _targetVec;
-        private Vector3 _moveStart;
+        protected Vector3 _targetVec;
+        protected Vector3 _moveStart;
         private float _roamAngleSign = 1;
-        private float _aimAngleStep = 0;
-        private ushort _aimSteps = 0;
-        private float _moveDistSqr = 0;
+        protected float _aimAngleStep = 0;
+        protected ushort _aimSteps = 0;
+        protected float _moveDistSqr = 0;
         private float _moveDistSqrHalf = 0;
         private bool _increaseSpeed = false;
-        private float _speedFactor = 0;
-        private float _speedInc = 0;
+        protected float _speedFactor = 0;
+        protected float _speedInc = 0;
 
         // todo: FPS stuff
-        private const float _speedIncAmount = 410 / 4096f * (1 / 3f) / 2;
-        private const ushort _aimStepCount = 10 * 2;
-        private const float _minSpeedFactor = 0.1f / 2;
-        private const float _maxSpeedFactor = 0.2f / 2;
+        protected float _speedIncAmount = 410 / 4096f * (1 / 3f) / 2;
+        protected ushort _aimStepCount = 10 * 2;
+        protected float _minSpeedFactor = 0.1f / 2;
+        protected float _maxSpeedFactor = 0.2f / 2;
 
         public Enemy35Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
         {
@@ -47,6 +47,12 @@ namespace MphRead.Entities.Enemies
         }
 
         protected override bool EnemyInitialize()
+        {
+            Setup();
+            return true;
+        }
+
+        protected virtual void Setup()
         {
             Vector3 facing = _spawner.Data.Header.FacingVector.ToFloatVector().Normalized();
             SetTransform(facing, Vector3.UnitY, _spawner.Data.Header.Position.ToFloatVector());
@@ -73,7 +79,6 @@ namespace MphRead.Entities.Enemies
             _state1 = _state2 = 1;
             _subId = _state1;
             ModelInstance inst = SetUpModel(Metadata.EnemyModelNames[35], animIndex: 4);
-            return true;
         }
 
         protected override void EnemyProcess()
@@ -99,7 +104,12 @@ namespace MphRead.Entities.Enemies
             CallStateProcess();
         }
 
-        private bool HandleCollision()
+        protected virtual bool HandleCollision()
+        {
+            return HandleCollision(5, 6);
+        }
+
+        protected bool HandleCollision(int stateA, int stateB)
         {
             _grounded = false;
             var results = new CollisionResult[30];
@@ -128,10 +138,10 @@ namespace MphRead.Entities.Enemies
                     {
                         _grounded = true;
                     }
-                    else if (_state1 != 1 && _state1 != 5)
+                    else if (_state1 != 1 && _state1 != stateA)
                     {
                         _airborne = true;
-                        if (_state1 != 0 && _state1 != 6)
+                        if (_state1 != 0 && _state1 != stateB)
                         {
                             _speed = -_speed;
                             _speed.Y = Fixed.ToFloat(1000) / 2; // todo: FPS stuff
@@ -152,7 +162,7 @@ namespace MphRead.Entities.Enemies
         }
 
         // todo: this is similar to Psycho Bit (cylinder only)
-        private void PickRoamTarget()
+        protected void PickRoamTarget()
         {
             float dist = Fixed.ToFloat(Rng.GetRandomInt2(Fixed.ToInt(_homeVolume.CylinderRadius)));
             var vec = new Vector3(dist, 0, 0);
@@ -165,7 +175,7 @@ namespace MphRead.Entities.Enemies
         }
 
         // todo: this is similar to Psycho Bit (doesn't have cross vector)
-        private void UpdateMoveTarget(Vector3 targetPoint)
+        protected void UpdateMoveTarget(Vector3 targetPoint)
         {
             _moveTarget = targetPoint;
             _moveStart = Position;
@@ -180,7 +190,7 @@ namespace MphRead.Entities.Enemies
         }
 
         // todo: this is similar to Psycho Bit (no values struct, no y speed)
-        private void UpdateSpeed()
+        protected void UpdateSpeed()
         {
             if (_increaseSpeed)
             {
