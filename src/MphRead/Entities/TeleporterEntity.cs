@@ -62,6 +62,7 @@ namespace MphRead.Entities
                 ModelInstance inst = SetUpModel(name);
                 _models.Add(inst);
                 _models.Add(inst);
+                inst.SetAnimation(-1);
                 float angleY = MathHelper.DegreesToRadians(337 * (360 / 4096f));
                 float angleZ = MathHelper.DegreesToRadians(360 * (360 / 4096f));
                 Matrix4 transform = Matrix4.CreateRotationY(angleY) * Matrix4.CreateRotationZ(angleZ);

@@ -112,7 +112,7 @@ namespace MphRead.Entities
                     if (distance < 20 && distance != 0)
                     {
                         float factor = (20 - distance) / (80 * distance); // hyperbolic function
-                        Position += between * factor;
+                        Position += between * factor / 2; // todo: FPS stuff
                     }
                 }
             }

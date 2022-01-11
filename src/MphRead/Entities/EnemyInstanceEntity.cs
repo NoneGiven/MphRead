@@ -480,7 +480,8 @@ namespace MphRead.Entities
             return HandleBlockingCollision(position, volume, updateSpeed, ref a, ref b);
         }
 
-        protected bool HandleBlockingCollision(Vector3 position, CollisionVolume volume, bool updateSpeed, ref bool a6, ref bool a7)
+        protected bool HandleBlockingCollision(Vector3 position, CollisionVolume volume, bool updateSpeed,
+            ref bool onGround, ref bool notGround)
         {
             int count = 0;
             var results = new CollisionResult[30];
@@ -498,7 +499,7 @@ namespace MphRead.Entities
                 count = CollisionDetection.CheckInRadius(position, _boundingRadius, limit: 30,
                     getSimpleNormal: false, TestFlags.None, _scene, results);
             }
-            a6 = false;
+            onGround = false;
             if (count == 0)
             {
                 return false;
@@ -523,11 +524,11 @@ namespace MphRead.Entities
                 {
                     if (result.Plane.Y < 0.1f && result.Plane.Y > -0.1f)
                     {
-                        a7 = true;
+                        notGround = true;
                     }
                     else
                     {
-                        a6 = true;
+                        onGround = true;
                     }
                     Position += result.Plane.Xyz * v18;
                     if (updateSpeed)
@@ -558,7 +559,7 @@ namespace MphRead.Entities
 
         public static bool SeekTargetVector(Vector3 target, ref Vector3 current, Vector3 axis, ref ushort steps, float angle)
         {
-            if (Vector3.Dot(target, current) < MathF.Cos(MathHelper.DegreesToRadians(angle)) && steps > 0)
+            if (steps > 0 && Vector3.Dot(target, current) < MathF.Cos(MathHelper.DegreesToRadians(angle)))
             {
                 current = RotateVector(current, axis, angle).Normalized();
                 steps--;
@@ -566,6 +567,28 @@ namespace MphRead.Entities
             }
             current = target;
             return true;
+        }
+
+        // similar to the above, where current is always the facing vector and axis is always Y up
+        public bool SeekTargetFacing(Vector3 target, Vector3 up, ref ushort steps, float angle)
+        {
+            bool result = false;
+            Vector3 facing = FacingVector;
+            float radians = MathHelper.DegreesToRadians(angle);
+            if (steps > 0 && Vector3.Dot(target, facing) < MathF.Cos(radians))
+            {
+                var cross = Vector3.Cross(target, facing);
+                var rotY = Matrix3.CreateRotationY(radians * (cross.Y <= 0 ? 1 : -1));
+                facing = (facing * rotY).Normalized();
+                steps--;
+            }
+            else
+            {
+                facing = target;
+                result = true;
+            }
+            SetTransform(facing, up, Position);
+            return result;
         }
     }
 
