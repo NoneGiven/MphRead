@@ -210,8 +210,9 @@ namespace MphRead.Entities
                     return true;
                 }
                 _scene.SendMessage(Message.Destroyed, this, _owner, 0, 0);
-                if (_owner is EnemySpawnEntity spawner)
+                if (_owner?.Type == EntityType.EnemySpawn)
                 {
+                    var spawner = (EnemySpawnEntity)_owner;
                     Vector3 pos = _hurtVolume.GetCenter().AddY(0.5f);
                     ItemSpawnEntity.SpawnItemDrop(spawner.Data.ItemType, pos, spawner.Data.ItemChance, _scene);
                 }

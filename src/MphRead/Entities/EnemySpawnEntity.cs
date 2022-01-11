@@ -171,7 +171,7 @@ namespace MphRead.Entities
         {
             if (info.Message == Message.Destroyed)
             {
-                if (info.Param1 is int value && value != 0)
+                if ((int)info.Param1 != 0)
                 {
                     // enemy was out of range
                     --_spawnedCount;
@@ -180,7 +180,8 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    if (info.Sender is EnemyInstanceEntity enemy && enemy.EnemyType == EnemyType.Spawner)
+                    if (info.Sender.Type == EntityType.EnemyInstance
+                        && ((EnemyInstanceEntity)info.Sender).EnemyType == EnemyType.Spawner)
                     {
                         Flags &= ~SpawnerFlags.Active;
                         // todo: room state
@@ -203,7 +204,7 @@ namespace MphRead.Entities
             }
             else if (info.Message == Message.SetActive)
             {
-                if (info.Param1 is int value && value != 1)
+                if ((int)info.Param1 != 0)
                 {
                     Flags |= SpawnerFlags.Active;
                     // todo: room state
