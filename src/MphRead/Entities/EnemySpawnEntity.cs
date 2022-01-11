@@ -221,8 +221,6 @@ namespace MphRead.Entities
             }
         }
 
-        private static int _count = 0;
-
         // todo: entity node ref
         public static EnemyInstanceEntity? SpawnEnemy(EntityBase spawner, EnemyType type, Scene scene)
         {
@@ -280,11 +278,7 @@ namespace MphRead.Entities
             }
             if (type == EnemyType.Voldrum2)
             {
-                _count++;
-                if (_count >= 1)
-                {
-                    return new Enemy35Entity(new EnemyInstanceEntityData(type, spawner), scene);
-                }
+                return new Enemy35Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
             if (type == EnemyType.FireSpawn)
             {

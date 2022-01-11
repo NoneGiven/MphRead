@@ -919,6 +919,11 @@ namespace MphRead
         // PsychoBitV20 - 0xEAF2 - zero Volt Driver/Omega Cannon, double Missile/Battlehammer/Shock Coil
         // PsychoBitV30 - 0xCEF9 - zero Magmaul/Omega Cannon, double Missile/Battlehammer/Judicator/Shock Coil, half Power Beam
         // PsychoBitV40 - 0xF2F9 - zero Judicator/Omega Cannon, double Missile/Battlehammer/Magmaul/Shock Coil, half Power Beam
+        // Voldrum1N - 0xEABA - zero Omega Cannon, double Missile/Shock Coil
+        // Voldrum1H - 0xEABA - zero Omega Cannon, double Missile/Shock Coil
+        // Voldrum1E - 0xEAB2 - zero Volt Driver/Omega Cannon, double Missile/Shock Coil
+        // Voldrum1M - 0xCEBA - zero Magmaul/Omega Cannon, double Missile/Judicator/Shock Coil
+        // Voldrum1I - 0xF2BA - zero Judicator/Omega Cannon, double Missile/Magmaul/Shock Coil
         // FireSpawn   - 0x8955 - zero Magmaul/Omega Cannon, normal Judicator/Shock Coil, half all else
         // ArcticSpawn - 0xB155 - zero Judicator/Omega Cannon, normal Shock Coil, double Magmaul, half all else
         // ForceFieldLock - types 0-7 are normal from the corresponding beam and zero from all else; type 8 is zero from all (vulerable to bombs)
@@ -960,7 +965,7 @@ namespace MphRead
             /* 33 */ 0x2AAAA, // GoreaMeteor
             /* 34 */ 0x2AAAA, // PsychoBit2
             /* 35 */ 0x2AABA, // Voldrum2 -- double from Missile
-            /* 36 */ 0x2AABA, // Voldrum1 -- double from Missile
+            /* 36 */ 0x2AABA, // Voldrum1 -- double from Missile (not used)
             /* 37 */ 0x2AAAA, // Quadtroid
             /* 38 */ 0x2EAFA, // CrashPillar -- double from Missile/Battlehammer/Shock Coil
             /* 39 */ 0x24D55, // FireSpawn -- zero from Magmual, double from Judicator, half from all else except Omega Cannon (not used)

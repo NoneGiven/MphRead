@@ -2279,10 +2279,10 @@ namespace MphRead
                         recolors: new List<string>()
                         {
                             "img_00",
+                            "img_04",
                             "img_01",
                             "img_02",
-                            "img_03",
-                            "img_04"
+                            "img_03"
                         },
                         animationPath: @"models\GuardBot01_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
