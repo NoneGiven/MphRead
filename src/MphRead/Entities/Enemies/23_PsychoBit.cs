@@ -8,25 +8,27 @@ namespace MphRead.Entities.Enemies
     {
         private readonly EnemySpawnEntity _spawner;
         private Enemy23Values _values;
-        private CollisionVolume _volume1;
-        private CollisionVolume _volume2;
-        private CollisionVolume _volume3;
+        private CollisionVolume _homeVolume;
+        private CollisionVolume _nearVolume;
+        private CollisionVolume _rangeVolume;
 
-        private Vector3 _field264;
+        private Vector3 _curFacing;
         private Vector3 _moveTarget;
-        private Vector3 _field2D8;
-        private float _roamAngleSign = 1; // sign for some angle
-        private ushort _field250 = 0;
+        private Vector3 _moveStart;
+        private float _roamAngleSign = 1;
+        private ushort _delayTimer = 0;
         private ushort _shotCount = 0;
         private ushort _shotTimer = 0;
-        private bool _field2B9 = false;
+        private bool _damaged = false;
         private float _speedFactor = 0;
         private float _speedInc = 0;
-        private bool _field2BB = false;
+        private bool _reachedTarget = false;
         private float _moveDistSqr = 0; // square of the length of the full vector to the move target
         private float _moveDistSqrHalf = 0; // half of _moveDistSqr, switch from gaining speed to losing speed when reached
         private bool _increaseSpeed = false; // true during the first part of the move to a roam target, then false
-        private ushort _field2D4 = 0;
+        private ushort _camSeqDelayTimer = 0;
+
+        private ushort _reachTargetHackTimer = 0;
 
         private Vector3 _eyePos;
         private Vector3 _aimVec = Vector3.UnitX;
@@ -64,34 +66,34 @@ namespace MphRead.Entities.Enemies
             _health = _healthMax = _values.HealthMax;
             Metadata.LoadEffectiveness(_values.Effectiveness, BeamEffectiveness);
             // todo: scan ID
-            _field264 = facing;
-            _volume1 = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume1, Position);
-            _volume2 = new CollisionVolume(Vector3.Zero, 1); // gets moved in the process function
-            _volume3 = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume3, Position);
+            _curFacing = facing;
+            _homeVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume1, Position);
+            _nearVolume = new CollisionVolume(Vector3.Zero, 1); // gets moved in the process function
+            _rangeVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume3, Position);
             WeaponInfo weapon = Weapons.EnemyWeapons[(int)_spawner.Data.Fields.S06.EnemyVersion];
             weapon.UnchargedDamage = _values.BeamDamage;
             weapon.SplashDamage = _values.SplashDamage;
             _equipInfo = new EquipInfo(weapon, _beams);
             _equipInfo.GetAmmo = () => _ammo;
             _equipInfo.SetAmmo = (newAmmo) => _ammo = newAmmo;
-            _field250 = (ushort)(_values.Field24 * 2); // todo: FPS stuff
+            _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
             _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
             _speedFactor = Fixed.ToFloat(_values.MinSpeedFactor1) / 2;
             _state1 = _state2 = 9;
-            Debug.Assert(_volume1.Type != VolumeType.Sphere);
+            Debug.Assert(_homeVolume.Type != VolumeType.Sphere);
             bool atHomePoint = false;
             Vector3 homePoint = Vector3.Zero;
             if (_spawner.Data.SpawnerHealth == 0)
             {
                 atHomePoint = true;
             }
-            else if (_volume1.Type == VolumeType.Cylinder)
+            else if (_homeVolume.Type == VolumeType.Cylinder)
             {
-                Debug.Assert(_volume1.CylinderVector == Vector3.UnitY);
+                Debug.Assert(_homeVolume.CylinderVector == Vector3.UnitY);
                 homePoint = new Vector3(
-                    _volume1.CylinderPosition.X,
-                    _volume1.CylinderPosition.Y + _volume1.CylinderDot / 2,
-                    _volume1.CylinderPosition.Z
+                    _homeVolume.CylinderPosition.X,
+                    _homeVolume.CylinderPosition.Y + _homeVolume.CylinderDot / 2,
+                    _homeVolume.CylinderPosition.Z
                 );
                 if (MathF.Abs(Position.X - homePoint.X) < 1 / 4096f
                     && MathF.Abs(Position.Y - homePoint.Y) < 1 / 4096f
@@ -100,12 +102,12 @@ namespace MphRead.Entities.Enemies
                     atHomePoint = true;
                 }
             }
-            else if (_volume1.Type == VolumeType.Box)
+            else if (_homeVolume.Type == VolumeType.Box)
             {
                 homePoint = new Vector3(
-                    _volume1.BoxPosition.X + _volume1.BoxVector1.X * (_volume1.BoxDot1 / 2),
-                    _volume1.BoxPosition.Y + _volume1.BoxVector2.Y * (_volume1.BoxDot2 / 2),
-                    _volume1.BoxPosition.Z + _volume1.BoxVector3.Z * (_volume1.BoxDot3 / 2)
+                    _homeVolume.BoxPosition.X + _homeVolume.BoxVector1.X * (_homeVolume.BoxDot1 / 2),
+                    _homeVolume.BoxPosition.Y + _homeVolume.BoxVector2.Y * (_homeVolume.BoxDot2 / 2),
+                    _homeVolume.BoxPosition.Z + _homeVolume.BoxVector3.Z * (_homeVolume.BoxDot3 / 2)
                 );
                 if (MathF.Abs(Position.X - homePoint.X) < 1 / 4096f
                     && MathF.Abs(Position.Y - homePoint.Y) < 1 / 4096f
@@ -136,10 +138,10 @@ namespace MphRead.Entities.Enemies
             {
                 Vector3 facing = FacingVector;
                 _eyePos = Position - facing;
-                _effect.Transform(facing, UpVector, _eyePos);
+                _effect.Transform(facing, Vector3.UnitY, _eyePos);
             }
             ContactDamagePlayer(_values.ContactDamage, knockback: true);
-            _volume2 = CollisionVolume.Move(new CollisionVolume(Vector3.Zero, 1), Position);
+            _nearVolume = CollisionVolume.Move(new CollisionVolume(Vector3.Zero, 1), Position);
             // todo: play SFX
             CallStateProcess();
         }
@@ -150,7 +152,7 @@ namespace MphRead.Entities.Enemies
             {
                 if (_state1 == 3)
                 {
-                    _field2B9 = true;
+                    _damaged = true;
                 }
                 else if (_state1 != 9 && _state1 != 10)
                 {
@@ -167,13 +169,13 @@ namespace MphRead.Entities.Enemies
                     _speed = Vector3.Zero;
                     _speedFactor = 0;
                     _speedInc = 0;
-                    _field250 = (ushort)(_values.Field24 * 2); // todo: FPS stuff
+                    _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
                     _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
                     _shotCount = (ushort)(_values.MinShots + Rng.GetRandomInt2(_values.MaxShots + 1 - _values.MinShots));
                     _aimVec = (PlayerEntity.Main.Position - Position).Normalized();
                     _models[0].SetAnimation(0, AnimFlags.NoLoop);
-                    SetTransform(_aimVec, UpVector, Position);
-                    _field264 = _aimVec;
+                    SetTransform(_aimVec, Vector3.UnitY, Position);
+                    _curFacing = _aimVec;
                 }
             }
             else if (_effect != null)
@@ -196,7 +198,7 @@ namespace MphRead.Entities.Enemies
         {
             Vector3 facing = FacingVector;
             _moveTarget = targetPoint;
-            _field2D8 = Position;
+            _moveStart = Position;
             _targetVec = _moveTarget - Position;
             _moveDistSqr = _targetVec.LengthSquared;
             _moveDistSqrHalf = _moveDistSqr / 2;
@@ -211,29 +213,29 @@ namespace MphRead.Entities.Enemies
         private void PickRoamTarget()
         {
             Vector3 moveTarget;
-            if (_volume1.Type == VolumeType.Cylinder)
+            if (_homeVolume.Type == VolumeType.Cylinder)
             {
-                float dist = Fixed.ToFloat(Rng.GetRandomInt2(Fixed.ToInt(_volume1.CylinderRadius)));
+                float dist = Fixed.ToFloat(Rng.GetRandomInt2(Fixed.ToInt(_homeVolume.CylinderRadius)));
                 var vec = new Vector3(dist, 0, 0);
                 _roamAngleSign *= -1;
                 float angle = Fixed.ToFloat(Rng.GetRandomInt2(0xB4000)) * _roamAngleSign; // [0-180)
                 var rotY = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(angle));
                 vec = Matrix.Vec3MultMtx3(vec, rotY);
-                vec.Y = Fixed.ToFloat(Rng.GetRandomInt2(Fixed.ToInt(_volume1.CylinderDot)));
-                moveTarget = _volume1.CylinderPosition + vec;
+                vec.Y = Fixed.ToFloat(Rng.GetRandomInt2(Fixed.ToInt(_homeVolume.CylinderDot)));
+                moveTarget = _homeVolume.CylinderPosition + vec;
             }
             else
             {
-                Debug.Assert(_volume1.Type == VolumeType.Box);
-                float distX = Fixed.ToFloat(Rng.GetRandomInt2(Fixed.ToInt(_volume1.BoxDot1)));
-                float distY = Fixed.ToFloat(Rng.GetRandomInt2(Fixed.ToInt(_volume1.BoxDot2)));
-                float distZ = Fixed.ToFloat(Rng.GetRandomInt2(Fixed.ToInt(_volume1.BoxDot3)));
+                Debug.Assert(_homeVolume.Type == VolumeType.Box);
+                float distX = Fixed.ToFloat(Rng.GetRandomInt2(Fixed.ToInt(_homeVolume.BoxDot1)));
+                float distY = Fixed.ToFloat(Rng.GetRandomInt2(Fixed.ToInt(_homeVolume.BoxDot2)));
+                float distZ = Fixed.ToFloat(Rng.GetRandomInt2(Fixed.ToInt(_homeVolume.BoxDot3)));
                 var vec = new Vector3(
-                    _volume1.BoxVector1.X * distX,
-                    _volume1.BoxVector2.Y * distY,
-                    _volume1.BoxVector3.Z * distZ
+                    _homeVolume.BoxVector1.X * distX,
+                    _homeVolume.BoxVector2.Y * distY,
+                    _homeVolume.BoxVector3.Z * distZ
                 );
-                moveTarget = _volume1.BoxPosition + vec;
+                moveTarget = _homeVolume.BoxPosition + vec;
             }
             UpdateMoveTarget(moveTarget);
             _speed = Vector3.Zero;
@@ -283,9 +285,9 @@ namespace MphRead.Entities.Enemies
         private void UpdateFacing()
         {
             Vector3 between = (PlayerEntity.Main.Position - Position).Normalized();
-            if (Vector3.Dot(_field264, between) > Fixed.ToFloat(_values.Field18))
+            if (Vector3.Dot(_curFacing, between) > Fixed.ToFloat(_values.RangeMaxCosine))
             {
-                SetTransform(between, UpVector, Position);
+                SetTransform(between, Vector3.UnitY, Position);
             }
         }
 
@@ -312,7 +314,7 @@ namespace MphRead.Entities.Enemies
                 _equipInfo.Weapon.HeadshotDamage = _values.BeamDamage;
                 BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, _aimVec, BeamSpawnFlags.None, _scene);
                 _shotCount--;
-                _field250 = (ushort)(_values.Field24 * 2); // todo: FPS stuff
+                _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
                 _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
                 // todo: play SFX
                 _models[0].SetAnimation(0, AnimFlags.NoLoop);
@@ -323,10 +325,10 @@ namespace MphRead.Entities.Enemies
         private void State04()
         {
             UpdateSpeed(Fixed.ToFloat(_values.MinSpeedFactor1), Fixed.ToFloat(_values.MaxSpeedFactor1));
-            if (CallSubroutine(Metadata.Enemy23Subroutines, this) && _state2 == 4)
+            if (CallSubroutine(Metadata.Enemy23Subroutines, this) && _state2 == 2) // can't be true
             {
                 _speed = Vector3.Zero;
-                _field264 = FacingVector;
+                _curFacing = FacingVector;
                 _models[0].SetAnimation(1);
                 // todo: play SFX
             }
@@ -361,7 +363,6 @@ namespace MphRead.Entities.Enemies
         private void State10()
         {
             _speed = FacingVector * _speedFactor;
-            _speed /= 2; // todo: FPS stuff
             CallSubroutine(Metadata.Enemy23Subroutines, this);
         }
 
@@ -369,7 +370,7 @@ namespace MphRead.Entities.Enemies
         {
             Vector3 facing = FacingVector;
             bool result = SeekTargetVector(_targetVec, ref facing, _crossVec, ref _aimSteps, _aimAngleStep);
-            SetTransform(facing, UpVector, Position);
+            SetTransform(facing, Vector3.UnitY, Position);
             if (!result)
             {
                 return false;
@@ -378,34 +379,37 @@ namespace MphRead.Entities.Enemies
             float minFactor = Fixed.ToFloat(_values.MinSpeedFactor2);
             float maxFactor = Fixed.ToFloat(_values.MaxSpeedFactor2);
             _speedFactor = minFactor / 2;
-            _speedInc = (maxFactor - minFactor) * (1 / Fixed.ToFloat(_values.Field34));
+            _speedInc = (maxFactor - minFactor) * (1f / _values.SpeedSteps);
             _speedInc /= 2;
             _speed = facing * _speedFactor;
-            _field264 = facing;
+            _curFacing = facing;
             _models[0].SetAnimation(2);
             return true;
         }
 
-        // or give up if the length has increased
         private void CheckReachedTarget()
         {
             Vector3 nextPos = Position + _speed;
-            if ((_field2D8 - nextPos).LengthSquared > _moveDistSqr)
+            if ((_moveStart - nextPos).LengthSquared > _moveDistSqr)
             {
                 _speed = nextPos - Position;
-                _field2BB = true;
+                _reachedTarget = true;
             }
         }
 
         public bool Behavior01()
         {
-            if (_field2BB)
+            if (_reachedTarget && _reachTargetHackTimer == 0)
             {
                 PickRoamTarget();
-                _field250 = (ushort)(_values.Field24 * 2); // todo: FPS stuff
+                _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
                 _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
-                _field2BB = false;
+                _reachedTarget = false;
                 return true;
+            }
+            if (_reachTargetHackTimer > 0)
+            {
+                _reachTargetHackTimer--;
             }
             CheckReachedTarget();
             return false;
@@ -420,14 +424,14 @@ namespace MphRead.Entities.Enemies
         {
             Vector3 facing = FacingVector;
             bool result = SeekTargetVector(_targetVec, ref facing, _crossVec, ref _aimSteps, _aimAngleStep);
-            SetTransform(facing, UpVector, Position);
+            SetTransform(facing, Vector3.UnitY, Position);
             if (!result)
             {
                 return false;
             }
             _speedInc = 0;
             _speedFactor = 0;
-            _field264 = facing;
+            _curFacing = facing;
             _models[0].SetAnimation(1);
             // todo: play SFX
             SpawnEffect();
@@ -444,7 +448,7 @@ namespace MphRead.Entities.Enemies
         {
             Vector3 facing = FacingVector;
             bool result = SeekTargetVector(_targetVec, ref facing, _crossVec, ref _aimSteps, _aimAngleStep);
-            SetTransform(facing, UpVector, Position);
+            SetTransform(facing, Vector3.UnitY, Position);
             if (!result)
             {
                 return false;
@@ -453,17 +457,21 @@ namespace MphRead.Entities.Enemies
             float minFactor = Fixed.ToFloat(_values.MinSpeedFactor1);
             float maxFactor = Fixed.ToFloat(_values.MaxSpeedFactor1);
             _speedFactor = minFactor / 2;
-            _speedInc = (maxFactor - minFactor) * (1 / Fixed.ToFloat(_values.Field34));
+            _speedInc = (maxFactor - minFactor) * (1f / _values.SpeedSteps);
             _speedInc /= 2;
             _speed = facing * _speedFactor;
-            _field264 = facing;
+            _curFacing = facing;
             return true;
         }
 
         public bool Behavior06()
         {
-            if (_field2BB)
+            if (_reachedTarget && _reachTargetHackTimer == 0)
             {
+                // bug: _reachedTarget is not cleared here, resulting in only short, jerky movements after the player is in range
+                // --> this additionally means the movements are longer in-game (1f of 30 fps speed) than for us
+                // so we use the _reachTargetHackTimer to make this bugged movement last 2f instead of 1f
+                _reachTargetHackTimer = 1; // todo: FPS stuff
                 Vector3 facing = FacingVector;
                 _targetVec = (PlayerEntity.Main.Position - Position).Normalized();
                 float angle = MathHelper.RadiansToDegrees(MathF.Acos(Vector3.Dot(facing, _targetVec)));
@@ -471,9 +479,13 @@ namespace MphRead.Entities.Enemies
                 _aimAngleStep = angle / _aimSteps;
                 _crossVec = Vector3.Cross(facing, _targetVec).Normalized();
                 _speed = Vector3.Zero;
-                _field250 = (ushort)(_values.Field24 * 2); // todo: FPS stuff
+                _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
                 _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
                 return true;
+            }
+            if (_reachTargetHackTimer > 0)
+            {
+                _reachTargetHackTimer--;
             }
             CheckReachedTarget();
             return false;
@@ -482,16 +494,16 @@ namespace MphRead.Entities.Enemies
         public bool Behavior07()
         {
             // todo: if in cam seq blocking input, set _field2D4 to 40 * 2 and return false
-            if (_field2D4 > 0)
+            if (_camSeqDelayTimer > 0)
             {
-                _field2D4--;
+                _camSeqDelayTimer--;
                 return false;
             }
             if (PlayerEntity.Main.Health > 0)
             {
                 Vector3 between = (PlayerEntity.Main.Position - Position).Normalized();
-                if (Vector3.Dot(_field264, between) > Fixed.ToFloat(_values.Field18)
-                    && _volume3.TestPoint(PlayerEntity.Main.Position))
+                if (Vector3.Dot(_curFacing, between) > Fixed.ToFloat(_values.RangeMaxCosine)
+                    && _rangeVolume.TestPoint(PlayerEntity.Main.Position))
                 {
                     _speed = Vector3.Zero;
                     _models[0].SetAnimation(1);
@@ -505,9 +517,9 @@ namespace MphRead.Entities.Enemies
 
         public bool Behavior08()
         {
-            if (_field250 > 0)
+            if (_delayTimer > 0)
             {
-                _field250--;
+                _delayTimer--;
                 return false;
             }
             // todo: stop SFX
@@ -520,7 +532,7 @@ namespace MphRead.Entities.Enemies
         private void MoveAway()
         {
             PickRoamTarget();
-            _field250 = (ushort)(_values.Field24 * 2); // todo: FPS stuff
+            _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
             _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
             _models[0].SetAnimation(3);
             if (_effect != null)
@@ -537,7 +549,7 @@ namespace MphRead.Entities.Enemies
         public bool Behavior09()
         {
             Vector3 between = (PlayerEntity.Main.Position - Position).Normalized();
-            if (Vector3.Dot(_field264, between) <= Fixed.ToFloat(_values.Field18))
+            if (Vector3.Dot(_curFacing, between) >= Fixed.ToFloat(_values.RangeMaxCosine))
             {
                 return false;
             }
@@ -547,7 +559,7 @@ namespace MphRead.Entities.Enemies
 
         public bool Behavior10()
         {
-            if (!_volume2.TestPoint(PlayerEntity.Main.Position))
+            if (!_nearVolume.TestPoint(PlayerEntity.Main.Position))
             {
                 return false;
             }
@@ -557,12 +569,12 @@ namespace MphRead.Entities.Enemies
 
         public bool Behavior11()
         {
-            if (_field2B9 || _shotCount > 0)
+            if (_damaged || _shotCount > 0)
             {
                 return false;
             }
             PickRoamTarget();
-            _field250 = (ushort)(_values.Field24 * 2); // todo: FPS stuff
+            _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
             _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
             _shotCount = (ushort)(_values.MinShots + Rng.GetRandomInt2(_values.MaxShots + 1 - _values.MinShots));
             if (_effect != null)
@@ -576,15 +588,15 @@ namespace MphRead.Entities.Enemies
         // todo: nearly the same as Behavior11
         public bool Behavior12()
         {
-            if (!_field2B9 || _shotCount > 0)
+            if (!_damaged || _shotCount > 0)
             {
                 return false;
             }
             PickRoamTarget();
-            _field250 = (ushort)(_values.Field24 * 2); // todo: FPS stuff
+            _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
             _shotTimer = (ushort)(_values.ShotTimer * 2); // todo: FPS stuff
             _shotCount = (ushort)(_values.MinShots + Rng.GetRandomInt2(_values.MaxShots + 1 - _values.MinShots));
-            _field2B9 = false;
+            _damaged = false;
             if (_effect != null)
             {
                 _scene.UnlinkEffectEntry(_effect);
@@ -673,17 +685,17 @@ namespace MphRead.Entities.Enemies
         public int MaxSpeedFactor1 { get; set; }
         public int MinSpeedFactor2 { get; set; }
         public int MaxSpeedFactor2 { get; set; }
-        public int Field18 { get; set; }
+        public int RangeMaxCosine { get; set; } // always -1 (greater than comparisons are always true)
         public int Unknown1C { get; set; } // functionless
         public int Unused20 { get; set; }
-        public ushort Field24 { get; set; }
+        public ushort DelayTime { get; set; }
         public ushort ShotTimer { get; set; }
         public int Unused28 { get; set; }
         public ushort MinShots { get; set; }
         public ushort MaxShots { get; set; }
-        public ushort Field30 { get; set; }
+        public ushort DoubleSpeedSteps { get; set; }
         public ushort AimSteps { get; set; }
-        public ushort Field34 { get; set; } // set at runtime to Field30 / 2
+        public ushort SpeedSteps { get; set; } // set at runtime to DoubleSpeedSteps / 2
         public short ScanId { get; set; }
         public int Effectiveness { get; set; }
     }

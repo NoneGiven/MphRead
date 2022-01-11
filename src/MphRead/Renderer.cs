@@ -126,6 +126,7 @@ namespace MphRead
         private float _elapsedTime = 0;
         private ulong _frameCount = 0;
         private bool _frameAdvanceOn = false;
+        public bool FrameAdvance => _frameAdvanceOn;
         private bool _advanceOneFrame = false;
         private bool _recording = false;
         private int _framesRecorded = 0;

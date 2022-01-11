@@ -138,7 +138,7 @@ namespace MphRead.Entities
                 }
                 if (PlayerEntity.FreeCamera) // skdebug
                 {
-                    inRange = CheckInRange(_scene.CameraPosition);
+                    inRange = true;
                 }
                 if (!inRange)
                 {
