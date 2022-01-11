@@ -503,6 +503,12 @@ namespace MphRead
                 {
                     rotations.Add(value / 65536.0f * 2.0f * MathF.PI);
                 }
+                if (offset == 3704 && model == "GuardBot1")
+                {
+                    // todo?: we need to read as many UV entries as the node frame count, causing a buggy animation
+                    // --> currently only doing it for this anim (5) because the enemy actually uses it, but others have issues
+                    transCount = 26;
+                }
                 var translations = DoOffsets<Fixed>(bytes, rawGroup.TranslateLutOffset, transCount).Select(f => f.FloatValue).ToList();
                 results.TexcoordAnimationGroups.Add(new TexcoordAnimationGroup(rawGroup, scales, rotations, translations, animations));
             }
