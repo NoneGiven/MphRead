@@ -376,6 +376,15 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
+        public override void Destroy()
+        {
+            if (_effectEntry != null)
+            {
+                _scene.UnlinkEffectEntry(_effectEntry);
+                _effectEntry = null;
+            }
+        }
+
         #region Boilerplate
 
         public static bool Behavior0(Enemy39Entity enemy)

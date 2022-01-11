@@ -114,6 +114,7 @@ namespace MphRead.Entities
             HitPlayers[3] = false;
         }
 
+        // todo: stop SFX on destroy
         public override bool Process()
         {
             bool inRange = false;
