@@ -9,8 +9,8 @@ namespace MphRead.Entities.Enemies
         protected override bool EnemyInitialize()
         {
             EnemySpawnEntityData data = _spawner.Data;
-            Setup(data.Header.FacingVector, data.Header.FacingVector, effectiveness: 0, data.Fields.S05.Volume0,
-                data.Fields.S05.Volume1, data.Fields.S05.Volume2, data.Fields.S05.Volume3);
+            Setup(data.Header.Position.ToFloatVector(), data.Header.FacingVector.ToFloatVector(), effectiveness: 0,
+                data.Fields.S05.Volume0, data.Fields.S05.Volume1, data.Fields.S05.Volume2, data.Fields.S05.Volume3);
             return true;
         }
 

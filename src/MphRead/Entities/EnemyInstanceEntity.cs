@@ -488,7 +488,7 @@ namespace MphRead.Entities
         }
 
         protected bool HandleBlockingCollision(Vector3 position, CollisionVolume volume, bool updateSpeed,
-            ref bool onGround, ref bool notGround)
+            ref bool withGround, ref bool withWall)
         {
             int count = 0;
             var results = new CollisionResult[30];
@@ -506,7 +506,7 @@ namespace MphRead.Entities
                 count = CollisionDetection.CheckInRadius(position, _boundingRadius, limit: 30,
                     getSimpleNormal: false, TestFlags.None, _scene, results);
             }
-            onGround = false;
+            withGround = false;
             if (count == 0)
             {
                 return false;
@@ -531,11 +531,11 @@ namespace MphRead.Entities
                 {
                     if (result.Plane.Y < 0.1f && result.Plane.Y > -0.1f)
                     {
-                        notGround = true;
+                        withWall = true;
                     }
                     else
                     {
-                        onGround = true;
+                        withGround = true;
                     }
                     Position += result.Plane.Xyz * v18;
                     if (updateSpeed)
