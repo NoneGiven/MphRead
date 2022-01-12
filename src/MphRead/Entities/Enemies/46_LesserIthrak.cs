@@ -35,6 +35,8 @@ namespace MphRead.Entities.Enemies
 
         private bool AnimEnded => _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended);
 
+        protected Material _mouthMaterial = null!;
+
         public Enemy46Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
@@ -70,6 +72,14 @@ namespace MphRead.Entities.Enemies
             ModelInstance inst = SetUpModel(Metadata.EnemyModelNames[(int)EnemyType]);
             inst.SetAnimation(5, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node);
             inst.SetAnimation(15, slot: 1, SetFlags.Texcoord);
+            for (int i = 0; i < inst.Model.Materials.Count; i++)
+            {
+                Material material = inst.Model.Materials[i];
+                if (material.Name == "Mouth_tga")
+                {
+                    _mouthMaterial = material;
+                }
+            }
             _field23E = 30 * 2; // todo: FPS stuff
             _moveStart = Position;
             _field240 = 600 * 2; // todo: FPS stuff
@@ -773,6 +783,17 @@ namespace MphRead.Entities.Enemies
             // todo: stop SFX, play SFX
             _speed = Vector3.Zero;
             return true;
+        }
+
+        protected virtual void UpdateMouthMaterial()
+        {
+            _mouthMaterial.Diffuse = new ColorRgb(31, 31, 31);
+        }
+
+        protected override bool EnemyGetDrawInfo()
+        {
+            UpdateMouthMaterial();
+            return false;
         }
 
         #region Boilerplate

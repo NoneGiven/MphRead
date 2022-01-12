@@ -19,6 +19,11 @@ namespace MphRead.Entities.Enemies
             CallSubroutine(Metadata.Enemy47Subroutines, this);
         }
 
+        protected override void UpdateMouthMaterial()
+        {
+            _mouthMaterial.Diffuse = new ColorRgb(14, 14, 14);
+        }
+
         #region Boilerplate
 
         public static bool Behavior00(Enemy47Entity enemy)
