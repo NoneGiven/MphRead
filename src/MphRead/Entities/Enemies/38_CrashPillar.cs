@@ -265,7 +265,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior05()
         {
-            if (_volume1.TestPoint(PlayerEntity.Main.Position))
+            if (!_volume1.TestPoint(PlayerEntity.Main.Position))
             {
                 return false;
             }
