@@ -6,19 +6,18 @@ namespace MphRead.Entities.Enemies
 {
     public class Enemy38Entity : EnemyInstanceEntity
     {
-        protected readonly EnemySpawnEntity _spawner;
+        private readonly EnemySpawnEntity _spawner;
         private CollisionVolume _volume1;
         private CollisionVolume _volume2;
         private Vector3 _initalPos;
         private Vector3 _initalFacing;
-
         private Vector3 _targetVec;
 
         private ushort _jumpTimer = 0; // for becoming vulnerable
         private ushort _delayTimer = 0;
         private float _jumpHeight = 0;
-        protected float _aimAngleStep = 0;
-        protected ushort _aimSteps = 0; // also used as a timer in one instance
+        private float _aimAngleStep = 0;
+        private ushort _aimSteps = 0; // also used as a timer in one instance
 
         public Enemy38Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
         {

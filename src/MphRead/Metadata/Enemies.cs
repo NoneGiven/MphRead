@@ -1014,6 +1014,242 @@ namespace MphRead
             }
         };
 
+        public static IReadOnlyList<EnemySubroutine<Enemy46Entity>> Enemy46Subroutines = new EnemySubroutine<Enemy46Entity>[20]
+        {
+            // state 0
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[1]
+            {
+                new EnemyBehavior<Enemy46Entity>(1, Enemy46Entity.Behavior02)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[2]
+            {
+                new EnemyBehavior<Enemy46Entity>(0, Enemy46Entity.Behavior14),
+                new EnemyBehavior<Enemy46Entity>(2, Enemy46Entity.Behavior15)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[1]
+            {
+                new EnemyBehavior<Enemy46Entity>(4, Enemy46Entity.Behavior05)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[4]
+            {
+                new EnemyBehavior<Enemy46Entity>(19, Enemy46Entity.Behavior16),
+                new EnemyBehavior<Enemy46Entity>(8, Enemy46Entity.Behavior18),
+                new EnemyBehavior<Enemy46Entity>(5, Enemy46Entity.Behavior24),
+                new EnemyBehavior<Enemy46Entity>(12, Enemy46Entity.Behavior25)
+            }),
+            // state 4
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[1]
+            {
+                new EnemyBehavior<Enemy46Entity>(3, Enemy46Entity.Behavior01)
+            }),
+            // state 5
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[3]
+            {
+                new EnemyBehavior<Enemy46Entity>(19, Enemy46Entity.Behavior16),
+                new EnemyBehavior<Enemy46Entity>(6, Enemy46Entity.Behavior23),
+                new EnemyBehavior<Enemy46Entity>(8, Enemy46Entity.Behavior18)
+            }),
+            // state 6
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[3]
+            {
+                new EnemyBehavior<Enemy46Entity>(19, Enemy46Entity.Behavior16),
+                new EnemyBehavior<Enemy46Entity>(7, Enemy46Entity.Behavior17),
+                new EnemyBehavior<Enemy46Entity>(8, Enemy46Entity.Behavior18)
+            }),
+            // state 7
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[2]
+            {
+                new EnemyBehavior<Enemy46Entity>(9, Enemy46Entity.Behavior05),
+                new EnemyBehavior<Enemy46Entity>(8, Enemy46Entity.Behavior11)
+            }),
+            // state 8
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[3]
+            {
+                new EnemyBehavior<Enemy46Entity>(19, Enemy46Entity.Behavior16),
+                new EnemyBehavior<Enemy46Entity>(3, Enemy46Entity.Behavior21),
+                new EnemyBehavior<Enemy46Entity>(19, Enemy46Entity.Behavior22)
+            }),
+            // state 9
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[1]
+            {
+                new EnemyBehavior<Enemy46Entity>(10, Enemy46Entity.Behavior09)
+            }),
+            // state 10
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[1]
+            {
+                new EnemyBehavior<Enemy46Entity>(11, Enemy46Entity.Behavior06)
+            }),
+            // state 11
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[1]
+            {
+                new EnemyBehavior<Enemy46Entity>(3, Enemy46Entity.Behavior03)
+            }),
+            // state 12
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[1]
+            {
+                new EnemyBehavior<Enemy46Entity>(13, Enemy46Entity.Behavior00)
+            }),
+            // state 13
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[1]
+            {
+                new EnemyBehavior<Enemy46Entity>(14, Enemy46Entity.Behavior04)
+            }),
+            // state 14
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[3]
+            {
+                new EnemyBehavior<Enemy46Entity>(15, Enemy46Entity.Behavior19),
+                new EnemyBehavior<Enemy46Entity>(11, Enemy46Entity.Behavior13),
+                new EnemyBehavior<Enemy46Entity>(16, Enemy46Entity.Behavior20)
+            }),
+            // state 15
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[1]
+            {
+                new EnemyBehavior<Enemy46Entity>(18, Enemy46Entity.Behavior10)
+            }),
+            // state 16
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[1]
+            {
+                new EnemyBehavior<Enemy46Entity>(17, Enemy46Entity.Behavior08)
+            }),
+            // state 17
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[1]
+            {
+                new EnemyBehavior<Enemy46Entity>(15, Enemy46Entity.Behavior00)
+            }),
+            // state 18
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[2]
+            {
+                new EnemyBehavior<Enemy46Entity>(14, Enemy46Entity.Behavior12),
+                new EnemyBehavior<Enemy46Entity>(11, Enemy46Entity.Behavior13)
+            }),
+            // state 19
+            new EnemySubroutine<Enemy46Entity>(new EnemyBehavior<Enemy46Entity>[1]
+            {
+                new EnemyBehavior<Enemy46Entity>(3, Enemy46Entity.Behavior07)
+            })
+        };
+
+        public static IReadOnlyList<EnemySubroutine<Enemy47Entity>> Enemy47Subroutines = new EnemySubroutine<Enemy47Entity>[20]
+        {
+            // state 0
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[1]
+            {
+                new EnemyBehavior<Enemy47Entity>(1, Enemy47Entity.Behavior02)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[2]
+            {
+                new EnemyBehavior<Enemy47Entity>(0, Enemy47Entity.Behavior14),
+                new EnemyBehavior<Enemy47Entity>(2, Enemy47Entity.Behavior15)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[1]
+            {
+                new EnemyBehavior<Enemy47Entity>(4, Enemy47Entity.Behavior05)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[4]
+            {
+                new EnemyBehavior<Enemy47Entity>(19, Enemy47Entity.Behavior16),
+                new EnemyBehavior<Enemy47Entity>(8, Enemy47Entity.Behavior18),
+                new EnemyBehavior<Enemy47Entity>(5, Enemy47Entity.Behavior24),
+                new EnemyBehavior<Enemy47Entity>(12, Enemy47Entity.Behavior25)
+            }),
+            // state 4
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[1]
+            {
+                new EnemyBehavior<Enemy47Entity>(3, Enemy47Entity.Behavior01)
+            }),
+            // state 5
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[3]
+            {
+                new EnemyBehavior<Enemy47Entity>(19, Enemy47Entity.Behavior16),
+                new EnemyBehavior<Enemy47Entity>(6, Enemy47Entity.Behavior23),
+                new EnemyBehavior<Enemy47Entity>(8, Enemy47Entity.Behavior18)
+            }),
+            // state 6
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[3]
+            {
+                new EnemyBehavior<Enemy47Entity>(19, Enemy47Entity.Behavior16),
+                new EnemyBehavior<Enemy47Entity>(7, Enemy47Entity.Behavior17),
+                new EnemyBehavior<Enemy47Entity>(8, Enemy47Entity.Behavior18)
+            }),
+            // state 7
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[2]
+            {
+                new EnemyBehavior<Enemy47Entity>(9, Enemy47Entity.Behavior05),
+                new EnemyBehavior<Enemy47Entity>(8, Enemy47Entity.Behavior11)
+            }),
+            // state 8
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[3]
+            {
+                new EnemyBehavior<Enemy47Entity>(19, Enemy47Entity.Behavior16),
+                new EnemyBehavior<Enemy47Entity>(3, Enemy47Entity.Behavior21),
+                new EnemyBehavior<Enemy47Entity>(19, Enemy47Entity.Behavior22)
+            }),
+            // state 9
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[1]
+            {
+                new EnemyBehavior<Enemy47Entity>(10, Enemy47Entity.Behavior09)
+            }),
+            // state 10
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[1]
+            {
+                new EnemyBehavior<Enemy47Entity>(11, Enemy47Entity.Behavior06)
+            }),
+            // state 11
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[1]
+            {
+                new EnemyBehavior<Enemy47Entity>(3, Enemy47Entity.Behavior03)
+            }),
+            // state 12
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[1]
+            {
+                new EnemyBehavior<Enemy47Entity>(13, Enemy47Entity.Behavior00)
+            }),
+            // state 13
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[1]
+            {
+                new EnemyBehavior<Enemy47Entity>(14, Enemy47Entity.Behavior04)
+            }),
+            // state 14
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[3]
+            {
+                new EnemyBehavior<Enemy47Entity>(15, Enemy47Entity.Behavior19),
+                new EnemyBehavior<Enemy47Entity>(11, Enemy47Entity.Behavior13),
+                new EnemyBehavior<Enemy47Entity>(16, Enemy47Entity.Behavior20)
+            }),
+            // state 15
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[1]
+            {
+                new EnemyBehavior<Enemy47Entity>(18, Enemy47Entity.Behavior10)
+            }),
+            // state 16
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[1]
+            {
+                new EnemyBehavior<Enemy47Entity>(17, Enemy47Entity.Behavior08)
+            }),
+            // state 17
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[1]
+            {
+                new EnemyBehavior<Enemy47Entity>(15, Enemy47Entity.Behavior00)
+            }),
+            // state 18
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[2]
+            {
+                new EnemyBehavior<Enemy47Entity>(14, Enemy47Entity.Behavior12),
+                new EnemyBehavior<Enemy47Entity>(11, Enemy47Entity.Behavior13)
+            }),
+            // state 19
+            new EnemySubroutine<Enemy47Entity>(new EnemyBehavior<Enemy47Entity>[1]
+            {
+                new EnemyBehavior<Enemy47Entity>(3, Enemy47Entity.Behavior07)
+            })
+        };
+
         public static string? GetEnemyModelName(EnemyType type)
         {
             int index = (int)type;
@@ -1148,7 +1384,7 @@ namespace MphRead
         }
 
         // todo: document other replacements
-        // default = 0x2AAAA = 101010101010101010 (2/normal effectiveness for everything)
+        // default = 0x2AAAA = 0101010101010101010 (2/normal effectiveness for everything)
         // replacements:
         // AlimbicTurretV10 - 0xEAAA - zero Omega Cannon, double Shock Coil
         // AlimbicTurretV14 - 0xEABA - zero Omega Cannon, double Missile/Shock Coil
@@ -1165,7 +1401,10 @@ namespace MphRead
         // Voldrum1I - 0xF2BA - zero Judicator/Omega Cannon, double Missile/Magmaul/Shock Coil
         // FireSpawn   - 0x8955 - zero Magmaul/Omega Cannon, normal Judicator/Shock Coil, half all else
         // ArcticSpawn - 0xB155 - zero Judicator/Omega Cannon, normal Shock Coil, double Magmaul, half all else
+        // LesserIthrak  - 0x5555 - zero Omega Cannon, half all else
+        // GreaterIthrak - 0x0000 - zero for all
         // ForceFieldLock - types 0-7 are normal from the corresponding beam and zero from all else; type 8 is zero from all (vulerable to bombs)
+        // HitZone - variable - can be the same as the owning enemy, or 0xFFFF for zero Omega Canon and double all else
         public static readonly IReadOnlyList<int> EnemyEffectiveness = new int[52]
         {
             /*  0 */ 0x2AAAA, // WarWasp
@@ -1214,11 +1453,11 @@ namespace MphRead
             /* 43 */ 0x2AA99, // SlenchNest -- half from Power Beam/Missile
             /* 44 */ 0x2AA99, // SlenchSynapse -- half from Power Beam/Missile
             /* 45 */ 0x2AA99, // SlenchTurret -- half from Power Beam/Missile
-            /* 46 */ 0x2AAAA, // LesserIthrak
-            /* 47 */ 0x2AAAA, // GreaterIthrak
+            /* 46 */ 0x2AAAA, // LesserIthrak (not used)
+            /* 47 */ 0x2AAAA, // GreaterIthrak (not used)
             /* 48 */ 0x2AAAA, // Hunter
             /* 49 */ 0x2AAAA, // ForceFieldLock (not used)
-            /* 50 */ 0x2AAAA, // HitZone
+            /* 50 */ 0x2AAAA, // HitZone (not used)
             /* 51 */ 0x2AAAA  // CarnivorousPlant
         };
     }

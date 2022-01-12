@@ -300,6 +300,14 @@ namespace MphRead.Entities
             {
                 return new Enemy40Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
+            if (type == EnemyType.LesserIthrak)
+            {
+                return new Enemy46Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.GreaterIthrak)
+            {
+                return new Enemy47Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
             if (type == EnemyType.ForceFieldLock)
             {
                 return new Enemy49Entity(new EnemyInstanceEntityData(type, spawner), scene);
