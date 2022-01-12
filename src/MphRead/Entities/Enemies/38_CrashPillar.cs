@@ -333,9 +333,10 @@ namespace MphRead.Entities.Enemies
             float factor = MathF.Sqrt(Fixed.ToFloat(80) / Fixed.ToFloat(22937));
             _speed = new Vector3(
                 between.X * factor,
-                Fixed.ToFloat(448),
+                MathF.Sqrt(Fixed.ToFloat(448)),
                 between.Z * factor
             );
+            _speed /= 2; // todo: FPS stuff
             _jumpHeight = Position.Y + 2.8f;
             _delayTimer = 15 * 2; // todo: FPS stuff
             _aimSteps = 8 * 2; // todo: FPS stuff
