@@ -1045,7 +1045,7 @@ namespace MphRead.Entities.Enemies
         protected override bool EnemyGetDrawInfo()
         {
             IReadOnlyList<Material> materials = _models[0].Model.Materials;
-            if (_state1 == 1)
+            if (_state1 == 11)
             {
                 for (int i = 0; i < materials.Count; i++)
                 {
@@ -1053,7 +1053,7 @@ namespace MphRead.Entities.Enemies
                 }
             }
             DrawGeneric();
-            if (_state1 == 1)
+            if (_state1 == 11)
             {
                 for (int i = 0; i < materials.Count; i++)
                 {
