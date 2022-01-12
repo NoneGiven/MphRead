@@ -78,7 +78,7 @@ namespace MphRead.Entities.Enemies
             }
             _state1 = _state2 = 1;
             _subId = _state1;
-            ModelInstance inst = SetUpModel(Metadata.EnemyModelNames[35], animIndex: 4);
+            SetUpModel(Metadata.EnemyModelNames[35], animIndex: 4);
         }
 
         protected override void EnemyProcess()
