@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Formats;
 using OpenTK.Mathematics;
@@ -283,7 +284,7 @@ namespace MphRead.Entities.Enemies
             else if (_state1 == 18)
             {
                 UpdateCollision();
-                _speed += _field224; // sktodo: FPS stuff?
+                _speed += _field224 / 2; // todo: FPS stuff
                 Func214E708(Func214EDD0);
                 _hitByBeam = false;
                 _hitByBomb = false;
@@ -710,10 +711,7 @@ namespace MphRead.Entities.Enemies
                 _target.TakeDamage(2, DamageFlags.NoDmgInvuln, null, this);
                 _field238 = 8 * 2; // todo: FPS stuff
             }
-            if (_target.IsAltForm)
-            {
-                // sktodo: set player's transform to enemy's?
-            }
+            // the game sets the player's model transform (if in alt form) to the enemy's here
         }
 
         private void Func214E8D4()
@@ -728,10 +726,10 @@ namespace MphRead.Entities.Enemies
         {
             if (player.IsAltForm)
             {
-                Position = player.Position;
+                Vector3 position = player.Position;
                 if (player.Speed != Vector3.Zero)
                 {
-                    _speed.Y += 0.4f / 2; // sktodo: FPS stuff?
+                    position.Y += 0.4f;
                     if (_models[0].AnimInfo.Index[0] != 12)
                     {
                         _models[0].SetAnimation(12, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node);
@@ -739,12 +737,13 @@ namespace MphRead.Entities.Enemies
                 }
                 else
                 {
-                    _speed.Y -= 0.25f / 2; // sktodo: FPS stuff?
+                    position.Y -= 0.25f;
                     if (_models[0].AnimInfo.Index[0] != 1)
                     {
                         _models[0].SetAnimation(1, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node);
                     }
                 }
+                Position = position;
             }
         }
 
@@ -857,7 +856,7 @@ namespace MphRead.Entities.Enemies
         private void Func214E82C()
         {
             Debug.Assert(_target != null);
-            // sktodo: set enemy's transform to player's?
+            // the game sets the enemy's model transform to the player's here
             _target.AttachedEnemy = this;
             _models[0].SetAnimation(1, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node);
             _state1 = _state2 = 13;
@@ -883,7 +882,8 @@ namespace MphRead.Entities.Enemies
             {
                 _state1 = _state2 = 1;
             }
-            Position = Position.WithY(0.625f); // sktodo: ???
+            // this seems like a bug, but this is only called in state 15, which is not used
+            Position = Position.WithY(0.625f);
         }
 
         private void Func214DBDC()
@@ -893,7 +893,7 @@ namespace MphRead.Entities.Enemies
             if (vec.LengthSquared > Fixed.ToFloat(32))
             {
                 Func214E444(vec.Normalized(), state: 2, animId: 12, AnimFlags.None);
-            } 
+            }
         }
 
         private void Func214ECB8()
@@ -1040,6 +1040,28 @@ namespace MphRead.Entities.Enemies
                 return true;
             }
             return false;
+        }
+
+        protected override bool EnemyGetDrawInfo()
+        {
+            IReadOnlyList<Material> materials = _models[0].Model.Materials;
+            if (_state1 == 1)
+            {
+                for (int i = 0; i < materials.Count; i++)
+                {
+                    materials[i].Lighting = 0;
+                }
+            }
+            DrawGeneric();
+            if (_state1 == 1)
+            {
+                for (int i = 0; i < materials.Count; i++)
+                {
+                    Material material = materials[i];
+                    material.Lighting = material.InitLighting;
+                }
+            }
+            return true;
         }
 
         [Flags]

@@ -263,15 +263,20 @@ namespace MphRead.Entities
             {
                 if (!EnemyGetDrawInfo())
                 {
-                    // todo: is_visible
-                    if (_timeSinceDamage < 5 * 2) // todo: FPS stuff
-                    {
-                        PaletteOverride = Metadata.RedPalette;
-                    }
-                    base.GetDrawInfo();
-                    PaletteOverride = null;
+                    DrawGeneric();
                 }
             }
+        }
+
+        protected void DrawGeneric()
+        {
+            // todo: is_visible
+            if (_timeSinceDamage < 5 * 2) // todo: FPS stuff
+            {
+                PaletteOverride = Metadata.RedPalette;
+            }
+            base.GetDrawInfo();
+            PaletteOverride = null;
         }
 
         /// <summary>

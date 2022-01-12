@@ -161,6 +161,7 @@ namespace MphRead
     {
         public string Name { get; }
         public byte Lighting { get; set; }
+        public byte InitLighting { get; }
         public CullingMode Culling { get; }
         public byte Alpha { get; }
         public float CurrentAlpha { get; set; }
@@ -194,6 +195,7 @@ namespace MphRead
         {
             Name = raw.Name.MarshalString();
             Lighting = raw.Lighting;
+            InitLighting = raw.Lighting;
             Culling = raw.Culling;
             Alpha = raw.Alpha;
             Wireframe = raw.Wireframe;
