@@ -157,6 +157,7 @@ namespace MphRead.Entities
         private readonly ModelInstance[] _bipedModelLods = new ModelInstance[2];
         private ModelInstance _bipedModel1 = null!; // legs
         private ModelInstance _bipedModel2 = null!; // torso
+        public ModelInstance BipedModel2 => _bipedModel2;
         private ModelInstance _altModel = null!;
         private ModelInstance _gunModel = null!;
         private ModelInstance _gunSmokeModel = null!;

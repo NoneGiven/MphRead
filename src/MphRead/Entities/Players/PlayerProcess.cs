@@ -617,7 +617,7 @@ namespace MphRead.Entities
                 }
                 else if (AttachedEnemy.EnemyType == EnemyType.Quadtroid)
                 {
-                    // todo: update attached Quadtroid
+                    ((Enemy37Entity)AttachedEnemy).UpdateAttached(this);
                 }
             }
             if (EquipInfo.SmokeLevel < EquipInfo.Weapon.SmokeStart * 2) // todo: FPS stuff

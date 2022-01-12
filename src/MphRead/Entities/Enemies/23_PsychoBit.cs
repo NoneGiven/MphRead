@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using MphRead.Effects;
 using OpenTK.Mathematics;
+
 namespace MphRead.Entities.Enemies
 {
     public class Enemy23Entity : EnemyInstanceEntity

@@ -284,6 +284,10 @@ namespace MphRead.Entities
             {
                 return new Enemy36Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
+            if (type == EnemyType.Quadtroid)
+            {
+                return new Enemy37Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
             if (type == EnemyType.FireSpawn)
             {
                 return new Enemy39Entity(new EnemyInstanceEntityData(type, spawner), scene);
