@@ -618,6 +618,7 @@ namespace MphRead.Entities.Enemies
             // todo: play SFX
             return true;
         }
+
         private void StartRecoil()
         {
             float factor = Fixed.ToFloat(500);
