@@ -117,8 +117,8 @@ namespace MphRead.Entities.Enemies
                 }
                 else
                 {
-                    _speed.X -= _acceleration.X;
-                    _speed.Z -= _acceleration.Z;
+                    _speed.X -= _acceleration.X / 2; // todo: FPS stuff
+                    _speed.Z -= _acceleration.Z / 2; // todo: FPS stuff
                 }
             }
             else if (_state1 == 3 || _state1 == 4 || _state1 == 5 || _state1 == 6 || _state1 == 8)
@@ -140,7 +140,7 @@ namespace MphRead.Entities.Enemies
             CallStateProcess();
             if (_state1 != 0 && _state1 != 1 && _state1 != 2 && !_groundCol)
             {
-                _speed.Y -= Fixed.ToFloat(100) / 2; // todo: FPS stuff
+                _speed.Y -= Fixed.ToFloat(100) / 4; // todo: FPS stuff
             }
         }
 
