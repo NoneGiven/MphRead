@@ -8,23 +8,23 @@ namespace MphRead.Entities.Enemies
     public class Enemy46Entity : EnemyInstanceEntity
     {
         protected readonly EnemySpawnEntity _spawner;
-        private CollisionVolume _volume1;
-        private CollisionVolume _volume2;
-        private CollisionVolume _volume3;
+        private CollisionVolume _homeVolume;
+        private CollisionVolume _rangeVolume;
+        private CollisionVolume _warnVolume;
         private Enemy50Entity? _hitZone = null;
 
         private Vector3 _moveTarget;
         private Vector3 _moveStart;
         private float _dropAngleSign = 1;
-        private float _field299 = 1; // another angle sign
+        private float _recoilAngleSign = 1;
         private float _moveDistSqr = 0;
 
         private Vector3 _targetVec;
         private float _aimAngleStep = 0;
         private ushort _stepCount = 0; // also used as a timer
 
-        private ushort _field23E = 0;
-        private ushort _field240 = 0;
+        private ushort _delayTimer = 0;
+        private ushort _moveTimer = 0; // basically a timeout
         private Vector3 _acceleration;
         private bool _wallCol = false;
         private bool _groundCol = false;
@@ -66,9 +66,9 @@ namespace MphRead.Entities.Enemies
             Flags |= EnemyFlags.OnRadar;
             _boundingRadius = 0.5f;
             _hurtVolumeInit = new CollisionVolume(hurtVolume);
-            _volume1 = CollisionVolume.Move(volume1, Position);
-            _volume2 = CollisionVolume.Move(volume2, Position);
-            _volume3 = CollisionVolume.Move(volume3, Position);
+            _homeVolume = CollisionVolume.Move(volume1, Position);
+            _rangeVolume = CollisionVolume.Move(volume2, Position);
+            _warnVolume = CollisionVolume.Move(volume3, Position);
             ModelInstance inst = SetUpModel(Metadata.EnemyModelNames[(int)EnemyType]);
             inst.SetAnimation(5, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node);
             inst.SetAnimation(15, slot: 1, SetFlags.Texcoord);
@@ -81,9 +81,9 @@ namespace MphRead.Entities.Enemies
                     break;
                 }
             }
-            _field23E = 30 * 2; // todo: FPS stuff
+            _delayTimer = 30 * 2; // todo: FPS stuff
             _moveStart = Position;
-            _field240 = 600 * 2; // todo: FPS stuff
+            _moveTimer = 600 * 2; // todo: FPS stuff
             Metadata.LoadEffectiveness(effectiveness, BeamEffectiveness);
             SpawnHitZone();
         }
@@ -283,18 +283,18 @@ namespace MphRead.Entities.Enemies
         {
             _speed.X = 0;
             _speed.Z = 0;
-            if (_field23E == 15 * 2) // todo: FPS stuff
+            if (_delayTimer == 15 * 2) // todo: FPS stuff
             {
                 SetNodeAnim(2, AnimFlags.NoLoop);
             }
-            else if (_field23E == 0)
+            else if (_delayTimer == 0)
             {
                 PlayerEntity.Main.TakeDamage(10, DamageFlags.NoDmgInvuln, _speed * 2, this); // todo: FPS stuff
-                _field23E = 30 * 2; // todo: FPS stuff
+                _delayTimer = 30 * 2; // todo: FPS stuff
             }
-            if (_field23E > 0)
+            if (_delayTimer > 0)
             {
-                _field23E--;
+                _delayTimer--;
             }
             CallSubroutine();
         }
@@ -378,7 +378,7 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             SetNodeAnim(16);
-            PickMoveTarget(_volume1);
+            PickMoveTarget(_homeVolume);
             _targetVec = (_moveTarget - Position).WithY(0).Normalized();
             float angle = MathHelper.RadiansToDegrees(MathF.Acos(Vector3.Dot(FacingVector, _targetVec)));
             _stepCount = 10 * 2; // todo: FPS stuff
@@ -405,7 +405,7 @@ namespace MphRead.Entities.Enemies
         // player in warning range
         protected bool Behavior02()
         {
-            if (!_volume3.TestPoint(PlayerEntity.Main.Position))
+            if (!_warnVolume.TestPoint(PlayerEntity.Main.Position))
             {
                 return false;
             }
@@ -489,11 +489,6 @@ namespace MphRead.Entities.Enemies
             _stepCount = 10 * 2; // todo: FPS stuff
             _aimAngleStep = angle / _stepCount;
             return true;
-        }
-
-        public override void GetDisplayVolumes()
-        {
-            AddVolumeItem(new CollisionVolume(Position.AddY(0.5f), _boundingRadius), Vector3.UnitX);
         }
 
         protected bool Behavior07()
@@ -580,7 +575,7 @@ namespace MphRead.Entities.Enemies
         protected bool Behavior13()
         {
             Vector3 playerPos = PlayerEntity.Main.Position;
-            if (!_volume2.TestPoint(playerPos) || !_volume2.TestPoint(Position))
+            if (!_rangeVolume.TestPoint(playerPos) || !_rangeVolume.TestPoint(Position))
             {
                 return false;
             }
@@ -596,7 +591,7 @@ namespace MphRead.Entities.Enemies
 
         protected bool Behavior14()
         {
-            if (_volume3.TestPoint(PlayerEntity.Main.Position))
+            if (_warnVolume.TestPoint(PlayerEntity.Main.Position))
             {
                 return false;
             }
@@ -606,11 +601,11 @@ namespace MphRead.Entities.Enemies
 
         protected bool Behavior15()
         {
-            if (!_volume2.TestPoint(PlayerEntity.Main.Position))
+            if (!_rangeVolume.TestPoint(PlayerEntity.Main.Position))
             {
                 return false;
             }
-            PickMoveTarget(_volume1);
+            PickMoveTarget(_homeVolume);
             Vector3 travel = _moveTarget - Position;
             float distance = travel.Length;
             _stepCount = (ushort)((distance / _stepDistance) + 1);
@@ -625,8 +620,8 @@ namespace MphRead.Entities.Enemies
             float factor = Fixed.ToFloat(500);
             Vector3 facing = FacingVector;
             var vec = new Vector3(-facing.X * factor, 0, -facing.Z * factor);
-            _field299 *= -1;
-            float randAngle = (Fixed.ToFloat(Rng.GetRandomInt2(0x1E000)) + 30) * _field299; // [30-60)
+            _recoilAngleSign *= -1;
+            float randAngle = (Fixed.ToFloat(Rng.GetRandomInt2(0x1E000)) + 30) * _recoilAngleSign; // [30-60)
             var rotY = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(randAngle));
             vec = Matrix.Vec3MultMtx3(vec, rotY);
             _speed = new Vector3(vec.X, Fixed.ToFloat(1000), vec.Z);
@@ -677,7 +672,7 @@ namespace MphRead.Entities.Enemies
             }
             _stepCount = 0;
             _speed = Vector3.Zero;
-            _field23E = 15 * 2; // todo: FPS stuff
+            _delayTimer = 15 * 2; // todo: FPS stuff
             // todo: stop SFX
             return true;
         }
@@ -687,7 +682,7 @@ namespace MphRead.Entities.Enemies
             if (_reachingTarget)
             {
                 SetNodeAnim(16);
-                PickMoveTarget(_volume1);
+                PickMoveTarget(_homeVolume);
                 // todo: stop SFX
                 _speed = Vector3.Zero;
                 _targetVec = (_moveTarget - Position).WithY(0).Normalized();
@@ -709,9 +704,9 @@ namespace MphRead.Entities.Enemies
 
         protected bool Behavior20()
         {
-            if (_field240 > 0)
+            if (_moveTimer > 0)
             {
-                _field240--;
+                _moveTimer--;
                 return false;
             }
             SetNodeAnim(16);
@@ -721,13 +716,13 @@ namespace MphRead.Entities.Enemies
             float angle = MathHelper.RadiansToDegrees(MathF.Acos(Vector3.Dot(FacingVector, _targetVec)));
             _stepCount = 10 * 2; // todo: FPS stuff
             _aimAngleStep = angle / _stepCount;
-            _field240 = 600 * 2; // todo: FPS stuff
+            _moveTimer = 600 * 2; // todo: FPS stuff
             return true;
         }
 
         protected bool Behavior21()
         {
-            if (_field23E > 0 || (Position - PlayerEntity.Main.Position).LengthSquared <= 2 * 2)
+            if (_delayTimer > 0 || (Position - PlayerEntity.Main.Position).LengthSquared <= 2 * 2)
             {
                 return false;
             }
@@ -736,7 +731,7 @@ namespace MphRead.Entities.Enemies
             SetTransform(facing, Vector3.UnitY, Position);
             _speed = new Vector3(facing.X * 0.15f, 0, facing.Z * 0.15f);
             _speed /= 2; // todo: FPS stuff
-            _field23E = 30 * 2; // todo: FPS stuff
+            _delayTimer = 30 * 2; // todo: FPS stuff
             return true;
         }
 
@@ -744,7 +739,7 @@ namespace MphRead.Entities.Enemies
         {
             // todo: FPS stuff
             // --> in addition to the timer, we have to halve the random chance
-            if (_field23E < 15 * 2 || Rng.GetRandomInt2(0x64000) >= 2048 / 2)
+            if (_delayTimer < 15 * 2 || Rng.GetRandomInt2(0x64000) >= 2048 / 2)
             {
                 return false;
             }
@@ -782,7 +777,7 @@ namespace MphRead.Entities.Enemies
 
         protected bool Behavior25()
         {
-            if (_volume2.TestPoint(Position) && _volume2.TestPoint(PlayerEntity.Main.Position))
+            if (_rangeVolume.TestPoint(Position) && _rangeVolume.TestPoint(PlayerEntity.Main.Position))
             {
                 return false;
             }
