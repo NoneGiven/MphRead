@@ -62,11 +62,11 @@ namespace MphRead.Entities.Enemies
             }
             if (_state1 == 7 || _state1 == 8)
             {
-                _speed.Y -= 0.02f / 2; // todo: FPS stuff
+                _speed.Y -= 0.02f / 4; // todo: FPS stuff
             }
             else if (_state1 != 9 && _state1 != 10)
             {
-                _speed.Y -= Fixed.ToFloat(100) / 2; // todo: FPS stuff
+                _speed.Y -= Fixed.ToFloat(100) / 4; // todo: FPS stuff
             }
             if (_state1 != 7 && _state1 != 10)
             {

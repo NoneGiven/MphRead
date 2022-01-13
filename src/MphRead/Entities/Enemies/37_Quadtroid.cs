@@ -284,7 +284,7 @@ namespace MphRead.Entities.Enemies
             else if (_state1 == 18)
             {
                 UpdateCollision();
-                _speed += _field224 / 2; // todo: FPS stuff
+                _speed += _field224 / 4; // todo: FPS stuff
                 Func214E708(Func214EDD0);
                 _hitByBeam = false;
                 _hitByBomb = false;

@@ -86,7 +86,7 @@ namespace MphRead.Entities.Enemies
             // todo: update SFX
             if (!_grounded)
             {
-                _speed.Y -= Fixed.ToFloat(110) / 2; // todo: FPS stuff
+                _speed.Y -= Fixed.ToFloat(110) / 4; // todo: FPS stuff
             }
             if (_state1 == 2)
             {

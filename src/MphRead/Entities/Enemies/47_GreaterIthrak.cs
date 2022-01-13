@@ -123,7 +123,7 @@ namespace MphRead.Entities.Enemies
 
         public static bool Behavior19(Enemy47Entity enemy)
         {
-            return enemy.Behavior18();
+            return enemy.Behavior19();
         }
 
         public static bool Behavior20(Enemy47Entity enemy)
