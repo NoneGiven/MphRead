@@ -14,6 +14,7 @@ namespace MphRead.Entities.Enemies
         private byte _shotFrames = 0;
         private EquipInfo? _equipInfo;
         private int _ammo = -1;
+        private Vector3 _ownSpeed; // todo: revisit this?
 
         // todo?: technically this has a custom draw function, but I don't think we need it (unless it's possible to observe the damage flash)
         public Enemy49Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
@@ -134,8 +135,8 @@ namespace MphRead.Entities.Enemies
             {
                 float dot1 = Vector3.Dot(between, _forceField.FieldFacingVector);
                 between = (between - _forceField.FieldFacingVector * dot1).Normalized();
-                float dot2 = Vector3.Dot(_speed, between) * 2;
-                _speed -= between * dot2;
+                float dot2 = Vector3.Dot(_ownSpeed, between) * 2;
+                _ownSpeed -= between * dot2;
                 float inv = 1 / MathF.Sqrt(pct);
                 float rf = rightPct * inv * width;
                 float uf = upPct * inv * height;
@@ -145,7 +146,7 @@ namespace MphRead.Entities.Enemies
                     _fieldPosition.Z + _forceField.FieldRightVector.Z * rf + _forceField.FieldUpVector.Z * uf
                 );
             }
-            float magSqr = _speed.X * _speed.X + _speed.Y * _speed.Y + _speed.Z * _speed.Z;
+            float magSqr = _ownSpeed.X * _ownSpeed.X + _ownSpeed.Y * _ownSpeed.Y + _ownSpeed.Z * _ownSpeed.Z;
             if (magSqr <= 0.0004f)
             {
                 if (_shotFrames == 0)
@@ -156,7 +157,7 @@ namespace MphRead.Entities.Enemies
                         {
                             float randRight = Rng.GetRandomInt2(0x666) / 4096f - 0.2f;
                             float randUp = Rng.GetRandomInt2(0x666) / 4096f - 0.2f;
-                            _speed = new Vector3(
+                            _ownSpeed = new Vector3(
                                 _forceField.FieldUpVector.X * randUp + _forceField.FieldRightVector.X * randRight,
                                 _forceField.FieldUpVector.Y * randUp + _forceField.FieldRightVector.Y * randRight,
                                 _forceField.FieldUpVector.Z * randUp + _forceField.FieldRightVector.Z * randRight
@@ -171,8 +172,9 @@ namespace MphRead.Entities.Enemies
             }
             else
             {
-                _speed *= Fixed.ToFloat(3973);
+                _ownSpeed *= Fixed.ToFloat(3973);
             }
+            _speed = _ownSpeed / 2; // todo: FPS stuff
         }
 
         protected override bool EnemyTakeDamage(EntityBase? source)
