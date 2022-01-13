@@ -372,7 +372,7 @@ namespace MphRead.Entities
             for (int i = 0; i < _scene.Entities.Count; i++)
             {
                 EntityBase entity = _scene.Entities[i];
-                if (entity.Type != EntityType.Player || Owner == entity)
+                if (entity.Type != EntityType.Player)
                 {
                     continue;
                 }
@@ -942,12 +942,12 @@ namespace MphRead.Entities
             if (type == 1)
             {
                 // sin 1
-                return value1 + (value2 - value1) * ((MathF.Sin(270 - 180 * ratio) + 1) / 2);
+                return value1 + (value2 - value1) * ((MathF.Sin(MathHelper.DegreesToRadians(270 - 180 * ratio)) + 1) / 2);
             }
             if (type == 2)
             {
                 // sin 2
-                return value1 + (value2 - value1) * (MathF.Sin(270 - 90 * ratio) + 1);
+                return value1 + (value2 - value1) * (MathF.Sin(MathHelper.DegreesToRadians(270 - 90 * ratio)) + 1);
             }
             return 0;
         }
@@ -1347,8 +1347,8 @@ namespace MphRead.Entities
                 || (!charged && weapon.Flags.TestFlag(WeaponFlags.AoeUncharged));
 
             BeamFlags flags = BeamFlags.None;
-            float speed = GetAmount(weapon.UnchargedSpeed, weapon.MinChargeSpeed, weapon.ChargedSpeed) / 4096f;
-            float finalSpeed = GetAmount(weapon.UnchargedFinalSpeed, weapon.MinChargeFinalSpeed, weapon.ChargedFinalSpeed) / 4096f;
+            float speed = GetAmount(weapon.UnchargedSpeed, weapon.MinChargeSpeed, weapon.ChargedSpeed) / 4096f / 2;
+            float finalSpeed = GetAmount(weapon.UnchargedFinalSpeed, weapon.MinChargeFinalSpeed, weapon.ChargedFinalSpeed) / 4096f / 2;
             float speedDecayTime = weapon.SpeedDecayTimes[charged ? 1 : 0] * (1 / 30f);
             ushort speedInterpolation = weapon.SpeedInterpolations[charged ? 1 : 0];
             float gravity = GetAmount(weapon.UnchargedGravity, weapon.MinChargeGravity, weapon.ChargedGravity) / 4096f;
