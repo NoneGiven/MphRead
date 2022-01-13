@@ -78,6 +78,7 @@ namespace MphRead.Entities.Enemies
                 if (material.Name == "Mouth_tga")
                 {
                     _mouthMaterial = material;
+                    break;
                 }
             }
             _field23E = 30 * 2; // todo: FPS stuff
@@ -489,6 +490,11 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
+        public override void GetDisplayVolumes()
+        {
+            AddVolumeItem(new CollisionVolume(Position.AddY(0.5f), _boundingRadius), Vector3.UnitX);
+        }
+
         protected bool Behavior07()
         {
             if (!HandleCollision(Position))
@@ -612,9 +618,7 @@ namespace MphRead.Entities.Enemies
             // todo: play SFX
             return true;
         }
-
-        // sktodo: function name
-        private void DoThing()
+        private void StartRecoil()
         {
             float factor = Fixed.ToFloat(500);
             Vector3 facing = FacingVector;
@@ -639,12 +643,13 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
-            DoThing();
+            StartRecoil();
             SetNodeAnim(7, AnimFlags.NoLoop);
             // todo: stop SFX
             return true;
         }
 
+        // start lunge
         protected bool Behavior17()
         {
             if (_stepCount > 0)
@@ -741,7 +746,7 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
-            DoThing();
+            StartRecoil();
             SetNodeAnim(7, AnimFlags.NoLoop);
             return true;
         }
