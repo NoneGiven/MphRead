@@ -144,7 +144,8 @@ namespace MphRead.Entities.Enemies
             }
         }
 
-        private void PickDropTarget(CollisionVolume volume)
+        // dropping, returning to home, roaming
+        private void PickMoveTarget(CollisionVolume volume)
         {
             _moveStart = Position;
             Vector3 moveTarget;
@@ -377,7 +378,7 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             SetNodeAnim(16);
-            PickDropTarget(_volume1);
+            PickMoveTarget(_volume1);
             _targetVec = (_moveTarget - Position).WithY(0).Normalized();
             float angle = MathHelper.RadiansToDegrees(MathF.Acos(Vector3.Dot(FacingVector, _targetVec)));
             _stepCount = 10 * 2; // todo: FPS stuff
@@ -609,7 +610,7 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
-            PickDropTarget(_volume1);
+            PickMoveTarget(_volume1);
             Vector3 travel = _moveTarget - Position;
             float distance = travel.Length;
             _stepCount = (ushort)((distance / _stepDistance) + 1);
@@ -686,7 +687,7 @@ namespace MphRead.Entities.Enemies
             if (_reachingTarget)
             {
                 SetNodeAnim(16);
-                PickDropTarget(_volume1);
+                PickMoveTarget(_volume1);
                 // todo: stop SFX
                 _speed = Vector3.Zero;
                 _targetVec = (_moveTarget - Position).WithY(0).Normalized();
@@ -901,7 +902,7 @@ namespace MphRead.Entities.Enemies
 
         public static bool Behavior19(Enemy46Entity enemy)
         {
-            return enemy.Behavior18();
+            return enemy.Behavior19();
         }
 
         public static bool Behavior20(Enemy46Entity enemy)
