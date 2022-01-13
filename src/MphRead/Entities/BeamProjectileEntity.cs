@@ -1919,51 +1919,55 @@ namespace MphRead.Entities
 
         public void SpawnDamageEffect(Effectiveness effectiveness)
         {
-            if (effectiveness == Effectiveness.Normal || effectiveness == Effectiveness.Double)
+            if (effectiveness != Effectiveness.Normal && effectiveness != Effectiveness.Double)
             {
-                int effectId = 0;
-                Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY);
-                transform.Row3.Xyz = Position;
-                if (effectiveness == Effectiveness.Double)
-                {
-                    // 20 - sprEffectivePB
-                    // 21 - sprEffectiveElectric
-                    // 22 - sprEffectiveMsl
-                    // 23 - sprEffectiveJack
-                    // 24 - sprEffectiveSniper
-                    // 25 - sprEffectiveIce
-                    // 26 - sprEffectiveMortar
-                    // 27 - sprEffectiveGhost
-                    effectId = (int)Beam + 20;
-                }
-                else if (!_scene.Multiplayer)
-                {
-                    // 12 - effectiveHitPB
-                    // 13 - effectiveHitElectric
-                    // 14 - effectiveHitMsl
-                    // 15 - effectiveHitJack
-                    // 16 - effectiveHitSniper
-                    // 17 - effectiveHitIce
-                    // 18 - effectiveHitMortar
-                    // 19 - effectiveHitGhost
-                    effectId = (int)Beam + 12;
-                }
-                else
-                {
-                    // 154 - mpEffectivePB
-                    // 155 - mpEffectiveElectric
-                    // 156 - mpEffectiveMsl
-                    // 157 - mpEffectiveJack
-                    // 158 - mpEffectiveSniper
-                    // 159 - mpEffectiveIce
-                    // 160 - mpEffectiveMortar
-                    // 161 - mpEffectiveGhost
-                    effectId = (int)Beam + 154;
-                }
-                if (effectId > 0)
-                {
-                    _scene.SpawnEffect(effectId, transform);
-                }
+                return;
+            }
+            int effectId = 0;
+            Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY);
+            transform.Row3.Xyz = Position;
+            if (effectiveness == Effectiveness.Double)
+            {
+                // 20 - sprEffectivePB
+                // 21 - sprEffectiveElectric
+                // 22 - sprEffectiveMsl
+                // 23 - sprEffectiveJack
+                // 24 - sprEffectiveSniper
+                // 25 - sprEffectiveIce
+                // 26 - sprEffectiveMortar
+                // 27 - sprEffectiveGhost
+                // 28 - sniperCol (unintended)
+                effectId = (int)Beam + 20;
+            }
+            else if (!_scene.Multiplayer)
+            {
+                // 12 - effectiveHitPB
+                // 13 - effectiveHitElectric
+                // 14 - effectiveHitMsl
+                // 15 - effectiveHitJack
+                // 16 - effectiveHitSniper
+                // 17 - effectiveHitIce
+                // 18 - effectiveHitMortar
+                // 19 - effectiveHitGhost
+                // 20 - sprEffectivePB (unintended)
+                effectId = (int)Beam + 12;
+            }
+            else
+            {
+                // 154 - mpEffectivePB
+                // 155 - mpEffectiveElectric
+                // 156 - mpEffectiveMsl
+                // 157 - mpEffectiveJack
+                // 158 - mpEffectiveSniper
+                // 159 - mpEffectiveIce
+                // 160 - mpEffectiveMortar
+                // 161 - mpEffectiveGhost
+                // 162 - pipeTricity (unintended)
+                effectId = (int)Beam + 154;
+            }
+            if (effectId > 0)
+            {
+                _scene.SpawnEffect(effectId, transform);
             }
         }
 

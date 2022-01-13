@@ -767,8 +767,17 @@ namespace MphRead
             return new Entity<T>(entry, (EntityType)(header.Type + 100), header.EntityId, ReadStruct<T>(bytes[start..end]), header);
         }
 
-        private static readonly Dictionary<string, Effect> _effects = new Dictionary<string, Effect>();
+        private static readonly Dictionary<int, Effect> _effects = new Dictionary<int, Effect>();
         private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
+
+        public static Effect? GetEffect(int id)
+        {
+            if (_effects.TryGetValue(id, out Effect? cached))
+            {
+                return cached;
+            }
+            return null;
+        }
 
         public static Effect LoadEffect(int id)
         {
@@ -777,10 +786,10 @@ namespace MphRead
                 throw new ProgramException("Could not get particle.");
             }
             (string name, string? archive) = Metadata.Effects[id];
-            return LoadEffect(name, archive);
+            return LoadEffect(id, name, archive);
         }
 
-        public static Effect LoadEffect(string name, string? archive)
+        public static Effect LoadEffect(int id, string name, string? archive)
         {
             string path;
             if (archive == null)
@@ -791,7 +800,7 @@ namespace MphRead
             {
                 path = $"_archives/{archive}/{name}_PS.bin";
             }
-            Effect effect = LoadEffect(path);
+            Effect effect = LoadEffect(id, path);
             foreach (EffectElement element in effect.Elements)
             {
                 if (element.ChildEffectId != 0)
@@ -802,9 +811,9 @@ namespace MphRead
             return effect;
         }
 
-        private static Effect LoadEffect(string path)
+        private static Effect LoadEffect(int id, string path)
         {
-            if (_effects.TryGetValue(path, out Effect? cached))
+            if (id != -1 && _effects.TryGetValue(id, out Effect? cached))
             {
                 return cached;
             }
@@ -848,7 +857,10 @@ namespace MphRead
                 elements.Add(new EffectElement(element, particles, funcs, elemFuncs));
             }
             var newEffect = new Effect(effect, funcs, list2, elements, path);
-            _effects.Add(path, newEffect);
+            if (id != -1)
+            {
+                _effects.Add(id, newEffect);
+            }
             return newEffect;
         }
 

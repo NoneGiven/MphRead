@@ -416,6 +416,9 @@ namespace MphRead
             // todo: lore
             scene.LoadModel(Read.GetSingleParticle(SingleType.Death).Model);
             scene.LoadModel(Read.GetSingleParticle(SingleType.Fuzzball).Model);
+            // skdebug - the game only loads these if the Omega Cannon item is in the room
+            scene.LoadEffect(209); // ultimateProjectile
+            scene.LoadEffect(245); // ultimateCol
         }
 
         public static void LoadObjectResources(Scene scene)

@@ -1411,7 +1411,12 @@ namespace MphRead
 
         private void SpawnEffect(int effectId, Matrix4 transform, bool child, EffectEntry? entry, EntityCollision? entCol)
         {
-            Effect effect = Read.LoadEffect(effectId); // should already be loaded
+            Effect? effect = Read.GetEffect(effectId);
+            if (effect == null)
+            {
+                Debug.Assert(effectId == 162); // skdebug - unintended Omega Cannon damage effect
+                return;
+            }
             for (int i = 0; i < effect.Elements.Count; i++)
             {
                 EffectElement elementDef = effect.Elements[i];

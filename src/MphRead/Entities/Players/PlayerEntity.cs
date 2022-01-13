@@ -1567,9 +1567,9 @@ namespace MphRead.Entities
                 }
                 _boostCharge = 0;
                 // todo: update stats
-                if (IsMainPlayer && beamType == BeamType.OmegaCannon)
+                if (this == Main && beamType == BeamType.OmegaCannon)
                 {
-                    _scene.SetFade(FadeType.FadeInWhite, 90 * 1 / 30f, overwrite: true);
+                    _scene.SetFade(FadeType.FadeInWhite, 90 * (1 / 30f), overwrite: true);
                 }
                 Speed = Vector3.Zero;
                 _respawnTimer = _respawnTime;
