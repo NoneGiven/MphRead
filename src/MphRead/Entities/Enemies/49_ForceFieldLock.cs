@@ -170,7 +170,7 @@ namespace MphRead.Entities.Enemies
                     }
                 }
             }
-            else
+            else if (_scene.FrameCount % 2 == 0) // todo: FPS stuff
             {
                 _ownSpeed *= Fixed.ToFloat(3973);
             }
