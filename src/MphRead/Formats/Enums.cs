@@ -127,7 +127,7 @@ namespace MphRead
         PowerBeam = 0,
         VoltDriver = 1,
         Missile = 2,
-        Battlehamer = 3,
+        Battlehammer = 3,
         Imperialist = 4,
         Judicator = 5,
         Magmaul = 6,
@@ -304,7 +304,7 @@ namespace MphRead
 
     public enum TriggerType : uint
     {
-        Normal = 0,
+        Volume = 0,
         Threshold = 1,
         Relay = 2,
         Automatic = 3,
@@ -421,7 +421,7 @@ namespace MphRead
         Gorea2 = 31,
         GoreaSealSphere2 = 32,
         GoreaMeteor = 33,
-        PsychoBit2 = 34,
+        PsychoBit2 = 34, // unused
         Voldrum2 = 35,
         Voldrum1 = 36,
         Quadtroid = 37,

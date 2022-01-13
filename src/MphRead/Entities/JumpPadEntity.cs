@@ -48,6 +48,11 @@ namespace MphRead.Entities
             }
         }
 
+        public override bool GetTargetable()
+        {
+            return false;
+        }
+
         public override bool Process()
         {
             if (_parent != null)
@@ -107,6 +112,29 @@ namespace MphRead.Entities
                 _cooldownTimer--;
             }
             return base.Process();
+        }
+
+        public override void HandleMessage(MessageInfo info)
+        {
+            if (info.Message == Message.Activate)
+            {
+                Active = true;
+                // todo: room state
+            }
+            else if (info.Message == Message.SetActive)
+            {
+                if ((int)info.Param1 != 0)
+                {
+                    Active = true;
+                    // todo: room state
+                }
+                else
+                {
+                    Active = false;
+                    // todo: room state
+                }
+            }
+            _models[1].Active = Active;
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)

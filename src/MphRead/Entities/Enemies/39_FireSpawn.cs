@@ -23,6 +23,8 @@ namespace MphRead.Entities.Enemies
         private Node? _wristNodeR = null;
         private readonly Vector3[] _wristPos = new Vector3[2];
         private Enemy50Entity? _hitZone = null;
+        private int _ammo0 = 1000;
+        private int _ammo1 = 1000;
 
         public Enemy39Values Values { get; private set; }
 
@@ -58,12 +60,15 @@ namespace MphRead.Entities.Enemies
             _locationVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume1, Position);
             Metadata.LoadEffectiveness(Values.Effectiveness, BeamEffectiveness);
             // todo: scan ID
-            // todo: ammo pointer
             WeaponInfo weapon = Weapons.EnemyWeapons[(int)_spawner.Data.Fields.S06.EnemyVersion];
             weapon.UnchargedDamage = Values.BeamDamage;
             weapon.SplashDamage = Values.SplashDamage;
             _equipInfo[0] = new EquipInfo(weapon, _beams);
             _equipInfo[1] = new EquipInfo(weapon, _beams);
+            _equipInfo[0].GetAmmo = () => _ammo0;
+            _equipInfo[0].SetAmmo = (newAmmo) => _ammo0 = newAmmo;
+            _equipInfo[1].GetAmmo = () => _ammo1;
+            _equipInfo[1].SetAmmo = (newAmmo) => _ammo1 = newAmmo;
             _attackDelay = Values.AttackDelay * 2; // todo: FPS stuff
             _attackCount = Values.AttackCountMin + Rng.GetRandomInt2((uint)(Values.AttackCountMax + 1 - Values.AttackCountMin));
             // todo: healthbar name
@@ -369,6 +374,15 @@ namespace MphRead.Entities.Enemies
             _tangibilityTimer = 0;
             Flags |= EnemyFlags.Invincible;
             return true;
+        }
+
+        public override void Destroy()
+        {
+            if (_effectEntry != null)
+            {
+                _scene.UnlinkEffectEntry(_effectEntry);
+                _effectEntry = null;
+            }
         }
 
         #region Boilerplate

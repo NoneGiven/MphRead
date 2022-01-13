@@ -126,6 +126,7 @@ namespace MphRead
         private float _elapsedTime = 0;
         private ulong _frameCount = 0;
         private bool _frameAdvanceOn = false;
+        public bool FrameAdvance => _frameAdvanceOn;
         private bool _advanceOneFrame = false;
         private bool _recording = false;
         private int _framesRecorded = 0;
@@ -137,6 +138,7 @@ namespace MphRead
         public int PlayerCount { get; private set; } = 1;
         public bool Multiplayer => GameMode != GameMode.SinglePlayer;
         public int RoomId => _roomId;
+        public int AreaId { get; set; }
 
         public Matrix4 ViewMatrix => _viewMatrix;
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
@@ -286,6 +288,7 @@ namespace MphRead
                 var player = PlayerEntity.Create(hunter, recolor);
                 if (player != null)
                 {
+                    player.ForcedSpawnPos = position;
                     // todo: revisit flags
                     player.LoadFlags |= LoadFlags.SlotActive;
                     player.LoadFlags |= LoadFlags.Active;
@@ -332,6 +335,7 @@ namespace MphRead
                     _entities.Add(player);
                     player.Initialize();
                     InitEntity(player);
+                    InitEntity(player.Halfturret);
                 }
             }
             OutputStart();
@@ -413,7 +417,7 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.FogMaxDistance, fogMax);
         }
 
-        private void InitEntity(EntityBase entity)
+        public void InitEntity(EntityBase entity)
         {
             foreach (ModelInstance inst in entity.GetModels())
             {
@@ -1315,6 +1319,7 @@ namespace MphRead
             entry.Acceleration = element.Acceleration;
             entry.ParticleDefinitions.AddRange(element.Particles);
             entry.Parity = (int)(_frameCount % 2);
+            entry.EffectEntry = null;
             entry.EntityCollision = entCol;
             entry.RoField1 = 0;
             entry.RoField2 = 0;
@@ -1485,7 +1490,7 @@ namespace MphRead
                     else
                     {
                         element.Transform = element.OwnTransform;
-                    } 
+                    }
                     var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
                     if (_frameCount % 2 == (ulong)element.Parity
                         && element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))
@@ -2042,6 +2047,7 @@ namespace MphRead
                 EntityBase entity = _entities[i];
                 if (!entity.Process())
                 {
+                    SendMessage(Message.Destroyed, entity, null, 0, 0, delay: 1);
                     // todo: need to handle destroying vs. unloading etc.
                     entity.Destroy();
                     _destroyedEntities.Add(entity);
@@ -3524,22 +3530,17 @@ namespace MphRead
             }
             else if (entity is AreaVolumeEntity area)
             {
+                EntityBase? parent = area.GetParent();
+                EntityBase? child = area.GetChild();
                 _sb.Append($" ({area.Data.TriggerFlags})");
                 _sb.AppendLine();
                 _sb.Append($"Entry: {area.Data.InsideMessage}");
                 _sb.Append($", Param1: {area.Data.InsideMsgParam1}, Param2: {area.Data.InsideMsgParam2}");
+                _sb.Append($", Target: {parent?.Type.ToString() ?? "None"} ({area.Data.ParentId})");
                 _sb.AppendLine();
                 _sb.Append($" Exit: {area.Data.ExitMessage}");
                 _sb.Append($", Param1: {area.Data.ExitMsgParam1}, Param2: {area.Data.ExitMsgParam2}");
-                _sb.AppendLine();
-                if (TryGetEntity(area.Data.ParentId, out EntityBase? parent))
-                {
-                    _sb.Append($"Target: {parent.Type} ({area.Data.ParentId})");
-                }
-                else
-                {
-                    _sb.Append("Target: None");
-                }
+                _sb.Append($", Target: {child?.Type.ToString() ?? "None"} ({area.Data.ChildId})");
             }
             else if (entity is FhAreaVolumeEntity fhArea)
             {
@@ -3550,11 +3551,11 @@ namespace MphRead
                 _sb.AppendLine();
                 _sb.Append($" Exit: {fhArea.Data.ExitMessage}");
                 _sb.Append($", Param1: {fhArea.Data.ExitMsgParam1}, Param2: 0");
-                _sb.AppendLine();
-                _sb.Append("Target: None");
             }
             else if (entity is TriggerVolumeEntity trigger)
             {
+                EntityBase? parent = trigger.GetParent();
+                EntityBase? child = trigger.GetChild();
                 _sb.Append($" ({trigger.Data.Subtype}");
                 if (trigger.Data.Subtype == TriggerType.Threshold)
                 {
@@ -3564,26 +3565,12 @@ namespace MphRead
                 _sb.Append($" ({trigger.Data.TriggerFlags})");
                 _sb.AppendLine();
                 _sb.Append($"Parent: {trigger.Data.ParentMessage}");
-                if (trigger.Data.ParentMessage != Message.None && TryGetEntity(trigger.Data.ParentId, out EntityBase? parent))
-                {
-                    _sb.Append($", Target: {parent.Type} ({trigger.Data.ParentId})");
-                }
-                else
-                {
-                    _sb.Append(", Target: None");
-                }
                 _sb.Append($", Param1: {trigger.Data.ParentMsgParam1}, Param2: {trigger.Data.ParentMsgParam2}");
+                _sb.Append($", Target: {parent?.Type.ToString() ?? "None"} ({trigger.Data.ParentId})");
                 _sb.AppendLine();
                 _sb.Append($" Child: {trigger.Data.ChildMessage}");
-                if (trigger.Data.ChildMessage != Message.None && TryGetEntity(trigger.Data.ChildId, out EntityBase? child))
-                {
-                    _sb.Append($", Target: {child.Type} ({trigger.Data.ChildId})");
-                }
-                else
-                {
-                    _sb.Append(", Target: None");
-                }
                 _sb.Append($", Param1: {trigger.Data.ChildMsgParam1}, Param2: {trigger.Data.ChildMsgParam2}");
+                _sb.Append($", Target: {child?.Type.ToString() ?? "None"} ({trigger.Data.ChildId})");
             }
             else if (entity is FhTriggerVolumeEntity fhTrigger)
             {
@@ -3594,6 +3581,8 @@ namespace MphRead
                 _sb.Append($" ({fhTrigger.Data.TriggerFlags})");
                 _sb.AppendLine();
                 _sb.Append($"Parent: {fhTrigger.Data.ParentMessage}");
+                _sb.Append($", Param1: {fhTrigger.Data.ParentMsgParam1}, Param2: 0");
+                // rtodo: use entity fields for parent/child
                 if (fhTrigger.Data.ParentMessage != FhMessage.None && TryGetEntity(fhTrigger.Data.ParentId, out EntityBase? parent))
                 {
                     _sb.Append($", Target: {parent.Type} ({fhTrigger.Data.ParentId})");
@@ -3602,9 +3591,9 @@ namespace MphRead
                 {
                     _sb.Append(", Target: None");
                 }
-                _sb.Append($", Param1: {fhTrigger.Data.ParentMsgParam1}, Param2: 0");
                 _sb.AppendLine();
                 _sb.Append($" Child: {fhTrigger.Data.ChildMessage}");
+                _sb.Append($", Param1: {fhTrigger.Data.ChildMsgParam1}, Param2: 0");
                 if (fhTrigger.Data.ChildMessage != FhMessage.None && TryGetEntity(fhTrigger.Data.ChildId, out EntityBase? child))
                 {
                     _sb.Append($", Target: {child.Type} ({fhTrigger.Data.ChildId})");
@@ -3613,7 +3602,6 @@ namespace MphRead
                 {
                     _sb.Append(", Target: None");
                 }
-                _sb.Append($", Param1: {fhTrigger.Data.ChildMsgParam1}, Param2: 0");
             }
             else if (entity is EnemySpawnEntity enemySpawn)
             {

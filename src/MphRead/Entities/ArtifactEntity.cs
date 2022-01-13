@@ -10,9 +10,15 @@ namespace MphRead.Entities
         private bool _invSetUp = false;
         private EntityBase? _parent = null;
         private Vector3 _invPos;
+        private EntityBase? _msgTarget1 = null;
+        private EntityBase? _msgTarget2 = null;
+        private EntityBase? _msgTarget3 = null;
+
+        public new bool Active { get; set; }
 
         public ArtifactEntity(ArtifactEntityData data, Scene scene) : base(EntityType.Artifact, scene)
         {
+            // todo: load resources for simple octolith/dropped octolith when needed
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
@@ -23,6 +29,8 @@ namespace MphRead.Entities
             {
                 SetUpModel("ArtifactBase");
             }
+            // todo: room state
+            Active = _data.Active != 0;
         }
 
         public override void Initialize()
@@ -34,6 +42,18 @@ namespace MphRead.Entities
                 {
                     _parent = parent;
                 }
+            }
+            if (_scene.TryGetEntity(_data.Message1Target, out EntityBase? target))
+            {
+                _msgTarget1 = target;
+            }
+            if (_scene.TryGetEntity(_data.Message2Target, out target))
+            {
+                _msgTarget2 = target;
+            }
+            if (_scene.TryGetEntity(_data.Message3Target, out target))
+            {
+                _msgTarget3 = target;
             }
         }
 
@@ -49,7 +69,142 @@ namespace MphRead.Entities
                 }
                 Position = Matrix.Vec3MultMtx4(_invPos, _parent.CollisionTransform);
             }
+            if (Active)
+            {
+                // todo: positional audio, node ref, SFX, set scan ID
+                // todo: return if there's a cam seq blocking input
+                // todo: move dropped octolith toward player
+                PlayerEntity player = PlayerEntity.Main;
+                if (player.Health == 0)
+                {
+                    return base.Process();
+                }
+                // todo: visualize pickup volumes
+                Vector3 position = Position.AddY(_heightOffset);
+                bool pickedUp = false;
+                float radii = player.Volume.SphereRadius + (_data.ModelId >= 8 ? 1 : 0.1f);
+                if (player.IsAltForm)
+                {
+                    Vector3 between = position - player.Volume.SpherePosition;
+                    if (Vector3.Dot(between, between) < radii * radii)
+                    {
+                        pickedUp = true;
+                    }
+                }
+                else
+                {
+                    Vector3 between = position - player.Position;
+                    if (between.X * between.X + between.Z * between.Z < radii * radii)
+                    {
+                        float diffY = position.Y - player.Position.Y;
+                        float maxY = Fixed.ToFloat(player.Values.MaxPickupHeight);
+                        if (diffY <= maxY + 0.5f)
+                        {
+                            float minY = Fixed.ToFloat(player.Values.MinPickupHeight);
+                            if (diffY >= minY - 0.5f)
+                            {
+                                pickedUp = true;
+                            }
+                        }
+                    }
+                }
+                if (!pickedUp)
+                {
+                    return base.Process();
+                }
+                if (_data.Message1 != Message.None)
+                {
+                    _scene.SendMessage(_data.Message1, this, _msgTarget1, 0, 0);
+                }
+                if (_data.Message2 != Message.None)
+                {
+                    _scene.SendMessage(_data.Message2, this, _msgTarget2, 0, 0);
+                }
+                if (_data.Message3 != Message.None)
+                {
+                    _scene.SendMessage(_data.Message3, this, _msgTarget3, 0, 0);
+                }
+                if (_data.ModelId >= 8)
+                {
+                    // todo: update story save
+                    if (Id == -1)
+                    {
+                        // todo: show reclaimed octolith dialog
+                    }
+                    else
+                    {
+                        // todo: start movie, update global state and story save
+                    }
+                }
+                else
+                {
+                    // todo: play SFX, update story save, show dialog (may send dialog message)
+                }
+                Active = false;
+                // todo: room state, stop SFX
+            }
+            else
+            {
+                // todo: set scan ID
+            }
             return base.Process();
+        }
+
+        public override void GetDrawInfo()
+        {
+            if (Active)
+            {
+                base.GetDrawInfo();
+            }
+        }
+
+        public override void HandleMessage(MessageInfo info)
+        {
+            if (info.Message != Message.Activate)
+            {
+                Active = true;
+                // todo: room state
+            }
+            else if (info.Message != Message.SetActive)
+            {
+                if ((int)info.Param1 != 0)
+                {
+                    Active = true;
+                    // todo: room state
+                }
+                else
+                {
+                    Active = false;
+                    // todo: room state
+                }
+            }
+            else if (info.Message != Message.MoveItemSpawner)
+            {
+                if (info.Sender.Type == EntityType.EnemySpawn)
+                {
+                    var spawner = (EnemySpawnEntity)info.Sender;
+                    if (spawner.Data.EnemyType == EnemyType.Hunter)
+                    {
+                        // todo: check bot spawner slots and find player to move to
+                    }
+                    else
+                    {
+                        info.Sender.GetPosition(out Vector3 position);
+                        Position = position;
+                    }
+                }
+                else
+                {
+                    info.Sender.GetPosition(out Vector3 position);
+                    Position = position;
+                }
+            }
+        }
+
+        public override void Destroy()
+        {
+            // todo: stop SFX
+            base.Destroy();
         }
 
         protected override LightInfo GetLightInfo()

@@ -494,7 +494,7 @@ namespace MphRead.Utility
                         mphSpawn.Volume0 = new CollisionVolume(Vector3.Zero, 1);
                         mphSpawn.Volume1 = enemySpawn.Cylinder;
                         mphSpawn.Position = Vector3.Zero;
-                        mphSpawn.Unknown00 = 0;
+                        mphSpawn.WeaveOffset = 0;
                         mphSpawn.Unknown01 = 0;
                     }
                     else if (enemySpawn.EnemyType == FhEnemyType.Zoomer)
@@ -514,7 +514,7 @@ namespace MphRead.Utility
                     var volume = new CollisionVolume(Vector3.Zero, 1);
                     TriggerFlags flags = GetFlags(trigger.TriggerFlags, trigger.Subtype);
                     flags |= TriggerFlags.IncludeBots;
-                    TriggerType subtype = TriggerType.Normal;
+                    TriggerType subtype = TriggerType.Volume;
                     if (trigger.Subtype == FhTriggerType.Threshold)
                     {
                         subtype = TriggerType.Threshold;
@@ -708,7 +708,7 @@ namespace MphRead.Utility
             static FhTriggerFlags GetFlags(TriggerFlags mphFlags, TriggerType subtype)
             {
                 FhTriggerFlags flags = FhTriggerFlags.None;
-                if (subtype == TriggerType.Normal)
+                if (subtype == TriggerType.Volume)
                 {
                     if (mphFlags.TestFlag(TriggerFlags.PowerBeam) || mphFlags.TestFlag(TriggerFlags.VoltDriver)
                         || mphFlags.TestFlag(TriggerFlags.Missile) || mphFlags.TestFlag(TriggerFlags.Battlehammer)
@@ -955,7 +955,7 @@ namespace MphRead.Utility
                         Position = areaVolume.Position,
                         Sphere = volume,
                         Subtype = subtype,
-                        TriggerFlags = GetFlags(areaVolume.TriggerFlags, TriggerType.Normal),
+                        TriggerFlags = GetFlags(areaVolume.TriggerFlags, TriggerType.Volume),
                         Up = areaVolume.Up
                     });
                 }
@@ -990,7 +990,7 @@ namespace MphRead.Utility
                         Position = jumpPad.Position,
                         Speed = jumpPad.Speed,
                         Sphere = jumpPad.Volume,
-                        TriggerFlags = GetFlags(jumpPad.TriggerFlags, TriggerType.Normal),
+                        TriggerFlags = GetFlags(jumpPad.TriggerFlags, TriggerType.Volume),
                         Up = jumpPad.Up,
                         VolumeType = volumeType
                     });
@@ -2041,7 +2041,7 @@ namespace MphRead.Utility
                 writer.Write(entity.Unused70);
                 writer.Write(entity.Unused74);
                 writer.WriteVector3(entity.EnemyPosition);
-                writer.Write(entity.Unknown00);
+                writer.Write(entity.WeaveOffset);
                 writer.Write(entity.Unknown01);
                 for (int i = 0; i < 75; i++)
                 {

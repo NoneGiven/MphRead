@@ -171,7 +171,7 @@ namespace MphRead.Entities
         {
             if (info.Message == Message.Destroyed)
             {
-                if (info.Param1 is int value && value != 0)
+                if ((int)info.Param1 != 0)
                 {
                     // enemy was out of range
                     --_spawnedCount;
@@ -180,7 +180,8 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    if (info.Sender is EnemyInstanceEntity enemy && enemy.EnemyType == EnemyType.Spawner)
+                    if (info.Sender.Type == EntityType.EnemyInstance
+                        && ((EnemyInstanceEntity)info.Sender).EnemyType == EnemyType.Spawner)
                     {
                         Flags &= ~SpawnerFlags.Active;
                         // todo: room state
@@ -203,7 +204,7 @@ namespace MphRead.Entities
             }
             else if (info.Message == Message.SetActive)
             {
-                if (info.Param1 is int value && value != 1)
+                if ((int)info.Param1 != 0)
                 {
                     Flags |= SpawnerFlags.Active;
                     // todo: room state
@@ -235,6 +236,62 @@ namespace MphRead.Entities
             {
                 return new Enemy02Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
+            if (type == EnemyType.Petrasyl1)
+            {
+                return new Enemy03Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.Petrasyl2)
+            {
+                return new Enemy04Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.Petrasyl3)
+            {
+                return new Enemy05Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.Petrasyl4)
+            {
+                return new Enemy06Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.BarbedWarWasp)
+            {
+                return new Enemy10Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.Shriekbat)
+            {
+                return new Enemy11Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.Geemer)
+            {
+                return new Enemy12Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.Blastcap)
+            {
+                return new Enemy16Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.AlimbicTurret)
+            {
+                return new Enemy18Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.PsychoBit1)
+            {
+                return new Enemy23Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.Voldrum2)
+            {
+                return new Enemy35Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.Voldrum1)
+            {
+                return new Enemy36Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.Quadtroid)
+            {
+                return new Enemy37Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.CrashPillar)
+            {
+                return new Enemy38Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
             if (type == EnemyType.FireSpawn)
             {
                 return new Enemy39Entity(new EnemyInstanceEntityData(type, spawner), scene);
@@ -242,6 +299,14 @@ namespace MphRead.Entities
             if (type == EnemyType.Spawner)
             {
                 return new Enemy40Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.LesserIthrak)
+            {
+                return new Enemy46Entity(new EnemyInstanceEntityData(type, spawner), scene);
+            }
+            if (type == EnemyType.GreaterIthrak)
+            {
+                return new Enemy47Entity(new EnemyInstanceEntityData(type, spawner), scene);
             }
             if (type == EnemyType.ForceFieldLock)
             {

@@ -12,19 +12,19 @@ namespace MphRead.Entities
     public class BeamProjectileEntity : EntityBase
     {
         public BeamFlags Flags { get; set; }
-        public BeamType Weapon { get; set; }
-        public BeamType WeaponType { get; set; }
+        public BeamType Beam { get; set; }
+        public BeamType BeamKind { get; set; }
 
         public Vector3 Velocity { get; set; }
         public Vector3 Acceleration { get; set; } // only used for gravity
         public Vector3 BackPosition { get; set; }
         public Vector3 SpawnPosition { get; set; }
         public Vector3[] PastPositions { get; } = new Vector3[10];
-        public Vector3 VecCross { get; set; }
 
         public int DrawFuncId { get; set; }
         public float Age { get; set; }
         public float Lifespan { get; set; }
+        public ulong Parity { get; set; } // skdebug?
 
         public Vector3 Color { get; set; }
         public byte CollisionEffect { get; set; }
@@ -33,12 +33,13 @@ namespace MphRead.Entities
         public float Homing { get; set; }
 
         public Vector3 Direction { get; set; }
+        public Vector3 Right { get; set; }
         public Vector3 Up { get; set; }
 
         public float Damage { get; set; }
         public float HeadshotDamage { get; set; }
         public float SplashDamage { get; set; }
-        public float BeamScale { get; set; }
+        public float SplashRadius { get; set; }
         public float MaxDistance { get; set; }
         public Affliction Afflictions { get; set; }
 
@@ -114,6 +115,8 @@ namespace MphRead.Entities
             // the game does this every other frame at 30 fps and keeps 5 past positions; we do it every other frame at 60 fps and keep 10,
             // and use only every other position to draw each trail segment, which results in the beam trail updating at the same frequency
             // (relative to the projectile) and having the same amount of smear as in the game
+            // todo?: might need to revisit
+            // --> observed homing missile trail flickering(?) when curved, and judicator trail getting more opaque on final collision
             if (_scene.FrameCount % 2 == 0)
             {
                 for (int i = 9; i > 0; i--)
@@ -148,12 +151,52 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // todo: beam SFX, node refs
+            // todo: positional audio (w/ BeamKind check), node refs
+            if (Target != null)
+            {
+                for (int i = 0; i < _scene.MessageQueue.Count; i++)
+                {
+                    MessageInfo info = _scene.MessageQueue[i];
+                    if (info.Message == Message.Destroyed && info.ExecuteFrame == _scene.FrameCount && info.Sender == Target)
+                    {
+                        Target = null;
+                        break;
+                    }
+                }
+            }
             if (!Flags.TestFlag(BeamFlags.Continuous) || firstFrame)
             {
                 CheckCollision();
             }
-            // btodo: target/homing stuff
+            if (Flags.TestFlag(BeamFlags.Homing) && !Flags.TestFlag(BeamFlags.Continuous) && Target != null)
+            {
+                Target.GetPosition(out Vector3 targetPos);
+                Vector3 acceleration = targetPos - Position;
+                if (acceleration != Vector3.Zero)
+                {
+                    acceleration = acceleration.Normalized();
+                }
+                else
+                {
+                    acceleration = Vector3.UnitX;
+                }
+                acceleration *= Speed;
+                if (Vector3.Dot(acceleration, Velocity) >= 0)
+                {
+                    acceleration -= Velocity;
+                    float accelMag = acceleration.Length;
+                    if (accelMag > Homing)
+                    {
+                        acceleration *= Homing / accelMag;
+                    }
+                    Velocity += acceleration;
+                }
+                else
+                {
+                    Target = null;
+                }
+            }
+            // todo: homing SFX
             if (Flags.TestFlag(BeamFlags.HasModel))
             {
                 UpdateAnimFrames(_models[0]);
@@ -169,7 +212,7 @@ namespace MphRead.Entities
                 colRes.Position = Position;
                 SpawnCollisionEffect(colRes, noSplat: true);
                 OnCollision(colRes, colWith: null);
-                // btodo: sfx etc.
+                // todo: sfx etc.
             }
             return true;
         }
@@ -301,29 +344,144 @@ namespace MphRead.Entities
                 for (int i = 0; i < _scene.Entities.Count; i++)
                 {
                     EntityBase entity = _scene.Entities[i];
-                    if (entity.Type == EntityType.EnemyInstance)
+                    if (entity.Type != EntityType.EnemyInstance)
                     {
-                        CollisionResult res = default;
-                        var enemy = (EnemyInstanceEntity)entity;
-                        if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam)
-                            && CollisionDetection.CheckCylinderOverlapVolume(enemy.HurtVolume, BackPosition, Position, CylinderRadius, ref res))
+                        continue;
+                    }
+                    CollisionResult res = default;
+                    var enemy = (EnemyInstanceEntity)entity;
+                    if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam)
+                        && CollisionDetection.CheckCylinderOverlapVolume(enemy.HurtVolume, BackPosition, Position, CylinderRadius, ref res))
+                    {
+                        if (Beam == BeamType.OmegaCannon && enemy.EnemyType == EnemyType.GoreaMeteor)
                         {
-                            if (WeaponType == BeamType.OmegaCannon && enemy.EnemyType == EnemyType.GoreaMeteor)
-                            {
-                                enemy.TakeDamage(500, this);
-                            }
-                            else if (res.Distance < minDist)
-                            {
-                                minDist = res.Distance;
-                                anyRes = res;
-                                colWith = enemy;
-                                noColEff = false;
-                            }
+                            enemy.TakeDamage(500, this);
+                        }
+                        else if (res.Distance < minDist)
+                        {
+                            minDist = res.Distance;
+                            anyRes = res;
+                            colWith = enemy;
+                            noColEff = false;
                         }
                     }
                 }
             }
-            // btodo: collide with players, collide with enemy beams
+            bool hitHalfturret = false;
+            // todo: visualize player collision (and rename some "pickup" fields)
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.Player || Owner == entity)
+                {
+                    continue;
+                }
+                var player = (PlayerEntity)entity;
+                if (player.Health == 0)
+                {
+                    continue;
+                }
+                bool hasHalfturret = player.Hunter == Hunter.Weavel && player.Flags2.TestFlag(PlayerFlags2.Halfturret);
+                if ((Owner == player || hasHalfturret && Owner == player.Halfturret)
+                    && (!Flags.TestFlag(BeamFlags.SelfDamage) || Age < 1 / 30f * 4))
+                {
+                    continue;
+                }
+                bool hitPlayer = false;
+                CollisionResult playerRes = default;
+                float radii = player.Volume.SphereRadius + CylinderRadius;
+                if (player.IsAltForm)
+                {
+                    if (player.Hunter == Hunter.Kanden)
+                    {
+                        if (CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position,
+                            player.KandenSegPos[2], 1.6f, ref playerRes))
+                        {
+                            if (CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position,
+                                player.Volume.SpherePosition, radii, ref playerRes)
+                                || CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position,
+                                    player.KandenSegPos[1], radii, ref playerRes)
+                                || CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position,
+                                    player.KandenSegPos[2], radii, ref playerRes)
+                                || CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position,
+                                    player.KandenSegPos[3], radii, ref playerRes))
+                            {
+                                hitPlayer = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position,
+                            player.Volume.SpherePosition, radii, ref playerRes))
+                        {
+                            hitPlayer = true;
+                        }
+                    }
+                }
+                else
+                {
+                    float minY = Fixed.ToFloat(player.Values.MinPickupHeight);
+                    Vector3 playerBottom = player.Position.AddY(minY);
+                    float dot = Fixed.ToFloat(player.Values.MaxPickupHeight) - minY;
+                    if (CollisionDetection.CheckCylindersOverlap(BackPosition, Position, playerBottom, Vector3.UnitY,
+                        dot, radii, ref playerRes))
+                    {
+                        hitPlayer = true;
+                    }
+                }
+                if (hitPlayer && playerRes.Distance < minDist)
+                {
+                    minDist = playerRes.Distance;
+                    anyRes = playerRes;
+                    colWith = player;
+                    noColEff = false;
+                    hitHalfturret = false;
+                }
+                // todo?: else wifi check
+                if (hasHalfturret && Owner != player.Halfturret)
+                {
+                    CollisionResult turretRes = default;
+                    float radius = CylinderRadius + 0.45f;
+                    if (CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position, player.Halfturret.Position,
+                        radius, ref turretRes) && turretRes.Distance < minDist)
+                    {
+                        minDist = turretRes.Distance;
+                        anyRes = turretRes;
+                        colWith = player.Halfturret;
+                        noColEff = false;
+                        hitHalfturret = true;
+                    }
+                }
+            }
+            if (!_scene.Multiplayer)
+            {
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.BeamProjectile)
+                    {
+                        continue;
+                    }
+                    var other = (BeamProjectileEntity)entity;
+                    if (other.Owner == Owner || other.Flags.TestFlag(BeamFlags.Collided) || !other.Flags.TestFlag(BeamFlags.Destroyable)
+                        || other.Owner?.Type == EntityType.EnemyInstance && Owner.Type == EntityType.EnemyInstance)
+                    {
+                        continue;
+                    }
+                    CollisionResult beamRes = default;
+                    int radiusIndex = (int)(other.Flags & (BeamFlags.RadiusIndex1 | BeamFlags.RadiusIndex2)) >> 9;
+                    float radius = Metadata.BeamRadiusValues[radiusIndex];
+                    if (CollisionDetection.CheckCylinderOverlapSphere(BackPosition, Position, other.Position,
+                        radius, ref beamRes) && beamRes.Distance < minDist)
+                    {
+                        minDist = beamRes.Distance;
+                        anyRes = beamRes;
+                        colWith = other;
+                        noColEff = true;
+                    }
+                }
+            }
             if (minDist >= 0 && minDist <= 1)
             {
                 float amt = Fixed.ToFloat(204);
@@ -333,14 +491,110 @@ namespace MphRead.Entities
                     anyRes.Position.Z + anyRes.Plane.Z * amt
                 );
                 bool ricochet = true;
-                // btodo: sfx and stuff
+                // todo: sfx and stuff
                 if (colWith != null)
                 {
-                    // btodo: handle collision with all entities
-                    if (colWith.Type == EntityType.EnemyInstance)
+                    if (colWith.Type == EntityType.Player || colWith.Type == EntityType.Halfturret)
+                    {
+                        PlayerEntity player;
+                        if (colWith.Type == EntityType.Player)
+                        {
+                            player = (PlayerEntity)colWith;
+                        }
+                        else
+                        {
+                            player = ((HalfturretEntity)colWith).Owner;
+                        }
+                        DamageFlags damageFlags = DamageFlags.NoDmgInvuln;
+                        if (player.BeamEffectiveness[(int)Beam] == Effectiveness.Zero)
+                        {
+                            if (!_scene.Multiplayer && Owner == PlayerEntity.Main)
+                            {
+                                Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY, player.Position);
+                                EffectEntry effect = _scene.SpawnEffectGetEntry(115, transform); // ineffectivePsycho
+                                effect.SetReadOnlyField(0, 1); // radius
+                                _scene.DetachEffectEntry(effect, setExpired: false);
+                            }
+                        }
+                        else
+                        {
+                            if (hitHalfturret)
+                            {
+                                damageFlags |= DamageFlags.Halfturret;
+                            }
+                            Vector3 damageDir = GetDamageDirection(anyRes.Position, player.Position);
+                            float damage = 0;
+                            uint wholeDamage = 0;
+                            bool isHeadshot = false;
+                            if (!player.IsAltForm
+                                && anyRes.Position.Y - player.Position.Y >= Fixed.ToFloat(player.Values.MaxPickupHeight) - 0.3f)
+                            {
+                                if (Beam == BeamType.Imperialist)
+                                {
+                                    isHeadshot = true;
+                                }
+                                else
+                                {
+                                    // todo: it's kind of lame that you can't get headshots at this range
+                                    Vector3 travel = Position - SpawnPosition;
+                                    isHeadshot = travel.LengthSquared <= 15 * 15;
+                                }
+                            }
+                            if (isHeadshot)
+                            {
+                                if (MaxDistance > 0)
+                                {
+                                    float pct = Vector3.Distance(Position, SpawnPosition) / MaxDistance;
+                                    damage = GetInterpolatedValue(DamageInterpolation, HeadshotDamage, 0, pct);
+                                }
+                                else
+                                {
+                                    damage = HeadshotDamage;
+                                }
+                                if (MathF.Abs(Damage - HeadshotDamage) > 1 / 4096f)
+                                {
+                                    damageFlags |= DamageFlags.Headshot;
+                                }
+                            }
+                            else
+                            {
+                                if (MaxDistance > 0)
+                                {
+                                    float pct = Vector3.Distance(Position, SpawnPosition) / MaxDistance;
+                                    damage = GetInterpolatedValue(DamageInterpolation, Damage, 0, pct);
+                                }
+                                else
+                                {
+                                    damage = Damage;
+                                }
+                            }
+                            wholeDamage = (uint)Math.Clamp(damage, 0, Int32.MaxValue);
+                            if (wholeDamage != 0 && (Beam != BeamType.ShockCoil || _scene.FrameCount % 2 == Parity)) // todo: FPS stuff
+                            {
+                                player.TakeDamage(wholeDamage, damageFlags, damageDir, this);
+                            }
+                            if (Flags.TestFlag(BeamFlags.LifeDrain) && Owner.Type == EntityType.Player)
+                            {
+                                var ownerPlayer = (PlayerEntity)Owner;
+                                if (!ownerPlayer.IsPrimeHunter && ownerPlayer.TeamIndex != player.TeamIndex)
+                                {
+                                    // GainHealth checks if the player is alive
+                                    player.GainHealth(wholeDamage);
+                                }
+                            }
+                            if (!player.IsMainPlayer || player.IsAltForm || player.IsMorphing)
+                            {
+                                SpawnCollisionEffect(anyRes, noSplat: true);
+                            }
+                        }
+                        OnCollision(anyRes, colWith);
+                        // todo: update SFX
+                        ricochet = false;
+                    }
+                    else if (colWith.Type == EntityType.EnemyInstance)
                     {
                         var enemy = (EnemyInstanceEntity)colWith;
-                        if (enemy.GetEffectiveness(WeaponType) == Effectiveness.Zero && (enemy.EnemyType == EnemyType.FireSpawn
+                        if (enemy.GetEffectiveness(Beam) == Effectiveness.Zero && (enemy.EnemyType == EnemyType.FireSpawn
                             || (enemy.Owner as EnemyInstanceEntity)?.EnemyType == EnemyType.FireSpawn))
                         {
                             // when ineffective + FireSpawn or HitZone owned by FireSpawn
@@ -365,8 +619,11 @@ namespace MphRead.Entities
                             }
                             if (damage > 0)
                             {
-                                enemy.TakeDamage((uint)damage, this);
-                                SpawnCollisionEffect(anyRes, noSplat: true);
+                                if (Beam != BeamType.ShockCoil || _scene.FrameCount % 2 == Parity) // todo: FPS stuff
+                                {
+                                    enemy.TakeDamage((uint)damage, this);
+                                    SpawnCollisionEffect(anyRes, noSplat: true);
+                                }
                                 OnCollision(anyRes, colWith);
                                 // todo: update SFX
                             }
@@ -386,7 +643,7 @@ namespace MphRead.Entities
                             {
                                 if (door.Flags.TestFlag(DoorFlags.Locked) && !door.Flags.TestFlag(DoorFlags.ShowLock))
                                 {
-                                    if (door.Data.PaletteId == (int)WeaponType)
+                                    if (door.Data.PaletteId == (int)Beam)
                                     {
                                         door.Unlock(updateState: true, sfxBool: true);
                                     }
@@ -414,9 +671,69 @@ namespace MphRead.Entities
                             ricochet = false;
                         }
                     }
+                    else if (colWith.Type == EntityType.BeamProjectile)
+                    {
+                        var other = (BeamProjectileEntity)colWith;
+                        if (Flags.TestFlag(BeamFlags.ForceEffect))
+                        {
+                            SpawnCollisionEffect(anyRes, noSplat: true);
+                        }
+                        OnCollision(anyRes, colWith);
+                        // todo: update SFX
+                        if (other.Flags.TestFlag(BeamFlags.ForceEffect))
+                        {
+                            other.SpawnCollisionEffect(anyRes, noSplat: true);
+                        }
+                        if (other.DrawFuncId == 12) // Slench tear
+                        {
+                            // todo: play SFX
+                            ItemType item = ItemType.None;
+                            uint rand = Rng.GetRandomInt2(100);
+                            if (_scene.AreaId == 0) // Slench 1 (Alinos 1)
+                            {
+                                // 5% small missile, 5% medium health, 90% nothing
+                                if (rand < 5)
+                                {
+                                    item = ItemType.HealthMedium;
+                                }
+                                else if (rand < 10)
+                                {
+                                    item = ItemType.MissileSmall;
+                                }
+                            }
+                            else // Slench 2 (Arcterra 1), Slench 3 (Archives 2), Slench 4 (VDO 2)
+                            {
+                                // 50% small UA, 25% medium health, 25% nothing
+                                if (rand < 25)
+                                {
+                                    item = ItemType.HealthMedium;
+                                }
+                                else if (rand < 75)
+                                {
+                                    item = ItemType.UASmall;
+                                }
+                            }
+                            if (item != ItemType.None)
+                            {
+                                // todo: node ref
+                                ItemSpawnEntity.SpawnItemDrop(item, other.Position, chance: 100, _scene);
+                            }
+                        }
+                        else if (other.DrawFuncId == 11) // Omega Cannon
+                        {
+                            // todo: play SFX
+                        }
+                        else
+                        {
+                            // todo: play SFX
+                        }
+                        other.OnCollision(anyRes, this);
+                        ricochet = false;
+                    }
                 }
                 else
                 {
+                    // collided with room, platform, or object collision
                     bool reflected = anyRes.Flags.TestFlag(CollisionFlags.ReflectBeams);
                     if (anyRes.EntityCollision != null)
                     {
@@ -431,6 +748,7 @@ namespace MphRead.Entities
                             bool noSplat = anyRes.Terrain == Terrain.Lava || anyRes.EntityCollision != null;
                             SpawnCollisionEffect(anyRes, noSplat);
                         }
+                        // todo: play SFX
                         OnCollision(anyRes, colWith: null);
                         ricochet = false;
                     }
@@ -482,7 +800,7 @@ namespace MphRead.Entities
                 }
                 PastPositions[0] = Position;
             }
-            // btodo: sfx
+            // todo: sfx
         }
 
         public void OnCollision(CollisionResult colRes, EntityBase? colWith)
@@ -496,11 +814,8 @@ namespace MphRead.Entities
             {
                 Debug.Assert(Equip != null);
                 Debug.Assert(Owner != null);
+                // note: when hitting halfturret, colWith has been replaced with the turret's owning player by this point
                 CheckSplashDamage(colWith);
-                if (Weapon == BeamType.OmegaCannon)
-                {
-                    _scene.SetFade(FadeType.FadeInWhite, 15 * (1 / 30f), overwrite: false);
-                }
                 if (RicochetWeapon != null && (colWith == null || colWith.Type != EntityType.Player))
                 {
                     Vector3 factor = Velocity * 7;
@@ -528,34 +843,84 @@ namespace MphRead.Entities
             }
             if (Owner != null)
             {
-                // todo: send event
+                _scene.SendMessage(Message.Impact, this, Owner, colWith ?? (object)0, 0);
+                // todo: stop SFX
             }
         }
 
         private void CheckSplashDamage(EntityBase? colWith)
         {
-            // todo: iterate and check players
             for (int i = 0; i < _scene.Entities.Count; i++)
             {
                 EntityBase entity = _scene.Entities[i];
-                if (entity.Type == EntityType.EnemyInstance && entity != colWith)
+                if (entity.Type != EntityType.Player || entity == colWith)
                 {
-                    var enemy = (EnemyInstanceEntity)entity;
-                    if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam))
+                    continue;
+                }
+                var player = (PlayerEntity)entity;
+
+                void OmegaCannonFlash()
+                {
+                    if (Beam == BeamType.OmegaCannon && player == PlayerEntity.Main)
                     {
-                        CollisionResult res = default;
-                        float dist = Vector3.Distance(enemy.Position, Position);
-                        if (dist < BeamScale
-                            && !CollisionDetection.CheckBetweenPoints(Position, enemy.Position, TestFlags.AffectsBeams, _scene, ref res))
+                        _scene.SetFade(FadeType.FadeInWhite, 15 * (1 / 30f), overwrite: false);
+                    }
+                }
+
+                if (player.Health > 0)
+                {
+                    if (!player.Flags2.TestFlag(PlayerFlags2.Halfturret) || Owner != player.Halfturret)
+                    {
+                        CollisionResult discard = default;
+                        float dist = Vector3.Distance(player.Position, Position);
+                        // todo?: wifi conditions
+                        if (dist >= SplashRadius
+                            || CollisionDetection.CheckBetweenPoints(Position, player.Position, TestFlags.AffectsBeams, _scene, ref discard))
                         {
-                            float damage = GetInterpolatedValue(SplashDamageType, SplashDamage, 0, dist / BeamScale);
-                            enemy.TakeDamage((uint)damage, this);
+                            OmegaCannonFlash();
+                        }
+                        else
+                        {
+                            Vector3 damageDir = GetDamageDirection(Position, player.Position);
+                            float ratio = dist / SplashRadius;
+                            int damage = (int)GetInterpolatedValue(SplashDamageType, SplashDamage, 0, ratio);
+                            player.TakeDamage(damage, DamageFlags.NoDmgInvuln, damageDir, this);
                             if (Owner != null)
                             {
-                                _scene.SendMessage(Message.Impact, this, Owner, enemy, 0);
-                                // todo: stop beam SFX
+                                _scene.SendMessage(Message.Impact, this, Owner, player, 0);
+                                // todo: stop SFX
                             }
                         }
+                    }
+                }
+                else
+                {
+                    OmegaCannonFlash();
+                }
+            }
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.EnemyInstance || entity == colWith)
+                {
+                    continue;
+                }
+                var enemy = (EnemyInstanceEntity)entity;
+                if (!enemy.Flags.TestFlag(EnemyFlags.CollideBeam))
+                {
+                    continue;
+                }
+                CollisionResult res = default;
+                float dist = Vector3.Distance(enemy.Position, Position);
+                if (dist < SplashRadius
+                    && !CollisionDetection.CheckBetweenPoints(Position, enemy.Position, TestFlags.AffectsBeams, _scene, ref res))
+                {
+                    float damage = GetInterpolatedValue(SplashDamageType, SplashDamage, 0, dist / SplashRadius);
+                    enemy.TakeDamage((uint)damage, this);
+                    if (Owner != null)
+                    {
+                        _scene.SendMessage(Message.Impact, this, Owner, enemy, 0);
+                        // todo: stop beam SFX
                     }
                 }
             }
@@ -885,7 +1250,7 @@ namespace MphRead.Entities
                 for (int i = 0; i < equip.Beams.Length; i++)
                 {
                     BeamProjectileEntity beam = equip.Beams[i];
-                    if (beam.Flags.TestFlag(BeamFlags.Continuous) && beam.WeaponType == equip.Weapon.WeaponType
+                    if (beam.Flags.TestFlag(BeamFlags.Continuous) && beam.BeamKind == equip.Weapon.BeamKind
                         && beam.Owner == owner && beam.Lifespan < equip.Weapon.UnchargedLifespan)
                     {
                         return beam;
@@ -899,7 +1264,7 @@ namespace MphRead.Entities
                 {
                     return beam;
                 }
-                if (beam.Flags.TestFlag(BeamFlags.Continuous) && beam.WeaponType == equip.Weapon.WeaponType
+                if (beam.Flags.TestFlag(BeamFlags.Continuous) && beam.BeamKind == equip.Weapon.BeamKind
                     && beam.Owner == owner && beam.Lifespan < equip.Weapon.UnchargedLifespan)
                 {
                     return beam;
@@ -939,7 +1304,18 @@ namespace MphRead.Entities
             int cost = (int)GetAmount(weapon.AmmoCost, weapon.MinChargeCost, weapon.ChargeCost);
             if (weapon.Flags.TestFlag(WeaponFlags.Continuous))
             {
-                // btodo: Shock Coil frame stuff for ammo cost
+                // todo?: figure out what the intent behind this actually is
+                // game's cycle for Shock Coil (10): 0 0 0 1 0 0 1 0 0 1 0 0 1 0 0 0
+                //    our cycle for Shock Coil (10): 0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0 0
+                // game's cycle for green beam (15): 0 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 0
+                //    our cycle for green beam (15): 0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0
+                //                                   0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0
+                ulong bits = (ulong)(cost & 31);
+                cost = (cost << 11) >> 16;
+                if (scene.FrameCount % 2 == 0 && bits != 0 && ((bits * (scene.FrameCount / 2)) & 31) > 32 - bits) // todo: FPS stuff
+                {
+                    cost++;
+                }
             }
             int ammo = equip.GetAmmo?.Invoke() ?? -1;
             if (ammo >= 0 && cost > ammo)
@@ -953,9 +1329,9 @@ namespace MphRead.Entities
                 if (effectId != 255)
                 {
                     Debug.Assert(effectId >= 3);
-                    Vector3 effVec1 = direction;
-                    Vector3 effVec2 = GetCrossVector(effVec1);
-                    Matrix4 transform = GetTransformMatrix(effVec2, effVec1);
+                    Vector3 effUp = direction;
+                    Vector3 effFacing = GetCrossVector(effUp);
+                    Matrix4 transform = GetTransformMatrix(effFacing, effUp);
                     transform.Row3.Xyz = position;
                     // the game does this by spawning a CBeamEffect, but that's unncessary for muzzle effects
                     scene.SpawnEffect(effectId - 3, transform);
@@ -971,8 +1347,8 @@ namespace MphRead.Entities
                 || (!charged && weapon.Flags.TestFlag(WeaponFlags.AoeUncharged));
 
             BeamFlags flags = BeamFlags.None;
-            float speed = GetAmount(weapon.UnchargedSpeed, weapon.MinChargeSpeed, weapon.ChargedSpeed) / 4096f / 2; // todo: FPS stuff
-            float finalSpeed = GetAmount(weapon.UnchargedFinalSpeed, weapon.MinChargeFinalSpeed, weapon.ChargedFinalSpeed) / 4096f / 2;
+            float speed = GetAmount(weapon.UnchargedSpeed, weapon.MinChargeSpeed, weapon.ChargedSpeed) / 4096f;
+            float finalSpeed = GetAmount(weapon.UnchargedFinalSpeed, weapon.MinChargeFinalSpeed, weapon.ChargedFinalSpeed) / 4096f;
             float speedDecayTime = weapon.SpeedDecayTimes[charged ? 1 : 0] * (1 / 30f);
             ushort speedInterpolation = weapon.SpeedInterpolations[charged ? 1 : 0];
             float gravity = GetAmount(weapon.UnchargedGravity, weapon.MinChargeGravity, weapon.ChargedGravity) / 4096f;
@@ -1023,7 +1399,7 @@ namespace MphRead.Entities
             int damage = (int)GetAmount(weapon.UnchargedDamage, weapon.MinChargeDamage, weapon.ChargedDamage);
             int hsDamage = (int)GetAmount(weapon.HeadshotDamage, weapon.MinChargeHeadshotDamage, weapon.ChargedHeadshotDamage);
             int splashDmg = (int)GetAmount(weapon.SplashDamage, weapon.MinChargeSplashDamage, weapon.ChargedSplashDamage);
-            float scale = GetAmount(weapon.UnchargedScale, weapon.MinChargeScale, weapon.ChargedScale);
+            float splashRadius = GetAmount(weapon.UnchargedSplashRadius, weapon.MinChargeSplashRadius, weapon.ChargedSplashRadius) / 4096f;
             byte splashDmgType = weapon.SplashDamageTypes[charged ? 1 : 0];
             if (spawnFlags.TestFlag(BeamSpawnFlags.DoubleDamage))
             {
@@ -1037,13 +1413,12 @@ namespace MphRead.Entities
                 hsDamage = 150 * hsDamage / 100;
                 splashDmg = 150 * splashDmg / 100;
             }
-            if (weapon.Weapon == BeamType.Imperialist && !equip.Zoomed)
+            if (weapon.Beam == BeamType.Imperialist && !equip.Zoomed)
             {
                 damage /= 2;
                 hsDamage /= 2;
                 splashDmg /= 2;
             }
-            // btodo: Shock Coil damage based on frame stuff
             ushort damageInterpolation = weapon.DamageInterpolations[charged ? 1 : 0];
             float maxDist = GetAmount(weapon.UnchargedDistance, weapon.MinChargeDistance, weapon.ChargedDistance) / 4096f;
             Affliction afflictions = weapon.Afflictions[charged ? 1 : 0];
@@ -1063,17 +1438,17 @@ namespace MphRead.Entities
             float ricochetLossV = GetAmount(weapon.UnchargedRicochetLossV, weapon.MinChargeRicochetLossV, weapon.ChargedRicochetLossV) / 4096f;
             int maxSpread = (int)GetAmount(weapon.UnchargedSpread, weapon.MinChargeSpread, weapon.ChargedSpread);
             WeaponInfo? ricochetWeapon = charged ? weapon.ChargedRicochetWeapon : weapon.UnchargedRicochetWeapon;
-            Vector3 vec1 = direction;
-            Vector3 vecC;
-            if (vec1.X != 0 || vec1.Z != 0)
+            Vector3 dirVec = direction;
+            Vector3 rightVec;
+            if (dirVec.X != 0 || dirVec.Z != 0)
             {
-                vecC = new Vector3(vec1.Z, 0, -vec1.X).Normalized();
+                rightVec = new Vector3(dirVec.Z, 0, -dirVec.X).Normalized();
             }
             else
             {
-                vecC = Vector3.UnitX;
+                rightVec = Vector3.UnitX;
             }
-            Vector3 vec2 = Vector3.Cross(vec1, vecC).Normalized();
+            Vector3 upVec = Vector3.Cross(dirVec, rightVec).Normalized();
             Vector3 velocity = Vector3.Zero;
             if (maxSpread <= 0)
             {
@@ -1102,10 +1477,11 @@ namespace MphRead.Entities
                     }
                 }
                 beam.Owner = owner;
-                beam.Weapon = weapon.Weapon;
-                beam.WeaponType = weapon.WeaponType;
+                beam.Beam = weapon.Beam;
+                beam.BeamKind = weapon.BeamKind;
                 beam.Flags = flags;
                 beam.Age = 0;
+                beam.Parity = scene.FrameCount % 2; // todo: FPS stuff
                 beam.InitialSpeed = beam.Speed = speed;
                 beam.FinalSpeed = finalSpeed;
                 beam.SpeedDecayTime = speedDecayTime;
@@ -1123,13 +1499,13 @@ namespace MphRead.Entities
                 {
                     beam.PastPositions[j] = position;
                 }
-                beam.Direction = vec1;
-                beam.Up = vec2;
-                beam.VecCross = vecC;
+                beam.Direction = dirVec;
+                beam.Right = rightVec;
+                beam.Up = upVec;
                 beam.Damage = damage;
                 beam.HeadshotDamage = hsDamage;
                 beam.SplashDamage = splashDmg;
-                beam.BeamScale = scale;
+                beam.SplashRadius = splashRadius;
                 beam.DamageInterpolation = damageInterpolation;
                 beam.MaxDistance = maxDist;
                 beam.Afflictions = afflictions;
@@ -1158,9 +1534,9 @@ namespace MphRead.Entities
                     float cos1 = MathF.Cos(angle1);
                     float sin2 = MathF.Sin(angle2);
                     float cos2 = MathF.Cos(angle2);
-                    velocity.X = direction.X * cos1 + (beam.Up.X * cos2 + beam.VecCross.X * sin2) * sin1;
-                    velocity.Y = direction.Y * cos1 + (beam.Up.Y * cos2 + beam.VecCross.Y * sin2) * sin1;
-                    velocity.Z = direction.Z * cos1 + (beam.Up.Z * cos2 + beam.VecCross.Z * sin2) * sin1;
+                    velocity.X = direction.X * cos1 + (beam.Up.X * cos2 + beam.Right.X * sin2) * sin1;
+                    velocity.Y = direction.Y * cos1 + (beam.Up.Y * cos2 + beam.Right.Y * sin2) * sin1;
+                    velocity.Z = direction.Z * cos1 + (beam.Up.Z * cos2 + beam.Right.Z * sin2) * sin1;
                     velocity *= beam.Speed;
                 }
                 beam.Velocity = velocity;
@@ -1186,61 +1562,175 @@ namespace MphRead.Entities
                     int effectId = Metadata.BeamDrawEffects[beam.DrawFuncId];
                     if (effectId != 0)
                     {
-                        Vector3 effVec1 = beam.Direction;
-                        Vector3 effVec2 = GetCrossVector(effVec1);
-                        Matrix4 transform = GetTransformMatrix(effVec2, effVec1);
+                        Vector3 effUp = beam.Direction;
+                        Vector3 effFacing = GetCrossVector(effUp);
+                        Matrix4 transform = GetTransformMatrix(effFacing, effUp);
                         transform.Row3.Xyz = beam.Position;
                         beam.Effect = scene.SpawnEffectGetEntry(effectId, transform);
                         beam.Effect.SetElementExtension(true);
                     }
                 }
-                // btodo: the latter two parts of this condition are just one code path
-                if (beam.Flags.TestFlag(BeamFlags.Homing)
-                    && weapon.Flags.TestFlag(WeaponFlags.Continuous) && beam.WeaponType == BeamType.Platform)
+                Debug.Assert(beam.Target == null);
+                if (beam.Flags.TestFlag(BeamFlags.Homing))
                 {
-                    // btodo: check for entities of other types
-                    // btodo: implement the "get alive" check
-                    float tolerance = weapon.HomingTolerance / 4096f;
-                    float homingDistance = tolerance;
-                    for (int j = 0; j < scene.Entities.Count; j++)
+                    if (CheckHomingTargets(beam, weapon, scene))
                     {
-                        EntityBase entity = scene.Entities[j];
-                        if (entity.Type == EntityType.Platform && entity != beam.Owner)
+                        result |= BeamResultFlags.Homing;
+                    }
+                    if (beam.Beam == BeamType.ShockCoil && owner.Type == EntityType.Player)
+                    {
+                        var ownerPlayer = (PlayerEntity)owner;
+                        if ((scene.Multiplayer || !ownerPlayer.IsBot) && ownerPlayer.ShockCoilTarget == beam.Target)
                         {
-                            var platform = (PlatformEntity)entity;
-                            if (platform.Flags.TestFlag(PlatformFlags.BeamTarget))
+                            // todo: FPS stuff
+                            ushort timer = ownerPlayer.ShockCoilTimer;
+                            if (timer >= 120 * 2)
                             {
-                                Vector3 between = platform.Position - beam.Position;
-                                float dot1 = Vector3.Dot(between, between);
-                                float range = weapon.HomingRange / 4096f;
-                                if (dot1 <= range * range)
-                                {
-                                    float distance = between.Length;
-                                    if (distance > 0)
-                                    {
-                                        float dot2 = Vector3.Dot(between, beam.Velocity.Normalized());
-                                        float div1 = dot2 / distance;
-                                        if (div1 >= homingDistance)
-                                        {
-                                            float div2 = distance / range;
-                                            if (div2 > 1)
-                                            {
-                                                div2 = 1;
-                                            }
-                                            if (div1 >= tolerance + div2 * (Fixed.ToFloat(4094) - tolerance))
-                                            {
-                                                beam.Target = entity;
-                                                homingDistance = div1;
-                                                result |= BeamResultFlags.Homing;
-                                            }
-                                        }
-                                    }
-                                }
+                                beam.Damage += 4;
+                                beam.SplashDamage += 4;
+                                beam.HeadshotDamage += 4;
+                            }
+                            else
+                            {
+                                beam.Damage += timer / (30 * 2);
+                                beam.SplashDamage += timer / (30 * 2);
+                                beam.HeadshotDamage += timer / (30 * 2);
                             }
                         }
                     }
                 }
                 scene.AddEntity(beam);
+            }
+            return result;
+        }
+
+        private static readonly IReadOnlyList<EntityType> _homingTargetTypes = new EntityType[5]
+        {
+            EntityType.Player,
+            EntityType.Halfturret,
+            EntityType.EnemyInstance,
+            EntityType.Door,
+            EntityType.Platform
+        };
+
+        private static bool CheckHomingTargets(BeamProjectileEntity beam, WeaponInfo weapon, Scene scene)
+        {
+            bool result = false;
+            Debug.Assert(beam.Owner != null);
+            float tolerance = Fixed.ToFloat(weapon.HomingTolerance);
+            float curDiv = tolerance;
+            for (int i = 0; i < _homingTargetTypes.Count; i++)
+            {
+                EntityType type = _homingTargetTypes[i];
+                if (type == EntityType.EnemyInstance
+                    && (beam.Owner.Type == EntityType.EnemyInstance || beam.Owner.Type == EntityType.Platform))
+                {
+                    continue;
+                }
+                for (int j = 0; j < scene.Entities.Count; j++)
+                {
+                    EntityBase entity = scene.Entities[j];
+                    if (entity.Type != type || entity == beam.Owner || !entity.GetTargetable())
+                    {
+                        continue;
+                    }
+                    bool tryTarget = false;
+                    if (type == EntityType.Player)
+                    {
+                        var player = (PlayerEntity)entity;
+                        if (beam.Owner.Type != EntityType.Player)
+                        {
+                            tryTarget = true;
+                        }
+                        else
+                        {
+                            var ownerPlayer = (PlayerEntity)beam.Owner;
+                            tryTarget = player.TeamIndex != ownerPlayer.TeamIndex;
+                        }
+                    }
+                    else if (type == EntityType.Halfturret)
+                    {
+                        var halfturret = (HalfturretEntity)entity;
+                        if (beam.Owner.Type != EntityType.Player)
+                        {
+                            tryTarget = true;
+                        }
+                        else
+                        {
+                            var ownerPlayer = (PlayerEntity)beam.Owner;
+                            tryTarget = halfturret.Owner.TeamIndex != ownerPlayer.TeamIndex;
+                        }
+                    }
+                    else if (type == EntityType.EnemyInstance)
+                    {
+                        var enemy = (EnemyInstanceEntity)entity;
+                        EnemyFlags flags = enemy.Flags;
+                        if (flags.TestFlag(EnemyFlags.CollideBeam)
+                            && (!flags.TestFlag(EnemyFlags.NoHomingNc) || beam.Flags.TestFlag(BeamFlags.Continuous))
+                            && (!flags.TestFlag(EnemyFlags.NoHomingCo) || !beam.Flags.TestFlag(BeamFlags.Continuous)))
+                        {
+                            tryTarget = true;
+                        }
+                    }
+                    else if (type == EntityType.Platform)
+                    {
+                        var platform = (PlatformEntity)entity;
+                        tryTarget = platform.Flags.TestFlag(PlatformFlags.BeamTarget);
+                    }
+                    else // if (type == EntityType.Door)
+                    {
+                        tryTarget = true;
+                    }
+                    if (tryTarget)
+                    {
+                        entity.GetPosition(out Vector3 position);
+                        Vector3 between = position - beam.Position;
+                        float distSqr = Vector3.Dot(between, between);
+                        float range = Fixed.ToFloat(weapon.HomingRange);
+                        if ((weapon.Flags.TestFlag(WeaponFlags.Continuous) && beam.BeamKind == BeamType.Platform
+                            || distSqr <= range * range) && distSqr > 0)
+                        {
+                            float dist = MathF.Sqrt(distSqr);
+                            Debug.Assert(beam.Velocity != Vector3.Zero);
+                            float dot = Vector3.Dot(between, beam.Velocity.Normalized());
+                            float div1 = dot / dist;
+                            if (div1 >= curDiv)
+                            {
+                                if (weapon.Flags.TestFlag(WeaponFlags.Continuous))
+                                {
+                                    bool canTarget = false;
+                                    if (type == EntityType.Player)
+                                    {
+                                        var player = (PlayerEntity)entity;
+                                        if (!player.IsAltForm && !player.IsMorphing || div1 >= Fixed.ToFloat(4006))
+                                        {
+                                            canTarget = true;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        canTarget = true;
+                                    }
+                                    if (canTarget)
+                                    {
+                                        float div2 = Math.Min(dist / range, 1);
+                                        if (div1 >= tolerance + div2 * (Fixed.ToFloat(4094) - tolerance))
+                                        {
+                                            curDiv = div1;
+                                            beam.Target = entity;
+                                            result = true;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    curDiv = div1;
+                                    beam.Target = entity;
+                                }
+                            }
+                        }
+                    }
+                }
             }
             return result;
         }
@@ -1252,26 +1742,127 @@ namespace MphRead.Entities
                 : weapon.MinChargeSpread + ((weapon.ChargedSpread - weapon.MinChargeSpread) * chargePct);
             angle /= 4096f;
             Debug.Assert(angle == 60);
-            // btodo: collision check with player and halfturret
-            Vector3 vec1 = Direction;
-            Vector3 vec2;
-            if (vec1.X != 0 || vec1.Z != 0)
+            CheckIceWaveCollision(angle);
+            Vector3 up = Direction;
+            Vector3 facing;
+            if (up.X != 0 || up.Z != 0)
             {
-                var temp = Vector3.Cross(Vector3.UnitY, vec1);
-                vec2 = Vector3.Cross(vec1, temp).Normalized();
+                var temp = Vector3.Cross(Vector3.UnitY, up);
+                facing = Vector3.Cross(up, temp).Normalized();
             }
             else
             {
-                var temp = Vector3.Cross(Vector3.UnitX, vec1);
-                vec2 = Vector3.Cross(vec1, temp).Normalized();
+                var temp = Vector3.Cross(Vector3.UnitX, up);
+                facing = Vector3.Cross(up, temp).Normalized();
             }
-            Matrix4 transform = Matrix4.CreateScale(MaxDistance) * GetTransformMatrix(vec2, vec1);
+            Matrix4 transform = Matrix4.CreateScale(MaxDistance) * GetTransformMatrix(facing, up);
             transform.Row3.Xyz = Position;
             var ent = BeamEffectEntity.Create(new BeamEffectEntityData(type: 0, noSplat: false, transform), _scene);
             if (ent != null)
             {
                 _scene.AddEntity(ent);
             }
+        }
+
+        // todo: visualize (also shadow freeze bug)
+        private void CheckIceWaveCollision(float angle)
+        {
+            float angleCos = MathF.Cos(MathHelper.DegreesToRadians(angle));
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.Player || Owner == entity)
+                {
+                    continue;
+                }
+                var player = (PlayerEntity)entity;
+                if (player.Health == 0)
+                {
+                    continue;
+                }
+                CheckIceWaveCollision(player, player.Position, angleCos, halfturret: false);
+                if (player.Flags2.TestFlag(PlayerFlags2.Halfturret))
+                {
+                    CheckIceWaveCollision(player, player.Halfturret.Position, angleCos, halfturret: true);
+                }
+            }
+        }
+
+        private void CheckIceWaveCollision(PlayerEntity player, Vector3 position, float angleCos, bool halfturret)
+        {
+            // bug: the beam's up vector is factored out in order to do a lateral distance check (where "lateral" is relative to
+            // the beam's orientation), but that same stripped vector is used for the angle check below. the result is that instead
+            // of checking in a 60 degree cone, a 60 degree wedge of a cylinder with infinite height is checked (again, where
+            // "height" is rleative to the beam) -- this results in the shadow freeze glitch
+            // fix: use the normalized between vector with all its components in the dot product check
+            Vector3 between = position - Position;
+            float dot = Vector3.Dot(between, Up);
+            between += Up * -dot;
+            float mag = between.Length;
+            if (mag < MaxDistance)
+            {
+                between /= mag;
+                if (Vector3.Dot(between, Direction) > angleCos)
+                {
+                    Vector3 dir = GetDamageDirection(Position, player.Position);
+                    DamageFlags flags = DamageFlags.NoDmgInvuln;
+                    if (halfturret)
+                    {
+                        flags |= DamageFlags.Halfturret;
+                    }
+                    player.TakeDamage((int)Damage, flags, dir, this);
+                }
+            }
+        }
+
+        private Vector3 GetDamageDirection(Vector3 beamPos, Vector3 targetPos)
+        {
+            if (DamageDirType == 1)
+            {
+                // multiply velocity (or unit Y if not moving) by magnitude -- unused?
+                Vector3 direction = Vector3.UnitY;
+                if (Velocity != Vector3.Zero)
+                {
+                    direction = Velocity.Normalized();
+                }
+                return direction * DamageDirMag;
+            }
+            if (DamageDirType == 2)
+            {
+                // normalize vector between, halve Y, minimum 0.03 Y (or 0.03 Y if not moving), multiply by magnitude
+                Vector3 direction = targetPos - beamPos;
+                if (direction != Vector3.Zero)
+                {
+                    direction = direction.Normalized();
+                    direction.Y /= 2;
+                    if (direction.Y < 0.03f)
+                    {
+                        direction.Y = 0.03f;
+                    }
+                }
+                else
+                {
+                    direction = new Vector3(0, 0.03f, 0);
+                }
+                return direction * DamageDirMag;
+            }
+            if (DamageDirType == 3)
+            {
+                // normalize horizontal vector between, multiply by magnitude
+                Vector3 direction = (targetPos - beamPos).WithY(0);
+                if (direction != Vector3.Zero)
+                {
+                    direction = direction.Normalized();
+                    direction *= DamageDirMag;
+                }
+                return direction;
+            }
+            if (DamageDirType == 4)
+            {
+                //unit Y multiplied by magnitude -- unused?
+                return new Vector3(0, DamageDirMag, 0);
+            }
+            return Vector3.Zero;
         }
 
         private void SpawnCollisionEffect(CollisionResult colRes, bool noSplat)
@@ -1288,16 +1879,16 @@ namespace MphRead.Entities
                     colRes.Position.Y + colRes.Plane.Y / 8,
                     colRes.Position.Z + colRes.Plane.Z / 8
                 );
-                Vector3 vec1 = WeaponType == BeamType.Imperialist ? -Direction : colRes.Plane.Xyz;
+                Vector3 up = Beam == BeamType.Imperialist ? -Direction : colRes.Plane.Xyz;
                 if (colRes.EntityCollision != null)
                 {
                     spawnPos = Matrix.Vec3MultMtx4(spawnPos, colRes.EntityCollision.Inverse1);
-                    vec1 = Matrix.Vec3MultMtx3(vec1, colRes.EntityCollision.Inverse1);
+                    up = Matrix.Vec3MultMtx3(up, colRes.EntityCollision.Inverse1);
                 }
-                Vector3 vec2 = GetCrossVector(vec1);
-                Matrix4 transform = GetTransformMatrix(vec2, vec1);
+                Vector3 facing = GetCrossVector(up);
+                Matrix4 transform = GetTransformMatrix(facing, up);
                 transform.Row3.Xyz = spawnPos;
-                // somehwat redundant logic, game uses "511" bits which accomplish the same thing as this terrain type check
+                // the game uses BeamKind against "511" bits which accomplish the same thing as this terrain type check
                 if (_scene.GameMode != GameMode.SinglePlayer || colRes.Terrain <= Terrain.Lava)
                 {
                     var ent = BeamEffectEntity.Create(
@@ -1306,12 +1897,13 @@ namespace MphRead.Entities
                     {
                         if (SplashDamage > 0)
                         {
-                            ent.Scale = Scale;
+                            ent.Scale = new Vector3(SplashRadius);
                         }
                         _scene.AddEntity(ent);
                     }
                 }
-                byte splatEffect = _terSplat1P[(int)Weapon][(int)colRes.Terrain];
+                // there are actually effect IDs to cover platform/enemy beams in these arrays (although most are 255)
+                byte splatEffect = _terSplat1P[(int)BeamKind][(int)colRes.Terrain];
                 if (_scene.GameMode == GameMode.SinglePlayer && splatEffect != 255)
                 {
                     splatEffect += 3;
@@ -1342,7 +1934,7 @@ namespace MphRead.Entities
                     // 25 - sprEffectiveIce
                     // 26 - sprEffectiveMortar
                     // 27 - sprEffectiveGhost
-                    effectId = (int)WeaponType + 20;
+                    effectId = (int)Beam + 20;
                 }
                 else if (!_scene.Multiplayer)
                 {
@@ -1354,7 +1946,7 @@ namespace MphRead.Entities
                     // 17 - effectiveHitIce
                     // 18 - effectiveHitMortar
                     // 19 - effectiveHitGhost
-                    effectId = (int)WeaponType + 12;
+                    effectId = (int)Beam + 12;
                 }
                 else
                 {
@@ -1366,7 +1958,7 @@ namespace MphRead.Entities
                     // 159 - mpEffectiveIce
                     // 160 - mpEffectiveMortar
                     // 161 - mpEffectiveGhost
-                    effectId = (int)WeaponType + 154;
+                    effectId = (int)Beam + 154;
                 }
                 if (effectId > 0)
                 {
@@ -1378,30 +1970,31 @@ namespace MphRead.Entities
         private static readonly IReadOnlyList<IReadOnlyList<byte>> _terSplat1P
             = new List<IReadOnlyList<byte>>()
             {
-                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 },
-                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 },
-                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 },
-                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 },
-                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 },
-                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 },
-                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 },
-                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 },
-                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 },
-                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 },
-                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 }
+                // metal, orange holo, green holo, blue holo, ice, snow, sand, rock, lava, acid, Gorea, unknown
+                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 }, // Power Beam
+                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 }, // Volt Driver
+                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 }, // Missile
+                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 }, // Battlehammer
+                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 }, // Imperialist
+                new List<byte>() { 255, 99, 121, 122, 123, 126, 125, 124, 100, 142, 141, 140 }, // Judicator
+                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 }, // Magmaul
+                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 }, // Shock Coil
+                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 }, // Omega Cannon
+                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 }, // Platform
+                new List<byte>() { 255, 255, 255, 255, 255, 255, 255, 255, 255, 142, 141, 140 } // Enemy
             };
 
         private void SpawnSniperBeam()
         {
             // following what the game does, but this should always be the same as SpawnPosition
             Vector3 spawnPos = PastPositions[8];
-            Vector3 vec1 = Position - spawnPos;
-            float magnitude = vec1.Length;
+            Vector3 up = Position - spawnPos;
+            float magnitude = up.Length;
             if (magnitude > 0)
             {
-                vec1.Normalize();
-                Vector3 vec2 = GetCrossVector(vec1);
-                Matrix4 transform = GetTransformMatrix(vec2, vec1);
+                up.Normalize();
+                Vector3 facing = GetCrossVector(up);
+                Matrix4 transform = GetTransformMatrix(facing, up);
                 transform.Row3.Xyz = spawnPos;
                 var ent = BeamEffectEntity.Create(new BeamEffectEntityData(type: 1, noSplat: false, transform), _scene);
                 if (ent != null)
@@ -1412,13 +2005,13 @@ namespace MphRead.Entities
             }
         }
 
-        private static Vector3 GetCrossVector(Vector3 vec1)
+        private static Vector3 GetCrossVector(Vector3 up)
         {
-            if (vec1.Z <= Fixed.ToFloat(-3686) || vec1.Z >= Fixed.ToFloat(3686))
+            if (up.Z <= Fixed.ToFloat(-3686) || up.Z >= Fixed.ToFloat(3686))
             {
-                return Vector3.Cross(Vector3.UnitX, vec1).Normalized();
+                return Vector3.Cross(Vector3.UnitX, up).Normalized();
             }
-            return Vector3.Cross(Vector3.UnitZ, vec1).Normalized();
+            return Vector3.Cross(Vector3.UnitZ, up).Normalized();
         }
 
         public static void StopChargeSfx(BeamType beam, Hunter hunter)

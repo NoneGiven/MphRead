@@ -29,6 +29,7 @@ namespace MphRead.Entities
         private readonly EquipInfo? _equipInfo;
         private readonly Vector3 _beamSpawnPos;
         private readonly Vector3 _beamSpawnDir;
+        private int _ammo = 0;
 
         private int _health = 0;
         private int _halfHealth = 0;
@@ -37,6 +38,7 @@ namespace MphRead.Entities
         private ushort _timeSincePlayerCol = 0;
         private bool _playerCol = false;
         private PlatformEntity? _parent = null;
+        private EntityCollision? _parentEntCol = null;
         private EntityBase? _scanMessageTarget = null;
         private EntityBase? _hitMessageTarget = null;
         private EntityBase? _playerColMessageTarget = null;
@@ -57,7 +59,8 @@ namespace MphRead.Entities
         private int _recoilTimer;
         private readonly float _forwardSpeed;
         private readonly float _backwardSpeed;
-        private int _currentAnim = 0;
+        private int _currentAnimState = 0; // todo: names
+        private int _currentAnimId = 0;
 
         // todo: would be nice to have the ability to manipulate these transforms manually
         private readonly Vector3 _posOffset;
@@ -133,18 +136,28 @@ namespace MphRead.Entities
                 {
                     SetCollision(Collision.GetCollision(modelMeta), attach: inst);
                 }
-                // temporary
-                if (_meta.Name == "SyluxTurret")
-                {
-                    inst.SetAnimation(-1);
-                }
+            }
+            if (EntityCollision[0] == null)
+            {
+                // needed for child entities to track
+                Matrix4 transform = GetTransform();
+                var entCol = new EntityCollision(null, this);
+                EntityCollision[0] = entCol;
+                UpdateCollisionTransform(0, transform);
+                UpdateLinkedInverse(0);
             }
             _beamInterval = (int)data.BeamInterval * 2; // todo: FPS stuff
+            if (_beams == null)
+            {
+                _beams = SceneSetup.CreateBeamList(64, scene); // in-game: 18
+            }
             if (data.BeamId > -1)
             {
-                // todo: ammo pointer
+                _ammo = 1000;
                 Debug.Assert(data.BeamId < Weapons.PlatformWeapons.Count);
                 _equipInfo = new EquipInfo(Weapons.PlatformWeapons[data.BeamId], _beams);
+                _equipInfo.GetAmmo = () => _ammo;
+                _equipInfo.SetAmmo = (newAmmo) => _ammo = newAmmo;
                 _beamSpawnPos = data.BeamSpawnPos.ToFloatVector();
                 _beamSpawnDir = data.BeamSpawnDir.ToFloatVector();
                 _beamIntervalIndex = 15;
@@ -160,10 +173,9 @@ namespace MphRead.Entities
             if (Flags.TestFlag(PlatformFlags.SamusShip))
             {
                 SleepWake(wake: true, instant: true);
-                _currentAnim = -2;
-                // todo: room state for initial landed
-                // --> options are instant_wake and wake, but it seems like it should be instant_sleep?
-                SetPlatAnimation(PlatAnimId.InstantSleep, AnimFlags.None);
+                _currentAnimState = -2;
+                // todo: room state for initial landing
+                SetPlatAnimation(PlatAnimId.InstantWake, AnimFlags.None);
                 _animFlags |= PlatAnimFlags.Active;
             }
             else
@@ -186,10 +198,10 @@ namespace MphRead.Entities
                 {
                     Deactivate();
                 }
-                _currentAnim = -2;
+                _currentAnimState = -2;
                 if (_animFlags.TestFlag(PlatAnimFlags.HasAnim))
                 {
-                    if (_animFlags.TestFlag(PlatAnimFlags.Active))
+                    if (StateFlags.TestFlag(PlatStateFlags.Awake))
                     {
                         SetPlatAnimation(PlatAnimId.InstantWake, AnimFlags.None);
                     }
@@ -199,7 +211,6 @@ namespace MphRead.Entities
                     }
                 }
             }
-            _beams = SceneSetup.CreateBeamList(64, scene); // in-game: 18
         }
 
         public override void Initialize()
@@ -234,7 +245,7 @@ namespace MphRead.Entities
                 _scene.LoadEffect(184); // syluxMissileCol
                 _scene.LoadEffect(185); // syluxMissileFlash
             }
-            _scene.TryGetEntity(_data.ScanMsgTarget, out _scanMessageTarget);
+            _scene.TryGetEntity(_data.ScanMsgTarget, out _scanMessageTarget); // todo: send scan message
             _scene.TryGetEntity(_data.BeamHitMsgTarget, out _hitMessageTarget);
             _scene.TryGetEntity(_data.PlayerColMsgTarget, out _playerColMessageTarget);
             _scene.TryGetEntity(_data.DeadMsgTarget, out _deathMessageTarget);
@@ -268,6 +279,7 @@ namespace MphRead.Entities
                 {
                     // only relevant for SyluxShip/Turret
                     _parent = (PlatformEntity)parent;
+                    _parentEntCol = _parent.EntityCollision[0];
                 }
             }
             Matrix4 transform = GetTransform();
@@ -299,7 +311,7 @@ namespace MphRead.Entities
                 Vector3 offset = Matrix.Vec3MultMtx3(new Vector3(0, 0.8f, 4.2f), transform);
                 position = transform.Row3.Xyz + offset;
             }
-            else if (Flags.TestFlag(PlatformFlags.SyluxShip) && EntityCollision[0] != null)
+            else if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parentEntCol != null)
             {
                 Matrix4 transform = GetTransform();
                 position = Matrix.Vec3MultMtx4(_beamSpawnPos, transform);
@@ -320,7 +332,7 @@ namespace MphRead.Entities
 
         private void SetPlatAnimation(int index, AnimFlags flags)
         {
-            _currentAnim = index;
+            _currentAnimId = index;
             if (index >= 0)
             {
                 Debug.Assert(!_models[0].IsPlaceholder);
@@ -345,7 +357,7 @@ namespace MphRead.Entities
                 else
                 {
                     SetPlatAnimation(PlatAnimId.Wake, AnimFlags.NoLoop);
-                    _currentAnim = GetAnimation(PlatAnimId.InstantWake);
+                    _currentAnimState = GetAnimation(PlatAnimId.InstantWake);
                 }
             }
             else
@@ -362,14 +374,14 @@ namespace MphRead.Entities
                 else
                 {
                     SetPlatAnimation(PlatAnimId.Sleep, AnimFlags.NoLoop);
-                    _currentAnim = GetAnimation(PlatAnimId.InstantSleep);
+                    _currentAnimState = GetAnimation(PlatAnimId.InstantSleep);
                 }
                 if (Flags.TestFlag(PlatformFlags.HideOnSleep))
                 {
                     for (int i = 0; i < EntityCollision.Length; i++)
                     {
                         EntityCollision? entCol = EntityCollision[i];
-                        if (entCol != null)
+                        if (entCol?.Collision != null)
                         {
                             entCol.Collision.Active = false;
                         }
@@ -449,7 +461,7 @@ namespace MphRead.Entities
             {
                 bool isTurret = false;
                 bool turretAiming = false;
-                if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parent != null)
+                if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parentEntCol != null)
                 {
                     isTurret = true;
                     if (_stateFlags.TestFlag(PlatStateFlags.Awake)
@@ -464,7 +476,7 @@ namespace MphRead.Entities
                     Vector3 target = Vector3.Zero;
                     if (isTurret)
                     {
-                        Debug.Assert(_parent != null);
+                        Debug.Assert(_parentEntCol != null);
                         if (turretAiming)
                         {
                             PlayerEntity mainPlayer = PlayerEntity.Main;
@@ -476,8 +488,7 @@ namespace MphRead.Entities
                         }
                         else
                         {
-                            target = Vector3.UnitZ;
-                            target = Matrix.Vec3MultMtx3(target, _parent.CollisionTransform);
+                            target = Matrix.Vec3MultMtx3(Vector3.UnitZ, _parentEntCol.Transform);
                         }
                         target = target.Normalized();
                     }
@@ -495,10 +506,10 @@ namespace MphRead.Entities
                     Vector4 rotation = ChooseVectors(cross1, cross2, target);
                     if (!_models[0].IsPlaceholder)
                     {
-                        float pct = Fixed.ToFloat(_parent == null ? 64 : 256);
+                        float pct = Fixed.ToFloat(_parentEntCol == null ? 64 : 256) / 2; // todo: FPS stuff
                         rotation = ComputeRotationSin(_curRotation, rotation, pct);
                     }
-                    _curRotation = rotation.Normalized();
+                    _curRotation = rotation;
                     if (_data.MovementType == 0)
                     {
                         UpdateState();
@@ -534,7 +545,7 @@ namespace MphRead.Entities
             bool spawnBeam = true;
             if (!_models[0].IsPlaceholder && Flags.TestFlag(PlatformFlags.SyluxShip))
             {
-                if (_currentAnim != -2)
+                if (_currentAnimState != -2)
                 {
                     spawnBeam = false;
                 }
@@ -544,10 +555,10 @@ namespace MphRead.Entities
                     spawnBeam = false;
                 }
             }
-            _stateFlags |= PlatStateFlags.Awake;
-            // btodo: 0 is valid for Sylux turret missiles, but without collision handling those would eat up the effect lists
+            // todo: don't spawn beam when node ref is not visible, unless the flag for that is set
+            //_stateFlags |= PlatStateFlags.Awake; // skdebug?
             if (spawnBeam && _animFlags.TestFlag(PlatAnimFlags.Draw) && !_animFlags.TestFlag(PlatAnimFlags.DisableReflect)
-                && _stateFlags.TestFlag(PlatStateFlags.Awake) && Flags.TestFlag(PlatformFlags.BeamSpawner) && _data.BeamId > 0)
+                && _stateFlags.TestFlag(PlatStateFlags.Awake) && Flags.TestFlag(PlatformFlags.BeamSpawner) && _data.BeamId > -1)
             {
                 if (--_beamIntervalTimer <= 0)
                 {
@@ -570,14 +581,14 @@ namespace MphRead.Entities
                     }
                 }
             }
-            if (!_models[0].IsPlaceholder && _animFlags.TestFlag(PlatAnimFlags.HasAnim) && _currentAnim >= 0)
+            if (!_models[0].IsPlaceholder && _animFlags.TestFlag(PlatAnimFlags.HasAnim) && _currentAnimId >= 0)
             {
                 UpdateAnimFrames(_models[0]);
             }
-            if (_currentAnim != -2 && _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
+            if (_currentAnimState != -2 && _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
             {
-                SetPlatAnimation(_currentAnim, AnimFlags.None);
-                _currentAnim = -2;
+                SetPlatAnimation(_currentAnimState, AnimFlags.None);
+                _currentAnimState = -2;
                 _stateFlags &= ~PlatStateFlags.WasAwake;
             }
             // todo: SFX and other stuff
@@ -607,17 +618,56 @@ namespace MphRead.Entities
             {
                 Transform = GetTransform();
             }
-            // todo?: for some reason, the game uses an inverse view matrix when using animation
-            UpdateCollisionTransform(0, CollisionTransform);
+            if (_animFlags.TestFlag(PlatAnimFlags.WasDrawn) && _colAttachNode != null)
+            {
+                UpdateCollisionTransform(0, _colAttachNode.Animation);
+            }
+            else
+            {
+                UpdateCollisionTransform(0, Transform);
+            } 
             return true;
         }
 
-        // todo: use more flags
         public override void GetDrawInfo()
         {
-            if (_animFlags.TestFlag(PlatAnimFlags.Draw) || _models[0].IsPlaceholder)
+            _animFlags &= ~PlatAnimFlags.WasDrawn;
+            if (_models[0].IsPlaceholder)
             {
                 base.GetDrawInfo();
+            }
+            else if (_animFlags.TestFlag(PlatAnimFlags.Draw))
+            {
+                bool draw = true;
+                // todo: use draw always, draw when node ref, and is_visible
+                if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parentEntCol != null)
+                {
+                    Debug.Assert(_parent != null);
+                    if (!_parent.StateFlags.TestFlag(PlatStateFlags.Awake) && !_parent.StateFlags.TestFlag(PlatStateFlags.WasAwake))
+                    {
+                        draw = false;
+                    }
+                }
+                if (_animFlags.TestFlag(PlatAnimFlags.HasAnim) && _currentAnimId < 0)
+                {
+                    draw = false;
+                }
+                if (draw)
+                {
+                    base.GetDrawInfo();
+                    _animFlags |= PlatAnimFlags.WasDrawn;
+                }
+                if (Flags.TestFlag(PlatformFlags.SamusShip))
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        EffectEntry? effect = _effects[i];
+                        if (effect != null)
+                        {
+                            effect.SetDrawEnabled(draw);
+                        }
+                    }
+                }
             }
         }
 
@@ -690,8 +740,8 @@ namespace MphRead.Entities
                 inv = 1 / sqrt / 2f;
                 return new Vector4(
                     (vec2.X + vec1.Y) * inv,
-                    (vec3.Y + vec2.Z) * inv,
                     sqrt / 2f,
+                    (vec3.Y + vec2.Z) * inv,
                     (vec3.X - vec1.Z) * inv
                 );
             }
@@ -892,25 +942,22 @@ namespace MphRead.Entities
                 {
                     transform.Row3.Xyz += Matrix.Vec3MultMtx3(_posOffset, transform);
                 }
-                if (Flags.TestFlag(PlatformFlags.SyluxShip))
+                if (_parentEntCol != null)
                 {
-                    if (_parent != null)
+                    if (Flags.TestFlag(PlatformFlags.SyluxShip))
                     {
-                        transform.Row3.Xyz = Matrix.Vec3MultMtx4(transform.Row3.Xyz, _parent.CollisionTransform);
+                        transform.Row3.Xyz = Matrix.Vec3MultMtx4(transform.Row3.Xyz, _parentEntCol.Transform);
                     }
-                }
-                else if (_parent != null)
-                {
-                    transform *= _parent.CollisionTransform;
+                    else
+                    {
+                        transform *= _parentEntCol.Transform;
+                    }
                 }
             }
             else
             {
+                Debug.Assert(_parentEntCol == null);
                 transform = Transform;
-                if (_parent != null)
-                {
-                    //transform.Row3.Xyz = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform);
-                }
             }
             return transform;
         }
@@ -1055,7 +1102,11 @@ namespace MphRead.Entities
                             else
                             {
                                 var beam = (BeamProjectileEntity)info.Sender;
-                                if (_beamEffectiveness[(int)beam.Weapon] == Effectiveness.Zero)
+                                // bug?: checking BeamKind instead of Beam here
+                                // the game does't do the bounds check, I guess assuming a platform can't be hit by a platform beam
+                                // --> in our case it can (seen with SyluxShip aiming bug at one point), so we'll handle it
+                                int index = (int)beam.BeamKind;
+                                if (index >= _beamEffectiveness.Length || _beamEffectiveness[index] == Effectiveness.Zero)
                                 {
                                     effectId = _data.ResistEffectId;
                                 }
@@ -1340,7 +1391,6 @@ namespace MphRead.Entities
                 }
             }
             Position = position;
-            base.Process();
             UpdateCollisionTransform(0, Transform);
             return true;
         }

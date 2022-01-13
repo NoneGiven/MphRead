@@ -14,7 +14,7 @@ namespace MphRead.Entities
         private Vector3 _visiblePosition;
 
         private ObjectFlags _flags = 0;
-        private int _effectInterval = 0;
+        private readonly int _effectInterval = 0;
         private int _effectIntervalTimer = 0;
         private int _effectIntervalIndex = 0;
         private bool _effectProcessing = false;
@@ -22,10 +22,12 @@ namespace MphRead.Entities
         public bool _effectActive = false;
         private readonly bool _scanVisorOnly = false;
         private int _state = 0;
-        private ObjectMetadata? _meta;
+        private readonly ObjectMetadata? _meta;
 
         private EntityBase? _parent = null;
-        private Matrix4 _invTransform;
+        private EntityCollision? _parentEntCol = null;
+        private Matrix4 _invTransform = Matrix4.Identity;
+        private EntityBase? _scanMsgTarget = null;
 
         // used for ID -1 (scan point, effect spawner)
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x22, 0x8B, 0x22).AsVector4();
@@ -107,8 +109,7 @@ namespace MphRead.Entities
                     SetCollision(Collision.GetCollision(modelMeta), attach: inst);
                     if (modelMeta.ExtraCollisionPath != null)
                     {
-                        // ctodo: disable capsule shield collision when appropriate
-                        // --> in game, collision isn't even set up unless state starts at 2, but we should still set it up ("reactivation")
+                        // in game, collision isn't even set up unless state starts at 2, but we should still set it up ("reactivation")
                         SetCollision(Collision.GetCollision(modelMeta, extra: true), slot: 1);
                     }
                 }
@@ -127,12 +128,9 @@ namespace MphRead.Entities
             {
                 _scene.LoadEffect(_data.EffectId);
             }
-            if (_data.LinkedEntity != -1)
+            if (_scene.TryGetEntity(_data.ScanMsgTarget, out EntityBase? target))
             {
-                if (_scene.TryGetEntity(_data.LinkedEntity, out EntityBase? parent))
-                {
-                    _parent = parent;
-                }
+                _scanMsgTarget = target;
             }
         }
 
@@ -171,14 +169,25 @@ namespace MphRead.Entities
             facing = FacingVector;
         }
 
+        public override void HandleMessage(MessageInfo info)
+        {
+            if (info.Message == Message.Activate)
+            {
+                UpdateState(2);
+            }
+            else if (info.Message == Message.SetActive)
+            {
+                UpdateState((int)info.Param1);
+            }
+        }
+
         private void UpdateState(int state)
         {
             if (_state == state)
             {
                 return;
             }
-            Debug.Assert(_meta != null);
-            int animId = _meta.AnimationIds[state];
+            int animId = _meta == null ? -1 : _meta.AnimationIds[state];
             if (animId < 0)
             {
                 _flags |= ObjectFlags.NoAnimation;
@@ -192,12 +201,17 @@ namespace MphRead.Entities
                     {
                         // todo: play SFX
                         _models[0].SetAnimation(animId, 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node, AnimFlags.NoLoop);
-                        // todo: unlink/deactivate collision in slot 1
+                        EntityCollision? entCol = EntityCollision[1];
+                        if (entCol?.Collision != null)
+                        {
+                            entCol.Collision.Active = false;
+                        }
                     }
                     needsUpdate = false;
                 }
                 else if (_data.ModelId == 46) // SniperTarget
                 {
+                    Debug.Assert(_meta != null);
                     if (state == 0)
                     {
                         if (_models[0].AnimInfo.Index[0] == _meta.AnimationIds[0])
@@ -271,9 +285,12 @@ namespace MphRead.Entities
                 {
                     // todo: check distance to player
                     Vector3 between = _scene.CameraPosition - Position;
-                    // todo: send message to the associated volume
                     if (Vector3.Dot(between, between) >= 15 * 15)
                     {
+                        if (_scanMsgTarget != null)
+                        {
+                            _scene.SendMessage(Message.SetActive, this, _scanMsgTarget, 1, 0);
+                        }
                         UpdateState(1);
                         if (_models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
                         {
@@ -283,6 +300,10 @@ namespace MphRead.Entities
                     }
                     else
                     {
+                        if (_scanMsgTarget != null)
+                        {
+                            _scene.SendMessage(Message.SetActive, this, _scanMsgTarget, 0, 0);
+                        }
                         UpdateState(0);
                     }
                 }
@@ -311,14 +332,18 @@ namespace MphRead.Entities
                 if (_data.LinkedEntity != -1 && _scene.TryGetEntity(_data.LinkedEntity, out EntityBase? entity))
                 {
                     _parent = entity;
-                    _invTransform = _transform * _parent.CollisionTransform.Inverted();
+                    _parentEntCol = _parent.EntityCollision[0];
+                    if (_parentEntCol != null)
+                    {
+                        _invTransform = _transform * _parentEntCol.Inverse2;
+                    }
                 }
                 _flags |= ObjectFlags.EntityLinked;
             }
             ShouldDraw = !_scanVisorOnly || _scene.ScanVisor;
-            if (_parent != null)
+            if (_parentEntCol != null)
             {
-                Transform = _invTransform * _parent.CollisionTransform;
+                Transform = _invTransform * _parentEntCol.Transform;
                 UpdateVisiblePosition();
             }
             if (Transform != _prevTransform)
@@ -380,24 +405,26 @@ namespace MphRead.Entities
                         }
                         else if ((_data.EffectOnIntervals & (1 << _effectIntervalIndex)) != 0)
                         {
-                            // ptodo: mtxptr stuff
-                            Matrix4 spawnTransform = Transform;
+                            EntityCollision? entCol = _parent?.EntityCollision[0];
+                            Vector3 spawnFacing = FacingVector;
+                            Vector3 spawnUp = UpVector;
+                            Vector3 spawnPos = Position;
+                            if (entCol != null)
+                            {
+                                spawnPos = Matrix.Vec3MultMtx4(spawnPos, entCol.Inverse1);
+                                spawnUp = Matrix.Vec3MultMtx3(spawnUp, entCol.Inverse1);
+                                spawnFacing = Matrix.Vec3MultMtx3(spawnFacing, entCol.Inverse1);
+                            }
                             if (_data.EffectFlags.TestFlag(ObjEffFlags.UseEffectOffset))
                             {
                                 Vector3 offset = _data.EffectPositionOffset.ToFloatVector();
                                 offset.X *= Fixed.ToFloat(2 * (Rng.GetRandomInt1(0x1000u) - 2048));
                                 offset.Y *= Fixed.ToFloat(2 * (Rng.GetRandomInt1(0x1000u) - 2048));
                                 offset.Z *= Fixed.ToFloat(2 * (Rng.GetRandomInt1(0x1000u) - 2048));
-                                offset = Matrix.Vec3MultMtx3(offset, Transform.ClearScale());
-                                spawnTransform = new Matrix4(
-                                    spawnTransform.Row0,
-                                    spawnTransform.Row1,
-                                    spawnTransform.Row2,
-                                    new Vector4(offset) + spawnTransform.Row3
-                                );
+                                spawnPos += Matrix.Vec3MultMtx3(offset, GetTransformMatrix(spawnFacing, spawnUp));
                             }
-                            EntityCollision? entCol = _parent == null ? null : EntityCollision[0];
-                            _scene.SpawnEffect(_data.EffectId, spawnTransform, entCol: entCol);
+                            // todo: play SFX
+                            _scene.SpawnEffect(_data.EffectId, spawnFacing, spawnUp, spawnPos, entCol: entCol);
                         }
                         _effectIntervalTimer = _effectInterval;
                     }
@@ -457,7 +484,7 @@ namespace MphRead.Entities
         None = 0x0,
         UseEffectVolume = 0x1,
         UseEffectOffset = 0x2,
-        RepeatScanMessage = 0x4,
+        RepeatScanMessage = 0x4, // todo: send scan message
         WeaponZoom = 0x8,
         AttachEffect = 0x10,
         DestroyEffect = 0x20,

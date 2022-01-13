@@ -73,6 +73,7 @@ namespace MphRead.Entities
         private void ProcessTouchInput()
         {
             // todo: touch input
+            SwitchWeapon();
         }
 
         private void ProcessBiped()

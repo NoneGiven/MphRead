@@ -25,9 +25,10 @@ namespace MphRead.Entities
         protected Vector3 _rotation = Vector3.Zero;
         protected Vector3 _position = Vector3.Zero;
 
-        private Node? _colAttachNode = null;
+        protected Node? _colAttachNode = null;
         private bool _drawColUpdated = true;
         public EntityCollision?[] EntityCollision { get; } = new EntityCollision?[2];
+        // todo: look into getting rid of this in favor of EntityCollision
         public Matrix4 CollisionTransform => _colAttachNode == null ? _transform : _colAttachNode.Animation;
 
         public Matrix4 Transform
@@ -142,9 +143,12 @@ namespace MphRead.Entities
             _drawColUpdated = false;
             UpdateCollisionTransform(slot, Transform.ClearScale());
             UpdateLinkedInverse(slot);
-            for (int i = 0; i < entCol.Collision.Info.Points.Count; i++)
+            if (entCol.Collision != null)
             {
-                entCol.DrawPoints.Add(entCol.Collision.Info.Points[i]);
+                for (int i = 0; i < entCol.Collision.Info.Points.Count; i++)
+                {
+                    entCol.DrawPoints.Add(entCol.Collision.Info.Points[i]);
+                }
             }
             if (attach != null)
             {
@@ -154,6 +158,10 @@ namespace MphRead.Entities
 
         private void SetCollisionMaxAvg(EntityCollision entCol)
         {
+            if (entCol.Collision == null)
+            {
+                return;
+            }
             int count = entCol.Collision.Info.Points.Count;
             Vector3 avg = Vector3.Zero;
             for (int i = 0; i < count; i++)
@@ -206,7 +214,7 @@ namespace MphRead.Entities
                 for (int i = 0; i < 2; i++)
                 {
                     EntityCollision? entCol = EntityCollision[i];
-                    if (entCol != null)
+                    if (entCol?.Collision != null)
                     {
                         CollisionInfo collision = entCol.Collision.Info;
                         for (int j = 0; j < collision.Points.Count; j++)
@@ -240,6 +248,11 @@ namespace MphRead.Entities
             facing = FacingVector;
         }
 
+        public virtual bool GetTargetable()
+        {
+            return true;
+        }
+
         public virtual bool Process()
         {
             if (Active)
@@ -254,12 +267,9 @@ namespace MphRead.Entities
 
         protected void UpdateAnimFrames(ModelInstance inst)
         {
-            if (inst.Active || _scene.ShowAllEntities)
+            if (_scene.FrameCount != 0 && _scene.FrameCount % 2 == 0)
             {
-                if (_scene.FrameCount != 0 && _scene.FrameCount % 2 == 0)
-                {
-                    inst.UpdateAnimFrames();
-                }
+                inst.UpdateAnimFrames();
             }
         }
 
@@ -314,27 +324,29 @@ namespace MphRead.Entities
             }
         }
 
-        public virtual void GetDrawInfo()
+        protected void UpdateTransforms(ModelInstance inst, Matrix4 transform, int recolor)
         {
-            for (int i = 0; i < _models.Count; i++)
-            {
-                ModelInstance inst = _models[i];
-                if ((!inst.Active && !_scene.ShowAllEntities) || (inst.IsPlaceholder && !_scene.ShowInvisibleEntities && !_scene.ShowAllEntities))
-                {
-                    continue;
-                }
-                UpdateTransforms(inst, i);
-                if (!Hidden)
-                {
-                    // todo: hide attached effects
-                    int polygonId = _scene.GetNextPolygonId();
-                    GetItems(inst, i, inst.Model.Nodes[0], polygonId);
-                }
-            }
-            if (_scene.ShowCollision && (_scene.ColEntDisplay == EntityType.All || _scene.ColEntDisplay == Type))
-            {
-                GetCollisionDrawInfo();
-            }
+            Model model = inst.Model;
+            model.AnimateMaterials(inst.AnimInfo);
+            model.AnimateTextures(inst.AnimInfo);
+            model.ComputeNodeMatrices(index: 0);
+            model.AnimateNodes(index: 0, UseNodeTransform, transform, model.Scale, inst.AnimInfo);
+            model.UpdateMatrixStack();
+            _scene.UpdateMaterials(model, recolor);
+        }
+
+        protected void UpdateMaterials(ModelInstance inst, int recolor)
+        {
+            Model model = inst.Model;
+            model.AnimateMaterials(inst.AnimInfo);
+            model.AnimateTextures(inst.AnimInfo);
+            _scene.UpdateMaterials(model, recolor);
+        }
+
+        protected void GetDrawItems(ModelInstance inst, int i)
+        {
+            int polygonId = _scene.GetNextPolygonId();
+            GetItems(inst, i, inst.Model.Nodes[0], polygonId);
 
             void GetItems(ModelInstance inst, int index, Node node, int polygonId)
             {
@@ -371,12 +383,34 @@ namespace MphRead.Entities
             }
         }
 
+        public virtual void GetDrawInfo()
+        {
+            for (int i = 0; i < _models.Count; i++)
+            {
+                ModelInstance inst = _models[i];
+                if ((!inst.Active && !_scene.ShowAllEntities) || (inst.IsPlaceholder && !_scene.ShowInvisibleEntities && !_scene.ShowAllEntities))
+                {
+                    continue;
+                }
+                UpdateTransforms(inst, i);
+                if (!Hidden)
+                {
+                    // todo: hide attached effects
+                    GetDrawItems(inst, i);
+                }
+            }
+            if (_scene.ShowCollision && (_scene.ColEntDisplay == EntityType.All || _scene.ColEntDisplay == Type))
+            {
+                GetCollisionDrawInfo();
+            }
+        }
+
         protected virtual void GetCollisionDrawInfo()
         {
             for (int i = 0; i < 2; i++)
             {
                 EntityCollision? entCol = EntityCollision[i];
-                if (entCol != null && entCol.Collision.Active)
+                if (entCol?.Collision != null && entCol.Collision.Active)
                 {
                     entCol.Collision.Info.GetDrawInfo(entCol.DrawPoints, Type, _scene);
                 }

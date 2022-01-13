@@ -18,6 +18,7 @@ namespace MphRead
         public int ChildIndex { get; } 
         public int NextIndex { get; }
         public bool Enabled { get; set; }
+        public bool AnimIgnoreParent { get; set; }
         public bool AnimIgnoreChild { get; set; }
         public int MeshCount { get; }
         public int MeshId { get; }
@@ -160,6 +161,7 @@ namespace MphRead
     {
         public string Name { get; }
         public byte Lighting { get; set; }
+        public byte InitLighting { get; }
         public CullingMode Culling { get; }
         public byte Alpha { get; }
         public float CurrentAlpha { get; set; }
@@ -171,7 +173,7 @@ namespace MphRead
         public int CurrentPaletteId { get; set; }
         public RepeatMode XRepeat { get; }
         public RepeatMode YRepeat { get; }
-        public ColorRgb Diffuse { get; }
+        public ColorRgb Diffuse { get; set; }
         public ColorRgb Ambient { get; set; } // todo: yep
         public ColorRgb Specular { get; }
         public Vector3 CurrentDiffuse { get; set; }
@@ -193,6 +195,7 @@ namespace MphRead
         {
             Name = raw.Name.MarshalString();
             Lighting = raw.Lighting;
+            InitLighting = raw.Lighting;
             Culling = raw.Culling;
             Alpha = raw.Alpha;
             Wireframe = raw.Wireframe;
@@ -1197,11 +1200,11 @@ namespace MphRead
         public byte AfterFrameInfluence { get; } // flag bits 0/1
         public bool UseEntityTransform { get; }
         public short PosEntityType { get; }
-        public ushort PosEntityId { get; }
+        public short PosEntityId { get; }
         public short TargetEntityType { get; }
-        public ushort TargetEntityId { get; }
+        public short TargetEntityId { get; }
         public short MessageTargetType { get; }
-        public ushort MessageTargetId { get; }
+        public short MessageTargetId { get; }
         public ushort MessageId { get; }
         public ushort MessageParam { get; }
         public float Easing { get; } // always 0, 4096, or 4120 (1.00585938)

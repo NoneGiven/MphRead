@@ -70,7 +70,8 @@ namespace MphRead.Entities
                         PlayerSpawnEntity? respawn = GetRespawnPoint();
                         if (respawn != null)
                         {
-                            Spawn(respawn.Position, respawn.FacingVector, respawn.UpVector, respawn: true);
+                            Vector3 position = ForcedSpawnPos ?? respawn.Position;
+                            Spawn(position, respawn.FacingVector, respawn.UpVector, respawn: true);
                         }
                     }
                 }
@@ -189,7 +190,7 @@ namespace MphRead.Entities
             if (_bombCooldown > 0)
             {
                 _bombCooldown--;
-                if (Hunter == Hunter.Kanden && _bombCooldown == 10 * 2)
+                if (Hunter == Hunter.Kanden && _bombCooldown == 10 * 2) // todo: FPS stuff
                 {
                     _altModel.SetAnimation((int)KandenAltAnim.TailIn, AnimFlags.NoLoop);
                 }
@@ -310,11 +311,14 @@ namespace MphRead.Entities
                 for (int i = 0; i < 3; i++)
                 {
                     BeamType slotWeap = _weaponSlots[i];
-                    WeaponInfo slotInfo = Weapons.Current[(int)slotWeap];
-                    if (slotInfo.Priority > priority && ammo >= slotInfo.AmmoCost)
+                    if (slotWeap != BeamType.None)
                     {
-                        priority = slotInfo.Priority;
-                        slot = i;
+                        WeaponInfo slotInfo = Weapons.Current[(int)slotWeap];
+                        if (slotInfo.Priority > priority && ammo >= slotInfo.AmmoCost)
+                        {
+                            priority = slotInfo.Priority;
+                            slot = i;
+                        }
                     }
                 }
                 // todo: update HUD
@@ -613,7 +617,7 @@ namespace MphRead.Entities
                 }
                 else if (AttachedEnemy.EnemyType == EnemyType.Quadtroid)
                 {
-                    // todo: update attached Quadtroid
+                    ((Enemy37Entity)AttachedEnemy).UpdateAttached(this);
                 }
             }
             if (EquipInfo.SmokeLevel < EquipInfo.Weapon.SmokeStart * 2) // todo: FPS stuff
@@ -687,7 +691,7 @@ namespace MphRead.Entities
                     }
                 }
             }
-            UpdateLightSources();
+            UpdateLightSources(_volume.SpherePosition);
             // todo: node ref updates
             if (Flags1.TestFlag(PlayerFlags1.Standing) && (_timeStanding == 0 || _scene.FrameCount % (4 * 2) == 0) // todo: FPS stuff
                 && (Flags1.TestFlag(PlayerFlags1.OnAcid) || (Flags1.TestFlag(PlayerFlags1.OnLava) && Hunter != Hunter.Spire)))
@@ -762,7 +766,7 @@ namespace MphRead.Entities
             if (_burnTimer > 0)
             {
                 _burnTimer--;
-                if (_burnTimer % (8 * 2) == 0)
+                if (_burnTimer % (8 * 2) == 0) // todo:FPS stuff
                 {
                     TakeDamage(1, DamageFlags.NoSfx | DamageFlags.Burn | DamageFlags.NoDmgInvuln, direction: null, _burnedBy);
                 }
@@ -991,7 +995,7 @@ namespace MphRead.Entities
                 weapon = itemType switch
                 {
                     ItemType.VoltDriver => BeamType.VoltDriver,
-                    ItemType.Battlehammer => BeamType.Battlehamer,
+                    ItemType.Battlehammer => BeamType.Battlehammer,
                     ItemType.Imperialist => BeamType.Imperialist,
                     ItemType.Judicator => BeamType.Judicator,
                     ItemType.Magmaul => BeamType.Magmaul,
@@ -1040,13 +1044,31 @@ namespace MphRead.Entities
 
         private static readonly int[] _healthPickupAmounts = new int[3] { 30, 60, 100 };
 
-        private void GainHealth(int health)
+        public void GainHealth(uint health)
+        {
+            GainHealth((int)health);
+        }
+
+        public void GainHealth(int health)
         {
             if (_health > 0)
             {
                 if (Flags2.TestFlag(PlayerFlags2.Halfturret))
                 {
-                    // todo: split health with halfturret
+                    if (_health <= _halfturret.Health)
+                    {
+                        _health += health - health / 2;
+                        _halfturret.Health += health / 2;
+                    }
+                    else
+                    {
+                        _health += health / 2;
+                        _halfturret.Health += health - health / 2;
+                    }
+                    if (_halfturret.Health > 100)
+                    {
+                        _halfturret.Health = 100;
+                    }
                 }
                 else
                 {
@@ -1340,7 +1362,7 @@ namespace MphRead.Entities
             {
                 _altModel.SetAnimation((int)WeavelAltAnim.Idle);
                 Flags2 |= PlayerFlags2.Halfturret;
-                // todo: spawn halfturret
+                _scene.AddEntity(_halfturret);
             }
             else if (Hunter == Hunter.Samus)
             {
@@ -1372,7 +1394,12 @@ namespace MphRead.Entities
         {
             if (Flags2.TestFlag(PlayerFlags2.Halfturret))
             {
-                // todo: update health, destroy turret
+                Flags2 &= ~PlayerFlags2.Halfturret;
+                if (_halfturret.Health > 0)
+                {
+                    GainHealth(_halfturret.Health);
+                }
+                _halfturret.Die();
             }
             Flags1 &= ~PlayerFlags1.Morphing;
             Flags1 |= PlayerFlags1.Unmorphing;
@@ -1581,12 +1608,12 @@ namespace MphRead.Entities
             // --> shouldn't matter since spawn points are meant to be together in the entity list
             for (int i = 0; i < _scene.Entities.Count && limit < 25; i++)
             {
-                EntityBase entity = _scene.Entities[i];
-                if (entity.Type != EntityType.PlayerSpawn)
+                EntityBase spawn = _scene.Entities[i];
+                if (spawn.Type != EntityType.PlayerSpawn)
                 {
                     continue;
                 }
-                var candidate = (PlayerSpawnEntity)entity;
+                var candidate = (PlayerSpawnEntity)spawn;
                 // skdebug - 1P spawns
                 if ((candidate.IsActive || !_scene.Room!.Metadata.Multiplayer) && candidate.Cooldown == 0
                     && (_scene.FrameCount > 0 || !candidate.Availability))
@@ -1595,16 +1622,20 @@ namespace MphRead.Entities
                     float minDistSqr = 100;
                     for (int j = 0; j < _scene.Entities.Count; j++)
                     {
-                        EntityBase player = _scene.Entities[i];
-                        if (player.Type != EntityType.Player)
+                        EntityBase entity = _scene.Entities[j];
+                        if (entity.Type != EntityType.Player)
                         {
                             continue;
                         }
-                        Vector3 between = candidate.Position - player.Position;
-                        float distSqr = Vector3.Dot(between, between);
-                        if (distSqr < minDistSqr)
+                        var player = (PlayerEntity)entity;
+                        if (player.Health > 0)
                         {
-                            minDistSqr = distSqr;
+                            Vector3 between = candidate.Position - player.Position;
+                            float distSqr = Vector3.Dot(between, between);
+                            if (distSqr < minDistSqr)
+                            {
+                                minDistSqr = distSqr;
+                            }
                         }
                     }
                     if (minDistSqr >= 100)
@@ -1662,116 +1693,19 @@ namespace MphRead.Entities
             return count;
         }
 
-        private const float _colorStep = 8 / 255f;
-
-        // todo?: FPS stuff
-        private void UpdateLightSources()
-        {
-            static float UpdateChannel(float current, float source, float frames)
-            {
-                float diff = source - current;
-                if (MathF.Abs(diff) < _colorStep)
-                {
-                    return source;
-                }
-                int factor;
-                if (current > source)
-                {
-                    factor = (int)MathF.Truncate((diff + _colorStep) / (8 * _colorStep));
-                    if (factor <= -1)
-                    {
-                        return current + (factor - 1) * _colorStep * frames;
-                    }
-                    return current - _colorStep * frames;
-                }
-                factor = (int)MathF.Truncate(diff / (8 * _colorStep));
-                if (factor >= 1)
-                {
-                    return current + factor * _colorStep * frames;
-                }
-                return current + _colorStep * frames;
-            }
-            bool hasLight1 = false;
-            bool hasLight2 = false;
-            Vector3 light1Color = _light1Color;
-            Vector3 light1Vector = _light1Vector;
-            Vector3 light2Color = _light2Color;
-            Vector3 light2Vector = _light2Vector;
-            float frames = _scene.FrameTime * 30;
-            for (int i = 0; i < _scene.Entities.Count; i++)
-            {
-                EntityBase entity = _scene.Entities[i];
-                if (entity.Type != EntityType.LightSource)
-                {
-                    continue;
-                }
-                var lightSource = (LightSourceEntity)entity;
-                if (lightSource.Volume.TestPoint(_volume.SpherePosition))
-                {
-                    if (lightSource.Light1Enabled)
-                    {
-                        hasLight1 = true;
-                        light1Vector.X += (lightSource.Light1Vector.X - light1Vector.X) / 8f * frames;
-                        light1Vector.Y += (lightSource.Light1Vector.Y - light1Vector.Y) / 8f * frames;
-                        light1Vector.Z += (lightSource.Light1Vector.Z - light1Vector.Z) / 8f * frames;
-                        light1Color.X = UpdateChannel(light1Color.X, lightSource.Light1Color.X, frames);
-                        light1Color.Y = UpdateChannel(light1Color.Y, lightSource.Light1Color.Y, frames);
-                        light1Color.Z = UpdateChannel(light1Color.Z, lightSource.Light1Color.Z, frames);
-                    }
-                    if (lightSource.Light2Enabled)
-                    {
-                        hasLight2 = true;
-                        light2Vector.X += (lightSource.Light2Vector.X - light2Vector.X) / 8f * frames;
-                        light2Vector.Y += (lightSource.Light2Vector.Y - light2Vector.Y) / 8f * frames;
-                        light2Vector.Z += (lightSource.Light2Vector.Z - light2Vector.Z) / 8f * frames;
-                        light2Color.X = UpdateChannel(light2Color.X, lightSource.Light2Color.X, frames);
-                        light2Color.Y = UpdateChannel(light2Color.Y, lightSource.Light2Color.Y, frames);
-                        light2Color.Z = UpdateChannel(light2Color.Z, lightSource.Light2Color.Z, frames);
-                    }
-                }
-            }
-            if (!hasLight1)
-            {
-                light1Vector.X += (_scene.Light1Vector.X - light1Vector.X) / 8f * frames;
-                light1Vector.Y += (_scene.Light1Vector.Y - light1Vector.Y) / 8f * frames;
-                light1Vector.Z += (_scene.Light1Vector.Z - light1Vector.Z) / 8f * frames;
-                light1Color.X = UpdateChannel(light1Color.X, _scene.Light1Color.X, frames);
-                light1Color.Y = UpdateChannel(light1Color.Y, _scene.Light1Color.Y, frames);
-                light1Color.Z = UpdateChannel(light1Color.Z, _scene.Light1Color.Z, frames);
-            }
-            if (!hasLight2)
-            {
-                light2Vector.X += (_scene.Light2Vector.X - light2Vector.X) / 8f * frames;
-                light2Vector.Y += (_scene.Light2Vector.Y - light2Vector.Y) / 8f * frames;
-                light2Vector.Z += (_scene.Light2Vector.Z - light2Vector.Z) / 8f * frames;
-                light2Color.X = UpdateChannel(light2Color.X, _scene.Light2Color.X, frames);
-                light2Color.Y = UpdateChannel(light2Color.Y, _scene.Light2Color.Y, frames);
-                light2Color.Z = UpdateChannel(light2Color.Z, _scene.Light2Color.Z, frames);
-            }
-            _light1Color = light1Color;
-            _light1Vector = light1Vector.Normalized();
-            _light2Color = light2Color;
-            _light2Vector = light2Vector.Normalized();
-        }
-
-        protected override LightInfo GetLightInfo()
-        {
-            return new LightInfo(_light1Vector, _light1Color, _light2Vector, _light2Color);
-        }
-
         public override void HandleMessage(MessageInfo info)
         {
             if (info.Message == Message.Damage)
             {
-                TakeDamage((uint)info.Param1, DamageFlags.IgnoreInvuln, direction: null, source: null);
+                TakeDamage((int)info.Param1, DamageFlags.IgnoreInvuln, direction: null, source: null);
             }
             else if (info.Message == Message.Death)
             {
-                TakeDamage((uint)info.Param1, DamageFlags.Deathalt, direction: null, source: null);
+                TakeDamage((int)info.Param1, DamageFlags.Death, direction: null, source: null);
             }
             else if (info.Message == Message.Gravity)
             {
-                float gravity = (float)info.Param1;
+                float gravity = Fixed.ToFloat((int)info.Param1);
                 if (!Flags1.TestFlag(PlayerFlags1.Standing) && !Flags2.TestFlag(PlayerFlags2.AltAttack)
                     && gravity != 0 && _jumpPadControlLock == 0)
                 {
@@ -1790,11 +1724,10 @@ namespace MphRead.Entities
                 {
                     _lastTarget = target;
                     _timeSinceHitTarget = 0;
-                    if (info.Sender != null)
+                    if (info.Sender.Type == EntityType.BeamProjectile)
                     {
-                        Debug.Assert(info.Sender.Type == EntityType.BeamProjectile);
                         var beam = (BeamProjectileEntity)info.Sender;
-                        if (beam.WeaponType == BeamType.ShockCoil)
+                        if (beam.Beam == BeamType.ShockCoil)
                         {
                             if (target == _shockCoilTarget)
                             {

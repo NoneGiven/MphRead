@@ -152,15 +152,17 @@ namespace MphRead.Entities
         Attack = 0
     }
 
-    public partial class PlayerEntity : EntityBase
+    public partial class PlayerEntity : DynamicLightEntityBase
     {
         private readonly ModelInstance[] _bipedModelLods = new ModelInstance[2];
         private ModelInstance _bipedModel1 = null!; // legs
         private ModelInstance _bipedModel2 = null!; // torso
+        public ModelInstance BipedModel2 => _bipedModel2;
         private ModelInstance _altModel = null!;
         private ModelInstance _gunModel = null!;
         private ModelInstance _gunSmokeModel = null!;
         private ModelInstance _doubleDmgModel = null!;
+        public ModelInstance DoubleDamageModel => _doubleDmgModel;
         private ModelInstance _altIceModel = null!;
         private ModelInstance _bipedIceModel = null!;
         private ModelInstance _trailModel = null!;
@@ -169,6 +171,7 @@ namespace MphRead.Entities
         private int _trailBindingId1 = 0;
         private int _trailBindingId2 = 0;
         private int _doubleDmgBindingId = 0;
+        public int DoubleDmgBindingId => _doubleDmgBindingId;
         private readonly Matrix4[] _bipedIceTransforms = new Matrix4[19];
 
         // todo?: could save space with a union
@@ -180,6 +183,7 @@ namespace MphRead.Entities
         private readonly Vector3[] _spireAltVecs = new Vector3[16];
         private readonly Vector3[] _kandenSegPos = new Vector3[5];
         private readonly Matrix4[] _kandenSegMtx = new Matrix4[5];
+        public IReadOnlyList<Vector3> KandenSegPos => _kandenSegPos;
         public byte SyluxBombCount { get; set; } = 0;
         public BombEntity?[] SyluxBombs { get; } = new BombEntity?[3];
 
@@ -200,11 +204,11 @@ namespace MphRead.Entities
         private int _health = 0;
         private int _healthRecovery = 0;
         private bool _tickedHealthRecovery = false; // used to update health every other frame
-        private int[] _ammoMax = new int[2];
-        private int[] _ammo = new int[2];
+        private readonly int[] _ammoMax = new int[2];
+        private readonly int[] _ammo = new int[2];
         private readonly int[] _ammoRecovery = new int[2];
         private readonly bool[] _tickedAmmoRecovery = new bool[2];
-        public int Health => _health;
+        public int Health { get => _health; set => _health = value; }
         private readonly BeamType[] _weaponSlots = new BeamType[3];
         private readonly AvailableArray _availableWeapons = new AvailableArray();
         private readonly AvailableArray _availableCharges = new AvailableArray();
@@ -240,10 +244,6 @@ namespace MphRead.Entities
         private static readonly Matrix4[,] _mbTrailMatrices = new Matrix4[MaxPlayers, _mbTrailSegments];
         private static readonly float[,] _mbTrailAlphas = new float[MaxPlayers, _mbTrailSegments];
         private static readonly int[] _mbTrailIndices = new int[MaxPlayers];
-        private Vector3 _light1Vector;
-        private Vector3 _light1Color;
-        private Vector3 _light2Vector;
-        private Vector3 _light2Color;
         private Matrix4 _modelTransform = Matrix4.Identity;
 
         // todo: visualize
@@ -263,6 +263,8 @@ namespace MphRead.Entities
         // something alt form angle related
         private float _field70 = 0;
         private float _field74 = 0;
+        public float Field70 => _field70;
+        public float Field74 => _field74;
         private float _field78 = 0;
         private float _field7C = 0;
         private float _field80 = 0;
@@ -301,6 +303,8 @@ namespace MphRead.Entities
         private float _altRollLrX = 0;
         private float _altRollLrZ = 0;
 
+        private HalfturretEntity _halfturret = null!;
+        public HalfturretEntity Halfturret => _halfturret;
         public EnemySpawnEntity? EnemySpawner => _enemySpawner;
         public EnemyInstanceEntity? AttachedEnemy { get; set; } = null;
         private EntityBase? _field35C = null;
@@ -309,8 +313,10 @@ namespace MphRead.Entities
         private JumpPadEntity? _lastJumpPad = null;
         private EnemySpawnEntity? _enemySpawner = null;
         private EntityBase? _burnedBy = null;
+        public EntityBase? BurnedBy => _burnedBy;
         private EntityBase? _lastTarget = null;
         private EntityBase? _shockCoilTarget = null;
+        public EntityBase? ShockCoilTarget => _shockCoilTarget;
 
         public bool IsAltForm => Flags1.TestFlag(PlayerFlags1.AltForm);
         public bool IsMorphing => Flags1.TestFlag(PlayerFlags1.Morphing);
@@ -359,6 +365,7 @@ namespace MphRead.Entities
         private ushort _powerBeamAutofire = 0;
         private ushort _timeSinceInput = 0;
         private ushort _timeSinceShot = 0;
+        public ushort TimeSinceShot { get => _timeSinceShot; set => _timeSinceShot = value; }
         private ushort _timeSinceDamage = 0;
         private ushort _timeSincePickup = 0;
         private ushort _timeSinceHeal = 0;
@@ -367,6 +374,7 @@ namespace MphRead.Entities
         private ushort _spawnInvulnTimer = 0;
         private ushort _viewSwayTimer = 0;
         private ushort _doubleDmgTimer = 0;
+        public bool DoubleDamage => _doubleDmgTimer > 0;
         private ushort _cloakTimer = 0;
         private ushort _deathaltTimer = 0;
         private ushort _frozenTimer = 0;
@@ -386,6 +394,7 @@ namespace MphRead.Entities
         private float _field44C = 0; // basically landing speed/force?
         private ushort _timeSinceHitTarget = 0;
         private ushort _shockCoilTimer = 0;
+        public ushort ShockCoilTimer => _shockCoilTimer;
         private ushort _timeSinceMorphCamera = 0;
         private ushort _horizColTimer = 0;
 
@@ -398,6 +407,7 @@ namespace MphRead.Entities
         private EffectEntry? _chargeEffect = null;
 
         private float _curAlpha = 1;
+        public float CurAlpha => _curAlpha;
         private float _targetAlpha = 1;
         private float _smokeAlpha = 0;
         private int _viewType = 0; // todo: update this and use an enum
@@ -405,6 +415,7 @@ namespace MphRead.Entities
         // debug/viewer
         public bool IgnoreItemPickups { get; set; }
         public static bool FreeCamera { get; set; } = true;
+        public Vector3? ForcedSpawnPos { get; set; }
 
         private PlayerEntity(int slotIndex, Scene scene) : base(EntityType.Player, scene)
         {
@@ -438,7 +449,16 @@ namespace MphRead.Entities
             }
             player.LoadFlags |= LoadFlags.SlotActive;
             player.LoadFlags &= ~LoadFlags.Spawned;
+            player.CreateHalfturret();
             return player;
+        }
+
+        public void CreateHalfturret()
+        {
+            Debug.Assert(_halfturret == null);
+            _halfturret = new HalfturretEntity(this, _scene);
+            _halfturret.Create();
+            _scene.InitEntity(_halfturret);
         }
 
         public override void Initialize()
@@ -772,6 +792,11 @@ namespace MphRead.Entities
             facing = FacingVector;
         }
 
+        public override bool GetTargetable()
+        {
+            return _health != 0;
+        }
+
         private void SetBiped1Animation(PlayerAnimation anim, AnimFlags animFlags)
         {
             SetBipedAnimation(anim, animFlags, setBiped1: true, setBiped2: false, setIfMorphing: false);
@@ -796,6 +821,67 @@ namespace MphRead.Entities
                     _bipedModel1.SetAnimation((int)anim, animFlags);
                 }
             }
+        }
+
+        public void Teleport(Vector3 position, Vector3 facing)
+        {
+            _gunVec1 = facing;
+            Transform = GetTransformMatrix(facing, UpVector, position);
+        }
+
+        // todo: visualize
+        public bool CheckHitByBomb(BombEntity bomb, bool halfturret)
+        {
+            if (bomb.Owner == this
+                && (!bomb.Flags.TestFlag(BombFlags.Exploding) && !bomb.Flags.TestFlag(BombFlags.Exploded) || halfturret))
+            {
+                return false;
+            }
+            bool hit = false;
+            Vector3 between;
+            if (halfturret)
+            {
+                between = Halfturret.Position - bomb.Position;
+            }
+            else
+            {
+                between = Volume.SpherePosition - bomb.Position;
+            }
+            float distSqr = between.LengthSquared;
+            if (bomb.Owner == this)
+            {
+                float hitRadiusSqr = Fixed.ToFloat(Values.BombSelfRadiusSquared);
+                if (distSqr < hitRadiusSqr && between.Y > -Volume.SphereRadius)
+                {
+                    hit = true;
+                    float ySpeed = Fixed.ToFloat(Values.BombJumpSpeed);
+                    if (Speed.Y < ySpeed)
+                    {
+                        Speed = Speed.WithY(ySpeed);
+                    }
+                }
+            }
+            else if (distSqr <= bomb.Radius * bomb.Radius)
+            {
+                hit = true;
+                DamageFlags flags = DamageFlags.NoDmgInvuln;
+                if (halfturret)
+                {
+                    flags |= DamageFlags.Halfturret;
+                }
+                TakeDamage(bomb.Damage, flags, null, bomb);
+                _scene.SendMessage(Message.Impact, bomb, bomb.Owner, this, 0); // the game doesn't set anything as sender
+            }
+            if (hit)
+            {
+                // todo: set camera shake
+            }
+            return hit;
+        }
+
+        public void OnHalfturretDied()
+        {
+            Flags2 &= ~PlayerFlags2.Halfturret;
         }
 
         private void ResetCameraInfo()
@@ -890,6 +976,57 @@ namespace MphRead.Entities
             }
         }
 
+        // skdebug
+        private void SwitchWeapon()
+        {
+            Debug.Assert(Input.KeyboardState != null);
+            BeamType beam = BeamType.None;
+            if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D1))
+            {
+                beam = BeamType.PowerBeam;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D2))
+            {
+                beam = BeamType.Missile;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D3))
+            {
+                beam = BeamType.VoltDriver;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D4))
+            {
+                beam = BeamType.Battlehammer;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D5))
+            {
+                beam = BeamType.Imperialist;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D6))
+            {
+                beam = BeamType.Judicator;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D7))
+            {
+                beam = BeamType.Magmaul;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D8))
+            {
+                beam = BeamType.ShockCoil;
+            }
+            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D9))
+            {
+                beam = BeamType.OmegaCannon;
+            }
+            if (beam != BeamType.None && CurrentWeapon != beam)
+            {
+                _availableWeapons[beam] = true;
+                _availableCharges[beam] = true;
+                _ammo[0] = 1000;
+                _ammo[1] = 1000;
+                TryEquipWeapon(beam, silent: false);
+            }
+        }
+
         private bool TryEquipWeapon(BeamType beam, bool silent = false)
         {
             int index = (int)beam;
@@ -897,7 +1034,7 @@ namespace MphRead.Entities
             {
                 return false;
             }
-            WeaponInfo info = Weapons.Current[(int)BeamType.Missile];
+            WeaponInfo info = Weapons.Current[(int)beam];
             byte ammoType = info.AmmoType;
             bool hasAmmo = beam == BeamType.PowerBeam || _ammo[ammoType] >= info.AmmoCost;
             if (!silent && (!hasAmmo || !_availableWeapons[beam] || GunAnimation == GunAnimation.UpDown))
@@ -1180,6 +1317,11 @@ namespace MphRead.Entities
             }
         }
 
+        public void TakeDamage(int damage, DamageFlags flags, Vector3? direction, EntityBase? source)
+        {
+            TakeDamage((uint)damage, flags, direction, source);
+        }
+
         public void TakeDamage(uint damage, DamageFlags flags, Vector3? direction, EntityBase? source)
         {
             if (_health == 0)
@@ -1201,7 +1343,7 @@ namespace MphRead.Entities
                 _damageInvulnTimer = (ushort)(Values.DamageInvuln * 2); // todo: FPS stuff
             }
             PlayerEntity? attacker = null;
-            EntityBase? halfturret = null;
+            bool fromHalfturret = false;
             BombEntity? bomb = null;
             BeamProjectileEntity? beam = null;
             if (source != null)
@@ -1209,7 +1351,7 @@ namespace MphRead.Entities
                 if (source.Type == EntityType.BeamProjectile)
                 {
                     beam = (BeamProjectileEntity)source;
-                    Effectiveness effectiveness = BeamEffectiveness[(int)beam.WeaponType]; // todo: how does this handle platform beams etc.?
+                    Effectiveness effectiveness = BeamEffectiveness[(int)beam.Beam];
                     if (effectiveness == Effectiveness.Zero)
                     {
                         return;
@@ -1220,8 +1362,8 @@ namespace MphRead.Entities
                     }
                     else if (beam.Owner?.Type == EntityType.Halfturret)
                     {
-                        // todo: set halfturret's owner as attacker
-                        halfturret = beam.Owner;
+                        attacker = ((HalfturretEntity)beam.Owner).Owner;
+                        fromHalfturret = true;
                     }
                     if (damage > 0)
                     {
@@ -1247,7 +1389,7 @@ namespace MphRead.Entities
                 else if (source.Type == EntityType.Bomb)
                 {
                     bomb = (BombEntity)source;
-                    // todo: set bomb's owner as attacker
+                    attacker = bomb.Owner;
                 }
             }
             bool ignoreDamage = false;
@@ -1271,11 +1413,36 @@ namespace MphRead.Entities
             }
             if (Flags2.TestFlag(PlayerFlags2.Halfturret) && attacker != null && !ignoreDamage)
             {
-                // todo: update halfturret
+                _halfturret.OnTakeDamage(attacker, damage);
             }
-            if (flags.TestFlag(DamageFlags.Halfturret) && !ignoreDamage) // todo: and either main player or not wifi
+            if (flags.TestFlag(DamageFlags.Halfturret) && !ignoreDamage) // todo?: and either main player or not wifi
             {
-                // todo: update damage for halfturret
+                uint turretDamage;
+                if (_health > Halfturret.Health)
+                {
+                    turretDamage = damage - damage / 2;
+                }
+                else
+                {
+                    turretDamage = damage / 2;
+                }
+                if (_halfturret.Health <= turretDamage)
+                {
+                    _halfturret.Die();
+                }
+                else
+                {
+                    _halfturret.Health -= (int)turretDamage;
+                }
+                damage -= turretDamage;
+                // todo: if 1P bot with some AI flag, update damage value
+                // else...
+                if (_health <= damage)
+                {
+                    damage = (uint)(_health - 1);
+                }
+                _halfturret.TimeSinceDamage = 0;
+                // todo: update bot AI field
             }
             if (IsBot)
             {
@@ -1310,9 +1477,9 @@ namespace MphRead.Entities
                 BeamType beamType = BeamType.Platform;
                 if (beam != null)
                 {
-                    beamType = beam.WeaponType;
+                    beamType = beam.Beam;
                 }
-                if (source == attacker || halfturret != null || bomb != null)
+                if (source == attacker || fromHalfturret || bomb != null)
                 {
                     // halfturret, bomb, or direct hit by player (not beam)
                     // --> also if there's no source and no attacker
@@ -1328,7 +1495,7 @@ namespace MphRead.Entities
                 // todo: update HUD
                 if (Flags2.TestFlag(PlayerFlags2.Halfturret))
                 {
-                    // todo: destroy halfturret
+                    _halfturret.Die();
                 }
                 _healthRecovery = 0;
                 _ammoRecovery[0] = 0;
@@ -1485,7 +1652,7 @@ namespace MphRead.Entities
                         if (flags.TestFlag(DamageFlags.Halfturret))
                         {
                             // todo: play SFX
-                            // todo: update halfturret for freeze
+                            _halfturret.OnFrozen();
                         }
                         else // todo?: if wifi, only do this if main player
                         {
@@ -1519,7 +1686,7 @@ namespace MphRead.Entities
                     {
                         if (flags.TestFlag(DamageFlags.Halfturret))
                         {
-                            // todo: update halfturret for burn
+                            _halfturret.OnSetOnFire();
                         }
                         else // todo?: if wifi, only do this if main player
                         {
@@ -1920,9 +2087,9 @@ namespace MphRead.Entities
             int swayIncrement, int swayLimit, int gunIdleTime, short mpAmmoCap, byte ammoRecharge, byte padding103, ushort energyTank,
             short field106, byte altGroundedNoGrav, byte padding109, ushort padding10A, int fallDamageSpeed, int fallDamageMax, int field114,
             int field118, int jumpPadSlideFactor, int altTiltAngleCap, int altMinWobble, int altMaxWobble, int altMinSpinAccel, int altMaxSpinAccel,
-            int altMinSpinSpeed, int altMaxSpinSpeed, int altTiltAngleMax, int altBounceWobble, int altBounceTilt, int altBounceSpin, int altAttackKnockbackAccel,
-            short altAttackKnockbackTime, ushort altAttackStartup, int field154, int field158, int lungeHSpeed, int lungeVSpeed,
-            ushort altAttackDamage, short altAttackCooldown)
+            int altMinSpinSpeed, int altMaxSpinSpeed, int altTiltAngleMax, int altBounceWobble, int altBounceTilt, int altBounceSpin,
+            int altAttackKnockbackAccel, short altAttackKnockbackTime, ushort altAttackStartup, int field154, int field158, int lungeHSpeed,
+            int lungeVSpeed, ushort altAttackDamage, short altAttackCooldown)
         {
             Hunter = hunter;
             WalkBipedTraction = walkBipedTraction;

@@ -22,7 +22,7 @@ namespace MphRead.Entities
     public class EnemyInstanceEntity : EntityBase
     {
         protected readonly EnemyInstanceEntityData _data;
-        protected ushort _framesSinceDamage = 510;
+        protected ushort _timeSinceDamage = 510;
         protected ushort _health = 20;
         protected ushort _healthMax = 20;
         protected EntityBase? _owner = null;
@@ -30,11 +30,16 @@ namespace MphRead.Entities
         protected CollisionVolume _hurtVolumeInit = default;
         protected byte _state1 = 0; // todo: names ("next?")
         protected byte _state2 = 0;
+        // some enemies needs to update this in between _state1 being set to _state2 and the subroutine being called
+        protected byte _subId = 0;
         public bool[] HitPlayers { get; } = new bool[4];
         protected Vector3 _prevPos = Vector3.Zero;
         protected Vector3 _speed = Vector3.Zero;
         protected float _boundingRadius = 0;
         protected Action[]? _stateProcesses;
+
+        public byte StateA => _state1;
+        public byte StateB => _state2;
 
         public readonly Effectiveness[] BeamEffectiveness = new Effectiveness[9];
         private bool _onlyMoveHurtVolume = false;
@@ -58,7 +63,6 @@ namespace MphRead.Entities
         public override void Initialize()
         {
             base.Initialize();
-            // todo: set other properties, etc.
             _owner = _data.Spawner;
             Metadata.LoadEffectiveness(_data.Type, BeamEffectiveness);
             Flags = EnemyFlags.CollidePlayer | EnemyFlags.CollideBeam;
@@ -97,6 +101,11 @@ namespace MphRead.Entities
             facing = FacingVector;
         }
 
+        public override bool GetTargetable()
+        {
+            return _health != 0;
+        }
+
         public void ClearHitPlayers()
         {
             HitPlayers[0] = false;
@@ -105,6 +114,7 @@ namespace MphRead.Entities
             HitPlayers[3] = false;
         }
 
+        // todo: stop SFX on destroy
         public override bool Process()
         {
             bool inRange = false;
@@ -129,7 +139,7 @@ namespace MphRead.Entities
                 }
                 if (PlayerEntity.FreeCamera) // skdebug
                 {
-                    inRange = CheckInRange(_scene.CameraPosition);
+                    inRange = true;
                 }
                 if (!inRange)
                 {
@@ -158,13 +168,14 @@ namespace MphRead.Entities
             }
             if (inRange)
             {
-                if (_framesSinceDamage < 510)
+                if (_timeSinceDamage < 510)
                 {
-                    _framesSinceDamage++;
+                    _timeSinceDamage++;
                 }
                 if (_health > 0)
                 {
                     _state1 = _state2;
+                    _subId = _state1;
                     if (!Flags.TestFlag(EnemyFlags.Static))
                     {
                         DoMovement();
@@ -199,8 +210,9 @@ namespace MphRead.Entities
                     return true;
                 }
                 _scene.SendMessage(Message.Destroyed, this, _owner, 0, 0);
-                if (_owner is EnemySpawnEntity spawner)
+                if (_owner?.Type == EntityType.EnemySpawn)
                 {
+                    var spawner = (EnemySpawnEntity)_owner;
                     Vector3 pos = _hurtVolume.GetCenter().AddY(0.5f);
                     ItemSpawnEntity.SpawnItemDrop(spawner.Data.ItemType, pos, spawner.Data.ItemChance, _scene);
                 }
@@ -251,15 +263,20 @@ namespace MphRead.Entities
             {
                 if (!EnemyGetDrawInfo())
                 {
-                    // todo: is_visible
-                    if (_framesSinceDamage < 10)
-                    {
-                        PaletteOverride = Metadata.RedPalette;
-                    }
-                    base.GetDrawInfo();
-                    PaletteOverride = null;
+                    DrawGeneric();
                 }
             }
+        }
+
+        protected void DrawGeneric()
+        {
+            // todo: is_visible
+            if (_timeSinceDamage < 5 * 2) // todo: FPS stuff
+            {
+                PaletteOverride = Metadata.RedPalette;
+            }
+            base.GetDrawInfo();
+            PaletteOverride = null;
         }
 
         /// <summary>
@@ -291,6 +308,22 @@ namespace MphRead.Entities
         {
         }
 
+        public bool CheckHitByBomb(BombEntity bomb)
+        {
+            if (Flags.TestFlag(EnemyFlags.Invincible))
+            {
+                return false;
+            }
+            Vector3 between = Position - bomb.Position;
+            if (between.LengthSquared > bomb.Radius * bomb.Radius)
+            {
+                return false;
+            }
+            TakeDamage(bomb.EnemyDamage, bomb);
+            _scene.SendMessage(Message.Impact, bomb, bomb.Owner, this, 0); // the game doesn't set anything as sender
+            return true;
+        }
+
         public void TakeDamage(uint damage, EntityBase? source)
         {
             ushort prevHealth = _health;
@@ -306,7 +339,7 @@ namespace MphRead.Entities
                 {
                     return;
                 }
-                effectiveness = GetEffectiveness(beamSource.Weapon);
+                effectiveness = GetEffectiveness(beamSource.Beam);
             }
             bool unaffected = false;
             if (effectiveness == Effectiveness.Zero || Flags.TestFlag(EnemyFlags.Invincible)
@@ -345,10 +378,9 @@ namespace MphRead.Entities
             {
                 if (effectiveness == Effectiveness.Zero && !_noIneffectiveEffect)
                 {
-                    // 115 - ineffectivePsycho
                     Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY);
                     transform.Row3.Xyz = _hurtVolume.GetCenter();
-                    EffectEntry effect = _scene.SpawnEffectGetEntry(115, transform);
+                    EffectEntry effect = _scene.SpawnEffectGetEntry(115, transform); // ineffectivePsycho
                     effect.SetReadOnlyField(0, _boundingRadius);
                     _scene.DetachEffectEntry(effect, setExpired: false);
                 }
@@ -383,7 +415,7 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    _framesSinceDamage = 0;
+                    _timeSinceDamage = 0;
                     // todo: play SFX
                     switch (_data.Type)
                     {
@@ -430,7 +462,7 @@ namespace MphRead.Entities
         protected bool CallSubroutine<T>(IReadOnlyList<EnemySubroutine<T>> subroutines, T enemy) where T : EnemyInstanceEntity
         {
             Debug.Assert(enemy == this);
-            EnemySubroutine<T> subroutine = subroutines[_state1];
+            EnemySubroutine<T> subroutine = subroutines[_subId];
             if (subroutine.Behaviors.Count == 0)
             {
                 return false;
@@ -455,7 +487,8 @@ namespace MphRead.Entities
             return HandleBlockingCollision(position, volume, updateSpeed, ref a, ref b);
         }
 
-        protected bool HandleBlockingCollision(Vector3 position, CollisionVolume volume, bool updateSpeed, ref bool a6, ref bool a7)
+        protected bool HandleBlockingCollision(Vector3 position, CollisionVolume volume, bool updateSpeed,
+            ref bool withGround, ref bool withWall)
         {
             int count = 0;
             var results = new CollisionResult[30];
@@ -473,7 +506,7 @@ namespace MphRead.Entities
                 count = CollisionDetection.CheckInRadius(position, _boundingRadius, limit: 30,
                     getSimpleNormal: false, TestFlags.None, _scene, results);
             }
-            a6 = false;
+            withGround = false;
             if (count == 0)
             {
                 return false;
@@ -498,11 +531,11 @@ namespace MphRead.Entities
                 {
                     if (result.Plane.Y < 0.1f && result.Plane.Y > -0.1f)
                     {
-                        a7 = true;
+                        withWall = true;
                     }
                     else
                     {
-                        a6 = true;
+                        withGround = true;
                     }
                     Position += result.Plane.Xyz * v18;
                     if (updateSpeed)
@@ -529,6 +562,40 @@ namespace MphRead.Entities
         public static Vector3 RotateVector(Vector3 vec, Vector3 axis, float angle)
         {
             return vec * Matrix3.CreateFromAxisAngle(axis, MathHelper.DegreesToRadians(angle));
+        }
+
+        public static bool SeekTargetVector(Vector3 target, ref Vector3 current, Vector3 axis, ref ushort steps, float angle)
+        {
+            if (steps > 0 && Vector3.Dot(target, current) < MathF.Cos(MathHelper.DegreesToRadians(angle)))
+            {
+                current = RotateVector(current, axis, angle).Normalized();
+                steps--;
+                return false;
+            }
+            current = target;
+            return true;
+        }
+
+        // similar to the above, where current is always the facing vector and axis is always Y up
+        public bool SeekTargetFacing(Vector3 target, Vector3 up, ref ushort steps, float angle)
+        {
+            bool result = false;
+            Vector3 facing = FacingVector;
+            float radians = MathHelper.DegreesToRadians(angle);
+            if (steps > 0 && Vector3.Dot(target, facing) < MathF.Cos(radians))
+            {
+                var cross = Vector3.Cross(target, facing);
+                var rotY = Matrix3.CreateRotationY(radians * (cross.Y <= 0 ? 1 : -1));
+                facing = (facing * rotY).Normalized();
+                steps--;
+            }
+            else
+            {
+                facing = target;
+                result = true;
+            }
+            SetTransform(facing, up, Position);
+            return result;
         }
     }
 

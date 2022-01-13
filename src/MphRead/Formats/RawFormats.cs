@@ -495,11 +495,11 @@ namespace MphRead
         public readonly byte Padding35;
         public readonly ushort Padding36;
         public readonly short PosEntityType;
-        public readonly ushort PosEntityId;
+        public readonly short PosEntityId;
         public readonly short TargetEntityType;
-        public readonly ushort TargetEntityId;
+        public readonly short TargetEntityId;
         public readonly short MessageTargetType;
-        public readonly ushort MessageTargetId;
+        public readonly short MessageTargetId;
         public readonly ushort MessageId;
         public readonly ushort MessageParam;
         public readonly Fixed Easing; // always 0, 4096, or 4120 (1.00585938)

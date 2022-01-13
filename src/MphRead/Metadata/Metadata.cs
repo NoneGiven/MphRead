@@ -951,7 +951,60 @@ namespace MphRead
 
         public static IReadOnlyList<Vector3> ObjectVisPosOffsets = new Vector3[54]
         {
-
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            new Vector3(-0.05f, 1.5f, -0.4f),
+            new Vector3(-0.05f, 1.5f, -0.4f),
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            new Vector3(-0.05f, 1.5f, 0),
+            new Vector3(0.01f, 1.5f, 0),
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            new Vector3(-0.03f, 1.5f, -0.3f),
+            new Vector3(0, 1.5f, -0.3f),
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            new Vector3(0, 1.5f, -0.2f),
+            new Vector3(0, 1.5f, -0.2f),
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            new Vector3(0, 1.4f, 0),
+            new Vector3(0, 1.4f, 0),
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            new Vector3(0, 1.75f, 0),
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero,
+            Vector3.Zero
         };
 
         public static readonly PlatformMetadata InvisiblePlat = new PlatformMetadata("N/A");
@@ -1429,11 +1482,17 @@ namespace MphRead
             /* 246 */ ("enemyMortarProjectile", null)
         };
 
+        public static readonly IReadOnlyList<float> BeamRadiusValues = new float[4]
+        {
+            0.15f, 0.25f, 0.5f, 0.75f
+        };
+
         public static readonly IReadOnlyList<int> BeamDrawEffects = new List<int>()
         {
             0, 237, 137, 0, 211, 130, 0, 0, 0, 0, 134, 209, 64, 0, 102, 94, 96, 0, 116, 138, 183, 238, 246
         };
 
+        // bombStartSylux, bombStartSyluxR, bombStartSyluxP, bombStartSyluxW, bombStartSyluxO, bombStartSyluxG
         public static readonly IReadOnlyList<int> SyluxBombEffects = new List<int>()
         {
             113, 152, 151, 153, 150, 149
@@ -2220,10 +2279,10 @@ namespace MphRead
                         recolors: new List<string>()
                         {
                             "img_00",
+                            "img_04",
                             "img_01",
                             "img_02",
-                            "img_03",
-                            "img_04"
+                            "img_03"
                         },
                         animationPath: @"models\GuardBot01_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
@@ -2748,10 +2807,10 @@ namespace MphRead
                         recolors: new List<string>()
                         {
                             "img_00",
+                            "img_04",
                             "img_01",
                             "img_02",
-                            "img_03",
-                            "img_04"
+                            "img_03"
                         },
                         animation: true,
                         mdlSuffix: MdlSuffix.Model)

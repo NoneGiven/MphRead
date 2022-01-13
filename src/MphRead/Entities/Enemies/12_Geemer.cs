@@ -5,7 +5,7 @@ using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
 {
-    public class Enemy01Entity : EnemyInstanceEntity
+    public class Enemy12Entity : EnemyInstanceEntity
     {
         private readonly EnemySpawnEntity _spawner;
         private EnemySpawnEntityData SpawnData => _spawner.Data;
@@ -16,14 +16,15 @@ namespace MphRead.Entities.Enemies
         private float _maxAngle = 0;
         private float _angleCos = 0;
         private Vector3 _intendedDir;
-        // sktodo: implement vector visualization with line loops and use it to classify these fields
-        private Vector3 _field1A0;
-        private Vector3 _field1AC;
+        private Vector3 _field19C; // todo: field names
+        private Vector3 _field1A8;
         private int _volumeCheckDelay = 0;
         private bool _seekingVolume = false;
         private CollisionVolume _homeVolume;
 
-        public Enemy01Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        private ushort _extendTimer = 0;
+
+        public Enemy12Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
         {
             // technically this enemy has one state function and one behavior, but they're no-ops
             var spawner = data.Spawner as EnemySpawnEntity;
@@ -31,6 +32,7 @@ namespace MphRead.Entities.Enemies
             _spawner = spawner;
         }
 
+        // todo: identical to Zoomer except for a few values
         protected override bool EnemyInitialize()
         {
             var facing = new Vector3(Rng.GetRandomInt2(4096) / 4096f, 0, Rng.GetRandomInt2(4096) / 4096f);
@@ -46,25 +48,71 @@ namespace MphRead.Entities.Enemies
             _health = _healthMax = 12;
             _boundingRadius = 0.25f;
             _hurtVolumeInit = new CollisionVolume(SpawnFields.Volume0);
-            SetUpModel(Metadata.EnemyModelNames[1]);
-            _field1A0 = _field1AC = up;
-            _angleInc = Fixed.ToFloat(Rng.GetRandomInt2(0x3000)) + 3;
+            SetUpModel(Metadata.EnemyModelNames[12], animIndex: 2);
+            _extendTimer = 60 * 2; // todo: FPS stuff
+            _field19C = _field1A8 = up;
+            _angleInc = Fixed.ToFloat(Rng.GetRandomInt2(0x7000)) + 3;
             _angleInc /= 2; // todo: FPS stuff
-            _maxAngle = Fixed.ToFloat(Rng.GetRandomInt2(0)) + 40;
+            _maxAngle = Fixed.ToFloat(Rng.GetRandomInt2(0)) + 60;
             _angleCos = MathF.Cos(MathHelper.DegreesToRadians(_angleInc));
             _homeVolume = CollisionVolume.Move(SpawnFields.Volume1, _spawner.Data.Header.Position.ToFloatVector());
             _direction = Vector3.Cross(facing, up).Normalized();
             return true;
         }
 
+        private void SetAnimation(GeemerAnim anim, AnimFlags flags = AnimFlags.None)
+        {
+            _models[0].SetAnimation((int)anim, flags);
+        }
+
         protected override void EnemyProcess()
         {
-            // todo?: owner ent col (although it's unused)
-            ModelInstance model = _models[0];
-            if (model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended) && model.AnimInfo.Index[0] != 0)
+            ContactDamagePlayer(15, knockback: true);
+            var anim = (GeemerAnim)_models[0].AnimInfo.Index[0];
+            if (anim == GeemerAnim.WiggleRetracted)
             {
-                model.SetAnimation(0);
+                float radii = PlayerEntity.Main.Volume.SphereRadius + 1.5f;
+                if ((Position - PlayerEntity.Main.Volume.SpherePosition).LengthSquared < radii * radii)
+                {
+                    // todo: play SFX
+                    SetAnimation(GeemerAnim.Extend, AnimFlags.NoLoop);
+                    _extendTimer = 0;
+                    _speed = Vector3.Zero;
+                    return;
+                }
             }
+            else if (anim == GeemerAnim.WiggleExtended)
+            {
+                float radii = PlayerEntity.Main.Volume.SphereRadius + 1.5f;
+                if ((Position - PlayerEntity.Main.Volume.SpherePosition).LengthSquared >= radii * radii)
+                {
+                    // todo: play SFX
+                    _speed = Vector3.Zero;
+                    SetAnimation(GeemerAnim.Retract, AnimFlags.NoLoop);
+                    return;
+                }
+            }
+            else if (anim == GeemerAnim.Extend)
+            {
+                if (_extendTimer > 0)
+                {
+                    _extendTimer--;
+                }
+                else if (_models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
+                {
+                    SetAnimation(GeemerAnim.WiggleExtended);
+                }
+                return;
+            }
+            else if (anim == GeemerAnim.Retract)
+            {
+                if (_models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
+                {
+                    SetAnimation(GeemerAnim.WiggleRetracted);
+                }
+                return;
+            }
+            // todo: everything after this is the same as Zoomer (without the hit_player or sub call at the end)
             // todo: play SFX
             if (!_seekingVolume)
             {
@@ -129,7 +177,7 @@ namespace MphRead.Entities.Enemies
                         testPos += b;
                     }
                     float facingDot = Vector3.Dot(result.Plane.Xyz, facing);
-                    if (Vector3.Dot(_field1A0, result.Plane.Xyz) < Fixed.ToFloat(4094)
+                    if (Vector3.Dot(_field19C, result.Plane.Xyz) < Fixed.ToFloat(4094)
                         && (dot < _boundingRadius - Fixed.ToFloat(408) && facingDot >= Fixed.ToFloat(-143)
                          || dot >= _boundingRadius - Fixed.ToFloat(408) && facingDot <= Fixed.ToFloat(143)))
                     {
@@ -140,9 +188,9 @@ namespace MphRead.Entities.Enemies
                 if (vec != Vector3.Zero)
                 {
                     vec = vec.Normalized();
-                    _field1AC = vec;
+                    _field1A8 = vec;
                 }
-                Vector3 upVec = UpVector + (_field1AC - UpVector) * (Fixed.ToFloat(819) / 2); // todo: FPS stuff
+                Vector3 upVec = UpVector + (_field1A8 - UpVector) * (Fixed.ToFloat(819) / 2); // todo: FPS stuff
                 upVec = upVec.Normalized();
                 Vector3 facingVec = Vector3.Cross(upVec, _direction).Normalized();
                 SetTransform(facingVec, upVec, position);
@@ -161,13 +209,13 @@ namespace MphRead.Entities.Enemies
             }
             else if (colCount > 0)
             {
-                float dot = Vector3.Dot(_field1AC, UpVector);
+                float dot = Vector3.Dot(_field1A8, UpVector);
                 if (dot >= Fixed.ToFloat(3712))
                 {
                     _speed += FacingVector * (Fixed.ToFloat(204) / 2); // todo: FPS stuff
                     if (dot >= Fixed.ToFloat(4095))
                     {
-                        _field1A0 = _field1AC;
+                        _field19C = _field1A8;
                         _curAngle += _angleInc;
                         if (_curAngle > _maxAngle || _curAngle < -_maxAngle)
                         {
@@ -178,7 +226,38 @@ namespace MphRead.Entities.Enemies
                     }
                 }
             }
-            ContactDamagePlayer(15, knockback: true);
+        }
+
+        protected override bool EnemyTakeDamage(EntityBase? source)
+        {
+            if (source?.Type == EntityType.BeamProjectile)
+            {
+                var beam = (BeamProjectileEntity)source;
+                if (BeamEffectiveness[(int)beam.Beam] == Effectiveness.Zero)
+                {
+                    if (_models[0].AnimInfo.Index[0] == 2)
+                    {
+                        // todo: play SFX
+                        SetAnimation(GeemerAnim.Extend, AnimFlags.NoLoop);
+                        _extendTimer = 60 * 2; // todo: FPS stuff
+                        _speed = Vector3.Zero;
+                    }
+                    else if (_models[0].AnimInfo.Index[0] == 1)
+                    {
+                        _extendTimer = 60 * 2; // todo: FPS stuff
+                    }
+                }
+            }
+            return false;
+        }
+
+        public enum GeemerAnim
+        {
+            None = -1,
+            Retract = 0,
+            Extend = 1,
+            WiggleRetracted = 2,
+            WiggleExtended = 3
         }
     }
 }

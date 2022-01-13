@@ -299,6 +299,21 @@ namespace MphRead.Entities.Enemies
             }
         }
 
+        public bool CheckTemroidHitByBomb(BombEntity bomb)
+        {
+            if (Flags.TestFlag(EnemyFlags.Invincible) || !bomb.Flags.TestFlag(BombFlags.Exploding) || bomb.Flags.TestFlag(BombFlags.Exploded))
+            {
+                return false;
+            }
+            Vector3 between = Position - bomb.Position;
+            if (between.LengthSquared > bomb.Radius * bomb.Radius)
+            {
+                return false;
+            }
+            _hitByBomb = true;
+            return true;
+        }
+
         private void State00()
         {
             Vector3 between = _idlePoints[_field1A4] - Position;
@@ -499,7 +514,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior04()
         {
-            return _framesSinceDamage == 1;
+            return _timeSinceDamage == 1;
         }
 
         private bool Behavior05()

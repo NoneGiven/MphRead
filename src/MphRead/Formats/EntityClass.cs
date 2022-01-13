@@ -493,8 +493,8 @@ namespace MphRead.Editor
         public ushort SpawnDelay { get; set; }
         public short NotifyEntityId { get; set; } // todo: parent? child?
         public Message CollectedMessage { get; set; }
-        public uint CollectedMsgParam1 { get; set; }
-        public uint CollectedMsgParam2 { get; set; }
+        public int CollectedMsgParam1 { get; set; }
+        public int CollectedMsgParam2 { get; set; }
 
         public ItemSpawnEntityEditor() : base(EntityType.ItemSpawn)
         {
@@ -575,12 +575,12 @@ namespace MphRead.Editor
         public uint TriggerThreshold { get; set; } // for subtype 1
         public short ParentId { get; set; }
         public Message ParentMessage { get; set; }
-        public uint ParentMsgParam1 { get; set; }
-        public uint ParentMsgParam2 { get; set; }
+        public int ParentMsgParam1 { get; set; }
+        public int ParentMsgParam2 { get; set; }
         public short ChildId { get; set; }
         public Message ChildMessage { get; set; }
-        public uint ChildMsgParam1 { get; set; }
-        public uint ChildMsgParam2 { get; set; }
+        public int ChildMsgParam1 { get; set; }
+        public int ChildMsgParam2 { get; set; }
 
         public TriggerVolumeEntityEditor() : base(EntityType.TriggerVolume)
         {
@@ -643,10 +643,10 @@ namespace MphRead.Editor
         public uint Threshold { get; set; }
         public short ParentId { get; set; }
         public FhMessage ParentMessage { get; set; }
-        public uint ParentMsgParam1 { get; set; }
+        public int ParentMsgParam1 { get; set; }
         public short ChildId { get; set; }
         public FhMessage ChildMessage { get; set; }
-        public uint ChildMsgParam1 { get; set; }
+        public int ChildMsgParam1 { get; set; }
 
         public FhTriggerVolumeEntityEditor() : base(EntityType.FhTriggerVolume)
         {
@@ -698,12 +698,12 @@ namespace MphRead.Editor
         public byte MessageDelay { get; set; } // always 0 or 1
         public ushort Unused6A { get; set; } // always 0 or 1
         public Message InsideMessage { get; set; }
-        public uint InsideMsgParam1 { get; set; } // seconds for escape sequence, gravity/jump assist values, etc.
-        public uint InsideMsgParam2 { get; set; } // always 0 except for type 15, where it's always 2
+        public int InsideMsgParam1 { get; set; } // seconds for escape sequence, gravity/jump assist values, etc.
+        public int InsideMsgParam2 { get; set; } // always 0 except for type 15, where it's always 2
         public short ParentId { get; set; }
         public Message ExitMessage { get; set; }
-        public uint ExitMsgParam1 { get; set; } // always 0
-        public uint ExitMsgParam2 { get; set; } // always 0
+        public int ExitMsgParam1 { get; set; } // always 0
+        public int ExitMsgParam2 { get; set; } // always 0
         public short ChildId { get; set; } // always the same as ParentId
         public ushort Cooldown { get; set; }
         public uint Priority { get; set; } // always 0 or 1
@@ -763,9 +763,9 @@ namespace MphRead.Editor
         public CollisionVolume Sphere { get; set; }
         public CollisionVolume Cylinder { get; set; }
         public FhMessage InsideMessage { get; set; }
-        public uint InsideMsgParam1 { get; set; }
+        public int InsideMsgParam1 { get; set; }
         public FhMessage ExitMessage { get; set; }
-        public uint ExitMsgParam1 { get; set; }
+        public int ExitMsgParam1 { get; set; }
         public ushort Cooldown { get; set; }
         public FhTriggerFlags TriggerFlags { get; set; }
 

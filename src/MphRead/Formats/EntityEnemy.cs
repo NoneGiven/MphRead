@@ -56,8 +56,8 @@ namespace MphRead
         public readonly uint Unused70;
         public readonly uint Unused74;
         public readonly Vector3Fx Position;
-        public readonly uint Field84;
-        public readonly uint Field88;
+        public readonly int WeaveOffset;
+        public readonly int Field88;
     }
 
     // size: 400 (260 + 35 * 4)
@@ -288,8 +288,8 @@ namespace MphRead.Editor
         public uint Unused78 { get; set; }
         public uint Unused7C { get; set; }
         public uint Unused80 { get; set; }
-        public uint Unknown00 { get; set; }
-        public uint Unknown01 { get; set; }
+        public int WeaveOffset { get; set; }
+        public int Unknown01 { get; set; }
 
         // carnivorous plant
         public ushort EnemyHealth { get; set; }
@@ -441,7 +441,7 @@ namespace MphRead.Editor
             {
                 Volume0 = new CollisionVolume(raw.Fields.S04.Volume0);
                 EnemyPosition = raw.Fields.S04.Position.ToFloatVector();
-                Unknown00 = raw.Fields.S04.Field84;
+                WeaveOffset = raw.Fields.S04.WeaveOffset;
                 Unknown01 = raw.Fields.S04.Field88;
                 Unused68 = raw.Fields.S04.Unused68;
                 Unused6C = raw.Fields.S04.Unused6C;
