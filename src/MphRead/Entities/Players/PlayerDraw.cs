@@ -21,8 +21,8 @@ namespace MphRead.Entities
             }
             int lod = 0;
             Flags2 &= ~PlayerFlags2.Lod1;
-            // todo: use main player's cam info pos, and make this configurable
-            if (!IsMainPlayer && (Position - _scene.CameraPosition).LengthSquared >= 3)
+            // todo: make this configurable
+            if (!IsMainPlayer && (Position - CameraInfo.Position).LengthSquared >= 3 * 3)
             {
                 lod = 1;
                 Flags2 |= PlayerFlags2.Lod1;
@@ -34,7 +34,8 @@ namespace MphRead.Entities
             if (IsMainPlayer || IsVisible())
             {
                 // todo: or if cam seq
-                drawBiped = !IsMainPlayer || _viewType != 0 || _viewSwayTimer < Values.ViewSwayTime * 2; // todo: FPS stuff
+                drawBiped = !IsMainPlayer || CameraType != CameraType.First
+                    || _viewSwayTimer < Values.ViewSwayTime * 2; // todo: FPS stuff
                 if (IsAltForm)
                 {
                     _modelTransform.Row3.Xyz = Position;
@@ -161,7 +162,7 @@ namespace MphRead.Entities
                     }
                     Flags2 |= PlayerFlags2.DrawnThirdPerson;
                 }
-                else if (AttachedEnemy == null && _field6D0 == 0 && Hunter != Hunter.Guardian)
+                else if (AttachedEnemy == null && !_field6D0 && Hunter != Hunter.Guardian)
                 {
                     Matrix4 transform = GetTransformMatrix(_aimVec, UpVector, _gunDrawPos);
                     UpdateTransforms(_gunModel, transform, Recolor);
@@ -338,7 +339,7 @@ namespace MphRead.Entities
 
         private void DrawShadow()
         {
-            if (IsMainPlayer && _viewType == 0)
+            if (IsMainPlayer && CameraType == CameraType.First)
             {
                 return;
             }

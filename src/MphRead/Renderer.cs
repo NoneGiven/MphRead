@@ -59,6 +59,13 @@ namespace MphRead
         Type
     }
 
+    public enum CameraMode
+    {
+        Pivot,
+        Roam,
+        Player
+    }
+
     public partial class Scene
     {
         public Vector2i Size { get; set; }
@@ -67,6 +74,7 @@ namespace MphRead
         private Matrix4 _viewInvRotYMatrix = Matrix4.Identity;
 
         private CameraMode _cameraMode = CameraMode.Pivot;
+        public CameraMode CameraMode => _cameraMode;
         private float _pivotAngleY = 0.0f;
         private float _pivotAngleX = 0.0f;
         private float _pivotDistance = 5.0f;
@@ -200,7 +208,6 @@ namespace MphRead
             _entities.Add(room);
             InitEntity(room);
             _room = room;
-            _cameraMode = CameraMode.Roam;
             if (meta.InGameName != null)
             {
                 _setTitle.Invoke(meta.InGameName);
@@ -1042,9 +1049,16 @@ namespace MphRead
                 _viewInvRotMatrix = _viewInvRotYMatrix = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(-1 * _pivotAngleY));
                 _viewInvRotMatrix = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-1 * _pivotAngleX)) * _viewInvRotMatrix;
             }
-            else if (_cameraMode == CameraMode.Roam)
+            else if (_cameraMode == CameraMode.Roam || _cameraMode == CameraMode.Player)
             {
-                _viewMatrix = Matrix4.LookAt(_cameraPosition, _cameraPosition + _cameraFacing, _cameraUp);
+                if (_cameraMode == CameraMode.Player)
+                {
+                    _viewMatrix = PlayerEntity.Main.CameraInfo.ViewMatrix;  // sktodo
+                }
+                else
+                {
+                    _viewMatrix = Matrix4.LookAt(_cameraPosition, _cameraPosition + _cameraFacing, _cameraUp);
+                } 
                 _viewInvRotMatrix = Matrix4.Transpose(_viewMatrix.ClearTranslation());
                 if (_viewInvRotMatrix.Row0.X != 0 || _viewInvRotMatrix.Row0.Z != 0)
                 {
@@ -1075,6 +1089,10 @@ namespace MphRead
                 float y = MathF.Round(_pivotDistance * MathF.Sin(theta) * MathF.Cos(phi), 4) * -1;
                 float z = MathF.Round(_pivotDistance * MathF.Sin(theta) * MathF.Sin(phi), 4);
                 _cameraPosition = new Vector3(x, y, z);
+            }
+            else if (_cameraMode == CameraMode.Player)
+            {
+                _cameraPosition = PlayerEntity.Main.CameraInfo.Position; // sktodo
             }
         }
 
@@ -3112,10 +3130,14 @@ namespace MphRead
                     {
                         _cameraMode = CameraMode.Roam;
                     }
+                    else if (_cameraMode == CameraMode.Roam)
+                    {
+                        _cameraMode = CameraMode.Player;
+                    }
                     else
                     {
                         _cameraMode = CameraMode.Pivot;
-                    }
+                    } 
                     ResetCamera();
                 }
             }
@@ -3231,12 +3253,6 @@ namespace MphRead
                     _pivotAngleY %= 360f;
                 }
             }
-        }
-
-        private enum CameraMode
-        {
-            Pivot,
-            Roam
         }
 
         private void UpdatePointModule()

@@ -195,7 +195,7 @@ namespace MphRead.Entities
         public static PlayerEntity Main => Players[MainPlayerIndex];
         public static readonly PlayerEntity[] _players = new PlayerEntity[4];
         public static IReadOnlyList<PlayerEntity> Players => _players;
-        public bool IsMainPlayer => this == Main && !FreeCamera;
+        public bool IsMainPlayer => this == Main && _scene.CameraMode == CameraMode.Player;
 
         private const int UA = 0;
         private const int Missiles = 1;
@@ -297,7 +297,9 @@ namespace MphRead.Entities
         private byte _field551 = 0;
         private byte _field552 = 0;
         private byte _field553 = 0;
-        private byte _field6D0 = 0;
+        private float _field684 = 0;
+        private float _field688 = 0;
+        private bool _field6D0 = false;
         private float _altRollFbX = 0; // set from other fields when entering alt form
         private float _altRollFbZ = 0;
         private float _altRollLrX = 0;
@@ -327,7 +329,6 @@ namespace MphRead.Entities
         public Vector3 Acceleration { get; set; }
         public Vector3 PrevSpeed { get; set; }
         public Vector3 PrevPosition { get; set; }
-        public Vector3 PrevCamPos { get; set; }
         public Vector3 IdlePosition { get; private set; }
         private ushort _accelerationTimer = 0;
         private float _hSpeedCap = 0;
@@ -410,11 +411,9 @@ namespace MphRead.Entities
         public float CurAlpha => _curAlpha;
         private float _targetAlpha = 1;
         private float _smokeAlpha = 0;
-        private int _viewType = 0; // todo: update this and use an enum
 
         // debug/viewer
         public bool IgnoreItemPickups { get; set; }
-        public static bool FreeCamera { get; set; } = true;
         public Vector3? ForcedSpawnPos { get; set; }
 
         private PlayerEntity(int slotIndex, Scene scene) : base(EntityType.Player, scene)
@@ -549,7 +548,10 @@ namespace MphRead.Entities
             _modelTransform = Matrix4.Identity;
             _viewSwayTimer = (ushort)(Values.ViewSwayTime * 2); // todo: FPS stuff (use floats)
             ResetCameraInfo();
-            // todo: update camera info
+            CameraInfo.Position = Position;
+            CameraInfo.UpVector = Vector3.UnitY;
+            CameraInfo.Target = Position + FacingVector;
+            // todo: cam info node ref
             _timeIdle = 0;
             _timeSinceInput = 0;
             _field40C = 0;
@@ -700,11 +702,26 @@ namespace MphRead.Entities
             _fieldE8 = 0;
             _gunViewBob = 0;
             _walkViewBob = 0;
-            // todo: update camera info and camseq stuff
+            // todo: if 1P and cam seq
+            // else...
+            // todo: if MP and cam seq
+            CameraInfo.Reset();
+            CameraInfo.Position = Position;
+            CameraInfo.PrevPosition = Position;
+            CameraInfo.UpVector = Vector3.UnitY;
+            CameraInfo.Target = Position + facing;
+            CameraInfo.Fov = Values.NormalFov * 2;
+            // todo: cam info node ref
+            SwitchCamera(CameraType.First, facing);
+            _viewSwayTimer = (ushort)(Values.ViewSwayTime * 2); // todo: FPS stuff
+            _field684 = 0;
+            _field688 = 0;
+            UpdateCameraFirst();
+            CameraInfo.Update();
             _gunDrawPos = Fixed.ToFloat(Values.FieldB8) * facing
-                + _scene.CameraPosition
+                + CameraInfo.Position
                 + Fixed.ToFloat(Values.FieldB0) * _gunVec2
-                + Fixed.ToFloat(Values.FieldB4) * up; // todo: use camera info position
+                + Fixed.ToFloat(Values.FieldB4) * up;
             _aimVec = _aimPosition - _gunDrawPos;
             _timeSinceInput = 0;
             Flags1 = PlayerFlags1.Standing | PlayerFlags1.StandingPrevious | PlayerFlags1.CanTouchBoost;
@@ -1501,7 +1518,7 @@ namespace MphRead.Entities
                 _ammoRecovery[0] = 0;
                 _ammoRecovery[1] = 0;
                 EquipInfo.ChargeLevel = 0;
-                // todo: set camera shake to 0
+                CameraInfo.Shake = 0;
                 _doubleDmgTimer = 0;
                 _deathaltTimer = 0;
                 _cloakTimer = 0;
@@ -1618,11 +1635,12 @@ namespace MphRead.Entities
                     }
                     if (attacker == null || attacker == this)
                     {
-                        // todo: update camera info to look ahead
+                        Vector3 camFacing = CameraInfo.Position + CameraInfo.FacingVector;
+                        SwitchCamera(CameraType.Free, camFacing);
                     }
                     else
                     {
-                        // todo: update camera info to look at attacker
+                        SwitchCamera(CameraType.Free, attacker.Position);
                     }
                     if (IsPrimeHunter)
                     {

@@ -1083,7 +1083,7 @@ namespace MphRead.Entities
 
         private bool TrySwitchForms(bool force = false)
         {
-            if (!force && (IsMorphing || IsUnmorphing || _frozenTimer > 0 || _field6D0 != 0 || _deathaltTimer > 0
+            if (!force && (IsMorphing || IsUnmorphing || _frozenTimer > 0 || _field6D0 || _deathaltTimer > 0
                     || Flags2.TestFlag(PlayerFlags2.NoFormSwitch)
                     || !IsAltForm && Flags2.TestFlag(PlayerFlags2.BipedStuck)
                     || IsAltForm && _morphCamera != null))
@@ -1129,10 +1129,11 @@ namespace MphRead.Entities
             Vector3 facing = FacingVector;
             Vector3 up = UpVector;
             _gunDrawPos = Fixed.ToFloat(Values.FieldB8) * facing
-                + _scene.CameraPosition // todo: use camera info position
+                + _scene.CameraPosition // todo: try to figure out why this works
                 + Fixed.ToFloat(Values.FieldB0) * _gunVec2
                 + Fixed.ToFloat(Values.FieldB4) * up;
-            _gunDrawPos.Y += Fixed.ToFloat(20) * MathF.Cos(MathHelper.DegreesToRadians(_gunViewBob));
+            float cos = MathF.Cos(MathHelper.DegreesToRadians(_gunViewBob));
+            _gunDrawPos.Y += Fixed.ToFloat(20) * cos;
             _aimVec = _aimPosition - _gunDrawPos;
             float dot = Vector3.Dot(_aimVec, facing);
             Vector3 vec = facing * dot;
@@ -1335,8 +1336,8 @@ namespace MphRead.Entities
             _altRollLrX = _gunVec2.X;
             _altRollLrZ = _gunVec2.Z;
             Flags1 |= PlayerFlags1.Morphing;
-            var vec = new Vector3(_field70, 0, _field74);
-            Func2015D34(Values.AltGroundedNoGrav != 0 ? 2 : 1, vec);
+            var camFacing = new Vector3(_field70, 0, _field74);
+            SwitchCamera(Values.AltGroundedNoGrav != 0 ? CameraType.Third2 : CameraType.Third1, camFacing);
             InitAltTransform();
             _modelTransform.Row3.Xyz = Vector3.Zero;
             if (Hunter == Hunter.Spire)
@@ -1403,7 +1404,7 @@ namespace MphRead.Entities
             }
             Flags1 &= ~PlayerFlags1.Morphing;
             Flags1 |= PlayerFlags1.Unmorphing;
-            Func2015D34(0, RightVector);
+            SwitchCamera(CameraType.First, FacingVector);
             if (_boostCharge > 0)
             {
                 // todo: update SFX
@@ -1538,7 +1539,7 @@ namespace MphRead.Entities
             {
                 facing = Vector3.Cross(Vector3.UnitZ, up).Normalized();
             }
-            Vector3 position = _scene.CameraPosition + up / 2; // todo: use camera info pos
+            Vector3 position = CameraInfo.Position + up / 2; // todo: use camera info pos
             Vector3 spawnPos = position;
             _scene.SpawnEffect(effectId, facing, up, spawnPos);
             spawnPos = position + _gunVec2 * 0.4f;
@@ -1590,11 +1591,6 @@ namespace MphRead.Entities
             _scene.SpawnEffect(effectId, Vector3.UnitY, -Vector3.UnitX, _volume.SpherePosition);
             _scene.SpawnEffect(effectId, Vector3.UnitY, Vector3.UnitX, _volume.SpherePosition);
             _scene.SpawnEffect(effectId, Vector3.UnitY, -Vector3.UnitX, _volume.SpherePosition);
-        }
-
-        private void Func2015D34(int a2, Vector3 a3)
-        {
-            // todo: this
         }
 
         private PlayerSpawnEntity? GetRespawnPoint()

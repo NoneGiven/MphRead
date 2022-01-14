@@ -92,7 +92,7 @@ namespace MphRead.Entities
             PlayerAnimation anim2 = PlayerAnimation.None;
             AnimFlags animFlags1 = AnimFlags.None;
             AnimFlags animFlags2 = AnimFlags.None;
-            if (_frozenTimer == 0 && _health > 0 && _field6D0 == 0)
+            if (_frozenTimer == 0 && _health > 0 && !_field6D0)
             {
                 if (Biped1Anim == PlayerAnimation.Turn)
                 {
@@ -270,7 +270,7 @@ namespace MphRead.Entities
             ProcessMovement();
             UpdateCamera();
             UpdateAimVecs();
-            if (_frozenTimer == 0 && _health > 0 && _field6D0 == 0)
+            if (_frozenTimer == 0 && _health > 0 && !_field6D0)
             {
                 // todo: scan visor
                 // else...
@@ -1093,7 +1093,7 @@ namespace MphRead.Entities
                 _field84 = _field74;
             }
             _aimPosition = _gunVec1 * Fixed.ToFloat(Values.AimDistance);
-            _aimPosition += _scene.CameraPosition; // todo: use camera info pos
+            _aimPosition += CameraInfo.Position;
             // unimpl-controls: this calculation is different when exact aim is not set
             hMag = MathF.Sqrt(_gunVec1.X * _gunVec1.X + _gunVec1.Z * _gunVec1.Z);
             _field88 = MathHelper.DegreesToRadians(MathF.Atan2(_gunVec1.Y, hMag));
@@ -1307,7 +1307,7 @@ namespace MphRead.Entities
                     }
                     if (PrevSpeed.Y < -0.65f)
                     {
-                        // todo: set camera shake
+                        CameraInfo.SetShake(Fixed.ToFloat(204));
                     }
                 }
             }
@@ -1360,11 +1360,6 @@ namespace MphRead.Entities
                     // todo: stop SFX
                 }
             }
-        }
-
-        private void UpdateCamera()
-        {
-            // sktodo
         }
 
         // sktodo: aim input (after camera)

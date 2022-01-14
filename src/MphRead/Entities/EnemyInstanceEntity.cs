@@ -137,7 +137,7 @@ namespace MphRead.Entities
                     Vector3 between = Position - pos;
                     return between.LengthSquared < distSqr && between.Y > -15 && between.Y < 15;
                 }
-                if (PlayerEntity.FreeCamera) // skdebug
+                if (_scene.CameraMode != CameraMode.Player) // skdebug
                 {
                     inRange = true;
                 }

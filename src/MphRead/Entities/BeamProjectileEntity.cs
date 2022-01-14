@@ -639,7 +639,7 @@ namespace MphRead.Entities
                         if (Owner?.Type == EntityType.Player)
                         {
                             var player = (PlayerEntity)Owner;
-                            if (player.IsMainPlayer || PlayerEntity.FreeCamera) // skdebug
+                            if (player.IsMainPlayer || _scene.CameraMode != CameraMode.Player) // skdebug
                             {
                                 if (door.Flags.TestFlag(DoorFlags.Locked) && !door.Flags.TestFlag(DoorFlags.ShowLock))
                                 {
