@@ -11,7 +11,6 @@ namespace MphRead.Entities
         public CameraInfo CameraInfo { get; } = new CameraInfo();
         public CameraType CameraType { get; private set; } = CameraType.First;
         private Vector3 _field544;
-        private float _field118 = 0;
 
         private void SwitchCamera(CameraType type, Vector3 facing)
         {
@@ -103,13 +102,13 @@ namespace MphRead.Entities
                 CameraInfo.Position = position;
                 CameraInfo.Target = CameraInfo.Position + FacingVector;
             }
-            CameraInfo.Target.Y += _field118 * MathF.Sin(MathHelper.DegreesToRadians(_field688));
+            CameraInfo.Target.Y += Fixed.ToFloat(Values.Field118) * MathF.Sin(MathHelper.DegreesToRadians(_field688));
             if (MathF.Abs(_field684) >= 1 / 4096f)
             {
                 Vector3 toTarget = CameraInfo.Target - CameraInfo.Position;
                 Vector3 upVec = new Vector3(-toTarget.Z, 0, toTarget.X).Normalized();
-                float factor = _field118 * MathF.Sin(MathHelper.DegreesToRadians(_field684));
-                CameraInfo.UpVector = new Vector3(upVec.X * factor, 0, upVec.Z * factor);
+                float factor = Fixed.ToFloat(Values.Field118) * MathF.Sin(MathHelper.DegreesToRadians(_field684));
+                CameraInfo.UpVector = new Vector3(upVec.X * factor, 1, upVec.Z * factor);
             }
             else
             {

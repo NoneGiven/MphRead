@@ -127,7 +127,7 @@ namespace MphRead.Entities
                     // itodo: aim input
                 }
                 bool jumping = false;
-                if (!Flags2.TestFlag(PlayerFlags2.BipedLock | PlayerFlags2.BipedStuck))
+                if (!Flags2.TestAny(PlayerFlags2.BipedLock | PlayerFlags2.BipedStuck))
                 {
                     // unimpl-controls: the game also tests for either the free strafe flag, or the strafe button held
                     // and later, for up/down, it tests for either flag, or the look button not held
@@ -162,7 +162,8 @@ namespace MphRead.Entities
                         }
                         if (!EquipInfo.Zoomed)
                         {
-                            // todo: update field684 (using sign)
+                            _field684 += Fixed.ToFloat(Values.Field114) * sign / 2; // todo: FPS stuff
+                            _field684 = Math.Clamp(_field684, -180, 180);
                         }
                     }
 
@@ -194,7 +195,8 @@ namespace MphRead.Entities
                         }
                         if (!EquipInfo.Zoomed)
                         {
-                            // todo: update field688 (using sign)
+                            _field688 += Fixed.ToFloat(Values.Field114) * sign / 2; // todo: FPS stuff
+                            _field688 = Math.Clamp(_field688, -180, 180);
                         }
                     }
 
@@ -207,7 +209,14 @@ namespace MphRead.Entities
                         MoveRightLeft(PlayerAnimation.WalkLeft, sign: -1);
                     }
                     // todo: update HUD x shift
-                    // todo: update field684
+                    if (_field684 < Fixed.ToFloat(500) && _field684 > Fixed.ToFloat(-500))
+                    {
+                        _field684 = 0;
+                    }
+                    else
+                    {
+                        _field684 *= 0.9f; // sktodo: FPS stuff
+                    }
                     if (Controls.MoveUp.IsDown)
                     {
                         MoveForwardBack(PlayerAnimation.WalkForward, sign: 1);
@@ -217,7 +226,14 @@ namespace MphRead.Entities
                         MoveForwardBack(PlayerAnimation.WalkBackward, sign: -1);
                     }
                     // todo: update HUD y shift
-                    // todo: update field684
+                    if (_field688 < Fixed.ToFloat(500) && _field688 > Fixed.ToFloat(-500))
+                    {
+                        _field688 = 0;
+                    }
+                    else
+                    {
+                        _field688 *= 0.9f; // sktodo: FPS stuff
+                    }
                     // unimpl-controls: in the up/down code path, the game processes aim reset if that flag is off
                     if (_jumpPadControlLockMin == 0 && Controls.Jump.IsPressed
                         && !Flags1.TestAny(PlayerFlags1.NoAimInput | PlayerFlags1.UsedJump))
