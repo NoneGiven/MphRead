@@ -152,6 +152,8 @@ namespace MphRead.Entities
         public float Shake;
         public Matrix4 ViewMatrix;
 
+        private bool _shake = true;
+
         public void Reset()
         {
             PrevPosition = Vector3.UnitZ;
@@ -165,10 +167,24 @@ namespace MphRead.Entities
         {
             Vector3 toTarget = Target - Position;
             var camUp = Vector3.Cross(toTarget, Vector3.Cross(UpVector, toTarget));
-            if (Shake > 0)
+            // todo: FPS stuff
+            if (Shake > 0 && _shake)
             {
-                // sktodo: camera shake
+                Target.X += Fixed.ToFloat(Rng.GetRandomInt2(Fixed.ToInt(Shake))) - Shake / 2;
+                Target.Y += Fixed.ToFloat(Rng.GetRandomInt2(Fixed.ToInt(Shake))) - Shake / 2;
+                Target.Z += Fixed.ToFloat(Rng.GetRandomInt2(Fixed.ToInt(Shake))) - Shake / 2;
+                if (toTarget.X * (Target.X - Position.X) + toTarget.Z * (Target.Z - Position.Z) < 0)
+                {
+                    Target.X = Position.X + toTarget.X / 2;
+                    Target.Z = Position.Z + toTarget.Z / 2;
+                }
+                Shake *= 0.85f;
+                if (Shake < 0.01f)
+                {
+                    Shake = 0;
+                }
             }
+            _shake = !_shake;
             FacingVector = Target - Position;
             // todo: set many other fields used by radar etc.
             FacingVector = FacingVector.Normalized();
