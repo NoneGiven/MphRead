@@ -169,6 +169,7 @@ namespace MphRead.Entities
                     GetDrawItems(_gunModel, _gunModel.Model.Nodes[0], _curAlpha);
                     if (Flags1.TestFlag(PlayerFlags1.DrawGunSmoke))
                     {
+                        // todo?: the game uses an alternate projection matrix to draw this
                         var drawPos = new Vector3(0, 0, Fixed.ToFloat(Values.MuzzleOffset));
                         drawPos = Matrix.Vec3MultMtx4(drawPos, transform);
                         transform.Row3.Xyz = drawPos;

@@ -76,6 +76,16 @@ namespace MphRead.Entities
             SwitchWeapon();
         }
 
+        private void UpdateAimY(float amount)
+        {
+            // skhere
+        }
+
+        private void UpdateAimX(float amount)
+        {
+            // skhere
+        }
+
         private void ProcessBiped()
         {
             // todo: set a field if cam seq, main player, and 1P mode
@@ -120,7 +130,46 @@ namespace MphRead.Entities
                 }
                 if (Controls.MouseAim)
                 {
-                    // itodo: aim input
+                    // todo: update HUD shift
+                    float aimY = Input.MouseDeltaY; // itodo: x and y sensitivity
+                    float aimX = Input.MouseDeltaX;
+                    UpdateAimY(aimY);
+                    UpdateAimX(aimX);
+                    if (Flags1.TestFlag(PlayerFlags1.Grounded))
+                    {
+                        // sktodo: threshold values
+                        if (aimX > 3)
+                        {
+                            _timeIdle = 0;
+                            anim1 = PlayerAnimation.Turn;
+                            animFlags1 = AnimFlags.Reverse;
+                            if (Biped2Anim == PlayerAnimation.Turn)
+                            {
+                                _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                _bipedModel2.AnimInfo.Flags[0] |= AnimFlags.Reverse;
+                            }
+                            if (Biped1Anim == PlayerAnimation.Turn)
+                            {
+                                _bipedModel1.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                _bipedModel1.AnimInfo.Flags[0] |= AnimFlags.Reverse;
+                            }
+                        }
+                        else if (aimX < -3)
+                        {
+                            _timeIdle = 0;
+                            anim1 = PlayerAnimation.Turn;
+                            if (Biped2Anim == PlayerAnimation.Turn)
+                            {
+                                _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
+                            }
+                            if (Biped1Anim == PlayerAnimation.Turn)
+                            {
+                                _bipedModel1.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                _bipedModel1.AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
+                            }
+                        }
+                    }
                 }
                 if (Controls.KeyboardAim)
                 {
@@ -1378,7 +1427,6 @@ namespace MphRead.Entities
             }
         }
 
-        // sktodo: aim input (after camera)
         public static void ProcessInput(KeyboardState keyboardState, MouseState mouseState)
         {
             KeyboardState keyboardSnap = keyboardState.GetSnapshot();
@@ -1397,19 +1445,27 @@ namespace MphRead.Entities
                     for (int j = 0; j < player.Controls.All.Length; j++)
                     {
                         ButtonControl control = player.Controls.All[j];
-                        if (control.IsKey == true)
+                        if (control.Type == ButtonType.Key)
                         {
                             bool prevDown = prevKeyboardSnap?.IsKeyDown(control.Key) ?? false;
                             control.IsDown = keyboardSnap.IsKeyDown(control.Key);
                             control.IsPressed = control.IsDown && !prevDown;
                             control.IsReleased = !control.IsDown && prevDown;
                         }
-                        else if (control.IsKey == false)
+                        else if (control.Type == ButtonType.Mouse)
                         {
                             bool prevDown = prevMouseSnap?.IsButtonDown(control.MouseButton) ?? false;
                             control.IsDown = mouseSnap!.IsButtonDown(control.MouseButton);
                             control.IsPressed = control.IsDown && !prevDown;
                             control.IsReleased = !control.IsDown && prevDown;
+                        }
+                        else
+                        {
+                            // todo?: deal with overflow or whatever
+                            control.IsDown = control.Type == ButtonType.ScrollUp && mouseSnap.Scroll.Y > (prevMouseSnap?.Scroll.Y ?? 0)
+                                || control.Type == ButtonType.ScrollDown && mouseSnap.Scroll.Y < (prevMouseSnap?.Scroll.Y ?? 0);
+                            control.IsPressed = control.IsDown;
+                            control.IsReleased = false;
                         }
                     }
                 }
@@ -1425,12 +1481,23 @@ namespace MphRead.Entities
             public KeyboardState? KeyboardState { get; set; }
             public MouseState? PrevMouseState { get; set; }
             public MouseState? MouseState { get; set; }
+
+            public float MouseDeltaX => (MouseState?.X - PrevMouseState?.X) ?? 0;
+            public float MouseDeltaY => (MouseState?.Y - PrevMouseState?.Y) ?? 0;
         }
+    }
+
+    public enum ButtonType
+    {
+        Key,
+        Mouse,
+        ScrollUp,
+        ScrollDown
     }
 
     public class ButtonControl
     {
-        public bool? IsKey { get; set; }
+        public ButtonType Type { get; set; }
         public Keys Key { get; set; }
         public MouseButton MouseButton { get; set; }
 
@@ -1445,14 +1512,23 @@ namespace MphRead.Entities
 
         public ButtonControl(Keys key)
         {
-            IsKey = true;
+            Type = ButtonType.Key;
             Key = key;
         }
 
         public ButtonControl(MouseButton mouseButton)
         {
-            IsKey = false;
+            Type = ButtonType.Mouse;
             MouseButton = mouseButton;
+        }
+
+        public ButtonControl(ButtonType scrollType)
+        {
+            if (scrollType != ButtonType.ScrollUp && scrollType != ButtonType.ScrollDown)
+            {
+                throw new ProgramException("Unexpected control type.");
+            }
+            Type = scrollType;
         }
     }
 
@@ -1474,12 +1550,16 @@ namespace MphRead.Entities
         public ButtonControl Morph { get; }
         public ButtonControl Boost { get; }
         public ButtonControl AltAttack { get; }
+        // todo: weapon switch modes (scroll through all, pick slot + scroll affinity, many buttons, radial menu, "curve" menu)
+        public ButtonControl NextWeapon { get; }
+        public ButtonControl PrevWeapon { get; }
 
         public ButtonControl[] All { get; }
 
         public PlayerControls(ButtonControl moveLeft, ButtonControl moveRight, ButtonControl moveUp, ButtonControl moveDown,
             ButtonControl aimLeft, ButtonControl aimRight, ButtonControl aimUp, ButtonControl aimDown, ButtonControl shoot,
-            ButtonControl zoom, ButtonControl jump, ButtonControl morph, ButtonControl boost, ButtonControl altAttack)
+            ButtonControl zoom, ButtonControl jump, ButtonControl morph, ButtonControl boost, ButtonControl altAttack,
+            ButtonControl nextWeapon, ButtonControl prevWeapon)
         {
             MouseAim = true;
             KeyboardAim = true;
@@ -1497,9 +1577,12 @@ namespace MphRead.Entities
             Morph = morph;
             Boost = boost;
             AltAttack = altAttack;
+            NextWeapon = nextWeapon;
+            PrevWeapon = prevWeapon;
             All = new[]
             {
-                moveLeft, moveRight, moveUp, moveDown, aimLeft, aimRight, aimUp, aimDown, shoot, zoom, jump, morph, boost, altAttack
+                moveLeft, moveRight, moveUp, moveDown, aimLeft, aimRight, aimUp, aimDown, shoot, zoom,
+                jump, morph, boost, altAttack, nextWeapon, prevWeapon
             };
         }
 
@@ -1514,12 +1597,14 @@ namespace MphRead.Entities
                 aimRight: new ButtonControl(Keys.Right),
                 aimUp: new ButtonControl(Keys.Up),
                 aimDown: new ButtonControl(Keys.Down),
-                shoot: new ButtonControl(MouseButton.Button2),
-                zoom: new ButtonControl(MouseButton.Button3),
-                jump: new ButtonControl(Keys.Space),
-                morph: new ButtonControl(Keys.C),
+                shoot: new ButtonControl(MouseButton.Button1),
+                zoom: new ButtonControl(MouseButton.Button2),
+                jump: new ButtonControl(ButtonType.ScrollUp),
+                morph: new ButtonControl(ButtonType.ScrollDown),
                 boost: new ButtonControl(Keys.Space),
-                altAttack: new ButtonControl(Keys.Q)
+                altAttack: new ButtonControl(Keys.Q),
+                nextWeapon: new ButtonControl(Keys.H),
+                prevWeapon: new ButtonControl(Keys.H)
             );
         }
     }
