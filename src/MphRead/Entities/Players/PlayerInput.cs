@@ -122,7 +122,7 @@ namespace MphRead.Entities
                 {
                     // itodo: aim input
                 }
-                else if (Controls.KeyboardAim)
+                if (Controls.KeyboardAim)
                 {
                     // itodo: aim input
                 }
@@ -1482,7 +1482,7 @@ namespace MphRead.Entities
             ButtonControl zoom, ButtonControl jump, ButtonControl morph, ButtonControl boost, ButtonControl altAttack)
         {
             MouseAim = true;
-            KeyboardAim = false;
+            KeyboardAim = true;
             MoveLeft = moveLeft;
             MoveRight = moveRight;
             MoveUp = moveUp;
@@ -1510,10 +1510,10 @@ namespace MphRead.Entities
                 moveRight: new ButtonControl(Keys.D),
                 moveUp: new ButtonControl(Keys.W),
                 moveDown: new ButtonControl(Keys.S),
-                aimLeft: new ButtonControl(),
-                aimRight: new ButtonControl(),
-                aimUp: new ButtonControl(),
-                aimDown: new ButtonControl(),
+                aimLeft: new ButtonControl(Keys.Left),
+                aimRight: new ButtonControl(Keys.Right),
+                aimUp: new ButtonControl(Keys.Up),
+                aimDown: new ButtonControl(Keys.Down),
                 shoot: new ButtonControl(MouseButton.Button2),
                 zoom: new ButtonControl(MouseButton.Button3),
                 jump: new ButtonControl(Keys.Space),

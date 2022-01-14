@@ -2973,9 +2973,9 @@ namespace MphRead
                         _outputCameraPos = !_outputCameraPos;
                     }
                 }
-                else
+                else if (_cameraMode != CameraMode.Player)
                 {
-                    //_showColors = !_showColors;
+                    _showColors = !_showColors;
                 }
             }
             else if (e.Key == Keys.Q)
@@ -2999,9 +2999,9 @@ namespace MphRead
                         }
                     }
                 }
-                else
+                else if (_cameraMode != CameraMode.Player)
                 {
-                    //_wireframe = !_wireframe;
+                    _wireframe = !_wireframe;
                 }
             }
             else if (e.Key == Keys.B && !e.Alt)
