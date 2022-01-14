@@ -76,14 +76,101 @@ namespace MphRead.Entities
             SwitchWeapon();
         }
 
+        private void UpdateAimFacing()
+        {
+            Vector3 facing = FacingVector;
+            float dot = Vector3.Dot(_gunVec1, facing);
+            if (dot < Fixed.ToFloat(3956))
+            {
+                Vector3 temp1 = (facing - _gunVec1 * dot).Normalized();
+                facing = Fixed.ToFloat(3956) * _gunVec1 + Fixed.ToFloat(1060) * temp1;
+            }
+            Vector3 temp2 = _gunVec1 - facing;
+            facing += temp2 * 0.1f;
+            SetTransform(facing.Normalized(), UpVector, Position);
+        }
+
         private void UpdateAimY(float amount)
         {
-            // skhere
+            if (Controls.InvertAimY)
+            {
+                amount *= -1;
+            }
+            float sensitivity = 1; // itodo: this
+            if (EquipInfo.Zoomed)
+            {
+                float fovFactor = CameraInfo.Fov - Values.NormalFov * 2;
+                sensitivity *= Fixed.ToFloat(Values.Field70) * fovFactor;
+            }
+            amount *= sensitivity;
+            // unimpl-controls: these calculations are different when exact aim is not set
+            float prevAim = _aimY;
+            _aimY += amount;
+            if (IsAltForm)
+            {
+                _aimY = Math.Clamp(_aimY, -25, 5);
+            }
+            else
+            {
+                _aimY = Math.Clamp(_aimY, -85, 85);
+            }
+            float diff = MathHelper.DegreesToRadians(_aimY - prevAim);
+            Matrix4 transform = GetTransformMatrix(_gunVec1, Vector3.UnitY);
+            Vector3 vector;
+            if (diff <= 0)
+            {
+                vector = new Vector3(0, MathF.Sin(diff), MathF.Cos(diff));
+            }
+            else
+            {
+                vector = new Vector3(0, -MathF.Sin(-diff), MathF.Cos(-diff));
+            }
+            _gunVec1 = Matrix.Vec3MultMtx3(vector, transform).Normalized();
+            _aimPosition = CameraInfo.Position + _gunVec1 * Fixed.ToFloat(Values.AimDistance);
+            UpdateAimFacing();
         }
 
         private void UpdateAimX(float amount)
         {
-            // skhere
+            if (Controls.InvertAimX)
+            {
+                amount *= -1;
+            }
+            float sensitivity = 1; // itodo: this
+            if (EquipInfo.Zoomed)
+            {
+                float fovFactor = CameraInfo.Fov - Values.NormalFov * 2;
+                sensitivity *= Fixed.ToFloat(Values.Field70) * fovFactor;
+            }
+            amount *= sensitivity;
+            // unimpl-controls: these calculations are different when exact aim is not set
+            float sin;
+            float cos;
+            float angle = MathHelper.DegreesToRadians(amount);
+            if (amount <= 0)
+            {
+                sin = MathF.Sin(angle);
+                cos = MathF.Cos(angle);
+            }
+            else
+            {
+                sin = -MathF.Sin(-angle);
+                cos = MathF.Cos(-angle);
+            }
+            float x = _gunVec1.X;
+            float z = _gunVec1.Z;
+            _gunVec1.X = x * cos + z * sin;
+            _gunVec1.Z = x * -sin + z * cos;
+            _gunVec1 = _gunVec1.Normalized();
+            _aimPosition = CameraInfo.Position + _gunVec1 * Fixed.ToFloat(Values.AimDistance);
+            if (EquipInfo.Zoomed)
+            {
+                SetTransform(_gunVec1, UpVector, Position);
+            }
+            else
+            {
+                UpdateAimFacing();
+            }
         }
 
         private void ProcessBiped()
@@ -131,8 +218,8 @@ namespace MphRead.Entities
                 if (Controls.MouseAim)
                 {
                     // todo: update HUD shift
-                    float aimY = Input.MouseDeltaY; // itodo: x and y sensitivity
-                    float aimX = Input.MouseDeltaX;
+                    float aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
+                    float aimX = -Input.MouseDeltaX / 4f;
                     UpdateAimY(aimY);
                     UpdateAimX(aimX);
                     if (Flags1.TestFlag(PlayerFlags1.Grounded))
@@ -173,7 +260,7 @@ namespace MphRead.Entities
                 }
                 if (Controls.KeyboardAim)
                 {
-                    // itodo: aim input
+                    // itodo: button aim
                 }
                 bool jumping = false;
                 if (!Flags2.TestAny(PlayerFlags2.BipedLock | PlayerFlags2.BipedStuck))
@@ -1161,10 +1248,10 @@ namespace MphRead.Entities
             _aimPosition += CameraInfo.Position;
             // unimpl-controls: this calculation is different when exact aim is not set
             hMag = MathF.Sqrt(_gunVec1.X * _gunVec1.X + _gunVec1.Z * _gunVec1.Z);
-            _field88 = MathHelper.DegreesToRadians(MathF.Atan2(_gunVec1.Y, hMag));
-            if (_field88 > 75 || _field88 < -75)
+            _aimY = MathHelper.DegreesToRadians(MathF.Atan2(_gunVec1.Y, hMag));
+            if (_aimY > 75 || _aimY < -75)
             {
-                // todo: update aim
+                UpdateAimY(_aimY);
             }
             if (Flags1.TestFlag(PlayerFlags1.UsedJumpPad))
             {
@@ -1506,10 +1593,6 @@ namespace MphRead.Entities
         public bool IsDown { get; set; }
         public bool IsReleased { get; set; }
 
-        public ButtonControl()
-        {
-        }
-
         public ButtonControl(Keys key)
         {
             Type = ButtonType.Key;
@@ -1553,13 +1636,17 @@ namespace MphRead.Entities
         // todo: weapon switch modes (scroll through all, pick slot + scroll affinity, many buttons, radial menu, "curve" menu)
         public ButtonControl NextWeapon { get; }
         public ButtonControl PrevWeapon { get; }
+        public ButtonControl WeaponMenu { get; }
+
+        public bool InvertAimY { get; }
+        public bool InvertAimX { get; }
 
         public ButtonControl[] All { get; }
 
         public PlayerControls(ButtonControl moveLeft, ButtonControl moveRight, ButtonControl moveUp, ButtonControl moveDown,
             ButtonControl aimLeft, ButtonControl aimRight, ButtonControl aimUp, ButtonControl aimDown, ButtonControl shoot,
             ButtonControl zoom, ButtonControl jump, ButtonControl morph, ButtonControl boost, ButtonControl altAttack,
-            ButtonControl nextWeapon, ButtonControl prevWeapon)
+            ButtonControl nextWeapon, ButtonControl prevWeapon, ButtonControl weaponMenu)
         {
             MouseAim = true;
             KeyboardAim = true;
@@ -1579,10 +1666,11 @@ namespace MphRead.Entities
             AltAttack = altAttack;
             NextWeapon = nextWeapon;
             PrevWeapon = prevWeapon;
+            WeaponMenu = weaponMenu;
             All = new[]
             {
                 moveLeft, moveRight, moveUp, moveDown, aimLeft, aimRight, aimUp, aimDown, shoot, zoom,
-                jump, morph, boost, altAttack, nextWeapon, prevWeapon
+                jump, morph, boost, altAttack, nextWeapon, prevWeapon, weaponMenu
             };
         }
 
@@ -1597,14 +1685,15 @@ namespace MphRead.Entities
                 aimRight: new ButtonControl(Keys.Right),
                 aimUp: new ButtonControl(Keys.Up),
                 aimDown: new ButtonControl(Keys.Down),
-                shoot: new ButtonControl(MouseButton.Button1),
-                zoom: new ButtonControl(MouseButton.Button2),
-                jump: new ButtonControl(ButtonType.ScrollUp),
-                morph: new ButtonControl(ButtonType.ScrollDown),
+                shoot: new ButtonControl(MouseButton.Left),
+                zoom: new ButtonControl(MouseButton.Right),
+                jump: new ButtonControl(Keys.Space),
+                morph: new ButtonControl(Keys.C),
                 boost: new ButtonControl(Keys.Space),
                 altAttack: new ButtonControl(Keys.Q),
                 nextWeapon: new ButtonControl(Keys.H),
-                prevWeapon: new ButtonControl(Keys.H)
+                prevWeapon: new ButtonControl(Keys.H),
+                weaponMenu: new ButtonControl(MouseButton.Middle)
             );
         }
     }

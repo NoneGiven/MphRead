@@ -578,7 +578,7 @@ namespace MphRead.Entities
             }
             // todo: check input
             _timeSinceInput = 0;
-            if (_field88 < 60 && _field88 > -60 && !EquipInfo.Zoomed && _health > 0)
+            if (_aimY < 60 && _aimY > -60 && !EquipInfo.Zoomed && _health > 0)
             {
                 if (_timeSinceInput == Values.SwayStartTime * 2) // todo: FPS stuff
                 {

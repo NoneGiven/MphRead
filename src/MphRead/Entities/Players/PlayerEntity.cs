@@ -270,7 +270,7 @@ namespace MphRead.Entities
         private float _field80 = 0;
         private float _field84 = 0;
 
-        private float _field88 = 0; // angle related to view sway
+        private float _aimY = 0;
         private float _field40C = 0; // view sway percentage
         private Vector3 _field410;
         private Vector3 _field41C;
@@ -514,7 +514,7 @@ namespace MphRead.Entities
             _volumeUnxf = PlayerVolumes[(int)Hunter, 0];
             _volume = CollisionVolume.Move(_volumeUnxf, Position);
             _aimPosition = (Position + _gunVec1 * Fixed.ToFloat(Values.AimDistance)).AddY(Fixed.ToFloat(Values.AimYOffset));
-            _field88 = 0;
+            _aimY = 0;
             _gunViewBob = 0;
             _walkViewBob = 0;
             _health = 0;
@@ -697,7 +697,7 @@ namespace MphRead.Entities
             Acceleration = Vector3.Zero;
             _accelerationTimer = 0;
             // todo: room node ref
-            _field88 = 0;
+            _aimY = 0;
             _fieldE4 = 0;
             _fieldE8 = 0;
             _gunViewBob = 0;
