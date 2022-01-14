@@ -506,7 +506,7 @@ namespace MphRead.Entities
                             }
                         }
                     }
-                    // todo: set camera shake
+                    CameraInfo.SetShake(0.023f);
                 }
                 if (IsMainPlayer && _chargeEffect != null)
                 {
@@ -1463,7 +1463,7 @@ namespace MphRead.Entities
                 else if (Hunter == Hunter.Spire)
                 {
                     _scene.SpawnEffect(37, Vector3.UnitX, Vector3.UnitY, Position); // spireAltSlam
-                    // todo: set camera shake
+                    CameraInfo.SetShake(0.3f);
                     for (int i = 0; i < _scene.Entities.Count; i++)
                     {
                         EntityBase entity = _scene.Entities[i];
@@ -1474,7 +1474,7 @@ namespace MphRead.Entities
                         var other = (PlayerEntity)entity;
                         if (other.Flags1.TestFlag(PlayerFlags1.Standing) && Vector3.DistanceSquared(Position, other.Position) < 16)
                         {
-                            // todo: set camera shake
+                            other.CameraInfo.SetShake(0.3f);
                             if (other.Speed.Y < 0.15f)
                             {
                                 other.Speed = other.Speed.WithY(0.15f);

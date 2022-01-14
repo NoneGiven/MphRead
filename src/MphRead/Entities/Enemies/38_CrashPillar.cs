@@ -96,8 +96,15 @@ namespace MphRead.Entities.Enemies
             CallSubroutine(Metadata.Enemy38Subroutines, this);
         }
 
+        private void SetCameraShake(float shakeMax)
+        {
+            Vector3 between = PlayerEntity.Main.Position - Position;
+            float shake = Math.Min(1 / between.LengthSquared * 3, shakeMax);
+            PlayerEntity.Main.CameraInfo.SetShake(shake);
+        }
+
         // sktodo: function name
-        private void DoThing()
+        private void DoThing(float shakeMax)
         {
             int frame = _models[0].AnimInfo.Frame[0];
             if (frame >= 17)
@@ -109,7 +116,7 @@ namespace MphRead.Entities.Enemies
             {
                 if (frame == 12 && _scene.FrameCount % 2 == 0)
                 {
-                    // todo: set camera shake
+                    SetCameraShake(shakeMax);
                 }
                 Vector3 facing = FacingVector;
                 // todo: FPS stuff
@@ -120,7 +127,7 @@ namespace MphRead.Entities.Enemies
 
         private void State04()
         {
-            DoThing();
+            DoThing(shakeMax: 0.08f);
             CallSubroutine(Metadata.Enemy38Subroutines, this);
         }
 
@@ -190,7 +197,7 @@ namespace MphRead.Entities.Enemies
         private void State13()
         {
             FaceInitialPosition();
-            DoThing();
+            DoThing(shakeMax: 0.08f);
             CallSubroutine(Metadata.Enemy38Subroutines, this);
         }
 
@@ -281,7 +288,7 @@ namespace MphRead.Entities.Enemies
             }
             _speed = Vector3.Zero;
             Flags |= EnemyFlags.Invincible;
-            // todo: set camera shake
+            SetCameraShake(shakeMax: 0.7f);
             _models[0].SetAnimation(5, AnimFlags.NoLoop);
             return true;
         }

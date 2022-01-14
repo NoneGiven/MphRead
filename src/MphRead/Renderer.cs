@@ -3178,7 +3178,7 @@ namespace MphRead
             }
             if (_cameraMode == CameraMode.Roam)
             {
-                float moveStep = _keyboardState.IsKeyDown(Keys.LeftShift) || _keyboardState.IsKeyDown(Keys.RightShift) ? 0.5f : 0;
+                float moveStep = _keyboardState.IsKeyDown(Keys.LeftShift) || _keyboardState.IsKeyDown(Keys.RightShift) ? 0.5f : 0.1f;
                 float rotStepDeg = _keyboardState.IsKeyDown(Keys.LeftShift) || _keyboardState.IsKeyDown(Keys.RightShift) ? 3 : 1.5f;
                 float rotStep = MathHelper.DegreesToRadians(rotStepDeg);
                 if (_keyboardState.IsKeyDown(Keys.W)) // move forward
@@ -3759,6 +3759,7 @@ namespace MphRead
 
         public RenderWindow() : base(_gameWindowSettings, _nativeWindowSettings)
         {
+            CursorGrabbed = true;
             Scene = new Scene(Size, KeyboardState, MouseState, (string title) =>
             {
                 Title = title;

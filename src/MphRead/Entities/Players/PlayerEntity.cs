@@ -865,10 +865,10 @@ namespace MphRead.Entities
                 between = Volume.SpherePosition - bomb.Position;
             }
             float distSqr = between.LengthSquared;
+            float hitRadiusSqr = Fixed.ToFloat(Values.BombSelfRadiusSquared);
             if (bomb.Owner == this)
             {
-                float hitRadiusSqr = Fixed.ToFloat(Values.BombSelfRadiusSquared);
-                if (distSqr < hitRadiusSqr && between.Y > -Volume.SphereRadius)
+                if (distSqr <= hitRadiusSqr && between.Y > -Volume.SphereRadius)
                 {
                     hit = true;
                     float ySpeed = Fixed.ToFloat(Values.BombJumpSpeed);
@@ -891,7 +891,8 @@ namespace MphRead.Entities
             }
             if (hit)
             {
-                // todo: set camera shake
+                float shake = (hitRadiusSqr - distSqr) / hitRadiusSqr * 0.1f;
+                CameraInfo.SetShake(shake);
             }
             return hit;
         }
@@ -1605,6 +1606,7 @@ namespace MphRead.Entities
                     if (IsMainPlayer)
                     {
                         // todo: update story save, death countdown, lost octolith, etc.
+                        CameraInfo.SetShake(0.25f);
                     }
                 }
                 else // multiplayer
@@ -1833,7 +1835,7 @@ namespace MphRead.Entities
                 {
                     shake = Math.Max(damage * 0.01f, 0.05f);
                 }
-                // todo: set camera shake
+                CameraInfo.SetShake(shake);
             }
             if (IsMainPlayer)
             {
