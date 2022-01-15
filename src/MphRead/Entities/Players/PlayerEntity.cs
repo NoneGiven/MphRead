@@ -992,7 +992,10 @@ namespace MphRead.Entities
         // skdebug
         private void SwitchWeapon()
         {
-            Debug.Assert(Input.KeyboardState != null);
+            if (IsBot || Input.KeyboardState == null)
+            {
+                return;
+            }
             BeamType beam = BeamType.None;
             if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D1))
             {
