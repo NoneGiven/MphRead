@@ -1104,7 +1104,7 @@ namespace MphRead.Entities
             if (!force && (IsMorphing || IsUnmorphing || _frozenTimer > 0 || _field6D0 || _deathaltTimer > 0
                     || Flags2.TestFlag(PlayerFlags2.NoFormSwitch)
                     || !IsAltForm && Flags2.TestFlag(PlayerFlags2.BipedStuck)
-                    || IsAltForm && _morphCamera != null))
+                    || IsAltForm && MorphCamera != null))
             {
                 // todo: play SFX
                 return false;

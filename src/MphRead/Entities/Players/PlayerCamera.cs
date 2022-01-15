@@ -144,9 +144,9 @@ namespace MphRead.Entities
             CameraInfo.Target.Y -= v7;
             CameraInfo.Target.Y += (Volume.SpherePosition.Y - CameraInfo.Target.Y) / 2;
             CameraInfo.Target.Z = Volume.SpherePosition.Z;
-            if (_morphCamera != null)
+            if (MorphCamera != null)
             {
-                CameraInfo.Position = _morphCamera.Position;
+                CameraInfo.Position = MorphCamera.Position;
                 return;
             }
             Vector3 posVec;
@@ -519,7 +519,13 @@ namespace MphRead.Entities
             // camtodo
         }
 
-        private void ResumeAltFormCamera()
+        public void RefreshExternalCamera()
+        {
+            Flags1 |= PlayerFlags1.AltDirOverride;
+            _timeSinceMorphCamera = 0;
+        }
+
+        public void ResumeOwnCamera()
         {
             if (CameraType == CameraType.Third1)
             {

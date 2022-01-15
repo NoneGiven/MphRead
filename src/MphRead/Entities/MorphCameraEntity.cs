@@ -1,3 +1,4 @@
+using MphRead.Formats;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -16,7 +17,47 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.Volume, Position);
+            // todo: node ref
             AddPlaceholderModel();
+        }
+
+        public override bool Process()
+        {
+            CollisionResult discard = default;
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.Player)
+                {
+                    continue;
+                }
+                var player = (PlayerEntity)entity;
+                if (player.IsAltForm)
+                {
+                    if (player.MorphCamera == null)
+                    {
+                        if (CollisionDetection.CheckVolumesOverlap(_volume, player.Volume, ref discard))
+                        {
+                            player.MorphCamera = this;
+                            // todo: cam info node ref
+                            player.RefreshExternalCamera();
+                        }
+                    }
+                    else if (player.MorphCamera == this
+                        && !CollisionDetection.CheckVolumesOverlap(_volume, player.Volume, ref discard))
+                    {
+                        player.MorphCamera = null;
+                        player.ResumeOwnCamera();
+                        player.RefreshExternalCamera();
+                    }
+                }
+                else if (player.MorphCamera != null)
+                {
+                    player.MorphCamera = null;
+                    player.ResumeOwnCamera();
+                }
+            }
+            return base.Process();
         }
 
         public override void GetDisplayVolumes()

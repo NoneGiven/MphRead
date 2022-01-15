@@ -312,7 +312,7 @@ namespace MphRead.Entities
         public EnemySpawnEntity? EnemySpawner => _enemySpawner;
         public EnemyInstanceEntity? AttachedEnemy { get; set; } = null;
         private EntityBase? _field35C = null;
-        private MorphCameraEntity? _morphCamera = null;
+        public MorphCameraEntity? MorphCamera { get; set; }
         private OctolithFlagEntity? _octolithFlag = null;
         private JumpPadEntity? _lastJumpPad = null;
         private EnemySpawnEntity? _enemySpawner = null;
@@ -773,7 +773,7 @@ namespace MphRead.Entities
             SetGunAnimation(GunAnimation.Idle, AnimFlags.NoLoop);
             _gunSmokeModel.SetAnimation(0);
             _smokeAlpha = 0;
-            _morphCamera = null;
+            MorphCamera = null;
             _octolithFlag = null;
             ResetMorphBallTrail();
             // todo: stop SFX, play SFX, update SFX handle
@@ -857,7 +857,7 @@ namespace MphRead.Entities
             // todo: node ref
             if (IsAltForm || IsMorphing || IsUnmorphing)
             {
-                ResumeAltFormCamera();
+                ResumeOwnCamera();
                 CameraInfo.Update();
             }
         }

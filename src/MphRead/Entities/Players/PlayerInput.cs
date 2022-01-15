@@ -759,7 +759,7 @@ namespace MphRead.Entities
                 {
                     Flags1 &= ~PlayerFlags1.AltDirOverride;
                 }
-                if (_timeSinceMorphCamera > 10 * 2 && !Flags1.TestFlag(PlayerFlags1.AltDirOverride)
+                if (_timeSinceMorphCamera > 10 * 2 && !Flags1.TestFlag(PlayerFlags1.AltDirOverride) // todo: FPS stuff
                     && (MathF.Abs(CameraInfo.Field48) >= 1 / 4096f || MathF.Abs(CameraInfo.Field4C) >= 1 / 4096f))
                 {
                     _altRollFbX = CameraInfo.Field48;
