@@ -375,7 +375,7 @@ namespace MphRead.Entities
         private ushort _respawnTimer = 0;
         private ushort _damageInvulnTimer = 0;
         private ushort _spawnInvulnTimer = 0;
-        private ushort _viewSwayTimer = 0;
+        private ushort _camSwitchTimer = 0;
         private ushort _doubleDmgTimer = 0;
         public bool DoubleDamage => _doubleDmgTimer > 0;
         private ushort _cloakTimer = 0;
@@ -550,7 +550,7 @@ namespace MphRead.Entities
             TeamIndex = SlotIndex; // todo: use game state and set Team
             _field4E8 = Vector3.Zero;
             _modelTransform = Matrix4.Identity;
-            _viewSwayTimer = (ushort)(Values.ViewSwayTime * 2); // todo: FPS stuff (use floats)
+            _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff (use floats)
             CameraInfo.Reset();
             CameraInfo.Position = Position;
             CameraInfo.UpVector = Vector3.UnitY;
@@ -719,7 +719,7 @@ namespace MphRead.Entities
             CameraInfo.Fov = Fixed.ToFloat(Values.NormalFov) * 2;
             // todo: cam info node ref
             SwitchCamera(CameraType.First, facing);
-            _viewSwayTimer = (ushort)(Values.ViewSwayTime * 2); // todo: FPS stuff
+            _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff
             _field684 = 0;
             _field688 = 0;
             UpdateCameraFirst();
@@ -2031,7 +2031,7 @@ namespace MphRead.Entities
         public readonly int Field5C;
         public readonly int WalkBobMax;
         public readonly int AimDistance;
-        public readonly ushort ViewSwayTime;
+        public readonly ushort CamSwitchTime;
         public readonly ushort Padding6A;
         public readonly int NormalFov;
         public readonly int Field70;
@@ -2112,7 +2112,7 @@ namespace MphRead.Entities
             int altMinHSpeed, int boostSpeedCap, int bipedGravity, int altAirGravity, int altGroundGravity, int jumpSpeed, int walkSpeedFactor,
             int altGroundSpeedFactor, int strafeSpeedFactor, int airSpeedFactor, int standSpeedFactor, int rollAltTraction, int altColRadius,
             int altColYPos, ushort boostChargeMin, ushort boostChargeMax, int boostSpeedMin, int boostSpeedMax, int altHSpeedCapIncrement,
-            int field58, int field5C, int walkBobMax, int aimDistance, ushort viewSwayTime, ushort padding6A, int normalFov, int field70,
+            int field58, int field5C, int walkBobMax, int aimDistance, ushort camSwitchTime, ushort padding6A, int normalFov, int field70,
             int aimYOffset, int field78, int field7C, int field80, int field84, int field88, int field8C, int field90, int minPickupHeight,
             int maxPickupHeight, int bipedColRadius, int fieldA0, int fieldA4, int fieldA8, short damageInvuln, ushort damageFlashTime,
             int fieldB0, int fieldB4, int fieldB8, int muzzleOffset, int bombCooldown, int bombSelfRadius, int bombSelfRadiusSquared,
@@ -2153,7 +2153,7 @@ namespace MphRead.Entities
             Field5C = field5C;
             WalkBobMax = walkBobMax;
             AimDistance = aimDistance;
-            ViewSwayTime = viewSwayTime;
+            CamSwitchTime = camSwitchTime;
             Padding6A = padding6A;
             NormalFov = normalFov;
             Field70 = field70;

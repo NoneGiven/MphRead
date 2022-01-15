@@ -35,7 +35,7 @@ namespace MphRead.Entities
             {
                 // todo: or if cam seq
                 drawBiped = !IsMainPlayer || CameraType != CameraType.First
-                    || _viewSwayTimer < Values.ViewSwayTime * 2; // todo: FPS stuff
+                    || _camSwitchTimer < Values.CamSwitchTime * 2; // todo: FPS stuff
                 if (IsAltForm)
                 {
                     _modelTransform.Row3.Xyz = Position;

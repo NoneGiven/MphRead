@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using MphRead.Formats;
 using OpenTK.Mathematics;
 
@@ -41,17 +42,17 @@ namespace MphRead.Entities
             }
             CameraType = type;
             _field544 = CameraInfo.Position;
-            _viewSwayTimer = (ushort)(Values.ViewSwayTime * 2 - _viewSwayTimer); // todo: FPS stuff
+            _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2 - _camSwitchTimer); // todo: FPS stuff
             CameraInfo.Shake = 0;
         }
 
         private void UpdateCamera()
         {
             CameraInfo.PrevPosition = CameraInfo.Position;
-            if (_viewSwayTimer < Values.ViewSwayTime * 2) // todo: FPS stuff
+            if (_camSwitchTimer < Values.CamSwitchTime * 2) // todo: FPS stuff
             {
-                _viewSwayTimer++;
-                if (!IsAltForm && _viewSwayTimer == Values.ViewSwayTime * 2)
+                _camSwitchTimer++;
+                if (!IsAltForm && _camSwitchTimer == Values.CamSwitchTime * 2)
                 {
                     SetGunAnimation(GunAnimation.UpDown, AnimFlags.NoLoop);
                 }
@@ -92,10 +93,10 @@ namespace MphRead.Entities
                 float angle = MathHelper.DegreesToRadians(360 * _timeStanding / (9 * 2)); // todo: FPS stuff
                 position.Y += MathF.Cos(angle) * _field44C - _field44C;
             }
-            float maxSway = Values.ViewSwayTime * 2;
-            if (_viewSwayTimer < maxSway) // todo: FPS stuff
+            float maxSway = Values.CamSwitchTime * 2; // todo: FPS stuff
+            if (_camSwitchTimer < maxSway)
             {
-                float pct = _viewSwayTimer / (float)maxSway;
+                float pct = _camSwitchTimer / (float)maxSway;
                 CameraInfo.Position = _field544 + (position - _field544) * pct;
                 Vector3 target = CameraInfo.Position + _facingVector;
                 CameraInfo.Target = Position + (target - Position) * pct;
@@ -171,7 +172,7 @@ namespace MphRead.Entities
             else
             {
                 Vector3 camVec;
-                if (_viewSwayTimer >= Values.ViewSwayTime * 2) // todo: FPS stuff
+                if (_camSwitchTimer >= Values.CamSwitchTime * 2) // todo: FPS stuff
                 {
                     camVec = (CameraInfo.Position - CameraInfo.Target).WithY(0);
                 }
@@ -188,10 +189,10 @@ namespace MphRead.Entities
                 );
             }
             CameraInfo.Target.Y += v7;
-            if (_viewSwayTimer < Values.ViewSwayTime * 2) // todo: FPS stuff
+            if (_camSwitchTimer < Values.CamSwitchTime * 2) // todo: FPS stuff
             {
-                float pct = _viewSwayTimer / (Values.ViewSwayTime * 2); // todo: FPS stuff
-                CameraInfo.Position = _field544 / 2 + (posVec - _field544) * pct;
+                float pct = _camSwitchTimer / (Values.CamSwitchTime * 2); // todo: FPS stuff
+                CameraInfo.Position = _field544 + (posVec - _field544) * pct;
                 Vector3 facingVec = CameraInfo.Position + CameraInfo.FacingVector;
                 CameraInfo.Target = facingVec + (CameraInfo.Target - facingVec) * pct;
             }
@@ -506,7 +507,63 @@ namespace MphRead.Entities
 
         private void UpdateCameraThird2()
         {
-            // sknext
+            // sktodo: "view sway" field names
+            float maxSway = Values.CamSwitchTime * 2; // todo: FPS stuff
+            if (_camSwitchTimer < maxSway)
+            {
+                _field68C = Fixed.ToFloat(Values.Field80);
+                _field690 = Fixed.ToFloat(Values.Field78);
+            }
+            else if (Flags1.TestFlag(PlayerFlags1.NoUnmorph))
+            {
+                // sktodo: FPS stuff
+                Debug.Assert(_field68C >= 0);
+                _field68C += -0.2f * _field68C / 2;
+                _field690 += 0.2f * (1.5f - _field690) / 2;
+            }
+            else
+            {
+                // sktodo: FPS stuff
+                _field68C += 0.2f * (Fixed.ToFloat(Values.Field80) - _field68C) / 2;
+                _field690 += 0.2f * (Fixed.ToFloat(Values.Field78) - _field690) / 2;
+            }
+            CameraInfo.Target = Volume.SpherePosition;
+            Vector3 camTarget = CameraInfo.Target;
+            CameraInfo.Target.Y += _field68C;
+            if (MorphCamera != null)
+            {
+                CameraInfo.Position = MorphCamera.Position;
+                return;
+            }
+            Vector3 camVec;
+            if (Flags1.TestFlag(PlayerFlags1.NoUnmorph))
+            {
+                camVec = new Vector3(_field70 * _field690, 0, _field84 * _field690);
+            }
+            else
+            {
+                camVec = _facingVector * _field690;
+            }
+            Vector3 posVec = CameraInfo.Target - camVec;
+            if (_camSwitchTimer < maxSway)
+            {
+                float pct = _camSwitchTimer / maxSway;
+                CameraInfo.Position = _field544 + (posVec - _field544) * pct;
+                Vector3 facingVec = CameraInfo.Position + _facingVector;
+                CameraInfo.Target = facingVec + (CameraInfo.Target - facingVec) * pct;
+            }
+            else
+            {
+                float factor = Fixed.ToFloat(Values.Field84);
+                CameraInfo.Position += (posVec - CameraInfo.Position) * factor; // sktodo: FPS stuff?
+            }
+            CollisionResult result = default;
+            if (CollisionDetection.CheckBetweenPoints(camTarget, CameraInfo.Position, TestFlags.Players, _scene, ref result))
+            {
+                Vector3 toTarget = CameraInfo.Position - camTarget;
+                CameraInfo.Position = CameraInfo.Target + toTarget * result.Distance;
+                CameraInfo.Position += 0.15f * result.Plane.Xyz;
+            }
         }
 
         private void UpdateCameraFree()
