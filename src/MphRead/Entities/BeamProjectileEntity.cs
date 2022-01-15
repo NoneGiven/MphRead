@@ -260,7 +260,7 @@ namespace MphRead.Entities
             if (Flags.TestFlag(BeamFlags.SurfaceCollision))
             {
                 CollisionResult colRes = default;
-                if (CollisionDetection.CheckBetweenPoints(BackPosition, Position, TestFlags.AffectsBeams, _scene, ref colRes)
+                if (CollisionDetection.CheckBetweenPoints(BackPosition, Position, TestFlags.Beams, _scene, ref colRes)
                     && colRes.Distance < minDist)
                 {
                     float dot = Vector3.Dot(BackPosition, colRes.Plane.Xyz) - colRes.Plane.W;
@@ -875,7 +875,7 @@ namespace MphRead.Entities
                         float dist = Vector3.Distance(player.Position, Position);
                         // todo?: wifi conditions
                         if (dist >= SplashRadius
-                            || CollisionDetection.CheckBetweenPoints(Position, player.Position, TestFlags.AffectsBeams, _scene, ref discard))
+                            || CollisionDetection.CheckBetweenPoints(Position, player.Position, TestFlags.Beams, _scene, ref discard))
                         {
                             OmegaCannonFlash();
                         }
@@ -913,7 +913,7 @@ namespace MphRead.Entities
                 CollisionResult res = default;
                 float dist = Vector3.Distance(enemy.Position, Position);
                 if (dist < SplashRadius
-                    && !CollisionDetection.CheckBetweenPoints(Position, enemy.Position, TestFlags.AffectsBeams, _scene, ref res))
+                    && !CollisionDetection.CheckBetweenPoints(Position, enemy.Position, TestFlags.Beams, _scene, ref res))
                 {
                     float damage = GetInterpolatedValue(SplashDamageType, SplashDamage, 0, dist / SplashRadius);
                     enemy.TakeDamage((uint)damage, this);

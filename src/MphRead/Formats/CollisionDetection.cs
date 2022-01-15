@@ -23,9 +23,9 @@ namespace MphRead.Formats
     public enum TestFlags
     {
         None = 0x0,
-        AffectsPlayers = 0x2000,
-        AffectsBeams = 0x4000,
-        AffectsScan = 0x8000
+        Players = 0x2000,
+        Beams = 0x4000,
+        Scan = 0x8000
     }
 
     // Field0 is set in check_between_points_sphere and check_blocker_in_radius
@@ -86,12 +86,12 @@ namespace MphRead.Formats
             _seenData.Clear();
             bool collided = false;
             ushort mask = 0;
-            bool includeEntities = !flags.TestFlag(TestFlags.AffectsScan);
-            if (flags.TestFlag(TestFlags.AffectsPlayers))
+            bool includeEntities = !flags.TestFlag(TestFlags.Scan);
+            if (flags.TestFlag(TestFlags.Players))
             {
                 mask |= (ushort)CollisionFlags.IgnorePlayers;
             }
-            if (flags.TestFlag(TestFlags.AffectsBeams))
+            if (flags.TestFlag(TestFlags.Beams))
             {
                 mask |= (ushort)CollisionFlags.IgnoreBeams;
             }
@@ -373,12 +373,12 @@ namespace MphRead.Formats
             _seenData.Clear();
             int count = 0;
             ushort mask = 0;
-            bool includeEntities = !flags.TestFlag(TestFlags.AffectsScan);
-            if (flags.TestFlag(TestFlags.AffectsPlayers))
+            bool includeEntities = !flags.TestFlag(TestFlags.Scan);
+            if (flags.TestFlag(TestFlags.Players))
             {
                 mask |= (ushort)CollisionFlags.IgnorePlayers;
             }
-            if (flags.TestFlag(TestFlags.AffectsBeams))
+            if (flags.TestFlag(TestFlags.Beams))
             {
                 mask |= (ushort)CollisionFlags.IgnoreBeams;
             }
@@ -542,11 +542,11 @@ namespace MphRead.Formats
             _seenData.Clear();
             int count = 0;
             ushort mask = 0;
-            if (flags.TestFlag(TestFlags.AffectsPlayers))
+            if (flags.TestFlag(TestFlags.Players))
             {
                 mask |= (ushort)CollisionFlags.IgnorePlayers;
             }
-            if (flags.TestFlag(TestFlags.AffectsBeams))
+            if (flags.TestFlag(TestFlags.Beams))
             {
                 mask |= (ushort)CollisionFlags.IgnoreBeams;
             }

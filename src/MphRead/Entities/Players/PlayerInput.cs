@@ -753,21 +753,60 @@ namespace MphRead.Entities
             Flags1 |= PlayerFlags1.UsedJump;
             if (_frozenTimer == 0 && _health > 0)
             {
-                // sktodo: update camera vecs and flags bit 29
-                _altRollFbX = 0;
-                _altRollFbZ = 1;
-                _altRollLrX = 1;
-                _altRollLrZ = 0;
+                // todo?: if touch movement for alt form was a thing, this would need extra conditions
+                if ((!Controls.MoveRight.IsDown && !Controls.MoveLeft.IsDown && !Controls.MoveUp.IsDown && !Controls.MoveDown.IsDown)
+                    || Controls.MoveRight.IsPressed || Controls.MoveLeft.IsPressed || Controls.MoveUp.IsPressed || Controls.MoveDown.IsPressed)
+                {
+                    Flags1 &= ~PlayerFlags1.AltDirOverride;
+                }
+                if (_timeSinceMorphCamera > 10 * 2 && !Flags1.TestFlag(PlayerFlags1.AltDirOverride)
+                    && (MathF.Abs(CameraInfo.Field48) >= 1 / 4096f || MathF.Abs(CameraInfo.Field4C) >= 1 / 4096f))
+                {
+                    _altRollFbX = CameraInfo.Field48;
+                    _altRollFbZ = CameraInfo.Field4C;
+                    _altRollLrX = CameraInfo.Field50;
+                    _altRollLrZ = CameraInfo.Field54;
+                }
                 // todo?: field35C targeting(?) stuff
                 if (Values.AltGroundedNoGrav != 0)
                 {
                     // Trace, Sylux, Weavel
-                    // todo: aim
-                    if (!Controls.KeyboardAim)
+                    if (Controls.MouseAim)
                     {
+                        // todo: update HUD shift
+                        float aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
+                        float aimX = -Input.MouseDeltaX / 4f;
+                        UpdateAimY(aimY);
+                        UpdateAimX(aimX);
+                        if ((Hunter == Hunter.Trace || Hunter == Hunter.Weavel) && Flags1.TestFlag(PlayerFlags1.Grounded))
+                        {
+                            // sktodo: threshold values
+                            if (aimX > 3)
+                            {
+                                _timeIdle = 0;
+                                animId = (int)WeavelAltAnim.Turn; // or TraceAltAnim.MoveBackward
+                                animFlags = AnimFlags.Reverse;
+                                if (_altModel.AnimInfo.Index[0] == animId)
+                                {
+                                    _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                    _bipedModel2.AnimInfo.Flags[0] |= AnimFlags.Reverse;
+                                }
+                            }
+                            else if (aimX < -3)
+                            {
+                                _timeIdle = 0;
+                                animId = (int)WeavelAltAnim.Turn; // or TraceAltAnim.MoveBackward
+                                if (_altModel.AnimInfo.Index[0] == animId)
+                                {
+                                    _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                    _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
+                                }
+                            }
+                        }
                     }
-                    else
+                    if (Controls.KeyboardAim)
                     {
+                        // itodo: button aim
                     }
                     if (!Flags2.TestFlag(PlayerFlags2.BipedLock) && (Hunter != Hunter.Trace || !Flags2.TestFlag(PlayerFlags2.AltAttack)))
                     {

@@ -782,7 +782,10 @@ namespace MphRead.Entities
             _jumpPadControlLockMin = 0;
             _timeSinceJumpPad = UInt16.MaxValue; // the game doesn't do this
             // todo: update HUD effects
-            // todo: update camera info vecs
+            _altRollFbX = CameraInfo.Field48;
+            _altRollFbZ = CameraInfo.Field4C;
+            _altRollLrX = CameraInfo.Field50;
+            _altRollLrZ = CameraInfo.Field54;
             _light1Vector = _scene.Light1Vector;
             _light1Color = _scene.Light1Color;
             _light2Vector = _scene.Light2Vector;
@@ -1943,7 +1946,7 @@ namespace MphRead.Entities
         Boosting = 0x4000000,
         CanTouchBoost = 0x8000000,
         UsedJumpPad = 0x10000000,
-        Bit29 = 0x20000000,
+        AltDirOverride = 0x20000000,
         Bit30 = 0x40000000,
         DrawGunSmoke = 0x80000000
     }
