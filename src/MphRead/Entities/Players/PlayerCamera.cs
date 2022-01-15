@@ -178,7 +178,7 @@ namespace MphRead.Entities
                 else
                 {
                     camVec = -CameraInfo.FacingVector.WithY(0);
-                    _field544 += Position - PrevPosition;
+                    _field544 += (Position - PrevPosition) / 2; // sktodo: FPS stuff?
                 }
                 camVec = camVec.Normalized();
                 posVec = new Vector3(
@@ -191,7 +191,7 @@ namespace MphRead.Entities
             if (_viewSwayTimer < Values.ViewSwayTime * 2) // todo: FPS stuff
             {
                 float pct = _viewSwayTimer / (Values.ViewSwayTime * 2); // todo: FPS stuff
-                CameraInfo.Position = _field544 + (posVec - _field544) * pct;
+                CameraInfo.Position = _field544 / 2 + (posVec - _field544) * pct;
                 Vector3 facingVec = CameraInfo.Position + CameraInfo.FacingVector;
                 CameraInfo.Target = facingVec + (CameraInfo.Target - facingVec) * pct;
             }
