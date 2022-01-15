@@ -79,16 +79,15 @@ namespace MphRead.Entities
 
         private void UpdateAimFacing()
         {
-            Vector3 facing = FacingVector;
-            float dot = Vector3.Dot(_gunVec1, facing);
+            float dot = Vector3.Dot(_gunVec1, _facingVector);
             if (dot < Fixed.ToFloat(3956))
             {
-                Vector3 temp1 = (facing - _gunVec1 * dot).Normalized();
-                facing = Fixed.ToFloat(3956) * _gunVec1 + Fixed.ToFloat(1060) * temp1;
+                Vector3 temp1 = (_facingVector - _gunVec1 * dot).Normalized();
+                _facingVector = Fixed.ToFloat(3956) * _gunVec1 + Fixed.ToFloat(1060) * temp1;
             }
-            Vector3 temp2 = _gunVec1 - facing;
-            facing += temp2 * 0.1f;
-            SetTransform(facing.Normalized(), UpVector, Position);
+            Vector3 temp2 = _gunVec1 - _facingVector;
+            _facingVector += temp2 * 0.1f;
+            _facingVector = _facingVector.Normalized();
         }
 
         private void UpdateAimY(float amount)
@@ -166,7 +165,7 @@ namespace MphRead.Entities
             _aimPosition = CameraInfo.Position + _gunVec1 * Fixed.ToFloat(Values.AimDistance);
             if (EquipInfo.Zoomed)
             {
-                SetTransform(_gunVec1, UpVector, Position);
+                _facingVector = _gunVec1;
             }
             else
             {
@@ -507,7 +506,7 @@ namespace MphRead.Entities
                         if (EquipInfo.Zoomed)
                         {
                             float zoomFov = Fixed.ToFloat(EquipInfo.Weapon.ZoomFov) * 2;
-                            Vector3 facing = FacingVector;
+                            Vector3 facing = _facingVector;
 
                             void CheckZoomTargets(EntityType type)
                             {
@@ -602,10 +601,9 @@ namespace MphRead.Entities
                 }
                 if (EquipInfo.Zoomed)
                 {
-                    Vector3 facing = FacingVector;
-                    Vector3 diff = _gunVec1 - facing;
-                    facing += diff * 0.3f / 2; // todo: FPS stuff
-                    SetTransform(facing.Normalized(), UpVector, Position);
+                    Vector3 diff = _gunVec1 - _facingVector;
+                    _facingVector += diff * 0.3f / 2; // todo: FPS stuff
+                    _facingVector = _facingVector.Normalized();
                 }
                 if (anim1 == PlayerAnimation.None)
                 {
@@ -954,7 +952,7 @@ namespace MphRead.Entities
                             _spireRockPosR = Position;
                             _spireRockPosL = Position;
                             _spireAltUp = _fieldC0;
-                            var cross = Vector3.Cross(FacingVector, _spireAltUp);
+                            var cross = Vector3.Cross(_facingVector, _spireAltUp);
                             _spireAltFacing = Vector3.Cross(_spireAltUp, cross).Normalized();
                         }
                     }
@@ -1069,7 +1067,7 @@ namespace MphRead.Entities
                                     _scene.UnlinkEffectEntry(_boostEffect);
                                     _boostEffect = null;
                                 }
-                                _boostEffect = _scene.SpawnEffectGetEntry(136, _gunVec2, FacingVector, Position); // samusDash
+                                _boostEffect = _scene.SpawnEffectGetEntry(136, _gunVec2, _facingVector, Position); // samusDash
                                 if (_boostEffect != null)
                                 {
                                     _boostEffect.SetElementExtension(true);
@@ -1247,11 +1245,10 @@ namespace MphRead.Entities
                     {
                         _field70 = hSpeed.X;
                         _field74 = hSpeed.Z;
-                        var face = new Vector3(_field70, 0, _field74);
-                        _gunVec1 = face;
+                        _facingVector = new Vector3(_field70, 0, _field74);
+                        _gunVec1 = _facingVector;
                         float add = _gunVec1.X * Fixed.ToFloat(Values.AimDistance);
                         _aimPosition = Position.AddX(add).AddZ(add);
-                        SetTransform(face, UpVector, Position);
                     }
                 }
                 if (IsAltForm)
@@ -1282,15 +1279,13 @@ namespace MphRead.Entities
                 _hSpeedMag = hSpeedMag;
             }
             // todo: check how much of this overwrites stuff done above
-            Vector3 facing = FacingVector;
-            float hMag = MathF.Sqrt(facing.X * facing.X + facing.Z * facing.Z);
-            _field70 = facing.X / hMag;
-            _field74 = facing.Z / hMag;
+            float hMag = MathF.Sqrt(_facingVector.X * _facingVector.X + _facingVector.Z * _facingVector.Z);
+            _field70 = _facingVector.X / hMag;
+            _field74 = _facingVector.Z / hMag;
             _gunVec2 = new Vector3(_field74, 0, -_field70);
             _field78 = _gunVec2.X;
             _field7C = _gunVec2.Z;
-            Vector3 up = Vector3.Cross(facing, _gunVec2).Normalized();
-            SetTransform(facing, up, Position);
+            _upVector = Vector3.Cross(_facingVector, _gunVec2).Normalized();
             if (Values.AltGroundedNoGrav != 0)
             {
                 _field80 = _field70;

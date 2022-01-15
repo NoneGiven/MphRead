@@ -78,7 +78,7 @@ namespace MphRead.Entities
                     Node spineNode = _spineNodes[lod]!;
                     spineNode.AnimIgnoreChild = true;
                     // todo: we can just figure out the angle directly from the facing vector
-                    Vector3 facing = FacingVector;
+                    Vector3 facing = _facingVector;
                     float limit = Fixed.ToFloat(2896);
                     float cos = MathF.Sqrt(1 - facing.Y * facing.Y);
                     float sin = facing.Y;
@@ -164,7 +164,7 @@ namespace MphRead.Entities
                 }
                 else if (AttachedEnemy == null && !_field6D0 && Hunter != Hunter.Guardian)
                 {
-                    Matrix4 transform = GetTransformMatrix(_aimVec, UpVector, _gunDrawPos);
+                    Matrix4 transform = GetTransformMatrix(_aimVec, _upVector, _gunDrawPos);
                     UpdateTransforms(_gunModel, transform, Recolor);
                     GetDrawItems(_gunModel, _gunModel.Model.Nodes[0], _curAlpha);
                     if (Flags1.TestFlag(PlayerFlags1.DrawGunSmoke))

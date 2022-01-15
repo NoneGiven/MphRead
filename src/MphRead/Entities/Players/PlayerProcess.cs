@@ -10,6 +10,13 @@ namespace MphRead.Entities
     {
         public override bool Process()
         {
+            bool result = ProcessPlayer();
+            SetTransform(_facingVector, _upVector, Position);
+            return result;
+        }
+
+        public bool ProcessPlayer()
+        {
             if (_scene.Multiplayer && !LoadFlags.TestFlag(LoadFlags.Connected) && LoadFlags.TestFlag(LoadFlags.WasConnected))
             {
                 LoadFlags |= LoadFlags.Disconnected;
@@ -524,7 +531,7 @@ namespace MphRead.Entities
             }
             if (_boostEffect != null)
             {
-                _boostEffect.Transform(_gunVec2, FacingVector, Position);
+                _boostEffect.Transform(_gunVec2, _facingVector, Position);
                 if (!IsAltForm && !IsMorphing)
                 {
                     _scene.UnlinkEffectEntry(_boostEffect);
@@ -545,7 +552,7 @@ namespace MphRead.Entities
             }
             if (_furlEffect != null)
             {
-                _furlEffect.Transform(_gunVec2, FacingVector, Position);
+                _furlEffect.Transform(_gunVec2, _facingVector, Position);
                 if (!IsAltForm && !IsMorphing || _furlEffect.IsFinished)
                 {
                     _scene.UnlinkEffectEntry(_furlEffect);
@@ -585,10 +592,10 @@ namespace MphRead.Entities
                     _field40C = 0;
                     float factor1 = (Rng.GetRandomInt2(Values.SwayLimit) - Values.SwayLimit / 2) / 4096f;
                     float factor2 = (Rng.GetRandomInt2(Values.SwayLimit) - Values.SwayLimit / 2) / 4096f;
-                    _field410 = FacingVector;
+                    _field410 = _facingVector;
                     _field41C = _field410;
                     _field428 = _field410;
-                    _field41C += _gunVec2 * factor1 + UpVector * factor2;
+                    _field41C += _gunVec2 * factor1 + _upVector * factor2;
                 }
                 else if (_timeSinceInput > Values.SwayStartTime * 2) // todo: FPS stuff
                 {
@@ -600,12 +607,12 @@ namespace MphRead.Entities
                         float factor2 = (Rng.GetRandomInt2(Values.SwayLimit) - Values.SwayLimit / 2) / 4096f;
                         _field410 = _field41C;
                         _field41C = _field428;
-                        _field41C += _gunVec2 * factor1 + UpVector * factor2;
+                        _field41C += _gunVec2 * factor1 + _upVector * factor2;
                     }
                     float angle = 180 * _field40C + 180;
                     float factor = (MathF.Cos(MathHelper.DegreesToRadians(angle)) + 1) / 2;
-                    Vector3 facing = _field410 + (_field41C - _field410) * factor;
-                    SetTransform(facing.Normalized(), UpVector, Position);
+                    _facingVector = _field410 + (_field41C - _field410) * factor;
+                    _facingVector = _facingVector.Normalized();
                 }
             }
             if (AttachedEnemy != null && !IsAltForm && (_bipedModel2.AnimInfo.Index[0] != (int)PlayerAnimation.Unmorph
@@ -750,11 +757,11 @@ namespace MphRead.Entities
                         {
                             if (_doubleDmgEffect != null)
                             {
-                                _doubleDmgEffect.Transform(UpVector, _gunVec1, _muzzlePos);
+                                _doubleDmgEffect.Transform(_upVector, _gunVec1, _muzzlePos);
                             }
                             else
                             {
-                                _doubleDmgEffect = _scene.SpawnEffectGetEntry(244, UpVector, _gunVec1, _muzzlePos); // doubleDamageGun
+                                _doubleDmgEffect = _scene.SpawnEffectGetEntry(244, _upVector, _gunVec1, _muzzlePos); // doubleDamageGun
                                 _doubleDmgEffect.SetElementExtension(true);
                             }
                         }
@@ -792,7 +799,7 @@ namespace MphRead.Entities
                     }
                     else
                     {
-                        _burnEffect.Transform(UpVector, _gunVec1, _muzzlePos);
+                        _burnEffect.Transform(_upVector, _gunVec1, _muzzlePos);
                     }
                 }
             }
@@ -1137,8 +1144,8 @@ namespace MphRead.Entities
 
         private void UpdateAimVecs()
         {
-            Vector3 facing = FacingVector;
-            Vector3 up = UpVector;
+            Vector3 facing = _facingVector;
+            Vector3 up = _upVector;
             _gunDrawPos = Fixed.ToFloat(Values.FieldB8) * facing
                 + _scene.CameraPosition // todo: try to figure out why this works
                 + Fixed.ToFloat(Values.FieldB0) * _gunVec2
@@ -1155,7 +1162,7 @@ namespace MphRead.Entities
         private void InitAltTransform()
         {
             _field4E8 = _gunVec2;
-            Vector3 up = UpVector;
+            Vector3 up = _upVector;
             _modelTransform.Row0.X = _gunVec2.X; // right?
             _modelTransform.Row0.Y = 0;
             _modelTransform.Row0.Z = _gunVec2.Z;
@@ -1378,7 +1385,7 @@ namespace MphRead.Entities
             }
             else if (Hunter == Hunter.Samus)
             {
-                _furlEffect = _scene.SpawnEffectGetEntry(30, _gunVec2, FacingVector, Position); // samusFurl
+                _furlEffect = _scene.SpawnEffectGetEntry(30, _gunVec2, _facingVector, Position); // samusFurl
             }
             else if (Hunter == Hunter.Kanden)
             {
@@ -1415,7 +1422,7 @@ namespace MphRead.Entities
             }
             Flags1 &= ~PlayerFlags1.Morphing;
             Flags1 |= PlayerFlags1.Unmorphing;
-            SwitchCamera(CameraType.First, FacingVector);
+            SwitchCamera(CameraType.First, _facingVector);
             if (_boostCharge > 0)
             {
                 // todo: update SFX
@@ -1496,7 +1503,7 @@ namespace MphRead.Entities
             }
             else
             {
-                _gunVec1 = FacingVector;
+                _gunVec1 = _facingVector;
                 CollisionVolume bipedVolume = PlayerVolumes[(int)Hunter, 0];
                 Position += _volumeUnxf.SpherePosition - bipedVolume.SpherePosition;
                 _volumeUnxf = bipedVolume;
@@ -1528,7 +1535,7 @@ namespace MphRead.Entities
                 {
                     position = _muzzlePos;
                     up = _gunVec1;
-                    facing = UpVector;
+                    facing = _upVector;
                     effectId = 188; // flamingGun
                 }
                 _burnEffect = _scene.SpawnEffectGetEntry(effectId, facing, up, position);
@@ -1539,8 +1546,8 @@ namespace MphRead.Entities
         private void CreateIceBreakEffectGun()
         {
             int effectId = 231; // iceShatter
-            Vector3 playerUp = UpVector;
-            Vector3 up = FacingVector;
+            Vector3 playerUp = _upVector;
+            Vector3 up = _facingVector;
             Vector3 facing;
             if (up.Z <= -0.9f || up.Z >= 0.9f)
             {
@@ -1803,27 +1810,6 @@ namespace MphRead.Entities
             {
                 _scene.UnlinkEffectEntry(_deathaltEffect);
                 _deathaltEffect = null;
-            }
-        }
-
-        public void DebugInput(OpenTK.Windowing.GraphicsLibraryFramework.KeyboardState keyboardState)
-        {
-            Vector3 facing = FacingVector;
-            if (keyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up))
-            {
-                if (facing.Y < 1)
-                {
-                    facing.Y += 0.02f;
-                    SetTransform(facing.Normalized(), UpVector, Position);
-                }
-            }
-            else if (keyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down))
-            {
-                if (facing.Y > -1)
-                {
-                    facing.Y -= 0.02f;
-                    SetTransform(facing.Normalized(), UpVector, Position);
-                }
             }
         }
     }

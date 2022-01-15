@@ -1,7 +1,4 @@
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
-using System.Threading;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -11,6 +8,8 @@ namespace MphRead.Entities
         public CameraInfo CameraInfo { get; } = new CameraInfo();
         public CameraType CameraType { get; private set; } = CameraType.First;
         private Vector3 _field544;
+        private float _field68C = 0;
+        private float _field690 = 0;
 
         private void SwitchCamera(CameraType type, Vector3 facing)
         {
@@ -94,13 +93,13 @@ namespace MphRead.Entities
             {
                 float pct = _viewSwayTimer / (float)maxSway;
                 CameraInfo.Position = _field544 + (position - _field544) * pct;
-                Vector3 target = CameraInfo.Position + FacingVector;
+                Vector3 target = CameraInfo.Position + _facingVector;
                 CameraInfo.Target = Position + (target - Position) * pct;
             }
             else
             {
                 CameraInfo.Position = position;
-                CameraInfo.Target = CameraInfo.Position + FacingVector;
+                CameraInfo.Target = CameraInfo.Position + _facingVector;
             }
             CameraInfo.Target.Y += Fixed.ToFloat(Values.Field118) * MathF.Sin(MathHelper.DegreesToRadians(_field688));
             if (MathF.Abs(_field684) >= 1 / 4096f)
@@ -122,7 +121,52 @@ namespace MphRead.Entities
 
         private void UpdateCameraThird1()
         {
-            // sktodo
+            float v5;
+            float v6;
+            float v7;
+            if (Flags1.TestFlag(PlayerFlags1.NoUnmorph))
+            {
+                v5 = Fixed.ToFloat(Values.Field78);
+                v6 = Fixed.ToFloat(Values.Field7C);
+                v7 = Fixed.ToFloat(Values.Field80);
+            }
+            else
+            {
+                v5 = 1.5f;
+                v6 = 0.7f;
+                v7 = 0.5f;
+            }
+            CameraInfo.Target.X = Volume.SpherePosition.X;
+            CameraInfo.Target.Y -= v7;
+            CameraInfo.Target.Y += (Volume.SpherePosition.Y - CameraInfo.Target.Y) / 2;
+            CameraInfo.Target.Z = Volume.SpherePosition.Z;
+            if (_morphCamera != null)
+            {
+                CameraInfo.Position = _morphCamera.Position;
+            }
+            else
+            {
+                if (_jumpPadControlLock > 0)
+                {
+
+                }
+                else if (_field551 <= 1)
+                {
+
+                }
+                else
+                {
+                    if (_viewSwayTimer >= Values.ViewSwayTime * 2) // todo: FPS stuff
+                    {
+
+                    }
+                    else
+                    {
+
+                    }
+                }
+            }
+            // skhere
         }
 
         private void UpdateCameraThird2()
@@ -138,6 +182,29 @@ namespace MphRead.Entities
         private void UpdateCameraSpectator()
         {
             // camtodo
+        }
+
+        private void ResumeAltFormCamera()
+        {
+            if (CameraType == CameraType.Third1)
+            {
+                CameraInfo.Target = Position;
+                CameraInfo.Position = CameraInfo.Target;
+                CameraInfo.Position.X -= _field80 * Fixed.ToFloat(Values.Field78);
+                CameraInfo.Position.Z -= _field84 * Fixed.ToFloat(Values.Field78);
+                _field544 = CameraInfo.Position;
+                CameraInfo.PrevPosition = CameraInfo.Position;
+                CameraInfo.Target.Y += Fixed.ToFloat(Values.Field80);
+            }
+            else
+            {
+                _field68C = Fixed.ToFloat(Values.Field80);
+                _field690 = Fixed.ToFloat(Values.Field78);
+                CameraInfo.Target = Position.AddY(_field68C + Fixed.ToFloat(Values.AltColYPos));
+                CameraInfo.Position = CameraInfo.Target - _facingVector * _field690;
+                _field544 = CameraInfo.Position;
+                CameraInfo.PrevPosition = CameraInfo.Position;
+            }
         }
     }
 

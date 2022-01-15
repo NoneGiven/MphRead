@@ -251,6 +251,8 @@ namespace MphRead.Entities
         private CollisionVolume _volume;
         public CollisionVolume Volume => _volume;
 
+        private Vector3 _facingVector;
+        private Vector3 _upVector;
         private Vector3 _gunVec1; // facing? (aim?)
         private Vector3 _gunVec2; // right? (turn?)
         private Vector3 _aimPosition;
@@ -507,7 +509,9 @@ namespace MphRead.Entities
             InitializeWeapon();
             _availableWeapons[BeamType.PowerBeam] = true;
             TryEquipWeapon(BeamType.PowerBeam, silent: true);
-            SetTransform(-Vector3.UnitZ, Vector3.UnitY, Vector3.Zero);
+            _facingVector = -Vector3.UnitZ;
+            _upVector = Vector3.UnitY;
+            SetTransform(_facingVector, _upVector, Vector3.Zero);
             Speed = Vector3.Zero;
             _gunVec1 = -Vector3.UnitZ;
             _gunVec2 = -Vector3.UnitX;
@@ -550,7 +554,7 @@ namespace MphRead.Entities
             CameraInfo.Reset();
             CameraInfo.Position = Position;
             CameraInfo.UpVector = Vector3.UnitY;
-            CameraInfo.Target = Position + FacingVector;
+            CameraInfo.Target = Position + _facingVector;
             // todo: cam info node ref
             _timeIdle = 0;
             _timeSinceInput = 0;
@@ -681,14 +685,16 @@ namespace MphRead.Entities
             {
                 pos = pos.AddY(1);
             }
-            SetTransform(facing, up, pos);
+            _upVector = up;
+            _facingVector = facing;
+            SetTransform(_facingVector, _upVector, pos);
             PrevPosition = Position;
             IdlePosition = Position;
             _gunVec2 = Vector3.Cross(up, facing).Normalized();
             _gunVec1 = facing;
-            float factor = 1 / MathF.Sqrt(facing.X * facing.X + facing.Z * facing.Z);
-            _field70 = facing.X * factor;
-            _field74 = facing.Z * factor;
+            float hMag = MathF.Sqrt(facing.X * facing.X + facing.Z * facing.Z);
+            _field70 = facing.X / hMag;
+            _field74 = facing.Z / hMag;
             _field78 = _field74;
             _field7C = -_field70;
             _field80 = _field70;
@@ -805,8 +811,8 @@ namespace MphRead.Entities
         public override void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
         {
             position = Position.AddY(IsAltForm ? 0 : 0.5f);
-            up = UpVector;
-            facing = FacingVector;
+            up = _upVector;
+            facing = _facingVector;
         }
 
         public override bool GetTargetable()
@@ -843,7 +849,14 @@ namespace MphRead.Entities
         public void Teleport(Vector3 position, Vector3 facing)
         {
             _gunVec1 = facing;
-            Transform = GetTransformMatrix(facing, UpVector, position);
+            _facingVector = facing;
+            SetTransform(facing, _upVector, position);
+            // todo: node ref
+            if (IsAltForm || IsMorphing || IsUnmorphing)
+            {
+                ResumeAltFormCamera();
+                CameraInfo.Update();
+            }
         }
 
         // todo: visualize
