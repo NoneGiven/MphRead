@@ -1825,7 +1825,7 @@ namespace MphRead.Entities
             }
             if (_health > 0 && !IsAltForm)
             {
-                float shake = 0.3f;
+                float shake = 0.03f;
                 if (!flags.TestFlag(DamageFlags.Burn))
                 {
                     shake = Math.Max(damage * 0.01f, 0.05f);
