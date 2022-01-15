@@ -547,7 +547,7 @@ namespace MphRead.Entities
             _field4E8 = Vector3.Zero;
             _modelTransform = Matrix4.Identity;
             _viewSwayTimer = (ushort)(Values.ViewSwayTime * 2); // todo: FPS stuff (use floats)
-            ResetCameraInfo();
+            CameraInfo.Reset();
             CameraInfo.Position = Position;
             CameraInfo.UpVector = Vector3.UnitY;
             CameraInfo.Target = Position + FacingVector;
@@ -710,7 +710,7 @@ namespace MphRead.Entities
             CameraInfo.PrevPosition = Position;
             CameraInfo.UpVector = Vector3.UnitY;
             CameraInfo.Target = Position + facing;
-            CameraInfo.Fov = Values.NormalFov * 2;
+            CameraInfo.Fov = Fixed.ToFloat(Values.NormalFov) * 2;
             // todo: cam info node ref
             SwitchCamera(CameraType.First, facing);
             _viewSwayTimer = (ushort)(Values.ViewSwayTime * 2); // todo: FPS stuff
@@ -900,11 +900,6 @@ namespace MphRead.Entities
         public void OnHalfturretDied()
         {
             Flags2 &= ~PlayerFlags2.Halfturret;
-        }
-
-        private void ResetCameraInfo()
-        {
-            // todo: this
         }
 
         private void ResetMorphBallTrail()

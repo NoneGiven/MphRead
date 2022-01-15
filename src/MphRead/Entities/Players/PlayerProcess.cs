@@ -672,7 +672,18 @@ namespace MphRead.Entities
             }
             if (!EquipInfo.Zoomed)
             {
-                // todo: return to normal FOV
+                float currentFov = CameraInfo.Fov;
+                float normalFov = Fixed.ToFloat(Values.NormalFov) * 2;
+                float diff = normalFov - currentFov;
+                if (MathF.Abs(diff) >= 0.1f * 2)
+                {
+                    currentFov += diff / 4; // todo: FPS stuff (balances out here)
+                    CameraInfo.Fov = currentFov;
+                }
+                else
+                {
+                    CameraInfo.Fov = normalFov;
+                }
             }
             if (_bipedModel2.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
             {

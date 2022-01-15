@@ -1,6 +1,7 @@
 using System;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace MphRead.Entities
 {
@@ -99,8 +100,8 @@ namespace MphRead.Entities
             float sensitivity = 1; // itodo: this
             if (EquipInfo.Zoomed)
             {
-                float fovFactor = CameraInfo.Fov - Values.NormalFov * 2;
-                sensitivity *= Fixed.ToFloat(Values.Field70) * fovFactor;
+                float fovFactor = CameraInfo.Fov - Fixed.ToFloat(Values.NormalFov) * 2;
+                sensitivity *= -Fixed.ToFloat(Values.Field70) * fovFactor;
             }
             amount *= sensitivity;
             // unimpl-controls: these calculations are different when exact aim is not set
@@ -139,8 +140,8 @@ namespace MphRead.Entities
             float sensitivity = 1; // itodo: this
             if (EquipInfo.Zoomed)
             {
-                float fovFactor = CameraInfo.Fov - Values.NormalFov * 2;
-                sensitivity *= Fixed.ToFloat(Values.Field70) * fovFactor;
+                float fovFactor = CameraInfo.Fov - Fixed.ToFloat(Values.NormalFov) * 2;
+                sensitivity *= -Fixed.ToFloat(Values.Field70) * fovFactor;
             }
             amount *= sensitivity;
             // unimpl-controls: these calculations are different when exact aim is not set
@@ -505,7 +506,58 @@ namespace MphRead.Entities
                         }
                         if (EquipInfo.Zoomed)
                         {
-                            // todo: zoom camera FOV
+                            float zoomFov = Fixed.ToFloat(EquipInfo.Weapon.ZoomFov) * 2;
+                            Vector3 facing = FacingVector;
+
+                            void CheckZoomTargets(EntityType type)
+                            {
+                                for (int i = 0; i < _scene.Entities.Count; i++)
+                                {
+                                    EntityBase entity = _scene.Entities[i];
+                                    if (entity.Type != type || entity == this || !entity.GetTargetable())
+                                    {
+                                        continue;
+                                    }
+                                    if (entity.Type == EntityType.Object
+                                        && !((ObjectEntity)entity).Data.EffectFlags.TestFlag(ObjEffFlags.WeaponZoom))
+                                    {
+                                        continue;
+                                    }
+                                    entity.GetPosition(out Vector3 position);
+                                    Vector3 between = position - Position;
+                                    float dot = Vector3.Dot(between, facing);
+                                    if (dot > 1 && dot / between.Length > Fixed.ToFloat(4074))
+                                    {
+                                        float angle = MathHelper.RadiansToDegrees(MathF.Atan2(3, dot));
+                                        if (angle < zoomFov)
+                                        {
+                                            zoomFov = angle;
+                                        }
+                                    }
+                                }
+                            }
+
+                            CheckZoomTargets(EntityType.Player);
+                            CheckZoomTargets(EntityType.EnemyInstance);
+                            CheckZoomTargets(EntityType.Object);
+                            float currentFov = CameraInfo.Fov;
+                            if (zoomFov > currentFov)
+                            {
+                                currentFov += 2 * 2;
+                                if (currentFov > zoomFov)
+                                {
+                                    currentFov = zoomFov;
+                                }
+                            }
+                            else if (zoomFov < currentFov)
+                            {
+                                currentFov -= 2 * 2;
+                                if (currentFov < zoomFov)
+                                {
+                                    currentFov = zoomFov;
+                                }
+                            }
+                            CameraInfo.Fov = currentFov;
                         }
                     }
                     if (Controls.Shoot.IsPressed && EquipInfo.ChargeLevel <= 1 * 2 // todo: FPS stuff

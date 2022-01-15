@@ -1053,7 +1053,9 @@ namespace MphRead
             {
                 if (_cameraMode == CameraMode.Player)
                 {
-                    _viewMatrix = PlayerEntity.Main.CameraInfo.ViewMatrix;  // sktodo
+                    _viewMatrix = PlayerEntity.Main.CameraInfo.ViewMatrix; // sktodo
+                    float fov = PlayerEntity.Main.CameraInfo.Fov > 0 ? PlayerEntity.Main.CameraInfo.Fov : 78;
+                    _cameraFov = MathHelper.DegreesToRadians(fov);
                 }
                 else
                 {
