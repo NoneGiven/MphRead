@@ -191,7 +191,7 @@ namespace MphRead.Entities
             CameraInfo.Target.Y += v7;
             if (_camSwitchTimer < Values.CamSwitchTime * 2) // todo: FPS stuff
             {
-                float pct = _camSwitchTimer / (Values.CamSwitchTime * 2); // todo: FPS stuff
+                float pct = _camSwitchTimer / (Values.CamSwitchTime * 2f); // todo: FPS stuff
                 CameraInfo.Position = _field544 + (posVec - _field544) * pct;
                 Vector3 facingVec = CameraInfo.Position + CameraInfo.Facing;
                 CameraInfo.Target = facingVec + (CameraInfo.Target - facingVec) * pct;
@@ -546,7 +546,7 @@ namespace MphRead.Entities
             Vector3 posVec = CameraInfo.Target - camVec;
             if (_camSwitchTimer < switchTime)
             {
-                float pct = _camSwitchTimer / switchTime;
+                float pct = _camSwitchTimer / (float)switchTime;
                 CameraInfo.Position = _field544 + (posVec - _field544) * pct;
                 Vector3 facingVec = CameraInfo.Position + _facingVector;
                 CameraInfo.Target = facingVec + (CameraInfo.Target - facingVec) * pct;
@@ -572,7 +572,7 @@ namespace MphRead.Entities
             ushort switchTime = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff
             if (_camSwitchTimer < switchTime)
             {
-                float pct = _camSwitchTimer / switchTime;
+                float pct = _camSwitchTimer / (float)switchTime;
                 Vector3 camVec = CameraInfo.Position - CameraInfo.Target;
                 camVec = camVec != Vector3.Zero ? camVec.Normalized() : _facingVector;
                 Vector3 posVec = Volume.SpherePosition + camVec * Fixed.ToFloat(Values.Field78);
