@@ -24,7 +24,6 @@ namespace MphRead.Entities
         public int DrawFuncId { get; set; }
         public float Age { get; set; }
         public float Lifespan { get; set; }
-        public ulong Parity { get; set; } // skdebug?
 
         public Vector3 Color { get; set; }
         public byte CollisionEffect { get; set; }
@@ -569,7 +568,7 @@ namespace MphRead.Entities
                                 }
                             }
                             wholeDamage = (uint)Math.Clamp(damage, 0, Int32.MaxValue);
-                            if (wholeDamage != 0 && (Beam != BeamType.ShockCoil || _scene.FrameCount % 2 == Parity)) // todo: FPS stuff
+                            if (wholeDamage != 0)
                             {
                                 player.TakeDamage(wholeDamage, damageFlags, damageDir, this);
                             }
@@ -619,7 +618,7 @@ namespace MphRead.Entities
                             }
                             if (damage > 0)
                             {
-                                if (Beam != BeamType.ShockCoil || _scene.FrameCount % 2 == Parity) // todo: FPS stuff
+                                if (Beam != BeamType.ShockCoil || _scene.FrameCount % 2 == 0) // todo: FPS stuff
                                 {
                                     enemy.TakeDamage((uint)damage, this);
                                     SpawnCollisionEffect(anyRes, noSplat: true);
@@ -1310,7 +1309,7 @@ namespace MphRead.Entities
                 //    our cycle for green beam (15): 0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0
                 //                                   0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0
                 ulong bits = (ulong)(cost & 31);
-                cost = (cost << 11) >> 16;
+                cost /= 32;
                 if (scene.FrameCount % 2 == 0 && bits != 0 && ((bits * (scene.FrameCount / 2)) & 31) > 32 - bits) // todo: FPS stuff
                 {
                     cost++;
@@ -1418,6 +1417,17 @@ namespace MphRead.Entities
                 hsDamage /= 2;
                 splashDmg /= 2;
             }
+            // todo?: it's kind of lame that double damage doesn't affect Shock Coil
+            if (weapon.Flags.TestFlag(WeaponFlags.Continuous))
+            {
+                // todo: this is the same as the ammo calculation but with ge instead of gt
+                ulong bits = (ulong)(damage & 31);
+                damage /= 32;
+                if (scene.FrameCount % 2 == 0 && bits != 0 && ((bits * (scene.FrameCount / 2)) & 31) >= 32 - bits) // todo: FPS stuff
+                {
+                    damage++;
+                }
+            }
             ushort damageInterpolation = weapon.DamageInterpolations[charged ? 1 : 0];
             float maxDist = GetAmount(weapon.UnchargedDistance, weapon.MinChargeDistance, weapon.ChargedDistance) / 4096f;
             Affliction afflictions = weapon.Afflictions[charged ? 1 : 0];
@@ -1480,7 +1490,6 @@ namespace MphRead.Entities
                 beam.BeamKind = weapon.BeamKind;
                 beam.Flags = flags;
                 beam.Age = 0;
-                beam.Parity = scene.FrameCount % 2; // todo: FPS stuff
                 beam.InitialSpeed = beam.Speed = speed;
                 beam.FinalSpeed = finalSpeed;
                 beam.SpeedDecayTime = speedDecayTime;
@@ -1579,7 +1588,8 @@ namespace MphRead.Entities
                     if (beam.Beam == BeamType.ShockCoil && owner.Type == EntityType.Player)
                     {
                         var ownerPlayer = (PlayerEntity)owner;
-                        if ((scene.Multiplayer || !ownerPlayer.IsBot) && ownerPlayer.ShockCoilTarget == beam.Target)
+                        if ((scene.Multiplayer || !ownerPlayer.IsBot) && ownerPlayer.ShockCoilTarget == beam.Target
+                            && scene.FrameCount % 2 == 0) // todo: FPS stuff
                         {
                             // todo: FPS stuff
                             ushort timer = ownerPlayer.ShockCoilTimer;
