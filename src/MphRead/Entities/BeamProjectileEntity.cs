@@ -1171,7 +1171,7 @@ namespace MphRead.Entities
             uint rng = (uint)(frames + (int)(Position.X * 4096));
             int index = frames & 15;
             float halfRange = range / 2;
-            Vector3 vec = PastPositions[8] - Position;
+            Vector3 vec = Position - PastPositions[8];
             Texture texture = _trailModel.Model.Recolors[0].Textures[0];
             float uvT = (texture.Height - (1 / 16f)) / texture.Height;
             Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(count);
@@ -1184,7 +1184,7 @@ namespace MphRead.Entities
                     uvS = (2 * texture.Width / (float)(segments - 1) * factor - (1 / 16f)) / texture.Width;
                 }
 
-                float pct = (float)i / segments - 1;
+                float pct = (float)i / (segments - 1);
 
                 // todo?: not sure if dividing by 4 is strictly correct here
                 float x = vec.X * pct + Velocity.X / 4 * pct * (1 - pct);
