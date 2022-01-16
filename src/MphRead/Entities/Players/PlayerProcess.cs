@@ -447,7 +447,7 @@ namespace MphRead.Entities
                 // todo: play landing SFX
             }
             UpdateGunAnimation();
-            _gunModel.UpdateAnimFrames();
+            UpdateAnimFrames(_gunModel);
             // todo: update weapon SFX
             PickUpItems();
             if (!IsAltForm)
@@ -1147,7 +1147,7 @@ namespace MphRead.Entities
             Vector3 facing = _facingVector;
             Vector3 up = _upVector;
             _gunDrawPos = Fixed.ToFloat(Values.FieldB8) * facing
-                + _scene.CameraPosition // todo: try to figure out why this works
+                + CameraInfo.Position
                 + Fixed.ToFloat(Values.FieldB0) * _gunVec2
                 + Fixed.ToFloat(Values.FieldB4) * up;
             float cos = MathF.Cos(MathHelper.DegreesToRadians(_gunViewBob));

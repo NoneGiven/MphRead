@@ -1051,12 +1051,11 @@ namespace MphRead.Entities
             {
                 if (Target != null)
                 {
-                    DrawTrail4(Fixed.ToFloat(614), 2048, 10);
+                    DrawTrail4(0.15f, 2048, 10);
                 }
-                else
+                else if (Owner == PlayerEntity.Main)
                 {
-                    // todo: only draw if owner is main player
-                    DrawTrail4(Fixed.ToFloat(102), 1433, 5);
+                    DrawTrail4(0.025f, 1433, 5);
                 }
             }
         }
