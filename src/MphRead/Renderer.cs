@@ -72,6 +72,8 @@ namespace MphRead
         private Matrix4 _viewMatrix = Matrix4.Identity;
         private Matrix4 _viewInvRotMatrix = Matrix4.Identity;
         private Matrix4 _viewInvRotYMatrix = Matrix4.Identity;
+        private Matrix4 _perspectiveMatrix = Matrix4.Identity;
+        public Matrix4 PerspectiveMatrix => _perspectiveMatrix;
 
         private CameraMode _cameraMode = CameraMode.Pivot;
         public CameraMode CameraMode => _cameraMode;
@@ -284,7 +286,7 @@ namespace MphRead
             InitEntity(entity);
         }
 
-        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null)
+        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null)
         {
             if (_roomLoaded)
             {
@@ -870,6 +872,17 @@ namespace MphRead
                 TransformCamera();
                 UpdateCameraPosition();
             }
+            UpdateProjection();
+            GetDrawItems();
+        }
+
+        private void UpdateProjection()
+        {
+            // todo: update this only when the viewport or camera values change
+            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
+            float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
+            _perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(_cameraFov, aspect, 0.0625f, _useClip ? _farClip : 10000f);
+            GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref _perspectiveMatrix);
         }
 
         public void AfterRenderFrame()
@@ -886,12 +899,6 @@ namespace MphRead
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
             GL.ClearStencil(0);
-
-            // todo: update this only when the viewport or camera values change
-            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
-            float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
-            var perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(_cameraFov, aspect, 0.0625f, _useClip ? _farClip : 10000f);
-            GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref perspectiveMatrix);
 
             UpdateUniforms();
             // pass 1: opaque
@@ -2080,6 +2087,16 @@ namespace MphRead
                 }
             }
 
+            ProcessEffects();
+            for (int i = 0; i < _singleParticleCount; i++)
+            {
+                SingleParticle single = _singleParticles[i];
+                single.Process();
+            }
+        }
+
+        private void GetDrawItems()
+        {
             if (_room != null)
             {
                 _room.GetDrawInfo();
@@ -2123,12 +2140,6 @@ namespace MphRead
                 RemoveEntity(entity);
             }
 
-            ProcessEffects();
-            for (int i = 0; i < _singleParticleCount; i++)
-            {
-                SingleParticle single = _singleParticles[i];
-                single.Process();
-            }
             for (int i = 0; i < _activeElements.Count; i++)
             {
                 EffectElementEntry element = _activeElements[i];
@@ -3792,9 +3803,9 @@ namespace MphRead
             Scene.AddModel(name, recolor, firstHunt, dir, pos);
         }
 
-        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null, Vector3? facing = null)
+        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null)
         {
-            Scene.AddPlayer(hunter, recolor, position, facing);
+            Scene.AddPlayer(hunter, recolor, position);
         }
 
         protected override void OnLoad()
