@@ -1051,11 +1051,11 @@ namespace MphRead.Entities
             {
                 if (Target != null)
                 {
-                    DrawTrail4(0.15f, 2048, 10);
+                    DrawTrail4(height: 0.15f, range: 0.5f, segments: 10);
                 }
                 else if (Owner == PlayerEntity.Main)
                 {
-                    DrawTrail4(0.025f, 1433, 5);
+                    DrawTrail4(height: 0.025f, range: 0.35f, segments: 5);
                 }
             }
         }
@@ -1158,7 +1158,7 @@ namespace MphRead.Entities
                 material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, _bindingId);
         }
 
-        private void DrawTrail4(float height, uint range, int segments)
+        private void DrawTrail4(float height, float range, int segments)
         {
             Debug.Assert(_trailModel != null);
             if (segments < 2)
@@ -1170,7 +1170,7 @@ namespace MphRead.Entities
             int frames = (int)_scene.FrameCount / 2;
             uint rng = (uint)(frames + (int)(Position.X * 4096));
             int index = frames & 15;
-            float halfRange = range / 4096f / 2;
+            float halfRange = range / 2;
             Vector3 vec = PastPositions[8] - Position;
             Texture texture = _trailModel.Model.Recolors[0].Textures[0];
             float uvT = (texture.Height - (1 / 16f)) / texture.Height;
@@ -1193,9 +1193,9 @@ namespace MphRead.Entities
 
                 if (i > 0 && i < segments - 1)
                 {
-                    x += Rng.CallRng(ref rng, range) / 4096f - halfRange;
-                    y += Rng.CallRng(ref rng, range) / 4096f - halfRange;
-                    z += Rng.CallRng(ref rng, range) / 4096f - halfRange;
+                    x += Rng.CallRng(ref rng, (uint)Fixed.ToInt(range)) / 4096f - halfRange;
+                    y += Rng.CallRng(ref rng, (uint)Fixed.ToInt(range)) / 4096f - halfRange;
+                    z += Rng.CallRng(ref rng, (uint)Fixed.ToInt(range)) / 4096f - halfRange;
                 }
 
                 uvsAndVerts[4 * i] = new Vector3(uvS, 0, 0);
