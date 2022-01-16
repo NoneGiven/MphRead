@@ -1355,7 +1355,7 @@ namespace MphRead.Entities
             _altRollLrZ = _gunVec2.Z;
             Flags1 |= PlayerFlags1.Morphing;
             var camFacing = new Vector3(_field70, 0, _field74);
-            SwitchCamera(Values.AltGroundedNoGrav != 0 ? CameraType.Third2 : CameraType.Third1, camFacing);
+            SwitchCamera(Values.AltFormStrafe != 0 ? CameraType.Third2 : CameraType.Third1, camFacing);
             InitAltTransform();
             _modelTransform.Row3.Xyz = Vector3.Zero;
             if (Hunter == Hunter.Spire)

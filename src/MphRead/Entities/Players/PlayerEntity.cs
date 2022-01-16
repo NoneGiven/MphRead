@@ -2079,7 +2079,7 @@ namespace MphRead.Entities
         public readonly byte Padding103;
         public readonly ushort EnergyTank;
         public readonly short Field106;
-        public readonly byte AltGroundedNoGrav;
+        public readonly byte AltFormStrafe;
         public readonly byte Padding109;
         public readonly ushort Padding10A;
         public readonly int FallDamageSpeed;
@@ -2119,7 +2119,7 @@ namespace MphRead.Entities
             int bombRadius, int bombRadiusSquared, int bombJumpSpeed, int bombRefillTime, short bombDamage, short bombEnemyDamage,
             short fieldE0, short spawnInvulnerability, ushort aimMinTouchTime, ushort paddingE6, int fieldE8, int fieldEC, int swayStartTime,
             int swayIncrement, int swayLimit, int gunIdleTime, short mpAmmoCap, byte ammoRecharge, byte padding103, ushort energyTank,
-            short field106, byte altGroundedNoGrav, byte padding109, ushort padding10A, int fallDamageSpeed, int fallDamageMax, int field114,
+            short field106, byte altFormStrafe, byte padding109, ushort padding10A, int fallDamageSpeed, int fallDamageMax, int field114,
             int field118, int jumpPadSlideFactor, int altTiltAngleCap, int altMinWobble, int altMaxWobble, int altMinSpinAccel, int altMaxSpinAccel,
             int altMinSpinSpeed, int altMaxSpinSpeed, int altTiltAngleMax, int altBounceWobble, int altBounceTilt, int altBounceSpin,
             int altAttackKnockbackAccel, short altAttackKnockbackTime, ushort altAttackStartup, int field154, int field158, int lungeHSpeed,
@@ -2201,7 +2201,7 @@ namespace MphRead.Entities
             Padding103 = padding103;
             EnergyTank = energyTank;
             Field106 = field106;
-            AltGroundedNoGrav = altGroundedNoGrav;
+            AltFormStrafe = altFormStrafe;
             Padding109 = padding109;
             Padding10A = padding10A;
             FallDamageSpeed = fallDamageSpeed;
