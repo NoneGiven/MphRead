@@ -579,7 +579,7 @@ namespace MphRead.Entities
                                 if (!ownerPlayer.IsPrimeHunter && ownerPlayer.TeamIndex != player.TeamIndex)
                                 {
                                     // GainHealth checks if the player is alive
-                                    player.GainHealth(wholeDamage);
+                                    ownerPlayer.GainHealth(wholeDamage);
                                 }
                             }
                             if (!player.IsMainPlayer || player.IsAltForm || player.IsMorphing)
