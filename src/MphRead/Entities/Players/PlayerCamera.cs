@@ -129,7 +129,7 @@ namespace MphRead.Entities
             float v5;
             float v6;
             float v7;
-            if (Flags1.TestFlag(PlayerFlags1.NoUnmorph))
+            if (!Flags1.TestFlag(PlayerFlags1.NoUnmorph))
             {
                 v5 = Fixed.ToFloat(Values.Field78);
                 v6 = Fixed.ToFloat(Values.Field7C);
@@ -211,7 +211,7 @@ namespace MphRead.Entities
             }
             else
             {
-                float speedMagSqr = Speed.LengthSquared;
+                float speedMagSqr = (Speed / 2).LengthSquared; // sktodo: FPS stuff?
                 if (speedMagSqr > Fixed.ToFloat(36) && _field551 != 255)
                 {
                     _field551++;
@@ -271,7 +271,7 @@ namespace MphRead.Entities
                         {
                             _field558 = 0;
                         }
-                        _field558 -= Fixed.ToFloat(Values.Field88) * speedMagSqr / max;
+                        _field558 -= Fixed.ToFloat(Values.Field88) * speedMagSqr / max / 2; // todo: FPS stuff
                         if (_field558 < -Fixed.ToFloat(Values.Field8C))
                         {
                             _field558 = -Fixed.ToFloat(Values.Field8C);
@@ -304,7 +304,7 @@ namespace MphRead.Entities
                     {
                         _field558 = 0;
                     }
-                    _field558 += Fixed.ToFloat(Values.Field88) * speedMagSqr / max;
+                    _field558 += Fixed.ToFloat(Values.Field88) * speedMagSqr / max / 2; // todo: FPS stuff
                     if (_field558 > Fixed.ToFloat(Values.Field8C))
                     {
                         _field558 = Fixed.ToFloat(Values.Field8C);
@@ -341,7 +341,7 @@ namespace MphRead.Entities
                         {
                             _field558 = 0;
                         }
-                        _field554 -= Fixed.ToFloat(Values.Field88) * speedMagSqr / max;
+                        _field554 -= Fixed.ToFloat(Values.Field88) * speedMagSqr / max / 2; // todO: FPS stuff
                         if (_field554 < -Fixed.ToFloat(Values.Field8C))
                         {
                             _field554 = -Fixed.ToFloat(Values.Field8C);
@@ -376,7 +376,7 @@ namespace MphRead.Entities
                     {
                         _field558 = 0;
                     }
-                    _field554 += Fixed.ToFloat(Values.Field88) * speedMagSqr / max;
+                    _field554 += Fixed.ToFloat(Values.Field88) * speedMagSqr / max / 2; // todo: FPS stuff
                     if (_field554 > Fixed.ToFloat(Values.Field8C))
                     {
                         _field554 = Fixed.ToFloat(Values.Field8C);
