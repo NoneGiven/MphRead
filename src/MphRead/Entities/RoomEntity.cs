@@ -58,6 +58,23 @@ namespace MphRead.Entities
                         node.IsRoomPartNode = true;
                     }
                 }
+                foreach (CollisionPortal portal in portals)
+                {
+                    for (int i = 0; i < model.Nodes.Count; i++)
+                    {
+                        Node node = model.Nodes[i];
+                        if (node.Name == portal.NodeName1)
+                        {
+                            node.IsRoomPartNode = true;
+                            portal.NodeIndex1 = i;
+                        }
+                        if (node.Name == portal.NodeName2)
+                        {
+                            node.IsRoomPartNode = true;
+                            portal.NodeIndex2 = i;
+                        }
+                    }
+                }
                 IEnumerable<CollisionPortal> pmags = portals.Where(p => p.Name.StartsWith("pmag"));
                 foreach (CollisionPortal portal in pmags)
                 {
@@ -102,12 +119,68 @@ namespace MphRead.Entities
             RoomCollision.Info.GetDrawInfo(RoomCollision.Info.Points, Type, _scene);
         }
 
+        private void UpdateRoomParts(ModelInstance inst)
+        {
+            for (int i = 0; i < inst.Model.Nodes.Count; i++)
+            {
+                Node node = inst.Model.Nodes[i];
+                if (!node.IsRoomPartNode)
+                {
+                    continue;
+                }
+                node.RoomPartActive = false;
+                if (_scene.CameraMode != CameraMode.Player)
+                {
+                    node.RoomPartActive = true;
+                    continue;
+                }
+                CameraInfo camInfo = PlayerEntity.Main.CameraInfo;
+                int nodeRef = camInfo.NodeRef;
+                if (nodeRef == -1)
+                {
+                    continue;
+                }
+                if (i == nodeRef)
+                {
+                    node.RoomPartActive = true;
+                    continue;
+                }
+                for (int j = 0; j < _portals.Count; j++)
+                {
+                    CollisionPortal portal = _portals[j];
+                    if ((!portal.IsForceField || GetPortalAlpha(portal.Position, camInfo.Position) < 1)
+                        && (portal.NodeIndex1 == nodeRef && portal.NodeIndex2 == i
+                        || portal.NodeIndex2 == nodeRef && portal.NodeIndex1 == i))
+                    {
+                        node.RoomPartActive = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        public int GetNodeRefByName(string nodeName)
+        {
+            Model model = _models[0].Model;
+            for (int i = 0; i < model.Nodes.Count; i++)
+            {
+                Node node = model.Nodes[i];
+                if (node.Name == nodeName)
+                {
+                    Debug.Assert(node.IsRoomPartNode);
+                    return i;
+                }
+            }
+            return -1;
+        }
+
         public override void GetDrawInfo()
         {
             if (!Hidden)
             {
                 ModelInstance inst = _models[0];
                 UpdateTransforms(inst, 0);
+                UpdateRoomParts(inst);
                 for (int i = 0; i < Nodes.Count; i++)
                 {
                     Node pnode = Nodes[i];
@@ -119,7 +192,7 @@ namespace MphRead.Entities
                     {
                         GetItems(inst, pnode);
                     }
-                    else if (pnode.IsRoomPartNode)
+                    else if (pnode.IsRoomPartNode && pnode.RoomPartActive)
                     {
                         int childIndex = pnode.ChildIndex;
                         if (childIndex != -1)

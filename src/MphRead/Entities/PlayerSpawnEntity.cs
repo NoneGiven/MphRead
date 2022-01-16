@@ -5,6 +5,7 @@ namespace MphRead.Entities
     public class PlayerSpawnEntity : EntityBase
     {
         private readonly PlayerSpawnEntityData _data;
+        private readonly string _nodeName;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x7F, 0x00, 0x00).AsVector4();
         private bool _active = false;
 
@@ -12,9 +13,10 @@ namespace MphRead.Entities
         public bool Availability => _data.Availability != 0;
         public ushort Cooldown { get; set; }
 
-        public PlayerSpawnEntity(PlayerSpawnEntityData data, Scene scene) : base(EntityType.PlayerSpawn, scene)
+        public PlayerSpawnEntity(PlayerSpawnEntityData data, string nodeName, Scene scene) : base(EntityType.PlayerSpawn, scene)
         {
             _data = data;
+            _nodeName = nodeName;
             Id = data.Header.EntityId;
         }
 
@@ -25,6 +27,7 @@ namespace MphRead.Entities
             // todo: room state
             _active = _data.Active != 0;
             AddPlaceholderModel();
+            NodeRef = _scene.Room?.GetNodeRefByName(_nodeName) ?? -1;
         }
 
         public override bool Process()

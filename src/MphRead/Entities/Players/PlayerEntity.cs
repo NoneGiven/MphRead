@@ -591,7 +591,7 @@ namespace MphRead.Entities
             }
         }
 
-        public void Spawn(Vector3 pos, Vector3 facing, Vector3 up, bool respawn) // todo: node ref
+        public void Spawn(Vector3 pos, Vector3 facing, Vector3 up, int nodeRef, bool respawn)
         {
             LoadFlags |= LoadFlags.Spawned;
             if (IsMainPlayer)
@@ -702,8 +702,8 @@ namespace MphRead.Entities
             _aimPosition = (Position + _gunVec1 * Fixed.ToFloat(Values.AimDistance)).AddY(Fixed.ToFloat(Values.AimYOffset));
             Acceleration = Vector3.Zero;
             _accelerationTimer = 0;
-            // todo: room node ref
             _aimY = 0;
+            NodeRef = nodeRef;
             _fieldE4 = 0;
             _fieldE8 = 0;
             _gunViewBob = 0;
@@ -717,7 +717,7 @@ namespace MphRead.Entities
             CameraInfo.UpVector = Vector3.UnitY;
             CameraInfo.Target = Position + facing;
             CameraInfo.Fov = Fixed.ToFloat(Values.NormalFov) * 2;
-            // todo: cam info node ref
+            CameraInfo.NodeRef = NodeRef;
             SwitchCamera(CameraType.First, facing);
             _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff
             _field684 = 0;

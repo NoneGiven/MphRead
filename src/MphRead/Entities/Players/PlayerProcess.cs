@@ -78,7 +78,7 @@ namespace MphRead.Entities
                         if (respawn != null)
                         {
                             Vector3 position = ForcedSpawnPos ?? respawn.Position;
-                            Spawn(position, respawn.FacingVector, respawn.UpVector, respawn: true);
+                            Spawn(position, respawn.FacingVector, respawn.UpVector, respawn.NodeRef, respawn: true);
                         }
                     }
                 }

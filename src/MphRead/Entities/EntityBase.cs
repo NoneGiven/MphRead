@@ -18,6 +18,7 @@ namespace MphRead.Entities
         public float Alpha { get; set; } = 1.0f;
 
         protected Scene _scene;
+        public int NodeRef { get; protected set; }
 
         protected float _drawScale = 1;
         protected Matrix4 _transform = Matrix4.Identity;

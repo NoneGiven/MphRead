@@ -751,6 +751,7 @@ namespace MphRead.Entities
         public float Field4C;
         public float Field50;
         public float Field54;
+        public int NodeRef = -1;
 
         private bool _shake = true;
 

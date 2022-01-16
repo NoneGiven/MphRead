@@ -125,7 +125,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.PlayerSpawn || entity.Type == EntityType.FhPlayerSpawn)
                 {
-                    results.Add(new PlayerSpawnEntity(((Entity<PlayerSpawnEntityData>)entity).Data, scene));
+                    results.Add(new PlayerSpawnEntity(((Entity<PlayerSpawnEntityData>)entity).Data, entity.NodeName, scene));
                 }
                 else if (entity.Type == EntityType.Door)
                 {
