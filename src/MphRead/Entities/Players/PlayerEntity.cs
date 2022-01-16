@@ -1233,7 +1233,7 @@ namespace MphRead.Entities
         {
             if (_timeSinceInput == 0)
             {
-                if (_gunModel.AnimInfo.Flags[0].TestFlag(AnimFlags.Reverse))
+                if (GunAnimation == GunAnimation.UpDown && _gunModel.AnimInfo.Flags[0].TestFlag(AnimFlags.Reverse))
                 {
                     _gunModel.AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
                     _gunModel.AnimInfo.Flags[0] &= ~AnimFlags.Ended;
@@ -1311,7 +1311,7 @@ namespace MphRead.Entities
                 }
                 else if (GunAnimation != GunAnimation.Charging && GunAnimation != GunAnimation.FullCharge)
                 {
-                    SetGunAnimation(GunAnimation.ChargeShot, AnimFlags.NoLoop);
+                    SetGunAnimation(GunAnimation.Charging, AnimFlags.NoLoop);
                 }
                 else if (GunAnimation != GunAnimation.FullCharge && _gunModel.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
                 {
