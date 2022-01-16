@@ -431,7 +431,7 @@ namespace MphRead.Entities
                     {
                         Flags2 &= ~PlayerFlags2.Shooting;
                     }
-                    else if (Controls.Shoot.IsPressed || Flags2.TestFlag(PlayerFlags2.NoShotsFired))
+                    else if (Controls.Shoot.IsPressed || !Flags2.TestFlag(PlayerFlags2.NoShotsFired))
                     {
                         Flags2 |= PlayerFlags2.Shooting;
                         Flags2 &= ~PlayerFlags2.NoShotsFired;
@@ -663,9 +663,9 @@ namespace MphRead.Entities
                 }
                 // basically adds 0, 1, or 2 to the base autofire cooldown depending on how long the PB has repeated fire
                 // --> could add more, but the min charge is reaached quickly
-                int pbAuto = Math.Min(_powerBeamAutofire / 2, 90); // todo: FPS stuff
-                pbAuto = (int)(pbAuto * 15 / 90f);
-                _autofireCooldown = (ushort)((pbAuto + EquipWeapon.AutofireCooldown) * 2); // todo: FPS stuff
+                int pbAuto = Math.Min((int)_powerBeamAutofire, 90 * 2); // todo: FPS stuff
+                pbAuto = (int)(pbAuto * 15 / (90f * 2));
+                _autofireCooldown = (ushort)(pbAuto + EquipWeapon.AutofireCooldown * 2); // todo: FPS stuff
             }
             // todo: autofire cooldown case can be bypassed if a certain bot AI flag is set
             if (_timeSinceShot < EquipWeapon.ShotCooldown * 2 // todo: FPS stuff
