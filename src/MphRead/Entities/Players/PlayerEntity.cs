@@ -790,7 +790,7 @@ namespace MphRead.Entities
             _light1Color = _scene.Light1Color;
             _light2Vector = _scene.Light2Vector;
             _light2Color = _scene.Light2Color;
-            // todo: clear input
+            Controls.ClearPressed();
             if (IsBot)
             {
                 // todo: bot stuff

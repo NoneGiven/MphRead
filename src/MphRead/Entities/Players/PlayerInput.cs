@@ -1759,6 +1759,14 @@ namespace MphRead.Entities
             };
         }
 
+        public void ClearPressed()
+        {
+            for (int i = 0; i < All.Length; i++)
+            {
+                All[i].IsPressed = false;
+            }
+        }
+
         public static PlayerControls GetDefault()
         {
             return new PlayerControls(
