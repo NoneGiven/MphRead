@@ -138,7 +138,7 @@ namespace MphRead.Entities
             else
             {
                 Position += Velocity;
-                Velocity += Acceleration;
+                Velocity += Acceleration / 2; // todo: FPS stuff
                 Debug.Assert(SpeedDecayTime >= 0);
                 if (SpeedDecayTime > 0 && Age <= SpeedDecayTime)
                 {
@@ -1345,12 +1345,13 @@ namespace MphRead.Entities
                 || (!charged && weapon.Flags.TestFlag(WeaponFlags.AoeUncharged));
 
             BeamFlags flags = BeamFlags.None;
+            // todo: FPS stuff
             float speed = GetAmount(weapon.UnchargedSpeed, weapon.MinChargeSpeed, weapon.ChargedSpeed) / 4096f / 2;
             float finalSpeed = GetAmount(weapon.UnchargedFinalSpeed, weapon.MinChargeFinalSpeed, weapon.ChargedFinalSpeed) / 4096f / 2;
             float speedDecayTime = weapon.SpeedDecayTimes[charged ? 1 : 0] * (1 / 30f);
             ushort speedInterpolation = weapon.SpeedInterpolations[charged ? 1 : 0];
             float gravity = GetAmount(weapon.UnchargedGravity, weapon.MinChargeGravity, weapon.ChargedGravity) / 4096f;
-            var acceleration = new Vector3(0, gravity, 0);
+            Vector3 acceleration = new Vector3(0, gravity, 0) / 2;
             float homing = GetAmount(weapon.UnchargedHoming, weapon.MinChargeHoming, weapon.ChargedHoming);
             if (homing > 0)
             {
