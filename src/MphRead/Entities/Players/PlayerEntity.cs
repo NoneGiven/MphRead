@@ -1651,7 +1651,7 @@ namespace MphRead.Entities
                     }
                     if (attacker == null || attacker == this)
                     {
-                        Vector3 camFacing = CameraInfo.Position + CameraInfo.FacingVector;
+                        Vector3 camFacing = CameraInfo.Position + CameraInfo.Facing;
                         SwitchCamera(CameraType.Free, camFacing);
                     }
                     else

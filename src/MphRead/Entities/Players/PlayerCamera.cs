@@ -178,7 +178,7 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    camVec = -CameraInfo.FacingVector.WithY(0);
+                    camVec = -CameraInfo.Facing.WithY(0);
                     _field544 += (Position - PrevPosition) / 2; // sktodo: FPS stuff?
                 }
                 camVec = camVec.Normalized();
@@ -193,7 +193,7 @@ namespace MphRead.Entities
             {
                 float pct = _camSwitchTimer / (Values.CamSwitchTime * 2); // todo: FPS stuff
                 CameraInfo.Position = _field544 + (posVec - _field544) * pct;
-                Vector3 facingVec = CameraInfo.Position + CameraInfo.FacingVector;
+                Vector3 facingVec = CameraInfo.Position + CameraInfo.Facing;
                 CameraInfo.Target = facingVec + (CameraInfo.Target - facingVec) * pct;
             }
             else
@@ -418,7 +418,7 @@ namespace MphRead.Entities
                     if (result.Field0 == 0)
                     {
                         float dot = -(Vector3.Dot(CameraInfo.Position, result.Plane.Xyz) - result.Plane.W - margin);
-                        if (dot < 0)
+                        if (dot > 0)
                         {
                             CameraInfo.Position += result.Plane.Xyz * dot;
                             v85 = true;
@@ -434,7 +434,7 @@ namespace MphRead.Entities
                         if (result.Field0 == 1 && Vector3.Dot(toTarget, result.Plane.Xyz) >= 0)
                         {
                             float dot = -(Vector3.Dot(CameraInfo.Position, result.Plane.Xyz) - result.Plane.W - margin);
-                            if (dot < 0)
+                            if (dot > 0)
                             {
                                 CameraInfo.Position += result.Plane.Xyz * dot;
                             }
@@ -568,23 +568,114 @@ namespace MphRead.Entities
         // todo: enhanced free cam
         private void UpdateCameraFree()
         {
+            Debug.Assert(_scene.Room != null);
             ushort switchTime = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff
             if (_camSwitchTimer < switchTime)
             {
                 float pct = _camSwitchTimer / switchTime;
                 Vector3 camVec = CameraInfo.Position - CameraInfo.Target;
-                if (camVec != Vector3.Zero)
-                {
-                    camVec = camVec.Normalized();
-                }
-                else
-                {
-                    camVec = _facingVector;
-                } 
+                camVec = camVec != Vector3.Zero ? camVec.Normalized() : _facingVector;
+                Vector3 posVec = Volume.SpherePosition + camVec * Fixed.ToFloat(Values.Field78);
+                posVec = Vector3.Clamp(posVec, _scene.Room.Metadata.CameraMin, _scene.Room.Metadata.CameraMax);
+                CameraInfo.Position = _field544 + (posVec - _field544) * pct;
             }
             else
             {
-
+                float limit = Fixed.ToFloat(40);
+                if (CameraInfo.Facing.X < limit && CameraInfo.Facing.X > -limit
+                    && CameraInfo.Facing.Z < limit && CameraInfo.Facing.Z > -limit)
+                {
+                    if (MathF.Abs(CameraInfo.Facing.X) >= 1 / 4096f || MathF.Abs(CameraInfo.Facing.X) >= 1 / 4096f)
+                    {
+                        CameraInfo.Facing.X *= 4;
+                        CameraInfo.Facing.Z *= 4;
+                    }
+                    else
+                    {
+                        CameraInfo.Facing.X = limit;
+                    }
+                }
+                // todo: FPS stuff
+                if (Controls.MoveUp.IsDown)
+                {
+                    CameraInfo.Position += CameraInfo.Facing * 0.4f / 2;
+                }
+                else if (Controls.MoveDown.IsDown)
+                {
+                    CameraInfo.Position -= CameraInfo.Facing * 0.4f / 2;
+                }
+                if (Controls.MoveLeft.IsDown)
+                {
+                    CameraInfo.Position.X += CameraInfo.Field50 * 0.4f / 2;
+                    CameraInfo.Position.Z += CameraInfo.Field54 * 0.4f / 2;
+                }
+                else if (Controls.MoveRight.IsDown)
+                {
+                    CameraInfo.Position.X -= CameraInfo.Field50 * 0.4f / 2;
+                    CameraInfo.Position.Z -= CameraInfo.Field54 * 0.4f / 2;
+                }
+                float aimY = 0;
+                float aimX = 0;
+                if (Controls.MouseAim)
+                {
+                    aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
+                    aimX = -Input.MouseDeltaX / 4f;
+                }
+                if (Controls.KeyboardAim)
+                {
+                    // itodo: button aim
+                }
+                if (Controls.InvertAimY)
+                {
+                    aimY *= -1;
+                }
+                if (Controls.InvertAimX)
+                {
+                    aimX *= -1;
+                }
+                float sensitivity = 1; // itodo: this
+                aimY *= sensitivity;
+                aimX *= sensitivity;
+                if ((CameraInfo.Facing.Y < 0.985f || aimY < 0) && (CameraInfo.Facing.Y > -0.985f || aimY > 0))
+                {
+                    aimY = MathHelper.DegreesToRadians(aimY);
+                    var cross = Vector3.Cross(CameraInfo.Facing, new Vector3(CameraInfo.Field50, 0, CameraInfo.Field54));
+                    float cosY;
+                    float sinY;
+                    if (aimY <= 0)
+                    {
+                        cosY = MathF.Cos(aimY);
+                        sinY = MathF.Sin(aimY);
+                    }
+                    else
+                    {
+                        cosY = MathF.Cos(-aimY);
+                        sinY = -MathF.Sin(-aimY);
+                    }
+                    CameraInfo.Facing.X = cross.X * sinY + CameraInfo.Facing.X * cosY;
+                    CameraInfo.Facing.Y = cross.Y * sinY + CameraInfo.Facing.Y * cosY;
+                    CameraInfo.Facing.Z = cross.Z * sinY + CameraInfo.Facing.Z * cosY;
+                }
+                aimX = MathHelper.DegreesToRadians(aimX);
+                float cosX;
+                float sinX;
+                if (aimX <= 0)
+                {
+                    cosX = MathF.Cos(aimX);
+                    sinX = MathF.Sin(aimX);
+                }
+                else
+                {
+                    cosX = MathF.Cos(-aimX);
+                    sinX = -MathF.Sin(-aimX);
+                }
+                float x = CameraInfo.Facing.X;
+                float z = CameraInfo.Facing.Z;
+                CameraInfo.Facing.X = x * cosX + z * sinX;
+                CameraInfo.Facing.Z = x * -sinX + z * cosX;
+                var pos = Vector3.Clamp(CameraInfo.Position, _scene.Room.Metadata.CameraMin, _scene.Room.Metadata.CameraMax);
+                CameraInfo.Position = pos;
+                CameraInfo.Target = CameraInfo.Position + CameraInfo.Facing;
             }
             // getting candidates separately since CheckBetweenPoints doesn't include entities when doing the candidate query
             Vector3 point1 = CameraInfo.PrevPosition;
@@ -599,7 +690,7 @@ namespace MphRead.Entities
             {
                 CollisionResult result = results[i];
                 float dot = -(Vector3.Dot(CameraInfo.Position, result.Plane.Xyz) - result.Plane.W - margin);
-                if (dot < 0)
+                if (dot > 0)
                 {
                     CameraInfo.Position += result.Plane.Xyz * dot;
                     _camSwitchTimer = switchTime;
@@ -607,7 +698,7 @@ namespace MphRead.Entities
             }
             if (_camSwitchTimer >= switchTime)
             {
-                CameraInfo.Target = CameraInfo.Position + CameraInfo.FacingVector;
+                CameraInfo.Target = CameraInfo.Position + CameraInfo.Facing;
             }
         }
 
@@ -652,7 +743,7 @@ namespace MphRead.Entities
         public Vector3 PrevPosition;
         public Vector3 Target;
         public Vector3 UpVector;
-        public Vector3 FacingVector;
+        public Vector3 Facing;
         public float Fov;
         public float Shake;
         public Matrix4 ViewMatrix;
@@ -694,11 +785,11 @@ namespace MphRead.Entities
                 }
             }
             _shake = !_shake;
-            FacingVector = Target - Position;
-            float facingX = FacingVector.X;
-            float facingZ = FacingVector.Z;
+            Facing = Target - Position;
+            float facingX = Facing.X;
+            float facingZ = Facing.Z;
             float hMag = MathF.Sqrt(facingX * facingX + facingZ * facingZ);
-            FacingVector = FacingVector.Normalized();
+            Facing = Facing.Normalized();
             Field48 = facingX / hMag;
             Field4C = facingZ / hMag;
             Field50 = Field4C;

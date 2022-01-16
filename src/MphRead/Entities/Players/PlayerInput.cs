@@ -1,7 +1,6 @@
 using System;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace MphRead.Entities
 {
