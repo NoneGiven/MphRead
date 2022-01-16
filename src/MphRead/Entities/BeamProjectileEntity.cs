@@ -24,7 +24,6 @@ namespace MphRead.Entities
         public int DrawFuncId { get; set; }
         public float Age { get; set; }
         public float Lifespan { get; set; }
-        public ulong Parity { get; set; } // skdebug?
 
         public Vector3 Color { get; set; }
         public byte CollisionEffect { get; set; }
@@ -139,7 +138,7 @@ namespace MphRead.Entities
             else
             {
                 Position += Velocity;
-                Velocity += Acceleration;
+                Velocity += Acceleration / 2; // todo: FPS stuff
                 Debug.Assert(SpeedDecayTime >= 0);
                 if (SpeedDecayTime > 0 && Age <= SpeedDecayTime)
                 {
@@ -569,7 +568,7 @@ namespace MphRead.Entities
                                 }
                             }
                             wholeDamage = (uint)Math.Clamp(damage, 0, Int32.MaxValue);
-                            if (wholeDamage != 0 && (Beam != BeamType.ShockCoil || _scene.FrameCount % 2 == Parity)) // todo: FPS stuff
+                            if (wholeDamage != 0)
                             {
                                 player.TakeDamage(wholeDamage, damageFlags, damageDir, this);
                             }
@@ -579,7 +578,7 @@ namespace MphRead.Entities
                                 if (!ownerPlayer.IsPrimeHunter && ownerPlayer.TeamIndex != player.TeamIndex)
                                 {
                                     // GainHealth checks if the player is alive
-                                    player.GainHealth(wholeDamage);
+                                    ownerPlayer.GainHealth(wholeDamage);
                                 }
                             }
                             if (!player.IsMainPlayer || player.IsAltForm || player.IsMorphing)
@@ -619,7 +618,7 @@ namespace MphRead.Entities
                             }
                             if (damage > 0)
                             {
-                                if (Beam != BeamType.ShockCoil || _scene.FrameCount % 2 == Parity) // todo: FPS stuff
+                                if (Beam != BeamType.ShockCoil || _scene.FrameCount % 2 == 0) // todo: FPS stuff
                                 {
                                     enemy.TakeDamage((uint)damage, this);
                                     SpawnCollisionEffect(anyRes, noSplat: true);
@@ -1051,12 +1050,11 @@ namespace MphRead.Entities
             {
                 if (Target != null)
                 {
-                    DrawTrail4(Fixed.ToFloat(614), 2048, 10);
+                    DrawTrail4(height: 0.15f, range: 0.5f, segments: 10);
                 }
-                else
+                else if (Owner == PlayerEntity.Main)
                 {
-                    // todo: only draw if owner is main player
-                    DrawTrail4(Fixed.ToFloat(102), 1433, 5);
+                    DrawTrail4(height: 0.025f, range: 0.35f, segments: 5);
                 }
             }
         }
@@ -1159,7 +1157,7 @@ namespace MphRead.Entities
                 material.ScaleS, material.ScaleT, Matrix4.CreateTranslation(PastPositions[0]), uvsAndVerts, _bindingId);
         }
 
-        private void DrawTrail4(float height, uint range, int segments)
+        private void DrawTrail4(float height, float range, int segments)
         {
             Debug.Assert(_trailModel != null);
             if (segments < 2)
@@ -1171,8 +1169,8 @@ namespace MphRead.Entities
             int frames = (int)_scene.FrameCount / 2;
             uint rng = (uint)(frames + (int)(Position.X * 4096));
             int index = frames & 15;
-            float halfRange = range / 4096f / 2;
-            Vector3 vec = PastPositions[8] - Position;
+            float halfRange = range / 2;
+            Vector3 vec = Position - PastPositions[8];
             Texture texture = _trailModel.Model.Recolors[0].Textures[0];
             float uvT = (texture.Height - (1 / 16f)) / texture.Height;
             Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(count);
@@ -1185,7 +1183,7 @@ namespace MphRead.Entities
                     uvS = (2 * texture.Width / (float)(segments - 1) * factor - (1 / 16f)) / texture.Width;
                 }
 
-                float pct = (float)i / segments - 1;
+                float pct = (float)i / (segments - 1);
 
                 // todo?: not sure if dividing by 4 is strictly correct here
                 float x = vec.X * pct + Velocity.X / 4 * pct * (1 - pct);
@@ -1194,9 +1192,9 @@ namespace MphRead.Entities
 
                 if (i > 0 && i < segments - 1)
                 {
-                    x += Rng.CallRng(ref rng, range) / 4096f - halfRange;
-                    y += Rng.CallRng(ref rng, range) / 4096f - halfRange;
-                    z += Rng.CallRng(ref rng, range) / 4096f - halfRange;
+                    x += Rng.CallRng(ref rng, (uint)Fixed.ToInt(range)) / 4096f - halfRange;
+                    y += Rng.CallRng(ref rng, (uint)Fixed.ToInt(range)) / 4096f - halfRange;
+                    z += Rng.CallRng(ref rng, (uint)Fixed.ToInt(range)) / 4096f - halfRange;
                 }
 
                 uvsAndVerts[4 * i] = new Vector3(uvS, 0, 0);
@@ -1311,7 +1309,7 @@ namespace MphRead.Entities
                 //    our cycle for green beam (15): 0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0
                 //                                   0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0
                 ulong bits = (ulong)(cost & 31);
-                cost = (cost << 11) >> 16;
+                cost /= 32;
                 if (scene.FrameCount % 2 == 0 && bits != 0 && ((bits * (scene.FrameCount / 2)) & 31) > 32 - bits) // todo: FPS stuff
                 {
                     cost++;
@@ -1347,12 +1345,13 @@ namespace MphRead.Entities
                 || (!charged && weapon.Flags.TestFlag(WeaponFlags.AoeUncharged));
 
             BeamFlags flags = BeamFlags.None;
+            // todo: FPS stuff
             float speed = GetAmount(weapon.UnchargedSpeed, weapon.MinChargeSpeed, weapon.ChargedSpeed) / 4096f / 2;
             float finalSpeed = GetAmount(weapon.UnchargedFinalSpeed, weapon.MinChargeFinalSpeed, weapon.ChargedFinalSpeed) / 4096f / 2;
             float speedDecayTime = weapon.SpeedDecayTimes[charged ? 1 : 0] * (1 / 30f);
             ushort speedInterpolation = weapon.SpeedInterpolations[charged ? 1 : 0];
             float gravity = GetAmount(weapon.UnchargedGravity, weapon.MinChargeGravity, weapon.ChargedGravity) / 4096f;
-            var acceleration = new Vector3(0, gravity, 0);
+            Vector3 acceleration = new Vector3(0, gravity, 0) / 2;
             float homing = GetAmount(weapon.UnchargedHoming, weapon.MinChargeHoming, weapon.ChargedHoming);
             if (homing > 0)
             {
@@ -1419,6 +1418,17 @@ namespace MphRead.Entities
                 hsDamage /= 2;
                 splashDmg /= 2;
             }
+            // todo?: it's kind of lame that double damage doesn't affect Shock Coil
+            if (weapon.Flags.TestFlag(WeaponFlags.Continuous))
+            {
+                // todo: this is the same as the ammo calculation but with ge instead of gt
+                ulong bits = (ulong)(damage & 31);
+                damage /= 32;
+                if (scene.FrameCount % 2 == 0 && bits != 0 && ((bits * (scene.FrameCount / 2)) & 31) >= 32 - bits) // todo: FPS stuff
+                {
+                    damage++;
+                }
+            }
             ushort damageInterpolation = weapon.DamageInterpolations[charged ? 1 : 0];
             float maxDist = GetAmount(weapon.UnchargedDistance, weapon.MinChargeDistance, weapon.ChargedDistance) / 4096f;
             Affliction afflictions = weapon.Afflictions[charged ? 1 : 0];
@@ -1481,7 +1491,6 @@ namespace MphRead.Entities
                 beam.BeamKind = weapon.BeamKind;
                 beam.Flags = flags;
                 beam.Age = 0;
-                beam.Parity = scene.FrameCount % 2; // todo: FPS stuff
                 beam.InitialSpeed = beam.Speed = speed;
                 beam.FinalSpeed = finalSpeed;
                 beam.SpeedDecayTime = speedDecayTime;
@@ -1580,7 +1589,8 @@ namespace MphRead.Entities
                     if (beam.Beam == BeamType.ShockCoil && owner.Type == EntityType.Player)
                     {
                         var ownerPlayer = (PlayerEntity)owner;
-                        if ((scene.Multiplayer || !ownerPlayer.IsBot) && ownerPlayer.ShockCoilTarget == beam.Target)
+                        if ((scene.Multiplayer || !ownerPlayer.IsBot) && ownerPlayer.ShockCoilTarget == beam.Target
+                            && scene.FrameCount % 2 == 0) // todo: FPS stuff
                         {
                             // todo: FPS stuff
                             ushort timer = ownerPlayer.ShockCoilTimer;

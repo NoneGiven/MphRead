@@ -767,7 +767,7 @@ namespace MphRead.Entities
                     _altRollLrZ = CameraInfo.Field54;
                 }
                 // todo?: field35C targeting(?) stuff
-                if (Values.AltGroundedNoGrav != 0)
+                if (Values.AltFormStrafe != 0)
                 {
                     // Trace, Sylux, Weavel
                     if (Controls.MouseAim)
@@ -1272,7 +1272,7 @@ namespace MphRead.Entities
             else
             {
                 hSpeed /= hSpeedMag;
-                if (Values.AltGroundedNoGrav == 0)
+                if (Values.AltFormStrafe == 0)
                 {
                     if (hSpeedMag > Fixed.ToFloat(Values.Field5C)) // todo: FPS stuff?
                     {
@@ -1324,7 +1324,7 @@ namespace MphRead.Entities
             _field78 = _gunVec2.X;
             _field7C = _gunVec2.Z;
             _upVector = Vector3.Cross(_facingVector, _gunVec2).Normalized();
-            if (Values.AltGroundedNoGrav != 0)
+            if (Values.AltFormStrafe != 0)
             {
                 _field80 = _field70;
                 _field84 = _field74;
@@ -1333,10 +1333,10 @@ namespace MphRead.Entities
             _aimPosition += CameraInfo.Position;
             // unimpl-controls: this calculation is different when exact aim is not set
             hMag = MathF.Sqrt(_gunVec1.X * _gunVec1.X + _gunVec1.Z * _gunVec1.Z);
-            _aimY = MathHelper.DegreesToRadians(MathF.Atan2(_gunVec1.Y, hMag));
-            if (_aimY > 75 || _aimY < -75)
+            float aimY = MathHelper.RadiansToDegrees(MathF.Atan2(_gunVec1.Y, hMag));
+            if (aimY > 75 || aimY < -75)
             {
-                UpdateAimY(_aimY);
+                UpdateAimY(0);
             }
             if (Flags1.TestFlag(PlayerFlags1.UsedJumpPad))
             {
@@ -1435,7 +1435,7 @@ namespace MphRead.Entities
                     {
                         if (IsAltForm || Flags2.TestFlag(PlayerFlags2.AltFormGravity))
                         {
-                            if (Flags1.TestFlag(PlayerFlags1.Standing) && _slipperiness == 0 && Values.AltGroundedNoGrav != 0)
+                            if (Flags1.TestFlag(PlayerFlags1.Standing) && _slipperiness == 0 && Values.AltFormStrafe != 0)
                             {
                                 _gravity = 0;
                             }

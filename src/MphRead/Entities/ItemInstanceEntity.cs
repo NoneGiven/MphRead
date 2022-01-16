@@ -108,11 +108,14 @@ namespace MphRead.Entities
                 {
                     // todo: visualize
                     Vector3 between = PlayerEntity.Main.Position - Position;
-                    float distance = between.Length;
-                    if (distance < 20 && distance != 0)
+                    float distSqr = between.LengthSquared;
+                    if (distSqr > 0 && distSqr < 20 * 20)
                     {
-                        float factor = (20 - distance) / (80 * distance); // hyperbolic function
-                        Position += between * factor / 2; // todo: FPS stuff
+                        // hyperbolic function -- (20 - x) / (80 * x)
+                        float distance = MathF.Sqrt(distSqr);
+                        float div = distance / 20;
+                        float pct = (1 - div) / distance;
+                        Position += between * (pct / (4 *2)); // todo: FPS stuff
                     }
                 }
             }

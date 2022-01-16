@@ -858,10 +858,6 @@ namespace MphRead
                 PlayerEntity.ProcessInput(_keyboardState, _mouseState);
             }
             OnKeyHeld();
-
-            TransformCamera();
-            UpdateCameraPosition();
-
             if (ProcessFrame)
             {
                 UpdateScene();
@@ -869,9 +865,14 @@ namespace MphRead
                 _elapsedTime += 1 / 60f; // todo: FPS stuff
                 _frameCount++;
             }
+            if (ProcessFrame || CameraMode != CameraMode.Player)
+            {
+                TransformCamera();
+                UpdateCameraPosition();
+            }
         }
 
-        public void AfterUpdateFrame()
+        public void AfterRenderFrame()
         {
             if (_recording)
             {
@@ -3801,17 +3802,12 @@ namespace MphRead
             base.OnLoad();
         }
 
-        protected override void OnUpdateFrame(FrameEventArgs args)
-        {
-            Scene.OnUpdateFrame(args.Time);
-            Scene.AfterUpdateFrame();
-            base.OnUpdateFrame(args);
-        }
-
         protected override void OnRenderFrame(FrameEventArgs args)
         {
+            Scene.OnUpdateFrame(args.Time);
             Scene.OnRenderFrame();
             SwapBuffers();
+            Scene.AfterRenderFrame();
             base.OnRenderFrame(args);
         }
 
