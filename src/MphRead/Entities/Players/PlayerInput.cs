@@ -76,6 +76,102 @@ namespace MphRead.Entities
             SwitchWeapon();
         }
 
+        private void UpdateAimFacing()
+        {
+            float dot = Vector3.Dot(_gunVec1, _facingVector);
+            if (dot < Fixed.ToFloat(3956))
+            {
+                Vector3 temp1 = (_facingVector - _gunVec1 * dot).Normalized();
+                _facingVector = Fixed.ToFloat(3956) * _gunVec1 + Fixed.ToFloat(1060) * temp1;
+            }
+            Vector3 temp2 = _gunVec1 - _facingVector;
+            _facingVector += temp2 * 0.1f;
+            _facingVector = _facingVector.Normalized();
+        }
+
+        private void UpdateAimY(float amount)
+        {
+            if (Controls.InvertAimY)
+            {
+                amount *= -1;
+            }
+            float sensitivity = 1; // itodo: this
+            if (EquipInfo.Zoomed)
+            {
+                float fovFactor = CameraInfo.Fov - Fixed.ToFloat(Values.NormalFov) * 2;
+                sensitivity *= -Fixed.ToFloat(Values.Field70) * fovFactor;
+            }
+            amount *= sensitivity;
+            // unimpl-controls: these calculations are different when exact aim is not set
+            float prevAim = _aimY;
+            _aimY += amount;
+            if (IsAltForm)
+            {
+                _aimY = Math.Clamp(_aimY, -25, 5);
+            }
+            else
+            {
+                _aimY = Math.Clamp(_aimY, -85, 85);
+            }
+            float diff = MathHelper.DegreesToRadians(_aimY - prevAim);
+            Matrix4 transform = GetTransformMatrix(_gunVec1, Vector3.UnitY);
+            Vector3 vector;
+            if (diff <= 0)
+            {
+                vector = new Vector3(0, MathF.Sin(diff), MathF.Cos(diff));
+            }
+            else
+            {
+                vector = new Vector3(0, -MathF.Sin(-diff), MathF.Cos(-diff));
+            }
+            _gunVec1 = Matrix.Vec3MultMtx3(vector, transform).Normalized();
+            _aimPosition = CameraInfo.Position + _gunVec1 * Fixed.ToFloat(Values.AimDistance);
+            UpdateAimFacing();
+        }
+
+        private void UpdateAimX(float amount)
+        {
+            if (Controls.InvertAimX)
+            {
+                amount *= -1;
+            }
+            float sensitivity = 1; // itodo: this
+            if (EquipInfo.Zoomed)
+            {
+                float fovFactor = CameraInfo.Fov - Fixed.ToFloat(Values.NormalFov) * 2;
+                sensitivity *= -Fixed.ToFloat(Values.Field70) * fovFactor;
+            }
+            amount *= sensitivity;
+            // unimpl-controls: these calculations are different when exact aim is not set
+            float sin;
+            float cos;
+            float angle = MathHelper.DegreesToRadians(amount);
+            if (amount <= 0)
+            {
+                sin = MathF.Sin(angle);
+                cos = MathF.Cos(angle);
+            }
+            else
+            {
+                sin = -MathF.Sin(-angle);
+                cos = MathF.Cos(-angle);
+            }
+            float x = _gunVec1.X;
+            float z = _gunVec1.Z;
+            _gunVec1.X = x * cos + z * sin;
+            _gunVec1.Z = x * -sin + z * cos;
+            _gunVec1 = _gunVec1.Normalized();
+            _aimPosition = CameraInfo.Position + _gunVec1 * Fixed.ToFloat(Values.AimDistance);
+            if (EquipInfo.Zoomed)
+            {
+                _facingVector = _gunVec1;
+            }
+            else
+            {
+                UpdateAimFacing();
+            }
+        }
+
         private void ProcessBiped()
         {
             // todo: set a field if cam seq, main player, and 1P mode
@@ -92,7 +188,7 @@ namespace MphRead.Entities
             PlayerAnimation anim2 = PlayerAnimation.None;
             AnimFlags animFlags1 = AnimFlags.None;
             AnimFlags animFlags2 = AnimFlags.None;
-            if (_frozenTimer == 0 && _health > 0 && _field6D0 == 0)
+            if (_frozenTimer == 0 && _health > 0 && !_field6D0)
             {
                 if (Biped1Anim == PlayerAnimation.Turn)
                 {
@@ -120,14 +216,53 @@ namespace MphRead.Entities
                 }
                 if (Controls.MouseAim)
                 {
-                    // itodo: aim input
+                    // todo: update HUD shift
+                    float aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
+                    float aimX = -Input.MouseDeltaX / 4f;
+                    UpdateAimY(aimY);
+                    UpdateAimX(aimX);
+                    if (Flags1.TestFlag(PlayerFlags1.Grounded))
+                    {
+                        // sktodo: threshold values
+                        if (aimX > 3)
+                        {
+                            _timeIdle = 0;
+                            anim1 = PlayerAnimation.Turn;
+                            animFlags1 = AnimFlags.Reverse;
+                            if (Biped2Anim == PlayerAnimation.Turn)
+                            {
+                                _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                _bipedModel2.AnimInfo.Flags[0] |= AnimFlags.Reverse;
+                            }
+                            if (Biped1Anim == PlayerAnimation.Turn)
+                            {
+                                _bipedModel1.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                _bipedModel1.AnimInfo.Flags[0] |= AnimFlags.Reverse;
+                            }
+                        }
+                        else if (aimX < -3)
+                        {
+                            _timeIdle = 0;
+                            anim1 = PlayerAnimation.Turn;
+                            if (Biped2Anim == PlayerAnimation.Turn)
+                            {
+                                _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
+                            }
+                            if (Biped1Anim == PlayerAnimation.Turn)
+                            {
+                                _bipedModel1.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                _bipedModel1.AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
+                            }
+                        }
+                    }
                 }
-                else if (Controls.KeyboardAim)
+                if (Controls.KeyboardAim)
                 {
-                    // itodo: aim input
+                    // itodo: button aim
                 }
                 bool jumping = false;
-                if (!Flags2.TestFlag(PlayerFlags2.BipedLock | PlayerFlags2.BipedStuck))
+                if (!Flags2.TestAny(PlayerFlags2.BipedLock | PlayerFlags2.BipedStuck))
                 {
                     // unimpl-controls: the game also tests for either the free strafe flag, or the strafe button held
                     // and later, for up/down, it tests for either flag, or the look button not held
@@ -162,7 +297,8 @@ namespace MphRead.Entities
                         }
                         if (!EquipInfo.Zoomed)
                         {
-                            // todo: update field684 (using sign)
+                            _field684 += Fixed.ToFloat(Values.Field114) * sign / 2; // todo: FPS stuff
+                            _field684 = Math.Clamp(_field684, -180, 180);
                         }
                     }
 
@@ -194,7 +330,8 @@ namespace MphRead.Entities
                         }
                         if (!EquipInfo.Zoomed)
                         {
-                            // todo: update field688 (using sign)
+                            _field688 += Fixed.ToFloat(Values.Field114) * sign / 2; // todo: FPS stuff
+                            _field688 = Math.Clamp(_field688, -180, 180);
                         }
                     }
 
@@ -207,7 +344,14 @@ namespace MphRead.Entities
                         MoveRightLeft(PlayerAnimation.WalkLeft, sign: -1);
                     }
                     // todo: update HUD x shift
-                    // todo: update field684
+                    if (_field684 < Fixed.ToFloat(500) && _field684 > Fixed.ToFloat(-500))
+                    {
+                        _field684 = 0;
+                    }
+                    else
+                    {
+                        _field684 *= 0.9f; // sktodo: FPS stuff
+                    }
                     if (Controls.MoveUp.IsDown)
                     {
                         MoveForwardBack(PlayerAnimation.WalkForward, sign: 1);
@@ -217,7 +361,14 @@ namespace MphRead.Entities
                         MoveForwardBack(PlayerAnimation.WalkBackward, sign: -1);
                     }
                     // todo: update HUD y shift
-                    // todo: update field684
+                    if (_field688 < Fixed.ToFloat(500) && _field688 > Fixed.ToFloat(-500))
+                    {
+                        _field688 = 0;
+                    }
+                    else
+                    {
+                        _field688 *= 0.9f; // sktodo: FPS stuff
+                    }
                     // unimpl-controls: in the up/down code path, the game processes aim reset if that flag is off
                     if (_jumpPadControlLockMin == 0 && Controls.Jump.IsPressed
                         && !Flags1.TestAny(PlayerFlags1.NoAimInput | PlayerFlags1.UsedJump))
@@ -270,20 +421,20 @@ namespace MphRead.Entities
             ProcessMovement();
             UpdateCamera();
             UpdateAimVecs();
-            if (_frozenTimer == 0 && _health > 0 && _field6D0 == 0)
+            if (_frozenTimer == 0 && _health > 0 && !_field6D0)
             {
                 // todo: scan visor
                 // else...
                 if (!IsUnmorphing)
                 {
-                    if (Controls.Shoot.IsPressed || (Controls.Shoot.IsDown && Flags2.TestFlag(PlayerFlags2.NoShotsFired)))
+                    if (!Controls.Shoot.IsDown)
+                    {
+                        Flags2 &= ~PlayerFlags2.Shooting;
+                    }
+                    else if (Controls.Shoot.IsPressed || !Flags2.TestFlag(PlayerFlags2.NoShotsFired))
                     {
                         Flags2 |= PlayerFlags2.Shooting;
                         Flags2 &= ~PlayerFlags2.NoShotsFired;
-                    }
-                    else if (!Controls.Shoot.IsDown)
-                    {
-                        Flags2 &= ~PlayerFlags2.Shooting;
                     }
                     if (!_availableCharges[CurrentWeapon] || !EquipWeapon.Flags.TestFlag(WeaponFlags.CanCharge))
                     {
@@ -353,7 +504,58 @@ namespace MphRead.Entities
                         }
                         if (EquipInfo.Zoomed)
                         {
-                            // todo: zoom camera FOV
+                            float zoomFov = Fixed.ToFloat(EquipInfo.Weapon.ZoomFov) * 2;
+                            Vector3 facing = _facingVector;
+
+                            void CheckZoomTargets(EntityType type)
+                            {
+                                for (int i = 0; i < _scene.Entities.Count; i++)
+                                {
+                                    EntityBase entity = _scene.Entities[i];
+                                    if (entity.Type != type || entity == this || !entity.GetTargetable())
+                                    {
+                                        continue;
+                                    }
+                                    if (entity.Type == EntityType.Object
+                                        && !((ObjectEntity)entity).Data.EffectFlags.TestFlag(ObjEffFlags.WeaponZoom))
+                                    {
+                                        continue;
+                                    }
+                                    entity.GetPosition(out Vector3 position);
+                                    Vector3 between = position - Position;
+                                    float dot = Vector3.Dot(between, facing);
+                                    if (dot > 1 && dot / between.Length > Fixed.ToFloat(4074))
+                                    {
+                                        float angle = MathHelper.RadiansToDegrees(MathF.Atan2(3, dot));
+                                        if (angle < zoomFov)
+                                        {
+                                            zoomFov = angle;
+                                        }
+                                    }
+                                }
+                            }
+
+                            CheckZoomTargets(EntityType.Player);
+                            CheckZoomTargets(EntityType.EnemyInstance);
+                            CheckZoomTargets(EntityType.Object);
+                            float currentFov = CameraInfo.Fov;
+                            if (zoomFov > currentFov)
+                            {
+                                currentFov += 2 * 2;
+                                if (currentFov > zoomFov)
+                                {
+                                    currentFov = zoomFov;
+                                }
+                            }
+                            else if (zoomFov < currentFov)
+                            {
+                                currentFov -= 2 * 2;
+                                if (currentFov < zoomFov)
+                                {
+                                    currentFov = zoomFov;
+                                }
+                            }
+                            CameraInfo.Fov = currentFov;
                         }
                     }
                     if (Controls.Shoot.IsPressed && EquipInfo.ChargeLevel <= 1 * 2 // todo: FPS stuff
@@ -398,10 +600,9 @@ namespace MphRead.Entities
                 }
                 if (EquipInfo.Zoomed)
                 {
-                    Vector3 facing = FacingVector;
-                    Vector3 diff = _gunVec1 - facing;
-                    facing += diff * 0.3f / 2; // todo: FPS stuff
-                    SetTransform(facing.Normalized(), UpVector, Position);
+                    Vector3 diff = _gunVec1 - _facingVector;
+                    _facingVector += diff * 0.3f / 2; // todo: FPS stuff
+                    _facingVector = _facingVector.Normalized();
                 }
                 if (anim1 == PlayerAnimation.None)
                 {
@@ -462,8 +663,8 @@ namespace MphRead.Entities
                 }
                 // basically adds 0, 1, or 2 to the base autofire cooldown depending on how long the PB has repeated fire
                 // --> could add more, but the min charge is reaached quickly
-                int pbAuto = Math.Min((int)_powerBeamAutofire, 90 * 2); // todo: FPS stuff
-                pbAuto = (int)(pbAuto * 15 * 2 / (90f * 2));
+                int pbAuto = Math.Min(_powerBeamAutofire / 2, 90); // todo: FPS stuff
+                pbAuto = (int)(pbAuto * 15 / 90f);
                 _autofireCooldown = (ushort)((pbAuto + EquipWeapon.AutofireCooldown) * 2); // todo: FPS stuff
             }
             // todo: autofire cooldown case can be bypassed if a certain bot AI flag is set
@@ -551,21 +752,60 @@ namespace MphRead.Entities
             Flags1 |= PlayerFlags1.UsedJump;
             if (_frozenTimer == 0 && _health > 0)
             {
-                // sktodo: update camera vecs and flags bit 29
-                _altRollFbX = 0;
-                _altRollFbZ = 1;
-                _altRollLrX = 1;
-                _altRollLrZ = 0;
+                // todo?: if touch movement for alt form was a thing, this would need extra conditions
+                if ((!Controls.MoveRight.IsDown && !Controls.MoveLeft.IsDown && !Controls.MoveUp.IsDown && !Controls.MoveDown.IsDown)
+                    || Controls.MoveRight.IsPressed || Controls.MoveLeft.IsPressed || Controls.MoveUp.IsPressed || Controls.MoveDown.IsPressed)
+                {
+                    Flags1 &= ~PlayerFlags1.AltDirOverride;
+                }
+                if (_timeSinceMorphCamera > 10 * 2 && !Flags1.TestFlag(PlayerFlags1.AltDirOverride) // todo: FPS stuff
+                    && (MathF.Abs(CameraInfo.Field48) >= 1 / 4096f || MathF.Abs(CameraInfo.Field4C) >= 1 / 4096f))
+                {
+                    _altRollFbX = CameraInfo.Field48;
+                    _altRollFbZ = CameraInfo.Field4C;
+                    _altRollLrX = CameraInfo.Field50;
+                    _altRollLrZ = CameraInfo.Field54;
+                }
                 // todo?: field35C targeting(?) stuff
                 if (Values.AltGroundedNoGrav != 0)
                 {
                     // Trace, Sylux, Weavel
-                    // todo: aim
-                    if (!Controls.KeyboardAim)
+                    if (Controls.MouseAim)
                     {
+                        // todo: update HUD shift
+                        float aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
+                        float aimX = -Input.MouseDeltaX / 4f;
+                        UpdateAimY(aimY);
+                        UpdateAimX(aimX);
+                        if ((Hunter == Hunter.Trace || Hunter == Hunter.Weavel) && Flags1.TestFlag(PlayerFlags1.Grounded))
+                        {
+                            // sktodo: threshold values
+                            if (aimX > 3)
+                            {
+                                _timeIdle = 0;
+                                animId = (int)WeavelAltAnim.Turn; // or TraceAltAnim.MoveBackward
+                                animFlags = AnimFlags.Reverse;
+                                if (_altModel.AnimInfo.Index[0] == animId)
+                                {
+                                    _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                    _bipedModel2.AnimInfo.Flags[0] |= AnimFlags.Reverse;
+                                }
+                            }
+                            else if (aimX < -3)
+                            {
+                                _timeIdle = 0;
+                                animId = (int)WeavelAltAnim.Turn; // or TraceAltAnim.MoveBackward
+                                if (_altModel.AnimInfo.Index[0] == animId)
+                                {
+                                    _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                    _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
+                                }
+                            }
+                        }
                     }
-                    else
+                    if (Controls.KeyboardAim)
                     {
+                        // itodo: button aim
                     }
                     if (!Flags2.TestFlag(PlayerFlags2.BipedLock) && (Hunter != Hunter.Trace || !Flags2.TestFlag(PlayerFlags2.AltAttack)))
                     {
@@ -750,7 +990,7 @@ namespace MphRead.Entities
                             _spireRockPosR = Position;
                             _spireRockPosL = Position;
                             _spireAltUp = _fieldC0;
-                            var cross = Vector3.Cross(FacingVector, _spireAltUp);
+                            var cross = Vector3.Cross(_facingVector, _spireAltUp);
                             _spireAltFacing = Vector3.Cross(_spireAltUp, cross).Normalized();
                         }
                     }
@@ -865,7 +1105,7 @@ namespace MphRead.Entities
                                     _scene.UnlinkEffectEntry(_boostEffect);
                                     _boostEffect = null;
                                 }
-                                _boostEffect = _scene.SpawnEffectGetEntry(136, _gunVec2, FacingVector, Position); // samusDash
+                                _boostEffect = _scene.SpawnEffectGetEntry(136, _gunVec2, _facingVector, Position); // samusDash
                                 if (_boostEffect != null)
                                 {
                                     _boostEffect.SetElementExtension(true);
@@ -1043,11 +1283,10 @@ namespace MphRead.Entities
                     {
                         _field70 = hSpeed.X;
                         _field74 = hSpeed.Z;
-                        var face = new Vector3(_field70, 0, _field74);
-                        _gunVec1 = face;
+                        _facingVector = new Vector3(_field70, 0, _field74);
+                        _gunVec1 = _facingVector;
                         float add = _gunVec1.X * Fixed.ToFloat(Values.AimDistance);
                         _aimPosition = Position.AddX(add).AddZ(add);
-                        SetTransform(face, UpVector, Position);
                     }
                 }
                 if (IsAltForm)
@@ -1078,28 +1317,26 @@ namespace MphRead.Entities
                 _hSpeedMag = hSpeedMag;
             }
             // todo: check how much of this overwrites stuff done above
-            Vector3 facing = FacingVector;
-            float hMag = MathF.Sqrt(facing.X * facing.X + facing.Z * facing.Z);
-            _field70 = facing.X / hMag;
-            _field74 = facing.Z / hMag;
+            float hMag = MathF.Sqrt(_facingVector.X * _facingVector.X + _facingVector.Z * _facingVector.Z);
+            _field70 = _facingVector.X / hMag;
+            _field74 = _facingVector.Z / hMag;
             _gunVec2 = new Vector3(_field74, 0, -_field70);
             _field78 = _gunVec2.X;
             _field7C = _gunVec2.Z;
-            Vector3 up = Vector3.Cross(facing, _gunVec2).Normalized();
-            SetTransform(facing, up, Position);
+            _upVector = Vector3.Cross(_facingVector, _gunVec2).Normalized();
             if (Values.AltGroundedNoGrav != 0)
             {
                 _field80 = _field70;
                 _field84 = _field74;
             }
             _aimPosition = _gunVec1 * Fixed.ToFloat(Values.AimDistance);
-            _aimPosition += _scene.CameraPosition; // todo: use camera info pos
+            _aimPosition += CameraInfo.Position;
             // unimpl-controls: this calculation is different when exact aim is not set
             hMag = MathF.Sqrt(_gunVec1.X * _gunVec1.X + _gunVec1.Z * _gunVec1.Z);
-            _field88 = MathHelper.DegreesToRadians(MathF.Atan2(_gunVec1.Y, hMag));
-            if (_field88 > 75 || _field88 < -75)
+            _aimY = MathHelper.DegreesToRadians(MathF.Atan2(_gunVec1.Y, hMag));
+            if (_aimY > 75 || _aimY < -75)
             {
-                // todo: update aim
+                UpdateAimY(_aimY);
             }
             if (Flags1.TestFlag(PlayerFlags1.UsedJumpPad))
             {
@@ -1307,7 +1544,7 @@ namespace MphRead.Entities
                     }
                     if (PrevSpeed.Y < -0.65f)
                     {
-                        // todo: set camera shake
+                        CameraInfo.SetShake(Fixed.ToFloat(204));
                     }
                 }
             }
@@ -1362,12 +1599,6 @@ namespace MphRead.Entities
             }
         }
 
-        private void UpdateCamera()
-        {
-            // sktodo
-        }
-
-        // sktodo: aim input (after camera)
         public static void ProcessInput(KeyboardState keyboardState, MouseState mouseState)
         {
             KeyboardState keyboardSnap = keyboardState.GetSnapshot();
@@ -1386,19 +1617,27 @@ namespace MphRead.Entities
                     for (int j = 0; j < player.Controls.All.Length; j++)
                     {
                         ButtonControl control = player.Controls.All[j];
-                        if (control.IsKey == true)
+                        if (control.Type == ButtonType.Key)
                         {
                             bool prevDown = prevKeyboardSnap?.IsKeyDown(control.Key) ?? false;
                             control.IsDown = keyboardSnap.IsKeyDown(control.Key);
                             control.IsPressed = control.IsDown && !prevDown;
                             control.IsReleased = !control.IsDown && prevDown;
                         }
-                        else if (control.IsKey == false)
+                        else if (control.Type == ButtonType.Mouse)
                         {
                             bool prevDown = prevMouseSnap?.IsButtonDown(control.MouseButton) ?? false;
                             control.IsDown = mouseSnap!.IsButtonDown(control.MouseButton);
                             control.IsPressed = control.IsDown && !prevDown;
                             control.IsReleased = !control.IsDown && prevDown;
+                        }
+                        else
+                        {
+                            // todo?: deal with overflow or whatever
+                            control.IsDown = control.Type == ButtonType.ScrollUp && mouseSnap.Scroll.Y > (prevMouseSnap?.Scroll.Y ?? 0)
+                                || control.Type == ButtonType.ScrollDown && mouseSnap.Scroll.Y < (prevMouseSnap?.Scroll.Y ?? 0);
+                            control.IsPressed = control.IsDown;
+                            control.IsReleased = false;
                         }
                     }
                 }
@@ -1414,12 +1653,23 @@ namespace MphRead.Entities
             public KeyboardState? KeyboardState { get; set; }
             public MouseState? PrevMouseState { get; set; }
             public MouseState? MouseState { get; set; }
+
+            public float MouseDeltaX => (MouseState?.X - PrevMouseState?.X) ?? 0;
+            public float MouseDeltaY => (MouseState?.Y - PrevMouseState?.Y) ?? 0;
         }
+    }
+
+    public enum ButtonType
+    {
+        Key,
+        Mouse,
+        ScrollUp,
+        ScrollDown
     }
 
     public class ButtonControl
     {
-        public bool? IsKey { get; set; }
+        public ButtonType Type { get; set; }
         public Keys Key { get; set; }
         public MouseButton MouseButton { get; set; }
 
@@ -1428,20 +1678,25 @@ namespace MphRead.Entities
         public bool IsDown { get; set; }
         public bool IsReleased { get; set; }
 
-        public ButtonControl()
-        {
-        }
-
         public ButtonControl(Keys key)
         {
-            IsKey = true;
+            Type = ButtonType.Key;
             Key = key;
         }
 
         public ButtonControl(MouseButton mouseButton)
         {
-            IsKey = false;
+            Type = ButtonType.Mouse;
             MouseButton = mouseButton;
+        }
+
+        public ButtonControl(ButtonType scrollType)
+        {
+            if (scrollType != ButtonType.ScrollUp && scrollType != ButtonType.ScrollDown)
+            {
+                throw new ProgramException("Unexpected control type.");
+            }
+            Type = scrollType;
         }
     }
 
@@ -1463,15 +1718,23 @@ namespace MphRead.Entities
         public ButtonControl Morph { get; }
         public ButtonControl Boost { get; }
         public ButtonControl AltAttack { get; }
+        // todo: weapon switch modes (scroll through all, pick slot + scroll affinity, many buttons, radial menu, "curve" menu)
+        public ButtonControl NextWeapon { get; }
+        public ButtonControl PrevWeapon { get; }
+        public ButtonControl WeaponMenu { get; }
+
+        public bool InvertAimY { get; }
+        public bool InvertAimX { get; }
 
         public ButtonControl[] All { get; }
 
         public PlayerControls(ButtonControl moveLeft, ButtonControl moveRight, ButtonControl moveUp, ButtonControl moveDown,
             ButtonControl aimLeft, ButtonControl aimRight, ButtonControl aimUp, ButtonControl aimDown, ButtonControl shoot,
-            ButtonControl zoom, ButtonControl jump, ButtonControl morph, ButtonControl boost, ButtonControl altAttack)
+            ButtonControl zoom, ButtonControl jump, ButtonControl morph, ButtonControl boost, ButtonControl altAttack,
+            ButtonControl nextWeapon, ButtonControl prevWeapon, ButtonControl weaponMenu)
         {
             MouseAim = true;
-            KeyboardAim = false;
+            KeyboardAim = true;
             MoveLeft = moveLeft;
             MoveRight = moveRight;
             MoveUp = moveUp;
@@ -1486,10 +1749,22 @@ namespace MphRead.Entities
             Morph = morph;
             Boost = boost;
             AltAttack = altAttack;
+            NextWeapon = nextWeapon;
+            PrevWeapon = prevWeapon;
+            WeaponMenu = weaponMenu;
             All = new[]
             {
-                moveLeft, moveRight, moveUp, moveDown, aimLeft, aimRight, aimUp, aimDown, shoot, zoom, jump, morph, boost, altAttack
+                moveLeft, moveRight, moveUp, moveDown, aimLeft, aimRight, aimUp, aimDown, shoot, zoom,
+                jump, morph, boost, altAttack, nextWeapon, prevWeapon, weaponMenu
             };
+        }
+
+        public void ClearPressed()
+        {
+            for (int i = 0; i < All.Length; i++)
+            {
+                All[i].IsPressed = false;
+            }
         }
 
         public static PlayerControls GetDefault()
@@ -1499,16 +1774,19 @@ namespace MphRead.Entities
                 moveRight: new ButtonControl(Keys.D),
                 moveUp: new ButtonControl(Keys.W),
                 moveDown: new ButtonControl(Keys.S),
-                aimLeft: new ButtonControl(),
-                aimRight: new ButtonControl(),
-                aimUp: new ButtonControl(),
-                aimDown: new ButtonControl(),
-                shoot: new ButtonControl(MouseButton.Button2),
-                zoom: new ButtonControl(MouseButton.Button3),
+                aimLeft: new ButtonControl(Keys.Left),
+                aimRight: new ButtonControl(Keys.Right),
+                aimUp: new ButtonControl(Keys.Up),
+                aimDown: new ButtonControl(Keys.Down),
+                shoot: new ButtonControl(MouseButton.Left),
+                zoom: new ButtonControl(MouseButton.Right),
                 jump: new ButtonControl(Keys.Space),
                 morph: new ButtonControl(Keys.C),
                 boost: new ButtonControl(Keys.Space),
-                altAttack: new ButtonControl(Keys.Q)
+                altAttack: new ButtonControl(Keys.Q),
+                nextWeapon: new ButtonControl(Keys.H),
+                prevWeapon: new ButtonControl(Keys.H),
+                weaponMenu: new ButtonControl(MouseButton.Middle)
             );
         }
     }

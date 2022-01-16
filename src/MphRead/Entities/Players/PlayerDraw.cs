@@ -21,8 +21,8 @@ namespace MphRead.Entities
             }
             int lod = 0;
             Flags2 &= ~PlayerFlags2.Lod1;
-            // todo: use main player's cam info pos, and make this configurable
-            if (!IsMainPlayer && (Position - _scene.CameraPosition).LengthSquared >= 3)
+            // todo: make this configurable
+            if (!IsMainPlayer && (Position - CameraInfo.Position).LengthSquared >= 3 * 3)
             {
                 lod = 1;
                 Flags2 |= PlayerFlags2.Lod1;
@@ -34,7 +34,8 @@ namespace MphRead.Entities
             if (IsMainPlayer || IsVisible())
             {
                 // todo: or if cam seq
-                drawBiped = !IsMainPlayer || _viewType != 0 || _viewSwayTimer < Values.ViewSwayTime * 2; // todo: FPS stuff
+                drawBiped = !IsMainPlayer || CameraType != CameraType.First
+                    || _camSwitchTimer < Values.CamSwitchTime * 2; // todo: FPS stuff
                 if (IsAltForm)
                 {
                     _modelTransform.Row3.Xyz = Position;
@@ -77,7 +78,7 @@ namespace MphRead.Entities
                     Node spineNode = _spineNodes[lod]!;
                     spineNode.AnimIgnoreChild = true;
                     // todo: we can just figure out the angle directly from the facing vector
-                    Vector3 facing = FacingVector;
+                    Vector3 facing = _facingVector;
                     float limit = Fixed.ToFloat(2896);
                     float cos = MathF.Sqrt(1 - facing.Y * facing.Y);
                     float sin = facing.Y;
@@ -161,13 +162,14 @@ namespace MphRead.Entities
                     }
                     Flags2 |= PlayerFlags2.DrawnThirdPerson;
                 }
-                else if (AttachedEnemy == null && _field6D0 == 0 && Hunter != Hunter.Guardian)
+                else if (AttachedEnemy == null && !_field6D0 && Hunter != Hunter.Guardian)
                 {
-                    Matrix4 transform = GetTransformMatrix(_aimVec, UpVector, _gunDrawPos);
+                    Matrix4 transform = GetTransformMatrix(_aimVec, _upVector, _gunDrawPos);
                     UpdateTransforms(_gunModel, transform, Recolor);
                     GetDrawItems(_gunModel, _gunModel.Model.Nodes[0], _curAlpha);
                     if (Flags1.TestFlag(PlayerFlags1.DrawGunSmoke))
                     {
+                        // todo?: the game uses an alternate projection matrix to draw this
                         var drawPos = new Vector3(0, 0, Fixed.ToFloat(Values.MuzzleOffset));
                         drawPos = Matrix.Vec3MultMtx4(drawPos, transform);
                         transform.Row3.Xyz = drawPos;
@@ -338,7 +340,7 @@ namespace MphRead.Entities
 
         private void DrawShadow()
         {
-            if (IsMainPlayer && _viewType == 0)
+            if (IsMainPlayer && CameraType == CameraType.First)
             {
                 return;
             }

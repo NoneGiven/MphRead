@@ -139,8 +139,6 @@ namespace MphRead.Entities
                                 {
                                     // todo: play SFX
                                     player.Teleport(_targetPos.AddY(0.5f), FacingVector);
-                                    // todo: node ref
-                                    // todo: update camera
                                 }
                                 else
                                 {

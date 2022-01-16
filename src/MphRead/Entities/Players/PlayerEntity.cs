@@ -195,7 +195,7 @@ namespace MphRead.Entities
         public static PlayerEntity Main => Players[MainPlayerIndex];
         public static readonly PlayerEntity[] _players = new PlayerEntity[4];
         public static IReadOnlyList<PlayerEntity> Players => _players;
-        public bool IsMainPlayer => this == Main && !FreeCamera;
+        public bool IsMainPlayer => this == Main && _scene.CameraMode == CameraMode.Player;
 
         private const int UA = 0;
         private const int Missiles = 1;
@@ -251,6 +251,8 @@ namespace MphRead.Entities
         private CollisionVolume _volume;
         public CollisionVolume Volume => _volume;
 
+        private Vector3 _facingVector;
+        private Vector3 _upVector;
         private Vector3 _gunVec1; // facing? (aim?)
         private Vector3 _gunVec2; // right? (turn?)
         private Vector3 _aimPosition;
@@ -270,7 +272,7 @@ namespace MphRead.Entities
         private float _field80 = 0;
         private float _field84 = 0;
 
-        private float _field88 = 0; // angle related to view sway
+        private float _aimY = 0;
         private float _field40C = 0; // view sway percentage
         private Vector3 _field410;
         private Vector3 _field41C;
@@ -297,7 +299,9 @@ namespace MphRead.Entities
         private byte _field551 = 0;
         private byte _field552 = 0;
         private byte _field553 = 0;
-        private byte _field6D0 = 0;
+        private float _field684 = 0;
+        private float _field688 = 0;
+        private bool _field6D0 = false;
         private float _altRollFbX = 0; // set from other fields when entering alt form
         private float _altRollFbZ = 0;
         private float _altRollLrX = 0;
@@ -308,7 +312,7 @@ namespace MphRead.Entities
         public EnemySpawnEntity? EnemySpawner => _enemySpawner;
         public EnemyInstanceEntity? AttachedEnemy { get; set; } = null;
         private EntityBase? _field35C = null;
-        private MorphCameraEntity? _morphCamera = null;
+        public MorphCameraEntity? MorphCamera { get; set; }
         private OctolithFlagEntity? _octolithFlag = null;
         private JumpPadEntity? _lastJumpPad = null;
         private EnemySpawnEntity? _enemySpawner = null;
@@ -327,7 +331,6 @@ namespace MphRead.Entities
         public Vector3 Acceleration { get; set; }
         public Vector3 PrevSpeed { get; set; }
         public Vector3 PrevPosition { get; set; }
-        public Vector3 PrevCamPos { get; set; }
         public Vector3 IdlePosition { get; private set; }
         private ushort _accelerationTimer = 0;
         private float _hSpeedCap = 0;
@@ -372,7 +375,7 @@ namespace MphRead.Entities
         private ushort _respawnTimer = 0;
         private ushort _damageInvulnTimer = 0;
         private ushort _spawnInvulnTimer = 0;
-        private ushort _viewSwayTimer = 0;
+        private ushort _camSwitchTimer = 0;
         private ushort _doubleDmgTimer = 0;
         public bool DoubleDamage => _doubleDmgTimer > 0;
         private ushort _cloakTimer = 0;
@@ -410,11 +413,9 @@ namespace MphRead.Entities
         public float CurAlpha => _curAlpha;
         private float _targetAlpha = 1;
         private float _smokeAlpha = 0;
-        private int _viewType = 0; // todo: update this and use an enum
 
         // debug/viewer
         public bool IgnoreItemPickups { get; set; }
-        public static bool FreeCamera { get; set; } = true;
         public Vector3? ForcedSpawnPos { get; set; }
 
         private PlayerEntity(int slotIndex, Scene scene) : base(EntityType.Player, scene)
@@ -508,14 +509,16 @@ namespace MphRead.Entities
             InitializeWeapon();
             _availableWeapons[BeamType.PowerBeam] = true;
             TryEquipWeapon(BeamType.PowerBeam, silent: true);
-            SetTransform(-Vector3.UnitZ, Vector3.UnitY, Vector3.Zero);
+            _facingVector = -Vector3.UnitZ;
+            _upVector = Vector3.UnitY;
+            SetTransform(_facingVector, _upVector, Vector3.Zero);
             Speed = Vector3.Zero;
             _gunVec1 = -Vector3.UnitZ;
             _gunVec2 = -Vector3.UnitX;
             _volumeUnxf = PlayerVolumes[(int)Hunter, 0];
             _volume = CollisionVolume.Move(_volumeUnxf, Position);
             _aimPosition = (Position + _gunVec1 * Fixed.ToFloat(Values.AimDistance)).AddY(Fixed.ToFloat(Values.AimYOffset));
-            _field88 = 0;
+            _aimY = 0;
             _gunViewBob = 0;
             _walkViewBob = 0;
             _health = 0;
@@ -547,9 +550,12 @@ namespace MphRead.Entities
             TeamIndex = SlotIndex; // todo: use game state and set Team
             _field4E8 = Vector3.Zero;
             _modelTransform = Matrix4.Identity;
-            _viewSwayTimer = (ushort)(Values.ViewSwayTime * 2); // todo: FPS stuff (use floats)
-            ResetCameraInfo();
-            // todo: update camera info
+            _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff (use floats)
+            CameraInfo.Reset();
+            CameraInfo.Position = Position;
+            CameraInfo.UpVector = Vector3.UnitY;
+            CameraInfo.Target = Position + _facingVector;
+            // todo: cam info node ref
             _timeIdle = 0;
             _timeSinceInput = 0;
             _field40C = 0;
@@ -679,14 +685,16 @@ namespace MphRead.Entities
             {
                 pos = pos.AddY(1);
             }
-            SetTransform(facing, up, pos);
+            _upVector = up;
+            _facingVector = facing;
+            SetTransform(_facingVector, _upVector, pos);
             PrevPosition = Position;
             IdlePosition = Position;
             _gunVec2 = Vector3.Cross(up, facing).Normalized();
             _gunVec1 = facing;
-            float factor = 1 / MathF.Sqrt(facing.X * facing.X + facing.Z * facing.Z);
-            _field70 = facing.X * factor;
-            _field74 = facing.Z * factor;
+            float hMag = MathF.Sqrt(facing.X * facing.X + facing.Z * facing.Z);
+            _field70 = facing.X / hMag;
+            _field74 = facing.Z / hMag;
             _field78 = _field74;
             _field7C = -_field70;
             _field80 = _field70;
@@ -695,16 +703,31 @@ namespace MphRead.Entities
             Acceleration = Vector3.Zero;
             _accelerationTimer = 0;
             // todo: room node ref
-            _field88 = 0;
+            _aimY = 0;
             _fieldE4 = 0;
             _fieldE8 = 0;
             _gunViewBob = 0;
             _walkViewBob = 0;
-            // todo: update camera info and camseq stuff
+            // todo: if 1P and cam seq
+            // else...
+            // todo: if MP and cam seq
+            CameraInfo.Reset();
+            CameraInfo.Position = Position;
+            CameraInfo.PrevPosition = Position;
+            CameraInfo.UpVector = Vector3.UnitY;
+            CameraInfo.Target = Position + facing;
+            CameraInfo.Fov = Fixed.ToFloat(Values.NormalFov) * 2;
+            // todo: cam info node ref
+            SwitchCamera(CameraType.First, facing);
+            _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff
+            _field684 = 0;
+            _field688 = 0;
+            UpdateCameraFirst();
+            CameraInfo.Update();
             _gunDrawPos = Fixed.ToFloat(Values.FieldB8) * facing
-                + _scene.CameraPosition
+                + CameraInfo.Position
                 + Fixed.ToFloat(Values.FieldB0) * _gunVec2
-                + Fixed.ToFloat(Values.FieldB4) * up; // todo: use camera info position
+                + Fixed.ToFloat(Values.FieldB4) * up;
             _aimVec = _aimPosition - _gunDrawPos;
             _timeSinceInput = 0;
             Flags1 = PlayerFlags1.Standing | PlayerFlags1.StandingPrevious | PlayerFlags1.CanTouchBoost;
@@ -750,7 +773,7 @@ namespace MphRead.Entities
             SetGunAnimation(GunAnimation.Idle, AnimFlags.NoLoop);
             _gunSmokeModel.SetAnimation(0);
             _smokeAlpha = 0;
-            _morphCamera = null;
+            MorphCamera = null;
             _octolithFlag = null;
             ResetMorphBallTrail();
             // todo: stop SFX, play SFX, update SFX handle
@@ -759,12 +782,15 @@ namespace MphRead.Entities
             _jumpPadControlLockMin = 0;
             _timeSinceJumpPad = UInt16.MaxValue; // the game doesn't do this
             // todo: update HUD effects
-            // todo: update camera info vecs
+            _altRollFbX = CameraInfo.Field48;
+            _altRollFbZ = CameraInfo.Field4C;
+            _altRollLrX = CameraInfo.Field50;
+            _altRollLrZ = CameraInfo.Field54;
             _light1Vector = _scene.Light1Vector;
             _light1Color = _scene.Light1Color;
             _light2Vector = _scene.Light2Vector;
             _light2Color = _scene.Light2Color;
-            // todo: clear input
+            Controls.ClearPressed();
             if (IsBot)
             {
                 // todo: bot stuff
@@ -788,8 +814,8 @@ namespace MphRead.Entities
         public override void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
         {
             position = Position.AddY(IsAltForm ? 0 : 0.5f);
-            up = UpVector;
-            facing = FacingVector;
+            up = _upVector;
+            facing = _facingVector;
         }
 
         public override bool GetTargetable()
@@ -826,7 +852,14 @@ namespace MphRead.Entities
         public void Teleport(Vector3 position, Vector3 facing)
         {
             _gunVec1 = facing;
-            Transform = GetTransformMatrix(facing, UpVector, position);
+            _facingVector = facing;
+            SetTransform(facing, _upVector, position);
+            // todo: node ref
+            if (IsAltForm || IsMorphing || IsUnmorphing)
+            {
+                ResumeOwnCamera();
+                CameraInfo.Update();
+            }
         }
 
         // todo: visualize
@@ -848,10 +881,10 @@ namespace MphRead.Entities
                 between = Volume.SpherePosition - bomb.Position;
             }
             float distSqr = between.LengthSquared;
+            float hitRadiusSqr = Fixed.ToFloat(Values.BombSelfRadiusSquared);
             if (bomb.Owner == this)
             {
-                float hitRadiusSqr = Fixed.ToFloat(Values.BombSelfRadiusSquared);
-                if (distSqr < hitRadiusSqr && between.Y > -Volume.SphereRadius)
+                if (distSqr <= hitRadiusSqr && between.Y > -Volume.SphereRadius)
                 {
                     hit = true;
                     float ySpeed = Fixed.ToFloat(Values.BombJumpSpeed);
@@ -874,7 +907,8 @@ namespace MphRead.Entities
             }
             if (hit)
             {
-                // todo: set camera shake
+                float shake = (hitRadiusSqr - distSqr) / hitRadiusSqr * 0.1f;
+                CameraInfo.SetShake(shake);
             }
             return hit;
         }
@@ -882,11 +916,6 @@ namespace MphRead.Entities
         public void OnHalfturretDied()
         {
             Flags2 &= ~PlayerFlags2.Halfturret;
-        }
-
-        private void ResetCameraInfo()
-        {
-            // todo: this
         }
 
         private void ResetMorphBallTrail()
@@ -979,7 +1008,10 @@ namespace MphRead.Entities
         // skdebug
         private void SwitchWeapon()
         {
-            Debug.Assert(Input.KeyboardState != null);
+            if (IsBot || Input.KeyboardState == null)
+            {
+                return;
+            }
             BeamType beam = BeamType.None;
             if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D1))
             {
@@ -1201,7 +1233,7 @@ namespace MphRead.Entities
         {
             if (_timeSinceInput == 0)
             {
-                if (_gunModel.AnimInfo.Flags[0].TestFlag(AnimFlags.Reverse))
+                if (GunAnimation == GunAnimation.UpDown && _gunModel.AnimInfo.Flags[0].TestFlag(AnimFlags.Reverse))
                 {
                     _gunModel.AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
                     _gunModel.AnimInfo.Flags[0] &= ~AnimFlags.Ended;
@@ -1279,7 +1311,7 @@ namespace MphRead.Entities
                 }
                 else if (GunAnimation != GunAnimation.Charging && GunAnimation != GunAnimation.FullCharge)
                 {
-                    SetGunAnimation(GunAnimation.ChargeShot, AnimFlags.NoLoop);
+                    SetGunAnimation(GunAnimation.Charging, AnimFlags.NoLoop);
                 }
                 else if (GunAnimation != GunAnimation.FullCharge && _gunModel.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
                 {
@@ -1501,7 +1533,7 @@ namespace MphRead.Entities
                 _ammoRecovery[0] = 0;
                 _ammoRecovery[1] = 0;
                 EquipInfo.ChargeLevel = 0;
-                // todo: set camera shake to 0
+                CameraInfo.Shake = 0;
                 _doubleDmgTimer = 0;
                 _deathaltTimer = 0;
                 _cloakTimer = 0;
@@ -1567,9 +1599,9 @@ namespace MphRead.Entities
                 }
                 _boostCharge = 0;
                 // todo: update stats
-                if (IsMainPlayer && beamType == BeamType.OmegaCannon)
+                if (this == Main && beamType == BeamType.OmegaCannon)
                 {
-                    _scene.SetFade(FadeType.FadeInWhite, 90 * 1 / 30f, overwrite: true);
+                    _scene.SetFade(FadeType.FadeInWhite, 90 * (1 / 30f), overwrite: true);
                 }
                 Speed = Vector3.Zero;
                 _respawnTimer = _respawnTime;
@@ -1588,6 +1620,7 @@ namespace MphRead.Entities
                     if (IsMainPlayer)
                     {
                         // todo: update story save, death countdown, lost octolith, etc.
+                        CameraInfo.SetShake(0.25f);
                     }
                 }
                 else // multiplayer
@@ -1618,11 +1651,12 @@ namespace MphRead.Entities
                     }
                     if (attacker == null || attacker == this)
                     {
-                        // todo: update camera info to look ahead
+                        Vector3 camFacing = CameraInfo.Position + CameraInfo.Facing;
+                        SwitchCamera(CameraType.Free, camFacing);
                     }
                     else
                     {
-                        // todo: update camera info to look at attacker
+                        SwitchCamera(CameraType.Free, attacker.Position);
                     }
                     if (IsPrimeHunter)
                     {
@@ -1810,12 +1844,12 @@ namespace MphRead.Entities
             }
             if (_health > 0 && !IsAltForm)
             {
-                float shake = 0.3f;
+                float shake = 0.03f;
                 if (!flags.TestFlag(DamageFlags.Burn))
                 {
                     shake = Math.Max(damage * 0.01f, 0.05f);
                 }
-                // todo: set camera shake
+                CameraInfo.SetShake(shake);
             }
             if (IsMainPlayer)
             {
@@ -1912,7 +1946,7 @@ namespace MphRead.Entities
         Boosting = 0x4000000,
         CanTouchBoost = 0x8000000,
         UsedJumpPad = 0x10000000,
-        Bit29 = 0x20000000,
+        AltDirOverride = 0x20000000,
         Bit30 = 0x40000000,
         DrawGunSmoke = 0x80000000
     }
@@ -1997,7 +2031,7 @@ namespace MphRead.Entities
         public readonly int Field5C;
         public readonly int WalkBobMax;
         public readonly int AimDistance;
-        public readonly ushort ViewSwayTime;
+        public readonly ushort CamSwitchTime;
         public readonly ushort Padding6A;
         public readonly int NormalFov;
         public readonly int Field70;
@@ -2078,7 +2112,7 @@ namespace MphRead.Entities
             int altMinHSpeed, int boostSpeedCap, int bipedGravity, int altAirGravity, int altGroundGravity, int jumpSpeed, int walkSpeedFactor,
             int altGroundSpeedFactor, int strafeSpeedFactor, int airSpeedFactor, int standSpeedFactor, int rollAltTraction, int altColRadius,
             int altColYPos, ushort boostChargeMin, ushort boostChargeMax, int boostSpeedMin, int boostSpeedMax, int altHSpeedCapIncrement,
-            int field58, int field5C, int walkBobMax, int aimDistance, ushort viewSwayTime, ushort padding6A, int normalFov, int field70,
+            int field58, int field5C, int walkBobMax, int aimDistance, ushort camSwitchTime, ushort padding6A, int normalFov, int field70,
             int aimYOffset, int field78, int field7C, int field80, int field84, int field88, int field8C, int field90, int minPickupHeight,
             int maxPickupHeight, int bipedColRadius, int fieldA0, int fieldA4, int fieldA8, short damageInvuln, ushort damageFlashTime,
             int fieldB0, int fieldB4, int fieldB8, int muzzleOffset, int bombCooldown, int bombSelfRadius, int bombSelfRadiusSquared,
@@ -2119,7 +2153,7 @@ namespace MphRead.Entities
             Field5C = field5C;
             WalkBobMax = walkBobMax;
             AimDistance = aimDistance;
-            ViewSwayTime = viewSwayTime;
+            CamSwitchTime = camSwitchTime;
             Padding6A = padding6A;
             NormalFov = normalFov;
             Field70 = field70;

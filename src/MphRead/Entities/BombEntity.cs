@@ -61,7 +61,7 @@ namespace MphRead.Entities
                     BombEntity firstBomb = Owner.SyluxBombs[0]!;
                     Vector3 between = firstBomb.Position - Position;
                     if (between.LengthSquared >= 100 || CollisionDetection.CheckBetweenPoints(firstBomb.Position, Position,
-                        TestFlags.AffectsPlayers, _scene, ref colRes))
+                        TestFlags.Players, _scene, ref colRes))
                     {
                         Countdown = 1;
                         firstBomb.Countdown = 1;
@@ -494,7 +494,6 @@ namespace MphRead.Entities
             }
             else
             {
-                // todo?: the tail bomb is visibly in the air when grounded
                 Debug.Assert(BombType == BombType.Stinglarva);
                 Vector3 between = (targetPos - Position).WithY(0);
                 float hMagSqr = between.X * between.X + between.Z * between.Z;

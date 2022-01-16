@@ -296,7 +296,7 @@ namespace MphRead.Entities
             {
                 float radius = altVolume.SphereRadius + (Hunter == Hunter.Spire || Hunter == Hunter.Sylux ? 0.5f : 0.35f);
                 int count = CollisionDetection.CheckSphereBetweenPoints(candidates, point1, point2, radius,
-                    limit: 40, includeOffset: true, TestFlags.AffectsPlayers, _scene, results);
+                    limit: 40, includeOffset: true, TestFlags.Players, _scene, results);
                 for (int i = 0; i < count; i++)
                 {
                     HandleCollision(results[i]);
@@ -307,7 +307,7 @@ namespace MphRead.Entities
                     - altVolume.SphereRadius - radius;
                 point2 = Position.AddY(yOffset);
                 count = CollisionDetection.CheckSphereBetweenPoints(candidates, point1, point2, radius,
-                    limit: 1, includeOffset: false, TestFlags.AffectsPlayers, _scene, results);
+                    limit: 1, includeOffset: false, TestFlags.Players, _scene, results);
                 if (count > 0)
                 {
                     Flags1 |= PlayerFlags1.NoUnmorph;
@@ -319,7 +319,7 @@ namespace MphRead.Entities
                     {
                         point2 = _kandenSegPos[i].AddY(Fixed.ToFloat(Values.AltColYPos));
                         count = CollisionDetection.CheckSphereBetweenPoints(candidates, point2, point2, altRadius,
-                            limit: 40, includeOffset: true, TestFlags.AffectsPlayers, _scene, results);
+                            limit: 40, includeOffset: true, TestFlags.Players, _scene, results);
                         for (int j = 0; j < count; j++)
                         {
                             CollisionResult result = results[j];
@@ -359,7 +359,7 @@ namespace MphRead.Entities
             {
                 float radius = (Fixed.ToFloat(Values.MaxPickupHeight) - Fixed.ToFloat(Values.MinPickupHeight)) / 2;
                 int count = CollisionDetection.CheckSphereBetweenPoints(candidates, point1, point2, radius,
-                    limit: 40, includeOffset: true, TestFlags.AffectsPlayers, _scene, results);
+                    limit: 40, includeOffset: true, TestFlags.Players, _scene, results);
                 for (int i = 0; i < count; i++)
                 {
                     HandleCollision(results[i]);

@@ -61,7 +61,7 @@ namespace MphRead.Testing
             {
                 if (name != "" && name != "sparksFall" && name != "mortarSecondary" && name != "powerBeamChargeNoSplatMP")
                 {
-                    Effect effect = Read.LoadEffect(name, archive);
+                    Effect effect = Read.LoadEffect(-1, name, archive);
                     foreach (EffectElement element in effect.Elements)
                     {
                     }
@@ -161,7 +161,7 @@ namespace MphRead.Testing
                 if (name != "" && name != "sparksFall" && name != "mortarSecondary"
                     && name != "powerBeamChargeNoSplatMP")
                 {
-                    effects.Add(i, Read.LoadEffect(name, archive));
+                    effects.Add(i, Read.LoadEffect(-1, name, archive));
                 }
             }
             foreach (KeyValuePair<string, RoomMetadata> meta in Metadata.RoomMetadata)

@@ -151,7 +151,8 @@ namespace MphRead.Entities
 
         private void CalculateFrameValues()
         {
-            // todo: set camera shake to 0 once that exists
+            // todo: use camera info
+            // todo: set shake to 0
             Vector3 finalPosition;
             Vector3 finalToTarget;
             float finalRoll;
