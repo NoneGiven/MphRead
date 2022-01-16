@@ -1333,10 +1333,10 @@ namespace MphRead.Entities
             _aimPosition += CameraInfo.Position;
             // unimpl-controls: this calculation is different when exact aim is not set
             hMag = MathF.Sqrt(_gunVec1.X * _gunVec1.X + _gunVec1.Z * _gunVec1.Z);
-            _aimY = MathHelper.DegreesToRadians(MathF.Atan2(_gunVec1.Y, hMag));
-            if (_aimY > 75 || _aimY < -75)
+            float aimY = MathHelper.RadiansToDegrees(MathF.Atan2(_gunVec1.Y, hMag));
+            if (aimY > 75 || aimY < -75)
             {
-                UpdateAimY(_aimY);
+                UpdateAimY(0);
             }
             if (Flags1.TestFlag(PlayerFlags1.UsedJumpPad))
             {
