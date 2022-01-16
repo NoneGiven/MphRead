@@ -1531,5 +1531,34 @@ namespace MphRead.Formats
             result.EntityCollision = null;
             return true;
         }
+
+        public static bool CheckPortBetweenPoints(Portal portal, Vector3 point1, Vector3 point2, bool otherSide)
+        {
+            float dotPrev = Vector3.Dot(point1, portal.Plane.Xyz) - portal.Plane.W;
+            float dotCur = Vector3.Dot(point2, portal.Plane.Xyz) - portal.Plane.W;
+            // todo?: the game returns false after a check with flags bit 1, but I don't think that's ever set
+            if (otherSide)
+            {
+                dotPrev *= -1;
+                dotCur *= -1;
+            }
+            if (dotPrev > 0 && dotCur <= 0)
+            {
+                float div = dotPrev / (dotPrev - dotCur);
+                Vector3 vec = point1 + (point2 - point1) * div;
+                Debug.Assert(portal.Points.Count == portal.Planes.Count);
+                Debug.Assert(portal.Planes.Count > 0);
+                for (int i = 0; i < portal.Planes.Count; i++)
+                {
+                    Vector4 plane = portal.Planes[i];
+                    if (Vector3.Dot(vec, plane.Xyz) - plane.W < Fixed.ToFloat(-4224))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
     }
 }

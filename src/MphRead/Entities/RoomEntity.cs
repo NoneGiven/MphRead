@@ -12,7 +12,7 @@ namespace MphRead.Entities
     public class RoomEntity : EntityBase
     {
         public CollisionInstance RoomCollision { get; }
-        private readonly IReadOnlyList<CollisionPortal> _portals = new List<CollisionPortal>();
+        private readonly IReadOnlyList<Portal> _portals = new List<Portal>();
         private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
         private IReadOnlyList<Node> Nodes => _models[0].Model.Nodes;
         private readonly RoomMetadata _meta;
@@ -44,7 +44,7 @@ namespace MphRead.Entities
                 _models.Add(Read.GetModelInstance("pick_wpn_missile", noCache: true));
                 _emptyMatrixStack = Array.Empty<float>();
             }
-            var portals = new List<CollisionPortal>();
+            var portals = new List<Portal>();
             var forceFields = new List<PortalNodeRef>();
             // portals are already filtered by layer mask
             portals.AddRange(collision.Info.Portals);
@@ -58,7 +58,7 @@ namespace MphRead.Entities
                         node.IsRoomPartNode = true;
                     }
                 }
-                foreach (CollisionPortal portal in portals)
+                foreach (Portal portal in portals)
                 {
                     for (int i = 0; i < model.Nodes.Count; i++)
                     {
@@ -75,8 +75,8 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                IEnumerable<CollisionPortal> pmags = portals.Where(p => p.Name.StartsWith("pmag"));
-                foreach (CollisionPortal portal in pmags)
+                IEnumerable<Portal> pmags = portals.Where(p => p.Name.StartsWith("pmag"));
+                foreach (Portal portal in pmags)
                 {
                     for (int i = 0; i < model.Nodes.Count; i++)
                     {
@@ -147,7 +147,7 @@ namespace MphRead.Entities
                 }
                 for (int j = 0; j < _portals.Count; j++)
                 {
-                    CollisionPortal portal = _portals[j];
+                    Portal portal = _portals[j];
                     if ((!portal.IsForceField || GetPortalAlpha(portal.Position, camInfo.Position) < 1)
                         && (portal.NodeIndex1 == nodeRef && portal.NodeIndex2 == i
                         || portal.NodeIndex2 == nodeRef && portal.NodeIndex1 == i))
@@ -172,6 +172,30 @@ namespace MphRead.Entities
                 }
             }
             return -1;
+        }
+
+        public int UpdateNodeRef(int current, Vector3 prevPos, Vector3 curPos)
+        {
+            Debug.Assert(current != -1);
+            for (int i = 0; i < _portals.Count; i++)
+            {
+                Portal portal = _portals[i];
+                if (portal.NodeIndex1 == current)
+                {
+                    if (CollisionDetection.CheckPortBetweenPoints(portal, prevPos, curPos, otherSide: false))
+                    {
+                        return portal.NodeIndex2;
+                    }
+                }
+                if (portal.NodeIndex2 == current)
+                {
+                    if (CollisionDetection.CheckPortBetweenPoints(portal, prevPos, curPos, otherSide: true))
+                    {
+                        return portal.NodeIndex1;
+                    }
+                }
+            }
+            return current;
         }
 
         public override void GetDrawInfo()
@@ -277,7 +301,7 @@ namespace MphRead.Entities
                 }
             }
 
-            void GetItems(ModelInstance inst, Node node, CollisionPortal? portal = null)
+            void GetItems(ModelInstance inst, Node node, Portal? portal = null)
             {
                 if (!node.Enabled)
                 {
@@ -325,7 +349,7 @@ namespace MphRead.Entities
             {
                 for (int i = 0; i < _portals.Count; i++)
                 {
-                    CollisionPortal portal = _portals[i];
+                    Portal portal = _portals[i];
                     int count = portal.Points.Count;
                     Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(count);
                     for (int j = 0; j < count; j++)
@@ -373,10 +397,10 @@ namespace MphRead.Entities
 
         private readonly struct PortalNodeRef
         {
-            public readonly CollisionPortal Portal;
+            public readonly Portal Portal;
             public readonly int NodeIndex;
 
-            public PortalNodeRef(CollisionPortal portal, int nodeIndex)
+            public PortalNodeRef(Portal portal, int nodeIndex)
             {
                 Portal = portal;
                 NodeIndex = nodeIndex;
