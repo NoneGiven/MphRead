@@ -2083,6 +2083,7 @@ namespace MphRead
             if (_room != null)
             {
                 _room.GetDrawInfo();
+                _room.GetDisplayVolumes();
             }
             for (int i = 0; i < _entities.Count; i++)
             {
