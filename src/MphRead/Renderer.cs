@@ -858,17 +858,17 @@ namespace MphRead
                 PlayerEntity.ProcessInput(_keyboardState, _mouseState);
             }
             OnKeyHeld();
-            if (ProcessFrame || CameraMode != CameraMode.Player)
-            {
-                TransformCamera();
-                UpdateCameraPosition();
-            }
             if (ProcessFrame)
             {
                 UpdateScene();
                 ProcessMessageQueue();
                 _elapsedTime += 1 / 60f; // todo: FPS stuff
                 _frameCount++;
+            }
+            if (ProcessFrame || CameraMode != CameraMode.Player)
+            {
+                TransformCamera();
+                UpdateCameraPosition();
             }
         }
 
