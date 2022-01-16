@@ -111,6 +111,7 @@ namespace MphRead
             IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, layerId, metadata.FirstHunt);
             foreach (Entity entity in entities)
             {
+                string nodeName = entity.NodeName;
                 if (entity.Type == EntityType.Platform)
                 {
                     results.Add(new PlatformEntity(((Entity<PlatformEntityData>)entity).Data, scene));
@@ -125,7 +126,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.PlayerSpawn || entity.Type == EntityType.FhPlayerSpawn)
                 {
-                    results.Add(new PlayerSpawnEntity(((Entity<PlayerSpawnEntityData>)entity).Data, entity.NodeName, scene));
+                    results.Add(new PlayerSpawnEntity(((Entity<PlayerSpawnEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.Door)
                 {
@@ -181,7 +182,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.MorphCamera)
                 {
-                    results.Add(new MorphCameraEntity(((Entity<MorphCameraEntityData>)entity).Data, scene));
+                    results.Add(new MorphCameraEntity(((Entity<MorphCameraEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.FhMorphCamera)
                 {
@@ -197,7 +198,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Teleporter)
                 {
-                    results.Add(new TeleporterEntity(((Entity<TeleporterEntityData>)entity).Data, scene));
+                    results.Add(new TeleporterEntity(((Entity<TeleporterEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.NodeDefense)
                 {

@@ -849,12 +849,16 @@ namespace MphRead.Entities
             }
         }
 
-        public void Teleport(Vector3 position, Vector3 facing)
+        public void Teleport(Vector3 position, Vector3 facing, int nodeRef)
         {
             _gunVec1 = facing;
             _facingVector = facing;
             SetTransform(facing, _upVector, position);
-            // todo: node ref
+            if (nodeRef >= 0)
+            {
+                NodeRef = nodeRef;
+                CameraInfo.NodeRef = nodeRef;
+            }
             if (IsAltForm || IsMorphing || IsUnmorphing)
             {
                 ResumeOwnCamera();

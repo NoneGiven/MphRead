@@ -11,13 +11,13 @@ namespace MphRead.Entities
         private readonly CollisionVolume _volume;
         private static readonly Vector3 _volumeColor = new Vector3(1, 1, 0);
 
-        public MorphCameraEntity(MorphCameraEntityData data, Scene scene) : base(EntityType.MorphCamera, scene)
+        public MorphCameraEntity(MorphCameraEntityData data, string nodeName, Scene scene)
+            : base(EntityType.MorphCamera, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.Volume, Position);
-            // todo: node ref
             AddPlaceholderModel();
         }
 
