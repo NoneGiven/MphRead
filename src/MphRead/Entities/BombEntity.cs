@@ -494,7 +494,6 @@ namespace MphRead.Entities
             }
             else
             {
-                // todo?: the tail bomb is visibly in the air when grounded
                 Debug.Assert(BombType == BombType.Stinglarva);
                 Vector3 between = (targetPos - Position).WithY(0);
                 float hMagSqr = between.X * between.X + between.Z * between.Z;

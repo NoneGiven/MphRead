@@ -93,10 +93,10 @@ namespace MphRead.Entities
                 float angle = MathHelper.DegreesToRadians(360 * _timeStanding / (9 * 2)); // todo: FPS stuff
                 position.Y += MathF.Cos(angle) * _field44C - _field44C;
             }
-            float maxSway = Values.CamSwitchTime * 2; // todo: FPS stuff
-            if (_camSwitchTimer < maxSway)
+            float switchTime = Values.CamSwitchTime * 2; // todo: FPS stuff
+            if (_camSwitchTimer < switchTime)
             {
-                float pct = _camSwitchTimer / (float)maxSway;
+                float pct = _camSwitchTimer / (float)switchTime;
                 CameraInfo.Position = _field544 + (position - _field544) * pct;
                 Vector3 target = CameraInfo.Position + _facingVector;
                 CameraInfo.Target = Position + (target - Position) * pct;
@@ -417,7 +417,7 @@ namespace MphRead.Entities
                     CollisionResult result = results[i];
                     if (result.Field0 == 0)
                     {
-                        float dot = -Vector3.Dot(CameraInfo.Position, result.Plane.Xyz) - result.Plane.W - margin;
+                        float dot = -(Vector3.Dot(CameraInfo.Position, result.Plane.Xyz) - result.Plane.W - margin);
                         if (dot < 0)
                         {
                             CameraInfo.Position += result.Plane.Xyz * dot;
@@ -433,7 +433,7 @@ namespace MphRead.Entities
                         CollisionResult result = results[i];
                         if (result.Field0 == 1 && Vector3.Dot(toTarget, result.Plane.Xyz) >= 0)
                         {
-                            float dot = -Vector3.Dot(CameraInfo.Position, result.Plane.Xyz) - result.Plane.W - margin;
+                            float dot = -(Vector3.Dot(CameraInfo.Position, result.Plane.Xyz) - result.Plane.W - margin);
                             if (dot < 0)
                             {
                                 CameraInfo.Position += result.Plane.Xyz * dot;
@@ -507,9 +507,8 @@ namespace MphRead.Entities
 
         private void UpdateCameraThird2()
         {
-            // sktodo: "view sway" field names
-            float maxSway = Values.CamSwitchTime * 2; // todo: FPS stuff
-            if (_camSwitchTimer < maxSway)
+            float switchTime = Values.CamSwitchTime * 2; // todo: FPS stuff
+            if (_camSwitchTimer < switchTime)
             {
                 _field68C = Fixed.ToFloat(Values.Field80);
                 _field690 = Fixed.ToFloat(Values.Field78);
@@ -545,9 +544,9 @@ namespace MphRead.Entities
                 camVec = _facingVector * _field690;
             }
             Vector3 posVec = CameraInfo.Target - camVec;
-            if (_camSwitchTimer < maxSway)
+            if (_camSwitchTimer < switchTime)
             {
-                float pct = _camSwitchTimer / maxSway;
+                float pct = _camSwitchTimer / switchTime;
                 CameraInfo.Position = _field544 + (posVec - _field544) * pct;
                 Vector3 facingVec = CameraInfo.Position + _facingVector;
                 CameraInfo.Target = facingVec + (CameraInfo.Target - facingVec) * pct;
@@ -566,9 +565,50 @@ namespace MphRead.Entities
             }
         }
 
+        // todo: enhanced free cam
         private void UpdateCameraFree()
         {
-            // sknext
+            ushort switchTime = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff
+            if (_camSwitchTimer < switchTime)
+            {
+                float pct = _camSwitchTimer / switchTime;
+                Vector3 camVec = CameraInfo.Position - CameraInfo.Target;
+                if (camVec != Vector3.Zero)
+                {
+                    camVec = camVec.Normalized();
+                }
+                else
+                {
+                    camVec = _facingVector;
+                } 
+            }
+            else
+            {
+
+            }
+            // getting candidates separately since CheckBetweenPoints doesn't include entities when doing the candidate query
+            Vector3 point1 = CameraInfo.PrevPosition;
+            Vector3 point2 = CameraInfo.Position;
+            float margin = 0.5f;
+            IReadOnlyList<CollisionCandidate> candidates = CollisionDetection.GetCandidatesForLimits(point1, point2,
+                margin, null, Vector3.Zero, includeEntities: true, _scene);
+            var results = new CollisionResult[8];
+            int count = CollisionDetection.CheckSphereBetweenPoints(candidates, point1, point2, margin,
+                limit: 8, includeOffset: false, TestFlags.Players, _scene, results);
+            for (int i = 0; i < count; i++)
+            {
+                CollisionResult result = results[i];
+                float dot = -(Vector3.Dot(CameraInfo.Position, result.Plane.Xyz) - result.Plane.W - margin);
+                if (dot < 0)
+                {
+                    CameraInfo.Position += result.Plane.Xyz * dot;
+                    _camSwitchTimer = switchTime;
+                }
+            }
+            if (_camSwitchTimer >= switchTime)
+            {
+                CameraInfo.Target = CameraInfo.Position + CameraInfo.FacingVector;
+            }
         }
 
         private void UpdateCameraSpectator()
