@@ -174,7 +174,7 @@ namespace MphRead
                 }
                 return true;
             }
-            if (e.Key == Keys.X && scene.AllowCameraMovement)
+            if (e.Key == Keys.X && scene.AllowCameraMovement && scene.CameraMode != CameraMode.Player)
             {
                 LookAtSelection(scene, e.Control, e.Shift);
                 return true;
