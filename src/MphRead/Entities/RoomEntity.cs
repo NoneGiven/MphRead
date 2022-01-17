@@ -151,6 +151,15 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
+                float distance = Vector3.Dot(portal.Plane.Xyz, camPos) - portal.Plane.W;
+                if (otherSide)
+                {
+                    distance *= -1;
+                }
+                if (distance < 0)
+                {
+                    continue;
+                }
                 bool partActive = false;
                 for (int j = 0; j < portal.Points.Count; j++)
                 {
@@ -246,10 +255,7 @@ namespace MphRead.Entities
             }
             _activeNodes.Clear();
             _activeNodes.Add(nodeRef);
-            if (PlayerEntity.Main.MorphCamera == null)
-            {
-                UpdateRoomParts(nodeRef, camInfo.Position);
-            }
+            UpdateRoomParts(nodeRef, camInfo.Position);
             for (int i = 0; i < inst.Model.Nodes.Count; i++)
             {
                 Node node = inst.Model.Nodes[i];
