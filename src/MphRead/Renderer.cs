@@ -876,6 +876,10 @@ namespace MphRead
                 PlayerEntity.ProcessInput(_keyboardState, _mouseState);
             }
             OnKeyHeld();
+            _singleParticleCount = 0;
+            _decalItems.Clear();
+            _nonDecalItems.Clear();
+            _translucentItems.Clear();
             if (ProcessFrame)
             {
                 UpdateScene();
@@ -2115,10 +2119,6 @@ namespace MphRead
 
         private void UpdateScene()
         {
-            _singleParticleCount = 0;
-            _decalItems.Clear();
-            _nonDecalItems.Clear();
-            _translucentItems.Clear();
             while (_usedRenderItems.Count > 0)
             {
                 RenderItem item = _usedRenderItems.Dequeue();
