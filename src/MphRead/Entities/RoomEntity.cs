@@ -246,7 +246,10 @@ namespace MphRead.Entities
             }
             _activeNodes.Clear();
             _activeNodes.Add(nodeRef);
-            UpdateRoomParts(nodeRef, camInfo.Position);
+            if (PlayerEntity.Main.MorphCamera == null)
+            {
+                UpdateRoomParts(nodeRef, camInfo.Position);
+            }
             for (int i = 0; i < inst.Model.Nodes.Count; i++)
             {
                 Node node = inst.Model.Nodes[i];
