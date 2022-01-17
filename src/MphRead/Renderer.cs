@@ -880,6 +880,17 @@ namespace MphRead
             _decalItems.Clear();
             _nonDecalItems.Clear();
             _translucentItems.Clear();
+            while (_usedRenderItems.Count > 0)
+            {
+                RenderItem item = _usedRenderItems.Dequeue();
+                if (item.Type != RenderItemType.Mesh)
+                {
+                    ArrayPool<Vector3>.Shared.Return(item.Points);
+                }
+                _freeRenderItems.Enqueue(item);
+            }
+            _nextPolygonId = 1;
+            _destroyedEntities.Clear();
             if (ProcessFrame)
             {
                 UpdateScene();
@@ -2122,18 +2133,6 @@ namespace MphRead
 
         private void UpdateScene()
         {
-            while (_usedRenderItems.Count > 0)
-            {
-                RenderItem item = _usedRenderItems.Dequeue();
-                if (item.Type != RenderItemType.Mesh)
-                {
-                    ArrayPool<Vector3>.Shared.Return(item.Points);
-                }
-                _freeRenderItems.Enqueue(item);
-            }
-            _nextPolygonId = 1;
-            _destroyedEntities.Clear();
-
             for (int i = 0; i < _entities.Count; i++)
             {
                 EntityBase entity = _entities[i];
