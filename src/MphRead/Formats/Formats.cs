@@ -74,7 +74,7 @@ namespace MphRead
         }
 
         public bool IsRoomPartNode { get; set; }
-        public bool RoomPartActive { get; set; }
+        public bool RoomPartActive { get; set; } = true;
 
         public Node(RawNode raw)
         {

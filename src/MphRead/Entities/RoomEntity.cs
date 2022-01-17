@@ -119,42 +119,140 @@ namespace MphRead.Entities
             RoomCollision.Info.GetDrawInfo(RoomCollision.Info.Points, Type, _scene);
         }
 
+        private readonly HashSet<int> _activeNodes = new HashSet<int>();
+
+        // this assumes that mutliple non-pmag portals will not be visible "in a row,"
+        // and that opaque pmags will prevent any out-of-control "chaining" through many parts
+        // --> at least, these conditions will prevent rendering of unwanted parts that are not physically occluded
+        private void UpdateRoomParts(int nodeIndex, Vector3 camPos)
+        {
+            FrustumInfo info = _scene.FrustumInfo;
+            for (int i = 0; i < _portals.Count; i++)
+            {
+                // todo: will probably need active flag check for door portals or whatever
+                Portal portal = _portals[i];
+                int nextPart = -1;
+                Debug.Assert(portal.NodeIndex1 != -1);
+                Debug.Assert(portal.NodeIndex2 != -1);
+                Debug.Assert(portal.NodeIndex1 != portal.NodeIndex2);
+                bool otherSide = false;
+                if (portal.NodeIndex1 == nodeIndex)
+                {
+                    nextPart = portal.NodeIndex2;
+                }
+                else if (portal.NodeIndex2 == nodeIndex)
+                {
+                    nextPart = portal.NodeIndex1;
+                    otherSide = true;
+                }
+                // todo?: portal alpha could be remembered between iterations
+                if (nextPart == -1 || _activeNodes.Contains(nextPart)
+                    || portal.IsForceField && GetPortalAlpha(portal.Position, camPos) == 1)
+                {
+                    continue;
+                }
+                bool partActive = false;
+                for (int j = 0; j < portal.Points.Count; j++)
+                {
+                    if (TestPointInFrustum(portal.Points[j], info))
+                    {
+                        partActive = true;
+                        break;
+                    }
+                }
+                if (!partActive)
+                {
+                    if (CollisionDetection.CheckPortBetweenPoints(portal, info.Position, info.FarTopLeft, otherSide))
+                    {
+                        partActive = true;
+                    }
+                    else if (CollisionDetection.CheckPortBetweenPoints(portal, info.Position, info.FarTopRight, otherSide))
+                    {
+                        partActive = true;
+                    }
+                    else if (CollisionDetection.CheckPortBetweenPoints(portal, info.Position, info.FarBottomLeft, otherSide))
+                    {
+                        partActive = true;
+                    }
+                    else if (CollisionDetection.CheckPortBetweenPoints(portal, info.Position, info.FarBottomRight, otherSide))
+                    {
+                        partActive = true;
+                    }
+                }
+                if (partActive)
+                {
+                    _activeNodes.Add(nextPart);
+                    UpdateRoomParts(nextPart, camPos);
+                }
+            }
+        }
+
+        private bool TestPointInFrustum(Vector3 point, FrustumInfo info)
+        {
+            if (Vector3.Dot(info.NearPlane.Xyz, point) + info.NearPlane.W < 0)
+            {
+                return false;
+            }
+            if (Vector3.Dot(info.FarPlane.Xyz, point) + info.FarPlane.W < 0)
+            {
+                return false;
+            }
+            if (Vector3.Dot(info.TopPlane.Xyz, point) + info.TopPlane.W < 0)
+            {
+                return false;
+            }
+            if (Vector3.Dot(info.BottomPlane.Xyz, point) + info.BottomPlane.W < 0)
+            {
+                return false;
+            }
+            if (Vector3.Dot(info.LeftPlane.Xyz, point) + info.LeftPlane.W < 0)
+            {
+                return false;
+            }
+            if (Vector3.Dot(info.RightPlane.Xyz, point) + info.RightPlane.W < 0)
+            {
+                return false;
+            }
+            return true;
+        }
+
         private void UpdateRoomParts(ModelInstance inst)
         {
+            if (_scene.CameraMode != CameraMode.Player)
+            {
+                for (int i = 0; i < inst.Model.Nodes.Count; i++)
+                {
+                    Node node = inst.Model.Nodes[i];
+                    if (node.IsRoomPartNode)
+                    {
+                        node.RoomPartActive = true;
+                    }
+                }
+                return;
+            }
+            CameraInfo camInfo = PlayerEntity.Main.CameraInfo;
+            int nodeRef = camInfo.NodeRef;
+            if (nodeRef == -1)
+            {
+                for (int i = 0; i < inst.Model.Nodes.Count; i++)
+                {
+                    Node node = inst.Model.Nodes[i];
+                    if (node.IsRoomPartNode)
+                    {
+                        node.RoomPartActive = false;
+                    }
+                }
+                return;
+            }
+            _activeNodes.Clear();
+            _activeNodes.Add(nodeRef);
+            UpdateRoomParts(nodeRef, camInfo.Position);
             for (int i = 0; i < inst.Model.Nodes.Count; i++)
             {
                 Node node = inst.Model.Nodes[i];
-                if (!node.IsRoomPartNode)
+                if (node.IsRoomPartNode)
                 {
-                    continue;
-                }
-                node.RoomPartActive = false;
-                if (_scene.CameraMode != CameraMode.Player)
-                {
-                    node.RoomPartActive = true;
-                    continue;
-                }
-                CameraInfo camInfo = PlayerEntity.Main.CameraInfo;
-                int nodeRef = camInfo.NodeRef;
-                if (nodeRef == -1)
-                {
-                    continue;
-                }
-                if (i == nodeRef)
-                {
-                    node.RoomPartActive = true;
-                    continue;
-                }
-                for (int j = 0; j < _portals.Count; j++)
-                {
-                    Portal portal = _portals[j];
-                    if ((!portal.IsForceField || GetPortalAlpha(portal.Position, camInfo.Position) < 1)
-                        && (portal.NodeIndex1 == nodeRef && portal.NodeIndex2 == i
-                        || portal.NodeIndex2 == nodeRef && portal.NodeIndex1 == i))
-                    {
-                        node.RoomPartActive = true;
-                        break;
-                    }
+                    node.RoomPartActive = _activeNodes.Contains(i);
                 }
             }
         }
@@ -340,7 +438,12 @@ namespace MphRead.Entities
         private float GetPortalAlpha(Vector3 portalPosition, Vector3 cameraPosition)
         {
             float between = (portalPosition - cameraPosition).Length;
-            return MathF.Min(between / 8, 1);
+            between /= 8;
+            if (between < 1 / 4096f)
+            {
+                between = 0;
+            }
+            return MathF.Min(between, 1);
         }
 
         public override void GetDisplayVolumes()

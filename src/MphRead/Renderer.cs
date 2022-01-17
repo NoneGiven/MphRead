@@ -66,6 +66,21 @@ namespace MphRead
         Player
     }
 
+    public class FrustumInfo
+    {
+        public Vector3 Position;
+        public Vector3 FarTopLeft;
+        public Vector3 FarTopRight;
+        public Vector3 FarBottomLeft;
+        public Vector3 FarBottomRight;
+        public Vector4 NearPlane;
+        public Vector4 FarPlane;
+        public Vector4 TopPlane;
+        public Vector4 BottomPlane;
+        public Vector4 LeftPlane;
+        public Vector4 RightPlane;
+    }
+
     public partial class Scene
     {
         public Vector2i Size { get; set; }
@@ -90,6 +105,7 @@ namespace MphRead
         private Vector3 _priorCameraPos = Vector3.Zero;
         private Vector3 _priorCameraFacing = -Vector3.UnitZ;
         private float _priorCameraFov = MathHelper.DegreesToRadians(78);
+        public FrustumInfo FrustumInfo { get; } = new FrustumInfo();
 
         private bool _showTextures = true;
         private bool _showColors = true;
@@ -881,8 +897,48 @@ namespace MphRead
             // todo: update this only when the viewport or camera values change
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
-            _perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(_cameraFov, aspect, 0.0625f, _useClip ? _farClip : 10000f);
+            float near = 0.0625f;
+            _perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(_cameraFov, aspect, near, _useClip ? _farClip : 10000f);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref _perspectiveMatrix);
+            CameraInfo camInfo = PlayerEntity.Main.CameraInfo;
+            Vector3 facing = (camInfo.Target - camInfo.Position).Normalized();
+            float far = _farClip;
+            Vector3 pos = camInfo.Position;
+            Vector3 right = Vector3.Cross(facing, camInfo.TrueUp).Normalized();
+            Vector3 target = camInfo.Target;
+            Vector3 up = camInfo.TrueUp;
+            float tan = MathF.Tan(_cameraFov / 2);
+            float nearHeight = 2 * tan * near;
+            float nearWidth = nearHeight * aspect;
+            float farHeight = 2 * tan * far;
+            float farWidth = farHeight * aspect;
+            Vector3 nearPos = pos + facing * near;
+            Vector3 farPos = pos + facing * far;
+            Vector3 nearTopLeft = nearPos + (up * nearHeight / 2) - (right * nearWidth / 2);
+            Vector3 nearTopRight = nearPos + (up * nearHeight / 2) + (right * nearWidth / 2);
+            Vector3 nearBottomLeft = nearPos - (up * nearHeight / 2) - (right * nearWidth / 2);
+            Vector3 nearBottomRight = nearPos - (up * nearHeight / 2) + (right * nearWidth / 2);
+            Vector3 farTopLeft = farPos + (up * farHeight / 2) - (right * farWidth / 2);
+            Vector3 farTopRight = farPos + (up * farHeight / 2) + (right * farWidth / 2);
+            Vector3 farBottomLeft = farPos - (up * farHeight / 2) - (right * farWidth / 2);
+            Vector3 farBottomRight = farPos - (up * farHeight / 2) + (right * farWidth / 2);
+            FrustumInfo.NearPlane = PlaneFromPoints(nearTopLeft, nearTopRight, nearBottomRight);
+            FrustumInfo.FarPlane = PlaneFromPoints(farTopRight, farTopLeft, farBottomLeft);
+            FrustumInfo.TopPlane = PlaneFromPoints(nearTopRight, nearTopLeft, farTopLeft);
+            FrustumInfo.BottomPlane = PlaneFromPoints(nearBottomLeft, nearBottomRight, farBottomRight);
+            FrustumInfo.LeftPlane = PlaneFromPoints(nearTopLeft, nearBottomLeft, farBottomLeft);
+            FrustumInfo.RightPlane = PlaneFromPoints(nearBottomRight, nearTopRight, farBottomRight);
+            FrustumInfo.Position = pos;
+            FrustumInfo.FarTopLeft = farTopLeft;
+            FrustumInfo.FarTopRight = farTopRight;
+            FrustumInfo.FarBottomLeft = farBottomLeft;
+            FrustumInfo.FarBottomRight = farBottomRight;
+        }
+
+        public Vector4 PlaneFromPoints(Vector3 one, Vector3 two, Vector3 three)
+        {
+            Vector3 normal = Vector3.Cross(two - one, three - one).Normalized();
+            return new Vector4(normal.X, normal.Y, normal.Z, -Vector3.Dot(normal, one));
         }
 
         public void AfterRenderFrame()
@@ -1068,7 +1124,7 @@ namespace MphRead
                 else
                 {
                     _viewMatrix = Matrix4.LookAt(_cameraPosition, _cameraPosition + _cameraFacing, _cameraUp);
-                } 
+                }
                 _viewInvRotMatrix = Matrix4.Transpose(_viewMatrix.ClearTranslation());
                 if (_viewInvRotMatrix.Row0.X != 0 || _viewInvRotMatrix.Row0.Z != 0)
                 {
@@ -3152,7 +3208,7 @@ namespace MphRead
                     else
                     {
                         _cameraMode = CameraMode.Pivot;
-                    } 
+                    }
                     ResetCamera();
                 }
             }

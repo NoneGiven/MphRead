@@ -260,8 +260,8 @@ namespace MphRead.Formats.Collision
         public string Name { get; }
         public string NodeName1 { get; }
         public string NodeName2 { get; }
-        public int NodeIndex1 { get; set; }
-        public int NodeIndex2 { get; set; }
+        public int NodeIndex1 { get; set; } = -1;
+        public int NodeIndex2 { get; set; } = -1;
         public ushort LayerMask { get; }
         public bool IsForceField { get; }
         public IReadOnlyList<Vector3> Points { get; }
