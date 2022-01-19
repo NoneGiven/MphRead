@@ -918,41 +918,6 @@ namespace MphRead
                 return new Vector4(normal, w);
             }
 
-            FrustumPlane SetBoundsIndices(Vector4 plane)
-            {
-                int xIndex1 = 0; // min.x
-                int xIndex2 = 3; // max.x
-                if (plane.X < 0)
-                {
-                    xIndex1 = 3;
-                    xIndex2 = 0;
-                }
-                int yIndex1 = 1; // min.y
-                int yIndex2 = 4; // max.y
-                if (plane.Y < 0)
-                {
-                    yIndex1 = 4;
-                    yIndex2 = 1;
-                }
-                int zIndex1 = 2; // min.z
-                int zIndex2 = 5; // max.z
-                if (plane.Z < 0)
-                {
-                    zIndex1 = 5;
-                    zIndex2 = 2;
-                }
-                return new FrustumPlane()
-                {
-                    Plane = plane,
-                    XIndex1 = xIndex1,
-                    XIndex2 = xIndex2,
-                    YIndex1 = yIndex1,
-                    YIndex2 = yIndex2,
-                    ZIndex1 = zIndex1,
-                    ZIndex2 = zIndex2
-                };
-            }
-
             float cosFov = MathF.Cos(_cameraFov / 2);
             float cosFovDiv = cosFov / aspect;
             float sinFov = MathF.Sin(_cameraFov / 2);
@@ -973,6 +938,41 @@ namespace MphRead
             // top plane
             temp = new Vector3(0, cosFov, sinFov).Normalized();
             FrustumInfo.Planes[4] = SetBoundsIndices(ComputePlane(temp));
+        }
+
+        public static FrustumPlane SetBoundsIndices(Vector4 plane)
+        {
+            int xIndex1 = 0; // min.x
+            int xIndex2 = 3; // max.x
+            if (plane.X < 0)
+            {
+                xIndex1 = 3;
+                xIndex2 = 0;
+            }
+            int yIndex1 = 1; // min.y
+            int yIndex2 = 4; // max.y
+            if (plane.Y < 0)
+            {
+                yIndex1 = 4;
+                yIndex2 = 1;
+            }
+            int zIndex1 = 2; // min.z
+            int zIndex2 = 5; // max.z
+            if (plane.Z < 0)
+            {
+                zIndex1 = 5;
+                zIndex2 = 2;
+            }
+            return new FrustumPlane()
+            {
+                Plane = plane,
+                XIndex1 = xIndex1,
+                XIndex2 = xIndex2,
+                YIndex1 = yIndex1,
+                YIndex2 = yIndex2,
+                ZIndex1 = zIndex1,
+                ZIndex2 = zIndex2
+            };
         }
 
         public void AfterRenderFrame()

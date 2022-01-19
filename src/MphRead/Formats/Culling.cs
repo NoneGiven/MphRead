@@ -1,3 +1,4 @@
+using System;
 using OpenTK.Mathematics;
 
 namespace MphRead.Formats.Culling
@@ -7,13 +8,33 @@ namespace MphRead.Formats.Culling
         public int PartIndex;
         public int NodeIndex;
 
+        public static readonly NodeRef None = new NodeRef { PartIndex = -1, NodeIndex = -1 };
+
         public NodeRef(int partIndex, int nodeIndex)
         {
             PartIndex = partIndex;
             NodeIndex = nodeIndex;
         }
 
-        public static readonly NodeRef None = new NodeRef { PartIndex = -1, NodeIndex = -1 };
+        public static bool operator ==(NodeRef lhs, NodeRef rhs)
+        {
+            return lhs.PartIndex == rhs.PartIndex && lhs.NodeIndex == rhs.NodeIndex;
+        }
+
+        public static bool operator !=(NodeRef lhs, NodeRef rhs)
+        {
+            return lhs.PartIndex != rhs.PartIndex || lhs.NodeIndex != rhs.NodeIndex;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is NodeRef other && PartIndex == other.PartIndex && NodeIndex == other.NodeIndex;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(PartIndex, NodeIndex);
+        }
     }
 
     public class RoomPartVisInfo

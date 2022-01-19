@@ -24,6 +24,9 @@ namespace MphRead.Entities
         public int RoomId { get; private set; }
         public RoomMetadata Metadata => _meta;
 
+        private readonly Dictionary<Node, Node> _nodePairs = new Dictionary<Node, Node>();
+        private readonly HashSet<Node> _excludedNodes = new HashSet<Node>();
+
         public RoomEntity(string name, RoomMetadata meta, CollisionInstance collision, NodeData? nodeData,
             int layerMask, int roomId, Scene scene) : base(EntityType.Room, scene)
         {
@@ -35,6 +38,15 @@ namespace MphRead.Entities
             {
                 // manually disable a decal that isn't rendered in-game because it's not on a surface
                 Nodes[46].Enabled = false;
+            }
+            else if (meta.Name == "UNIT1_RM4" || meta.Name == "MP3 PROVING GROUND")
+            {
+                // depending on active partial rooms, either of these may be drawn,
+                // but we have a rendering issue when both are, while the game looks the same either way
+                _nodePairs.Add(Nodes[16], Nodes[26]); // after drawing skyLayer0, don't draw skyLayer3
+                _nodePairs.Add(Nodes[25], Nodes[17]); // ...and vice versa
+                _nodePairs.Add(Nodes[17], Nodes[25]); // after drawing skyLayer01, don't draw skyLayer04
+                _nodePairs.Add(Nodes[26], Nodes[16]); // ...and vice versa
             }
             _meta = meta;
             Model model = inst.Model;
@@ -204,12 +216,245 @@ namespace MphRead.Entities
             RoomFrustumItem? link = _roomFrustumLinks[curNodeRef.PartIndex];
             curRoomFrustum.Next = link;
             _roomFrustumLinks[curNodeRef.PartIndex] = curRoomFrustum;
-            FindVisibleRoomParts(curRoomFrustum);
+            FindVisibleRoomParts(curRoomFrustum, curNodeRef);
         }
 
-        private void FindVisibleRoomParts(RoomFrustumItem frustumItem)
+        private static readonly Vector3[] _startPointList = new Vector3[14];
+        private static readonly Vector3[] _destPointList = new Vector3[14];
+
+        private void FindVisibleRoomParts(RoomFrustumItem frustumItem, NodeRef mainNodeRef)
         {
-            // sktodo
+            bool otherSide = false;
+            for (int i = 0; i < _portals.Count; i++)
+            {
+                Portal portal = _portals[i];
+                if (portal.NodeRef1 == frustumItem.NodeRef)
+                {
+                    otherSide = false;
+                }
+                else if (portal.NodeRef2 == frustumItem.NodeRef)
+                {
+                    otherSide = true;
+                }
+                else
+                {
+                    continue;
+                }
+                Debug.Assert(portal.NodeRef1 != NodeRef.None);
+                Debug.Assert(portal.NodeRef2 != NodeRef.None);
+                Debug.Assert(portal.NodeRef1 != portal.NodeRef2);
+                float minX = 1;
+                float maxX = 0;
+                float minY = 1;
+                float maxY = 0;
+                float dist = GetDistanceToPortal(_scene.CameraPosition, portal.Plane, otherSide);
+                if (dist < 0)
+                {
+                    continue;
+                }
+                // sktodo?: link this portal into the draw list
+                if (portal.IsForceField && GetPortalAlpha(portal.Position, _scene.CameraPosition) == 1)
+                {
+                    continue;
+                }
+                bool adjacent = false;
+                if (dist < 0.5f)
+                {
+                    adjacent = true;
+                    for (int j = 0; j < portal.Planes.Count; j++)
+                    {
+                        Vector4 plane = portal.Planes[j];
+                        if (Vector3.Dot(_scene.CameraPosition, plane.Xyz) - plane.W < Fixed.ToFloat(-4224))
+                        {
+                            adjacent = false;
+                            break;
+                        }
+                    }
+                }
+                int v28; // sktodo
+                RoomFrustumItem nextFrustumItem = GetRoomFrustumItem();
+                if (adjacent)
+                {
+                    // even if facing away, we're close enough to the portal that should consider its part visible
+                    minX = 0;
+                    maxX = 1;
+                    minY = 0;
+                    maxY = 1;
+                    v28 = 4;
+                    nextFrustumItem.Info.Index = frustumItem.Info.Index;
+                    nextFrustumItem.Info.Count = frustumItem.Info.Count;
+                    for (int j = 0; j < frustumItem.Info.Count; j++)
+                    {
+                        nextFrustumItem.Info.Planes[j] = frustumItem.Info.Planes[j];
+                    }
+                }
+                else
+                {
+                    for (int j = 0; j < portal.Points.Count; j++)
+                    {
+                        _startPointList[j] = portal.Points[j];
+                    }
+                    v28 = Func21180A8(frustumItem.Info, _startPointList, portal.Points.Count, _destPointList);
+                    if (v28 >= 3)
+                    {
+                        Debug.Assert(frustumItem.Info.Index + v28 <= 10);
+                        // sktodo?: not entirely sure what it means for the index to be 0 or not
+                        // --> basically we've got an "current count" (index) and a "new count" after adding v28?
+                        // --> so not really the same usage as with the main frustum?
+                        int index = frustumItem.Info.Index;
+                        nextFrustumItem.Info.Index = index;
+                        for (int j = 0; j < frustumItem.Info.Index; j++)
+                        {
+                            nextFrustumItem.Info.Planes[j] = frustumItem.Info.Planes[j];
+                        }
+                        // sktodo: names/purposes
+                        nextFrustumItem.Info.Count = index;
+                        for (int j = 0; j < v28; j++)
+                        {
+                            Vector3 point1 = _destPointList[j];
+                            Vector3 point2 = _destPointList[j == v28 - 1 ? 0 : j + 1];
+                            if (MathF.Abs(point1.X - point2.X) >= 1 / 4096f || MathF.Abs(point1.Y - point2.Y) >= 1 / 4096f
+                                || MathF.Abs(point1.Z - point2.Z) >= 1 / 4096f)
+                            {
+                                Vector3 normal;
+                                Vector3 vec1 = point1 - _scene.CameraPosition;
+                                Vector3 vec2 = point2 - _scene.CameraPosition;
+                                if (otherSide)
+                                {
+                                    normal = Vector3.Cross(vec1, vec2).Normalized();
+                                }
+                                else
+                                {
+                                    normal = Vector3.Cross(vec2, vec1).Normalized();
+                                }
+                                var plane = new Vector4(normal, Vector3.Dot(normal, _scene.CameraPosition));
+                                nextFrustumItem.Info.Planes[index + j] = Scene.SetBoundsIndices(plane);
+                                Vector3 destPoint = _startPointList[j];
+                                if (Func2117F84(point1, ref destPoint) >= 0)
+                                {
+                                    minX = MathF.Min(minX, destPoint.X);
+                                    maxX = MathF.Max(maxX, destPoint.X);
+                                    minY = MathF.Min(minY, destPoint.Y);
+                                    maxY = MathF.Max(maxY, destPoint.Y);
+                                    // skhere
+                                }
+                                nextFrustumItem.Info.Count++;
+                            }
+                        }
+                    }
+                }
+                if (v28 >= 3)
+                {
+                    minX = MathF.Max(minX, 0);
+                    maxX = MathF.Min(maxX, 1);
+                    minY = MathF.Max(minY, 0);
+                    maxY = MathF.Min(maxY, 1);
+                    // sktodo?: base these values on the aspect ratio or something?
+                    if (minX < maxX - 1 / 800f && minY < maxY - 1 / 600f)
+                    {
+                        // sktodo?: link this portal into the draw list
+                        NodeRef nextNodeRef = otherSide ? portal.NodeRef1 : portal.NodeRef2;
+                        // sktodo: couldn't we bail a lot earlier for either condition?
+                        if (nextNodeRef.PartIndex == mainNodeRef.PartIndex || _visNodeRefRecursionDepth < 6)
+                        {
+                            _visNodeRefRecursionDepth++;
+                            RoomPartVisInfo nextVisInfo = GetPartVisInfo(nextNodeRef);
+                            nextVisInfo.ViewMinX = MathF.Min(nextVisInfo.ViewMinX, minX);
+                            nextVisInfo.ViewMaxX = MathF.Max(nextVisInfo.ViewMaxX, maxX);
+                            nextVisInfo.ViewMinY = MathF.Min(nextVisInfo.ViewMinY, minY);
+                            nextVisInfo.ViewMaxY = MathF.Max(nextVisInfo.ViewMaxY, maxY);
+                            _activeRoomParts[nextNodeRef.PartIndex] = true;
+                            _roomFrustumIndex++;
+                            nextFrustumItem.NodeRef = nextNodeRef;
+                            RoomFrustumItem? link = _roomFrustumLinks[nextNodeRef.PartIndex];
+                            nextFrustumItem.Next = link;
+                            _roomFrustumLinks[nextNodeRef.PartIndex] = nextFrustumItem;
+                            FindVisibleRoomParts(nextFrustumItem, mainNodeRef);
+                            _visNodeRefRecursionDepth--;
+                        }
+                    }
+                }
+            }
+        }
+
+        // sktodo: name/purpose
+        private float Func2117F84(Vector3 point, ref Vector3 dest)
+        {
+            Matrix4 matrix = _scene.ViewMatrix * _scene.PerspectiveMatrix; // sktodo: no need to do this multiple times
+            float v4 = point.X * matrix.Row0.W + point.Y * matrix.Row1.W + point.Z * matrix.Row2.W + matrix.Row3.W;
+            if (v4 <= 0)
+            {
+                return v4;
+            }
+            dest = Matrix.Vec3MultMtx4(point, matrix);
+            dest.X = (dest.X * 400 / v4 + 400) / 800;
+            dest.Y = (dest.Y * 300 / v4 + 300) / 600;
+            dest.Z /= v4;
+            return 1 / v4;
+        }
+
+        // sktodo: name/purpose
+        private int Func21180A8(FrustumInfo frustumInfo, Vector3[] pointList, int pointCount, Vector3[] destList)
+        {
+            Debug.Assert(frustumInfo.Count > 0);
+            var temp1 = new Vector3[14];
+            var temp2 = new Vector3[14];
+            for (int i = 0; i < frustumInfo.Count; i++)
+            {
+                // first iteration: pointList is the list of points from the portal
+                // next iterations: pointList is the list we built in temp1/temp2 in the last iteration
+                int newPointCount = 0;
+                Vector3[] newList;
+                if (i == frustumInfo.Count - 1)
+                {
+                    newList = destList;
+                }
+                else
+                {
+                    newList = i % 2 == 0 ? temp1 : temp2;
+                }
+                Vector4 plane = frustumInfo.Planes[i].Plane;
+                float dist1 = Vector3.Dot(pointList[0], plane.Xyz) - plane.W;
+                bool v5 = dist1 >= 0;
+                Debug.Assert(pointCount > 0);
+                for (int j = 0; j < pointCount; j++)
+                {
+                    // each iteration, dist1 is the distance from point1 to the frustum plane,
+                    // and dist2 is the distance from point2 to the portal, as we test successive edges
+                    Vector3 point1 = pointList[j];
+                    Vector3 point2 = pointList[j == pointCount - 1 ? 0 : j + 1];
+                    if (v5)
+                    {
+                        newList[newPointCount++] = point1;
+                    }
+                    float dist2 = Vector3.Dot(point2, plane.Xyz) - plane.W;
+                    bool v6 = dist2 >= 0;
+                    if (v5 != v6)
+                    {
+                        float div = -dist1 / (dist2 - dist1);
+                        newList[newPointCount++] = point1 + (point2 - point1) * div;
+                    }
+                    dist1 = dist2;
+                    v5 = v6;
+                }
+                if (newPointCount == 0)
+                {
+                    return 0;
+                }
+                pointList = newList;
+                pointCount = newPointCount;
+            }
+            return pointCount;
+        }
+
+        private float GetDistanceToPortal(Vector3 pos, Vector4 plane, bool otherSide)
+        {
+            float dist = Vector3.Dot(pos, plane.Xyz) - plane.W;
+            if (otherSide)
+            {
+                dist *= -1;
+            }
+            return dist;
         }
 
         public NodeRef GetNodeRefByName(string nodeName)
@@ -343,6 +588,7 @@ namespace MphRead.Entities
 
         private void DrawRoomParts(ModelInstance inst)
         {
+            _excludedNodes.Clear();
             RoomPartVisInfo? roomPart = _partVisInfoHead;
             while (roomPart != null)
             {
@@ -354,7 +600,7 @@ namespace MphRead.Entities
                 {
                     Node? node = inst.Model.Nodes[nodeIndex];
                     Debug.Assert(node.ChildIndex == -1);
-                    if (!node.Enabled || node.MeshCount == 0)
+                    if (!node.Enabled || node.MeshCount == 0 || _excludedNodes.Contains(node))
                     {
                         nodeIndex = node.NextIndex;
                         continue;
@@ -365,6 +611,10 @@ namespace MphRead.Entities
                         if (IsNodeVisible(frustumLink.Info, node, 0x8FFF))
                         {
                             GetItems(inst, node);
+                            if (_nodePairs.TryGetValue(node, out Node? exclude))
+                            {
+                                _excludedNodes.Add(exclude);
+                            }
                             break;
                         }
                         frustumLink = frustumLink.Next;
