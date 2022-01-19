@@ -592,7 +592,7 @@ namespace MphRead
 
         private static bool FilterNode(Node node, bool roomOnly)
         {
-            return !roomOnly || node.IsRoomPartNode;
+            return !roomOnly || node.RoomPartId >= 0;
         }
 
         private static void SelectInstance(int direction)

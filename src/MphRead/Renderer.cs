@@ -13,6 +13,7 @@ using MphRead.Entities;
 using MphRead.Export;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
+using MphRead.Formats.Culling;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -64,21 +65,6 @@ namespace MphRead
         Pivot,
         Roam,
         Player
-    }
-
-    public class FrustumInfo
-    {
-        public Vector3 Position;
-        public Vector3 FarTopLeft;
-        public Vector3 FarTopRight;
-        public Vector3 FarBottomLeft;
-        public Vector3 FarBottomRight;
-        public Vector4 NearPlane;
-        public Vector4 FarPlane;
-        public Vector4 TopPlane;
-        public Vector4 BottomPlane;
-        public Vector4 LeftPlane;
-        public Vector4 RightPlane;
     }
 
     public partial class Scene
@@ -144,6 +130,7 @@ namespace MphRead
         private int _fogOffset = 0;
         private int _fogSlope = 0;
         private Color4 _clearColor = new Color4(0f, 0f, 0f, 1f);
+        private readonly float _nearClip = 0.0625f;
         private float _farClip = 0;
         private bool _useClip = false;
         private float _killHeight = 0f;
@@ -912,51 +899,80 @@ namespace MphRead
             // todo: update this only when the viewport or camera values change
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
-            float near = 0.0625f;
-            _perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(_cameraFov, aspect, near, _useClip ? _farClip : 10000f);
+            _perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(_cameraFov, aspect, _nearClip, _useClip ? _farClip : 10000f);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref _perspectiveMatrix);
-            CameraInfo camInfo = PlayerEntity.Main.CameraInfo;
-            float far = _farClip;
-            Vector3 pos = camInfo.Position;
-            Vector3 target = camInfo.Target;
+            // update frustum info
+            Vector3 camPos = PlayerEntity.Main.CameraInfo.Position;
+            var camRight = new Vector3(_viewMatrix.Row0.X, _viewMatrix.Row0.Y, -_viewMatrix.Row0.Z);
+            var camUp = new Vector3(_viewMatrix.Row1.X, _viewMatrix.Row1.Y, -_viewMatrix.Row1.Z);
+            var camFacing = new Vector3(_viewMatrix.Row2.X, _viewMatrix.Row2.Y, -_viewMatrix.Row2.Z);
 
-            Vector3 up = camInfo.TrueUp;
-            Vector3 facing = (pos - target).Normalized();
-            Vector3 right = Vector3.Cross(up, facing).Normalized();
-            up = Vector3.Cross(facing, right);
+            Vector4 ComputePlane(Vector3 input)
+            {
+                var normal = new Vector3(
+                    Vector3.Dot(input, camRight),
+                    Vector3.Dot(input, camUp),
+                    Vector3.Dot(input, camFacing)
+                );
+                float w = Vector3.Dot(normal, camPos);
+                return new Vector4(normal, w);
+            }
 
-            float tan = MathF.Tan(_cameraFov / 2);
-            float nearHeight = tan * near;
-            float nearWidth = nearHeight * aspect;
-            float farHeight = tan * far;
-            float farWidth = farHeight * aspect;
-            Vector3 nearPos = pos - facing * near;
-            Vector3 farPos = pos - facing * far;
-            Vector3 nearTopLeft = nearPos + up * nearHeight - right * nearWidth;
-            Vector3 nearTopRight = nearPos + up * nearHeight + right * nearWidth;
-            Vector3 nearBottomLeft = nearPos - up * nearHeight - right * nearWidth;
-            Vector3 nearBottomRight = nearPos - up * nearHeight + right * nearWidth;
-            Vector3 farTopLeft = farPos + up * farHeight - right * farWidth;
-            Vector3 farTopRight = farPos + up * farHeight + right * farWidth;
-            Vector3 farBottomLeft = farPos - up * farHeight - right * farWidth;
-            Vector3 farBottomRight = farPos - up * farHeight + right * farWidth;
-            FrustumInfo.NearPlane = PlaneFromPoints(nearTopLeft, nearTopRight, nearBottomRight);
-            FrustumInfo.FarPlane = PlaneFromPoints(farTopRight, farTopLeft, farBottomLeft);
-            FrustumInfo.TopPlane = PlaneFromPoints(nearTopRight, nearTopLeft, farTopLeft);
-            FrustumInfo.BottomPlane = PlaneFromPoints(nearBottomLeft, nearBottomRight, farBottomRight);
-            FrustumInfo.LeftPlane = PlaneFromPoints(nearTopLeft, nearBottomLeft, farBottomLeft);
-            FrustumInfo.RightPlane = PlaneFromPoints(nearBottomRight, nearTopRight, farBottomRight);
-            FrustumInfo.Position = pos;
-            FrustumInfo.FarTopLeft = farTopLeft;
-            FrustumInfo.FarTopRight = farTopRight;
-            FrustumInfo.FarBottomLeft = farBottomLeft;
-            FrustumInfo.FarBottomRight = farBottomRight;
-        }
+            FrustumPlane SetBoundsIndices(Vector4 plane)
+            {
+                int xIndex1 = 0; // min.x
+                int xIndex2 = 3; // max.x
+                if (plane.X < 0)
+                {
+                    xIndex1 = 3;
+                    xIndex2 = 0;
+                }
+                int yIndex1 = 1; // min.y
+                int yIndex2 = 4; // max.y
+                if (plane.Y < 0)
+                {
+                    yIndex1 = 4;
+                    yIndex2 = 1;
+                }
+                int zIndex1 = 2; // min.z
+                int zIndex2 = 5; // max.z
+                if (plane.Z < 0)
+                {
+                    zIndex1 = 5;
+                    zIndex2 = 2;
+                }
+                return new FrustumPlane()
+                {
+                    Plane = plane,
+                    XIndex1 = xIndex1,
+                    XIndex2 = xIndex2,
+                    YIndex1 = yIndex1,
+                    YIndex2 = yIndex2,
+                    ZIndex1 = zIndex1,
+                    ZIndex2 = zIndex2
+                };
+            }
 
-        public Vector4 PlaneFromPoints(Vector3 one, Vector3 two, Vector3 three)
-        {
-            Vector3 normal = Vector3.Cross(two - one, three - one).Normalized();
-            return new Vector4(normal.X, normal.Y, normal.Z, -Vector3.Dot(normal, one));
+            float cosFov = MathF.Cos(_cameraFov / 2);
+            float cosFovDiv = cosFov / aspect;
+            float sinFov = MathF.Sin(_cameraFov / 2);
+
+            FrustumInfo.Index = 1;
+            FrustumInfo.Count = 5;
+            // near plane
+            FrustumInfo.Planes[0] = SetBoundsIndices(ComputePlane(Vector3.UnitZ).AddW(_nearClip));
+            // right plane
+            Vector3 temp = new Vector3(cosFovDiv, 0, sinFov).Normalized();
+            FrustumInfo.Planes[1] = SetBoundsIndices(ComputePlane(temp));
+            // left plane
+            temp = new Vector3(-cosFovDiv, 0, sinFov).Normalized();
+            FrustumInfo.Planes[2] = SetBoundsIndices(ComputePlane(temp));
+            // bottom plane
+            temp = new Vector3(0, -cosFov, sinFov).Normalized();
+            FrustumInfo.Planes[3] = SetBoundsIndices(ComputePlane(temp));
+            // top plane
+            temp = new Vector3(0, cosFov, sinFov).Normalized();
+            FrustumInfo.Planes[4] = SetBoundsIndices(ComputePlane(temp));
         }
 
         public void AfterRenderFrame()
@@ -2146,11 +2162,6 @@ namespace MphRead
             }
 
             ProcessEffects();
-            for (int i = 0; i < _singleParticleCount; i++)
-            {
-                SingleParticle single = _singleParticles[i];
-                single.Process();
-            }
         }
 
         private void GetDrawItems()
@@ -2219,6 +2230,11 @@ namespace MphRead
                         }
                     }
                 }
+            }
+            for (int i = 0; i < _singleParticleCount; i++)
+            {
+                SingleParticle single = _singleParticles[i];
+                single.Process();
             }
             for (int i = 0; i < _singleParticleCount; i++)
             {
@@ -3608,7 +3624,7 @@ namespace MphRead
             _sb.Append($" [{entity.Id}] {(entity.Active ? "On " : "Off")}{color}");
             if (entity.Type == EntityType.Room)
             {
-                _sb.Append($" ({entity.GetModels()[0].Model.Nodes.Count(n => n.IsRoomPartNode)})");
+                _sb.Append($" ({entity.GetModels()[0].Model.Nodes.Count(n => n.RoomPartId >= 0)})");
             }
             else if (entity is LightSourceEntity light)
             {

@@ -1,4 +1,5 @@
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -17,7 +18,7 @@ namespace MphRead.Entities
         private bool _bool4 = false;
         private readonly bool[] _triggeredSlots = new bool[4] { true, true, true, true };
         private int _targetRoomId = -1; // todo: this
-        private int _targetNodeRef = -1;
+        private NodeRef _targetNodeRef = NodeRef.None;
 
         // used for invisible teleporters
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0xFF, 0xFF).AsVector4();
@@ -87,7 +88,7 @@ namespace MphRead.Entities
             base.Initialize();
             if (_data.NodeName[0] != '\0')
             {
-                _targetNodeRef = _scene.Room?.GetNodeRefByName(_data.NodeName.MarshalString()) ?? -1;
+                _targetNodeRef = _scene.Room?.GetNodeRefByName(_data.NodeName.MarshalString()) ?? NodeRef.None;
             }
         }
 

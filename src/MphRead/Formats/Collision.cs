@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using MphRead.Entities;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Formats.Collision
@@ -260,8 +261,8 @@ namespace MphRead.Formats.Collision
         public string Name { get; }
         public string NodeName1 { get; }
         public string NodeName2 { get; }
-        public int NodeIndex1 { get; set; } = -1;
-        public int NodeIndex2 { get; set; } = -1;
+        public NodeRef NodeRef1 { get; set; } = NodeRef.None;
+        public NodeRef NodeRef2 { get; set; } = NodeRef.None;
         public ushort LayerMask { get; }
         public bool IsForceField { get; }
         public IReadOnlyList<Vector3> Points { get; }

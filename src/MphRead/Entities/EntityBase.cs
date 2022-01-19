@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using MphRead.Formats.Collision;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -19,7 +20,7 @@ namespace MphRead.Entities
 
         protected Scene _scene;
         private readonly string? _nodeName;
-        public int NodeRef { get; protected set; }
+        public NodeRef NodeRef { get; protected set; } = NodeRef.None;
 
         protected float _drawScale = 1;
         protected Matrix4 _transform = Matrix4.Identity;
@@ -136,7 +137,7 @@ namespace MphRead.Entities
             _anyLighting |= _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
             if (_nodeName != null)
             {
-                NodeRef = _scene.Room?.GetNodeRefByName(_nodeName) ?? -1;
+                NodeRef = _scene.Room?.GetNodeRefByName(_nodeName) ?? NodeRef.None;
             }
         }
 

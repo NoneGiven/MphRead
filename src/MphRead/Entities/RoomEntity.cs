@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -44,6 +45,7 @@ namespace MphRead.Entities
                 _models.Add(Read.GetModelInstance("pick_wpn_missile", noCache: true));
                 _emptyMatrixStack = Array.Empty<float>();
             }
+            int partId = 0;
             var portals = new List<Portal>();
             var forceFields = new List<PortalNodeRef>();
             // portals are already filtered by layer mask
@@ -55,7 +57,7 @@ namespace MphRead.Entities
                 {
                     if (parts.Contains(node.Name))
                     {
-                        node.IsRoomPartNode = true;
+                        node.RoomPartId = partId++;
                     }
                 }
                 foreach (Portal portal in portals)
@@ -65,13 +67,15 @@ namespace MphRead.Entities
                         Node node = model.Nodes[i];
                         if (node.Name == portal.NodeName1)
                         {
-                            node.IsRoomPartNode = true;
-                            portal.NodeIndex1 = i;
+                            Debug.Assert(node.RoomPartId >= 0);
+                            Debug.Assert(node.ChildIndex != -1);
+                            portal.NodeRef1 = new NodeRef(node.RoomPartId, node.ChildIndex);
                         }
                         if (node.Name == portal.NodeName2)
                         {
-                            node.IsRoomPartNode = true;
-                            portal.NodeIndex2 = i;
+                            Debug.Assert(node.RoomPartId >= 0);
+                            Debug.Assert(node.ChildIndex != -1);
+                            portal.NodeRef2 = new NodeRef(node.RoomPartId, node.ChildIndex);
                         }
                     }
                 }
@@ -94,7 +98,7 @@ namespace MphRead.Entities
             else if (meta.RoomNodeName != null
                 && model.Nodes.TryFind(n => n.Name == meta.RoomNodeName && n.ChildIndex != -1, out Node? roomNode))
             {
-                roomNode.IsRoomPartNode = true;
+                roomNode.RoomPartId = 0;
             }
             else
             {
@@ -102,16 +106,21 @@ namespace MphRead.Entities
                 {
                     if (node.Name.StartsWith("rm"))
                     {
-                        node.IsRoomPartNode = true;
+                        node.RoomPartId = 0;
                         break;
                     }
                 }
             }
-            Debug.Assert(model.Nodes.Any(n => n.IsRoomPartNode));
+            Debug.Assert(model.Nodes.Any(n => n.RoomPartId >= 0));
             _portals = portals;
             _forceFields = forceFields;
             RoomCollision = collision; // todo: transform if connector
             RoomId = roomId;
+            for (int i = 0; i < _roomPartMax; i++)
+            {
+                _partVisInfo[i] = new RoomPartVisInfo();
+                _roomFrustumItems[i] = new RoomFrustumItem();
+            }
         }
 
         protected override void GetCollisionDrawInfo()
@@ -119,154 +128,91 @@ namespace MphRead.Entities
             RoomCollision.Info.GetDrawInfo(RoomCollision.Info.Points, Type, _scene);
         }
 
-        private readonly HashSet<int> _activeNodes = new HashSet<int>();
+        private const int _roomPartMax = 32;
 
-        // this assumes that mutliple non-pmag portals will not be visible "in a row,"
-        // and that opaque pmags will prevent any out-of-control "chaining" through many parts
-        // --> at least, these conditions will prevent rendering of unwanted parts that are not physically occluded
-        private void UpdateRoomParts(int nodeIndex, Vector3 camPos)
+        // todo: need to maintain an array of audible room parts as well
+        private readonly bool[] _activeRoomParts = new bool[_roomPartMax];
+
+        private int _visNodeRefRecursionDepth = 0;
+
+        private RoomPartVisInfo? _partVisInfoHead = null;
+        private readonly RoomPartVisInfo[] _partVisInfo = new RoomPartVisInfo[_roomPartMax];
+
+        private RoomPartVisInfo GetPartVisInfo(NodeRef nodeRef)
         {
-            FrustumInfo info = _scene.FrustumInfo;
-            for (int i = 0; i < _portals.Count; i++)
+            RoomPartVisInfo visInfo = _partVisInfo[nodeRef.PartIndex];
+            if (!_activeRoomParts[nodeRef.PartIndex])
             {
-                // todo: will probably need active flag check for door portals or whatever
-                Portal portal = _portals[i];
-                int nextPart = -1;
-                Debug.Assert(portal.NodeIndex1 != -1);
-                Debug.Assert(portal.NodeIndex2 != -1);
-                Debug.Assert(portal.NodeIndex1 != portal.NodeIndex2);
-                bool otherSide = false;
-                if (portal.NodeIndex1 == nodeIndex)
-                {
-                    nextPart = portal.NodeIndex2;
-                }
-                else if (portal.NodeIndex2 == nodeIndex)
-                {
-                    nextPart = portal.NodeIndex1;
-                    otherSide = true;
-                }
-                // todo?: portal alpha could be remembered between iterations
-                if (nextPart == -1 || _activeNodes.Contains(nextPart)
-                    || portal.IsForceField && GetPortalAlpha(portal.Position, camPos) == 1)
-                {
-                    continue;
-                }
-                float distance = Vector3.Dot(portal.Plane.Xyz, camPos) - portal.Plane.W;
-                if (otherSide)
-                {
-                    distance *= -1;
-                }
-                if (distance < 0)
-                {
-                    continue;
-                }
-                bool partActive = false;
-                for (int j = 0; j < portal.Points.Count; j++)
-                {
-                    if (TestPointInFrustum(portal.Points[j], info))
-                    {
-                        partActive = true;
-                        break;
-                    }
-                }
-                if (!partActive)
-                {
-                    if (CollisionDetection.CheckPortBetweenPoints(portal, info.Position, info.FarTopLeft, otherSide))
-                    {
-                        partActive = true;
-                    }
-                    else if (CollisionDetection.CheckPortBetweenPoints(portal, info.Position, info.FarTopRight, otherSide))
-                    {
-                        partActive = true;
-                    }
-                    else if (CollisionDetection.CheckPortBetweenPoints(portal, info.Position, info.FarBottomLeft, otherSide))
-                    {
-                        partActive = true;
-                    }
-                    else if (CollisionDetection.CheckPortBetweenPoints(portal, info.Position, info.FarBottomRight, otherSide))
-                    {
-                        partActive = true;
-                    }
-                }
-                if (partActive)
-                {
-                    _activeNodes.Add(nextPart);
-                    UpdateRoomParts(nextPart, camPos);
-                }
+                visInfo.NodeRef = nodeRef;
+                visInfo.ViewMinX = 1;
+                visInfo.ViewMaxX = 0;
+                visInfo.ViewMinY = 1;
+                visInfo.ViewMaxY = 0;
+                visInfo.Next = _partVisInfoHead;
+                _partVisInfoHead = visInfo;
             }
+            return visInfo;
         }
 
-        private bool TestPointInFrustum(Vector3 point, FrustumInfo info)
+        private int _roomFrustumIndex = 0;
+        private readonly RoomFrustumItem[] _roomFrustumItems = new RoomFrustumItem[_roomPartMax];
+        private readonly RoomFrustumItem?[] _roomFrustumLinks = new RoomFrustumItem[_roomPartMax];
+
+        private RoomFrustumItem GetRoomFrustumItem()
         {
-            if (Vector3.Dot(info.NearPlane.Xyz, point) + info.NearPlane.W < 0)
-            {
-                return false;
-            }
-            if (Vector3.Dot(info.FarPlane.Xyz, point) + info.FarPlane.W < 0)
-            {
-                return false;
-            }
-            if (Vector3.Dot(info.TopPlane.Xyz, point) + info.TopPlane.W < 0)
-            {
-                return false;
-            }
-            if (Vector3.Dot(info.BottomPlane.Xyz, point) + info.BottomPlane.W < 0)
-            {
-                return false;
-            }
-            if (Vector3.Dot(info.LeftPlane.Xyz, point) + info.LeftPlane.W < 0)
-            {
-                return false;
-            }
-            if (Vector3.Dot(info.RightPlane.Xyz, point) + info.RightPlane.W < 0)
-            {
-                return false;
-            }
-            return true;
+            Debug.Assert(_roomFrustumIndex != _roomPartMax);
+            return _roomFrustumItems[_roomFrustumIndex];
         }
 
-        private void UpdateRoomParts(ModelInstance inst)
+        // skhere
+        private void ClearRoomPartState()
         {
-            if (_scene.CameraMode != CameraMode.Player)
+            for (int i = 0; i < _roomPartMax; i++)
             {
-                for (int i = 0; i < inst.Model.Nodes.Count; i++)
-                {
-                    Node node = inst.Model.Nodes[i];
-                    if (node.IsRoomPartNode)
-                    {
-                        node.RoomPartActive = true;
-                    }
-                }
+                _activeRoomParts[i] = false;
+                _roomFrustumLinks[i] = null;
+            }
+            _visNodeRefRecursionDepth = 0;
+            _roomFrustumIndex = 0;
+            _partVisInfoHead = null;
+        }
+
+        private void UpdateRoomParts()
+        {
+            NodeRef curNodeRef = PlayerEntity.Main.CameraInfo.NodeRef;
+            if (_scene.CameraMode != CameraMode.Player || curNodeRef.PartIndex == -1)
+            {
                 return;
             }
-            CameraInfo camInfo = PlayerEntity.Main.CameraInfo;
-            int nodeRef = camInfo.NodeRef;
-            if (nodeRef == -1)
+            Debug.Assert(curNodeRef.NodeIndex != -1);
+            // sktodo: handle multiple rooms (connectors)
+            RoomPartVisInfo curVisInfo = GetPartVisInfo(curNodeRef);
+            curVisInfo.ViewMinX = 0;
+            curVisInfo.ViewMaxX = 1;
+            curVisInfo.ViewMinY = 0;
+            curVisInfo.ViewMaxY = 1;
+            _activeRoomParts[curNodeRef.PartIndex] = true;
+            RoomFrustumItem curRoomFrustum = GetRoomFrustumItem();
+            _roomFrustumIndex++;
+            curRoomFrustum.Info.Count = _scene.FrustumInfo.Count; // always 5
+            curRoomFrustum.Info.Index = _scene.FrustumInfo.Index; // always 1
+            for (int i = 0; i < curRoomFrustum.Info.Planes.Length; i++)
             {
-                for (int i = 0; i < inst.Model.Nodes.Count; i++)
-                {
-                    Node node = inst.Model.Nodes[i];
-                    if (node.IsRoomPartNode)
-                    {
-                        node.RoomPartActive = false;
-                    }
-                }
-                return;
+                curRoomFrustum.Info.Planes[i] = _scene.FrustumInfo.Planes[i];
             }
-            _activeNodes.Clear();
-            _activeNodes.Add(nodeRef);
-            UpdateRoomParts(nodeRef, camInfo.Position);
-            for (int i = 0; i < inst.Model.Nodes.Count; i++)
-            {
-                Node node = inst.Model.Nodes[i];
-                if (node.IsRoomPartNode)
-                {
-                    node.RoomPartActive = _activeNodes.Contains(i);
-                }
-            }
+            curRoomFrustum.NodeRef = curNodeRef;
+            RoomFrustumItem? link = _roomFrustumLinks[curNodeRef.PartIndex];
+            curRoomFrustum.Next = link;
+            _roomFrustumLinks[curNodeRef.PartIndex] = curRoomFrustum;
+            FindVisibleRoomParts(curRoomFrustum);
         }
 
-        public int GetNodeRefByName(string nodeName)
+        private void FindVisibleRoomParts(RoomFrustumItem frustumItem)
+        {
+            // sktodo
+        }
+
+        public NodeRef GetNodeRefByName(string nodeName)
         {
             Model model = _models[0].Model;
             for (int i = 0; i < model.Nodes.Count; i++)
@@ -274,31 +220,32 @@ namespace MphRead.Entities
                 Node node = model.Nodes[i];
                 if (node.Name == nodeName)
                 {
-                    Debug.Assert(node.IsRoomPartNode);
-                    return i;
+                    Debug.Assert(node.RoomPartId >= 0);
+                    Debug.Assert(node.ChildIndex != -1);
+                    return new NodeRef(node.RoomPartId, node.ChildIndex);
                 }
             }
-            return -1;
+            return NodeRef.None;
         }
 
-        public int UpdateNodeRef(int current, Vector3 prevPos, Vector3 curPos)
+        public NodeRef UpdateNodeRef(NodeRef current, Vector3 prevPos, Vector3 curPos)
         {
-            Debug.Assert(current != -1);
+            Debug.Assert(current.PartIndex != -1);
             for (int i = 0; i < _portals.Count; i++)
             {
                 Portal portal = _portals[i];
-                if (portal.NodeIndex1 == current)
+                if (portal.NodeRef1.PartIndex == current.PartIndex)
                 {
                     if (CollisionDetection.CheckPortBetweenPoints(portal, prevPos, curPos, otherSide: false))
                     {
-                        return portal.NodeIndex2;
+                        return portal.NodeRef2;
                     }
                 }
-                if (portal.NodeIndex2 == current)
+                if (portal.NodeRef2.PartIndex == current.PartIndex)
                 {
                     if (CollisionDetection.CheckPortBetweenPoints(portal, prevPos, curPos, otherSide: true))
                     {
-                        return portal.NodeIndex1;
+                        return portal.NodeRef1;
                     }
                 }
             }
@@ -311,55 +258,15 @@ namespace MphRead.Entities
             {
                 ModelInstance inst = _models[0];
                 UpdateTransforms(inst, 0);
-                UpdateRoomParts(inst);
-                for (int i = 0; i < Nodes.Count; i++)
+                ClearRoomPartState();
+                UpdateRoomParts();
+                if (_partVisInfoHead == null || _scene.ShowAllNodes)
                 {
-                    Node pnode = Nodes[i];
-                    if (!pnode.Enabled)
-                    {
-                        continue;
-                    }
-                    if (_scene.ShowAllNodes)
-                    {
-                        GetItems(inst, pnode);
-                    }
-                    else if (pnode.IsRoomPartNode && pnode.RoomPartActive)
-                    {
-                        int childIndex = pnode.ChildIndex;
-                        if (childIndex != -1)
-                        {
-                            Node node = Nodes[childIndex];
-                            Debug.Assert(node.ChildIndex == -1);
-                            GetItems(inst, node);
-                            int nextIndex = node.NextIndex;
-                            while (nextIndex != -1)
-                            {
-                                node = Nodes[nextIndex];
-                                GetItems(inst, node);
-                                nextIndex = node.NextIndex;
-                            }
-                        }
-                    }
+                    DrawAllNodes(inst);
                 }
-                if (_scene.ShowForceFields)
+                else
                 {
-                    for (int i = 0; i < _forceFields.Count; i++)
-                    {
-                        PortalNodeRef forceField = _forceFields[i];
-                        Node pnode = Nodes[forceField.NodeIndex];
-                        if (pnode.ChildIndex != -1)
-                        {
-                            Node node = Nodes[pnode.ChildIndex];
-                            GetItems(inst, node, forceField.Portal);
-                            int nextIndex = node.NextIndex;
-                            while (nextIndex != -1)
-                            {
-                                node = Nodes[nextIndex];
-                                GetItems(inst, node, forceField.Portal);
-                                nextIndex = node.NextIndex;
-                            }
-                        }
-                    }
+                    DrawRoomParts(inst);
                 }
             }
             if (_scene.ShowCollision && (_scene.ColEntDisplay == EntityType.All || _scene.ColEntDisplay == Type))
@@ -407,40 +314,173 @@ namespace MphRead.Entities
                     }
                 }
             }
+        }
 
-            void GetItems(ModelInstance inst, Node node, Portal? portal = null)
+        private bool IsNodeVisible(FrustumInfo frustumInfo, Node node, int mask)
+        {
+            float[] bounds = node.Bounds;
+            for (int i = 0; i < frustumInfo.Count; i++)
             {
-                if (!node.Enabled)
+                Debug.Assert((mask & (1 << i)) != 0); // sktodo: if this never happens, we can just get rid of mask
+                FrustumPlane frustumPlane = frustumInfo.Planes[i];
+                // frustum planes have outward facing normals -- near plane = false if min bounds are on outer side,
+                // right plane = false if min bounds are on outer side, left plane = false if max bounds are on outer side,
+                // bottom plane = false if max bounds are on outer side, top plane = false if min bounds are on outer side
+                Vector4 plane = frustumPlane.Plane;
+                if (plane.X * bounds[frustumPlane.XIndex2] + plane.Y * bounds[frustumPlane.YIndex2]
+                    + plane.Z * bounds[frustumPlane.ZIndex2] - plane.W < 0)
                 {
-                    return;
+                    return false;
                 }
-                Model model = inst.Model;
-                int start = node.MeshId / 2;
-                for (int k = 0; k < node.MeshCount; k++)
+                if (plane.X * bounds[frustumPlane.XIndex1] + plane.Y * bounds[frustumPlane.YIndex1]
+                    + plane.Z * bounds[frustumPlane.ZIndex1] - plane.W >= 0)
                 {
-                    int polygonId = 0;
-                    Mesh mesh = model.Meshes[start + k];
-                    if (!mesh.Visible)
+                    mask &= ~(1 << i);
+                }
+            }
+            return true;
+        }
+
+        private void DrawRoomParts(ModelInstance inst)
+        {
+            RoomPartVisInfo? roomPart = _partVisInfoHead;
+            while (roomPart != null)
+            {
+                RoomFrustumItem? frustumItem = _roomFrustumLinks[roomPart.NodeRef.PartIndex];
+                int nodeIndex = roomPart.NodeRef.NodeIndex;
+                Debug.Assert(frustumItem != null);
+                Debug.Assert(nodeIndex != -1);
+                while (nodeIndex != -1)
+                {
+                    Node? node = inst.Model.Nodes[nodeIndex];
+                    Debug.Assert(node.ChildIndex == -1);
+                    if (!node.Enabled || node.MeshCount == 0)
                     {
+                        nodeIndex = node.NextIndex;
                         continue;
                     }
-                    Material material = model.Materials[mesh.MaterialId];
-                    float alpha = 1.0f;
-                    if (portal != null)
+                    RoomFrustumItem? frustumLink = frustumItem;
+                    while (frustumLink != null)
                     {
-                        polygonId = _scene.GetNextPolygonId();
-                        alpha = GetPortalAlpha(portal.Position, _scene.CameraPosition);
+                        if (IsNodeVisible(frustumLink.Info, node, 0x8FFF))
+                        {
+                            GetItems(inst, node);
+                            break;
+                        }
+                        frustumLink = frustumLink.Next;
                     }
-                    else if (material.RenderMode == RenderMode.Translucent)
-                    {
-                        polygonId = _scene.GetNextPolygonId();
-                    }
-                    Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node);
-                    SelectionType selectionType = Selection.CheckSelection(this, inst, node, mesh);
-                    _scene.AddRenderItem(material, polygonId, alpha, emission: Vector3.Zero, GetLightInfo(),
-                        texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
-                        overrideColor: null, paletteOverride: null, selectionType, node.BillboardMode);
+                    nodeIndex = node.NextIndex;
                 }
+                roomPart = roomPart.Next;
+            }
+            // sktodo?
+            if (_scene.ShowForceFields)
+            {
+                for (int i = 0; i < _forceFields.Count; i++)
+                {
+                    PortalNodeRef forceField = _forceFields[i];
+                    Node pnode = Nodes[forceField.NodeIndex];
+                    if (pnode.ChildIndex != -1)
+                    {
+                        Node node = Nodes[pnode.ChildIndex];
+                        GetItems(inst, node, forceField.Portal);
+                        int nextIndex = node.NextIndex;
+                        while (nextIndex != -1)
+                        {
+                            node = Nodes[nextIndex];
+                            GetItems(inst, node, forceField.Portal);
+                            nextIndex = node.NextIndex;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void DrawAllNodes(ModelInstance inst)
+        {
+            for (int i = 0; i < Nodes.Count; i++)
+            {
+                Node pnode = Nodes[i];
+                if (!pnode.Enabled)
+                {
+                    continue;
+                }
+                if (_scene.ShowAllNodes)
+                {
+                    GetItems(inst, pnode);
+                }
+                else if (pnode.RoomPartId >= 0)
+                {
+                    int childIndex = pnode.ChildIndex;
+                    if (childIndex != -1)
+                    {
+                        Node node = Nodes[childIndex];
+                        Debug.Assert(node.ChildIndex == -1);
+                        GetItems(inst, node);
+                        int nextIndex = node.NextIndex;
+                        while (nextIndex != -1)
+                        {
+                            node = Nodes[nextIndex];
+                            GetItems(inst, node);
+                            nextIndex = node.NextIndex;
+                        }
+                    }
+                }
+            }
+            if (_scene.ShowForceFields)
+            {
+                for (int i = 0; i < _forceFields.Count; i++)
+                {
+                    PortalNodeRef forceField = _forceFields[i];
+                    Node pnode = Nodes[forceField.NodeIndex];
+                    if (pnode.ChildIndex != -1)
+                    {
+                        Node node = Nodes[pnode.ChildIndex];
+                        GetItems(inst, node, forceField.Portal);
+                        int nextIndex = node.NextIndex;
+                        while (nextIndex != -1)
+                        {
+                            node = Nodes[nextIndex];
+                            GetItems(inst, node, forceField.Portal);
+                            nextIndex = node.NextIndex;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void GetItems(ModelInstance inst, Node node, Portal? portal = null)
+        {
+            if (!node.Enabled)
+            {
+                return;
+            }
+            Model model = inst.Model;
+            int start = node.MeshId / 2;
+            for (int k = 0; k < node.MeshCount; k++)
+            {
+                int polygonId = 0;
+                Mesh mesh = model.Meshes[start + k];
+                if (!mesh.Visible)
+                {
+                    continue;
+                }
+                Material material = model.Materials[mesh.MaterialId];
+                float alpha = 1.0f;
+                if (portal != null)
+                {
+                    polygonId = _scene.GetNextPolygonId();
+                    alpha = GetPortalAlpha(portal.Position, _scene.CameraPosition);
+                }
+                else if (material.RenderMode == RenderMode.Translucent)
+                {
+                    polygonId = _scene.GetNextPolygonId();
+                }
+                Matrix4 texcoordMatrix = GetTexcoordMatrix(inst, material, mesh.MaterialId, node);
+                SelectionType selectionType = Selection.CheckSelection(this, inst, node, mesh);
+                _scene.AddRenderItem(material, polygonId, alpha, emission: Vector3.Zero, GetLightInfo(),
+                    texcoordMatrix, node.Animation, mesh.ListId, model.NodeMatrixIds.Count, model.MatrixStackValues,
+                    overrideColor: null, paletteOverride: null, selectionType, node.BillboardMode);
             }
         }
 
@@ -455,8 +495,18 @@ namespace MphRead.Entities
             return MathF.Min(between, 1);
         }
 
+        // sktodo: make node bounds display a feature
+        private int _nodeIndex = 16;
+
         public override void GetDisplayVolumes()
         {
+            //Node node = _models[0].Model.Nodes[_nodeIndex];
+            //float width = node.MaxBounds.X - node.MinBounds.X;
+            //float height = node.MaxBounds.Y - node.MinBounds.Y;
+            //float depth = node.MaxBounds.Z - node.MinBounds.Z;
+            //var box = new CollisionVolume(Vector3.UnitX, Vector3.UnitY, -Vector3.UnitZ,
+            //    node.MinBounds.WithZ(node.MaxBounds.Z), width, height, depth);
+            //AddVolumeItem(box, Vector3.UnitX);
             if (_scene.ShowVolumes == VolumeDisplay.Portal)
             {
                 for (int i = 0; i < _portals.Count; i++)

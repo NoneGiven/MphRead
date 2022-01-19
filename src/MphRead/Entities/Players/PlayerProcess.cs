@@ -714,7 +714,7 @@ namespace MphRead.Entities
             UpdateLightSources(_volume.SpherePosition);
             // todo?: if wifi and not main player
             // else...
-            if (NodeRef >= 0)
+            if (NodeRef.PartIndex >= 0)
             {
                 Debug.Assert(_scene.Room != null);
                 int index = Flags1.TestFlag(PlayerFlags1.AltFormPrevious) ? 2 : 0;

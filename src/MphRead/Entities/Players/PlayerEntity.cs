@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -591,7 +592,7 @@ namespace MphRead.Entities
             }
         }
 
-        public void Spawn(Vector3 pos, Vector3 facing, Vector3 up, int nodeRef, bool respawn)
+        public void Spawn(Vector3 pos, Vector3 facing, Vector3 up, NodeRef nodeRef, bool respawn)
         {
             LoadFlags |= LoadFlags.Spawned;
             if (IsMainPlayer)
@@ -849,12 +850,12 @@ namespace MphRead.Entities
             }
         }
 
-        public void Teleport(Vector3 position, Vector3 facing, int nodeRef)
+        public void Teleport(Vector3 position, Vector3 facing, NodeRef nodeRef)
         {
             _gunVec1 = facing;
             _facingVector = facing;
             SetTransform(facing, _upVector, position);
-            if (nodeRef >= 0)
+            if (nodeRef.PartIndex >= 0)
             {
                 NodeRef = nodeRef;
                 CameraInfo.NodeRef = nodeRef;

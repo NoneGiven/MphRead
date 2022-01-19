@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -752,7 +753,7 @@ namespace MphRead.Entities
         public float Field4C;
         public float Field50;
         public float Field54;
-        public int NodeRef = -1;
+        public NodeRef NodeRef = NodeRef.None;
 
         private bool _shake = true;
 
