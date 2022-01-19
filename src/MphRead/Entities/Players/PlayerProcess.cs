@@ -1707,7 +1707,7 @@ namespace MphRead.Entities
         {
             // todo: FPS stuff
             int count = 0;
-            if (_scene.GameMode == GameMode.Survival || _scene.GameMode == GameMode.SurvivalTeams)
+            if (_scene.GameMode != GameMode.Survival && _scene.GameMode != GameMode.SurvivalTeams)
             {
                 if (_scene.PlayerCount > 3)
                 {
