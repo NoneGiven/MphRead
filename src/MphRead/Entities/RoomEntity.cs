@@ -26,6 +26,7 @@ namespace MphRead.Entities
 
         private readonly Dictionary<Node, Node> _nodePairs = new Dictionary<Node, Node>();
         private readonly HashSet<Node> _excludedNodes = new HashSet<Node>();
+        private readonly List<Node> _morphCameraExcludeNodes = new List<Node>();
 
         public RoomEntity(string name, RoomMetadata meta, CollisionInstance collision, NodeData? nodeData,
             int layerMask, int roomId, Scene scene) : base(EntityType.Room, scene)
@@ -34,12 +35,12 @@ namespace MphRead.Entities
             _models.Add(inst);
             inst.SetAnimation(0);
             inst.Model.FilterNodes(layerMask);
-            if (meta.Name == "UNIT2_C6")
+            if (meta.Name == "UNIT2_C6") // Tetra Vista
             {
                 // manually disable a decal that isn't rendered in-game because it's not on a surface
                 Nodes[46].Enabled = false;
             }
-            else if (meta.Name == "UNIT1_RM4" || meta.Name == "MP3 PROVING GROUND")
+            else if (meta.Name == "UNIT1_RM4" || meta.Name == "MP3 PROVING GROUND") // Combat Hall
             {
                 // depending on active partial rooms, either of these may be drawn,
                 // but we have a rendering issue when both are, while the game looks the same either way
@@ -47,6 +48,11 @@ namespace MphRead.Entities
                 _nodePairs.Add(Nodes[25], Nodes[17]); // ...and vice versa
                 _nodePairs.Add(Nodes[17], Nodes[25]); // after drawing skyLayer01, don't draw skyLayer04
                 _nodePairs.Add(Nodes[26], Nodes[16]); // ...and vice versa
+            }
+            else if (meta.Name == "UNIT3_C2") // Cortex CPU
+            {
+                // hide a wall that mysteriously isn't visible when it renders in front of the morph camera
+                _morphCameraExcludeNodes.Add(Nodes[16]);
             }
             _meta = meta;
             Model model = inst.Model;
@@ -589,6 +595,13 @@ namespace MphRead.Entities
         private void DrawRoomParts(ModelInstance inst)
         {
             _excludedNodes.Clear();
+            if (PlayerEntity.Main.MorphCamera != null)
+            {
+                for (int i = 0; i < _morphCameraExcludeNodes.Count; i++)
+                {
+                    _excludedNodes.Add(_morphCameraExcludeNodes[i]);
+                }
+            }
             RoomPartVisInfo? roomPart = _partVisInfoHead;
             while (roomPart != null)
             {
