@@ -648,6 +648,7 @@ namespace MphRead.Entities
 
         private void DrawAllNodes(ModelInstance inst)
         {
+            _excludedNodes.Clear();
             for (int i = 0; i < Nodes.Count; i++)
             {
                 Node pnode = Nodes[i];
@@ -661,19 +662,20 @@ namespace MphRead.Entities
                 }
                 else if (pnode.RoomPartId >= 0)
                 {
-                    int childIndex = pnode.ChildIndex;
-                    if (childIndex != -1)
+                    int nodeIndex = pnode.ChildIndex;
+                    while (nodeIndex != -1)
                     {
-                        Node node = Nodes[childIndex];
+                        Node node = Nodes[nodeIndex];
                         Debug.Assert(node.ChildIndex == -1);
-                        GetItems(inst, node);
-                        int nextIndex = node.NextIndex;
-                        while (nextIndex != -1)
+                        if (!_excludedNodes.Contains(node))
                         {
-                            node = Nodes[nextIndex];
                             GetItems(inst, node);
-                            nextIndex = node.NextIndex;
+                            if (_nodePairs.TryGetValue(node, out Node? exclude))
+                            {
+                                _excludedNodes.Add(exclude);
+                            }
                         }
+                        nodeIndex = node.NextIndex;
                     }
                 }
             }
