@@ -182,7 +182,6 @@ namespace MphRead.Entities
             return _roomFrustumItems[_roomFrustumIndex];
         }
 
-        // skhere
         private void ClearRoomPartState()
         {
             for (int i = 0; i < _roomPartMax; i++)
@@ -203,7 +202,7 @@ namespace MphRead.Entities
                 return;
             }
             Debug.Assert(curNodeRef.NodeIndex != -1);
-            // sktodo: handle multiple rooms (connectors)
+            // todo: handle multiple rooms (connectors)
             RoomPartVisInfo curVisInfo = GetPartVisInfo(curNodeRef);
             curVisInfo.ViewMinX = 0;
             curVisInfo.ViewMaxX = 1;
@@ -258,7 +257,7 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
-                // sktodo?: link this portal into the draw list
+                // todo?: link this portal into the draw list
                 if (portal.IsForceField && GetPortalAlpha(portal.Position, _scene.CameraPosition) == 1)
                 {
                     continue;
@@ -277,7 +276,7 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                int v28; // sktodo
+                int v28;
                 RoomFrustumItem nextFrustumItem = GetRoomFrustumItem();
                 if (adjacent)
                 {
@@ -304,7 +303,7 @@ namespace MphRead.Entities
                     if (v28 >= 3)
                     {
                         Debug.Assert(frustumItem.Info.Index + v28 <= 10);
-                        // sktodo?: not entirely sure what it means for the index to be 0 or not
+                        // not entirely sure what it means for the index to be 0 or not
                         // --> basically we've got an "current count" (index) and a "new count" after adding v28?
                         // --> so not really the same usage as with the main frustum?
                         int index = frustumItem.Info.Index;
@@ -313,7 +312,7 @@ namespace MphRead.Entities
                         {
                             nextFrustumItem.Info.Planes[j] = frustumItem.Info.Planes[j];
                         }
-                        // sktodo: names/purposes
+                        // todo: names/purposes
                         nextFrustumItem.Info.Count = index;
                         for (int j = 0; j < v28; j++)
                         {
@@ -342,7 +341,6 @@ namespace MphRead.Entities
                                     maxX = MathF.Max(maxX, destPoint.X);
                                     minY = MathF.Min(minY, destPoint.Y);
                                     maxY = MathF.Max(maxY, destPoint.Y);
-                                    // skhere
                                 }
                                 nextFrustumItem.Info.Count++;
                             }
@@ -355,12 +353,12 @@ namespace MphRead.Entities
                     maxX = MathF.Min(maxX, 1);
                     minY = MathF.Max(minY, 0);
                     maxY = MathF.Min(maxY, 1);
-                    // sktodo?: base these values on the aspect ratio or something?
+                    // todo?: base these values on the aspect ratio or something?
                     if (minX < maxX - 1 / 800f && minY < maxY - 1 / 600f)
                     {
-                        // sktodo?: link this portal into the draw list
+                        // todo?: link this portal into the draw list
                         NodeRef nextNodeRef = otherSide ? portal.NodeRef1 : portal.NodeRef2;
-                        // sktodo: couldn't we bail a lot earlier for either condition?
+                        // todo: couldn't we bail a lot earlier for either condition?
                         if (nextNodeRef.PartIndex == mainNodeRef.PartIndex || _visNodeRefRecursionDepth < 6)
                         {
                             _visNodeRefRecursionDepth++;
@@ -383,10 +381,10 @@ namespace MphRead.Entities
             }
         }
 
-        // sktodo: name/purpose
+        // todo: name/purpose
         private float Func2117F84(Vector3 point, ref Vector3 dest)
         {
-            Matrix4 matrix = _scene.ViewMatrix * _scene.PerspectiveMatrix; // sktodo: no need to do this multiple times
+            Matrix4 matrix = _scene.ViewMatrix * _scene.PerspectiveMatrix; // todo: no need to do this multiple times
             float v4 = point.X * matrix.Row0.W + point.Y * matrix.Row1.W + point.Z * matrix.Row2.W + matrix.Row3.W;
             if (v4 <= 0)
             {
@@ -399,7 +397,7 @@ namespace MphRead.Entities
             return 1 / v4;
         }
 
-        // sktodo: name/purpose
+        // todo: name/purpose
         private int Func21180A8(FrustumInfo frustumInfo, Vector3[] pointList, int pointCount, Vector3[] destList)
         {
             Debug.Assert(frustumInfo.Count > 0);
@@ -572,7 +570,7 @@ namespace MphRead.Entities
             float[] bounds = node.Bounds;
             for (int i = 0; i < frustumInfo.Count; i++)
             {
-                Debug.Assert((mask & (1 << i)) != 0); // sktodo: if this never happens, we can just get rid of mask
+                Debug.Assert((mask & (1 << i)) != 0); // todo: if this never happens, we can just get rid of mask
                 FrustumPlane frustumPlane = frustumInfo.Planes[i];
                 // frustum planes have outward facing normals -- near plane = false if min bounds are on outer side,
                 // right plane = false if min bounds are on outer side, left plane = false if max bounds are on outer side,
@@ -636,7 +634,7 @@ namespace MphRead.Entities
                 }
                 roomPart = roomPart.Next;
             }
-            // sktodo?
+            // todo: use visibility list for portals too
             if (_scene.ShowForceFields)
             {
                 for (int i = 0; i < _forceFields.Count; i++)
