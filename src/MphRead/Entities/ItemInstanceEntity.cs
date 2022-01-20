@@ -115,7 +115,7 @@ namespace MphRead.Entities
                         float distance = MathF.Sqrt(distSqr);
                         float div = distance / 20;
                         float pct = (1 - div) / distance;
-                        Position += between * (pct / (4 *2)); // todo: FPS stuff
+                        Position += between * (pct / (4 * 2)); // todo: FPS stuff
                     }
                 }
             }

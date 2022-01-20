@@ -1421,12 +1421,12 @@ namespace MphRead.Effects
                     else
                     {
                         transform = Matrix4.CreateTranslation(Position) * Owner.Transform;
-                    } 
+                    }
                 }
                 else
                 {
                     transform = Matrix4.CreateTranslation(Position);
-                } 
+                }
                 scene.AddRenderItem(RenderItemType.Particle, Alpha, scene.GetNextPolygonId(), Color, xRepeat, yRepeat,
                     scaleS, scaleT, transform, uvsAndVerts, bindingId, BillboardMode);
             }

@@ -1,6 +1,5 @@
 using System;
 using MphRead.Formats;
-using OpenTK.Graphics.GL;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities

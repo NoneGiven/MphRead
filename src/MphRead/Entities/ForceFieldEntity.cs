@@ -104,7 +104,7 @@ namespace MphRead.Entities
                     // todo: 1P stuff
                     _active = false;
                     // todo: scan ID
-                } 
+                }
             }
             else if (info.Message == Message.Lock)
             {

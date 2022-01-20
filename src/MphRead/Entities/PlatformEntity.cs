@@ -625,7 +625,7 @@ namespace MphRead.Entities
             else
             {
                 UpdateCollisionTransform(0, Transform);
-            } 
+            }
             return true;
         }
 
