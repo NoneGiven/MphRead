@@ -758,19 +758,23 @@ namespace MphRead.Entities
             return MathF.Min(between, 1);
         }
 
-        // sktodo: make node bounds display a feature
-        private int _nodeIndex = 16;
-
         public override void GetDisplayVolumes()
         {
-            //Node node = _models[0].Model.Nodes[_nodeIndex];
-            //float width = node.MaxBounds.X - node.MinBounds.X;
-            //float height = node.MaxBounds.Y - node.MinBounds.Y;
-            //float depth = node.MaxBounds.Z - node.MinBounds.Z;
-            //var box = new CollisionVolume(Vector3.UnitX, Vector3.UnitY, -Vector3.UnitZ,
-            //    node.MinBounds.WithZ(node.MaxBounds.Z), width, height, depth);
-            //AddVolumeItem(box, Vector3.UnitX);
-            if (_scene.ShowVolumes == VolumeDisplay.Portal)
+
+            if (_scene.ShowVolumes == VolumeDisplay.NodeBounds)
+            {
+                if (Selection.Node != null && Nodes.Contains(Selection.Node))
+                {
+                    Node node = Selection.Node;
+                    float width = node.MaxBounds.X - node.MinBounds.X;
+                    float height = node.MaxBounds.Y - node.MinBounds.Y;
+                    float depth = node.MaxBounds.Z - node.MinBounds.Z;
+                    var box = new CollisionVolume(Vector3.UnitX, Vector3.UnitY, -Vector3.UnitZ,
+                        node.MinBounds.WithZ(node.MaxBounds.Z), width, height, depth);
+                    AddVolumeItem(box, Vector3.UnitX);
+                }
+            }
+            else if (_scene.ShowVolumes == VolumeDisplay.Portal)
             {
                 for (int i = 0; i < _portals.Count; i++)
                 {

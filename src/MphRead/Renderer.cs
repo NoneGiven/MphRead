@@ -41,6 +41,7 @@ namespace MphRead
         KillPlane,
         PlayerLimit,
         CameraLimit,
+        NodeBounds,
         Portal
     }
 
@@ -3556,6 +3557,7 @@ namespace MphRead
                 VolumeDisplay.KillPlane => "kill plane",
                 VolumeDisplay.PlayerLimit => "room limits (player)",
                 VolumeDisplay.CameraLimit => "room limits (camera)",
+                VolumeDisplay.NodeBounds => "room node bounds",
                 VolumeDisplay.Portal => "portals",
                 _ => "off"
             };
@@ -3852,7 +3854,6 @@ namespace MphRead
 
         public RenderWindow() : base(_gameWindowSettings, _nativeWindowSettings)
         {
-            CursorGrabbed = true;
             Scene = new Scene(Size, KeyboardState, MouseState, (string title) =>
             {
                 Title = title;
@@ -3894,6 +3895,11 @@ namespace MphRead
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
+            CursorGrabbed = Scene.CameraMode == CameraMode.Player;
+            if (!CursorGrabbed)
+            {
+                CursorVisible = true;
+            }
             Scene.OnUpdateFrame(args.Time);
             Scene.OnRenderFrame();
             SwapBuffers();
