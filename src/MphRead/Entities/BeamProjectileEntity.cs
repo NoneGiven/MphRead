@@ -229,7 +229,7 @@ namespace MphRead.Entities
                 if (dist >= MaxDistance)
                 {
                     Vector3 backTravel = BackPosition - SpawnPosition;
-                    float dot = Vector3.Dot(frontTravel, backTravel);
+                    float dot = Vector3.Dot(frontTravel.Normalized(), backTravel);
                     float pct = 1;
                     if (Fixed.ToFloat(Fixed.ToInt(dist)) != Fixed.ToFloat(Fixed.ToInt(dot)))
                     {
