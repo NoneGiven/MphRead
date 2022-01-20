@@ -716,20 +716,19 @@ namespace MphRead.Entities
             // else...
             if (NodeRef.PartIndex >= 0)
             {
-                Debug.Assert(_scene.Room != null);
                 int index = Flags1.TestFlag(PlayerFlags1.AltFormPrevious) ? 2 : 0;
                 Vector3 prevPos = PrevPosition + PlayerVolumes[(int)Hunter, index].SpherePosition;
                 index = IsAltForm ? 2 : 0;
                 Vector3 curPos = Position + PlayerVolumes[(int)Hunter, index].SpherePosition;
-                NodeRef = _scene.Room.UpdateNodeRef(NodeRef, prevPos, curPos);
+                NodeRef = _scene.UpdateNodeRef(NodeRef, prevPos, curPos);
                 // todo: do the following only if no cam seq or not main player
                 if (CameraType == CameraType.Free)
                 {
-                    CameraInfo.NodeRef = _scene.Room.UpdateNodeRef(CameraInfo.NodeRef, CameraInfo.PrevPosition, CameraInfo.Position);
+                    CameraInfo.NodeRef = _scene.UpdateNodeRef(CameraInfo.NodeRef, CameraInfo.PrevPosition, CameraInfo.Position);
                 }
                 else if (CameraType != CameraType.Spectator)
                 {
-                    CameraInfo.NodeRef = _scene.Room.UpdateNodeRef(NodeRef, curPos, CameraInfo.Position);
+                    CameraInfo.NodeRef = _scene.UpdateNodeRef(NodeRef, curPos, CameraInfo.Position);
                 }
                 // todo?: something if wifi
             }

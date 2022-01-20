@@ -321,6 +321,16 @@ namespace MphRead
             _entities.Remove(entity);
         }
 
+        public NodeRef UpdateNodeRef(NodeRef current, Vector3 prevPos, Vector3 curPos)
+        {
+            return Room?.UpdateNodeRef(current, prevPos, curPos) ?? NodeRef.None;
+        }
+
+        public NodeRef GetNodeRefByName(string nodeName)
+        {
+            return Room?.GetNodeRefByName(nodeName) ?? NodeRef.None;
+        }
+
         public void OnLoad()
         {
             GL.ClearColor(_clearColor);
@@ -1214,6 +1224,7 @@ namespace MphRead
             }
         }
 
+        // sktodo: remove
         public void SetCamera(Vector3 position, Vector3 target, float fov = 0, float roll = 0)
         {
             _cameraMode = CameraMode.Roam;
@@ -3734,7 +3745,7 @@ namespace MphRead
                     _sb.Append($" ({obj.Data.EffectId}, {Metadata.Effects[obj.Data.EffectId].Name})");
                 }
             }
-            else if (entity is CameraSequenceEntity cam)
+            else if (entity is CamSeqEntity cam)
             {
                 _sb.Append($" (ID {cam.Data.SequenceId})");
             }

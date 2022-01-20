@@ -150,7 +150,7 @@ namespace MphRead
                         else if (entity.Type == EntityType.CameraSequence)
                         {
                             CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
-                            Add(data.Message);
+                            Add(data.EndMessage);
                         }
                         else if (entity.Type == EntityType.AreaVolume)
                         {
@@ -171,7 +171,7 @@ namespace MphRead
             {
                 if (i != 8 && i != 66 && i != 69 && i != 84 && i != 106 && i != 122 && i != 123)
                 {
-                    var seq = Formats.CameraSequence.Load(i);
+                    var seq = Formats.CameraSequence.Load(i, scene: null!);
                     foreach (CameraSequenceKeyframe frame in seq.Keyframes)
                     {
                         var message = (Message)frame.MessageId;

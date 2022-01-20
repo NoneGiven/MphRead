@@ -62,7 +62,7 @@ namespace MphRead.Testing
                 string name = Path.GetFileName(filePath);
                 if (name != "cameraEditBG.bin")
                 {
-                    var seq = CameraSequence.Load(name);
+                    var seq = CameraSequence.Load(name, scene: null!);
                     Nop();
                 }
             }

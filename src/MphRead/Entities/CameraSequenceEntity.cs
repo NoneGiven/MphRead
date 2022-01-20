@@ -32,7 +32,7 @@ namespace MphRead.Entities
             CameraSequence? sequence = _sequenceData[seqId];
             if (sequence == null)
             {
-                sequence = CameraSequence.Load(seqId);
+                sequence = CameraSequence.Load(seqId, scene);
                 _sequenceData[seqId] = sequence;
             }
             Sequence = sequence;
@@ -47,9 +47,9 @@ namespace MphRead.Entities
             Debug.Assert(Data.PlayerId2 == 0);
             Debug.Assert(Data.Entity1 == -1);
             Debug.Assert(Data.Entity2 == -1);
-            if (Data.MessageTargetId != -1)
+            if (Data.EndMessageTargetId != -1)
             {
-                _scene.TryGetEntity(Data.MessageTargetId, out _messageTarget);
+                _scene.TryGetEntity(Data.EndMessageTargetId, out _messageTarget);
             }
             foreach (CameraSequenceKeyframe keyframe in Sequence.Keyframes)
             {
@@ -137,7 +137,7 @@ namespace MphRead.Entities
                     {
                         _keyframeIndex = 0;
                         _keyframeElapsed = 0;
-                        if (Data.Loop == 0 && !Sequence.Loop)
+                        if (Data.Loop == 0 && !Sequence.Flags.TestFlag(CamSeqFlags.Loop))
                         {
                             Active = false;
                             _scene.EndCutscene();
