@@ -3736,6 +3736,10 @@ namespace MphRead
             {
                 _sb.Append($" (ID {cam.Data.SequenceId})");
             }
+            else if (entity is PlayerEntity player)
+            {
+                _sb.Append($" (Health: {player.Health})");
+            }
             _sb.AppendLine();
             _sb.AppendLine($"Position ({entity.Position.X}, {entity.Position.Y}, {entity.Position.Z})");
             _sb.AppendLine($"Rotation ({entity.Rotation.X}, {entity.Rotation.Y}, {entity.Rotation.Z})");
