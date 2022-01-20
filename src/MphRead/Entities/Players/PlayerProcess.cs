@@ -78,7 +78,7 @@ namespace MphRead.Entities
                         if (respawn != null)
                         {
                             Vector3 position = ForcedSpawnPos ?? respawn.Position;
-                            Spawn(position, respawn.FacingVector, respawn.UpVector, respawn: true);
+                            Spawn(position, respawn.FacingVector, respawn.UpVector, respawn.NodeRef, respawn: true);
                         }
                     }
                 }
@@ -701,7 +701,9 @@ namespace MphRead.Entities
                 }
                 else if (IsUnmorphing)
                 {
-                    // todo: camera node ref
+                    // todo: if main player and cam seq, set node ref
+                    // else...
+                    CameraInfo.NodeRef = NodeRef;
                     Flags1 &= ~PlayerFlags1.Unmorphing;
                     if (_burnTimer > 0)
                     {
@@ -710,7 +712,27 @@ namespace MphRead.Entities
                 }
             }
             UpdateLightSources(_volume.SpherePosition);
-            // todo: node ref updates
+            // todo?: if wifi and not main player
+            // else...
+            if (NodeRef.PartIndex >= 0)
+            {
+                Debug.Assert(_scene.Room != null);
+                int index = Flags1.TestFlag(PlayerFlags1.AltFormPrevious) ? 2 : 0;
+                Vector3 prevPos = PrevPosition + PlayerVolumes[(int)Hunter, index].SpherePosition;
+                index = IsAltForm ? 2 : 0;
+                Vector3 curPos = Position + PlayerVolumes[(int)Hunter, index].SpherePosition;
+                NodeRef = _scene.Room.UpdateNodeRef(NodeRef, prevPos, curPos);
+                // todo: do the following only if no cam seq or not main player
+                if (CameraType == CameraType.Free)
+                {
+                    CameraInfo.NodeRef = _scene.Room.UpdateNodeRef(CameraInfo.NodeRef, CameraInfo.PrevPosition, CameraInfo.Position);
+                }
+                else if (CameraType != CameraType.Spectator)
+                {
+                    CameraInfo.NodeRef = _scene.Room.UpdateNodeRef(NodeRef, curPos, CameraInfo.Position);
+                }
+                // todo?: something if wifi
+            }
             if (Flags1.TestFlag(PlayerFlags1.Standing) && (_timeStanding == 0 || _scene.FrameCount % (4 * 2) == 0) // todo: FPS stuff
                 && (Flags1.TestFlag(PlayerFlags1.OnAcid) || (Flags1.TestFlag(PlayerFlags1.OnLava) && Hunter != Hunter.Spire)))
             {
@@ -1685,7 +1707,7 @@ namespace MphRead.Entities
         {
             // todo: FPS stuff
             int count = 0;
-            if (_scene.GameMode == GameMode.Survival || _scene.GameMode == GameMode.SurvivalTeams)
+            if (_scene.GameMode != GameMode.Survival && _scene.GameMode != GameMode.SurvivalTeams)
             {
                 if (_scene.PlayerCount > 3)
                 {

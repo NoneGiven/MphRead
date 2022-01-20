@@ -15,7 +15,7 @@ namespace MphRead
     {
         public string Name { get; }
         public int ParentIndex { get; }
-        public int ChildIndex { get; } 
+        public int ChildIndex { get; }
         public int NextIndex { get; }
         public bool Enabled { get; set; }
         public bool AnimIgnoreParent { get; set; }
@@ -33,6 +33,39 @@ namespace MphRead
         public Matrix4? BeforeTransform { get; set; }
         public Matrix4? AfterTransform { get; set; }
         public Matrix4 Animation { get; set; } = Matrix4.Identity;
+
+        public int RoomPartId { get; set; } = -1;
+        public bool RoomPartActive { get; set; } = true; // sktodo: remove
+
+        public readonly float[] Bounds = new float[6];
+
+        public Node(RawNode raw)
+        {
+            Name = raw.Name.MarshalString();
+            ParentIndex = raw.ParentId;
+            ChildIndex = raw.ChildId;
+            NextIndex = raw.NextId;
+            Enabled = raw.Enabled != 0;
+            MeshCount = raw.MeshCount;
+            MeshId = raw.MeshId;
+            Scale = raw.Scale.ToFloatVector();
+            Angle = new Vector3(
+                raw.AngleX / 65536.0f * 2.0f * MathF.PI,
+                raw.AngleY / 65536.0f * 2.0f * MathF.PI,
+                raw.AngleZ / 65536.0f * 2.0f * MathF.PI
+            );
+            Position = raw.Position.ToFloatVector();
+            BoundingRadius = raw.BoundingRadius.FloatValue;
+            MinBounds = raw.MinBounds.ToFloatVector();
+            MaxBounds = raw.MaxBounds.ToFloatVector();
+            BillboardMode = raw.BillboardMode;
+            Bounds[0] = MinBounds.X;
+            Bounds[1] = MinBounds.Y;
+            Bounds[2] = MinBounds.Z;
+            Bounds[3] = MaxBounds.X;
+            Bounds[4] = MaxBounds.Y;
+            Bounds[5] = MaxBounds.Z;
+        }
 
         public IEnumerable<int> GetMeshIds()
         {
@@ -71,30 +104,6 @@ namespace MphRead
                     yield return value;
                 }
             }
-        }
-
-        public bool IsRoomPartNode { get; set; }
-
-        public Node(RawNode raw)
-        {
-            Name = raw.Name.MarshalString();
-            ParentIndex = raw.ParentId;
-            ChildIndex = raw.ChildId;
-            NextIndex = raw.NextId;
-            Enabled = raw.Enabled != 0;
-            MeshCount = raw.MeshCount;
-            MeshId = raw.MeshId;
-            Scale = raw.Scale.ToFloatVector();
-            Angle = new Vector3(
-                raw.AngleX / 65536.0f * 2.0f * MathF.PI,
-                raw.AngleY / 65536.0f * 2.0f * MathF.PI,
-                raw.AngleZ / 65536.0f * 2.0f * MathF.PI
-            );
-            Position = raw.Position.ToFloatVector();
-            BoundingRadius = raw.BoundingRadius.FloatValue;
-            MinBounds = raw.MinBounds.ToFloatVector();
-            MaxBounds = raw.MaxBounds.ToFloatVector();
-            BillboardMode = raw.BillboardMode;
         }
     }
 

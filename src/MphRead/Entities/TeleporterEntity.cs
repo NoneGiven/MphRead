@@ -1,4 +1,5 @@
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -17,13 +18,15 @@ namespace MphRead.Entities
         private bool _bool4 = false;
         private readonly bool[] _triggeredSlots = new bool[4] { true, true, true, true };
         private int _targetRoomId = -1; // todo: this
+        private NodeRef _targetNodeRef = NodeRef.None;
 
         // used for invisible teleporters
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0xFF, 0xFF).AsVector4();
         // used for multiplayer teleporter destination
         private readonly Vector4 _overrideColor2 = new ColorRgb(0xAA, 0xAA, 0xAA).AsVector4();
 
-        public TeleporterEntity(TeleporterEntityData data, Scene scene) : base(EntityType.Teleporter, scene)
+        public TeleporterEntity(TeleporterEntityData data, string nodeName, Scene scene)
+            : base(EntityType.Teleporter, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -77,6 +80,15 @@ namespace MphRead.Entities
             {
                 AddPlaceholderModel();
                 _targetPos = _data.TargetPosition.ToFloatVector();
+            }
+        }
+
+        public override void Initialize()
+        {
+            base.Initialize();
+            if (_data.NodeName[0] != '\0')
+            {
+                _targetNodeRef = _scene.Room?.GetNodeRefByName(_data.NodeName.MarshalString()) ?? NodeRef.None;
             }
         }
 
@@ -138,7 +150,7 @@ namespace MphRead.Entities
                                 if (_targetRoomId == -1)
                                 {
                                     // todo: play SFX
-                                    player.Teleport(_targetPos.AddY(0.5f), FacingVector);
+                                    player.Teleport(_targetPos.AddY(0.5f), FacingVector, _targetNodeRef);
                                 }
                                 else
                                 {

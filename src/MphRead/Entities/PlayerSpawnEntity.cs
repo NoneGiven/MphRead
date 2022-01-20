@@ -12,7 +12,8 @@ namespace MphRead.Entities
         public bool Availability => _data.Availability != 0;
         public ushort Cooldown { get; set; }
 
-        public PlayerSpawnEntity(PlayerSpawnEntityData data, Scene scene) : base(EntityType.PlayerSpawn, scene)
+        public PlayerSpawnEntity(PlayerSpawnEntityData data, string nodeName, Scene scene)
+            : base(EntityType.PlayerSpawn, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;

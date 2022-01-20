@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -591,7 +592,7 @@ namespace MphRead.Entities
             }
         }
 
-        public void Spawn(Vector3 pos, Vector3 facing, Vector3 up, bool respawn) // todo: node ref
+        public void Spawn(Vector3 pos, Vector3 facing, Vector3 up, NodeRef nodeRef, bool respawn)
         {
             LoadFlags |= LoadFlags.Spawned;
             if (IsMainPlayer)
@@ -702,8 +703,8 @@ namespace MphRead.Entities
             _aimPosition = (Position + _gunVec1 * Fixed.ToFloat(Values.AimDistance)).AddY(Fixed.ToFloat(Values.AimYOffset));
             Acceleration = Vector3.Zero;
             _accelerationTimer = 0;
-            // todo: room node ref
             _aimY = 0;
+            NodeRef = nodeRef;
             _fieldE4 = 0;
             _fieldE8 = 0;
             _gunViewBob = 0;
@@ -717,7 +718,7 @@ namespace MphRead.Entities
             CameraInfo.UpVector = Vector3.UnitY;
             CameraInfo.Target = Position + facing;
             CameraInfo.Fov = Fixed.ToFloat(Values.NormalFov) * 2;
-            // todo: cam info node ref
+            CameraInfo.NodeRef = NodeRef;
             SwitchCamera(CameraType.First, facing);
             _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff
             _field684 = 0;
@@ -849,12 +850,16 @@ namespace MphRead.Entities
             }
         }
 
-        public void Teleport(Vector3 position, Vector3 facing)
+        public void Teleport(Vector3 position, Vector3 facing, NodeRef nodeRef)
         {
             _gunVec1 = facing;
             _facingVector = facing;
             SetTransform(facing, _upVector, position);
-            // todo: node ref
+            if (nodeRef.PartIndex >= 0)
+            {
+                NodeRef = nodeRef;
+                CameraInfo.NodeRef = nodeRef;
+            }
             if (IsAltForm || IsMorphing || IsUnmorphing)
             {
                 ResumeOwnCamera();

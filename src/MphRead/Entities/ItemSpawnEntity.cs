@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities

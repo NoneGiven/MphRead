@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -743,6 +744,7 @@ namespace MphRead.Entities
         public Vector3 PrevPosition;
         public Vector3 Target;
         public Vector3 UpVector;
+        public Vector3 TrueUp;
         public Vector3 Facing;
         public float Fov;
         public float Shake;
@@ -751,6 +753,7 @@ namespace MphRead.Entities
         public float Field4C;
         public float Field50;
         public float Field54;
+        public NodeRef NodeRef = NodeRef.None;
 
         private bool _shake = true;
 
@@ -795,6 +798,7 @@ namespace MphRead.Entities
             Field50 = Field4C;
             Field54 = -Field48;
             ViewMatrix = Matrix4.LookAt(Position, Target, camUp);
+            TrueUp = camUp;
             // todo?: set transposes and stuff
         }
 

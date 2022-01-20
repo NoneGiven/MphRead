@@ -229,7 +229,7 @@ namespace MphRead.Entities
                 if (dist >= MaxDistance)
                 {
                     Vector3 backTravel = BackPosition - SpawnPosition;
-                    float dot = Vector3.Dot(frontTravel, backTravel);
+                    float dot = Vector3.Dot(frontTravel.Normalized(), backTravel);
                     float pct = 1;
                     if (Fixed.ToFloat(Fixed.ToInt(dist)) != Fixed.ToFloat(Fixed.ToInt(dot)))
                     {
@@ -1308,11 +1308,18 @@ namespace MphRead.Entities
                 // game's cycle for green beam (15): 0 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 0
                 //    our cycle for green beam (15): 0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0
                 //                                   0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0
-                ulong bits = (ulong)(cost & 31);
-                cost /= 32;
-                if (scene.FrameCount % 2 == 0 && bits != 0 && ((bits * (scene.FrameCount / 2)) & 31) > 32 - bits) // todo: FPS stuff
+                if (scene.FrameCount % 2 == 0)
                 {
-                    cost++;
+                    ulong bits = (ulong)(cost & 31);
+                    cost /= 32;
+                    if (scene.FrameCount % 2 == 0 && bits != 0 && ((bits * (scene.FrameCount / 2)) & 31) > 32 - bits) // todo: FPS stuff
+                    {
+                        cost++;
+                    }
+                }
+                else
+                {
+                    cost = 0;
                 }
             }
             int ammo = equip.GetAmmo?.Invoke() ?? -1;
@@ -1422,11 +1429,21 @@ namespace MphRead.Entities
             if (weapon.Flags.TestFlag(WeaponFlags.Continuous))
             {
                 // todo: this is the same as the ammo calculation but with ge instead of gt
-                ulong bits = (ulong)(damage & 31);
-                damage /= 32;
-                if (scene.FrameCount % 2 == 0 && bits != 0 && ((bits * (scene.FrameCount / 2)) & 31) >= 32 - bits) // todo: FPS stuff
+                // note: previously the frame count partiy check was part of the condition below, but that assumed the base value
+                // was zero after the division by 32, which is true for Shock Coil but not e.g. platform green energy beams,
+                // so we need those to hit every other frame to match the DPS from the game
+                if (scene.FrameCount % 2 == 0)
                 {
-                    damage++;
+                    ulong bits = (ulong)(damage & 31);
+                    damage /= 32;
+                    if (bits != 0 && ((bits * (scene.FrameCount / 2)) & 31) >= 32 - bits) // todo: FPS stuff
+                    {
+                        damage++;
+                    }
+                }
+                else
+                {
+                    damage = 0;
                 }
             }
             ushort damageInterpolation = weapon.DamageInterpolations[charged ? 1 : 0];

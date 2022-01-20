@@ -1,4 +1,3 @@
-using System.Reflection.Metadata;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities

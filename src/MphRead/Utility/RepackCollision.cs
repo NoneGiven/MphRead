@@ -401,7 +401,7 @@ namespace MphRead.Utility
             }
             // portals
             int portalOffset = (int)stream.Position;
-            foreach (CollisionPortal portal in info.Portals)
+            foreach (Portal portal in info.Portals)
             {
                 Debug.Assert(portal.Points.Count == 4);
                 Debug.Assert(portal.Planes.Count == 4);
@@ -465,12 +465,12 @@ namespace MphRead.Utility
 
         private class CollisionPortalPack
         {
-            public CollisionPortal Portal { get; }
+            public Portal Portal { get; }
             public ushort PlaneIndex { get; set; }
             public ushort PointIndexCount { get; set; }
             public ushort PointStartIndex { get; set; }
 
-            public CollisionPortalPack(CollisionPortal portal, int planeIndex, int pointIndexCount, int pointStartIndex)
+            public CollisionPortalPack(Portal portal, int planeIndex, int pointIndexCount, int pointStartIndex)
             {
                 Portal = portal;
                 PlaneIndex = (ushort)planeIndex;
@@ -648,7 +648,7 @@ namespace MphRead.Utility
             return indices;
         }
 
-        private static byte[] RepackMphCollision(IReadOnlyList<CollisionDataEditor> data, IReadOnlyList<CollisionPortal> portals)
+        private static byte[] RepackMphCollision(IReadOnlyList<CollisionDataEditor> data, IReadOnlyList<Portal> portals)
         {
             uint padInt = 0;
             ushort padShort = 0;
@@ -796,7 +796,7 @@ namespace MphRead.Utility
             }
             // portals
             int portalOffset = (int)stream.Position;
-            foreach (CollisionPortal portal in portals)
+            foreach (Portal portal in portals)
             {
                 Debug.Assert(portal.Points.Count == 4);
                 Debug.Assert(portal.Planes.Count == 4);
@@ -863,7 +863,7 @@ namespace MphRead.Utility
             public int RightIndex { get; set; }
         }
 
-        private static byte[] RepackFhCollision(IReadOnlyList<CollisionDataEditor> data, IReadOnlyList<CollisionPortal> portals)
+        private static byte[] RepackFhCollision(IReadOnlyList<CollisionDataEditor> data, IReadOnlyList<Portal> portals)
         {
             byte padByte = 0;
             ushort padShort = 0;
@@ -916,7 +916,7 @@ namespace MphRead.Utility
                 }
             }
 
-            foreach (CollisionPortal portal in portals)
+            foreach (Portal portal in portals)
             {
                 int planeIndex = planes.IndexOf(p => p == portal.Plane);
                 if (planeIndex == -1)

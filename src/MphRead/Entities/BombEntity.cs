@@ -221,7 +221,7 @@ namespace MphRead.Entities
                                 door.Flags |= DoorFlags.ShotOpen;
                             }
                         }
-                    }   
+                    }
                 }
                 if (BombType == BombType.Lockjaw && BombIndex == 0 && Owner.SyluxBombCount == 3
                     && _target == null && hitEntity == null)

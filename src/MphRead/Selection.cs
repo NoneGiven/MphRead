@@ -174,7 +174,7 @@ namespace MphRead
                 }
                 return true;
             }
-            if (e.Key == Keys.X && scene.AllowCameraMovement)
+            if (e.Key == Keys.X && scene.AllowCameraMovement && scene.CameraMode != CameraMode.Player)
             {
                 LookAtSelection(scene, e.Control, e.Shift);
                 return true;
@@ -592,7 +592,7 @@ namespace MphRead
 
         private static bool FilterNode(Node node, bool roomOnly)
         {
-            return !roomOnly || node.IsRoomPartNode;
+            return !roomOnly || node.RoomPartId >= 0;
         }
 
         private static void SelectInstance(int direction)

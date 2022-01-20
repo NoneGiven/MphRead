@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using MphRead.Formats.Collision;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -18,6 +19,8 @@ namespace MphRead.Entities
         public float Alpha { get; set; } = 1.0f;
 
         protected Scene _scene;
+        private readonly string? _nodeName;
+        public NodeRef NodeRef { get; protected set; } = NodeRef.None;
 
         protected float _drawScale = 1;
         protected Matrix4 _transform = Matrix4.Identity;
@@ -122,9 +125,20 @@ namespace MphRead.Entities
             _scene = scene;
         }
 
+        protected EntityBase(EntityType type, string nodeName, Scene scene)
+        {
+            Type = type;
+            _scene = scene;
+            _nodeName = nodeName;
+        }
+
         public virtual void Initialize()
         {
             _anyLighting |= _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
+            if (_nodeName != null)
+            {
+                NodeRef = _scene.Room?.GetNodeRefByName(_nodeName) ?? NodeRef.None;
+            }
         }
 
         protected ModelInstance SetUpModel(string name, int animIndex = 0, AnimFlags animFlags = AnimFlags.None, bool firstHunt = false)
