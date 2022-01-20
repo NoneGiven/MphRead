@@ -374,6 +374,8 @@ namespace MphRead.Entities
         private ushort _timeSincePickup = 0;
         private ushort _timeSinceHeal = 0;
         private ushort _respawnTimer = 0;
+        private ushort _deathCountdown = 0;
+        public ushort DeathCountdown => _deathCountdown;
         private ushort _damageInvulnTimer = 0;
         private ushort _spawnInvulnTimer = 0;
         private ushort _camSwitchTimer = 0;
