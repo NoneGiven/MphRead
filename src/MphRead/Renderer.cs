@@ -3038,7 +3038,7 @@ namespace MphRead
                     }
                 }
             }
-            else if (e.Key == Keys.D5)
+            else if (e.Key == Keys.D5 && e.Shift)
             {
                 if (!_recording)
                 {
