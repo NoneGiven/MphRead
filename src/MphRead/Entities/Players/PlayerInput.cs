@@ -219,6 +219,10 @@ namespace MphRead.Entities
                     // todo: update HUD shift
                     float aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
                     float aimX = -Input.MouseDeltaX / 4f;
+                    if (_scene.FrameAdvance) // skdebug
+                    {
+                        aimX = aimY = 0;
+                    }
                     UpdateAimY(aimY);
                     UpdateAimX(aimX);
                     if (Flags1.TestFlag(PlayerFlags1.Grounded))
@@ -775,6 +779,10 @@ namespace MphRead.Entities
                         // todo: update HUD shift
                         float aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
                         float aimX = -Input.MouseDeltaX / 4f;
+                        if (_scene.FrameAdvance) // skdebug
+                        {
+                            aimX = aimY = 0;
+                        }
                         UpdateAimY(aimY);
                         UpdateAimX(aimX);
                         if ((Hunter == Hunter.Trace || Hunter == Hunter.Weavel) && Flags1.TestFlag(PlayerFlags1.Grounded))
