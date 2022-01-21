@@ -255,7 +255,7 @@ namespace MphRead
             }
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
-            _cameraMode = CameraMode.Roam;
+            _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
             _roomId = room.RoomId;
         }
 
