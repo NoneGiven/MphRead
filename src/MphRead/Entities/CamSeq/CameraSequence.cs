@@ -88,6 +88,7 @@ namespace MphRead.Formats
             CalculateFrameValues();
             if (_keyframeElapsed < 1 / 60f) // todo: FPS stuff
             {
+                CamInfoRef.PrevPosition = CamInfoRef.Position;
                 if (curFrame.PositionEntity != null)
                 {
                     NodeRef nodeRef = curFrame.PositionEntity.NodeRef;

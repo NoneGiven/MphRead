@@ -507,8 +507,11 @@ namespace MphRead.Entities
             {
                 ModelInstance inst = _models[0];
                 UpdateTransforms(inst, 0);
-                ClearRoomPartState();
-                UpdateRoomParts();
+                if (_scene.ProcessFrame)
+                {
+                    ClearRoomPartState();
+                    UpdateRoomParts();
+                }
                 if (_partVisInfoHead == null || _scene.ShowAllNodes)
                 {
                     DrawAllNodes(inst);

@@ -144,7 +144,7 @@ namespace MphRead
         private bool _advanceOneFrame = false;
         private bool _recording = false;
         private int _framesRecorded = 0;
-        private bool ProcessFrame => _frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame;
+        public bool ProcessFrame => _frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame;
         private bool _roomLoaded = false;
         private RoomEntity? _room = null;
         private int _roomId = -1;
