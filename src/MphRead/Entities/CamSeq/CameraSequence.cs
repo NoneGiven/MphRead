@@ -28,15 +28,16 @@ namespace MphRead.Formats
         public byte Version { get; }
         public IReadOnlyList<CameraSequenceKeyframe> Keyframes { get; }
 
-        // sktodo: make fields private
         public CamSeqFlags Flags { get; set; }
         public bool BlockInput => Flags.TestFlag(CamSeqFlags.BlockInput);
         public bool ForceAlt => Flags.TestFlag(CamSeqFlags.ForceAlt);
         public bool ForceBiped => Flags.TestFlag(CamSeqFlags.ForceBiped);
-        public ushort TransitionTime { get; set; }
+
         public ushort TransitionTimer { get; set; }
-        public int KeyframeIndex { get; set; }
-        public float KeyframeElapsed { get; set; }
+        private ushort _transitionTime = 0;
+        private int _keyframeIndex = 0;
+        private float _keyframeElapsed = 0;
+
         public CameraInfo InitialCamInfo { get; } = new CameraInfo();
         public CameraInfo? CamInfoRef { get; set; }
 
@@ -81,11 +82,11 @@ namespace MphRead.Formats
             Debug.Assert(CamInfoRef != null);
             CamInfoRef.Shake = 0;
             CamInfoRef.PrevPosition = CamInfoRef.Position;
-            CameraSequenceKeyframe curFrame = Keyframes[KeyframeIndex];
+            CameraSequenceKeyframe curFrame = Keyframes[_keyframeIndex];
             float frameLength = curFrame.HoldTime + curFrame.MoveTime;
             float fadeOutStart = frameLength - curFrame.FadeOutTime;
             CalculateFrameValues();
-            if (KeyframeElapsed < 1 / 60f) // todo: FPS stuff
+            if (_keyframeElapsed < 1 / 60f) // todo: FPS stuff
             {
                 if (curFrame.PositionEntity != null)
                 {
@@ -113,13 +114,13 @@ namespace MphRead.Formats
             }
             FadeType fadeType = FadeType.None;
             float fadeTime = 0;
-            if (curFrame.FadeInType != FadeType.None && KeyframeElapsed <= 2 / 30f)
+            if (curFrame.FadeInType != FadeType.None && _keyframeElapsed <= 2 / 30f)
             {
                 fadeType = curFrame.FadeInType;
                 fadeTime = curFrame.FadeInTime;
             }
             else if (curFrame.FadeOutType != FadeType.None
-                && KeyframeElapsed >= fadeOutStart && KeyframeElapsed <= fadeOutStart + 2 / 30f)
+                && _keyframeElapsed >= fadeOutStart && _keyframeElapsed <= fadeOutStart + 2 / 30f)
             {
                 fadeType = curFrame.FadeOutType;
                 fadeTime = curFrame.FadeOutTime;
@@ -131,17 +132,17 @@ namespace MphRead.Formats
             if (curFrame.HoldTime == 0 && curFrame.MoveTime == 0)
             {
                 // make zero-length frames last for 2 frames (equivalent to 1 frame in game)
-                KeyframeElapsed += _scene.FrameTime / 2;
+                _keyframeElapsed += _scene.FrameTime / 2;
             }
             else
             {
-                KeyframeElapsed += _scene.FrameTime;
+                _keyframeElapsed += _scene.FrameTime;
             }
-            if (KeyframeElapsed >= frameLength)
+            if (_keyframeElapsed >= frameLength)
             {
-                KeyframeElapsed -= frameLength;
-                KeyframeIndex++;
-                if (KeyframeIndex >= Keyframes.Count)
+                _keyframeElapsed -= frameLength;
+                _keyframeIndex++;
+                if (_keyframeIndex >= Keyframes.Count)
                 {
                     if (Flags.TestFlag(CamSeqFlags.Loop))
                     {
@@ -151,11 +152,11 @@ namespace MphRead.Formats
                     {
                         Flags |= CamSeqFlags.CanEnd;
                         Flags |= CamSeqFlags.Complete;
-                        KeyframeElapsed = frameLength;
+                        _keyframeElapsed = frameLength;
                     }
                 }
             }
-            if (TransitionTimer < TransitionTime)
+            if (TransitionTimer < _transitionTime)
             {
                 TransitionTimer++;
             }
@@ -190,10 +191,10 @@ namespace MphRead.Formats
             Flags &= ~CamSeqFlags.Complete;
             Flags &= ~CamSeqFlags.CanEnd;
             Flags &= ~CamSeqFlags.Loop;
-            KeyframeElapsed = 0;
+            _keyframeElapsed = 0;
             TransitionTimer = 0;
-            TransitionTime = transitionTime;
-            KeyframeIndex = 0;
+            _transitionTime = transitionTime;
+            _keyframeIndex = 0;
             if (Keyframes.Count > 0)
             {
                 CameraSequenceKeyframe firstFrame = Keyframes[0];
@@ -218,10 +219,10 @@ namespace MphRead.Formats
         {
             Flags &= ~CamSeqFlags.Complete;
             Flags &= ~CamSeqFlags.CanEnd;
-            KeyframeElapsed = 0;
+            _keyframeElapsed = 0;
             TransitionTimer = 0;
-            TransitionTime = 0;
-            KeyframeIndex = 0;
+            _transitionTime = 0;
+            _keyframeIndex = 0;
             Debug.Assert(Keyframes.Count > 0);
             Debug.Assert(CamInfoRef != null);
             CameraSequenceKeyframe firstFrame = Keyframes[0];
@@ -242,10 +243,10 @@ namespace MphRead.Formats
         {
             Flags |= CamSeqFlags.CanEnd;
             Flags |= CamSeqFlags.Complete;
-            KeyframeElapsed = 0;
+            _keyframeElapsed = 0;
             TransitionTimer = 0;
-            TransitionTime = 0;
-            KeyframeIndex = 0;
+            _transitionTime = 0;
+            _keyframeIndex = 0;
             if (Current == this)
             {
                 if (CamInfoRef != null)
@@ -276,9 +277,9 @@ namespace MphRead.Formats
             Vector3 finalToTarget;
             float finalRoll;
             float finalFov;
-            CameraSequenceKeyframe curFrame = Keyframes[KeyframeIndex];
+            CameraSequenceKeyframe curFrame = Keyframes[_keyframeIndex];
             float movePercent = 0;
-            float moveElapsed = KeyframeElapsed - curFrame.HoldTime;
+            float moveElapsed = _keyframeElapsed - curFrame.HoldTime;
             if (moveElapsed >= 0 && curFrame.MoveTime > 0)
             {
                 movePercent = moveElapsed / curFrame.MoveTime;
@@ -293,9 +294,9 @@ namespace MphRead.Formats
             );
             float factorDot = Vector4.Dot(factorVec, moveVec);
             CameraSequenceKeyframe? nextFrame = null;
-            if (KeyframeIndex + 1 < Keyframes.Count)
+            if (_keyframeIndex + 1 < Keyframes.Count)
             {
-                nextFrame = Keyframes[KeyframeIndex + 1];
+                nextFrame = Keyframes[_keyframeIndex + 1];
             }
             if (nextFrame != null)
             {
@@ -312,11 +313,11 @@ namespace MphRead.Formats
                     Vector3 prevPos;
                     Vector3 prevTarget;
                     CameraSequenceKeyframe? prevFrame = null;
-                    if (KeyframeIndex - 1 >= 0)
+                    if (_keyframeIndex - 1 >= 0)
                     {
-                        prevFrame = Keyframes[KeyframeIndex - 1];
+                        prevFrame = Keyframes[_keyframeIndex - 1];
                     }
-                    if (KeyframeIndex > 0 && prevFrame != null && (curFrame.PrevFrameInfluence & 2) != 0 && prevFrame.MoveTime > 0)
+                    if (_keyframeIndex > 0 && prevFrame != null && (curFrame.PrevFrameInfluence & 2) != 0 && prevFrame.MoveTime > 0)
                     {
                         float easing = 1 / 6f * curFrame.MoveTime * curFrame.Easing;
                         prevPos = prevFrame.Position;
@@ -338,9 +339,9 @@ namespace MphRead.Formats
                     Vector3 afterPos;
                     Vector3 afterTarget;
                     CameraSequenceKeyframe? afterFrame = null;
-                    if (KeyframeIndex + 2 < Keyframes.Count)
+                    if (_keyframeIndex + 2 < Keyframes.Count)
                     {
-                        afterFrame = Keyframes[KeyframeIndex + 2];
+                        afterFrame = Keyframes[_keyframeIndex + 2];
                     }
                     if (afterFrame != null && (curFrame.AfterFrameInfluence & 2) != 0 && nextFrame.MoveTime > 0)
                     {
@@ -413,7 +414,7 @@ namespace MphRead.Formats
             }
             Debug.Assert(CamInfoRef != null);
             finalFov *= 2;
-            if (TransitionTimer >= TransitionTime)
+            if (TransitionTimer >= _transitionTime)
             {
                 CamInfoRef.Fov = finalFov;
                 CamInfoRef.Position = finalPosition;
@@ -421,8 +422,8 @@ namespace MphRead.Formats
             }
             else
             {
-                Debug.Assert(TransitionTime != 0);
-                float pct = TransitionTimer / (float)TransitionTime;
+                Debug.Assert(_transitionTime != 0);
+                float pct = TransitionTimer / (float)_transitionTime;
                 CamInfoRef.Fov += (finalFov - CamInfoRef.Fov) * pct;
                 CamInfoRef.Position += (finalPosition - CamInfoRef.Position) * pct;
                 finalToTarget = CamInfoRef.Facing + (finalToTarget - CamInfoRef.Facing) * pct;
@@ -439,14 +440,14 @@ namespace MphRead.Formats
                 float sin = MathF.Sin(finalRoll);
                 upVector = new Vector3(cross.X * cos, upVector.Y * sin, cross.Z * cos);
             }
-            if (TransitionTimer >= TransitionTime)
+            if (TransitionTimer >= _transitionTime)
             {
                 CamInfoRef.UpVector = upVector;
             }
             else
             {
-                Debug.Assert(TransitionTime != 0);
-                float pct = TransitionTimer / (float)TransitionTime;
+                Debug.Assert(_transitionTime != 0);
+                float pct = TransitionTimer / (float)_transitionTime;
                 CamInfoRef.UpVector += (upVector - CamInfoRef.UpVector) * pct;
                 CamInfoRef.UpVector = CamInfoRef.UpVector.Normalized();
             }

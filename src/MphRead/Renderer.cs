@@ -1162,7 +1162,7 @@ namespace MphRead
             {
                 if (_cameraMode == CameraMode.Player)
                 {
-                    _viewMatrix = PlayerEntity.Main.CameraInfo.ViewMatrix; // sktodo
+                    _viewMatrix = PlayerEntity.Main.CameraInfo.ViewMatrix;
                     float fov = PlayerEntity.Main.CameraInfo.Fov > 0 ? PlayerEntity.Main.CameraInfo.Fov : 78;
                     _cameraFov = MathHelper.DegreesToRadians(fov);
                 }
@@ -1203,7 +1203,7 @@ namespace MphRead
             }
             else if (_cameraMode == CameraMode.Player)
             {
-                _cameraPosition = PlayerEntity.Main.CameraInfo.Position; // sktodo
+                _cameraPosition = PlayerEntity.Main.CameraInfo.Position;
             }
         }
 
@@ -1221,25 +1221,6 @@ namespace MphRead
                 _pivotAngleX = 0;
                 _pivotAngleY = 0;
                 _pivotDistance = 5.0f;
-            }
-        }
-
-        // sktodo: remove
-        public void SetCamera(Vector3 position, Vector3 target, float fov = 0, float roll = 0)
-        {
-            _cameraMode = CameraMode.Roam;
-            _cameraPosition = position;
-            _cameraFacing = target;
-            _cameraUp = Vector3.UnitY;
-            if (roll > 0)
-            {
-                _cameraUp = (Matrix3.CreateRotationZ(roll) * _cameraUp).Normalized();
-            }
-            _cameraRight = Vector3.Cross(_cameraFacing, _cameraUp);
-            _cameraUp = Vector3.Cross(_cameraRight, _cameraFacing);
-            if (fov > 0)
-            {
-                _cameraFov = fov;
             }
         }
 
