@@ -260,7 +260,7 @@ namespace MphRead.Entities
             {
                 if (_handoffTimer == 0)
                 {
-                    _handoffTimer = 2 * 2; // sktodo: FPS stuff?
+                    _handoffTimer = 2 * 2;
                 }
             }
         }
