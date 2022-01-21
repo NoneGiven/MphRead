@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
+using MphRead.Formats;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
@@ -279,24 +280,18 @@ namespace MphRead.Entities
         private Vector3 _field41C;
         private Vector3 _field428;
 
-        private float _fieldE4 = 0;
-        private float _fieldE8 = 0;
+        private float _buttonAimX = 0;
+        private float _buttonAimY = 0;
 
         private ushort _timeIdle = 0;
-        private byte _field360 = 0;
-        private byte _field447 = 0;
         private ushort _field43A = 0;
         private int _field450 = 0;
         private byte _crushBits = 0;
         private Vector3 _field4E8; // stores gun vec 2
-        private float _field4EC = 0;
-        private float _field4F0 = 0;
         private float _altTiltX = 0;
-        private float _field528 = 0;
         private float _altTiltZ = 0;
         private float _altSpinRot = 0;
         private float _altWobble = 0;
-        private byte _field53E = 0;
         private byte _field551 = 0;
         private byte _field552 = 0;
         private byte _field553 = 0;
@@ -374,6 +369,8 @@ namespace MphRead.Entities
         private ushort _timeSincePickup = 0;
         private ushort _timeSinceHeal = 0;
         private ushort _respawnTimer = 0;
+        private ushort _deathCountdown = 0;
+        public ushort DeathCountdown => _deathCountdown;
         private ushort _damageInvulnTimer = 0;
         private ushort _spawnInvulnTimer = 0;
         private ushort _camSwitchTimer = 0;
@@ -388,7 +385,6 @@ namespace MphRead.Entities
         private ushort _timeSinceFrozen = 0;
         private ushort _timeSinceDead = 0;
         private ushort _hidingTimer = 0;
-        private ushort _timeSinceButtonTouch = 0;
         private ushort _timeStanding = 0;
         private ushort _timeSinceStanding = 0;
         private ushort _timeSinceGrounded = 0;
@@ -526,13 +522,12 @@ namespace MphRead.Entities
             Flags2 |= PlayerFlags2.HideModel;
             AttachedEnemy = null;
             _field35C = null;
-            _field360 = 0;
             EquipInfo.ChargeLevel = 0;
             _timeSinceShot = 255;
             _timeSinceDamage = 255;
             _timeSincePickup = 255;
             _timeSinceHeal = 255;
-            _field447 = 0;
+            _timeSinceStanding = 0;
             _field449 = 0;
             _respawnTimer = 0;
             _timeSinceDead = 0;
@@ -542,7 +537,6 @@ namespace MphRead.Entities
             _bombCooldown = 0;
             _bombRefillTimer = 0;
             _bombAmmo = 3;
-            _field53E = 1;
             _damageInvulnTimer = 0;
             _spawnInvulnTimer = 0;
             _abilities = AbilityFlags.None;
@@ -679,7 +673,6 @@ namespace MphRead.Entities
             _disruptedTimer = 0;
             _burnedBy = null;
             _burnTimer = 0;
-            _timeSinceButtonTouch = 255;
             _hSpeedCap = Fixed.ToFloat(Values.WalkSpeedCap); // todo: FPS stuff?
             Speed = Vector3.Zero;
             if (respawn)
@@ -705,26 +698,36 @@ namespace MphRead.Entities
             _accelerationTimer = 0;
             _aimY = 0;
             NodeRef = nodeRef;
-            _fieldE4 = 0;
-            _fieldE8 = 0;
+            _buttonAimX = 0;
+            _buttonAimY = 0;
             _gunViewBob = 0;
             _walkViewBob = 0;
-            // todo: if 1P and cam seq
-            // else...
-            // todo: if MP and cam seq
-            CameraInfo.Reset();
-            CameraInfo.Position = Position;
-            CameraInfo.PrevPosition = Position;
-            CameraInfo.UpVector = Vector3.UnitY;
-            CameraInfo.Target = Position + facing;
-            CameraInfo.Fov = Fixed.ToFloat(Values.NormalFov) * 2;
-            CameraInfo.NodeRef = NodeRef;
-            SwitchCamera(CameraType.First, facing);
-            _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff
-            _field684 = 0;
-            _field688 = 0;
-            UpdateCameraFirst();
-            CameraInfo.Update();
+            if (!_scene.Multiplayer && CameraSequence.Current != null)
+            {
+                _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff
+                _field684 = 0;
+                _field688 = 0;
+            }
+            else
+            {
+                if (IsMainPlayer && _scene.Multiplayer && CameraSequence.Current != null)
+                {
+                    // sktodo: end intro cam seq
+                }
+                CameraInfo.Reset();
+                CameraInfo.Position = Position;
+                CameraInfo.PrevPosition = Position;
+                CameraInfo.UpVector = Vector3.UnitY;
+                CameraInfo.Target = Position + facing;
+                CameraInfo.Fov = Fixed.ToFloat(Values.NormalFov) * 2;
+                CameraInfo.NodeRef = NodeRef;
+                SwitchCamera(CameraType.First, facing);
+                _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff
+                _field684 = 0;
+                _field688 = 0;
+                UpdateCameraFirst();
+                CameraInfo.Update();
+            }
             _gunDrawPos = Fixed.ToFloat(Values.FieldB8) * facing
                 + CameraInfo.Position
                 + Fixed.ToFloat(Values.FieldB0) * _gunVec2
@@ -737,12 +740,11 @@ namespace MphRead.Entities
             _volume = CollisionVolume.Move(_volumeUnxf, Position);
             AttachedEnemy = null;
             _field35C = null;
-            _field360 = 0;
             _timeSinceShot = 255;
             _timeSinceDamage = 255;
             _timeSincePickup = 255;
             _timeSinceHeal = 255;
-            _field447 = 0;
+            _timeSinceStanding = 0;
             _timeStanding = 0;
             _field449 = 0;
             _respawnTimer = 0;
@@ -754,7 +756,6 @@ namespace MphRead.Entities
             _bombOveruse = 0;
             _bombRefillTimer = 0;
             _bombAmmo = 3;
-            _field53E = 1;
             _damageInvulnTimer = 0;
             if (IsBot && !_scene.Multiplayer)
             {
@@ -855,7 +856,7 @@ namespace MphRead.Entities
             _gunVec1 = facing;
             _facingVector = facing;
             SetTransform(facing, _upVector, position);
-            if (nodeRef.PartIndex >= 0)
+            if (nodeRef != NodeRef.None)
             {
                 NodeRef = nodeRef;
                 CameraInfo.NodeRef = nodeRef;
@@ -865,6 +866,11 @@ namespace MphRead.Entities
                 ResumeOwnCamera();
                 CameraInfo.Update();
             }
+        }
+
+        public void BlockFormSwitch()
+        {
+            Flags2 |= PlayerFlags2.NoFormSwitch;
         }
 
         // todo: visualize
@@ -1365,7 +1371,14 @@ namespace MphRead.Entities
             {
                 return;
             }
-            // todo: if in camseq which blocks input, return unless death, in which case do something and proceed
+            if (IsMainPlayer && CameraSequence.Current?.BlockInput == true)
+            {
+                if (!flags.TestFlag(DamageFlags.Death))
+                {
+                    return;
+                }
+                CamSeqEntity.CancelCurrent();
+            }
             if (_spawnInvulnTimer > 0 && !flags.TestFlag(DamageFlags.Death) && !flags.TestFlag(DamageFlags.IgnoreInvuln))
             {
                 return;

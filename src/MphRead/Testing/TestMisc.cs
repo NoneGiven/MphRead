@@ -38,7 +38,7 @@ namespace MphRead.Testing
                         if (entity.Type == EntityType.CameraSequence)
                         {
                             CameraSequenceEntityData data = ((Entity<CameraSequenceEntityData>)entity).Data;
-                            var entityClass = new CameraSequenceEntity(data, scene: null!);
+                            var entityClass = new CamSeqEntity(data, scene: null!);
                             if (ids.Contains(data.SequenceId))
                             {
                                 continue;
@@ -62,7 +62,7 @@ namespace MphRead.Testing
                 string name = Path.GetFileName(filePath);
                 if (name != "cameraEditBG.bin")
                 {
-                    var seq = CameraSequence.Load(name);
+                    var seq = CameraSequence.Load(name, scene: null!);
                     Nop();
                 }
             }

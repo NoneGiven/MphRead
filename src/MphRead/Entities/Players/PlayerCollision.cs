@@ -678,7 +678,16 @@ namespace MphRead.Entities
                     // --> compensate for halved gravity so we can't go up steeper slopes
                     // todo?: the response when moving into walls laterally is also not accurate ("wall sliding")
                     // --> needs a hack; just doubling it results in jittering
-                    position.Y += result.Plane.Y * v2 * (result.Plane.Y > 0 ? 0.5f / 2 : 2 * 2); // todo: FPS stuff
+                    float factor = 1;
+                    if (result.Plane.Y > 0 && result.Plane.Y < 0.9f)
+                    {
+                        factor = 0.5f / 2; // todo: FPS stuff
+                    }
+                    else if (result.Plane.Y < 0)
+                    {
+                        factor = 2 * 2; // todo: FPS stuff
+                    }
+                    position.Y += result.Plane.Y * v2 * factor;
                 }
                 float dot = Vector3.Dot(Speed, result.Plane.Xyz);
                 if (dot < 0)

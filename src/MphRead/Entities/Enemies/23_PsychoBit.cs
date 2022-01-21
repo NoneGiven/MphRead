@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using MphRead.Effects;
+using MphRead.Formats;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
@@ -494,7 +495,11 @@ namespace MphRead.Entities.Enemies
 
         public bool Behavior07()
         {
-            // todo: if in cam seq blocking input, set _field2D4 to 40 * 2 and return false
+            if (CameraSequence.Current?.BlockInput == true)
+            {
+                _camSeqDelayTimer = 40 * 2; // todo: FPS stuff
+                return false;
+            }
             if (_camSeqDelayTimer > 0)
             {
                 _camSeqDelayTimer--;

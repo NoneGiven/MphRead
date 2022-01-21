@@ -2356,9 +2356,9 @@ namespace MphRead.Utility
             writer.Write(entity.PlayerId2);
             writer.Write(entity.Entity1);
             writer.Write(entity.Entity2);
-            writer.Write(entity.MessageTargetId);
-            writer.Write((uint)entity.Message);
-            writer.Write(entity.MessageParam);
+            writer.Write(entity.EndMessageTargetId);
+            writer.Write((uint)entity.EndMessage);
+            writer.Write(entity.EndMessageParam);
         }
 
         private static void WriteMphForceField(ForceFieldEntityEditor entity, BinaryWriter writer)

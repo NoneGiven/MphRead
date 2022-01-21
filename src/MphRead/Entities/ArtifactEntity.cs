@@ -1,3 +1,4 @@
+using MphRead.Formats;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -72,7 +73,10 @@ namespace MphRead.Entities
             if (Active)
             {
                 // todo: positional audio, node ref, SFX, set scan ID
-                // todo: return if there's a cam seq blocking input
+                if (CameraSequence.Current?.BlockInput == true)
+                {
+                    return base.Process();
+                }
                 // todo: move dropped octolith toward player
                 PlayerEntity player = PlayerEntity.Main;
                 if (player.Health == 0)

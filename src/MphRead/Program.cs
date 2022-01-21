@@ -9,7 +9,7 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 17, 1, 0);
+        public static Version Version { get; } = new Version(0, 18, 0, 0);
 
         private static void Main(string[] args)
         {
@@ -30,11 +30,7 @@ namespace MphRead
                 }
                 else
                 {
-                    Console.Write("Enter room name or ID: ");
-                    string room = Console.ReadLine() ?? "";
-                    using var renderer = new RenderWindow();
-                    renderer.AddRoom(room);
-                    renderer.Run();
+                    ShowMenuPrompts();
                 }
             }
             else if (arguments.Any(a => a.Name == "setup"))
@@ -115,6 +111,422 @@ namespace MphRead
                 }
                 renderer.Run();
             }
+        }
+
+        private static void ShowMenuPrompts()
+        {
+            int prompt = 0;
+            int selection = 7;
+            int roomId = 95;
+            string room = "Combat Hall";
+            string roomKey = "MP3 PROVING GROUND";
+            var players = new List<(string Hunter, string Recolor)>()
+            {
+                ("Samus", "0"), ("none", "0"), ("none", "0"), ("none", "0")
+            };
+            var playerIds = new List<int>() { 0, -1, -1, -1 };
+            var hunters = new List<string>()
+            {
+                "Samus", "Kanden", "Trace", "Sylux", "Noxus", "Spire", "Weavel", "Guardian"
+            };
+            string mode = "auto-select";
+            int modeId = 0;
+            var modeOpts = new Dictionary<string, string>()
+            {
+                { "adventure", "Adventure" },
+                { "story", "Adventure" },
+                { "1p", "Adventure" },
+                { "battle", "Battle" },
+                { "battleteams", "Battle Teams" },
+                { "survival", "Survival" },
+                { "survivalteams", "Survival Teams" },
+                { "capture", "Capture" },
+                { "bounty", "Bounty" },
+                { "bountyteams", "Bounty Teams" },
+                { "nodes", "Nodes" },
+                { "nodesteams", "Nodes Teams" },
+                { "defender", "Defender" },
+                { "defenderteams", "Defender Teams" },
+                { "primehunter", "Prime Hunter" },
+            };
+            var modes = new List<string>()
+            {
+                "auto-select", "Adventure", "Battle", "Battle Teams", "Survival", "Survival Teams", "Capture",
+                "Bounty", "Bounty Teams", "Nodes", "Nodes Teams", "Defender", "Defender Teams", "Prime Hunter"
+            };
+            var models = new List<(string Name, string Recolor)>();
+
+            string PrintPlayer(int index)
+            {
+                (string hunter, string recolor) = players[index];
+                if (hunter == "none")
+                {
+                    return "none";
+                }
+                return $"{hunter}, suit color {recolor}";
+            }
+
+            string PrintModels()
+            {
+                if (models.Count == 0)
+                {
+                    return "none";
+                }
+                return String.Join(", ", models.Select(c => $"{c.Name} {c.Recolor}"));
+            }
+
+            while (true)
+            {
+                Console.Clear();
+                Console.WriteLine($"MphRead Version {Version}");
+                Console.WriteLine();
+                Console.WriteLine("Choose an option with up/down.");
+                Console.WriteLine("Press Enter to specify, Backspace to clear, or left/right to advance the option.");
+                Console.WriteLine("When finished, press Enter on the last option to launch.");
+                Console.WriteLine();
+                Console.WriteLine($"[{(selection == 0 ? "x" : " ")}] Room: {room}");
+                Console.WriteLine($"[{(selection == 1 ? "x" : " ")}] Game mode: {mode}");
+                Console.WriteLine($"[{(selection == 2 ? "x" : " ")}] Player 1: {PrintPlayer(0)}");
+                Console.WriteLine($"[{(selection == 3 ? "x" : " ")}] Player 2: {PrintPlayer(1)}");
+                Console.WriteLine($"[{(selection == 4 ? "x" : " ")}] Player 3: {PrintPlayer(2)}");
+                Console.WriteLine($"[{(selection == 5 ? "x" : " ")}] Player 4: {PrintPlayer(3)}");
+                Console.WriteLine($"[{(selection == 6 ? "x" : " ")}] Models: {PrintModels()}");
+                Console.WriteLine($"[{(selection == 7 ? "x" : " ")}] Launch");
+                if (prompt == 0)
+                {
+                    ConsoleKeyInfo keyInfo = Console.ReadKey();
+                    if (keyInfo.Key == ConsoleKey.Escape)
+                    {
+                        return;
+                    }
+                    if (keyInfo.Key == ConsoleKey.Enter)
+                    {
+                        if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Shift)
+                            || keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control) || selection == 7)
+                        {
+                            Console.Clear();
+                            Console.WriteLine($"MphRead Version {Version}");
+                            Console.WriteLine();
+                            Console.WriteLine("Loading...");
+                            break;
+                        }
+                        prompt = selection + 1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.UpArrow || keyInfo.Key == ConsoleKey.W)
+                    {
+                        selection--;
+                        if (selection < 0)
+                        {
+                            selection = 7;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.DownArrow || keyInfo.Key == ConsoleKey.S)
+                    {
+                        selection++;
+                        if (selection > 7)
+                        {
+                            selection = 0;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
+                    {
+                        if (selection == 0)
+                        {
+                            roomId = -1;
+                            room = "none";
+                            roomKey = "none";
+                        }
+                        else if (selection == 1)
+                        {
+                            mode = "auto-select";
+                        }
+                        else if (selection >= 2 && selection <= 5)
+                        {
+                            players[selection - 2] = ("none", "0");
+                        }
+                        else if (selection == 6)
+                        {
+                            models.Clear();
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
+                        || keyInfo.Key == ConsoleKey.RightArrow)
+                    {
+                        if (selection == 0)
+                        {
+                            roomId++;
+                            if (roomId > 130)
+                            {
+                                roomId = -1;
+                            }
+                            RoomMetadata? meta = Metadata.GetRoomById(roomId);
+                            if (meta != null)
+                            {
+                                room = meta.InGameName ?? meta.Name;
+                                roomKey = meta.Name;
+                            }
+                            else
+                            {
+                                roomId = -1;
+                                room = "none";
+                                roomKey = "none";
+                            }
+                        }
+                        else if (selection == 1)
+                        {
+                            modeId++;
+                            if (modeId >= modes.Count)
+                            {
+                                modeId = 0;
+                            }
+                            mode = modes[modeId];
+                        }
+                        else if (selection >= 2 && selection <= 5)
+                        {
+                            int index = selection - 2;
+                            int id = playerIds[index];
+                            id++;
+                            if (id > 7)
+                            {
+                                id = -1;
+                            }
+                            playerIds[index] = id;
+                            players[index] = (id == -1 ? "none" : hunters[id], players[index].Recolor);
+                        }
+                        else if (selection == 6)
+                        {
+                            if (models.Count == 0)
+                            {
+                                models.Add(("Crate01", "0"));
+                            }
+                            else
+                            {
+                                string model = models[0].Name;
+                                int index = Metadata.ModelMetadata.Keys.IndexOf(k => k == model);
+                                index++;
+                                if (index >= Metadata.ModelMetadata.Keys.Count())
+                                {
+                                    index = 0;
+                                }
+                                model = Metadata.ModelMetadata[Metadata.ModelMetadata.Keys.ElementAt(index)].Name;
+                                models[0] = (model, models[0].Recolor);
+                            }
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Subtract || keyInfo.Key == ConsoleKey.OemMinus
+                        || keyInfo.Key == ConsoleKey.LeftArrow)
+                    {
+                        if (selection == 0)
+                        {
+                            roomId--;
+                            if (roomId < -1)
+                            {
+                                roomId = 130;
+                            }
+                            RoomMetadata? meta = Metadata.GetRoomById(roomId);
+                            if (meta != null)
+                            {
+                                room = meta.InGameName ?? meta.Name;
+                                roomKey = meta.Name;
+                            }
+                            else
+                            {
+                                roomId = -1;
+                                room = "none";
+                                roomKey = "none";
+                            }
+                        }
+                        else if (selection == 1)
+                        {
+                            modeId--;
+                            if (modeId < 0)
+                            {
+                                modeId = modes.Count - 1;
+                            }
+                            mode = modes[modeId];
+                        }
+                        else if (selection >= 2 && selection <= 5)
+                        {
+                            int index = selection - 2;
+                            int id = playerIds[index];
+                            id--;
+                            if (id < -1)
+                            {
+                                id = 7;
+                            }
+                            playerIds[index] = id;
+                            players[index] = (id == -1 ? "none" : hunters[id], players[index].Recolor);
+                        }
+                        else if (selection == 6)
+                        {
+                            if (models.Count == 0)
+                            {
+                                models.Add(("Crate01", "0"));
+                            }
+                            else
+                            {
+                                string model = models[0].Name;
+                                int index = Metadata.ModelMetadata.Keys.IndexOf(k => k == model);
+                                index--;
+                                if (index < 0)
+                                {
+                                    index = Metadata.ModelMetadata.Keys.Count() - 1;
+                                }
+                                model = Metadata.ModelMetadata[Metadata.ModelMetadata.Keys.ElementAt(index)].Name;
+                                models[0] = (model, models[0].Recolor);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine();
+                    if (prompt == 1)
+                    {
+                        Console.WriteLine("Enter room ID, internal name, or in-game name.");
+                        Console.WriteLine("Examples: 95, MP3 PROVING GROUND, Combat Hall");
+                        string? input = Console.ReadLine();
+                        if (!String.IsNullOrWhiteSpace(input))
+                        {
+                            input = input.Trim().ToLower();
+                            if (Int32.TryParse(input, out int id))
+                            {
+                                RoomMetadata? meta = Metadata.GetRoomById(id);
+                                if (meta != null)
+                                {
+                                    roomId = id;
+                                    room = meta.InGameName ?? meta.Name;
+                                    roomKey = meta.Name;
+                                }
+                            }
+                            else
+                            {
+                                IEnumerable<RoomMetadata> rooms = Metadata.RoomMetadata.Values;
+                                RoomMetadata? meta = rooms.FirstOrDefault(r => r.Name.ToLower() == input);
+                                if (meta == null)
+                                {
+                                    bool multi = mode != "Adventure";
+                                    meta = rooms.FirstOrDefault(r => r.InGameName?.ToLower() == input && r.Multiplayer == multi);
+                                    if (meta == null)
+                                    {
+                                        meta = rooms.FirstOrDefault(r => r.InGameName?.ToLower() == input);
+                                    }
+                                }
+                                if (meta != null)
+                                {
+                                    roomId = meta.Id;
+                                    room = meta.InGameName ?? meta.Name;
+                                    roomKey = meta.Name;
+                                }
+                            }
+                        }
+                        prompt = 0;
+                    }
+                    else if (prompt == 2)
+                    {
+                        Console.WriteLine("Enter game mode.");
+                        Console.WriteLine("Examples: Adventure, Battle, Survival Teams");
+                        string? input = Console.ReadLine();
+                        if (!String.IsNullOrWhiteSpace(input))
+                        {
+                            input = input.Trim().ToLower().Replace(" ", "");
+                            if (modeOpts.TryGetValue(input, out string? result))
+                            {
+                                mode = result;
+                                modeId = modes.IndexOf(mode);
+                            }
+                            else
+                            {
+                                mode = "auto-select";
+                                modeId = 0;
+                            }
+                        }
+                        prompt = 0;
+                    }
+                    else if (prompt >= 3 && prompt <= 6)
+                    {
+                        Console.WriteLine("Enter hunter and (optionally) recolor.");
+                        Console.WriteLine("Examples: Samus, Trace 2, Sylux 5, Guardian");
+                        string? input = Console.ReadLine();
+                        if (!String.IsNullOrWhiteSpace(input))
+                        {
+                            input = input.Trim().ToLower();
+                            int index = prompt - 3;
+                            string[] split = input.Split(' ');
+                            string player = "none";
+                            string name = split[0];
+                            if (name.Length > 0)
+                            {
+                                name = name[..1].ToUpper() + name[1..];
+                            }
+                            if (Enum.TryParse(name, out Hunter hunter) && hunter != Hunter.Random)
+                            {
+                                player = hunter.ToString();
+                            }
+                            string recolor = players[index].Recolor;
+                            if (split.Length > 1 && Int32.TryParse(split[1], out int result))
+                            {
+                                recolor = Math.Clamp(result, 0, 5).ToString();
+                            }
+                            players[index] = (player, recolor);
+                        }
+                        prompt = 0;
+                    }
+                    else if (prompt == 7)
+                    {
+                        Console.WriteLine("Enter comma-separated list of models and (optionally) recolors.");
+                        Console.WriteLine("Examples: Crate01, blastcap, LavaDemon 1, KandenGun 4");
+                        string? input = Console.ReadLine();
+                        if (!String.IsNullOrWhiteSpace(input))
+                        {
+                            models.Clear();
+                            string[] split = input.Split(',');
+                            for (int i = 0; i < split.Length; i++)
+                            {
+                                string[] pair = split[i].Trim().Split(' ');
+                                if (Metadata.ModelMetadata.TryGetValue(pair[0], out ModelMetadata? meta))
+                                {
+                                    string recolor = "0";
+                                    if (pair.Length > 1 && Int32.TryParse(pair[1], out int result))
+                                    {
+                                        recolor = Math.Clamp(result, 0, meta.Recolors.Count - 1).ToString();
+                                    }
+                                    models.Add((meta.Name, recolor));
+                                }
+                            }
+                        }
+                        prompt = 0;
+                    }
+                }
+            }
+            using var renderer = new RenderWindow();
+            if (room != "none")
+            {
+                for (int i = 0; i < players.Count; i++)
+                {
+                    (string hunter, string recolor) = players[i];
+                    if (hunter != "none")
+                    {
+                        renderer.AddPlayer(Enum.Parse<Hunter>(hunter), Int32.Parse(recolor));
+                    }
+                }
+                GameMode gameMode = GameMode.None;
+                if (mode == "Adventure")
+                {
+                    gameMode = GameMode.SinglePlayer;
+                }
+                else if (mode != "auto-select")
+                {
+                    gameMode = Enum.Parse<GameMode>(mode.Replace(" ", ""));
+                }
+                renderer.AddRoom(roomKey, gameMode);
+            }
+            for (int i = 0; i < models.Count; i++)
+            {
+                (string model, string recolor) = models[i];
+                renderer.AddModel(model, Int32.Parse(recolor));
+            }
+            renderer.Run();
         }
 
         private static bool CheckSetup(string[] args)

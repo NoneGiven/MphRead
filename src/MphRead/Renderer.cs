@@ -144,7 +144,7 @@ namespace MphRead
         private bool _advanceOneFrame = false;
         private bool _recording = false;
         private int _framesRecorded = 0;
-        private bool ProcessFrame => _frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame;
+        public bool ProcessFrame => _frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame;
         private bool _roomLoaded = false;
         private RoomEntity? _room = null;
         private int _roomId = -1;
@@ -255,7 +255,7 @@ namespace MphRead
             }
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
-            _cameraMode = CameraMode.Roam;
+            _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
             _roomId = room.RoomId;
         }
 
@@ -319,6 +319,16 @@ namespace MphRead
         {
             _entityMap.Remove(entity.Id);
             _entities.Remove(entity);
+        }
+
+        public NodeRef UpdateNodeRef(NodeRef current, Vector3 prevPos, Vector3 curPos)
+        {
+            return Room?.UpdateNodeRef(current, prevPos, curPos) ?? NodeRef.None;
+        }
+
+        public NodeRef GetNodeRefByName(string nodeName)
+        {
+            return Room?.GetNodeRefByName(nodeName) ?? NodeRef.None;
         }
 
         public void OnLoad()
@@ -882,9 +892,6 @@ namespace MphRead
             if (ProcessFrame)
             {
                 UpdateScene();
-                ProcessMessageQueue();
-                _elapsedTime += 1 / 60f; // todo: FPS stuff
-                _frameCount++;
             }
             if (ProcessFrame || CameraMode != CameraMode.Player)
             {
@@ -893,6 +900,12 @@ namespace MphRead
             }
             UpdateProjection();
             GetDrawItems();
+            if (ProcessFrame)
+            {
+                ProcessMessageQueue();
+                _elapsedTime += 1 / 60f; // todo: FPS stuff
+                _frameCount++;
+            }
         }
 
         private void UpdateProjection()
@@ -1152,7 +1165,7 @@ namespace MphRead
             {
                 if (_cameraMode == CameraMode.Player)
                 {
-                    _viewMatrix = PlayerEntity.Main.CameraInfo.ViewMatrix; // sktodo
+                    _viewMatrix = PlayerEntity.Main.CameraInfo.ViewMatrix;
                     float fov = PlayerEntity.Main.CameraInfo.Fov > 0 ? PlayerEntity.Main.CameraInfo.Fov : 78;
                     _cameraFov = MathHelper.DegreesToRadians(fov);
                 }
@@ -1193,7 +1206,7 @@ namespace MphRead
             }
             else if (_cameraMode == CameraMode.Player)
             {
-                _cameraPosition = PlayerEntity.Main.CameraInfo.Position; // sktodo
+                _cameraPosition = PlayerEntity.Main.CameraInfo.Position;
             }
         }
 
@@ -1211,24 +1224,6 @@ namespace MphRead
                 _pivotAngleX = 0;
                 _pivotAngleY = 0;
                 _pivotDistance = 5.0f;
-            }
-        }
-
-        public void SetCamera(Vector3 position, Vector3 target, float fov = 0, float roll = 0)
-        {
-            _cameraMode = CameraMode.Roam;
-            _cameraPosition = position;
-            _cameraFacing = target;
-            _cameraUp = Vector3.UnitY;
-            if (roll > 0)
-            {
-                _cameraUp = (Matrix3.CreateRotationZ(roll) * _cameraUp).Normalized();
-            }
-            _cameraRight = Vector3.Cross(_cameraFacing, _cameraUp);
-            _cameraUp = Vector3.Cross(_cameraRight, _cameraFacing);
-            if (fov > 0)
-            {
-                _cameraFov = fov;
             }
         }
 
@@ -3734,7 +3729,7 @@ namespace MphRead
                     _sb.Append($" ({obj.Data.EffectId}, {Metadata.Effects[obj.Data.EffectId].Name})");
                 }
             }
-            else if (entity is CameraSequenceEntity cam)
+            else if (entity is CamSeqEntity cam)
             {
                 _sb.Append($" (ID {cam.Data.SequenceId})");
             }

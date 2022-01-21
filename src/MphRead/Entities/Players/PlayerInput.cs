@@ -1,4 +1,5 @@
 using System;
+using MphRead.Formats;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -174,7 +175,10 @@ namespace MphRead.Entities
 
         private void ProcessBiped()
         {
-            // todo: set a field if cam seq, main player, and 1P mode
+            if (IsMainPlayer && !_scene.Multiplayer && CameraSequence.Current != null)
+            {
+                _timeIdle = 0;
+            }
             if (EquipInfo.SmokeLevel < EquipInfo.Weapon.SmokeDrain)
             {
                 EquipInfo.SmokeLevel = 0;
@@ -576,11 +580,11 @@ namespace MphRead.Entities
                             }
                         }
                     }
-                    // todo: or if main player in cam seq which forces alt
-                    if (!Flags2.TestFlag(PlayerFlags2.BipedStuck) && _abilities.TestFlag(AbilityFlags.AltForm) && Controls.Morph.IsPressed)
+                    // the game doesn't require pressed here, but presumably the control scheme would have the pressed flag
+                    // todo: use the ability flag for the morph touch button too, even though the game doesn't
+                    if (!Flags2.TestFlag(PlayerFlags2.BipedStuck) && _abilities.TestFlag(AbilityFlags.AltForm)
+                        && Controls.Morph.IsPressed || IsMainPlayer && CameraSequence.Current?.ForceAlt == true)
                     {
-                        // the game doesn't require pressed here, but presumably the control scheme would have the pressed flag
-                        // todo: use the ability flag for the morph touch button too, even though the game doesn't
                         TrySwitchForms();
                         anim1 = PlayerAnimation.Morph;
                         anim2 = PlayerAnimation.Morph;
@@ -1147,11 +1151,11 @@ namespace MphRead.Entities
                 {
                     Speed = Speed.WithX(Speed.X / 2).WithZ(Speed.Z / 2);
                 }
-                // todo: or if main player in cam seq which forces alt
-                if (_abilities.TestFlag(AbilityFlags.AltForm) && Controls.Morph.IsPressed)
+                // the game doesn't require pressed here, but presumably the control scheme would have the pressed flag
+                // the game also doesn't check the ability flag here
+                if (_abilities.TestFlag(AbilityFlags.AltForm) && Controls.Morph.IsPressed
+                    || IsMainPlayer && CameraSequence.Current?.ForceBiped == true)
                 {
-                    // the game doesn't require pressed here, but presumably the control scheme would have the pressed flag
-                    // the game doesn't check the ability flag here
                     TrySwitchForms();
                 }
                 if (Hunter == Hunter.Trace || Hunter == Hunter.Weavel)
@@ -1765,6 +1769,16 @@ namespace MphRead.Entities
                 moveLeft, moveRight, moveUp, moveDown, aimLeft, aimRight, aimUp, aimDown, shoot, zoom,
                 jump, morph, boost, altAttack, nextWeapon, prevWeapon, weaponMenu
             };
+        }
+
+        public void ClearAll()
+        {
+            for (int i = 0; i < All.Length; i++)
+            {
+                All[i].IsDown = false;
+                All[i].IsPressed = false;
+                All[i].IsReleased = false;
+            }
         }
 
         public void ClearPressed()

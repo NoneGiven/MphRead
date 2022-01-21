@@ -88,7 +88,7 @@ namespace MphRead.Entities
             base.Initialize();
             if (_data.NodeName[0] != '\0')
             {
-                _targetNodeRef = _scene.Room?.GetNodeRefByName(_data.NodeName.MarshalString()) ?? NodeRef.None;
+                _targetNodeRef = _scene.GetNodeRefByName(_data.NodeName.MarshalString());
             }
         }
 

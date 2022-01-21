@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Entities.Enemies;
+using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -41,7 +43,10 @@ namespace MphRead.Entities
                 // todo: bot stuff
             }
             // display swap update happens here for main player
-            // todo: copy player input unless there's a camseq
+            if (IsMainPlayer && CameraSequence.Current?.BlockInput == true)
+            {
+                Controls.ClearAll();
+            }
             if (Flags1.TestFlag(PlayerFlags1.AltForm))
             {
                 Flags1 |= PlayerFlags1.AltFormPrevious;
@@ -525,7 +530,7 @@ namespace MphRead.Entities
                 UpdateAnimFrames(_bipedModel1);
                 UpdateAnimFrames(_bipedModel2);
             }
-            if (IsAltForm || IsMorphing && _frozenTimer == 0)
+            if ((IsAltForm || IsMorphing) && _frozenTimer == 0)
             {
                 UpdateAnimFrames(_altModel);
             }
@@ -701,9 +706,14 @@ namespace MphRead.Entities
                 }
                 else if (IsUnmorphing)
                 {
-                    // todo: if main player and cam seq, set node ref
-                    // else...
-                    CameraInfo.NodeRef = NodeRef;
+                    if (IsMainPlayer && CameraSequence.Current != null)
+                    {
+                        CameraSequence.Current.InitialCamInfo.NodeRef = NodeRef;
+                    }
+                    else
+                    {
+                        CameraInfo.NodeRef = NodeRef;
+                    }
                     Flags1 &= ~PlayerFlags1.Unmorphing;
                     if (_burnTimer > 0)
                     {
@@ -714,22 +724,23 @@ namespace MphRead.Entities
             UpdateLightSources(_volume.SpherePosition);
             // todo?: if wifi and not main player
             // else...
-            if (NodeRef.PartIndex >= 0)
+            if (NodeRef != NodeRef.None)
             {
-                Debug.Assert(_scene.Room != null);
                 int index = Flags1.TestFlag(PlayerFlags1.AltFormPrevious) ? 2 : 0;
                 Vector3 prevPos = PrevPosition + PlayerVolumes[(int)Hunter, index].SpherePosition;
                 index = IsAltForm ? 2 : 0;
                 Vector3 curPos = Position + PlayerVolumes[(int)Hunter, index].SpherePosition;
-                NodeRef = _scene.Room.UpdateNodeRef(NodeRef, prevPos, curPos);
-                // todo: do the following only if no cam seq or not main player
-                if (CameraType == CameraType.Free)
+                NodeRef = _scene.UpdateNodeRef(NodeRef, prevPos, curPos);
+                if (CameraSequence.Current == null || !IsMainPlayer)
                 {
-                    CameraInfo.NodeRef = _scene.Room.UpdateNodeRef(CameraInfo.NodeRef, CameraInfo.PrevPosition, CameraInfo.Position);
-                }
-                else if (CameraType != CameraType.Spectator)
-                {
-                    CameraInfo.NodeRef = _scene.Room.UpdateNodeRef(NodeRef, curPos, CameraInfo.Position);
+                    if (CameraType == CameraType.Free)
+                    {
+                        CameraInfo.NodeRef = _scene.UpdateNodeRef(CameraInfo.NodeRef, CameraInfo.PrevPosition, CameraInfo.Position);
+                    }
+                    else if (CameraType != CameraType.Spectator)
+                    {
+                        CameraInfo.NodeRef = _scene.UpdateNodeRef(NodeRef, curPos, CameraInfo.Position);
+                    }
                 }
                 // todo?: something if wifi
             }
@@ -812,9 +823,12 @@ namespace MphRead.Entities
                 }
                 if (_burnEffect != null)
                 {
-                    // todo: destroy effect if in camseq which blocks input
-                    // else...
-                    if (!IsMainPlayer || IsAltForm || IsMorphing)
+                    if (CameraSequence.Current?.BlockInput == true)
+                    {
+                        _scene.UnlinkEffectEntry(_burnEffect);
+                        _burnEffect = null;
+                    }
+                    else if (!IsMainPlayer || IsAltForm || IsMorphing)
                     {
                         var facing = new Vector3(_field70, 0, _field74);
                         _burnEffect.Transform(facing, Vector3.UnitY, _volume.SpherePosition);
@@ -861,8 +875,8 @@ namespace MphRead.Entities
 
         private void PickUpItems()
         {
-            // todo: also return if the following are all true - cur camseq, block input flag set, IsMainPlayer
-            if (_health == 0 || (IsBot && !_scene.Multiplayer) || IgnoreItemPickups)
+            if (_health == 0 || (IsBot && !_scene.Multiplayer) || IgnoreItemPickups
+                || IsMainPlayer && CameraSequence.Current?.BlockInput == true)
             {
                 return;
             }
@@ -1128,7 +1142,10 @@ namespace MphRead.Entities
                     || !IsAltForm && Flags2.TestFlag(PlayerFlags2.BipedStuck)
                     || IsAltForm && MorphCamera != null))
             {
-                // todo: play SFX
+                if (IsMainPlayer && (CameraSequence.Current == null || !CameraSequence.Current.BlockInput))
+                {
+                    // todo: play SFX
+                }
                 return false;
             }
             if (Hunter == Hunter.Guardian) // todo: playable Guardian
@@ -1211,7 +1228,6 @@ namespace MphRead.Entities
                 _altTiltZ -= _altTiltZ / 8 / 2; // todo: FPS stuff
                 _altTiltX += -(_altTiltX + Fixed.ToFloat(25) * (Speed.X - PrevSpeed.X)) / 32 / 2; // todo: FPS stuff
                 _altTiltZ += -(_altTiltZ + Fixed.ToFloat(25) * (Speed.Z - PrevSpeed.Z)) / 32 / 2; // todo: FPS stuff
-                _field528 = 0;
                 float minSpinAccel = Fixed.ToFloat(Values.AltMinSpinAccel);
                 float maxSpinAccel = Fixed.ToFloat(Values.AltMaxSpinAccel);
                 _altSpinSpeed += (minSpinAccel
@@ -1392,7 +1408,6 @@ namespace MphRead.Entities
             {
                 _altSpinSpeed = Fixed.ToFloat(Values.AltMinSpinAccel);
                 _altTiltX = 0;
-                _field528 = 0;
                 _altTiltZ = 0;
                 _altSpinRot = 0;
                 _altWobble = 0;

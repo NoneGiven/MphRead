@@ -519,9 +519,9 @@ namespace MphRead
         public readonly byte PlayerId2;
         public readonly short Entity1;
         public readonly short Entity2;
-        public readonly short MessageTargetId;
-        public readonly Message Message;
-        public readonly uint MessageParam;
+        public readonly short EndMessageTargetId;
+        public readonly Message EndMessage;
+        public readonly uint EndMessageParam;
     }
 
     // size: 53

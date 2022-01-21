@@ -137,7 +137,7 @@ namespace MphRead.Entities
             _anyLighting |= _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));
             if (_nodeName != null)
             {
-                NodeRef = _scene.Room?.GetNodeRefByName(_nodeName) ?? NodeRef.None;
+                NodeRef = _scene.GetNodeRefByName(_nodeName);
             }
         }
 

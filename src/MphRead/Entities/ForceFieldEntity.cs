@@ -101,10 +101,13 @@ namespace MphRead.Entities
                 if (_lock != null)
                 {
                     _lock.SetHealth(0);
-                    // todo: 1P stuff
-                    _active = false;
-                    // todo: scan ID
                 }
+                if (!_scene.Multiplayer)
+                {
+                    // todo: SFX, room state
+                }
+                _active = false;
+                // todo: scan ID
             }
             else if (info.Message == Message.Lock)
             {

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using MphRead.Effects;
 using MphRead.Entities;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -1222,6 +1223,7 @@ namespace MphRead
         public EntityBase? PositionEntity { get; set; }
         public EntityBase? TargetEntity { get; set; }
         public EntityBase? MessageTarget { get; set; }
+        public NodeRef NodeRef { get; set; }
 
         public CameraSequenceKeyframe(RawCameraSequenceKeyframe raw)
         {

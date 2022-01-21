@@ -1116,9 +1116,9 @@ namespace MphRead.Editor
         public byte PlayerId2 { get; set; }
         public short Entity1 { get; set; }
         public short Entity2 { get; set; }
-        public short MessageTargetId { get; set; }
-        public Message Message { get; set; }
-        public uint MessageParam { get; set; }
+        public short EndMessageTargetId { get; set; }
+        public Message EndMessage { get; set; }
+        public uint EndMessageParam { get; set; }
 
         public CameraSequenceEntityEditor(Entity header, CameraSequenceEntityData raw) : base(header)
         {
@@ -1133,9 +1133,9 @@ namespace MphRead.Editor
             PlayerId2 = raw.PlayerId2;
             Entity1 = raw.Entity1;
             Entity2 = raw.Entity2;
-            MessageTargetId = raw.MessageTargetId;
-            Message = raw.Message;
-            MessageParam = raw.MessageParam;
+            EndMessageTargetId = raw.EndMessageTargetId;
+            EndMessage = raw.EndMessage;
+            EndMessageParam = raw.EndMessageParam;
         }
 
         public void CompareTo(CameraSequenceEntityEditor other)
@@ -1151,9 +1151,9 @@ namespace MphRead.Editor
             PrintValue(PlayerId2, other.PlayerId2, nameof(PlayerId2));
             PrintValue(Entity1, other.Entity1, nameof(Entity1));
             PrintValue(Entity2, other.Entity2, nameof(Entity2));
-            PrintValue(MessageTargetId, other.MessageTargetId, nameof(MessageTargetId));
-            PrintValue(Message, other.Message, nameof(Message));
-            PrintValue(MessageParam, other.MessageParam, nameof(MessageParam));
+            PrintValue(EndMessageTargetId, other.EndMessageTargetId, nameof(EndMessageTargetId));
+            PrintValue(EndMessage, other.EndMessage, nameof(EndMessage));
+            PrintValue(EndMessageParam, other.EndMessageParam, nameof(EndMessageParam));
         }
     }
 
