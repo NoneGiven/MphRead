@@ -72,7 +72,7 @@ namespace MphRead.Entities
             {
                 TryStart();
             }
-            else
+            if (_delayTimer > Data.DelayFrames * 2) // todo: FPS stuff
             {
                 Sequence.Process();
                 if (Sequence.Flags.TestFlag(CamSeqFlags.CanEnd))
@@ -89,7 +89,7 @@ namespace MphRead.Entities
                         _active = false;
                         Sequence.End();
                         Current = null;
-                        PlayerEntity.Main.OnCameraSequence();
+                        PlayerEntity.Main.RefreshExternalCamera();
                         SendEndEvent();
                     }
                 }
@@ -141,7 +141,7 @@ namespace MphRead.Entities
             }
             ushort transitionTime = (ushort)(_handoff ? 60 * 2 : 0); // todo: FPS stuff
             Sequence.SetUp(PlayerEntity.Main.CameraInfo, transitionTime);
-            PlayerEntity.Main.OnCameraSequence();
+            PlayerEntity.Main.RefreshExternalCamera();
         }
 
         private void Cancel()
@@ -153,7 +153,7 @@ namespace MphRead.Entities
             if (CameraSequence.Current == Sequence)
             {
                 PlayerEntity player = PlayerEntity.Main;
-                player.OnCameraSequence();
+                player.RefreshExternalCamera();
                 if (Sequence.CamInfoRef == player.CameraInfo
                     && (player.IsAltForm || player.IsMorphing || player.IsUnmorphing))
                 {

@@ -880,12 +880,6 @@ namespace MphRead.Entities
             }
         }
 
-        public void OnCameraSequence()
-        {
-            Flags1 |= PlayerFlags1.AltDirOverride;
-            _timeSinceMorphCamera = 0;
-        }
-
         public void BlockFormSwitch()
         {
             Flags2 |= PlayerFlags2.NoFormSwitch;
