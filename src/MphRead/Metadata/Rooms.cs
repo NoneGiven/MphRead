@@ -14,6 +14,7 @@ namespace MphRead
 
     public class RoomMetadata
     {
+        public int Id { get; }
         public string Name { get; }
         public string? InGameName { get; }
         public string Archive { get; }
@@ -51,13 +52,14 @@ namespace MphRead
         public Vector3 PlayerMax { get; }
         public bool HasLimits { get; }
 
-        public RoomMetadata(string name, string? inGameName, string archive, string modelPath, string animationPath, string collisionPath,
-            string? texturePath, string? entityPath, string? nodePath, string? roomNodeName, uint battleTimeLimit, uint timeLimit,
-            short pointLimit, short nodeLayer, bool fogEnabled, bool clearFog, ColorRgb fogColor, int fogSlope, ushort fogOffset,
-            ColorRgb light1Color, Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, int farClip, int killHeight,
-            RoomSize size, Vector3 cameraMin = default, Vector3 cameraMax = default, Vector3 playerMin = default, Vector3 playerMax = default,
-            bool multiplayer = false, bool firstHunt = false, bool hybrid = false)
+        public RoomMetadata(int id, string name, string? inGameName, string archive, string modelPath, string animationPath,
+            string collisionPath, string? texturePath, string? entityPath, string? nodePath, string? roomNodeName, uint battleTimeLimit,
+            uint timeLimit, short pointLimit, short nodeLayer, bool fogEnabled, bool clearFog, ColorRgb fogColor, int fogSlope,
+            ushort fogOffset, ColorRgb light1Color, Vector3 light1Vector, ColorRgb light2Color, Vector3 light2Vector, int farClip,
+            int killHeight, RoomSize size, Vector3 cameraMin = default, Vector3 cameraMax = default, Vector3 playerMin = default,
+            Vector3 playerMax = default, bool multiplayer = false, bool firstHunt = false, bool hybrid = false)
         {
+            Id = id;
             Name = name;
             InGameName = inGameName;
             Archive = archive;
@@ -265,6 +267,7 @@ namespace MphRead
                 {
                     "UNIT1_CX",
                     new RoomMetadata(
+                        id: 0,
                         name: "UNIT1_CX",
                         inGameName: null,
                         archive: "unit1_CX",
@@ -295,6 +298,7 @@ namespace MphRead
                 {
                     "UNIT1_CZ",
                     new RoomMetadata(
+                        id: 2,
                         name: "UNIT1_CZ",
                         inGameName: null,
                         archive: "unit1_CZ",
@@ -325,6 +329,7 @@ namespace MphRead
                 {
                     "UNIT1_MORPH_CX",
                     new RoomMetadata(
+                        id: 4,
                         name: "UNIT1_MORPH_CX",
                         inGameName: null,
                         archive: "unit1_morph_CX",
@@ -355,6 +360,7 @@ namespace MphRead
                 {
                     "UNIT1_MORPH_CZ",
                     new RoomMetadata(
+                        id: 6,
                         name: "UNIT1_MORPH_CZ",
                         inGameName: null,
                         archive: "unit1_morph_CZ",
@@ -385,6 +391,7 @@ namespace MphRead
                 {
                     "UNIT2_CX",
                     new RoomMetadata(
+                        id: 8,
                         name: "UNIT2_CX",
                         inGameName: null,
                         archive: "unit2_CX",
@@ -415,6 +422,7 @@ namespace MphRead
                 {
                     "UNIT2_CZ",
                     new RoomMetadata(
+                        id: 10,
                         name: "UNIT2_CZ",
                         inGameName: null,
                         archive: "unit2_CZ",
@@ -445,6 +453,7 @@ namespace MphRead
                 {
                     "UNIT3_CX",
                     new RoomMetadata(
+                        id: 12,
                         name: "UNIT3_CX",
                         inGameName: null,
                         archive: "unit3_CX",
@@ -475,6 +484,7 @@ namespace MphRead
                 {
                     "UNIT3_CZ",
                     new RoomMetadata(
+                        id: 14,
                         name: "UNIT3_CZ",
                         inGameName: null,
                         archive: "unit3_CZ",
@@ -505,6 +515,7 @@ namespace MphRead
                 {
                     "UNIT4_CX",
                     new RoomMetadata(
+                        id: 16,
                         name: "UNIT4_CX",
                         inGameName: null,
                         archive: "unit4_CX",
@@ -535,6 +546,7 @@ namespace MphRead
                 {
                     "UNIT4_CZ",
                     new RoomMetadata(
+                        id: 18,
                         name: "UNIT4_CZ",
                         inGameName: null,
                         archive: "unit4_CZ",
@@ -565,6 +577,7 @@ namespace MphRead
                 {
                     "CYLINDER_C1",
                     new RoomMetadata(
+                        id: 20,
                         name: "CYLINDER_C1",
                         inGameName: null,
                         archive: "Cylinder_C1_CZ",
@@ -595,6 +608,7 @@ namespace MphRead
                 {
                     "BIGEYE_C1",
                     new RoomMetadata(
+                        id: 21,
                         name: "BIGEYE_C1",
                         inGameName: null,
                         archive: "BigEye_C1_CZ",
@@ -625,6 +639,7 @@ namespace MphRead
                 {
                     "UNIT1_RM1_CX",
                     new RoomMetadata(
+                        id: 22,
                         name: "UNIT1_RM1_CX",
                         inGameName: null,
                         archive: "unit1_RM1_CX",
@@ -655,6 +670,7 @@ namespace MphRead
                 {
                     "GOREA_C1",
                     new RoomMetadata(
+                        id: 24,
                         name: "GOREA_C1",
                         inGameName: null,
                         archive: "Gorea_C1_CZ",
@@ -685,6 +701,7 @@ namespace MphRead
                 {
                     "UNIT3_MORPH_CZ",
                     new RoomMetadata(
+                        id: 25,
                         name: "UNIT3_MORPH_CZ",
                         inGameName: null,
                         archive: "unit3_morph_CZ",
@@ -715,6 +732,7 @@ namespace MphRead
                 {
                     "UNIT1_LAND",
                     new RoomMetadata(
+                        id: 27,
                         name: "UNIT1_LAND",
                         inGameName: "Alinos Gateway",
                         archive: "unit1_Land",
@@ -745,6 +763,7 @@ namespace MphRead
                 {
                     "UNIT1_C0",
                     new RoomMetadata(
+                        id: 28,
                         name: "UNIT1_C0",
                         inGameName: "Echo Hall",
                         archive: "unit1_C0",
@@ -775,6 +794,7 @@ namespace MphRead
                 {
                     "UNIT1_RM1",
                     new RoomMetadata(
+                        id: 29,
                         name: "UNIT1_RM1",
                         inGameName: "High Ground",
                         archive: "unit1_RM1",
@@ -805,6 +825,7 @@ namespace MphRead
                 {
                     "UNIT1_C4",
                     new RoomMetadata(
+                        id: 30,
                         name: "UNIT1_C4",
                         inGameName: "Magma Drop",
                         archive: "unit1_C4",
@@ -835,6 +856,7 @@ namespace MphRead
                 {
                     "UNIT1_RM6",
                     new RoomMetadata(
+                        id: 31,
                         name: "UNIT1_RM6",
                         inGameName: "Elder Passage",
                         archive: "unit1_RM6",
@@ -865,6 +887,7 @@ namespace MphRead
                 {
                     "CRYSTALROOM",
                     new RoomMetadata(
+                        id: 32,
                         name: "CRYSTALROOM",
                         inGameName: "Alimbic Cannon Control Room",
                         archive: "crystalroom",
@@ -895,6 +918,7 @@ namespace MphRead
                 {
                     "UNIT1_RM4",
                     new RoomMetadata(
+                        id: 33,
                         name: "UNIT1_RM4",
                         inGameName: "Combat Hall",
                         archive: "mp3",
@@ -925,6 +949,7 @@ namespace MphRead
                 {
                     "UNIT1_TP1",
                     new RoomMetadata(
+                        id: 34,
                         name: "UNIT1_TP1",
                         inGameName: "Stronghold Void A",
                         archive: "TeleportRoom",
@@ -955,6 +980,7 @@ namespace MphRead
                 {
                     "UNIT1_B1",
                     new RoomMetadata(
+                        id: 35,
                         name: "UNIT1_B1",
                         inGameName: "Biodefense Chamber 02", // Biodefense Chamber A
                         archive: "bigeyeroom",
@@ -985,6 +1011,7 @@ namespace MphRead
                 {
                     "UNIT1_C1",
                     new RoomMetadata(
+                        id: 36,
                         name: "UNIT1_C1",
                         inGameName: "Alimbic Gardens",
                         archive: "unit1_C1",
@@ -1015,6 +1042,7 @@ namespace MphRead
                 {
                     "UNIT1_C2",
                     new RoomMetadata(
+                        id: 37,
                         name: "UNIT1_C2",
                         inGameName: "Thermal Vast",
                         archive: "unit1_C2",
@@ -1045,6 +1073,7 @@ namespace MphRead
                 {
                     "UNIT1_C5",
                     new RoomMetadata(
+                        id: 38,
                         name: "UNIT1_C5",
                         inGameName: "Piston Cave",
                         archive: "unit1_C5",
@@ -1075,6 +1104,7 @@ namespace MphRead
                 {
                     "UNIT1_RM2",
                     new RoomMetadata(
+                        id: 39,
                         name: "UNIT1_RM2",
                         inGameName: "Alinos Perch",
                         archive: "unit1_RM2",
@@ -1105,6 +1135,7 @@ namespace MphRead
                 {
                     "UNIT1_RM3",
                     new RoomMetadata(
+                        id: 40,
                         name: "UNIT1_RM3",
                         inGameName: "Council Chamber",
                         archive: "unit1_RM3",
@@ -1135,6 +1166,7 @@ namespace MphRead
                 {
                     "UNIT1_RM5",
                     new RoomMetadata(
+                        id: 41,
                         name: "UNIT1_RM5",
                         inGameName: "Processor Core",
                         archive: "mp7",
@@ -1165,6 +1197,7 @@ namespace MphRead
                 {
                     "UNIT1_C3",
                     new RoomMetadata(
+                        id: 42,
                         name: "UNIT1_C3",
                         inGameName: "Crash Site",
                         archive: "unit1_C3",
@@ -1195,6 +1228,7 @@ namespace MphRead
                 {
                     "UNIT1_TP2",
                     new RoomMetadata(
+                        id: 43,
                         name: "UNIT1_TP2",
                         inGameName: "Stronghold Void B",
                         archive: "TeleportRoom",
@@ -1225,6 +1259,7 @@ namespace MphRead
                 {
                     "UNIT1_B2",
                     new RoomMetadata(
+                        id: 44,
                         name: "UNIT1_B2",
                         inGameName: "Biodefense Chamber 06", // Biodefense Chamber B
                         archive: "cylinderroom",
@@ -1255,6 +1290,7 @@ namespace MphRead
                 {
                     "UNIT2_LAND",
                     new RoomMetadata(
+                        id: 45,
                         name: "UNIT2_LAND",
                         inGameName: "Celestial Gateway",
                         archive: "unit2_Land",
@@ -1285,6 +1321,7 @@ namespace MphRead
                 {
                     "UNIT2_C0",
                     new RoomMetadata(
+                        id: 46,
                         name: "UNIT2_C0",
                         inGameName: "Helm Room",
                         archive: "unit2_C0",
@@ -1315,6 +1352,7 @@ namespace MphRead
                 {
                     "UNIT2_C1",
                     new RoomMetadata(
+                        id: 47,
                         name: "UNIT2_C1",
                         inGameName: "Meditation Room",
                         archive: "unit2_C1",
@@ -1345,6 +1383,7 @@ namespace MphRead
                 {
                     "UNIT2_RM1",
                     new RoomMetadata(
+                        id: 48,
                         name: "UNIT2_RM1",
                         inGameName: "Data Shrine 01",
                         archive: "mp1",
@@ -1375,6 +1414,7 @@ namespace MphRead
                 {
                     "UNIT2_C2",
                     new RoomMetadata(
+                        id: 49,
                         name: "UNIT2_C2",
                         inGameName: "Fan Room Alpha",
                         archive: "unit2_C2",
@@ -1405,6 +1445,7 @@ namespace MphRead
                 {
                     "UNIT2_RM2",
                     new RoomMetadata(
+                        id: 50,
                         name: "UNIT2_RM2",
                         inGameName: "Data Shrine 02",
                         archive: "mp1",
@@ -1435,6 +1476,7 @@ namespace MphRead
                 {
                     "UNIT2_C3",
                     new RoomMetadata(
+                        id: 51,
                         name: "UNIT2_C3",
                         inGameName: "Fan Room Beta",
                         archive: "unit2_C3",
@@ -1465,6 +1507,7 @@ namespace MphRead
                 {
                     "UNIT2_RM3",
                     new RoomMetadata(
+                        id: 52,
                         name: "UNIT2_RM3",
                         inGameName: "Data Shrine 03",
                         archive: "unit2_RM3",
@@ -1495,6 +1538,7 @@ namespace MphRead
                 {
                     "UNIT2_C4",
                     new RoomMetadata(
+                        id: 53,
                         name: "UNIT2_C4",
                         inGameName: "Synergy Core",
                         archive: "unit2_C4",
@@ -1525,6 +1569,7 @@ namespace MphRead
                 {
                     "UNIT2_TP1",
                     new RoomMetadata(
+                        id: 54,
                         name: "UNIT2_TP1",
                         inGameName: "Stronghold Void A",
                         archive: "TeleportRoom",
@@ -1555,6 +1600,7 @@ namespace MphRead
                 {
                     "UNIT2_B1",
                     new RoomMetadata(
+                        id: 55,
                         name: "UNIT2_B1",
                         inGameName: "Biodefense Chamber 01", // Biodefense Chamber A
                         archive: "cylinderroom",
@@ -1585,6 +1631,7 @@ namespace MphRead
                 {
                     "UNIT2_C6",
                     new RoomMetadata(
+                        id: 56,
                         name: "UNIT2_C6",
                         inGameName: "Tetra Vista",
                         archive: "unit2_C6",
@@ -1615,6 +1662,7 @@ namespace MphRead
                 {
                     "UNIT2_C7",
                     new RoomMetadata(
+                        id: 57,
                         name: "UNIT2_C7",
                         inGameName: "New Arrival Registration",
                         archive: "unit2_C7",
@@ -1645,6 +1693,7 @@ namespace MphRead
                 {
                     "UNIT2_RM4",
                     new RoomMetadata(
+                        id: 58,
                         name: "UNIT2_RM4",
                         inGameName: "Transfer Lock",
                         archive: "unit2_RM4",
@@ -1675,6 +1724,7 @@ namespace MphRead
                 {
                     "UNIT2_RM5",
                     new RoomMetadata(
+                        id: 59,
                         name: "UNIT2_RM5",
                         inGameName: "Incubation Vault 01",
                         archive: "mp10",
@@ -1705,6 +1755,7 @@ namespace MphRead
                 {
                     "UNIT2_RM6",
                     new RoomMetadata(
+                        id: 60,
                         name: "UNIT2_RM6",
                         inGameName: "Incubation Vault 02",
                         archive: "mp10",
@@ -1735,6 +1786,7 @@ namespace MphRead
                 {
                     "UNIT2_RM7",
                     new RoomMetadata(
+                        id: 61,
                         name: "UNIT2_RM7",
                         inGameName: "Incubation Vault 03",
                         archive: "mp10",
@@ -1765,6 +1817,7 @@ namespace MphRead
                 {
                     "UNIT2_RM8",
                     new RoomMetadata(
+                        id: 62,
                         name: "UNIT2_RM8",
                         inGameName: "Docking Bay",
                         archive: "unit2_RM8",
@@ -1795,6 +1848,7 @@ namespace MphRead
                 {
                     "UNIT2_TP2",
                     new RoomMetadata(
+                        id: 63,
                         name: "UNIT2_TP2",
                         inGameName: "Stronghold Void B",
                         archive: "TeleportRoom",
@@ -1825,6 +1879,7 @@ namespace MphRead
                 {
                     "UNIT2_B2",
                     new RoomMetadata(
+                        id: 64,
                         name: "UNIT2_B2",
                         inGameName: "Biodefense Chamber 05", // Biodefense Chamber B
                         archive: "bigeyeroom",
@@ -1855,6 +1910,7 @@ namespace MphRead
                 {
                     "UNIT3_LAND",
                     new RoomMetadata(
+                        id: 65,
                         name: "UNIT3_LAND",
                         inGameName: "VDO Gateway",
                         archive: "unit3_Land",
@@ -1885,6 +1941,7 @@ namespace MphRead
                 {
                     "UNIT3_C0",
                     new RoomMetadata(
+                        id: 66,
                         name: "UNIT3_C0",
                         inGameName: "Bioweaponry Lab",
                         archive: "unit3_C0",
@@ -1915,6 +1972,7 @@ namespace MphRead
                 {
                     "UNIT3_C2",
                     new RoomMetadata(
+                        id: 67,
                         name: "UNIT3_C2",
                         inGameName: "Cortex CPU",
                         archive: "unit3_C2",
@@ -1945,6 +2003,7 @@ namespace MphRead
                 {
                     "UNIT3_RM1",
                     new RoomMetadata(
+                        id: 68,
                         name: "UNIT3_RM1",
                         inGameName: "Weapons Complex",
                         archive: "unit3_RM1",
@@ -1975,6 +2034,7 @@ namespace MphRead
                 {
                     "UNIT3_RM4",
                     new RoomMetadata(
+                        id: 69,
                         name: "UNIT3_RM4",
                         inGameName: "Compression Chamber",
                         archive: "mp5",
@@ -2005,6 +2065,7 @@ namespace MphRead
                 {
                     "UNIT3_TP1",
                     new RoomMetadata(
+                        id: 70,
                         name: "UNIT3_TP1",
                         inGameName: "Stronghold Void A",
                         archive: "TeleportRoom",
@@ -2035,6 +2096,7 @@ namespace MphRead
                 {
                     "UNIT3_B1",
                     new RoomMetadata(
+                        id: 71,
                         name: "UNIT3_B1",
                         inGameName: "Biodefense Chamber 03", // Biodefense Chamber A
                         archive: "cylinderroom",
@@ -2065,6 +2127,7 @@ namespace MphRead
                 {
                     "UNIT3_C1",
                     new RoomMetadata(
+                        id: 72,
                         name: "UNIT3_C1",
                         inGameName: "Ascension",
                         archive: "unit3_C1",
@@ -2095,6 +2158,7 @@ namespace MphRead
                 {
                     "UNIT3_RM2",
                     new RoomMetadata(
+                        id: 73,
                         name: "UNIT3_RM2",
                         inGameName: "Fuel Stack",
                         archive: "unit3_RM2",
@@ -2125,6 +2189,7 @@ namespace MphRead
                 {
                     "UNIT3_RM3",
                     new RoomMetadata(
+                        id: 74,
                         name: "UNIT3_RM3",
                         inGameName: "Stasis Bunker",
                         archive: "e3Level",
@@ -2155,6 +2220,7 @@ namespace MphRead
                 {
                     "UNIT3_TP2",
                     new RoomMetadata(
+                        id: 75,
                         name: "UNIT3_TP2",
                         inGameName: "Stronghold Void B",
                         archive: "TeleportRoom",
@@ -2185,6 +2251,7 @@ namespace MphRead
                 {
                     "UNIT3_B2",
                     new RoomMetadata(
+                        id: 76,
                         name: "UNIT3_B2",
                         inGameName: "Biodefense Chamber 08", // Biodefense Chamber B
                         archive: "bigeyeroom",
@@ -2215,6 +2282,7 @@ namespace MphRead
                 {
                     "UNIT4_LAND",
                     new RoomMetadata(
+                        id: 77,
                         name: "UNIT4_LAND",
                         inGameName: "Arcterra Gateway",
                         archive: "unit4_Land",
@@ -2245,6 +2313,7 @@ namespace MphRead
                 {
                     "UNIT4_RM1",
                     new RoomMetadata(
+                        id: 78,
                         name: "UNIT4_RM1",
                         inGameName: "Ice Hive",
                         archive: "unit4_rm1",
@@ -2275,6 +2344,7 @@ namespace MphRead
                 {
                     "UNIT4_RM3",
                     new RoomMetadata(
+                        id: 79,
                         name: "UNIT4_RM3",
                         inGameName: "Sic Transit",
                         archive: "mp12",
@@ -2305,6 +2375,7 @@ namespace MphRead
                 {
                     "UNIT4_C0",
                     new RoomMetadata(
+                        id: 80,
                         name: "UNIT4_C0",
                         inGameName: "Frost Labyrinth",
                         archive: "unit4_C0",
@@ -2335,6 +2406,7 @@ namespace MphRead
                 {
                     "UNIT4_TP1",
                     new RoomMetadata(
+                        id: 81,
                         name: "UNIT4_TP1",
                         inGameName: "Stronghold Void A",
                         archive: "TeleportRoom",
@@ -2365,6 +2437,7 @@ namespace MphRead
                 {
                     "UNIT4_B1",
                     new RoomMetadata(
+                        id: 82,
                         name: "UNIT4_B1",
                         inGameName: "Biodefense Chamber 04", // Biodefense Chamber A
                         archive: "bigeyeroom",
@@ -2395,6 +2468,7 @@ namespace MphRead
                 {
                     "UNIT4_C1",
                     new RoomMetadata(
+                        id: 83,
                         name: "UNIT4_C1",
                         inGameName: "Drip Moat",
                         archive: "unit4_C1",
@@ -2425,6 +2499,7 @@ namespace MphRead
                 {
                     "UNIT4_RM2",
                     new RoomMetadata(
+                        id: 84,
                         name: "UNIT4_RM2",
                         inGameName: "Subterranean",
                         archive: "unit4_rm2",
@@ -2455,6 +2530,7 @@ namespace MphRead
                 {
                     "UNIT4_RM4",
                     new RoomMetadata(
+                        id: 85,
                         name: "UNIT4_RM4",
                         inGameName: "Sanctorus",
                         archive: "mp11",
@@ -2485,6 +2561,7 @@ namespace MphRead
                 {
                     "UNIT4_RM5",
                     new RoomMetadata(
+                        id: 86,
                         name: "UNIT4_RM5",
                         inGameName: "Fault Line",
                         archive: "unit4_rm5",
@@ -2515,6 +2592,7 @@ namespace MphRead
                 {
                     "UNIT4_TP2",
                     new RoomMetadata(
+                        id: 87,
                         name: "UNIT4_TP2",
                         inGameName: "Stronghold Void B",
                         archive: "TeleportRoom",
@@ -2545,6 +2623,7 @@ namespace MphRead
                 {
                     "UNIT4_B2",
                     new RoomMetadata(
+                        id: 88,
                         name: "UNIT4_B2",
                         inGameName: "Biodefense Chamber 07", // Biodefense Chamber B
                         archive: "cylinderroom",
@@ -2575,6 +2654,7 @@ namespace MphRead
                 {
                     "Gorea_Land",
                     new RoomMetadata(
+                        id: 89,
                         name: "Gorea_Land",
                         inGameName: null,
                         archive: "Gorea_Land",
@@ -2605,6 +2685,7 @@ namespace MphRead
                 {
                     "Gorea_Peek",
                     new RoomMetadata(
+                        id: 90,
                         name: "Gorea_Peek",
                         inGameName: null,
                         archive: "Gorea_b2",
@@ -2635,6 +2716,7 @@ namespace MphRead
                 {
                     "Gorea_b1",
                     new RoomMetadata(
+                        id: 91,
                         name: "Gorea_b1",
                         inGameName: null,
                         archive: "Gorea_b1",
@@ -2665,6 +2747,7 @@ namespace MphRead
                 {
                     "Gorea_b2",
                     new RoomMetadata(
+                        id: 92,
                         name: "Gorea_b2",
                         inGameName: null,
                         archive: "Gorea_b2",
@@ -2695,6 +2778,7 @@ namespace MphRead
                 {
                     "MP1 SANCTORUS",
                     new RoomMetadata(
+                        id: 93,
                         name: "MP1 SANCTORUS",
                         inGameName: "Data Shrine",
                         archive: "mp1",
@@ -2730,6 +2814,7 @@ namespace MphRead
                 {
                     "MP2 HARVESTER",
                     new RoomMetadata(
+                        id: 94,
                         name: "MP2 HARVESTER",
                         inGameName: "Harvester",
                         archive: "mp2",
@@ -2765,6 +2850,7 @@ namespace MphRead
                 {
                     "MP3 PROVING GROUND",
                     new RoomMetadata(
+                        id: 95,
                         name: "MP3 PROVING GROUND",
                         inGameName: "Combat Hall",
                         archive: "mp3",
@@ -2800,6 +2886,7 @@ namespace MphRead
                 {
                     "MP4 HIGHGROUND - EXPANDED",
                     new RoomMetadata(
+                        id: 96,
                         name: "MP4 HIGHGROUND - EXPANDED",
                         inGameName: "Elder Passage",
                         archive: "mp4",
@@ -2835,6 +2922,7 @@ namespace MphRead
                 {
                     "MP4 HIGHGROUND",
                     new RoomMetadata(
+                        id: 97,
                         name: "MP4 HIGHGROUND",
                         inGameName: "High Ground",
                         archive: "unit1_RM1",
@@ -2870,6 +2958,7 @@ namespace MphRead
                 {
                     "MP5 FUEL SLUICE",
                     new RoomMetadata(
+                        id: 98,
                         name: "MP5 FUEL SLUICE",
                         inGameName: "Compression Chamber",
                         archive: "mp5",
@@ -2905,6 +2994,7 @@ namespace MphRead
                 {
                     "MP6 HEADSHOT",
                     new RoomMetadata(
+                        id: 99,
                         name: "MP6 HEADSHOT",
                         inGameName: "Head Shot",
                         archive: "mp6",
@@ -2940,6 +3030,7 @@ namespace MphRead
                 {
                     "MP7 PROCESSOR CORE",
                     new RoomMetadata(
+                        id: 100,
                         name: "MP7 PROCESSOR CORE",
                         inGameName: "Processor Core",
                         archive: "mp7",
@@ -2975,6 +3066,7 @@ namespace MphRead
                 {
                     "MP8 FIRE CONTROL",
                     new RoomMetadata(
+                        id: 101,
                         name: "MP8 FIRE CONTROL",
                         inGameName: "Weapons Complex",
                         archive: "mp8",
@@ -3010,6 +3102,7 @@ namespace MphRead
                 {
                     "MP9 CRYOCHASM",
                     new RoomMetadata(
+                        id: 102,
                         name: "MP9 CRYOCHASM",
                         inGameName: "Ice Hive",
                         archive: "mp9",
@@ -3045,6 +3138,7 @@ namespace MphRead
                 {
                     "MP10 OVERLOAD",
                     new RoomMetadata(
+                        id: 103,
                         name: "MP10 OVERLOAD",
                         inGameName: "Incubation Vault",
                         archive: "mp10",
@@ -3080,6 +3174,7 @@ namespace MphRead
                 {
                     "MP11 BREAKTHROUGH",
                     new RoomMetadata(
+                        id: 104,
                         name: "MP11 BREAKTHROUGH",
                         inGameName: "Sanctorus",
                         archive: "mp11",
@@ -3115,6 +3210,7 @@ namespace MphRead
                 {
                     "MP12 SIC TRANSIT",
                     new RoomMetadata(
+                        id: 105,
                         name: "MP12 SIC TRANSIT",
                         inGameName: "Sic Transit",
                         archive: "mp12",
@@ -3150,6 +3246,7 @@ namespace MphRead
                 {
                     "MP13 ACCELERATOR",
                     new RoomMetadata(
+                        id: 106,
                         name: "MP13 ACCELERATOR",
                         inGameName: "Fuel Stack",
                         archive: "mp13",
@@ -3185,6 +3282,7 @@ namespace MphRead
                 {
                     "MP14 OUTER REACH",
                     new RoomMetadata(
+                        id: 107,
                         name: "MP14 OUTER REACH",
                         inGameName: "Outer Reach",
                         archive: "mp14",
@@ -3220,6 +3318,7 @@ namespace MphRead
                 {
                     "CTF1 FAULT LINE - EXPANDED",
                     new RoomMetadata(
+                        id: 108,
                         name: "CTF1 FAULT LINE - EXPANDED",
                         inGameName: "Fault Line",
                         archive: "ctf1",
@@ -3255,6 +3354,7 @@ namespace MphRead
                 {
                     "CTF1_FAULT LINE",
                     new RoomMetadata(
+                        id: 109,
                         name: "CTF1_FAULT LINE",
                         inGameName: "Subterranean",
                         archive: "unit4_rm5",
@@ -3290,6 +3390,7 @@ namespace MphRead
                 {
                     "AD1 TRANSFER LOCK BT",
                     new RoomMetadata(
+                        id: 110,
                         name: "AD1 TRANSFER LOCK BT",
                         inGameName: "Transfer Lock",
                         archive: "ad1",
@@ -3325,6 +3426,7 @@ namespace MphRead
                 {
                     "AD1 TRANSFER LOCK DM",
                     new RoomMetadata(
+                        id: 111,
                         name: "AD1 TRANSFER LOCK DM",
                         inGameName: "Transfer Lock",
                         archive: "unit2_RM4",
@@ -3360,6 +3462,7 @@ namespace MphRead
                 {
                     "AD2 MAGMA VENTS",
                     new RoomMetadata(
+                        id: 112,
                         name: "AD2 MAGMA VENTS",
                         inGameName: "Council Chamber",
                         archive: "ad2",
@@ -3395,6 +3498,7 @@ namespace MphRead
                 {
                     "AD2 ALINOS PERCH",
                     new RoomMetadata(
+                        id: 113,
                         name: "AD2 ALINOS PERCH",
                         inGameName: "Alinos Perch",
                         archive: "unit1_RM2",
@@ -3430,6 +3534,7 @@ namespace MphRead
                 {
                     "UNIT1 ALINOS LANDFALL",
                     new RoomMetadata(
+                        id: 114,
                         name: "UNIT1 ALINOS LANDFALL",
                         inGameName: "Alinos Gateway",
                         archive: "unit1_Land",
@@ -3465,6 +3570,7 @@ namespace MphRead
                 {
                     "UNIT2 LANDING BAY",
                     new RoomMetadata(
+                        id: 115,
                         name: "UNIT2 LANDING BAY",
                         inGameName: "Celestial Gateway",
                         archive: "unit2_Land",
@@ -3500,6 +3606,7 @@ namespace MphRead
                 {
                     "UNIT 3 VESPER STARPORT",
                     new RoomMetadata(
+                        id: 116,
                         name: "UNIT 3 VESPER STARPORT",
                         inGameName: "VDO Gateway",
                         archive: "unit3_Land",
@@ -3535,6 +3642,7 @@ namespace MphRead
                 {
                     "UNIT 4 ARCTERRA BASE",
                     new RoomMetadata(
+                        id: 117,
                         name: "UNIT 4 ARCTERRA BASE",
                         inGameName: "Arcterra Gateway",
                         archive: "unit4_Land",
@@ -3570,6 +3678,7 @@ namespace MphRead
                 {
                     "Gorea Prison",
                     new RoomMetadata(
+                        id: 118,
                         name: "Gorea Prison",
                         inGameName: "Oubliette",
                         archive: "Gorea_b2",
@@ -3605,6 +3714,7 @@ namespace MphRead
                 {
                     "E3 FIRST HUNT",
                     new RoomMetadata(
+                        id: 119,
                         name: "E3 FIRST HUNT",
                         inGameName: "Stasis Bunker",
                         archive: "e3Level",
@@ -3640,6 +3750,7 @@ namespace MphRead
                 {
                     "Level TestLevel",
                     new RoomMetadata(
+                        id: 120,
                         name: "Level TestLevel",
                         inGameName: "Test Level",
                         archive: "testLevel",
@@ -3675,6 +3786,7 @@ namespace MphRead
                 {
                     "Level AbeTest",
                     new RoomMetadata(
+                        id: 121,
                         name: "Level AbeTest",
                         inGameName: "Abe Test Level",
                         archive: "testLevel",
@@ -3711,6 +3823,7 @@ namespace MphRead
                 {
                     "biodefense chamber 06",
                     new RoomMetadata(
+                        id: 122,
                         name: "biodefense chamber 06",
                         inGameName: "Early Processor Core",
                         archive: "unit1_b2",
@@ -3746,6 +3859,7 @@ namespace MphRead
                 {
                     "biodefense chamber 05",
                     new RoomMetadata(
+                        id: 123,
                         name: "biodefense chamber 05",
                         inGameName: "Early Stasis Bunker",
                         archive: "unit2_b2",
@@ -3781,6 +3895,7 @@ namespace MphRead
                 {
                     "biodefense chamber 03",
                     new RoomMetadata(
+                        id: 124,
                         name: "biodefense chamber 03",
                         inGameName: "Early Head Shot",
                         archive: "unit3_b1",
@@ -3816,6 +3931,7 @@ namespace MphRead
                 {
                     "biodefense chamber 08",
                     new RoomMetadata(
+                        id: 125,
                         name: "biodefense chamber 08",
                         inGameName: "Early Fuel Stack",
                         archive: "unit3_b2",
@@ -3851,6 +3967,7 @@ namespace MphRead
                 {
                     "biodefense chamber 04",
                     new RoomMetadata(
+                        id: 126,
                         name: "biodefense chamber 04",
                         inGameName: "Early Sanctorus",
                         archive: "unit4_b1",
@@ -3886,6 +4003,7 @@ namespace MphRead
                 {
                     "biodefense chamber 07",
                     new RoomMetadata(
+                        id: 127,
                         name: "biodefense chamber 07",
                         inGameName: "Early Sic Transit",
                         archive: "unit4_b2",
@@ -3917,6 +4035,7 @@ namespace MphRead
                 {
                     "Level MPH Morphball",
                     new RoomMetadata(
+                        id: 128,
                         name: "Level MPH Morphball",
                         inGameName: "Morph Ball",
                         archive: "e3Level",
@@ -3948,6 +4067,7 @@ namespace MphRead
                 {
                     "Level MPH Regulator",
                     new RoomMetadata(
+                        id: 129,
                         name: "Level MPH Regulator",
                         inGameName: "Regulator",
                         archive: "blueRoom",
@@ -3979,6 +4099,7 @@ namespace MphRead
                 {
                     "Level MPH Survivor",
                     new RoomMetadata(
+                        id: 130,
                         name: "Level MPH Survivor",
                         inGameName: "Survivor",
                         archive: "mp2",
@@ -4016,6 +4137,7 @@ namespace MphRead
                 {
                     "Level MP1",
                     new RoomMetadata(
+                        id: 0,
                         name: "Level MP1",
                         inGameName: "Trooper Module",
                         archive: "mp1",
@@ -4048,6 +4170,7 @@ namespace MphRead
                 {
                     "Level MP1b",
                     new RoomMetadata(
+                        id: 8,
                         name: "Level MP1b", // copy of Level MP1 with a few different params and no name string
                         inGameName: "Trooper Module",
                         archive: "mp1",
@@ -4080,6 +4203,7 @@ namespace MphRead
                 {
                     "Level MP2",
                     new RoomMetadata(
+                        id: 1,
                         name: "Level MP2",
                         inGameName: "Assault Cradle",
                         archive: "mp2",
@@ -4112,6 +4236,7 @@ namespace MphRead
                 {
                     "Level MP3",
                     new RoomMetadata(
+                        id: 2,
                         name: "Level MP3",
                         inGameName: "Ancient Vestige",
                         archive: "mp3",
@@ -4144,6 +4269,7 @@ namespace MphRead
                 {
                     "Level SP Morphball",
                     new RoomMetadata(
+                        id: 3,
                         name: "Level SP Morphball",
                         inGameName: "Morph Ball",
                         archive: "e3Level",
@@ -4175,6 +4301,7 @@ namespace MphRead
                 {
                     "Level SP Regulator",
                     new RoomMetadata(
+                        id: 4,
                         name: "Level SP Regulator",
                         inGameName: "Regulator",
                         archive: "blueRoom",
@@ -4206,6 +4333,7 @@ namespace MphRead
                 {
                     "Level SP Survivor",
                     new RoomMetadata(
+                        id: 5,
                         name: "Level SP Survivor",
                         inGameName: "Survivor",
                         archive: "mp2",
@@ -4237,6 +4365,7 @@ namespace MphRead
                 {
                     "Level FhTestLevel",
                     new RoomMetadata(
+                        id: 6,
                         name: "Level FhTestLevel", // name is actually "Level TestLevel"
                         inGameName: "Test Level (First Hunt)",
                         archive: "testLevel",
@@ -4268,6 +4397,7 @@ namespace MphRead
                 {
                     "Level MP5",
                     new RoomMetadata(
+                        id: 7,
                         name: "Level MP5",
                         inGameName: "Early Head Shot (First Hunt)",
                         archive: "mp5",
@@ -4300,6 +4430,7 @@ namespace MphRead
                 {
                     "E3 level",
                     new RoomMetadata(
+                        id: 9,
                         name: "E3 level",
                         inGameName: "Stasis Bunker (First Hunt)",
                         archive: "e3Level",
