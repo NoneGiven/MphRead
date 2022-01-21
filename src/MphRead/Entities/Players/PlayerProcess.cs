@@ -529,7 +529,7 @@ namespace MphRead.Entities
                 UpdateAnimFrames(_bipedModel1);
                 UpdateAnimFrames(_bipedModel2);
             }
-            if (IsAltForm || IsMorphing && _frozenTimer == 0)
+            if ((IsAltForm || IsMorphing) && _frozenTimer == 0)
             {
                 UpdateAnimFrames(_altModel);
             }

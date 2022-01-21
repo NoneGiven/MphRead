@@ -147,15 +147,16 @@ namespace MphRead.Entities
         private void Cancel()
         {
             // todo: something with SFX
+            PlayerEntity player = PlayerEntity.Main;
+            bool currentSeq = CameraSequence.Current == Sequence;
+            bool playerCam = Sequence.CamInfoRef == player.CameraInfo;
             SendEndEvent();
             Sequence.End();
             _active = false;
-            if (CameraSequence.Current == Sequence)
+            if (currentSeq)
             {
-                PlayerEntity player = PlayerEntity.Main;
                 player.RefreshExternalCamera();
-                if (Sequence.CamInfoRef == player.CameraInfo
-                    && (player.IsAltForm || player.IsMorphing || player.IsUnmorphing))
+                if (playerCam && (player.IsAltForm || player.IsMorphing || player.IsUnmorphing))
                 {
                     player.ResumeOwnCamera();
                 }
@@ -250,7 +251,7 @@ namespace MphRead.Entities
             {
                 if (_handoffTimer == 0)
                 {
-                    _handoffTimer = 2 * 2; // todo: FPS stuff
+                    _handoffTimer = 2; // sktodo: FPS stuff?
                 }
             }
         }
