@@ -280,24 +280,18 @@ namespace MphRead.Entities
         private Vector3 _field41C;
         private Vector3 _field428;
 
-        private float _fieldE4 = 0;
-        private float _fieldE8 = 0;
+        private float _buttonAimX = 0;
+        private float _buttonAimY = 0;
 
         private ushort _timeIdle = 0;
-        private byte _field360 = 0;
-        private byte _field447 = 0;
         private ushort _field43A = 0;
         private int _field450 = 0;
         private byte _crushBits = 0;
         private Vector3 _field4E8; // stores gun vec 2
-        private float _field4EC = 0;
-        private float _field4F0 = 0;
         private float _altTiltX = 0;
-        private float _field528 = 0;
         private float _altTiltZ = 0;
         private float _altSpinRot = 0;
         private float _altWobble = 0;
-        private byte _field53E = 0;
         private byte _field551 = 0;
         private byte _field552 = 0;
         private byte _field553 = 0;
@@ -391,7 +385,6 @@ namespace MphRead.Entities
         private ushort _timeSinceFrozen = 0;
         private ushort _timeSinceDead = 0;
         private ushort _hidingTimer = 0;
-        private ushort _timeSinceButtonTouch = 0;
         private ushort _timeStanding = 0;
         private ushort _timeSinceStanding = 0;
         private ushort _timeSinceGrounded = 0;
@@ -529,13 +522,12 @@ namespace MphRead.Entities
             Flags2 |= PlayerFlags2.HideModel;
             AttachedEnemy = null;
             _field35C = null;
-            _field360 = 0;
             EquipInfo.ChargeLevel = 0;
             _timeSinceShot = 255;
             _timeSinceDamage = 255;
             _timeSincePickup = 255;
             _timeSinceHeal = 255;
-            _field447 = 0;
+            _timeSinceStanding = 0;
             _field449 = 0;
             _respawnTimer = 0;
             _timeSinceDead = 0;
@@ -545,7 +537,6 @@ namespace MphRead.Entities
             _bombCooldown = 0;
             _bombRefillTimer = 0;
             _bombAmmo = 3;
-            _field53E = 1;
             _damageInvulnTimer = 0;
             _spawnInvulnTimer = 0;
             _abilities = AbilityFlags.None;
@@ -682,7 +673,6 @@ namespace MphRead.Entities
             _disruptedTimer = 0;
             _burnedBy = null;
             _burnTimer = 0;
-            _timeSinceButtonTouch = 255;
             _hSpeedCap = Fixed.ToFloat(Values.WalkSpeedCap); // todo: FPS stuff?
             Speed = Vector3.Zero;
             if (respawn)
@@ -708,8 +698,8 @@ namespace MphRead.Entities
             _accelerationTimer = 0;
             _aimY = 0;
             NodeRef = nodeRef;
-            _fieldE4 = 0;
-            _fieldE8 = 0;
+            _buttonAimX = 0;
+            _buttonAimY = 0;
             _gunViewBob = 0;
             _walkViewBob = 0;
             if (!_scene.Multiplayer && CameraSequence.Current != null)
@@ -750,12 +740,11 @@ namespace MphRead.Entities
             _volume = CollisionVolume.Move(_volumeUnxf, Position);
             AttachedEnemy = null;
             _field35C = null;
-            _field360 = 0;
             _timeSinceShot = 255;
             _timeSinceDamage = 255;
             _timeSincePickup = 255;
             _timeSinceHeal = 255;
-            _field447 = 0;
+            _timeSinceStanding = 0;
             _timeStanding = 0;
             _field449 = 0;
             _respawnTimer = 0;
@@ -767,7 +756,6 @@ namespace MphRead.Entities
             _bombOveruse = 0;
             _bombRefillTimer = 0;
             _bombAmmo = 3;
-            _field53E = 1;
             _damageInvulnTimer = 0;
             if (IsBot && !_scene.Multiplayer)
             {

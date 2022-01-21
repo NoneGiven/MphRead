@@ -1228,7 +1228,6 @@ namespace MphRead.Entities
                 _altTiltZ -= _altTiltZ / 8 / 2; // todo: FPS stuff
                 _altTiltX += -(_altTiltX + Fixed.ToFloat(25) * (Speed.X - PrevSpeed.X)) / 32 / 2; // todo: FPS stuff
                 _altTiltZ += -(_altTiltZ + Fixed.ToFloat(25) * (Speed.Z - PrevSpeed.Z)) / 32 / 2; // todo: FPS stuff
-                _field528 = 0;
                 float minSpinAccel = Fixed.ToFloat(Values.AltMinSpinAccel);
                 float maxSpinAccel = Fixed.ToFloat(Values.AltMaxSpinAccel);
                 _altSpinSpeed += (minSpinAccel
@@ -1409,7 +1408,6 @@ namespace MphRead.Entities
             {
                 _altSpinSpeed = Fixed.ToFloat(Values.AltMinSpinAccel);
                 _altTiltX = 0;
-                _field528 = 0;
                 _altTiltZ = 0;
                 _altSpinRot = 0;
                 _altWobble = 0;
