@@ -58,7 +58,10 @@ namespace MphRead.Entities
                     SetGunAnimation(GunAnimation.UpDown, AnimFlags.NoLoop);
                 }
             }
-            // todo: only update camera if not cam seq, or cam seq but not main player
+            if (IsMainPlayer && CameraSequence.Current != null)
+            {
+                return;
+            }
             if (CameraType == CameraType.Third1)
             {
                 UpdateCameraThird1();

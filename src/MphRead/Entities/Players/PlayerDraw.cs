@@ -33,8 +33,7 @@ namespace MphRead.Entities
             bool drawBiped = false;
             if (IsMainPlayer || IsVisible())
             {
-                // todo: or if cam seq
-                drawBiped = !IsMainPlayer || CameraType != CameraType.First
+                drawBiped = !IsMainPlayer || CameraType != CameraType.First || CameraSequence.Current != null
                     || _camSwitchTimer < Values.CamSwitchTime * 2; // todo: FPS stuff
                 if (IsAltForm)
                 {
@@ -119,7 +118,8 @@ namespace MphRead.Entities
                             PaletteOverride = Metadata.RedPalette;
                         }
                         float alpha = _curAlpha;
-                        if (IsMainPlayer && _bipedModel1.AnimInfo.Index[0] == (int)PlayerAnimation.Unmorph) // todo: and no camseq
+                        if (IsMainPlayer && CameraSequence.Current == null
+                            && _bipedModel1.AnimInfo.Index[0] == (int)PlayerAnimation.Unmorph)
                         {
                             alpha -= alpha * _bipedModel1.AnimInfo.Frame[0] / _bipedModel1.AnimInfo.FrameCount[0];
                             alpha = Math.Clamp(alpha, 0, 1);

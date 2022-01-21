@@ -30,6 +30,9 @@ namespace MphRead.Formats
 
         // sktodo: make fields private
         public CamSeqFlags Flags { get; set; }
+        public bool BlockInput => Flags.TestFlag(CamSeqFlags.BlockInput);
+        public bool ForceAlt => Flags.TestFlag(CamSeqFlags.ForceAlt);
+        public bool ForceBiped => Flags.TestFlag(CamSeqFlags.ForceBiped);
         public ushort TransitionTime { get; set; }
         public ushort TransitionTimer { get; set; }
         public int KeyframeIndex { get; set; }

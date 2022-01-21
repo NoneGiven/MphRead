@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
+using MphRead.Formats;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
@@ -711,22 +712,32 @@ namespace MphRead.Entities
             _fieldE8 = 0;
             _gunViewBob = 0;
             _walkViewBob = 0;
-            // todo: if 1P and cam seq
-            // else...
-            // todo: if MP and cam seq
-            CameraInfo.Reset();
-            CameraInfo.Position = Position;
-            CameraInfo.PrevPosition = Position;
-            CameraInfo.UpVector = Vector3.UnitY;
-            CameraInfo.Target = Position + facing;
-            CameraInfo.Fov = Fixed.ToFloat(Values.NormalFov) * 2;
-            CameraInfo.NodeRef = NodeRef;
-            SwitchCamera(CameraType.First, facing);
-            _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff
-            _field684 = 0;
-            _field688 = 0;
-            UpdateCameraFirst();
-            CameraInfo.Update();
+            if (!_scene.Multiplayer && CameraSequence.Current != null)
+            {
+                _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff
+                _field684 = 0;
+                _field688 = 0;
+            }
+            else
+            {
+                if (IsMainPlayer && _scene.Multiplayer && CameraSequence.Current != null)
+                {
+                    // sktodo: end intro cam seq
+                }
+                CameraInfo.Reset();
+                CameraInfo.Position = Position;
+                CameraInfo.PrevPosition = Position;
+                CameraInfo.UpVector = Vector3.UnitY;
+                CameraInfo.Target = Position + facing;
+                CameraInfo.Fov = Fixed.ToFloat(Values.NormalFov) * 2;
+                CameraInfo.NodeRef = NodeRef;
+                SwitchCamera(CameraType.First, facing);
+                _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff
+                _field684 = 0;
+                _field688 = 0;
+                UpdateCameraFirst();
+                CameraInfo.Update();
+            }
             _gunDrawPos = Fixed.ToFloat(Values.FieldB8) * facing
                 + CameraInfo.Position
                 + Fixed.ToFloat(Values.FieldB0) * _gunVec2
@@ -1378,7 +1389,14 @@ namespace MphRead.Entities
             {
                 return;
             }
-            // todo: if in camseq which blocks input, return unless death, in which case do something and proceed
+            if (IsMainPlayer && CameraSequence.Current?.BlockInput == true)
+            {
+                if (!flags.TestFlag(DamageFlags.Death))
+                {
+                    return;
+                }
+                CamSeqEntity.CancelCurrent();
+            }
             if (_spawnInvulnTimer > 0 && !flags.TestFlag(DamageFlags.Death) && !flags.TestFlag(DamageFlags.IgnoreInvuln))
             {
                 return;
