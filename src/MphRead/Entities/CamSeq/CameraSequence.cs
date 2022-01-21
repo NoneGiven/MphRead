@@ -95,7 +95,7 @@ namespace MphRead.Formats
                     if (nodeRef != NodeRef.None)
                     {
                         curFrame.PositionEntity.GetPosition(out Vector3 prevPos);
-                        CamInfoRef.NodeRef = _scene.UpdateNodeRef(nodeRef, prevPos, CamInfoRef.Position);
+                        CamInfoRef.NodeRef = _scene.UpdateNodeRef(CamInfoRef.NodeRef, prevPos, CamInfoRef.Position);
                     }
                     else
                     {
