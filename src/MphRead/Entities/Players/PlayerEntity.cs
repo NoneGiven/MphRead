@@ -868,7 +868,7 @@ namespace MphRead.Entities
             _gunVec1 = facing;
             _facingVector = facing;
             SetTransform(facing, _upVector, position);
-            if (nodeRef.PartIndex >= 0)
+            if (nodeRef != NodeRef.None)
             {
                 NodeRef = nodeRef;
                 CameraInfo.NodeRef = nodeRef;

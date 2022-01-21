@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Entities.Enemies;
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -723,7 +724,7 @@ namespace MphRead.Entities
             UpdateLightSources(_volume.SpherePosition);
             // todo?: if wifi and not main player
             // else...
-            if (NodeRef.PartIndex >= 0)
+            if (NodeRef != NodeRef.None)
             {
                 int index = Flags1.TestFlag(PlayerFlags1.AltFormPrevious) ? 2 : 0;
                 Vector3 prevPos = PrevPosition + PlayerVolumes[(int)Hunter, index].SpherePosition;
