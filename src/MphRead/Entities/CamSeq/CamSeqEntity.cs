@@ -79,7 +79,7 @@ namespace MphRead.Entities
                 {
                     if (Data.Loop != 0)
                     {
-                        if (Bugfixes.SmoothCamSeqHandoffs)
+                        if (Bugfixes.SmoothCamSeqHandoff)
                         {
                             Sequence.Restart(Sequence.TransitionTimer, Sequence.TransitionTime);
                         }

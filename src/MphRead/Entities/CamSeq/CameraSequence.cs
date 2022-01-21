@@ -229,7 +229,8 @@ namespace MphRead.Formats
             CameraSequenceKeyframe firstFrame = Keyframes[0];
             CamInfoRef.NodeRef = firstFrame.NodeRef;
             CalculateFrameValues();
-            if (firstFrame.PositionEntity != null)
+            // this has the potential for "tearing" of node refs e.g. in Cortex CPU, and the update is never needed
+            if (!Bugfixes.BetterCamSeqNodeRef && firstFrame.PositionEntity != null)
             {
                 NodeRef nodeRef = firstFrame.PositionEntity.NodeRef;
                 if (nodeRef != NodeRef.None)
