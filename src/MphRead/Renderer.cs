@@ -892,9 +892,6 @@ namespace MphRead
             if (ProcessFrame)
             {
                 UpdateScene();
-                ProcessMessageQueue();
-                _elapsedTime += 1 / 60f; // todo: FPS stuff
-                _frameCount++;
             }
             if (ProcessFrame || CameraMode != CameraMode.Player)
             {
@@ -903,6 +900,12 @@ namespace MphRead
             }
             UpdateProjection();
             GetDrawItems();
+            if (ProcessFrame)
+            {
+                ProcessMessageQueue();
+                _elapsedTime += 1 / 60f; // todo: FPS stuff
+                _frameCount++;
+            }
         }
 
         private void UpdateProjection()
