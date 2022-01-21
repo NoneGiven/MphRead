@@ -79,9 +79,18 @@ namespace MphRead.Entities
                 {
                     if (Data.Loop != 0)
                     {
-                        ushort transitionTimer = Sequence.TransitionTimer;
-                        Sequence.Restart();
-                        Sequence.TransitionTimer = transitionTimer;
+                        if (Bugfixes.SmoothCamSeqHandoffs)
+                        {
+                            Sequence.Restart(Sequence.TransitionTimer, Sequence.TransitionTime);
+                        }
+                        else
+                        {
+                            // setting back the timer doesn't do anything, since the time value it compares against is lost,
+                            // and Restart will update the frame values while both are set to zero anyway
+                            ushort transitionTimer = Sequence.TransitionTimer;
+                            Sequence.Restart();
+                            Sequence.TransitionTimer = transitionTimer;
+                        }
                     }
                     else
                     {
@@ -211,7 +220,7 @@ namespace MphRead.Entities
                     {
                         if (handoff)
                         {
-                            Sequence.CamInfoRef = null;
+                            Current.Sequence.CamInfoRef = null;
                         }
                         Current.Cancel();
                     }
@@ -251,7 +260,7 @@ namespace MphRead.Entities
             {
                 if (_handoffTimer == 0)
                 {
-                    _handoffTimer = 2; // sktodo: FPS stuff?
+                    _handoffTimer = 2 * 2; // sktodo: FPS stuff?
                 }
             }
         }

@@ -34,7 +34,7 @@ namespace MphRead.Formats
         public bool ForceBiped => Flags.TestFlag(CamSeqFlags.ForceBiped);
 
         public ushort TransitionTimer { get; set; }
-        private ushort _transitionTime = 0;
+        public ushort TransitionTime { get; private set; }
         private int _keyframeIndex = 0;
         private float _keyframeElapsed = 0;
 
@@ -157,7 +157,7 @@ namespace MphRead.Formats
                     }
                 }
             }
-            if (TransitionTimer < _transitionTime)
+            if (TransitionTimer < TransitionTime)
             {
                 TransitionTimer++;
             }
@@ -194,7 +194,7 @@ namespace MphRead.Formats
             Flags &= ~CamSeqFlags.Loop;
             _keyframeElapsed = 0;
             TransitionTimer = 0;
-            _transitionTime = transitionTime;
+            TransitionTime = transitionTime;
             _keyframeIndex = 0;
             if (Keyframes.Count > 0)
             {
@@ -216,13 +216,13 @@ namespace MphRead.Formats
             // todo: close dialogs, update HUD
         }
 
-        public void Restart()
+        public void Restart(ushort transitionTimer = 0, ushort transitionTime = 0)
         {
             Flags &= ~CamSeqFlags.Complete;
             Flags &= ~CamSeqFlags.CanEnd;
             _keyframeElapsed = 0;
-            TransitionTimer = 0;
-            _transitionTime = 0;
+            TransitionTimer = transitionTimer;
+            TransitionTime = transitionTime;
             _keyframeIndex = 0;
             Debug.Assert(Keyframes.Count > 0);
             Debug.Assert(CamInfoRef != null);
@@ -246,7 +246,7 @@ namespace MphRead.Formats
             Flags |= CamSeqFlags.Complete;
             _keyframeElapsed = 0;
             TransitionTimer = 0;
-            _transitionTime = 0;
+            TransitionTime = 0;
             _keyframeIndex = 0;
             if (Current == this)
             {
@@ -415,7 +415,7 @@ namespace MphRead.Formats
             }
             Debug.Assert(CamInfoRef != null);
             finalFov *= 2;
-            if (TransitionTimer >= _transitionTime)
+            if (TransitionTimer >= TransitionTime)
             {
                 CamInfoRef.Fov = finalFov;
                 CamInfoRef.Position = finalPosition;
@@ -423,8 +423,8 @@ namespace MphRead.Formats
             }
             else
             {
-                Debug.Assert(_transitionTime != 0);
-                float pct = TransitionTimer / (float)_transitionTime;
+                Debug.Assert(TransitionTime != 0);
+                float pct = TransitionTimer / (float)TransitionTime;
                 CamInfoRef.Fov += (finalFov - CamInfoRef.Fov) * pct;
                 CamInfoRef.Position += (finalPosition - CamInfoRef.Position) * pct;
                 finalToTarget = CamInfoRef.Facing + (finalToTarget - CamInfoRef.Facing) * pct;
@@ -441,14 +441,14 @@ namespace MphRead.Formats
                 float sin = MathF.Sin(finalRoll);
                 upVector = new Vector3(cross.X * cos, upVector.Y * sin, cross.Z * cos);
             }
-            if (TransitionTimer >= _transitionTime)
+            if (TransitionTimer >= TransitionTime)
             {
                 CamInfoRef.UpVector = upVector;
             }
             else
             {
-                Debug.Assert(_transitionTime != 0);
-                float pct = TransitionTimer / (float)_transitionTime;
+                Debug.Assert(TransitionTime != 0);
+                float pct = TransitionTimer / (float)TransitionTime;
                 CamInfoRef.UpVector += (upVector - CamInfoRef.UpVector) * pct;
                 CamInfoRef.UpVector = CamInfoRef.UpVector.Normalized();
             }
