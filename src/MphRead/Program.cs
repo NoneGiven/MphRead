@@ -116,7 +116,7 @@ namespace MphRead
         private static void ShowMenuPrompts()
         {
             int prompt = 0;
-            int selection = 6;
+            int selection = 7;
             int roomId = 95;
             string room = "Combat Hall";
             string roomKey = "MP3 PROVING GROUND";
@@ -131,7 +131,6 @@ namespace MphRead
             };
             string mode = "auto-select";
             int modeId = 0;
-            var models = new List<(string, string)>();
             var modeOpts = new Dictionary<string, string>()
             {
                 { "adventure", "Adventure" },
@@ -155,6 +154,7 @@ namespace MphRead
                 "auto-select", "Adventure", "Battle", "Battle Teams", "Survival", "Survival Teams", "Capture",
                 "Bounty", "Bounty Teams", "Nodes", "Nodes Teams", "Defender", "Defender Teams", "Prime Hunter"
             };
+            var models = new List<(string Name, string Recolor)>();
 
             string PrintPlayer(int index)
             {
@@ -166,8 +166,15 @@ namespace MphRead
                 return $"{hunter}, suit color {recolor}";
             }
 
-            // sktodo:
-            // - model entry, inc/dec, clear, add to renderer
+            string PrintModels()
+            {
+                if (models.Count == 0)
+                {
+                    return "none";
+                }
+                return String.Join(", ", models.Select(c => $"{c.Name} {c.Recolor}"));
+            }
+
             while (true)
             {
                 Console.Clear();
@@ -183,7 +190,8 @@ namespace MphRead
                 Console.WriteLine($"[{(selection == 3 ? "x" : " ")}] Player 2: {PrintPlayer(1)}");
                 Console.WriteLine($"[{(selection == 4 ? "x" : " ")}] Player 3: {PrintPlayer(2)}");
                 Console.WriteLine($"[{(selection == 5 ? "x" : " ")}] Player 4: {PrintPlayer(3)}");
-                Console.WriteLine($"[{(selection == 6 ? "x" : " ")}] Launch");
+                Console.WriteLine($"[{(selection == 6 ? "x" : " ")}] Models: {PrintModels()}");
+                Console.WriteLine($"[{(selection == 7 ? "x" : " ")}] Launch");
                 if (prompt == 0)
                 {
                     ConsoleKeyInfo keyInfo = Console.ReadKey();
@@ -194,7 +202,7 @@ namespace MphRead
                     if (keyInfo.Key == ConsoleKey.Enter)
                     {
                         if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Shift)
-                            || keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control) || selection == 6)
+                            || keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control) || selection == 7)
                         {
                             Console.Clear();
                             Console.WriteLine($"MphRead Version {Version}");
@@ -209,13 +217,13 @@ namespace MphRead
                         selection--;
                         if (selection < 0)
                         {
-                            selection = 6;
+                            selection = 7;
                         }
                     }
                     else if (keyInfo.Key == ConsoleKey.DownArrow || keyInfo.Key == ConsoleKey.S)
                     {
                         selection++;
-                        if (selection > 6)
+                        if (selection > 7)
                         {
                             selection = 0;
                         }
@@ -235,6 +243,10 @@ namespace MphRead
                         else if (selection >= 2 && selection <= 5)
                         {
                             players[selection - 2] = ("none", "0");
+                        }
+                        else if (selection == 6)
+                        {
+                            models.Clear();
                         }
                     }
                     else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
@@ -281,6 +293,25 @@ namespace MphRead
                             playerIds[index] = id;
                             players[index] = (id == -1 ? "none" : hunters[id], players[index].Recolor);
                         }
+                        else if (selection == 6)
+                        {
+                            if (models.Count == 0)
+                            {
+                                models.Add(("Crate01", "0"));
+                            }
+                            else
+                            {
+                                string model = models[0].Name;
+                                int index = Metadata.ModelMetadata.Keys.IndexOf(k => k == model);
+                                index++;
+                                if (index >= Metadata.ModelMetadata.Keys.Count())
+                                {
+                                    index = 0;
+                                }
+                                model = Metadata.ModelMetadata[Metadata.ModelMetadata.Keys.ElementAt(index)].Name;
+                                models[0] = (model, models[0].Recolor);
+                            }
+                        }
                     }
                     else if (keyInfo.Key == ConsoleKey.Subtract || keyInfo.Key == ConsoleKey.OemMinus
                         || keyInfo.Key == ConsoleKey.LeftArrow)
@@ -325,6 +356,25 @@ namespace MphRead
                             }
                             playerIds[index] = id;
                             players[index] = (id == -1 ? "none" : hunters[id], players[index].Recolor);
+                        }
+                        else if (selection == 6)
+                        {
+                            if (models.Count == 0)
+                            {
+                                models.Add(("Crate01", "0"));
+                            }
+                            else
+                            {
+                                string model = models[0].Name;
+                                int index = Metadata.ModelMetadata.Keys.IndexOf(k => k == model);
+                                index--;
+                                if (index < 0)
+                                {
+                                    index = Metadata.ModelMetadata.Keys.Count() - 1;
+                                }
+                                model = Metadata.ModelMetadata[Metadata.ModelMetadata.Keys.ElementAt(index)].Name;
+                                models[0] = (model, models[0].Recolor);
+                            }
                         }
                     }
                 }
@@ -416,9 +466,34 @@ namespace MphRead
                             string recolor = players[index].Recolor;
                             if (split.Length > 1 && Int32.TryParse(split[1], out int result))
                             {
-                                recolor = result.ToString();
+                                recolor = Math.Clamp(result, 0, 5).ToString();
                             }
                             players[index] = (player, recolor);
+                        }
+                        prompt = 0;
+                    }
+                    else if (prompt == 7)
+                    {
+                        Console.WriteLine("Enter comma-separated list of models and (optionally) recolors.");
+                        Console.WriteLine("Examples: Crate01, blastcap, LavaDemon 1, KandenGun 4");
+                        string? input = Console.ReadLine();
+                        if (!String.IsNullOrWhiteSpace(input))
+                        {
+                            models.Clear();
+                            string[] split = input.Split(',');
+                            for (int i = 0; i < split.Length; i++)
+                            {
+                                string[] pair = split[i].Trim().Split(' ');
+                                if (Metadata.ModelMetadata.TryGetValue(pair[0], out ModelMetadata? meta))
+                                {
+                                    string recolor = "0";
+                                    if (pair.Length > 1 && Int32.TryParse(pair[1], out int result))
+                                    {
+                                        recolor = Math.Clamp(result, 0, meta.Recolors.Count - 1).ToString();
+                                    }
+                                    models.Add((meta.Name, recolor));
+                                }
+                            }
                         }
                         prompt = 0;
                     }
@@ -430,9 +505,10 @@ namespace MphRead
                 for (int i = 0; i < players.Count; i++)
                 {
                     (string hunter, string recolor) = players[i];
-                    Int32.TryParse(recolor, out int result);
-                    result = Math.Clamp(result, 0, 5);
-                    renderer.AddPlayer(Enum.Parse<Hunter>(hunter), result);
+                    if (hunter != "none")
+                    {
+                        renderer.AddPlayer(Enum.Parse<Hunter>(hunter), Int32.Parse(recolor));
+                    }
                 }
                 GameMode gameMode = GameMode.None;
                 if (mode == "Adventure")
@@ -444,6 +520,11 @@ namespace MphRead
                     gameMode = Enum.Parse<GameMode>(mode.Replace(" ", ""));
                 }
                 renderer.AddRoom(roomKey, gameMode);
+            }
+            for (int i = 0; i < models.Count; i++)
+            {
+                (string model, string recolor) = models[i];
+                renderer.AddModel(model, Int32.Parse(recolor));
             }
             renderer.Run();
         }
