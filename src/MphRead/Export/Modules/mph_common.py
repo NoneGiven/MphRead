@@ -2,7 +2,7 @@ import bpy
 import mathutils
 
 def get_common_version():
-    return '0.17.1.0'
+    return '0.18.0.0'
 
 def get_object(name):
     try:
