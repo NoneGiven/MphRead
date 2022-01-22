@@ -3904,8 +3904,8 @@ namespace MphRead
 
         protected override void OnResize(ResizeEventArgs e)
         {
-            GL.Viewport(0, 0, Size.X, Size.Y);
-            Scene.Size = Size;
+            GL.Viewport(0, 0, e.Size.X, e.Size.Y);
+            Scene.Size = e.Size;
             base.OnResize(e);
         }
 
