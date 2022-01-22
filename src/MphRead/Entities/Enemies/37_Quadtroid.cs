@@ -906,6 +906,7 @@ namespace MphRead.Entities.Enemies
 
         protected override bool EnemyTakeDamage(EntityBase? source)
         {
+            bool hitBySyluxBomb = false;
             if (source != null && !_flags.TestFlag(QuadtroidFlags.Bit7))
             {
                 if (source.Type == EntityType.BeamProjectile)
@@ -920,6 +921,10 @@ namespace MphRead.Entities.Enemies
                 {
                     _hitByBomb = true;
                     Func214E1C0(PlayerEntity.Main);
+                    if (((BombEntity)source).Owner.Hunter == Hunter.Sylux)
+                    {
+                        hitBySyluxBomb = true;
+                    }
                 }
             }
             if (_health == 0)
@@ -929,6 +934,11 @@ namespace MphRead.Entities.Enemies
             if (_prevHealth > _health)
             {
                 _damageTaken = (ushort)(_prevHealth - _health);
+                // apply this hack so Sylux can't get stuck in place after bombing the attached Quadtroid
+                if (hitBySyluxBomb && _damageTaken < 25)
+                {
+                    _damageTaken = 25;
+                }
             }
             _prevHealth = _health;
             return false;
