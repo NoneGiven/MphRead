@@ -57,7 +57,7 @@ namespace MphRead.Entities
             var facing = new Vector3(Owner.Field70, 0, Owner.Field74);
             Transform = GetTransformMatrix(facing, Vector3.UnitY, position);
             _aimVector = facing;
-            // todo: node ref
+            NodeRef = Owner.NodeRef;
             int health = Owner.Health;
             if (health > 1)
             {
@@ -248,7 +248,7 @@ namespace MphRead.Entities
                     // todo?: wifi stuff
                 }
                 UpdateLightSources(Position);
-                // todo: update node ref
+                NodeRef = _scene.UpdateNodeRef(NodeRef, prevPos, Position);
             }
             // todo?: wifi stuff
             Debug.Assert(_scene.Room != null);

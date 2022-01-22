@@ -52,7 +52,7 @@ namespace MphRead.Entities
                 Flags1 |= PlayerFlags1.AltFormPrevious;
             }
             PrevPosition = Position;
-            // todo: update camera info prev pos
+            CameraInfo.PrevPosition = CameraInfo.Position;
             PrevSpeed = Speed;
             Flags1 &= ~PlayerFlags1.MovingBiped;
             Flags1 &= ~PlayerFlags1.ShotCharged;
@@ -1594,7 +1594,7 @@ namespace MphRead.Entities
             {
                 facing = Vector3.Cross(Vector3.UnitZ, up).Normalized();
             }
-            Vector3 position = CameraInfo.Position + up / 2; // todo: use camera info pos
+            Vector3 position = CameraInfo.Position + up / 2;
             Vector3 spawnPos = position;
             _scene.SpawnEffect(effectId, facing, up, spawnPos);
             spawnPos = position + _gunVec2 * 0.4f;

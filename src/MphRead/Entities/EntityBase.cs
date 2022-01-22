@@ -20,7 +20,7 @@ namespace MphRead.Entities
 
         protected Scene _scene;
         private readonly string? _nodeName;
-        public NodeRef NodeRef { get; protected set; } = NodeRef.None;
+        public NodeRef NodeRef { get; set; } = NodeRef.None;
 
         protected float _drawScale = 1;
         protected Matrix4 _transform = Matrix4.Identity;

@@ -1207,7 +1207,7 @@ namespace MphRead.Entities
                     bomb.BombIndex = SyluxBombCount++;
                     // todo?: wifi stuff
                 }
-                // todo: node ref
+                bomb.NodeRef = NodeRef;
                 bomb.Radius = Fixed.ToFloat(Values.BombRadius);
                 bomb.SelfRadius = Fixed.ToFloat(Values.BombSelfRadius);
                 // todo: if bot and encounter state, set damage values
