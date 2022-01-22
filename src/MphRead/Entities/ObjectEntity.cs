@@ -283,8 +283,7 @@ namespace MphRead.Entities
             {
                 if (_state != 2)
                 {
-                    // todo: check distance to player
-                    Vector3 between = _scene.CameraPosition - Position;
+                    Vector3 between = PlayerEntity.Main.Position - Position;
                     if (Vector3.Dot(between, between) >= 15 * 15)
                     {
                         if (_scanMsgTarget != null)
@@ -365,7 +364,10 @@ namespace MphRead.Entities
                 else if (_data.EffectFlags.TestFlag(ObjEffFlags.UseEffectVolume))
                 {
                     // todo: add an option to disable this check
-                    processEffect = _effectVolume.TestPoint(_scene.CameraPosition);
+                    Vector3 cameraPosition = _scene.CameraMode == CameraMode.Player
+                        ? PlayerEntity.Main.CameraInfo.Position
+                        : _scene.CameraPosition; // skdebug
+                    processEffect = _effectVolume.TestPoint(cameraPosition);
                 }
                 else if (_flags.TestFlag(ObjectFlags.IsVisible))
                 {
