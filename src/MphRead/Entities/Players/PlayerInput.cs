@@ -512,7 +512,7 @@ namespace MphRead.Entities
                         }
                         if (EquipInfo.Zoomed)
                         {
-                            float zoomFov = Fixed.ToFloat(EquipInfo.Weapon.ZoomFov) * 2;
+                            float zoomFov = Fixed.ToFloat(EquipInfo.Weapon.ZoomFov);
                             Vector3 facing = _facingVector;
 
                             void CheckZoomTargets(EntityType type)
@@ -532,7 +532,7 @@ namespace MphRead.Entities
                                     entity.GetPosition(out Vector3 position);
                                     Vector3 between = position - Position;
                                     float dot = Vector3.Dot(between, facing);
-                                    if (dot > 1 && dot / between.Length > Fixed.ToFloat(4074))
+                                    if (dot > 1 && dot / between.Length >= Fixed.ToFloat(4074))
                                     {
                                         float angle = MathHelper.RadiansToDegrees(MathF.Atan2(3, dot));
                                         if (angle < zoomFov)
@@ -546,6 +546,7 @@ namespace MphRead.Entities
                             CheckZoomTargets(EntityType.Player);
                             CheckZoomTargets(EntityType.EnemyInstance);
                             CheckZoomTargets(EntityType.Object);
+                            zoomFov *= 2;
                             float currentFov = CameraInfo.Fov;
                             if (zoomFov > currentFov)
                             {

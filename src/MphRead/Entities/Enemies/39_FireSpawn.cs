@@ -41,7 +41,7 @@ namespace MphRead.Entities.Enemies
 
         private static readonly int[] _recolors = new int[11]
         {
-            0, 1, 0, 4, 0, 3, 2, 0, 0, 0, 0
+            0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1
         };
 
         protected override bool EnemyInitialize()
@@ -129,7 +129,7 @@ namespace MphRead.Entities.Enemies
                 {
                     _hitZone.SetHealth(0);
                     _hitZone = null;
-                } 
+                }
             }
             return false;
         }

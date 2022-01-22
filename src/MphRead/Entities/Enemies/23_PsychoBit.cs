@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats;

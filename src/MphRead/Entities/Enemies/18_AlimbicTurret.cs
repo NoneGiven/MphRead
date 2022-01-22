@@ -46,7 +46,7 @@ namespace MphRead.Entities.Enemies
 
         private static readonly int[] _recolors = new int[11]
         {
-            0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1
+            0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0
         };
 
         protected override bool EnemyInitialize()
