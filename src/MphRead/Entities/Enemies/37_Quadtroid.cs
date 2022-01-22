@@ -666,8 +666,7 @@ namespace MphRead.Entities.Enemies
             }
             else
             {
-                // todo: use cam info pos with Y - 0.5f
-                targetPos = _target.Position;
+                targetPos = _target.CameraInfo.Position.AddY(-0.5f);
             }
             Vector3 between = targetPos - Position;
             if (between.LengthSquared > 0.375f)
@@ -777,7 +776,7 @@ namespace MphRead.Entities.Enemies
         private void Func214DE50()
         {
             Debug.Assert(_target != null);
-            Vector3 pos = _target.Position; // todo: use cam info pos
+            Vector3 pos = _target.CameraInfo.Position;
             Vector3 targetFacing = _target.FacingVector;
             Vector3 targetUp = _target.FacingVector;
             Vector3 targetRight = Vector3.Cross(targetUp, targetFacing).Normalized();
@@ -941,7 +940,7 @@ namespace MphRead.Entities.Enemies
             {
                 return;
             }
-            Vector3 position = player.Position; // todo: use cam info pos
+            Vector3 position = player.CameraInfo.Position;
             Vector3 facing = player.FacingVector;
             position += facing * 0.74f;
             facing *= -1;
