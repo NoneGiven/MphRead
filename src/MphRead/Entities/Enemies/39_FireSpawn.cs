@@ -74,7 +74,7 @@ namespace MphRead.Entities.Enemies
             // todo: healthbar name
             if (_spawner.Data.Fields.S06.EnemySubtype == 1)
             {
-                inst.Model.Materials[0].Ambient = new ColorRgb(148, 222, 255);
+                inst.Model.Materials[0].Ambient = new ColorRgb(18, 27, 31);
             }
             inst.SetAnimation(3, AnimFlags.Paused);
             _wristNodeL = inst.Model.GetNodeByName("Wrist_L");
