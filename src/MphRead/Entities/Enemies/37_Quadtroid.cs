@@ -778,7 +778,7 @@ namespace MphRead.Entities.Enemies
             Debug.Assert(_target != null);
             Vector3 pos = _target.CameraInfo.Position;
             Vector3 targetFacing = _target.FacingVector;
-            Vector3 targetUp = _target.FacingVector;
+            Vector3 targetUp = _target.UpVector;
             Vector3 targetRight = Vector3.Cross(targetUp, targetFacing).Normalized();
             pos += targetFacing * 0.74f;
             pos += targetUp * -1.1f;
