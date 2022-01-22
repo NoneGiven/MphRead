@@ -109,6 +109,25 @@ namespace MphRead.Entities.Enemies
             CallStateProcess();
         }
 
+        protected override bool EnemyTakeDamage(EntityBase? source)
+        {
+            if (_health == 0)
+            {
+                // todo: play SFX
+                if (_effectEntry != null)
+                {
+                    _scene.UnlinkEffectEntry(_effectEntry);
+                    _effectEntry = null;
+                }
+                if (_hitZone != null)
+                {
+                    _hitZone.SetHealth(0);
+                    _hitZone = null;
+                } 
+            }
+            return false;
+        }
+
         // todo: function names
         private void State0()
         {

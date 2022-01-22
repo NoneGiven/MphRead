@@ -371,7 +371,7 @@ namespace MphRead.Entities
                 }
                 else if (_flags.TestFlag(ObjectFlags.IsVisible))
                 {
-                    processEffect = (_flags & ObjectFlags.State) != 0;
+                    processEffect = _state != 0;
                 }
                 if (processEffect)
                 {
