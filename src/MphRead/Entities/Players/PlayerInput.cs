@@ -1207,7 +1207,7 @@ namespace MphRead.Entities
                     bomb.BombIndex = SyluxBombCount++;
                     // todo?: wifi stuff
                 }
-                // todo: node ref
+                bomb.NodeRef = NodeRef;
                 bomb.Radius = Fixed.ToFloat(Values.BombRadius);
                 bomb.SelfRadius = Fixed.ToFloat(Values.BombSelfRadius);
                 // todo: if bot and encounter state, set damage values
@@ -1352,19 +1352,19 @@ namespace MphRead.Entities
             }
             if (Flags1.TestFlag(PlayerFlags1.UsedJumpPad))
             {
-                // todo: FPS stuff
+                // basically exclude the jump pad speed for the rest of the speed calc, then restore it below
                 float prevX = Speed.X;
-                Speed = Speed.AddX(-_jumpPadAccel.X / 2);
+                Speed = Speed.AddX(-_jumpPadAccel.X);
                 if (prevX <= 0 && Speed.X > 0 || prevX > 0 && Speed.X < 0)
                 {
-                    _jumpPadAccel.X += Speed.X / 2;
+                    _jumpPadAccel.X += Speed.X / 2; // todo: FPS stuff
                     Speed = Speed.WithX(0);
                 }
                 float prevZ = Speed.Z;
-                Speed = Speed.AddZ(-_jumpPadAccel.Z / 2);
+                Speed = Speed.AddZ(-_jumpPadAccel.Z);
                 if (prevZ <= 0 && Speed.Z > 0 || prevZ > 0 && Speed.Z < 0)
                 {
-                    _jumpPadAccel.Z += Speed.Z / 2;
+                    _jumpPadAccel.Z += Speed.Z / 2; // todo: FPS stuff
                     Speed = Speed.WithZ(0);
                 }
             }
@@ -1417,8 +1417,8 @@ namespace MphRead.Entities
             Speed += (speedMul - Speed) / 2; // todo: FPS stuff
             if (Flags1.TestFlag(PlayerFlags1.UsedJumpPad))
             {
-                Speed = Speed.AddX(_jumpPadAccel.X / 2); // todo: FPS stuff
-                Speed = Speed.AddZ(_jumpPadAccel.Z / 2); // todo: FPS stuff
+                Speed = Speed.AddX(_jumpPadAccel.X);
+                Speed = Speed.AddZ(_jumpPadAccel.Z);
             }
             if (Flags1.TestFlag(PlayerFlags1.Standing) && _timeSinceJumpPad > 5 * 2) // todo: FPS stuff
             {

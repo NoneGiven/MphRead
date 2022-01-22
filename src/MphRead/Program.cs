@@ -9,7 +9,7 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 18, 0, 0);
+        public static Version Version { get; } = new Version(0, 18, 1, 0);
 
         private static void Main(string[] args)
         {
@@ -401,7 +401,7 @@ namespace MphRead
                             }
                             else
                             {
-                                IEnumerable<RoomMetadata> rooms = Metadata.RoomMetadata.Values;
+                                IReadOnlyList<RoomMetadata> rooms = Metadata.RoomList;
                                 RoomMetadata? meta = rooms.FirstOrDefault(r => r.Name.ToLower() == input);
                                 if (meta == null)
                                 {

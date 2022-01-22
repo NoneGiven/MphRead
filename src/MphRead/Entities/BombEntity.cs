@@ -4,6 +4,7 @@ using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Entities.Enemies;
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -640,6 +641,7 @@ namespace MphRead.Entities
             bomb.Transform = transform;
             bomb.Recolor = owner.Recolor;
             bomb.Flags = BombFlags.None;
+            bomb.NodeRef = NodeRef.None;
             scene.AddEntity(bomb);
             return bomb;
         }

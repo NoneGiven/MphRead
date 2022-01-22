@@ -20,7 +20,7 @@ namespace MphRead.Entities
 
         protected Scene _scene;
         private readonly string? _nodeName;
-        public NodeRef NodeRef { get; protected set; } = NodeRef.None;
+        public NodeRef NodeRef { get; set; } = NodeRef.None;
 
         protected float _drawScale = 1;
         protected Matrix4 _transform = Matrix4.Identity;
@@ -108,9 +108,9 @@ namespace MphRead.Entities
             }
         }
 
-        public Vector3 RightVector => Transform.Row0.Xyz.Normalized();
-        public Vector3 UpVector => Transform.Row1.Xyz.Normalized();
-        public Vector3 FacingVector => Transform.Row2.Xyz.Normalized();
+        public virtual Vector3 RightVector => Transform.Row0.Xyz.Normalized();
+        public virtual Vector3 UpVector => Transform.Row1.Xyz.Normalized();
+        public virtual Vector3 FacingVector => Transform.Row2.Xyz.Normalized();
 
         protected bool _anyLighting = false;
         protected readonly List<ModelInstance> _models = new List<ModelInstance>();

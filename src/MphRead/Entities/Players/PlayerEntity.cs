@@ -255,6 +255,8 @@ namespace MphRead.Entities
 
         private Vector3 _facingVector;
         private Vector3 _upVector;
+        public override Vector3 FacingVector => _facingVector;
+        public override Vector3 UpVector => _upVector;
         private Vector3 _gunVec1; // facing? (aim?)
         private Vector3 _gunVec2; // right? (turn?)
         private Vector3 _aimPosition;
@@ -487,8 +489,6 @@ namespace MphRead.Entities
             _trailBindingId2 = _scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
             _doubleDmgBindingId = _scene.BindGetTexture(_doubleDmgModel.Model, 0, 0, 0);
             base.Initialize();
-            // todo: respawn node ref
-            // todo: update controls
             EquipInfo.Beams = _beams;
             Values = Metadata.PlayerValues[(int)Hunter];
             if (_scene.Multiplayer)
@@ -550,12 +550,12 @@ namespace MphRead.Entities
             CameraInfo.Position = Position;
             CameraInfo.UpVector = Vector3.UnitY;
             CameraInfo.Target = Position + _facingVector;
-            // todo: cam info node ref
+            CameraInfo.NodeRef = NodeRef.None;
+            NodeRef = NodeRef.None;
             _timeIdle = 0;
             _timeSinceInput = 0;
             _field40C = 0;
             _doubleDmgTimer = 0;
-            // todo: room and camera node refs
             _octolithFlag = null;
             ResetMorphBallTrail();
             // todo?: point module

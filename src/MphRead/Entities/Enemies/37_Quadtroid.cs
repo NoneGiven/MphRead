@@ -46,7 +46,6 @@ namespace MphRead.Entities.Enemies
             SetTransform(facing, up.Normalized(), position);
             _prevPos = position;
             _boundingRadius = 0.25f;
-            _drawScale = 1.5f;
             _health = _healthMax = 120;
             _prevHealth = _health;
             _hurtVolumeInit = new CollisionVolume(_spawner.Data.Fields.S00.Volume0);
@@ -666,8 +665,7 @@ namespace MphRead.Entities.Enemies
             }
             else
             {
-                // todo: use cam info pos with Y - 0.5f
-                targetPos = _target.Position;
+                targetPos = _target.CameraInfo.Position.AddY(-0.5f);
             }
             Vector3 between = targetPos - Position;
             if (between.LengthSquared > 0.375f)
@@ -777,9 +775,9 @@ namespace MphRead.Entities.Enemies
         private void Func214DE50()
         {
             Debug.Assert(_target != null);
-            Vector3 pos = _target.Position; // todo: use cam info pos
+            Vector3 pos = _target.CameraInfo.Position;
             Vector3 targetFacing = _target.FacingVector;
-            Vector3 targetUp = _target.FacingVector;
+            Vector3 targetUp = _target.UpVector;
             Vector3 targetRight = Vector3.Cross(targetUp, targetFacing).Normalized();
             pos += targetFacing * 0.74f;
             pos += targetUp * -1.1f;
@@ -907,6 +905,7 @@ namespace MphRead.Entities.Enemies
 
         protected override bool EnemyTakeDamage(EntityBase? source)
         {
+            bool hitBySyluxBomb = false;
             if (source != null && !_flags.TestFlag(QuadtroidFlags.Bit7))
             {
                 if (source.Type == EntityType.BeamProjectile)
@@ -921,6 +920,10 @@ namespace MphRead.Entities.Enemies
                 {
                     _hitByBomb = true;
                     Func214E1C0(PlayerEntity.Main);
+                    if (((BombEntity)source).Owner.Hunter == Hunter.Sylux)
+                    {
+                        hitBySyluxBomb = true;
+                    }
                 }
             }
             if (_health == 0)
@@ -930,6 +933,11 @@ namespace MphRead.Entities.Enemies
             if (_prevHealth > _health)
             {
                 _damageTaken = (ushort)(_prevHealth - _health);
+                // apply this hack so Sylux can't get stuck in place after bombing the attached Quadtroid
+                if (hitBySyluxBomb && _damageTaken < 25)
+                {
+                    _damageTaken = 25;
+                }
             }
             _prevHealth = _health;
             return false;
@@ -941,7 +949,7 @@ namespace MphRead.Entities.Enemies
             {
                 return;
             }
-            Vector3 position = player.Position; // todo: use cam info pos
+            Vector3 position = player.CameraInfo.Position;
             Vector3 facing = player.FacingVector;
             position += facing * 0.74f;
             facing *= -1;
@@ -1052,7 +1060,20 @@ namespace MphRead.Entities.Enemies
                     materials[i].Lighting = 0;
                 }
             }
+            Matrix4 transform = Transform;
+            Matrix4 scaleTransform = Transform;
+            scaleTransform.Row0.X *= 1.5f;
+            scaleTransform.Row0.Y *= 1.5f;
+            scaleTransform.Row0.Z *= 1.5f;
+            scaleTransform.Row1.X *= 1.5f;
+            scaleTransform.Row1.Y *= 1.5f;
+            scaleTransform.Row1.Z *= 1.5f;
+            scaleTransform.Row2.X *= 1.5f;
+            scaleTransform.Row2.Y *= 1.5f;
+            scaleTransform.Row2.Z *= 1.5f;
+            Transform = scaleTransform;
             DrawGeneric();
+            Transform = transform;
             if (_state1 == 11)
             {
                 for (int i = 0; i < materials.Count; i++)

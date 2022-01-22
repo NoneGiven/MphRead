@@ -102,7 +102,7 @@ namespace MphRead.Entities.Enemies
                     UpdateAnimFrames(_models[i]);
                 }
             }
-            if (Vector3.Dot(PlayerEntity.Main.Position - _fieldPosition, _vec2) < 0) // todo: use camera info pos
+            if (Vector3.Dot(PlayerEntity.Main.CameraInfo.Position - _fieldPosition, _vec2) < 0)
             {
                 _vec2 *= -1;
                 Vector3 position = _fieldPosition + _vec2 * Fixed.ToFloat(409);

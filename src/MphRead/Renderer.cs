@@ -331,6 +331,11 @@ namespace MphRead
             return Room?.GetNodeRefByName(nodeName) ?? NodeRef.None;
         }
 
+        public NodeRef GetNodeRefByPosition(Vector3 position)
+        {
+            return Room?.GetNodeRefByPosition(position) ?? NodeRef.None;
+        }
+
         public void OnLoad()
         {
             GL.ClearColor(_clearColor);
@@ -3904,8 +3909,8 @@ namespace MphRead
 
         protected override void OnResize(ResizeEventArgs e)
         {
-            GL.Viewport(0, 0, Size.X, Size.Y);
-            Scene.Size = Size;
+            GL.Viewport(0, 0, e.Size.X, e.Size.Y);
+            Scene.Size = e.Size;
             base.OnResize(e);
         }
 

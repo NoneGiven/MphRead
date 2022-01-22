@@ -221,7 +221,7 @@ namespace MphRead.Entities.Enemies
 
         public void UpdateAttached(PlayerEntity player)
         {
-            Vector3 position = player.Position + player.FacingVector / 2; // todo: use camera info pos
+            Vector3 position = player.CameraInfo.Position + player.FacingVector / 2;
             SetTransform(-player.FacingVector, UpVector, position);
         }
 
@@ -327,7 +327,7 @@ namespace MphRead.Entities.Enemies
 
         private void State01()
         {
-            Func216469C(_scene.CameraPosition, PlayerEntity.Main.Position, sign: 1);
+            Func216469C(PlayerEntity.Main.Position, Position, sign: 1);
             State02();
         }
 
@@ -422,7 +422,7 @@ namespace MphRead.Entities.Enemies
                 AnimationInfo animInfo = _models[0].AnimInfo;
                 int frameCount = animInfo.FrameCount[0];
                 int animFrame = animInfo.Frame[0];
-                Vector3 cameraPos = playerPos; // todo: use player camera info
+                Vector3 cameraPos = PlayerEntity.Main.CameraInfo.Position;
                 Vector3 postion = (playerPos.AddY(0.625f) * (frameCount - animFrame) + (cameraPos + playerFacing / 2) * animFrame) / frameCount;
                 SetTransform(facing.Normalized(), UpVector, postion);
             }
@@ -524,8 +524,8 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
-            Vector3 between = _scene.CameraPosition - Position;
-            return between.LengthSquared < 42.25f;
+            Vector3 between = PlayerEntity.Main.Position - Position;
+            return between.LengthSquared < 6.5f * 6.5f;
         }
 
         private bool Behavior06()
