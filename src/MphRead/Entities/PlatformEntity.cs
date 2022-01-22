@@ -166,7 +166,7 @@ namespace MphRead.Entities
             _moveTimer = _delay;
             _recoilTimer = 0;
             _forwardSpeed = data.ForwardSpeed.FloatValue / 2f; // todo: FPS stuff
-            _backwardSpeed = data.ForwardSpeed.FloatValue / 2f; // todo: FPS stuff
+            _backwardSpeed = data.BackwardSpeed.FloatValue / 2f; // todo: FPS stuff
             UpdatePosition();
             _animFlags |= PlatAnimFlags.Draw;
             // todo: room state
@@ -696,8 +696,15 @@ namespace MphRead.Entities
             else
             {
                 float distance = velocity.Length;
-                _moveTimer = (int)(distance / speed);
-                factor = speed / distance;
+                if (distance == 0)
+                {
+                    factor = 0; // skdebug
+                }
+                else
+                {
+                    _moveTimer = (int)(distance / speed);
+                    factor = speed / distance;
+                }
             }
             _velocity = velocity * factor;
             _toRotation = _rotList[_toIndex];
