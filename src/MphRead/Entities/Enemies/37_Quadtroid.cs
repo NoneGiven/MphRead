@@ -46,7 +46,6 @@ namespace MphRead.Entities.Enemies
             SetTransform(facing, up.Normalized(), position);
             _prevPos = position;
             _boundingRadius = 0.25f;
-            _drawScale = 1.5f;
             _health = _healthMax = 120;
             _prevHealth = _health;
             _hurtVolumeInit = new CollisionVolume(_spawner.Data.Fields.S00.Volume0);
@@ -1061,7 +1060,20 @@ namespace MphRead.Entities.Enemies
                     materials[i].Lighting = 0;
                 }
             }
+            Matrix4 transform = Transform;
+            Matrix4 scaleTransform = Transform;
+            scaleTransform.Row0.X *= 1.5f;
+            scaleTransform.Row0.Y *= 1.5f;
+            scaleTransform.Row0.Z *= 1.5f;
+            scaleTransform.Row1.X *= 1.5f;
+            scaleTransform.Row1.Y *= 1.5f;
+            scaleTransform.Row1.Z *= 1.5f;
+            scaleTransform.Row2.X *= 1.5f;
+            scaleTransform.Row2.Y *= 1.5f;
+            scaleTransform.Row2.Z *= 1.5f;
+            Transform = scaleTransform;
             DrawGeneric();
+            Transform = transform;
             if (_state1 == 11)
             {
                 for (int i = 0; i < materials.Count; i++)

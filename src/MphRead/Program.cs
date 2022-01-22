@@ -401,7 +401,7 @@ namespace MphRead
                             }
                             else
                             {
-                                IEnumerable<RoomMetadata> rooms = Metadata.RoomMetadata.Values;
+                                IReadOnlyList<RoomMetadata> rooms = Metadata.RoomList;
                                 RoomMetadata? meta = rooms.FirstOrDefault(r => r.Name.ToLower() == input);
                                 if (meta == null)
                                 {

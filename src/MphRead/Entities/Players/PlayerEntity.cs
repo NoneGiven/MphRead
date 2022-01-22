@@ -255,6 +255,8 @@ namespace MphRead.Entities
 
         private Vector3 _facingVector;
         private Vector3 _upVector;
+        public override Vector3 FacingVector => _facingVector;
+        public override Vector3 UpVector => _upVector;
         private Vector3 _gunVec1; // facing? (aim?)
         private Vector3 _gunVec2; // right? (turn?)
         private Vector3 _aimPosition;
