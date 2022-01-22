@@ -39,8 +39,15 @@ namespace MphRead.Entities.Enemies
             };
         }
 
+        private static readonly int[] _recolors = new int[11]
+        {
+            0, 1, 0, 4, 0, 3, 2, 0, 0, 0, 0
+        };
+
         protected override bool EnemyInitialize()
         {
+            int version = (int)_spawner.Data.Fields.S06.EnemyVersion;
+            Recolor = _recolors[version];
             Flags |= EnemyFlags.Visible;
             Flags |= EnemyFlags.Invincible;
             Flags |= EnemyFlags.OnRadar;
@@ -52,15 +59,14 @@ namespace MphRead.Entities.Enemies
             _boundingRadius = 1;
             _hurtVolumeInit = new CollisionVolume(new Vector3(0, Fixed.ToFloat(13516), Fixed.ToFloat(11059)), 0.5f);
             ModelInstance inst = SetUpModel("LavaDemon", animIndex: 1, AnimFlags.Paused);
-            Recolor = (int)_spawner.Data.Fields.S06.EnemySubtype;
-            Values = Metadata.Enemy39Values[Recolor];
+            Values = Metadata.Enemy39Values[(int)_spawner.Data.Fields.S06.EnemySubtype];
             _health = _healthMax = Values.HealthMax;
             _animFrameCount = inst.AnimInfo.FrameCount[0]; // just set to get the frame count, I guess
             _activeVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume2, Position);
             _locationVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume1, Position);
             Metadata.LoadEffectiveness(Values.Effectiveness, BeamEffectiveness);
             // todo: scan ID
-            WeaponInfo weapon = Weapons.EnemyWeapons[(int)_spawner.Data.Fields.S06.EnemyVersion];
+            WeaponInfo weapon = Weapons.EnemyWeapons[version];
             weapon.UnchargedDamage = Values.BeamDamage;
             weapon.SplashDamage = Values.SplashDamage;
             _equipInfo[0] = new EquipInfo(weapon, _beams);
@@ -74,7 +80,7 @@ namespace MphRead.Entities.Enemies
             // todo: healthbar name
             if (_spawner.Data.Fields.S06.EnemySubtype == 1)
             {
-                inst.Model.Materials[0].Ambient = new ColorRgb(18, 27, 31);
+                inst.Model.Materials[0].Ambient = new ColorRgb(18, 27, 31); // should really be based on version/texture
             }
             inst.SetAnimation(3, AnimFlags.Paused);
             _wristNodeL = inst.Model.GetNodeByName("Wrist_L");

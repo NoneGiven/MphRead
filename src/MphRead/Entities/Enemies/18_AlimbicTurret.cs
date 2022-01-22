@@ -44,9 +44,15 @@ namespace MphRead.Entities.Enemies
             };
         }
 
+        private static readonly int[] _recolors = new int[11]
+        {
+            0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1
+        };
+
         protected override bool EnemyInitialize()
         {
-            Recolor = (int)_spawner.Data.Fields.S06.EnemySubtype;
+            int version = (int)_spawner.Data.Fields.S06.EnemyVersion;
+            Recolor = _recolors[version];
             Vector3 facing = _spawner.FacingVector;
             SetTransform(facing, _spawner.UpVector, _spawner.Position);
             ModelInstance inst = SetUpModel(Metadata.EnemyModelNames[18]);
@@ -54,7 +60,7 @@ namespace MphRead.Entities.Enemies
             Flags |= EnemyFlags.OnRadar;
             _boundingRadius = 1;
             _hurtVolumeInit = new CollisionVolume(_spawner.Data.Fields.S06.Volume0);
-            _values = Metadata.Enemy18Values[Recolor];
+            _values = Metadata.Enemy18Values[(int)_spawner.Data.Fields.S06.EnemySubtype];
             _health = _healthMax = _values.HealthMax;
             Metadata.LoadEffectiveness(_values.Effectiveness, BeamEffectiveness);
             // todo: scan ID
@@ -66,7 +72,7 @@ namespace MphRead.Entities.Enemies
             _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
             _initialFacing = facing;
             _aimVec = facing;
-            WeaponInfo weapon = Weapons.EnemyWeapons[(int)_spawner.Data.Fields.S06.EnemyVersion];
+            WeaponInfo weapon = Weapons.EnemyWeapons[version];
             weapon.UnchargedDamage = _values.BeamDamage;
             weapon.SplashDamage = _values.SplashDamage;
             _equipInfo = new EquipInfo(weapon, _beams);

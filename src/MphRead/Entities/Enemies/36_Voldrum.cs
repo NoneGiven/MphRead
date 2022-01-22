@@ -23,11 +23,17 @@ namespace MphRead.Entities.Enemies
             };
         }
 
+        private static readonly int[] _recolors = new int[11]
+        {
+            0, 1, 0, 4, 0, 3, 2, 0, 0, 0, 0
+        };
+
         // todo: share code (pass header values common with S00)
         protected override void Setup()
         {
-            Recolor = (int)_spawner.Data.Fields.S06.EnemySubtype;
-            _values = Metadata.Enemy36Values[Recolor];
+            int version = (int)_spawner.Data.Fields.S06.EnemyVersion;
+            Recolor = _recolors[version];
+            _values = Metadata.Enemy36Values[(int)_spawner.Data.Fields.S06.EnemySubtype];
             Vector3 facing = _spawner.Data.Header.FacingVector.ToFloatVector().Normalized();
             SetTransform(facing, Vector3.UnitY, _spawner.Data.Header.Position.ToFloatVector());
             Flags |= EnemyFlags.Visible;
@@ -39,7 +45,7 @@ namespace MphRead.Entities.Enemies
             _health = _healthMax = _values.HealthMax;
             Metadata.LoadEffectiveness(_values.Effectiveness, BeamEffectiveness);
             // todo: scan ID
-            WeaponInfo weapon = Weapons.EnemyWeapons[(int)_spawner.Data.Fields.S06.EnemyVersion];
+            WeaponInfo weapon = Weapons.EnemyWeapons[version];
             weapon.UnchargedDamage = _values.BeamDamage;
             weapon.SplashDamage = _values.SplashDamage;
             _equipInfo1 = new EquipInfo(weapon, _beams);
