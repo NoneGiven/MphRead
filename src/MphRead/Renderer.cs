@@ -2161,8 +2161,6 @@ namespace MphRead
                     _destroyedEntities.Add(entity);
                 }
             }
-
-            ProcessEffects();
         }
 
         private void GetDrawItems()
@@ -2208,6 +2206,11 @@ namespace MphRead
             {
                 EntityBase entity = _destroyedEntities[i];
                 RemoveEntity(entity);
+            }
+
+            if (ProcessFrame)
+            {
+                ProcessEffects();
             }
 
             for (int i = 0; i < _activeElements.Count; i++)
