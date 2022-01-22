@@ -128,7 +128,8 @@ namespace MphRead.Entities
             {
                 if (Target != null)
                 {
-                    Position = Target.Position;
+                    Target.GetPosition(out Vector3 targetPos);
+                    Position = targetPos;
                 }
                 else
                 {
@@ -1359,7 +1360,7 @@ namespace MphRead.Entities
             ushort speedInterpolation = weapon.SpeedInterpolations[charged ? 1 : 0];
             float gravity = GetAmount(weapon.UnchargedGravity, weapon.MinChargeGravity, weapon.ChargedGravity) / 4096f;
             Vector3 acceleration = new Vector3(0, gravity, 0) / 2;
-            float homing = GetAmount(weapon.UnchargedHoming, weapon.MinChargeHoming, weapon.ChargedHoming);
+            float homing = GetAmount(weapon.UnchargedHoming, weapon.MinChargeHoming, weapon.ChargedHoming) / 4096f / 2;
             if (homing > 0)
             {
                 flags |= BeamFlags.Homing;
