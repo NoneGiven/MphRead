@@ -17,7 +17,7 @@ namespace MphRead.Entities
         private bool _bool3 = false; // todo: names
         private bool _bool4 = false;
         private readonly bool[] _triggeredSlots = new bool[4] { true, true, true, true };
-        private int _targetRoomId = -1; // todo: this
+        private readonly int _targetRoomId = -1;
         private NodeRef _targetNodeRef = NodeRef.None;
 
         // used for invisible teleporters
@@ -53,6 +53,18 @@ namespace MphRead.Entities
                 ModelInstance inst = SetUpModel(modelName);
                 inst.SetAnimation(2, AnimFlags.NoLoop | AnimFlags.Reverse);
 
+            }
+            string? roomName = data.TargetRoom.MarshalString();
+            if (roomName != null)
+            {
+                for (int i = 0; i < Metadata.RoomList.Count; i++)
+                {
+                    RoomMetadata meta = Metadata.RoomList[i];
+                    if (meta.EntityPath != null && meta.EntityPath.Split('\\')[^1].StartsWith(roomName))
+                    {
+                        _targetRoomId = meta.Id;
+                    }
+                }
             }
             // todo: use room state/artifact bits/etc. to determine active state
             Active = data.Active != 0;
@@ -141,7 +153,7 @@ namespace MphRead.Entities
                     if (CollisionDetection.CheckCylinderOverlapSphere(player.PrevPosition, player.Volume.SpherePosition,
                         testPos, 1.75f, ref discard))
                     {
-                        if (!_triggeredSlots[player.SlotIndex])
+                        if (!_triggeredSlots[player.SlotIndex] && _targetRoomId == -1) // skdebug
                         {
                             float radius = _big ? 1.5f : 1;
                             if (CollisionDetection.CheckCylinderOverlapSphere(player.PrevPosition, player.Volume.SpherePosition,
