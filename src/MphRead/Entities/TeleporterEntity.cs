@@ -66,6 +66,20 @@ namespace MphRead.Entities
                     }
                 }
             }
+            // skdebug
+            if (roomName == "Gorea_Land_Ent.")
+            {
+                if (Id == 6)
+                {
+                    _targetRoomId = -1;
+                    _targetPos = new Vector3(0.064697266f, 1.1169434f, 28.408691f);
+                }
+                else if (Id == 7)
+                {
+                    _targetRoomId = -1;
+                    _targetPos = new Vector3(-7.100342f, -1f, -22.510742f);
+                }
+            }
             // todo: use room state/artifact bits/etc. to determine active state
             Active = data.Active != 0;
             // 0-7 = big teleporter using the corresponding artifact model

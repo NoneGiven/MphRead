@@ -331,6 +331,11 @@ namespace MphRead
             return Room?.GetNodeRefByName(nodeName) ?? NodeRef.None;
         }
 
+        public NodeRef GetNodeRefByPosition(Vector3 position)
+        {
+            return Room?.GetNodeRefByPosition(position) ?? NodeRef.None;
+        }
+
         public void OnLoad()
         {
             GL.ClearColor(_clearColor);

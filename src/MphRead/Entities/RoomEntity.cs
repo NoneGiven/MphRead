@@ -14,6 +14,7 @@ namespace MphRead.Entities
     {
         public CollisionInstance RoomCollision { get; }
         private readonly IReadOnlyList<Portal> _portals = new List<Portal>();
+        private readonly List<List<(Portal Portal, bool OtherSide)>> _portalSides = new List<List<(Portal, bool)>>();
         private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
         private IReadOnlyList<Node> Nodes => _models[0].Model.Nodes;
         private readonly RoomMetadata _meta;
@@ -76,6 +77,7 @@ namespace MphRead.Entities
                     if (parts.Contains(node.Name))
                     {
                         node.RoomPartId = partId++;
+                        _portalSides.Add(new List<(Portal, bool)>());
                     }
                 }
                 foreach (Portal portal in portals)
@@ -88,12 +90,14 @@ namespace MphRead.Entities
                             Debug.Assert(node.RoomPartId >= 0);
                             Debug.Assert(node.ChildIndex != -1);
                             portal.NodeRef1 = new NodeRef(node.RoomPartId, node.ChildIndex);
+                            _portalSides[node.RoomPartId].Add((portal, false));
                         }
                         if (node.Name == portal.NodeName2)
                         {
                             Debug.Assert(node.RoomPartId >= 0);
                             Debug.Assert(node.ChildIndex != -1);
                             portal.NodeRef2 = new NodeRef(node.RoomPartId, node.ChildIndex);
+                            _portalSides[node.RoomPartId].Add((portal, true));
                         }
                     }
                 }
@@ -472,6 +476,36 @@ namespace MphRead.Entities
                     Debug.Assert(node.RoomPartId >= 0);
                     Debug.Assert(node.ChildIndex != -1);
                     return new NodeRef(node.RoomPartId, node.ChildIndex);
+                }
+            }
+            return NodeRef.None;
+        }
+
+        public NodeRef GetNodeRefByPosition(Vector3 position)
+        {
+            for (int i = 0; i < _portalSides.Count; i++)
+            {
+                NodeRef result = NodeRef.None;
+                bool allInside = true;
+                List<(Portal Portal, bool OtherSide)> partSides = _portalSides[i];
+                for (int j = 0; j < partSides.Count; j++)
+                {
+                    (Portal portal, bool otherSide) = partSides[j];
+                    float dist = Vector3.Dot(position, portal.Plane.Xyz) - portal.Plane.W;
+                    if (otherSide)
+                    {
+                        dist *= -1;
+                    }
+                    if (dist < 0)
+                    {
+                        allInside = false;
+                        break;
+                    }
+                    result = otherSide ? portal.NodeRef2 : portal.NodeRef1;
+                }
+                if (allInside)
+                {
+                    return result;
                 }
             }
             return NodeRef.None;
