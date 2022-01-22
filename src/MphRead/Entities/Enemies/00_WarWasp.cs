@@ -368,7 +368,7 @@ namespace MphRead.Entities.Enemies
         private bool Behavior10()
         {
             CollisionResult res = default;
-            if (!CollisionDetection.CheckBetweenPoints(Position, _scene.CameraPosition, TestFlags.None, _scene, ref res))
+            if (!CollisionDetection.CheckBetweenPoints(Position, PlayerEntity.Main.Position, TestFlags.None, _scene, ref res))
             {
                 return false;
             }

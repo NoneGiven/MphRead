@@ -524,8 +524,8 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
-            Vector3 between = _scene.CameraPosition - Position;
-            return between.LengthSquared < 42.25f;
+            Vector3 between = PlayerEntity.Main.Position - Position;
+            return between.LengthSquared < 6.5f * 6.5f;
         }
 
         private bool Behavior06()
