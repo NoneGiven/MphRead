@@ -1650,6 +1650,7 @@ namespace MphRead.Entities
 
         private PlayerSpawnEntity? GetRespawnPoint()
         {
+            Debug.Assert(_scene.Room != null);
             PlayerSpawnEntity? chosenSpawn = null;
             int limit = 0;
             var valid = new List<PlayerSpawnEntity>();
@@ -1666,7 +1667,7 @@ namespace MphRead.Entities
                 }
                 var candidate = (PlayerSpawnEntity)spawn;
                 // skdebug - 1P spawns
-                if ((candidate.IsActive || !_scene.Room!.Metadata.Multiplayer) && candidate.Cooldown == 0
+                if ((candidate.IsActive || !_scene.Room.Metadata.Multiplayer) && candidate.Cooldown == 0
                     && (_scene.FrameCount > 0 || !candidate.Availability))
                 {
                     // todo: if CTF mode, check team index
