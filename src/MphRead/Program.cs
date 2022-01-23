@@ -120,6 +120,7 @@ namespace MphRead
             int roomId = 95;
             string room = "Combat Hall";
             string roomKey = "MP3 PROVING GROUND";
+            bool fhRoom = false;
             var players = new List<(string Hunter, string Recolor)>()
             {
                 ("Samus", "0"), ("none", "0"), ("none", "0"), ("none", "0")
@@ -255,21 +256,27 @@ namespace MphRead
                         if (selection == 0)
                         {
                             roomId++;
-                            if (roomId > 130)
-                            {
-                                roomId = -1;
-                            }
-                            RoomMetadata? meta = Metadata.GetRoomById(roomId);
-                            if (meta != null)
-                            {
-                                room = meta.InGameName ?? meta.Name;
-                                roomKey = meta.Name;
-                            }
-                            else
+                            if (roomId > 137)
                             {
                                 roomId = -1;
                                 room = "none";
                                 roomKey = "none";
+                            }
+                            else
+                            {
+                                RoomMetadata? meta = Metadata.GetRoomById(roomId);
+                                if (meta != null)
+                                {
+                                    room = meta.InGameName ?? meta.Name;
+                                    roomKey = meta.Name;
+                                    fhRoom = meta.FirstHunt;
+                                }
+                                else
+                                {
+                                    roomId = -1;
+                                    room = "none";
+                                    roomKey = "none";
+                                }
                             }
                         }
                         else if (selection == 1)
@@ -321,19 +328,28 @@ namespace MphRead
                             roomId--;
                             if (roomId < -1)
                             {
-                                roomId = 130;
+                                roomId = 137;
                             }
-                            RoomMetadata? meta = Metadata.GetRoomById(roomId);
-                            if (meta != null)
+                            if (roomId == -1)
                             {
-                                room = meta.InGameName ?? meta.Name;
-                                roomKey = meta.Name;
+                                room = "none";
+                                roomKey = "none";
                             }
                             else
                             {
-                                roomId = -1;
-                                room = "none";
-                                roomKey = "none";
+                                RoomMetadata? meta = Metadata.GetRoomById(roomId);
+                                if (meta != null)
+                                {
+                                    room = meta.InGameName ?? meta.Name;
+                                    roomKey = meta.Name;
+                                    fhRoom = meta.FirstHunt;
+                                }
+                                else
+                                {
+                                    roomId = -1;
+                                    room = "none";
+                                    roomKey = "none";
+                                }
                             }
                         }
                         else if (selection == 1)
@@ -397,6 +413,7 @@ namespace MphRead
                                     roomId = id;
                                     room = meta.InGameName ?? meta.Name;
                                     roomKey = meta.Name;
+                                    fhRoom = meta.FirstHunt;
                                 }
                             }
                             else
@@ -417,6 +434,7 @@ namespace MphRead
                                     roomId = meta.Id;
                                     room = meta.InGameName ?? meta.Name;
                                     roomKey = meta.Name;
+                                    fhRoom = meta.FirstHunt;
                                 }
                             }
                         }
@@ -502,12 +520,15 @@ namespace MphRead
             using var renderer = new RenderWindow();
             if (room != "none")
             {
-                for (int i = 0; i < players.Count; i++)
+                if (!fhRoom)
                 {
-                    (string hunter, string recolor) = players[i];
-                    if (hunter != "none")
+                    for (int i = 0; i < players.Count; i++)
                     {
-                        renderer.AddPlayer(Enum.Parse<Hunter>(hunter), Int32.Parse(recolor));
+                        (string hunter, string recolor) = players[i];
+                        if (hunter != "none")
+                        {
+                            renderer.AddPlayer(Enum.Parse<Hunter>(hunter), Int32.Parse(recolor));
+                        }
                     }
                 }
                 GameMode gameMode = GameMode.None;
