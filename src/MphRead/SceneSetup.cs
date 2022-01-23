@@ -4,6 +4,7 @@ using System.IO;
 using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
+using MphRead.Hud;
 
 namespace MphRead
 {
@@ -420,6 +421,7 @@ namespace MphRead
             // skdebug - the game only loads these if the Omega Cannon item is in the room
             scene.LoadEffect(209); // ultimateProjectile
             scene.LoadEffect(245); // ultimateCol
+            scene.IceLayerBindingId = HudInfo.CharMapToTexture(HudElements.IceLayer, scene);
         }
 
         public static void LoadObjectResources(Scene scene)

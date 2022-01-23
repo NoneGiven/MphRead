@@ -828,6 +828,22 @@ namespace MphRead
             return onlyOpaque;
         }
 
+        public int BindGetTexture(IReadOnlyList<ColorRgba> data, int width, int height)
+        {
+            _textureCount++;
+            var pixels = new List<uint>();
+            for (int i = 0; i < data.Count; i++)
+            {
+                ColorRgba pixel = data[i];
+                pixels.Add(pixel.ToUint());
+            }
+            GL.BindTexture(TextureTarget.Texture2D, _textureCount);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
+                PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            return _textureCount;
+        }
+
         public void UpdateMaterials(Model model, int recolorId)
         {
             for (int i = 0; i < model.Materials.Count; i++)
@@ -1086,6 +1102,11 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
+
+            if (DrawIceLayer && CameraMode == CameraMode.Player)
+            {
+                DrawIceLayerTris();
+            }
         }
 
         private void LoadAndUnload()
@@ -2732,6 +2753,64 @@ namespace MphRead
                 GL.Vertex3(vertex3);
                 GL.End();
             }
+        }
+
+        public int IceLayerBindingId { get; set; } = -1;
+        public bool DrawIceLayer { get; set; }
+
+        private void DrawIceLayerTris()
+        {
+            // todo: if BG 3 is shifted, we need this quad to be bigger than the viewport so it can shift appropriately
+            Debug.Assert(IceLayerBindingId != -1);
+            GL.Disable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.Blend);
+            Matrix4 identity = Matrix4.Identity;
+            GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref identity);
+            GL.UniformMatrix4(_shaderLocations.ViewInvMatrix, transpose: false, ref identity);
+            GL.Uniform1(_shaderLocations.UseLight, 0);
+            GL.Color3(Vector3.One);
+            GL.Uniform3(_shaderLocations.Diffuse, Vector3.One);
+            GL.Uniform3(_shaderLocations.Ambient, Vector3.One);
+            GL.Uniform3(_shaderLocations.Specular, Vector3.One);
+            GL.Uniform3(_shaderLocations.Emission, Vector3.One);
+            GL.Uniform1(_shaderLocations.MaterialAlpha, 9 / 16f);
+            GL.Uniform1(_shaderLocations.MaterialMode, (int)PolygonMode.Modulate);
+            GL.BindTexture(TextureTarget.Texture2D, IceLayerBindingId);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            GL.Uniform1(_shaderLocations.TexgenMode, (int)TexgenMode.None);
+            GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref identity);
+            GL.Uniform1(_shaderLocations.UseTexture, 1);
+            GL.Uniform1(_shaderLocations.UseOverride, 0);
+            GL.Uniform1(_shaderLocations.UsePaletteOverride, 0);
+            GL.Enable(EnableCap.CullFace);
+            GL.CullFace(CullFaceMode.Back);
+            GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
+            GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref identity);
+            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
+            float width = viewport.Z - viewport.X;
+            float height = viewport.W - viewport.Y;
+            var orthoMatrix = Matrix4.CreateOrthographic(width, height, 0.5f, 1.5f);
+            GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref orthoMatrix);
+            float size = MathF.Max(width, height) / 2;
+            GL.Begin(PrimitiveType.TriangleStrip);
+            GL.TexCoord3(0f, 0f, 0f);
+            GL.Vertex3(-size, -size, -1f);
+            GL.TexCoord3(1f, 0f, 0f);
+            GL.Vertex3(size, -size, -1f);
+            GL.TexCoord3(0f, 1f, 0f);
+            GL.Vertex3(-size, size, -1f);
+            GL.TexCoord3(1f, 1f, 0f);
+            GL.Vertex3(size, size, -1f);
+            GL.End();
+            GL.Disable(EnableCap.Blend);
+            GL.Enable(EnableCap.DepthTest);
         }
 
         private void DoMaterial(RenderItem item)

@@ -41,6 +41,7 @@ namespace MphRead.Entities
             _prevTransform = Transform;
             UpdateVisiblePosition();
             _flags = data.Flags;
+            _state = (int)(data.Flags & ObjectFlags.State);
             // todo: room state affecting animation ID
             _flags &= ~ObjectFlags.NoAnimation;
             _flags &= ~ObjectFlags.IsVisible;

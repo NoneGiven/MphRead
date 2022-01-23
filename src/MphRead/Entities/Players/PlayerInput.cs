@@ -53,7 +53,7 @@ namespace MphRead.Entities
                     _frozenGfxTimer--;
                     if (IsMainPlayer && _frozenGfxTimer == 0)
                     {
-                        // todo: update HUD
+                        _scene.DrawIceLayer = false;
                     }
                 }
                 if (_timeSinceFrozen != UInt16.MaxValue)

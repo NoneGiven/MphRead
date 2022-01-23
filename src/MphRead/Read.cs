@@ -1051,6 +1051,11 @@ namespace MphRead
             return DoOffsets<T>(bytes, offset, 1)[0];
         }
 
+        public static IReadOnlyList<T> DoOffsets<T>(ReadOnlySpan<byte> bytes, int offset, int count) where T : struct
+        {
+            return DoOffsets<T>(bytes, (uint)offset, count);
+        }
+
         public static IReadOnlyList<T> DoOffsets<T>(ReadOnlySpan<byte> bytes, int offset, uint count) where T : struct
         {
             return DoOffsets<T>(bytes, (uint)offset, (int)count);
