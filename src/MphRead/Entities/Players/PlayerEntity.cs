@@ -718,7 +718,6 @@ namespace MphRead.Entities
                 }
                 CameraInfo.Reset();
                 CameraInfo.Position = Position;
-                CameraInfo.PrevPosition = Position;
                 CameraInfo.UpVector = Vector3.UnitY;
                 CameraInfo.Target = Position + facing;
                 CameraInfo.Fov = Fixed.ToFloat(Values.NormalFov) * 2;

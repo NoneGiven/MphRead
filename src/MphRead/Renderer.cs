@@ -3987,7 +3987,7 @@ namespace MphRead
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            CursorGrabbed = Scene.CameraMode == CameraMode.Player;
+            CursorGrabbed = Scene.CameraMode == CameraMode.Player && !Scene.FrameAdvance;
             if (!CursorGrabbed)
             {
                 CursorVisible = true;

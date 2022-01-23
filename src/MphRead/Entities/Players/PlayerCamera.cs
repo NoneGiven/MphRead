@@ -564,7 +564,7 @@ namespace MphRead.Entities
             if (CollisionDetection.CheckBetweenPoints(camTarget, CameraInfo.Position, TestFlags.Players, _scene, ref result))
             {
                 Vector3 toTarget = CameraInfo.Position - camTarget;
-                CameraInfo.Position = CameraInfo.Target + toTarget * result.Distance;
+                CameraInfo.Position = camTarget + toTarget * result.Distance;
                 CameraInfo.Position += 0.15f * result.Plane.Xyz;
             }
         }
@@ -726,7 +726,6 @@ namespace MphRead.Entities
                 CameraInfo.Position.X -= _field80 * Fixed.ToFloat(Values.Field78);
                 CameraInfo.Position.Z -= _field84 * Fixed.ToFloat(Values.Field78);
                 _field544 = CameraInfo.Position;
-                CameraInfo.PrevPosition = CameraInfo.Position;
                 CameraInfo.Target.Y += Fixed.ToFloat(Values.Field80);
             }
             else
@@ -736,7 +735,6 @@ namespace MphRead.Entities
                 CameraInfo.Target = Position.AddY(_field68C + Fixed.ToFloat(Values.AltColYPos));
                 CameraInfo.Position = CameraInfo.Target - _facingVector * _field690;
                 _field544 = CameraInfo.Position;
-                CameraInfo.PrevPosition = CameraInfo.Position;
             }
         }
     }

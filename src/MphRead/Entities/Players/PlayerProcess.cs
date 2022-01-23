@@ -47,13 +47,13 @@ namespace MphRead.Entities
             {
                 Controls.ClearAll();
             }
+            PrevPosition = Position;
+            PrevSpeed = Speed;
+            Flags1 &= ~PlayerFlags1.AltFormPrevious;
             if (Flags1.TestFlag(PlayerFlags1.AltForm))
             {
                 Flags1 |= PlayerFlags1.AltFormPrevious;
             }
-            PrevPosition = Position;
-            CameraInfo.PrevPosition = CameraInfo.Position;
-            PrevSpeed = Speed;
             Flags1 &= ~PlayerFlags1.MovingBiped;
             Flags1 &= ~PlayerFlags1.ShotCharged;
             Flags1 &= ~PlayerFlags1.ShotMissile;
