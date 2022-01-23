@@ -3155,7 +3155,7 @@ namespace MphRead
                         _outputCameraPos = !_outputCameraPos;
                     }
                 }
-                else if (_cameraMode != CameraMode.Player)
+                else if (e.Control)
                 {
                     _showColors = !_showColors;
                 }
@@ -3181,7 +3181,7 @@ namespace MphRead
                         }
                     }
                 }
-                else if (_cameraMode != CameraMode.Player)
+                else if (e.Control)
                 {
                     _wireframe = !_wireframe;
                 }
