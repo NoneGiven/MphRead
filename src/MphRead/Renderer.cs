@@ -1105,7 +1105,7 @@ namespace MphRead
 
             if (DrawIceLayer && CameraMode == CameraMode.Player)
             {
-                DrawIceLayerTris();
+                DrawHudLayer(IceLayerBindingId);
             }
         }
 
@@ -2758,10 +2758,10 @@ namespace MphRead
         public int IceLayerBindingId { get; set; } = -1;
         public bool DrawIceLayer { get; set; }
 
-        private void DrawIceLayerTris()
+        private void DrawHudLayer(int bindingId)
         {
             // todo: if BG 3 is shifted, we need this quad to be bigger than the viewport so it can shift appropriately
-            Debug.Assert(IceLayerBindingId != -1);
+            Debug.Assert(bindingId != -1);
             GL.Disable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
             Matrix4 identity = Matrix4.Identity;
@@ -2775,7 +2775,7 @@ namespace MphRead
             GL.Uniform3(_shaderLocations.Emission, Vector3.One);
             GL.Uniform1(_shaderLocations.MaterialAlpha, 9 / 16f);
             GL.Uniform1(_shaderLocations.MaterialMode, (int)PolygonMode.Modulate);
-            GL.BindTexture(TextureTarget.Texture2D, IceLayerBindingId);
+            GL.BindTexture(TextureTarget.Texture2D, bindingId);
             int minParameter = (int)TextureMinFilter.Nearest;
             int magParameter = (int)TextureMagFilter.Nearest;
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
