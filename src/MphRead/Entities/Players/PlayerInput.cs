@@ -53,7 +53,7 @@ namespace MphRead.Entities
                     _frozenGfxTimer--;
                     if (IsMainPlayer && _frozenGfxTimer == 0)
                     {
-                        _scene.DrawIceLayer = false;
+                        _drawIceLayer = false;
                     }
                 }
                 if (_timeSinceFrozen != UInt16.MaxValue)

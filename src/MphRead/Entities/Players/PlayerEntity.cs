@@ -382,6 +382,7 @@ namespace MphRead.Entities
         private ushort _deathaltTimer = 0;
         private ushort _frozenTimer = 0;
         private ushort _frozenGfxTimer = 0;
+        private bool _drawIceLayer = false;
         private ushort _disruptedTimer = 0;
         private ushort _burnTimer = 0;
         private ushort _timeSinceFrozen = 0;
@@ -667,6 +668,7 @@ namespace MphRead.Entities
             _frozenTimer = 0;
             _timeSinceFrozen = 255;
             _frozenGfxTimer = 0;
+            _drawIceLayer = false;
             _hidingTimer = 0;
             _curAlpha = 1;
             _targetAlpha = 1;
@@ -1562,7 +1564,7 @@ namespace MphRead.Entities
                     // todo: license info, update HUD to end disrupt
                     if (_frozenGfxTimer > 0)
                     {
-                        _scene.DrawIceLayer = false;
+                        _drawIceLayer = false;
                     }
                 }
                 _frozenTimer = 0;
@@ -1719,7 +1721,7 @@ namespace MphRead.Entities
                             // todo: play SFX
                             if (IsMainPlayer)
                             {
-                                _scene.DrawIceLayer = true;
+                                _drawIceLayer = true;
                             }
                             if (_frozenTimer == 0)
                             {

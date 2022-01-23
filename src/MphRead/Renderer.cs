@@ -1103,9 +1103,12 @@ namespace MphRead
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
 
-            if (DrawIceLayer && CameraMode == CameraMode.Player)
+            PlayerEntity.Main.UpdateHud();
+            if (CameraMode == CameraMode.Player)
             {
-                DrawHudLayer(IceLayerBindingId);
+                DrawHudLayer(Layer3BindingId);
+                DrawHudLayer(Layer1BindingId);
+                DrawHudLayer(Layer2BindingId);
             }
         }
 
@@ -2755,13 +2758,20 @@ namespace MphRead
             }
         }
 
+        public int Layer1BindingId { get; set; } = -1;
+        public int Layer2BindingId { get; set; } = -1;
+        public int Layer3BindingId { get; set; } = -1;
+
         public int IceLayerBindingId { get; set; } = -1;
-        public bool DrawIceLayer { get; set; }
 
         private void DrawHudLayer(int bindingId)
         {
-            // todo: if BG 3 is shifted, we need this quad to be bigger than the viewport so it can shift appropriately
-            Debug.Assert(bindingId != -1);
+            if (bindingId == -1)
+            {
+                return;
+            }
+            // todo: if BG layer is shifted, we need this quad to be bigger than the viewport so it can shift appropriately
+            // tood: allow this to be affected by viewer toggles
             GL.Disable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
             Matrix4 identity = Matrix4.Identity;
