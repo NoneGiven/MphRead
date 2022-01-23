@@ -800,8 +800,8 @@ namespace MphRead.Entities
                                 animFlags = AnimFlags.Reverse;
                                 if (_altModel.AnimInfo.Index[0] == animId)
                                 {
-                                    _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
-                                    _bipedModel2.AnimInfo.Flags[0] |= AnimFlags.Reverse;
+                                    _altModel.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                    _altModel.AnimInfo.Flags[0] |= AnimFlags.Reverse;
                                 }
                             }
                             else if (aimX < -3)
@@ -810,8 +810,8 @@ namespace MphRead.Entities
                                 animId = (int)WeavelAltAnim.Turn; // or TraceAltAnim.MoveBackward
                                 if (_altModel.AnimInfo.Index[0] == animId)
                                 {
-                                    _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
-                                    _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
+                                    _altModel.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                    _altModel.AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
                                 }
                             }
                         }
