@@ -1118,7 +1118,7 @@ namespace MphRead.Editor
         public short Entity2 { get; set; }
         public short EndMessageTargetId { get; set; }
         public Message EndMessage { get; set; }
-        public uint EndMessageParam { get; set; }
+        public int EndMessageParam { get; set; }
 
         public CameraSequenceEntityEditor(Entity header, CameraSequenceEntityData raw) : base(header)
         {
