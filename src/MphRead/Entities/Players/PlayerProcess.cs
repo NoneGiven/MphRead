@@ -223,7 +223,7 @@ namespace MphRead.Entities
                 {
                     int effectId = 181; // deathBall
                     _deathaltEffect = _scene.SpawnEffectGetEntry(effectId, Vector3.UnitX, Vector3.UnitY, _volume.SpherePosition);
-                    _deathaltEffect.SetElementExtension(true);
+                    _deathaltEffect?.SetElementExtension(true);
                 }
                 else
                 {
@@ -795,7 +795,7 @@ namespace MphRead.Entities
                             else
                             {
                                 _doubleDmgEffect = _scene.SpawnEffectGetEntry(244, _upVector, _gunVec1, _muzzlePos); // doubleDamageGun
-                                _doubleDmgEffect.SetElementExtension(true);
+                                _doubleDmgEffect?.SetElementExtension(true);
                             }
                         }
                         else if (_doubleDmgEffect != null)
@@ -1576,7 +1576,7 @@ namespace MphRead.Entities
                     effectId = 188; // flamingGun
                 }
                 _burnEffect = _scene.SpawnEffectGetEntry(effectId, facing, up, position);
-                _burnEffect.SetElementExtension(true);
+                _burnEffect?.SetElementExtension(true);
             }
         }
 

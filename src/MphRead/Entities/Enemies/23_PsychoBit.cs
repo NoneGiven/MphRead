@@ -199,7 +199,7 @@ namespace MphRead.Entities.Enemies
             Vector3 facing = FacingVector;
             _eyePos = Position - facing;
             _effect = _scene.SpawnEffectGetEntry(240, Vector3.UnitX, Vector3.UnitY, _eyePos); // psychoCharge
-            _effect.SetElementExtension(true);
+            _effect?.SetElementExtension(true);
         }
 
         private void UpdateMoveTarget(Vector3 targetPoint)

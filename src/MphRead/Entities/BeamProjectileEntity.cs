@@ -511,9 +511,12 @@ namespace MphRead.Entities
                             if (!_scene.Multiplayer && Owner == PlayerEntity.Main)
                             {
                                 Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY, player.Position);
-                                EffectEntry effect = _scene.SpawnEffectGetEntry(115, transform); // ineffectivePsycho
-                                effect.SetReadOnlyField(0, 1); // radius
-                                _scene.DetachEffectEntry(effect, setExpired: false);
+                                EffectEntry? effect = _scene.SpawnEffectGetEntry(115, transform); // ineffectivePsycho
+                                if (effect != null)
+                                {
+                                    effect.SetReadOnlyField(0, 1); // radius
+                                    _scene.DetachEffectEntry(effect, setExpired: false);
+                                }
                             }
                         }
                         else
@@ -1594,7 +1597,7 @@ namespace MphRead.Entities
                         Matrix4 transform = GetTransformMatrix(effFacing, effUp);
                         transform.Row3.Xyz = beam.Position;
                         beam.Effect = scene.SpawnEffectGetEntry(effectId, transform);
-                        beam.Effect.SetElementExtension(true);
+                        beam.Effect?.SetElementExtension(true);
                     }
                 }
                 Debug.Assert(beam.Target == null);

@@ -1302,10 +1302,10 @@ namespace MphRead
 
         // todo: effect limits for beam effects
         // in-game: 64 effects, 96 elements, 200 particles
-        private static readonly int _effectEntryMax = 100;
-        private static readonly int _effectElementMax = 200;
-        private static readonly int _effectParticleMax = 3000;
-        private static readonly int _singleParticleMax = 1000;
+        private static readonly int _effectEntryMax = 64;
+        private static readonly int _effectElementMax = 96;
+        private static readonly int _effectParticleMax = 200;
+        private static readonly int _singleParticleMax = 200;
         private static readonly int _beamEffectMax = 100;
         private static readonly int _bombMax = 32;
 
@@ -1348,8 +1348,12 @@ namespace MphRead
             }
         }
 
-        public BeamEffectEntity InitBeamEffect(BeamEffectEntityData data)
+        public BeamEffectEntity? InitBeamEffect(BeamEffectEntityData data)
         {
+            if (_inactiveBeamEffects.Count == 0)
+            {
+                return null;
+            }
             BeamEffectEntity entry = _inactiveBeamEffects.Dequeue();
             entry.Spawn(data);
             return entry;
@@ -1394,8 +1398,12 @@ namespace MphRead
             }
         }
 
-        private EffectEntry InitEffectEntry()
+        private EffectEntry? InitEffectEntry()
         {
+            if (_inactiveEffects.Count == 0)
+            {
+                return null;
+            }
             EffectEntry entry = _inactiveEffects.Dequeue();
             entry.EffectId = 0;
             Debug.Assert(entry.Elements.Count == 0);
@@ -1437,8 +1445,12 @@ namespace MphRead
             UnlinkEffectEntry(entry);
         }
 
-        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element, EntityCollision? entCol, bool child)
+        private EffectElementEntry? InitEffectElement(Effect effect, EffectElement element, EntityCollision? entCol, bool child)
         {
+            if (_inactiveElements.Count == 0)
+            {
+                return null;
+            }
             EffectElementEntry entry = _inactiveElements.Dequeue();
             entry.EffectName = effect.Name;
             entry.ElementName = element.Name;
@@ -1492,8 +1504,12 @@ namespace MphRead
             _inactiveElements.Enqueue(element);
         }
 
-        private EffectParticle InitEffectParticle()
+        private EffectParticle? InitEffectParticle()
         {
+            if (_inactiveParticles.Count == 0)
+            {
+                return null;
+            }
             EffectParticle particle = _inactiveParticles.Dequeue();
             particle.Position = Vector3.Zero;
             particle.Speed = Vector3.Zero;
@@ -1527,15 +1543,19 @@ namespace MphRead
             }
         }
 
-        public EffectEntry SpawnEffectGetEntry(int effectId, Vector3 facing, Vector3 up, Vector3 position, EntityCollision? entCol = null)
+        public EffectEntry? SpawnEffectGetEntry(int effectId, Vector3 facing, Vector3 up, Vector3 position, EntityCollision? entCol = null)
         {
             Matrix4 transform = EntityBase.GetTransformMatrix(facing, up, position);
             return SpawnEffectGetEntry(effectId, transform, entCol);
         }
 
-        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform, EntityCollision? entCol = null)
+        public EffectEntry? SpawnEffectGetEntry(int effectId, Matrix4 transform, EntityCollision? entCol = null)
         {
-            EffectEntry entry = InitEffectEntry();
+            EffectEntry? entry = InitEffectEntry();
+            if (entry == null)
+            {
+                return null;
+            }
             entry.EffectId = effectId;
             SpawnEffect(effectId, transform, child: false, entry, entCol);
             return entry;
@@ -1563,7 +1583,11 @@ namespace MphRead
             for (int i = 0; i < effect.Elements.Count; i++)
             {
                 EffectElement elementDef = effect.Elements[i];
-                EffectElementEntry element = InitEffectElement(effect, elementDef, entCol, child);
+                EffectElementEntry? element = InitEffectElement(effect, elementDef, entCol, child);
+                if (element == null)
+                {
+                    return;
+                }
                 if (entry != null)
                 {
                     element.EffectEntry = entry;
@@ -1654,7 +1678,11 @@ namespace MphRead
                     for (int j = 0; j < spawnCount; j++)
                     {
                         Vector3 temp = Vector3.Zero;
-                        EffectParticle particle = InitEffectParticle();
+                        EffectParticle? particle = InitEffectParticle();
+                        if (particle == null)
+                        {
+                            break;
+                        }
                         element.Particles.Add(particle);
                         particle.Owner = element;
                         particle.SetFuncIds();

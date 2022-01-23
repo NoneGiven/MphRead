@@ -402,7 +402,7 @@ namespace MphRead.Entities
                                 else
                                 {
                                     _effectEntry = _scene.SpawnEffectGetEntry(_data.EffectId, Transform);
-                                    _effectEntry.SetElementExtension(true);
+                                    _effectEntry?.SetElementExtension(true);
                                 }
                             }
                         }

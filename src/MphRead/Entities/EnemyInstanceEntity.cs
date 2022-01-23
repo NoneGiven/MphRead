@@ -380,9 +380,12 @@ namespace MphRead.Entities
                 {
                     Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY);
                     transform.Row3.Xyz = _hurtVolume.GetCenter();
-                    EffectEntry effect = _scene.SpawnEffectGetEntry(115, transform); // ineffectivePsycho
-                    effect.SetReadOnlyField(0, _boundingRadius);
-                    _scene.DetachEffectEntry(effect, setExpired: false);
+                    EffectEntry? effect = _scene.SpawnEffectGetEntry(115, transform); // ineffectivePsycho
+                    if (effect != null)
+                    {
+                        effect.SetReadOnlyField(0, _boundingRadius);
+                        _scene.DetachEffectEntry(effect, setExpired: false);
+                    }
                 }
             }
             else

@@ -50,7 +50,7 @@ namespace MphRead.Entities
             {
                 Matrix4 transform = Matrix.GetTransform4(Vector3.UnitX, Vector3.UnitY, Position);
                 _effectEntry = _scene.SpawnEffectGetEntry(144, transform); // artifactKeyEffect
-                _effectEntry.SetElementExtension(true);
+                _effectEntry?.SetElementExtension(true);
             }
         }
 

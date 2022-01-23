@@ -146,7 +146,7 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             _effect = _scene.SpawnEffectGetEntry(29, Vector3.UnitX, Vector3.UnitY, Position); // shriekBatTrail
-            _effect.SetElementExtension(true);
+            _effect?.SetElementExtension(true);
             _speed = _targetPos - Position;
             float mag = _speed.Length;
             _moveTimer = (int)(mag / 0.3f) + 1;

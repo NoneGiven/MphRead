@@ -742,7 +742,7 @@ namespace MphRead.Entities
                 }
                 int effectId = Metadata.MuzzleEffectIds[(int)CurrentWeapon];
                 _muzzleEffect = _scene.SpawnEffectGetEntry(effectId, _gunVec2, _gunVec1, _muzzlePos);
-                if (!IsMainPlayer)
+                if (_muzzleEffect != null && !IsMainPlayer)
                 {
                     _muzzleEffect.SetDrawEnabled(false);
                 }
