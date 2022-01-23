@@ -47,13 +47,13 @@ namespace MphRead.Entities
             {
                 Controls.ClearAll();
             }
+            PrevPosition = Position;
+            PrevSpeed = Speed;
+            Flags1 &= ~PlayerFlags1.AltFormPrevious;
             if (Flags1.TestFlag(PlayerFlags1.AltForm))
             {
                 Flags1 |= PlayerFlags1.AltFormPrevious;
             }
-            PrevPosition = Position;
-            CameraInfo.PrevPosition = CameraInfo.Position;
-            PrevSpeed = Speed;
             Flags1 &= ~PlayerFlags1.MovingBiped;
             Flags1 &= ~PlayerFlags1.ShotCharged;
             Flags1 &= ~PlayerFlags1.ShotMissile;
@@ -223,7 +223,7 @@ namespace MphRead.Entities
                 {
                     int effectId = 181; // deathBall
                     _deathaltEffect = _scene.SpawnEffectGetEntry(effectId, Vector3.UnitX, Vector3.UnitY, _volume.SpherePosition);
-                    _deathaltEffect.SetElementExtension(true);
+                    _deathaltEffect?.SetElementExtension(true);
                 }
                 else
                 {
@@ -795,7 +795,7 @@ namespace MphRead.Entities
                             else
                             {
                                 _doubleDmgEffect = _scene.SpawnEffectGetEntry(244, _upVector, _gunVec1, _muzzlePos); // doubleDamageGun
-                                _doubleDmgEffect.SetElementExtension(true);
+                                _doubleDmgEffect?.SetElementExtension(true);
                             }
                         }
                         else if (_doubleDmgEffect != null)
@@ -1576,7 +1576,7 @@ namespace MphRead.Entities
                     effectId = 188; // flamingGun
                 }
                 _burnEffect = _scene.SpawnEffectGetEntry(effectId, facing, up, position);
-                _burnEffect.SetElementExtension(true);
+                _burnEffect?.SetElementExtension(true);
             }
         }
 
@@ -1650,6 +1650,7 @@ namespace MphRead.Entities
 
         private PlayerSpawnEntity? GetRespawnPoint()
         {
+            Debug.Assert(_scene.Room != null);
             PlayerSpawnEntity? chosenSpawn = null;
             int limit = 0;
             var valid = new List<PlayerSpawnEntity>();
@@ -1666,7 +1667,7 @@ namespace MphRead.Entities
                 }
                 var candidate = (PlayerSpawnEntity)spawn;
                 // skdebug - 1P spawns
-                if ((candidate.IsActive || !_scene.Room!.Metadata.Multiplayer) && candidate.Cooldown == 0
+                if ((candidate.IsActive || !_scene.Room.Metadata.Multiplayer) && candidate.Cooldown == 0
                     && (_scene.FrameCount > 0 || !candidate.Availability))
                 {
                     // todo: if CTF mode, check team index

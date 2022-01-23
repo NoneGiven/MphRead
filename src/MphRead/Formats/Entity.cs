@@ -521,7 +521,7 @@ namespace MphRead
         public readonly short Entity2;
         public readonly short EndMessageTargetId;
         public readonly Message EndMessage;
-        public readonly uint EndMessageParam;
+        public readonly int EndMessageParam;
     }
 
     // size: 53

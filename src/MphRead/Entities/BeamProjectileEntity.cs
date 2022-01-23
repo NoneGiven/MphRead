@@ -128,7 +128,8 @@ namespace MphRead.Entities
             {
                 if (Target != null)
                 {
-                    Position = Target.Position;
+                    Target.GetPosition(out Vector3 targetPos);
+                    Position = targetPos;
                 }
                 else
                 {
@@ -510,9 +511,12 @@ namespace MphRead.Entities
                             if (!_scene.Multiplayer && Owner == PlayerEntity.Main)
                             {
                                 Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY, player.Position);
-                                EffectEntry effect = _scene.SpawnEffectGetEntry(115, transform); // ineffectivePsycho
-                                effect.SetReadOnlyField(0, 1); // radius
-                                _scene.DetachEffectEntry(effect, setExpired: false);
+                                EffectEntry? effect = _scene.SpawnEffectGetEntry(115, transform); // ineffectivePsycho
+                                if (effect != null)
+                                {
+                                    effect.SetReadOnlyField(0, 1); // radius
+                                    _scene.DetachEffectEntry(effect, setExpired: false);
+                                }
                             }
                         }
                         else
@@ -1359,7 +1363,7 @@ namespace MphRead.Entities
             ushort speedInterpolation = weapon.SpeedInterpolations[charged ? 1 : 0];
             float gravity = GetAmount(weapon.UnchargedGravity, weapon.MinChargeGravity, weapon.ChargedGravity) / 4096f;
             Vector3 acceleration = new Vector3(0, gravity, 0) / 2;
-            float homing = GetAmount(weapon.UnchargedHoming, weapon.MinChargeHoming, weapon.ChargedHoming);
+            float homing = GetAmount(weapon.UnchargedHoming, weapon.MinChargeHoming, weapon.ChargedHoming) / 4096f / 2;
             if (homing > 0)
             {
                 flags |= BeamFlags.Homing;
@@ -1593,7 +1597,7 @@ namespace MphRead.Entities
                         Matrix4 transform = GetTransformMatrix(effFacing, effUp);
                         transform.Row3.Xyz = beam.Position;
                         beam.Effect = scene.SpawnEffectGetEntry(effectId, transform);
-                        beam.Effect.SetElementExtension(true);
+                        beam.Effect?.SetElementExtension(true);
                     }
                 }
                 Debug.Assert(beam.Target == null);

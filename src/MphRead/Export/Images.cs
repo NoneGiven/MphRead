@@ -165,7 +165,7 @@ namespace MphRead.Export
             }
         }
 
-        private static void SaveTexture(string directory, string filename, ushort width, ushort height, IReadOnlyList<ColorRgba> pixels)
+        public static void SaveTexture(string directory, string filename, ushort width, ushort height, IReadOnlyList<ColorRgba> pixels)
         {
             string imagePath = Path.Combine(directory, $"{filename}.png");
             using var image = new Image<Rgba32>(width, height);

@@ -41,23 +41,29 @@ namespace MphRead.Entities.Enemies
             };
         }
 
+        private static readonly int[] _recolors = new int[11]
+        {
+            0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0
+        };
+
         // todo: this is mostly identical to War Wasp
         protected override bool EnemyInitialize()
         {
-            Recolor = (int)_spawner.Data.Fields.S08.EnemySubtype;
+            int version = (int)_spawner.Data.Fields.S08.EnemyVersion;
+            Recolor = _recolors[version];
             SetTransform(_spawner.FacingVector, Vector3.UnitY, _spawner.Position);
             _movementType = _spawner.Data.Fields.S08.WarWasp.MovementType;
             Flags |= EnemyFlags.Visible;
             Flags |= EnemyFlags.OnRadar;
             _boundingRadius = 1;
             _hurtVolumeInit = new CollisionVolume(new Vector3(0, -0.45f, 0), 1.4f);
-            _values = Metadata.Enemy10Values[Recolor];
+            _values = Metadata.Enemy10Values[(int)_spawner.Data.Fields.S08.EnemySubtype];
             _health = _healthMax = _values.HealthMax;
             Metadata.LoadEffectiveness(_values.Effectiveness, BeamEffectiveness);
             // todo: scan ID
             _homeVolume = CollisionVolume.Move(_spawner.Data.Fields.S08.WarWasp.Volume2, Position);
             _movementVolume = CollisionVolume.Move(_spawner.Data.Fields.S08.WarWasp.Volume1, Position);
-            WeaponInfo weapon = Weapons.EnemyWeapons[(int)_spawner.Data.Fields.S08.EnemyVersion];
+            WeaponInfo weapon = Weapons.EnemyWeapons[version];
             weapon.UnchargedDamage = _values.BeamDamage;
             weapon.SplashDamage = _values.SplashDamage;
             _equipInfo = new EquipInfo(weapon, _beams);

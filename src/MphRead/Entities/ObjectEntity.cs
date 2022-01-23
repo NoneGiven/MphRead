@@ -41,6 +41,7 @@ namespace MphRead.Entities
             _prevTransform = Transform;
             UpdateVisiblePosition();
             _flags = data.Flags;
+            _state = (int)(data.Flags & ObjectFlags.State);
             // todo: room state affecting animation ID
             _flags &= ~ObjectFlags.NoAnimation;
             _flags &= ~ObjectFlags.IsVisible;
@@ -283,8 +284,7 @@ namespace MphRead.Entities
             {
                 if (_state != 2)
                 {
-                    // todo: check distance to player
-                    Vector3 between = _scene.CameraPosition - Position;
+                    Vector3 between = PlayerEntity.Main.Position - Position;
                     if (Vector3.Dot(between, between) >= 15 * 15)
                     {
                         if (_scanMsgTarget != null)
@@ -365,11 +365,14 @@ namespace MphRead.Entities
                 else if (_data.EffectFlags.TestFlag(ObjEffFlags.UseEffectVolume))
                 {
                     // todo: add an option to disable this check
-                    processEffect = _effectVolume.TestPoint(_scene.CameraPosition);
+                    Vector3 cameraPosition = _scene.CameraMode == CameraMode.Player
+                        ? PlayerEntity.Main.CameraInfo.Position
+                        : _scene.CameraPosition; // skdebug
+                    processEffect = _effectVolume.TestPoint(cameraPosition);
                 }
                 else if (_flags.TestFlag(ObjectFlags.IsVisible))
                 {
-                    processEffect = (_flags & ObjectFlags.State) != 0;
+                    processEffect = _state != 0;
                 }
                 if (processEffect)
                 {
@@ -399,7 +402,7 @@ namespace MphRead.Entities
                                 else
                                 {
                                     _effectEntry = _scene.SpawnEffectGetEntry(_data.EffectId, Transform);
-                                    _effectEntry.SetElementExtension(true);
+                                    _effectEntry?.SetElementExtension(true);
                                 }
                             }
                         }

@@ -166,7 +166,7 @@ namespace MphRead.Entities
             _moveTimer = _delay;
             _recoilTimer = 0;
             _forwardSpeed = data.ForwardSpeed.FloatValue / 2f; // todo: FPS stuff
-            _backwardSpeed = data.ForwardSpeed.FloatValue / 2f; // todo: FPS stuff
+            _backwardSpeed = data.BackwardSpeed.FloatValue / 2f; // todo: FPS stuff
             UpdatePosition();
             _animFlags |= PlatAnimFlags.Draw;
             // todo: room state
@@ -596,14 +596,15 @@ namespace MphRead.Entities
             Model model = _models[0].Model;
             for (int i = 0; i < 4; i++)
             {
-                if (_effectNodeIds[i] >= 0 && _effects[i] == null)
+                EffectEntry? effect = _effects[i];
+                if (_effectNodeIds[i] >= 0 && effect == null)
                 {
                     Matrix4 transform = Matrix.GetTransform4(Vector3.UnitX, Vector3.UnitY, new Vector3(0, 2, 0));
-                    _effects[i] = _scene.SpawnEffectGetEntry(_nozzleEffectId, transform);
-                    _effects[i]!.SetElementExtension(true);
+                    effect = _scene.SpawnEffectGetEntry(_nozzleEffectId, transform);
                 }
-                if (_effects[i] != null)
+                if (effect != null)
                 {
+                    effect.SetElementExtension(true);
                     Matrix4 transform = model.Nodes[_effectNodeIds[i]].Animation;
                     var position = new Vector3(
                         transform.M31 * 1.5f + transform.M41,
@@ -611,7 +612,8 @@ namespace MphRead.Entities
                         transform.M33 * 1.5f + transform.M43
                     );
                     transform = Matrix.GetTransform4(new Vector3(transform.Row1), new Vector3(transform.Row2), position);
-                    _effects[i]!.Transform(position, transform);
+                    effect.Transform(position, transform);
+                    _effects[i] = effect;
                 }
             }
             if (_data.PositionCount > 0)
@@ -696,8 +698,15 @@ namespace MphRead.Entities
             else
             {
                 float distance = velocity.Length;
-                _moveTimer = (int)(distance / speed);
-                factor = speed / distance;
+                if (distance == 0)
+                {
+                    factor = 0; // skdebug
+                }
+                else
+                {
+                    _moveTimer = (int)(distance / speed);
+                    factor = speed / distance;
+                }
             }
             _velocity = velocity * factor;
             _toRotation = _rotList[_toIndex];

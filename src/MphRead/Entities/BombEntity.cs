@@ -77,7 +77,7 @@ namespace MphRead.Entities
             if (effectId != 0)
             {
                 Effect = _scene.SpawnEffectGetEntry(effectId, Transform);
-                Effect.SetElementExtension(true);
+                Effect?.SetElementExtension(true);
             }
             if (_trailModel != null)
             {

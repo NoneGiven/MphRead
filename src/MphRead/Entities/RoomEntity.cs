@@ -714,7 +714,6 @@ namespace MphRead.Entities
                     while (nodeIndex != -1)
                     {
                         Node node = Nodes[nodeIndex];
-                        Debug.Assert(node.ChildIndex == -1);
                         if (!_excludedNodes.Contains(node))
                         {
                             GetItems(inst, node);

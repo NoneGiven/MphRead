@@ -54,9 +54,15 @@ namespace MphRead.Entities.Enemies
             };
         }
 
+        private static readonly int[] _recolors = new int[11]
+        {
+            0, 1, 0, 4, 0, 3, 2, 0, 0, 0, 0
+        };
+
         protected override bool EnemyInitialize()
         {
-            Recolor = (int)_spawner.Data.Fields.S06.EnemySubtype;
+            int version = (int)_spawner.Data.Fields.S06.EnemyVersion;
+            Recolor = _recolors[version];
             Vector3 facing = _spawner.FacingVector;
             SetTransform(facing, Vector3.UnitY, _spawner.Position);
             SetUpModel(Metadata.EnemyModelNames[23], animIndex: 3);
@@ -64,7 +70,7 @@ namespace MphRead.Entities.Enemies
             Flags |= EnemyFlags.OnRadar;
             _boundingRadius = 1;
             _hurtVolumeInit = new CollisionVolume(_spawner.Data.Fields.S06.Volume0);
-            _values = Metadata.Enemy23Values[Recolor];
+            _values = Metadata.Enemy23Values[(int)_spawner.Data.Fields.S06.EnemySubtype];
             _health = _healthMax = _values.HealthMax;
             Metadata.LoadEffectiveness(_values.Effectiveness, BeamEffectiveness);
             // todo: scan ID
@@ -72,7 +78,7 @@ namespace MphRead.Entities.Enemies
             _homeVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume1, Position);
             _nearVolume = new CollisionVolume(Vector3.Zero, 1); // gets moved in the process function
             _rangeVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume3, Position);
-            WeaponInfo weapon = Weapons.EnemyWeapons[(int)_spawner.Data.Fields.S06.EnemyVersion];
+            WeaponInfo weapon = Weapons.EnemyWeapons[version];
             weapon.UnchargedDamage = _values.BeamDamage;
             weapon.SplashDamage = _values.SplashDamage;
             _equipInfo = new EquipInfo(weapon, _beams);
@@ -193,7 +199,7 @@ namespace MphRead.Entities.Enemies
             Vector3 facing = FacingVector;
             _eyePos = Position - facing;
             _effect = _scene.SpawnEffectGetEntry(240, Vector3.UnitX, Vector3.UnitY, _eyePos); // psychoCharge
-            _effect.SetElementExtension(true);
+            _effect?.SetElementExtension(true);
         }
 
         private void UpdateMoveTarget(Vector3 targetPoint)

@@ -53,7 +53,7 @@ namespace MphRead.Entities
                     _frozenGfxTimer--;
                     if (IsMainPlayer && _frozenGfxTimer == 0)
                     {
-                        // todo: update HUD
+                        _drawIceLayer = false;
                     }
                 }
                 if (_timeSinceFrozen != UInt16.MaxValue)
@@ -512,7 +512,7 @@ namespace MphRead.Entities
                         }
                         if (EquipInfo.Zoomed)
                         {
-                            float zoomFov = Fixed.ToFloat(EquipInfo.Weapon.ZoomFov) * 2;
+                            float zoomFov = Fixed.ToFloat(EquipInfo.Weapon.ZoomFov);
                             Vector3 facing = _facingVector;
 
                             void CheckZoomTargets(EntityType type)
@@ -532,7 +532,7 @@ namespace MphRead.Entities
                                     entity.GetPosition(out Vector3 position);
                                     Vector3 between = position - Position;
                                     float dot = Vector3.Dot(between, facing);
-                                    if (dot > 1 && dot / between.Length > Fixed.ToFloat(4074))
+                                    if (dot > 1 && dot / between.Length >= Fixed.ToFloat(4074))
                                     {
                                         float angle = MathHelper.RadiansToDegrees(MathF.Atan2(3, dot));
                                         if (angle < zoomFov)
@@ -546,6 +546,7 @@ namespace MphRead.Entities
                             CheckZoomTargets(EntityType.Player);
                             CheckZoomTargets(EntityType.EnemyInstance);
                             CheckZoomTargets(EntityType.Object);
+                            zoomFov *= 2;
                             float currentFov = CameraInfo.Fov;
                             if (zoomFov > currentFov)
                             {
@@ -741,7 +742,7 @@ namespace MphRead.Entities
                 }
                 int effectId = Metadata.MuzzleEffectIds[(int)CurrentWeapon];
                 _muzzleEffect = _scene.SpawnEffectGetEntry(effectId, _gunVec2, _gunVec1, _muzzlePos);
-                if (!IsMainPlayer)
+                if (_muzzleEffect != null && !IsMainPlayer)
                 {
                     _muzzleEffect.SetDrawEnabled(false);
                 }
@@ -799,8 +800,8 @@ namespace MphRead.Entities
                                 animFlags = AnimFlags.Reverse;
                                 if (_altModel.AnimInfo.Index[0] == animId)
                                 {
-                                    _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
-                                    _bipedModel2.AnimInfo.Flags[0] |= AnimFlags.Reverse;
+                                    _altModel.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                    _altModel.AnimInfo.Flags[0] |= AnimFlags.Reverse;
                                 }
                             }
                             else if (aimX < -3)
@@ -809,8 +810,8 @@ namespace MphRead.Entities
                                 animId = (int)WeavelAltAnim.Turn; // or TraceAltAnim.MoveBackward
                                 if (_altModel.AnimInfo.Index[0] == animId)
                                 {
-                                    _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
-                                    _bipedModel2.AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
+                                    _altModel.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                    _altModel.AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
                                 }
                             }
                         }

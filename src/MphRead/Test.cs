@@ -344,7 +344,7 @@ namespace MphRead
                 int index = list.IndexOf(f => f.ToLower() == match1 || f.ToLower() == match2);
                 if (index != -1)
                 {
-                    lines!.Add(list[index]);
+                    lines.Add(list[index]);
                     list.RemoveAt(index);
                 }
             }

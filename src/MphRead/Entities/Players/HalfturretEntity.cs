@@ -118,7 +118,7 @@ namespace MphRead.Entities
                 _burnEffect = null;
             }
             _burnEffect = _scene.SpawnEffectGetEntry(187, FacingVector.WithY(0), Vector3.UnitY, Position); // flamingAltForm
-            _burnEffect.SetElementExtension(true);
+            _burnEffect?.SetElementExtension(true);
         }
 
         public override bool Process()

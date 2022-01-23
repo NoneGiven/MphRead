@@ -382,6 +382,7 @@ namespace MphRead.Entities
         private ushort _deathaltTimer = 0;
         private ushort _frozenTimer = 0;
         private ushort _frozenGfxTimer = 0;
+        private bool _drawIceLayer = false;
         private ushort _disruptedTimer = 0;
         private ushort _burnTimer = 0;
         private ushort _timeSinceFrozen = 0;
@@ -667,6 +668,7 @@ namespace MphRead.Entities
             _frozenTimer = 0;
             _timeSinceFrozen = 255;
             _frozenGfxTimer = 0;
+            _drawIceLayer = false;
             _hidingTimer = 0;
             _curAlpha = 1;
             _targetAlpha = 1;
@@ -716,7 +718,6 @@ namespace MphRead.Entities
                 }
                 CameraInfo.Reset();
                 CameraInfo.Position = Position;
-                CameraInfo.PrevPosition = Position;
                 CameraInfo.UpVector = Vector3.UnitY;
                 CameraInfo.Target = Position + facing;
                 CameraInfo.Fov = Fixed.ToFloat(Values.NormalFov) * 2;
@@ -1556,7 +1557,15 @@ namespace MphRead.Entities
                 _deathaltTimer = 0;
                 _cloakTimer = 0;
                 Flags2 &= ~PlayerFlags2.Cloaking;
-                // todo: update kill streak, license info, and HUD
+                // todo: update kill streak
+                if (IsMainPlayer)
+                {
+                    // todo: license info, update HUD to end disrupt
+                    if (_frozenGfxTimer > 0)
+                    {
+                        _drawIceLayer = false;
+                    }
+                }
                 _frozenTimer = 0;
                 _frozenGfxTimer = 0;
                 _disruptedTimer = 0;
@@ -1708,12 +1717,16 @@ namespace MphRead.Entities
                         }
                         else // todo?: if wifi, only do this if main player
                         {
-                            // todo: play SFX, update HUD
-                            int time = (_scene.Multiplayer || attacker != null ? 75 : 30) * 2; // todo: FPS stuff
+                            // todo: play SFX
+                            if (IsMainPlayer)
+                            {
+                                _drawIceLayer = true;
+                            }
                             if (_frozenTimer == 0)
                             {
                                 if (_timeSinceFrozen > 60 * 2) // todo: FPS stuff
                                 {
+                                    int time = (_scene.Multiplayer || attacker != null ? 75 : 30) * 2; // todo: FPS stuff
                                     _frozenTimer = (ushort)time;
                                 }
                                 else if (_frozenTimer < 15 * 2) // todo: FPS stuff

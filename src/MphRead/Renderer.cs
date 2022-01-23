@@ -828,6 +828,22 @@ namespace MphRead
             return onlyOpaque;
         }
 
+        public int BindGetTexture(IReadOnlyList<ColorRgba> data, int width, int height)
+        {
+            _textureCount++;
+            var pixels = new List<uint>();
+            for (int i = 0; i < data.Count; i++)
+            {
+                ColorRgba pixel = data[i];
+                pixels.Add(pixel.ToUint());
+            }
+            GL.BindTexture(TextureTarget.Texture2D, _textureCount);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
+                PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            return _textureCount;
+        }
+
         public void UpdateMaterials(Model model, int recolorId)
         {
             for (int i = 0; i < model.Materials.Count; i++)
@@ -1086,6 +1102,14 @@ namespace MphRead
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
+
+            PlayerEntity.Main.UpdateHud();
+            if (CameraMode == CameraMode.Player)
+            {
+                DrawHudLayer(Layer3BindingId);
+                DrawHudLayer(Layer1BindingId);
+                DrawHudLayer(Layer2BindingId);
+            }
         }
 
         private void LoadAndUnload()
@@ -1278,10 +1302,10 @@ namespace MphRead
 
         // todo: effect limits for beam effects
         // in-game: 64 effects, 96 elements, 200 particles
-        private static readonly int _effectEntryMax = 100;
-        private static readonly int _effectElementMax = 200;
-        private static readonly int _effectParticleMax = 3000;
-        private static readonly int _singleParticleMax = 1000;
+        private static readonly int _effectEntryMax = 64;
+        private static readonly int _effectElementMax = 96;
+        private static readonly int _effectParticleMax = 200;
+        private static readonly int _singleParticleMax = 200;
         private static readonly int _beamEffectMax = 100;
         private static readonly int _bombMax = 32;
 
@@ -1324,8 +1348,12 @@ namespace MphRead
             }
         }
 
-        public BeamEffectEntity InitBeamEffect(BeamEffectEntityData data)
+        public BeamEffectEntity? InitBeamEffect(BeamEffectEntityData data)
         {
+            if (_inactiveBeamEffects.Count == 0)
+            {
+                return null;
+            }
             BeamEffectEntity entry = _inactiveBeamEffects.Dequeue();
             entry.Spawn(data);
             return entry;
@@ -1370,8 +1398,12 @@ namespace MphRead
             }
         }
 
-        private EffectEntry InitEffectEntry()
+        private EffectEntry? InitEffectEntry()
         {
+            if (_inactiveEffects.Count == 0)
+            {
+                return null;
+            }
             EffectEntry entry = _inactiveEffects.Dequeue();
             entry.EffectId = 0;
             Debug.Assert(entry.Elements.Count == 0);
@@ -1413,8 +1445,12 @@ namespace MphRead
             UnlinkEffectEntry(entry);
         }
 
-        private EffectElementEntry InitEffectElement(Effect effect, EffectElement element, EntityCollision? entCol, bool child)
+        private EffectElementEntry? InitEffectElement(Effect effect, EffectElement element, EntityCollision? entCol, bool child)
         {
+            if (_inactiveElements.Count == 0)
+            {
+                return null;
+            }
             EffectElementEntry entry = _inactiveElements.Dequeue();
             entry.EffectName = effect.Name;
             entry.ElementName = element.Name;
@@ -1468,8 +1504,12 @@ namespace MphRead
             _inactiveElements.Enqueue(element);
         }
 
-        private EffectParticle InitEffectParticle()
+        private EffectParticle? InitEffectParticle()
         {
+            if (_inactiveParticles.Count == 0)
+            {
+                return null;
+            }
             EffectParticle particle = _inactiveParticles.Dequeue();
             particle.Position = Vector3.Zero;
             particle.Speed = Vector3.Zero;
@@ -1503,15 +1543,19 @@ namespace MphRead
             }
         }
 
-        public EffectEntry SpawnEffectGetEntry(int effectId, Vector3 facing, Vector3 up, Vector3 position, EntityCollision? entCol = null)
+        public EffectEntry? SpawnEffectGetEntry(int effectId, Vector3 facing, Vector3 up, Vector3 position, EntityCollision? entCol = null)
         {
             Matrix4 transform = EntityBase.GetTransformMatrix(facing, up, position);
             return SpawnEffectGetEntry(effectId, transform, entCol);
         }
 
-        public EffectEntry SpawnEffectGetEntry(int effectId, Matrix4 transform, EntityCollision? entCol = null)
+        public EffectEntry? SpawnEffectGetEntry(int effectId, Matrix4 transform, EntityCollision? entCol = null)
         {
-            EffectEntry entry = InitEffectEntry();
+            EffectEntry? entry = InitEffectEntry();
+            if (entry == null)
+            {
+                return null;
+            }
             entry.EffectId = effectId;
             SpawnEffect(effectId, transform, child: false, entry, entCol);
             return entry;
@@ -1539,7 +1583,11 @@ namespace MphRead
             for (int i = 0; i < effect.Elements.Count; i++)
             {
                 EffectElement elementDef = effect.Elements[i];
-                EffectElementEntry element = InitEffectElement(effect, elementDef, entCol, child);
+                EffectElementEntry? element = InitEffectElement(effect, elementDef, entCol, child);
+                if (element == null)
+                {
+                    return;
+                }
                 if (entry != null)
                 {
                     element.EffectEntry = entry;
@@ -1630,7 +1678,11 @@ namespace MphRead
                     for (int j = 0; j < spawnCount; j++)
                     {
                         Vector3 temp = Vector3.Zero;
-                        EffectParticle particle = InitEffectParticle();
+                        EffectParticle? particle = InitEffectParticle();
+                        if (particle == null)
+                        {
+                            break;
+                        }
                         element.Particles.Add(particle);
                         particle.Owner = element;
                         particle.SetFuncIds();
@@ -2161,8 +2213,6 @@ namespace MphRead
                     _destroyedEntities.Add(entity);
                 }
             }
-
-            ProcessEffects();
         }
 
         private void GetDrawItems()
@@ -2208,6 +2258,11 @@ namespace MphRead
             {
                 EntityBase entity = _destroyedEntities[i];
                 RemoveEntity(entity);
+            }
+
+            if (ProcessFrame)
+            {
+                ProcessEffects();
             }
 
             for (int i = 0; i < _activeElements.Count; i++)
@@ -2731,6 +2786,71 @@ namespace MphRead
             }
         }
 
+        public int Layer1BindingId { get; set; } = -1;
+        public int Layer2BindingId { get; set; } = -1;
+        public int Layer3BindingId { get; set; } = -1;
+
+        public int IceLayerBindingId { get; set; } = -1;
+
+        private void DrawHudLayer(int bindingId)
+        {
+            if (bindingId == -1)
+            {
+                return;
+            }
+            // todo: if BG layer is shifted, we need this quad to be bigger than the viewport so it can shift appropriately
+            // tood: allow this to be affected by viewer toggles
+            GL.Disable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.Blend);
+            Matrix4 identity = Matrix4.Identity;
+            GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref identity);
+            GL.UniformMatrix4(_shaderLocations.ViewInvMatrix, transpose: false, ref identity);
+            GL.Uniform1(_shaderLocations.UseLight, 0);
+            GL.Color3(Vector3.One);
+            GL.Uniform3(_shaderLocations.Diffuse, Vector3.One);
+            GL.Uniform3(_shaderLocations.Ambient, Vector3.One);
+            GL.Uniform3(_shaderLocations.Specular, Vector3.One);
+            GL.Uniform3(_shaderLocations.Emission, Vector3.One);
+            GL.Uniform1(_shaderLocations.MaterialAlpha, 9 / 16f);
+            GL.Uniform1(_shaderLocations.MaterialMode, (int)PolygonMode.Modulate);
+            GL.BindTexture(TextureTarget.Texture2D, bindingId);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            GL.Uniform1(_shaderLocations.TexgenMode, (int)TexgenMode.None);
+            GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref identity);
+            GL.Uniform1(_shaderLocations.UseTexture, 1);
+            GL.Uniform1(_shaderLocations.UseOverride, 0);
+            GL.Uniform1(_shaderLocations.UsePaletteOverride, 0);
+            GL.Enable(EnableCap.CullFace);
+            GL.CullFace(CullFaceMode.Back);
+            GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
+            GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref identity);
+            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
+            float width = viewport.Z - viewport.X;
+            float height = viewport.W - viewport.Y;
+            var orthoMatrix = Matrix4.CreateOrthographic(width, height, 0.5f, 1.5f);
+            GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref orthoMatrix);
+            float size = MathF.Max(width, height) / 2;
+            GL.Begin(PrimitiveType.TriangleStrip);
+            GL.TexCoord3(0f, 0f, 0f);
+            GL.Vertex3(-size, -size, -1f);
+            GL.TexCoord3(1f, 0f, 0f);
+            GL.Vertex3(size, -size, -1f);
+            GL.TexCoord3(0f, 1f, 0f);
+            GL.Vertex3(-size, size, -1f);
+            GL.TexCoord3(1f, 1f, 0f);
+            GL.Vertex3(size, size, -1f);
+            GL.End();
+            GL.Disable(EnableCap.Blend);
+            GL.Enable(EnableCap.DepthTest);
+        }
+
         private void DoMaterial(RenderItem item)
         {
             GL.Uniform1(_shaderLocations.UseLight, _lighting && item.Lighting ? 1 : 0);
@@ -3063,7 +3183,7 @@ namespace MphRead
                         _outputCameraPos = !_outputCameraPos;
                     }
                 }
-                else if (_cameraMode != CameraMode.Player)
+                else if (e.Control)
                 {
                     _showColors = !_showColors;
                 }
@@ -3089,7 +3209,7 @@ namespace MphRead
                         }
                     }
                 }
-                else if (_cameraMode != CameraMode.Player)
+                else if (e.Control)
                 {
                     _wireframe = !_wireframe;
                 }
@@ -3895,7 +4015,7 @@ namespace MphRead
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            CursorGrabbed = Scene.CameraMode == CameraMode.Player;
+            CursorGrabbed = Scene.CameraMode == CameraMode.Player && !Scene.FrameAdvance;
             if (!CursorGrabbed)
             {
                 CursorVisible = true;

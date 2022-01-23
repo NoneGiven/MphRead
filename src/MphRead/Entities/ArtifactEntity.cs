@@ -215,7 +215,9 @@ namespace MphRead.Entities
         {
             if (_data.ModelId >= 8)
             {
-                Vector3 player = _scene.CameraPosition;
+                Vector3 player = _scene.CameraMode == CameraMode.Player
+                    ? PlayerEntity.Main.CameraInfo.Position
+                    : _scene.CameraPosition; // skdebug
                 var vector1 = new Vector3(0, 1, 0);
                 Vector3 vector2 = new Vector3(player.X - Position.X, 0, player.Z - Position.Z).Normalized();
                 Matrix3 lightTransform = Matrix.GetTransform3(vector2, vector1);
