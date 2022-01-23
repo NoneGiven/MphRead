@@ -541,7 +541,7 @@ namespace MphRead.Entities
             Vector3 camVec;
             if (Flags1.TestFlag(PlayerFlags1.NoUnmorph))
             {
-                camVec = new Vector3(_field70 * _field690, 0, _field84 * _field690);
+                camVec = new Vector3(_field70 * _field690, 0, _field74 * _field690);
             }
             else
             {
