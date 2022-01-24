@@ -17,18 +17,7 @@ This project is a model viewer, scene renderer, and general parser for file form
 
 ## Usage
 
-```
-MphRead usage:
-
-    -room <room_name -or- room_id>
-    -model <model_name> [recolor_index]
-
-At most one room may be specified, while any number of models may be specified.
-To load First Hunt models, include -fh in the argument list.
-Available room options: -mode, -players, -boss, -node, -entity
-```
-
-If no arguments are passed, MphRead will prompt for a room name or ID.
+After setup, MphRead can be launched from the executable with no arguments, and menu prompts will appear to help you set up the scene.
 
 See the [full setup and export guide](https://github.com/NoneGiven/MphRead/wiki/Setup-&-Export-Guide) for details on setup and command line options.
 
