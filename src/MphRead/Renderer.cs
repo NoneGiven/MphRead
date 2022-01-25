@@ -2865,18 +2865,18 @@ namespace MphRead
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
             GL.Begin(PrimitiveType.TriangleStrip);
-            // bottom left
-            GL.TexCoord3(0f, 0f, 0f);
-            GL.Vertex3(-size, -size, -1f);
-            // bottom right
-            GL.TexCoord3(1f, 0f, 0f);
-            GL.Vertex3(size, -size, -1f);
-            // top left
-            GL.TexCoord3(0f, 1f, 0f);
-            GL.Vertex3(-size, size, -1f);
             // top right
-            GL.TexCoord3(1f, 1f, 0f);
+            GL.TexCoord3(1f, 0f, 0f);
             GL.Vertex3(size, size, -1f);
+            // top left
+            GL.TexCoord3(0f, 0f, 0f);
+            GL.Vertex3(-size, size, -1f);
+            // bottom right
+            GL.TexCoord3(1f, 1f, 0f);
+            GL.Vertex3(size, -size, -1f);
+            // bottom left
+            GL.TexCoord3(0f, 1f, 0f);
+            GL.Vertex3(-size, -size, -1f);
             GL.End();
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
@@ -2893,7 +2893,7 @@ namespace MphRead
                 TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            // sktodo: don't call this every time
+            // ltodo: don't call this every time
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float viewWidth = viewport.Z - viewport.X;
             float viewHeight = viewport.W - viewport.Y;
@@ -2906,18 +2906,18 @@ namespace MphRead
             float topPos = viewTop - y * viewHeight + (center ? (height / 2) : 0);
             float bottomPos = topPos - height;
             GL.Begin(PrimitiveType.TriangleStrip);
-            // bottom left
-            GL.TexCoord3(0f, 0f, 0f);
-            GL.Vertex3(leftPos, bottomPos, -1f);
-            // bottom right
-            GL.TexCoord3(1f, 0f, 0f);
-            GL.Vertex3(rightPos, bottomPos, -1f);
-            // top left
-            GL.TexCoord3(0f, 1f, 0f);
-            GL.Vertex3(leftPos, topPos, -1f);
             // top right
-            GL.TexCoord3(1f, 1f, 0f);
+            GL.TexCoord3(1f, 0f, 0f);
             GL.Vertex3(rightPos, topPos, -1f);
+            // top left
+            GL.TexCoord3(0f, 0f, 0f);
+            GL.Vertex3(leftPos, topPos, -1f);
+            // bottom right
+            GL.TexCoord3(1f, 1f, 0f);
+            GL.Vertex3(rightPos, bottomPos, -1f);
+            // bottom left
+            GL.TexCoord3(0f, 1f, 0f);
+            GL.Vertex3(leftPos, bottomPos, -1f);
             GL.End();
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }

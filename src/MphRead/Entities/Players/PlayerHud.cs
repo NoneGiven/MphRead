@@ -29,6 +29,7 @@ namespace MphRead.Entities
                 return;
             }
             // todo: lots more stuff
+            _targetCircleInst.Enabled = false;
             if (_health > 0)
             {
                 if (IsAltForm || IsMorphing || IsUnmorphing)
@@ -49,7 +50,6 @@ namespace MphRead.Entities
         {
             // sktodo: test input time or whatever, expand/contract animation
             Matrix.ProjectPosition(_aimPosition, _scene.ViewMatrix, _scene.PerspectiveMatrix, out Vector2 pos);
-            // sktodo: center
             _targetCircleInst.PositionX = pos.X;
             _targetCircleInst.PositionY = pos.Y;
             _targetCircleInst.Enabled = true;
