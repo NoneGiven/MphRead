@@ -12,8 +12,25 @@ namespace MphRead.Entities
         private HudObject _sniperCircleObj = null!;
         private HudObjectInstance _targetCircleInst = null!;
 
+        private ModelInstance _damageIndicator = null!;
+        private readonly ushort[] _damageIndicatorTimers = new ushort[8];
+        private readonly Node[] _damageIndicatorNodes = new Node[8];
+
         public void SetUpHud()
         {
+            _damageIndicator = Read.GetModelInstance("damage", dir: MetaDir.Hud);
+            for (int i = 0; i < 8; i++)
+            {
+                _damageIndicatorTimers[i] = 0;
+            }
+            _damageIndicatorNodes[0] = _damageIndicator.Model.GetNodeByName("north")!;
+            _damageIndicatorNodes[1] = _damageIndicator.Model.GetNodeByName("ne")!;
+            _damageIndicatorNodes[2] = _damageIndicator.Model.GetNodeByName("east")!;
+            _damageIndicatorNodes[3] = _damageIndicator.Model.GetNodeByName("se")!;
+            _damageIndicatorNodes[4] = _damageIndicator.Model.GetNodeByName("south")!;
+            _damageIndicatorNodes[5] = _damageIndicator.Model.GetNodeByName("sw")!;
+            _damageIndicatorNodes[6] = _damageIndicator.Model.GetNodeByName("west")!;
+            _damageIndicatorNodes[7] = _damageIndicator.Model.GetNodeByName("nw")!;
             _targetCircleObj = HudInfo.GetHudObject(_hudObjects.Reticle);
             _sniperCircleObj = HudInfo.GetHudObject(_hudObjects.SniperReticle);
             Debug.Assert(_sniperCircleObj.Width > _targetCircleObj.Width);

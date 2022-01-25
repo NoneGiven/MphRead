@@ -71,10 +71,10 @@ namespace MphRead.Entities
         Flourish = 1,
         WalkForward = 2,
         Unmorph = 3,
-        DamageFront = 4,
-        DamageBack = 5,
-        DamageRight = 6,
-        DamageLeft = 7,
+        DamageBack = 4,
+        DamageFront = 5,
+        DamageLeft = 6,
+        DamageRight = 7,
         Idle = 8,
         LandNeutral = 9,
         LandLeft = 10,
@@ -1860,29 +1860,42 @@ namespace MphRead.Entities
                     {
                         dirVertical = -dirUpDown;
                     }
+                    // sktodo: diagonals (behind feature switch)
                     PlayerAnimation anim = PlayerAnimation.None;
                     if (dirVertical <= dirHorizontal)
                     {
                         if (dirLeftRight <= 0)
                         {
-                            anim = PlayerAnimation.DamageLeft;
-                            // todo: update HUD
+                            anim = PlayerAnimation.DamageRight;
+                            if (IsMainPlayer)
+                            {
+                                _damageIndicatorTimers[2] = 63 * 2; // todo: FPS stuff
+                            }
                         }
                         else
                         {
-                            anim = PlayerAnimation.DamageRight;
-                            // todo: update HUD
+                            anim = PlayerAnimation.DamageLeft;
+                            if (IsMainPlayer)
+                            {
+                                _damageIndicatorTimers[6] = 63 * 2; // todo: FPS stuff
+                            }
                         }
                     }
                     else if (dirUpDown <= 0)
                     {
-                        anim = PlayerAnimation.DamageFront;
-                        // todo: update HUD
+                        anim = PlayerAnimation.DamageBack;
+                        if (IsMainPlayer)
+                        {
+                            _damageIndicatorTimers[4] = 63 * 2; // todo: FPS stuff
+                        }
                     }
                     else
                     {
-                        anim = PlayerAnimation.DamageBack;
-                        // todo: update HUD
+                        anim = PlayerAnimation.DamageFront;
+                        if (IsMainPlayer)
+                        {
+                            _damageIndicatorTimers[0] = 63 * 2; // todo: FPS stuff
+                        }
                     }
                     if (anim != PlayerAnimation.None)
                     {
