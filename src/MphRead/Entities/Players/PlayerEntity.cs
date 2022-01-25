@@ -1157,7 +1157,11 @@ namespace MphRead.Entities
         {
             if (IsMainPlayer && EquipInfo.Zoomed != zoom)
             {
-                // todo: play SFX, update HUD
+                // todo: play SFX
+                if (CurrentWeapon == BeamType.Imperialist)
+                {
+                    HudOnZoom(zoom);
+                }
             }
             EquipInfo.Zoomed = zoom;
         }

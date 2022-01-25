@@ -29,22 +29,21 @@ namespace MphRead.Hud
         public bool Center;
         public float PositionX;
         public float PositionY;
-        public readonly int Width;
-        public readonly int Height;
+        public int Width;
+        public int Height;
         public IReadOnlyList<byte>? CharacterData;
         public int PaletteIndex = -1;
         public IReadOnlyList<ColorRgba>? PaletteData;
         public readonly ColorRgba[] Texture;
         public int BindingId = -1;
         // sktodo?: if we find a "non-linear" example, then this will need to be adjusted
+        // --> also going to need a loop flag and control over animation speed (e.g. blinking Octolith icon)
         public int CurrentFrame;
         public int StartFrame;
         public int TargetFrame;
         public float Timer = -1;
         public float Time = -1;
 
-        // sktodo: buffer needs to be big enough to fit the largest size this will be used for
-        // (32x32 vs. 64x64 for targetcircle vs. snipercircle)
         public HudObjectInstance(int width, int height)
         {
             Width = width;
@@ -52,7 +51,22 @@ namespace MphRead.Hud
             Texture = new ColorRgba[Width * Height];
         }
 
-        // sktodo: yeah this needs to include all the frames (images)
+        public HudObjectInstance(int width, int height, int maxWidth, int maxHeight)
+        {
+            Width = width;
+            Height = height;
+            Texture = new ColorRgba[maxWidth * maxHeight];
+        }
+
+        public void SetCharacterData(IReadOnlyList<byte> data, int width, int height, Scene scene)
+        {
+            Debug.Assert(Width * Height <= Texture.Length);
+            Width = width;
+            Height = height;
+            CharacterData = null; // ensure DoTexture is called
+            SetCharacterData(data, scene);
+        }
+
         public void SetCharacterData(IReadOnlyList<byte> data, Scene scene)
         {
             if (CharacterData != data)
@@ -418,7 +432,7 @@ namespace MphRead.Hud
         }
 
         private static readonly int _objHeaderSize = Marshal.SizeOf<UiObjectHeader>();
-        private static readonly int _affineParamSize = Marshal.SizeOf<UiAnimParams>();
+        private static readonly int _animParamSize = Marshal.SizeOf<UiAnimParams>();
         private static readonly int _oamAttrSize = Marshal.SizeOf<RawUiOamAttrs>();
 
         public static HudObject GetHudObject(string file)
@@ -426,9 +440,9 @@ namespace MphRead.Hud
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, file)));
             UiObjectHeader header = Read.ReadStruct<UiObjectHeader>(bytes);
             int offset = _objHeaderSize;
-            Debug.Assert(header.ParamDataSize % _affineParamSize == 0);
-            int count = header.ParamDataSize / _affineParamSize;
-            IReadOnlyList<UiAnimParams> affineParams = Read.DoOffsets<UiAnimParams>(bytes, offset, count);
+            Debug.Assert(header.ParamDataSize % _animParamSize == 0);
+            int count = header.ParamDataSize / _animParamSize;
+            IReadOnlyList<UiAnimParams> animParams = Read.DoOffsets<UiAnimParams>(bytes, offset, count);
             offset += header.ParamDataSize;
             Debug.Assert(header.AttrDataSize % _oamAttrSize == 0);
             count = header.AttrDataSize / _oamAttrSize;
@@ -461,7 +475,74 @@ namespace MphRead.Hud
             return new HudObject(width * 8, height * 8, palIndexData, palColorData);
         }
 
-        public static void TestObjects()
+        private static void TestAnimation(IReadOnlyList<UiAnimParams> animParams, int pInitial, int pStart, int pTimer, int pTarget)
+        {
+            int frame = pInitial;
+            int timer = 0;
+            int target = 0;
+            bool updating = false;
+
+            void SetAnim()
+            {
+                frame = pStart - 1;
+                timer = pTimer - 1;
+                target = pTarget;
+                updating = true;
+            }
+
+            void ProcessAnim()
+            {
+                if (updating)
+                {
+                    frame++;
+                    if (frame == timer)
+                    {
+                        if (target >= 0)
+                        {
+                            updating = false;
+                            frame = target - 1;
+                        }
+                        else
+                        {
+                            // loop
+                            frame = -1 - target;
+                        }
+                    }
+                }
+            }
+
+            (int, int) CheckThing(int pFrame)
+            {
+                for (int i = 0; i < animParams.Count; i++)
+                {
+                    int value = animParams[i].Delay;
+                    if (pFrame < value)
+                    {
+                        return (i, animParams[i].ImageIndex);
+                    }
+                    pFrame -= value;
+                }
+                return (0, animParams[0].ImageIndex);
+            }
+
+            (int sn, int sidx) = CheckThing(frame);
+            Console.WriteLine($"start: {sn} --> {sidx}");
+            SetAnim();
+
+            int frameCount = -1;
+            while (updating)
+            {
+                frameCount++;
+                ProcessAnim();
+                (int n, int idx) = CheckThing(frame);
+                Console.WriteLine($"f{frameCount}: {n} --> {idx}");
+                Nop();
+            }
+            Console.WriteLine();
+            Nop();
+        }
+
+        public static void TestObjects(string? filename, int pInitial, int pStart, int pTimer, int pTarget)
         {
             var files = new List<string>()
             {
@@ -634,17 +715,20 @@ namespace MphRead.Hud
                 "_archives/localWeavel/rad_lights.bin",
                 "_archives/localWeavel/rad_ammobar.bin"
             };
-            files.Clear();
-            files.Add("_archives/localSamus/hud_targetcircle.bin");
+            if (filename != null)
+            {
+                files.Clear();
+                files.Add(filename);
+            }
             foreach (string file in files)
             {
                 var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, file)));
                 UiObjectHeader header = Read.ReadStruct<UiObjectHeader>(bytes);
                 int offset = _objHeaderSize;
-                Debug.Assert(header.ParamDataSize % _affineParamSize == 0);
-                int count = header.ParamDataSize / _affineParamSize;
+                Debug.Assert(header.ParamDataSize % _animParamSize == 0);
+                int count = header.ParamDataSize / _animParamSize;
                 Debug.Assert(count == header.FrameCount);
-                IReadOnlyList<UiAnimParams> affineParams = Read.DoOffsets<UiAnimParams>(bytes, offset, count);
+                IReadOnlyList<UiAnimParams> animParams = Read.DoOffsets<UiAnimParams>(bytes, offset, count);
                 offset += header.ParamDataSize;
                 Debug.Assert(header.AttrDataSize % _oamAttrSize == 0);
                 count = header.AttrDataSize / _oamAttrSize;
@@ -657,6 +741,11 @@ namespace MphRead.Hud
                 IReadOnlyList<ushort> paletteData = Read.DoOffsets<ushort>(bytes, offset, header.PalDataSize / 2);
                 offset += header.PalDataSize;
                 Debug.Assert(offset == bytes.Length);
+
+                if (filename != null)
+                {
+                    TestAnimation(animParams, pInitial, pStart, pTimer, pTarget);
+                }
 
                 var palIndexData = new List<byte>();
                 for (int i = 0; i < characterData.Count; i++)

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using MphRead.Formats;
 using MphRead.Hud;
 using OpenTK.Mathematics;
@@ -6,16 +7,21 @@ namespace MphRead.Entities
 {
     public partial class PlayerEntity
     {
+        private HudObject _targetCircleObj = null!;
+        private HudObject _sniperCircleObj = null!;
         private HudObjectInstance _targetCircleInst = null!;
 
-        // sktodo: sniper circle
         public void SetUpHud()
         {
-            HudObject targetCircle = HudInfo.GetHudObject("_archives/localSamus/hud_targetcircle.bin");
-            HudObject sniperCircle = HudInfo.GetHudObject("_archives/localSamus/hud_snipercircle.bin");
-            _targetCircleInst = new HudObjectInstance(targetCircle.Width, targetCircle.Height);
-            _targetCircleInst.SetCharacterData(targetCircle.CharacterData, _scene);
-            _targetCircleInst.SetPaletteData(targetCircle.PaletteData, _scene);
+            // sktodo: put these paths into hunter info structs and reference those
+            _targetCircleObj = HudInfo.GetHudObject("_archives/localSamus/hud_targetcircle.bin");
+            _sniperCircleObj = HudInfo.GetHudObject("_archives/localSamus/hud_snipercircle.bin");
+            Debug.Assert(_sniperCircleObj.Width > _targetCircleObj.Width);
+            Debug.Assert(_sniperCircleObj.Height > _targetCircleObj.Height);
+            _targetCircleInst = new HudObjectInstance(_targetCircleObj.Width, _targetCircleObj.Height,
+                _sniperCircleObj.Width, _sniperCircleObj.Height);
+            _targetCircleInst.SetCharacterData(_targetCircleObj.CharacterData, _scene);
+            _targetCircleInst.SetPaletteData(_targetCircleObj.PaletteData, _scene);
             _targetCircleInst.Center = true;
         }
 
@@ -41,19 +47,23 @@ namespace MphRead.Entities
                 else
                 {
                     _scene.Layer3BindingId = _drawIceLayer ? _scene.IceLayerBindingId : -1;
-                    UpdateReticle();
+                    if (_timeSinceInput < (ulong)Values.GunIdleTime * 2) // todo: FPS stuff
+                    {
+                        UpdateReticle();
+                    }
                 }
             }
         }
 
         private bool _smallReticle = false;
         private ushort _smallReticleTimer = 0;
+        private bool _sniperReticle = false;
+        private bool _hudZoom = false;
 
         private void HudOnFiredShot()
         {
             // todo: check scan visor
-            // sktodo: check snipercircle
-            if (!_smallReticle)
+            if (!_smallReticle && !_sniperReticle)
             {
                 _smallReticle = true;
                 _targetCircleInst.SetAnimation(start: 0, target: 3, frames: 4);
@@ -63,17 +73,16 @@ namespace MphRead.Entities
 
         private void ResetReticle()
         {
-            _targetCircleInst.SetIndex(0, _scene);
+            _targetCircleInst.SetCharacterData(_targetCircleObj.CharacterData, _targetCircleObj.Width,
+                _targetCircleObj.Height, _scene);
             _smallReticle = false;
             _smallReticleTimer = 0;
         }
 
         private void UpdateReticle()
         {
-            // sktodo: reset this when spawning, morphing, etc.
-            if (_smallReticleTimer > 0)
+            if (_smallReticleTimer > 0 && !_sniperReticle)
             {
-                // sktodo: check snipercircle
                 _smallReticleTimer--;
                 if (_smallReticleTimer == 0 && _smallReticle)
                 {
@@ -83,7 +92,6 @@ namespace MphRead.Entities
                     _smallReticle = false;
                 }
             }
-            // sktodo: test input time or whatever
             Matrix.ProjectPosition(_aimPosition, _scene.ViewMatrix, _scene.PerspectiveMatrix, out Vector2 pos);
             _targetCircleInst.PositionX = pos.X;
             _targetCircleInst.PositionY = pos.Y;
@@ -99,16 +107,35 @@ namespace MphRead.Entities
 
         private void HudOnWeaponSwitch(BeamType beam)
         {
-            if (beam != BeamType.Imperialist) // sktodo: or snipercircle is on
+            if (beam != BeamType.Imperialist || _sniperReticle)
             {
-                // sktodo: turn snipercircle off
+                _sniperReticle = false;
                 ResetReticle(); // todo: only do this if scan visor is off
             }
             else
             {
-                // sktodo: turn snipercircle on, etc.
+                _sniperReticle = true;
+                _targetCircleInst.SetCharacterData(_sniperCircleObj.CharacterData, _sniperCircleObj.Width,
+                    _sniperCircleObj.Height, _scene);
             }
             // todo?: set HUD object anim for top screen weapon icon
+        }
+
+        private void HudOnZoom(bool zoom)
+        {
+            if (_hudZoom != zoom)
+            {
+                _hudZoom = zoom;
+                // todo: only do the rest if scan visor is off
+                if (_hudZoom)
+                {
+                    _targetCircleInst.SetAnimation(start: 0, target: 2, frames: 2);
+                }
+                else
+                {
+                    _targetCircleInst.SetAnimation(start: 2, target: 0, frames: 2);
+                }
+            }
         }
 
         public void DrawObjects()
