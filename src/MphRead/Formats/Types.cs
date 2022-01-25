@@ -367,6 +367,34 @@ namespace MphRead
                 (axis.Z * axis.Z * k) + cos
             );
         }
+
+        // get position as X/Y percentages from viewport top-left to bottom-right
+        public static float ProjectPosition(Vector3 pos, Matrix4 viewMatrix, Matrix4 projectionMtx, out Vector2 dest)
+        {
+            pos = Vec3MultMtx4(pos, viewMatrix);
+            float w = projectionMtx.Row3.W
+                + pos.X * projectionMtx.Row0.W
+                + pos.Y * projectionMtx.Row1.W
+                + pos.Z * projectionMtx.Row2.W;
+            if (w <= 0)
+            {
+                dest = Vector2.Zero;
+                return w;
+            }
+            float x = (projectionMtx.Row3.X
+                + pos.X * projectionMtx.Row0.X
+                + pos.Y * projectionMtx.Row1.X
+                + pos.Z * projectionMtx.Row2.X) / w;
+            float y = (projectionMtx.Row3.Y
+                + pos.X * projectionMtx.Row0.Y
+                + pos.Y * projectionMtx.Row1.Y
+                + pos.Z * projectionMtx.Row2.Y) / w;
+            // results are in percentages from center where bottom-left is (-1,-1) and top-right is (1,1)
+            // we need to convert to percentages from top-left so top-left is (0,0) and bottom-right is (1,1)
+            dest.X = (x + 1) / 2; // -1, 0, 1 --> 0, 0.5, 1
+            dest.Y = (1 - y) / 2; // -1, 0, 1 --> 1, 0.5, 0
+            return w;
+        }
     }
 
     // size: 3

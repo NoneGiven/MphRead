@@ -257,6 +257,10 @@ namespace MphRead
             _farClip = meta.FarClip;
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
             _roomId = room.RoomId;
+            if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active))
+            {
+                PlayerEntity.Main.SetUpHud();
+            }
         }
 
         // called before load
@@ -831,17 +835,19 @@ namespace MphRead
         public int BindGetTexture(IReadOnlyList<ColorRgba> data, int width, int height)
         {
             _textureCount++;
-            var pixels = new List<uint>();
-            for (int i = 0; i < data.Count; i++)
-            {
-                ColorRgba pixel = data[i];
-                pixels.Add(pixel.ToUint());
-            }
             GL.BindTexture(TextureTarget.Texture2D, _textureCount);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
-                PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
+                PixelFormat.Rgba, PixelType.UnsignedByte, data.ToArray());
             GL.BindTexture(TextureTarget.Texture2D, 0);
             return _textureCount;
+        }
+
+        public void BindTexture(IReadOnlyList<ColorRgba> data, int width, int height, int bindingId)
+        {
+            GL.BindTexture(TextureTarget.Texture2D, bindingId);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
+                PixelFormat.Rgba, PixelType.UnsignedByte, data.ToArray());
+            GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
         public void UpdateMaterials(Model model, int recolorId)
@@ -1103,12 +1109,21 @@ namespace MphRead
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
 
-            PlayerEntity.Main.UpdateHud();
-            if (CameraMode == CameraMode.Player)
+            if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active))
             {
-                DrawHudLayer(Layer3BindingId);
-                DrawHudLayer(Layer1BindingId);
-                DrawHudLayer(Layer2BindingId);
+                if (ProcessFrame)
+                {
+                    PlayerEntity.Main.UpdateHud();
+                }
+                if (CameraMode == CameraMode.Player)
+                {
+                    float size = SetHudLayerUniforms();
+                    DrawHudLayer(Layer3BindingId, size, alpha: 9 / 16f); // ltodo: alpha
+                    DrawHudLayer(Layer1BindingId, size, alpha: 1);
+                    DrawHudLayer(Layer2BindingId, size, alpha: 1);
+                    PlayerEntity.Main.DrawObjects();
+                    UnsetHudLayerUniforms();
+                }
             }
         }
 
@@ -1300,7 +1315,6 @@ namespace MphRead
             }
         }
 
-        // todo: effect limits for beam effects
         // in-game: 64 effects, 96 elements, 200 particles
         private static readonly int _effectEntryMax = 64;
         private static readonly int _effectElementMax = 96;
@@ -2792,14 +2806,9 @@ namespace MphRead
 
         public int IceLayerBindingId { get; set; } = -1;
 
-        private void DrawHudLayer(int bindingId)
+        private float SetHudLayerUniforms()
         {
-            if (bindingId == -1)
-            {
-                return;
-            }
-            // todo: if BG layer is shifted, we need this quad to be bigger than the viewport so it can shift appropriately
-            // tood: allow this to be affected by viewer toggles
+            // ltodo: allow this to be affected by viewer toggles
             GL.Disable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
             Matrix4 identity = Matrix4.Identity;
@@ -2811,17 +2820,7 @@ namespace MphRead
             GL.Uniform3(_shaderLocations.Ambient, Vector3.One);
             GL.Uniform3(_shaderLocations.Specular, Vector3.One);
             GL.Uniform3(_shaderLocations.Emission, Vector3.One);
-            GL.Uniform1(_shaderLocations.MaterialAlpha, 9 / 16f);
             GL.Uniform1(_shaderLocations.MaterialMode, (int)PolygonMode.Modulate);
-            GL.BindTexture(TextureTarget.Texture2D, bindingId);
-            int minParameter = (int)TextureMinFilter.Nearest;
-            int magParameter = (int)TextureMagFilter.Nearest;
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
-            GL.TexParameter(TextureTarget.Texture2D,
-                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D,
-                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
             GL.Uniform1(_shaderLocations.TexgenMode, (int)TexgenMode.None);
             GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref identity);
             GL.Uniform1(_shaderLocations.UseTexture, 1);
@@ -2837,18 +2836,90 @@ namespace MphRead
             var orthoMatrix = Matrix4.CreateOrthographic(width, height, 0.5f, 1.5f);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref orthoMatrix);
             float size = MathF.Max(width, height) / 2;
+            return size;
+        }
+
+        private void UnsetHudLayerUniforms()
+        {
+            GL.Disable(EnableCap.Blend);
+            GL.Enable(EnableCap.DepthTest);
+            GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref _viewMatrix);
+            GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref _perspectiveMatrix);
+        }
+
+        private void DrawHudLayer(int bindingId, float size, float alpha)
+        {
+            if (bindingId == -1)
+            {
+                return;
+            }
+            // ltodo: if BG layer is shifted, we need this quad to be bigger than the viewport so it can shift appropriately
+            GL.Uniform1(_shaderLocations.MaterialAlpha, alpha);
+            GL.BindTexture(TextureTarget.Texture2D, bindingId);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
             GL.Begin(PrimitiveType.TriangleStrip);
+            // bottom left
             GL.TexCoord3(0f, 0f, 0f);
             GL.Vertex3(-size, -size, -1f);
+            // bottom right
             GL.TexCoord3(1f, 0f, 0f);
             GL.Vertex3(size, -size, -1f);
+            // top left
             GL.TexCoord3(0f, 1f, 0f);
             GL.Vertex3(-size, size, -1f);
+            // top right
             GL.TexCoord3(1f, 1f, 0f);
             GL.Vertex3(size, size, -1f);
             GL.End();
-            GL.Disable(EnableCap.Blend);
-            GL.Enable(EnableCap.DepthTest);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
+        public void DrawHudObject(float x, float y, float width, float height, int bindingId, bool center = false)
+        {
+            GL.Uniform1(_shaderLocations.MaterialAlpha, 1f); // ltodo: alpha?
+            GL.BindTexture(TextureTarget.Texture2D, bindingId);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            // sktodo: don't call this every time
+            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
+            float viewWidth = viewport.Z - viewport.X;
+            float viewHeight = viewport.W - viewport.Y;
+            width = width / 256 * viewWidth;
+            height = height / 192 * viewHeight;
+            float viewLeft = -viewWidth / 2;
+            float viewTop = viewHeight / 2;
+            float leftPos = viewLeft + x * viewWidth - (center ? (width / 2) : 0);
+            float rightPos = leftPos + width;
+            float topPos = viewTop - y * viewHeight + (center ? (height / 2) : 0);
+            float bottomPos = topPos - height;
+            GL.Begin(PrimitiveType.TriangleStrip);
+            // bottom left
+            GL.TexCoord3(0f, 0f, 0f);
+            GL.Vertex3(leftPos, bottomPos, -1f);
+            // bottom right
+            GL.TexCoord3(1f, 0f, 0f);
+            GL.Vertex3(rightPos, bottomPos, -1f);
+            // top left
+            GL.TexCoord3(0f, 1f, 0f);
+            GL.Vertex3(leftPos, topPos, -1f);
+            // top right
+            GL.TexCoord3(1f, 1f, 0f);
+            GL.Vertex3(rightPos, topPos, -1f);
+            GL.End();
+            GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
         private void DoMaterial(RenderItem item)
