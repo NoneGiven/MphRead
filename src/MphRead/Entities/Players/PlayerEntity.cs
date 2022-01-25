@@ -1839,31 +1839,31 @@ namespace MphRead.Entities
                     float hitZ = hitDirection.Value.Z;
                     float hitX = -hitDirection.Value.X;
                     float v126 = -hitZ * _field74;
-                    float v123 = -hitZ * _gunVec2.Z;
-                    float v124 = hitX * _gunVec2.X + v123;
-                    if (v124 < 0)
+                    float dirHorizontal = -hitZ * _gunVec2.Z;
+                    float dirLeftRight = hitX * _gunVec2.X + dirHorizontal;
+                    if (dirLeftRight < 0)
                     {
-                        v123 = -v124;
+                        dirHorizontal = -dirLeftRight;
                     }
                     float v125 = hitX * _field70;
-                    float v127 = v125 + v126;
-                    if (v124 >= 0)
+                    float dirUpDown = v125 + v126;
+                    if (dirLeftRight >= 0)
                     {
-                        v123 = v124;
+                        dirHorizontal = dirLeftRight;
                     }
-                    float v128;
-                    if (v127 >= 0)
+                    float dirVertical;
+                    if (dirUpDown >= 0)
                     {
-                        v128 = v125 + v126;
+                        dirVertical = v125 + v126;
                     }
                     else
                     {
-                        v128 = -v127;
+                        dirVertical = -dirUpDown;
                     }
                     PlayerAnimation anim = PlayerAnimation.None;
-                    if (v128 <= v123)
+                    if (dirVertical <= dirHorizontal)
                     {
-                        if (v124 <= 0)
+                        if (dirLeftRight <= 0)
                         {
                             anim = PlayerAnimation.DamageLeft;
                             // todo: update HUD
@@ -1874,7 +1874,7 @@ namespace MphRead.Entities
                             // todo: update HUD
                         }
                     }
-                    else if (v127 <= 0)
+                    else if (dirUpDown <= 0)
                     {
                         anim = PlayerAnimation.DamageFront;
                         // todo: update HUD
