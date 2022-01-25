@@ -2893,8 +2893,9 @@ namespace MphRead
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float viewWidth = viewport.Z - viewport.X;
             float viewHeight = viewport.W - viewport.Y;
+            float aspect = width / height;
             width = width / 256 * viewWidth;
-            height = height / 192 * viewHeight;
+            height = width / aspect;
             float viewLeft = -viewWidth / 2;
             float viewTop = viewHeight / 2;
             float leftPos = viewLeft + x * viewWidth - (center ? (width / 2) : 0);
