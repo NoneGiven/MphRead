@@ -257,10 +257,6 @@ namespace MphRead
             _farClip = meta.FarClip;
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
             _roomId = room.RoomId;
-            if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active))
-            {
-                PlayerEntity.Main.SetUpHud();
-            }
         }
 
         // called before load

@@ -36,7 +36,7 @@ namespace MphRead.Hud
         public IReadOnlyList<ColorRgba>? PaletteData;
         public readonly ColorRgba[] Texture;
         public int BindingId = -1;
-        // sktodo?: if we find a "non-linear" example, then this will need to be adjusted
+        // ltodo?: if we find a "non-linear" example, then this will need to be adjusted
         // --> also going to need a loop flag and control over animation speed (e.g. blinking Octolith icon)
         public int CurrentFrame;
         public int StartFrame;
@@ -761,7 +761,7 @@ namespace MphRead.Hud
                     palColorData.Add(new ColorRgba(paletteData[i]));
                 }
 
-                // sktodo: share this
+                // todo: share this
                 var characters = new List<List<List<ColorRgba>>>();
                 Debug.Assert(characterData.Count % 32 == 0);
                 Debug.Assert(paletteData.Count % 16 == 0);
@@ -1065,9 +1065,197 @@ namespace MphRead.Hud
     {
         public static readonly string IceLayer = @"_archives\common\bg_ice.bin";
 
-        public static IEnumerable<string> All { get; } = new List<string>()
+        public static IEnumerable<string> AllLayers { get; } = new List<string>()
         {
             IceLayer
         };
+
+        public static IReadOnlyList<HudObjects> HunterObjects = new HudObjects[8]
+        {
+            // Samus
+            new HudObjects(
+                helmet: @"_archives\localSamus\bg_top.bin",
+                helmetDrop: @"_archives\localSamus\bg_top_drop.bin",
+                visor: @"_archives\localSamus\bg_top_ovl.bin",
+                healthBarA: @"_archives\localSamus\hud_energybar.bin",
+                healthBarB: @"_archives\localSamus\hud_energybar2.bin",
+                energyTanks: @"_archives\spSamus\hud_etank.bin",
+                weaponIcon: @"_archives\localSamus\hud_weaponicon.bin",
+                doubleDamage: @"_archives\localSamus\hud_damage.bin",
+                cloaking: @"_archives\localSamus\cloaking.bin",
+                primeHunter: @"_archives\localSamus\hud_primehunter.bin",
+                ammoBar: @"_archives\localSamus\hud_ammobar.bin",
+                reticle: @"_archives\localSamus\hud_targetcircle.bin",
+                sniperReticle: @"_archives\localSamus\hud_snipercircle.bin",
+                scanBox: @"_archives\spSamus\hud_scanbox.bin",
+                messageBox: @"_archives\spSamus\hud_msgBox.bin"
+            ),
+            // Kanden
+            new HudObjects(
+                helmet: @"_archives\localKanden\bg_top.bin",
+                helmetDrop: @"_archives\localKanden\bg_top_drop.bin",
+                visor: @"_archives\localKanden\bg_top_ovl.bin",
+                healthBarA: @"_archives\localKanden\hud_energybar.bin",
+                healthBarB: @"_archives\localKanden\hud_energybar2.bin",
+                energyTanks: null,
+                weaponIcon: @"_archives\localKanden\hud_weaponicon.bin",
+                doubleDamage: @"_archives\localKanden\hud_damage.bin",
+                cloaking: @"_archives\localKanden\cloaking.bin",
+                primeHunter: @"_archives\localKanden\hud_primehunter.bin",
+                ammoBar: @"_archives\localKanden\hud_ammobar.bin",
+                reticle: @"_archives\localKanden\hud_targetcircle.bin",
+                sniperReticle: @"_archives\localKanden\hud_snipercircle.bin",
+                scanBox: null,
+                messageBox: null // todo: SP stuff for other hunters
+            ),
+            // Trace
+            new HudObjects(
+                helmet: @"_archives\localTrace\bg_top.bin",
+                helmetDrop: @"_archives\localTrace\bg_top_drop.bin",
+                visor: @"_archives\localTrace\bg_top_ovl.bin",
+                healthBarA: @"_archives\localTrace\hud_energybar.bin",
+                healthBarB: @"_archives\localTrace\hud_energybar2.bin",
+                energyTanks: null,
+                weaponIcon: @"_archives\localTrace\hud_weaponicon.bin",
+                doubleDamage: @"_archives\localTrace\hud_damage.bin",
+                cloaking: @"_archives\localTrace\cloaking.bin",
+                primeHunter: @"_archives\localTrace\hud_primehunter.bin",
+                ammoBar: @"_archives\localTrace\hud_ammobar.bin",
+                reticle: @"_archives\localTrace\hud_targetcircle.bin",
+                sniperReticle: @"_archives\localTrace\hud_snipercircle.bin",
+                scanBox: null,
+                messageBox: null
+            ),
+            // Sylux
+            new HudObjects(
+                helmet: @"_archives\localSylux\bg_top.bin",
+                helmetDrop: @"_archives\localSylux\bg_top_drop.bin",
+                visor: @"_archives\localSylux\bg_top_ovl.bin",
+                healthBarA: @"_archives\localSylux\hud_energybar.bin",
+                healthBarB: @"_archives\localSylux\hud_energybar2.bin",
+                energyTanks: null,
+                weaponIcon: @"_archives\localSylux\hud_weaponicon.bin",
+                doubleDamage: @"_archives\localSylux\hud_damage.bin",
+                cloaking: @"_archives\localSylux\cloaking.bin",
+                primeHunter: @"_archives\localSylux\hud_primehunter.bin",
+                ammoBar: @"_archives\localSylux\hud_ammobar.bin",
+                reticle: @"_archives\localSylux\hud_targetcircle.bin",
+                sniperReticle: @"_archives\localSylux\hud_snipercircle.bin",
+                scanBox: null,
+                messageBox: null
+            ),
+            // Noxus
+            new HudObjects(
+                helmet: @"_archives\localNox\bg_top.bin",
+                helmetDrop: @"_archives\localNox\bg_top_drop.bin",
+                visor: @"_archives\localNox\bg_top_ovl.bin",
+                healthBarA: @"_archives\localNox\hud_energybar.bin",
+                healthBarB: @"_archives\localNox\hud_energybar2.bin",
+                energyTanks: null,
+                weaponIcon: @"_archives\localNox\hud_weaponicon.bin",
+                doubleDamage: @"_archives\localNox\hud_damage.bin",
+                cloaking: @"_archives\localNox\cloaking.bin",
+                primeHunter: @"_archives\localNox\hud_primehunter.bin",
+                ammoBar: @"_archives\localNox\hud_ammobar.bin",
+                reticle: @"_archives\localNox\hud_targetcircle.bin",
+                sniperReticle: @"_archives\localNox\hud_snipercircle.bin",
+                scanBox: null,
+                messageBox: null
+            ),
+            // Spire
+            new HudObjects(
+                helmet: @"_archives\localSpire\bg_top.bin",
+                helmetDrop: @"_archives\localSpire\bg_top_drop.bin",
+                visor: @"_archives\localSpire\bg_top_ovl.bin",
+                healthBarA: @"_archives\localSpire\hud_energybar.bin",
+                healthBarB: @"_archives\localSpire\hud_energybar2.bin",
+                energyTanks: null,
+                weaponIcon: @"_archives\localSpire\hud_weaponicon.bin",
+                doubleDamage: @"_archives\localSpire\hud_damage.bin",
+                cloaking: @"_archives\localSpire\cloaking.bin",
+                primeHunter: @"_archives\localSpire\hud_primehunter.bin",
+                ammoBar: @"_archives\localSpire\hud_ammobar.bin",
+                reticle: @"_archives\localSpire\hud_targetcircle.bin",
+                sniperReticle: @"_archives\localSpire\hud_snipercircle.bin",
+                scanBox: null,
+                messageBox: null
+            ),
+            // Weavel
+            new HudObjects(
+                helmet: @"_archives\localWeavel\bg_top.bin",
+                helmetDrop: @"_archives\localWeavel\bg_top_drop.bin",
+                visor: @"_archives\localWeavel\bg_top_ovl.bin",
+                healthBarA: @"_archives\localWeavel\hud_energybar.bin",
+                healthBarB: @"_archives\localWeavel\hud_energybar2.bin",
+                energyTanks: null,
+                weaponIcon: @"_archives\localWeavel\hud_weaponicon.bin",
+                doubleDamage: @"_archives\localWeavel\hud_damage.bin",
+                cloaking: @"_archives\localWeavel\cloaking.bin",
+                primeHunter: @"_archives\localWeavel\hud_primehunter.bin",
+                ammoBar: @"_archives\localWeavel\hud_ammobar.bin",
+                reticle: @"_archives\localWeavel\hud_targetcircle.bin",
+                sniperReticle: @"_archives\localWeavel\hud_snipercircle.bin",
+                scanBox: null,
+                messageBox: null
+            ),
+            // Guardian
+            new HudObjects(
+                helmet: "", // todo: all HUD stuff for guardians
+                helmetDrop: "",
+                visor: "",
+                healthBarA: "",
+                healthBarB: "",
+                energyTanks: "",
+                weaponIcon: "",
+                doubleDamage: "",
+                cloaking: "",
+                primeHunter: "",
+                ammoBar: "",
+                reticle: @"_archives\localSamus\hud_targetcircle.bin",
+                sniperReticle: @"_archives\localSamus\hud_snipercircle.bin",
+                scanBox: null,
+                messageBox: null
+            )
+        };
+    }
+
+    public class HudObjects
+    {
+        public readonly string Helmet;
+        public readonly string HelmetDrop;
+        public readonly string Visor;
+        public readonly string HealthBarA;
+        public readonly string HealthBarB;
+        public readonly string? EnergyTanks;
+        public readonly string WeaponIcon;
+        public readonly string DoubleDamage;
+        public readonly string Cloaking;
+        public readonly string PrimeHunter;
+        public readonly string AmmoBar;
+        public readonly string Reticle;
+        public readonly string SniperReticle;
+        public readonly string? ScanBox;
+        public readonly string? MessageBox;
+
+        public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB,
+            string? energyTanks, string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar,
+            string reticle, string sniperReticle, string? scanBox, string? messageBox)
+        {
+            Helmet = helmet;
+            HelmetDrop = helmetDrop;
+            Visor = visor;
+            HealthBarA = healthBarA;
+            HealthBarB = healthBarB;
+            EnergyTanks = energyTanks;
+            WeaponIcon = weaponIcon;
+            DoubleDamage = doubleDamage;
+            Cloaking = cloaking;
+            PrimeHunter = primeHunter;
+            AmmoBar = ammoBar;
+            Reticle = reticle;
+            SniperReticle = sniperReticle;
+            ScanBox = scanBox;
+            MessageBox = messageBox;
+        }
     }
 }

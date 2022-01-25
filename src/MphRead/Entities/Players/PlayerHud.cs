@@ -7,15 +7,15 @@ namespace MphRead.Entities
 {
     public partial class PlayerEntity
     {
+        private HudObjects _hudObjects = null!;
         private HudObject _targetCircleObj = null!;
         private HudObject _sniperCircleObj = null!;
         private HudObjectInstance _targetCircleInst = null!;
 
         public void SetUpHud()
         {
-            // sktodo: put these paths into hunter info structs and reference those
-            _targetCircleObj = HudInfo.GetHudObject("_archives/localSamus/hud_targetcircle.bin");
-            _sniperCircleObj = HudInfo.GetHudObject("_archives/localSamus/hud_snipercircle.bin");
+            _targetCircleObj = HudInfo.GetHudObject(_hudObjects.Reticle);
+            _sniperCircleObj = HudInfo.GetHudObject(_hudObjects.SniperReticle);
             Debug.Assert(_sniperCircleObj.Width > _targetCircleObj.Width);
             Debug.Assert(_sniperCircleObj.Height > _targetCircleObj.Height);
             _targetCircleInst = new HudObjectInstance(_targetCircleObj.Width, _targetCircleObj.Height,

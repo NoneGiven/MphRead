@@ -4,6 +4,7 @@ using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats;
 using MphRead.Formats.Culling;
+using MphRead.Hud;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -492,6 +493,11 @@ namespace MphRead.Entities
             base.Initialize();
             EquipInfo.Beams = _beams;
             Values = Metadata.PlayerValues[(int)Hunter];
+            _hudObjects = HudElements.HunterObjects[(int)Hunter];
+            if (IsMainPlayer)
+            {
+                SetUpHud();
+            }
             if (_scene.Multiplayer)
             {
                 _healthMax = (ushort)(2 * Values.EnergyTank - 1);
