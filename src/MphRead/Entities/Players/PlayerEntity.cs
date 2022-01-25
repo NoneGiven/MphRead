@@ -784,6 +784,12 @@ namespace MphRead.Entities
             _jumpPadControlLock = 0;
             _jumpPadControlLockMin = 0;
             _timeSinceJumpPad = UInt16.MaxValue; // the game doesn't do this
+            if (IsMainPlayer)
+            {
+                // the game only does this in multiplayer, but it can't hard either way
+                // todo: lots of other stuff
+                ResetReticle();
+            }
             // todo: update HUD effects
             _altRollFbX = CameraInfo.Field48;
             _altRollFbZ = CameraInfo.Field4C;
@@ -1141,7 +1147,8 @@ namespace MphRead.Entities
             }
             if (IsMainPlayer)
             {
-                // todo: update HUD
+                HudOnWeaponSwitch(beam);
+                // todo?: update weapon HUD objects
             }
             return true;
         }

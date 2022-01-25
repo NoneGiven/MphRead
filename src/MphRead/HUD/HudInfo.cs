@@ -31,16 +31,17 @@ namespace MphRead.Hud
         public float PositionY;
         public readonly int Width;
         public readonly int Height;
-        public int CharacterIndex = -1;
         public IReadOnlyList<byte>? CharacterData;
         public int PaletteIndex = -1;
         public IReadOnlyList<ColorRgba>? PaletteData;
         public readonly ColorRgba[] Texture;
         public int BindingId = -1;
-        // sktodo: how does animation work?
+        // sktodo?: if we find a "non-linear" example, then this will need to be adjusted
         public int CurrentFrame;
+        public int StartFrame;
         public int TargetFrame;
-        public int Timer = -1;
+        public float Timer = -1;
+        public float Time = -1;
 
         // sktodo: buffer needs to be big enough to fit the largest size this will be used for
         // (32x32 vs. 64x64 for targetcircle vs. snipercircle)
@@ -51,12 +52,13 @@ namespace MphRead.Hud
             Texture = new ColorRgba[Width * Height];
         }
 
-        public void SetCharacterData(IReadOnlyList<byte> data, int index, Scene scene)
+        // sktodo: yeah this needs to include all the frames (images)
+        public void SetCharacterData(IReadOnlyList<byte> data, Scene scene)
         {
-            if (CharacterData != data || CharacterIndex != index)
+            if (CharacterData != data)
             {
                 CharacterData = data;
-                CharacterIndex = index;
+                CurrentFrame = 0;
                 if (PaletteData != null)
                 {
                     DoTexture(scene);
@@ -64,16 +66,26 @@ namespace MphRead.Hud
             }
         }
 
-        public void SetPaletteData(IReadOnlyList<ColorRgba> data, int index, Scene scene)
+        public void SetPaletteData(IReadOnlyList<ColorRgba> data, Scene scene)
         {
-            if (PaletteData != data || PaletteIndex != index)
+            if (PaletteData != data)
             {
                 PaletteData = data;
-                PaletteIndex = index;
+                PaletteIndex = 0;
                 if (CharacterData != null)
                 {
                     DoTexture(scene);
                 }
+            }
+        }
+
+        public void SetPalette(int index, Scene scene)
+        {
+            int prev = PaletteIndex;
+            PaletteIndex = index;
+            if (CharacterData != null && index != prev)
+            {
+                DoTexture(scene);
             }
         }
 
@@ -84,6 +96,7 @@ namespace MphRead.Hud
             int palOffset = PaletteIndex * 16;
             int width = Width / 8;
             int height = Height / 8;
+            int image = CurrentFrame * Width * Height;
             for (int ty = 0; ty < height; ty++)
             {
                 for (int tx = 0; tx < width; tx++)
@@ -93,15 +106,13 @@ namespace MphRead.Hud
                     {
                         for (int px = 0; px < 8; px++)
                         {
-                            byte palIndex = CharacterData[ty * width * 8 * 8 + tx * 8 * 8 + py * 8 + px];
+                            byte palIndex = CharacterData[image + ty * width * 8 * 8 + tx * 8 * 8 + py * 8 + px];
                             int index = start + py * width * 8 + px;
                             Texture[index] = palIndex == 0 ? new ColorRgba() : PaletteData[palOffset + palIndex];
                         }
                     }
                 }
             }
-            //string path = @"D:\Cdrv\MPH\Data\_Export\_2D\Objects\localTrace\hud_targetcircle\pal_00";
-            //Export.Images.SaveTexture(path, "test", 32, 32, Texture);
             if (BindingId == -1)
             {
                 BindingId = scene.BindGetTexture(Texture, Width, Height);
@@ -109,6 +120,54 @@ namespace MphRead.Hud
             else
             {
                 scene.BindTexture(Texture, Width, Height, BindingId);
+            }
+        }
+
+        public void SetIndex(int frame, Scene scene)
+        {
+            int prev = CurrentFrame;
+            CurrentFrame = frame;
+            Timer = 0;
+            if (frame != prev)
+            {
+                DoTexture(scene);
+            }
+        }
+
+        public void SetAnimation(int start, int target, int frames)
+        {
+            if (start == target)
+            {
+                CurrentFrame = start;
+            }
+            else
+            {
+                CurrentFrame = start;
+                StartFrame = start;
+                TargetFrame = target;
+                Timer = Time = frames * (1 / 30f);
+            }
+            // no need to update textures since ProcessAnimation will do it
+        }
+
+        public void ProcessAnimation(Scene scene)
+        {
+            if (Timer > 0)
+            {
+                int prev = CurrentFrame;
+                Timer -= scene.FrameTime;
+                if (Timer <= 0)
+                {
+                    CurrentFrame = TargetFrame;
+                }
+                else
+                {
+                    CurrentFrame = StartFrame + (int)MathF.Round((TargetFrame - StartFrame) * (1 - Timer / Time));
+                }
+                if (CurrentFrame != prev)
+                {
+                    DoTexture(scene);
+                }
             }
         }
     }
@@ -233,8 +292,8 @@ namespace MphRead.Hud
 
         private readonly struct UiObjectHeader
         {
-            public readonly ushort Field0; // passed to update_hud_object in process_reticle_timer
-            public readonly ushort Count;
+            public readonly ushort FrameCount;
+            public readonly ushort ImageCount;
             public readonly ushort Width;
             public readonly ushort Height;
             public readonly int ParamDataSize;
@@ -243,12 +302,12 @@ namespace MphRead.Hud
             public readonly int PalDataSize;
         }
 
-        private readonly struct UiAffineParams
+        private readonly struct UiAnimParams
         {
-            public readonly byte Field0; // index? (i.e. how many objects were before this one?)
-            public readonly byte Field1;
-            public readonly ushort Field2;
-            public readonly int Field4;
+            public readonly byte ImageIndex;
+            public readonly byte Delay; // sort of
+            public readonly ushort Field2; // unused?
+            public readonly int Field4; // unused?
             public readonly ushort ParamPa;
             public readonly ushort ParamPb;
             public readonly ushort ParamPc;
@@ -359,7 +418,7 @@ namespace MphRead.Hud
         }
 
         private static readonly int _objHeaderSize = Marshal.SizeOf<UiObjectHeader>();
-        private static readonly int _affineParamSize = Marshal.SizeOf<UiAffineParams>();
+        private static readonly int _affineParamSize = Marshal.SizeOf<UiAnimParams>();
         private static readonly int _oamAttrSize = Marshal.SizeOf<RawUiOamAttrs>();
 
         public static HudObject GetHudObject(string file)
@@ -369,7 +428,7 @@ namespace MphRead.Hud
             int offset = _objHeaderSize;
             Debug.Assert(header.ParamDataSize % _affineParamSize == 0);
             int count = header.ParamDataSize / _affineParamSize;
-            IReadOnlyList<UiAffineParams> affineParams = Read.DoOffsets<UiAffineParams>(bytes, offset, count);
+            IReadOnlyList<UiAnimParams> affineParams = Read.DoOffsets<UiAnimParams>(bytes, offset, count);
             offset += header.ParamDataSize;
             Debug.Assert(header.AttrDataSize % _oamAttrSize == 0);
             count = header.AttrDataSize / _oamAttrSize;
@@ -576,7 +635,7 @@ namespace MphRead.Hud
                 "_archives/localWeavel/rad_ammobar.bin"
             };
             files.Clear();
-            files.Add("_archives/localTrace/hud_targetcircle.bin");
+            files.Add("_archives/localSamus/hud_targetcircle.bin");
             foreach (string file in files)
             {
                 var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, file)));
@@ -584,7 +643,8 @@ namespace MphRead.Hud
                 int offset = _objHeaderSize;
                 Debug.Assert(header.ParamDataSize % _affineParamSize == 0);
                 int count = header.ParamDataSize / _affineParamSize;
-                IReadOnlyList<UiAffineParams> affineParams = Read.DoOffsets<UiAffineParams>(bytes, offset, count);
+                Debug.Assert(count == header.FrameCount);
+                IReadOnlyList<UiAnimParams> affineParams = Read.DoOffsets<UiAnimParams>(bytes, offset, count);
                 offset += header.ParamDataSize;
                 Debug.Assert(header.AttrDataSize % _oamAttrSize == 0);
                 count = header.AttrDataSize / _oamAttrSize;
@@ -659,7 +719,7 @@ namespace MphRead.Hud
                 ushort texWidth = (ushort)(width * 8);
                 ushort texHeight = (ushort)(height * 8);
                 int size = texWidth * texHeight;
-                for (int i = 0; i < header.Count; i++)
+                for (int i = 0; i < header.ImageCount; i++)
                 {
                     var distinctPalettes = new List<List<ushort>>();
                     for (int p = 0; p < paletteData.Count / 16; p++)

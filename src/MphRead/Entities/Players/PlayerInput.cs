@@ -586,7 +586,12 @@ namespace MphRead.Entities
                     if (!Flags2.TestFlag(PlayerFlags2.BipedStuck) && _abilities.TestFlag(AbilityFlags.AltForm)
                         && Controls.Morph.IsPressed || IsMainPlayer && CameraSequence.Current?.ForceAlt == true)
                     {
-                        TrySwitchForms();
+                        if (TrySwitchForms() && IsMainPlayer && IsMorphing)
+                        {
+                            // the game only does this when using the touch screen button, but this is equivalent,
+                            // and we want to call this beause it updates the reticle expansion
+                            HudOnMorphStart(teleported: false);
+                        } 
                         anim1 = PlayerAnimation.Morph;
                         anim2 = PlayerAnimation.Morph;
                     }
@@ -720,7 +725,10 @@ namespace MphRead.Entities
             }
             // todo: update license stats
             _timeSinceShot = 0;
-            // todo: update HUD
+            if (IsMainPlayer)
+            {
+                HudOnFiredShot();
+            }
             if (CurrentWeapon == BeamType.Missile)
             {
                 Flags1 |= PlayerFlags1.ShotMissile;
