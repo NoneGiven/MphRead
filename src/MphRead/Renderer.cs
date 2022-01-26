@@ -2961,19 +2961,26 @@ namespace MphRead
                 TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            // ltodo: don't call this every time
+            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
+            float viewWidth = viewport.Z - viewport.X;
+            float viewHeight = viewport.W - viewport.Y;
+            float size = MathF.Max(viewWidth, viewHeight) / 2;
+            float width = size / (viewWidth / 2);
+            float height = size / (viewHeight / 2);
             GL.Begin(PrimitiveType.TriangleStrip);
             // top right
             GL.TexCoord3(1f, 0f, 0f);
-            GL.Vertex3(1f, 1f, -1f);
+            GL.Vertex3(width, height, 0f);
             // top left
             GL.TexCoord3(0f, 0f, 0f);
-            GL.Vertex3(-1f, 1f, -1f);
+            GL.Vertex3(-width, height, 0f);
             // bottom right
             GL.TexCoord3(1f, 1f, 0f);
-            GL.Vertex3(1f, -1f, -1f);
+            GL.Vertex3(width, -height, 0f);
             // bottom left
             GL.TexCoord3(0f, 1f, 0f);
-            GL.Vertex3(-1f, -1f, -1f);
+            GL.Vertex3(-width, -height, 0f);
             GL.End();
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
