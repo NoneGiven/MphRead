@@ -169,6 +169,34 @@ void main()
     gl_FragColor = col + vec4(fade_color, fade_color, fade_color, 0);
 }
 ";
+
+        public static string RttVertexShader { get; } = @"
+#version 120
+
+varying vec2 texcoord;
+varying vec4 color;
+
+void main()
+{
+    gl_Position = vec4(gl_Vertex.xy, 0, 1);
+    texcoord = gl_MultiTexCoord0.xy;
+    color = vec4(gl_Position.x < -0.9 ? 1 : 0, 0, 0, 1);
+}
+";
+
+        public static string RttFragmentShader { get; } = @"
+#version 120
+
+uniform sampler2D tex;
+varying vec2 texcoord;
+varying vec4 color;
+
+void main()
+{
+    gl_FragColor = texture2D(tex, texcoord);
+    //gl_FragColor = color;
+}
+";
     }
 
     public class ShaderLocations

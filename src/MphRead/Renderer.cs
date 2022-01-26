@@ -119,6 +119,7 @@ namespace MphRead
         private readonly Dictionary<int, TextureMap> _texPalMap = new Dictionary<int, TextureMap>();
 
         private int _shaderProgramId = 0;
+        private int _rttShaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
 
         private Vector3 _light1Vector = Vector3.Zero;
@@ -369,6 +370,10 @@ namespace MphRead
             OutputStart();
         }
 
+        private int _frameBuffer = 0;
+        private int _screenTexture = 0;
+        private int _renderBuffer = 0;
+
         private void InitShaders()
         {
             int vertexShader = GL.CreateShader(ShaderType.VertexShader);
@@ -385,8 +390,9 @@ namespace MphRead
                 {
                     Debugger.Break();
                 }
-                throw new ProgramException("Failed to compile shaders.");
+                throw new ProgramException("Failed to compile main shaders.");
             }
+
             _shaderProgramId = GL.CreateProgram();
             GL.AttachShader(_shaderProgramId, vertexShader);
             GL.AttachShader(_shaderProgramId, fragmentShader);
@@ -395,6 +401,63 @@ namespace MphRead
             GL.DetachShader(_shaderProgramId, fragmentShader);
             GL.DeleteShader(fragmentShader);
             GL.DeleteShader(vertexShader);
+
+            vertexShader = GL.CreateShader(ShaderType.VertexShader);
+            GL.ShaderSource(vertexShader, Shaders.RttVertexShader);
+            GL.CompileShader(vertexShader);
+            vertexLog = GL.GetShaderInfoLog(vertexShader);
+            fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
+            GL.ShaderSource(fragmentShader, Shaders.RttFragmentShader);
+            GL.CompileShader(fragmentShader);
+            fragmentLog = GL.GetShaderInfoLog(fragmentShader);
+            if (vertexLog != "" || fragmentLog != "")
+            {
+                if (Debugger.IsAttached)
+                {
+                    Debugger.Break();
+                }
+                throw new ProgramException("Failed to compile RTT shaders.");
+            }
+            _rttShaderProgramId = GL.CreateProgram();
+            GL.AttachShader(_rttShaderProgramId, vertexShader);
+            GL.AttachShader(_rttShaderProgramId, fragmentShader);
+            GL.LinkProgram(_rttShaderProgramId);
+            GL.DetachShader(_rttShaderProgramId, vertexShader);
+            GL.DetachShader(_rttShaderProgramId, fragmentShader);
+            GL.DeleteShader(fragmentShader);
+            GL.DeleteShader(vertexShader);
+
+            _frameBuffer = GL.GenFramebuffer();
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, _frameBuffer);
+            _screenTexture = GL.GenTexture();
+            _textureCount++;
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, _screenTexture);
+            // sktodo: size/resizing
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, 800, 600, 0,
+                PixelFormat.Rgb, PixelType.UnsignedByte, IntPtr.Zero);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
+                TextureTarget.Texture2D, _screenTexture, 0);
+
+            _renderBuffer = GL.GenRenderbuffer();
+            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, _renderBuffer);
+            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.Depth24Stencil8, 800, 600);
+            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
+            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment,
+                RenderbufferTarget.Renderbuffer, _renderBuffer);
+
+            FramebufferErrorCode status = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+            if (status != FramebufferErrorCode.FramebufferComplete)
+            {
+                Debugger.Break();
+            }
+
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 
             _shaderLocations.UseLight = GL.GetUniformLocation(_shaderProgramId, "use_light");
             _shaderLocations.ShowColors = GL.GetUniformLocation(_shaderProgramId, "show_colors");
@@ -883,6 +946,8 @@ namespace MphRead
 
         public void OnUpdateFrame(double frameTime)
         {
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, _frameBuffer);
+            GL.UseProgram(_shaderProgramId);
             if (_recording || Debugger.IsAttached)
             {
                 _frameTime = 1 / 60f; // todo: FPS stuff
@@ -1101,7 +1166,6 @@ namespace MphRead
                 RenderItem(item);
             }
             GL.DepthMask(true);
-            GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
 
@@ -1115,19 +1179,45 @@ namespace MphRead
                 }
                 if (CameraMode == CameraMode.Player)
                 {
-                    size = SetHudLayerUniforms();
+                    //size = SetHudLayerUniforms();
                     PlayerEntity.Main.DrawHudModels();
                 }
             }
+
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            GL.UseProgram(_rttShaderProgramId);
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            GL.Disable(EnableCap.DepthTest);
+            GL.BindTexture(TextureTarget.Texture2D, _screenTexture);
+
+            GL.Begin(PrimitiveType.TriangleStrip);
+            // top right
+            GL.TexCoord3(1f, 1f, 0f);
+            GL.Vertex3(1f, 1f, 0f);
+            // top left
+            GL.TexCoord3(0f, 1f, 0f);
+            GL.Vertex3(-1f, 1f, 0f);
+            // bottom right
+            GL.TexCoord3(1f, 0f, 0f);
+            GL.Vertex3(1f, -1f, 0f);
+            // bottom left
+            GL.TexCoord3(0f, 0f, 0f);
+            GL.Vertex3(-1f, -1f, 0f);
+            GL.End();
+
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
+            GL.Enable(EnableCap.DepthTest);
             // ltodo: rtt/postprocess
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
             {
-                DrawHudLayer(Layer3BindingId, size, alpha: 9 / 16f); // ltodo: alpha
-                DrawHudLayer(Layer1BindingId, size, alpha: 1);
-                DrawHudLayer(Layer2BindingId, size, alpha: 1);
-                PlayerEntity.Main.DrawHudObjects();
-                UnsetHudLayerUniforms();
+                //DrawHudLayer(Layer3BindingId, size, alpha: 9 / 16f); // ltodo: alpha
+                //DrawHudLayer(Layer1BindingId, size, alpha: 1);
+                //DrawHudLayer(Layer2BindingId, size, alpha: 1);
+                //PlayerEntity.Main.DrawHudObjects();
+                //UnsetHudLayerUniforms();
             }
+            GL.Disable(EnableCap.Blend);
         }
 
         private void LoadAndUnload()
