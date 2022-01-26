@@ -19,6 +19,7 @@ namespace MphRead.Entities
         public void SetUpHud()
         {
             _damageIndicator = Read.GetModelInstance("damage", dir: MetaDir.Hud);
+            _scene.LoadModel(_damageIndicator.Model);
             for (int i = 0; i < 8; i++)
             {
                 _damageIndicatorTimers[i] = 0;
@@ -44,6 +45,9 @@ namespace MphRead.Entities
 
         public void UpdateHud()
         {
+            UpdateDamageIndicators();
+            _targetCircleInst.Enabled = false;
+            _damageIndicator.Active = false;
             if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true)
             {
                 _scene.Layer1BindingId = -1;
@@ -52,7 +56,6 @@ namespace MphRead.Entities
                 return;
             }
             // todo: lots more stuff
-            _targetCircleInst.Enabled = false;
             if (_health > 0)
             {
                 if (IsAltForm || IsMorphing || IsUnmorphing)
@@ -69,6 +72,21 @@ namespace MphRead.Entities
                         UpdateReticle();
                     }
                 }
+                _damageIndicator.Active = true;
+            }
+        }
+
+        private void UpdateDamageIndicators()
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                ushort time = _damageIndicatorTimers[i];
+                if (time > 0)
+                {
+                    time--;
+                    _damageIndicatorTimers[i] = time;
+                }
+                _damageIndicatorNodes[i].Enabled = (time & (4 * 2)) != 0; // todo: FPS stuff
             }
         }
 
@@ -155,11 +173,19 @@ namespace MphRead.Entities
             }
         }
 
-        public void DrawObjects()
+        public void DrawHudObjects()
         {
             if (_targetCircleInst.Enabled)
             {
                 DrawHudObject(_targetCircleInst);
+            }
+        }
+
+        public void DrawHudModels()
+        {
+            if (_damageIndicator.Active)
+            {
+                _scene.DrawHudDamageModel(_damageIndicator);
             }
         }
 

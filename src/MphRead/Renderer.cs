@@ -1105,6 +1105,7 @@ namespace MphRead
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
 
+            float size = 0;
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active))
             {
                 if (ProcessFrame)
@@ -1113,13 +1114,18 @@ namespace MphRead
                 }
                 if (CameraMode == CameraMode.Player)
                 {
-                    float size = SetHudLayerUniforms();
-                    DrawHudLayer(Layer3BindingId, size, alpha: 9 / 16f); // ltodo: alpha
-                    DrawHudLayer(Layer1BindingId, size, alpha: 1);
-                    DrawHudLayer(Layer2BindingId, size, alpha: 1);
-                    PlayerEntity.Main.DrawObjects();
-                    UnsetHudLayerUniforms();
+                    size = SetHudLayerUniforms();
+                    PlayerEntity.Main.DrawHudModels();
                 }
+            }
+            // ltodo: rtt/postprocess
+            if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
+            {
+                DrawHudLayer(Layer3BindingId, size, alpha: 9 / 16f); // ltodo: alpha
+                DrawHudLayer(Layer1BindingId, size, alpha: 1);
+                DrawHudLayer(Layer2BindingId, size, alpha: 1);
+                PlayerEntity.Main.DrawHudObjects();
+                UnsetHudLayerUniforms();
             }
         }
 
@@ -2822,8 +2828,11 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.UseTexture, 1);
             GL.Uniform1(_shaderLocations.UseOverride, 0);
             GL.Uniform1(_shaderLocations.UsePaletteOverride, 0);
-            GL.Enable(EnableCap.CullFace);
-            GL.CullFace(CullFaceMode.Back);
+            if (_faceCulling)
+            {
+                GL.Enable(EnableCap.CullFace);
+                GL.CullFace(CullFaceMode.Back);
+            }
             GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
             GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref identity);
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
@@ -2917,6 +2926,62 @@ namespace MphRead
             GL.Vertex3(leftPos, bottomPos, -1f);
             GL.End();
             GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
+        private readonly float[] _hudMatrixStack = new float[16 * 31];
+
+        public void DrawHudDamageModel(ModelInstance inst)
+        {
+            Model model = inst.Model;
+            UpdateMaterials(model, 0);
+            GL.Uniform1(_shaderLocations.MaterialAlpha, 1f);
+            GL.BindTexture(TextureTarget.Texture2D, model.Materials[0].TextureBindingId);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            // ltodo: don't call this every time
+            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
+            float viewWidth = viewport.Z - viewport.X;
+            float viewHeight = viewport.W - viewport.Y;
+            float xOffset = -viewWidth / 2;
+            float yOffset = -viewHeight / 2;
+            // ltodo: we only need to update this loop and matrix stack update if the viewport changes
+            for (int i = 1; i < 9; i++)
+            {
+                Node node = inst.Model.Nodes[i];
+                if (node.Enabled)
+                {
+                    float width = node.MaxBounds.X - node.MinBounds.X;
+                    float height = node.MaxBounds.Y - node.MinBounds.Y;
+                    float newWidth = width / 256 * viewWidth;
+                    float newHeight = height / 192 * viewHeight;
+                    newWidth *= model.Scale.X;
+                    newHeight *= model.Scale.Y;
+                    var transform = Matrix4.CreateScale(newWidth / width, newHeight / height, 1);
+                    transform.Row3.Xyz = new Vector3(xOffset, yOffset, -1);
+                    node.Animation = transform;
+                }
+            }
+            model.UpdateMatrixStack();
+            Array.Copy(model.MatrixStackValues.ToArray(), _hudMatrixStack, model.MatrixStackValues.Count);
+            GL.UniformMatrix4(_shaderLocations.MatrixStack, model.NodeMatrixIds.Count, transpose: false, _hudMatrixStack);
+            for (int i = 1; i < 9; i++)
+            {
+                Node node = inst.Model.Nodes[i];
+                if (node.Enabled)
+                {
+                    Mesh mesh = model.Meshes[node.MeshId / 2];
+                    GL.CallList(mesh.ListId);
+                }
+            }
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            Matrix4 identity = Matrix4.Identity;
+            GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref identity);
         }
 
         private void DoMaterial(RenderItem item)

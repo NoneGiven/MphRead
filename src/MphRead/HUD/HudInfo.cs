@@ -73,6 +73,7 @@ namespace MphRead.Hud
             {
                 CharacterData = data;
                 CurrentFrame = 0;
+                Timer = 0;
                 if (PaletteData != null)
                 {
                     DoTexture(scene);
