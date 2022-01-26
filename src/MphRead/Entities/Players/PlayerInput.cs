@@ -591,7 +591,7 @@ namespace MphRead.Entities
                             // the game only does this when using the touch screen button, but this is equivalent,
                             // and we want to call this beause it updates the reticle expansion
                             HudOnMorphStart(teleported: false);
-                        } 
+                        }
                         anim1 = PlayerAnimation.Morph;
                         anim2 = PlayerAnimation.Morph;
                     }
@@ -622,9 +622,12 @@ namespace MphRead.Entities
                 {
                     if (Flags1.TestFlag(PlayerFlags1.Grounded))
                     {
-                        if (Biped1Anim == PlayerAnimation.Idle && ++_timeIdle > 300 * 2 && _timeSinceInput > 300 * 2) // todo: FPS stuff
+                        if (Biped1Anim == PlayerAnimation.Idle)
                         {
-                            SetBiped1Animation(PlayerAnimation.Flourish, AnimFlags.NoLoop);
+                            if (++_timeIdle > 300 * 2 && _timeSinceInput > 300 * 2) // todo: FPS stuff
+                            {
+                                SetBiped1Animation(PlayerAnimation.Flourish, AnimFlags.NoLoop);
+                            }
                         }
                         else if (!Biped1Flags.TestFlag(AnimFlags.NoLoop) || Biped1Flags.TestFlag(AnimFlags.Ended))
                         {
