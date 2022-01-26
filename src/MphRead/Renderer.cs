@@ -1105,6 +1105,7 @@ namespace MphRead
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
 
+            // ltodo: the rest of these calls could use a simpler shader
             float size = 0;
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active))
             {
@@ -2828,6 +2829,7 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.UseTexture, 1);
             GL.Uniform1(_shaderLocations.UseOverride, 0);
             GL.Uniform1(_shaderLocations.UsePaletteOverride, 0);
+            GL.Uniform1(_shaderLocations.UseFog, 0);
             if (_faceCulling)
             {
                 GL.Enable(EnableCap.CullFace);
