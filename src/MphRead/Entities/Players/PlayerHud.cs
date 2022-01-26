@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using MphRead.Formats;
 using MphRead.Hud;
@@ -128,8 +129,8 @@ namespace MphRead.Entities
                 }
             }
             Matrix.ProjectPosition(_aimPosition, _scene.ViewMatrix, _scene.PerspectiveMatrix, out Vector2 pos);
-            _targetCircleInst.PositionX = pos.X;
-            _targetCircleInst.PositionY = pos.Y;
+            _targetCircleInst.PositionX = MathF.Round(pos.X, 5);
+            _targetCircleInst.PositionY = MathF.Round(pos.Y, 5);
             _targetCircleInst.Enabled = true;
             _targetCircleInst.ProcessAnimation(_scene);
         }

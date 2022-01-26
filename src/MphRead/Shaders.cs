@@ -174,19 +174,18 @@ void main()
 #version 120
 
 varying vec2 texcoord;
-varying vec4 color;
 
 void main()
 {
     gl_Position = vec4(gl_Vertex.xy, 0, 1);
     texcoord = gl_MultiTexCoord0.xy;
-    color = vec4(gl_Position.x < -0.9 ? 1 : 0, 0, 0, 1);
 }
 ";
 
         public static string RttFragmentShader { get; } = @"
 #version 120
 
+uniform float alpha;
 uniform sampler2D tex;
 varying vec2 texcoord;
 varying vec4 color;
@@ -194,7 +193,7 @@ varying vec4 color;
 void main()
 {
     gl_FragColor = texture2D(tex, texcoord);
-    //gl_FragColor = color;
+    gl_FragColor.a *= alpha;
 }
 ";
     }
@@ -230,5 +229,6 @@ void main()
         public int MatrixStack { get; set; }
         public int ToonTable { get; set; }
         public int FadeColor { get; set; }
+        public int LayerAlpha { get; set; }
     }
 }

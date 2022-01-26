@@ -490,6 +490,8 @@ namespace MphRead
             _shaderLocations.ToonTable = GL.GetUniformLocation(_shaderProgramId, "toon_table");
             _shaderLocations.FadeColor = GL.GetUniformLocation(_shaderProgramId, "fade_color");
 
+            _shaderLocations.LayerAlpha = GL.GetUniformLocation(_rttShaderProgramId, "alpha");
+
             GL.UseProgram(_shaderProgramId);
 
             var floats = new List<float>(Metadata.ToonTable.Count * 3);
@@ -1169,8 +1171,6 @@ namespace MphRead
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
 
-            // ltodo: the rest of these calls could use a simpler shader
-            float size = 0;
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active))
             {
                 if (ProcessFrame)
@@ -1179,8 +1179,9 @@ namespace MphRead
                 }
                 if (CameraMode == CameraMode.Player)
                 {
-                    //size = SetHudLayerUniforms();
+                    SetHudLayerUniforms();
                     PlayerEntity.Main.DrawHudModels();
+                    UnsetHudLayerUniforms();
                 }
             }
 
@@ -1188,7 +1189,9 @@ namespace MphRead
             GL.UseProgram(_rttShaderProgramId);
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.Disable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.Blend);
             GL.BindTexture(TextureTarget.Texture2D, _screenTexture);
+            GL.Uniform1(_shaderLocations.LayerAlpha, 1f);
 
             GL.Begin(PrimitiveType.TriangleStrip);
             // top right
@@ -1205,18 +1208,18 @@ namespace MphRead
             GL.Vertex3(-1f, -1f, 0f);
             GL.End();
 
+            // ltodo: post-process
+
             GL.BindTexture(TextureTarget.Texture2D, 0);
 
-            GL.Enable(EnableCap.DepthTest);
-            // ltodo: rtt/postprocess
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
             {
-                //DrawHudLayer(Layer3BindingId, size, alpha: 9 / 16f); // ltodo: alpha
-                //DrawHudLayer(Layer1BindingId, size, alpha: 1);
-                //DrawHudLayer(Layer2BindingId, size, alpha: 1);
-                //PlayerEntity.Main.DrawHudObjects();
-                //UnsetHudLayerUniforms();
+                DrawHudLayer(Layer3BindingId, alpha: 9 / 16f); // ltodo: alpha
+                DrawHudLayer(Layer1BindingId, alpha: 1);
+                DrawHudLayer(Layer2BindingId, alpha: 1);
+                PlayerEntity.Main.DrawHudObjects();
             }
+            GL.Enable(EnableCap.DepthTest);
             GL.Disable(EnableCap.Blend);
         }
 
@@ -2899,9 +2902,8 @@ namespace MphRead
 
         public int IceLayerBindingId { get; set; } = -1;
 
-        private float SetHudLayerUniforms()
+        private void SetHudLayerUniforms()
         {
-            // ltodo: allow this to be affected by viewer toggles
             GL.Disable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
             Matrix4 identity = Matrix4.Identity;
@@ -2932,8 +2934,6 @@ namespace MphRead
             float height = viewport.W - viewport.Y;
             var orthoMatrix = Matrix4.CreateOrthographic(width, height, 0.5f, 1.5f);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref orthoMatrix);
-            float size = MathF.Max(width, height) / 2;
-            return size;
         }
 
         private void UnsetHudLayerUniforms()
@@ -2944,14 +2944,14 @@ namespace MphRead
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref _perspectiveMatrix);
         }
 
-        private void DrawHudLayer(int bindingId, float size, float alpha)
+        private void DrawHudLayer(int bindingId, float alpha)
         {
             if (bindingId == -1)
             {
                 return;
             }
             // ltodo: if BG layer is shifted, we need this quad to be bigger than the viewport so it can shift appropriately
-            GL.Uniform1(_shaderLocations.MaterialAlpha, alpha);
+            GL.Uniform1(_shaderLocations.LayerAlpha, alpha);
             GL.BindTexture(TextureTarget.Texture2D, bindingId);
             int minParameter = (int)TextureMinFilter.Nearest;
             int magParameter = (int)TextureMagFilter.Nearest;
@@ -2964,23 +2964,23 @@ namespace MphRead
             GL.Begin(PrimitiveType.TriangleStrip);
             // top right
             GL.TexCoord3(1f, 0f, 0f);
-            GL.Vertex3(size, size, -1f);
+            GL.Vertex3(1f, 1f, -1f);
             // top left
             GL.TexCoord3(0f, 0f, 0f);
-            GL.Vertex3(-size, size, -1f);
+            GL.Vertex3(-1f, 1f, -1f);
             // bottom right
             GL.TexCoord3(1f, 1f, 0f);
-            GL.Vertex3(size, -size, -1f);
+            GL.Vertex3(1f, -1f, -1f);
             // bottom left
             GL.TexCoord3(0f, 1f, 0f);
-            GL.Vertex3(-size, -size, -1f);
+            GL.Vertex3(-1f, -1f, -1f);
             GL.End();
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
         public void DrawHudObject(float x, float y, float width, float height, int bindingId, bool center = false)
         {
-            GL.Uniform1(_shaderLocations.MaterialAlpha, 1f); // ltodo: alpha?
+            GL.Uniform1(_shaderLocations.LayerAlpha, 1f);
             GL.BindTexture(TextureTarget.Texture2D, bindingId);
             int minParameter = (int)TextureMinFilter.Nearest;
             int magParameter = (int)TextureMagFilter.Nearest;
@@ -3003,19 +3003,23 @@ namespace MphRead
             float rightPos = leftPos + width;
             float topPos = viewTop - y * viewHeight + (center ? (height / 2) : 0);
             float bottomPos = topPos - height;
+            leftPos /= (viewWidth / 2);
+            rightPos /= (viewWidth / 2);
+            topPos /= (viewHeight / 2);
+            bottomPos /= (viewHeight / 2);
             GL.Begin(PrimitiveType.TriangleStrip);
             // top right
             GL.TexCoord3(1f, 0f, 0f);
-            GL.Vertex3(rightPos, topPos, -1f);
+            GL.Vertex3(rightPos, topPos, 0f);
             // top left
             GL.TexCoord3(0f, 0f, 0f);
-            GL.Vertex3(leftPos, topPos, -1f);
+            GL.Vertex3(leftPos, topPos, 0f);
             // bottom right
             GL.TexCoord3(1f, 1f, 0f);
-            GL.Vertex3(rightPos, bottomPos, -1f);
+            GL.Vertex3(rightPos, bottomPos, 0f);
             // bottom left
             GL.TexCoord3(0f, 1f, 0f);
-            GL.Vertex3(leftPos, bottomPos, -1f);
+            GL.Vertex3(leftPos, bottomPos, 0f);
             GL.End();
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
