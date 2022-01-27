@@ -142,7 +142,9 @@ namespace MphRead
         private float _elapsedTime = 0;
         private ulong _frameCount = 0;
         private bool _frameAdvanceOn = false;
+        private bool _frameAdvanceLastFrame = false;
         public bool FrameAdvance => _frameAdvanceOn;
+        public bool FrameAdvanceLastFrame => _frameAdvanceLastFrame;
         private bool _advanceOneFrame = false;
         private bool _recording = false;
         private int _framesRecorded = 0;
@@ -1053,6 +1055,7 @@ namespace MphRead
                 _elapsedTime += 1 / 60f; // todo: FPS stuff
                 _frameCount++;
             }
+            _frameAdvanceLastFrame = _frameAdvanceOn;
         }
 
         private void UpdateProjection()
