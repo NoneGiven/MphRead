@@ -1577,7 +1577,8 @@ namespace MphRead.Entities
                 // todo: update kill streak
                 if (IsMainPlayer)
                 {
-                    // todo: license info, update HUD to end disrupt
+                    // todo: license info
+                    HudEndDisrupted();
                     if (_frozenGfxTimer > 0)
                     {
                         _drawIceLayer = false;
@@ -1761,7 +1762,8 @@ namespace MphRead.Entities
                         if (IsMainPlayer)
                         {
                             skipSfx = true;
-                            // todo: update HUD, play SFX
+                            HudOnDisrupted();
+                            // todo: play SFX
                         }
                     }
                     if (beam.Afflictions.TestFlag(Affliction.Burn))

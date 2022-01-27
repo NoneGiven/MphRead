@@ -196,6 +196,35 @@ void main()
     gl_FragColor.a *= alpha;
 }
 ";
+
+        public static string ShiftFragmentShader { get; } = @"
+#version 120
+
+uniform float[64] shift_table;
+uniform int shift_idx;
+uniform float shift_fac;
+uniform float lerp_fac;
+uniform sampler2D tex;
+
+varying vec2 texcoord;
+varying vec4 color;
+
+void main()
+{
+    int band = int((1.0 - texcoord.y) * 192.0);
+    int index = int(mod((band + shift_idx + mod(band, 2) * 32), 64));
+    float value1 = shift_table[index];
+    float value2 = shift_table[int(mod(index + 1, 64))];
+    float value = mix(value1, value2, lerp_fac) * shift_fac;
+    vec2 shifted = vec2(texcoord.x + value, texcoord.y);
+    if (shifted.x < 0.0 || shifted.x > 1.0) {
+        gl_FragColor = vec4(0, 0, 0, 1);
+    }
+    else {
+        gl_FragColor = texture2D(tex, shifted);
+    }
+}
+";
     }
 
     public class ShaderLocations
@@ -230,5 +259,9 @@ void main()
         public int ToonTable { get; set; }
         public int FadeColor { get; set; }
         public int LayerAlpha { get; set; }
+        public int ShiftTable { get; set; }
+        public int ShiftIndex { get; set; }
+        public int ShiftFactor { get; set; }
+        public int LerpFactor { get; set; }
     }
 }

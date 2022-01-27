@@ -21,6 +21,7 @@ namespace MphRead.Entities
         {
             _damageIndicator = Read.GetModelInstance("damage", dir: MetaDir.Hud);
             _scene.LoadModel(_damageIndicator.Model);
+            _damageIndicator.Active = false;
             for (int i = 0; i < 8; i++)
             {
                 _damageIndicatorTimers[i] = 0;
@@ -35,8 +36,8 @@ namespace MphRead.Entities
             _damageIndicatorNodes[7] = _damageIndicator.Model.GetNodeByName("nw")!;
             _targetCircleObj = HudInfo.GetHudObject(_hudObjects.Reticle);
             _sniperCircleObj = HudInfo.GetHudObject(_hudObjects.SniperReticle);
-            Debug.Assert(_sniperCircleObj.Width > _targetCircleObj.Width);
-            Debug.Assert(_sniperCircleObj.Height > _targetCircleObj.Height);
+            Debug.Assert(_sniperCircleObj.Width >= _targetCircleObj.Width);
+            Debug.Assert(_sniperCircleObj.Height >= _targetCircleObj.Height);
             _targetCircleInst = new HudObjectInstance(_targetCircleObj.Width, _targetCircleObj.Height,
                 _sniperCircleObj.Width, _sniperCircleObj.Height);
             _targetCircleInst.SetCharacterData(_targetCircleObj.CharacterData, _scene);
@@ -47,6 +48,7 @@ namespace MphRead.Entities
         public void UpdateHud()
         {
             UpdateDamageIndicators();
+            UpdateDisruptedState();
             _targetCircleInst.Enabled = false;
             _damageIndicator.Active = false;
             if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true)
@@ -170,6 +172,66 @@ namespace MphRead.Entities
                 else
                 {
                     _targetCircleInst.SetAnimation(start: 2, target: 0, frames: 2);
+                }
+            }
+        }
+
+        public byte HudDisruptedState { get; private set; } = 0;
+        public float HudDisruptionFactor { get; private set; } = 0;
+        private ushort _hudDisruptedTimer = 0;
+
+        private void HudOnDisrupted()
+        {
+            if (CameraSequence.Current == null)
+            {
+                HudDisruptedState = 1;
+                _hudDisruptedTimer = _disruptedTimer;
+            }
+        }
+
+        public void HudEndDisrupted()
+        {
+            if (HudDisruptedState != 0)
+            {
+                HudDisruptedState = 0;
+                _hudDisruptedTimer = 0;
+                HudDisruptionFactor = 0;
+            }
+        }
+
+        private void UpdateDisruptedState()
+        {
+            if (HudDisruptedState == 1)
+            {
+                HudDisruptionFactor += 0.25f / 2; // todo: FPS stuff
+                if (HudDisruptionFactor >= 1)
+                {
+                    HudDisruptionFactor = 1;
+                    HudDisruptedState = 2;
+                }
+            }
+            else if (HudDisruptedState == 2)
+            {
+                if (--_hudDisruptedTimer == 0)
+                {
+                    HudDisruptedState = 3;
+                }
+            }
+            else if (HudDisruptedState == 3)
+            {
+                HudDisruptionFactor -= 0.125f / 2; // todo: FPS stuff
+                if (HudDisruptionFactor <= 0)
+                {
+                    HudDisruptionFactor = 0;
+                    HudDisruptedState = 0;
+                    _hudDisruptedTimer = 32 * 2; // todo: FPS stuff
+                }
+            }
+            else if (HudDisruptedState != 0)
+            {
+                if (--_hudDisruptedTimer == 0)
+                {
+                    HudDisruptedState = 1;
                 }
             }
         }

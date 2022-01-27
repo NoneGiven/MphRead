@@ -120,6 +120,7 @@ namespace MphRead
 
         private int _shaderProgramId = 0;
         private int _rttShaderProgramId = 0;
+        private int _shiftShaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
 
         private Vector3 _light1Vector = Vector3.Zero;
@@ -425,6 +426,27 @@ namespace MphRead
             GL.DetachShader(_rttShaderProgramId, vertexShader);
             GL.DetachShader(_rttShaderProgramId, fragmentShader);
             GL.DeleteShader(fragmentShader);
+
+            // use same vertex shader
+            fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
+            GL.ShaderSource(fragmentShader, Shaders.ShiftFragmentShader);
+            GL.CompileShader(fragmentShader);
+            fragmentLog = GL.GetShaderInfoLog(fragmentShader);
+            if (fragmentLog != "")
+            {
+                if (Debugger.IsAttached)
+                {
+                    Debugger.Break();
+                }
+                throw new ProgramException("Failed to compile shift shader.");
+            }
+            _shiftShaderProgramId = GL.CreateProgram();
+            GL.AttachShader(_shiftShaderProgramId, vertexShader);
+            GL.AttachShader(_shiftShaderProgramId, fragmentShader);
+            GL.LinkProgram(_shiftShaderProgramId);
+            GL.DetachShader(_shiftShaderProgramId, vertexShader);
+            GL.DetachShader(_shiftShaderProgramId, fragmentShader);
+            GL.DeleteShader(fragmentShader);
             GL.DeleteShader(vertexShader);
 
             _frameBuffer = GL.GenFramebuffer();
@@ -474,7 +496,6 @@ namespace MphRead
             _shaderLocations.FogColor = GL.GetUniformLocation(_shaderProgramId, "fog_color");
             _shaderLocations.FogMinDistance = GL.GetUniformLocation(_shaderProgramId, "fog_min");
             _shaderLocations.FogMaxDistance = GL.GetUniformLocation(_shaderProgramId, "fog_max");
-
             _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
             _shaderLocations.UsePaletteOverride = GL.GetUniformLocation(_shaderProgramId, "use_pal_override");
@@ -491,6 +512,29 @@ namespace MphRead
             _shaderLocations.FadeColor = GL.GetUniformLocation(_shaderProgramId, "fade_color");
 
             _shaderLocations.LayerAlpha = GL.GetUniformLocation(_rttShaderProgramId, "alpha");
+
+            _shaderLocations.ShiftTable = GL.GetUniformLocation(_shiftShaderProgramId, "shift_table");
+            _shaderLocations.ShiftIndex = GL.GetUniformLocation(_shiftShaderProgramId, "shift_idx");
+            _shaderLocations.ShiftFactor = GL.GetUniformLocation(_shiftShaderProgramId, "shift_fac");
+            _shaderLocations.LerpFactor = GL.GetUniformLocation(_shiftShaderProgramId, "lerp_fac");
+
+            GL.UseProgram(_shiftShaderProgramId);
+
+            float[] shifts = new float[64];
+            for (int i = 0; i < 64; i++)
+            {
+                int val;
+                if ((i & 32) != 0)
+                {
+                    val = 31 - (i & 31);
+                }
+                else
+                {
+                    val = i & 31;
+                }
+                shifts[i] = -((val - 16) << 12) / 4096f / 256f;
+            }
+            GL.Uniform1(_shaderLocations.ShiftTable, 64, shifts);
 
             GL.UseProgram(_shaderProgramId);
 
@@ -1185,13 +1229,27 @@ namespace MphRead
                 }
             }
 
+            if (PlayerEntity.Main.HudDisruptedState != 0)
+            {
+                float div = _elapsedTime / (1 / 30f);
+                int index = (int)div;
+                float factor = div % 1;
+                GL.UseProgram(_shiftShaderProgramId);
+                GL.Uniform1(_shaderLocations.ShiftFactor, PlayerEntity.Main.HudDisruptionFactor);
+                GL.Uniform1(_shaderLocations.ShiftIndex, index);
+                GL.Uniform1(_shaderLocations.LerpFactor, factor);
+            }
+            else
+            {
+                GL.UseProgram(_rttShaderProgramId);
+                GL.Uniform1(_shaderLocations.LayerAlpha, 1f);
+            }
+
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-            GL.UseProgram(_rttShaderProgramId);
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.Disable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
             GL.BindTexture(TextureTarget.Texture2D, _screenTexture);
-            GL.Uniform1(_shaderLocations.LayerAlpha, 1f);
 
             GL.Begin(PrimitiveType.TriangleStrip);
             // top right
@@ -1208,10 +1266,12 @@ namespace MphRead
             GL.Vertex3(-1f, -1f, 0f);
             GL.End();
 
-            // ltodo: post-process
-
             GL.BindTexture(TextureTarget.Texture2D, 0);
 
+            if (PlayerEntity.Main.HudDisruptedState != 0)
+            {
+                GL.UseProgram(_rttShaderProgramId);
+            }
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
             {
                 DrawHudLayer(Layer3BindingId, alpha: 9 / 16f); // ltodo: alpha
@@ -2953,8 +3013,8 @@ namespace MphRead
             // ltodo: if BG layer is shifted, we need this quad to be bigger than the viewport so it can shift appropriately
             GL.Uniform1(_shaderLocations.LayerAlpha, alpha);
             GL.BindTexture(TextureTarget.Texture2D, bindingId);
-            int minParameter = (int)TextureMinFilter.Nearest;
-            int magParameter = (int)TextureMagFilter.Nearest;
+            int minParameter = (int)TextureMinFilter.Linear;
+            int magParameter = (int)TextureMagFilter.Linear;
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
             GL.TexParameter(TextureTarget.Texture2D,
