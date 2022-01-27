@@ -375,6 +375,21 @@ namespace MphRead
         private int _screenTexture = 0;
         private int _renderBuffer = 0;
 
+        public void OnResize()
+        {
+            if (_screenTexture != 0)
+            {
+                GL.BindTexture(TextureTarget.Texture2D, _screenTexture);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, Size.X, Size.Y, 0,
+                    PixelFormat.Rgb, PixelType.UnsignedByte, IntPtr.Zero);
+                GL.BindTexture(TextureTarget.Texture2D, 0);
+                Debug.Assert(_renderBuffer != 0);
+                GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, _renderBuffer);
+                GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.Depth24Stencil8, Size.X, Size.Y);
+                GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
+            }
+        }
+
         private void InitShaders()
         {
             int vertexShader = GL.CreateShader(ShaderType.VertexShader);
@@ -453,10 +468,8 @@ namespace MphRead
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, _frameBuffer);
             _screenTexture = GL.GenTexture();
             _textureCount++;
-            GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, _screenTexture);
-            // sktodo: size/resizing
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, 800, 600, 0,
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, Size.X, Size.Y, 0,
                 PixelFormat.Rgb, PixelType.UnsignedByte, IntPtr.Zero);
             int minParameter = (int)TextureMinFilter.Nearest;
             int magParameter = (int)TextureMagFilter.Nearest;
@@ -468,7 +481,7 @@ namespace MphRead
 
             _renderBuffer = GL.GenRenderbuffer();
             GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, _renderBuffer);
-            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.Depth24Stencil8, 800, 600);
+            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.Depth24Stencil8, Size.X, Size.Y);
             GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
             GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment,
                 RenderbufferTarget.Renderbuffer, _renderBuffer);
@@ -4327,6 +4340,7 @@ namespace MphRead
         {
             GL.Viewport(0, 0, e.Size.X, e.Size.Y);
             Scene.Size = e.Size;
+            Scene.OnResize();
             base.OnResize(e);
         }
 
