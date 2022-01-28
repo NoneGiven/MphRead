@@ -86,7 +86,7 @@ namespace MphRead.Entities
         {
             UpdateDamageIndicators();
             UpdateDisruptedState();
-            WeaponSelection = BeamType.None;
+            WeaponSelection = CurrentWeapon;
             if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
             {
                 UpdateWeaponSelect();

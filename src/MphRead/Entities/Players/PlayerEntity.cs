@@ -1672,7 +1672,7 @@ namespace MphRead.Entities
                     Vector3 position = _volume.SpherePosition.AddY(0.35f);
                     ItemSpawnEntity.SpawnItem(itemType, position, 300 * 2, _scene); // todo: FPS stuff
                 }
-                WeaponSelection = BeamType.None;
+                WeaponSelection = CurrentWeapon;
                 Flags1 &= ~PlayerFlags1.WeaponMenuOpen;
             }
             else // not dead

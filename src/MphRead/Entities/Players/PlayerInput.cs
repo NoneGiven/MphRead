@@ -107,7 +107,7 @@ namespace MphRead.Entities
                     {
                         // todo: play SFX
                     }
-                    WeaponSelection = BeamType.None;
+                    WeaponSelection = CurrentWeapon;
                 }
             }
             if (!selected)
