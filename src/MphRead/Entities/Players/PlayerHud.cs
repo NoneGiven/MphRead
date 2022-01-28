@@ -63,6 +63,7 @@ namespace MphRead.Entities
                 new Vector2(81 / 256f, 70 / 192f),
                 new Vector2(77 / 256f, 32 / 192f)
             };
+            HudObject iconInst = HudInfo.GetHudObject(_hudObjects.SelectIcon);
             for (int i = 0; i < 6; i++)
             {
                 var weaponInst = new HudObjectInstance(_weaponSelectObj.Width, _weaponSelectObj.Height);
@@ -74,7 +75,7 @@ namespace MphRead.Entities
                 weaponInst.Alpha = 0.5f; // not actual alpha
                 var boxInst = new HudObjectInstance(_selectBoxObj.Width, _selectBoxObj.Height);
                 boxInst.SetCharacterData(_selectBoxObj.CharacterData, _scene);
-                boxInst.SetPaletteData(_selectBoxObj.PaletteData, _scene);
+                boxInst.SetPaletteData(iconInst.PaletteData, _scene);
                 boxInst.Enabled = true;
                 Vector2 position = positions[i];
                 weaponInst.PositionX = position.X;
