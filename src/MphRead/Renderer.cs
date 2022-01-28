@@ -3127,6 +3127,42 @@ namespace MphRead
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
+        public void DrawHudFilterModel(ModelInstance inst)
+        {
+            Model model = inst.Model;
+            UpdateMaterials(model, 0);
+            Material material = model.Materials[0];
+            GL.Uniform1(_shaderLocations.MaterialAlpha, material.Alpha / 31f);
+            GL.BindTexture(TextureTarget.Texture2D, material.TextureBindingId);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            // ltodo: don't call this every time
+            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
+            float viewWidth = viewport.Z - viewport.X;
+            float viewHeight = viewport.W - viewport.Y;
+            GL.Begin(PrimitiveType.TriangleStrip);
+            // top right
+            GL.TexCoord3(1f, 0f, 0f);
+            GL.Vertex3(viewWidth, viewHeight, -1f);
+            // top left
+            GL.TexCoord3(0f, 0f, 0f);
+            GL.Vertex3(-viewWidth, viewHeight, -1f);
+            // bottom right
+            GL.TexCoord3(1f, 1f, 0f);
+            GL.Vertex3(viewWidth, -viewHeight, -1f);
+            // bottom left
+            GL.TexCoord3(0f, 1f, 0f);
+            GL.Vertex3(-viewWidth, -viewHeight, -1f);
+            GL.End();
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
         private readonly float[] _hudMatrixStack = new float[16 * 31];
 
         public void DrawHudDamageModel(ModelInstance inst)

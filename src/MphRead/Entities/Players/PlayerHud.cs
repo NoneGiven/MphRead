@@ -21,8 +21,12 @@ namespace MphRead.Entities
         private readonly ushort[] _damageIndicatorTimers = new ushort[8];
         private readonly Node[] _damageIndicatorNodes = new Node[8];
 
+        private ModelInstance _filterModel = null!;
+
         public void SetUpHud()
         {
+            _filterModel = Read.GetModelInstance("filter");
+            _scene.LoadModel(_filterModel.Model);
             _damageIndicator = Read.GetModelInstance("damage", dir: MetaDir.Hud);
             _scene.LoadModel(_damageIndicator.Model);
             _damageIndicator.Active = false;
@@ -93,25 +97,22 @@ namespace MphRead.Entities
             }
             _targetCircleInst.Enabled = false;
             _damageIndicator.Active = false;
+            _scene.Layer1BindingId = -1;
+            _scene.Layer2BindingId = -1;
+            _scene.Layer3BindingId = -1;
             if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true)
             {
-                _scene.Layer1BindingId = -1;
-                _scene.Layer2BindingId = -1;
-                _scene.Layer3BindingId = -1;
                 return;
             }
             // todo: lots more stuff
             if (_health > 0)
             {
-                if (IsAltForm || IsMorphing || IsUnmorphing)
+                if (!IsAltForm && !IsMorphing && !IsUnmorphing)
                 {
-                    _scene.Layer1BindingId = -1;
-                    _scene.Layer2BindingId = -1;
-                    _scene.Layer3BindingId = -1;
-                }
-                else
-                {
-                    _scene.Layer3BindingId = _drawIceLayer ? _scene.IceLayerBindingId : -1;
+                    if (_drawIceLayer && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
+                    {
+                        _scene.Layer3BindingId = _scene.IceLayerBindingId;
+                    }
                     if (_timeSinceInput < (ulong)Values.GunIdleTime * 2) // todo: FPS stuff
                     {
                         UpdateReticle();
@@ -348,21 +349,28 @@ namespace MphRead.Entities
 
         public void DrawHudObjects()
         {
-            _scene.DrawHudObject(_targetCircleInst);
-            // sktodo: draw filter, select box/fan, and hot dot
             if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
             {
+                // sktodo: draw select box/fan and hot dot
                 for (int i = 0; i < 6; i++)
                 {
                     _scene.DrawHudObject(_selectBoxInsts[i], byHeight: true);
                     _scene.DrawHudObject(_weaponSelectInsts[i], byHeight: true);
                 }
             }
+            else
+            {
+                _scene.DrawHudObject(_targetCircleInst);
+            }
         }
 
         public void DrawHudModels()
         {
-            if (_damageIndicator.Active)
+            if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
+            {
+                _scene.DrawHudFilterModel(_filterModel);
+            }
+            else if (_damageIndicator.Active)
             {
                 _scene.DrawHudDamageModel(_damageIndicator);
             }
