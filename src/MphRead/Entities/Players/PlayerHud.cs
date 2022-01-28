@@ -70,9 +70,7 @@ namespace MphRead.Entities
                 int frame = i == 0 ? 1 : i + 2;
                 weaponInst.SetCharacterData(_weaponSelectObj.CharacterData, frame, _scene);
                 weaponInst.SetPaletteData(_weaponSelectObj.PaletteData, _scene);
-                // sktodo: the game renders the boxes over the icons, but only blends with them and not the background
-                // --> we'll need to render the icons on top, and use the right transparency so the result is the same
-                weaponInst.Alpha = 0.5f; // not actual alpha
+                weaponInst.Alpha = 0.722f;
                 var boxInst = new HudObjectInstance(_selectBoxObj.Width, _selectBoxObj.Height);
                 boxInst.SetCharacterData(_selectBoxObj.CharacterData, _scene);
                 boxInst.SetPaletteData(iconInst.PaletteData, _scene);
