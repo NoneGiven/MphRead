@@ -1063,8 +1063,7 @@ namespace MphRead
         private void UpdateProjection()
         {
             // todo: update this only when the viewport or camera values change
-            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
-            float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
+            float aspect = Size.X / (float)Size.Y;
             _perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(_cameraFov, aspect, _nearClip, _useClip ? _farClip : 10000f);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref _perspectiveMatrix);
             // update frustum info
@@ -1292,7 +1291,7 @@ namespace MphRead
             }
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
             {
-                DrawHudLayer(Layer3BindingId, alpha: 9 / 16f); // ltodo: alpha
+                DrawHudLayer(Layer3BindingId, alpha: 9 / 16f);
                 DrawHudLayer(Layer1BindingId, alpha: 1);
                 DrawHudLayer(Layer2BindingId, alpha: 1);
                 PlayerEntity.Main.DrawHudObjects();
@@ -3007,10 +3006,7 @@ namespace MphRead
             }
             GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
             GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref identity);
-            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
-            float width = viewport.Z - viewport.X;
-            float height = viewport.W - viewport.Y;
-            var orthoMatrix = Matrix4.CreateOrthographic(width, height, 0.5f, 1.5f);
+            var orthoMatrix = Matrix4.CreateOrthographic(Size.X, Size.Y, 0.5f, 1.5f);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref orthoMatrix);
         }
 
@@ -3039,10 +3035,8 @@ namespace MphRead
                 TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            // ltodo: don't call this every time
-            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
-            float viewWidth = viewport.Z - viewport.X;
-            float viewHeight = viewport.W - viewport.Y;
+            float viewWidth = Size.X;
+            float viewHeight = Size.Y;
             float size = MathF.Max(viewWidth, viewHeight) / 2;
             float width = size / (viewWidth / 2);
             float height = size / (viewHeight / 2);
@@ -3084,10 +3078,8 @@ namespace MphRead
                 TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            // ltodo: don't call this every time
-            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
-            float viewWidth = viewport.Z - viewport.X;
-            float viewHeight = viewport.W - viewport.Y;
+            float viewWidth = Size.X;
+            float viewHeight = Size.Y;
             if (byHeight)
             {
                 float aspect = height / width;
@@ -3142,10 +3134,8 @@ namespace MphRead
                 TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            // ltodo: don't call this every time
-            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
-            float viewWidth = viewport.Z - viewport.X;
-            float viewHeight = viewport.W - viewport.Y;
+            float viewWidth = Size.X;
+            float viewHeight = Size.Y;
             GL.Begin(PrimitiveType.TriangleStrip);
             // top right
             GL.TexCoord3(1f, 0f, 0f);
@@ -3179,10 +3169,8 @@ namespace MphRead
                 TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            // ltodo: don't call this every time
-            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
-            float viewWidth = viewport.Z - viewport.X;
-            float viewHeight = viewport.W - viewport.Y;
+            float viewWidth = Size.X;
+            float viewHeight = Size.Y;
             float xOffset = -viewWidth / 2;
             float yOffset = -viewHeight / 2;
             // ltodo: we only need to update this loop and matrix stack update if the viewport changes
