@@ -351,7 +351,6 @@ namespace MphRead.Entities
         {
             if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
             {
-                // sktodo: draw select box/fan and hot dot
                 for (int i = 0; i < 6; i++)
                 {
                     _scene.DrawHudObject(_selectBoxInsts[i], byHeight: true);
