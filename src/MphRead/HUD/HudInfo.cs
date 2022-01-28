@@ -35,6 +35,7 @@ namespace MphRead.Hud
         public int PaletteIndex = -1;
         public IReadOnlyList<ColorRgba>? PaletteData;
         public readonly ColorRgba[] Texture;
+        public float Alpha = 1;
         public int BindingId = -1;
         // ltodo?: if we find a "non-linear" example, then this will need to be adjusted
         // --> also going to need a loop flag and control over animation speed (e.g. blinking Octolith icon)
@@ -69,10 +70,15 @@ namespace MphRead.Hud
 
         public void SetCharacterData(IReadOnlyList<byte> data, Scene scene)
         {
+            SetCharacterData(data, frame: 0, scene);
+        }
+
+        public void SetCharacterData(IReadOnlyList<byte> data, int frame, Scene scene)
+        {
             if (CharacterData != data)
             {
                 CharacterData = data;
-                CurrentFrame = 0;
+                CurrentFrame = frame;
                 Timer = 0;
                 if (PaletteData != null)
                 {
@@ -1089,7 +1095,9 @@ namespace MphRead.Hud
                 reticle: @"_archives\localSamus\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localSamus\hud_snipercircle.bin",
                 scanBox: @"_archives\spSamus\hud_scanbox.bin",
-                messageBox: @"_archives\spSamus\hud_msgBox.bin"
+                messageBox: @"_archives\spSamus\hud_msgBox.bin",
+                weaponSelect: @"_archives\localSamus\rad_wepsel.bin",
+                selectBox: @"_archives\localSamus\wepsel_box.bin"
             ),
             // Kanden
             new HudObjects(
@@ -1107,7 +1115,9 @@ namespace MphRead.Hud
                 reticle: @"_archives\localKanden\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localKanden\hud_snipercircle.bin",
                 scanBox: null,
-                messageBox: null // todo: SP stuff for other hunters
+                messageBox: null, // todo: SP stuff for other hunters
+                weaponSelect: @"_archives\localKanden\rad_wepsel.bin",
+                selectBox: @"_archives\localKanden\wepsel_box.bin"
             ),
             // Trace
             new HudObjects(
@@ -1125,7 +1135,9 @@ namespace MphRead.Hud
                 reticle: @"_archives\localTrace\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localTrace\hud_snipercircle.bin",
                 scanBox: null,
-                messageBox: null
+                messageBox: null,
+                weaponSelect: @"_archives\localTrace\rad_wepsel.bin",
+                selectBox: @"_archives\localTrace\wepsel_box.bin"
             ),
             // Sylux
             new HudObjects(
@@ -1143,7 +1155,9 @@ namespace MphRead.Hud
                 reticle: @"_archives\localSylux\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localSylux\hud_snipercircle.bin",
                 scanBox: null,
-                messageBox: null
+                messageBox: null,
+                weaponSelect: @"_archives\localSylux\rad_wepsel.bin",
+                selectBox: @"_archives\localSylux\wepsel_box.bin"
             ),
             // Noxus
             new HudObjects(
@@ -1161,7 +1175,9 @@ namespace MphRead.Hud
                 reticle: @"_archives\localNox\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localNox\hud_snipercircle.bin",
                 scanBox: null,
-                messageBox: null
+                messageBox: null,
+                weaponSelect: @"_archives\localNox\rad_wepsel.bin",
+                selectBox: @"_archives\localNox\wepsel_box.bin"
             ),
             // Spire
             new HudObjects(
@@ -1179,7 +1195,9 @@ namespace MphRead.Hud
                 reticle: @"_archives\localSpire\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localSpire\hud_snipercircle.bin",
                 scanBox: null,
-                messageBox: null
+                messageBox: null,
+                weaponSelect: @"_archives\localSpire\rad_wepsel.bin",
+                selectBox: @"_archives\localSpire\wepsel_box.bin"
             ),
             // Weavel
             new HudObjects(
@@ -1197,7 +1215,9 @@ namespace MphRead.Hud
                 reticle: @"_archives\localWeavel\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localWeavel\hud_snipercircle.bin",
                 scanBox: null,
-                messageBox: null
+                messageBox: null,
+                weaponSelect: @"_archives\localWeavel\rad_wepsel.bin",
+                selectBox: @"_archives\localWeavel\wepsel_box.bin"
             ),
             // Guardian
             new HudObjects(
@@ -1215,7 +1235,9 @@ namespace MphRead.Hud
                 reticle: @"_archives\localSamus\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localSamus\hud_snipercircle.bin",
                 scanBox: null,
-                messageBox: null
+                messageBox: null,
+                weaponSelect: @"_archives\localSamus\rad_wepsel.bin",
+                selectBox: @"_archives\localSamus\wepsel_box.bin"
             )
         };
     }
@@ -1237,10 +1259,12 @@ namespace MphRead.Hud
         public readonly string SniperReticle;
         public readonly string? ScanBox;
         public readonly string? MessageBox;
+        public readonly string WeaponSelect;
+        public readonly string SelectBox;
 
         public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB,
             string? energyTanks, string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar,
-            string reticle, string sniperReticle, string? scanBox, string? messageBox)
+            string reticle, string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectBox)
         {
             Helmet = helmet;
             HelmetDrop = helmetDrop;
@@ -1257,6 +1281,8 @@ namespace MphRead.Hud
             SniperReticle = sniperReticle;
             ScanBox = scanBox;
             MessageBox = messageBox;
+            WeaponSelect = weaponSelect;
+            SelectBox = selectBox;
         }
     }
 }

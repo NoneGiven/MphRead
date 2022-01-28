@@ -14,6 +14,7 @@ using MphRead.Export;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
+using MphRead.Hud;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -79,6 +80,7 @@ namespace MphRead
 
         private CameraMode _cameraMode = CameraMode.Pivot;
         public CameraMode CameraMode => _cameraMode;
+        public bool ShowCursor => PlayerEntity.Main?.Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) == true;
         private float _pivotAngleY = 0.0f;
         private float _pivotAngleX = 0.0f;
         private float _pivotDistance = 5.0f;
@@ -3061,10 +3063,19 @@ namespace MphRead
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
-        public void DrawHudObject(float x, float y, float width, float height, int bindingId, bool center = false)
+        public void DrawHudObject(HudObjectInstance inst, bool byHeight = false)
         {
-            GL.Uniform1(_shaderLocations.LayerAlpha, 1f);
-            GL.BindTexture(TextureTarget.Texture2D, bindingId);
+            if (!inst.Enabled)
+            {
+                return;
+            }
+            float x = inst.PositionX;
+            float y = inst.PositionY;
+            float width = inst.Width;
+            float height = inst.Height;
+            bool center = inst.Center;
+            GL.Uniform1(_shaderLocations.LayerAlpha, inst.Alpha);
+            GL.BindTexture(TextureTarget.Texture2D, inst.BindingId);
             int minParameter = (int)TextureMinFilter.Nearest;
             int magParameter = (int)TextureMagFilter.Nearest;
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
@@ -3077,9 +3088,18 @@ namespace MphRead
             GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
             float viewWidth = viewport.Z - viewport.X;
             float viewHeight = viewport.W - viewport.Y;
-            float aspect = width / height;
-            width = width / 256 * viewWidth;
-            height = width / aspect;
+            if (byHeight)
+            {
+                float aspect = height / width;
+                height = height / 192 * viewHeight;
+                width = height / aspect;
+            }
+            else
+            {
+                float aspect = width / height;
+                width = width / 256 * viewWidth;
+                height = width / aspect;
+            }
             float viewLeft = -viewWidth / 2;
             float viewTop = viewHeight / 2;
             float leftPos = viewLeft + x * viewWidth - (center ? (width / 2) : 0);
@@ -4327,7 +4347,7 @@ namespace MphRead
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            CursorGrabbed = Scene.CameraMode == CameraMode.Player && !Scene.FrameAdvance;
+            CursorGrabbed = Scene.CameraMode == CameraMode.Player && !Scene.FrameAdvance && !Scene.ShowCursor;
             if (!CursorGrabbed)
             {
                 CursorVisible = true;

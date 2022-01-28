@@ -1029,66 +1029,19 @@ namespace MphRead.Entities
             }
         }
 
-        // skdebug
-        private void SwitchWeapon()
-        {
-            if (IsBot || Input.KeyboardState == null)
-            {
-                return;
-            }
-            BeamType beam = BeamType.None;
-            if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D1))
-            {
-                beam = BeamType.PowerBeam;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D2))
-            {
-                beam = BeamType.Missile;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D3))
-            {
-                beam = BeamType.VoltDriver;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D4))
-            {
-                beam = BeamType.Battlehammer;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D5))
-            {
-                beam = BeamType.Imperialist;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D6))
-            {
-                beam = BeamType.Judicator;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D7))
-            {
-                beam = BeamType.Magmaul;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D8))
-            {
-                beam = BeamType.ShockCoil;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D9))
-            {
-                beam = BeamType.OmegaCannon;
-            }
-            if (beam != BeamType.None && CurrentWeapon != beam)
-            {
-                _availableWeapons[beam] = true;
-                _availableCharges[beam] = true;
-                _ammo[0] = 1000;
-                _ammo[1] = 1000;
-                TryEquipWeapon(beam, silent: false);
-            }
-        }
-
-        private bool TryEquipWeapon(BeamType beam, bool silent = false)
+        private bool TryEquipWeapon(BeamType beam, bool silent = false, bool debug = false)
         {
             int index = (int)beam;
             if (index < 0 || index >= 9)
             {
                 return false;
+            }
+            if (debug) // skdebug
+            {
+                _availableWeapons[beam] = true;
+                _availableCharges[beam] = true;
+                _ammo[0] = 1000;
+                _ammo[1] = 1000;
             }
             WeaponInfo info = Weapons.Current[(int)beam];
             byte ammoType = info.AmmoType;
@@ -1719,6 +1672,8 @@ namespace MphRead.Entities
                     Vector3 position = _volume.SpherePosition.AddY(0.35f);
                     ItemSpawnEntity.SpawnItem(itemType, position, 300 * 2, _scene); // todo: FPS stuff
                 }
+                WeaponSelection = BeamType.None;
+                Flags1 &= ~PlayerFlags1.WeaponMenuOpen;
             }
             else // not dead
             {

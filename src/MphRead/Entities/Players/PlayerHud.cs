@@ -12,6 +12,10 @@ namespace MphRead.Entities
         private HudObject _targetCircleObj = null!;
         private HudObject _sniperCircleObj = null!;
         private HudObjectInstance _targetCircleInst = null!;
+        private HudObject _weaponSelectObj = null!;
+        private HudObject _selectBoxObj = null!;
+        private readonly HudObjectInstance[] _weaponSelectInsts = new HudObjectInstance[6];
+        private readonly HudObjectInstance[] _selectBoxInsts = new HudObjectInstance[6];
 
         private ModelInstance _damageIndicator = null!;
         private readonly ushort[] _damageIndicatorTimers = new ushort[8];
@@ -43,12 +47,50 @@ namespace MphRead.Entities
             _targetCircleInst.SetCharacterData(_targetCircleObj.CharacterData, _scene);
             _targetCircleInst.SetPaletteData(_targetCircleObj.PaletteData, _scene);
             _targetCircleInst.Center = true;
+            _weaponSelectObj = HudInfo.GetHudObject(_hudObjects.WeaponSelect);
+            _selectBoxObj = HudInfo.GetHudObject(_hudObjects.SelectBox);
+            // todo: left-handed mode
+            var positions = new Vector2[6]
+            {
+                new Vector2(201 / 256f, 156 / 192f),
+                new Vector2(161 / 256f, 152 / 192f),
+                new Vector2(122 / 256f, 142 / 192f),
+                new Vector2(90 / 256f, 109 / 192f),
+                new Vector2(81 / 256f, 70 / 192f),
+                new Vector2(77 / 256f, 32 / 192f)
+            };
+            for (int i = 0; i < 6; i++)
+            {
+                var weaponInst = new HudObjectInstance(_weaponSelectObj.Width, _weaponSelectObj.Height);
+                int frame = i == 0 ? 1 : i + 2;
+                weaponInst.SetCharacterData(_weaponSelectObj.CharacterData, frame, _scene);
+                weaponInst.SetPaletteData(_weaponSelectObj.PaletteData, _scene);
+                // sktodo: the game renders the boxes over the icons, but only blends with them and not the background
+                // --> we'll need to render the icons on top, and use the right transparency so the result is the same
+                weaponInst.Alpha = 0.5f; // not actual alpha
+                var boxInst = new HudObjectInstance(_selectBoxObj.Width, _selectBoxObj.Height);
+                boxInst.SetCharacterData(_selectBoxObj.CharacterData, _scene);
+                boxInst.SetPaletteData(_selectBoxObj.PaletteData, _scene);
+                boxInst.Enabled = true;
+                Vector2 position = positions[i];
+                weaponInst.PositionX = position.X;
+                weaponInst.PositionY = position.Y;
+                boxInst.PositionX = position.X;
+                boxInst.PositionY = position.Y;
+                _weaponSelectInsts[i] = weaponInst;
+                _selectBoxInsts[i] = boxInst;
+            }
         }
 
         public void UpdateHud()
         {
             UpdateDamageIndicators();
             UpdateDisruptedState();
+            WeaponSelection = BeamType.None;
+            if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
+            {
+                UpdateWeaponSelect();
+            }
             _targetCircleInst.Enabled = false;
             _damageIndicator.Active = false;
             if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true)
@@ -76,6 +118,74 @@ namespace MphRead.Entities
                     }
                 }
                 _damageIndicator.Active = true;
+            }
+        }
+
+        private void UpdateWeaponSelect()
+        {
+            int selection = -1;
+            float x = Input.MouseState?.X ?? 0;
+            float y = Input.MouseState?.Y ?? 0;
+            float ratioX = _scene.Size.X / 256f;
+            float ratioY = _scene.Size.Y / 192f;
+            float distX = 224 * ratioX - x; // todo: invert for left-handed mode
+            float distY = y - 38 * ratioY;
+            if (distX > 0 && distY > 0 && distX * distX + distY * distY > 20 * ratioY * 20 * ratioY)
+            {
+                float div = distX / distY;
+                if (div >= Fixed.ToFloat(1060) / Fixed.ToFloat(3956))
+                {
+                    if (div >= Fixed.ToFloat(2048) / Fixed.ToFloat(3547))
+                    {
+                        if (div >= Fixed.ToFloat(2896) / Fixed.ToFloat(2896))
+                        {
+                            if (div >= Fixed.ToFloat(3547) / Fixed.ToFloat(2048))
+                            {
+                                if (div >= Fixed.ToFloat(3956) / Fixed.ToFloat(1060))
+                                {
+                                    if (_availableWeapons[BeamType.ShockCoil])
+                                    {
+                                        selection = 5;
+                                        WeaponSelection = BeamType.ShockCoil;
+                                    }
+                                }
+                                else if (_availableWeapons[BeamType.Magmaul])
+                                {
+                                    selection = 4;
+                                    WeaponSelection = BeamType.Magmaul;
+                                }
+                            }
+                            else if (_availableWeapons[BeamType.Judicator])
+                            {
+                                selection = 3;
+                                WeaponSelection = BeamType.Judicator;
+                            }
+                        }
+                        else if (_availableWeapons[BeamType.Imperialist])
+                        {
+                            selection = 2;
+                            WeaponSelection = BeamType.Imperialist;
+                        }
+                    }
+                    else if (_availableWeapons[BeamType.Battlehammer])
+                    {
+                        selection = 1;
+                        WeaponSelection = BeamType.Battlehammer;
+                    }
+                }
+                else if (_availableWeapons[BeamType.VoltDriver])
+                {
+                    selection = 0;
+                    WeaponSelection = BeamType.VoltDriver;
+                }
+            }
+            for (int i = 0; i < 6; i++)
+            {
+                HudObjectInstance weaponInst = _weaponSelectInsts[i];
+                bool available = _availableWeapons[weaponInst.CurrentFrame];
+                weaponInst.Enabled = available;
+                HudObjectInstance boxInst = _selectBoxInsts[i];
+                boxInst.SetIndex(available ? (i == selection ? 2 : 1) : 0, _scene);
             }
         }
 
@@ -238,9 +348,15 @@ namespace MphRead.Entities
 
         public void DrawHudObjects()
         {
-            if (_targetCircleInst.Enabled)
+            _scene.DrawHudObject(_targetCircleInst);
+            // sktodo: draw filter, select box/fan, and hot dot
+            if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
             {
-                DrawHudObject(_targetCircleInst);
+                for (int i = 0; i < 6; i++)
+                {
+                    _scene.DrawHudObject(_selectBoxInsts[i], byHeight: true);
+                    _scene.DrawHudObject(_weaponSelectInsts[i], byHeight: true);
+                }
             }
         }
 
@@ -250,11 +366,6 @@ namespace MphRead.Entities
             {
                 _scene.DrawHudDamageModel(_damageIndicator);
             }
-        }
-
-        private void DrawHudObject(HudObjectInstance inst)
-        {
-            _scene.DrawHudObject(inst.PositionX, inst.PositionY, inst.Width, inst.Height, inst.BindingId, inst.Center);
         }
     }
 }
