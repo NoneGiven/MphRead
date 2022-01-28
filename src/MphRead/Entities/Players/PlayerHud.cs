@@ -133,15 +133,15 @@ namespace MphRead.Entities
             if (distX > 0 && distY > 0 && distX * distX + distY * distY > 20 * ratioY * 20 * ratioY)
             {
                 float div = distX / distY;
-                if (div >= Fixed.ToFloat(1060) / Fixed.ToFloat(3956))
+                if (div >= Fixed.ToFloat(1060) * ratioX / (Fixed.ToFloat(3956) * ratioY))
                 {
-                    if (div >= Fixed.ToFloat(2048) / Fixed.ToFloat(3547))
+                    if (div >= Fixed.ToFloat(2048) * ratioX / (Fixed.ToFloat(3547) * ratioY))
                     {
-                        if (div >= Fixed.ToFloat(2896) / Fixed.ToFloat(2896))
+                        if (div >= Fixed.ToFloat(2896) * ratioX / (Fixed.ToFloat(2896) * ratioY))
                         {
-                            if (div >= Fixed.ToFloat(3547) / Fixed.ToFloat(2048))
+                            if (div >= Fixed.ToFloat(3547) * ratioX / (Fixed.ToFloat(2048) * ratioY))
                             {
-                                if (div >= Fixed.ToFloat(3956) / Fixed.ToFloat(1060))
+                                if (div >= Fixed.ToFloat(3956) * ratioX / (Fixed.ToFloat(1060) * ratioY))
                                 {
                                     if (_availableWeapons[BeamType.ShockCoil])
                                     {
