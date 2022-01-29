@@ -7,6 +7,26 @@ using System.Runtime.InteropServices;
 
 namespace MphRead.Hud
 {
+    public class HudMeter
+    {
+        public bool Horizontal;
+        public int Length;
+        public int TankSpacing;
+        public int TankOffsetX;
+        public int TankOffsetY;
+        public int BarOffsetX;
+        public int BarOffsetY;
+        public int TextOffsetX;
+        public int TextOffsetY;
+        public int TextType; // sktodo: enum
+        public int MessageId;
+
+        public int TankAmount;
+        public int TankCount;
+        public HudObjectInstance BarInst = null!;
+        public HudObjectInstance? TankInst;
+    }
+
     public class HudObject
     {
         public readonly int Width;
@@ -105,6 +125,30 @@ namespace MphRead.Hud
             int prev = PaletteIndex;
             PaletteIndex = index;
             if (CharacterData != null && index != prev)
+            {
+                DoTexture(scene);
+            }
+        }
+
+        public void SetData(IReadOnlyList<byte> charData, int charFrame,
+            IReadOnlyList<ColorRgba> palData, int palIndex, Scene scene)
+        {
+            Timer = 0;
+            CharacterData = charData;
+            CurrentFrame = charFrame;
+            PaletteData = palData;
+            PaletteIndex = palIndex;
+            DoTexture(scene);
+        }
+
+        public void SetData(int charFrame, int palIndex, Scene scene)
+        {
+            Timer = 0;
+            int prevChar = CurrentFrame;
+            int prevPal = PaletteIndex;
+            CurrentFrame = charFrame;
+            PaletteIndex = palIndex;
+            if (CharacterData != null && PaletteData != null && (charFrame != prevChar || palIndex != prevPal))
             {
                 DoTexture(scene);
             }
@@ -1098,7 +1142,13 @@ namespace MphRead.Hud
                 messageBox: @"_archives\spSamus\hud_msgBox.bin",
                 weaponSelect: @"_archives\localSamus\rad_wepsel.bin",
                 selectIcon: @"_archives\localSamus\wepsel_icon.bin",
-                selectBox: @"_archives\localSamus\wepsel_box.bin"
+                selectBox: @"_archives\localSamus\wepsel_box.bin",
+                healthMainPosX: 93,
+                healthMainPosY: -5,
+                healthSubPosX: 93,
+                healthSubPosY: 1,
+                healthOffsetY: 32,
+                healthOffsetYAlt: -10
             ),
             // Kanden
             new HudObjects(
@@ -1107,7 +1157,7 @@ namespace MphRead.Hud
                 visor: @"_archives\localKanden\bg_top_ovl.bin",
                 healthBarA: @"_archives\localKanden\hud_energybar.bin",
                 healthBarB: @"_archives\localKanden\hud_energybar2.bin",
-                energyTanks: null,
+                energyTanks: @"_archives\spSamus\hud_etank.bin",
                 weaponIcon: @"_archives\localKanden\hud_weaponicon.bin",
                 doubleDamage: @"_archives\localKanden\hud_damage.bin",
                 cloaking: @"_archives\localKanden\cloaking.bin",
@@ -1119,7 +1169,13 @@ namespace MphRead.Hud
                 messageBox: null, // todo: SP stuff for other hunters
                 weaponSelect: @"_archives\localKanden\rad_wepsel.bin",
                 selectIcon: @"_archives\localKanden\wepsel_icon.bin",
-                selectBox: @"_archives\localKanden\wepsel_box.bin"
+                selectBox: @"_archives\localKanden\wepsel_box.bin",
+                healthMainPosX: 13,
+                healthMainPosY: 0,
+                healthSubPosX: 20,
+                healthSubPosY: 0,
+                healthOffsetY: 128,
+                healthOffsetYAlt: 0
             ),
             // Trace
             new HudObjects(
@@ -1128,7 +1184,7 @@ namespace MphRead.Hud
                 visor: @"_archives\localTrace\bg_top_ovl.bin",
                 healthBarA: @"_archives\localTrace\hud_energybar.bin",
                 healthBarB: @"_archives\localTrace\hud_energybar2.bin",
-                energyTanks: null,
+                energyTanks: @"_archives\spSamus\hud_etank.bin",
                 weaponIcon: @"_archives\localTrace\hud_weaponicon.bin",
                 doubleDamage: @"_archives\localTrace\hud_damage.bin",
                 cloaking: @"_archives\localTrace\cloaking.bin",
@@ -1140,7 +1196,13 @@ namespace MphRead.Hud
                 messageBox: null,
                 weaponSelect: @"_archives\localTrace\rad_wepsel.bin",
                 selectIcon: @"_archives\localTrace\wepsel_icon.bin",
-                selectBox: @"_archives\localTrace\wepsel_box.bin"
+                selectBox: @"_archives\localTrace\wepsel_box.bin",
+                healthMainPosX: 24,
+                healthMainPosY: 135,
+                healthSubPosX: 29,
+                healthSubPosY: 135,
+                healthOffsetY: 0,
+                healthOffsetYAlt: 0
             ),
             // Sylux
             new HudObjects(
@@ -1149,7 +1211,7 @@ namespace MphRead.Hud
                 visor: @"_archives\localSylux\bg_top_ovl.bin",
                 healthBarA: @"_archives\localSylux\hud_energybar.bin",
                 healthBarB: @"_archives\localSylux\hud_energybar2.bin",
-                energyTanks: null,
+                energyTanks: @"_archives\spSamus\hud_etank.bin",
                 weaponIcon: @"_archives\localSylux\hud_weaponicon.bin",
                 doubleDamage: @"_archives\localSylux\hud_damage.bin",
                 cloaking: @"_archives\localSylux\cloaking.bin",
@@ -1161,7 +1223,13 @@ namespace MphRead.Hud
                 messageBox: null,
                 weaponSelect: @"_archives\localSylux\rad_wepsel.bin",
                 selectIcon: @"_archives\localSylux\wepsel_icon.bin",
-                selectBox: @"_archives\localSylux\wepsel_box.bin"
+                selectBox: @"_archives\localSylux\wepsel_box.bin",
+                healthMainPosX: 47,
+                healthMainPosY: 165,
+                healthSubPosX: 51,
+                healthSubPosY: 165,
+                healthOffsetY: 0,
+                healthOffsetYAlt: 0
             ),
             // Noxus
             new HudObjects(
@@ -1170,7 +1238,7 @@ namespace MphRead.Hud
                 visor: @"_archives\localNox\bg_top_ovl.bin",
                 healthBarA: @"_archives\localNox\hud_energybar.bin",
                 healthBarB: @"_archives\localNox\hud_energybar2.bin",
-                energyTanks: null,
+                energyTanks: @"_archives\spSamus\hud_etank.bin",
                 weaponIcon: @"_archives\localNox\hud_weaponicon.bin",
                 doubleDamage: @"_archives\localNox\hud_damage.bin",
                 cloaking: @"_archives\localNox\cloaking.bin",
@@ -1182,7 +1250,13 @@ namespace MphRead.Hud
                 messageBox: null,
                 weaponSelect: @"_archives\localNox\rad_wepsel.bin",
                 selectIcon: @"_archives\localNox\wepsel_icon.bin",
-                selectBox: @"_archives\localNox\wepsel_box.bin"
+                selectBox: @"_archives\localNox\wepsel_box.bin",
+                healthMainPosX: 29,
+                healthMainPosY: 0,
+                healthSubPosX: 34,
+                healthSubPosY: 0,
+                healthOffsetY: 117,
+                healthOffsetYAlt: 0
             ),
             // Spire
             new HudObjects(
@@ -1191,7 +1265,7 @@ namespace MphRead.Hud
                 visor: @"_archives\localSpire\bg_top_ovl.bin",
                 healthBarA: @"_archives\localSpire\hud_energybar.bin",
                 healthBarB: @"_archives\localSpire\hud_energybar2.bin",
-                energyTanks: null,
+                energyTanks: @"_archives\spSamus\hud_etank.bin",
                 weaponIcon: @"_archives\localSpire\hud_weaponicon.bin",
                 doubleDamage: @"_archives\localSpire\hud_damage.bin",
                 cloaking: @"_archives\localSpire\cloaking.bin",
@@ -1203,7 +1277,13 @@ namespace MphRead.Hud
                 messageBox: null,
                 weaponSelect: @"_archives\localSpire\rad_wepsel.bin",
                 selectIcon: @"_archives\localSpire\wepsel_icon.bin",
-                selectBox: @"_archives\localSpire\wepsel_box.bin"
+                selectBox: @"_archives\localSpire\wepsel_box.bin",
+                healthMainPosX: 12,
+                healthMainPosY: 0,
+                healthSubPosX: 21,
+                healthSubPosY: 0,
+                healthOffsetY: 128,
+                healthOffsetYAlt: 0
             ),
             // Weavel
             new HudObjects(
@@ -1212,7 +1292,7 @@ namespace MphRead.Hud
                 visor: @"_archives\localWeavel\bg_top_ovl.bin",
                 healthBarA: @"_archives\localWeavel\hud_energybar.bin",
                 healthBarB: @"_archives\localWeavel\hud_energybar2.bin",
-                energyTanks: null,
+                energyTanks: @"_archives\spSamus\hud_etank.bin",
                 weaponIcon: @"_archives\localWeavel\hud_weaponicon.bin",
                 doubleDamage: @"_archives\localWeavel\hud_damage.bin",
                 cloaking: @"_archives\localWeavel\cloaking.bin",
@@ -1224,16 +1304,22 @@ namespace MphRead.Hud
                 messageBox: null,
                 weaponSelect: @"_archives\localWeavel\rad_wepsel.bin",
                 selectIcon: @"_archives\localWeavel\wepsel_icon.bin",
-                selectBox: @"_archives\localWeavel\wepsel_box.bin"
+                selectBox: @"_archives\localWeavel\wepsel_box.bin",
+                healthMainPosX: 22,
+                healthMainPosY: 118,
+                healthSubPosX: 30,
+                healthSubPosY: 118,
+                healthOffsetY: 0,
+                healthOffsetYAlt: 0
             ),
             // Guardian
             new HudObjects(
                 helmet: "", // todo: all HUD stuff for guardians
                 helmetDrop: "",
                 visor: "",
-                healthBarA: "",
-                healthBarB: "",
-                energyTanks: "",
+                healthBarA: @"_archives\localSamus\hud_energybar.bin",
+                healthBarB: @"_archives\localSamus\hud_energybar2.bin",
+                energyTanks: @"_archives\spSamus\hud_etank.bin",
                 weaponIcon: "",
                 doubleDamage: "",
                 cloaking: "",
@@ -1245,8 +1331,294 @@ namespace MphRead.Hud
                 messageBox: null,
                 weaponSelect: @"_archives\localSamus\rad_wepsel.bin",
                 selectIcon: @"_archives\localSamus\wepsel_icon.bin",
-                selectBox: @"_archives\localSamus\wepsel_box.bin"
+                selectBox: @"_archives\localSamus\wepsel_box.bin",
+                healthMainPosX: 93,
+                healthMainPosY: -5,
+                healthSubPosX: 93,
+                healthSubPosY: 1,
+                healthOffsetY: 32,
+                healthOffsetYAlt: -10
             )
+        };
+
+        public static readonly IReadOnlyList<HudMeter> MainHealthbars = new HudMeter[8]
+        {
+            // Samus
+            new HudMeter()
+            {
+                Horizontal = true,
+                TankAmount = 100,
+                TankCount = 0,
+                Length = 72,
+                TankSpacing = 6,
+                TankOffsetX = 1,
+                TankOffsetY = 8,
+                BarOffsetX = 0,
+                BarOffsetY = -8,
+                TextType = 0,
+                TextOffsetX = 30,
+                TextOffsetY = -8,
+                MessageId = 6
+            },
+            // Kanden
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 80,
+                TankSpacing = 8,
+                TankOffsetX = 8, // game has 1
+                TankOffsetY = 3, // game has -8
+                BarOffsetX = 32,
+                BarOffsetY = -35,
+                TextType = 1,
+                TextOffsetX = 30,
+                TextOffsetY = -7,
+                MessageId = 0
+            },
+            // Trace
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 0,
+                Length = 64,
+                TankSpacing = 8, // game has 0
+                TankOffsetX = 8, // game has 0
+                TankOffsetY = 3, // game has 0
+                BarOffsetX = 8,
+                BarOffsetY = 0,
+                TextType = 0,
+                TextOffsetX = 0,
+                TextOffsetY = 0,
+                MessageId = 0
+            },
+            // Sylux
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 152,
+                TankSpacing = 8,
+                TankOffsetX = 8,
+                TankOffsetY = 1,
+                BarOffsetX = -4,
+                BarOffsetY = -66,
+                TextType = 1,
+                TextOffsetX = 0,
+                TextOffsetY = 0,
+                MessageId = 0
+            },
+            // Noxus
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 80,
+                TankSpacing = 8,
+                TankOffsetX = 8, // game has 1
+                TankOffsetY = 3, // game has -8
+                BarOffsetX = -3,
+                BarOffsetY = 1,
+                TextType = 1,
+                TextOffsetX = 30,
+                TextOffsetY = -7,
+                MessageId = 0
+            },
+            // Spire
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 80,
+                TankSpacing = 8,
+                TankOffsetX = 10, // game has 1
+                TankOffsetY = 3, // game has -8
+                BarOffsetX = 5,
+                BarOffsetY = -82,
+                TextType = 2,
+                TextOffsetX = 30,
+                TextOffsetY = -7,
+                MessageId = 0
+            },
+            // Weavel
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 64,
+                TankSpacing = 8,
+                TankOffsetX = 8, // game has 1
+                TankOffsetY = 3, // game has -8
+                BarOffsetX = 10,
+                BarOffsetY = -68,
+                TextType = 0,
+                TextOffsetX = 0,
+                TextOffsetY = 0,
+                MessageId = 0
+            },
+            // Guardian
+            new HudMeter()
+            {
+                Horizontal = true,
+                TankAmount = 100,
+                TankCount = 0,
+                Length = 72,
+                TankSpacing = 6,
+                TankOffsetX = 1,
+                TankOffsetY = 8,
+                BarOffsetX = 0,
+                BarOffsetY = -8,
+                TextType = 0,
+                TextOffsetX = 30,
+                TextOffsetY = -8,
+                MessageId = 6
+            }
+        };
+
+        public static readonly IReadOnlyList<HudMeter> SubHealthbars = new HudMeter[8]
+        {
+            // Samus
+            new HudMeter()
+            {
+                Horizontal = true,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 72,
+                TankSpacing = 8,
+                TankOffsetX = 1,
+                TankOffsetY = -8,
+                BarOffsetX = 15,
+                BarOffsetY = 6,
+                TextType = 0,
+                TextOffsetX = 30,
+                TextOffsetY = 7,
+                MessageId = 0
+            },
+            // Kanden
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 80,
+                TankSpacing = 8,
+                TankOffsetX = 1,
+                TankOffsetY = -8,
+                BarOffsetX = 15,
+                BarOffsetY = 6,
+                TextType = 0,
+                TextOffsetX = 30,
+                TextOffsetY = 7,
+                MessageId = 0
+            },
+            // Trace
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 0,
+                Length = 64,
+                TankSpacing = 0,
+                TankOffsetX = 0,
+                TankOffsetY = 0,
+                BarOffsetX = 0,
+                BarOffsetY = 0,
+                TextType = 0,
+                TextOffsetX = 0,
+                TextOffsetY = 0,
+                MessageId = 0
+            },
+            // Sylux
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 152,
+                TankSpacing = 8,
+                TankOffsetX = 1,
+                TankOffsetY = -8,
+                BarOffsetX = 0,
+                BarOffsetY = 0,
+                TextType = 0,
+                TextOffsetX = 0,
+                TextOffsetY = 0,
+                MessageId = 0
+            },
+            // Noxus
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 80,
+                TankSpacing = 8,
+                TankOffsetX = 1,
+                TankOffsetY = -8,
+                BarOffsetX = 15,
+                BarOffsetY = 6,
+                TextType = 0,
+                TextOffsetX = 30,
+                TextOffsetY = 7,
+                MessageId = 0
+            },
+            // Spire
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 80,
+                TankSpacing = 8,
+                TankOffsetX = 1,
+                TankOffsetY = -8,
+                BarOffsetX = 15,
+                BarOffsetY = 6,
+                TextType = 0,
+                TextOffsetX = 30,
+                TextOffsetY = 7,
+                MessageId = 0
+            },
+            // Weavel
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 64,
+                TankSpacing = 8,
+                TankOffsetX = 1,
+                TankOffsetY = -8,
+                BarOffsetX = 0,
+                BarOffsetY = 0,
+                TextType = 0,
+                TextOffsetX = 0,
+                TextOffsetY = 0,
+                MessageId = 0
+            },
+            // Guardian
+            new HudMeter()
+            {
+                Horizontal = true,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 72,
+                TankSpacing = 8,
+                TankOffsetX = 1,
+                TankOffsetY = -8,
+                BarOffsetX = 15,
+                BarOffsetY = 6,
+                TextType = 0,
+                TextOffsetX = 30,
+                TextOffsetY = 7,
+                MessageId = 0
+            }
         };
     }
 
@@ -1270,10 +1642,17 @@ namespace MphRead.Hud
         public readonly string WeaponSelect;
         public readonly string SelectIcon;
         public readonly string SelectBox;
+        public readonly int HealthMainPosX;
+        public readonly int HealthMainPosY;
+        public readonly int HealthSubPosX;
+        public readonly int HealthSubPosY;
+        public readonly int HealthOffsetY;
+        public readonly int HealthOffsetYAlt;
 
         public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB, string? energyTanks,
             string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar, string reticle,
-            string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectIcon, string selectBox)
+            string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectIcon, string selectBox,
+            int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY, int healthOffsetYAlt)
         {
             Helmet = helmet;
             HelmetDrop = helmetDrop;
@@ -1293,6 +1672,12 @@ namespace MphRead.Hud
             WeaponSelect = weaponSelect;
             SelectIcon = selectIcon;
             SelectBox = selectBox;
+            HealthMainPosX = healthMainPosX;
+            HealthMainPosY = healthMainPosY;
+            HealthSubPosX = healthSubPosX;
+            HealthSubPosY = healthSubPosY;
+            HealthOffsetY = healthOffsetY;
+            HealthOffsetYAlt = healthOffsetYAlt;
         }
     }
 }

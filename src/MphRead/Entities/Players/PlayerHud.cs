@@ -16,6 +16,11 @@ namespace MphRead.Entities
         private HudObject _selectBoxObj = null!;
         private readonly HudObjectInstance[] _weaponSelectInsts = new HudObjectInstance[6];
         private readonly HudObjectInstance[] _selectBoxInsts = new HudObjectInstance[6];
+        private HudObject _healthbarMain = null!;
+        private HudObject _healthbarSub = null!;
+        private HudObject? _healthbarTank = null;
+        private HudMeter _healthbarMainMeter = null!;
+        private HudMeter _healthbarSubMeter = null!;
 
         private ModelInstance _damageIndicator = null!;
         private readonly ushort[] _damageIndicatorTimers = new ushort[8];
@@ -83,10 +88,40 @@ namespace MphRead.Entities
                 _weaponSelectInsts[i] = weaponInst;
                 _selectBoxInsts[i] = boxInst;
             }
+            _healthbarMain = HudInfo.GetHudObject(_hudObjects.HealthBarA);
+            _healthbarSub = HudInfo.GetHudObject(_hudObjects.HealthBarB);
+            _healthbarMainMeter = HudElements.MainHealthbars[(int)Hunter];
+            _healthbarSubMeter = HudElements.SubHealthbars[(int)Hunter];
+            _healthbarMainMeter.BarInst = new HudObjectInstance(_healthbarMain.Width, _healthbarMain.Height);
+            _healthbarMainMeter.BarInst.SetCharacterData(_healthbarMain.CharacterData, _scene);
+            _healthbarMainMeter.BarInst.SetPaletteData(_healthbarMain.PaletteData, _scene);
+            _healthbarMainMeter.BarInst.Enabled = true;
+            _healthbarSubMeter.BarInst = new HudObjectInstance(_healthbarSub.Width, _healthbarSub.Height);
+            _healthbarSubMeter.BarInst.SetCharacterData(_healthbarSub.CharacterData, _scene);
+            _healthbarSubMeter.BarInst.SetPaletteData(_healthbarSub.PaletteData, _scene);
+            _healthbarSubMeter.BarInst.Enabled = true;
+            // todo: MP1P/other hunters
+            if (!_scene.Multiplayer && _hudObjects.EnergyTanks != null)
+            {
+                _healthbarTank = HudInfo.GetHudObject(_hudObjects.EnergyTanks);
+                _healthbarMainMeter.TankInst = new HudObjectInstance(_healthbarTank.Width, _healthbarTank.Height);
+                _healthbarMainMeter.TankInst.SetCharacterData(_healthbarTank.CharacterData, _scene);
+                if (Hunter == Hunter.Samus || Hunter == Hunter.Guardian)
+                {
+                    _healthbarMainMeter.TankInst.SetPaletteData(_healthbarTank.PaletteData, _scene);
+                }
+                else
+                {
+                    _healthbarMainMeter.TankInst.SetPaletteData(_healthbarMain.PaletteData, _scene);
+                }
+                _healthbarMainMeter.TankInst.Enabled = true;
+            }
+            _healthbarYOffset = _hudObjects.HealthOffsetY;
         }
 
         public void UpdateHud()
         {
+            UpdateHealthbars();
             UpdateDamageIndicators();
             UpdateDisruptedState();
             WeaponSelection = CurrentWeapon;
@@ -118,6 +153,58 @@ namespace MphRead.Entities
                     }
                 }
                 _damageIndicator.Active = true;
+            }
+        }
+
+        private int _healthbarPalette = 0;
+        private bool _healthbarChangedColor = false;
+        private float _healthbarYOffset = 0;
+
+        private void UpdateHealthbars()
+        {
+            if (_health < 25)
+            {
+                if (!_healthbarChangedColor)
+                {
+                    _healthbarPalette = 2;
+                    _healthbarChangedColor = true;
+                }
+            }
+            else if (_timeSinceHeal < 10 * 2) // todo: FPS stuff
+            {
+                if (!_healthbarChangedColor)
+                {
+                    _healthbarPalette = 1;
+                    _healthbarChangedColor = true;
+                }
+                // todo?: update radar lights
+            }
+            else if (_timeSinceDamage < 6 * 2) // todo: FPS stuff
+            {
+                if (!_healthbarChangedColor)
+                {
+                    _healthbarPalette = 2;
+                    _healthbarChangedColor = true;
+                }
+            }
+            else if (_healthbarChangedColor)
+            {
+                _healthbarPalette = 0;
+                _healthbarChangedColor = false;
+            }
+            // todo: bomb UI
+            float targetOffsetY = _hudObjects.HealthOffsetY; // todo: or match state is 2
+            if (IsAltForm || IsMorphing)
+            {
+                targetOffsetY += _hudObjects.HealthOffsetYAlt;
+            }
+            if (_healthbarYOffset > targetOffsetY)
+            {
+                _healthbarYOffset -= 1 / 2f; // todo: FPS stuff
+            }
+            else if (_healthbarYOffset < targetOffsetY)
+            {
+                _healthbarYOffset += 1 / 2f; // todo: FPS stuff
             }
         }
 
@@ -359,6 +446,10 @@ namespace MphRead.Entities
             else
             {
                 _scene.DrawHudObject(_targetCircleInst);
+                if (_health > 0)
+                {
+                    DrawHealthbars();
+                }
             }
         }
 
@@ -371,6 +462,118 @@ namespace MphRead.Entities
             else if (_damageIndicator.Active)
             {
                 _scene.DrawHudDamageModel(_damageIndicator);
+            }
+        }
+
+        private void DrawHealthbars()
+        {
+            _healthbarMainMeter.TankAmount = Values.EnergyTank;
+            _healthbarMainMeter.TankCount = _healthMax / Values.EnergyTank;
+            DrawMeter(_hudObjects.HealthMainPosX, _hudObjects.HealthMainPosY + _healthbarYOffset, Values.EnergyTank - 1,
+                _health, _healthbarPalette, _healthbarMainMeter, drawText: true, drawTanks: !_scene.Multiplayer);
+            if (_scene.Multiplayer)
+            {
+                int amount = 0;
+                if (_health >= Values.EnergyTank)
+                {
+                    amount = _health - Values.EnergyTank;
+                }
+                _healthbarSubMeter.TankAmount = Values.EnergyTank;
+                _healthbarSubMeter.TankCount = _healthMax / Values.EnergyTank;
+                DrawMeter(_hudObjects.HealthSubPosX, _hudObjects.HealthSubPosY + _healthbarYOffset, Values.EnergyTank - 1,
+                    amount, _healthbarPalette, _healthbarSubMeter, drawText: false, drawTanks: false);
+            }
+        }
+
+        private void DrawMeter(float x, float y, int baseAmount, int curAmount, int palette,
+            HudMeter meter, bool drawText, bool drawTanks)
+        {
+            int filledTanks = 0;
+            int remaining = curAmount;
+            if (drawTanks && meter.TankCount > 0)
+            {
+                for (int i = 0; i < meter.TankCount; i++)
+                {
+                    if (remaining < meter.TankAmount)
+                    {
+                        break;
+                    }
+                    filledTanks++;
+                    remaining -= meter.TankAmount;
+                }
+            }
+            if (!_scene.Multiplayer)
+            {
+                baseAmount = curAmount - filledTanks * meter.TankAmount;
+            }
+            else if (curAmount <= baseAmount)
+            {
+                baseAmount = curAmount;
+            }
+            int tiles = (meter.Length + 7) / 8;
+            int filledTiles = 100000 * baseAmount / (99000 * meter.TankAmount / meter.Length);
+            if (filledTiles == 0 && baseAmount > 0)
+            {
+                filledTiles = 1;
+            }
+            if (drawText)
+            {
+                // sktodo: draw text
+                if (drawTanks && meter.TankCount > 0)
+                {
+                    Debug.Assert(meter.TankInst != null);
+                    float tankX = x + meter.TankOffsetX;
+                    float tankY = y + meter.TankOffsetY;
+                    for (int i = 0; i < meter.TankCount; i++)
+                    {
+                        meter.TankInst.PositionX = tankX / 256f;
+                        meter.TankInst.PositionY = tankY / 192f;
+                        meter.TankInst.SetData(i < filledTanks ? 0 : 1, palIndex: palette, _scene);
+                        _scene.DrawHudObject(meter.TankInst);
+                        if (meter.Horizontal)
+                        {
+                            tankX += meter.TankSpacing;
+                        }
+                        else
+                        {
+                            tankY -= meter.TankSpacing;
+                        }
+                    }
+                }
+            }
+
+            void DrawTile(int charFrame)
+            {
+                meter.BarInst.PositionX = x / 256f;
+                meter.BarInst.PositionY = y / 192f;
+                meter.BarInst.SetData(charFrame, palIndex: palette, _scene);
+                _scene.DrawHudObject(meter.BarInst);
+                if (meter.Horizontal)
+                {
+                    x += 8;
+                }
+                else
+                {
+                    y -= 8;
+                }
+            }
+
+            for (int i = 0; i < filledTiles / 8; i++)
+            {
+                DrawTile(charFrame: 0);
+                tiles--;
+            }
+            if (tiles > 0)
+            {
+                DrawTile(charFrame: 8 - (filledTiles & 7));
+                tiles--;
+                if (tiles > 0)
+                {
+                    for (int i = 0; i < tiles; i++)
+                    {
+                        DrawTile(charFrame: 8);
+                    }
+                }
             }
         }
     }

@@ -1231,6 +1231,7 @@ namespace MphRead
             GL.DepthMask(true);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
+            GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
 
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active))
             {
@@ -3004,7 +3005,6 @@ namespace MphRead
                 GL.Enable(EnableCap.CullFace);
                 GL.CullFace(CullFaceMode.Back);
             }
-            GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
             GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref identity);
             var orthoMatrix = Matrix4.CreateOrthographic(Size.X, Size.Y, 0.5f, 1.5f);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref orthoMatrix);
