@@ -435,6 +435,10 @@ namespace MphRead.Entities
 
         public void DrawHudObjects()
         {
+            if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true)
+            {
+                return;
+            }
             if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
             {
                 for (int i = 0; i < 6; i++)

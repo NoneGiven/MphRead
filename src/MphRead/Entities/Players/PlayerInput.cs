@@ -383,7 +383,8 @@ namespace MphRead.Entities
                     // todo: update HUD shift
                     float aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
                     float aimX = -Input.MouseDeltaX / 4f;
-                    if (_scene.FrameAdvance || _scene.FrameAdvanceLastFrame) // skdebug
+                    if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true
+                        || _scene.FrameAdvance || _scene.FrameAdvanceLastFrame) // skdebug
                     {
                         aimX = aimY = 0;
                     }
@@ -955,7 +956,8 @@ namespace MphRead.Entities
                         // todo: update HUD shift
                         float aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
                         float aimX = -Input.MouseDeltaX / 4f;
-                        if (_scene.FrameAdvance || _scene.FrameAdvanceLastFrame) // skdebug
+                        if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true
+                            || _scene.FrameAdvance || _scene.FrameAdvanceLastFrame) // skdebug
                         {
                             aimX = aimY = 0;
                         }
