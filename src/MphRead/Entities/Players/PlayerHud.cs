@@ -122,7 +122,7 @@ namespace MphRead.Entities
             _healthbarYOffset = _hudObjects.HealthOffsetY;
             _textInst = new HudObjectInstance(width: 8, height: 8); // todo: max is 16x16
             _textInst.SetCharacterData(Font.CharacterData, _scene);
-            _textInst.SetPaletteData(_healthbarMain.PaletteData, _scene); // sktodo
+            _textInst.SetPaletteData(_healthbarMain.PaletteData, _scene);
             _textInst.Enabled = true;
         }
 
@@ -615,7 +615,7 @@ namespace MphRead.Entities
                     }
                     else
                     {
-                        int index = ch - 32; // sktodo
+                        int index = ch - 32; // todo: starting character
                         float offset = Font.Offsets[index] + y;
                         if (ch != ' ')
                         {
