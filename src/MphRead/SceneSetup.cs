@@ -5,6 +5,7 @@ using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
 using MphRead.Hud;
+using MphRead.Text;
 
 namespace MphRead
 {
@@ -276,6 +277,10 @@ namespace MphRead
                 scene.LoadEffect(Metadata.ChargeLoopEffectIds[i]);
             }
             PlayerEntity.GeneratePlayerVolumes();
+            // todo: use game mode etc.
+            Strings.ReadStringTable(StringTables.HudMsgsCommon);
+            Strings.ReadStringTable(StringTables.HudMessagesSP);
+            Strings.ReadStringTable(StringTables.HudMessagesMP);
         }
 
         public static void LoadHunterResources(Hunter hunter, Scene scene)

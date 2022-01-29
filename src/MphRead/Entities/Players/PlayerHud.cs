@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using MphRead.Formats;
 using MphRead.Hud;
+using MphRead.Text;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -16,6 +17,8 @@ namespace MphRead.Entities
         private HudObject _selectBoxObj = null!;
         private readonly HudObjectInstance[] _weaponSelectInsts = new HudObjectInstance[6];
         private readonly HudObjectInstance[] _selectBoxInsts = new HudObjectInstance[6];
+        private HudObjectInstance _textInst = null!;
+
         private HudObject _healthbarMain = null!;
         private HudObject _healthbarSub = null!;
         private HudObject? _healthbarTank = null;
@@ -117,6 +120,10 @@ namespace MphRead.Entities
                 _healthbarMainMeter.TankInst.Enabled = true;
             }
             _healthbarYOffset = _hudObjects.HealthOffsetY;
+            _textInst = new HudObjectInstance(width: 8, height: 8); // todo: max is 16x16
+            _textInst.SetCharacterData(Font.CharacterData, _scene);
+            _textInst.SetPaletteData(_healthbarMain.PaletteData, _scene); // sktodo
+            _textInst.Enabled = true;
         }
 
         public void UpdateHud()
@@ -506,23 +513,30 @@ namespace MphRead.Entities
                     remaining -= meter.TankAmount;
                 }
             }
+            int barAmount;
             if (!_scene.Multiplayer)
             {
-                baseAmount = curAmount - filledTanks * meter.TankAmount;
+                barAmount = curAmount - filledTanks * meter.TankAmount;
             }
-            else if (curAmount <= baseAmount)
+            else
             {
-                baseAmount = curAmount;
+                barAmount = Math.Min(baseAmount, curAmount);
             }
             int tiles = (meter.Length + 7) / 8;
-            int filledTiles = 100000 * baseAmount / (99000 * meter.TankAmount / meter.Length);
-            if (filledTiles == 0 && baseAmount > 0)
+            int filledTiles = 100000 * barAmount / (99000 * meter.TankAmount / meter.Length);
+            if (filledTiles == 0 && barAmount > 0)
             {
                 filledTiles = 1;
             }
             if (drawText)
             {
-                // sktodo: draw text
+                int amount = _scene.Multiplayer ? curAmount : barAmount;
+                DrawText2D(x + meter.BarOffsetX, y + meter.BarOffsetY, type: 0, $"{amount:00}");
+                if (meter.MessageId > 0)
+                {
+                    string message = Strings.GetHudMessage(meter.MessageId);
+                    DrawText2D(x + meter.TextOffsetX, y + meter.TextOffsetY, type: 0, message);
+                }
                 if (drawTanks && meter.TankCount > 0)
                 {
                     Debug.Assert(meter.TankInst != null);
@@ -579,6 +593,54 @@ namespace MphRead.Entities
                     }
                 }
             }
+        }
+
+        private int _textSpacingY = 0;
+
+        // todo: size/shape (seemingly only used by the bottom screen rank, which is 16x16/square instead of 8x8/square)
+        private Vector2 DrawText2D(float x, float y, int type, string text)
+        {
+            int spacingY = _textSpacingY == 0 ? 12 : _textSpacingY;
+            if (type == 0)
+            {
+                float startX = x;
+                for (int i = 0; i < text.Length; i++)
+                {
+                    char ch = text[i];
+                    Debug.Assert(ch < 128);
+                    if (ch == '\n')
+                    {
+                        x = startX;
+                        y += spacingY;
+                    }
+                    else
+                    {
+                        int index = ch - 32; // sktodo
+                        float offset = Font.Offsets[index] + y;
+                        if (ch != ' ')
+                        {
+                            _textInst.PositionX = x / 256f;
+                            _textInst.PositionY = offset / 192f;
+                            _textInst.SetData(index, _healthbarPalette, _scene);
+                            _scene.DrawHudObject(_textInst);
+                        }
+                        x += Font.Widths[index];
+                    }
+                }
+            }
+            else if (type == 1)
+            {
+
+            }
+            else if (type == 2)
+            {
+
+            }
+            else if (type == 3)
+            {
+
+            }
+            return new Vector2(x, y);
         }
     }
 }
