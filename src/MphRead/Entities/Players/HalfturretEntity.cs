@@ -228,7 +228,10 @@ namespace MphRead.Entities
             {
                 _timeSinceDamage++;
             }
-            // todo: show HUD message
+            if (Owner == PlayerEntity.Main)
+            {
+                // sktodo: show HUD message
+            }
             if (!_grounded)
             {
                 // future: it would be cool to have the halfturret move with platforms, etc.
