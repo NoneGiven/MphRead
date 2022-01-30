@@ -1393,7 +1393,7 @@ namespace MphRead.Hud
                 TankCount = 0,
                 Length = 64,
                 TankSpacing = 8, // game has 0
-                TankOffsetX = 8, // game has 0
+                TankOffsetX = -8, // game has 0
                 TankOffsetY = 3, // game has 0
                 BarOffsetX = 8,
                 BarOffsetY = 0,
