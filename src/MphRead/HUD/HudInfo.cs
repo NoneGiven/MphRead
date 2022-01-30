@@ -1156,7 +1156,9 @@ namespace MphRead.Hud
                 healthSubPosX: 93,
                 healthSubPosY: 1,
                 healthOffsetY: 32,
-                healthOffsetYAlt: -10
+                healthOffsetYAlt: -10,
+                ammoBarPosX: 236,
+                ammoBarPosY: 137
             ),
             // Kanden
             new HudObjects(
@@ -1183,7 +1185,9 @@ namespace MphRead.Hud
                 healthSubPosX: 20,
                 healthSubPosY: 0,
                 healthOffsetY: 128,
-                healthOffsetYAlt: 0
+                healthOffsetYAlt: 0,
+                ammoBarPosX: 238,
+                ammoBarPosY: 128
             ),
             // Trace
             new HudObjects(
@@ -1210,7 +1214,9 @@ namespace MphRead.Hud
                 healthSubPosX: 29,
                 healthSubPosY: 135,
                 healthOffsetY: 0,
-                healthOffsetYAlt: 0
+                healthOffsetYAlt: 0,
+                ammoBarPosX: 232,
+                ammoBarPosY: 135
             ),
             // Sylux
             new HudObjects(
@@ -1237,7 +1243,9 @@ namespace MphRead.Hud
                 healthSubPosX: 51,
                 healthSubPosY: 165,
                 healthOffsetY: 0,
-                healthOffsetYAlt: 0
+                healthOffsetYAlt: 0,
+                ammoBarPosX: 206,
+                ammoBarPosY: 165
             ),
             // Noxus
             new HudObjects(
@@ -1264,7 +1272,9 @@ namespace MphRead.Hud
                 healthSubPosX: 34,
                 healthSubPosY: 0,
                 healthOffsetY: 117,
-                healthOffsetYAlt: 0
+                healthOffsetYAlt: 0,
+                ammoBarPosX: 221,
+                ammoBarPosY: 117
             ),
             // Spire
             new HudObjects(
@@ -1291,7 +1301,9 @@ namespace MphRead.Hud
                 healthSubPosX: 21,
                 healthSubPosY: 0,
                 healthOffsetY: 128,
-                healthOffsetYAlt: 0
+                healthOffsetYAlt: 0,
+                ammoBarPosX: 233,
+                ammoBarPosY: 128
             ),
             // Weavel
             new HudObjects(
@@ -1318,7 +1330,9 @@ namespace MphRead.Hud
                 healthSubPosX: 30,
                 healthSubPosY: 118,
                 healthOffsetY: 0,
-                healthOffsetYAlt: 0
+                healthOffsetYAlt: 0,
+                ammoBarPosX: 229,
+                ammoBarPosY: 118
             ),
             // Guardian
             new HudObjects(
@@ -1345,7 +1359,9 @@ namespace MphRead.Hud
                 healthSubPosX: 93,
                 healthSubPosY: 1,
                 healthOffsetY: 32,
-                healthOffsetYAlt: -10
+                healthOffsetYAlt: -10,
+                ammoBarPosX: 236,
+                ammoBarPosY: 137
             )
         };
 
@@ -1628,6 +1644,146 @@ namespace MphRead.Hud
                 MessageId = 0
             }
         };
+
+        public static readonly IReadOnlyList<HudMeter> AmmoBars = new HudMeter[8]
+        {
+            // Samus
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 72,
+                TankSpacing = 8,
+                TankOffsetX = 8,
+                TankOffsetY = 1,
+                BarOffsetX = -3,
+                BarOffsetY = 0,
+                TextType = TextType.RightAlign,
+                TextOffsetX = -2,
+                TextOffsetY = -1,
+                MessageId = 0
+            },
+            // Kanden
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 80,
+                TankSpacing = 8,
+                TankOffsetX = 8,
+                TankOffsetY = 1,
+                BarOffsetX = -22,
+                BarOffsetY = -35,
+                TextType = TextType.LeftAlign,
+                TextOffsetX = -2,
+                TextOffsetY = -1,
+                MessageId = 0
+            },
+            // Trace
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 0,
+                Length = 64,
+                TankSpacing = 0,
+                TankOffsetX = 0,
+                TankOffsetY = 0,
+                BarOffsetX = -2,
+                BarOffsetY = 0,
+                TextType = TextType.RightAlign,
+                TextOffsetX = 0,
+                TextOffsetY = 0,
+                MessageId = 0
+            },
+            // Sylux
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 152,
+                TankSpacing = 8,
+                TankOffsetX = 8,
+                TankOffsetY = 1,
+                BarOffsetX = 6,
+                BarOffsetY = -66,
+                TextType = TextType.LeftAlign,
+                TextOffsetX = 0,
+                TextOffsetY = 0,
+                MessageId = 0
+            },
+            // Noxus
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 80,
+                TankSpacing = 8,
+                TankOffsetX = 8,
+                TankOffsetY = 1,
+                BarOffsetX = 9,
+                BarOffsetY = 1,
+                TextType = TextType.LeftAlign,
+                TextOffsetX = -2,
+                TextOffsetY = -1,
+                MessageId = 0
+            },
+            // Spire
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 80,
+                TankSpacing = 8,
+                TankOffsetX = 8,
+                TankOffsetY = 1,
+                BarOffsetX = 3,
+                BarOffsetY = -82,
+                TextType = TextType.Centered,
+                TextOffsetX = -2,
+                TextOffsetY = -1,
+                MessageId = 0
+            },
+            // Weavel
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 64,
+                TankSpacing = 8,
+                TankOffsetX = 8,
+                TankOffsetY = 1,
+                BarOffsetX = -10,
+                BarOffsetY = -68,
+                TextType = TextType.Centered,
+                TextOffsetX = 0,
+                TextOffsetY = 0,
+                MessageId = 0
+            },
+            // Guardian
+            new HudMeter()
+            {
+                Horizontal = false,
+                TankAmount = 100,
+                TankCount = 5,
+                Length = 72,
+                TankSpacing = 8,
+                TankOffsetX = 8,
+                TankOffsetY = 1,
+                BarOffsetX = -3,
+                BarOffsetY = 0,
+                TextType = TextType.RightAlign,
+                TextOffsetX = -2,
+                TextOffsetY = -1,
+                MessageId = 0
+            }
+        };
     }
 
     public class HudObjects
@@ -1651,16 +1807,19 @@ namespace MphRead.Hud
         public readonly string SelectIcon;
         public readonly string SelectBox;
         public readonly int HealthMainPosX;
-        public readonly int HealthMainPosY;
         public readonly int HealthSubPosX;
         public readonly int HealthSubPosY;
         public readonly int HealthOffsetY;
         public readonly int HealthOffsetYAlt;
+        public readonly int HealthMainPosY;
+        public readonly int AmmoBarPosX;
+        public readonly int AmmoBarPosY;
 
         public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB, string? energyTanks,
             string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar, string reticle,
             string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectIcon, string selectBox,
-            int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY, int healthOffsetYAlt)
+            int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY, int healthOffsetYAlt,
+            int ammoBarPosX, int ammoBarPosY)
         {
             Helmet = helmet;
             HelmetDrop = helmetDrop;
@@ -1686,6 +1845,8 @@ namespace MphRead.Hud
             HealthSubPosY = healthSubPosY;
             HealthOffsetY = healthOffsetY;
             HealthOffsetYAlt = healthOffsetYAlt;
+            AmmoBarPosX = ammoBarPosX;
+            AmmoBarPosY = ammoBarPosY;
         }
     }
 }

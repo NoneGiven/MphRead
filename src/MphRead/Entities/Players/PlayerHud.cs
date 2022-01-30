@@ -24,6 +24,8 @@ namespace MphRead.Entities
         private HudObject? _healthbarTank = null;
         private HudMeter _healthbarMainMeter = null!;
         private HudMeter _healthbarSubMeter = null!;
+        private HudObject _ammoBar = null!;
+        private HudMeter _ammoBarMeter = null!;
 
         private ModelInstance _damageIndicator = null!;
         private readonly ushort[] _damageIndicatorTimers = new ushort[8];
@@ -120,6 +122,12 @@ namespace MphRead.Entities
                 _healthbarMainMeter.TankInst.Enabled = true;
             }
             _healthbarYOffset = _hudObjects.HealthOffsetY;
+            _ammoBar = HudInfo.GetHudObject(_hudObjects.AmmoBar);
+            _ammoBarMeter = HudElements.AmmoBars[(int)Hunter];
+            _ammoBarMeter.BarInst = new HudObjectInstance(_ammoBar.Width, _ammoBar.Height);
+            _ammoBarMeter.BarInst.SetCharacterData(_ammoBar.CharacterData, _scene);
+            _ammoBarMeter.BarInst.SetPaletteData(_ammoBar.PaletteData, _scene);
+            _ammoBarMeter.BarInst.Enabled = true;
             _textInst = new HudObjectInstance(width: 8, height: 8); // todo: max is 16x16
             _textInst.SetCharacterData(Font.CharacterData, _scene);
             _textInst.SetPaletteData(_healthbarMain.PaletteData, _scene);
@@ -129,6 +137,7 @@ namespace MphRead.Entities
         public void UpdateHud()
         {
             UpdateHealthbars();
+            UpdateAmmoBar();
             UpdateDamageIndicators();
             UpdateDisruptedState();
             WeaponSelection = CurrentWeapon;
@@ -212,6 +221,31 @@ namespace MphRead.Entities
             else if (_healthbarYOffset < targetOffsetY)
             {
                 _healthbarYOffset += 1 / 2f; // todo: FPS stuff
+            }
+        }
+
+        private int _ammoBarPalette = 0;
+        private bool _ammoBarChangedColor = false;
+
+        private void UpdateAmmoBar()
+        {
+            // todo?:
+            // - use the other palettes for low ammo warning and danger?
+            // - the bar flashes when picking up UA w/ missiles equipped and vice versa
+            // - the bar doesn't flash when ammo is restored by the affinity weapon pickup
+            if (_timeSincePickup < 10 * 2) // todo: FPS stuff
+            {
+                if (!_ammoBarChangedColor)
+                {
+                    _ammoBarPalette = 1;
+                    _ammoBarChangedColor = true;
+                }
+                // todo?: update radar lights
+            }
+            else if (_ammoBarChangedColor)
+            {
+                _ammoBarPalette = 0;
+                _ammoBarChangedColor = false;
             }
         }
 
@@ -456,6 +490,7 @@ namespace MphRead.Entities
             }
             else
             {
+                DrawAmmoBar();
                 _scene.DrawHudObject(_targetCircleInst);
                 if (_health > 0)
                 {
@@ -496,6 +531,23 @@ namespace MphRead.Entities
             }
         }
 
+        private void DrawAmmoBar()
+        {
+            WeaponInfo info = EquipInfo.Weapon;
+            if (info.AmmoCost == 0)
+            {
+                return;
+            }
+            _ammoBarMeter.TankAmount = _ammoMax[info.AmmoType] + 1;
+            _ammoBarMeter.TankCount = 0;
+            int amount = _ammo[info.AmmoType];
+            DrawMeter(_hudObjects.AmmoBarPosX, _hudObjects.AmmoBarPosY, amount, amount,
+                _ammoBarPalette, _ammoBarMeter, drawText: false, drawTanks: false);
+            amount /= info.AmmoCost;
+            DrawText2D(_hudObjects.AmmoBarPosX + _ammoBarMeter.BarOffsetX, _hudObjects.AmmoBarPosY + _ammoBarMeter.BarOffsetY,
+                _ammoBarMeter.TextType, _ammoBarPalette, $"{amount:00}");
+        }
+
         private void DrawMeter(float x, float y, int baseAmount, int curAmount, int palette,
             HudMeter meter, bool drawText, bool drawTanks)
         {
@@ -531,11 +583,11 @@ namespace MphRead.Entities
             if (drawText)
             {
                 int amount = _scene.Multiplayer ? curAmount : barAmount;
-                DrawText2D(x + meter.BarOffsetX, y + meter.BarOffsetY, meter.TextType, $"{amount:00}");
+                DrawText2D(x + meter.BarOffsetX, y + meter.BarOffsetY, meter.TextType, _healthbarPalette, $"{amount:00}");
                 if (meter.MessageId > 0)
                 {
                     string message = Strings.GetHudMessage(meter.MessageId);
-                    DrawText2D(x + meter.TextOffsetX, y + meter.TextOffsetY, type: 0, message);
+                    DrawText2D(x + meter.TextOffsetX, y + meter.TextOffsetY, type: 0, _healthbarPalette, message);
                 }
                 if (drawTanks && meter.TankCount > 0)
                 {
@@ -598,7 +650,7 @@ namespace MphRead.Entities
         private int _textSpacingY = 0;
 
         // todo: size/shape (seemingly only used by the bottom screen rank, which is 16x16/square instead of 8x8/square)
-        private Vector2 DrawText2D(float x, float y, TextType type, string text)
+        private Vector2 DrawText2D(float x, float y, TextType type, int palette, string text)
         {
             if (text.Length == 0)
             {
@@ -625,7 +677,7 @@ namespace MphRead.Entities
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
-                            _textInst.SetData(index, _healthbarPalette, _scene);
+                            _textInst.SetData(index, palette, _scene);
                             _scene.DrawHudObject(_textInst);
                         }
                         x += Font.Widths[index];
@@ -656,7 +708,7 @@ namespace MphRead.Entities
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
-                            _textInst.SetData(index, _healthbarPalette, _scene);
+                            _textInst.SetData(index, palette, _scene);
                             _scene.DrawHudObject(_textInst);
                         }
                     }
@@ -705,7 +757,7 @@ namespace MphRead.Entities
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
-                            _textInst.SetData(index, _healthbarPalette, _scene);
+                            _textInst.SetData(index, palette, _scene);
                             _scene.DrawHudObject(_textInst);
                         }
                         x += Font.Widths[index];

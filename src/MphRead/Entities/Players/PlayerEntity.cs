@@ -1036,15 +1036,14 @@ namespace MphRead.Entities
             {
                 return false;
             }
+            WeaponInfo info = Weapons.Current[(int)beam];
+            byte ammoType = info.AmmoType;
             if (debug) // skdebug
             {
                 _availableWeapons[beam] = true;
                 _availableCharges[beam] = true;
-                _ammo[0] = 1000;
-                _ammo[1] = 1000;
+                _ammo[info.AmmoType] = _ammoMax[info.AmmoType];
             }
-            WeaponInfo info = Weapons.Current[(int)beam];
-            byte ammoType = info.AmmoType;
             bool hasAmmo = beam == BeamType.PowerBeam || _ammo[ammoType] >= info.AmmoCost;
             if (!silent && (!hasAmmo || !_availableWeapons[beam] || GunAnimation == GunAnimation.UpDown))
             {
