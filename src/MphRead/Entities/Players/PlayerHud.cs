@@ -531,7 +531,7 @@ namespace MphRead.Entities
             if (drawText)
             {
                 int amount = _scene.Multiplayer ? curAmount : barAmount;
-                DrawText2D(x + meter.BarOffsetX, y + meter.BarOffsetY, type: 0, $"{amount:00}");
+                DrawText2D(x + meter.BarOffsetX, y + meter.BarOffsetY, meter.TextType, $"{amount:00}");
                 if (meter.MessageId > 0)
                 {
                     string message = Strings.GetHudMessage(meter.MessageId);
@@ -598,10 +598,14 @@ namespace MphRead.Entities
         private int _textSpacingY = 0;
 
         // todo: size/shape (seemingly only used by the bottom screen rank, which is 16x16/square instead of 8x8/square)
-        private Vector2 DrawText2D(float x, float y, int type, string text)
+        private Vector2 DrawText2D(float x, float y, TextType type, string text)
         {
+            if (text.Length == 0)
+            {
+                return new Vector2(x, y);
+            }
             int spacingY = _textSpacingY == 0 ? 12 : _textSpacingY;
-            if (type == 0)
+            if (type == TextType.LeftAlign)
             {
                 float startX = x;
                 for (int i = 0; i < text.Length; i++)
@@ -628,17 +632,54 @@ namespace MphRead.Entities
                     }
                 }
             }
-            else if (type == 1)
+            else if (type == TextType.RightAlign)
             {
-
+                float startX = x;
+                int start = 0;
+                int end = 0;
+                do
+                {
+                    end = text.IndexOf('\n', start);
+                    if (end == -1)
+                    {
+                        end = text.Length;
+                    }
+                    x = startX;
+                    for (int i = end - 1; i >= start; i--)
+                    {
+                        char ch = text[i];
+                        Debug.Assert(ch < 128);
+                        int index = ch - 32; // todo: starting character
+                        x -= Font.Widths[index];
+                        float offset = Font.Offsets[index] + y;
+                        if (ch != ' ')
+                        {
+                            _textInst.PositionX = x / 256f;
+                            _textInst.PositionY = offset / 192f;
+                            _textInst.SetData(index, _healthbarPalette, _scene);
+                            _scene.DrawHudObject(_textInst);
+                        }
+                    }
+                    if (end != text.Length)
+                    {
+                        do
+                        {
+                            end++;
+                            start = end;
+                            y += spacingY;
+                        }
+                        while (text[start] == '\n');
+                    }
+                }
+                while (end < text.Length);
             }
-            else if (type == 2)
+            else if (type == TextType.Type2)
             {
-
+                // sktodo
             }
-            else if (type == 3)
+            else if (type == TextType.Type3)
             {
-
+                // sktodo
             }
             return new Vector2(x, y);
         }

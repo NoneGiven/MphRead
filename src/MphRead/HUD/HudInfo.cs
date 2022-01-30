@@ -7,6 +7,14 @@ using System.Runtime.InteropServices;
 
 namespace MphRead.Hud
 {
+    public enum TextType
+    {
+        LeftAlign = 0,
+        RightAlign = 1,
+        Type2 = 2,
+        Type3 = 3
+    }
+
     public class HudMeter
     {
         public bool Horizontal;
@@ -18,7 +26,7 @@ namespace MphRead.Hud
         public int BarOffsetY;
         public int TextOffsetX;
         public int TextOffsetY;
-        public int TextType; // sktodo: enum
+        public TextType TextType;
         public int MessageId;
 
         public int TankAmount;
@@ -1355,7 +1363,7 @@ namespace MphRead.Hud
                 TankOffsetY = 8,
                 BarOffsetX = 0,
                 BarOffsetY = -8,
-                TextType = 0,
+                TextType = TextType.LeftAlign,
                 TextOffsetX = 30,
                 TextOffsetY = -8,
                 MessageId = 6
@@ -1372,7 +1380,7 @@ namespace MphRead.Hud
                 TankOffsetY = 3, // game has -8
                 BarOffsetX = 32,
                 BarOffsetY = -35,
-                TextType = 1,
+                TextType = TextType.RightAlign,
                 TextOffsetX = 30,
                 TextOffsetY = -7,
                 MessageId = 0
@@ -1389,7 +1397,7 @@ namespace MphRead.Hud
                 TankOffsetY = 3, // game has 0
                 BarOffsetX = 8,
                 BarOffsetY = 0,
-                TextType = 0,
+                TextType = TextType.LeftAlign,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -1406,7 +1414,7 @@ namespace MphRead.Hud
                 TankOffsetY = 1,
                 BarOffsetX = -4,
                 BarOffsetY = -66,
-                TextType = 1,
+                TextType = TextType.RightAlign,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -1423,7 +1431,7 @@ namespace MphRead.Hud
                 TankOffsetY = 3, // game has -8
                 BarOffsetX = -3,
                 BarOffsetY = 1,
-                TextType = 1,
+                TextType = TextType.RightAlign,
                 TextOffsetX = 30,
                 TextOffsetY = -7,
                 MessageId = 0
@@ -1440,7 +1448,7 @@ namespace MphRead.Hud
                 TankOffsetY = 3, // game has -8
                 BarOffsetX = 5,
                 BarOffsetY = -82,
-                TextType = 2,
+                TextType = TextType.Type2,
                 TextOffsetX = 30,
                 TextOffsetY = -7,
                 MessageId = 0
@@ -1457,7 +1465,7 @@ namespace MphRead.Hud
                 TankOffsetY = 3, // game has -8
                 BarOffsetX = 10,
                 BarOffsetY = -68,
-                TextType = 0,
+                TextType = TextType.LeftAlign,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -1474,7 +1482,7 @@ namespace MphRead.Hud
                 TankOffsetY = 8,
                 BarOffsetX = 0,
                 BarOffsetY = -8,
-                TextType = 0,
+                TextType = TextType.LeftAlign,
                 TextOffsetX = 30,
                 TextOffsetY = -8,
                 MessageId = 6
@@ -1495,7 +1503,7 @@ namespace MphRead.Hud
                 TankOffsetY = -8,
                 BarOffsetX = 15,
                 BarOffsetY = 6,
-                TextType = 0,
+                TextType = TextType.LeftAlign,
                 TextOffsetX = 30,
                 TextOffsetY = 7,
                 MessageId = 0
@@ -1512,7 +1520,7 @@ namespace MphRead.Hud
                 TankOffsetY = -8,
                 BarOffsetX = 15,
                 BarOffsetY = 6,
-                TextType = 0,
+                TextType = TextType.LeftAlign,
                 TextOffsetX = 30,
                 TextOffsetY = 7,
                 MessageId = 0
@@ -1529,7 +1537,7 @@ namespace MphRead.Hud
                 TankOffsetY = 0,
                 BarOffsetX = 0,
                 BarOffsetY = 0,
-                TextType = 0,
+                TextType = TextType.LeftAlign,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -1546,7 +1554,7 @@ namespace MphRead.Hud
                 TankOffsetY = -8,
                 BarOffsetX = 0,
                 BarOffsetY = 0,
-                TextType = 0,
+                TextType = TextType.LeftAlign,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -1563,7 +1571,7 @@ namespace MphRead.Hud
                 TankOffsetY = -8,
                 BarOffsetX = 15,
                 BarOffsetY = 6,
-                TextType = 0,
+                TextType = TextType.LeftAlign,
                 TextOffsetX = 30,
                 TextOffsetY = 7,
                 MessageId = 0
@@ -1580,7 +1588,7 @@ namespace MphRead.Hud
                 TankOffsetY = -8,
                 BarOffsetX = 15,
                 BarOffsetY = 6,
-                TextType = 0,
+                TextType = TextType.LeftAlign,
                 TextOffsetX = 30,
                 TextOffsetY = 7,
                 MessageId = 0
@@ -1597,7 +1605,7 @@ namespace MphRead.Hud
                 TankOffsetY = -8,
                 BarOffsetX = 0,
                 BarOffsetY = 0,
-                TextType = 0,
+                TextType = TextType.LeftAlign,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -1614,7 +1622,7 @@ namespace MphRead.Hud
                 TankOffsetY = -8,
                 BarOffsetX = 15,
                 BarOffsetY = 6,
-                TextType = 0,
+                TextType = TextType.LeftAlign,
                 TextOffsetX = 30,
                 TextOffsetY = 7,
                 MessageId = 0
