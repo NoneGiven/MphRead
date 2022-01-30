@@ -20,6 +20,7 @@ namespace MphRead.Entities
         private HudMeter _healthbarMainMeter = null!;
         private HudMeter _healthbarSubMeter = null!;
         private HudMeter _ammoBarMeter = null!;
+        private HudObjectInstance _weaponIconInst = null!;
 
         private ModelInstance _damageIndicator = null!;
         private readonly ushort[] _damageIndicatorTimers = new ushort[8];
@@ -121,7 +122,13 @@ namespace MphRead.Entities
             _ammoBarMeter.BarInst = new HudObjectInstance(ammoBar.Width, ammoBar.Height);
             _ammoBarMeter.BarInst.SetCharacterData(ammoBar.CharacterData, _scene);
             _ammoBarMeter.BarInst.SetPaletteData(ammoBar.PaletteData, _scene);
-            _ammoBarMeter.BarInst.Enabled = true;
+            HudObject weaponIcon = HudInfo.GetHudObject(_hudObjects.WeaponIcon);
+            _weaponIconInst = new HudObjectInstance(weaponIcon.Width, weaponIcon.Height);
+            _weaponIconInst.SetCharacterData(weaponIcon.CharacterData, _scene);
+            _weaponIconInst.SetPaletteData(weaponIcon.PaletteData, _scene);
+            _weaponIconInst.PositionX = _hudObjects.WeaponIconPosX / 256f;
+            _weaponIconInst.PositionY = _hudObjects.WeaponIconPosY / 192f;
+            _weaponIconInst.SetAnimationFrames(weaponIcon.AnimParams);
             _textInst = new HudObjectInstance(width: 8, height: 8); // todo: max is 16x16
             _textInst.SetCharacterData(Font.CharacterData, _scene);
             _textInst.SetPaletteData(healthbarMain.PaletteData, _scene);
@@ -132,6 +139,7 @@ namespace MphRead.Entities
         {
             UpdateHealthbars();
             UpdateAmmoBar();
+            _weaponIconInst.ProcessAnimation(_scene);
             UpdateDamageIndicators();
             UpdateDisruptedState();
             WeaponSelection = CurrentWeapon;
@@ -140,6 +148,8 @@ namespace MphRead.Entities
                 UpdateWeaponSelect();
             }
             _targetCircleInst.Enabled = false;
+            _ammoBarMeter.BarInst.Enabled = false;
+            _weaponIconInst.Enabled = false;
             _damageIndicator.Active = false;
             _scene.Layer1BindingId = -1;
             _scene.Layer2BindingId = -1;
@@ -161,6 +171,8 @@ namespace MphRead.Entities
                     {
                         UpdateReticle();
                     }
+                    _ammoBarMeter.BarInst.Enabled = true;
+                    _weaponIconInst.Enabled = true;
                 }
                 _damageIndicator.Active = true;
             }
@@ -388,7 +400,7 @@ namespace MphRead.Entities
                 _targetCircleInst.SetCharacterData(_sniperCircleObj.CharacterData, _sniperCircleObj.Width,
                     _sniperCircleObj.Height, _scene);
             }
-            // todo?: set HUD object anim for top screen weapon icon
+            _weaponIconInst.SetAnimation(start: 9, target: 27, frames: 19, afterAnim: (int)beam);
         }
 
         private void HudOnZoom(bool zoom)
@@ -485,6 +497,7 @@ namespace MphRead.Entities
             else
             {
                 DrawAmmoBar();
+                _scene.DrawHudObject(_weaponIconInst);
                 _scene.DrawHudObject(_targetCircleInst);
                 if (_health > 0)
                 {
@@ -528,7 +541,7 @@ namespace MphRead.Entities
         private void DrawAmmoBar()
         {
             WeaponInfo info = EquipInfo.Weapon;
-            if (info.AmmoCost == 0)
+            if (info.AmmoCost == 0 || !_ammoBarMeter.BarInst.Enabled)
             {
                 return;
             }

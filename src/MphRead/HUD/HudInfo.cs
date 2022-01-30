@@ -15,6 +15,18 @@ namespace MphRead.Hud
         Type3 = 3
     }
 
+    public readonly struct UiAnimParams
+    {
+        public readonly byte ImageIndex;
+        public readonly byte Delay; // sort of
+        public readonly ushort Field2; // unused?
+        public readonly int Field4; // unused?
+        public readonly ushort ParamPa;
+        public readonly ushort ParamPb;
+        public readonly ushort ParamPc;
+        public readonly ushort ParamPd;
+    }
+
     public class HudMeter
     {
         public bool Horizontal;
@@ -41,13 +53,16 @@ namespace MphRead.Hud
         public readonly int Height;
         public readonly IReadOnlyList<byte> CharacterData;
         public readonly IReadOnlyList<ColorRgba> PaletteData;
+        public readonly IReadOnlyList<UiAnimParams> AnimParams;
 
-        public HudObject(int width, int height, IReadOnlyList<byte> characterData, IReadOnlyList<ColorRgba> paletteData)
+        public HudObject(int width, int height, IReadOnlyList<byte> characterData, IReadOnlyList<ColorRgba> paletteData,
+            IReadOnlyList<UiAnimParams> animParams)
         {
             Width = width;
             Height = height;
             CharacterData = characterData;
             PaletteData = paletteData;
+            AnimParams = animParams;
         }
     }
 
@@ -62,6 +77,7 @@ namespace MphRead.Hud
         public IReadOnlyList<byte>? CharacterData;
         public int PaletteIndex = -1;
         public IReadOnlyList<ColorRgba>? PaletteData;
+        public IReadOnlyList<int>? AnimFrames;
         public readonly ColorRgba[] Texture;
         public float Alpha = 1;
         public int BindingId = -1;
@@ -72,6 +88,7 @@ namespace MphRead.Hud
         public int TargetFrame;
         public float Timer = -1;
         public float Time = -1;
+        public int AfterAnimFrame = -1;
 
         public HudObjectInstance(int width, int height)
         {
@@ -85,6 +102,20 @@ namespace MphRead.Hud
             Width = width;
             Height = height;
             Texture = new ColorRgba[maxWidth * maxHeight];
+        }
+
+        public void SetAnimationFrames(IReadOnlyList<UiAnimParams> frames)
+        {
+            var list = new List<int>();
+            for (int i = 0; i < frames.Count; i++)
+            {
+                UiAnimParams frame = frames[i];
+                for (int j = 0; j < frame.Delay; j++)
+                {
+                    list.Add(frame.ImageIndex);
+                }
+            }
+            AnimFrames = list;
         }
 
         public void SetCharacterData(IReadOnlyList<byte> data, int width, int height, Scene scene)
@@ -215,14 +246,32 @@ namespace MphRead.Hud
             }
             else
             {
+                // no need to update textures since ProcessAnimation will do it
                 CurrentFrame = start;
                 StartFrame = start;
                 TargetFrame = target;
                 Timer = Time = frames * (1 / 30f);
             }
-            // no need to update textures since ProcessAnimation will do it
         }
 
+        public void SetAnimation(int start, int target, int frames, int afterAnim)
+        {
+            Debug.Assert(AnimFrames != null);
+            if (start == target)
+            {
+                CurrentFrame = start;
+            }
+            else
+            {
+                // don't set the start frame as current, since it's not always where we currently are
+                StartFrame = start;
+                TargetFrame = target;
+                Timer = Time = frames * (1 / 30f);
+                AfterAnimFrame = AnimFrames[afterAnim];
+            }
+        }
+
+        // todo: revisit this
         public void ProcessAnimation(Scene scene)
         {
             if (Timer > 0)
@@ -231,11 +280,19 @@ namespace MphRead.Hud
                 Timer -= scene.FrameTime;
                 if (Timer <= 0)
                 {
-                    CurrentFrame = TargetFrame;
+                    CurrentFrame = AnimFrames == null ? TargetFrame : AfterAnimFrame;
                 }
                 else
                 {
-                    CurrentFrame = StartFrame + (int)MathF.Round((TargetFrame - StartFrame) * (1 - Timer / Time));
+                    int frame = StartFrame + (int)MathF.Round((TargetFrame - StartFrame) * (1 - Timer / Time));
+                    if (AnimFrames == null)
+                    {
+                        CurrentFrame = frame;
+                    }
+                    else
+                    {
+                        CurrentFrame = AnimFrames[frame];
+                    }
                 }
                 if (CurrentFrame != prev)
                 {
@@ -373,18 +430,6 @@ namespace MphRead.Hud
             public readonly int AttrDataSize;
             public readonly int CharDataSize;
             public readonly int PalDataSize;
-        }
-
-        private readonly struct UiAnimParams
-        {
-            public readonly byte ImageIndex;
-            public readonly byte Delay; // sort of
-            public readonly ushort Field2; // unused?
-            public readonly int Field4; // unused?
-            public readonly ushort ParamPa;
-            public readonly ushort ParamPb;
-            public readonly ushort ParamPc;
-            public readonly ushort ParamPd;
         }
 
         public readonly struct RawUiOamAttrs
@@ -531,7 +576,7 @@ namespace MphRead.Hud
             // skodo: parse characters for each palette that's actually specified by the attr, I guess?
             // --> some just have 1 in all the attrs instead of 0 in all the attrs, so just use that?
             (int width, int height) = _objectDimensions[(int)attrs.Shape, (int)attrs.Size];
-            return new HudObject(width * 8, height * 8, palIndexData, palColorData);
+            return new HudObject(width * 8, height * 8, palIndexData, palColorData, animParams);
         }
 
         private static void TestAnimation(IReadOnlyList<UiAnimParams> animParams, int pInitial, int pStart, int pTimer, int pTarget)
@@ -1158,7 +1203,9 @@ namespace MphRead.Hud
                 healthOffsetY: 32,
                 healthOffsetYAlt: -10,
                 ammoBarPosX: 236,
-                ammoBarPosY: 137
+                ammoBarPosY: 137,
+                weaponIconPosX: 214,
+                weaponIconPosY: 150
             ),
             // Kanden
             new HudObjects(
@@ -1187,7 +1234,9 @@ namespace MphRead.Hud
                 healthOffsetY: 128,
                 healthOffsetYAlt: 0,
                 ammoBarPosX: 238,
-                ammoBarPosY: 128
+                ammoBarPosY: 128,
+                weaponIconPosX: 230,
+                weaponIconPosY: 138
             ),
             // Trace
             new HudObjects(
@@ -1216,7 +1265,9 @@ namespace MphRead.Hud
                 healthOffsetY: 0,
                 healthOffsetYAlt: 0,
                 ammoBarPosX: 232,
-                ammoBarPosY: 135
+                ammoBarPosY: 135,
+                weaponIconPosX: 225,
+                weaponIconPosY: 148
             ),
             // Sylux
             new HudObjects(
@@ -1245,7 +1296,9 @@ namespace MphRead.Hud
                 healthOffsetY: 0,
                 healthOffsetYAlt: 0,
                 ammoBarPosX: 206,
-                ammoBarPosY: 165
+                ammoBarPosY: 165,
+                weaponIconPosX: 214,
+                weaponIconPosY: 131
             ),
             // Noxus
             new HudObjects(
@@ -1274,7 +1327,9 @@ namespace MphRead.Hud
                 healthOffsetY: 117,
                 healthOffsetYAlt: 0,
                 ammoBarPosX: 221,
-                ammoBarPosY: 117
+                ammoBarPosY: 117,
+                weaponIconPosX: 196,
+                weaponIconPosY: 138
             ),
             // Spire
             new HudObjects(
@@ -1303,7 +1358,9 @@ namespace MphRead.Hud
                 healthOffsetY: 128,
                 healthOffsetYAlt: 0,
                 ammoBarPosX: 233,
-                ammoBarPosY: 128
+                ammoBarPosY: 128,
+                weaponIconPosX: 227,
+                weaponIconPosY: 20
             ),
             // Weavel
             new HudObjects(
@@ -1332,7 +1389,9 @@ namespace MphRead.Hud
                 healthOffsetY: 0,
                 healthOffsetYAlt: 0,
                 ammoBarPosX: 229,
-                ammoBarPosY: 118
+                ammoBarPosY: 118,
+                weaponIconPosX: 206,
+                weaponIconPosY: 104
             ),
             // Guardian
             new HudObjects(
@@ -1361,7 +1420,9 @@ namespace MphRead.Hud
                 healthOffsetY: 32,
                 healthOffsetYAlt: -10,
                 ammoBarPosX: 236,
-                ammoBarPosY: 137
+                ammoBarPosY: 137,
+                weaponIconPosX: 214,
+                weaponIconPosY: 150
             )
         };
 
@@ -1814,12 +1875,14 @@ namespace MphRead.Hud
         public readonly int HealthMainPosY;
         public readonly int AmmoBarPosX;
         public readonly int AmmoBarPosY;
+        public readonly int WeaponIconPosX;
+        public readonly int WeaponIconPosY;
 
         public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB, string? energyTanks,
             string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar, string reticle,
             string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectIcon, string selectBox,
             int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY, int healthOffsetYAlt,
-            int ammoBarPosX, int ammoBarPosY)
+            int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY)
         {
             Helmet = helmet;
             HelmetDrop = helmetDrop;
@@ -1847,6 +1910,8 @@ namespace MphRead.Hud
             HealthOffsetYAlt = healthOffsetYAlt;
             AmmoBarPosX = ammoBarPosX;
             AmmoBarPosY = ammoBarPosY;
+            WeaponIconPosX = weaponIconPosX;
+            WeaponIconPosY = weaponIconPosY;
         }
     }
 }

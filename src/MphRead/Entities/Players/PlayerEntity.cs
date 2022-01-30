@@ -795,6 +795,7 @@ namespace MphRead.Entities
                 // the game only does this in multiplayer, but it can't hard either way
                 // todo: lots of other stuff
                 ResetReticle();
+                _weaponIconInst.SetIndex(0, _scene);
             }
             // todo: update HUD effects
             _altRollFbX = CameraInfo.Field48;
