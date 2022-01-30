@@ -526,8 +526,8 @@ namespace MphRead
             _shaderLocations.TexgenMode = GL.GetUniformLocation(_shaderProgramId, "texgen_mode");
             _shaderLocations.MatrixStack = GL.GetUniformLocation(_shaderProgramId, "mtx_stack");
             _shaderLocations.ToonTable = GL.GetUniformLocation(_shaderProgramId, "toon_table");
-            _shaderLocations.FadeColor = GL.GetUniformLocation(_shaderProgramId, "fade_color");
 
+            _shaderLocations.FadeColor = GL.GetUniformLocation(_rttShaderProgramId, "fade_color");
             _shaderLocations.LayerAlpha = GL.GetUniformLocation(_rttShaderProgramId, "alpha");
 
             _shaderLocations.ShiftTable = GL.GetUniformLocation(_shiftShaderProgramId, "shift_table");
@@ -1262,6 +1262,7 @@ namespace MphRead
                 GL.UseProgram(_rttShaderProgramId);
                 GL.Uniform1(_shaderLocations.LayerAlpha, 1f);
             }
+            GL.Uniform4(_shaderLocations.FadeColor, Vector4.Zero);
 
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.Clear(ClearBufferMask.ColorBufferBit);
@@ -1296,6 +1297,29 @@ namespace MphRead
                 DrawHudLayer(Layer1BindingId, alpha: 1);
                 DrawHudLayer(Layer2BindingId, alpha: 1);
                 PlayerEntity.Main.DrawHudObjects();
+                if (_fadeType != FadeType.None)
+                {
+                    float percent = _fadePercent;
+                    if (_fadeIn)
+                    {
+                        percent = 1 - percent;
+                    }
+                    GL.Uniform4(_shaderLocations.FadeColor, _fadeColor, _fadeColor, _fadeColor, percent);
+                    GL.Begin(PrimitiveType.TriangleStrip);
+                    // top right
+                    GL.TexCoord3(1f, 1f, 0f);
+                    GL.Vertex3(1f, 1f, 0f);
+                    // top left
+                    GL.TexCoord3(0f, 1f, 0f);
+                    GL.Vertex3(-1f, 1f, 0f);
+                    // bottom right
+                    GL.TexCoord3(1f, 0f, 0f);
+                    GL.Vertex3(1f, -1f, 0f);
+                    // bottom left
+                    GL.TexCoord3(0f, 0f, 0f);
+                    GL.Vertex3(-1f, -1f, 0f);
+                    GL.End();
+                }
             }
             GL.Enable(EnableCap.DepthTest);
             GL.Disable(EnableCap.Blend);
@@ -2520,10 +2544,10 @@ namespace MphRead
 
         private FadeType _fadeType = FadeType.None;
         private float _fadeColor = 0;
-        private float _fadeTarget = 0;
+        private bool _fadeIn = false;
         private float _fadeStart = 0;
         private float _fadeLength = 0;
-        private float _currentFade = 0;
+        private float _fadePercent = 0;
 
         public void SetFade(FadeType type, float length, bool overwrite)
         {
@@ -2532,34 +2556,34 @@ namespace MphRead
                 return;
             }
             _fadeType = type;
+            _fadePercent = 0;
             if (type == FadeType.None)
             {
                 _fadeType = type;
                 _fadeColor = 0;
-                _fadeTarget = 0;
-                _currentFade = 0;
+                _fadeIn = false;
                 _fadeStart = 0;
                 _fadeLength = 0;
             }
             else if (type == FadeType.FadeInWhite)
             {
                 _fadeColor = 1;
-                _fadeTarget = 0;
+                _fadeIn = true;
             }
             else if (type == FadeType.FadeInBlack)
             {
-                _fadeColor = -1;
-                _fadeTarget = 0;
+                _fadeColor = 0;
+                _fadeIn = true;
             }
             else if (type == FadeType.FadeOutWhite || type == FadeType.FadeOutInWhite)
             {
-                _fadeColor = 0;
-                _fadeTarget = 1;
+                _fadeColor = 1;
+                _fadeIn = false;
             }
             else if (type == FadeType.FadeOutBlack || type == FadeType.FadeOutInBlack)
             {
                 _fadeColor = 0;
-                _fadeTarget = -1;
+                _fadeIn = false;
             }
             _fadeStart = _elapsedTime;
             _fadeLength = length;
@@ -2570,34 +2594,19 @@ namespace MphRead
             Color4 clearColor = _clearColor;
             if (_fadeType != FadeType.None)
             {
-                float percent = (_elapsedTime - _fadeStart) / _fadeLength;
-                if (percent > 1)
+                _fadePercent = (_elapsedTime - _fadeStart) / _fadeLength;
+                if (_fadePercent >= 1)
                 {
-                    percent = 1;
-                }
-                _currentFade = _fadeColor + (_fadeTarget - _fadeColor) * percent;
-                clearColor = new Color4(_clearColor.R + _currentFade, _clearColor.G + _currentFade,
-                    _clearColor.B + _currentFade, _clearColor.A);
-                if (percent == 1)
-                {
+                    _fadePercent = 1;
                     EndFade();
                 }
             }
-            GL.Uniform1(_shaderLocations.FadeColor, _currentFade);
-            GL.ClearColor(clearColor);
+            GL.ClearColor(_clearColor);
         }
 
         private void EndFade()
         {
-            if (_fadeType == FadeType.FadeOutBlack)
-            {
-                _currentFade = -1;
-            }
-            else if (_fadeType == FadeType.FadeOutWhite)
-            {
-                _currentFade = 1;
-            }
-            else if (_fadeType == FadeType.FadeOutInBlack)
+            if (_fadeType == FadeType.FadeOutInBlack)
             {
                 SetFade(FadeType.FadeInBlack, _fadeLength, overwrite: true);
             }
@@ -2609,8 +2618,8 @@ namespace MphRead
             {
                 _fadeType = FadeType.None;
                 _fadeColor = 0;
-                _fadeTarget = 0;
-                _currentFade = 0;
+                _fadeIn = false;
+                _fadePercent = 0;
                 _fadeStart = 0;
                 _fadeLength = 0;
             }

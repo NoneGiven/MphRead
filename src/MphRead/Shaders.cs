@@ -109,7 +109,6 @@ uniform vec4 pal_override_color;
 uniform float mat_alpha;
 uniform int mat_mode;
 uniform vec3[32] toon_table;
-uniform float fade_color;
 
 varying vec2 texcoord;
 varying vec4 color;
@@ -166,7 +165,7 @@ void main()
         }
         col = vec4((col * (1.0 - density) + fog_color * density).xyz, col.a);
     }
-    gl_FragColor = col + vec4(fade_color, fade_color, fade_color, 0);
+    gl_FragColor = col;
 }
 ";
 
@@ -186,14 +185,20 @@ void main()
 #version 120
 
 uniform float alpha;
+uniform vec4 fade_color;
 uniform sampler2D tex;
 varying vec2 texcoord;
 varying vec4 color;
 
 void main()
 {
-    gl_FragColor = texture2D(tex, texcoord);
-    gl_FragColor.a *= alpha;
+    if (fade_color.a > 0) {
+        gl_FragColor = fade_color;
+    }
+    else {
+        gl_FragColor = texture2D(tex, texcoord);
+        gl_FragColor.a *= alpha;
+    }
 }
 ";
 
