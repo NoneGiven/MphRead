@@ -4334,7 +4334,7 @@ namespace MphRead
 
         private static readonly NativeWindowSettings _nativeWindowSettings = new NativeWindowSettings()
         {
-            Size = new Vector2i(800, 600),
+            Size = new Vector2i(1024, 768),
             Title = "MphRead",
             Profile = ContextProfile.Compatability,
             APIVersion = new Version(3, 2)
