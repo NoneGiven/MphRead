@@ -11,7 +11,7 @@ namespace MphRead.Hud
     {
         LeftAlign = 0,
         RightAlign = 1,
-        Type2 = 2,
+        Centered = 2,
         Type3 = 3
     }
 
@@ -1448,7 +1448,7 @@ namespace MphRead.Hud
                 TankOffsetY = 3, // game has -8
                 BarOffsetX = 5,
                 BarOffsetY = -82,
-                TextType = TextType.Type2,
+                TextType = TextType.Centered,
                 TextOffsetX = 30,
                 TextOffsetY = -7,
                 MessageId = 0

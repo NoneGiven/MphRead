@@ -673,13 +673,60 @@ namespace MphRead.Entities
                 }
                 while (end < text.Length);
             }
-            else if (type == TextType.Type2)
+            else if (type == TextType.Centered)
             {
-                // sktodo
+                float startX = x;
+                int start = 0;
+                int end = 0;
+                do
+                {
+                    end = text.IndexOf('\n', start);
+                    if (end == -1)
+                    {
+                        end = text.Length;
+                    }
+                    x = startX;
+                    float width = 0;
+                    for (int i = start; i < end; i++)
+                    {
+                        char ch = text[i];
+                        Debug.Assert(ch < 128);
+                        int index = ch - 32; // todo: starting character
+                        width += Font.Widths[index];
+                    }
+                    x = startX - width / 2;
+                    for (int i = start; i < end; i++)
+                    {
+                        char ch = text[i];
+                        Debug.Assert(ch < 128);
+                        int index = ch - 32; // todo: starting character
+                        float offset = Font.Offsets[index] + y;
+                        if (ch != ' ')
+                        {
+                            _textInst.PositionX = x / 256f;
+                            _textInst.PositionY = offset / 192f;
+                            _textInst.SetData(index, _healthbarPalette, _scene);
+                            _scene.DrawHudObject(_textInst);
+                        }
+                        x += Font.Widths[index];
+                    }
+                    if (end != text.Length)
+                    {
+                        do
+                        {
+                            end++;
+                            start = end;
+                            y += spacingY;
+                        }
+                        while (text[start] == '\n');
+                    }
+                }
+                while (end < text.Length);
             }
             else if (type == TextType.Type3)
             {
-                // sktodo
+                // todo: this
+                Debug.Assert(false);
             }
             return new Vector2(x, y);
         }
