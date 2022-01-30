@@ -1168,6 +1168,8 @@ namespace MphRead.Hud
     public static class HudElements
     {
         public static readonly string IceLayer = @"_archives\common\bg_ice.bin";
+        public static readonly string Boost = @"_archives\common\hud_boost.bin";
+        public static readonly string Bombs = @"_archives\common\hud_bombs.bin";
 
         public static IEnumerable<string> AllLayers { get; } = new List<string>()
         {

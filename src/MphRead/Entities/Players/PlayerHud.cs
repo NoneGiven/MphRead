@@ -21,6 +21,8 @@ namespace MphRead.Entities
         private HudMeter _healthbarSubMeter = null!;
         private HudMeter _ammoBarMeter = null!;
         private HudObjectInstance _weaponIconInst = null!;
+        private HudObjectInstance _boostInst = null!;
+        private HudObjectInstance _bombInst = null!;
 
         private ModelInstance _damageIndicator = null!;
         private readonly ushort[] _damageIndicatorTimers = new ushort[8];
@@ -129,6 +131,18 @@ namespace MphRead.Entities
             _weaponIconInst.PositionX = _hudObjects.WeaponIconPosX / 256f;
             _weaponIconInst.PositionY = _hudObjects.WeaponIconPosY / 192f;
             _weaponIconInst.SetAnimationFrames(weaponIcon.AnimParams);
+            HudObject boost = HudInfo.GetHudObject(HudElements.Boost);
+            _boostInst = new HudObjectInstance(boost.Width, boost.Height);
+            _boostInst.SetCharacterData(boost.CharacterData, _scene);
+            _boostInst.SetPaletteData(boost.PaletteData, _scene);
+            _boostInst.SetAnimationFrames(boost.AnimParams);
+            _boostInst.Enabled = true;
+            HudObject bombs = HudInfo.GetHudObject(HudElements.Bombs);
+            _bombInst = new HudObjectInstance(bombs.Width, bombs.Height);
+            _bombInst.SetCharacterData(bombs.CharacterData, _scene);
+            _bombInst.SetPaletteData(bombs.PaletteData, _scene);
+            _bombInst.Enabled = true;
+            _boostBombsYOffset = 208;
             _textInst = new HudObjectInstance(width: 8, height: 8); // todo: max is 16x16
             _textInst.SetCharacterData(Font.CharacterData, _scene);
             _textInst.SetPaletteData(healthbarMain.PaletteData, _scene);
@@ -140,6 +154,8 @@ namespace MphRead.Entities
             UpdateHealthbars();
             UpdateAmmoBar();
             _weaponIconInst.ProcessAnimation(_scene);
+            _boostInst.ProcessAnimation(_scene);
+            UpdateBoostBombs();
             UpdateDamageIndicators();
             UpdateDisruptedState();
             WeaponSelection = CurrentWeapon;
@@ -214,9 +230,8 @@ namespace MphRead.Entities
                 _healthbarPalette = 0;
                 _healthbarChangedColor = false;
             }
-            // todo: bomb UI
-            float targetOffsetY = _hudObjects.HealthOffsetY; // todo: or match state is 2
-            if (IsAltForm || IsMorphing)
+            float targetOffsetY = _hudObjects.HealthOffsetY;
+            if (IsAltForm || IsMorphing) // todo: or match state is 2
             {
                 targetOffsetY += _hudObjects.HealthOffsetYAlt;
             }
@@ -252,6 +267,25 @@ namespace MphRead.Entities
             {
                 _ammoBarPalette = 0;
                 _ammoBarChangedColor = false;
+            }
+        }
+
+        private float _boostBombsYOffset = 0;
+
+        private void UpdateBoostBombs()
+        {
+            float targetOffsetY = 208;
+            if (IsAltForm || IsMorphing) // todo: or match state is 2
+            {
+                targetOffsetY = 160;
+            }
+            if (_boostBombsYOffset > targetOffsetY)
+            {
+                _boostBombsYOffset -= 2 / 2f; // todo: FPS stuff
+            }
+            else if (_boostBombsYOffset < targetOffsetY)
+            {
+                _boostBombsYOffset += 2 / 2f; // todo: FPS stuff
             }
         }
 
@@ -496,9 +530,16 @@ namespace MphRead.Entities
             }
             else
             {
-                DrawAmmoBar();
-                _scene.DrawHudObject(_weaponIconInst);
-                _scene.DrawHudObject(_targetCircleInst);
+                if (IsAltForm || IsMorphing || IsUnmorphing) // todo: or match state is 2
+                {
+                    DrawBoostBombs();
+                }
+                else
+                {
+                    DrawAmmoBar();
+                    _scene.DrawHudObject(_weaponIconInst);
+                    _scene.DrawHudObject(_targetCircleInst);
+                }
                 if (_health > 0)
                 {
                     DrawHealthbars();
@@ -555,6 +596,41 @@ namespace MphRead.Entities
                 _ammoBarMeter.TextType, _ammoBarPalette, $"{amount:00}");
         }
 
+        private void DrawBoostBombs()
+        {
+            float posY = _boostBombsYOffset;
+            if (_abilities.TestFlag(AbilityFlags.Bombs) && Hunter != Hunter.Kanden)
+            {
+                float posX = 244;
+                for (int i = 3; i > 0; i--)
+                {
+                    _bombInst.SetIndex(_bombAmmo < i ? 1 : 0, _scene);
+                    _bombInst.PositionX = (posX - _bombInst.Width / 2) / 256f;
+                    _bombInst.PositionY = posY / 192f;
+                    _scene.DrawHudObject(_bombInst);
+                    posX -= 14;
+                }
+                string message = Strings.GetHudMessage(1); // bombs
+                DrawText2D(230, posY + 18, TextType.Centered, palette: 0, message);
+            }
+            if (_abilities.TestFlag(AbilityFlags.Boost))
+            {
+                if (_altAttackCooldown == 0)
+                {
+                    _boostInst.SetIndex(0, _scene);
+                }
+                else if (_boostInst.Timer <= 1 / 30f)
+                {
+                    _boostInst.SetIndex(1, _scene);
+                }
+                _boostInst.PositionX = (29 - _boostInst.Width / 2) / 256f;
+                _boostInst.PositionY = (posY - 16) / 192f;
+                _scene.DrawHudObject(_boostInst);
+                string message = Strings.GetHudMessage(2); // boost
+                DrawText2D(29, posY + 18, TextType.Centered, palette: 0, message);
+            }
+        }
+
         private void DrawMeter(float x, float y, int baseAmount, int curAmount, int palette,
             HudMeter meter, bool drawText, bool drawTanks)
         {
@@ -594,7 +670,7 @@ namespace MphRead.Entities
                 if (meter.MessageId > 0)
                 {
                     string message = Strings.GetHudMessage(meter.MessageId);
-                    DrawText2D(x + meter.TextOffsetX, y + meter.TextOffsetY, type: 0, _healthbarPalette, message);
+                    DrawText2D(x + meter.TextOffsetX, y + meter.TextOffsetY, TextType.LeftAlign, _healthbarPalette, message);
                 }
                 if (drawTanks && meter.TankCount > 0)
                 {

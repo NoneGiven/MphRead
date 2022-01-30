@@ -1284,7 +1284,7 @@ namespace MphRead.Entities
                                 _boostDamage = (ushort)(Values.AltAttackDamage * _boostCharge / (Values.BoostChargeMax * 2)); // todo: FPS stuff
                                 if (IsMainPlayer)
                                 {
-                                    // todo: update HUD
+                                    _boostInst.SetAnimation(start: 0, target: 10, frames: 11, afterAnim: 0);
                                 }
                                 if (_boostEffect != null)
                                 {
