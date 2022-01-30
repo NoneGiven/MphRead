@@ -3057,7 +3057,7 @@ namespace MphRead
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
-        public void DrawHudObject(HudObjectInstance inst, bool byHeight = false)
+        public void DrawHudObject(HudObjectInstance inst, int mode = 0)
         {
             if (!inst.Enabled)
             {
@@ -3080,13 +3080,18 @@ namespace MphRead
                 TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
             float viewWidth = Size.X;
             float viewHeight = Size.Y;
-            if (byHeight)
+            if (mode == 2)
+            {
+                width = width / 256 * viewWidth;
+                height = height / 192 * viewHeight;
+            }
+            else if (mode == 1)
             {
                 float aspect = height / width;
                 height = height / 192 * viewHeight;
                 width = height / aspect;
             }
-            else
+            else // if (mode == 0)
             {
                 float aspect = width / height;
                 width = width / 256 * viewWidth;

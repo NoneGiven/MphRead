@@ -524,8 +524,8 @@ namespace MphRead.Entities
             {
                 for (int i = 0; i < 6; i++)
                 {
-                    _scene.DrawHudObject(_selectBoxInsts[i], byHeight: true);
-                    _scene.DrawHudObject(_weaponSelectInsts[i], byHeight: true);
+                    _scene.DrawHudObject(_selectBoxInsts[i], mode: 1);
+                    _scene.DrawHudObject(_weaponSelectInsts[i], mode: 1);
                 }
             }
             else
@@ -607,7 +607,7 @@ namespace MphRead.Entities
                     _bombInst.SetIndex(_bombAmmo < i ? 1 : 0, _scene);
                     _bombInst.PositionX = (posX - _bombInst.Width / 2) / 256f;
                     _bombInst.PositionY = posY / 192f;
-                    _scene.DrawHudObject(_bombInst);
+                    _scene.DrawHudObject(_bombInst, mode: 2);
                     posX -= 14;
                 }
                 string message = Strings.GetHudMessage(1); // bombs
@@ -625,7 +625,7 @@ namespace MphRead.Entities
                 }
                 _boostInst.PositionX = (29 - _boostInst.Width / 2) / 256f;
                 _boostInst.PositionY = (posY - 16) / 192f;
-                _scene.DrawHudObject(_boostInst);
+                _scene.DrawHudObject(_boostInst, mode: 2);
                 string message = Strings.GetHudMessage(2); // boost
                 DrawText2D(29, posY + 18, TextType.Centered, palette: 0, message);
             }
@@ -700,7 +700,7 @@ namespace MphRead.Entities
                 meter.BarInst.PositionX = x / 256f;
                 meter.BarInst.PositionY = y / 192f;
                 meter.BarInst.SetData(charFrame, palIndex: palette, _scene);
-                _scene.DrawHudObject(meter.BarInst);
+                _scene.DrawHudObject(meter.BarInst, mode: 2);
                 if (meter.Horizontal)
                 {
                     x += 8;
@@ -761,7 +761,7 @@ namespace MphRead.Entities
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
                             _textInst.SetData(index, palette, _scene);
-                            _scene.DrawHudObject(_textInst);
+                            _scene.DrawHudObject(_textInst, mode: 2);
                         }
                         x += Font.Widths[index];
                     }
