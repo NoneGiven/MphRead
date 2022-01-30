@@ -13,18 +13,12 @@ namespace MphRead.Entities
         private HudObject _targetCircleObj = null!;
         private HudObject _sniperCircleObj = null!;
         private HudObjectInstance _targetCircleInst = null!;
-        private HudObject _weaponSelectObj = null!;
-        private HudObject _selectBoxObj = null!;
         private readonly HudObjectInstance[] _weaponSelectInsts = new HudObjectInstance[6];
         private readonly HudObjectInstance[] _selectBoxInsts = new HudObjectInstance[6];
         private HudObjectInstance _textInst = null!;
 
-        private HudObject _healthbarMain = null!;
-        private HudObject _healthbarSub = null!;
-        private HudObject? _healthbarTank = null;
         private HudMeter _healthbarMainMeter = null!;
         private HudMeter _healthbarSubMeter = null!;
-        private HudObject _ammoBar = null!;
         private HudMeter _ammoBarMeter = null!;
 
         private ModelInstance _damageIndicator = null!;
@@ -61,8 +55,8 @@ namespace MphRead.Entities
             _targetCircleInst.SetCharacterData(_targetCircleObj.CharacterData, _scene);
             _targetCircleInst.SetPaletteData(_targetCircleObj.PaletteData, _scene);
             _targetCircleInst.Center = true;
-            _weaponSelectObj = HudInfo.GetHudObject(_hudObjects.WeaponSelect);
-            _selectBoxObj = HudInfo.GetHudObject(_hudObjects.SelectBox);
+            HudObject weaponSelectObj = HudInfo.GetHudObject(_hudObjects.WeaponSelect);
+            HudObject selectBoxObj = HudInfo.GetHudObject(_hudObjects.SelectBox);
             // todo: left-handed mode
             var positions = new Vector2[6]
             {
@@ -76,13 +70,13 @@ namespace MphRead.Entities
             HudObject iconInst = HudInfo.GetHudObject(_hudObjects.SelectIcon);
             for (int i = 0; i < 6; i++)
             {
-                var weaponInst = new HudObjectInstance(_weaponSelectObj.Width, _weaponSelectObj.Height);
+                var weaponInst = new HudObjectInstance(weaponSelectObj.Width, weaponSelectObj.Height);
                 int frame = i == 0 ? 1 : i + 2;
-                weaponInst.SetCharacterData(_weaponSelectObj.CharacterData, frame, _scene);
-                weaponInst.SetPaletteData(_weaponSelectObj.PaletteData, _scene);
+                weaponInst.SetCharacterData(weaponSelectObj.CharacterData, frame, _scene);
+                weaponInst.SetPaletteData(weaponSelectObj.PaletteData, _scene);
                 weaponInst.Alpha = 0.722f;
-                var boxInst = new HudObjectInstance(_selectBoxObj.Width, _selectBoxObj.Height);
-                boxInst.SetCharacterData(_selectBoxObj.CharacterData, _scene);
+                var boxInst = new HudObjectInstance(selectBoxObj.Width, selectBoxObj.Height);
+                boxInst.SetCharacterData(selectBoxObj.CharacterData, _scene);
                 boxInst.SetPaletteData(iconInst.PaletteData, _scene);
                 boxInst.Enabled = true;
                 Vector2 position = positions[i];
@@ -93,44 +87,44 @@ namespace MphRead.Entities
                 _weaponSelectInsts[i] = weaponInst;
                 _selectBoxInsts[i] = boxInst;
             }
-            _healthbarMain = HudInfo.GetHudObject(_hudObjects.HealthBarA);
-            _healthbarSub = HudInfo.GetHudObject(_hudObjects.HealthBarB);
+            HudObject healthbarMain = HudInfo.GetHudObject(_hudObjects.HealthBarA);
+            HudObject healthbarSub = HudInfo.GetHudObject(_hudObjects.HealthBarB);
             _healthbarMainMeter = HudElements.MainHealthbars[(int)Hunter];
             _healthbarSubMeter = HudElements.SubHealthbars[(int)Hunter];
-            _healthbarMainMeter.BarInst = new HudObjectInstance(_healthbarMain.Width, _healthbarMain.Height);
-            _healthbarMainMeter.BarInst.SetCharacterData(_healthbarMain.CharacterData, _scene);
-            _healthbarMainMeter.BarInst.SetPaletteData(_healthbarMain.PaletteData, _scene);
+            _healthbarMainMeter.BarInst = new HudObjectInstance(healthbarMain.Width, healthbarMain.Height);
+            _healthbarMainMeter.BarInst.SetCharacterData(healthbarMain.CharacterData, _scene);
+            _healthbarMainMeter.BarInst.SetPaletteData(healthbarMain.PaletteData, _scene);
             _healthbarMainMeter.BarInst.Enabled = true;
-            _healthbarSubMeter.BarInst = new HudObjectInstance(_healthbarSub.Width, _healthbarSub.Height);
-            _healthbarSubMeter.BarInst.SetCharacterData(_healthbarSub.CharacterData, _scene);
-            _healthbarSubMeter.BarInst.SetPaletteData(_healthbarSub.PaletteData, _scene);
+            _healthbarSubMeter.BarInst = new HudObjectInstance(healthbarSub.Width, healthbarSub.Height);
+            _healthbarSubMeter.BarInst.SetCharacterData(healthbarSub.CharacterData, _scene);
+            _healthbarSubMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
             _healthbarSubMeter.BarInst.Enabled = true;
             // todo: MP1P/other hunters
             if (!_scene.Multiplayer && _hudObjects.EnergyTanks != null)
             {
-                _healthbarTank = HudInfo.GetHudObject(_hudObjects.EnergyTanks);
-                _healthbarMainMeter.TankInst = new HudObjectInstance(_healthbarTank.Width, _healthbarTank.Height);
-                _healthbarMainMeter.TankInst.SetCharacterData(_healthbarTank.CharacterData, _scene);
+                HudObject healthbarTank = HudInfo.GetHudObject(_hudObjects.EnergyTanks);
+                _healthbarMainMeter.TankInst = new HudObjectInstance(healthbarTank.Width, healthbarTank.Height);
+                _healthbarMainMeter.TankInst.SetCharacterData(healthbarTank.CharacterData, _scene);
                 if (Hunter == Hunter.Samus || Hunter == Hunter.Guardian)
                 {
-                    _healthbarMainMeter.TankInst.SetPaletteData(_healthbarTank.PaletteData, _scene);
+                    _healthbarMainMeter.TankInst.SetPaletteData(healthbarTank.PaletteData, _scene);
                 }
                 else
                 {
-                    _healthbarMainMeter.TankInst.SetPaletteData(_healthbarMain.PaletteData, _scene);
+                    _healthbarMainMeter.TankInst.SetPaletteData(healthbarMain.PaletteData, _scene);
                 }
                 _healthbarMainMeter.TankInst.Enabled = true;
             }
             _healthbarYOffset = _hudObjects.HealthOffsetY;
-            _ammoBar = HudInfo.GetHudObject(_hudObjects.AmmoBar);
+            HudObject ammoBar = HudInfo.GetHudObject(_hudObjects.AmmoBar);
             _ammoBarMeter = HudElements.AmmoBars[(int)Hunter];
-            _ammoBarMeter.BarInst = new HudObjectInstance(_ammoBar.Width, _ammoBar.Height);
-            _ammoBarMeter.BarInst.SetCharacterData(_ammoBar.CharacterData, _scene);
-            _ammoBarMeter.BarInst.SetPaletteData(_ammoBar.PaletteData, _scene);
+            _ammoBarMeter.BarInst = new HudObjectInstance(ammoBar.Width, ammoBar.Height);
+            _ammoBarMeter.BarInst.SetCharacterData(ammoBar.CharacterData, _scene);
+            _ammoBarMeter.BarInst.SetPaletteData(ammoBar.PaletteData, _scene);
             _ammoBarMeter.BarInst.Enabled = true;
             _textInst = new HudObjectInstance(width: 8, height: 8); // todo: max is 16x16
             _textInst.SetCharacterData(Font.CharacterData, _scene);
-            _textInst.SetPaletteData(_healthbarMain.PaletteData, _scene);
+            _textInst.SetPaletteData(healthbarMain.PaletteData, _scene);
             _textInst.Enabled = true;
         }
 
