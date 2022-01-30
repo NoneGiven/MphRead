@@ -681,7 +681,7 @@ namespace MphRead.Entities
                     {
                         meter.TankInst.PositionX = tankX / 256f;
                         meter.TankInst.PositionY = tankY / 192f;
-                        meter.TankInst.SetData(i < filledTanks ? 0 : 1, palIndex: palette, _scene);
+                        meter.TankInst.SetData(charFrame: i < filledTanks ? 0 : 1, palette, _scene);
                         _scene.DrawHudObject(meter.TankInst);
                         if (meter.Horizontal)
                         {
@@ -699,7 +699,7 @@ namespace MphRead.Entities
             {
                 meter.BarInst.PositionX = x / 256f;
                 meter.BarInst.PositionY = y / 192f;
-                meter.BarInst.SetData(charFrame, palIndex: palette, _scene);
+                meter.BarInst.SetData(charFrame, palette, _scene);
                 _scene.DrawHudObject(meter.BarInst, mode: 2);
                 if (meter.Horizontal)
                 {
