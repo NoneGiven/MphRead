@@ -117,7 +117,7 @@ namespace MphRead
         private static void ShowMenuPrompts()
         {
             int prompt = 0;
-            int selection = 7;
+            int selection = 9;
             int roomId = 95;
             string room = "Combat Hall";
             string roomKey = "MP3 PROVING GROUND";
@@ -159,6 +159,22 @@ namespace MphRead
             var models = new List<(string Name, string Recolor)>();
             var mphVersions = new List<string>() { "A76E0", "AMHE0", "AMHE1", "AMHP0", "AMHP1", "AMHJ0", "AMHJ1", "AMHK0" };
             var fhVersions = new List<string>() { "AMFE0", "AMFP0" };
+            var mphInfo = new Dictionary<string, string>()
+            {
+                { "A76E0", "Kiosk demo" },
+                { "AMHE0", "USA rev 0" },
+                { "AMHE1", "USA rev 1" },
+                { "AMHP0", "EUR rev 0" },
+                { "AMHP1", "EUR rev 1" },
+                { "AMHJ0", "JPN rev 0" },
+                { "AMHJ1", "JPN rev 1" },
+                { "AMHK0", "KOR rev 0" }
+            };
+            var fhInfo = new Dictionary<string, string>()
+            {
+                { "AMFE0", "USA rev 0" },
+                { "AMFP0", "EUR rev 0" }
+            };
 
             string PrintPlayer(int index)
             {
@@ -181,6 +197,8 @@ namespace MphRead
 
             while (true)
             {
+                string mphKey = Paths.MphKey;
+                string fhKey = Paths.FhKey;
                 Console.Clear();
                 Console.WriteLine($"MphRead Version {Version}");
                 Console.WriteLine();
@@ -195,9 +213,9 @@ namespace MphRead
                 Console.WriteLine($"[{(selection == 4 ? "x" : " ")}] Player 3: {PrintPlayer(2)}");
                 Console.WriteLine($"[{(selection == 5 ? "x" : " ")}] Player 4: {PrintPlayer(3)}");
                 Console.WriteLine($"[{(selection == 6 ? "x" : " ")}] Models: {PrintModels()}");
-                Console.WriteLine($"[{(selection == 7 ? "x" : " ")}] Launch");
-                Console.WriteLine($"[{(selection == 8 ? "x" : " ")}] MPH Version: {Paths.MphKey}");
-                Console.WriteLine($"[{(selection == 9 ? "x" : " ")}] FH Version: {Paths.FhKey}");
+                Console.WriteLine($"[{(selection == 7 ? "x" : " ")}] MPH Version: {mphKey} ({mphInfo[mphKey]})");
+                Console.WriteLine($"[{(selection == 8 ? "x" : " ")}] FH Version: {fhKey} ({fhInfo[fhKey]})");
+                Console.WriteLine($"[{(selection == 9 ? "x" : " ")}] Launch");
                 if (prompt == 0)
                 {
                     ConsoleKeyInfo keyInfo = Console.ReadKey();
@@ -208,7 +226,7 @@ namespace MphRead
                     if (keyInfo.Key == ConsoleKey.Enter)
                     {
                         if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Shift)
-                            || keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control) || selection == 7)
+                            || keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control) || selection == 9)
                         {
                             Console.Clear();
                             Console.WriteLine($"MphRead Version {Version}");
@@ -254,11 +272,11 @@ namespace MphRead
                         {
                             models.Clear();
                         }
-                        else if (selection == 8)
+                        else if (selection == 7)
                         {
                             Paths.ChooseMphPath();
                         }
-                        else if (selection == 9)
+                        else if (selection == 8)
                         {
                             Paths.ChooseFhPath();
                         }
@@ -332,7 +350,7 @@ namespace MphRead
                                 models[0] = (model, models[0].Recolor);
                             }
                         }
-                        else if (selection == 8)
+                        else if (selection == 7)
                         {
                             string current = Paths.MphKey;
                             string next = Paths.MphKey;
@@ -353,7 +371,7 @@ namespace MphRead
                             while (current != next);
                             Paths.MphKey = current;
                         }
-                        else if (selection == 9)
+                        else if (selection == 8)
                         {
                             string current = Paths.FhKey;
                             string next = Paths.FhKey;
@@ -447,7 +465,7 @@ namespace MphRead
                                 models[0] = (model, models[0].Recolor);
                             }
                         }
-                        else if (selection == 8)
+                        else if (selection == 7)
                         {
                             string current = Paths.MphKey;
                             string next = Paths.MphKey;
@@ -468,7 +486,7 @@ namespace MphRead
                             while (current != next);
                             Paths.MphKey = current;
                         }
-                        else if (selection == 9)
+                        else if (selection == 8)
                         {
                             string current = Paths.FhKey;
                             string next = Paths.FhKey;
