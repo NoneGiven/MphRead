@@ -26,8 +26,13 @@ namespace MphRead.Text
             int offset = name == StringTables.ScanLog ? 8 : 4;
             foreach (RawStringTableEntry entry in Read.DoOffsets<RawStringTableEntry>(bytes, offset, count))
             {
-                string value = Read.ReadString(bytes, entry.Offset, entry.Length);
-                entries.Add(new StringTableEntry(entry, value));
+                // A76E has invalid offsets on some entries
+                // todo?: are those not supposed to be parsed? (e.g. boost)
+                if (entry.Offset < bytes.Length)
+                {
+                    string value = Read.ReadString(bytes, entry.Offset, entry.Length);
+                    entries.Add(new StringTableEntry(entry, value));
+                }
             }
             _cache.Add(name, entries);
             return entries;
