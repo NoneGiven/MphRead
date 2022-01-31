@@ -277,10 +277,15 @@ namespace MphRead
                 scene.LoadEffect(Metadata.ChargeLoopEffectIds[i]);
             }
             PlayerEntity.GeneratePlayerVolumes();
-            // todo: use game mode etc.
-            Strings.ReadStringTable(StringTables.HudMsgsCommon);
-            Strings.ReadStringTable(StringTables.HudMessagesSP);
-            Strings.ReadStringTable(StringTables.HudMessagesMP);
+            // todo: use game mode, region, etc.
+            Language language = Language.English;
+            if (Paths.MphKey == "AMHK0")
+            {
+                language = Language.Japanese;
+            }
+            Strings.ReadStringTable(StringTables.HudMsgsCommon, language);
+            Strings.ReadStringTable(StringTables.HudMessagesSP, language);
+            Strings.ReadStringTable(StringTables.HudMessagesMP, language);
         }
 
         public static void LoadHunterResources(Hunter hunter, Scene scene)
