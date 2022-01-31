@@ -63,20 +63,29 @@ namespace MphRead
             string rootName = $"{header.GameCode.MarshalString()}{header.Version}";
             ExtractRomFs(header, bytes, rootName, hasArchives: !isFh);
             ExtractRomData(rootName);
+            string newPath;
             if (isFh)
             {
-                File.WriteAllText("paths.txt", String.Join(Environment.NewLine,
-                    Paths.FileSystem,
-                    Path.GetFullPath(Path.Combine("files", rootName, "data")),
-                    Paths.Export));
+                newPath = Path.GetFullPath(Path.Combine("files", rootName, "data"));
             }
             else
             {
-                File.WriteAllText("paths.txt", String.Join(Environment.NewLine,
-                    Path.GetFullPath(Path.Combine("files", rootName)),
-                    Paths.FhFileSystem,
-                    Paths.Export));
+                newPath = Path.GetFullPath(Path.Combine("files", rootName));
             }
+            Paths.SetPath(rootName, newPath);
+            var lines = new List<string>();
+            lines.Add($"AMFE0={Paths.AllPaths["AMFE0"]}");
+            lines.Add($"AMFP0={Paths.AllPaths["AMFP0"]}");
+            lines.Add($"A76E0={Paths.AllPaths["A76E0"]}");
+            lines.Add($"AMHE0={Paths.AllPaths["AMHE0"]}");
+            lines.Add($"AMHE1={Paths.AllPaths["AMHE1"]}");
+            lines.Add($"AMHP0={Paths.AllPaths["AMHP0"]}");
+            lines.Add($"AMHP1={Paths.AllPaths["AMHP1"]}");
+            lines.Add($"AMHJ0={Paths.AllPaths["AMHJ0"]}");
+            lines.Add($"AMHJ1={Paths.AllPaths["AMHJ1"]}");
+            lines.Add($"AMHK0={Paths.AllPaths["AMHK0"]}");
+            lines.Add($"Export={Paths.AllPaths["Export"]}");
+            File.WriteAllText("paths.txt", String.Join(Environment.NewLine, lines));
             Nop();
         }
 

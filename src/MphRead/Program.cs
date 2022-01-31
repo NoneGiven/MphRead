@@ -24,7 +24,6 @@ namespace MphRead
             {
                 if (Debugger.IsAttached)
                 {
-                    // sktodo: set game codes
                     using var renderer = new RenderWindow();
                     renderer.AddRoom("MP3 PROVING GROUND");
                     //renderer.AddModel("Crate01");
@@ -158,6 +157,8 @@ namespace MphRead
                 "Bounty", "Bounty Teams", "Nodes", "Nodes Teams", "Defender", "Defender Teams", "Prime Hunter"
             };
             var models = new List<(string Name, string Recolor)>();
+            var mphVersions = new List<string>() { "A76E0", "AMHE0", "AMHE1", "AMHP0", "AMHP1", "AMHJ0", "AMHJ1", "AMHK0" };
+            var fhVersions = new List<string>() { "AMFE0", "AMFP0" };
 
             string PrintPlayer(int index)
             {
@@ -195,6 +196,8 @@ namespace MphRead
                 Console.WriteLine($"[{(selection == 5 ? "x" : " ")}] Player 4: {PrintPlayer(3)}");
                 Console.WriteLine($"[{(selection == 6 ? "x" : " ")}] Models: {PrintModels()}");
                 Console.WriteLine($"[{(selection == 7 ? "x" : " ")}] Launch");
+                Console.WriteLine($"[{(selection == 8 ? "x" : " ")}] MPH Version: {Paths.MphKey}");
+                Console.WriteLine($"[{(selection == 9 ? "x" : " ")}] FH Version: {Paths.FhKey}");
                 if (prompt == 0)
                 {
                     ConsoleKeyInfo keyInfo = Console.ReadKey();
@@ -220,13 +223,13 @@ namespace MphRead
                         selection--;
                         if (selection < 0)
                         {
-                            selection = 7;
+                            selection = 9;
                         }
                     }
                     else if (keyInfo.Key == ConsoleKey.DownArrow || keyInfo.Key == ConsoleKey.S)
                     {
                         selection++;
-                        if (selection > 7)
+                        if (selection > 9)
                         {
                             selection = 0;
                         }
@@ -250,6 +253,14 @@ namespace MphRead
                         else if (selection == 6)
                         {
                             models.Clear();
+                        }
+                        else if (selection == 8)
+                        {
+                            Paths.ChooseMphPath();
+                        }
+                        else if (selection == 9)
+                        {
+                            Paths.ChooseFhPath();
                         }
                     }
                     else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
@@ -320,6 +331,48 @@ namespace MphRead
                                 model = Metadata.ModelMetadata[Metadata.ModelMetadata.Keys.ElementAt(index)].Name;
                                 models[0] = (model, models[0].Recolor);
                             }
+                        }
+                        else if (selection == 8)
+                        {
+                            string current = Paths.MphKey;
+                            string next = Paths.MphKey;
+                            do
+                            {
+                                int index = mphVersions.IndexOf(next);
+                                index++;
+                                if (index >= mphVersions.Count)
+                                {
+                                    index = 0;
+                                }
+                                next = mphVersions[index];
+                                if (Paths.AllPaths[next] != "")
+                                {
+                                    current = next;
+                                }
+                            }
+                            while (current != next);
+                            Paths.MphKey = current;
+                        }
+                        else if (selection == 9)
+                        {
+                            string current = Paths.FhKey;
+                            string next = Paths.FhKey;
+                            do
+                            {
+                                int index = fhVersions.IndexOf(next);
+                                index++;
+                                if (index >= fhVersions.Count)
+                                {
+                                    index = 0;
+                                }
+                                next = fhVersions[index];
+                                if (Paths.AllPaths[next] != "")
+                                {
+                                    current = next;
+                                }
+                            }
+                            while (current != next);
+                            Paths.FhKey = current;
                         }
                     }
                     else if (keyInfo.Key == ConsoleKey.Subtract || keyInfo.Key == ConsoleKey.OemMinus
@@ -393,6 +446,48 @@ namespace MphRead
                                 model = Metadata.ModelMetadata[Metadata.ModelMetadata.Keys.ElementAt(index)].Name;
                                 models[0] = (model, models[0].Recolor);
                             }
+                        }
+                        else if (selection == 8)
+                        {
+                            string current = Paths.MphKey;
+                            string next = Paths.MphKey;
+                            do
+                            {
+                                int index = mphVersions.IndexOf(next);
+                                index--;
+                                if (index < 0)
+                                {
+                                    index = mphVersions.Count - 1;
+                                }
+                                next = mphVersions[index];
+                                if (Paths.AllPaths[next] != "")
+                                {
+                                    current = next;
+                                }
+                            }
+                            while (current != next);
+                            Paths.MphKey = current;
+                        }
+                        else if (selection == 9)
+                        {
+                            string current = Paths.FhKey;
+                            string next = Paths.FhKey;
+                            do
+                            {
+                                int index = fhVersions.IndexOf(next);
+                                index--;
+                                if (index < 0)
+                                {
+                                    index = fhVersions.Count - 1;
+                                }
+                                next = fhVersions[index];
+                                if (Paths.AllPaths[next] != "")
+                                {
+                                    current = next;
+                                }
+                            }
+                            while (current != next);
+                            Paths.FhKey = current;
                         }
                     }
                 }
@@ -517,6 +612,36 @@ namespace MphRead
                         }
                         prompt = 0;
                     }
+                    else if (prompt == 9)
+                    {
+                        Console.WriteLine("Enter MPH version.");
+                        Console.WriteLine("Examples: AMHE0, AMHP1, A76E0");
+                        string? input = Console.ReadLine();
+                        if (!String.IsNullOrWhiteSpace(input))
+                        {
+                            input = input.Trim().ToUpper();
+                            if (mphVersions.Contains(input) && Paths.AllPaths[input] != "")
+                            {
+                                Paths.MphKey = input;
+                            }
+                        }
+                        prompt = 0;
+                    }
+                    else if (prompt == 10)
+                    {
+                        Console.WriteLine("Enter FH version.");
+                        Console.WriteLine("Examples: AMFE0, AMFP0");
+                        string? input = Console.ReadLine();
+                        if (!String.IsNullOrWhiteSpace(input))
+                        {
+                            input = input.Trim().ToUpper();
+                            if (fhVersions.Contains(input) && Paths.AllPaths[input] != "")
+                            {
+                                Paths.FhKey = input;
+                            }
+                        }
+                        prompt = 0;
+                    }
                 }
             }
             using var renderer = new RenderWindow();
@@ -571,6 +696,9 @@ namespace MphRead
                 Console.WriteLine("Could not find the paths.txt file.");
                 return true;
             }
+            Paths.UpdatePaths();
+            Paths.ChooseMphPath();
+            Paths.ChooseFhPath();
             return false;
         }
 

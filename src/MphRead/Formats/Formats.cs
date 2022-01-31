@@ -1377,25 +1377,46 @@ namespace MphRead
         public static string MphKey { get; set; } = "AMHE0";
         public static string FhKey { get; set; } = "AMFE0";
 
-        public static string FileSystem => AllPaths.Value[MphKey];
-        public static string FhFileSystem => AllPaths.Value[FhKey];
-        public static string Export => AllPaths.Value["Export"];
+        public static string FileSystem => AllPaths[MphKey];
+        public static string FhFileSystem => AllPaths[FhKey];
+        public static string Export => AllPaths["Export"];
 
-        public static readonly Lazy<IReadOnlyDictionary<string, string>> AllPaths
-            = new Lazy<IReadOnlyDictionary<string, string>>(() =>
+        private static readonly Dictionary<string, string> _allPaths = new Dictionary<string, string>();
+        public static IReadOnlyDictionary<string, string> AllPaths
         {
-            var results = new Dictionary<string, string>();
-            results.Add("AMFE0", "");
-            results.Add("AMFP0", "");
-            results.Add("A76E0", "");
-            results.Add("AMHE0", "");
-            results.Add("AMHE1", "");
-            results.Add("AMHJ0", "");
-            results.Add("AMHJ1", "");
-            results.Add("AMHP0", "");
-            results.Add("AMHP1", "");
-            results.Add("AMHK0", "");
-            results.Add("Export", "");
+            get
+            {
+                if (_allPaths.Count == 0)
+                {
+                    UpdatePaths();
+                }
+                return _allPaths;
+            }
+        }
+
+        public static void SetPath(string key, string path)
+        {
+            if (_allPaths.Count == 0)
+            {
+                UpdatePaths();
+            }
+            _allPaths[key] = path;
+        }
+
+        public static void UpdatePaths()
+        {
+            _allPaths.Clear();
+            _allPaths.Add("AMFE0", "");
+            _allPaths.Add("AMFP0", "");
+            _allPaths.Add("A76E0", "");
+            _allPaths.Add("AMHE0", "");
+            _allPaths.Add("AMHE1", "");
+            _allPaths.Add("AMHJ0", "");
+            _allPaths.Add("AMHJ1", "");
+            _allPaths.Add("AMHP0", "");
+            _allPaths.Add("AMHP1", "");
+            _allPaths.Add("AMHK0", "");
+            _allPaths.Add("Export", "");
             if (File.Exists("paths.txt"))
             {
                 string[] lines = File.ReadAllLines("paths.txt");
@@ -1403,14 +1424,81 @@ namespace MphRead
                 {
                     string[] split = line.Trim().Split('=');
                     string key = split[0].Trim();
-                    if (split.Length == 2 && results.ContainsKey(key))
+                    if (split.Length == 2 && _allPaths.ContainsKey(key))
                     {
-                        results[key] = split[1].Trim();
+                        _allPaths[key] = split[1].Trim();
                     }
                 }
             }
-            return results;
-        });
+        }
+
+        public static void ChooseMphPath()
+        {
+            static bool ChooseMphPath(string key)
+            {
+                if (_allPaths[key] != "")
+                {
+                    MphKey = key;
+                    return true;
+                }
+                return false;
+            }
+            if (ChooseMphPath("AMHE1"))
+            {
+                return;
+            }
+            if (ChooseMphPath("AMHP1"))
+            {
+                return;
+            }
+            if (ChooseMphPath("AMHJ1"))
+            {
+                return;
+            }
+            if (ChooseMphPath("AMHK0"))
+            {
+                return;
+            }
+            if (ChooseMphPath("AMHE0"))
+            {
+                return;
+            }
+            if (ChooseMphPath("AMHP0"))
+            {
+                return;
+            }
+            if (ChooseMphPath("AMHJ0"))
+            {
+                return;
+            }
+            if (ChooseMphPath("A76E0"))
+            {
+                return;
+            }
+            MphKey = "AMHE0";
+        }
+
+        public static void ChooseFhPath()
+        {
+            static bool ChooseFhPath(string key)
+            {
+                if (_allPaths[key] != "")
+                {
+                    FhKey = key;
+                    return true;
+                }
+                return false;
+            }
+            if (ChooseFhPath("AMFE0"))
+            {
+                return;
+            }
+            if (ChooseFhPath("AMFP0"))
+            {
+                return;
+            }
+            FhKey = "AMFE0";
+        }
     }
 
     public static class CollectionExtensions
