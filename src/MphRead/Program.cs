@@ -630,7 +630,7 @@ namespace MphRead
                         }
                         prompt = 0;
                     }
-                    else if (prompt == 9)
+                    else if (prompt == 8)
                     {
                         Console.WriteLine("Enter MPH version.");
                         Console.WriteLine("Examples: AMHE0, AMHP1, A76E0");
@@ -645,7 +645,7 @@ namespace MphRead
                         }
                         prompt = 0;
                     }
-                    else if (prompt == 10)
+                    else if (prompt == 9)
                     {
                         Console.WriteLine("Enter FH version.");
                         Console.WriteLine("Examples: AMFE0, AMFP0");
