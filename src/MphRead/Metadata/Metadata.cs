@@ -2047,6 +2047,10 @@ namespace MphRead
                     new ModelMetadata("filter", animation: false, archive: "common")
                 },
                 {
+                    "hudfont",
+                    new ModelMetadata("hudfont", animation: false)
+                },
+                {
                     "flagbase_bounty",
                     new ModelMetadata("flagbase_bounty")
                 },

@@ -1374,22 +1374,42 @@ namespace MphRead
 
     public static class Paths
     {
-        public static string FileSystem => _paths.Value.FileSystem;
-        public static string FhFileSystem => _paths.Value.FhFileSystem;
-        public static string Export => _paths.Value.Export;
+        public static string MphKey { get; set; } = "AMHE0";
+        public static string FhKey { get; set; } = "AMFE0";
 
-        private static readonly Lazy<(string FileSystem, string FhFileSystem, string Export)> _paths
-            = new Lazy<(string, string, string)>(() =>
+        public static string FileSystem => AllPaths.Value[MphKey];
+        public static string FhFileSystem => AllPaths.Value[FhKey];
+        public static string Export => AllPaths.Value["Export"];
+
+        public static readonly Lazy<IReadOnlyDictionary<string, string>> AllPaths
+            = new Lazy<IReadOnlyDictionary<string, string>>(() =>
         {
+            var results = new Dictionary<string, string>();
+            results.Add("AMFE0", "");
+            results.Add("AMFP0", "");
+            results.Add("A76E0", "");
+            results.Add("AMHE0", "");
+            results.Add("AMHE1", "");
+            results.Add("AMHJ0", "");
+            results.Add("AMHJ1", "");
+            results.Add("AMHP0", "");
+            results.Add("AMHP1", "");
+            results.Add("AMHK0", "");
+            results.Add("Export", "");
             if (File.Exists("paths.txt"))
             {
                 string[] lines = File.ReadAllLines("paths.txt");
-                return (
-                    lines.Length > 0 ? lines[0] : "",
-                    lines.Length > 1 ? lines[1] : "",
-                    lines.Length > 2 ? lines[2] : "");
+                foreach (string line in lines)
+                {
+                    string[] split = line.Trim().Split('=');
+                    string key = split[0].Trim();
+                    if (split.Length == 2 && results.ContainsKey(key))
+                    {
+                        results[key] = split[1].Trim();
+                    }
+                }
             }
-            return ("", "", "");
+            return results;
         });
     }
 

@@ -1201,7 +1201,7 @@ namespace MphRead
                     Console.Write(" Extracting archive...");
                     filesWritten = Archiver.Extract(path, output);
                 }
-                else if (bytes[0] == Lz.MagicByte)
+                else if (bytes[0] == LZ10.MagicByte)
                 {
                     string temp = Path.Combine(Paths.Export, "__temp");
                     try
@@ -1212,7 +1212,7 @@ namespace MphRead
                     Directory.CreateDirectory(temp);
                     string destination = Path.Combine(temp, $"{name}.arc");
                     Console.Write(" Decompressing...");
-                    Lz.Decompress(path, destination);
+                    LZ10.Decompress(path, destination);
                     Console.Write(" Extracting archive...");
                     filesWritten = Archiver.Extract(destination, output);
                     Directory.Delete(temp, recursive: true);

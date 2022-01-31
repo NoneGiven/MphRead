@@ -10,6 +10,7 @@ namespace MphRead
     internal static class Program
     {
         public static Version Version { get; } = new Version(0, 18, 2, 0);
+        private static readonly Version _minExtractVersion = new Version(0, 18, 2, 0);
 
         private static void Main(string[] args)
         {
@@ -23,6 +24,7 @@ namespace MphRead
             {
                 if (Debugger.IsAttached)
                 {
+                    // sktodo: set game codes
                     using var renderer = new RenderWindow();
                     renderer.AddRoom("MP3 PROVING GROUND");
                     //renderer.AddModel("Crate01");
@@ -552,6 +554,13 @@ namespace MphRead
 
         private static bool CheckSetup(string[] args)
         {
+            if (File.Exists("paths.txt") && !CheckVersion())
+            {
+                Console.WriteLine("Your paths.txt file is not compatible with this version of MphRead and needs to be recreated.");
+                Console.WriteLine("It is recommended that you delete the file as well as any extracted game files, " +
+                    "then perform setup again.");
+                return true;
+            }
             if (args.Length == 1 && !args[0].StartsWith('-') && File.Exists(args[0]))
             {
                 Extract.Setup(args[0]);
@@ -559,8 +568,18 @@ namespace MphRead
             }
             if (!File.Exists("paths.txt"))
             {
-                Console.WriteLine("Could not find paths.txt file.");
+                Console.WriteLine("Could not find the paths.txt file.");
                 return true;
+            }
+            return false;
+        }
+
+        private static bool CheckVersion()
+        {
+            string text = File.ReadAllText("paths.txt").Split('\n')[0].Trim();
+            if (Version.TryParse(text, out Version? extractVersion))
+            {
+                return extractVersion >= _minExtractVersion;
             }
             return false;
         }

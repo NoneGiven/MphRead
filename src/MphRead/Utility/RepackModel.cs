@@ -1183,6 +1183,33 @@ namespace MphRead.Utility
             return (new Vector3i(minX, minY, minZ), new Vector3i(maxX, maxY, maxZ));
         }
 
+        public static (byte[], byte[]) PackModel(Model model)
+        {
+            int recolor = 0;
+            var textureInfo = new List<TextureInfo>();
+            for (int i = 0; i < model.Recolors[recolor].Textures.Count; i++)
+            {
+                Texture texture = model.Recolors[recolor].Textures[i];
+                IReadOnlyList<TextureData> data = model.Recolors[recolor].TextureData[i];
+                textureInfo.Add(ConvertData(texture, data));
+            }
+            var paletteInfo = new List<PaletteInfo>();
+            foreach (IReadOnlyList<PaletteData> data in model.Recolors[recolor].PaletteData)
+            {
+                paletteInfo.Add(new PaletteInfo(data.Select(d => d.Data).ToList()));
+            }
+            var options = new RepackOptions()
+            {
+                Compare = false,
+                ComputeBounds = ComputeBounds.None,
+                IsRoom = false,
+                Texture = RepackTexture.Inline,
+                WriteFile = false
+            };
+            return PackModel((int)model.Scale.X, model.NodeMatrixIds, model.NodePosCounts, model.Materials,
+                textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists, options);
+        }
+
         public static (byte[], byte[]) PackModel(int scale, IReadOnlyList<int> nodeMtxIds, IReadOnlyList<int> nodePosScaleCounts,
             IReadOnlyList<Material> materials, IReadOnlyList<TextureInfo> textures, IReadOnlyList<PaletteInfo> palettes,
             IReadOnlyList<Node> nodes, IReadOnlyList<Mesh> meshes, IReadOnlyList<IReadOnlyList<RenderInstruction>> renders,

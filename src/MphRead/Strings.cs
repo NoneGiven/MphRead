@@ -188,7 +188,7 @@ namespace MphRead.Text
 
     public static class Font
     {
-        // future: arrays like this should be parsed out of the overlays (version differences, etc.)
+        // sktodo: replace these
         public static IReadOnlyList<int> Widths = new int[480]
         {
             6, 2, 7, 6, 6, 8, 6, 3, 3, 3, 6, 6, 3, 6, 3, 7, 7,
