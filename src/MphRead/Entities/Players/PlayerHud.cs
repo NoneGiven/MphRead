@@ -151,6 +151,7 @@ namespace MphRead.Entities
 
         public void UpdateHud()
         {
+            ProcessHudMessageQueue();
             UpdateHealthbars();
             UpdateAmmoBar();
             _weaponIconInst.ProcessAnimation(_scene);
@@ -544,6 +545,7 @@ namespace MphRead.Entities
                 {
                     DrawHealthbars();
                 }
+                DrawQueuedHudMessages();
             }
         }
 
@@ -733,17 +735,28 @@ namespace MphRead.Entities
         private int _textSpacingY = 0;
 
         // todo: size/shape (seemingly only used by the bottom screen rank, which is 16x16/square instead of 8x8/square)
-        private Vector2 DrawText2D(float x, float y, TextType type, int palette, string text)
+        private Vector2 DrawText2D(float x, float y, TextType type, int palette, ReadOnlySpan<char> text,
+            ColorRgba? color = null, float alpha = 1)
         {
-            if (text.Length == 0)
+            int length = 0;
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '\0')
+                {
+                    break;
+                }
+                length++;
+            }
+            if (length == 0)
             {
                 return new Vector2(x, y);
             }
+            _textInst.Alpha = alpha;
             int spacingY = _textSpacingY == 0 ? 12 : _textSpacingY;
             if (type == TextType.LeftAlign)
             {
                 float startX = x;
-                for (int i = 0; i < text.Length; i++)
+                for (int i = 0; i < length; i++)
                 {
                     char ch = text[i];
                     Debug.Assert(ch < 128);
@@ -760,7 +773,14 @@ namespace MphRead.Entities
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
-                            _textInst.SetData(index, palette, _scene);
+                            if (color.HasValue)
+                            {
+                                _textInst.SetData(index, color.Value, _scene);
+                            }
+                            else
+                            {
+                                _textInst.SetData(index, palette, _scene);
+                            }
                             _scene.DrawHudObject(_textInst, mode: 2);
                         }
                         x += Font.Widths[index];
@@ -774,10 +794,10 @@ namespace MphRead.Entities
                 int end = 0;
                 do
                 {
-                    end = text.IndexOf('\n', start);
+                    end = text[start..].IndexOf('\n');
                     if (end == -1)
                     {
-                        end = text.Length;
+                        end = length;
                     }
                     x = startX;
                     for (int i = end - 1; i >= start; i--)
@@ -791,11 +811,18 @@ namespace MphRead.Entities
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
-                            _textInst.SetData(index, palette, _scene);
+                            if (color.HasValue)
+                            {
+                                _textInst.SetData(index, color.Value, _scene);
+                            }
+                            else
+                            {
+                                _textInst.SetData(index, palette, _scene);
+                            }
                             _scene.DrawHudObject(_textInst);
                         }
                     }
-                    if (end != text.Length)
+                    if (end != length)
                     {
                         do
                         {
@@ -806,7 +833,7 @@ namespace MphRead.Entities
                         while (text[start] == '\n');
                     }
                 }
-                while (end < text.Length);
+                while (end < length);
             }
             else if (type == TextType.Centered)
             {
@@ -815,10 +842,10 @@ namespace MphRead.Entities
                 int end = 0;
                 do
                 {
-                    end = text.IndexOf('\n', start);
+                    end = text[start..].IndexOf('\n');
                     if (end == -1)
                     {
-                        end = text.Length;
+                        end = length;
                     }
                     x = startX;
                     float width = 0;
@@ -840,12 +867,19 @@ namespace MphRead.Entities
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
-                            _textInst.SetData(index, palette, _scene);
+                            if (color.HasValue)
+                            {
+                                _textInst.SetData(index, color.Value, _scene);
+                            }
+                            else
+                            {
+                                _textInst.SetData(index, palette, _scene);
+                            }
                             _scene.DrawHudObject(_textInst);
                         }
                         x += Font.Widths[index];
                     }
-                    if (end != text.Length)
+                    if (end != length)
                     {
                         do
                         {
@@ -856,7 +890,7 @@ namespace MphRead.Entities
                         while (text[start] == '\n');
                     }
                 }
-                while (end < text.Length);
+                while (end < length);
             }
             else if (type == TextType.Type3)
             {
@@ -865,5 +899,174 @@ namespace MphRead.Entities
             }
             return new Vector2(x, y);
         }
+
+        public void QueueHudMessage(float x, float y, TextType textType, int maxWidth, float fontSize,
+            ColorRgba color, float alpha, float duration, byte category, string text)
+        {
+            Debug.Assert(text.Length < 256);
+            fontSize /= 256f;
+            char[] buffer = new char[512];
+            int lineCount = WrapText(text, maxWidth, buffer);
+            float minDuration = Single.MaxValue;
+            HudMessage? message = null;
+            for (int i = 0; i < _hudMessageQueue.Length; i++)
+            {
+                HudMessage existing = _hudMessageQueue[i];
+                if (existing.Lifetime > 0)
+                {
+                    if ((category & 14) != 0 && (existing.Category & 14) != 0)
+                    {
+                        existing.Position = existing.Position.AddY(-lineCount * fontSize);
+                    }
+                    else if (existing.Position.Y == y)
+                    {
+                        existing.Lifetime = 0;
+                    }
+                }
+                if (existing.Lifetime < minDuration)
+                {
+                    minDuration = existing.Lifetime;
+                    message = existing;
+                }
+            }
+            Debug.Assert(message != null);
+            Array.Fill(message.Text, '\0');
+            Array.Copy(buffer, message.Text, message.Text.Length);
+            if ((category & 14) != 0)
+            {
+                y -= (lineCount - 1) * fontSize;
+            }
+            message.Position = new Vector2(x, y);
+            message.MaxWidth = maxWidth;
+            message.FontSize = fontSize;
+            message.Color = color;
+            message.Alpha = alpha;
+            message.TextType = textType;
+            message.Category = category;
+            message.Lifetime = duration;
+        }
+
+        private int WrapText(string text, int maxWidth, char[] dest)
+        {
+            int lines = 1;
+            if (maxWidth <= 0)
+            {
+                return lines;
+            }
+            int lineWidth = 0;
+            int breakPos = 0;
+            int c = 0;
+            for (int i = 0; i < text.Length; i++)
+            {
+                char ch = text[i];
+                // todo: upper bit check/alt font stuff will be important for symbols (i.e. nicknames)
+                Debug.Assert(ch < 128);
+                dest[c] = ch;
+                if (ch == '\n')
+                {
+                    lineWidth = 0;
+                    breakPos = 0;
+                    lines++;
+                }
+                else
+                {
+                    if (ch == ' ')
+                    {
+                        breakPos = c;
+                    }
+                    if (ch >= ' ')
+                    {
+                        int index = ch - 32; // todo: starting character
+                        lineWidth += Font.Widths[index];
+                    }
+                    if (i < text.Length - 1 && lineWidth > maxWidth)
+                    {
+                        if (breakPos == 0 && maxWidth >= 8)
+                        {
+                            dest[c + 1] = ch;
+                            breakPos = c;
+                            c++;
+                        }
+                        if (breakPos > 0)
+                        {
+                            dest[breakPos] = '\n';
+                            breakPos = 0;
+                            lineWidth = 0;
+                            lines++;
+                        }
+                    }
+                }
+                c++;
+            }
+            return lines;
+        }
+
+        private void ProcessHudMessageQueue()
+        {
+            for (int i = 0; i < _hudMessageQueue.Length; i++)
+            {
+                HudMessage message = _hudMessageQueue[i];
+                if (message.Lifetime > 0)
+                {
+                    message.Lifetime -= _scene.FrameTime;
+                    if (message.Lifetime < 0)
+                    {
+                        message.Lifetime = 0;
+                    }
+                }
+            }
+        }
+
+        private void DrawQueuedHudMessages()
+        {
+            for (int i = 0; i < _hudMessageQueue.Length; i++)
+            {
+                HudMessage message = _hudMessageQueue[i];
+                if (message.Lifetime > 0
+                    && ((message.Category & 1) == 0 || (_scene.FrameCount & (7 * 2)) <= 3 * 2)) // todo: FPS stuff
+                {
+                    // todo: support font size
+                    DrawText2D(message.Position.X, message.Position.Y, message.TextType, palette: 0,
+                        message.Text, message.Color, message.Alpha);
+                }
+            }
+        }
+
+        private class HudMessage
+        {
+            public Vector2 Position { get; set; }
+            public float FontSize { get; set; }
+            public ColorRgba Color { get; set; }
+            public float Lifetime { get; set; }
+            public float Alpha { get; set; }
+            public byte Category { get; set; }
+            public int MaxWidth { get; set; }
+            public TextType TextType { get; set; }
+            public char[] Text { get; } = new char[256];
+        }
+
+        private static HudMessage[] _hudMessageQueue = new HudMessage[20]
+        {
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage(),
+            new HudMessage()
+        };
     }
 }

@@ -78,6 +78,7 @@ namespace MphRead.Hud
         public int PaletteIndex = -1;
         public IReadOnlyList<ColorRgba>? PaletteData;
         public IReadOnlyList<int>? AnimFrames;
+        public ColorRgba? Color;
         public readonly ColorRgba[] Texture;
         public float Alpha = 1;
         public int BindingId = -1;
@@ -148,6 +149,7 @@ namespace MphRead.Hud
 
         public void SetPaletteData(IReadOnlyList<ColorRgba> data, Scene scene)
         {
+            Color = null;
             if (PaletteData != data)
             {
                 PaletteData = data;
@@ -161,6 +163,7 @@ namespace MphRead.Hud
 
         public void SetPalette(int index, Scene scene)
         {
+            Color = null;
             int prev = PaletteIndex;
             PaletteIndex = index;
             if (CharacterData != null && index != prev)
@@ -172,6 +175,7 @@ namespace MphRead.Hud
         public void SetData(IReadOnlyList<byte> charData, int charFrame,
             IReadOnlyList<ColorRgba> palData, int palIndex, Scene scene)
         {
+            Color = null;
             Timer = 0;
             CharacterData = charData;
             CurrentFrame = charFrame;
@@ -182,12 +186,27 @@ namespace MphRead.Hud
 
         public void SetData(int charFrame, int palIndex, Scene scene)
         {
+            Color = null;
             Timer = 0;
             int prevChar = CurrentFrame;
             int prevPal = PaletteIndex;
             CurrentFrame = charFrame;
             PaletteIndex = palIndex;
             if (CharacterData != null && PaletteData != null && (charFrame != prevChar || palIndex != prevPal))
+            {
+                DoTexture(scene);
+            }
+        }
+
+        public void SetData(int charFrame, ColorRgba color, Scene scene)
+        {
+            Color = null;
+            Timer = 0;
+            int prevChar = CurrentFrame;
+            ColorRgba? prevColor = Color;
+            CurrentFrame = charFrame;
+            Color = color;
+            if (CharacterData != null && PaletteData != null && (charFrame != prevChar || prevColor != color))
             {
                 DoTexture(scene);
             }
@@ -212,7 +231,18 @@ namespace MphRead.Hud
                         {
                             byte palIndex = CharacterData[image + ty * width * 8 * 8 + tx * 8 * 8 + py * 8 + px];
                             int index = start + py * width * 8 + px;
-                            Texture[index] = palIndex == 0 ? new ColorRgba() : PaletteData[palOffset + palIndex];
+                            if (palIndex == 0)
+                            {
+                                Texture[index] = new ColorRgba();
+                            }
+                            else if (Color != null)
+                            {
+                                Texture[index] = Color.Value;
+                            }
+                            else
+                            {
+                                Texture[index] = PaletteData[palOffset + palIndex];
+                            }
                         }
                     }
                 }

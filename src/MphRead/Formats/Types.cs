@@ -425,6 +425,26 @@ namespace MphRead
         {
             return new Vector3(left.Red / right, left.Green / right, left.Blue / right);
         }
+
+        public static bool operator ==(ColorRgb lhs, ColorRgb rhs)
+        {
+            return lhs.Red == rhs.Red && lhs.Green == rhs.Green && lhs.Blue == rhs.Blue;
+        }
+
+        public static bool operator !=(ColorRgb lhs, ColorRgb rhs)
+        {
+            return lhs.Red != rhs.Red || lhs.Green != rhs.Green || lhs.Blue != rhs.Blue;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is ColorRgb other && Red == other.Red && Green == other.Green && Blue == other.Blue;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Red, Green, Blue);
+        }
     }
 
     // size: 4
@@ -460,10 +480,51 @@ namespace MphRead
         {
             return (uint)((Red << 0) | (Green << 8) | (Blue << 16) | (Alpha << 24));
         }
+
+        public static bool operator ==(ColorRgba lhs, ColorRgba rhs)
+        {
+            return lhs.Red == rhs.Red && lhs.Green == rhs.Green && lhs.Blue == rhs.Blue && lhs.Alpha == rhs.Alpha;
+        }
+
+        public static bool operator !=(ColorRgba lhs, ColorRgba rhs)
+        {
+            return lhs.Red != rhs.Red || lhs.Green != rhs.Green || lhs.Blue != rhs.Blue || lhs.Alpha != rhs.Alpha;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is ColorRgba other
+                && Red == other.Red && Green == other.Green && Blue == other.Blue && Alpha == other.Alpha;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Red, Green, Blue, Alpha);
+        }
     }
 
     public static class TypeExtensions
     {
+        public static Vector2 WithX(this Vector2 vector, float x)
+        {
+            return new Vector2(x, vector.Y);
+        }
+
+        public static Vector2 WithY(this Vector2 vector, float y)
+        {
+            return new Vector2(vector.X, y);
+        }
+
+        public static Vector2 AddX(this Vector2 vector, float x)
+        {
+            return new Vector2(vector.X + x, vector.Y);
+        }
+
+        public static Vector2 AddY(this Vector2 vector, float y)
+        {
+            return new Vector2(vector.X, vector.Y + y);
+        }
+
         public static Vector3 WithX(this Vector3 vector, float x)
         {
             return new Vector3(x, vector.Y, vector.Z);
