@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Formats;
 using MphRead.Hud;
@@ -899,26 +900,42 @@ namespace MphRead.Entities
             return new Vector2(x, y);
         }
 
-        public void QueueHudMessage(float x, float y, float duration, string text)
+        public void QueueHudMessage(float x, float y, float duration, byte category, int messageId)
         {
-            QueueHudMessage(x, y, TextType.Centered, 256, 1, new ColorRgba(0x3FEF), 1, duration, 0, text);
+            string text = Strings.GetHudMessage(messageId);
+            QueueHudMessage(x, y, TextType.Centered, 256, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
+        }
+
+        public void QueueHudMessage(float x, float y, int maxWidth, float duration, byte category, int messageId)
+        {
+            string text = Strings.GetHudMessage(messageId);
+            QueueHudMessage(x, y, TextType.Centered, maxWidth, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
+        }
+
+        public void QueueHudMessage(float x, float y, float duration, byte category, string text)
+        {
+            QueueHudMessage(x, y, TextType.Centered, 256, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
+        }
+
+        public void QueueHudMessage(float x, float y, int maxWidth, float duration, byte category, string text)
+        {
+            QueueHudMessage(x, y, TextType.Centered, maxWidth, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
         }
 
         public void QueueHudMessage(float x, float y, TextType textType, int maxWidth, float fontSize,
             ColorRgba color, float alpha, float duration, byte category, string text)
         {
             Debug.Assert(text.Length < 256);
-            fontSize /= 256f;
             char[] buffer = new char[512];
             int lineCount = WrapText(text, maxWidth, buffer);
             float minDuration = Single.MaxValue;
             HudMessage? message = null;
-            for (int i = 0; i < _hudMessageQueue.Length; i++)
+            for (int i = 0; i < _hudMessageQueue.Count; i++)
             {
                 HudMessage existing = _hudMessageQueue[i];
                 if (existing.Lifetime > 0)
                 {
-                    if ((category & 14) != 0 && (existing.Category & 14) != 0)
+                    if ((category & existing.Category & 14) != 0)
                     {
                         existing.Position = existing.Position.AddY(-lineCount * fontSize);
                     }
@@ -1007,7 +1024,7 @@ namespace MphRead.Entities
 
         public void ProcessHudMessageQueue()
         {
-            for (int i = 0; i < _hudMessageQueue.Length; i++)
+            for (int i = 0; i < _hudMessageQueue.Count; i++)
             {
                 HudMessage message = _hudMessageQueue[i];
                 if (message.Lifetime > 0)
@@ -1023,7 +1040,7 @@ namespace MphRead.Entities
 
         private void DrawQueuedHudMessages()
         {
-            for (int i = 0; i < _hudMessageQueue.Length; i++)
+            for (int i = 0; i < _hudMessageQueue.Count; i++)
             {
                 HudMessage message = _hudMessageQueue[i];
                 if (message.Lifetime > 0
@@ -1049,7 +1066,7 @@ namespace MphRead.Entities
             public char[] Text { get; } = new char[256];
         }
 
-        private static HudMessage[] _hudMessageQueue = new HudMessage[20]
+        private static readonly IReadOnlyList<HudMessage> _hudMessageQueue = new HudMessage[20]
         {
             new HudMessage(),
             new HudMessage(),

@@ -276,6 +276,7 @@ namespace MphRead
                 scene.LoadEffect(Metadata.ChargeEffectIds[i]);
                 scene.LoadEffect(Metadata.ChargeLoopEffectIds[i]);
             }
+            PlayerEntity.LoadWeaponNames();
             PlayerEntity.GeneratePlayerVolumes();
             // todo: use game mode, region, etc.
             Language language = Language.English;

@@ -5,6 +5,7 @@ using MphRead.Effects;
 using MphRead.Formats;
 using MphRead.Formats.Culling;
 using MphRead.Hud;
+using MphRead.Text;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -1050,7 +1051,8 @@ namespace MphRead.Entities
             {
                 if (IsMainPlayer)
                 {
-                    // todo: play SFX, update HUD
+                    // todo: play SFX
+                    ShowNoAmmoMessage();
                 }
                 return false;
             }
@@ -1110,6 +1112,12 @@ namespace MphRead.Entities
                 // todo?: update weapon HUD objects
             }
             return true;
+        }
+
+        private void ShowNoAmmoMessage()
+        {
+            string message = Strings.GetHudMessage(9); // AMMO DEPLETED!
+            QueueHudMessage(128, 120, TextType.Centered, 256, 8, new ColorRgba(0x295F), 1, 45 / 30f, 1, message);
         }
 
         public void UpdateZoom(bool zoom)
@@ -1422,7 +1430,8 @@ namespace MphRead.Entities
             }
             if (!ignoreDamage && flags.TestFlag(DamageFlags.Headshot) && attacker == Main) // todo: and not on wifi
             {
-                // todo: draw HUD string
+                int messageId = _scene.Multiplayer ? 228 : 121; // HEADSHOT!
+                QueueHudMessage(128, 40, 20 / 30f, 0, messageId);
             }
             if (attacker != null && attacker != this && beam != null)
             {
@@ -1513,7 +1522,7 @@ namespace MphRead.Entities
                     Debug.Assert(EnemySpawner.Type == EntityType.EnemySpawn);
                     ItemSpawnEntity.SpawnItemDrop(EnemySpawner.Data.ItemType, Position, EnemySpawner.Data.ItemChance, _scene);
                 }
-                // todo: update HUD
+                // todo: update HUD to cancel scan visor
                 if (Flags2.TestFlag(PlayerFlags2.Halfturret))
                 {
                     _halfturret.Die();
@@ -1627,7 +1636,66 @@ namespace MphRead.Entities
                     {
                         if (IsMainPlayer)
                         {
-                            // todo: update HUD, draw HUD strings
+                            // todo: update HUD to close dialogs
+                            if (attacker == this)
+                            {
+                                QueueHudMessage(128, 70, 140, 90 / 30f, 2, 235); // YOU SELF-DESTRUCTED!
+                            }
+                            else
+                            {
+                                // todo: update license
+                                // sknext: nickname
+                                // %s's HEADSHOT KILLED YOU! / %s KILLED YOU!
+                                string message = Strings.GetHudMessage(flags.TestFlag(DamageFlags.Headshot) ? 236 : 237);
+                                QueueHudMessage(128, 70, 140, 90 / 30f, 2, message.Replace("%s", "Player"));
+                            }
+                            string? killedBy = null;
+                            if (flags.TestFlag(DamageFlags.Deathalt))
+                            {
+                                killedBy = Strings.GetHudMessage(250); // DEATHALT
+                            }
+                            else if (flags.TestFlag(DamageFlags.Burn))
+                            {
+                                killedBy = Strings.GetHudMessage(251); // MAGMAUL BURN
+                            }
+                            else if (fromHalfturret)
+                            {
+                                killedBy = _altAttackNames[(int)attacker.Hunter];
+                            }
+                            else if (beamType <= BeamType.OmegaCannon)
+                            {
+                                killedBy = _weaponNames[(int)beamType];
+                            }
+                            else if (source == attacker)
+                            {
+                                if (attacker.Hunter == Hunter.Weavel)
+                                {
+                                    killedBy = Strings.GetHudMessage(253); // HALFTURRET SLICE
+                                }
+                                else
+                                {
+                                    killedBy = _altAttackNames[(int)attacker.Hunter];
+                                }
+                            }
+                            else if (bomb != null)
+                            {
+                                if (bomb.BombType == BombType.MorphBall)
+                                {
+                                    killedBy = Strings.GetHudMessage(252); // MORPH BALL BOMB
+                                }
+                                else if (bomb.BombType == BombType.Stinglarva)
+                                {
+                                    killedBy = _altAttackNames[(int)Hunter.Kanden];
+                                }
+                                else if (bomb.BombType == BombType.Lockjaw)
+                                {
+                                    killedBy = _altAttackNames[(int)Hunter.Sylux];
+                                }
+                            }
+                            if (killedBy != null)
+                            {
+                                QueueHudMessage(128, 70, 140, 90 / 30f, 2, $"({killedBy})");
+                            }
                         }
                         if (attacker == this)
                         {
@@ -1635,8 +1703,30 @@ namespace MphRead.Entities
                         }
                         else
                         {
-                            // todo: update license info, draw more HUD strings, update kill streak
-                            // todo: gain health if prime hunter
+                            if (attacker.TeamIndex == TeamIndex)
+                            {
+                                // update license info, points, kill streak
+                                if (attacker == Main)
+                                {
+                                    // sknext: nickname
+                                    string message = Strings.GetHudMessage(240); // YOU KILLED A TEAMMATE, (%s)!
+                                    QueueHudMessage(128, 70, 140, 60 / 30f, 2, message.Replace("%s", "Player"));
+                                }
+                            }
+                            else
+                            {
+                                if (attacker == Main)
+                                {
+                                    // todo: update license info
+                                    // sknext: nickname
+                                    // YOUR HEADSHOT KILLED %s! / YOU KILLED %s!
+                                    string message = Strings.GetHudMessage(flags.TestFlag(DamageFlags.Headshot) ? 239 : 238);
+                                    QueueHudMessage(128, 70, 140, 60 / 30f, 2, message.Replace("%s", "Player"));
+                                }
+                                // todo: update points and kill streak
+                                // todo: play voice and draw string for kill streak
+                                // todo: gain health if prime hunter, play voice and draw string
+                            }
                         }
                     }
                     else
@@ -1659,7 +1749,7 @@ namespace MphRead.Entities
                     if (IsPrimeHunter)
                     {
                         IsPrimeHunter = false;
-                        // todo: draw HUD message
+                        QueueHudMessage(128, 70, 140, 90 / 30f, 2, 242); // the prime hunter is dead!
                     }
                 }
                 if (_scene.Multiplayer && attacker != null && attacker != this)
@@ -1872,6 +1962,28 @@ namespace MphRead.Entities
             if (IsMainPlayer)
             {
                 // todo: do something (HUD or camera-related?)
+            }
+        }
+
+        private static readonly string[] _altAttackNames = new string[8];
+        private static readonly string[] _hunterNames = new string[8];
+        private static readonly string[] _weaponNames = new string[9];
+
+        public static void LoadWeaponNames()
+        {
+            // todo: use language
+            for (int i = 0; i < 9; ++i)
+            {
+                _weaponNames[i] = Strings.GetMessage('W', i + 1, StringTables.WeaponNames);
+            }
+            for (int i = 0; i < 8; ++i)
+            {
+                _hunterNames[i] = Strings.GetMessage('H', i + 1, StringTables.WeaponNames);
+            }
+            // todo: Guardian alt form
+            for (int i = 0; i < 7; ++i)
+            {
+                _altAttackNames[i] = Strings.GetMessage('A', i + 1, StringTables.WeaponNames);
             }
         }
 

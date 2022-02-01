@@ -200,7 +200,7 @@ namespace MphRead.Hud
 
         public void SetData(int charFrame, ColorRgba color, Scene scene)
         {
-            Color = null;
+            PaletteIndex = -1;
             Timer = 0;
             int prevChar = CurrentFrame;
             ColorRgba? prevColor = Color;
