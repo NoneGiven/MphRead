@@ -1644,10 +1644,10 @@ namespace MphRead.Entities
                             else
                             {
                                 // todo: update license
-                                // sknext: nickname
+                                string nickname = GameState.Nicknames[attacker.SlotIndex];
                                 // %s's HEADSHOT KILLED YOU! / %s KILLED YOU!
                                 string message = Strings.GetHudMessage(flags.TestFlag(DamageFlags.Headshot) ? 236 : 237);
-                                QueueHudMessage(128, 70, 140, 90 / 30f, 2, message.Replace("%s", "Player"));
+                                QueueHudMessage(128, 70, 140, 90 / 30f, 2, message.Replace("%s", nickname));
                             }
                             string? killedBy = null;
                             if (flags.TestFlag(DamageFlags.Deathalt))
@@ -1708,9 +1708,9 @@ namespace MphRead.Entities
                                 // update license info, points, kill streak
                                 if (attacker == Main)
                                 {
-                                    // sknext: nickname
+                                    string nickname = GameState.Nicknames[SlotIndex];
                                     string message = Strings.GetHudMessage(240); // YOU KILLED A TEAMMATE, (%s)!
-                                    QueueHudMessage(128, 70, 140, 60 / 30f, 2, message.Replace("%s", "Player"));
+                                    QueueHudMessage(128, 70, 140, 60 / 30f, 2, message.Replace("%s", nickname));
                                 }
                             }
                             else
@@ -1718,10 +1718,10 @@ namespace MphRead.Entities
                                 if (attacker == Main)
                                 {
                                     // todo: update license info
-                                    // sknext: nickname
+                                    string nickname = GameState.Nicknames[SlotIndex];
                                     // YOUR HEADSHOT KILLED %s! / YOU KILLED %s!
                                     string message = Strings.GetHudMessage(flags.TestFlag(DamageFlags.Headshot) ? 239 : 238);
-                                    QueueHudMessage(128, 70, 140, 60 / 30f, 2, message.Replace("%s", "Player"));
+                                    QueueHudMessage(128, 70, 140, 60 / 30f, 2, message.Replace("%s", nickname));
                                 }
                                 // todo: update points and kill streak
                                 // todo: play voice and draw string for kill streak

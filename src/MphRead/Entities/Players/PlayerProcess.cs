@@ -72,9 +72,17 @@ namespace MphRead.Entities
                     // todo: if we loaded into this room through a door or teleporter, respawn in the right place
                     // else...
                     int time = GetTimeUntilRespawn();
-                    if (IsMainPlayer && _scene.Multiplayer) // todo: and some global is set
+                    if (IsMainPlayer && _scene.Multiplayer) // todo: and some global is not set
                     {
-                        // todo: set HUD model and draw messages
+                        // press FIRE to respawn / press FIRE to begin
+                        int messageId = CameraSequence.Current == null ? 244 : 245;
+                        QueueHudMessage(128, 162, 1 / 1000f, 0, messageId);
+                        if (time < 150 * 2) // todo: FPS stuff
+                        {
+                            string message = Text.Strings.GetHudMessage(246); // SPAWNING IN %d...
+                            int seconds = (time + 30 * 2) / (30 * 2); // todo: FPS stuff
+                            QueueHudMessage(128, 152, 1 / 1000f, 0, message.Replace("%d", seconds.ToString()));
+                        }
                     }
                     if (!_scene.Multiplayer || Controls.Shoot.IsDown || time <= 0 || IsBot) // todo: or forced
                     {
