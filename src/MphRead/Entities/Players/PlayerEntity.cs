@@ -213,6 +213,7 @@ namespace MphRead.Entities
         private readonly int[] _ammoRecovery = new int[2];
         private readonly bool[] _tickedAmmoRecovery = new bool[2];
         public int Health { get => _health; set => _health = value; }
+        public int HealthMax => _healthMax;
         private readonly BeamType[] _weaponSlots = new BeamType[3];
         private readonly AvailableArray _availableWeapons = new AvailableArray();
         private readonly AvailableArray _availableCharges = new AvailableArray();

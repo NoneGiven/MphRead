@@ -24,6 +24,7 @@ namespace MphRead.Entities
         private HudObjectInstance _weaponIconInst = null!;
         private HudObjectInstance _boostInst = null!;
         private HudObjectInstance _bombInst = null!;
+        private HudMeter _enemyHealthMeter = null!;
 
         private ModelInstance _damageIndicator = null!;
         private readonly ushort[] _damageIndicatorTimers = new ushort[8];
@@ -103,7 +104,11 @@ namespace MphRead.Entities
             _healthbarSubMeter.BarInst.SetCharacterData(healthbarSub.CharacterData, _scene);
             _healthbarSubMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
             _healthbarSubMeter.BarInst.Enabled = true;
-            // todo: MP1P/other hunters
+            _enemyHealthMeter = HudElements.EnemyHealthbar;
+            _enemyHealthMeter.BarInst = new HudObjectInstance(healthbarSub.Width, healthbarSub.Height);
+            _enemyHealthMeter.BarInst.SetCharacterData(healthbarSub.CharacterData, _scene);
+            _enemyHealthMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
+            _enemyHealthMeter.BarInst.Enabled = true;
             if (!_scene.Multiplayer && _hudObjects.EnergyTanks != null)
             {
                 HudObject healthbarTank = HudInfo.GetHudObject(_hudObjects.EnergyTanks);
@@ -541,6 +546,7 @@ namespace MphRead.Entities
                     _scene.DrawHudObject(_weaponIconInst);
                     _scene.DrawHudObject(_targetCircleInst);
                 }
+                DrawModeHud();
                 if (_health > 0)
                 {
                     DrawHealthbars();
@@ -730,6 +736,115 @@ namespace MphRead.Entities
                     }
                 }
             }
+        }
+
+        private void DrawModeHud()
+        {
+            // todo: the rest
+            if (_scene.GameMode == GameMode.SinglePlayer)
+            {
+                DrawHudAdventure();
+            }
+        }
+
+        private void DrawHudAdventure()
+        {
+            //_enemyHealthMeter
+            // todo: draw scan visor if enabled
+            // else...
+            if (_scene.RoomId == 92) // Gorea_b2
+            {
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type == EntityType.EnemyInstance)
+                    {
+                        var enemy = (EnemyInstanceEntity)entity;
+                        if (enemy.EnemyType == EnemyType.GoreaSealSphere2)
+                        {
+                            // todo: draw healthbar if damaged and some flag
+                            break;
+                        }
+                    }
+                }
+            }
+            else if (_lastTarget != null)
+            {
+                // todo: we'll need to use this for MP too, while making sure it doesn't conflict with other HUD elements
+                if (!DrawTargetHealthbar(_lastTarget))
+                {
+                    _lastTarget = null;
+                }
+            }
+            // todo: draw visor name
+        }
+
+        private bool DrawTargetHealthbar(EntityBase target)
+        {
+            int max = 0;
+            int current = 0;
+            string? text = null;
+            int lowHealth = 0;
+            if (target.Type == EntityType.EnemyInstance)
+            {
+                var enemy = (EnemyInstanceEntity)target;
+                if (enemy.EnemyType != EnemyType.FireSpawn && enemy.EnemyType != EnemyType.CretaphidCrystal
+                    && enemy.EnemyType != EnemyType.Slench && enemy.EnemyType != EnemyType.SlenchShield
+                    && enemy.EnemyType != EnemyType.GoreaArm && enemy.EnemyType != EnemyType.GoreaSealSphere1
+                    && enemy.EnemyType != EnemyType.GoreaSealSphere2)
+                {
+                    return true;
+                }
+                text = Strings.GetMessage('E', enemy.HealthbarMessageId, StringTables.HudMessagesSP);
+                max = enemy.HealthMax;
+                current = enemy.Health;
+                if (enemy.EnemyType == EnemyType.SlenchShield)
+                {
+                    // todo: get current and max from owner
+                }
+                else if (enemy.EnemyType == EnemyType.GoreaArm)
+                {
+                    // todo: get current by subtracting damage from max
+                }
+                else if (enemy.EnemyType == EnemyType.GoreaSealSphere1)
+                {
+                    // todo: get current by subtracting damage from max
+                }
+                else if (enemy.EnemyType == EnemyType.GoreaSealSphere2)
+                {
+                    // todo: get current by subtracting damage from max
+                }
+                lowHealth = max / 4;
+            }
+            else if (target.Type == EntityType.Player)
+            {
+                var player = (PlayerEntity)target;
+                max = player.HealthMax;
+                current = player.Health;
+                text = _hunterNames[(int)player.Hunter];
+                lowHealth = 25;
+            }
+            else if (target.Type == EntityType.Halfturret)
+            {
+                var turret = (HalfturretEntity)target;
+                max = turret.Owner.HealthMax / 2;
+                current = turret.Health;
+                text = _altAttackNames[(int)Hunter.Weavel];
+                lowHealth = 25;
+            }
+            int palette = current > lowHealth ? 0 : 2;
+            _enemyHealthMeter.TankAmount = max;
+            _enemyHealthMeter.TankCount = 0;
+            _enemyHealthMeter.Length = _healthbarSubMeter.Length;
+            DrawMeter(_hudObjects.EnemyHealthPosX, _hudObjects.EnemyHealthPosY, max, current, palette,
+                _enemyHealthMeter, drawText: false, drawTanks: false);
+            // todo: only draw text if we have the scan data
+            // else, draw "enemy" instead
+            if (text != null)
+            {
+                DrawText2D(_hudObjects.EnemyHealthTextPosX, _hudObjects.EnemyHealthTextPosY, TextType.Centered, palette, text);
+            }
+            return current > 0;
         }
 
         private int _textSpacingY = 0;

@@ -1237,7 +1237,11 @@ namespace MphRead.Hud
                 ammoBarPosX: 236,
                 ammoBarPosY: 137,
                 weaponIconPosX: 214,
-                weaponIconPosY: 150
+                weaponIconPosY: 150,
+                enemyHealthPosX: 93,
+                enemyHealthPosY: 164,
+                enemyHealthTextPosX: 128,
+                enemyHealthTextPosY: 168
             ),
             // Kanden
             new HudObjects(
@@ -1268,7 +1272,11 @@ namespace MphRead.Hud
                 ammoBarPosX: 238,
                 ammoBarPosY: 128,
                 weaponIconPosX: 230,
-                weaponIconPosY: 138
+                weaponIconPosY: 138,
+                enemyHealthPosX: 93, // hunters besides Samus have zeroes for these fields in the game
+                enemyHealthPosY: 164,
+                enemyHealthTextPosX: 128,
+                enemyHealthTextPosY: 168
             ),
             // Trace
             new HudObjects(
@@ -1299,7 +1307,11 @@ namespace MphRead.Hud
                 ammoBarPosX: 232,
                 ammoBarPosY: 135,
                 weaponIconPosX: 225,
-                weaponIconPosY: 148
+                weaponIconPosY: 148,
+                enemyHealthPosX: 93,
+                enemyHealthPosY: 164,
+                enemyHealthTextPosX: 128,
+                enemyHealthTextPosY: 168
             ),
             // Sylux
             new HudObjects(
@@ -1330,7 +1342,11 @@ namespace MphRead.Hud
                 ammoBarPosX: 206,
                 ammoBarPosY: 165,
                 weaponIconPosX: 214,
-                weaponIconPosY: 131
+                weaponIconPosY: 131,
+                enemyHealthPosX: 93,
+                enemyHealthPosY: 164,
+                enemyHealthTextPosX: 128,
+                enemyHealthTextPosY: 168
             ),
             // Noxus
             new HudObjects(
@@ -1361,7 +1377,11 @@ namespace MphRead.Hud
                 ammoBarPosX: 221,
                 ammoBarPosY: 117,
                 weaponIconPosX: 196,
-                weaponIconPosY: 138
+                weaponIconPosY: 138,
+                enemyHealthPosX: 93,
+                enemyHealthPosY: 164,
+                enemyHealthTextPosX: 128,
+                enemyHealthTextPosY: 168
             ),
             // Spire
             new HudObjects(
@@ -1392,7 +1412,11 @@ namespace MphRead.Hud
                 ammoBarPosX: 233,
                 ammoBarPosY: 128,
                 weaponIconPosX: 227,
-                weaponIconPosY: 20
+                weaponIconPosY: 20,
+                enemyHealthPosX: 93,
+                enemyHealthPosY: 164,
+                enemyHealthTextPosX: 128,
+                enemyHealthTextPosY: 168
             ),
             // Weavel
             new HudObjects(
@@ -1423,7 +1447,11 @@ namespace MphRead.Hud
                 ammoBarPosX: 229,
                 ammoBarPosY: 118,
                 weaponIconPosX: 206,
-                weaponIconPosY: 104
+                weaponIconPosY: 104,
+                enemyHealthPosX: 93,
+                enemyHealthPosY: 164,
+                enemyHealthTextPosX: 128,
+                enemyHealthTextPosY: 168
             ),
             // Guardian
             new HudObjects(
@@ -1454,8 +1482,29 @@ namespace MphRead.Hud
                 ammoBarPosX: 236,
                 ammoBarPosY: 137,
                 weaponIconPosX: 214,
-                weaponIconPosY: 150
+                weaponIconPosY: 150,
+                enemyHealthPosX: 93,
+                enemyHealthPosY: 164,
+                enemyHealthTextPosX: 128,
+                enemyHealthTextPosY: 168
             )
+        };
+
+        public static readonly HudMeter EnemyHealthbar = new HudMeter()
+        {
+            Horizontal = true,
+            TankAmount = 0,
+            TankCount = 0,
+            Length = 0,
+            TankSpacing = 0,
+            TankOffsetX = 0,
+            TankOffsetY = 0,
+            BarOffsetX = 15,
+            BarOffsetY = 6,
+            TextType = TextType.LeftAlign,
+            TextOffsetX = 30,
+            TextOffsetY = 7,
+            MessageId = 0
         };
 
         public static readonly IReadOnlyList<HudMeter> MainHealthbars = new HudMeter[8]
@@ -1909,12 +1958,17 @@ namespace MphRead.Hud
         public readonly int AmmoBarPosY;
         public readonly int WeaponIconPosX;
         public readonly int WeaponIconPosY;
+        public readonly int EnemyHealthPosX;
+        public readonly int EnemyHealthPosY;
+        public readonly int EnemyHealthTextPosX;
+        public readonly int EnemyHealthTextPosY;
 
         public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB, string? energyTanks,
             string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar, string reticle,
             string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectIcon, string selectBox,
             int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY, int healthOffsetYAlt,
-            int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY)
+            int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY, int enemyHealthPosX, int enemyHealthPosY,
+            int enemyHealthTextPosX, int enemyHealthTextPosY)
         {
             Helmet = helmet;
             HelmetDrop = helmetDrop;
@@ -1944,6 +1998,10 @@ namespace MphRead.Hud
             AmmoBarPosY = ammoBarPosY;
             WeaponIconPosX = weaponIconPosX;
             WeaponIconPosY = weaponIconPosY;
+            EnemyHealthPosX = enemyHealthPosX;
+            EnemyHealthPosY = enemyHealthPosY;
+            EnemyHealthTextPosX = enemyHealthTextPosX;
+            EnemyHealthTextPosY = enemyHealthTextPosY;
         }
     }
 }

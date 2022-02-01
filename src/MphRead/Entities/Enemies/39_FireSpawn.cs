@@ -77,10 +77,11 @@ namespace MphRead.Entities.Enemies
             _equipInfo[1].SetAmmo = (newAmmo) => _ammo1 = newAmmo;
             _attackDelay = Values.AttackDelay * 2; // todo: FPS stuff
             _attackCount = Values.AttackCountMin + Rng.GetRandomInt2((uint)(Values.AttackCountMax + 1 - Values.AttackCountMin));
-            // todo: healthbar name
+            HealthbarMessageId = 4; // fire spawn
             if (_spawner.Data.Fields.S06.EnemySubtype == 1)
             {
                 inst.Model.Materials[0].Ambient = new ColorRgb(18, 27, 31); // should really be based on version/texture
+                HealthbarMessageId = 5; // ice spawn
             }
             inst.SetAnimation(3, AnimFlags.Paused);
             _wristNodeL = inst.Model.GetNodeByName("Wrist_L");
