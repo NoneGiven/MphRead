@@ -2414,6 +2414,7 @@ namespace MphRead
 
         private void UpdateScene()
         {
+            PlayerEntity.Main.ProcessHudMessageQueue();
             for (int i = 0; i < _entities.Count; i++)
             {
                 EntityBase entity = _entities[i];

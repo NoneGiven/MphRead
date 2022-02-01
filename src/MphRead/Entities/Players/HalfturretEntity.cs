@@ -230,7 +230,8 @@ namespace MphRead.Entities
             }
             if (Owner == PlayerEntity.Main)
             {
-                // sktodo: show HUD message
+                string message = Text.Strings.GetHudMessage(233); // turret energy: %d
+                Owner.QueueHudMessage(128, 150, 1 / 1000f, message.Replace("%d", _health.ToString()));
             }
             if (!_grounded)
             {

@@ -151,7 +151,6 @@ namespace MphRead.Entities
 
         public void UpdateHud()
         {
-            ProcessHudMessageQueue();
             UpdateHealthbars();
             UpdateAmmoBar();
             _weaponIconInst.ProcessAnimation(_scene);
@@ -900,6 +899,11 @@ namespace MphRead.Entities
             return new Vector2(x, y);
         }
 
+        public void QueueHudMessage(float x, float y, float duration, string text)
+        {
+            QueueHudMessage(x, y, TextType.Centered, 256, 1, new ColorRgba(0x3FEF), 1, duration, 0, text);
+        }
+
         public void QueueHudMessage(float x, float y, TextType textType, int maxWidth, float fontSize,
             ColorRgba color, float alpha, float duration, byte category, string text)
         {
@@ -1001,7 +1005,7 @@ namespace MphRead.Entities
             return lines;
         }
 
-        private void ProcessHudMessageQueue()
+        public void ProcessHudMessageQueue()
         {
             for (int i = 0; i < _hudMessageQueue.Length; i++)
             {
