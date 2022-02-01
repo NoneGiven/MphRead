@@ -286,6 +286,7 @@ namespace MphRead
             Strings.ReadStringTable(StringTables.HudMsgsCommon, language);
             Strings.ReadStringTable(StringTables.HudMessagesSP, language);
             Strings.ReadStringTable(StringTables.HudMessagesMP, language);
+            Extract.LoadRuntimeData();
         }
 
         public static void LoadHunterResources(Hunter hunter, Scene scene)
