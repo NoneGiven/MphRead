@@ -314,7 +314,7 @@ namespace MphRead.Entities
         public EnemyInstanceEntity? AttachedEnemy { get; set; } = null;
         private EntityBase? _field35C = null;
         public MorphCameraEntity? MorphCamera { get; set; }
-        private OctolithFlagEntity? _octolithFlag = null;
+        public OctolithFlagEntity? OctolithFlag { get; set; }
         private JumpPadEntity? _lastJumpPad = null;
         private EnemySpawnEntity? _enemySpawner = null;
         private EntityBase? _burnedBy = null;
@@ -565,7 +565,7 @@ namespace MphRead.Entities
             _timeSinceInput = 0;
             _field40C = 0;
             _doubleDmgTimer = 0;
-            _octolithFlag = null;
+            OctolithFlag = null;
             ResetMorphBallTrail();
             // todo?: point module
             string shootNodeName = Hunter == Hunter.Guardian ? "Head_1" : "R_elbow";
@@ -785,7 +785,7 @@ namespace MphRead.Entities
             _gunSmokeModel.SetAnimation(0);
             _smokeAlpha = 0;
             MorphCamera = null;
-            _octolithFlag = null;
+            OctolithFlag = null;
             ResetMorphBallTrail();
             // todo: stop SFX, play SFX, update SFX handle
             _lastJumpPad = null;
@@ -1053,7 +1053,10 @@ namespace MphRead.Entities
                 if (IsMainPlayer)
                 {
                     // todo: play SFX
-                    ShowNoAmmoMessage();
+                    if (!hasAmmo)
+                    {
+                        ShowNoAmmoMessage();
+                    }
                 }
                 return false;
             }
@@ -1727,6 +1730,11 @@ namespace MphRead.Entities
                                 // todo: update points and kill streak
                                 // todo: play voice and draw string for kill streak
                                 // todo: gain health if prime hunter, play voice and draw string
+                                if ((_scene.GameMode == GameMode.Capture || _scene.GameMode == GameMode.Bounty
+                                    || _scene.GameMode == GameMode.BountyTeams) && OctolithFlag != null)
+                                {
+                                    GameState.OctolithStops[attacker.SlotIndex]++;
+                                }
                             }
                         }
                     }

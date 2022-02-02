@@ -3134,12 +3134,12 @@ namespace MphRead
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
-        public void DrawHudFilterModel(ModelInstance inst)
+        public void DrawHudFilterModel(ModelInstance inst, float alpha = 1)
         {
             Model model = inst.Model;
             UpdateMaterials(model, 0);
             Material material = model.Materials[0];
-            GL.Uniform1(_shaderLocations.MaterialAlpha, material.Alpha / 31f);
+            GL.Uniform1(_shaderLocations.MaterialAlpha, material.Alpha / 31f * alpha);
             GL.BindTexture(TextureTarget.Texture2D, material.TextureBindingId);
             int minParameter = (int)TextureMinFilter.Nearest;
             int magParameter = (int)TextureMagFilter.Nearest;

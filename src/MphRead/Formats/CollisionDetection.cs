@@ -536,6 +536,36 @@ namespace MphRead.Formats
             return count;
         }
 
+        public static bool CheckCylinderBetweenPoints(Vector3 point1, Vector3 point2, Vector3 cylPos,
+            float cylHeight, float radii, ref CollisionResult result)
+        {
+            Vector3 travel = point2 - point1;
+            float length = travel.Length;
+            travel /= length;
+            Vector3 vec1 = cylPos - point1;
+            float dot = Vector3.Dot(travel, vec1);
+            if (dot < -radii || dot > length + radii)
+            {
+                return false;
+            }
+            Vector3 vec2 = vec1 - travel * dot;
+            if (vec2.Y > 0 || vec2.Y < -cylHeight)
+            {
+                return false;
+            }
+            if (vec2.X * vec2.X + vec2.Z * vec2.Z <= radii * radii)
+            {
+                result.Field0 = 0;
+                result.EntityCollision = null;
+                result.Flags = CollisionFlags.None;
+                result.Position = cylPos - vec2;
+                result.Distance = Math.Clamp(dot / length, 0, 1);
+                result.Plane = new Vector4(-travel, 0);
+                return true;
+            }
+            return false;
+        }
+
         public static int CheckInRadius(Vector3 point, float radius, int limit, bool getSimpleNormal,
             TestFlags flags, Scene scene, CollisionResult[] results)
         {

@@ -5,7 +5,6 @@ using MphRead.Entities.Enemies;
 using MphRead.Formats;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
-using SixLabors.ImageSharp;
 
 namespace MphRead.Entities
 {
