@@ -6,6 +6,7 @@ namespace MphRead.Entities
     {
         private readonly FlagBaseEntityData _data;
         private readonly CollisionVolume _volume;
+        private readonly bool _capture = false;
 
         // flag base has a model in Bounty, but is invisible in Capture
         protected override Vector4? OverrideColor { get; } = new ColorRgb(15, 207, 255).AsVector4();
@@ -27,8 +28,59 @@ namespace MphRead.Entities
             {
                 SetUpModel("flagbase_cap");
             }
+            _capture = mode == GameMode.Capture;
         }
 
+        public override bool Process()
+        {
+            base.Process();
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.Player)
+                {
+                    continue;
+                }
+                var player = (PlayerEntity)entity;
+                if (player.OctolithFlag == null || _capture && player.TeamIndex != _data.TeamId)
+                {
+                    continue;
+                }
+                if (_volume.TestPoint(player.Position))
+                {
+                    if (_capture && !CheckOwnOctolith(player))
+                    {
+                        if (player == PlayerEntity.Main)
+                        {
+                            PlayerEntity.Main.QueueHudMessage(128, 50, 1 / 1000f, 0, 232); // your octolith is missing!
+                        }
+                        continue;
+                    }
+                    player.OctolithFlag.OnCaptured();
+                }
+            }
+            return true;
+        }
+
+        private bool CheckOwnOctolith(PlayerEntity player)
+        {
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.OctolithFlag)
+                {
+                    continue;
+                }
+                var octolith = (OctolithFlagEntity)entity;
+                if (octolith.Data.TeamId == player.TeamIndex && !octolith.AtBase)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // todo: is_visible
         public override void GetDisplayVolumes()
         {
             if (_scene.ShowVolumes == VolumeDisplay.FlagBase)

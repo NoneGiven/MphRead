@@ -7,12 +7,14 @@ namespace MphRead.Entities
     public class OctolithFlagEntity : EntityBase
     {
         private readonly OctolithFlagEntityData _data;
+        public OctolithFlagEntityData Data => _data;
         private readonly Vector3 _basePosition = Vector3.Zero;
         private readonly bool _bounty = false;
 
         private PlayerEntity? _carrier = null;
         private PlayerEntity? _lastCarrier = null;
         private bool _atBase = false;
+        public bool AtBase => _atBase;
         private bool _grounded = false;
         private float _resetTimer = 0;
         private float _gravity = 0;
