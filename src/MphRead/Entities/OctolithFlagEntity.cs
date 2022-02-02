@@ -159,9 +159,9 @@ namespace MphRead.Entities
             else
             {
                 Vector3 prevPos = Position;
-                float newGravity = _gravity - 0.02f * 30 * 31 * _scene.FrameTime;
-                Position = Position.AddY(_gravity * _scene.FrameTime + (newGravity - _gravity) / 2 * _scene.FrameTime);
-                _gravity = newGravity;
+                (float gravity, float displacement) = ConstantAcceleration(-0.02f, _gravity);
+                Position = Position.AddY(displacement);
+                _gravity = gravity;
                 var results = new CollisionResult[16];
                 int count = CollisionDetection.CheckSphereBetweenPoints(prevPos, Position, radius: 1.25f,
                     limit: 16, includeOffset: false, TestFlags.None, _scene, results);
