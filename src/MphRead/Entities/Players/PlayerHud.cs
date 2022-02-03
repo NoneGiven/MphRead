@@ -152,7 +152,7 @@ namespace MphRead.Entities
             _boostBombsYOffset = 208;
             _textInst = new HudObjectInstance(width: 8, height: 8); // todo: max is 16x16
             _textInst.SetCharacterData(Font.CharacterData, _scene);
-            _textInst.SetPaletteData(healthbarMain.PaletteData, _scene);
+            _textInst.SetPaletteData(ammoBar.PaletteData, _scene);
             _textInst.Enabled = true;
         }
 
@@ -537,6 +537,7 @@ namespace MphRead.Entities
             }
             else if (_showScoreboard)
             {
+                DrawMatchTime();
                 // sktodo
             }
             else
@@ -570,6 +571,21 @@ namespace MphRead.Entities
             {
                 _scene.DrawHudDamageModel(_damageIndicator);
             }
+        }
+
+        private void DrawMatchTime()
+        {
+            if (GameState.MatchTime < 0)
+            {
+                return;
+            }
+            var time = TimeSpan.FromSeconds(GameState.MatchTime);
+            int palette = time.TotalSeconds < 10 ? 2 : 0;
+            float posY = 25;
+            string text = Strings.GetHudMessage(5); // TIME
+            DrawText2D(128, posY, TextType.Centered, palette, text);
+            text = $"{time.Minutes}:{time.Seconds:00}";
+            DrawText2D(128, posY + 10, TextType.Centered, palette, text);
         }
 
         private void DrawHealthbars()

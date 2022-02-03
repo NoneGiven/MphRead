@@ -233,21 +233,7 @@ namespace MphRead
             }
             SceneSetup.LoadItemResources(this);
             SceneSetup.LoadEnemyResources(this);
-            if (GameMode == GameMode.BattleTeams || GameMode == GameMode.SurvivalTeams || GameMode == GameMode.Capture
-                || GameMode == GameMode.BountyTeams || GameMode == GameMode.NodesTeams || GameMode == GameMode.DefenderTeams)
-            {
-                GameState.Teams = true;
-                for (int i = 0; i < 4; i++)
-                {
-                    PlayerEntity player = PlayerEntity.Players[i];
-                    if (player.LoadFlags.TestFlag(LoadFlags.Active))
-                    {
-                        player.Team = player.TeamIndex == 0 ? Team.Orange : Team.Green;
-                        // todo: allow other colors (and I guess disable the emission then too)
-                        player.Recolor = player.TeamIndex == 0 ? 4 : 5;
-                    }
-                }
-            }
+            GameState.Setup(this);
             _light1Vector = meta.Light1Vector;
             _light1Color = new Vector3(
                 meta.Light1Color.Red / 31.0f,
@@ -1073,6 +1059,7 @@ namespace MphRead
                 ProcessMessageQueue();
                 _elapsedTime += 1 / 60f; // todo: FPS stuff
                 _frameCount++;
+                GameState.UpdateTime(this);
             }
             _frameAdvanceLastFrame = _frameAdvanceOn;
         }

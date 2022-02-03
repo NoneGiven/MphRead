@@ -1,10 +1,20 @@
+using System;
 using System.Collections.Generic;
 using MphRead.Entities;
 
 namespace MphRead
 {
+    public enum MatchState
+    {
+        InProgress = 0,
+        GameOver = 1,
+        Scoreboard = 2,
+        Ending = 3
+    }
+
     public static class GameState
     {
+        public static MatchState MatchState { get; set; } = MatchState.InProgress;
         public static int ActivePlayers { get; set; } = 0;
         public static string[] Nicknames { get; } = new string[4] { "Player1", "Player2", "Player3", "Player4" };
         public static int[] Standings { get; } = new int[4];
@@ -14,9 +24,12 @@ namespace MphRead
 
         public static bool Teams { get; set; } = false;
         public static bool FriendlyFire { get; set; } = false;
-        public static int PointGoal { get; } = 0; // also used for starting extra lives
-        public static int DamageLevel = 1;
+        public static int PointGoal { get; set; } = 0; // also used for starting extra lives
+        public static float TimeGoal { get; set; } = 0; // also used for starting extra lives
+        public static int DamageLevel { get; } = 1;
         public static bool OctolithReset { get; set; } = false;
+
+        public static float MatchTime { get; set; } = -1;
 
         public static int[] Points { get; } = new int[4];
         public static int[] TeamPoints { get; } = new int[4];
@@ -45,6 +58,72 @@ namespace MphRead
 
         public static int[] KillsAsPrime { get; } = new int[4]; // field260 in-game
         public static int[] PrimesKilled { get; } = new int[4]; // field268 in-game
+
+
+        public static void Setup(Scene scene)
+        {
+            GameMode mode = scene.GameMode;
+            if (mode == GameMode.BattleTeams || mode == GameMode.SurvivalTeams || mode == GameMode.Capture
+                || mode == GameMode.BountyTeams || mode == GameMode.NodesTeams || mode == GameMode.DefenderTeams)
+            {
+                Teams = true;
+                for (int i = 0; i < 4; i++)
+                {
+                    PlayerEntity player = PlayerEntity.Players[i];
+                    if (player.LoadFlags.TestFlag(LoadFlags.Active))
+                    {
+                        player.Team = player.TeamIndex == 0 ? Team.Orange : Team.Green;
+                        // todo: allow other colors (and I guess disable the emission then too)
+                        player.Recolor = player.TeamIndex == 0 ? 4 : 5;
+                    }
+                }
+            }
+            if (mode == GameMode.Battle || mode == GameMode.BattleTeams)
+            {
+                PointGoal = 7;
+                MatchTime = 7 * 60;
+            }
+            else if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
+            {
+                PointGoal = 2;
+                MatchTime = 15 * 60;
+            }
+            else if (mode == GameMode.Bounty || mode == GameMode.BountyTeams)
+            {
+                PointGoal = 3;
+                MatchTime = 15 * 60;
+            }
+            else if (mode == GameMode.Capture)
+            {
+                PointGoal = 5;
+                MatchTime = 15 * 60;
+            }
+            else if (mode == GameMode.Defender || mode == GameMode.DefenderTeams)
+            {
+                TimeGoal = 1.5f * 60;
+                MatchTime = 15 * 60;
+            }
+
+            else if (mode == GameMode.Nodes || mode == GameMode.NodesTeams)
+            {
+                PointGoal = 70;
+                MatchTime = 15 * 60;
+            }
+            else if (mode == GameMode.PrimeHunter)
+            {
+                TimeGoal = 1.5f * 60;
+                MatchTime = 15 * 60;
+            }
+        }
+
+        public static void UpdateTime(Scene scene)
+        {
+            // todo: update license info etc.
+            if (MatchTime > 0)
+            {
+                MatchTime = MathF.Max(MatchTime - scene.FrameTime, 0);
+            }
+        }
 
         public static void Update(Scene scene)
         {
