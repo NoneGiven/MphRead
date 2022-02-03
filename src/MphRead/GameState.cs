@@ -197,6 +197,7 @@ namespace MphRead
                     // todo: 1P time up? isn't that handled by death countdown etc.?
                     MatchState = MatchState.GameOver;
                     MatchTime = 90 / 30f;
+                    scene.SetFade(FadeType.None, length: 0, overwrite: true);
                     // todo: stop SFX, update music
                 }
             }

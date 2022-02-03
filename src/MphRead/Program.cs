@@ -130,7 +130,7 @@ namespace MphRead
             var playerIds = new List<int>() { 0, -1, -1, -1 };
             var hunters = new List<string>()
             {
-                "Samus", "Kanden", "Trace", "Sylux", "Noxus", "Spire", "Weavel", "Guardian"
+                "Samus", "Kanden", "Spire", "Trace", "Noxus", "Sylux", "Weavel", "Guardian"
             };
             string mode = "auto-select";
             int modeId = 0;
