@@ -1045,6 +1045,7 @@ namespace MphRead
             _destroyedEntities.Clear();
             if (ProcessFrame)
             {
+                GameState.ProcessFrame(this);
                 UpdateScene();
             }
             if (ProcessFrame || CameraMode != CameraMode.Player)
@@ -2430,7 +2431,7 @@ namespace MphRead
                     _destroyedEntities.Add(entity);
                 }
             }
-            GameState.Update(this);
+            GameState.UpdateState(this);
         }
 
         private void GetDrawItems()
@@ -4363,10 +4364,12 @@ namespace MphRead
             Size = new Vector2i(1024, 768),
             Title = "MphRead",
             Profile = ContextProfile.Compatability,
-            APIVersion = new Version(3, 2)
+            APIVersion = new Version(3, 2),
+            StartVisible = false
         };
 
         public Scene Scene { get; }
+        private bool _startedHidden = true;
 
         public RenderWindow() : base(_gameWindowSettings, _nativeWindowSettings)
         {
@@ -4419,6 +4422,11 @@ namespace MphRead
             Scene.OnUpdateFrame(args.Time);
             Scene.OnRenderFrame();
             SwapBuffers();
+            if (_startedHidden)
+            {
+                IsVisible = true;
+                _startedHidden = false;
+            }
             Scene.AfterRenderFrame();
             base.OnRenderFrame(args);
         }

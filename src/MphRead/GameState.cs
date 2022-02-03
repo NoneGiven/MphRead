@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using MphRead.Entities;
+using MphRead.Formats;
 
 namespace MphRead
 {
@@ -8,8 +10,8 @@ namespace MphRead
     {
         InProgress = 0,
         GameOver = 1,
-        Scoreboard = 2,
-        Ending = 3
+        Ending = 2,
+        Disconnected = 3
     }
 
     public static class GameState
@@ -114,6 +116,13 @@ namespace MphRead
                 TimeGoal = 1.5f * 60;
                 MatchTime = 15 * 60;
             }
+            if (CameraSequence.Intro != null)
+            {
+                CameraSequence.Intro.Initialize();
+                CameraSequence.Intro.SetUp(PlayerEntity.Main.CameraInfo, transitionTime: 0);
+                CameraSequence.Intro.Flags |= CamSeqFlags.Loop;
+                scene.SetFade(FadeType.FadeInBlack, 20 / 30f, overwrite: true);
+            }
         }
 
         public static void UpdateTime(Scene scene)
@@ -125,8 +134,22 @@ namespace MphRead
             }
         }
 
-        public static void Update(Scene scene)
+        public static void ProcessFrame(Scene scene)
         {
+            if (scene.Multiplayer && CameraSequence.Intro != null)
+            {
+                Debug.Assert(CameraSequence.Intro.CamInfoRef == PlayerEntity.Main.CameraInfo);
+                CameraSequence.Intro.Process();
+            }
+            // sktodo: more stuff
+        }
+
+        public static void UpdateState(Scene scene)
+        {
+            if (PlayerEntity.PlayerCount == 0)
+            {
+                return;
+            }
             GameMode mode = scene.GameMode;
             IReadOnlyList<PlayerEntity> players = PlayerEntity.Players;
             int[] prevTeamPoints = new int[4];

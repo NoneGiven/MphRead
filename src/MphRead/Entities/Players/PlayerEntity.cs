@@ -724,9 +724,10 @@ namespace MphRead.Entities
             }
             else
             {
-                if (IsMainPlayer && _scene.Multiplayer && CameraSequence.Current != null)
+                if (IsMainPlayer && _scene.Multiplayer && CameraSequence.Intro != null)
                 {
-                    // sktodo: end intro cam seq
+                    CameraSequence.Intro.End();
+                    CameraSequence.Intro = null;
                 }
                 CameraInfo.Reset();
                 CameraInfo.Position = Position;

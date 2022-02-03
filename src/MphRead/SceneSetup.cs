@@ -69,6 +69,14 @@ namespace MphRead
                 nodeData = ReadNodeData.ReadData(Path.Combine(@"", metadata.NodePath));
             }
             LoadResources(scene);
+            if (scene.Multiplayer && PlayerEntity.PlayerCount > 0)
+            {
+                int seqId = roomId - 93 + 172;
+                if (seqId >= 172 && seqId < 199)
+                {
+                    CameraSequence.Intro = CameraSequence.Load(seqId, scene);
+                }
+            }
             var room = new RoomEntity(name, metadata, collision, nodeData, nodeLayerMask, roomId, scene);
             return (room, metadata, collision, entities);
         }

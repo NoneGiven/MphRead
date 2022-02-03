@@ -527,6 +527,12 @@ namespace MphRead.Entities
             {
                 return;
             }
+            if (CameraSequence.Intro != null)
+            {
+                // sktodo: draw laws of battle
+                DrawQueuedHudMessages();
+                return;
+            }
             if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
             {
                 for (int i = 0; i < 6; i++)
@@ -538,7 +544,7 @@ namespace MphRead.Entities
             else if (_showScoreboard)
             {
                 DrawMatchTime();
-                // sktodo
+                // sktodo: draw scoreboard
             }
             else
             {
@@ -563,7 +569,11 @@ namespace MphRead.Entities
 
         public void DrawHudModels()
         {
-            if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) || _showScoreboard)
+            if (CameraSequence.Intro != null)
+            {
+                _scene.DrawHudFilterModel(_filterModel, alpha: 15 / 31f);
+            }
+            else if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) || _showScoreboard)
             {
                 _scene.DrawHudFilterModel(_filterModel);
             }

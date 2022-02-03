@@ -44,6 +44,7 @@ namespace MphRead.Formats
         private readonly Scene _scene;
 
         public static CameraSequence? Current { get; set; }
+        public static CameraSequence? Intro { get; set; }
         private static readonly HashSet<int> _cockpitLoops = new HashSet<int>() { 102, 103, 104, 105, 106, 168 };
 
         private CameraSequence(int id, string name, Scene scene,
@@ -69,6 +70,10 @@ namespace MphRead.Formats
                 keyframe.TargetEntity = GetKeyframeRef(keyframe.TargetEntityType, keyframe.TargetEntityId);
                 keyframe.MessageTarget = GetKeyframeRef(keyframe.MessageTargetType, keyframe.MessageTargetId);
                 keyframe.NodeRef = _scene.GetNodeRefByName(keyframe.NodeName);
+                if (keyframe.NodeRef == NodeRef.None)
+                {
+                    keyframe.NodeRef = _scene.GetNodeRefByName("rmMain");
+                }
                 Debug.Assert(_scene.Room == null || keyframe.NodeRef != NodeRef.None);
             }
         }
