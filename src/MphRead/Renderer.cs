@@ -4095,10 +4095,10 @@ namespace MphRead
             _sb.AppendLine(" - Esc closes the viewer");
             // sktodo: show all stats on a separate menu
             _sb.AppendLine("---");
-            _sb.AppendLine($"{GameState.Standings[0]} ({GameState.TeamStandings[0]})");
-            _sb.AppendLine($"{GameState.Standings[1]} ({GameState.TeamStandings[1]})");
-            _sb.AppendLine($"{GameState.Standings[2]} ({GameState.TeamStandings[2]})");
-            _sb.AppendLine($"{GameState.Standings[3]} ({GameState.TeamStandings[3]})");
+            _sb.AppendLine($"{GameState.Standings[0]} ({GameState.TeamStandings[0]}) ({GameState.WinningSlots[0]})");
+            _sb.AppendLine($"{GameState.Standings[1]} ({GameState.TeamStandings[1]}) ({GameState.WinningSlots[1]})");
+            _sb.AppendLine($"{GameState.Standings[2]} ({GameState.TeamStandings[2]}) ({GameState.WinningSlots[2]})");
+            _sb.AppendLine($"{GameState.Standings[3]} ({GameState.TeamStandings[3]}) ({GameState.WinningSlots[3]})");
             _sb.AppendLine("---");
             _sb.AppendLine($"{GameState.Points[0]} / {GameState.Kills[0]} / {GameState.Deaths[0]} " +
                 $"({GameState.TeamPoints[0]} / {GameState.TeamKills[0]} / {GameState.TeamDeaths[0]})");
