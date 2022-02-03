@@ -243,7 +243,7 @@ namespace MphRead.Entities
         public LoadFlags LoadFlags { get; set; }
         public Hunter Hunter { get; private set; }
         public PlayerValues Values { get; private set; }
-        public bool IsPrimeHunter => GameState.PrimeHunter == SlotIndex;
+        public bool IsPrimeHunter => SlotIndex == GameState.PrimeHunter;
 
         private const int _mbTrailSegments = 9 * 2;
         private static readonly Matrix4[,] _mbTrailMatrices = new Matrix4[MaxPlayers, _mbTrailSegments];
