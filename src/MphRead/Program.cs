@@ -122,9 +122,10 @@ namespace MphRead
             string room = "Combat Hall";
             string roomKey = "MP3 PROVING GROUND";
             bool fhRoom = false;
-            var players = new List<(string Hunter, string Recolor)>()
+            bool teams = false;
+            var players = new List<(string Hunter, string Team, string Recolor)>()
             {
-                ("Samus", "0"), ("none", "0"), ("none", "0"), ("none", "0")
+                ("Samus", "orange", "0"), ("none", "green", "0"), ("none", "orange", "0"), ("none", "green", "0")
             };
             var playerIds = new List<int>() { 0, -1, -1, -1 };
             var hunters = new List<string>()
@@ -156,6 +157,10 @@ namespace MphRead
                 "auto-select", "Adventure", "Battle", "Battle Teams", "Survival", "Survival Teams", "Capture",
                 "Bounty", "Bounty Teams", "Nodes", "Nodes Teams", "Defender", "Defender Teams", "Prime Hunter"
             };
+            var teamsModes = new List<string>()
+            {
+                "Battle Teams", "Survival Teams", "Capture", "Bounty Teams", "Nodes Teams", "Defender Teams"
+            };
             var models = new List<(string Name, string Recolor)>();
             var mphVersions = new List<string>() { "A76E0", "AMHE0", "AMHE1", "AMHP0", "AMHP1", "AMHJ0", "AMHJ1", "AMHK0" };
             var fhVersions = new List<string>() { "AMFE0", "AMFP0" };
@@ -178,10 +183,14 @@ namespace MphRead
 
             string PrintPlayer(int index)
             {
-                (string hunter, string recolor) = players[index];
+                (string hunter, string team, string recolor) = players[index];
                 if (hunter == "none")
                 {
                     return "none";
+                }
+                if (teams)
+                {
+                    return $"{hunter}, {team} team";
                 }
                 return $"{hunter}, suit color {recolor}";
             }
@@ -197,6 +206,7 @@ namespace MphRead
 
             while (true)
             {
+                teams = teamsModes.Contains(mode);
                 string mphKey = Paths.MphKey;
                 string fhKey = Paths.FhKey;
                 Console.Clear();
@@ -266,7 +276,9 @@ namespace MphRead
                         }
                         else if (selection >= 2 && selection <= 5)
                         {
-                            players[selection - 2] = ("none", "0");
+                            int index = selection - 2;
+                            string team = index == 0 || index == 2 ? "orange" : "green";
+                            players[index] = ("none", team, "0");
                         }
                         else if (selection == 6)
                         {
@@ -329,7 +341,7 @@ namespace MphRead
                                 id = -1;
                             }
                             playerIds[index] = id;
-                            players[index] = (id == -1 ? "none" : hunters[id], players[index].Recolor);
+                            players[index] = (id == -1 ? "none" : hunters[id], players[index].Team, players[index].Recolor);
                         }
                         else if (selection == 6)
                         {
@@ -444,7 +456,7 @@ namespace MphRead
                                 id = 7;
                             }
                             playerIds[index] = id;
-                            players[index] = (id == -1 ? "none" : hunters[id], players[index].Recolor);
+                            players[index] = (id == -1 ? "none" : hunters[id], players[index].Team, players[index].Recolor);
                         }
                         else if (selection == 6)
                         {
@@ -596,12 +608,32 @@ namespace MphRead
                             {
                                 player = hunter.ToString();
                             }
+                            string team = players[index].Team;
                             string recolor = players[index].Recolor;
-                            if (split.Length > 1 && Int32.TryParse(split[1], out int result))
+                            if (split.Length > 1)
                             {
-                                recolor = Math.Clamp(result, 0, 5).ToString();
+                                if (teams)
+                                {
+                                    string value = split[1].ToLower();
+                                    if (value == "orange" || value == "red")
+                                    {
+                                        team = "orange";
+                                    }
+                                    else if (value == "green")
+                                    {
+                                        team = "green";
+                                    }
+                                    else if (Int32.TryParse(split[1], out int result))
+                                    {
+                                        team = Math.Clamp(result, 0, 1) == 0 ? "orange" : "green";
+                                    }
+                                }
+                                else if (Int32.TryParse(split[1], out int result))
+                                {
+                                    recolor = Math.Clamp(result, 0, 5).ToString();
+                                }
                             }
-                            players[index] = (player, recolor);
+                            players[index] = (player, team, recolor);
                         }
                         prompt = 0;
                     }
@@ -669,10 +701,15 @@ namespace MphRead
                 {
                     for (int i = 0; i < players.Count; i++)
                     {
-                        (string hunter, string recolor) = players[i];
+                        (string hunter, string team, string recolor) = players[i];
                         if (hunter != "none")
                         {
-                            renderer.AddPlayer(Enum.Parse<Hunter>(hunter), Int32.Parse(recolor));
+                            int teamId = -1;
+                            if (teams)
+                            {
+                                teamId = team == "orange" ? 0 : 1;
+                            }
+                            renderer.AddPlayer(Enum.Parse<Hunter>(hunter), Int32.Parse(recolor), teamId);
                         }
                     }
                 }

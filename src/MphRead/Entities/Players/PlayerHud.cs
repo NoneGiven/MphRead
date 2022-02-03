@@ -31,6 +31,7 @@ namespace MphRead.Entities
         private readonly Node[] _damageIndicatorNodes = new Node[8];
 
         private ModelInstance _filterModel = null!;
+        private bool _showScoreboard = false;
 
         public void SetUpHud()
         {
@@ -185,7 +186,7 @@ namespace MphRead.Entities
             {
                 if (!IsAltForm && !IsMorphing && !IsUnmorphing)
                 {
-                    if (_drawIceLayer && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
+                    if (_drawIceLayer && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && !_showScoreboard)
                     {
                         _scene.Layer3BindingId = _scene.IceLayerBindingId;
                     }
@@ -534,6 +535,10 @@ namespace MphRead.Entities
                     _scene.DrawHudObject(_weaponSelectInsts[i], mode: 1);
                 }
             }
+            else if (_showScoreboard)
+            {
+                // sktodo
+            }
             else
             {
                 if (IsAltForm || IsMorphing || IsUnmorphing) // todo: or match state is 2
@@ -557,7 +562,7 @@ namespace MphRead.Entities
 
         public void DrawHudModels()
         {
-            if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
+            if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) || _showScoreboard)
             {
                 _scene.DrawHudFilterModel(_filterModel);
             }

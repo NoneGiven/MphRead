@@ -25,6 +25,15 @@ namespace MphRead.Entities
                 if (!IsBot)
                 {
                     ProcessTouchInput();
+                    // todo: actual pause menu should required pressed
+                    if (!Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && Controls.Pause.IsDown)
+                    {
+                        _showScoreboard = true;
+                    }
+                    else
+                    {
+                        _showScoreboard = false;
+                    }
                 }
                 if (_frozenTimer > 0)
                 {
@@ -90,6 +99,7 @@ namespace MphRead.Entities
             {
                 Flags1 |= PlayerFlags1.NoAimInput;
                 Flags1 |= PlayerFlags1.WeaponMenuOpen;
+                _showScoreboard = false;
             }
             bool selected = false;
             if (!Controls.WeaponMenu.IsDown)
@@ -1920,6 +1930,7 @@ namespace MphRead.Entities
         public Keybind ShockCoil { get; }
         public Keybind OmegaCannon { get; }
         public Keybind AffinitySlot { get; }
+        public Keybind Pause { get; }
 
         public bool InvertAimY { get; }
         public bool InvertAimX { get; }
@@ -1931,7 +1942,7 @@ namespace MphRead.Entities
             Keybind aimUp, Keybind aimDown, Keybind shoot, Keybind zoom, Keybind jump, Keybind morph, Keybind boost, Keybind altAttack,
             Keybind nextWeapon, Keybind prevWeapon, Keybind weaponMenu, Keybind powerBeam, Keybind missile, Keybind voltDriver,
             Keybind battlehammer, Keybind imperialist, Keybind judicator, Keybind magmaul, Keybind shockCoil, Keybind omegaCannon,
-            Keybind affinitySlot)
+            Keybind affinitySlot, Keybind pause)
         {
             MouseAim = true;
             KeyboardAim = true;
@@ -1963,11 +1974,12 @@ namespace MphRead.Entities
             ShockCoil = shockCoil;
             OmegaCannon = omegaCannon;
             AffinitySlot = affinitySlot;
+            Pause = pause;
             All = new[]
             {
                 moveLeft, moveRight, moveUp, moveDown, aimLeft, aimRight, aimUp, aimDown, shoot, zoom, jump, morph, boost,
                 altAttack, nextWeapon, prevWeapon, weaponMenu, powerBeam, missile, voltDriver, battlehammer, imperialist,
-                judicator, magmaul, shockCoil, omegaCannon, affinitySlot
+                judicator, magmaul, shockCoil, omegaCannon, affinitySlot, pause
             };
         }
 
@@ -2018,7 +2030,8 @@ namespace MphRead.Entities
                 magmaul: new Keybind(Keys.D7),
                 shockCoil: new Keybind(Keys.D8),
                 omegaCannon: new Keybind(Keys.D9),
-                affinitySlot: new Keybind(Keys.Unknown)
+                affinitySlot: new Keybind(Keys.Unknown),
+                pause: new Keybind(Keys.Tab)
             );
         }
     }
