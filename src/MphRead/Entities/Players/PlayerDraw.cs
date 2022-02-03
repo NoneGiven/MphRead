@@ -357,7 +357,7 @@ namespace MphRead.Entities
                     float alpha = _curAlpha * pct;
                     if (_health == 0)
                     {
-                        float decrease = 2 * (_respawnTime - _respawnTimer) / 2f; // todo: FPS stuff
+                        float decrease = 2 * (RespawnTime - _respawnTimer) / 2f; // todo: FPS stuff
                         alpha -= decrease;
                     }
                     if (alpha > 0)
@@ -462,7 +462,7 @@ namespace MphRead.Entities
         private void DrawDeathParticles()
         {
             // get current percentage through the first 1/3 of the respawn cooldown
-            float timePct = 1 - ((_respawnTimer - (2 / 3f * _respawnTime)) / (1 / 3f * _respawnTime));
+            float timePct = 1 - ((_respawnTimer - (2 / 3f * RespawnTime)) / (1 / 3f * RespawnTime));
             if (timePct < 0 || timePct > 1)
             {
                 return;

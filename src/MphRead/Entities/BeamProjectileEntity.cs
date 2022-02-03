@@ -1545,7 +1545,11 @@ namespace MphRead.Entities
                 beam.RicochetLossV = ricochetLossV;
                 beam.RicochetWeapon = ricochetWeapon;
                 beam.Equip = equip;
-                // todo: game state max damage stuff (efficiency?)
+                if (owner.Type == EntityType.Player)
+                {
+                    var ownerPlayer = (PlayerEntity)owner;
+                    GameState.BeamDamageMax[ownerPlayer.SlotIndex] += damage;
+                }
                 if (instantAoe)
                 {
                     beam.SpawnIceWave(weapon, chargePct);

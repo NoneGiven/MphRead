@@ -62,7 +62,18 @@ namespace MphRead.Entities
             if (_respawnTimer > 0)
             {
                 _respawnTimer--;
-                // todo: if in survival mode and out of lives, draw HUD message and prevent _respawnTimer from reaching 0
+                if ((_scene.GameMode == GameMode.Survival || _scene.GameMode == GameMode.SurvivalTeams)
+                    && GameState.TeamDeaths[SlotIndex] > GameState.PointGoal)
+                {
+                    if (IsMainPlayer)
+                    {
+                        QueueHudMessage(128, 152, 1 / 1000f, 0, 243); // you lost all your lives! you're out of the game
+                    }
+                    if (_respawnTimer == 0)
+                    {
+                        _respawnTimer = 1;
+                    }
+                }
             }
             if (_health == 0)
             {
@@ -75,12 +86,16 @@ namespace MphRead.Entities
                     {
                         // press FIRE to respawn / press FIRE to begin
                         int messageId = CameraSequence.Current == null ? 244 : 245;
-                        QueueHudMessage(128, 162, 1 / 1000f, 0, messageId);
-                        if (time < 150 * 2) // todo: FPS stuff
+                        if (!Bugfixes.NoStrayRespawnText || time > 0
+                            || _scene.GameMode != GameMode.Survival && _scene.GameMode != GameMode.SurvivalTeams)
                         {
-                            string message = Text.Strings.GetHudMessage(246); // SPAWNING IN %d...
-                            int seconds = (time + 30 * 2) / (30 * 2); // todo: FPS stuff
-                            QueueHudMessage(128, 152, 1 / 1000f, 0, message.Replace("%d", seconds.ToString()));
+                            QueueHudMessage(128, 162, 1 / 1000f, 0, messageId);
+                            if (time < 150 * 2) // todo: FPS stuff
+                            {
+                                string message = Text.Strings.GetHudMessage(246); // SPAWNING IN %d...
+                                int seconds = (time + 30 * 2) / (30 * 2); // todo: FPS stuff
+                                QueueHudMessage(128, 152, 1 / 1000f, 0, message.Replace("%d", seconds.ToString()));
+                            }
                         }
                     }
                     if (!_scene.Multiplayer || Controls.Shoot.IsDown || time <= 0 || IsBot) // todo: or forced

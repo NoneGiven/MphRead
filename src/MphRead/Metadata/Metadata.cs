@@ -737,6 +737,11 @@ namespace MphRead
             "SEQ_FLY_IN_GOREA"
         };
 
+        public static readonly IReadOnlyList<float> DamageLevels = new float[3]
+        {
+            0.75f, 1, 1.25f
+        };
+
         public static ModelMetadata? GetModelByName(string name, MetaDir dir = MetaDir.Models)
         {
             if (name == "doubleDamage_img")

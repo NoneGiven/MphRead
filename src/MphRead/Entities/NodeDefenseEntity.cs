@@ -101,7 +101,7 @@ namespace MphRead.Entities
             else
             {
                 (speed, rotation) = ConstantAcceleration(0.25f, _spinSpeed, maxVelocity: 8 * 30f);
-                GameState.DefenseTime[team] += _scene.FrameTime;
+                GameState.TeamTime[team] += _scene.FrameTime;
             }
             _spinSpeed = speed;
             _curRotation += rotation;

@@ -311,6 +311,7 @@ namespace MphRead
                     // todo: revisit flags
                     player.LoadFlags |= LoadFlags.SlotActive;
                     player.LoadFlags |= LoadFlags.Active;
+                    player.LoadFlags |= LoadFlags.Initial;
                     PlayerEntity.PlayerCount++;
                 }
             }
@@ -2426,6 +2427,7 @@ namespace MphRead
                     _destroyedEntities.Add(entity);
                 }
             }
+            GameState.Update(this);
         }
 
         private void GetDrawItems()

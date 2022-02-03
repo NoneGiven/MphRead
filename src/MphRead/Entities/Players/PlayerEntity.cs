@@ -243,7 +243,7 @@ namespace MphRead.Entities
         public LoadFlags LoadFlags { get; set; }
         public Hunter Hunter { get; private set; }
         public PlayerValues Values { get; private set; }
-        public bool IsPrimeHunter { get; set; } // todo: use game state
+        public bool IsPrimeHunter => GameState.PrimeHunter == SlotIndex;
 
         private const int _mbTrailSegments = 9 * 2;
         private static readonly Matrix4[,] _mbTrailMatrices = new Matrix4[MaxPlayers, _mbTrailSegments];
@@ -363,7 +363,7 @@ namespace MphRead.Entities
         private ushort _timeSinceJumpPad = 0;
         private Vector3 _jumpPadAccel;
 
-        private const ushort _respawnTime = 90 * 2; // todo: FPS stuff
+        public const ushort RespawnTime = 90 * 2; // todo: FPS stuff
 
         private ushort _autofireCooldown = 0;
         private ushort _powerBeamAutofire = 0;
@@ -374,6 +374,7 @@ namespace MphRead.Entities
         private ushort _timeSincePickup = 0;
         private ushort _timeSinceHeal = 0;
         private ushort _respawnTimer = 0;
+        public ushort RespawnTimer => _respawnTimer;
         private ushort _deathCountdown = 0;
         public ushort DeathCountdown => _deathCountdown;
         private ushort _damageInvulnTimer = 0;
@@ -1426,9 +1427,9 @@ namespace MphRead.Entities
                 }
             }
             bool ignoreDamage = false;
-            if (!_scene.Multiplayer && IsBot && attacker == this)
+            if (!_scene.Multiplayer && IsBot && attacker == this || GameState.Teams && !GameState.FriendlyFire
+                && attacker != null && attacker != this && attacker.TeamIndex == TeamIndex)
             {
-                // todo: also ignore if teams are on, friendly fire isn't, and attacker is not null, not self, and is same team as self
                 ignoreDamage = true;
                 damage = 0;
             }
@@ -1439,11 +1440,20 @@ namespace MphRead.Entities
             }
             if (attacker != null && attacker != this && beam != null)
             {
-                // todo: update stats
+                // bugfix?: since double damage was already applied above,
+                // it's possible to increase efficiency with double damage hits
+                GameState.BeamDamageDealt[attacker.SlotIndex] = Math.Min(
+                    GameState.BeamDamageDealt[attacker.SlotIndex] + (int)damage,
+                    GameState.BeamDamageMax[attacker.SlotIndex]
+                );
             }
             if (damage > 0)
             {
-                // todo: apply damage multiplier from settings
+                damage = (uint)(damage * Metadata.DamageLevels[GameState.DamageLevel]);
+                if (damage == 0)
+                {
+                    damage = 1;
+                }
             }
             if (Flags2.TestFlag(PlayerFlags2.Halfturret) && attacker != null && !ignoreDamage)
             {
@@ -1500,7 +1510,7 @@ namespace MphRead.Entities
                 }
                 if (attacker != this)
                 {
-                    // todo: update stats
+                    GameState.DamageCount[attacker.SlotIndex]++;
                     attacker._hidingTimer = 0;
                     _hidingTimer = 0;
                 }
@@ -1517,7 +1527,7 @@ namespace MphRead.Entities
                 {
                     // halfturret, bomb, or direct hit by player (not beam)
                     // --> also if there's no source and no attacker
-                    flags |= DamageFlags.ByPlayer;
+                    flags |= DamageFlags.FromAlt;
                 }
                 _scene.SendMessage(Message.Destroyed, this, null, 0, 0, delay: 1);
                 if (EnemySpawner != null)
@@ -1540,7 +1550,7 @@ namespace MphRead.Entities
                 _deathaltTimer = 0;
                 _cloakTimer = 0;
                 Flags2 &= ~PlayerFlags2.Cloaking;
-                // todo: update kill streak
+                GameState.KillStreak[SlotIndex] = 0;
                 if (IsMainPlayer)
                 {
                     // todo: license info
@@ -1609,13 +1619,13 @@ namespace MphRead.Entities
                     // todo: update SFX
                 }
                 _boostCharge = 0;
-                // todo: update stats
+                GameState.Deaths[SlotIndex]++;
                 if (this == Main && beamType == BeamType.OmegaCannon)
                 {
                     _scene.SetFade(FadeType.FadeInWhite, 90 * (1 / 30f), overwrite: true);
                 }
                 Speed = Vector3.Zero;
-                _respawnTimer = _respawnTime;
+                _respawnTimer = RespawnTime;
                 _timeSinceDead = 0;
                 if (!_scene.Multiplayer)
                 {
@@ -1703,13 +1713,19 @@ namespace MphRead.Entities
                         }
                         if (attacker == this)
                         {
-                            // todo: update suicides
+                            GameState.Suicides[SlotIndex]++;
+                            if (_scene.GameMode == GameMode.Battle || _scene.GameMode == GameMode.BattleTeams)
+                            {
+                                GameState.Points[SlotIndex]--;
+                            }
                         }
                         else
                         {
                             if (attacker.TeamIndex == TeamIndex)
                             {
-                                // update license info, points, kill streak
+                                GameState.FriendlyKills[attacker.SlotIndex]++;
+                                GameState.KillStreak[attacker.SlotIndex] = 0;
+                                // todo: update license info
                                 if (attacker == Main)
                                 {
                                     string nickname = GameState.Nicknames[SlotIndex];
@@ -1727,20 +1743,87 @@ namespace MphRead.Entities
                                     string message = Strings.GetHudMessage(flags.TestFlag(DamageFlags.Headshot) ? 239 : 238);
                                     QueueHudMessage(128, 70, 140, 60 / 30f, 2, message.Replace("%s", nickname));
                                 }
-                                // todo: update points and kill streak
-                                // todo: play voice and draw string for kill streak
-                                // todo: gain health if prime hunter, play voice and draw string
-                                if ((_scene.GameMode == GameMode.Capture || _scene.GameMode == GameMode.Bounty
+                                if (flags.TestFlag(DamageFlags.Headshot))
+                                {
+                                    GameState.HeadshotKills[attacker.SlotIndex]++;
+                                }
+                                GameState.Kills[attacker.SlotIndex]++;
+                                // todo?: the game also updates another kills stat(?) here
+                                if (attacker.IsPrimeHunter)
+                                {
+                                    GameState.KillsAsPrime[attacker.SlotIndex]++;
+                                }
+                                if (beamType <= BeamType.OmegaCannon)
+                                {
+                                    GameState.BeamKills[attacker.SlotIndex, (int)beamType]++;
+                                    // todo: update license info
+                                }
+                                if (GameState.KillStreak[attacker.SlotIndex] < 255)
+                                {
+                                    GameState.KillStreak[attacker.SlotIndex]++;
+                                }
+                                if (GameState.KillStreak[attacker.SlotIndex] == 5)
+                                {
+                                    // todo: play voice
+                                    string message;
+                                    if (attacker.IsMainPlayer)
+                                    {
+                                        message = Strings.GetHudMessage(254); // YOU KILLED 5 IN A ROW!
+                                    }
+                                    else
+                                    {
+                                        string nickname = GameState.Nicknames[attacker.SlotIndex];
+                                        message = Strings.GetHudMessage(255); // %s KILLED 5 IN A ROW!
+                                        message = message.Replace("%s", nickname);
+                                    }
+                                    QueueHudMessage(128, 70, 140, 90 / 30f, 2, message);
+                                }
+                                if (_scene.GameMode == GameMode.PrimeHunter)
+                                {
+                                    if (attacker.IsPrimeHunter)
+                                    {
+                                        attacker.GainHealth(70);
+                                    }
+                                    else if (attacker.Health > 0 && (GameState.PrimeHunter == -1 || IsPrimeHunter))
+                                    {
+                                        GameState.PrimeHunter = attacker.SlotIndex;
+                                        GameState.PrimesKilled[attacker.SlotIndex]++;
+                                        if (Main.IsPrimeHunter)
+                                        {
+                                            // todo: play voice
+                                        }
+                                        string nickname = GameState.Nicknames[attacker.SlotIndex];
+                                        string message = Strings.GetHudMessage(241); // %s is the new prime hunter!
+                                        QueueHudMessage(128, 70, 140, 60 / 90, 2, message.Replace("%s", nickname));
+                                    }
+                                }
+                                else if (_scene.GameMode == GameMode.Battle || _scene.GameMode == GameMode.BattleTeams)
+                                {
+                                    if (GameState.Points[attacker.SlotIndex] < 99999)
+                                    {
+                                        GameState.Points[attacker.SlotIndex]++;
+                                    }
+                                }
+                                else if ((_scene.GameMode == GameMode.Capture || _scene.GameMode == GameMode.Bounty
                                     || _scene.GameMode == GameMode.BountyTeams) && OctolithFlag != null)
                                 {
                                     GameState.OctolithStops[attacker.SlotIndex]++;
                                 }
+                                // bugfix?: this flag is also set for suicides/environmental damage/etc.
+                                if (flags.TestFlag(DamageFlags.FromAlt))
+                                {
+                                    GameState.AltDamageCount[attacker.SlotIndex]++;
+                                }
                             }
                         }
                     }
-                    else
+                    else // no attacker
                     {
-                        // todo: update suicides
+                        GameState.Suicides[SlotIndex]++;
+                        if (_scene.GameMode == GameMode.Battle || _scene.GameMode == GameMode.BattleTeams)
+                        {
+                            GameState.Points[SlotIndex]--;
+                        }
                     }
                     if (IsAltForm || IsMorphing)
                     {
@@ -1757,7 +1840,7 @@ namespace MphRead.Entities
                     }
                     if (IsPrimeHunter)
                     {
-                        IsPrimeHunter = false;
+                        GameState.PrimeHunter = -1;
                         QueueHudMessage(128, 70, 140, 90 / 30f, 2, 242); // the prime hunter is dead!
                     }
                 }
@@ -2049,7 +2132,7 @@ namespace MphRead.Entities
         Deathalt = 0x20,
         Burn = 0x40,
         NoSfx = 0x80,
-        ByPlayer = 0x100
+        FromAlt = 0x100
     }
 
     [Flags]
