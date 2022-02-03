@@ -1794,7 +1794,7 @@ namespace MphRead.Entities
                                         }
                                         string nickname = GameState.Nicknames[attacker.SlotIndex];
                                         string message = Strings.GetHudMessage(241); // %s is the new prime hunter!
-                                        QueueHudMessage(128, 70, 140, 60 / 90, 2, message.Replace("%s", nickname));
+                                        QueueHudMessage(128, 70, 140, 90 / 30f, 2, message.Replace("%s", nickname));
                                     }
                                 }
                                 else if (_scene.GameMode == GameMode.Battle || _scene.GameMode == GameMode.BattleTeams)

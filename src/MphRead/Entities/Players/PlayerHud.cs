@@ -847,11 +847,11 @@ namespace MphRead.Entities
             return current > 0;
         }
 
-        private int _textSpacingY = 0;
+        private float _textSpacingY = 0;
 
         // todo: size/shape (seemingly only used by the bottom screen rank, which is 16x16/square instead of 8x8/square)
         private Vector2 DrawText2D(float x, float y, TextType type, int palette, ReadOnlySpan<char> text,
-            ColorRgba? color = null, float alpha = 1)
+            ColorRgba? color = null, float alpha = 1, float fontSpacing = -1)
         {
             int length = 0;
             for (int i = 0; i < text.Length; i++)
@@ -867,7 +867,7 @@ namespace MphRead.Entities
                 return new Vector2(x, y);
             }
             _textInst.Alpha = alpha;
-            int spacingY = _textSpacingY == 0 ? 12 : _textSpacingY;
+            float spacingY = _textSpacingY == 0 ? (fontSpacing == -1 ? 12 : fontSpacing) : _textSpacingY;
             if (type == TextType.LeftAlign)
             {
                 float startX = x;
@@ -1052,7 +1052,7 @@ namespace MphRead.Entities
                 {
                     if ((category & existing.Category & 14) != 0)
                     {
-                        existing.Position = existing.Position.AddY(-lineCount * fontSize);
+                        existing.Position = existing.Position.AddY(-lineCount * existing.FontSize);
                     }
                     else if (existing.Position.Y == y)
                     {
@@ -1163,7 +1163,7 @@ namespace MphRead.Entities
                 {
                     // todo: support font size
                     DrawText2D(message.Position.X, message.Position.Y, message.TextType, palette: 0,
-                        message.Text, message.Color, message.Alpha);
+                        message.Text, message.Color, message.Alpha, fontSpacing: message.FontSize);
                 }
             }
         }

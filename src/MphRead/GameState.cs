@@ -119,7 +119,7 @@ namespace MphRead
                 if (PlayerEntity.Main.LoadFlags.TestAny(LoadFlags.Active) && opponents == 1 && lastTeam != -1)
                 {
                     int teamDeaths = TeamDeaths[lastTeam];
-                    if (teamDeaths != prevTeamDeaths[lastTeam] && teamDeaths == PointGoal )
+                    if (teamDeaths != prevTeamDeaths[lastTeam] && teamDeaths == PointGoal)
                     {
                         // todo: play voice
                     }
