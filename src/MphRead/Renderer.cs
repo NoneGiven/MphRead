@@ -143,6 +143,7 @@ namespace MphRead
         private float _frameTime = 0;
         private float _elapsedTime = 0;
         private ulong _frameCount = 0;
+        private ulong _liveFrames = 0;
         private bool _frameAdvanceOn = false;
         private bool _frameAdvanceLastFrame = false;
         public bool FrameAdvance => _frameAdvanceOn;
@@ -170,6 +171,8 @@ namespace MphRead
         public bool ShowAllNodes => _showAllNodes;
         public float FrameTime => _frameTime;
         public ulong FrameCount => _frameCount;
+        public ulong LiveFrames => _liveFrames;
+        public float ElapsedTime => _elapsedTime;
         public VolumeDisplay ShowVolumes => _showVolumes;
         public bool ShowForceFields => _showVolumes != VolumeDisplay.Portal;
         public float KillHeight => _killHeight;
@@ -1067,6 +1070,7 @@ namespace MphRead
                 if (GameState.MatchState == MatchState.InProgress)
                 {
                     ProcessMessageQueue();
+                    _liveFrames++;
                 }
                 _elapsedTime += 1 / 60f; // todo: FPS stuff
                 _frameCount++;

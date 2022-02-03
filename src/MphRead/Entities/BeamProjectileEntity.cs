@@ -1170,7 +1170,7 @@ namespace MphRead.Entities
             }
             int count = 4 * segments;
 
-            int frames = (int)_scene.FrameCount / 2;
+            int frames = (int)_scene.LiveFrames / 2;
             uint rng = (uint)(frames + (int)(Position.X * 4096));
             int index = frames & 15;
             float halfRange = range / 2;

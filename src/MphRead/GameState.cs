@@ -147,6 +147,7 @@ namespace MphRead
         }
 
         private static bool _stateChanged = false;
+        private static float _matchEndTime = 0;
 
         public static void ProcessFrame(Scene scene)
         {
@@ -198,6 +199,8 @@ namespace MphRead
                     MatchState = MatchState.GameOver;
                     MatchTime = 90 / 30f;
                     scene.SetFade(FadeType.None, length: 0, overwrite: true);
+                    _stateChanged = true;
+                    _matchEndTime = scene.ElapsedTime;
                     // todo: stop SFX, update music
                 }
             }
