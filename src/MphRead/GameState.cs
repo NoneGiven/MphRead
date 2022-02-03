@@ -150,10 +150,10 @@ namespace MphRead
 
         public static void ProcessFrame(Scene scene)
         {
-            if (scene.Multiplayer && CameraSequence.Intro != null)
+            if (scene.Multiplayer && CameraSequence.Current?.IsIntro == true)
             {
-                Debug.Assert(CameraSequence.Intro.CamInfoRef == PlayerEntity.Main.CameraInfo);
-                CameraSequence.Intro.Process();
+                Debug.Assert(CameraSequence.Current.CamInfoRef == PlayerEntity.Main.CameraInfo);
+                CameraSequence.Current.Process();
             }
             if (MatchState == MatchState.InProgress)
             {
@@ -196,7 +196,7 @@ namespace MphRead
                     }
                     // todo: 1P time up? isn't that handled by death countdown etc.?
                     MatchState = MatchState.GameOver;
-                    MatchTime = 180 / 30f;
+                    MatchTime = 90 / 30f;
                     // todo: stop SFX, update music
                 }
             }
@@ -210,13 +210,24 @@ namespace MphRead
                 if (MatchTime == 0)
                 {
                     MatchState = MatchState.Ending;
-                    MatchTime = 300 / 30f;
+                    MatchTime = 150 / 30f;
                     // todo: update license info, stop SFX
                 }
             }
             else if (MatchState == MatchState.Ending)
             {
-                // sktodo: start cam seq if not already started
+                if (scene.Multiplayer && CameraSequence.Current == null && CameraSequence.Intro != null)
+                {
+                    CameraSequence.Intro.SetUp(PlayerEntity.Main.CameraInfo, transitionTime: 0);
+                    PlayerEntity.Main.CameraInfo.Update();
+                    CameraSequence.Intro.Flags |= CamSeqFlags.Loop;
+                }
+                // todo: more stuff?
+                if (MatchTime == 0)
+                {
+                    MatchTime = -1;
+                    scene.SetFade(FadeType.FadeOutBlack, 20 / 30f, overwrite: true, exitAfterFade: true);
+                }
             }
         }
 

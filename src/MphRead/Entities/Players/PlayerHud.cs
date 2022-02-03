@@ -536,7 +536,7 @@ namespace MphRead.Entities
             {
                 return;
             }
-            else if (CameraSequence.Intro != null)
+            else if (CameraSequence.Current?.IsIntro == true)
             {
                 // sktodo: draw laws of battle
                 DrawQueuedHudMessages();
@@ -578,7 +578,7 @@ namespace MphRead.Entities
 
         public void DrawHudModels()
         {
-            if (CameraSequence.Intro != null)
+            if (CameraSequence.Current?.IsIntro == true)
             {
                 _scene.DrawHudFilterModel(_filterModel, alpha: 15 / 31f);
             }

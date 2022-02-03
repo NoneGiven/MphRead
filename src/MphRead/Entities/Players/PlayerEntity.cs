@@ -734,10 +734,9 @@ namespace MphRead.Entities
             }
             else
             {
-                if (IsMainPlayer && _scene.Multiplayer && CameraSequence.Intro != null)
+                if (IsMainPlayer && _scene.Multiplayer && CameraSequence.Current?.IsIntro == true)
                 {
-                    CameraSequence.Intro.End();
-                    CameraSequence.Intro = null;
+                    CameraSequence.Current.End();
                 }
                 CameraInfo.Reset();
                 CameraInfo.Position = Position;

@@ -190,13 +190,16 @@ namespace MphRead
         private readonly KeyboardState _keyboardState;
         private readonly MouseState _mouseState;
         private readonly Action<string> _setTitle;
+        private readonly Action _close;
 
-        public Scene(Vector2i size, KeyboardState keyboardState, MouseState mouseState, Action<string> setTitle)
+        public Scene(Vector2i size, KeyboardState keyboardState, MouseState mouseState,
+            Action<string> setTitle, Action close)
         {
             Size = size;
             _keyboardState = keyboardState;
             _mouseState = mouseState;
             _setTitle = setTitle;
+            _close = close;
             Read.ClearCache();
             GameState.Reset();
             PlayerEntity.Construct(this);
@@ -2562,8 +2565,9 @@ namespace MphRead
         private float _fadeStart = 0;
         private float _fadeLength = 0;
         private float _fadePercent = 0;
+        private bool _exitAfterFade = false; // skdebug
 
-        public void SetFade(FadeType type, float length, bool overwrite)
+        public void SetFade(FadeType type, float length, bool overwrite, bool exitAfterFade = false)
         {
             if (!overwrite && _fadeType != FadeType.None)
             {
@@ -2601,6 +2605,7 @@ namespace MphRead
             }
             _fadeStart = _elapsedTime;
             _fadeLength = length;
+            _exitAfterFade = exitAfterFade;
         }
 
         private void UpdateFade()
@@ -2620,6 +2625,11 @@ namespace MphRead
 
         private void EndFade()
         {
+            if (_exitAfterFade)
+            {
+                _close.Invoke();
+                return;
+            }
             if (_fadeType == FadeType.FadeOutInBlack)
             {
                 SetFade(FadeType.FadeInBlack, _fadeLength, overwrite: true);
@@ -4383,6 +4393,9 @@ namespace MphRead
             Scene = new Scene(Size, KeyboardState, MouseState, (string title) =>
             {
                 Title = title;
+            }, () =>
+            {
+                Close();
             });
         }
 
