@@ -236,8 +236,8 @@ namespace MphRead.Entities
         private ushort _altAttackTime = 0;
         private float _altSpinSpeed = 0;
 
-        public Team Team { get; private set; } = Team.None;
-        public int TeamIndex { get; private set; }
+        public Team Team { get; set; } = Team.None;
+        public int TeamIndex { get; set; } = -1;
         public int SlotIndex { get; private set; }
         public bool IsBot { get; set; }
         public LoadFlags LoadFlags { get; set; }
@@ -552,7 +552,10 @@ namespace MphRead.Entities
             _abilities = AbilityFlags.None;
             _field43A = 0;
             _field450 = 0;
-            TeamIndex = SlotIndex; // todo: use game state and set Team
+            if (TeamIndex == -1)
+            {
+                TeamIndex = SlotIndex;
+            }
             _field4E8 = Vector3.Zero;
             _modelTransform = Matrix4.Identity;
             _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff (use floats)

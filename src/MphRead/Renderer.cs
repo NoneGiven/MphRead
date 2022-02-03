@@ -233,6 +233,21 @@ namespace MphRead
             }
             SceneSetup.LoadItemResources(this);
             SceneSetup.LoadEnemyResources(this);
+            if (GameMode == GameMode.BattleTeams || GameMode == GameMode.SurvivalTeams || GameMode == GameMode.Capture
+                || GameMode == GameMode.BountyTeams || GameMode == GameMode.NodesTeams || GameMode == GameMode.DefenderTeams)
+            {
+                GameState.Teams = true;
+                for (int i = 0; i < 4; i++)
+                {
+                    PlayerEntity player = PlayerEntity.Players[i];
+                    if (player.LoadFlags.TestFlag(LoadFlags.Active))
+                    {
+                        player.Team = player.TeamIndex == 0 ? Team.Orange : Team.Green;
+                        // todo: allow other colors (and I guess disable the emission then too)
+                        player.Recolor = player.TeamIndex == 0 ? 4 : 5;
+                    }
+                }
+            }
             _light1Vector = meta.Light1Vector;
             _light1Color = new Vector3(
                 meta.Light1Color.Red / 31.0f,
@@ -296,13 +311,9 @@ namespace MphRead
             InitEntity(entity);
         }
 
-        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null)
+        public void AddPlayer(Hunter hunter, int recolor = 0, int team = -1, Vector3? position = null)
         {
-            if (_roomLoaded)
-            {
-                // todo?: add this functionality back
-            }
-            else
+            if (!_roomLoaded)
             {
                 var player = PlayerEntity.Create(hunter, recolor);
                 if (player != null)
@@ -312,6 +323,11 @@ namespace MphRead
                     player.LoadFlags |= LoadFlags.SlotActive;
                     player.LoadFlags |= LoadFlags.Active;
                     player.LoadFlags |= LoadFlags.Initial;
+                    if (team != -1)
+                    {
+                        Debug.Assert(team == 0 || team == 1);
+                        player.TeamIndex = team;
+                    }
                     PlayerEntity.PlayerCount++;
                 }
             }
@@ -4077,6 +4093,26 @@ namespace MphRead
             _sb.AppendLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
             _sb.AppendLine(" - Ctrl+U then enter \"model_id\" to unload");
             _sb.AppendLine(" - Esc closes the viewer");
+            // sktodo: show all stats on a separate menu
+            _sb.AppendLine("---");
+            _sb.AppendLine($"{GameState.Standings[0]} ({GameState.TeamStandings[0]})");
+            _sb.AppendLine($"{GameState.Standings[1]} ({GameState.TeamStandings[1]})");
+            _sb.AppendLine($"{GameState.Standings[2]} ({GameState.TeamStandings[2]})");
+            _sb.AppendLine($"{GameState.Standings[3]} ({GameState.TeamStandings[3]})");
+            _sb.AppendLine("---");
+            _sb.AppendLine($"{GameState.Points[0]} / {GameState.Kills[0]} / {GameState.Deaths[0]} " +
+                $"({GameState.TeamPoints[0]} / {GameState.TeamKills[0]} / {GameState.TeamDeaths[0]})");
+            _sb.AppendLine($"{GameState.Points[1]} / {GameState.Kills[1]} / {GameState.Deaths[1]} " +
+                $"({GameState.TeamPoints[1]} / {GameState.TeamKills[1]} / {GameState.TeamDeaths[1]})");
+            _sb.AppendLine($"{GameState.Points[2]} / {GameState.Kills[2]} / {GameState.Deaths[2]} " +
+                $"({GameState.TeamPoints[2]} / {GameState.TeamKills[2]} / {GameState.TeamDeaths[2]})");
+            _sb.AppendLine($"{GameState.Points[3]} / {GameState.Kills[3]} / {GameState.Deaths[3]} " +
+                $"({GameState.TeamPoints[3]} / {GameState.TeamKills[3]} / {GameState.TeamDeaths[3]})");
+            _sb.AppendLine("---");
+            _sb.AppendLine($"{TimeSpan.FromSeconds(GameState.Time[0])} ({TimeSpan.FromSeconds(GameState.TeamTime[0])})");
+            _sb.AppendLine($"{TimeSpan.FromSeconds(GameState.Time[1])} ({TimeSpan.FromSeconds(GameState.TeamTime[1])})");
+            _sb.AppendLine($"{TimeSpan.FromSeconds(GameState.Time[2])} ({TimeSpan.FromSeconds(GameState.TeamTime[2])})");
+            _sb.AppendLine($"{TimeSpan.FromSeconds(GameState.Time[3])} ({TimeSpan.FromSeconds(GameState.TeamTime[3])})");
         }
 
         private void OutputGetEntityInfo()
@@ -4375,9 +4411,9 @@ namespace MphRead
             Scene.AddModel(name, recolor, firstHunt, dir, pos);
         }
 
-        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null)
+        public void AddPlayer(Hunter hunter, int recolor = 0, int team = -1, Vector3? position = null)
         {
-            Scene.AddPlayer(hunter, recolor, position);
+            Scene.AddPlayer(hunter, recolor, team, position);
         }
 
         protected override void OnLoad()

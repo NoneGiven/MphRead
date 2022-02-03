@@ -22,7 +22,7 @@ namespace MphRead.Entities
         private float _curRotation = 0;
         private float _spinSpeed = 0;
         private bool _contested = false;
-        private bool _bit1 = false;
+        private bool _inProgress = false;
 
         private readonly Material _terminalMat = null!;
         private readonly Material _ringMat = null!;
@@ -142,13 +142,13 @@ namespace MphRead.Entities
                         occupiedByAny = true;
                         slot = player.SlotIndex;
                     }
-                    if (_occupyingTeam == 4 && _currentTeam != player.TeamIndex)
+                    else if (_occupyingTeam == 4 && _currentTeam != player.TeamIndex)
                     {
                         _occupiedBy[player.SlotIndex] = true;
                         occupiedByAny = true;
                         _occupyingTeam = player.TeamIndex;
                         _progress = 0;
-                        _bit1 = false;
+                        _inProgress = false;
                         slot = player.SlotIndex;
                     }
                     else if (_occupyingTeam != player.TeamIndex)
@@ -171,11 +171,11 @@ namespace MphRead.Entities
                 {
                     if (_occupiedBy[PlayerEntity.Main.SlotIndex])
                     {
-                        if (!_bit1 && _progress >= 10 / 30f)
+                        if (!_inProgress && _progress >= 10 / 30f)
                         {
                             // todo: update music
                             value1 = 1;
-                            _bit1 = true;
+                            _inProgress = true;
                         }
                         // todo: update music
                     }
@@ -199,11 +199,11 @@ namespace MphRead.Entities
                     {
                         value1 = 3;
                     }
-                    _currentTeam = 4;
-                    _progress = 0;
-                    _bit1 = false;
-                    (_spinSpeed, rotation) = ConstantAcceleration(-0.15f, _spinSpeed, minVelocity: 0);
                 }
+                _occupyingTeam = 4;
+                _progress = 0;
+                _inProgress = false;
+                (_spinSpeed, rotation) = ConstantAcceleration(-0.15f, _spinSpeed, minVelocity: 0);
             }
             int nodeCount = 0;
             int team = _currentTeam;
@@ -264,13 +264,17 @@ namespace MphRead.Entities
             {
                 _curRotation -= 360;
             }
-            if (_blinkTimer > 0)
+            if (!occupiedByAny)
             {
-                _blinkTimer -= _scene.FrameTime;
+                _blinkTimer = 0;
             }
-            if (occupiedByAny && Fixed.ToInt(_curRotation) / 61440 != Fixed.ToInt(prevRotation) / 61440)
+            else if (Fixed.ToInt(_curRotation) / 61440 != Fixed.ToInt(prevRotation) / 61440)
             {
                 _blinkTimer = 1 / 30f;
+            }
+            else if (_blinkTimer > 0)
+            {
+                _blinkTimer -= _scene.FrameTime;
             }
         }
 
@@ -305,7 +309,7 @@ namespace MphRead.Entities
             }
             _currentTeam = _occupyingTeam;
             _progress = 0;
-            _bit1 = false;
+            _inProgress = false;
             _occupyingTeam = 4;
             _scoreTimer = 150 / 30f;
             if (_currentTeam == PlayerEntity.Main.TeamIndex)

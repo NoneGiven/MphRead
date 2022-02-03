@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MphRead.Entities;
 
 namespace MphRead
@@ -7,6 +8,7 @@ namespace MphRead
         public static int ActivePlayers { get; set; } = 0;
         public static string[] Nicknames { get; } = new string[4] { "Player1", "Player2", "Player3", "Player4" };
         public static int[] Standings { get; } = new int[4];
+        public static int[] TeamStandings { get; } = new int[4];
         public static int[] WinningSlots { get; } = new int[4]; // sktodo: what is this?
         public static int PrimeHunter { get; set; } = -1;
 
@@ -47,6 +49,7 @@ namespace MphRead
         public static void Update(Scene scene)
         {
             GameMode mode = scene.GameMode;
+            IReadOnlyList<PlayerEntity> players = PlayerEntity.Players;
             int[] prevTeamPoints = new int[4];
             int[] prevTeamDeaths = new int[4];
             for (int i = 0; i < 4; i++)
@@ -63,7 +66,7 @@ namespace MphRead
             }
             for (int i = 0; i < 4; i++)
             {
-                PlayerEntity player = PlayerEntity.Players[i];
+                PlayerEntity player = players[i];
                 if (!player.LoadFlags.TestFlag(LoadFlags.Initial))
                 {
                     continue;
@@ -98,7 +101,7 @@ namespace MphRead
                 int lastTeam = -1;
                 for (int i = 0; i < 4; i++)
                 {
-                    PlayerEntity player = PlayerEntity.Players[i];
+                    PlayerEntity player = players[i];
                     if (!player.LoadFlags.TestAny(LoadFlags.Active))
                     {
                         continue;
@@ -126,7 +129,245 @@ namespace MphRead
                 }
             }
             ActivePlayers = 0;
-            // skhere
+            if (Teams)
+            {
+                int a = 0;
+                for (int t = 0; t < 2; t++)
+                {
+                    for (int p = 0; p < 4; p++)
+                    {
+                        PlayerEntity player = players[p];
+                        if (player.TeamIndex == t)
+                        {
+                            Standings[p] = 3;
+                            if (player.LoadFlags.TestFlag(LoadFlags.Active))
+                            {
+                                WinningSlots[a++] = p;
+                                ActivePlayers++;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                int a = 0;
+                for (int p = 0; p < 4; p++)
+                {
+                    Standings[p] = 3;
+                    if (players[p].LoadFlags.TestFlag(LoadFlags.Active))
+                    {
+                        WinningSlots[a++] = p;
+                        ActivePlayers++;
+                    }
+                }
+            }
+            for (int index = 0; index < ActivePlayers; index++)
+            {
+                for (int nextIndex = index + 1; nextIndex < ActivePlayers; nextIndex++)
+                {
+                    int slot = WinningSlots[index];
+                    int nextSlot = WinningSlots[nextIndex];
+                    int teamIndex = players[slot].TeamIndex;
+                    int nextTeamIndex = players[nextSlot].TeamIndex;
+                    // sktodo?: the game passes team_ids[wslot/nslot] instead of the player fields to CompareTeams
+                    if (Teams && teamIndex != nextTeamIndex && CompareTeams(teamIndex, nextTeamIndex, mode) < 0
+                        || ComparePlayers(slot, nextSlot, mode) < 0)
+                    {
+                        WinningSlots[index] = nextSlot;
+                        WinningSlots[nextIndex] = slot;
+                    }
+                }
+            }
+            if (Teams)
+            {
+                int v47 = 0;
+                int v48 = CompareTeams(0, 1, mode);
+                int[] v57 = new int[2];
+                if (v48 <= 0)
+                {
+                    v57[0] = v48 != 0 ? 1 : 0;
+                    v57[1] = 0;
+                }
+                else
+                {
+                    v57[0] = 0;
+                    v57[1] = 1;
+                }
+                for (int i = 0; i < ActivePlayers - 1; i++)
+                {
+                    int slot = WinningSlots[i];
+                    int nextSlot = WinningSlots[i + 1];
+                    int teamIndex = players[slot].TeamIndex;
+                    Standings[slot] = v57[teamIndex];
+                    TeamStandings[slot] = v47;
+                    if (teamIndex != players[nextSlot].TeamIndex)
+                    {
+                        if (ComparePlayers(slot, nextSlot, mode) != 0)
+                        {
+                            v47++;
+                        }
+                    }
+                    else
+                    {
+                        v47 = 0;
+                    }
+                }
+                int index = ActivePlayers - 1;
+                Standings[index] = v57[players[WinningSlots[index]].TeamIndex];
+                TeamStandings[index] = v47;
+            }
+            else
+            {
+                int index;
+                int v47 = 0;
+                for (index = 0; index < ActivePlayers - 1; index++)
+                {
+                    int slot = WinningSlots[index];
+                    Standings[slot] = v47;
+                    if (ComparePlayers(slot, WinningSlots[index + 1], mode) != 0)
+                    {
+                        v47 = index + 1;
+                    }
+                }
+                Standings[WinningSlots[index]] = v47;
+            }
+            // todo: update license info
+        }
+
+        private static int ComparePlayers(int slot1, int slot2, GameMode mode)
+        {
+            int points1 = Points[slot1];
+            int points2 = Points[slot2];
+            float time1 = Time[slot1];
+            float time2 = Time[slot2];
+            int deaths1 = Deaths[slot1];
+            int deaths2 = Deaths[slot2];
+            int kills1 = Kills[slot1];
+            int kills2 = Kills[slot2];
+            if (mode == GameMode.Battle || mode == GameMode.BattleTeams)
+            {
+                if (points1 == points2 && deaths1 == deaths2)
+                {
+                    return 0;
+                }
+                if (points1 < points2 || points1 == points2 && deaths1 > deaths2)
+                {
+                    return -1;
+                }
+                return 1;
+            }
+            if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
+            {
+                if (time1 == time2 && deaths1 == deaths2)
+                {
+                    return 0;
+                }
+                if (time1 < time2 || time1 == time2 && deaths1 > deaths2)
+                {
+                    return -1;
+                }
+                return 1;
+            }
+            if (mode == GameMode.Defender || mode == GameMode.DefenderTeams)
+            {
+                if (time1 == time2 && kills1 == kills2)
+                {
+                    return 0;
+                }
+                if (time1 < time2 || time1 == time2 && kills1 < kills2)
+                {
+                    return -1;
+                }
+                return 1;
+            }
+            if (mode == GameMode.Capture || mode == GameMode.Nodes || mode == GameMode.NodesTeams
+                || mode == GameMode.Bounty || mode == GameMode.BountyTeams)
+            {
+                if (points1 == points2 && kills1 == kills2)
+                {
+                    return 0;
+                }
+                if (points1 < points2 || points1 == points2 && kills1 < kills2)
+                {
+                    return -1;
+                }
+                return 1;
+            }
+            if (mode == GameMode.PrimeHunter)
+            {
+                if (time1 == time2 && kills1 == kills2)
+                {
+                    return 0;
+                }
+                if (time1 < time2 || time1 == time2 && kills1 < kills2)
+                {
+                    return -1;
+                }
+                return 1;
+            }
+            return 0;
+        }
+
+        private static int CompareTeams(int slot1, int slot2, GameMode mode)
+        {
+            int points1 = TeamPoints[slot1];
+            int points2 = TeamPoints[slot2];
+            float time1 = TeamTime[slot1];
+            float time2 = TeamTime[slot2];
+            int deaths1 = TeamDeaths[slot1];
+            int deaths2 = TeamDeaths[slot2];
+            int kills1 = TeamKills[slot1];
+            int kills2 = TeamKills[slot2];
+            if (mode == GameMode.BattleTeams)
+            {
+                if (points1 == points2 && deaths1 == deaths2)
+                {
+                    return 0;
+                }
+                if (points1 < points2 || points1 == points2 && deaths1 > deaths2)
+                {
+                    return -1;
+                }
+                return 1;
+            }
+            if (mode == GameMode.SurvivalTeams)
+            {
+                if (time1 == time2 && deaths1 == deaths2)
+                {
+                    return 0;
+                }
+                if (time1 < time2 || time1 == time2 && deaths1 > deaths2)
+                {
+                    return -1;
+                }
+                return 1;
+            }
+            if (mode == GameMode.DefenderTeams)
+            {
+                if (time1 == time2 && kills1 == kills2)
+                {
+                    return 0;
+                }
+                if (time1 < time2 || time1 == time2 && kills1 < kills2)
+                {
+                    return -1;
+                }
+                return 1;
+            }
+            if (mode == GameMode.Capture || mode == GameMode.NodesTeams || mode == GameMode.BattleTeams)
+            {
+                if (points1 == points2 && kills1 == kills2)
+                {
+                    return 0;
+                }
+                if (points1 < points2 || points1 == points2 && kills1 < kills2)
+                {
+                    return -1;
+                }
+                return 1;
+            }
+            return 0;
         }
     }
 }
