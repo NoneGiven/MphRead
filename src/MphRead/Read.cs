@@ -18,6 +18,12 @@ namespace MphRead
         private static readonly Dictionary<string, Model> _modelCache = new Dictionary<string, Model>();
         private static readonly Dictionary<string, Model> _fhModelCache = new Dictionary<string, Model>();
 
+        public static void ClearCache()
+        {
+            _modelCache.Clear();
+            _fhModelCache.Clear();
+        }
+
         public static ModelInstance GetModelInstance(string name, bool firstHunt = false,
             MetaDir dir = MetaDir.Models, bool noCache = false)
         {

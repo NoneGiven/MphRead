@@ -193,7 +193,7 @@ namespace MphRead.Entities
 
         // todo: these settings can change
         public static int MainPlayerIndex { get; set; } = 0;
-        public static int PlayerCount { get; set; } = 0; // todo: update this
+        public static int PlayerCount { get; set; } = 0;
         public static int MaxPlayers { get; set; } = 4;
         public static int PlayersCreated { get; set; } = 0;
         public static PlayerEntity Main => Players[MainPlayerIndex];
@@ -437,6 +437,16 @@ namespace MphRead.Entities
                     _players[i] = new PlayerEntity(i, scene);
                 }
             }
+        }
+
+        public static void Reset()
+        {
+            for (int i = 0; i < _players.Length; i++)
+            {
+                _players[i] = null!;
+            }
+            PlayerCount = 0;
+            PlayersCreated = 0;
         }
 
         public static PlayerEntity? Create(Hunter hunter, int recolor)
@@ -824,7 +834,7 @@ namespace MphRead.Entities
             if (respawn && (IsMainPlayer || _scene.Multiplayer))
             {
                 // spawnEffectMP or spawnEffect
-                int effectId = _scene.Multiplayer && _scene.PlayerCount > 2 ? 33 : 31;
+                int effectId = _scene.Multiplayer && PlayerCount > 2 ? 33 : 31;
                 _scene.SpawnEffect(effectId, Vector3.UnitX, Vector3.UnitY, Position);
             }
         }

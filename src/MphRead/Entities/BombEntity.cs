@@ -72,7 +72,7 @@ namespace MphRead.Entities
             else if (BombType == BombType.MorphBall)
             {
                 Countdown = 43 * 2;
-                effectId = _scene.Multiplayer && _scene.PlayerCount > 2 ? 119 : 9; // bombStartMP or bombStart
+                effectId = _scene.Multiplayer && PlayerEntity.PlayerCount > 2 ? 119 : 9; // bombStartMP or bombStart
             }
             if (effectId != 0)
             {

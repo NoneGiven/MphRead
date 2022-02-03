@@ -140,7 +140,7 @@ namespace MphRead.Entities
                 {
                     // todo: draw string if player radar setting is on
                     // else...
-                    int revealTime = (_scene.PlayerCount > 2 ? 600 : 300) * 2; // todo: FPS stuff
+                    int revealTime = (PlayerCount > 2 ? 600 : 300) * 2; // todo: FPS stuff
                     Vector3 moved = Position - IdlePosition;
                     if (moved.LengthSquared >= 25)
                     {
@@ -1751,11 +1751,11 @@ namespace MphRead.Entities
             int count = 0;
             if (_scene.GameMode != GameMode.Survival && _scene.GameMode != GameMode.SurvivalTeams)
             {
-                if (_scene.PlayerCount > 3)
+                if (PlayerCount > 3)
                 {
                     count = 900 * 2 - _timeSinceDead;
                 }
-                else if (_scene.PlayerCount > 2)
+                else if (PlayerCount > 2)
                 {
                     count = 600 * 2 - _timeSinceDead;
                 }

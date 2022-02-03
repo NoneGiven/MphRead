@@ -523,17 +523,26 @@ namespace MphRead.Entities
 
         public void DrawHudObjects()
         {
-            if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true)
+            if (GameState.MatchState == MatchState.GameOver)
+            {
+                string text = Strings.GetHudMessage(219); // GAME OVER
+                DrawText2D(128, 40, TextType.Centered, 0, text, new ColorRgba(0x3FEF), fontSpacing: 8);
+            }
+            else if (GameState.MatchState == MatchState.Ending)
+            {
+                DrawScoreboard();
+            }
+            else if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true)
             {
                 return;
             }
-            if (CameraSequence.Intro != null)
+            else if (CameraSequence.Intro != null)
             {
                 // sktodo: draw laws of battle
                 DrawQueuedHudMessages();
                 return;
             }
-            if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
+            else if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
             {
                 for (int i = 0; i < 6; i++)
                 {
@@ -544,11 +553,11 @@ namespace MphRead.Entities
             else if (_showScoreboard)
             {
                 DrawMatchTime();
-                // sktodo: draw scoreboard
+                DrawScoreboard();
             }
             else
             {
-                if (IsAltForm || IsMorphing || IsUnmorphing) // todo: or match state is 2
+                if (IsAltForm || IsMorphing || IsUnmorphing)
                 {
                     DrawBoostBombs();
                 }
@@ -573,7 +582,11 @@ namespace MphRead.Entities
             {
                 _scene.DrawHudFilterModel(_filterModel, alpha: 15 / 31f);
             }
-            else if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) || _showScoreboard)
+            else if (GameState.MatchState == MatchState.GameOver)
+            {
+                _scene.DrawHudFilterModel(_filterModel, alpha: 12 / 31f);
+            }
+            else if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) || _showScoreboard || GameState.MatchState == MatchState.Ending)
             {
                 _scene.DrawHudFilterModel(_filterModel);
             }
@@ -596,6 +609,11 @@ namespace MphRead.Entities
             DrawText2D(128, posY, TextType.Centered, palette, text);
             text = $"{time.Minutes}:{time.Seconds:00}";
             DrawText2D(128, posY + 10, TextType.Centered, palette, text);
+        }
+
+        private void DrawScoreboard()
+        {
+            // sktodo
         }
 
         private void DrawHealthbars()

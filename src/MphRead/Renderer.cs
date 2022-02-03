@@ -155,7 +155,6 @@ namespace MphRead
         private RoomEntity? _room = null;
         private int _roomId = -1;
         public GameMode GameMode { get; set; } = GameMode.SinglePlayer;
-        public int PlayerCount { get; private set; } = 1;
         public bool Multiplayer => GameMode != GameMode.SinglePlayer;
         public int RoomId => _roomId;
         public int AreaId { get; set; }
@@ -198,6 +197,8 @@ namespace MphRead
             _keyboardState = keyboardState;
             _mouseState = mouseState;
             _setTitle = setTitle;
+            Read.ClearCache();
+            GameState.Reset();
             PlayerEntity.Construct(this);
         }
 
@@ -1046,7 +1047,10 @@ namespace MphRead
             if (ProcessFrame)
             {
                 GameState.ProcessFrame(this);
-                UpdateScene();
+                if (GameState.MatchState == MatchState.InProgress)
+                {
+                    UpdateScene();
+                }
             }
             if (ProcessFrame || CameraMode != CameraMode.Player)
             {
@@ -1057,7 +1061,10 @@ namespace MphRead
             GetDrawItems();
             if (ProcessFrame)
             {
-                ProcessMessageQueue();
+                if (GameState.MatchState == MatchState.InProgress)
+                {
+                    ProcessMessageQueue();
+                }
                 _elapsedTime += 1 / 60f; // todo: FPS stuff
                 _frameCount++;
                 GameState.UpdateTime(this);
@@ -2479,7 +2486,7 @@ namespace MphRead
                 RemoveEntity(entity);
             }
 
-            if (ProcessFrame)
+            if (ProcessFrame && GameState.MatchState == MatchState.InProgress)
             {
                 ProcessEffects();
             }

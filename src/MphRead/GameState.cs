@@ -28,10 +28,12 @@ namespace MphRead
         public static bool FriendlyFire { get; set; } = false;
         public static int PointGoal { get; set; } = 0; // also used for starting extra lives
         public static float TimeGoal { get; set; } = 0; // also used for starting extra lives
-        public static int DamageLevel { get; } = 1;
+        public static int DamageLevel { get; set; } = 1;
         public static bool OctolithReset { get; set; } = false;
+        public static bool RadarPlayers { get; set; } = false;
 
         public static float MatchTime { get; set; } = -1;
+        public static bool ForceEndGame { get; set; } = false;
 
         public static int[] Points { get; } = new int[4];
         public static int[] TeamPoints { get; } = new int[4];
@@ -61,6 +63,7 @@ namespace MphRead
         public static int[] KillsAsPrime { get; } = new int[4]; // field260 in-game
         public static int[] PrimesKilled { get; } = new int[4]; // field268 in-game
 
+        public static Action<Scene> ModeState { get; private set; } = ModeStateAdventure;
 
         public static void Setup(Scene scene)
         {
@@ -80,41 +83,48 @@ namespace MphRead
                     }
                 }
             }
+            ModeState = ModeStateAdventure;
             if (mode == GameMode.Battle || mode == GameMode.BattleTeams)
             {
                 PointGoal = 7;
                 MatchTime = 7 * 60;
+                ModeState = ModeStateBattle;
             }
             else if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
             {
-                PointGoal = 2;
+                PointGoal = 2; // spare lives
                 MatchTime = 15 * 60;
+                ModeState = ModeStateSurvival;
             }
             else if (mode == GameMode.Bounty || mode == GameMode.BountyTeams)
             {
                 PointGoal = 3;
                 MatchTime = 15 * 60;
+                ModeState = ModeStateBounty;
             }
             else if (mode == GameMode.Capture)
             {
                 PointGoal = 5;
                 MatchTime = 15 * 60;
+                ModeState = ModeStateCapture;
             }
             else if (mode == GameMode.Defender || mode == GameMode.DefenderTeams)
             {
                 TimeGoal = 1.5f * 60;
                 MatchTime = 15 * 60;
+                ModeState = ModeStateDefender;
             }
-
             else if (mode == GameMode.Nodes || mode == GameMode.NodesTeams)
             {
                 PointGoal = 70;
                 MatchTime = 15 * 60;
+                ModeState = ModeStateNodes;
             }
             else if (mode == GameMode.PrimeHunter)
             {
                 TimeGoal = 1.5f * 60;
                 MatchTime = 15 * 60;
+                ModeState = ModeStatePrimeHunter;
             }
             if (CameraSequence.Intro != null)
             {
@@ -123,6 +133,8 @@ namespace MphRead
                 CameraSequence.Intro.Flags |= CamSeqFlags.Loop;
                 scene.SetFade(FadeType.FadeInBlack, 20 / 30f, overwrite: true);
             }
+            ForceEndGame = false;
+            _stateChanged = false;
         }
 
         public static void UpdateTime(Scene scene)
@@ -134,6 +146,8 @@ namespace MphRead
             }
         }
 
+        private static bool _stateChanged = false;
+
         public static void ProcessFrame(Scene scene)
         {
             if (scene.Multiplayer && CameraSequence.Intro != null)
@@ -141,7 +155,197 @@ namespace MphRead
                 Debug.Assert(CameraSequence.Intro.CamInfoRef == PlayerEntity.Main.CameraInfo);
                 CameraSequence.Intro.Process();
             }
-            // sktodo: more stuff
+            if (MatchState == MatchState.InProgress)
+            {
+                // todo: process dialogs or something for 1P
+                // todo: update SFX
+                for (int i = 0; i < scene.MessageQueue.Count; i++)
+                {
+                    MessageInfo message = scene.MessageQueue[i];
+                    if (message.Message == Message.Complete && message.ExecuteFrame == scene.FrameCount)
+                    {
+                        MatchTime = 0;
+                    }
+                }
+                // todo: update MP playtime to license info
+                // todo: end multiplayer match if too few players or invalid teams
+                ModeState(scene);
+                // todo: escape sequence stuff
+                if (MatchTime > 0 && !ForceEndGame)
+                {
+                    // todo: update music, play timer alarm
+                }
+                else
+                {
+                    PlayerEntity.Main.HudEndDisrupted();
+                    if ((scene.GameMode == GameMode.Survival || scene.GameMode == GameMode.SurvivalTeams) && !ForceEndGame)
+                    {
+                        for (int i = 0; i < 4; i++)
+                        {
+                            PlayerEntity player = PlayerEntity.Players[i];
+                            // the game also checks if the player's time is greater than or equal to the time goal,
+                            // which in survival is always zero, so the check isn't needed
+                            if (player.LoadFlags.TestFlag(LoadFlags.Active)
+                                && (player.Health > 0 || TeamDeaths[player.TeamIndex] <= PointGoal))
+                            {
+                                Time[i] = -1;
+                                TeamTime[player.TeamIndex] = -1;
+                            }
+                        }
+                        UpdateState(scene);
+                    }
+                    // todo: 1P time up? isn't that handled by death countdown etc.?
+                    MatchState = MatchState.GameOver;
+                    MatchTime = 180 / 30f;
+                    // todo: stop SFX, update music
+                }
+            }
+            else if (MatchState == MatchState.GameOver)
+            {
+                // sktodo: set up winner camera or cam seq
+                if (_stateChanged)
+                {
+                    _stateChanged = false;
+                }
+                if (MatchTime == 0)
+                {
+                    MatchState = MatchState.Ending;
+                    MatchTime = 300 / 30f;
+                    // todo: update license info, stop SFX
+                }
+            }
+            else if (MatchState == MatchState.Ending)
+            {
+                // sktodo: start cam seq if not already started
+            }
+        }
+
+        public static void ModeStateAdventure(Scene scene)
+        {
+            // todo: update save, oubliette stuff, update checkpoints, record boss times
+        }
+
+        private static void EndIfPointGoalReached()
+        {
+            if (PointGoal <= 0)
+            {
+                return;
+            }
+            for (int i = 0; i < 4; i++)
+            {
+                PlayerEntity player = PlayerEntity.Players[i];
+                if (player.LoadFlags.TestFlag(LoadFlags.Active) && TeamPoints[player.TeamIndex] >= PointGoal)
+                {
+                    MatchTime = 0;
+                    break;
+                }
+            }
+        }
+
+        public static void ModeStateBattle(Scene scene)
+        {
+            EndIfPointGoalReached();
+        }
+
+        public static void ModeStateSurvival(Scene scene)
+        {
+            RadarPlayers = false;
+            int playersAlive = 0;
+            int botsAlive = 0;
+            bool[] teamsAlive = new bool[2];
+            for (int i = 0; i < 4; i++)
+            {
+                PlayerEntity player = PlayerEntity.Players[i];
+                if (player.LoadFlags.TestFlag(LoadFlags.Active)
+                    && (player.Health > 0 || TeamDeaths[player.TeamIndex] <= PointGoal))
+                {
+                    Time[i] += scene.FrameTime;
+                    if (player.IsBot)
+                    {
+                        botsAlive++;
+                    }
+                    else
+                    {
+                        playersAlive++;
+                    }
+                    if (Teams)
+                    {
+                        Debug.Assert(player.TeamIndex == 0 || player.TeamIndex == 1);
+                        teamsAlive[player.TeamIndex] = true;
+                    }
+                }
+            }
+            if (playersAlive == 0 || playersAlive + botsAlive < 2 || Teams && (!teamsAlive[0] || !teamsAlive[1]))
+            {
+                MatchTime = 0;
+                for (int i = 0; i < 4; i++)
+                {
+                    PlayerEntity player = PlayerEntity.Players[i];
+                    if (player.LoadFlags.TestFlag(LoadFlags.Active)
+                        && (player.Health > 0 || TeamDeaths[player.TeamIndex] <= PointGoal))
+                    {
+                        Time[i] = -1; // MAX
+                    }
+                }
+            }
+            else if (playersAlive + botsAlive == 2 && PlayerEntity.MaxPlayers > 2)
+            {
+                RadarPlayers = true;
+            }
+        }
+
+        public static void ModeStateCapture(Scene scene)
+        {
+            EndIfPointGoalReached();
+        }
+
+        public static void ModeStateBounty(Scene scene)
+        {
+            EndIfPointGoalReached();
+        }
+
+        public static void ModeStateDefender(Scene scene)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                PlayerEntity player = PlayerEntity.Players[i];
+                if (player.LoadFlags.TestFlag(LoadFlags.Active) && TeamTime[player.TeamIndex] >= TimeGoal)
+                {
+                    MatchTime = 0;
+                    break;
+                }
+            }
+        }
+
+        public static void ModeStateNodes(Scene scene)
+        {
+            EndIfPointGoalReached();
+        }
+
+        public static void ModeStatePrimeHunter(Scene scene)
+        {
+            if (PrimeHunter == -1)
+            {
+                return;
+            }
+            PlayerEntity player = PlayerEntity.Players[PrimeHunter];
+            if (!player.LoadFlags.TestFlag(LoadFlags.Active))
+            {
+                PrimeHunter = -1;
+                return;
+            }
+            if (scene.FrameCount % (10 * 2) == 0) // todo: FPS stuff
+            {
+                player.TakeDamage(1, DamageFlags.NoDmgInvuln, direction: null, source: null);
+            }
+            if (PrimeHunter != -1)
+            {
+                Time[PrimeHunter] += scene.FrameTime;
+                if (Time[PrimeHunter] >= TimeGoal)
+                {
+                    MatchTime = 0;
+                }
+            }
         }
 
         public static void UpdateState(Scene scene)
@@ -272,7 +476,7 @@ namespace MphRead
                     int nextSlot = WinningSlots[nextIndex];
                     int teamIndex = players[slot].TeamIndex;
                     int nextTeamIndex = players[nextSlot].TeamIndex;
-                    // sktodo?: the game passes team_ids[wslot/nslot] instead of the player fields to CompareTeams
+                    // the game passes team_ids[wslot/nslot] instead of the player fields to CompareTeams
                     if (Teams && teamIndex != nextTeamIndex && CompareTeams(teamIndex, nextTeamIndex, mode) < 0
                         || ComparePlayers(slot, nextSlot, mode) < 0)
                     {
@@ -470,6 +674,56 @@ namespace MphRead
                 return 1;
             }
             return 0;
+        }
+
+        public static void Reset()
+        {
+            MatchState = MatchState.InProgress;
+            ActivePlayers = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                Standings[i] = 0;
+                TeamStandings[i] = 0;
+                WinningSlots[i] = 0;
+                Points[i] = 0;
+                TeamPoints[i] = 0;
+                Kills[i] = 0;
+                TeamKills[i] = 0;
+                Deaths[i] = 0;
+                TeamDeaths[i] = 0;
+                Time[i] = 0;
+                TeamTime[i] = 0;
+                BeamDamageMax[i] = 0;
+                BeamDamageDealt[i] = 0;
+                DamageCount[i] = 0;
+                AltDamageCount[i] = 0;
+                Kills[i] = 0;
+                Suicides[i] = 0;
+                FriendlyKills[i] = 0;
+                HeadshotKills[i] = 0;
+                OctolithScores[i] = 0;
+                OctolithDrops[i] = 0;
+                OctolithStops[i] = 0;
+                NodesCaptured[i] = 0;
+                NodesLost[i] = 0;
+                KillsAsPrime[i] = 0;
+                PrimesKilled[i] = 0;
+                for (int j = 0; j < 9; j++)
+                {
+                    BeamKills[i, j] = 0;
+                }
+            }
+            PrimeHunter = -1;
+            Teams = false;
+            FriendlyFire = false;
+            PointGoal = 0;
+            TimeGoal = 0;
+            DamageLevel = 1;
+            OctolithReset = false;
+            RadarPlayers = false;
+            MatchTime = -1;
+            PlayerEntity.Reset();
+            CameraSequence.Current = null;
         }
     }
 }
