@@ -21,7 +21,7 @@ namespace MphRead
         public static string[] Nicknames { get; } = new string[4] { "Player1", "Player2", "Player3", "Player4" };
         public static int[] Standings { get; } = new int[4];
         public static int[] TeamStandings { get; } = new int[4];
-        public static int[] WinningSlots { get; } = new int[4]; // sktodo: what is this?
+        public static int[] WinningSlots { get; } = new int[4];
         public static int PrimeHunter { get; set; } = -1;
 
         public static bool Teams { get; set; } = false;
@@ -206,10 +206,15 @@ namespace MphRead
             }
             else if (MatchState == MatchState.GameOver)
             {
-                // sktodo: set up winner camera or cam seq
-                if (_stateChanged)
+                PlayerEntity winner = PlayerEntity.Players[WinningSlots[0]];
+                if (winner.Health > 0 && winner.LoadFlags.TestFlag(LoadFlags.Active)
+                    && winner.LoadFlags.TestFlag(LoadFlags.Spawned))
                 {
-                    _stateChanged = false;
+                    UpdateMatchEndCamera(scene);
+                }
+                else
+                {
+                    EnsureIntroCamSeq(scene);
                 }
                 if (MatchTime == 0)
                 {
@@ -220,18 +225,32 @@ namespace MphRead
             }
             else if (MatchState == MatchState.Ending)
             {
-                if (scene.Multiplayer && CameraSequence.Current == null && CameraSequence.Intro != null)
-                {
-                    CameraSequence.Intro.SetUp(PlayerEntity.Main.CameraInfo, transitionTime: 0);
-                    PlayerEntity.Main.CameraInfo.Update();
-                    CameraSequence.Intro.Flags |= CamSeqFlags.Loop;
-                }
+                EnsureIntroCamSeq(scene);
                 // todo: more stuff?
                 if (MatchTime == 0)
                 {
                     MatchTime = -1;
                     scene.SetFade(FadeType.FadeOutBlack, 20 / 30f, overwrite: true, exitAfterFade: true);
                 }
+            }
+        }
+
+        private static void EnsureIntroCamSeq(Scene scene)
+        {
+            if (scene.Multiplayer && CameraSequence.Current == null && CameraSequence.Intro != null)
+            {
+                CameraSequence.Intro.SetUp(PlayerEntity.Main.CameraInfo, transitionTime: 0);
+                PlayerEntity.Main.CameraInfo.Update();
+                CameraSequence.Intro.Flags |= CamSeqFlags.Loop;
+            }
+        }
+
+        private static void UpdateMatchEndCamera(Scene scene)
+        {
+            // sktodo: set up winner camera and use _matchEndTime
+            if (_stateChanged)
+            {
+                _stateChanged = false;
             }
         }
 
