@@ -577,6 +577,17 @@ namespace MphRead
             int points2 = Points[slot2];
             float time1 = Time[slot1];
             float time2 = Time[slot2];
+            if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
+            {
+                if (time1 == -1)
+                {
+                    time1 = Single.MaxValue;
+                }
+                if (time2 == -1)
+                {
+                    time2 = Single.MaxValue;
+                }
+            }
             int deaths1 = Deaths[slot1];
             int deaths2 = Deaths[slot2];
             int kills1 = Kills[slot1];
@@ -651,6 +662,17 @@ namespace MphRead
             int points2 = TeamPoints[slot2];
             float time1 = TeamTime[slot1];
             float time2 = TeamTime[slot2];
+            if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
+            {
+                if (time1 == -1)
+                {
+                    time1 = Single.MaxValue;
+                }
+                if (time2 == -1)
+                {
+                    time2 = Single.MaxValue;
+                }
+            }
             int deaths1 = TeamDeaths[slot1];
             int deaths2 = TeamDeaths[slot2];
             int kills1 = TeamKills[slot1];
