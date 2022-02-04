@@ -711,6 +711,68 @@ namespace MphRead.Entities
             // camtodo
         }
 
+        public void SetUpMatchEndCamera()
+        {
+            _field70 = CameraInfo.Field48;
+            _field74 = CameraInfo.Field4C;
+            _gunVec2 = new Vector3(CameraInfo.Field50, 0, CameraInfo.Field54);
+            _facingVector = CameraInfo.Facing;
+            SetTransform(_facingVector, _upVector, Position);
+        }
+
+        public void UpdateMatchEndCamera(PlayerEntity winner, float timeSinceMatchEnd)
+        {
+            Vector3 winnerFacing = winner.FacingVector;
+            // todo?: the game updates all players' cameras, possibly because of (non-existent) spectator mode?
+            CameraType = CameraType.Third2;
+            CameraInfo.Target = winner.Position;
+            if (winner.IsAltForm || winner.IsMorphing || winner.IsUnmorphing)
+            {
+                CameraInfo.Position = winner.Position
+                    .AddX(-(2.75f * winner.Field70))
+                    .AddY(3)
+                    .AddZ(-(2.75f * winner.Field74));
+            }
+            else
+            {
+                CameraInfo.Target += winnerFacing * 10;
+                CameraInfo.Position = winner.Position
+                    .AddX(-(1.5f * winner.Field70 + winner._gunVec2.X / 2))
+                    .AddY(1.75f)
+                    .AddZ(-(1.5f * winner.Field74 + winner._gunVec2.X / 2));
+            }
+            if (winnerFacing.Y < 0)
+            {
+                CameraInfo.Position = CameraInfo.Position
+                    .AddX(-(2.15f * winnerFacing.Y * winner.Field70))
+                    .AddY(-(winnerFacing.Y / 2))
+                    .AddZ(-(2.15f * winnerFacing.Y * winner.Field74));
+            }
+            else
+            {
+                CameraInfo.Position = CameraInfo.Position
+                    .AddX(0.75f * winnerFacing.Y * winner.Field70)
+                    .AddY(-(winnerFacing.Y * 2))
+                    .AddZ(0.75f * winnerFacing.Y * winner.Field74);
+            }
+            float factor = Fixed.ToFloat(15) * timeSinceMatchEnd * 30;
+            CameraInfo.Position = CameraInfo.Position
+                .AddX(winner._gunVec2.X * factor)
+                .AddZ(winner._gunVec2.Z * factor);
+            CollisionResult result = default;
+            if (CollisionDetection.CheckBetweenPoints(winner.Position, CameraInfo.Position,
+                TestFlags.Players, _scene, ref result))
+            {
+                Vector3 between = CameraInfo.Position - winner.Position;
+                CameraInfo.Position = winner.Position + between * result.Distance + result.Plane.Xyz * 0.05f;
+            }
+            CameraInfo.UpVector = Vector3.UnitY;
+            CameraInfo.Shake = 0;
+            CameraInfo.Fov = Fixed.ToFloat(Values.NormalFov) * 2;
+            CameraInfo.Update();
+            CameraInfo.NodeRef = _scene.UpdateNodeRef(winner.NodeRef, winner.Position, CameraInfo.Position);
+        }
+
         public void RefreshExternalCamera()
         {
             Flags1 |= PlayerFlags1.AltDirOverride;

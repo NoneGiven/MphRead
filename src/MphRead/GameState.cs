@@ -210,7 +210,12 @@ namespace MphRead
                 if (winner.Health > 0 && winner.LoadFlags.TestFlag(LoadFlags.Active)
                     && winner.LoadFlags.TestFlag(LoadFlags.Spawned))
                 {
-                    UpdateMatchEndCamera(scene);
+                    if (_stateChanged)
+                    {
+                        _stateChanged = false;
+                        winner.SetUpMatchEndCamera();
+                    }
+                    PlayerEntity.Main.UpdateMatchEndCamera(winner, scene.ElapsedTime - _matchEndTime);
                 }
                 else
                 {
@@ -242,15 +247,6 @@ namespace MphRead
                 CameraSequence.Intro.SetUp(PlayerEntity.Main.CameraInfo, transitionTime: 0);
                 PlayerEntity.Main.CameraInfo.Update();
                 CameraSequence.Intro.Flags |= CamSeqFlags.Loop;
-            }
-        }
-
-        private static void UpdateMatchEndCamera(Scene scene)
-        {
-            // sktodo: set up winner camera and use _matchEndTime
-            if (_stateChanged)
-            {
-                _stateChanged = false;
             }
         }
 
