@@ -103,6 +103,8 @@ namespace MphRead
                     teams = teamsModes.Contains(mode);
                     string mphKey = Paths.MphKey;
                     string fhKey = Paths.FhKey;
+                    string roomString = roomKey == "AD1 TRANSFER LOCK BT" ? "Transfer Lock (Expanded)" : room;
+                    string modeString = mode == "auto-select" ? "auto-select (Adventure or Battle)" : mode;
                     Console.Clear();
                     Console.WriteLine($"MphRead Version {Program.Version}");
                     Console.WriteLine();
@@ -110,8 +112,8 @@ namespace MphRead
                     Console.WriteLine("Press Enter to specify, Backspace to clear, or left/right to advance the option.");
                     Console.WriteLine("When finished, press Enter on the last option to launch. Press Escape to exit.");
                     Console.WriteLine();
-                    Console.WriteLine($"[{(selection == 0 ? "x" : " ")}] Room: {room}");
-                    Console.WriteLine($"[{(selection == 1 ? "x" : " ")}] Game mode: {mode}");
+                    Console.WriteLine($"[{(selection == 0 ? "x" : " ")}] Room: {roomString}");
+                    Console.WriteLine($"[{(selection == 1 ? "x" : " ")}] Game mode: {modeString}");
                     Console.WriteLine($"[{(selection == 2 ? "x" : " ")}] Player 1: {PrintPlayer(0)}");
                     Console.WriteLine($"[{(selection == 3 ? "x" : " ")}] Player 2: {PrintPlayer(1)}");
                     Console.WriteLine($"[{(selection == 4 ? "x" : " ")}] Player 3: {PrintPlayer(2)}");

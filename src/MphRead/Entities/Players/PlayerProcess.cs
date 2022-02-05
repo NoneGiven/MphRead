@@ -84,8 +84,8 @@ namespace MphRead.Entities
                     int time = GetTimeUntilRespawn();
                     if (IsMainPlayer && _scene.Multiplayer) // todo: and some global is not set
                     {
-                        // press FIRE to respawn / press FIRE to begin
-                        int messageId = CameraSequence.Current?.IsIntro == true ? 244 : 245;
+                        // press FIRE to begin / press FIRE to respawn
+                        int messageId = CameraSequence.Current?.IsIntro == true ? 245 : 244;
                         if (!Bugfixes.NoStrayRespawnText || time > 0
                             || _scene.GameMode != GameMode.Survival && _scene.GameMode != GameMode.SurvivalTeams)
                         {

@@ -26,6 +26,10 @@ namespace MphRead
             if (mode == GameMode.None)
             {
                 mode = metadata.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;
+                if (mode == GameMode.Battle && metadata.Name == "AD1 TRANSFER LOCK BT")
+                {
+                    mode = GameMode.Bounty;
+                }
                 Weapons.Current = metadata.Multiplayer ? Weapons.WeaponsMP : Weapons.Weapons1P;
             }
             else

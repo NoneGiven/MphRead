@@ -576,7 +576,10 @@ namespace MphRead.Entities
             {
                 if (IsAltForm || IsMorphing || IsUnmorphing)
                 {
-                    DrawBoostBombs();
+                    if (_health > 0)
+                    {
+                        DrawBoostBombs();
+                    }
                 }
                 else
                 {
