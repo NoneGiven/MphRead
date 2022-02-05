@@ -1007,7 +1007,6 @@ namespace MphRead.Entities
 
         private void DrawModeHud()
         {
-            // sktodo: the rest
             GameMode mode = _scene.GameMode;
             if (mode == GameMode.SinglePlayer)
             {
