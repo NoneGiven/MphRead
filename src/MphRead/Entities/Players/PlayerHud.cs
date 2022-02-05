@@ -616,6 +616,11 @@ namespace MphRead.Entities
             }
         }
 
+        private string FormatTime(TimeSpan time)
+        {
+            return $"{time.Hours * 60 + time.Minutes}:{time.Seconds:00}";
+        }
+
         private void DrawMatchTime()
         {
             if (GameState.MatchTime < 0)
@@ -627,7 +632,7 @@ namespace MphRead.Entities
             float posY = 10;
             string text = Strings.GetHudMessage(5); // TIME
             DrawText2D(128, posY, TextType.Centered, palette, text);
-            text = $"{time.Minutes}:{time.Seconds:00}";
+            text = FormatTime(time);
             DrawText2D(128, posY + 10, TextType.Centered, palette, text);
         }
 
@@ -710,7 +715,7 @@ namespace MphRead.Entities
                     || mode == GameMode.DefenderTeams || mode == GameMode.PrimeHunter)
                 {
                     // time should only be -1 to indicate max in survival/teams
-                    return time < 0 ? maxText : $"{TimeSpan.FromSeconds(time):m\\:ss}";
+                    return time < 0 ? maxText : FormatTime(TimeSpan.FromSeconds(time));
                 }
                 // battle/teams, capture, bounty/teams, nodes/teams
                 return points.ToString();

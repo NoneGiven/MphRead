@@ -32,6 +32,7 @@ namespace MphRead
         public static int DamageLevel { get; set; } = 1;
         public static bool OctolithReset { get; set; } = false;
         public static bool RadarPlayers { get; set; } = false;
+        public static bool AffinityWeapons { get; set; } = false;
 
         public static float MatchTime { get; set; } = -1;
         public static bool ForceEndGame { get; set; } = false;
@@ -797,6 +798,7 @@ namespace MphRead
             DamageLevel = 1;
             OctolithReset = false;
             RadarPlayers = false;
+            AffinityWeapons = false;
             MatchTime = -1;
             PlayerEntity.Reset();
             CameraSequence.Current = null;

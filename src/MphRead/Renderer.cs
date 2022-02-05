@@ -241,6 +241,10 @@ namespace MphRead
             SceneSetup.LoadItemResources(this);
             SceneSetup.LoadEnemyResources(this);
             GameState.Setup(this);
+            if (Multiplayer)
+            {
+                Menu.ApplySettings();
+            }
             _light1Vector = meta.Light1Vector;
             _light1Color = new Vector3(
                 meta.Light1Color.Red / 31.0f,
