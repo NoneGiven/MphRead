@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using MphRead.Formats;
 using MphRead.Hud;
 using MphRead.Text;
@@ -163,7 +164,23 @@ namespace MphRead.Entities
                 HudObject hunter = HudInfo.GetHudObject(HudElements.Hunters[i]);
                 var hunterInst = new HudObjectInstance(hunter.Width, hunter.Height);
                 hunterInst.SetCharacterData(hunter.CharacterData, _scene);
-                hunterInst.SetPaletteData(hunter.PaletteData, _scene);
+                if (i == 7)
+                {
+                    // skdebug: black out the Guardian portrait (using Samus's) except the frame
+                    var palette = hunter.PaletteData.ToList();
+                    for (int j = 0; j < palette.Count; j++)
+                    {
+                        if (j != 1)
+                        {
+                            palette[j] = new ColorRgba(0, 0, 0, 255);
+                        }
+                    }
+                    hunterInst.SetPaletteData(palette, _scene);
+                }
+                else
+                {
+                    hunterInst.SetPaletteData(hunter.PaletteData, _scene);
+                }
                 hunterInst.Enabled = true;
                 _hunterInsts[i] = hunterInst;
             }

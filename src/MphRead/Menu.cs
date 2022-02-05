@@ -16,7 +16,6 @@ namespace MphRead
             string room = "Combat Hall";
             string roomKey = "MP3 PROVING GROUND";
             bool fhRoom = false;
-            bool teams = false;
             var players = new List<(string Hunter, string Team, string Recolor)>()
             {
                 ("Samus", "orange", "0"), ("none", "green", "0"), ("none", "orange", "0"), ("none", "green", "0")
@@ -82,7 +81,7 @@ namespace MphRead
                 {
                     return "none";
                 }
-                if (teams)
+                if (_teams)
                 {
                     return $"{hunter}, {team} team";
                 }
@@ -117,7 +116,6 @@ namespace MphRead
                         prompt = 0;
                     }
                     string lastMode = _mode;
-                    teams = teamsModes.Contains(_mode);
                     string mphKey = Paths.MphKey;
                     string fhKey = Paths.FhKey;
                     string roomString = roomKey == "AD1 TRANSFER LOCK BT" ? "Transfer Lock (Expanded)" : room;
@@ -552,8 +550,16 @@ namespace MphRead
                         }
                         else if (prompt >= 3 && prompt <= 6)
                         {
-                            Console.WriteLine("Enter hunter and (optionally) recolor.");
-                            Console.WriteLine("Examples: Samus, Trace 2, Sylux 5, Guardian");
+                            if (_teams)
+                            {
+                                Console.WriteLine("Enter hunter and (optionally) team.");
+                                Console.WriteLine("Examples: Samus, Trace 0, Sylux 1, Guardian");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Enter hunter and (optionally) recolor.");
+                                Console.WriteLine("Examples: Samus, Trace 2, Sylux 5, Guardian");
+                            }
                             string? input = Console.ReadLine();
                             if (!String.IsNullOrWhiteSpace(input))
                             {
@@ -574,7 +580,7 @@ namespace MphRead
                                 string recolor = players[index].Recolor;
                                 if (split.Length > 1)
                                 {
-                                    if (teams)
+                                    if (_teams)
                                     {
                                         string value = split[1].ToLower();
                                         if (value == "orange" || value == "red")
@@ -669,7 +675,7 @@ namespace MphRead
                             if (hunter != "none")
                             {
                                 int teamId = -1;
-                                if (teams)
+                                if (_teams)
                                 {
                                     teamId = team == "orange" ? 0 : 1;
                                 }
