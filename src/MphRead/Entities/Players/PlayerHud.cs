@@ -30,6 +30,10 @@ namespace MphRead.Entities
         private ModelInstance _damageIndicator = null!;
         private readonly ushort[] _damageIndicatorTimers = new ushort[8];
         private readonly Node[] _damageIndicatorNodes = new Node[8];
+        private ModelInstance _playerLocator = null!;
+        private ModelInstance _arrowLocator = null!;
+        private ModelInstance _nodeLocator = null!;
+        private ModelInstance _octolithLocator = null!;
 
         private HudObjectInstance _starsInst = null!;
         private readonly HudObjectInstance[] _hunterInsts = new HudObjectInstance[8];
@@ -56,6 +60,14 @@ namespace MphRead.Entities
             _damageIndicatorNodes[5] = _damageIndicator.Model.GetNodeByName("sw")!;
             _damageIndicatorNodes[6] = _damageIndicator.Model.GetNodeByName("west")!;
             _damageIndicatorNodes[7] = _damageIndicator.Model.GetNodeByName("nw")!;
+            _playerLocator = Read.GetModelInstance("hud_icon_player", dir: MetaDir.Hud);
+            _scene.LoadModel(_playerLocator.Model);
+            _arrowLocator = Read.GetModelInstance("hud_icon_arrow", dir: MetaDir.Hud);
+            _scene.LoadModel(_arrowLocator.Model);
+            _nodeLocator = Read.GetModelInstance("hud_icon_nodes", dir: MetaDir.Hud);
+            _scene.LoadModel(_nodeLocator.Model);
+            _octolithLocator = Read.GetModelInstance("hud_icon_octolith", dir: MetaDir.Hud);
+            _scene.LoadModel(_octolithLocator.Model);
             _targetCircleObj = HudInfo.GetHudObject(_hudObjects.Reticle);
             _sniperCircleObj = HudInfo.GetHudObject(_hudObjects.SniperReticle);
             Debug.Assert(_sniperCircleObj.Width >= _targetCircleObj.Width);
@@ -627,9 +639,127 @@ namespace MphRead.Entities
             {
                 _scene.DrawHudFilterModel(_filterModel);
             }
-            else if (_damageIndicator.Active)
+            else
             {
-                _scene.DrawHudDamageModel(_damageIndicator);
+                DrawLocatorIcons();
+                if (_damageIndicator.Active)
+                {
+                    _scene.DrawHudDamageModel(_damageIndicator);
+                }
+            }
+        }
+
+        private class LocatorInfo
+        {
+            public Vector3 Position { get; set; }
+            public float Angle { get; set; }
+            public ModelInstance Model { get; set; }
+            public ColorRgb Color { get; set; }
+            public float Alpha { get; set; }
+
+            public LocatorInfo(Vector3 position, float angle, ModelInstance model, ColorRgb color, float alpha)
+            {
+                Position = position;
+                Angle = angle;
+                Model = model;
+                Color = color;
+                Alpha = alpha;
+            }
+        }
+
+        private readonly List<LocatorInfo> _locatorInfo = new List<LocatorInfo>();
+
+        private void DrawLocatorIcons()
+        {
+            for (int i = 0; i < _locatorInfo.Count; i++)
+            {
+                LocatorInfo info = _locatorInfo[i];
+                DrawLocatorIcon(info.Position, info.Angle, info.Model, info.Color, info.Alpha);
+            }
+        }
+
+        private void DrawLocatorIcon(Vector3 position, float angle, ModelInstance inst, ColorRgb color, float alpha)
+        {
+            float x;
+            float y;
+            bool behind = false;
+            Vector2 proj = Vector2.Zero;
+            Vector3 mult = Matrix.Vec3MultMtx4(position, _scene.ViewMatrix);
+            if (mult.Z < -1)
+            {
+                Matrix.ProjectPosition(position, _scene.ViewMatrix, _scene.PerspectiveMatrix, out proj);
+                x = proj.X - 128 / 256f;
+                y = proj.Y - 106 / 192f;
+            }
+            else
+            {
+                x = mult.X / (_scene.Size.X / 2);
+                y = -mult.Y / (_scene.Size.Y / 2);
+                behind = true;
+            }
+            float absX = MathF.Abs(x);
+            float absY = MathF.Abs(y);
+            if (behind || absX > 100 / 256f || absY > 60f / 192f)
+            {
+                if (absY >= 1 / 192f)
+                {
+                    float v15 = absX + MathF.Truncate((60 / 192f - absY) * absX / absY);
+                    if (v15 > 100 / 256f)
+                    {
+                        float v17 = absY + MathF.Truncate((100 / 256f - absX) * absY / absX);
+                        if (x <= 0)
+                        {
+                            proj.X = 28 / 256f;
+                        }
+                        else
+                        {
+                            proj.X = 228 / 256f;
+                        }
+                        if (y <= 0)
+                        {
+                            proj.Y = 106 / 192f - v17;
+                        }
+                        else
+                        {
+                            proj.Y = v17 + 106 / 192f;
+                        }
+                    }
+                    else
+                    {
+                        if (x <= 0)
+                        {
+                            proj.X = 128 / 256f - v15;
+                        }
+                        else
+                        {
+                            proj.X = v15 + 128 / 256f;
+                        }
+                        if (y <= 0)
+                        {
+                            proj.Y = 46 / 192f;
+                        }
+                        else
+                        {
+                            proj.Y = 166 / 192f;
+                        }
+                    }
+                }
+                else if (x <= 0)
+                {
+                    proj.X = 28 / 256f;
+                }
+                else
+                {
+                    proj.X = 228 / 256f;
+                }
+                angle = MathHelper.RadiansToDegrees(MathF.Atan2(-y, x));
+                _arrowLocator.Model.Materials[0].Diffuse = color;
+                _scene.DrawIconModel(proj, angle, _arrowLocator, alpha);
+            }
+            else
+            {
+                inst.Model.Materials[0].Diffuse = color;
+                _scene.DrawIconModel(proj, angle, inst, alpha);
             }
         }
 
@@ -685,6 +815,11 @@ namespace MphRead.Entities
                 height += _scorePlayerSpace;
             }
             return height;
+        }
+
+        private static float Lerp(float first, float second, float by)
+        {
+            return first * (1 - by) + second * by;
         }
 
         private void DrawScoreboard()
@@ -780,11 +915,6 @@ namespace MphRead.Entities
                 var color = new ColorRgba(0x7DEF);
                 if (player.IsMainPlayer)
                 {
-                    float Lerp(float first, float second, float by)
-                    {
-                        return first * (1 - by) + second * by;
-                    }
-
                     float rg;
                     float pct = _scene.ElapsedTime / (32 / 30f) % 1;
                     if (pct <= 0.5f)
@@ -992,16 +1122,86 @@ namespace MphRead.Entities
             }
         }
 
-        public void ProcessMode()
+        public void ProcessModeHud()
         {
+            _locatorInfo.Clear();
             // todo: update opponent damage bar
-            if (_scene.GameMode == GameMode.Nodes || _scene.GameMode == GameMode.NodesTeams)
+            if (_scene.GameMode == GameMode.Survival || _scene.GameMode == GameMode.SurvivalTeams)
+            {
+                ProcessHudSurvival();
+            }
+            else if (_scene.GameMode == GameMode.Nodes || _scene.GameMode == GameMode.NodesTeams)
             {
                 // todo: lots of stuff
             }
             else if (_scene.GameMode == GameMode.PrimeHunter)
             {
                 // todo: prime hunter HUD setup stuff
+            }
+        }
+
+        private void ProcessHudSurvival()
+        {
+            int reveal = 0;
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.Player)
+                {
+                    continue;
+                }
+                var player = (PlayerEntity)entity;
+                if (player.Health == 0 || player.TeamIndex == TeamIndex)
+                {
+                    continue;
+                }
+                float alpha = 1;
+                if (GameState.RadarPlayers)
+                {
+                    float past = _scene.ElapsedTime % (120 / 30f);
+                    if (past > 32 / 30f)
+                    {
+                        alpha = 0;
+                    }
+                    else
+                    {
+                        float pct = past / (32 / 30f) % 1;
+                        if (pct <= 0.5f)
+                        {
+                            alpha = Lerp(0, 1, pct * 2);
+                        }
+                        else
+                        {
+                            alpha = Lerp(1, 0, (pct - 0.5f) * 2);
+                        }
+                    }
+                }
+                else
+                {
+                    if (!player.Flags2.TestFlag(PlayerFlags2.RadarReveal))
+                    {
+                        continue;
+                    }
+                    if (player.Flags2.TestFlag(PlayerFlags2.RadarRevealPrevious))
+                    {
+                        reveal = 2;
+                    }
+                    else if (reveal == 0)
+                    {
+                        reveal = 1;
+                    }
+                }
+                Vector3 pos = player.Position;
+                if (!player.IsAltForm)
+                {
+                    pos.Y += 0.75f;
+                }
+                _locatorInfo.Add(new LocatorInfo(pos, angle: 0, _playerLocator, new ColorRgb(31, 31, 31), alpha));
+            }
+            if (reveal == 1)
+            {
+                // todo: play voice
+                QueueHudMessage(128, 150, 60 / 30f, 0, 234); // COWARD DETECTED!
             }
         }
 
@@ -1119,7 +1319,7 @@ namespace MphRead.Entities
 
         private void DrawHudSurvival()
         {
-            // sktodo
+            DrawModeScore(213, FormatModeScore(MainPlayerIndex)); // lives left
         }
 
         private void DrawHudBounty()

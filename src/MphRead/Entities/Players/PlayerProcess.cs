@@ -159,7 +159,11 @@ namespace MphRead.Entities
                     if (_hidingTimer >= revealTime)
                     {
                         Flags2 |= PlayerFlags2.RadarReveal;
-                        // todo: draw HUD string
+                        if (IsMainPlayer && (_scene.FrameCount & (8 * 2)) == 0) // todo: FPS stuff
+                        {
+                            QueueHudMessage(128, 150, 1 / 1000f, 0, 248); // position revealed!
+                            QueueHudMessage(128, 160, 1 / 1000f, 0, 249); // RETURN TO BATTLE!
+                        }
                     }
                 }
             }

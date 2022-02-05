@@ -2449,7 +2449,7 @@ namespace MphRead
                     _destroyedEntities.Add(entity);
                 }
             }
-            PlayerEntity.Main.ProcessMode();
+            PlayerEntity.Main.ProcessModeHud();
             GameState.UpdateState(this);
         }
 
@@ -3164,6 +3164,31 @@ namespace MphRead
             GL.Vertex3(leftPos, bottomPos, 0f);
             GL.End();
             GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
+        public void DrawIconModel(Vector2 position, float angle, ModelInstance inst, float alpha)
+        {
+            float scale = Size.Y / 192f;
+            var position3d = new Vector3(position.X * Size.X - Size.X / 2, (1 - position.Y) * Size.Y - (Size.Y / 2), -1f);
+            Matrix4 transform = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(angle))
+                * Matrix4.CreateScale(scale, scale, 1) * Matrix4.CreateTranslation(position3d);
+            GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
+            Model model = inst.Model;
+            UpdateMaterials(model, 0);
+            GL.Uniform1(_shaderLocations.MaterialAlpha, alpha);
+            GL.BindTexture(TextureTarget.Texture2D, model.Materials[0].TextureBindingId);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            GL.CallList(model.Meshes[0].ListId);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            Matrix4 identity = Matrix4.Identity;
+            GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref identity);
         }
 
         public void DrawHudFilterModel(ModelInstance inst, float alpha = 1)

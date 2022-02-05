@@ -343,7 +343,7 @@ namespace MphRead
                     }
                 }
             }
-            else if (playersAlive + botsAlive == 2 && PlayerEntity.MaxPlayers > 2)
+            else if (playersAlive + botsAlive == 2 && PlayerEntity.PlayerCount > 2)
             {
                 RadarPlayers = true;
             }
