@@ -1157,6 +1157,10 @@ namespace MphRead.Entities
             {
                 ProcessHudBounty();
             }
+            else if (_scene.GameMode == GameMode.Capture)
+            {
+                ProcessHudCapture();
+            }
             else if (_scene.GameMode == GameMode.Nodes || _scene.GameMode == GameMode.NodesTeams)
             {
                 // sktodo: lots of stuff
@@ -1265,6 +1269,11 @@ namespace MphRead.Entities
                     AddLocatorInfo(entity.Position, angle: 0, _octolithLocator, color, alpha: 1);
                 }
             }
+        }
+
+        private void ProcessHudCapture()
+        {
+            // skhere
         }
 
         private void DrawModeHud()
@@ -1421,7 +1430,7 @@ namespace MphRead.Entities
 
         private void DrawHudCapture()
         {
-            // sktodo
+            // skhere
         }
 
         private void DrawHudDefender()
