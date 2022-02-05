@@ -33,8 +33,13 @@ namespace MphRead.Entities
         {
             Position = data.Position;
             // todo: scan ID
-            // todo: replace with affinity weapon based on game state
             ItemType = data.ItemType;
+            if (scene.Multiplayer && GameState.AffinityWeapons && (ItemType == ItemType.VoltDriver
+                || ItemType == ItemType.Battlehammer || ItemType == ItemType.Imperialist
+                || ItemType == ItemType.Judicator || ItemType == ItemType.Magmaul || ItemType == ItemType.ShockCoil))
+            {
+                ItemType = ItemType.AffinityWeapon;
+            }
             // todo: node ref
             SetUpModel(Metadata.Items[(int)data.ItemType]);
             if (data.DespawnTimer > 0)
