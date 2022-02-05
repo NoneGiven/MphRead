@@ -170,6 +170,29 @@ namespace MphRead
                     }
                 }
                 // todo: update MP playtime to license info
+                if (scene.Multiplayer && !Features.AllowInvalidTeams)
+                {
+                    bool invalid = PlayerEntity.MaxPlayers < 2;
+                    if (!invalid && Teams)
+                    {
+                        bool[] teams = new bool[2];
+                        for (int i = 0; i < 4; i++)
+                        {
+                            PlayerEntity player = PlayerEntity.Players[i];
+                            if (player.LoadFlags.TestFlag(LoadFlags.Active))
+                            {
+                                teams[player.TeamIndex] = true;
+                            }
+                        }
+                        invalid = !teams[0] || !teams[1];
+                    }
+                    if (invalid)
+                    {
+                        MatchTime = 0;
+                        CameraSequence.Current?.End();
+                        // todo: stop music/SFX, state bits/disconnect message?
+                    }
+                }
                 // sktodo: end multiplayer match if too few players or invalid teams
                 ModeState(scene);
                 // todo: escape sequence stuff

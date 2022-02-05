@@ -6,4 +6,9 @@ namespace MphRead
         public static bool BetterCamSeqNodeRef { get; set; } = true;
         public static bool NoStrayRespawnText { get; set; } = false;
     }
+
+    public static class Features
+    {
+        public static bool AllowInvalidTeams { get; set; } = true;
+    }
 }
