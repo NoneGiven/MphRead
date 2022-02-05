@@ -125,22 +125,21 @@ namespace MphRead
                     Console.Clear();
                     Console.WriteLine($"MphRead Version {Program.Version}");
                     Console.WriteLine();
-                    Console.WriteLine("Choose an option with up/down.");
-                    Console.WriteLine("Press Enter to specify, Backspace to clear, or left/right to advance the option.");
-                    // sktodo: Space vs. Enter, hotkeys
+                    Console.WriteLine("Choose an option using up/down or with the key indicated.");
+                    Console.WriteLine("Press Space to specify, Backspace to clear, or left/right to advance the option.");
                     Console.WriteLine("When finished, press Enter or use the last option to launch. Press Escape to exit.");
                     Console.WriteLine();
-                    Console.WriteLine($"{X(s++)} Room: {roomString}");
-                    Console.WriteLine($"{X(s++)} Game mode: {modeString}");
-                    Console.WriteLine($"{X(s++)} Player 1: {PrintPlayer(0)}");
-                    Console.WriteLine($"{X(s++)} Player 2: {PrintPlayer(1)}");
-                    Console.WriteLine($"{X(s++)} Player 3: {PrintPlayer(2)}");
-                    Console.WriteLine($"{X(s++)} Player 4: {PrintPlayer(3)}");
-                    Console.WriteLine($"{X(s++)} Models: {PrintModels()}");
-                    Console.WriteLine($"{X(s++)} MPH Version: {mphKey} ({mphInfo[mphKey]})");
-                    Console.WriteLine($"{X(s++)} FH Version: {fhKey} ({fhInfo[fhKey]})");
-                    Console.WriteLine($"{X(s++)} Match Settings...");
-                    Console.WriteLine($"{X(s++)} Launch");
+                    Console.WriteLine($"{X(s++)} (R) Room: {roomString}");
+                    Console.WriteLine($"{X(s++)} (G) Game mode: {modeString}");
+                    Console.WriteLine($"{X(s++)} (1) Player 1: {PrintPlayer(0)}");
+                    Console.WriteLine($"{X(s++)} (2) Player 2: {PrintPlayer(1)}");
+                    Console.WriteLine($"{X(s++)} (3) Player 3: {PrintPlayer(2)}");
+                    Console.WriteLine($"{X(s++)} (4) Player 4: {PrintPlayer(3)}");
+                    Console.WriteLine($"{X(s++)} (M) Models: {PrintModels()}");
+                    Console.WriteLine($"{X(s++)} (V) MPH Version: {mphKey} ({mphInfo[mphKey]})");
+                    Console.WriteLine($"{X(s++)} (F) FH Version: {fhKey} ({fhInfo[fhKey]})");
+                    Console.WriteLine($"{X(s++)} (S) Match Settings...");
+                    Console.WriteLine($"{X(s++)} (L) Launch");
                     s--;
                     if (prompt == 0)
                     {
@@ -149,23 +148,67 @@ namespace MphRead
                         {
                             return;
                         }
-                        if (keyInfo.Key == ConsoleKey.Enter)
+                        if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.L
+                            || keyInfo.Key == ConsoleKey.Spacebar && selection == s)
                         {
-                            if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Shift)
-                                || keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control) || selection == s)
-                            {
-                                Console.Clear();
-                                Console.WriteLine($"MphRead Version {Program.Version}");
-                                Console.WriteLine();
-                                Console.WriteLine("Loading...");
-                                break;
-                            }
+                            Console.Clear();
+                            Console.WriteLine($"MphRead Version {Program.Version}");
+                            Console.WriteLine();
+                            Console.WriteLine("Loading...");
+                            break;
+                        }
+                        if (keyInfo.Key == ConsoleKey.Spacebar)
+                        {
                             if (selection == s - 1)
                             {
                                 prompt = -1;
                                 continue;
                             }
                             prompt = selection + 1;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.R)
+                        {
+                            selection = 0;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.G)
+                        {
+                            selection = 1;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.P
+                            || keyInfo.Key == ConsoleKey.D1 || keyInfo.Key == ConsoleKey.NumPad1)
+                        {
+                            selection = 2;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.D2 || keyInfo.Key == ConsoleKey.NumPad2)
+                        {
+                            selection = 3;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.D3 || keyInfo.Key == ConsoleKey.NumPad3)
+                        {
+                            selection = 4;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.D4 || keyInfo.Key == ConsoleKey.NumPad4)
+                        {
+                            selection = 5;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.M)
+                        {
+                            selection = 6;
+                            prompt = selection + 1;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.V)
+                        {
+                            selection = 7;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.F)
+                        {
+                            selection = 8;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.S)
+                        {
+                            selection = 9;
+                            prompt = -1;
+                            continue;
                         }
                         else if (keyInfo.Key == ConsoleKey.UpArrow || keyInfo.Key == ConsoleKey.W)
                         {
@@ -761,21 +804,21 @@ namespace MphRead
                 Console.Clear();
                 Console.WriteLine($"MphRead Version {Program.Version}");
                 Console.WriteLine();
-                Console.WriteLine("Choose a setting with up/down.");
-                Console.WriteLine("Press Enter to specify, Backspace to clear, or left/right to advance the setting.");
+                Console.WriteLine("Choose a setting using up/down or with the key indicated.");
+                Console.WriteLine("Press Space to specify, Backspace to clear, or left/right to advance the setting.");
                 Console.WriteLine("When finished, press Enter or use the last option to return. Press Escape to exit.");
                 Console.WriteLine();
                 Console.WriteLine(modeString);
                 Console.WriteLine();
-                Console.WriteLine($"{X(s++)} {_goalType}: {goalString}");
-                Console.WriteLine($"{X(s++)} Time Limit: {timeString}");
-                Console.WriteLine($"{X(s++)} Auto Reset: {resetString}");
-                Console.WriteLine($"{X(s++)} Team Play: {OnOff(_teams)}");
-                Console.WriteLine($"{X(s++)} Show Hunters On Radar: {OnOff(_radarPlayers)}");
-                Console.WriteLine($"{X(s++)} Damage Level: {damageLevels[_damageLevel]}");
-                Console.WriteLine($"{X(s++)} Friendly Fire: {OnOff(_friendlyFire)}");
-                Console.WriteLine($"{X(s++)} Available Weapons: {weaponsString}");
-                Console.WriteLine($"{X(s++)} Return");
+                Console.WriteLine($"{X(s++)} (P) {_goalType}: {goalString}");
+                Console.WriteLine($"{X(s++)} (L) Time Limit: {timeString}");
+                Console.WriteLine($"{X(s++)} (A) Auto Reset: {resetString}");
+                Console.WriteLine($"{X(s++)} (T) Team Play: {OnOff(_teams)}");
+                Console.WriteLine($"{X(s++)} (S) Show Hunters On Radar: {OnOff(_radarPlayers)}");
+                Console.WriteLine($"{X(s++)} (D) Damage Level: {damageLevels[_damageLevel]}");
+                Console.WriteLine($"{X(s++)} (F) Friendly Fire: {OnOff(_friendlyFire)}");
+                Console.WriteLine($"{X(s++)} (W) Available Weapons: {weaponsString}");
+                Console.WriteLine($"{X(s++)} (R) Return");
                 s--;
                 if (prompt == 0)
                 {
@@ -784,14 +827,46 @@ namespace MphRead
                     {
                         return false;
                     }
-                    if (keyInfo.Key == ConsoleKey.Enter)
+                    if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.R
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == s)
                     {
-                        if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Shift)
-                            || keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control) || selection == s)
-                        {
-                            break;
-                        }
+                        break;
+                    }
+                    if (keyInfo.Key == ConsoleKey.Spacebar)
+                    {
                         prompt = selection + 1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.P)
+                    {
+                        selection = 0;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.L)
+                    {
+                        selection = 1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.A)
+                    {
+                        selection = 2;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.T)
+                    {
+                        selection = 3;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.S)
+                    {
+                        selection = 4;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D)
+                    {
+                        selection = 5;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.F)
+                    {
+                        selection = 6;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.W)
+                    {
+                        selection = 7;
                     }
                     else if (keyInfo.Key == ConsoleKey.UpArrow || keyInfo.Key == ConsoleKey.W)
                     {
