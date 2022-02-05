@@ -680,6 +680,16 @@ namespace MphRead.Entities
 
         private void DrawLocatorIcon(Vector3 position, float angle, ModelInstance inst, ColorRgb color, float alpha)
         {
+            float W(float value)
+            {
+                return value / 256f * _scene.Size.X;
+            }
+
+            float H(float value)
+            {
+                return value / 192f * _scene.Size.Y;
+            }
+
             float x;
             float y;
             bool behind = false;
@@ -688,70 +698,72 @@ namespace MphRead.Entities
             if (mult.Z < -1)
             {
                 Matrix.ProjectPosition(position, _scene.ViewMatrix, _scene.PerspectiveMatrix, out proj);
-                x = proj.X - 128 / 256f;
-                y = proj.Y - 106 / 192f;
+                x = proj.X * _scene.Size.X - W(128);
+                y = proj.Y * _scene.Size.Y - H(106);
             }
             else
             {
-                x = mult.X / (_scene.Size.X / 2);
-                y = -mult.Y / (_scene.Size.Y / 2);
+                x = W(mult.X);
+                y = -H(mult.Y);
                 behind = true;
             }
             float absX = MathF.Abs(x);
             float absY = MathF.Abs(y);
-            if (behind || absX > 100 / 256f || absY > 60f / 192f)
+            if (behind || absX > W(100) || absY > H(60))
             {
-                if (absY >= 1 / 192f)
+                if (absY >= 1 / 4096f)
                 {
-                    float v15 = absX + MathF.Truncate((60 / 192f - absY) * absX / absY);
-                    if (v15 > 100 / 256f)
+                    float v15 = absX + MathF.Truncate((H(60) - absY) * absX / absY);
+                    if (v15 > W(100))
                     {
-                        float v17 = absY + MathF.Truncate((100 / 256f - absX) * absY / absX);
+                        float v17 = absY + MathF.Truncate((W(100) - absX) * absY / absX);
                         if (x <= 0)
                         {
-                            proj.X = 28 / 256f;
+                            proj.X = W(28);
                         }
                         else
                         {
-                            proj.X = 228 / 256f;
+                            proj.X = W(228);
                         }
                         if (y <= 0)
                         {
-                            proj.Y = 106 / 192f - v17;
+                            proj.Y = H(106) - v17;
                         }
                         else
                         {
-                            proj.Y = v17 + 106 / 192f;
+                            proj.Y = v17 + H(106);
                         }
                     }
                     else
                     {
                         if (x <= 0)
                         {
-                            proj.X = 128 / 256f - v15;
+                            proj.X = W(128) - v15;
                         }
                         else
                         {
-                            proj.X = v15 + 128 / 256f;
+                            proj.X = v15 + W(128);
                         }
                         if (y <= 0)
                         {
-                            proj.Y = 46 / 192f;
+                            proj.Y = H(46);
                         }
                         else
                         {
-                            proj.Y = 166 / 192f;
+                            proj.Y = H(166);
                         }
                     }
                 }
                 else if (x <= 0)
                 {
-                    proj.X = 28 / 256f;
+                    proj.X = W(28);
                 }
                 else
                 {
-                    proj.X = 228 / 256f;
+                    proj.X = W(228);
                 }
+                proj.X /= _scene.Size.X;
+                proj.Y /= _scene.Size.Y;
                 angle = MathHelper.RadiansToDegrees(MathF.Atan2(-y, x));
                 _arrowLocator.Model.Materials[0].Diffuse = color;
                 _scene.DrawIconModel(proj, angle, _arrowLocator, alpha);
