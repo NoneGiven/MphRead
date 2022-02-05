@@ -70,6 +70,10 @@ namespace MphRead.Entities
                     _timeSinceFrozen++;
                 }
             }
+            else
+            {
+                _showScoreboard = Controls.Pause.IsDown;
+            }
             if (IsAltForm || IsMorphing)
             {
                 ProcessAlt();

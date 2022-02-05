@@ -3166,7 +3166,7 @@ namespace MphRead
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
-        public void DrawIconModel(Vector2 position, float angle, ModelInstance inst, float alpha)
+        public void DrawIconModel(Vector2 position, float angle, ModelInstance inst, ColorRgb color, float alpha)
         {
             float scale = Size.Y / 192f;
             var position3d = new Vector3(position.X * Size.X - Size.X / 2, (1 - position.Y) * Size.Y - (Size.Y / 2), -1f);
@@ -3185,6 +3185,7 @@ namespace MphRead
                 TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            GL.Color3(new Vector3(color.Red / 31f, color.Green / 31f, color.Blue / 31f));
             GL.CallList(model.Meshes[0].ListId);
             GL.BindTexture(TextureTarget.Texture2D, 0);
             Matrix4 identity = Matrix4.Identity;

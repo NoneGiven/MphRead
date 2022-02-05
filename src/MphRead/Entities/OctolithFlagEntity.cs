@@ -12,6 +12,7 @@ namespace MphRead.Entities
         private readonly bool _bounty = false;
 
         private PlayerEntity? _carrier = null;
+        public PlayerEntity? Carrier => _carrier;
         private PlayerEntity? _lastCarrier = null;
         private bool _atBase = false;
         public bool AtBase => _atBase;

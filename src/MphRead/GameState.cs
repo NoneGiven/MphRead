@@ -194,7 +194,6 @@ namespace MphRead
                         // todo: stop music/SFX, state bits/disconnect message?
                     }
                 }
-                // sktodo: end multiplayer match if too few players or invalid teams
                 ModeState(scene);
                 // todo: escape sequence stuff
                 if (MatchTime > 0 && !ForceEndGame)

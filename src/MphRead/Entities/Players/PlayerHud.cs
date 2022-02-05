@@ -27,6 +27,8 @@ namespace MphRead.Entities
         private HudObjectInstance _bombInst = null!;
         private HudMeter _enemyHealthMeter = null!;
 
+        private HudObjectInstance _octolithInst = null!;
+
         private ModelInstance _damageIndicator = null!;
         private readonly ushort[] _damageIndicatorTimers = new ushort[8];
         private readonly Node[] _damageIndicatorNodes = new Node[8];
@@ -43,6 +45,7 @@ namespace MphRead.Entities
 
         public void SetUpHud()
         {
+            // todo: only load what needs to be loaded for the mode
             _filterModel = Read.GetModelInstance("filter");
             _scene.LoadModel(_filterModel.Model);
             _damageIndicator = Read.GetModelInstance("damage", dir: MetaDir.Hud);
@@ -196,6 +199,11 @@ namespace MphRead.Entities
                 hunterInst.Enabled = true;
                 _hunterInsts[i] = hunterInst;
             }
+            HudObject octolith = HudInfo.GetHudObject(HudElements.Octolith);
+            _octolithInst = new HudObjectInstance(octolith.Width, octolith.Height);
+            _octolithInst.SetCharacterData(octolith.CharacterData, _scene);
+            _octolithInst.SetPaletteData(octolith.PaletteData, _scene);
+            _octolithInst.Enabled = true;
             _textInst = new HudObjectInstance(width: 8, height: 8); // todo: max is 16x16
             _textInst.SetCharacterData(Font.CharacterData, _scene);
             _textInst.SetPaletteData(ammoBar.PaletteData, _scene);
@@ -649,13 +657,13 @@ namespace MphRead.Entities
             }
         }
 
-        private class LocatorInfo
+        private struct LocatorInfo
         {
-            public Vector3 Position { get; set; }
-            public float Angle { get; set; }
-            public ModelInstance Model { get; set; }
-            public ColorRgb Color { get; set; }
-            public float Alpha { get; set; }
+            public Vector3 Position;
+            public float Angle;
+            public ModelInstance Model;
+            public ColorRgb Color;
+            public float Alpha;
 
             public LocatorInfo(Vector3 position, float angle, ModelInstance model, ColorRgb color, float alpha)
             {
@@ -667,7 +675,12 @@ namespace MphRead.Entities
             }
         }
 
-        private readonly List<LocatorInfo> _locatorInfo = new List<LocatorInfo>();
+        private readonly List<LocatorInfo> _locatorInfo = new List<LocatorInfo>(15);
+
+        private void AddLocatorInfo(Vector3 position, float angle, ModelInstance inst, ColorRgb color, float alpha)
+        {
+            _locatorInfo.Add(new LocatorInfo(position, angle, inst, color, alpha));
+        }
 
         private void DrawLocatorIcons()
         {
@@ -765,13 +778,11 @@ namespace MphRead.Entities
                 proj.X /= _scene.Size.X;
                 proj.Y /= _scene.Size.Y;
                 angle = MathHelper.RadiansToDegrees(MathF.Atan2(-y, x));
-                _arrowLocator.Model.Materials[0].Diffuse = color;
-                _scene.DrawIconModel(proj, angle, _arrowLocator, alpha);
+                _scene.DrawIconModel(proj, angle, _arrowLocator, color, alpha);
             }
             else
             {
-                inst.Model.Materials[0].Diffuse = color;
-                _scene.DrawIconModel(proj, angle, inst, alpha);
+                _scene.DrawIconModel(proj, angle, inst, color, alpha);
             }
         }
 
@@ -1142,13 +1153,17 @@ namespace MphRead.Entities
             {
                 ProcessHudSurvival();
             }
+            else if (_scene.GameMode == GameMode.Bounty || _scene.GameMode == GameMode.BountyTeams)
+            {
+                ProcessHudBounty();
+            }
             else if (_scene.GameMode == GameMode.Nodes || _scene.GameMode == GameMode.NodesTeams)
             {
-                // todo: lots of stuff
+                // sktodo: lots of stuff
             }
             else if (_scene.GameMode == GameMode.PrimeHunter)
             {
-                // todo: prime hunter HUD setup stuff
+                // sktodo: prime hunter HUD setup stuff
             }
         }
 
@@ -1208,12 +1223,47 @@ namespace MphRead.Entities
                 {
                     pos.Y += 0.75f;
                 }
-                _locatorInfo.Add(new LocatorInfo(pos, angle: 0, _playerLocator, new ColorRgb(31, 31, 31), alpha));
+                AddLocatorInfo(pos, angle: 0, _playerLocator, new ColorRgb(31, 31, 31), alpha);
             }
             if (reveal == 1)
             {
                 // todo: play voice
                 QueueHudMessage(128, 150, 60 / 30f, 0, 234); // COWARD DETECTED!
+            }
+        }
+
+        private void ProcessHudBounty()
+        {
+            var goodColor = new ColorRgb(15, 15, 31);
+            if (OctolithFlag != null)
+            {
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.FlagBase)
+                    {
+                        continue;
+                    }
+                    AddLocatorInfo(entity.Position, angle: 0, _nodeLocator, goodColor, alpha: 1);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.OctolithFlag)
+                    {
+                        continue;
+                    }
+                    var flag = (OctolithFlagEntity)entity;
+                    var color = new ColorRgb(31, 31, 31);
+                    if (flag.Carrier != null && (_scene.FrameCount & (4 * 2)) != 0) // todo: FPS stuff
+                    {
+                        color = flag.Carrier.TeamIndex == TeamIndex ? goodColor : new ColorRgb(31, 0, 0);
+                    }
+                    AddLocatorInfo(entity.Position, angle: 0, _octolithLocator, color, alpha: 1);
+                }
             }
         }
 
@@ -1336,7 +1386,37 @@ namespace MphRead.Entities
 
         private void DrawHudBounty()
         {
-            // sktodo
+            DrawModeScore(215, FormatModeScore(MainPlayerIndex)); // octoliths
+            bool drawIcon = false;
+            if (OctolithFlag != null)
+            {
+                drawIcon = (_scene.FrameCount & (16 * 2)) != 0; // todo: FPS stuff
+                _octolithInst.Alpha = 1;
+            }
+            else if (GameState.Teams)
+            {
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.OctolithFlag)
+                    {
+                        continue;
+                    }
+                    var flag = (OctolithFlagEntity)entity;
+                    if (flag.Carrier != null && flag.Carrier.TeamIndex == TeamIndex)
+                    {
+                        drawIcon = true;
+                        _octolithInst.Alpha = 0.5f;
+                        break;
+                    }
+                }
+            }
+            if (drawIcon)
+            {
+                _octolithInst.PositionX = _hudObjects.OctolithPosX / 256f;
+                _octolithInst.PositionY = _hudObjects.OctolithPosY / 192f;
+                _scene.DrawHudObject(_octolithInst);
+            }
         }
 
         private void DrawHudCapture()

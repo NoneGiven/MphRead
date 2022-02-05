@@ -1201,6 +1201,8 @@ namespace MphRead.Hud
         public static readonly string Boost = @"_archives\common\hud_boost.bin";
         public static readonly string Bombs = @"_archives\common\hud_bombs.bin";
         public static readonly string Stars = @"_archives\commonMP\stars.bin";
+        public static readonly string Octolith = @"_archives\commonMP\radar_octolithLARGE.bin";
+
         public static readonly IReadOnlyList<string> Hunters = new string[8]
         {
             @"_archives\common\enemy_samus.bin",
@@ -1256,7 +1258,9 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 12,
                 scorePosY: 30,
-                scoreTextType: TextType.LeftAlign
+                scoreTextType: TextType.LeftAlign,
+                octolithPosX: 228,
+                octolithPosY: 28
             ),
             // Kanden
             new HudObjects(
@@ -1294,7 +1298,9 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 20,
                 scorePosY: 4,
-                scoreTextType: TextType.LeftAlign
+                scoreTextType: TextType.LeftAlign,
+                octolithPosX: 212,
+                octolithPosY: 4
             ),
             // Trace
             new HudObjects(
@@ -1332,7 +1338,9 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 128,
                 scorePosY: 12,
-                scoreTextType: TextType.Centered
+                scoreTextType: TextType.Centered,
+                octolithPosX: 176,
+                octolithPosY: 12
             ),
             // Sylux
             new HudObjects(
@@ -1370,7 +1378,9 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 56,
                 scorePosY: 8,
-                scoreTextType: TextType.LeftAlign
+                scoreTextType: TextType.LeftAlign,
+                octolithPosX: 186,
+                octolithPosY: 4
             ),
             // Noxus
             new HudObjects(
@@ -1408,7 +1418,9 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 36,
                 scorePosY: 12,
-                scoreTextType: TextType.LeftAlign
+                scoreTextType: TextType.LeftAlign,
+                octolithPosX: 200,
+                octolithPosY: 8
             ),
             // Spire
             new HudObjects(
@@ -1446,7 +1458,9 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 10,
                 scorePosY: 16,
-                scoreTextType: TextType.LeftAlign
+                scoreTextType: TextType.LeftAlign,
+                octolithPosX: 208,
+                octolithPosY: 13
             ),
             // Weavel
             new HudObjects(
@@ -1484,7 +1498,9 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 128,
                 scorePosY: 18,
-                scoreTextType: TextType.Centered
+                scoreTextType: TextType.Centered,
+                octolithPosX: 216,
+                octolithPosY: 4
             ),
             // Guardian
             new HudObjects(
@@ -1522,7 +1538,9 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 12,
                 scorePosY: 30,
-                scoreTextType: TextType.LeftAlign
+                scoreTextType: TextType.LeftAlign,
+                octolithPosX: 228,
+                octolithPosY: 28
             )
         };
 
@@ -2001,13 +2019,16 @@ namespace MphRead.Hud
         public readonly int ScorePosX;
         public readonly int ScorePosY;
         public readonly TextType ScoreTextType;
+        public readonly int OctolithPosX;
+        public readonly int OctolithPosY;
 
         public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB, string? energyTanks,
             string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar, string reticle,
             string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectIcon, string selectBox,
             int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY, int healthOffsetYAlt,
             int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY, int enemyHealthPosX, int enemyHealthPosY,
-            int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX, int scorePosY, TextType scoreTextType)
+            int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX, int scorePosY, TextType scoreTextType,
+            int octolithPosX, int octolithPosY)
         {
             Helmet = helmet;
             HelmetDrop = helmetDrop;
@@ -2044,6 +2065,8 @@ namespace MphRead.Hud
             ScorePosX = scorePosX;
             ScorePosY = scorePosY;
             ScoreTextType = scoreTextType;
+            OctolithPosX = octolithPosX;
+            OctolithPosY = octolithPosY;
         }
     }
 }
