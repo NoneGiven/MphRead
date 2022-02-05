@@ -30,6 +30,9 @@ namespace MphRead.Entities
         private readonly ushort[] _damageIndicatorTimers = new ushort[8];
         private readonly Node[] _damageIndicatorNodes = new Node[8];
 
+        private HudObjectInstance _starsInst = null!;
+        private readonly HudObjectInstance[] _hunterInsts = new HudObjectInstance[8];
+
         private ModelInstance _filterModel = null!;
         private bool _showScoreboard = false;
 
@@ -150,6 +153,20 @@ namespace MphRead.Entities
             _bombInst.SetPaletteData(bombs.PaletteData, _scene);
             _bombInst.Enabled = true;
             _boostBombsYOffset = 208;
+            HudObject stars = HudInfo.GetHudObject(HudElements.Stars);
+            _starsInst = new HudObjectInstance(stars.Width, stars.Height);
+            _starsInst.SetCharacterData(stars.CharacterData, _scene);
+            _starsInst.SetPaletteData(stars.PaletteData, _scene);
+            _starsInst.Enabled = true;
+            for (int i = 0; i < 8; i++)
+            {
+                HudObject hunter = HudInfo.GetHudObject(HudElements.Hunters[i]);
+                var hunterInst = new HudObjectInstance(hunter.Width, hunter.Height);
+                hunterInst.SetCharacterData(hunter.CharacterData, _scene);
+                hunterInst.SetPaletteData(hunter.PaletteData, _scene);
+                hunterInst.Enabled = true;
+                _hunterInsts[i] = hunterInst;
+            }
             _textInst = new HudObjectInstance(width: 8, height: 8); // todo: max is 16x16
             _textInst.SetCharacterData(Font.CharacterData, _scene);
             _textInst.SetPaletteData(ammoBar.PaletteData, _scene);
@@ -604,16 +621,179 @@ namespace MphRead.Entities
             }
             var time = TimeSpan.FromSeconds(GameState.MatchTime);
             int palette = time.TotalSeconds < 10 ? 2 : 0;
-            float posY = 25;
+            float posY = 10;
             string text = Strings.GetHudMessage(5); // TIME
             DrawText2D(128, posY, TextType.Centered, palette, text);
             text = $"{time.Minutes}:{time.Seconds:00}";
             DrawText2D(128, posY + 10, TextType.Centered, palette, text);
         }
 
+        private const float _scoreStartSpace = 13;
+        private const float _scoreTeamHeaderSpace = 4;
+        private const float _scoreTeamLineSpace = 18;
+        private const float _scorePlayerSpace = 28;
+
+        private float GetScoreboardHeight()
+        {
+            float height = _scoreStartSpace;
+            if (GameState.MatchState == MatchState.Ending)
+            {
+                height *= 2;
+            }
+            int curTeam = 4;
+            for (int i = 0; i < GameState.ActivePlayers; i++)
+            {
+                PlayerEntity player = Players[GameState.ResultSlots[i]];
+                if (!player.LoadFlags.TestFlag(LoadFlags.Active))
+                {
+                    continue;
+                }
+                if (GameState.Teams && player.TeamIndex != curTeam)
+                {
+                    if (curTeam != 4)
+                    {
+                        height -= _scoreTeamHeaderSpace;
+                    }
+                    height += _scoreTeamLineSpace;
+                    curTeam = player.TeamIndex;
+                }
+                height += _scorePlayerSpace;
+            }
+            return height;
+        }
+
         private void DrawScoreboard()
         {
-            // sktodo
+            GameMode mode = _scene.GameMode;
+            float posY = 104 - GetScoreboardHeight() / 2;
+            if (GameState.MatchState == MatchState.Ending)
+            {
+                string text = Strings.GetHudMessage(219); // GAME OVER
+                DrawText2D(128, posY, TextType.Centered, 0, text, new ColorRgba(0x53F4), fontSpacing: 8);
+                posY += _scoreStartSpace;
+            }
+            string header1 = "";
+            string header2 = "";
+            if (mode == GameMode.Battle || mode == GameMode.BattleTeams
+                || mode == GameMode.Nodes || mode == GameMode.NodesTeams)
+            {
+                header1 = Strings.GetHudMessage(225); // points
+            }
+            else if (mode == GameMode.Capture || mode == GameMode.Bounty || mode == GameMode.BountyTeams)
+            {
+                header1 = Strings.GetHudMessage(227); // octoliths
+            }
+            else // survival/teams, defender/teams, prime hunter
+            {
+                header1 = Strings.GetHudMessage(224); // time
+            }
+            if (mode == GameMode.Battle || mode == GameMode.BattleTeams
+                || mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
+            {
+                header2 = Strings.GetHudMessage(223); // deaths
+            }
+            else // capture, bounty/teams, defender/teams, nodes/teams, prime hunter
+            {
+                header2 = Strings.GetHudMessage(220); // kills
+            }
+            DrawText2D(160, posY, TextType.Centered, 0, header1, new ColorRgba(0x3FEF), fontSpacing: 8);
+            DrawText2D(215, posY, TextType.Centered, 0, header2, new ColorRgba(0x3FEF), fontSpacing: 8);
+            posY += _scoreStartSpace;
+            string maxText = Strings.GetHudMessage(256); // MAX
+
+            string ChooseValue1(float time, int points)
+            {
+                if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams || mode == GameMode.Defender
+                    || mode == GameMode.DefenderTeams || mode == GameMode.PrimeHunter)
+                {
+                    // time should only be -1 to indicate max in survival/teams
+                    return time < 0 ? maxText : $"{TimeSpan.FromSeconds(time):m\\:ss}";
+                }
+                // battle/teams, capture, bounty/teams, nodes/teams
+                return points.ToString();
+            }
+
+            string ChooseValue2(int deaths, int kills)
+            {
+                if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams
+                    || mode == GameMode.Battle || mode == GameMode.BattleTeams)
+                {
+                    return deaths.ToString();
+                }
+                // capture, bounty/teams, defender/teams, nodes/teams, prime hunter
+                return kills.ToString();
+            }
+
+            string teamText = Strings.GetHudMessage(222); // team
+            int curTeam = 4;
+            for (int i = 0; i < GameState.ActivePlayers; i++)
+            {
+                int slot = GameState.ResultSlots[i];
+                PlayerEntity player = Players[slot];
+                if (!player.LoadFlags.TestFlag(LoadFlags.Active))
+                {
+                    continue;
+                }
+                if (GameState.Teams && player.TeamIndex != curTeam)
+                {
+                    if (curTeam != 4)
+                    {
+                        posY -= _scoreTeamHeaderSpace;
+                    }
+                    curTeam = player.TeamIndex;
+                    string teamValue1 = ChooseValue1(GameState.TeamTime[curTeam], GameState.TeamPoints[curTeam]);
+                    string teamValue2 = ChooseValue2(GameState.TeamDeaths[curTeam], GameState.TeamKills[curTeam]);
+                    var teamColor = new ColorRgba(player.Team == Team.Orange ? 0x23Fu : 0x2BEAu);
+                    string teamName = $"{teamText} {player.TeamIndex + 1}";
+                    DrawText2D(42, posY, TextType.Centered, 0, teamName, teamColor, fontSpacing: 8);
+                    DrawText2D(160, posY, TextType.Centered, 0, teamValue1, teamColor, fontSpacing: 8);
+                    DrawText2D(215, posY, TextType.Centered, 0, teamValue2, teamColor, fontSpacing: 8);
+                    posY += _scoreTeamLineSpace;
+                }
+                string value1 = ChooseValue1(GameState.Time[slot], GameState.Points[slot]);
+                string value2 = ChooseValue2(GameState.Deaths[slot], GameState.Kills[slot]);
+                var color = new ColorRgba(0x7DEF);
+                if (player.IsMainPlayer)
+                {
+                    float Lerp(float first, float second, float by)
+                    {
+                        return first * (1 - by) + second * by;
+                    }
+
+                    float rg;
+                    float pct = _scene.ElapsedTime / (32 / 30f) % 1;
+                    if (pct <= 0.5f)
+                    {
+                        rg = Lerp(0, 1, pct * 2);
+                    }
+                    else
+                    {
+                        rg = Lerp(1, 0, (pct - 0.5f) * 2);
+                    }
+                    color = new ColorRgba((byte)(rg * 255), (byte)(rg * 255), 255, 255);
+                }
+                DrawScoreboardPlayer(60, posY, color, _hunterInsts[(int)player.Hunter], slot);
+                DrawText2D(160, posY, TextType.Centered, 0, value1, color, fontSpacing: 8);
+                DrawText2D(215, posY, TextType.Centered, 0, value2, color, fontSpacing: 8);
+                posY += _scorePlayerSpace;
+            }
+        }
+
+        private void DrawScoreboardPlayer(float posX, float posY, ColorRgba color, HudObjectInstance hunter, int slot)
+        {
+            hunter.PositionX = (posX - 40) / 256f;
+            hunter.PositionY = (posY - 13) / 192f;
+            _scene.DrawHudObject(hunter, mode: 2);
+            int stars = GameState.Stars[slot];
+            _starsInst.PositionX = posX / 256f;
+            _starsInst.PositionY = posY / 192f;
+            _starsInst.SetIndex(stars * 2, _scene);
+            _scene.DrawHudObject(_starsInst, mode: 2);
+            _starsInst.PositionX = (posX + 32) / 256f;
+            _starsInst.SetIndex(stars * 2 + 1, _scene);
+            _scene.DrawHudObject(_starsInst, mode: 2);
+            string nickname = GameState.Nicknames[slot];
+            DrawText2D(posX + 32, posY - 9, TextType.Centered, 0, nickname, color, fontSpacing: 8);
         }
 
         private void DrawHealthbars()

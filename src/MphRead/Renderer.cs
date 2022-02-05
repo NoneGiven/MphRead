@@ -4102,26 +4102,6 @@ namespace MphRead
             _sb.AppendLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
             _sb.AppendLine(" - Ctrl+U then enter \"model_id\" to unload");
             _sb.AppendLine(" - Esc closes the viewer");
-            // sktodo: show all stats on a separate menu
-            _sb.AppendLine("---");
-            _sb.AppendLine($"{GameState.Standings[0]} ({GameState.TeamStandings[0]}) ({GameState.WinningSlots[0]})");
-            _sb.AppendLine($"{GameState.Standings[1]} ({GameState.TeamStandings[1]}) ({GameState.WinningSlots[1]})");
-            _sb.AppendLine($"{GameState.Standings[2]} ({GameState.TeamStandings[2]}) ({GameState.WinningSlots[2]})");
-            _sb.AppendLine($"{GameState.Standings[3]} ({GameState.TeamStandings[3]}) ({GameState.WinningSlots[3]})");
-            _sb.AppendLine("---");
-            _sb.AppendLine($"{GameState.Points[0]} / {GameState.Kills[0]} / {GameState.Deaths[0]} " +
-                $"({GameState.TeamPoints[0]} / {GameState.TeamKills[0]} / {GameState.TeamDeaths[0]})");
-            _sb.AppendLine($"{GameState.Points[1]} / {GameState.Kills[1]} / {GameState.Deaths[1]} " +
-                $"({GameState.TeamPoints[1]} / {GameState.TeamKills[1]} / {GameState.TeamDeaths[1]})");
-            _sb.AppendLine($"{GameState.Points[2]} / {GameState.Kills[2]} / {GameState.Deaths[2]} " +
-                $"({GameState.TeamPoints[2]} / {GameState.TeamKills[2]} / {GameState.TeamDeaths[2]})");
-            _sb.AppendLine($"{GameState.Points[3]} / {GameState.Kills[3]} / {GameState.Deaths[3]} " +
-                $"({GameState.TeamPoints[3]} / {GameState.TeamKills[3]} / {GameState.TeamDeaths[3]})");
-            _sb.AppendLine("---");
-            _sb.AppendLine($"{TimeSpan.FromSeconds(GameState.Time[0])} ({TimeSpan.FromSeconds(GameState.TeamTime[0])})");
-            _sb.AppendLine($"{TimeSpan.FromSeconds(GameState.Time[1])} ({TimeSpan.FromSeconds(GameState.TeamTime[1])})");
-            _sb.AppendLine($"{TimeSpan.FromSeconds(GameState.Time[2])} ({TimeSpan.FromSeconds(GameState.TeamTime[2])})");
-            _sb.AppendLine($"{TimeSpan.FromSeconds(GameState.Time[3])} ({TimeSpan.FromSeconds(GameState.TeamTime[3])})");
         }
 
         private void OutputGetEntityInfo()

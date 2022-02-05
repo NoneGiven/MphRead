@@ -19,9 +19,10 @@ namespace MphRead
         public static MatchState MatchState { get; set; } = MatchState.InProgress;
         public static int ActivePlayers { get; set; } = 0;
         public static string[] Nicknames { get; } = new string[4] { "Player1", "Player2", "Player3", "Player4" };
+        public static int[] Stars { get; } = new int[4];
         public static int[] Standings { get; } = new int[4];
         public static int[] TeamStandings { get; } = new int[4];
-        public static int[] WinningSlots { get; } = new int[4];
+        public static int[] ResultSlots { get; } = new int[4]; // ordered by team rank, then by player rank
         public static int PrimeHunter { get; set; } = -1;
 
         public static bool Teams { get; set; } = false;
@@ -169,7 +170,7 @@ namespace MphRead
                     }
                 }
                 // todo: update MP playtime to license info
-                // todo: end multiplayer match if too few players or invalid teams
+                // sktodo: end multiplayer match if too few players or invalid teams
                 ModeState(scene);
                 // todo: escape sequence stuff
                 if (MatchTime > 0 && !ForceEndGame)
@@ -206,7 +207,7 @@ namespace MphRead
             }
             else if (MatchState == MatchState.GameOver)
             {
-                PlayerEntity winner = PlayerEntity.Players[WinningSlots[0]];
+                PlayerEntity winner = PlayerEntity.Players[ResultSlots[0]];
                 if (winner.Health > 0 && winner.LoadFlags.TestFlag(LoadFlags.Active)
                     && winner.LoadFlags.TestFlag(LoadFlags.Spawned))
                 {
@@ -478,7 +479,7 @@ namespace MphRead
                             Standings[p] = 3;
                             if (player.LoadFlags.TestFlag(LoadFlags.Active))
                             {
-                                WinningSlots[a++] = p;
+                                ResultSlots[a++] = p;
                                 ActivePlayers++;
                             }
                         }
@@ -493,7 +494,7 @@ namespace MphRead
                     Standings[p] = 3;
                     if (players[p].LoadFlags.TestFlag(LoadFlags.Active))
                     {
-                        WinningSlots[a++] = p;
+                        ResultSlots[a++] = p;
                         ActivePlayers++;
                     }
                 }
@@ -502,16 +503,16 @@ namespace MphRead
             {
                 for (int nextIndex = index + 1; nextIndex < ActivePlayers; nextIndex++)
                 {
-                    int slot = WinningSlots[index];
-                    int nextSlot = WinningSlots[nextIndex];
+                    int slot = ResultSlots[index];
+                    int nextSlot = ResultSlots[nextIndex];
                     int teamIndex = players[slot].TeamIndex;
                     int nextTeamIndex = players[nextSlot].TeamIndex;
                     // the game passes team_ids[wslot/nslot] instead of the player fields to CompareTeams
                     if (Teams && teamIndex != nextTeamIndex && CompareTeams(teamIndex, nextTeamIndex, mode) < 0
                         || ComparePlayers(slot, nextSlot, mode) < 0)
                     {
-                        WinningSlots[index] = nextSlot;
-                        WinningSlots[nextIndex] = slot;
+                        ResultSlots[index] = nextSlot;
+                        ResultSlots[nextIndex] = slot;
                     }
                 }
             }
@@ -532,8 +533,8 @@ namespace MphRead
                 }
                 for (int i = 0; i < ActivePlayers - 1; i++)
                 {
-                    int slot = WinningSlots[i];
-                    int nextSlot = WinningSlots[i + 1];
+                    int slot = ResultSlots[i];
+                    int nextSlot = ResultSlots[i + 1];
                     int teamIndex = players[slot].TeamIndex;
                     Standings[slot] = v57[teamIndex];
                     TeamStandings[slot] = v47;
@@ -550,7 +551,7 @@ namespace MphRead
                     }
                 }
                 int index = ActivePlayers - 1;
-                Standings[index] = v57[players[WinningSlots[index]].TeamIndex];
+                Standings[index] = v57[players[ResultSlots[index]].TeamIndex];
                 TeamStandings[index] = v47;
             }
             else
@@ -559,14 +560,14 @@ namespace MphRead
                 int v47 = 0;
                 for (index = 0; index < ActivePlayers - 1; index++)
                 {
-                    int slot = WinningSlots[index];
+                    int slot = ResultSlots[index];
                     Standings[slot] = v47;
-                    if (ComparePlayers(slot, WinningSlots[index + 1], mode) != 0)
+                    if (ComparePlayers(slot, ResultSlots[index + 1], mode) != 0)
                     {
                         v47 = index + 1;
                     }
                 }
-                Standings[WinningSlots[index]] = v47;
+                Standings[ResultSlots[index]] = v47;
             }
             // todo: update license info
         }
@@ -736,7 +737,7 @@ namespace MphRead
             {
                 Standings[i] = 0;
                 TeamStandings[i] = 0;
-                WinningSlots[i] = 0;
+                ResultSlots[i] = 0;
                 Points[i] = 0;
                 TeamPoints[i] = 0;
                 Kills[i] = 0;

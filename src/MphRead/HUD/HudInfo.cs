@@ -1200,6 +1200,18 @@ namespace MphRead.Hud
         public static readonly string IceLayer = @"_archives\common\bg_ice.bin";
         public static readonly string Boost = @"_archives\common\hud_boost.bin";
         public static readonly string Bombs = @"_archives\common\hud_bombs.bin";
+        public static readonly string Stars = @"_archives\commonMP\stars.bin";
+        public static readonly IReadOnlyList<string> Hunters = new string[8]
+        {
+            @"_archives\common\enemy_samus.bin",
+            @"_archives\common\enemy_kanden.bin",
+            @"_archives\common\enemy_trace.bin",
+            @"_archives\common\enemy_sylux.bin",
+            @"_archives\common\enemy_noxus.bin",
+            @"_archives\common\enemy_spyre.bin",
+            @"_archives\common\enemy_weavel.bin",
+            @"_archives\common\enemy_samus.bin" // todo: Guardian portrait
+        };
 
         public static IEnumerable<string> AllLayers { get; } = new List<string>()
         {
