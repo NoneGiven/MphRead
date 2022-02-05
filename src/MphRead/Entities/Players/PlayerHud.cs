@@ -572,7 +572,7 @@ namespace MphRead.Entities
             }
             else if (CameraSequence.Current?.IsIntro == true)
             {
-                // sktodo: draw laws of battle
+                // todo: draw laws of battle
                 DrawQueuedHudMessages();
                 return;
             }
@@ -992,18 +992,59 @@ namespace MphRead.Entities
             }
         }
 
+        public void ProcessMode()
+        {
+            // todo: update opponent damage bar
+            if (_scene.GameMode == GameMode.Nodes || _scene.GameMode == GameMode.NodesTeams)
+            {
+                // todo: lots of stuff
+            }
+            else if (_scene.GameMode == GameMode.PrimeHunter)
+            {
+                // todo: prime hunter HUD setup stuff
+            }
+        }
+
         private void DrawModeHud()
         {
-            // todo: the rest
-            if (_scene.GameMode == GameMode.SinglePlayer)
+            // sktodo: the rest
+            GameMode mode = _scene.GameMode;
+            if (mode == GameMode.SinglePlayer)
             {
                 DrawHudAdventure();
+            }
+            else if (mode == GameMode.Battle || mode == GameMode.BattleTeams)
+            {
+                DrawHudBattle();
+            }
+            else if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
+            {
+                DrawHudSurvival();
+            }
+            else if (mode == GameMode.Bounty || mode == GameMode.BountyTeams)
+            {
+                DrawHudBounty();
+            }
+            else if (mode == GameMode.Capture)
+            {
+                DrawHudCapture();
+            }
+            else if (mode == GameMode.Defender || mode == GameMode.DefenderTeams)
+            {
+                DrawHudDefender();
+            }
+            else if (mode == GameMode.Nodes || mode == GameMode.NodesTeams)
+            {
+                DrawHudNodes();
+            }
+            else if (mode == GameMode.PrimeHunter)
+            {
+                DrawHudPrimeHunter();
             }
         }
 
         private void DrawHudAdventure()
         {
-            //_enemyHealthMeter
             // todo: draw scan visor if enabled
             // else...
             if (_scene.RoomId == 92) // Gorea_b2
@@ -1031,6 +1072,80 @@ namespace MphRead.Entities
                 }
             }
             // todo: draw visor name
+        }
+
+        // we don't really need a separate function for this as-is, but it might be reused for the opponent damage bar
+        private string FormatModeScore(int slot)
+        {
+            GameMode mode = _scene.GameMode;
+            if (mode == GameMode.Battle || mode == GameMode.BattleTeams || mode == GameMode.Capture || mode == GameMode.Nodes
+                || mode == GameMode.NodesTeams || mode == GameMode.Bounty || mode == GameMode.BountyTeams)
+            {
+                if (GameState.Teams)
+                {
+                    return $"{GameState.TeamPoints[Players[slot].TeamIndex]} / {GameState.PointGoal}";
+                }
+                return $"{GameState.Points[slot]} / {GameState.PointGoal}";
+            }
+            if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
+            {
+                int lives = Math.Max(GameState.PointGoal - GameState.TeamDeaths[Players[slot].TeamIndex], 0);
+                return lives.ToString();
+            }
+            if (mode == GameMode.Defender || mode == GameMode.DefenderTeams || mode == GameMode.PrimeHunter)
+            {
+                return $"{FormatTime(TimeSpan.FromSeconds(GameState.Time[slot]))}/" +
+                    $"{FormatTime(TimeSpan.FromSeconds(GameState.TimeGoal))}";
+            }
+            return " ";
+        }
+
+        private void DrawModeScore(int messageId, string text)
+        {
+            float posX = _hudObjects.ScorePosX;
+            float posY = _hudObjects.ScorePosY;
+            _textSpacingY = 8;
+            string message = Strings.GetHudMessage(messageId);
+            // the game wraps text here, but the text used will never wrap (and doesn't have newlines)
+            DrawText2D(posX, posY, _hudObjects.ScoreTextType, 0, message);
+            posY += 9;
+            DrawText2D(posX, posY, _hudObjects.ScoreTextType, 0, text);
+            _textSpacingY = 0;
+        }
+
+        private void DrawHudBattle()
+        {
+            DrawModeScore(212, FormatModeScore(MainPlayerIndex)); // points
+        }
+
+        private void DrawHudSurvival()
+        {
+            // sktodo
+        }
+
+        private void DrawHudBounty()
+        {
+            // sktodo
+        }
+
+        private void DrawHudCapture()
+        {
+            // sktodo
+        }
+
+        private void DrawHudDefender()
+        {
+            // sktodo
+        }
+
+        private void DrawHudNodes()
+        {
+            // sktodo
+        }
+
+        private void DrawHudPrimeHunter()
+        {
+            // sktodo
         }
 
         private bool DrawTargetHealthbar(EntityBase target)

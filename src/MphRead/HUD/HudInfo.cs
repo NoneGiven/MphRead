@@ -1253,7 +1253,10 @@ namespace MphRead.Hud
                 enemyHealthPosX: 93,
                 enemyHealthPosY: 164,
                 enemyHealthTextPosX: 128,
-                enemyHealthTextPosY: 168
+                enemyHealthTextPosY: 168,
+                scorePosX: 12,
+                scorePosY: 30,
+                scoreTextType: TextType.LeftAlign
             ),
             // Kanden
             new HudObjects(
@@ -1288,7 +1291,10 @@ namespace MphRead.Hud
                 enemyHealthPosX: 93, // hunters besides Samus have zeroes for these fields in the game
                 enemyHealthPosY: 164,
                 enemyHealthTextPosX: 128,
-                enemyHealthTextPosY: 168
+                enemyHealthTextPosY: 168,
+                scorePosX: 20,
+                scorePosY: 4,
+                scoreTextType: TextType.LeftAlign
             ),
             // Trace
             new HudObjects(
@@ -1323,7 +1329,10 @@ namespace MphRead.Hud
                 enemyHealthPosX: 93,
                 enemyHealthPosY: 164,
                 enemyHealthTextPosX: 128,
-                enemyHealthTextPosY: 168
+                enemyHealthTextPosY: 168,
+                scorePosX: 128,
+                scorePosY: 12,
+                scoreTextType: TextType.Centered
             ),
             // Sylux
             new HudObjects(
@@ -1358,7 +1367,10 @@ namespace MphRead.Hud
                 enemyHealthPosX: 93,
                 enemyHealthPosY: 164,
                 enemyHealthTextPosX: 128,
-                enemyHealthTextPosY: 168
+                enemyHealthTextPosY: 168,
+                scorePosX: 56,
+                scorePosY: 8,
+                scoreTextType: TextType.LeftAlign
             ),
             // Noxus
             new HudObjects(
@@ -1393,7 +1405,10 @@ namespace MphRead.Hud
                 enemyHealthPosX: 93,
                 enemyHealthPosY: 164,
                 enemyHealthTextPosX: 128,
-                enemyHealthTextPosY: 168
+                enemyHealthTextPosY: 168,
+                scorePosX: 36,
+                scorePosY: 12,
+                scoreTextType: TextType.LeftAlign
             ),
             // Spire
             new HudObjects(
@@ -1428,7 +1443,10 @@ namespace MphRead.Hud
                 enemyHealthPosX: 93,
                 enemyHealthPosY: 164,
                 enemyHealthTextPosX: 128,
-                enemyHealthTextPosY: 168
+                enemyHealthTextPosY: 168,
+                scorePosX: 10,
+                scorePosY: 16,
+                scoreTextType: TextType.LeftAlign
             ),
             // Weavel
             new HudObjects(
@@ -1463,7 +1481,10 @@ namespace MphRead.Hud
                 enemyHealthPosX: 93,
                 enemyHealthPosY: 164,
                 enemyHealthTextPosX: 128,
-                enemyHealthTextPosY: 168
+                enemyHealthTextPosY: 168,
+                scorePosX: 128,
+                scorePosY: 18,
+                scoreTextType: TextType.Centered
             ),
             // Guardian
             new HudObjects(
@@ -1498,7 +1519,10 @@ namespace MphRead.Hud
                 enemyHealthPosX: 93,
                 enemyHealthPosY: 164,
                 enemyHealthTextPosX: 128,
-                enemyHealthTextPosY: 168
+                enemyHealthTextPosY: 168,
+                scorePosX: 12,
+                scorePosY: 30,
+                scoreTextType: TextType.LeftAlign
             )
         };
 
@@ -1974,13 +1998,16 @@ namespace MphRead.Hud
         public readonly int EnemyHealthPosY;
         public readonly int EnemyHealthTextPosX;
         public readonly int EnemyHealthTextPosY;
+        public readonly int ScorePosX;
+        public readonly int ScorePosY;
+        public readonly TextType ScoreTextType;
 
         public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB, string? energyTanks,
             string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar, string reticle,
             string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectIcon, string selectBox,
             int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY, int healthOffsetYAlt,
             int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY, int enemyHealthPosX, int enemyHealthPosY,
-            int enemyHealthTextPosX, int enemyHealthTextPosY)
+            int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX, int scorePosY, TextType scoreTextType)
         {
             Helmet = helmet;
             HelmetDrop = helmetDrop;
@@ -2014,6 +2041,9 @@ namespace MphRead.Hud
             EnemyHealthPosY = enemyHealthPosY;
             EnemyHealthTextPosX = enemyHealthTextPosX;
             EnemyHealthTextPosY = enemyHealthTextPosY;
+            ScorePosX = scorePosX;
+            ScorePosY = scorePosY;
+            ScoreTextType = scoreTextType;
         }
     }
 }

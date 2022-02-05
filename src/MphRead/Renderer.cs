@@ -2449,6 +2449,7 @@ namespace MphRead
                     _destroyedEntities.Add(entity);
                 }
             }
+            PlayerEntity.Main.ProcessMode();
             GameState.UpdateState(this);
         }
 
