@@ -29,6 +29,8 @@ namespace MphRead.Entities
 
         private HudObjectInstance _octolithInst = null!;
         private HudObjectInstance _primeHunterInst = null!;
+        private HudObjectInstance _nodesInst = null!;
+        private HudMeter _nodeProgressMeter = null!;
 
         private ModelInstance _damageIndicator = null!;
         private readonly ushort[] _damageIndicatorTimers = new ushort[8];
@@ -210,6 +212,17 @@ namespace MphRead.Entities
             _primeHunterInst.SetCharacterData(primeHunter.CharacterData, _scene);
             _primeHunterInst.SetPaletteData(primeHunter.PaletteData, _scene);
             _primeHunterInst.Enabled = true;
+            HudObject nodes = HudInfo.GetHudObject(GameState.Teams ? HudElements.NodesOG : HudElements.NodesRB);
+            _nodesInst = new HudObjectInstance(nodes.Width, nodes.Height);
+            _nodesInst.SetCharacterData(nodes.CharacterData, _scene);
+            _nodesInst.SetPaletteData(nodes.PaletteData, _scene);
+            _nodesInst.Enabled = true;
+            HudObject systemLoad = HudInfo.GetHudObject(HudElements.SystemLoad);
+            _nodeProgressMeter = HudElements.NodeProgressBar;
+            _nodeProgressMeter.BarInst = new HudObjectInstance(systemLoad.Width, systemLoad.Height);
+            _nodeProgressMeter.BarInst.SetCharacterData(systemLoad.CharacterData, _scene);
+            _nodeProgressMeter.BarInst.SetPaletteData(systemLoad.PaletteData, _scene);
+            _nodeProgressMeter.BarInst.Enabled = true;
             _textInst = new HudObjectInstance(width: 8, height: 8); // todo: max is 16x16
             _textInst.SetCharacterData(Font.CharacterData, _scene);
             _textInst.SetPaletteData(ammoBar.PaletteData, _scene);
@@ -1345,9 +1358,116 @@ namespace MphRead.Entities
             }
         }
 
+        private int _mostNodesTeam = -1;
+        private bool _nodeBonusOn = false;
+        private readonly int[] _teamNodeCounts = new int[4];
+        public int _nodesHudState = 0;
+        public int _nodesProgressAmount = 0;
+
         private void ProcessHudNodes()
         {
-            // sktodo
+            _mostNodesTeam = -1;
+            _nodeBonusOn = false;
+            for (int i = 0; i < 4; i++)
+            {
+                _teamNodeCounts[i] = 0;
+            }
+            bool showBar = false;
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.NodeDefense)
+                {
+                    continue;
+                }
+                var defense = (NodeDefenseEntity)entity;
+                ColorRgb color;
+                if (defense.CurrentTeam == 4)
+                {
+                    if (defense.Blinking)
+                    {
+                        if (GameState.Teams)
+                        {
+                            Debug.Assert(defense.OccupyingTeam == 0 || defense.OccupyingTeam == 1);
+                            color = Metadata.TeamColors[defense.OccupyingTeam];
+                        }
+                        else if (defense.OccupyingTeam == TeamIndex)
+                        {
+                            color = new ColorRgb(15, 15, 31);
+                        }
+                        else
+                        {
+                            color = new ColorRgb(31, 0, 0);
+                        }
+                    }
+                    else
+                    {
+                        color = new ColorRgb(31, 31, 31);
+                    }
+                }
+                else if (GameState.Teams)
+                {
+                    color = Metadata.TeamColors[defense.Blinking ? defense.OccupyingTeam : defense.CurrentTeam];
+                }
+                else
+                {
+                    if (defense.CurrentTeam == TeamIndex)
+                    {
+                        if (!defense.Blinking || defense.OccupyingTeam == TeamIndex)
+                        {
+                            color = new ColorRgb(15, 15, 31);
+                        }
+                        else
+                        {
+                            color = new ColorRgb(31, 0, 0);
+                        }
+                    }
+                    else if (defense.Blinking && defense.OccupyingTeam == TeamIndex)
+                    {
+                        color = new ColorRgb(15, 15, 31);
+                    }
+                    else
+                    {
+                        color = new ColorRgb(31, 0, 0);
+                    }
+                }
+                AddLocatorInfo(defense.Position, _nodeLocator, color);
+                if (defense.CurrentTeam != 4 && defense.OccupyingTeam == 4)
+                {
+                    int count = _teamNodeCounts[defense.CurrentTeam] + 1;
+                    _teamNodeCounts[defense.CurrentTeam] = count;
+                    if (count > 1)
+                    {
+                        if (defense.CurrentTeam == TeamIndex)
+                        {
+                            _nodeBonusOn = true;
+                        }
+                        else if (_mostNodesTeam == -1 || count > _teamNodeCounts[_mostNodesTeam])
+                        {
+                            _mostNodesTeam = defense.CurrentTeam;
+                        }
+                    }
+                }
+                if (defense.OccupiedBy[SlotIndex])
+                {
+                    showBar = true;
+                    if (_nodesHudState == 0)
+                    {
+                        QueueHudMessage(128, 133, 45 / 30f, 17, 205); // acquiring node
+                        _nodesProgressAmount = 0;
+                        _nodesHudState = 1;
+                    }
+                    else if (_nodesHudState == 1)
+                    {
+                        _nodesProgressAmount = (int)MathF.Round(Lerp(0, 40, defense.Progress / (300 / 30f)));
+                    }
+                }
+            }
+            if (!showBar && _nodesHudState != 0)
+            {
+                ClearHudMessage(mask: 16);
+                _nodesHudState = 0;
+            }
         }
 
         private bool _hudIsPrimeHunter = false;
@@ -1559,7 +1679,17 @@ namespace MphRead.Entities
 
         private void DrawHudNodes()
         {
-            // sktodo
+            DrawModeScore(218, FormatModeScore(MainPlayerIndex)); // points
+            // sktodo: draw icons/bonuses
+            if (_nodesHudState == 1 && !IsHudMessageQueued(mask: 16))
+            {
+                _nodeProgressMeter.TankAmount = 40;
+                _nodeProgressMeter.TankCount = 0;
+                DrawMeter(108, 143, _nodesProgressAmount, _nodesProgressAmount, palette: 0,
+                    _nodeProgressMeter, drawText: false, drawTanks: false);
+                string message = Strings.GetHudMessage(204); // progress
+                DrawText2D(128, 133, TextType.Centered, palette: 0, message);
+            }
         }
 
         private void DrawHudPrimeHunter()
@@ -1945,6 +2075,31 @@ namespace MphRead.Entities
                 c++;
             }
             return lines;
+        }
+
+        private void ClearHudMessage(int mask)
+        {
+            for (int i = 0; i < _hudMessageQueue.Count; i++)
+            {
+                HudMessage message = _hudMessageQueue[i];
+                if ((mask & message.Category) != 0)
+                {
+                    message.Lifetime = 0;
+                }
+            }
+        }
+
+        private bool IsHudMessageQueued(int mask)
+        {
+            for (int i = 0; i < _hudMessageQueue.Count; i++)
+            {
+                HudMessage message = _hudMessageQueue[i];
+                if ((mask & message.Category) != 0 && message.Lifetime > 0)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public void ProcessHudMessageQueue()

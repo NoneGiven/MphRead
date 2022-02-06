@@ -1210,6 +1210,9 @@ namespace MphRead.Hud
         public static readonly string Bombs = @"_archives\common\hud_bombs.bin";
         public static readonly string Stars = @"_archives\commonMP\stars.bin";
         public static readonly string Octolith = @"_archives\commonMP\radar_octolithLARGE.bin";
+        public static readonly string NodesOG = @"hud\rad_NodesOG.bin";
+        public static readonly string NodesRB = @"hud\rad_NodesRB.bin";
+        public static readonly string SystemLoad = @"_archives\commonMP\hud_systemload.bin";
 
         public static readonly IReadOnlyList<string> Hunters = new string[8]
         {
@@ -1606,6 +1609,23 @@ namespace MphRead.Hud
             TextType = TextType.LeftAlign,
             TextOffsetX = 30,
             TextOffsetY = 7,
+            MessageId = 0
+        };
+
+        public static readonly HudMeter NodeProgressBar = new HudMeter()
+        {
+            Horizontal = true,
+            TankAmount = 100,
+            TankCount = 5,
+            Length = 40,
+            TankSpacing = 8,
+            TankOffsetX = 1,
+            TankOffsetY = -8,
+            BarOffsetX = 15,
+            BarOffsetY = 6,
+            TextType = TextType.Centered,
+            TextOffsetX = 0,
+            TextOffsetY = -7,
             MessageId = 0
         };
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using MphRead.Hud;
@@ -13,7 +14,6 @@ namespace MphRead.Entities
         private readonly bool _defender = false;
 
         private int _currentTeam = 4;
-        public int CurrentTeam => _currentTeam;
         private int _occupyingTeam = 4;
         private readonly bool[] _occupiedBy = new bool[4];
         private float _blinkTimer = 0;
@@ -24,6 +24,12 @@ namespace MphRead.Entities
         private float _spinSpeed = 0;
         private bool _contested = false;
         private bool _inProgress = false;
+
+        public int CurrentTeam => _currentTeam;
+        public int OccupyingTeam => _occupyingTeam;
+        public bool Blinking => _blinkTimer > 0;
+        public IReadOnlyList<bool> OccupiedBy => _occupiedBy;
+        public float Progress => _progress;
 
         private readonly Material _terminalMat = null!;
         private readonly Material _ringMat = null!;
