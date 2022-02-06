@@ -82,13 +82,12 @@ namespace MphRead.Hud
         public readonly ColorRgba[] Texture;
         public float Alpha = 1;
         public int BindingId = -1;
-        // ltodo?: if we find a "non-linear" example, then this will need to be adjusted
-        // --> also going to need a loop flag and control over animation speed (e.g. blinking Octolith icon)
         public int CurrentFrame;
         public int StartFrame;
         public int TargetFrame;
         public float Timer = -1;
         public float Time = -1;
+        public bool Loop = false;
         public int AfterAnimFrame = -1;
 
         public HudObjectInstance(int width, int height)
@@ -268,7 +267,7 @@ namespace MphRead.Hud
             }
         }
 
-        public void SetAnimation(int start, int target, int frames)
+        public void SetAnimation(int start, int target, int frames, bool loop = false)
         {
             if (start == target)
             {
@@ -281,10 +280,11 @@ namespace MphRead.Hud
                 StartFrame = start;
                 TargetFrame = target;
                 Timer = Time = frames * (1 / 30f);
+                Loop = loop;
             }
         }
 
-        public void SetAnimation(int start, int target, int frames, int afterAnim)
+        public void SetAnimation(int start, int target, int frames, int afterAnim, bool loop = false)
         {
             Debug.Assert(AnimFrames != null);
             if (start == target)
@@ -298,10 +298,10 @@ namespace MphRead.Hud
                 TargetFrame = target;
                 Timer = Time = frames * (1 / 30f);
                 AfterAnimFrame = AnimFrames[afterAnim];
+                Loop = loop;
             }
         }
 
-        // todo: revisit this
         public void ProcessAnimation(Scene scene)
         {
             if (Timer > 0)
@@ -310,7 +310,15 @@ namespace MphRead.Hud
                 Timer -= scene.FrameTime;
                 if (Timer <= 0)
                 {
-                    CurrentFrame = AnimFrames == null ? TargetFrame : AfterAnimFrame;
+                    if (Loop)
+                    {
+                        CurrentFrame = StartFrame;
+                        Timer = Time;
+                    }
+                    else
+                    {
+                        CurrentFrame = AnimFrames == null ? TargetFrame : AfterAnimFrame;
+                    }
                 }
                 else
                 {
@@ -1260,7 +1268,12 @@ namespace MphRead.Hud
                 scorePosY: 30,
                 scoreTextType: TextType.LeftAlign,
                 octolithPosX: 228,
-                octolithPosY: 28
+                octolithPosY: 28,
+                primeHunterPosX: 232,
+                primeHunterPosY: 42,
+                primeHunterTextPosX: -16,
+                primeHunterTextPosY: -4,
+                primeHunterTextType: TextType.RightAlign
             ),
             // Kanden
             new HudObjects(
@@ -1300,7 +1313,12 @@ namespace MphRead.Hud
                 scorePosY: 4,
                 scoreTextType: TextType.LeftAlign,
                 octolithPosX: 212,
-                octolithPosY: 4
+                octolithPosY: 4,
+                primeHunterPosX: 222,
+                primeHunterPosY: 17,
+                primeHunterTextPosX: -16,
+                primeHunterTextPosY: -10,
+                primeHunterTextType: TextType.RightAlign
             ),
             // Trace
             new HudObjects(
@@ -1340,7 +1358,12 @@ namespace MphRead.Hud
                 scorePosY: 12,
                 scoreTextType: TextType.Centered,
                 octolithPosX: 176,
-                octolithPosY: 12
+                octolithPosY: 12,
+                primeHunterPosX: 226,
+                primeHunterPosY: 56,
+                primeHunterTextPosX: -16,
+                primeHunterTextPosY: -10,
+                primeHunterTextType: TextType.RightAlign
             ),
             // Sylux
             new HudObjects(
@@ -1380,7 +1403,12 @@ namespace MphRead.Hud
                 scorePosY: 8,
                 scoreTextType: TextType.LeftAlign,
                 octolithPosX: 186,
-                octolithPosY: 4
+                octolithPosY: 4,
+                primeHunterPosX: 190,
+                primeHunterPosY: 16,
+                primeHunterTextPosX: 14,
+                primeHunterTextPosY: 17,
+                primeHunterTextType: TextType.RightAlign
             ),
             // Noxus
             new HudObjects(
@@ -1420,7 +1448,12 @@ namespace MphRead.Hud
                 scorePosY: 12,
                 scoreTextType: TextType.LeftAlign,
                 octolithPosX: 200,
-                octolithPosY: 8
+                octolithPosY: 8,
+                primeHunterPosX: 204,
+                primeHunterPosY: 16,
+                primeHunterTextPosX: 14,
+                primeHunterTextPosY: 17,
+                primeHunterTextType: TextType.RightAlign
             ),
             // Spire
             new HudObjects(
@@ -1460,7 +1493,12 @@ namespace MphRead.Hud
                 scorePosY: 16,
                 scoreTextType: TextType.LeftAlign,
                 octolithPosX: 208,
-                octolithPosY: 13
+                octolithPosY: 13,
+                primeHunterPosX: 210,
+                primeHunterPosY: 20,
+                primeHunterTextPosX: 14,
+                primeHunterTextPosY: 17,
+                primeHunterTextType: TextType.RightAlign
             ),
             // Weavel
             new HudObjects(
@@ -1500,7 +1538,12 @@ namespace MphRead.Hud
                 scorePosY: 18,
                 scoreTextType: TextType.Centered,
                 octolithPosX: 216,
-                octolithPosY: 4
+                octolithPosY: 4,
+                primeHunterPosX: 214,
+                primeHunterPosY: 78,
+                primeHunterTextPosX: -16,
+                primeHunterTextPosY: -10,
+                primeHunterTextType: TextType.RightAlign
             ),
             // Guardian
             new HudObjects(
@@ -1540,7 +1583,12 @@ namespace MphRead.Hud
                 scorePosY: 30,
                 scoreTextType: TextType.LeftAlign,
                 octolithPosX: 228,
-                octolithPosY: 28
+                octolithPosY: 28,
+                primeHunterPosX: 232,
+                primeHunterPosY: 42,
+                primeHunterTextPosX: -16,
+                primeHunterTextPosY: -4,
+                primeHunterTextType: TextType.RightAlign
             )
         };
 
@@ -2021,6 +2069,11 @@ namespace MphRead.Hud
         public readonly TextType ScoreTextType;
         public readonly int OctolithPosX;
         public readonly int OctolithPosY;
+        public readonly int PrimeHunterPosX;
+        public readonly int PrimeHunterPosY;
+        public readonly int PrimeHunterTextPosX;
+        public readonly int PrimeHunterTextPosY;
+        public readonly TextType PrimeHunterTextType;
 
         public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB, string? energyTanks,
             string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar, string reticle,
@@ -2028,7 +2081,8 @@ namespace MphRead.Hud
             int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY, int healthOffsetYAlt,
             int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY, int enemyHealthPosX, int enemyHealthPosY,
             int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX, int scorePosY, TextType scoreTextType,
-            int octolithPosX, int octolithPosY)
+            int octolithPosX, int octolithPosY, int primeHunterPosX, int primeHunterPosY, int primeHunterTextPosX,
+            int primeHunterTextPosY, TextType primeHunterTextType)
         {
             Helmet = helmet;
             HelmetDrop = helmetDrop;
@@ -2067,6 +2121,11 @@ namespace MphRead.Hud
             ScoreTextType = scoreTextType;
             OctolithPosX = octolithPosX;
             OctolithPosY = octolithPosY;
+            PrimeHunterPosX = primeHunterPosX;
+            PrimeHunterPosY = primeHunterPosY;
+            PrimeHunterTextPosX = primeHunterTextPosX;
+            PrimeHunterTextPosY = primeHunterTextPosY;
+            PrimeHunterTextType = primeHunterTextType;
         }
     }
 }

@@ -28,6 +28,7 @@ namespace MphRead.Entities
         private HudMeter _enemyHealthMeter = null!;
 
         private HudObjectInstance _octolithInst = null!;
+        private HudObjectInstance _primeHunterInst = null!;
 
         private ModelInstance _damageIndicator = null!;
         private readonly ushort[] _damageIndicatorTimers = new ushort[8];
@@ -204,6 +205,11 @@ namespace MphRead.Entities
             _octolithInst.SetCharacterData(octolith.CharacterData, _scene);
             _octolithInst.SetPaletteData(octolith.PaletteData, _scene);
             _octolithInst.Enabled = true;
+            HudObject primeHunter = HudInfo.GetHudObject(_hudObjects.PrimeHunter);
+            _primeHunterInst = new HudObjectInstance(primeHunter.Width, primeHunter.Height);
+            _primeHunterInst.SetCharacterData(primeHunter.CharacterData, _scene);
+            _primeHunterInst.SetPaletteData(primeHunter.PaletteData, _scene);
+            _primeHunterInst.Enabled = true;
             _textInst = new HudObjectInstance(width: 8, height: 8); // todo: max is 16x16
             _textInst.SetCharacterData(Font.CharacterData, _scene);
             _textInst.SetPaletteData(ammoBar.PaletteData, _scene);
@@ -1169,7 +1175,7 @@ namespace MphRead.Entities
             }
             else if (_scene.GameMode == GameMode.PrimeHunter)
             {
-                // sktodo: prime hunter HUD setup stuff
+                ProcessHudPrimeHunter();
             }
         }
 
@@ -1329,6 +1335,38 @@ namespace MphRead.Entities
                     color = new ColorRgb(31, 0, 0);
                 }
                 AddLocatorInfo(defense.Position, _nodeLocator, color);
+            }
+        }
+
+        private bool _hudIsPrimeHunter = false;
+
+        private void ProcessHudPrimeHunter()
+        {
+            if (GameState.PrimeHunter == SlotIndex)
+            {
+                if (!_hudIsPrimeHunter)
+                {
+                    _primeHunterInst.SetAnimation(start: 0, target: 1, frames: 20, loop: true);
+                    // sktodo: text timer
+                    _hudIsPrimeHunter = true;
+                }
+            }
+            else
+            {
+                if (_hudIsPrimeHunter)
+                {
+                    _hudIsPrimeHunter = false;
+                }
+                if (GameState.PrimeHunter != -1)
+                {
+                    PlayerEntity primeHunter = Players[GameState.PrimeHunter];
+                    Vector3 pos = primeHunter.Position;
+                    if (!primeHunter.IsAltForm)
+                    {
+                        pos.Y += 0.75f;
+                    }
+                    AddLocatorInfo(pos, _playerLocator, new ColorRgb(31, 0, 0));
+                }
             }
         }
 
@@ -1508,7 +1546,16 @@ namespace MphRead.Entities
 
         private void DrawHudPrimeHunter()
         {
-            // sktodo
+            _primeHunterInst.ProcessAnimation(_scene);
+            if (_hudIsPrimeHunter)
+            {
+                _primeHunterInst.PositionX = (_hudObjects.PrimeHunterPosX - 16) / 256f;
+                _primeHunterInst.PositionY = (_hudObjects.PrimeHunterPosY - 16) / 192f;
+                _scene.DrawHudObject(_primeHunterInst);
+                // sktodo: draw scrolling text
+                // skhere
+            }
+            DrawModeScore(214, FormatModeScore(MainPlayerIndex)); // prime time
         }
 
         private bool DrawTargetHealthbar(EntityBase target)
