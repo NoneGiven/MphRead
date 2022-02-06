@@ -9,6 +9,7 @@ namespace MphRead.Entities
         private readonly OctolithFlagEntityData _data;
         public OctolithFlagEntityData Data => _data;
         private readonly Vector3 _basePosition = Vector3.Zero;
+        public Vector3 BasePosition => _basePosition;
         private readonly bool _bounty = false;
 
         private PlayerEntity? _carrier = null;

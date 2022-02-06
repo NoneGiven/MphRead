@@ -2637,6 +2637,7 @@ namespace MphRead
         {
             if (_exitAfterFade)
             {
+                OutputStop();
                 _close.Invoke();
                 return;
             }
@@ -3941,6 +3942,11 @@ namespace MphRead
             Task.Run(async () => await OutputUpdate(_outputCts.Token), _outputCts.Token);
         }
 
+        public void OutputStop()
+        {
+            _outputCts.Cancel();
+        }
+
         private async Task OutputUpdate(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
@@ -3964,7 +3970,11 @@ namespace MphRead
                     Console.WriteLine(output);
                     _currentOutput = output;
                 }
-                await Task.Delay(100, token);
+                try
+                {
+                    await Task.Delay(100, token);
+                }
+                catch (TaskCanceledException) { }
             }
         }
 
@@ -4509,6 +4519,7 @@ namespace MphRead
         {
             if (e.Key == Keys.Escape)
             {
+                Scene.OutputStop();
                 Close();
             }
             else

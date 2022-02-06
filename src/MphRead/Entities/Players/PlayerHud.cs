@@ -660,15 +660,13 @@ namespace MphRead.Entities
         private struct LocatorInfo
         {
             public Vector3 Position;
-            public float Angle;
             public ModelInstance Model;
             public ColorRgb Color;
             public float Alpha;
 
-            public LocatorInfo(Vector3 position, float angle, ModelInstance model, ColorRgb color, float alpha)
+            public LocatorInfo(Vector3 position, ModelInstance model, ColorRgb color, float alpha)
             {
                 Position = position;
-                Angle = angle;
                 Model = model;
                 Color = color;
                 Alpha = alpha;
@@ -677,9 +675,9 @@ namespace MphRead.Entities
 
         private readonly List<LocatorInfo> _locatorInfo = new List<LocatorInfo>(15);
 
-        private void AddLocatorInfo(Vector3 position, float angle, ModelInstance inst, ColorRgb color, float alpha)
+        private void AddLocatorInfo(Vector3 position, ModelInstance inst, ColorRgb color, float alpha = 1)
         {
-            _locatorInfo.Add(new LocatorInfo(position, angle, inst, color, alpha));
+            _locatorInfo.Add(new LocatorInfo(position, inst, color, alpha));
         }
 
         private void DrawLocatorIcons()
@@ -687,11 +685,11 @@ namespace MphRead.Entities
             for (int i = 0; i < _locatorInfo.Count; i++)
             {
                 LocatorInfo info = _locatorInfo[i];
-                DrawLocatorIcon(info.Position, info.Angle, info.Model, info.Color, info.Alpha);
+                DrawLocatorIcon(info.Position, info.Model, info.Color, info.Alpha);
             }
         }
 
-        private void DrawLocatorIcon(Vector3 position, float angle, ModelInstance inst, ColorRgb color, float alpha)
+        private void DrawLocatorIcon(Vector3 position, ModelInstance inst, ColorRgb color, float alpha)
         {
             float W(float value)
             {
@@ -777,12 +775,12 @@ namespace MphRead.Entities
                 }
                 proj.X /= _scene.Size.X;
                 proj.Y /= _scene.Size.Y;
-                angle = MathHelper.RadiansToDegrees(MathF.Atan2(-y, x));
+                float angle = MathHelper.RadiansToDegrees(MathF.Atan2(-y, x));
                 _scene.DrawIconModel(proj, angle, _arrowLocator, color, alpha);
             }
             else
             {
-                _scene.DrawIconModel(proj, angle, inst, color, alpha);
+                _scene.DrawIconModel(proj, angle: 0, inst, color, alpha);
             }
         }
 
@@ -1227,7 +1225,7 @@ namespace MphRead.Entities
                 {
                     pos.Y += 0.75f;
                 }
-                AddLocatorInfo(pos, angle: 0, _playerLocator, new ColorRgb(31, 31, 31), alpha);
+                AddLocatorInfo(pos, _playerLocator, new ColorRgb(31, 31, 31), alpha);
             }
             if (reveal == 1)
             {
@@ -1248,7 +1246,7 @@ namespace MphRead.Entities
                     {
                         continue;
                     }
-                    AddLocatorInfo(entity.Position, angle: 0, _nodeLocator, goodColor, alpha: 1);
+                    AddLocatorInfo(entity.Position, _nodeLocator, goodColor);
                 }
             }
             else
@@ -1266,14 +1264,36 @@ namespace MphRead.Entities
                     {
                         color = flag.Carrier.TeamIndex == TeamIndex ? goodColor : new ColorRgb(31, 0, 0);
                     }
-                    AddLocatorInfo(entity.Position, angle: 0, _octolithLocator, color, alpha: 1);
+                    AddLocatorInfo(flag.Position, _octolithLocator, color);
                 }
             }
         }
 
         private void ProcessHudCapture()
         {
-            // skhere
+            var goodColor = new ColorRgb(15, 15, 31);
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.OctolithFlag)
+                {
+                    continue;
+                }
+                var flag = (OctolithFlagEntity)entity;
+                if (flag.Carrier != this)
+                {
+                    ColorRgb color = Metadata.TeamColors[flag.Data.TeamId];
+                    if (flag.Carrier != null && (_scene.FrameCount & (4 * 2)) != 0) // todo: FPS stuff
+                    {
+                        color = flag.Carrier.TeamIndex == TeamIndex ? goodColor : new ColorRgb(31, 0, 0);
+                    }
+                    AddLocatorInfo(flag.Position, _octolithLocator, color);
+                    if (OctolithFlag != null && flag.Data.TeamId == TeamIndex)
+                    {
+                        AddLocatorInfo(flag.BasePosition, _nodeLocator, goodColor);
+                    }
+                }
+            }
         }
 
         private void DrawModeHud()
@@ -1393,9 +1413,8 @@ namespace MphRead.Entities
             DrawModeScore(213, FormatModeScore(MainPlayerIndex)); // lives left
         }
 
-        private void DrawHudBounty()
+        private void DrawOctolithInst(int frame)
         {
-            DrawModeScore(215, FormatModeScore(MainPlayerIndex)); // octoliths
             bool drawIcon = false;
             if (OctolithFlag != null)
             {
@@ -1424,13 +1443,21 @@ namespace MphRead.Entities
             {
                 _octolithInst.PositionX = _hudObjects.OctolithPosX / 256f;
                 _octolithInst.PositionY = _hudObjects.OctolithPosY / 192f;
+                _octolithInst.SetIndex(frame, _scene);
                 _scene.DrawHudObject(_octolithInst);
             }
         }
 
+        private void DrawHudBounty()
+        {
+            DrawModeScore(215, FormatModeScore(MainPlayerIndex)); // octoliths
+            DrawOctolithInst(frame: 0);
+        }
+
         private void DrawHudCapture()
         {
-            // skhere
+            DrawModeScore(216, FormatModeScore(MainPlayerIndex)); // octoliths
+            DrawOctolithInst(frame: TeamIndex == 0 ? 4 : 3);
         }
 
         private void DrawHudDefender()
