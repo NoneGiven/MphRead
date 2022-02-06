@@ -835,11 +835,13 @@ namespace MphRead.Entities
                         }
                         if (_doubleDmgTimer == 210 * 2) // todo: FPS stuff
                         {
-                            // todo: update SFX and HUD
+                            // todo: update SFX
+                            UpdateDoubleDamageSpeed(2);
                         }
                         else if (_doubleDmgTimer == 120 * 2) // todo: FPS stuff
                         {
-                            // todo: update SFX and HUD
+                            // todo: update SFX
+                            UpdateDoubleDamageSpeed(3);
                         }
                     }
                 }
@@ -998,14 +1000,21 @@ namespace MphRead.Entities
                     pickedUp = true;
                     _timeSincePickup = 0;
                     _doubleDmgTimer = 900 * 2; // todo: FPS stuff
-                    // todo: play SFX
+                    if (IsMainPlayer)
+                    {
+                        // todo: play and update SFX
+                        UpdateDoubleDamageSpeed(1);
+                    }
                     break;
                 case ItemType.Cloak:
                     pickedUp = true;
                     _timeSincePickup = 0;
                     _cloakTimer = 900 * 2; // todo: FPS stuff
                     Flags2 |= PlayerFlags2.Cloaking;
-                    // todo: play SFX
+                    if (IsMainPlayer)
+                    {
+                        // todo: play SFX
+                    }
                     break;
                 case ItemType.Deathalt:
                     pickedUp = true;

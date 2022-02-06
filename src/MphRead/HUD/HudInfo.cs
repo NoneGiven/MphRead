@@ -1284,7 +1284,17 @@ namespace MphRead.Hud
                 nodeIconPosX: 220,
                 nodeIconPosY: 41,
                 nodeTextPosX: 220,
-                nodeTextPosY: 45
+                nodeTextPosY: 45,
+                dblDmgPosX: 64,
+                dblDmgPosY: 174,
+                dblDmgTextPosX: 16,
+                dblDmgTextPosY: -8,
+                dblDmgAlign: Align.Left,
+                cloakPosX: 192,
+                cloakPosY: 174,
+                cloakTextPosX: -16,
+                cloakTextPosY: 2,
+                cloakAlign: Align.Right
             ),
             // Kanden
             new HudObjects(
@@ -1337,7 +1347,17 @@ namespace MphRead.Hud
                 nodeIconPosX: 210,
                 nodeIconPosY: 12,
                 nodeTextPosX: 210,
-                nodeTextPosY: 14
+                nodeTextPosY: 14,
+                dblDmgPosX: 22,
+                dblDmgPosY: 156,
+                dblDmgTextPosX: 6,
+                dblDmgTextPosY: 14,
+                dblDmgAlign: Align.Left,
+                cloakPosX: 224,
+                cloakPosY: 176,
+                cloakTextPosX: -16,
+                cloakTextPosY: 3,
+                cloakAlign: Align.Right
             ),
             // Trace
             new HudObjects(
@@ -1390,7 +1410,17 @@ namespace MphRead.Hud
                 nodeIconPosX: 202,
                 nodeIconPosY: 32,
                 nodeTextPosX: 202,
-                nodeTextPosY: 36
+                nodeTextPosY: 36,
+                dblDmgPosX: 48,
+                dblDmgPosY: 172,
+                dblDmgTextPosX: 16,
+                dblDmgTextPosY: -7,
+                dblDmgAlign: Align.Left,
+                cloakPosX: 208,
+                cloakPosY: 172,
+                cloakTextPosX: -16,
+                cloakTextPosY: 3,
+                cloakAlign: Align.Right
             ),
             // Sylux
             new HudObjects(
@@ -1443,7 +1473,17 @@ namespace MphRead.Hud
                 nodeIconPosX: 180,
                 nodeIconPosY: 15,
                 nodeTextPosX: 180,
-                nodeTextPosY: 17
+                nodeTextPosY: 17,
+                dblDmgPosX: 32,
+                dblDmgPosY: 164,
+                dblDmgTextPosX: 20,
+                dblDmgTextPosY: -3,
+                dblDmgAlign: Align.Left,
+                cloakPosX: 186,
+                cloakPosY: 162,
+                cloakTextPosX: 16,
+                cloakTextPosY: 12,
+                cloakAlign: Align.Right
             ),
             // Noxus
             new HudObjects(
@@ -1496,7 +1536,17 @@ namespace MphRead.Hud
                 nodeIconPosX: 200,
                 nodeIconPosY: 18,
                 nodeTextPosX: 200,
-                nodeTextPosY: 20
+                nodeTextPosY: 20,
+                dblDmgPosX: 56,
+                dblDmgPosY: 173,
+                dblDmgTextPosX: 16,
+                dblDmgTextPosY: -8,
+                dblDmgAlign: Align.Left,
+                cloakPosX: 200,
+                cloakPosY: 173,
+                cloakTextPosX: -16,
+                cloakTextPosY: 2,
+                cloakAlign: Align.Right
             ),
             // Spire
             new HudObjects(
@@ -1549,7 +1599,17 @@ namespace MphRead.Hud
                 nodeIconPosX: 196,
                 nodeIconPosY: 16,
                 nodeTextPosX: 196,
-                nodeTextPosY: 20
+                nodeTextPosY: 20,
+                dblDmgPosX: 68,
+                dblDmgPosY: 164,
+                dblDmgTextPosX: 16,
+                dblDmgTextPosY: -8,
+                dblDmgAlign: Align.Left,
+                cloakPosX: 188,
+                cloakPosY: 164,
+                cloakTextPosX: -16,
+                cloakTextPosY: 2,
+                cloakAlign: Align.Right
             ),
             // Weavel
             new HudObjects(
@@ -1602,7 +1662,17 @@ namespace MphRead.Hud
                 nodeIconPosX: 128,
                 nodeIconPosY: 9,
                 nodeTextPosX: 128,
-                nodeTextPosY: 11
+                nodeTextPosY: 11,
+                dblDmgPosX: 88,
+                dblDmgPosY: 178,
+                dblDmgTextPosX: 13,
+                dblDmgTextPosY: -8,
+                dblDmgAlign: Align.Left,
+                cloakPosX: 168,
+                cloakPosY: 178,
+                cloakTextPosX: 0,
+                cloakTextPosY: -18,
+                cloakAlign: Align.Center
             ),
             // Guardian
             new HudObjects(
@@ -1655,7 +1725,17 @@ namespace MphRead.Hud
                 nodeIconPosX: 220,
                 nodeIconPosY: 41,
                 nodeTextPosX: 220,
-                nodeTextPosY: 45
+                nodeTextPosY: 45,
+                dblDmgPosX: 64,
+                dblDmgPosY: 174,
+                dblDmgTextPosX: 16,
+                dblDmgTextPosY: -8,
+                dblDmgAlign: Align.Left,
+                cloakPosX: 192,
+                cloakPosY: 174,
+                cloakTextPosX: -16,
+                cloakTextPosY: 2,
+                cloakAlign: Align.Right
             )
         };
 
@@ -2166,6 +2246,16 @@ namespace MphRead.Hud
         public readonly int NodeIconPosY;
         public readonly int NodeTextPosX;
         public readonly int NodeTextPosY;
+        public readonly int DblDmgPosX;
+        public readonly int DblDmgPosY;
+        public readonly int DblDmgTextPosX;
+        public readonly int DblDmgTextPosY;
+        public readonly Align DblDmgAlign;
+        public readonly int CloakPosX;
+        public readonly int CloakPosY;
+        public readonly int CloakTextPosX;
+        public readonly int CloakTextPosY;
+        public readonly Align CloakAlign;
 
         public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB, string? energyTanks,
             string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar, string reticle,
@@ -2175,7 +2265,8 @@ namespace MphRead.Hud
             int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX, int scorePosY, Align scoreAlign, int octolithPosX,
             int octolithPosY, int primePosX, int primePosY, int primeTextPosX, int primeTextPosY, Align primeAlign,
             int nodeBonusPosX, int nodeBonusPosY, int enemyBonusPosX, int enemyBonusPosY, int nodeIconPosX, int nodeIconPosY,
-            int nodeTextPosX, int nodeTextPosY)
+            int nodeTextPosX, int nodeTextPosY, int dblDmgPosX, int dblDmgPosY, int dblDmgTextPosX, int dblDmgTextPosY,
+            Align dblDmgAlign, int cloakPosX, int cloakPosY, int cloakTextPosX, int cloakTextPosY, Align cloakAlign)
         {
             Helmet = helmet;
             HelmetDrop = helmetDrop;
@@ -2227,6 +2318,16 @@ namespace MphRead.Hud
             NodeIconPosY = nodeIconPosY;
             NodeTextPosX = nodeTextPosX;
             NodeTextPosY = nodeTextPosY;
+            DblDmgPosX = dblDmgPosX;
+            DblDmgPosY = dblDmgPosY;
+            DblDmgTextPosX = dblDmgTextPosX;
+            DblDmgTextPosY = dblDmgTextPosY;
+            DblDmgAlign = dblDmgAlign;
+            CloakPosX = cloakPosX;
+            CloakPosY = cloakPosY;
+            CloakTextPosX = cloakTextPosX;
+            CloakTextPosY = cloakTextPosY;
+            CloakAlign = cloakAlign;
         }
     }
 }

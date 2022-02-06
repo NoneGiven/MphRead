@@ -15,6 +15,8 @@ namespace MphRead.Entities
         private HudObject _targetCircleObj = null!;
         private HudObject _sniperCircleObj = null!;
         private HudObjectInstance _targetCircleInst = null!;
+        private HudObjectInstance _cloakInst = null!;
+        private HudObjectInstance _doubleDamageInst = null!;
         private readonly HudObjectInstance[] _weaponSelectInsts = new HudObjectInstance[6];
         private readonly HudObjectInstance[] _selectBoxInsts = new HudObjectInstance[6];
         private HudObjectInstance _textInst = null!;
@@ -83,6 +85,16 @@ namespace MphRead.Entities
             _targetCircleInst.SetCharacterData(_targetCircleObj.CharacterData, _scene);
             _targetCircleInst.SetPaletteData(_targetCircleObj.PaletteData, _scene);
             _targetCircleInst.Center = true;
+            HudObject cloak = HudInfo.GetHudObject(_hudObjects.Cloaking);
+            _cloakInst = new HudObjectInstance(cloak.Width, cloak.Height);
+            _cloakInst.SetCharacterData(cloak.CharacterData, _scene);
+            _cloakInst.SetPaletteData(cloak.PaletteData, _scene);
+            _cloakInst.Enabled = true;
+            HudObject doubleDamage = HudInfo.GetHudObject(_hudObjects.DoubleDamage);
+            _doubleDamageInst = new HudObjectInstance(doubleDamage.Width, doubleDamage.Height);
+            _doubleDamageInst.SetCharacterData(doubleDamage.CharacterData, _scene);
+            _doubleDamageInst.SetPaletteData(doubleDamage.PaletteData, _scene);
+            _doubleDamageInst.Enabled = true;
             HudObject weaponSelectObj = HudInfo.GetHudObject(_hudObjects.WeaponSelect);
             HudObject selectBoxObj = HudInfo.GetHudObject(_hudObjects.SelectBox);
             // todo: left-handed mode
@@ -235,6 +247,8 @@ namespace MphRead.Entities
 
         public void UpdateHud()
         {
+            ProcessDoubleDamageTimer();
+            ProcessCloakTimer();
             UpdateHealthbars();
             UpdateAmmoBar();
             _weaponIconInst.ProcessAnimation(_scene);
@@ -634,22 +648,21 @@ namespace MphRead.Entities
             }
             else
             {
-                if (IsAltForm || IsMorphing || IsUnmorphing)
+                if (Health > 0)
                 {
-                    if (_health > 0)
+                    if (IsAltForm || IsMorphing || IsUnmorphing)
                     {
                         DrawBoostBombs();
                     }
-                }
-                else
-                {
-                    DrawAmmoBar();
-                    _scene.DrawHudObject(_weaponIconInst);
-                    _scene.DrawHudObject(_targetCircleInst);
-                }
-                if (_health > 0)
-                {
+                    else
+                    {
+                        DrawAmmoBar();
+                        _scene.DrawHudObject(_weaponIconInst);
+                        _scene.DrawHudObject(_targetCircleInst);
+                    }
                     DrawModeHud();
+                    DrawDoubleDamageTimer();
+                    DrawCloakTimer();
                     DrawHealthbars();
                 }
                 DrawQueuedHudMessages();
@@ -1827,6 +1840,125 @@ namespace MphRead.Entities
                 }
             }
             DrawModeScore(214, FormatModeScore(MainPlayerIndex)); // prime time
+        }
+
+        private int _doubleDamageSpeed = 0;
+        private float _doubleDamageTextTimer = 0;
+        private float _doubleDamageIconTimer = 0;
+
+        private void UpdateDoubleDamageSpeed(int speed)
+        {
+            _doubleDamageSpeed = speed;
+            _doubleDamageIconTimer = 0;
+            if (speed == 1)
+            {
+                _doubleDamageTextTimer = 60 / 30f;
+            }
+        }
+
+        private void ProcessDoubleDamageTimer()
+        {
+            if (_doubleDmgTimer > 0)
+            {
+                if (_doubleDamageTextTimer > 0)
+                {
+                    _doubleDamageTextTimer -= _scene.FrameTime;
+                }
+                _doubleDamageIconTimer += _scene.FrameTime;
+            }
+        }
+
+        private void DrawDoubleDamageTimer()
+        {
+            if (_doubleDmgTimer > 0)
+            {
+                float posX = _hudObjects.DblDmgPosX;
+                float posY = _hudObjects.DblDmgPosY;
+                _doubleDamageInst.PositionX = (posX - 16) / 256f;
+                _doubleDamageInst.PositionY = (posY - 16) / 192f;
+                int frame = 0;
+                if (_doubleDamageSpeed == 1)
+                {
+                    float past = _doubleDamageIconTimer % (35 / 30f);
+                    if (past >= 30 / 30f)
+                    {
+                        frame = 1;
+                    }
+                }
+                else if (_doubleDamageSpeed == 2)
+                {
+                    float past = _doubleDamageIconTimer % (25 / 30f);
+                    if (past >= 20 / 30f)
+                    {
+                        frame = 1;
+                    }
+                }
+                else if (_doubleDamageSpeed == 3)
+                {
+                    float past = _doubleDamageIconTimer % (10 / 30f);
+                    if (past >= 5 / 30f)
+                    {
+                        frame = 1;
+                    }
+                }
+                _doubleDamageInst.SetIndex(frame, _scene);
+                _doubleDamageInst.Alpha = 0.5f;
+                _scene.DrawHudObject(_doubleDamageInst);
+                if (_doubleDamageTextTimer > 0)
+                {
+                    float elapsed = (60 / 30f) - _doubleDamageTextTimer;
+                    int length = (int)MathF.Ceiling(elapsed / (1 / 30f));
+                    string message = Strings.GetHudMessage(3); // double damage
+                    _textSpacingY = 10;
+                    DrawText2D(posX + _hudObjects.DblDmgTextPosX, posY + _hudObjects.DblDmgTextPosY,
+                        _hudObjects.DblDmgAlign, 0, message, maxLength: length);
+                    _textSpacingY = 0;
+                }
+            }
+        }
+
+        private bool _hudCloaking = false;
+        private float _cloakTextTimer = 0;
+
+        private void ProcessCloakTimer()
+        {
+            if (_cloakTimer > 0)
+            {
+                if (!_hudCloaking)
+                {
+                    _hudCloaking = true;
+                    _cloakTextTimer = 45 / 30f;
+                }
+                if (_cloakTextTimer > 0)
+                {
+                    _cloakTextTimer -= _scene.FrameTime;
+                }
+            }
+            else
+            {
+                _hudCloaking = false;
+            }
+        }
+
+        private void DrawCloakTimer()
+        {
+            if (_cloakTimer > 0)
+            {
+                float posX = _hudObjects.CloakPosX;
+                float posY = _hudObjects.CloakPosY;
+                _cloakInst.PositionX = (posX - 16) / 256f;
+                _cloakInst.PositionY = (posY - 16) / 192f;
+                _cloakInst.Alpha = 0.5f;
+                _scene.DrawHudObject(_cloakInst);
+                if (_cloakTextTimer > 0)
+                {
+                    float elapsed = (45 / 30f) - _cloakTextTimer;
+                    int length = (int)MathF.Ceiling(elapsed / (1 / 30f));
+                    string message = Strings.GetHudMessage(4); // cloak
+                    DrawText2D(posX + _hudObjects.CloakTextPosX, posY + _hudObjects.CloakTextPosY,
+                        _hudObjects.CloakAlign, 0, message, maxLength: length);
+                }
+            }
         }
 
         private bool DrawTargetHealthbar(EntityBase target)
