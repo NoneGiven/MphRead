@@ -1055,7 +1055,7 @@ namespace MphRead.Entities
             }
             WeaponInfo info = Weapons.Current[(int)beam];
             byte ammoType = info.AmmoType;
-            if (debug) // skdebug
+            if (debug && Features.DebugWeaponSelect)
             {
                 _availableWeapons[beam] = true;
                 _availableCharges[beam] = true;

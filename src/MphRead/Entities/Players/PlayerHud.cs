@@ -1368,6 +1368,7 @@ namespace MphRead.Entities
                     AddLocatorInfo(pos, _playerLocator, new ColorRgb(31, 0, 0));
                 }
             }
+            _primeHunterInst.ProcessAnimation(_scene);
         }
 
         private void DrawModeHud()
@@ -1546,7 +1547,6 @@ namespace MphRead.Entities
 
         private void DrawHudPrimeHunter()
         {
-            _primeHunterInst.ProcessAnimation(_scene);
             if (_hudIsPrimeHunter)
             {
                 _primeHunterInst.PositionX = (_hudObjects.PrimeHunterPosX - 16) / 256f;
