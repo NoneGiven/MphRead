@@ -1276,7 +1276,15 @@ namespace MphRead.Hud
                 primePosY: 42,
                 primeTextPosX: -16,
                 primeTextPosY: -4,
-                primeTextType: TextType.RightAlign
+                primeTextType: TextType.RightAlign,
+                nodeBonusPosX: 22,
+                nodeBonusPosY: 56,
+                enemyBonusPosX: 22,
+                enemyBonusPosY: 80,
+                nodeIconPosX: 220,
+                nodeIconPosY: 41,
+                nodeTextPosX: 220,
+                nodeTextPosY: 45
             ),
             // Kanden
             new HudObjects(
@@ -1321,7 +1329,15 @@ namespace MphRead.Hud
                 primePosY: 17,
                 primeTextPosX: -16,
                 primeTextPosY: -10,
-                primeTextType: TextType.RightAlign
+                primeTextType: TextType.RightAlign,
+                nodeBonusPosX: 96,
+                nodeBonusPosY: 4,
+                enemyBonusPosX: 136,
+                enemyBonusPosY: 4,
+                nodeIconPosX: 210,
+                nodeIconPosY: 12,
+                nodeTextPosX: 210,
+                nodeTextPosY: 14
             ),
             // Trace
             new HudObjects(
@@ -1366,7 +1382,15 @@ namespace MphRead.Hud
                 primePosY: 56,
                 primeTextPosX: -16,
                 primeTextPosY: -10,
-                primeTextType: TextType.RightAlign
+                primeTextType: TextType.RightAlign,
+                nodeBonusPosX: 60,
+                nodeBonusPosY: 24,
+                enemyBonusPosX: 24,
+                enemyBonusPosY: 38,
+                nodeIconPosX: 202,
+                nodeIconPosY: 32,
+                nodeTextPosX: 202,
+                nodeTextPosY: 36
             ),
             // Sylux
             new HudObjects(
@@ -1411,7 +1435,15 @@ namespace MphRead.Hud
                 primePosY: 16,
                 primeTextPosX: 14,
                 primeTextPosY: 17,
-                primeTextType: TextType.RightAlign
+                primeTextType: TextType.RightAlign,
+                nodeBonusPosX: 212,
+                nodeBonusPosY: 38,
+                enemyBonusPosX: 212,
+                enemyBonusPosY: 62,
+                nodeIconPosX: 180,
+                nodeIconPosY: 15,
+                nodeTextPosX: 180,
+                nodeTextPosY: 17
             ),
             // Noxus
             new HudObjects(
@@ -1456,7 +1488,15 @@ namespace MphRead.Hud
                 primePosY: 16,
                 primeTextPosX: 14,
                 primeTextPosY: 17,
-                primeTextType: TextType.RightAlign
+                primeTextType: TextType.RightAlign,
+                nodeBonusPosX: 40,
+                nodeBonusPosY: 32,
+                enemyBonusPosX: 190,
+                enemyBonusPosY: 32,
+                nodeIconPosX: 200,
+                nodeIconPosY: 18,
+                nodeTextPosX: 200,
+                nodeTextPosY: 20
             ),
             // Spire
             new HudObjects(
@@ -1501,7 +1541,15 @@ namespace MphRead.Hud
                 primePosY: 20,
                 primeTextPosX: 14,
                 primeTextPosY: 17,
-                primeTextType: TextType.RightAlign
+                primeTextType: TextType.RightAlign,
+                nodeBonusPosX: 37,
+                nodeBonusPosY: 35,
+                enemyBonusPosX: 193,
+                enemyBonusPosY: 35,
+                nodeIconPosX: 196,
+                nodeIconPosY: 16,
+                nodeTextPosX: 196,
+                nodeTextPosY: 20
             ),
             // Weavel
             new HudObjects(
@@ -1546,7 +1594,15 @@ namespace MphRead.Hud
                 primePosY: 78,
                 primeTextPosX: -16,
                 primeTextPosY: -10,
-                primeTextType: TextType.RightAlign
+                primeTextType: TextType.RightAlign,
+                nodeBonusPosX: 36,
+                nodeBonusPosY: 4,
+                enemyBonusPosX: 196,
+                enemyBonusPosY: 4,
+                nodeIconPosX: 128,
+                nodeIconPosY: 9,
+                nodeTextPosX: 128,
+                nodeTextPosY: 11
             ),
             // Guardian
             new HudObjects(
@@ -1591,7 +1647,15 @@ namespace MphRead.Hud
                 primePosY: 42,
                 primeTextPosX: -16,
                 primeTextPosY: -4,
-                primeTextType: TextType.RightAlign
+                primeTextType: TextType.RightAlign,
+                nodeBonusPosX: 22,
+                nodeBonusPosY: 56,
+                enemyBonusPosX: 22,
+                enemyBonusPosY: 80,
+                nodeIconPosX: 220,
+                nodeIconPosY: 41,
+                nodeTextPosX: 220,
+                nodeTextPosY: 45
             )
         };
 
@@ -2094,15 +2158,24 @@ namespace MphRead.Hud
         public readonly int PrimeTextPosX;
         public readonly int PrimeTextPosY;
         public readonly TextType PrimeTextType;
+        public readonly int NodeBonusPosX;
+        public readonly int NodeBonusPosY;
+        public readonly int EnemyBonusPosX;
+        public readonly int EnemyBonusPosY;
+        public readonly int NodeIconPosX;
+        public readonly int NodeIconPosY;
+        public readonly int NodeTextPosX;
+        public readonly int NodeTextPosY;
 
         public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB, string? energyTanks,
             string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar, string reticle,
             string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectIcon, string selectBox,
             int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY, int healthOffsetYAlt,
             int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY, int enemyHealthPosX, int enemyHealthPosY,
-            int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX, int scorePosY, TextType scoreTextType,
-            int octolithPosX, int octolithPosY, int primePosX, int primePosY, int primeTextPosX,
-            int primeTextPosY, TextType primeTextType)
+            int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX, int scorePosY, TextType scoreTextType, int octolithPosX,
+            int octolithPosY, int primePosX, int primePosY, int primeTextPosX, int primeTextPosY, TextType primeTextType,
+            int nodeBonusPosX, int nodeBonusPosY, int enemyBonusPosX, int enemyBonusPosY, int nodeIconPosX, int nodeIconPosY,
+            int nodeTextPosX, int nodeTextPosY)
         {
             Helmet = helmet;
             HelmetDrop = helmetDrop;
@@ -2146,6 +2219,14 @@ namespace MphRead.Hud
             PrimeTextPosX = primeTextPosX;
             PrimeTextPosY = primeTextPosY;
             PrimeTextType = primeTextType;
+            NodeBonusPosX = nodeBonusPosX;
+            NodeBonusPosY = nodeBonusPosY;
+            EnemyBonusPosX = enemyBonusPosX;
+            EnemyBonusPosY = enemyBonusPosY;
+            NodeIconPosX = nodeIconPosX;
+            NodeIconPosY = nodeIconPosY;
+            NodeTextPosX = nodeTextPosX;
+            NodeTextPosY = nodeTextPosY;
         }
     }
 }

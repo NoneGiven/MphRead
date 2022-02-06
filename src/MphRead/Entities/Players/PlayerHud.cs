@@ -1358,16 +1358,16 @@ namespace MphRead.Entities
             }
         }
 
-        private int _mostNodesTeam = -1;
-        private bool _nodeBonusOn = false;
+        private int _nodeBonusOpponent = -1;
+        private bool _mainNodeBonus = false;
         private readonly int[] _teamNodeCounts = new int[4];
         public int _nodesHudState = 0;
         public int _nodesProgressAmount = 0;
 
         private void ProcessHudNodes()
         {
-            _mostNodesTeam = -1;
-            _nodeBonusOn = false;
+            _nodeBonusOpponent = -1;
+            _mainNodeBonus = false;
             for (int i = 0; i < 4; i++)
             {
                 _teamNodeCounts[i] = 0;
@@ -1440,11 +1440,11 @@ namespace MphRead.Entities
                     {
                         if (defense.CurrentTeam == TeamIndex)
                         {
-                            _nodeBonusOn = true;
+                            _mainNodeBonus = true;
                         }
-                        else if (_mostNodesTeam == -1 || count > _teamNodeCounts[_mostNodesTeam])
+                        else if (_nodeBonusOpponent == -1 || count > _teamNodeCounts[_nodeBonusOpponent])
                         {
-                            _mostNodesTeam = defense.CurrentTeam;
+                            _nodeBonusOpponent = defense.CurrentTeam;
                         }
                     }
                 }
@@ -1680,7 +1680,8 @@ namespace MphRead.Entities
         private void DrawHudNodes()
         {
             DrawModeScore(218, FormatModeScore(MainPlayerIndex)); // points
-            // sktodo: draw icons/bonuses
+            DrawNodesBonuses();
+            DrawNodesIcons();
             if (_nodesHudState == 1 && !IsHudMessageQueued(mask: 16))
             {
                 _nodeProgressMeter.TankAmount = 40;
@@ -1690,6 +1691,37 @@ namespace MphRead.Entities
                 string message = Strings.GetHudMessage(204); // progress
                 DrawText2D(128, 133, TextType.Centered, palette: 0, message);
             }
+        }
+
+        private void DrawNodesBonuses()
+        {
+            string message = Strings.GetHudMessage(210); // bonus
+            if (_mainNodeBonus)
+            {
+                _nodesInst.PositionX = _hudObjects.NodeBonusPosX / 256f;
+                _nodesInst.PositionY = _hudObjects.NodeBonusPosY / 192f;
+                _nodesInst.SetIndex(GameState.Teams && TeamIndex == 0 ? 2 : 4, _scene);
+                _scene.DrawHudObject(_nodesInst);
+                string text = $"x {_teamNodeCounts[TeamIndex]}";
+                DrawText2D(_hudObjects.NodeBonusPosX + 12, _hudObjects.NodeBonusPosY + 2, TextType.LeftAlign, 0, text);
+                DrawText2D(_hudObjects.NodeBonusPosX, _hudObjects.NodeBonusPosY + 10, TextType.LeftAlign, 0, message);
+            }
+            float past = _scene.ElapsedTime % (16 / 30f);
+            if (_nodeBonusOpponent != -1 && past < 12 / 30f)
+            {
+                _nodesInst.PositionX = _hudObjects.EnemyBonusPosX / 256f;
+                _nodesInst.PositionY = _hudObjects.EnemyBonusPosY / 192f;
+                _nodesInst.SetIndex(GameState.Teams && _nodeBonusOpponent == 1 ? 4 : 2, _scene);
+                _scene.DrawHudObject(_nodesInst);
+                string text = $"x {_teamNodeCounts[_nodeBonusOpponent]}";
+                DrawText2D(_hudObjects.EnemyBonusPosX + 12, _hudObjects.EnemyBonusPosY + 2, TextType.LeftAlign, 2, text);
+                DrawText2D(_hudObjects.EnemyBonusPosX, _hudObjects.EnemyBonusPosY + 10, TextType.LeftAlign, 2, message);
+            }
+        }
+
+        private void DrawNodesIcons()
+        {
+            // sktodo
         }
 
         private void DrawHudPrimeHunter()
