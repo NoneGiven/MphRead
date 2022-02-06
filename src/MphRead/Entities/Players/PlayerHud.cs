@@ -214,6 +214,10 @@ namespace MphRead.Entities
             _textInst.SetCharacterData(Font.CharacterData, _scene);
             _textInst.SetPaletteData(ammoBar.PaletteData, _scene);
             _textInst.Enabled = true;
+            for (int i = 0; i < _hudMessageQueue.Count; i++)
+            {
+                _hudMessageQueue[i].Lifetime = 0;
+            }
         }
 
         public void UpdateHud()
@@ -1171,7 +1175,7 @@ namespace MphRead.Entities
             }
             else if (_scene.GameMode == GameMode.Nodes || _scene.GameMode == GameMode.NodesTeams)
             {
-                // sktodo: lots of stuff
+                ProcessHudNodes();
             }
             else if (_scene.GameMode == GameMode.PrimeHunter)
             {
@@ -1336,6 +1340,11 @@ namespace MphRead.Entities
                 }
                 AddLocatorInfo(defense.Position, _nodeLocator, color);
             }
+        }
+
+        private void ProcessHudNodes()
+        {
+            // sktodo
         }
 
         private bool _hudIsPrimeHunter = false;
@@ -1979,7 +1988,7 @@ namespace MphRead.Entities
             public char[] Text { get; } = new char[256];
         }
 
-        private readonly IReadOnlyList<HudMessage> _hudMessageQueue = new HudMessage[20]
+        private static readonly IReadOnlyList<HudMessage> _hudMessageQueue = new HudMessage[20]
         {
             new HudMessage(),
             new HudMessage(),
