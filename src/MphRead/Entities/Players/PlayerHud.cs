@@ -1721,7 +1721,89 @@ namespace MphRead.Entities
 
         private void DrawNodesIcons()
         {
-            // sktodo
+            float startX = 12;
+            int nodeCount = 0;
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type == EntityType.NodeDefense)
+                {
+                    nodeCount++;
+                }
+            }
+            if (nodeCount < 4)
+            {
+                startX = (16 * nodeCount / 2) - 12;
+            }
+            float posX = 0;
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.NodeDefense)
+                {
+                    continue;
+                }
+                var defense = (NodeDefenseEntity)entity;
+                int frame;
+                if (defense.CurrentTeam == 4)
+                {
+                    if (defense.Blinking)
+                    {
+                        if (GameState.Teams)
+                        {
+                            frame = defense.OccupyingTeam == 0 ? 2 : 4;
+                        }
+                        else
+                        {
+                            frame = defense.OccupyingTeam == TeamIndex ? 4 : 2;
+                        }
+                    }
+                    else
+                    {
+                        frame = 0;
+                    }
+                }
+                else if (GameState.Teams)
+                {
+                    if (defense.Blinking)
+                    {
+                        frame = defense.OccupyingTeam == 0 ? 2 : 4;
+                    }
+                    else
+                    {
+                        frame = defense.CurrentTeam == 0 ? 2 : 4;
+                    }
+                }
+                else
+                {
+                    if (defense.CurrentTeam == TeamIndex)
+                    {
+                        if (!defense.Blinking || defense.OccupyingTeam == TeamIndex)
+                        {
+                            frame = 4;
+                        }
+                        else
+                        {
+                            frame = 2;
+                        }
+                    }
+                    else if (defense.Blinking && defense.OccupyingTeam == TeamIndex)
+                    {
+                        frame = 4;
+                    }
+                    else
+                    {
+                        frame = 2;
+                    }
+                }
+                _nodesInst.PositionX = (_hudObjects.NodeIconPosX + startX - posX) / 256f;
+                _nodesInst.PositionY = (_hudObjects.NodeIconPosY - 8) / 192f;
+                _nodesInst.SetIndex(frame, _scene);
+                _scene.DrawHudObject(_nodesInst);
+                posX += 16;
+            }
+            string text = Strings.GetHudMessage(8); // NODES
+            DrawText2D(_hudObjects.NodeTextPosX, _hudObjects.NodeTextPosY, Align.Center, 0, text);
         }
 
         private void DrawHudPrimeHunter()
