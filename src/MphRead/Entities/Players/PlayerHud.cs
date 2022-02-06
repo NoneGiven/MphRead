@@ -1159,6 +1159,10 @@ namespace MphRead.Entities
             {
                 ProcessHudCapture();
             }
+            else if (_scene.GameMode == GameMode.Defender || _scene.GameMode == GameMode.DefenderTeams)
+            {
+                ProcessHudDefender();
+            }
             else if (_scene.GameMode == GameMode.Nodes || _scene.GameMode == GameMode.NodesTeams)
             {
                 // sktodo: lots of stuff
@@ -1271,7 +1275,7 @@ namespace MphRead.Entities
 
         private void ProcessHudCapture()
         {
-            var goodColor = new ColorRgb(15, 15, 31);
+            var goodColor = new ColorRgb(15, 15, 31); // todo: share common colors
             for (int i = 0; i < _scene.Entities.Count; i++)
             {
                 EntityBase entity = _scene.Entities[i];
@@ -1293,6 +1297,38 @@ namespace MphRead.Entities
                         AddLocatorInfo(flag.BasePosition, _nodeLocator, goodColor);
                     }
                 }
+            }
+        }
+
+        private void ProcessHudDefender()
+        {
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.NodeDefense)
+                {
+                    continue;
+                }
+                var defense = (NodeDefenseEntity)entity;
+                ColorRgb color;
+                if (defense.CurrentTeam == 4)
+                {
+                    color = new ColorRgb(31, 31, 31);
+                }
+                else if (GameState.Teams)
+                {
+                    Debug.Assert(defense.CurrentTeam == 0 || defense.CurrentTeam == 1);
+                    color = Metadata.TeamColors[defense.CurrentTeam];
+                }
+                else if (defense.CurrentTeam == TeamIndex)
+                {
+                    color = new ColorRgb(15, 15, 31);
+                }
+                else
+                {
+                    color = new ColorRgb(31, 0, 0);
+                }
+                AddLocatorInfo(defense.Position, _nodeLocator, color);
             }
         }
 
@@ -1462,7 +1498,7 @@ namespace MphRead.Entities
 
         private void DrawHudDefender()
         {
-            // sktodo
+            DrawModeScore(217, FormatModeScore(MainPlayerIndex)); // ring time
         }
 
         private void DrawHudNodes()

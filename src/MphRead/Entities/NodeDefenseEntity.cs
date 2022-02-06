@@ -13,6 +13,7 @@ namespace MphRead.Entities
         private readonly bool _defender = false;
 
         private int _currentTeam = 4;
+        public int CurrentTeam => _currentTeam;
         private int _occupyingTeam = 4;
         private readonly bool[] _occupiedBy = new bool[4];
         private float _blinkTimer = 0;
