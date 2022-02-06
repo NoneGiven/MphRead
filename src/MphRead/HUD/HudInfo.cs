@@ -1269,11 +1269,11 @@ namespace MphRead.Hud
                 scoreTextType: TextType.LeftAlign,
                 octolithPosX: 228,
                 octolithPosY: 28,
-                primeHunterPosX: 232,
-                primeHunterPosY: 42,
-                primeHunterTextPosX: -16,
-                primeHunterTextPosY: -4,
-                primeHunterTextType: TextType.RightAlign
+                primePosX: 232,
+                primePosY: 42,
+                primeTextPosX: -16,
+                primeTextPosY: -4,
+                primeTextType: TextType.RightAlign
             ),
             // Kanden
             new HudObjects(
@@ -1314,11 +1314,11 @@ namespace MphRead.Hud
                 scoreTextType: TextType.LeftAlign,
                 octolithPosX: 212,
                 octolithPosY: 4,
-                primeHunterPosX: 222,
-                primeHunterPosY: 17,
-                primeHunterTextPosX: -16,
-                primeHunterTextPosY: -10,
-                primeHunterTextType: TextType.RightAlign
+                primePosX: 222,
+                primePosY: 17,
+                primeTextPosX: -16,
+                primeTextPosY: -10,
+                primeTextType: TextType.RightAlign
             ),
             // Trace
             new HudObjects(
@@ -1359,11 +1359,11 @@ namespace MphRead.Hud
                 scoreTextType: TextType.Centered,
                 octolithPosX: 176,
                 octolithPosY: 12,
-                primeHunterPosX: 226,
-                primeHunterPosY: 56,
-                primeHunterTextPosX: -16,
-                primeHunterTextPosY: -10,
-                primeHunterTextType: TextType.RightAlign
+                primePosX: 226,
+                primePosY: 56,
+                primeTextPosX: -16,
+                primeTextPosY: -10,
+                primeTextType: TextType.RightAlign
             ),
             // Sylux
             new HudObjects(
@@ -1404,11 +1404,11 @@ namespace MphRead.Hud
                 scoreTextType: TextType.LeftAlign,
                 octolithPosX: 186,
                 octolithPosY: 4,
-                primeHunterPosX: 190,
-                primeHunterPosY: 16,
-                primeHunterTextPosX: 14,
-                primeHunterTextPosY: 17,
-                primeHunterTextType: TextType.RightAlign
+                primePosX: 190,
+                primePosY: 16,
+                primeTextPosX: 14,
+                primeTextPosY: 17,
+                primeTextType: TextType.RightAlign
             ),
             // Noxus
             new HudObjects(
@@ -1449,11 +1449,11 @@ namespace MphRead.Hud
                 scoreTextType: TextType.LeftAlign,
                 octolithPosX: 200,
                 octolithPosY: 8,
-                primeHunterPosX: 204,
-                primeHunterPosY: 16,
-                primeHunterTextPosX: 14,
-                primeHunterTextPosY: 17,
-                primeHunterTextType: TextType.RightAlign
+                primePosX: 204,
+                primePosY: 16,
+                primeTextPosX: 14,
+                primeTextPosY: 17,
+                primeTextType: TextType.RightAlign
             ),
             // Spire
             new HudObjects(
@@ -1494,11 +1494,11 @@ namespace MphRead.Hud
                 scoreTextType: TextType.LeftAlign,
                 octolithPosX: 208,
                 octolithPosY: 13,
-                primeHunterPosX: 210,
-                primeHunterPosY: 20,
-                primeHunterTextPosX: 14,
-                primeHunterTextPosY: 17,
-                primeHunterTextType: TextType.RightAlign
+                primePosX: 210,
+                primePosY: 20,
+                primeTextPosX: 14,
+                primeTextPosY: 17,
+                primeTextType: TextType.RightAlign
             ),
             // Weavel
             new HudObjects(
@@ -1539,11 +1539,11 @@ namespace MphRead.Hud
                 scoreTextType: TextType.Centered,
                 octolithPosX: 216,
                 octolithPosY: 4,
-                primeHunterPosX: 214,
-                primeHunterPosY: 78,
-                primeHunterTextPosX: -16,
-                primeHunterTextPosY: -10,
-                primeHunterTextType: TextType.RightAlign
+                primePosX: 214,
+                primePosY: 78,
+                primeTextPosX: -16,
+                primeTextPosY: -10,
+                primeTextType: TextType.RightAlign
             ),
             // Guardian
             new HudObjects(
@@ -1584,11 +1584,11 @@ namespace MphRead.Hud
                 scoreTextType: TextType.LeftAlign,
                 octolithPosX: 228,
                 octolithPosY: 28,
-                primeHunterPosX: 232,
-                primeHunterPosY: 42,
-                primeHunterTextPosX: -16,
-                primeHunterTextPosY: -4,
-                primeHunterTextType: TextType.RightAlign
+                primePosX: 232,
+                primePosY: 42,
+                primeTextPosX: -16,
+                primeTextPosY: -4,
+                primeTextType: TextType.RightAlign
             )
         };
 
@@ -2069,11 +2069,11 @@ namespace MphRead.Hud
         public readonly TextType ScoreTextType;
         public readonly int OctolithPosX;
         public readonly int OctolithPosY;
-        public readonly int PrimeHunterPosX;
-        public readonly int PrimeHunterPosY;
-        public readonly int PrimeHunterTextPosX;
-        public readonly int PrimeHunterTextPosY;
-        public readonly TextType PrimeHunterTextType;
+        public readonly int PrimePosX;
+        public readonly int PrimePosY;
+        public readonly int PrimeTextPosX;
+        public readonly int PrimeTextPosY;
+        public readonly TextType PrimeTextType;
 
         public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB, string? energyTanks,
             string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar, string reticle,
@@ -2081,8 +2081,8 @@ namespace MphRead.Hud
             int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY, int healthOffsetYAlt,
             int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY, int enemyHealthPosX, int enemyHealthPosY,
             int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX, int scorePosY, TextType scoreTextType,
-            int octolithPosX, int octolithPosY, int primeHunterPosX, int primeHunterPosY, int primeHunterTextPosX,
-            int primeHunterTextPosY, TextType primeHunterTextType)
+            int octolithPosX, int octolithPosY, int primePosX, int primePosY, int primeTextPosX,
+            int primeTextPosY, TextType primeTextType)
         {
             Helmet = helmet;
             HelmetDrop = helmetDrop;
@@ -2121,11 +2121,11 @@ namespace MphRead.Hud
             ScoreTextType = scoreTextType;
             OctolithPosX = octolithPosX;
             OctolithPosY = octolithPosY;
-            PrimeHunterPosX = primeHunterPosX;
-            PrimeHunterPosY = primeHunterPosY;
-            PrimeHunterTextPosX = primeHunterTextPosX;
-            PrimeHunterTextPosY = primeHunterTextPosY;
-            PrimeHunterTextType = primeHunterTextType;
+            PrimePosX = primePosX;
+            PrimePosY = primePosY;
+            PrimeTextPosX = primeTextPosX;
+            PrimeTextPosY = primeTextPosY;
+            PrimeTextType = primeTextType;
         }
     }
 }

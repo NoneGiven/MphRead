@@ -1339,6 +1339,7 @@ namespace MphRead.Entities
         }
 
         private bool _hudIsPrimeHunter = false;
+        private float _primeHunterTextTimer = 0;
 
         private void ProcessHudPrimeHunter()
         {
@@ -1347,8 +1348,12 @@ namespace MphRead.Entities
                 if (!_hudIsPrimeHunter)
                 {
                     _primeHunterInst.SetAnimation(start: 0, target: 1, frames: 20, loop: true);
-                    // sktodo: text timer
+                    _primeHunterTextTimer = 90 / 30f;
                     _hudIsPrimeHunter = true;
+                }
+                if (_primeHunterTextTimer > 0)
+                {
+                    _primeHunterTextTimer -= _scene.FrameTime;
                 }
             }
             else
@@ -1549,11 +1554,21 @@ namespace MphRead.Entities
         {
             if (_hudIsPrimeHunter)
             {
-                _primeHunterInst.PositionX = (_hudObjects.PrimeHunterPosX - 16) / 256f;
-                _primeHunterInst.PositionY = (_hudObjects.PrimeHunterPosY - 16) / 192f;
+                float posX = _hudObjects.PrimePosX;
+                float posY = _hudObjects.PrimePosY;
+                _primeHunterInst.PositionX = (posX - 16) / 256f;
+                _primeHunterInst.PositionY = (posY - 16) / 192f;
                 _scene.DrawHudObject(_primeHunterInst);
-                // sktodo: draw scrolling text
-                // skhere
+                if (_primeHunterTextTimer > 0)
+                {
+                    float elapsed = (90 / 30f) - _primeHunterTextTimer;
+                    int length = (int)MathF.Ceiling(elapsed / (1 / 30f));
+                    string message = Strings.GetHudMessage(11); // prime hunter
+                    _textSpacingY = 8;
+                    DrawText2D(posX + _hudObjects.PrimeTextPosX, posY + _hudObjects.PrimeTextPosY,
+                        _hudObjects.PrimeTextType, 0, message, maxLength: length);
+                    _textSpacingY = 0;
+                }
             }
             DrawModeScore(214, FormatModeScore(MainPlayerIndex)); // prime time
         }
@@ -1630,7 +1645,7 @@ namespace MphRead.Entities
 
         // todo: size/shape (seemingly only used by the bottom screen rank, which is 16x16/square instead of 8x8/square)
         private Vector2 DrawText2D(float x, float y, TextType type, int palette, ReadOnlySpan<char> text,
-            ColorRgba? color = null, float alpha = 1, float fontSpacing = -1)
+            ColorRgba? color = null, float alpha = 1, float fontSpacing = -1, int maxLength = -1)
         {
             int length = 0;
             for (int i = 0; i < text.Length; i++)
@@ -1640,6 +1655,10 @@ namespace MphRead.Entities
                     break;
                 }
                 length++;
+            }
+            if (maxLength != -1)
+            {
+                length = Math.Min(length, maxLength);
             }
             if (length == 0)
             {
@@ -1689,7 +1708,7 @@ namespace MphRead.Entities
                 do
                 {
                     end = text[start..].IndexOf('\n');
-                    if (end == -1)
+                    if (end == -1 || length < end)
                     {
                         end = length;
                     }
@@ -1737,7 +1756,7 @@ namespace MphRead.Entities
                 do
                 {
                     end = text[start..].IndexOf('\n');
-                    if (end == -1)
+                    if (end == -1 || length < end)
                     {
                         end = length;
                     }
@@ -1960,7 +1979,7 @@ namespace MphRead.Entities
             public char[] Text { get; } = new char[256];
         }
 
-        private static readonly IReadOnlyList<HudMessage> _hudMessageQueue = new HudMessage[20]
+        private readonly IReadOnlyList<HudMessage> _hudMessageQueue = new HudMessage[20]
         {
             new HudMessage(),
             new HudMessage(),
