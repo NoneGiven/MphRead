@@ -634,9 +634,9 @@ namespace MphRead.Entities
                     _scene.DrawHudObject(_weaponIconInst);
                     _scene.DrawHudObject(_targetCircleInst);
                 }
-                DrawModeHud();
                 if (_health > 0)
                 {
+                    DrawModeHud();
                     DrawHealthbars();
                 }
                 DrawQueuedHudMessages();
@@ -659,7 +659,10 @@ namespace MphRead.Entities
             }
             else
             {
-                DrawLocatorIcons();
+                if (_health > 0)
+                {
+                    DrawLocatorIcons();
+                }
                 if (_damageIndicator.Active)
                 {
                     _scene.DrawHudDamageModel(_damageIndicator);
