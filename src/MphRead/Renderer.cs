@@ -1650,7 +1650,6 @@ namespace MphRead
             for (int i = 0; i < entry.Elements.Count; i++)
             {
                 EffectElementEntry element = entry.Elements[i];
-                Debug.WriteLine($"unlink{element.EffectName} {element.ElementName}");
                 UnlinkEffectElement(element);
             }
             entry.Elements.Clear();
@@ -1662,7 +1661,6 @@ namespace MphRead
             for (int i = 0; i < entry.Elements.Count; i++)
             {
                 EffectElementEntry element = entry.Elements[i];
-                Debug.WriteLine($"detach {element.EffectName} {element.ElementName}");
                 if (element.Flags.TestFlag(EffElemFlags.DestroyOnDetach))
                 {
                     UnlinkEffectElement(element);
@@ -1881,6 +1879,7 @@ namespace MphRead
                         i--;
                         continue;
                     }
+                    element.Transform = element.OwnTransform;
                 }
                 else
                 {
