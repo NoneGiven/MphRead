@@ -7,11 +7,11 @@ using System.Runtime.InteropServices;
 
 namespace MphRead.Hud
 {
-    public enum TextType
+    public enum Align
     {
-        LeftAlign = 0,
-        RightAlign = 1,
-        Centered = 2,
+        Left = 0,
+        Right = 1,
+        Center = 2,
         Type3 = 3
     }
 
@@ -38,7 +38,7 @@ namespace MphRead.Hud
         public int BarOffsetY;
         public int TextOffsetX;
         public int TextOffsetY;
-        public TextType TextType;
+        public Align Align;
         public int MessageId;
 
         public int TankAmount;
@@ -1269,14 +1269,14 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 12,
                 scorePosY: 30,
-                scoreTextType: TextType.LeftAlign,
+                scoreAlign: Align.Left,
                 octolithPosX: 228,
                 octolithPosY: 28,
                 primePosX: 232,
                 primePosY: 42,
                 primeTextPosX: -16,
                 primeTextPosY: -4,
-                primeTextType: TextType.RightAlign,
+                primeAlign: Align.Right,
                 nodeBonusPosX: 22,
                 nodeBonusPosY: 56,
                 enemyBonusPosX: 22,
@@ -1322,14 +1322,14 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 20,
                 scorePosY: 4,
-                scoreTextType: TextType.LeftAlign,
+                scoreAlign: Align.Left,
                 octolithPosX: 212,
                 octolithPosY: 4,
                 primePosX: 222,
                 primePosY: 17,
                 primeTextPosX: -16,
                 primeTextPosY: -10,
-                primeTextType: TextType.RightAlign,
+                primeAlign: Align.Right,
                 nodeBonusPosX: 96,
                 nodeBonusPosY: 4,
                 enemyBonusPosX: 136,
@@ -1375,14 +1375,14 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 128,
                 scorePosY: 12,
-                scoreTextType: TextType.Centered,
+                scoreAlign: Align.Center,
                 octolithPosX: 176,
                 octolithPosY: 12,
                 primePosX: 226,
                 primePosY: 56,
                 primeTextPosX: -16,
                 primeTextPosY: -10,
-                primeTextType: TextType.RightAlign,
+                primeAlign: Align.Right,
                 nodeBonusPosX: 60,
                 nodeBonusPosY: 24,
                 enemyBonusPosX: 24,
@@ -1428,14 +1428,14 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 56,
                 scorePosY: 8,
-                scoreTextType: TextType.LeftAlign,
+                scoreAlign: Align.Left,
                 octolithPosX: 186,
                 octolithPosY: 4,
                 primePosX: 190,
                 primePosY: 16,
                 primeTextPosX: 14,
                 primeTextPosY: 17,
-                primeTextType: TextType.RightAlign,
+                primeAlign: Align.Right,
                 nodeBonusPosX: 212,
                 nodeBonusPosY: 38,
                 enemyBonusPosX: 212,
@@ -1481,14 +1481,14 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 36,
                 scorePosY: 12,
-                scoreTextType: TextType.LeftAlign,
+                scoreAlign: Align.Left,
                 octolithPosX: 200,
                 octolithPosY: 8,
                 primePosX: 204,
                 primePosY: 16,
                 primeTextPosX: 14,
                 primeTextPosY: 17,
-                primeTextType: TextType.RightAlign,
+                primeAlign: Align.Right,
                 nodeBonusPosX: 40,
                 nodeBonusPosY: 32,
                 enemyBonusPosX: 190,
@@ -1534,14 +1534,14 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 10,
                 scorePosY: 16,
-                scoreTextType: TextType.LeftAlign,
+                scoreAlign: Align.Left,
                 octolithPosX: 208,
                 octolithPosY: 13,
                 primePosX: 210,
                 primePosY: 20,
                 primeTextPosX: 14,
                 primeTextPosY: 17,
-                primeTextType: TextType.RightAlign,
+                primeAlign: Align.Right,
                 nodeBonusPosX: 37,
                 nodeBonusPosY: 35,
                 enemyBonusPosX: 193,
@@ -1587,14 +1587,14 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 128,
                 scorePosY: 18,
-                scoreTextType: TextType.Centered,
+                scoreAlign: Align.Center,
                 octolithPosX: 216,
                 octolithPosY: 4,
                 primePosX: 214,
                 primePosY: 78,
                 primeTextPosX: -16,
                 primeTextPosY: -10,
-                primeTextType: TextType.RightAlign,
+                primeAlign: Align.Right,
                 nodeBonusPosX: 36,
                 nodeBonusPosY: 4,
                 enemyBonusPosX: 196,
@@ -1640,14 +1640,14 @@ namespace MphRead.Hud
                 enemyHealthTextPosY: 168,
                 scorePosX: 12,
                 scorePosY: 30,
-                scoreTextType: TextType.LeftAlign,
+                scoreAlign: Align.Left,
                 octolithPosX: 228,
                 octolithPosY: 28,
                 primePosX: 232,
                 primePosY: 42,
                 primeTextPosX: -16,
                 primeTextPosY: -4,
-                primeTextType: TextType.RightAlign,
+                primeAlign: Align.Right,
                 nodeBonusPosX: 22,
                 nodeBonusPosY: 56,
                 enemyBonusPosX: 22,
@@ -1670,7 +1670,7 @@ namespace MphRead.Hud
             TankOffsetY = 0,
             BarOffsetX = 15,
             BarOffsetY = 6,
-            TextType = TextType.LeftAlign,
+            Align = Align.Left,
             TextOffsetX = 30,
             TextOffsetY = 7,
             MessageId = 0
@@ -1687,7 +1687,7 @@ namespace MphRead.Hud
             TankOffsetY = -8,
             BarOffsetX = 15,
             BarOffsetY = 6,
-            TextType = TextType.Centered,
+            Align = Align.Center,
             TextOffsetX = 0,
             TextOffsetY = -7,
             MessageId = 0
@@ -1707,7 +1707,7 @@ namespace MphRead.Hud
                 TankOffsetY = 8,
                 BarOffsetX = 0,
                 BarOffsetY = -8,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = 30,
                 TextOffsetY = -8,
                 MessageId = 6
@@ -1724,7 +1724,7 @@ namespace MphRead.Hud
                 TankOffsetY = 3, // game has -8
                 BarOffsetX = 32,
                 BarOffsetY = -35,
-                TextType = TextType.RightAlign,
+                Align = Align.Right,
                 TextOffsetX = 30,
                 TextOffsetY = -7,
                 MessageId = 0
@@ -1741,7 +1741,7 @@ namespace MphRead.Hud
                 TankOffsetY = 3, // game has 0
                 BarOffsetX = 8,
                 BarOffsetY = 0,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -1758,7 +1758,7 @@ namespace MphRead.Hud
                 TankOffsetY = 1,
                 BarOffsetX = -4,
                 BarOffsetY = -66,
-                TextType = TextType.RightAlign,
+                Align = Align.Right,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -1775,7 +1775,7 @@ namespace MphRead.Hud
                 TankOffsetY = 3, // game has -8
                 BarOffsetX = -3,
                 BarOffsetY = 1,
-                TextType = TextType.RightAlign,
+                Align = Align.Right,
                 TextOffsetX = 30,
                 TextOffsetY = -7,
                 MessageId = 0
@@ -1792,7 +1792,7 @@ namespace MphRead.Hud
                 TankOffsetY = 3, // game has -8
                 BarOffsetX = 5,
                 BarOffsetY = -82,
-                TextType = TextType.Centered,
+                Align = Align.Center,
                 TextOffsetX = 30,
                 TextOffsetY = -7,
                 MessageId = 0
@@ -1809,7 +1809,7 @@ namespace MphRead.Hud
                 TankOffsetY = 3, // game has -8
                 BarOffsetX = 10,
                 BarOffsetY = -68,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -1826,7 +1826,7 @@ namespace MphRead.Hud
                 TankOffsetY = 8,
                 BarOffsetX = 0,
                 BarOffsetY = -8,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = 30,
                 TextOffsetY = -8,
                 MessageId = 6
@@ -1847,7 +1847,7 @@ namespace MphRead.Hud
                 TankOffsetY = -8,
                 BarOffsetX = 15,
                 BarOffsetY = 6,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = 30,
                 TextOffsetY = 7,
                 MessageId = 0
@@ -1864,7 +1864,7 @@ namespace MphRead.Hud
                 TankOffsetY = -8,
                 BarOffsetX = 15,
                 BarOffsetY = 6,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = 30,
                 TextOffsetY = 7,
                 MessageId = 0
@@ -1881,7 +1881,7 @@ namespace MphRead.Hud
                 TankOffsetY = 0,
                 BarOffsetX = 0,
                 BarOffsetY = 0,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -1898,7 +1898,7 @@ namespace MphRead.Hud
                 TankOffsetY = -8,
                 BarOffsetX = 0,
                 BarOffsetY = 0,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -1915,7 +1915,7 @@ namespace MphRead.Hud
                 TankOffsetY = -8,
                 BarOffsetX = 15,
                 BarOffsetY = 6,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = 30,
                 TextOffsetY = 7,
                 MessageId = 0
@@ -1932,7 +1932,7 @@ namespace MphRead.Hud
                 TankOffsetY = -8,
                 BarOffsetX = 15,
                 BarOffsetY = 6,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = 30,
                 TextOffsetY = 7,
                 MessageId = 0
@@ -1949,7 +1949,7 @@ namespace MphRead.Hud
                 TankOffsetY = -8,
                 BarOffsetX = 0,
                 BarOffsetY = 0,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -1966,7 +1966,7 @@ namespace MphRead.Hud
                 TankOffsetY = -8,
                 BarOffsetX = 15,
                 BarOffsetY = 6,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = 30,
                 TextOffsetY = 7,
                 MessageId = 0
@@ -1987,7 +1987,7 @@ namespace MphRead.Hud
                 TankOffsetY = 1,
                 BarOffsetX = -3,
                 BarOffsetY = 0,
-                TextType = TextType.RightAlign,
+                Align = Align.Right,
                 TextOffsetX = -2,
                 TextOffsetY = -1,
                 MessageId = 0
@@ -2004,7 +2004,7 @@ namespace MphRead.Hud
                 TankOffsetY = 1,
                 BarOffsetX = -22,
                 BarOffsetY = -35,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = -2,
                 TextOffsetY = -1,
                 MessageId = 0
@@ -2021,7 +2021,7 @@ namespace MphRead.Hud
                 TankOffsetY = 0,
                 BarOffsetX = -2,
                 BarOffsetY = 0,
-                TextType = TextType.RightAlign,
+                Align = Align.Right,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -2038,7 +2038,7 @@ namespace MphRead.Hud
                 TankOffsetY = 1,
                 BarOffsetX = 6,
                 BarOffsetY = -66,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -2055,7 +2055,7 @@ namespace MphRead.Hud
                 TankOffsetY = 1,
                 BarOffsetX = 9,
                 BarOffsetY = 1,
-                TextType = TextType.LeftAlign,
+                Align = Align.Left,
                 TextOffsetX = -2,
                 TextOffsetY = -1,
                 MessageId = 0
@@ -2072,7 +2072,7 @@ namespace MphRead.Hud
                 TankOffsetY = 1,
                 BarOffsetX = 3,
                 BarOffsetY = -82,
-                TextType = TextType.Centered,
+                Align = Align.Center,
                 TextOffsetX = -2,
                 TextOffsetY = -1,
                 MessageId = 0
@@ -2089,7 +2089,7 @@ namespace MphRead.Hud
                 TankOffsetY = 1,
                 BarOffsetX = -10,
                 BarOffsetY = -68,
-                TextType = TextType.Centered,
+                Align = Align.Center,
                 TextOffsetX = 0,
                 TextOffsetY = 0,
                 MessageId = 0
@@ -2106,7 +2106,7 @@ namespace MphRead.Hud
                 TankOffsetY = 1,
                 BarOffsetX = -3,
                 BarOffsetY = 0,
-                TextType = TextType.RightAlign,
+                Align = Align.Right,
                 TextOffsetX = -2,
                 TextOffsetY = -1,
                 MessageId = 0
@@ -2150,14 +2150,14 @@ namespace MphRead.Hud
         public readonly int EnemyHealthTextPosY;
         public readonly int ScorePosX;
         public readonly int ScorePosY;
-        public readonly TextType ScoreTextType;
+        public readonly Align ScoreAlign;
         public readonly int OctolithPosX;
         public readonly int OctolithPosY;
         public readonly int PrimePosX;
         public readonly int PrimePosY;
         public readonly int PrimeTextPosX;
         public readonly int PrimeTextPosY;
-        public readonly TextType PrimeTextType;
+        public readonly Align PrimeAlign;
         public readonly int NodeBonusPosX;
         public readonly int NodeBonusPosY;
         public readonly int EnemyBonusPosX;
@@ -2172,8 +2172,8 @@ namespace MphRead.Hud
             string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectIcon, string selectBox,
             int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY, int healthOffsetYAlt,
             int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY, int enemyHealthPosX, int enemyHealthPosY,
-            int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX, int scorePosY, TextType scoreTextType, int octolithPosX,
-            int octolithPosY, int primePosX, int primePosY, int primeTextPosX, int primeTextPosY, TextType primeTextType,
+            int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX, int scorePosY, Align scoreAlign, int octolithPosX,
+            int octolithPosY, int primePosX, int primePosY, int primeTextPosX, int primeTextPosY, Align primeAlign,
             int nodeBonusPosX, int nodeBonusPosY, int enemyBonusPosX, int enemyBonusPosY, int nodeIconPosX, int nodeIconPosY,
             int nodeTextPosX, int nodeTextPosY)
         {
@@ -2211,14 +2211,14 @@ namespace MphRead.Hud
             EnemyHealthTextPosY = enemyHealthTextPosY;
             ScorePosX = scorePosX;
             ScorePosY = scorePosY;
-            ScoreTextType = scoreTextType;
+            ScoreAlign = scoreAlign;
             OctolithPosX = octolithPosX;
             OctolithPosY = octolithPosY;
             PrimePosX = primePosX;
             PrimePosY = primePosY;
             PrimeTextPosX = primeTextPosX;
             PrimeTextPosY = primeTextPosY;
-            PrimeTextType = primeTextType;
+            PrimeAlign = primeAlign;
             NodeBonusPosX = nodeBonusPosX;
             NodeBonusPosY = nodeBonusPosY;
             EnemyBonusPosX = enemyBonusPosX;

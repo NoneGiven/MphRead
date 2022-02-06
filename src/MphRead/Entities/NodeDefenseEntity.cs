@@ -291,7 +291,7 @@ namespace MphRead.Entities
             {
                 dest1 = 4;
                 string msg = Text.Strings.GetHudMessage(211); // node stolen
-                PlayerEntity.Main.QueueHudMessage(128, 133, TextType.Centered, 256, 8, new ColorRgba(31), 1, 90 / 30f, 17, msg);
+                PlayerEntity.Main.QueueHudMessage(128, 133, Align.Center, 256, 8, new ColorRgba(31), 1, 90 / 30f, 17, msg);
             }
             for (int i = 0; i < 4; i++)
             {

@@ -603,7 +603,7 @@ namespace MphRead.Entities
             if (GameState.MatchState == MatchState.GameOver)
             {
                 string text = Strings.GetHudMessage(219); // GAME OVER
-                DrawText2D(128, 40, TextType.Centered, 0, text, new ColorRgba(0x3FEF), fontSpacing: 8);
+                DrawText2D(128, 40, Align.Center, 0, text, new ColorRgba(0x3FEF), fontSpacing: 8);
             }
             else if (GameState.MatchState == MatchState.Ending)
             {
@@ -825,9 +825,9 @@ namespace MphRead.Entities
             int palette = time.TotalSeconds < 10 ? 2 : 0;
             float posY = 10;
             string text = Strings.GetHudMessage(5); // TIME
-            DrawText2D(128, posY, TextType.Centered, palette, text);
+            DrawText2D(128, posY, Align.Center, palette, text);
             text = FormatTime(time);
-            DrawText2D(128, posY + 10, TextType.Centered, palette, text);
+            DrawText2D(128, posY + 10, Align.Center, palette, text);
         }
 
         private const float _scoreStartSpace = 13;
@@ -876,7 +876,7 @@ namespace MphRead.Entities
             if (GameState.MatchState == MatchState.Ending)
             {
                 string text = Strings.GetHudMessage(219); // GAME OVER
-                DrawText2D(128, posY, TextType.Centered, 0, text, new ColorRgba(0x53F4), fontSpacing: 8);
+                DrawText2D(128, posY, Align.Center, 0, text, new ColorRgba(0x53F4), fontSpacing: 8);
                 posY += _scoreStartSpace;
             }
             string header1 = "";
@@ -903,8 +903,8 @@ namespace MphRead.Entities
             {
                 header2 = Strings.GetHudMessage(220); // kills
             }
-            DrawText2D(160, posY, TextType.Centered, 0, header1, new ColorRgba(0x3FEF), fontSpacing: 8);
-            DrawText2D(215, posY, TextType.Centered, 0, header2, new ColorRgba(0x3FEF), fontSpacing: 8);
+            DrawText2D(160, posY, Align.Center, 0, header1, new ColorRgba(0x3FEF), fontSpacing: 8);
+            DrawText2D(215, posY, Align.Center, 0, header2, new ColorRgba(0x3FEF), fontSpacing: 8);
             posY += _scoreStartSpace;
             string maxText = Strings.GetHudMessage(256); // MAX
 
@@ -952,9 +952,9 @@ namespace MphRead.Entities
                     string teamValue2 = ChooseValue2(GameState.TeamDeaths[curTeam], GameState.TeamKills[curTeam]);
                     var teamColor = new ColorRgba(player.Team == Team.Orange ? 0x23Fu : 0x2BEAu);
                     string teamName = $"{teamText} {player.TeamIndex + 1}";
-                    DrawText2D(42, posY, TextType.Centered, 0, teamName, teamColor, fontSpacing: 8);
-                    DrawText2D(160, posY, TextType.Centered, 0, teamValue1, teamColor, fontSpacing: 8);
-                    DrawText2D(215, posY, TextType.Centered, 0, teamValue2, teamColor, fontSpacing: 8);
+                    DrawText2D(42, posY, Align.Center, 0, teamName, teamColor, fontSpacing: 8);
+                    DrawText2D(160, posY, Align.Center, 0, teamValue1, teamColor, fontSpacing: 8);
+                    DrawText2D(215, posY, Align.Center, 0, teamValue2, teamColor, fontSpacing: 8);
                     posY += _scoreTeamLineSpace;
                 }
                 string value1 = ChooseValue1(GameState.Time[slot], GameState.Points[slot]);
@@ -975,8 +975,8 @@ namespace MphRead.Entities
                     color = new ColorRgba((byte)(rg * 255), (byte)(rg * 255), 255, 255);
                 }
                 DrawScoreboardPlayer(60, posY, color, _hunterInsts[(int)player.Hunter], slot);
-                DrawText2D(160, posY, TextType.Centered, 0, value1, color, fontSpacing: 8);
-                DrawText2D(215, posY, TextType.Centered, 0, value2, color, fontSpacing: 8);
+                DrawText2D(160, posY, Align.Center, 0, value1, color, fontSpacing: 8);
+                DrawText2D(215, posY, Align.Center, 0, value2, color, fontSpacing: 8);
                 posY += _scorePlayerSpace;
             }
         }
@@ -995,7 +995,7 @@ namespace MphRead.Entities
             _starsInst.SetIndex(stars * 2 + 1, _scene);
             _scene.DrawHudObject(_starsInst, mode: 2);
             string nickname = GameState.Nicknames[slot];
-            DrawText2D(posX + 32, posY - 9, TextType.Centered, 0, nickname, color, fontSpacing: 8);
+            DrawText2D(posX + 32, posY - 9, Align.Center, 0, nickname, color, fontSpacing: 8);
         }
 
         private void DrawHealthbars()
@@ -1032,7 +1032,7 @@ namespace MphRead.Entities
                 _ammoBarPalette, _ammoBarMeter, drawText: false, drawTanks: false);
             amount /= info.AmmoCost;
             DrawText2D(_hudObjects.AmmoBarPosX + _ammoBarMeter.BarOffsetX, _hudObjects.AmmoBarPosY + _ammoBarMeter.BarOffsetY,
-                _ammoBarMeter.TextType, _ammoBarPalette, $"{amount:00}");
+                _ammoBarMeter.Align, _ammoBarPalette, $"{amount:00}");
         }
 
         private void DrawBoostBombs()
@@ -1050,7 +1050,7 @@ namespace MphRead.Entities
                     posX -= 14;
                 }
                 string message = Strings.GetHudMessage(1); // bombs
-                DrawText2D(230, posY + 18, TextType.Centered, palette: 0, message);
+                DrawText2D(230, posY + 18, Align.Center, palette: 0, message);
             }
             if (_abilities.TestFlag(AbilityFlags.Boost))
             {
@@ -1066,7 +1066,7 @@ namespace MphRead.Entities
                 _boostInst.PositionY = (posY - 16) / 192f;
                 _scene.DrawHudObject(_boostInst, mode: 2);
                 string message = Strings.GetHudMessage(2); // boost
-                DrawText2D(29, posY + 18, TextType.Centered, palette: 0, message);
+                DrawText2D(29, posY + 18, Align.Center, palette: 0, message);
             }
         }
 
@@ -1105,11 +1105,11 @@ namespace MphRead.Entities
             if (drawText)
             {
                 int amount = _scene.Multiplayer ? curAmount : barAmount;
-                DrawText2D(x + meter.BarOffsetX, y + meter.BarOffsetY, meter.TextType, _healthbarPalette, $"{amount:00}");
+                DrawText2D(x + meter.BarOffsetX, y + meter.BarOffsetY, meter.Align, _healthbarPalette, $"{amount:00}");
                 if (meter.MessageId > 0)
                 {
                     string message = Strings.GetHudMessage(meter.MessageId);
-                    DrawText2D(x + meter.TextOffsetX, y + meter.TextOffsetY, TextType.LeftAlign, _healthbarPalette, message);
+                    DrawText2D(x + meter.TextOffsetX, y + meter.TextOffsetY, Align.Left, _healthbarPalette, message);
                 }
                 if (drawTanks && meter.TankCount > 0)
                 {
@@ -1609,9 +1609,9 @@ namespace MphRead.Entities
             _textSpacingY = 8;
             string message = Strings.GetHudMessage(messageId);
             // the game wraps text here, but the text used will never wrap (and doesn't have newlines)
-            DrawText2D(posX, posY, _hudObjects.ScoreTextType, 0, message);
+            DrawText2D(posX, posY, _hudObjects.ScoreAlign, 0, message);
             posY += 9;
-            DrawText2D(posX, posY, _hudObjects.ScoreTextType, 0, text);
+            DrawText2D(posX, posY, _hudObjects.ScoreAlign, 0, text);
             _textSpacingY = 0;
         }
 
@@ -1689,7 +1689,7 @@ namespace MphRead.Entities
                 DrawMeter(108, 143, _nodesProgressAmount, _nodesProgressAmount, palette: 0,
                     _nodeProgressMeter, drawText: false, drawTanks: false);
                 string message = Strings.GetHudMessage(204); // progress
-                DrawText2D(128, 133, TextType.Centered, palette: 0, message);
+                DrawText2D(128, 133, Align.Center, palette: 0, message);
             }
         }
 
@@ -1703,8 +1703,8 @@ namespace MphRead.Entities
                 _nodesInst.SetIndex(GameState.Teams && TeamIndex == 0 ? 2 : 4, _scene);
                 _scene.DrawHudObject(_nodesInst);
                 string text = $"x {_teamNodeCounts[TeamIndex]}";
-                DrawText2D(_hudObjects.NodeBonusPosX + 12, _hudObjects.NodeBonusPosY + 2, TextType.LeftAlign, 0, text);
-                DrawText2D(_hudObjects.NodeBonusPosX, _hudObjects.NodeBonusPosY + 10, TextType.LeftAlign, 0, message);
+                DrawText2D(_hudObjects.NodeBonusPosX + 12, _hudObjects.NodeBonusPosY + 2, Align.Left, 0, text);
+                DrawText2D(_hudObjects.NodeBonusPosX, _hudObjects.NodeBonusPosY + 10, Align.Left, 0, message);
             }
             float past = _scene.ElapsedTime % (16 / 30f);
             if (_nodeBonusOpponent != -1 && past < 12 / 30f)
@@ -1714,8 +1714,8 @@ namespace MphRead.Entities
                 _nodesInst.SetIndex(GameState.Teams && _nodeBonusOpponent == 1 ? 4 : 2, _scene);
                 _scene.DrawHudObject(_nodesInst);
                 string text = $"x {_teamNodeCounts[_nodeBonusOpponent]}";
-                DrawText2D(_hudObjects.EnemyBonusPosX + 12, _hudObjects.EnemyBonusPosY + 2, TextType.LeftAlign, 2, text);
-                DrawText2D(_hudObjects.EnemyBonusPosX, _hudObjects.EnemyBonusPosY + 10, TextType.LeftAlign, 2, message);
+                DrawText2D(_hudObjects.EnemyBonusPosX + 12, _hudObjects.EnemyBonusPosY + 2, Align.Left, 2, text);
+                DrawText2D(_hudObjects.EnemyBonusPosX, _hudObjects.EnemyBonusPosY + 10, Align.Left, 2, message);
             }
         }
 
@@ -1740,7 +1740,7 @@ namespace MphRead.Entities
                     string message = Strings.GetHudMessage(11); // prime hunter
                     _textSpacingY = 8;
                     DrawText2D(posX + _hudObjects.PrimeTextPosX, posY + _hudObjects.PrimeTextPosY,
-                        _hudObjects.PrimeTextType, 0, message, maxLength: length);
+                        _hudObjects.PrimeAlign, 0, message, maxLength: length);
                     _textSpacingY = 0;
                 }
             }
@@ -1810,7 +1810,7 @@ namespace MphRead.Entities
             // else, draw "enemy" instead
             if (text != null)
             {
-                DrawText2D(_hudObjects.EnemyHealthTextPosX, _hudObjects.EnemyHealthTextPosY, TextType.Centered, palette, text);
+                DrawText2D(_hudObjects.EnemyHealthTextPosX, _hudObjects.EnemyHealthTextPosY, Align.Center, palette, text);
             }
             return current > 0;
         }
@@ -1818,7 +1818,7 @@ namespace MphRead.Entities
         private float _textSpacingY = 0;
 
         // todo: size/shape (seemingly only used by the bottom screen rank, which is 16x16/square instead of 8x8/square)
-        private Vector2 DrawText2D(float x, float y, TextType type, int palette, ReadOnlySpan<char> text,
+        private Vector2 DrawText2D(float x, float y, Align type, int palette, ReadOnlySpan<char> text,
             ColorRgba? color = null, float alpha = 1, float fontSpacing = -1, int maxLength = -1)
         {
             int length = 0;
@@ -1840,7 +1840,7 @@ namespace MphRead.Entities
             }
             _textInst.Alpha = alpha;
             float spacingY = _textSpacingY == 0 ? (fontSpacing == -1 ? 12 : fontSpacing) : _textSpacingY;
-            if (type == TextType.LeftAlign)
+            if (type == Align.Left)
             {
                 float startX = x;
                 for (int i = 0; i < length; i++)
@@ -1874,7 +1874,7 @@ namespace MphRead.Entities
                     }
                 }
             }
-            else if (type == TextType.RightAlign)
+            else if (type == Align.Right)
             {
                 float startX = x;
                 int start = 0;
@@ -1922,7 +1922,7 @@ namespace MphRead.Entities
                 }
                 while (end < length);
             }
-            else if (type == TextType.Centered)
+            else if (type == Align.Center)
             {
                 float startX = x;
                 int start = 0;
@@ -1979,7 +1979,7 @@ namespace MphRead.Entities
                 }
                 while (end < length);
             }
-            else if (type == TextType.Type3)
+            else if (type == Align.Type3)
             {
                 // todo: this
                 Debug.Assert(false);
@@ -1990,26 +1990,26 @@ namespace MphRead.Entities
         public void QueueHudMessage(float x, float y, float duration, byte category, int messageId)
         {
             string text = Strings.GetHudMessage(messageId);
-            QueueHudMessage(x, y, TextType.Centered, 256, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
+            QueueHudMessage(x, y, Align.Center, 256, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
         }
 
         public void QueueHudMessage(float x, float y, int maxWidth, float duration, byte category, int messageId)
         {
             string text = Strings.GetHudMessage(messageId);
-            QueueHudMessage(x, y, TextType.Centered, maxWidth, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
+            QueueHudMessage(x, y, Align.Center, maxWidth, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
         }
 
         public void QueueHudMessage(float x, float y, float duration, byte category, string text)
         {
-            QueueHudMessage(x, y, TextType.Centered, 256, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
+            QueueHudMessage(x, y, Align.Center, 256, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
         }
 
         public void QueueHudMessage(float x, float y, int maxWidth, float duration, byte category, string text)
         {
-            QueueHudMessage(x, y, TextType.Centered, maxWidth, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
+            QueueHudMessage(x, y, Align.Center, maxWidth, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
         }
 
-        public void QueueHudMessage(float x, float y, TextType textType, int maxWidth, float fontSize,
+        public void QueueHudMessage(float x, float y, Align align, int maxWidth, float fontSize,
             ColorRgba color, float alpha, float duration, byte category, string text)
         {
             Debug.Assert(text.Length < 256);
@@ -2049,7 +2049,7 @@ namespace MphRead.Entities
             message.FontSize = fontSize;
             message.Color = color;
             message.Alpha = alpha;
-            message.TextType = textType;
+            message.Align = align;
             message.Category = category;
             message.Lifetime = duration;
         }
@@ -2159,7 +2159,7 @@ namespace MphRead.Entities
                     && ((message.Category & 1) == 0 || (_scene.FrameCount & (7 * 2)) <= 3 * 2)) // todo: FPS stuff
                 {
                     // todo: support font size
-                    DrawText2D(message.Position.X, message.Position.Y, message.TextType, palette: 0,
+                    DrawText2D(message.Position.X, message.Position.Y, message.Align, palette: 0,
                         message.Text, message.Color, message.Alpha, fontSpacing: message.FontSize);
                 }
             }
@@ -2174,7 +2174,7 @@ namespace MphRead.Entities
             public float Alpha { get; set; }
             public byte Category { get; set; }
             public int MaxWidth { get; set; }
-            public TextType TextType { get; set; }
+            public Align Align { get; set; }
             public char[] Text { get; } = new char[256];
         }
 

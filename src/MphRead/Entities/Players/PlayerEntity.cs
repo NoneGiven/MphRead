@@ -1135,7 +1135,7 @@ namespace MphRead.Entities
         private void ShowNoAmmoMessage()
         {
             string message = Strings.GetHudMessage(9); // AMMO DEPLETED!
-            QueueHudMessage(128, 120, TextType.Centered, 256, 8, new ColorRgba(0x295F), 1, 45 / 30f, 1, message);
+            QueueHudMessage(128, 120, Align.Center, 256, 8, new ColorRgba(0x295F), 1, 45 / 30f, 1, message);
         }
 
         public void UpdateZoom(bool zoom)
