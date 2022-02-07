@@ -48,11 +48,17 @@ namespace MphRead.Entities
         private ModelInstance _filterModel = null!;
         private bool _showScoreboard = false;
         private int _iceLayerBindingId = -1;
+        private int _helmetBindingId = -1;
+        private int _helmetDropBindingId = -1;
+        private int _visorBindingId = -1; // todo: support other visor views
 
         public void SetUpHud()
         {
             _iceLayerBindingId = HudInfo.CharMapToTexture(HudElements.IceLayer,
                 startX: 16, startY: 0, tilesX: 32, tilesY: 32, _scene);
+            _helmetBindingId = HudInfo.CharMapToTexture(_hudObjects.Helmet, _scene);
+            _helmetDropBindingId = HudInfo.CharMapToTexture(_hudObjects.HelmetDrop, _scene);
+            _visorBindingId = HudInfo.CharMapToTexture(_hudObjects.Visor, _scene);
             // todo: only load what needs to be loaded for the mode
             _filterModel = Read.GetModelInstance("filter");
             _scene.LoadModel(_filterModel.Model);
@@ -370,6 +376,7 @@ namespace MphRead.Entities
                     {
                         // sktodo: HUD shift
                         // sktodo: visor/helmet opacity settings feature
+                        // sktodo: sizes
                         if (_drawIceLayer)
                         {
                             _scene.Layer3Info.BindingId = _iceLayerBindingId;
@@ -377,12 +384,12 @@ namespace MphRead.Entities
                         }
                         else
                         {
-                            _scene.Layer3Info.BindingId = -1; // sktodo;
+                            _scene.Layer3Info.BindingId = _helmetDropBindingId;
                             _scene.Layer3Info.Alpha = 1;
                         }
-                        _scene.Layer1Info.BindingId = -1; // sktodo
+                        _scene.Layer1Info.BindingId = _visorBindingId;
                         _scene.Layer1Info.Alpha = 0.5f;
-                        _scene.Layer2Info.BindingId = -1; // sktodo
+                        _scene.Layer2Info.BindingId = _helmetBindingId;
                         _scene.Layer2Info.Alpha = 1;
                     }
                     if (_timeSinceInput < (ulong)Values.GunIdleTime * 2) // todo: FPS stuff

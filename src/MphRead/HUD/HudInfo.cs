@@ -424,9 +424,9 @@ namespace MphRead.Hud
                     {
                         byte data = characterData[i * 32 + y * 4 + x];
                         int index1 = data & 0xF;
-                        character.Add(new ColorRgba(paletteData[index1]));
+                        character.Add(index1 == 0 ? new ColorRgba() : new ColorRgba(paletteData[index1]));
                         int index2 = (data & 0xF0) >> 4;
-                        character.Add(new ColorRgba(paletteData[index2]));
+                        character.Add(index2 == 0 ? new ColorRgba() : new ColorRgba(paletteData[index2]));
                     }
                 }
                 characters.Add(character);
