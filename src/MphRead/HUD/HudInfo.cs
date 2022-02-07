@@ -344,8 +344,8 @@ namespace MphRead.Hud
     {
         public int BindingId { get; set; } = -1;
         public float Alpha { get; set; } = 1;
-        public float Width { get; set; } = -1;
-        public float Height { get; set; } = -1;
+        public float ScaleX { get; set; } = -1;
+        public float ScaleY { get; set; } = -1;
     }
 
     public class HudInfo
@@ -476,7 +476,7 @@ namespace MphRead.Hud
                     }
                 }
             }
-            return scene.BindGetTexture(texture, 256, 256);
+            return scene.BindGetTexture(texture, width, height);
         }
 
         private static readonly (int Width, int Height)[,] _objectDimensions = new (int, int)[3, 4]
@@ -640,8 +640,6 @@ namespace MphRead.Hud
             UiOamAttrs attrs = oamAttrs[0];
             Debug.Assert(!attrs.FlipHorizontal);
             Debug.Assert(!attrs.FlipVertical);
-            // skodo: parse characters for each palette that's actually specified by the attr, I guess?
-            // --> some just have 1 in all the attrs instead of 0 in all the attrs, so just use that?
             (int width, int height) = _objectDimensions[(int)attrs.Shape, (int)attrs.Size];
             return new HudObject(width * 8, height * 8, palIndexData, palColorData, animParams);
         }
@@ -1168,9 +1166,9 @@ namespace MphRead.Hud
                         {
                             byte data = characterData[i * 32 + y * 4 + x];
                             int index1 = data & 0xF;
-                            character.Add(new ColorRgba(paletteData[index1]));
+                            character.Add(index1 == 0 ? new ColorRgba() : new ColorRgba(paletteData[index1]));
                             int index2 = (data & 0xF0) >> 4;
-                            character.Add(new ColorRgba(paletteData[index2]));
+                            character.Add(index2 == 0 ? new ColorRgba() : new ColorRgba(paletteData[index2]));
                         }
                     }
                     characters.Add(character);

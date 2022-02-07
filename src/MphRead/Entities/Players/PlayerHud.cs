@@ -58,7 +58,7 @@ namespace MphRead.Entities
                 startX: 16, startY: 0, tilesX: 32, tilesY: 32, _scene);
             _helmetBindingId = HudInfo.CharMapToTexture(_hudObjects.Helmet, _scene);
             _helmetDropBindingId = HudInfo.CharMapToTexture(_hudObjects.HelmetDrop, _scene);
-            _visorBindingId = HudInfo.CharMapToTexture(_hudObjects.Visor, _scene);
+            _visorBindingId = HudInfo.CharMapToTexture(_hudObjects.Visor, startX: 0, startY: 0, tilesX: 0, tilesY: 32, _scene);
             // todo: only load what needs to be loaded for the mode
             _filterModel = Read.GetModelInstance("filter");
             _scene.LoadModel(_filterModel.Model);
@@ -376,21 +376,28 @@ namespace MphRead.Entities
                     {
                         // sktodo: HUD shift
                         // sktodo: visor/helmet opacity settings feature
-                        // sktodo: sizes
                         if (_drawIceLayer)
                         {
                             _scene.Layer3Info.BindingId = _iceLayerBindingId;
                             _scene.Layer3Info.Alpha = 9 / 16f;
+                            _scene.Layer3Info.ScaleX = -1;
+                            _scene.Layer3Info.ScaleY = -1;
                         }
                         else
                         {
                             _scene.Layer3Info.BindingId = _helmetDropBindingId;
                             _scene.Layer3Info.Alpha = 1;
+                            _scene.Layer3Info.ScaleX = 2;
+                            _scene.Layer3Info.ScaleY = 256 / 192f;
                         }
                         _scene.Layer1Info.BindingId = _visorBindingId;
                         _scene.Layer1Info.Alpha = 0.5f;
+                        _scene.Layer1Info.ScaleX = 1;
+                        _scene.Layer1Info.ScaleY = 256 / 192f;
                         _scene.Layer2Info.BindingId = _helmetBindingId;
                         _scene.Layer2Info.Alpha = 1;
+                        _scene.Layer2Info.ScaleX = 2;
+                        _scene.Layer2Info.ScaleY = 256 / 192f;
                     }
                     if (_timeSinceInput < (ulong)Values.GunIdleTime * 2) // todo: FPS stuff
                     {

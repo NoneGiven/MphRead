@@ -3071,19 +3071,20 @@ namespace MphRead
                 TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            float width = info.Width;
-            float height = info.Height;
-            if (width == -1 || height == -1)
+            float viewWidth = Size.X;
+            float viewHeight = Size.Y;
+            float width;
+            float height;
+            if (info.ScaleX == -1 || info.ScaleY == -1)
             {
-                float viewWidth = Size.X;
-                float viewHeight = Size.Y;
                 float size = MathF.Max(viewWidth, viewHeight) / 2;
                 width = size / (viewWidth / 2);
                 height = size / (viewHeight / 2);
             }
             else
             {
-
+                width = viewWidth * info.ScaleX / 2 / (viewWidth / 2);
+                height = viewHeight * info.ScaleY / 2 / (viewHeight / 2);
             }
             GL.Begin(PrimitiveType.TriangleStrip);
             // top right
