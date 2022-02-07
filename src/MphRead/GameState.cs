@@ -196,7 +196,7 @@ namespace MphRead
                 }
                 ModeState(scene);
                 // todo: escape sequence stuff
-                if (MatchTime > 0 && !ForceEndGame)
+                if (!scene.Multiplayer || MatchTime > 0 && !ForceEndGame)
                 {
                     // todo: update music, play timer alarm
                 }
