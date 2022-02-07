@@ -26,7 +26,7 @@ namespace MphRead.Entities
                 {
                     ProcessTouchInput();
                     // todo: actual pause menu should required pressed
-                    if (!Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && Controls.Pause.IsDown)
+                    if (_scene.Multiplayer && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && Controls.Pause.IsDown)
                     {
                         _showScoreboard = true;
                     }
@@ -72,7 +72,7 @@ namespace MphRead.Entities
             }
             else
             {
-                _showScoreboard = Controls.Pause.IsDown;
+                _showScoreboard = _scene.Multiplayer && Controls.Pause.IsDown;
             }
             if (IsAltForm || IsMorphing)
             {
