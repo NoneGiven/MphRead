@@ -347,6 +347,22 @@ namespace MphRead.Entities
             }
         }
 
+        private void UpdateHudShiftY(float amount)
+        {
+            if (IsMainPlayer)
+            {
+                _hudShiftY = Math.Clamp(-MathF.Round(amount), -8, 8);
+            }
+        }
+
+        private void UpdateHudShiftX(float amount)
+        {
+            if (IsMainPlayer)
+            {
+                _hudShiftX = Math.Clamp(MathF.Round(amount), -8, 8);
+            }
+        }
+
         private void ProcessBiped()
         {
             if (IsMainPlayer && !_scene.Multiplayer && CameraSequence.Current != null)
@@ -394,7 +410,6 @@ namespace MphRead.Entities
                 }
                 if (Controls.MouseAim && !Flags1.TestFlag(PlayerFlags1.NoAimInput))
                 {
-                    // todo: update HUD shift
                     float aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
                     float aimX = -Input.MouseDeltaX / 4f;
                     if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true
@@ -402,6 +417,8 @@ namespace MphRead.Entities
                     {
                         aimX = aimY = 0;
                     }
+                    UpdateHudShiftY(aimY);
+                    UpdateHudShiftX(aimX);
                     UpdateAimY(aimY);
                     UpdateAimX(aimX);
                     if (Flags1.TestFlag(PlayerFlags1.Grounded))
@@ -526,7 +543,6 @@ namespace MphRead.Entities
                     {
                         MoveRightLeft(PlayerAnimation.WalkLeft, sign: -1);
                     }
-                    // todo: update HUD x shift
                     if (_field684 < Fixed.ToFloat(500) && _field684 > Fixed.ToFloat(-500))
                     {
                         _field684 = 0;
@@ -543,7 +559,6 @@ namespace MphRead.Entities
                     {
                         MoveForwardBack(PlayerAnimation.WalkBackward, sign: -1);
                     }
-                    // todo: update HUD y shift
                     if (_field688 < Fixed.ToFloat(500) && _field688 > Fixed.ToFloat(-500))
                     {
                         _field688 = 0;
@@ -971,7 +986,6 @@ namespace MphRead.Entities
                     // Trace, Sylux, Weavel
                     if (Controls.MouseAim && !Flags1.TestFlag(PlayerFlags1.NoAimInput))
                     {
-                        // todo: update HUD shift
                         float aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
                         float aimX = -Input.MouseDeltaX / 4f;
                         if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true
@@ -979,6 +993,8 @@ namespace MphRead.Entities
                         {
                             aimX = aimY = 0;
                         }
+                        UpdateHudShiftY(aimY);
+                        UpdateHudShiftX(aimX);
                         UpdateAimY(aimY);
                         UpdateAimX(aimX);
                         if ((Hunter == Hunter.Trace || Hunter == Hunter.Weavel) && Flags1.TestFlag(PlayerFlags1.Grounded))
@@ -1087,7 +1103,6 @@ namespace MphRead.Entities
                         {
                             MoveRightLeft(walkAnim: 2, sign: -1); // TraceAltAnim.MoveLeft or WeavelAltAnim.MoveLeft
                         }
-                        // todo: update HUD x shift
                         // todo: update field684
                         if (Controls.MoveUp.IsDown)
                         {
@@ -1097,7 +1112,6 @@ namespace MphRead.Entities
                         {
                             MoveForwardBack(walkAnim: 5, sign: -1); // TraceAltAnim.MoveBackward or WeavelAltAnim.MoveBackward
                         }
-                        // todo: update HUD y shift
                         // todo: update field684
                         // unimpl-controls: in the up/down code path, the game processes aim reset if that flag is off
                     }

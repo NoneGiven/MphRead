@@ -1310,7 +1310,8 @@ namespace MphRead
             }
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
             {
-                DrawHudLayer(Layer3Info); // helmet back, ice
+                DrawHudLayer(Layer4Info); // ice layer
+                DrawHudLayer(Layer3Info); // helmet back
                 DrawHudLayer(Layer1Info); // visor
                 DrawHudLayer(Layer2Info); // helmet front
                 PlayerEntity.Main.DrawHudObjects();
@@ -3015,6 +3016,7 @@ namespace MphRead
         public LayerInfo Layer1Info { get; } = new LayerInfo();
         public LayerInfo Layer2Info { get; } = new LayerInfo();
         public LayerInfo Layer3Info { get; } = new LayerInfo();
+        public LayerInfo Layer4Info { get; } = new LayerInfo();
 
         private void SetHudLayerUniforms()
         {
@@ -3089,16 +3091,16 @@ namespace MphRead
             GL.Begin(PrimitiveType.TriangleStrip);
             // top right
             GL.TexCoord3(1f, 0f, 0f);
-            GL.Vertex3(width, height, 0f);
+            GL.Vertex3(width + info.ShiftX, height + info.ShiftY, 0f);
             // top left
             GL.TexCoord3(0f, 0f, 0f);
-            GL.Vertex3(-width, height, 0f);
+            GL.Vertex3(-width + info.ShiftX, height + info.ShiftY, 0f);
             // bottom right
             GL.TexCoord3(1f, 1f, 0f);
-            GL.Vertex3(width, -height, 0f);
+            GL.Vertex3(width + info.ShiftX, -height + info.ShiftY, 0f);
             // bottom left
             GL.TexCoord3(0f, 1f, 0f);
-            GL.Vertex3(-width, -height, 0f);
+            GL.Vertex3(-width + info.ShiftX, -height + info.ShiftY, 0f);
             GL.End();
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }

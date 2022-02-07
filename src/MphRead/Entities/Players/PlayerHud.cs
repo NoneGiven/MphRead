@@ -341,6 +341,9 @@ namespace MphRead.Entities
             }
         }
 
+        private float _hudShiftX = 0;
+        private float _hudShiftY = 0;
+
         public void UpdateHud()
         {
             ProcessDoubleDamageHud();
@@ -364,6 +367,15 @@ namespace MphRead.Entities
             _scene.Layer1Info.BindingId = -1;
             _scene.Layer2Info.BindingId = -1;
             _scene.Layer3Info.BindingId = -1;
+            _scene.Layer4Info.BindingId = -1;
+            _scene.Layer1Info.ShiftX = 0;
+            _scene.Layer1Info.ShiftY = 0;
+            _scene.Layer2Info.ShiftX = 0;
+            _scene.Layer2Info.ShiftY = 0;
+            _scene.Layer3Info.ShiftX = 0;
+            _scene.Layer3Info.ShiftY = 0;
+            _scene.Layer4Info.ShiftX = 0;
+            _scene.Layer4Info.ShiftY = 0;
             if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true)
             {
                 return;
@@ -377,26 +389,36 @@ namespace MphRead.Entities
                         // sktodo: HUD shift
                         if (_drawIceLayer)
                         {
-                            _scene.Layer3Info.BindingId = _iceLayerBindingId;
-                            _scene.Layer3Info.Alpha = 9 / 16f;
-                            _scene.Layer3Info.ScaleX = -1;
-                            _scene.Layer3Info.ScaleY = -1;
+                            // ice layer
+                            _scene.Layer4Info.BindingId = _iceLayerBindingId;
+                            _scene.Layer4Info.Alpha = 9 / 16f;
+                            _scene.Layer4Info.ScaleX = -1;
+                            _scene.Layer4Info.ScaleY = -1;
                         }
-                        else
-                        {
-                            _scene.Layer3Info.BindingId = _helmetDropBindingId;
-                            _scene.Layer3Info.Alpha = Features.HelmetOpacity;
-                            _scene.Layer3Info.ScaleX = 2;
-                            _scene.Layer3Info.ScaleY = 256 / 192f;
-                        }
+                        // helmet back
+                        _scene.Layer3Info.BindingId = _helmetDropBindingId;
+                        _scene.Layer3Info.Alpha = Features.HelmetOpacity;
+                        _scene.Layer3Info.ScaleX = 2;
+                        _scene.Layer3Info.ScaleY = 256 / 192f;
+                        // visor
                         _scene.Layer1Info.BindingId = _visorBindingId;
                         _scene.Layer1Info.Alpha = Features.VisorOpacity;
                         _scene.Layer1Info.ScaleX = 1;
                         _scene.Layer1Info.ScaleY = 256 / 192f;
+                        // helmet front
                         _scene.Layer2Info.BindingId = _helmetBindingId;
                         _scene.Layer2Info.Alpha = Features.HelmetOpacity;
                         _scene.Layer2Info.ScaleX = 2;
                         _scene.Layer2Info.ScaleY = 256 / 192f;
+                        if (Features.HudSway)
+                        {
+                            _scene.Layer1Info.ShiftX = _hudShiftX / 256f;
+                            _scene.Layer1Info.ShiftY = _hudShiftY / 192f;
+                            _scene.Layer2Info.ShiftX = _hudShiftX / 256f;
+                            _scene.Layer2Info.ShiftY = _hudShiftY / 192f;
+                            _scene.Layer3Info.ShiftX = -_hudShiftX / 4 / 256f;
+                            _scene.Layer3Info.ShiftY = -_hudShiftY / 4 / 192f;
+                        }
                     }
                     if (_timeSinceInput < (ulong)Values.GunIdleTime * 2) // todo: FPS stuff
                     {

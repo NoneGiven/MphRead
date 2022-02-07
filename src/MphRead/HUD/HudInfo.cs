@@ -346,6 +346,8 @@ namespace MphRead.Hud
         public float Alpha { get; set; } = 1;
         public float ScaleX { get; set; } = -1;
         public float ScaleY { get; set; } = -1;
+        public float ShiftX { get; set; } = 0;
+        public float ShiftY { get; set; } = 0;
     }
 
     public class HudInfo
