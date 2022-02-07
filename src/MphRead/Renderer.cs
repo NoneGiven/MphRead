@@ -1025,17 +1025,12 @@ namespace MphRead
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, _frameBuffer);
             GL.UseProgram(_shaderProgramId);
-            if (_recording || Debugger.IsAttached)
-            {
-                _frameTime = 1 / 60f; // todo: FPS stuff
-            }
-            else
-            {
-                _frameTime = (float)frameTime;
-            }
             LoadAndUnload();
+            // todo: FPS stuff
+            _frameTime = 1 / 60f;
             if (ProcessFrame)
             {
+                _elapsedTime += _frameTime;
                 PlayerEntity.ProcessInput(_keyboardState, _mouseState);
             }
             OnKeyHeld();
@@ -1076,7 +1071,6 @@ namespace MphRead
                     ProcessMessageQueue();
                     _liveFrames++;
                 }
-                _elapsedTime += 1 / 60f; // todo: FPS stuff
                 _frameCount++;
                 GameState.UpdateTime(this);
             }

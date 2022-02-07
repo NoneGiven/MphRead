@@ -1203,6 +1203,20 @@ namespace MphRead.Hud
         }
     }
 
+    public class RulesInfo
+    {
+        public int Count { get; }
+        public int[] MessageIds { get; }
+        public int[] Offsets { get; }
+
+        public RulesInfo(int count, int[] messageIds, int[] offsets)
+        {
+            Count = count;
+            MessageIds = messageIds;
+            Offsets = offsets;
+        }
+    }
+
     public static class HudElements
     {
         public static readonly string IceLayer = @"_archives\common\bg_ice.bin";
@@ -1229,6 +1243,58 @@ namespace MphRead.Hud
         public static IEnumerable<string> AllLayers { get; } = new List<string>()
         {
             IceLayer
+        };
+
+        public static IReadOnlyList<RulesInfo> RulesInfo = new RulesInfo[7]
+        {
+            // Battle
+            new RulesInfo(
+                count: 4,
+                messageIds: new int[8] { 1, 2, 3, 4, 0, 0, 0, 0 },
+                offsets: new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 }
+            ),
+            // Survival
+            new RulesInfo
+            (
+                count: 4,
+                messageIds: new int[8] { 11, 12, 13, 14, 0, 0, 0, 0 },
+                offsets: new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 }
+            ),
+            // Prime Hunter
+            new RulesInfo
+            (
+                count: 7,
+                messageIds: new int[8] { 21, 22, 23, 24, 25, 26, 27, 0 },
+                offsets: new int[8] { 0, 0, 0, 0, 12, 12, 12, 0 }
+            ),
+            // Bounty
+            new RulesInfo
+            (
+                count: 5,
+                messageIds: new int[8] { 31, 32, 33, 34, 35, 0, 0, 0 },
+                offsets: new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 }
+            ),
+            // Capture
+            new RulesInfo
+            (
+                count: 6,
+                messageIds: new int[8] { 41, 42, 43, 44, 45, 46, 0, 0 },
+                offsets: new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 }
+            ),
+            // Defender
+            new RulesInfo
+            (
+                count: 4,
+                messageIds: new int[8] { 51, 52, 53, 54, 0, 0, 0, 0 },
+                offsets: new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 }
+            ),
+            // Nodes
+            new RulesInfo
+            (
+                count: 8,
+                messageIds: new int[8] { 61, 62, 63, 64, 65, 66, 67, 68 },
+                offsets: new int[8] { 0, 0, 0, 0, 0, 12, 12, 12 }
+            )
         };
 
         public static IReadOnlyList<HudObjects> HunterObjects = new HudObjects[8]

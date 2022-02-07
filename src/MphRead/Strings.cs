@@ -169,6 +169,11 @@ namespace MphRead.Text
             }
             return strings;
         }
+
+        public static void GetModeRules(GameMode mode)
+        {
+
+        }
     }
 
     public static class StringTables

@@ -243,6 +243,81 @@ namespace MphRead.Entities
             {
                 _hudMessageQueue[i].Lifetime = 0;
             }
+            if (_scene.Multiplayer)
+            {
+                LoadModeRules();
+            }
+        }
+
+        private RulesInfo _rulesInfo = null!;
+        private readonly string?[] _rulesLines = new string[8];
+        private readonly (int Length, int Newlines)[] _rulesLengths = new (int, int)[8];
+
+        private void LoadModeRules()
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                _rulesLines[i] = null;
+                _rulesLengths[i] = (0, 0);
+            }
+            GameMode mode = _scene.GameMode;
+            if (mode == GameMode.Battle || mode == GameMode.BattleTeams)
+            {
+                _rulesInfo = HudElements.RulesInfo[0];
+            }
+            else if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
+            {
+                _rulesInfo = HudElements.RulesInfo[1];
+            }
+            else if (mode == GameMode.PrimeHunter)
+            {
+                _rulesInfo = HudElements.RulesInfo[2];
+            }
+            else if (mode == GameMode.Bounty || mode == GameMode.BountyTeams)
+            {
+                _rulesInfo = HudElements.RulesInfo[3];
+            }
+            else if (mode == GameMode.Capture)
+            {
+                _rulesInfo = HudElements.RulesInfo[4];
+            }
+            else if (mode == GameMode.Defender || mode == GameMode.DefenderTeams)
+            {
+                _rulesInfo = HudElements.RulesInfo[5];
+            }
+            else if (mode == GameMode.Nodes || mode == GameMode.NodesTeams)
+            {
+                _rulesInfo = HudElements.RulesInfo[6];
+            }
+            char[] buf = new char[256];
+            for (int i = 0; i < _rulesInfo.Count; i++)
+            {
+                string line = Strings.GetMessage('S', _rulesInfo.MessageIds[i], StringTables.HudMessagesMP);
+                if (i == 0)
+                {
+                    _rulesLines[i] = line;
+                    _rulesLengths[0] = (30, 0);
+                }
+                else
+                {
+                    // todo: text wrapping should be based on current window width
+                    // --> and so it also needs to be deferred until the text is being rendered
+                    int offset = _rulesInfo.Offsets[i];
+                    int lineCount = WrapText(line, 244 - (offset + 12), buf);
+                    int length = 0;
+                    for (int j = 0; j < buf.Length; j++)
+                    {
+                        if (buf[j] == '\0')
+                        {
+                            break;
+                        }
+                        length++;
+                    }
+                    line = new string(buf, 0, length);
+                    _rulesLines[i] = line;
+                    _rulesLengths[i] = (_rulesLengths[i - 1].Length + line.Length, lineCount - 1);
+                }
+            }
         }
 
         public void UpdateHud()
@@ -329,7 +404,7 @@ namespace MphRead.Entities
                 _healthbarChangedColor = false;
             }
             float targetOffsetY = _hudObjects.HealthOffsetY;
-            if (IsAltForm || IsMorphing) // todo: or match state is 2
+            if (IsAltForm || IsMorphing)
             {
                 targetOffsetY += _hudObjects.HealthOffsetYAlt;
             }
@@ -373,7 +448,7 @@ namespace MphRead.Entities
         private void UpdateBoostBombs()
         {
             float targetOffsetY = 208;
-            if (IsAltForm || IsMorphing) // todo: or match state is 2
+            if (IsAltForm || IsMorphing)
             {
                 targetOffsetY = 160;
             }
@@ -629,7 +704,7 @@ namespace MphRead.Entities
             }
             else if (CameraSequence.Current?.IsIntro == true)
             {
-                // todo: draw laws of battle
+                DrawModeRules();
                 DrawQueuedHudMessages();
                 return;
             }
@@ -1185,7 +1260,7 @@ namespace MphRead.Entities
         public void ProcessModeHud()
         {
             _locatorInfo.Clear();
-            // todo: update opponent damage bar
+            // sktodo: update opponent damage bar
             if (_scene.GameMode == GameMode.Survival || _scene.GameMode == GameMode.SurvivalTeams)
             {
                 ProcessHudSurvival();
@@ -1528,33 +1603,37 @@ namespace MphRead.Entities
             {
                 DrawHudAdventure();
             }
-            else if (mode == GameMode.Battle || mode == GameMode.BattleTeams)
+            else
             {
-                DrawHudBattle();
-            }
-            else if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
-            {
-                DrawHudSurvival();
-            }
-            else if (mode == GameMode.Bounty || mode == GameMode.BountyTeams)
-            {
-                DrawHudBounty();
-            }
-            else if (mode == GameMode.Capture)
-            {
-                DrawHudCapture();
-            }
-            else if (mode == GameMode.Defender || mode == GameMode.DefenderTeams)
-            {
-                DrawHudDefender();
-            }
-            else if (mode == GameMode.Nodes || mode == GameMode.NodesTeams)
-            {
-                DrawHudNodes();
-            }
-            else if (mode == GameMode.PrimeHunter)
-            {
-                DrawHudPrimeHunter();
+                if (mode == GameMode.Battle || mode == GameMode.BattleTeams)
+                {
+                    DrawHudBattle();
+                }
+                else if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
+                {
+                    DrawHudSurvival();
+                }
+                else if (mode == GameMode.Bounty || mode == GameMode.BountyTeams)
+                {
+                    DrawHudBounty();
+                }
+                else if (mode == GameMode.Capture)
+                {
+                    DrawHudCapture();
+                }
+                else if (mode == GameMode.Defender || mode == GameMode.DefenderTeams)
+                {
+                    DrawHudDefender();
+                }
+                else if (mode == GameMode.Nodes || mode == GameMode.NodesTeams)
+                {
+                    DrawHudNodes();
+                }
+                else if (mode == GameMode.PrimeHunter)
+                {
+                    DrawHudPrimeHunter();
+                }
+                DrawOpponentHealthbar();
             }
         }
 
@@ -1580,7 +1659,6 @@ namespace MphRead.Entities
             }
             else if (_lastTarget != null)
             {
-                // todo: we'll need to use this for MP too, while making sure it doesn't conflict with other HUD elements
                 if (!DrawTargetHealthbar(_lastTarget))
                 {
                     _lastTarget = null;
@@ -2029,6 +2107,37 @@ namespace MphRead.Entities
             return current > 0;
         }
 
+        private void DrawOpponentHealthbar()
+        {
+            // sktodo: draw opponent damage bar
+        }
+
+        private void DrawModeRules()
+        {
+            string? header = _rulesLines[0];
+            Debug.Assert(header != null);
+            DrawText2D(128, 10, Align.Center, 0, header, new ColorRgba(0x7FDE));
+            int totalCharacters = (int)(_scene.ElapsedTime / (1 / 30f));
+            float posY = 28;
+            _textSpacingY = 8;
+            for (int i = 1; i < _rulesInfo.Count; i++)
+            {
+                (int prevLength, _) = _rulesLengths[i - 1];
+                int characters = totalCharacters - prevLength;
+                if (characters <= 0)
+                {
+                    break;
+                }
+                string? line = _rulesLines[i];
+                Debug.Assert(line != null);
+                float posX = _rulesInfo.Offsets[i] + 12;
+                DrawText2D(posX, posY, Align.Left, 0, line, new ColorRgba(0x7F5A), maxLength: characters);
+                posY += 13 + _rulesLengths[i].Newlines * 8;
+                // todo: play SFX, somewhere
+            }
+            _textSpacingY = 0;
+        }
+
         private float _textSpacingY = 0;
 
         // todo: size/shape (seemingly only used by the bottom screen rank, which is 16x16/square instead of 8x8/square)
@@ -2320,6 +2429,7 @@ namespace MphRead.Entities
                 }
                 c++;
             }
+            dest[c] = '\0';
             return lines;
         }
 
