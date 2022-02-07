@@ -375,7 +375,6 @@ namespace MphRead.Entities
                     if (!Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && !_showScoreboard)
                     {
                         // sktodo: HUD shift
-                        // sktodo: visor/helmet opacity settings feature
                         if (_drawIceLayer)
                         {
                             _scene.Layer3Info.BindingId = _iceLayerBindingId;
@@ -386,16 +385,16 @@ namespace MphRead.Entities
                         else
                         {
                             _scene.Layer3Info.BindingId = _helmetDropBindingId;
-                            _scene.Layer3Info.Alpha = 1;
+                            _scene.Layer3Info.Alpha = Features.HelmetOpacity;
                             _scene.Layer3Info.ScaleX = 2;
                             _scene.Layer3Info.ScaleY = 256 / 192f;
                         }
                         _scene.Layer1Info.BindingId = _visorBindingId;
-                        _scene.Layer1Info.Alpha = 0.5f;
+                        _scene.Layer1Info.Alpha = Features.VisorOpacity;
                         _scene.Layer1Info.ScaleX = 1;
                         _scene.Layer1Info.ScaleY = 256 / 192f;
                         _scene.Layer2Info.BindingId = _helmetBindingId;
-                        _scene.Layer2Info.Alpha = 1;
+                        _scene.Layer2Info.Alpha = Features.HelmetOpacity;
                         _scene.Layer2Info.ScaleX = 2;
                         _scene.Layer2Info.ScaleY = 256 / 192f;
                     }
