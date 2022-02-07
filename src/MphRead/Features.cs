@@ -10,6 +10,12 @@ namespace MphRead
     public static class Features
     {
         public static bool AllowInvalidTeams { get; set; } = true;
-        public static bool DebugWeaponSelect { get; set; } = true;
+        public static bool TopScreenTargetInfo { get; set; } = true;
+    }
+
+    public static class Cheats
+    {
+        public static bool FreeWeaponSelect { get; set; } = true;
+        public static bool UnlimitedJumps { get; set; } = false;
     }
 }

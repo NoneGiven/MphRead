@@ -552,6 +552,10 @@ namespace MphRead.Entities
                     {
                         _field688 *= 0.9f; // sktodo: FPS stuff
                     }
+                    if (Cheats.UnlimitedJumps)
+                    {
+                        Flags1 &= ~PlayerFlags1.UsedJump;
+                    }
                     // unimpl-controls: in the up/down code path, the game processes aim reset if that flag is off
                     // unimpl-controls: the aim input disable flag is also checked by the game
                     if (_jumpPadControlLockMin == 0 && Controls.Jump.IsPressed && !Flags1.TestFlag(PlayerFlags1.UsedJump))

@@ -2109,7 +2109,7 @@ namespace MphRead.Entities
 
         private void DrawOpponentHealthbar()
         {
-            // sktodo: draw opponent damage bar
+            // sktodo: draw opponent damage bar if TopScreenTargetInfo is on
         }
 
         private void DrawModeRules()
