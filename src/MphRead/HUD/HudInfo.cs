@@ -375,7 +375,7 @@ namespace MphRead.Hud
         private static readonly int _layerHeaderSize = Marshal.SizeOf<UiPartHeader>();
         private static readonly int _scrDatInfoSize = Marshal.SizeOf<ScrDatInfo>();
 
-        public static int CharMapToTexture(string path, Scene scene)
+        public static int CharMapToTexture(string path, int startX, int startY, int tilesX, int tilesY, Scene scene)
         {
             // todo: does this file define the palette (16/256 colors, etc.) or screen size (256x256, 512x512, etc.)?
             // --> if not, where does the game get that info when setting it on the hardware?
@@ -415,17 +415,21 @@ namespace MphRead.Hud
                 characters.Add(character);
             }
 
-            var texture = new ColorRgba[256 * 256];
-            for (int cy = 0; cy < 32; cy++)
+            ushort width = (ushort)(tilesX * 8);
+            ushort height = (ushort)(tilesY * 8);
+            var texture = new ColorRgba[width * height];
+            for (int cy = 0; cy < tilesY; cy++)
             {
-                for (int cx = 0; cx < 32; cx++) // skip last 16 of 64
+                int icy = cy + startY;
+                for (int cx = 0; cx < tilesX; cx++)
                 {
-                    int icx = cx + 16; // skip first 16 of 64
-                    int idx = cy * 32 + ((icx / 32) == 1 ? 0x400 + (icx - 32) : icx); // deal with the "split" addresses
+                    int icx = cx + startX;
+                    int idx = icy * (info.CharsX > 32 ? info.CharsX / 2 : info.CharsX)
+                        + ((icx / 32) == 1 ? 0x400 + (icx - 32) : icx); // deal with the "split" addresses
                     ScreenData screen = screenData[idx];
                     Debug.Assert(screen.PaletteId == 0);
                     List<ColorRgba> character = characters[screen.CharacterId];
-                    int start = cy * 32 * 8 * 8 + cx * 8;
+                    int start = cy * tilesX * 8 * 8 + cx * 8;
                     for (int py = 0; py < 8; py++)
                     {
                         int iy = py;
@@ -441,7 +445,7 @@ namespace MphRead.Hud
                                 ix = 7 - px;
                             }
                             ColorRgba pixel = character[iy * 8 + ix];
-                            int index = start + py * 32 * 8 + px;
+                            int index = start + py * tilesX * 8 + px;
                             texture[index] = pixel;
                         }
                     }
@@ -1182,7 +1186,7 @@ namespace MphRead.Hud
                     }
                 }
                 string name = file.Replace("/", "--");
-                //Export.Images.SaveTexture(Path.Combine(Paths.Export, "_ice"), name, width, height, texture);
+                //Export.Images.SaveTexture(Path.Combine(Paths.Export, @"_2D\layertest"), name, width, height, texture);
 
                 for (int i = 0; i < characters.Count; i++)
                 {
@@ -1238,11 +1242,6 @@ namespace MphRead.Hud
             @"_archives\common\enemy_spyre.bin",
             @"_archives\common\enemy_weavel.bin",
             @"_archives\common\enemy_samus.bin" // todo: Guardian portrait
-        };
-
-        public static IEnumerable<string> AllLayers { get; } = new List<string>()
-        {
-            IceLayer
         };
 
         public static IReadOnlyList<RulesInfo> RulesInfo = new RulesInfo[7]
