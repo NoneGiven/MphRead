@@ -340,6 +340,14 @@ namespace MphRead.Hud
         }
     }
 
+    public class LayerInfo
+    {
+        public int BindingId { get; set; } = -1;
+        public float Alpha { get; set; } = 1;
+        public float Width { get; set; } = -1;
+        public float Height { get; set; } = -1;
+    }
+
     public class HudInfo
     {
         private readonly struct UiPartHeader

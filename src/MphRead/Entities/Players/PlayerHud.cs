@@ -352,9 +352,9 @@ namespace MphRead.Entities
             _ammoBarMeter.BarInst.Enabled = false;
             _weaponIconInst.Enabled = false;
             _damageIndicator.Active = false;
-            _scene.Layer1BindingId = -1;
-            _scene.Layer2BindingId = -1;
-            _scene.Layer3BindingId = -1;
+            _scene.Layer1Info.BindingId = -1;
+            _scene.Layer2Info.BindingId = -1;
+            _scene.Layer3Info.BindingId = -1;
             if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true)
             {
                 return;
@@ -366,7 +366,8 @@ namespace MphRead.Entities
                 {
                     if (_drawIceLayer && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && !_showScoreboard)
                     {
-                        _scene.Layer3BindingId = _scene.IceLayerBindingId;
+                        _scene.Layer3Info.BindingId = _scene.IceLayerBindingId;
+                        _scene.Layer3Info.Alpha = 9 / 16f;
                     }
                     if (_timeSinceInput < (ulong)Values.GunIdleTime * 2) // todo: FPS stuff
                     {

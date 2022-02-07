@@ -1310,9 +1310,9 @@ namespace MphRead
             }
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
             {
-                DrawHudLayer(Layer3BindingId, alpha: 9 / 16f);
-                DrawHudLayer(Layer1BindingId, alpha: 1);
-                DrawHudLayer(Layer2BindingId, alpha: 1);
+                DrawHudLayer(Layer3Info); // helmet back, ice
+                DrawHudLayer(Layer1Info); // visor
+                DrawHudLayer(Layer2Info); // helmet front
                 PlayerEntity.Main.DrawHudObjects();
                 if (_fadeType != FadeType.None)
                 {
@@ -3012,11 +3012,11 @@ namespace MphRead
             }
         }
 
-        public int Layer1BindingId { get; set; } = -1;
-        public int Layer2BindingId { get; set; } = -1;
-        public int Layer3BindingId { get; set; } = -1;
+        public LayerInfo Layer1Info { get; } = new LayerInfo();
+        public LayerInfo Layer2Info { get; } = new LayerInfo();
+        public LayerInfo Layer3Info { get; } = new LayerInfo();
 
-        public int IceLayerBindingId { get; set; } = -1;
+        public int IceLayerBindingId { get; set; } = -1; // sktodo: move to player along with the others
 
         private void SetHudLayerUniforms()
         {
@@ -3056,15 +3056,15 @@ namespace MphRead
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref _perspectiveMatrix);
         }
 
-        private void DrawHudLayer(int bindingId, float alpha)
+        private void DrawHudLayer(LayerInfo info)
         {
-            if (bindingId == -1)
+            if (info.BindingId == -1)
             {
                 return;
             }
             // ltodo: if BG layer is shifted, we need this quad to be bigger than the viewport so it can shift appropriately
-            GL.Uniform1(_shaderLocations.LayerAlpha, alpha);
-            GL.BindTexture(TextureTarget.Texture2D, bindingId);
+            GL.Uniform1(_shaderLocations.LayerAlpha, info.Alpha);
+            GL.BindTexture(TextureTarget.Texture2D, info.BindingId);
             int minParameter = (int)TextureMinFilter.Linear;
             int magParameter = (int)TextureMagFilter.Linear;
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
@@ -3073,11 +3073,16 @@ namespace MphRead
                 TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            float viewWidth = Size.X;
-            float viewHeight = Size.Y;
-            float size = MathF.Max(viewWidth, viewHeight) / 2;
-            float width = size / (viewWidth / 2);
-            float height = size / (viewHeight / 2);
+            float width = info.Width;
+            float height = info.Height;
+            if (width == -1 || height == -1)
+            {
+                float viewWidth = Size.X;
+                float viewHeight = Size.Y;
+                float size = MathF.Max(viewWidth, viewHeight) / 2;
+                width = size / (viewWidth / 2);
+                height = size / (viewHeight / 2);
+            }
             GL.Begin(PrimitiveType.TriangleStrip);
             // top right
             GL.TexCoord3(1f, 0f, 0f);
