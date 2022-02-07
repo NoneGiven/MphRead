@@ -343,8 +343,8 @@ namespace MphRead.Entities
 
         public void UpdateHud()
         {
-            ProcessDoubleDamageTimer();
-            ProcessCloakTimer();
+            ProcessDoubleDamageHud();
+            ProcessCloakHud();
             UpdateHealthbars();
             UpdateAmmoBar();
             _weaponIconInst.ProcessAnimation(_scene);
@@ -779,8 +779,8 @@ namespace MphRead.Entities
                         _scene.DrawHudObject(_targetCircleInst);
                     }
                     DrawModeHud();
-                    DrawDoubleDamageTimer();
-                    DrawCloakTimer();
+                    DrawDoubleDamageHud();
+                    DrawCloakHud();
                     DrawHealthbars();
                 }
                 DrawQueuedHudMessages();
@@ -1976,7 +1976,7 @@ namespace MphRead.Entities
             }
         }
 
-        private void ProcessDoubleDamageTimer()
+        private void ProcessDoubleDamageHud()
         {
             if (_doubleDmgTimer > 0)
             {
@@ -1988,7 +1988,7 @@ namespace MphRead.Entities
             }
         }
 
-        private void DrawDoubleDamageTimer()
+        private void DrawDoubleDamageHud()
         {
             if (_doubleDmgTimer > 0)
             {
@@ -2040,9 +2040,9 @@ namespace MphRead.Entities
         private bool _hudCloaking = false;
         private float _cloakTextTimer = 0;
 
-        private void ProcessCloakTimer()
+        private void ProcessCloakHud()
         {
-            if (_cloakTimer > 0)
+            if (_cloakTimer > 0 && Flags2.TestFlag(PlayerFlags2.Cloaking))
             {
                 if (!_hudCloaking)
                 {
@@ -2060,9 +2060,9 @@ namespace MphRead.Entities
             }
         }
 
-        private void DrawCloakTimer()
+        private void DrawCloakHud()
         {
-            if (_cloakTimer > 0)
+            if (_cloakTimer > 0 && Flags2.TestFlag(PlayerFlags2.Cloaking))
             {
                 float posX = _hudObjects.CloakPosX;
                 float posY = _hudObjects.CloakPosY;
