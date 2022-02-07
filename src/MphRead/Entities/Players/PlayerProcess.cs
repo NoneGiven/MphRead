@@ -138,31 +138,40 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    // todo: draw string if player radar setting is on
-                    // else...
-                    int revealTime = (PlayerCount > 2 ? 600 : 300) * 2; // todo: FPS stuff
-                    Vector3 moved = Position - IdlePosition;
-                    if (moved.LengthSquared >= 25)
+                    if (GameState.RadarPlayers)
                     {
-                        // todo: FPS stuff
-                        _hidingTimer = (ushort)(_hidingTimer > 35 * 2 ? _hidingTimer - 35 * 2 : 0);
-                        if (_hidingTimer < revealTime && _hidingTimer > revealTime - 35 * 2)
+                        if (IsMainPlayer)
                         {
-                            // give the player at least a second before they're revealed again
-                            _hidingTimer = (ushort)(revealTime - 35 * 2);
+                            QueueHudMessage(128, 170, 1 / 1000f, 0, 247); // FACE OFF!
                         }
+                        _hidingTimer = 0;
                     }
-                    if (_hidingTimer < revealTime + 150 * 2) // todo: FPS stuff
+                    else
                     {
-                        _hidingTimer++;
-                    }
-                    if (_hidingTimer >= revealTime)
-                    {
-                        Flags2 |= PlayerFlags2.RadarReveal;
-                        if (IsMainPlayer && (_scene.FrameCount & (8 * 2)) == 0) // todo: FPS stuff
+                        int revealTime = (PlayerCount > 2 ? 600 : 300) * 2; // todo: FPS stuff
+                        Vector3 moved = Position - IdlePosition;
+                        if (moved.LengthSquared >= 25)
                         {
-                            QueueHudMessage(128, 150, 1 / 1000f, 0, 248); // position revealed!
-                            QueueHudMessage(128, 160, 1 / 1000f, 0, 249); // RETURN TO BATTLE!
+                            // todo: FPS stuff
+                            _hidingTimer = (ushort)(_hidingTimer > 35 * 2 ? _hidingTimer - 35 * 2 : 0);
+                            if (_hidingTimer < revealTime && _hidingTimer > revealTime - 35 * 2)
+                            {
+                                // give the player at least a second before they're revealed again
+                                _hidingTimer = (ushort)(revealTime - 35 * 2);
+                            }
+                        }
+                        if (_hidingTimer < revealTime + 150 * 2) // todo: FPS stuff
+                        {
+                            _hidingTimer++;
+                        }
+                        if (_hidingTimer >= revealTime)
+                        {
+                            Flags2 |= PlayerFlags2.RadarReveal;
+                            if (IsMainPlayer && (_scene.FrameCount & (8 * 2)) == 0) // todo: FPS stuff
+                            {
+                                QueueHudMessage(128, 150, 1 / 1000f, 0, 248); // position revealed!
+                                QueueHudMessage(128, 160, 1 / 1000f, 0, 249); // RETURN TO BATTLE!
+                            }
                         }
                     }
                 }
