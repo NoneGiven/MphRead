@@ -375,11 +375,20 @@ namespace MphRead.Hud
         private static readonly int _layerHeaderSize = Marshal.SizeOf<UiPartHeader>();
         private static readonly int _scrDatInfoSize = Marshal.SizeOf<ScrDatInfo>();
 
+        public static int CharMapToTexture(string path, Scene scene)
+        {
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
+            return CharMapToTexture(bytes, startX: 0, startY: 0, tilesX: 0, tilesY: 0, scene);
+        }
+
         public static int CharMapToTexture(string path, int startX, int startY, int tilesX, int tilesY, Scene scene)
         {
-            // todo: does this file define the palette (16/256 colors, etc.) or screen size (256x256, 512x512, etc.)?
-            // --> if not, where does the game get that info when setting it on the hardware?
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
+            return CharMapToTexture(bytes, startX, startY, tilesX, tilesY, scene);
+        }
+
+        private static int CharMapToTexture(ReadOnlySpan<byte> bytes, int startX, int startY, int tilesX, int tilesY, Scene scene)
+        {
             UiPartHeader header = Read.ReadStruct<UiPartHeader>(bytes);
             Debug.Assert(header.Magic == 0);
             int offset = _layerHeaderSize;
@@ -415,6 +424,14 @@ namespace MphRead.Hud
                 characters.Add(character);
             }
 
+            if (tilesX == 0)
+            {
+                tilesX = info.CharsX;
+            }
+            if (tilesY == 0)
+            {
+                tilesY = info.CharsY;
+            }
             ushort width = (ushort)(tilesX * 8);
             ushort height = (ushort)(tilesY * 8);
             var texture = new ColorRgba[width * height];
