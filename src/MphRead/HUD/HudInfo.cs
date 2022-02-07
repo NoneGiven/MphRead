@@ -1771,9 +1771,9 @@ namespace MphRead.Hud
             ),
             // Guardian
             new HudObjects(
-                helmet: @"_archives\localSamus\bg_top.bin", // todo: modify HUD graphics/palettes for Guardians
-                helmetDrop: @"_archives\localSamus\bg_top_drop.bin",
-                visor: @"_archives\localSamus\bg_top_ovl.bin",
+                helmet: @"_archives\localWeavel\bg_top.bin", // todo: modify HUD graphics/palettes for Guardians
+                helmetDrop: @"_archives\localWeavel\bg_top_drop.bin",
+                visor: @"_archives\localKanden\bg_top_ovl.bin",
                 healthBarA: @"_archives\localSamus\hud_energybar.bin",
                 healthBarB: @"_archives\localSamus\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
