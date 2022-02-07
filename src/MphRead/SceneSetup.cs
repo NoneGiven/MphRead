@@ -446,8 +446,6 @@ namespace MphRead
             // skdebug - the game only loads these if the Omega Cannon item is in the room
             scene.LoadEffect(209); // ultimateProjectile
             scene.LoadEffect(245); // ultimateCol
-            scene.IceLayerBindingId = HudInfo.CharMapToTexture(HudElements.IceLayer,
-                startX: 16, startY: 0, tilesX: 32, tilesY: 32, scene);
         }
 
         public static void LoadObjectResources(Scene scene)

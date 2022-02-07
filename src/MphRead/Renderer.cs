@@ -1021,7 +1021,7 @@ namespace MphRead
             }
         }
 
-        public void OnUpdateFrame(double frameTime)
+        public void OnUpdateFrame()
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, _frameBuffer);
             GL.UseProgram(_shaderProgramId);
@@ -3016,8 +3016,6 @@ namespace MphRead
         public LayerInfo Layer2Info { get; } = new LayerInfo();
         public LayerInfo Layer3Info { get; } = new LayerInfo();
 
-        public int IceLayerBindingId { get; set; } = -1; // sktodo: move to player along with the others
-
         private void SetHudLayerUniforms()
         {
             GL.Disable(EnableCap.DepthTest);
@@ -3065,8 +3063,8 @@ namespace MphRead
             // ltodo: if BG layer is shifted, we need this quad to be bigger than the viewport so it can shift appropriately
             GL.Uniform1(_shaderLocations.LayerAlpha, info.Alpha);
             GL.BindTexture(TextureTarget.Texture2D, info.BindingId);
-            int minParameter = (int)TextureMinFilter.Linear;
-            int magParameter = (int)TextureMagFilter.Linear;
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
             GL.TexParameter(TextureTarget.Texture2D,
@@ -3082,6 +3080,10 @@ namespace MphRead
                 float size = MathF.Max(viewWidth, viewHeight) / 2;
                 width = size / (viewWidth / 2);
                 height = size / (viewHeight / 2);
+            }
+            else
+            {
+
             }
             GL.Begin(PrimitiveType.TriangleStrip);
             // top right
@@ -4464,7 +4466,7 @@ namespace MphRead
             {
                 CursorVisible = true;
             }
-            Scene.OnUpdateFrame(args.Time);
+            Scene.OnUpdateFrame();
             Scene.OnRenderFrame();
             SwapBuffers();
             if (_startedHidden)

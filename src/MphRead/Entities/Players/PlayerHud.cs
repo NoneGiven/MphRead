@@ -47,9 +47,12 @@ namespace MphRead.Entities
 
         private ModelInstance _filterModel = null!;
         private bool _showScoreboard = false;
+        private int _iceLayerBindingId = -1;
 
         public void SetUpHud()
         {
+            _iceLayerBindingId = HudInfo.CharMapToTexture(HudElements.IceLayer,
+                startX: 16, startY: 0, tilesX: 32, tilesY: 32, _scene);
             // todo: only load what needs to be loaded for the mode
             _filterModel = Read.GetModelInstance("filter");
             _scene.LoadModel(_filterModel.Model);
@@ -359,15 +362,28 @@ namespace MphRead.Entities
             {
                 return;
             }
-            // todo: lots more stuff
             if (_health > 0)
             {
                 if (!IsAltForm && !IsMorphing && !IsUnmorphing)
                 {
-                    if (_drawIceLayer && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && !_showScoreboard)
+                    if (!Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && !_showScoreboard)
                     {
-                        _scene.Layer3Info.BindingId = _scene.IceLayerBindingId;
-                        _scene.Layer3Info.Alpha = 9 / 16f;
+                        // sktodo: HUD shift
+                        // sktodo: visor/helmet opacity settings feature
+                        if (_drawIceLayer)
+                        {
+                            _scene.Layer3Info.BindingId = _iceLayerBindingId;
+                            _scene.Layer3Info.Alpha = 9 / 16f;
+                        }
+                        else
+                        {
+                            _scene.Layer3Info.BindingId = -1; // sktodo;
+                            _scene.Layer3Info.Alpha = 1;
+                        }
+                        _scene.Layer1Info.BindingId = -1; // sktodo
+                        _scene.Layer1Info.Alpha = 0.5f;
+                        _scene.Layer2Info.BindingId = -1; // sktodo
+                        _scene.Layer2Info.Alpha = 1;
                     }
                     if (_timeSinceInput < (ulong)Values.GunIdleTime * 2) // todo: FPS stuff
                     {
