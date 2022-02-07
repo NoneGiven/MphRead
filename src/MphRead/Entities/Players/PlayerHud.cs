@@ -139,11 +139,23 @@ namespace MphRead.Entities
             _healthbarSubMeter.BarInst.SetCharacterData(healthbarSub.CharacterData, _scene);
             _healthbarSubMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
             _healthbarSubMeter.BarInst.Enabled = true;
-            _enemyHealthMeter = HudElements.EnemyHealthbar;
-            _enemyHealthMeter.BarInst = new HudObjectInstance(healthbarSub.Width, healthbarSub.Height);
-            _enemyHealthMeter.BarInst.SetCharacterData(healthbarSub.CharacterData, _scene);
-            _enemyHealthMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
-            _enemyHealthMeter.BarInst.Enabled = true;
+            if (_scene.Multiplayer)
+            {
+                HudObject damageBar = HudInfo.GetHudObject(_hudObjects.DamageBar);
+                _enemyHealthMeter = new HudMeter() { Horizontal = true, };
+                _enemyHealthMeter.BarInst = new HudObjectInstance(damageBar.Width, damageBar.Height);
+                _enemyHealthMeter.BarInst.SetCharacterData(damageBar.CharacterData, _scene);
+                _enemyHealthMeter.BarInst.SetPaletteData(damageBar.PaletteData, _scene);
+                _enemyHealthMeter.BarInst.Enabled = true;
+            }
+            else
+            {
+                _enemyHealthMeter = HudElements.EnemyHealthbar;
+                _enemyHealthMeter.BarInst = new HudObjectInstance(healthbarSub.Width, healthbarSub.Height);
+                _enemyHealthMeter.BarInst.SetCharacterData(healthbarSub.CharacterData, _scene);
+                _enemyHealthMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
+                _enemyHealthMeter.BarInst.Enabled = true;
+            }
             if (!_scene.Multiplayer && _hudObjects.EnergyTanks != null)
             {
                 HudObject healthbarTank = HudInfo.GetHudObject(_hudObjects.EnergyTanks);
@@ -1260,7 +1272,7 @@ namespace MphRead.Entities
         public void ProcessModeHud()
         {
             _locatorInfo.Clear();
-            // sktodo: update opponent damage bar
+            ProcessOpponent();
             if (_scene.GameMode == GameMode.Survival || _scene.GameMode == GameMode.SurvivalTeams)
             {
                 ProcessHudSurvival();
@@ -1633,7 +1645,7 @@ namespace MphRead.Entities
                 {
                     DrawHudPrimeHunter();
                 }
-                DrawOpponentHealthbar();
+                DrawOpponent();
             }
         }
 
@@ -1667,7 +1679,6 @@ namespace MphRead.Entities
             // todo: draw visor name
         }
 
-        // we don't really need a separate function for this as-is, but it might be reused for the opponent damage bar
         private string FormatModeScore(int slot)
         {
             GameMode mode = _scene.GameMode;
@@ -2107,9 +2118,58 @@ namespace MphRead.Entities
             return current > 0;
         }
 
-        private void DrawOpponentHealthbar()
+        private float _opponentHealthbarTimer = 0;
+        private int _opponentIndex = -1;
+
+        private void UpdateOpponent(int slot)
         {
-            // sktodo: draw opponent damage bar if TopScreenTargetInfo is on
+            if (_scene.Multiplayer && slot != SlotIndex)
+            {
+                _opponentHealthbarTimer = 60 / 30f;
+                _opponentIndex = slot;
+            }
+        }
+
+        private void ProcessOpponent()
+        {
+            if (_opponentIndex != -1 && _opponentHealthbarTimer > 0)
+            {
+                _opponentHealthbarTimer -= _scene.FrameTime;
+                if (_opponentHealthbarTimer <= 0)
+                {
+                    _opponentHealthbarTimer = 0;
+                    _opponentIndex = -1;
+                }
+            }
+        }
+
+        private void DrawOpponent()
+        {
+            if (_opponentIndex == -1 || _opponentHealthbarTimer == 0 || !Features.TopScreenTargetInfo)
+            {
+                return;
+            }
+            PlayerEntity opponent = Players[_opponentIndex];
+            float posX = 93;
+            float posY = 182;
+            string nickname = GameState.Nicknames[_opponentIndex];
+            DrawText2D(posX, posY, Align.Center, 0, nickname);
+            HudObjectInstance portrait = _hunterInsts[(int)opponent.Hunter];
+            portrait.PositionX = (posX - 16) / 256f;
+            portrait.PositionY = (posY - 33) / 192f;
+            _scene.DrawHudObject(portrait);
+            posX += 18;
+            posY -= 26;
+            int remainingAmount = opponent.Health >= Values.EnergyTank ? opponent.Health - Values.EnergyTank : 0;
+            _enemyHealthMeter.TankAmount = Values.EnergyTank;
+            _enemyHealthMeter.TankCount = opponent.HealthMax / Values.EnergyTank;
+            _enemyHealthMeter.Length = 72;
+            DrawMeter(posX, posY, Values.EnergyTank - 1, opponent.Health, 0, _enemyHealthMeter,
+                drawText: false, drawTanks: false);
+            DrawMeter(posX, posY + 5, Values.EnergyTank - 1, remainingAmount, 0, _enemyHealthMeter,
+                drawText: false, drawTanks: false);
+            string score = FormatModeScore(opponent.SlotIndex);
+            DrawText2D(posX + _enemyHealthMeter.Length / 2, posY + 14, Align.Center, 0, score);
         }
 
         private void DrawModeRules()

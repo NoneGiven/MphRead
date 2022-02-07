@@ -1519,7 +1519,7 @@ namespace MphRead.Entities
             {
                 if (attacker == Main)
                 {
-                    // todo: update HUD
+                    Main.UpdateOpponent(SlotIndex);
                 }
                 if (attacker != this)
                 {

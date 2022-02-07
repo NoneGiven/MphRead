@@ -1319,6 +1319,7 @@ namespace MphRead.Hud
                 weaponSelect: @"_archives\localSamus\rad_wepsel.bin",
                 selectIcon: @"_archives\localSamus\wepsel_icon.bin",
                 selectBox: @"_archives\localSamus\wepsel_box.bin",
+                damageBar: @"_archives\localSamus\rad_ammobar.bin",
                 healthMainPosX: 93,
                 healthMainPosY: -5,
                 healthSubPosX: 93,
@@ -1382,6 +1383,7 @@ namespace MphRead.Hud
                 weaponSelect: @"_archives\localKanden\rad_wepsel.bin",
                 selectIcon: @"_archives\localKanden\wepsel_icon.bin",
                 selectBox: @"_archives\localKanden\wepsel_box.bin",
+                damageBar: @"_archives\localKanden\rad_ammobar.bin",
                 healthMainPosX: 13,
                 healthMainPosY: 0,
                 healthSubPosX: 20,
@@ -1445,6 +1447,7 @@ namespace MphRead.Hud
                 weaponSelect: @"_archives\localTrace\rad_wepsel.bin",
                 selectIcon: @"_archives\localTrace\wepsel_icon.bin",
                 selectBox: @"_archives\localTrace\wepsel_box.bin",
+                damageBar: @"_archives\localTrace\rad_ammobar.bin",
                 healthMainPosX: 24,
                 healthMainPosY: 135,
                 healthSubPosX: 29,
@@ -1508,6 +1511,7 @@ namespace MphRead.Hud
                 weaponSelect: @"_archives\localSylux\rad_wepsel.bin",
                 selectIcon: @"_archives\localSylux\wepsel_icon.bin",
                 selectBox: @"_archives\localSylux\wepsel_box.bin",
+                damageBar: @"_archives\localSylux\rad_ammobar.bin",
                 healthMainPosX: 47,
                 healthMainPosY: 165,
                 healthSubPosX: 51,
@@ -1571,6 +1575,7 @@ namespace MphRead.Hud
                 weaponSelect: @"_archives\localNox\rad_wepsel.bin",
                 selectIcon: @"_archives\localNox\wepsel_icon.bin",
                 selectBox: @"_archives\localNox\wepsel_box.bin",
+                damageBar: @"_archives\localNox\rad_ammobar.bin",
                 healthMainPosX: 29,
                 healthMainPosY: 0,
                 healthSubPosX: 34,
@@ -1634,6 +1639,7 @@ namespace MphRead.Hud
                 weaponSelect: @"_archives\localSpire\rad_wepsel.bin",
                 selectIcon: @"_archives\localSpire\wepsel_icon.bin",
                 selectBox: @"_archives\localSpire\wepsel_box.bin",
+                damageBar: @"_archives\localSpire\rad_ammobar.bin",
                 healthMainPosX: 12,
                 healthMainPosY: 0,
                 healthSubPosX: 21,
@@ -1697,6 +1703,7 @@ namespace MphRead.Hud
                 weaponSelect: @"_archives\localWeavel\rad_wepsel.bin",
                 selectIcon: @"_archives\localWeavel\wepsel_icon.bin",
                 selectBox: @"_archives\localWeavel\wepsel_box.bin",
+                damageBar: @"_archives\localWeavel\rad_ammobar.bin",
                 healthMainPosX: 22,
                 healthMainPosY: 118,
                 healthSubPosX: 30,
@@ -1760,6 +1767,7 @@ namespace MphRead.Hud
                 weaponSelect: @"_archives\localSamus\rad_wepsel.bin",
                 selectIcon: @"_archives\localSamus\wepsel_icon.bin",
                 selectBox: @"_archives\localSamus\wepsel_box.bin",
+                damageBar: @"_archives\localSamus\rad_ammobar.bin",
                 healthMainPosX: 93,
                 healthMainPosY: -5,
                 healthSubPosX: 93,
@@ -2280,6 +2288,7 @@ namespace MphRead.Hud
         public readonly string WeaponSelect;
         public readonly string SelectIcon;
         public readonly string SelectBox;
+        public readonly string DamageBar;
         public readonly int HealthMainPosX;
         public readonly int HealthSubPosX;
         public readonly int HealthSubPosY;
@@ -2326,10 +2335,10 @@ namespace MphRead.Hud
         public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB, string? energyTanks,
             string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar, string reticle,
             string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectIcon, string selectBox,
-            int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY, int healthOffsetYAlt,
-            int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY, int enemyHealthPosX, int enemyHealthPosY,
-            int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX, int scorePosY, Align scoreAlign, int octolithPosX,
-            int octolithPosY, int primePosX, int primePosY, int primeTextPosX, int primeTextPosY, Align primeAlign,
+            string damageBar, int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY,
+            int healthOffsetYAlt, int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY, int enemyHealthPosX,
+            int enemyHealthPosY, int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX, int scorePosY, Align scoreAlign,
+            int octolithPosX, int octolithPosY, int primePosX, int primePosY, int primeTextPosX, int primeTextPosY, Align primeAlign,
             int nodeBonusPosX, int nodeBonusPosY, int enemyBonusPosX, int enemyBonusPosY, int nodeIconPosX, int nodeIconPosY,
             int nodeTextPosX, int nodeTextPosY, int dblDmgPosX, int dblDmgPosY, int dblDmgTextPosX, int dblDmgTextPosY,
             Align dblDmgAlign, int cloakPosX, int cloakPosY, int cloakTextPosX, int cloakTextPosY, Align cloakAlign)
@@ -2352,6 +2361,7 @@ namespace MphRead.Hud
             WeaponSelect = weaponSelect;
             SelectIcon = selectIcon;
             SelectBox = selectBox;
+            DamageBar = damageBar;
             HealthMainPosX = healthMainPosX;
             HealthMainPosY = healthMainPosY;
             HealthSubPosX = healthSubPosX;
