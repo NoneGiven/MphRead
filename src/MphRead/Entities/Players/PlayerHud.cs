@@ -2200,7 +2200,7 @@ namespace MphRead.Entities
             DrawMeter(posX, posY + 5, Values.EnergyTank - 1, remainingAmount, 0, _enemyHealthMeter,
                 drawText: false, drawTanks: false);
             string score = FormatModeScore(opponent.SlotIndex);
-            DrawText2D(posX + _enemyHealthMeter.Length / 2, posY + 14, Align.Center, 0, score);
+            DrawText2D(posX + 5, posY + 14, Align.Left, 0, score);
         }
 
         private void DrawModeRules()
