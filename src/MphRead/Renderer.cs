@@ -1322,21 +1322,24 @@ namespace MphRead
                     {
                         percent = 1 - percent;
                     }
-                    GL.Uniform4(_shaderLocations.FadeColor, _fadeColor, _fadeColor, _fadeColor, percent);
-                    GL.Begin(PrimitiveType.TriangleStrip);
-                    // top right
-                    GL.TexCoord3(1f, 1f, 0f);
-                    GL.Vertex3(1f, 1f, 0f);
-                    // top left
-                    GL.TexCoord3(0f, 1f, 0f);
-                    GL.Vertex3(-1f, 1f, 0f);
-                    // bottom right
-                    GL.TexCoord3(1f, 0f, 0f);
-                    GL.Vertex3(1f, -1f, 0f);
-                    // bottom left
-                    GL.TexCoord3(0f, 0f, 0f);
-                    GL.Vertex3(-1f, -1f, 0f);
-                    GL.End();
+                    if (percent > 0)
+                    {
+                        GL.Uniform4(_shaderLocations.FadeColor, _fadeColor, _fadeColor, _fadeColor, percent);
+                        GL.Begin(PrimitiveType.TriangleStrip);
+                        // top right
+                        GL.TexCoord3(1f, 1f, 0f);
+                        GL.Vertex3(1f, 1f, 0f);
+                        // top left
+                        GL.TexCoord3(0f, 1f, 0f);
+                        GL.Vertex3(-1f, 1f, 0f);
+                        // bottom right
+                        GL.TexCoord3(1f, 0f, 0f);
+                        GL.Vertex3(1f, -1f, 0f);
+                        // bottom left
+                        GL.TexCoord3(0f, 0f, 0f);
+                        GL.Vertex3(-1f, -1f, 0f);
+                        GL.End();
+                    }
                 }
             }
             GL.Enable(EnableCap.DepthTest);
