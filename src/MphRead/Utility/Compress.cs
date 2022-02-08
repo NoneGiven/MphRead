@@ -487,7 +487,7 @@ namespace MphRead
                         if (index2 == -1)
                         {
                             break;
-                        } 
+                        }
                         int byte2 = buffer[index2];
                         readBytes++;
 
@@ -578,8 +578,8 @@ namespace MphRead
             instream.Read(indata, 0, (int)inLength);
             Array.Reverse(indata);
 
-            MemoryStream inMemStream = new MemoryStream(indata);
-            MemoryStream outMemStream = new MemoryStream();
+            var inMemStream = new MemoryStream(indata);
+            var outMemStream = new MemoryStream();
             int compressedLength = CompressNormal(inMemStream, inLength, outMemStream);
 
             int totalCompFileLength = (int)outMemStream.Length + 8;
@@ -684,10 +684,9 @@ namespace MphRead
                     // determine if we're dealing with a compressed or raw block.
                     // it is a compressed block when the next 3 or more bytes can be copied from
                     // somewhere in the set of already compressed bytes.
-                    int disp;
                     int oldLength = Math.Min(readBytes, 0x1001);
                     int length = LZUtil.GetOccurrenceLength(instart + readBytes, (int)Math.Min(inLength - readBytes, 0x12),
-                                                          instart + readBytes - oldLength, oldLength, out disp);
+                                                          instart + readBytes - oldLength, oldLength, out int disp);
 
                     // disp = 1 cannot be stored.
                     if (disp == 1)

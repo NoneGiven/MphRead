@@ -4,7 +4,6 @@ using System.IO;
 using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
-using MphRead.Hud;
 using MphRead.Text;
 
 namespace MphRead
