@@ -4,6 +4,8 @@ using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats;
 using MphRead.Formats.Culling;
+using MphRead.Hud;
+using MphRead.Text;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -70,10 +72,10 @@ namespace MphRead.Entities
         Flourish = 1,
         WalkForward = 2,
         Unmorph = 3,
-        DamageFront = 4,
-        DamageBack = 5,
-        DamageRight = 6,
-        DamageLeft = 7,
+        DamageBack = 4,
+        DamageFront = 5,
+        DamageLeft = 6,
+        DamageRight = 7,
         Idle = 8,
         LandNeutral = 9,
         LandLeft = 10,
@@ -191,7 +193,7 @@ namespace MphRead.Entities
 
         // todo: these settings can change
         public static int MainPlayerIndex { get; set; } = 0;
-        public static int PlayerCount { get; set; } = 0; // todo: update this
+        public static int PlayerCount { get; set; } = 0;
         public static int MaxPlayers { get; set; } = 4;
         public static int PlayersCreated { get; set; } = 0;
         public static PlayerEntity Main => Players[MainPlayerIndex];
@@ -211,6 +213,7 @@ namespace MphRead.Entities
         private readonly int[] _ammoRecovery = new int[2];
         private readonly bool[] _tickedAmmoRecovery = new bool[2];
         public int Health { get => _health; set => _health = value; }
+        public int HealthMax => _healthMax;
         private readonly BeamType[] _weaponSlots = new BeamType[3];
         private readonly AvailableArray _availableWeapons = new AvailableArray();
         private readonly AvailableArray _availableCharges = new AvailableArray();
@@ -233,14 +236,14 @@ namespace MphRead.Entities
         private ushort _altAttackTime = 0;
         private float _altSpinSpeed = 0;
 
-        public Team Team { get; private set; } = Team.None;
-        public int TeamIndex { get; private set; }
+        public Team Team { get; set; } = Team.None;
+        public int TeamIndex { get; set; } = -1;
         public int SlotIndex { get; private set; }
         public bool IsBot { get; set; }
         public LoadFlags LoadFlags { get; set; }
         public Hunter Hunter { get; private set; }
         public PlayerValues Values { get; private set; }
-        public bool IsPrimeHunter { get; set; } // todo: use game state
+        public bool IsPrimeHunter => SlotIndex == GameState.PrimeHunter;
 
         private const int _mbTrailSegments = 9 * 2;
         private static readonly Matrix4[,] _mbTrailMatrices = new Matrix4[MaxPlayers, _mbTrailSegments];
@@ -311,7 +314,7 @@ namespace MphRead.Entities
         public EnemyInstanceEntity? AttachedEnemy { get; set; } = null;
         private EntityBase? _field35C = null;
         public MorphCameraEntity? MorphCamera { get; set; }
-        private OctolithFlagEntity? _octolithFlag = null;
+        public OctolithFlagEntity? OctolithFlag { get; set; }
         private JumpPadEntity? _lastJumpPad = null;
         private EnemySpawnEntity? _enemySpawner = null;
         private EntityBase? _burnedBy = null;
@@ -360,7 +363,7 @@ namespace MphRead.Entities
         private ushort _timeSinceJumpPad = 0;
         private Vector3 _jumpPadAccel;
 
-        private const ushort _respawnTime = 90 * 2; // todo: FPS stuff
+        public const ushort RespawnTime = 90 * 2; // todo: FPS stuff
 
         private ushort _autofireCooldown = 0;
         private ushort _powerBeamAutofire = 0;
@@ -371,6 +374,7 @@ namespace MphRead.Entities
         private ushort _timeSincePickup = 0;
         private ushort _timeSinceHeal = 0;
         private ushort _respawnTimer = 0;
+        public ushort RespawnTimer => _respawnTimer;
         private ushort _deathCountdown = 0;
         public ushort DeathCountdown => _deathCountdown;
         private ushort _damageInvulnTimer = 0;
@@ -435,6 +439,16 @@ namespace MphRead.Entities
             }
         }
 
+        public static void Reset()
+        {
+            for (int i = 0; i < _players.Length; i++)
+            {
+                _players[i] = null!;
+            }
+            PlayerCount = 0;
+            PlayersCreated = 0;
+        }
+
         public static PlayerEntity? Create(Hunter hunter, int recolor)
         {
             if (PlayersCreated >= MaxPlayers)
@@ -492,6 +506,11 @@ namespace MphRead.Entities
             base.Initialize();
             EquipInfo.Beams = _beams;
             Values = Metadata.PlayerValues[(int)Hunter];
+            _hudObjects = HudElements.HunterObjects[(int)Hunter];
+            if (IsMainPlayer)
+            {
+                SetUpHud();
+            }
             if (_scene.Multiplayer)
             {
                 _healthMax = (ushort)(2 * Values.EnergyTank - 1);
@@ -543,7 +562,10 @@ namespace MphRead.Entities
             _abilities = AbilityFlags.None;
             _field43A = 0;
             _field450 = 0;
-            TeamIndex = SlotIndex; // todo: use game state and set Team
+            if (TeamIndex == -1)
+            {
+                TeamIndex = SlotIndex;
+            }
             _field4E8 = Vector3.Zero;
             _modelTransform = Matrix4.Identity;
             _camSwitchTimer = (ushort)(Values.CamSwitchTime * 2); // todo: FPS stuff (use floats)
@@ -557,7 +579,7 @@ namespace MphRead.Entities
             _timeSinceInput = 0;
             _field40C = 0;
             _doubleDmgTimer = 0;
-            _octolithFlag = null;
+            OctolithFlag = null;
             ResetMorphBallTrail();
             // todo?: point module
             string shootNodeName = Hunter == Hunter.Guardian ? "Head_1" : "R_elbow";
@@ -712,9 +734,9 @@ namespace MphRead.Entities
             }
             else
             {
-                if (IsMainPlayer && _scene.Multiplayer && CameraSequence.Current != null)
+                if (IsMainPlayer && _scene.Multiplayer && CameraSequence.Current?.IsIntro == true)
                 {
-                    // sktodo: end intro cam seq
+                    CameraSequence.Current.End();
                 }
                 CameraInfo.Reset();
                 CameraInfo.Position = Position;
@@ -777,13 +799,20 @@ namespace MphRead.Entities
             _gunSmokeModel.SetAnimation(0);
             _smokeAlpha = 0;
             MorphCamera = null;
-            _octolithFlag = null;
+            OctolithFlag = null;
             ResetMorphBallTrail();
             // todo: stop SFX, play SFX, update SFX handle
             _lastJumpPad = null;
             _jumpPadControlLock = 0;
             _jumpPadControlLockMin = 0;
             _timeSinceJumpPad = UInt16.MaxValue; // the game doesn't do this
+            if (IsMainPlayer)
+            {
+                // the game only does this in multiplayer, but it can't hard either way
+                // todo: lots of other stuff
+                ResetReticle();
+                _weaponIconInst.SetIndex(0, _scene);
+            }
             // todo: update HUD effects
             _altRollFbX = CameraInfo.Field48;
             _altRollFbZ = CameraInfo.Field4C;
@@ -804,7 +833,7 @@ namespace MphRead.Entities
             if (respawn && (IsMainPlayer || _scene.Multiplayer))
             {
                 // spawnEffectMP or spawnEffect
-                int effectId = _scene.Multiplayer && _scene.PlayerCount > 2 ? 33 : 31;
+                int effectId = _scene.Multiplayer && PlayerCount > 2 ? 33 : 31;
                 _scene.SpawnEffect(effectId, Vector3.UnitX, Vector3.UnitY, Position);
             }
         }
@@ -1017,61 +1046,7 @@ namespace MphRead.Entities
             }
         }
 
-        // skdebug
-        private void SwitchWeapon()
-        {
-            if (IsBot || Input.KeyboardState == null)
-            {
-                return;
-            }
-            BeamType beam = BeamType.None;
-            if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D1))
-            {
-                beam = BeamType.PowerBeam;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D2))
-            {
-                beam = BeamType.Missile;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D3))
-            {
-                beam = BeamType.VoltDriver;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D4))
-            {
-                beam = BeamType.Battlehammer;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D5))
-            {
-                beam = BeamType.Imperialist;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D6))
-            {
-                beam = BeamType.Judicator;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D7))
-            {
-                beam = BeamType.Magmaul;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D8))
-            {
-                beam = BeamType.ShockCoil;
-            }
-            else if (Input.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D9))
-            {
-                beam = BeamType.OmegaCannon;
-            }
-            if (beam != BeamType.None && CurrentWeapon != beam)
-            {
-                _availableWeapons[beam] = true;
-                _availableCharges[beam] = true;
-                _ammo[0] = 1000;
-                _ammo[1] = 1000;
-                TryEquipWeapon(beam, silent: false);
-            }
-        }
-
-        private bool TryEquipWeapon(BeamType beam, bool silent = false)
+        private bool TryEquipWeapon(BeamType beam, bool silent = false, bool debug = false)
         {
             int index = (int)beam;
             if (index < 0 || index >= 9)
@@ -1080,12 +1055,22 @@ namespace MphRead.Entities
             }
             WeaponInfo info = Weapons.Current[(int)beam];
             byte ammoType = info.AmmoType;
+            if (debug && Cheats.FreeWeaponSelect)
+            {
+                _availableWeapons[beam] = true;
+                _availableCharges[beam] = true;
+                _ammo[info.AmmoType] = _ammoMax[info.AmmoType];
+            }
             bool hasAmmo = beam == BeamType.PowerBeam || _ammo[ammoType] >= info.AmmoCost;
             if (!silent && (!hasAmmo || !_availableWeapons[beam] || GunAnimation == GunAnimation.UpDown))
             {
                 if (IsMainPlayer)
                 {
-                    // todo: play SFX, update HUD
+                    // todo: play SFX
+                    if (!hasAmmo)
+                    {
+                        ShowNoAmmoMessage();
+                    }
                 }
                 return false;
             }
@@ -1141,16 +1126,27 @@ namespace MphRead.Entities
             }
             if (IsMainPlayer)
             {
-                // todo: update HUD
+                HudOnWeaponSwitch(beam);
+                // todo?: update weapon HUD objects
             }
             return true;
+        }
+
+        private void ShowNoAmmoMessage()
+        {
+            string message = Strings.GetHudMessage(9); // AMMO DEPLETED!
+            QueueHudMessage(128, 120, Align.Center, 256, 8, new ColorRgba(0x295F), 1, 45 / 30f, 1, message);
         }
 
         public void UpdateZoom(bool zoom)
         {
             if (IsMainPlayer && EquipInfo.Zoomed != zoom)
             {
-                // todo: play SFX, update HUD
+                // todo: play SFX
+                if (CurrentWeapon == BeamType.Imperialist)
+                {
+                    HudOnZoom(zoom);
+                }
             }
             EquipInfo.Zoomed = zoom;
         }
@@ -1444,23 +1440,33 @@ namespace MphRead.Entities
                 }
             }
             bool ignoreDamage = false;
-            if (!_scene.Multiplayer && IsBot && attacker == this)
+            if (!_scene.Multiplayer && IsBot && attacker == this || GameState.Teams && !GameState.FriendlyFire
+                && attacker != null && attacker != this && attacker.TeamIndex == TeamIndex)
             {
-                // todo: also ignore if teams are on, friendly fire isn't, and attacker is not null, not self, and is same team as self
                 ignoreDamage = true;
                 damage = 0;
             }
             if (!ignoreDamage && flags.TestFlag(DamageFlags.Headshot) && attacker == Main) // todo: and not on wifi
             {
-                // todo: draw HUD string
+                int messageId = _scene.Multiplayer ? 228 : 121; // HEADSHOT!
+                QueueHudMessage(128, 40, 20 / 30f, 0, messageId);
             }
             if (attacker != null && attacker != this && beam != null)
             {
-                // todo: update stats
+                // bugfix?: since double damage was already applied above,
+                // it's possible to increase efficiency with double damage hits
+                GameState.BeamDamageDealt[attacker.SlotIndex] = Math.Min(
+                    GameState.BeamDamageDealt[attacker.SlotIndex] + (int)damage,
+                    GameState.BeamDamageMax[attacker.SlotIndex]
+                );
             }
             if (damage > 0)
             {
-                // todo: apply damage multiplier from settings
+                damage = (uint)(damage * Metadata.DamageLevels[GameState.DamageLevel]);
+                if (damage == 0)
+                {
+                    damage = 1;
+                }
             }
             if (Flags2.TestFlag(PlayerFlags2.Halfturret) && attacker != null && !ignoreDamage)
             {
@@ -1513,11 +1519,11 @@ namespace MphRead.Entities
             {
                 if (attacker == Main)
                 {
-                    // todo: update HUD
+                    Main.UpdateOpponent(SlotIndex);
                 }
                 if (attacker != this)
                 {
-                    // todo: update stats
+                    GameState.DamageCount[attacker.SlotIndex]++;
                     attacker._hidingTimer = 0;
                     _hidingTimer = 0;
                 }
@@ -1534,7 +1540,7 @@ namespace MphRead.Entities
                 {
                     // halfturret, bomb, or direct hit by player (not beam)
                     // --> also if there's no source and no attacker
-                    flags |= DamageFlags.ByPlayer;
+                    flags |= DamageFlags.FromAlt;
                 }
                 _scene.SendMessage(Message.Destroyed, this, null, 0, 0, delay: 1);
                 if (EnemySpawner != null)
@@ -1543,7 +1549,7 @@ namespace MphRead.Entities
                     Debug.Assert(EnemySpawner.Type == EntityType.EnemySpawn);
                     ItemSpawnEntity.SpawnItemDrop(EnemySpawner.Data.ItemType, Position, EnemySpawner.Data.ItemChance, _scene);
                 }
-                // todo: update HUD
+                // todo: update HUD to cancel scan visor
                 if (Flags2.TestFlag(PlayerFlags2.Halfturret))
                 {
                     _halfturret.Die();
@@ -1557,10 +1563,11 @@ namespace MphRead.Entities
                 _deathaltTimer = 0;
                 _cloakTimer = 0;
                 Flags2 &= ~PlayerFlags2.Cloaking;
-                // todo: update kill streak
+                GameState.KillStreak[SlotIndex] = 0;
                 if (IsMainPlayer)
                 {
-                    // todo: license info, update HUD to end disrupt
+                    // todo: license info
+                    HudEndDisrupted();
                     if (_frozenGfxTimer > 0)
                     {
                         _drawIceLayer = false;
@@ -1625,13 +1632,13 @@ namespace MphRead.Entities
                     // todo: update SFX
                 }
                 _boostCharge = 0;
-                // todo: update stats
+                GameState.Deaths[SlotIndex]++;
                 if (this == Main && beamType == BeamType.OmegaCannon)
                 {
                     _scene.SetFade(FadeType.FadeInWhite, 90 * (1 / 30f), overwrite: true);
                 }
                 Speed = Vector3.Zero;
-                _respawnTimer = _respawnTime;
+                _respawnTimer = RespawnTime;
                 _timeSinceDead = 0;
                 if (!_scene.Multiplayer)
                 {
@@ -1656,21 +1663,180 @@ namespace MphRead.Entities
                     {
                         if (IsMainPlayer)
                         {
-                            // todo: update HUD, draw HUD strings
+                            // todo: update HUD to close dialogs
+                            if (attacker == this)
+                            {
+                                QueueHudMessage(128, 70, 140, 90 / 30f, 2, 235); // YOU SELF-DESTRUCTED!
+                            }
+                            else
+                            {
+                                // todo: update license
+                                string nickname = GameState.Nicknames[attacker.SlotIndex];
+                                // %s's HEADSHOT KILLED YOU! / %s KILLED YOU!
+                                string message = Strings.GetHudMessage(flags.TestFlag(DamageFlags.Headshot) ? 236 : 237);
+                                QueueHudMessage(128, 70, 140, 90 / 30f, 2, message.Replace("%s", nickname));
+                            }
+                            string? killedBy = null;
+                            if (flags.TestFlag(DamageFlags.Deathalt))
+                            {
+                                killedBy = Strings.GetHudMessage(250); // DEATHALT
+                            }
+                            else if (flags.TestFlag(DamageFlags.Burn))
+                            {
+                                killedBy = Strings.GetHudMessage(251); // MAGMAUL BURN
+                            }
+                            else if (fromHalfturret)
+                            {
+                                killedBy = _altAttackNames[(int)attacker.Hunter];
+                            }
+                            else if (beamType <= BeamType.OmegaCannon)
+                            {
+                                killedBy = _weaponNames[(int)beamType];
+                            }
+                            else if (source == attacker)
+                            {
+                                if (attacker.Hunter == Hunter.Weavel)
+                                {
+                                    killedBy = Strings.GetHudMessage(253); // HALFTURRET SLICE
+                                }
+                                else
+                                {
+                                    killedBy = _altAttackNames[(int)attacker.Hunter];
+                                }
+                            }
+                            else if (bomb != null)
+                            {
+                                if (bomb.BombType == BombType.MorphBall)
+                                {
+                                    killedBy = Strings.GetHudMessage(252); // MORPH BALL BOMB
+                                }
+                                else if (bomb.BombType == BombType.Stinglarva)
+                                {
+                                    killedBy = _altAttackNames[(int)Hunter.Kanden];
+                                }
+                                else if (bomb.BombType == BombType.Lockjaw)
+                                {
+                                    killedBy = _altAttackNames[(int)Hunter.Sylux];
+                                }
+                            }
+                            if (killedBy != null)
+                            {
+                                QueueHudMessage(128, 70, 140, 90 / 30f, 2, $"({killedBy})");
+                            }
                         }
                         if (attacker == this)
                         {
-                            // todo: update suicides
+                            GameState.Suicides[SlotIndex]++;
+                            if (_scene.GameMode == GameMode.Battle || _scene.GameMode == GameMode.BattleTeams)
+                            {
+                                GameState.Points[SlotIndex]--;
+                            }
                         }
                         else
                         {
-                            // todo: update license info, draw more HUD strings, update kill streak
-                            // todo: gain health if prime hunter
+                            if (attacker.TeamIndex == TeamIndex)
+                            {
+                                GameState.FriendlyKills[attacker.SlotIndex]++;
+                                GameState.KillStreak[attacker.SlotIndex] = 0;
+                                // todo: update license info
+                                if (attacker == Main)
+                                {
+                                    string nickname = GameState.Nicknames[SlotIndex];
+                                    string message = Strings.GetHudMessage(240); // YOU KILLED A TEAMMATE, (%s)!
+                                    QueueHudMessage(128, 70, 140, 60 / 30f, 2, message.Replace("%s", nickname));
+                                }
+                            }
+                            else
+                            {
+                                if (attacker == Main)
+                                {
+                                    // todo: update license info
+                                    string nickname = GameState.Nicknames[SlotIndex];
+                                    // YOUR HEADSHOT KILLED %s! / YOU KILLED %s!
+                                    string message = Strings.GetHudMessage(flags.TestFlag(DamageFlags.Headshot) ? 239 : 238);
+                                    QueueHudMessage(128, 70, 140, 60 / 30f, 2, message.Replace("%s", nickname));
+                                }
+                                if (flags.TestFlag(DamageFlags.Headshot))
+                                {
+                                    GameState.HeadshotKills[attacker.SlotIndex]++;
+                                }
+                                GameState.Kills[attacker.SlotIndex]++;
+                                // todo?: the game also updates another kills stat(?) here
+                                if (attacker.IsPrimeHunter)
+                                {
+                                    GameState.KillsAsPrime[attacker.SlotIndex]++;
+                                }
+                                if (beamType <= BeamType.OmegaCannon)
+                                {
+                                    GameState.BeamKills[attacker.SlotIndex, (int)beamType]++;
+                                    // todo: update license info
+                                }
+                                if (GameState.KillStreak[attacker.SlotIndex] < 255)
+                                {
+                                    GameState.KillStreak[attacker.SlotIndex]++;
+                                }
+                                if (GameState.KillStreak[attacker.SlotIndex] == 5)
+                                {
+                                    // todo: play voice
+                                    string message;
+                                    if (attacker.IsMainPlayer)
+                                    {
+                                        message = Strings.GetHudMessage(254); // YOU KILLED 5 IN A ROW!
+                                    }
+                                    else
+                                    {
+                                        string nickname = GameState.Nicknames[attacker.SlotIndex];
+                                        message = Strings.GetHudMessage(255); // %s KILLED 5 IN A ROW!
+                                        message = message.Replace("%s", nickname);
+                                    }
+                                    QueueHudMessage(128, 70, 140, 90 / 30f, 2, message);
+                                }
+                                if (_scene.GameMode == GameMode.PrimeHunter)
+                                {
+                                    if (attacker.IsPrimeHunter)
+                                    {
+                                        attacker.GainHealth(70);
+                                    }
+                                    else if (attacker.Health > 0 && (GameState.PrimeHunter == -1 || IsPrimeHunter))
+                                    {
+                                        GameState.PrimeHunter = attacker.SlotIndex;
+                                        GameState.PrimesKilled[attacker.SlotIndex]++;
+                                        if (Main.IsPrimeHunter)
+                                        {
+                                            // todo: play voice
+                                        }
+                                        string nickname = GameState.Nicknames[attacker.SlotIndex];
+                                        string message = Strings.GetHudMessage(241); // %s is the new prime hunter!
+                                        QueueHudMessage(128, 70, 140, 90 / 30f, 2, message.Replace("%s", nickname));
+                                    }
+                                }
+                                else if (_scene.GameMode == GameMode.Battle || _scene.GameMode == GameMode.BattleTeams)
+                                {
+                                    if (GameState.Points[attacker.SlotIndex] < 99999)
+                                    {
+                                        GameState.Points[attacker.SlotIndex]++;
+                                    }
+                                }
+                                else if ((_scene.GameMode == GameMode.Capture || _scene.GameMode == GameMode.Bounty
+                                    || _scene.GameMode == GameMode.BountyTeams) && OctolithFlag != null)
+                                {
+                                    GameState.OctolithStops[attacker.SlotIndex]++;
+                                }
+                                // bugfix?: this flag is also set for suicides/environmental damage/etc.
+                                if (flags.TestFlag(DamageFlags.FromAlt))
+                                {
+                                    GameState.AltDamageCount[attacker.SlotIndex]++;
+                                }
+                            }
                         }
                     }
-                    else
+                    else // no attacker
                     {
-                        // todo: update suicides
+                        GameState.Suicides[SlotIndex]++;
+                        if (_scene.GameMode == GameMode.Battle || _scene.GameMode == GameMode.BattleTeams)
+                        {
+                            GameState.Points[SlotIndex]--;
+                        }
                     }
                     if (IsAltForm || IsMorphing)
                     {
@@ -1687,8 +1853,8 @@ namespace MphRead.Entities
                     }
                     if (IsPrimeHunter)
                     {
-                        IsPrimeHunter = false;
-                        // todo: draw HUD message
+                        GameState.PrimeHunter = -1;
+                        QueueHudMessage(128, 70, 140, 90 / 30f, 2, 242); // the prime hunter is dead!
                     }
                 }
                 if (_scene.Multiplayer && attacker != null && attacker != this)
@@ -1701,6 +1867,8 @@ namespace MphRead.Entities
                     Vector3 position = _volume.SpherePosition.AddY(0.35f);
                     ItemSpawnEntity.SpawnItem(itemType, position, 300 * 2, _scene); // todo: FPS stuff
                 }
+                WeaponSelection = CurrentWeapon;
+                Flags1 &= ~PlayerFlags1.WeaponMenuOpen;
             }
             else // not dead
             {
@@ -1744,7 +1912,8 @@ namespace MphRead.Entities
                         if (IsMainPlayer)
                         {
                             skipSfx = true;
-                            // todo: update HUD, play SFX
+                            HudOnDisrupted();
+                            // todo: play SFX
                         }
                     }
                     if (beam.Afflictions.TestFlag(Affliction.Burn))
@@ -1822,50 +1991,63 @@ namespace MphRead.Entities
                     float hitZ = hitDirection.Value.Z;
                     float hitX = -hitDirection.Value.X;
                     float v126 = -hitZ * _field74;
-                    float v123 = -hitZ * _gunVec2.Z;
-                    float v124 = hitX * _gunVec2.X + v123;
-                    if (v124 < 0)
+                    float dirHorizontal = -hitZ * _gunVec2.Z;
+                    float dirLeftRight = hitX * _gunVec2.X + dirHorizontal;
+                    if (dirLeftRight < 0)
                     {
-                        v123 = -v124;
+                        dirHorizontal = -dirLeftRight;
                     }
                     float v125 = hitX * _field70;
-                    float v127 = v125 + v126;
-                    if (v124 >= 0)
+                    float dirUpDown = v125 + v126;
+                    if (dirLeftRight >= 0)
                     {
-                        v123 = v124;
+                        dirHorizontal = dirLeftRight;
                     }
-                    float v128;
-                    if (v127 >= 0)
+                    float dirVertical;
+                    if (dirUpDown >= 0)
                     {
-                        v128 = v125 + v126;
+                        dirVertical = v125 + v126;
                     }
                     else
                     {
-                        v128 = -v127;
+                        dirVertical = -dirUpDown;
                     }
+                    // sktodo: diagonals (behind feature switch)
                     PlayerAnimation anim = PlayerAnimation.None;
-                    if (v128 <= v123)
+                    if (dirVertical <= dirHorizontal)
                     {
-                        if (v124 <= 0)
+                        if (dirLeftRight <= 0)
                         {
-                            anim = PlayerAnimation.DamageLeft;
-                            // todo: update HUD
+                            anim = PlayerAnimation.DamageRight;
+                            if (IsMainPlayer)
+                            {
+                                _damageIndicatorTimers[2] = 63 * 2; // todo: FPS stuff
+                            }
                         }
                         else
                         {
-                            anim = PlayerAnimation.DamageRight;
-                            // todo: update HUD
+                            anim = PlayerAnimation.DamageLeft;
+                            if (IsMainPlayer)
+                            {
+                                _damageIndicatorTimers[6] = 63 * 2; // todo: FPS stuff
+                            }
                         }
                     }
-                    else if (v127 <= 0)
+                    else if (dirUpDown <= 0)
                     {
-                        anim = PlayerAnimation.DamageFront;
-                        // todo: update HUD
+                        anim = PlayerAnimation.DamageBack;
+                        if (IsMainPlayer)
+                        {
+                            _damageIndicatorTimers[4] = 63 * 2; // todo: FPS stuff
+                        }
                     }
                     else
                     {
-                        anim = PlayerAnimation.DamageBack;
-                        // todo: update HUD
+                        anim = PlayerAnimation.DamageFront;
+                        if (IsMainPlayer)
+                        {
+                            _damageIndicatorTimers[0] = 63 * 2; // todo: FPS stuff
+                        }
                     }
                     if (anim != PlayerAnimation.None)
                     {
@@ -1885,6 +2067,28 @@ namespace MphRead.Entities
             if (IsMainPlayer)
             {
                 // todo: do something (HUD or camera-related?)
+            }
+        }
+
+        private static readonly string[] _altAttackNames = new string[8];
+        private static readonly string[] _hunterNames = new string[8];
+        private static readonly string[] _weaponNames = new string[9];
+
+        public static void LoadWeaponNames()
+        {
+            // todo: use language
+            for (int i = 0; i < 9; ++i)
+            {
+                _weaponNames[i] = Strings.GetMessage('W', i + 1, StringTables.WeaponNames);
+            }
+            for (int i = 0; i < 8; ++i)
+            {
+                _hunterNames[i] = Strings.GetMessage('H', i + 1, StringTables.WeaponNames);
+            }
+            // todo: Guardian alt form
+            for (int i = 0; i < 7; ++i)
+            {
+                _altAttackNames[i] = Strings.GetMessage('A', i + 1, StringTables.WeaponNames);
             }
         }
 
@@ -1941,7 +2145,7 @@ namespace MphRead.Entities
         Deathalt = 0x20,
         Burn = 0x40,
         NoSfx = 0x80,
-        ByPlayer = 0x100
+        FromAlt = 0x100
     }
 
     [Flags]

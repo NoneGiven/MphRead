@@ -199,7 +199,7 @@ namespace MphRead.Testing
             Archive.Archiver.Archive(outPath, files);
             string archiveName = overMeta?.Archive ?? meta.Archive;
             Console.WriteLine(" Compressing...");
-            Lz.Compress(outPath, outPath.Replace("out.arc", $"{archiveName}.arc"));
+            LZ10.Compress(outPath, outPath.Replace("out.arc", $"{archiveName}.arc"));
             File.Delete(outPath);
             Console.WriteLine("Done.");
             Nop();

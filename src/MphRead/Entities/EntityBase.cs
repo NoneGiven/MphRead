@@ -699,6 +699,15 @@ namespace MphRead.Entities
             // sktodo: this
             return true;
         }
+
+        protected (float, float) ConstantAcceleration(float step, float velocity,
+            float minVelocity = Single.MinValue, float maxVelocity = Single.MaxValue)
+        {
+            float newVelocity = velocity + step * 30 * 31 * _scene.FrameTime;
+            newVelocity = Math.Clamp(newVelocity, minVelocity, maxVelocity);
+            float displacement = velocity * _scene.FrameTime + (newVelocity - velocity) / 2 * _scene.FrameTime;
+            return (newVelocity, displacement);
+        }
     }
 
     public class ModelEntity : EntityBase

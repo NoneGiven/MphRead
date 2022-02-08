@@ -25,6 +25,8 @@ namespace MphRead.Entities
         protected ushort _timeSinceDamage = 510;
         protected ushort _health = 20;
         protected ushort _healthMax = 20;
+        public ushort Health => _health;
+        public ushort HealthMax => _healthMax;
         protected EntityBase? _owner = null;
         protected CollisionVolume _hurtVolume = default;
         protected CollisionVolume _hurtVolumeInit = default;
@@ -48,6 +50,7 @@ namespace MphRead.Entities
         public CollisionVolume HurtVolume => _hurtVolume;
         public EnemyType EnemyType => _data.Type;
         public EntityBase? Owner => _owner;
+        public int HealthbarMessageId { get; protected set; } = 0;
 
         protected static BeamProjectileEntity[] _beams = null!;
 

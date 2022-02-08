@@ -228,7 +228,11 @@ namespace MphRead.Entities
             {
                 _timeSinceDamage++;
             }
-            // todo: show HUD message
+            if (Owner == PlayerEntity.Main)
+            {
+                string message = Text.Strings.GetHudMessage(233); // turret energy: %d
+                Owner.QueueHudMessage(128, 150, 1 / 1000f, 0, message.Replace("%d", _health.ToString()));
+            }
             if (!_grounded)
             {
                 // future: it would be cool to have the halfturret move with platforms, etc.
@@ -415,7 +419,7 @@ namespace MphRead.Entities
                 product.M23 *= -1;
                 product.M32 *= -1;
                 product.M33 *= -1;
-                ulong frame = _scene.FrameCount / 2;
+                ulong frame = _scene.LiveFrames / 2;
                 float rotZ = ((int)(16 * ((781874935307L * (53248 * frame) >> 32) + 2048)) >> 20) * (360 / 4096f);
                 float rotY = ((int)(16 * ((781874935307L * (26624 * frame) + 0x80000000000) >> 32)) >> 20) * (360 / 4096f);
                 var rot = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(rotZ));

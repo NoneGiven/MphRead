@@ -62,7 +62,18 @@ namespace MphRead.Entities
             if (_respawnTimer > 0)
             {
                 _respawnTimer--;
-                // todo: if in survival mode and out of lives, draw HUD message and prevent _respawnTimer from reaching 0
+                if ((_scene.GameMode == GameMode.Survival || _scene.GameMode == GameMode.SurvivalTeams)
+                    && GameState.TeamDeaths[SlotIndex] > GameState.PointGoal)
+                {
+                    if (IsMainPlayer)
+                    {
+                        QueueHudMessage(128, 152, 1 / 1000f, 0, 243); // you lost all your lives! you're out of the game
+                    }
+                    if (_respawnTimer == 0)
+                    {
+                        _respawnTimer = 1;
+                    }
+                }
             }
             if (_health == 0)
             {
@@ -71,9 +82,21 @@ namespace MphRead.Entities
                     // todo: if we loaded into this room through a door or teleporter, respawn in the right place
                     // else...
                     int time = GetTimeUntilRespawn();
-                    if (IsMainPlayer && _scene.Multiplayer) // todo: and some global is set
+                    if (IsMainPlayer && _scene.Multiplayer) // todo: and some global is not set
                     {
-                        // todo: set HUD model and draw messages
+                        // press FIRE to begin / press FIRE to respawn
+                        int messageId = CameraSequence.Current?.IsIntro == true ? 245 : 244;
+                        if (!Bugfixes.NoStrayRespawnText || time > 0
+                            || _scene.GameMode != GameMode.Survival && _scene.GameMode != GameMode.SurvivalTeams)
+                        {
+                            QueueHudMessage(128, 162, 1 / 1000f, 0, messageId);
+                            if (time < 150 * 2) // todo: FPS stuff
+                            {
+                                string message = Text.Strings.GetHudMessage(246); // SPAWNING IN %d...
+                                int seconds = (time + 30 * 2) / (30 * 2); // todo: FPS stuff
+                                QueueHudMessage(128, 152, 1 / 1000f, 0, message.Replace("%d", seconds.ToString()));
+                            }
+                        }
                     }
                     if (!_scene.Multiplayer || Controls.Shoot.IsDown || time <= 0 || IsBot) // todo: or forced
                     {
@@ -115,28 +138,41 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    // todo: draw string if player radar setting is on
-                    // else...
-                    int revealTime = (_scene.PlayerCount > 2 ? 600 : 300) * 2; // todo: FPS stuff
-                    Vector3 moved = Position - IdlePosition;
-                    if (moved.LengthSquared >= 25)
+                    if (GameState.RadarPlayers)
                     {
-                        // todo: FPS stuff
-                        _hidingTimer = (ushort)(_hidingTimer > 35 * 2 ? _hidingTimer - 35 * 2 : 0);
-                        if (_hidingTimer < revealTime && _hidingTimer > revealTime - 35 * 2)
+                        if (IsMainPlayer)
                         {
-                            // give the player at least a second before they're revealed again
-                            _hidingTimer = (ushort)(revealTime - 35 * 2);
+                            QueueHudMessage(128, 170, 1 / 1000f, 0, 247); // FACE OFF!
                         }
+                        _hidingTimer = 0;
                     }
-                    if (_hidingTimer < revealTime + 150 * 2) // todo: FPS stuff
+                    else
                     {
-                        _hidingTimer++;
-                    }
-                    if (_hidingTimer >= revealTime)
-                    {
-                        Flags2 |= PlayerFlags2.RadarReveal;
-                        // todo: draw HUD string
+                        int revealTime = (PlayerCount > 2 ? 600 : 300) * 2; // todo: FPS stuff
+                        Vector3 moved = Position - IdlePosition;
+                        if (moved.LengthSquared >= 25)
+                        {
+                            // todo: FPS stuff
+                            _hidingTimer = (ushort)(_hidingTimer > 35 * 2 ? _hidingTimer - 35 * 2 : 0);
+                            if (_hidingTimer < revealTime && _hidingTimer > revealTime - 35 * 2)
+                            {
+                                // give the player at least a second before they're revealed again
+                                _hidingTimer = (ushort)(revealTime - 35 * 2);
+                            }
+                        }
+                        if (_hidingTimer < revealTime + 150 * 2) // todo: FPS stuff
+                        {
+                            _hidingTimer++;
+                        }
+                        if (_hidingTimer >= revealTime)
+                        {
+                            Flags2 |= PlayerFlags2.RadarReveal;
+                            if (IsMainPlayer && (_scene.FrameCount & (8 * 2)) == 0) // todo: FPS stuff
+                            {
+                                QueueHudMessage(128, 150, 1 / 1000f, 0, 248); // position revealed!
+                                QueueHudMessage(128, 160, 1 / 1000f, 0, 249); // RETURN TO BATTLE!
+                            }
+                        }
                     }
                 }
             }
@@ -333,7 +369,10 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                // todo: update HUD
+                if (IsMainPlayer)
+                {
+                    ShowNoAmmoMessage();
+                }
                 TryEquipWeapon(_weaponSlots[slot]);
             }
             ProcessInput();
@@ -805,11 +844,13 @@ namespace MphRead.Entities
                         }
                         if (_doubleDmgTimer == 210 * 2) // todo: FPS stuff
                         {
-                            // todo: update SFX and HUD
+                            // todo: update SFX
+                            UpdateDoubleDamageSpeed(2);
                         }
                         else if (_doubleDmgTimer == 120 * 2) // todo: FPS stuff
                         {
-                            // todo: update SFX and HUD
+                            // todo: update SFX
+                            UpdateDoubleDamageSpeed(3);
                         }
                     }
                 }
@@ -968,14 +1009,21 @@ namespace MphRead.Entities
                     pickedUp = true;
                     _timeSincePickup = 0;
                     _doubleDmgTimer = 900 * 2; // todo: FPS stuff
-                    // todo: play SFX
+                    if (IsMainPlayer)
+                    {
+                        // todo: play and update SFX
+                        UpdateDoubleDamageSpeed(1);
+                    }
                     break;
                 case ItemType.Cloak:
                     pickedUp = true;
                     _timeSincePickup = 0;
                     _cloakTimer = 900 * 2; // todo: FPS stuff
                     Flags2 |= PlayerFlags2.Cloaking;
-                    // todo: play SFX
+                    if (IsMainPlayer)
+                    {
+                        // todo: play SFX
+                    }
                     break;
                 case ItemType.Deathalt:
                     pickedUp = true;
@@ -1725,11 +1773,11 @@ namespace MphRead.Entities
             int count = 0;
             if (_scene.GameMode != GameMode.Survival && _scene.GameMode != GameMode.SurvivalTeams)
             {
-                if (_scene.PlayerCount > 3)
+                if (PlayerCount > 3)
                 {
                     count = 900 * 2 - _timeSinceDead;
                 }
-                else if (_scene.PlayerCount > 2)
+                else if (PlayerCount > 2)
                 {
                     count = 600 * 2 - _timeSinceDead;
                 }

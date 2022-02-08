@@ -18,6 +18,12 @@ namespace MphRead
         private static readonly Dictionary<string, Model> _modelCache = new Dictionary<string, Model>();
         private static readonly Dictionary<string, Model> _fhModelCache = new Dictionary<string, Model>();
 
+        public static void ClearCache()
+        {
+            _modelCache.Clear();
+            _fhModelCache.Clear();
+        }
+
         public static ModelInstance GetModelInstance(string name, bool firstHunt = false,
             MetaDir dir = MetaDir.Models, bool noCache = false)
         {
@@ -1201,7 +1207,7 @@ namespace MphRead
                     Console.Write(" Extracting archive...");
                     filesWritten = Archiver.Extract(path, output);
                 }
-                else if (bytes[0] == Lz.MagicByte)
+                else if (bytes[0] == LZ10.MagicByte)
                 {
                     string temp = Path.Combine(Paths.Export, "__temp");
                     try
@@ -1212,7 +1218,7 @@ namespace MphRead
                     Directory.CreateDirectory(temp);
                     string destination = Path.Combine(temp, $"{name}.arc");
                     Console.Write(" Decompressing...");
-                    Lz.Decompress(path, destination);
+                    LZ10.Decompress(path, destination);
                     Console.Write(" Extracting archive...");
                     filesWritten = Archiver.Extract(destination, output);
                     Directory.Delete(temp, recursive: true);

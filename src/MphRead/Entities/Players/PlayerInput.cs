@@ -25,6 +25,15 @@ namespace MphRead.Entities
                 if (!IsBot)
                 {
                     ProcessTouchInput();
+                    // todo: actual pause menu should required pressed
+                    if (_scene.Multiplayer && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && Controls.Pause.IsDown)
+                    {
+                        _showScoreboard = true;
+                    }
+                    else
+                    {
+                        _showScoreboard = false;
+                    }
                 }
                 if (_frozenTimer > 0)
                 {
@@ -61,6 +70,10 @@ namespace MphRead.Entities
                     _timeSinceFrozen++;
                 }
             }
+            else
+            {
+                _showScoreboard = _scene.Multiplayer && Controls.Pause.IsDown;
+            }
             if (IsAltForm || IsMorphing)
             {
                 ProcessAlt();
@@ -71,10 +84,171 @@ namespace MphRead.Entities
             }
         }
 
+        private static readonly BeamType[] _weaponOrder = new BeamType[9]
+        {
+            /* 0 */ BeamType.PowerBeam,
+            /* 1 */ BeamType.Missile,
+            /* 2 */ BeamType.VoltDriver,
+            /* 3 */ BeamType.Battlehammer,
+            /* 4 */ BeamType.Imperialist,
+            /* 5 */ BeamType.Judicator,
+            /* 6 */ BeamType.Magmaul,
+            /* 7 */ BeamType.ShockCoil,
+            /* 8 */ BeamType.OmegaCannon
+        };
+
         private void ProcessTouchInput()
         {
-            // todo: touch input
-            SwitchWeapon();
+            if ((_scene.Multiplayer || _weaponSlots[2] != BeamType.OmegaCannon) && Controls.WeaponMenu.IsDown)
+            {
+                Flags1 |= PlayerFlags1.NoAimInput;
+                Flags1 |= PlayerFlags1.WeaponMenuOpen;
+                _showScoreboard = false;
+            }
+            bool selected = false;
+            if (!Controls.WeaponMenu.IsDown)
+            {
+                Flags1 &= ~PlayerFlags1.NoAimInput;
+                Flags1 &= ~PlayerFlags1.WeaponMenuOpen;
+                if (WeaponSelection != BeamType.None)
+                {
+                    if (WeaponSelection != CurrentWeapon)
+                    {
+                        TryEquipWeapon(WeaponSelection);
+                        selected = true;
+                    }
+                    else if (IsMainPlayer)
+                    {
+                        // todo: play SFX
+                    }
+                    WeaponSelection = CurrentWeapon;
+                }
+            }
+            if (!selected)
+            {
+                if (Controls.PowerBeam.IsPressed)
+                {
+                    if (CurrentWeapon != BeamType.PowerBeam)
+                    {
+                        TryEquipWeapon(BeamType.PowerBeam, debug: true);
+                    }
+                }
+                else if (Controls.Missile.IsPressed)
+                {
+                    if (CurrentWeapon != BeamType.Missile)
+                    {
+                        TryEquipWeapon(BeamType.Missile, debug: true);
+                    }
+                }
+                else if (Controls.VoltDriver.IsPressed)
+                {
+                    if (CurrentWeapon != BeamType.VoltDriver)
+                    {
+                        TryEquipWeapon(BeamType.VoltDriver, debug: true);
+                    }
+                }
+                else if (Controls.Battlehammer.IsPressed)
+                {
+                    if (CurrentWeapon != BeamType.Battlehammer)
+                    {
+                        TryEquipWeapon(BeamType.Battlehammer, debug: true);
+                    }
+                }
+                else if (Controls.Imperialist.IsPressed)
+                {
+                    if (CurrentWeapon != BeamType.Imperialist)
+                    {
+                        TryEquipWeapon(BeamType.Imperialist, debug: true);
+                    }
+                }
+                else if (Controls.Judicator.IsPressed)
+                {
+                    if (CurrentWeapon != BeamType.Judicator)
+                    {
+                        TryEquipWeapon(BeamType.Judicator, debug: true);
+                    }
+                }
+                else if (Controls.Magmaul.IsPressed)
+                {
+                    if (CurrentWeapon != BeamType.Magmaul)
+                    {
+                        TryEquipWeapon(BeamType.Magmaul, debug: true);
+                    }
+                }
+                else if (Controls.ShockCoil.IsPressed)
+                {
+                    if (CurrentWeapon != BeamType.ShockCoil)
+                    {
+                        TryEquipWeapon(BeamType.ShockCoil, debug: true);
+                    }
+                }
+                else if (Controls.OmegaCannon.IsPressed)
+                {
+                    if (CurrentWeapon != BeamType.OmegaCannon)
+                    {
+                        TryEquipWeapon(BeamType.OmegaCannon, debug: true);
+                    }
+                }
+                else if (Controls.AffinitySlot.IsPressed)
+                {
+                    BeamType weapon = _weaponSlots[2];
+                    if (weapon != BeamType.None && CurrentWeapon != weapon)
+                    {
+                        TryEquipWeapon(weapon);
+                    }
+                }
+                else if (Controls.ScrollAllWeapons || CurrentWeapon != BeamType.PowerBeam && CurrentWeapon != BeamType.Missile)
+                {
+                    int currentIndex = -1;
+                    for (int i = 0; i < _weaponOrder.Length; i++)
+                    {
+                        if (_weaponOrder[i] == CurrentWeapon)
+                        {
+                            currentIndex = i;
+                        }
+                    }
+                    int nextIndex = currentIndex;
+                    BeamType nextBeam = CurrentWeapon;
+                    if (Controls.NextWeapon.IsPressed)
+                    {
+                        do
+                        {
+                            nextIndex++;
+                            if (Controls.ScrollAllWeapons && nextIndex > 8)
+                            {
+                                nextIndex = 0;
+                            }
+                            else if (!Controls.ScrollAllWeapons && nextIndex > 7)
+                            {
+                                nextIndex = 2;
+                            }
+                            nextBeam = _weaponOrder[nextIndex];
+                        }
+                        while (nextIndex != currentIndex && !_availableWeapons[nextBeam]);
+                    }
+                    else if (Controls.PrevWeapon.IsPressed)
+                    {
+                        do
+                        {
+                            nextIndex--;
+                            if (Controls.ScrollAllWeapons && nextIndex < 0)
+                            {
+                                nextIndex = 8;
+                            }
+                            else if (!Controls.ScrollAllWeapons && nextIndex < 2)
+                            {
+                                nextIndex = 7;
+                            }
+                            nextBeam = _weaponOrder[nextIndex];
+                        }
+                        while (nextIndex != currentIndex && !_availableWeapons[nextBeam]);
+                    }
+                    if (nextBeam != CurrentWeapon)
+                    {
+                        TryEquipWeapon(nextBeam);
+                    }
+                }
+            }
         }
 
         private void UpdateAimFacing()
@@ -173,6 +347,59 @@ namespace MphRead.Entities
             }
         }
 
+        private readonly float[] _pastAimX = new float[8];
+        private readonly float[] _pastAimY = new float[8];
+
+        private void UpdateHudShiftY(float amount)
+        {
+            if (IsMainPlayer)
+            {
+                float sum = 0;
+                for (int i = 6; i >= 0; i--)
+                {
+                    float past = _pastAimY[i];
+                    sum += past;
+                    _pastAimY[i + 1] = past;
+                }
+                _pastAimY[0] = amount;
+                if (Features.HudSway)
+                {
+                    float average = (sum + amount) / 8;
+                    _hudShiftY = Math.Clamp(-MathF.Round(average), -8, 8);
+                }
+                else
+                {
+                    _hudShiftY = 0;
+                }
+                _objShiftY = -_hudShiftY / 2;
+            }
+        }
+
+        private void UpdateHudShiftX(float amount)
+        {
+            if (IsMainPlayer)
+            {
+                float sum = 0;
+                for (int i = 6; i >= 0; i--)
+                {
+                    float past = _pastAimX[i];
+                    sum += past;
+                    _pastAimX[i + 1] = past;
+                }
+                _pastAimX[0] = amount;
+                if (Features.HudSway)
+                {
+                    float average = (sum + amount) / 8;
+                    _hudShiftX = Math.Clamp(MathF.Round(average), -8, 8);
+                }
+                else
+                {
+                    _hudShiftX = 0;
+                }
+                _objShiftX = _hudShiftX / 2;
+            }
+        }
+
         private void ProcessBiped()
         {
             if (IsMainPlayer && !_scene.Multiplayer && CameraSequence.Current != null)
@@ -218,15 +445,17 @@ namespace MphRead.Entities
                     }
                     Biped2Flags |= AnimFlags.NoLoop;
                 }
-                if (Controls.MouseAim)
+                if (Controls.MouseAim && !Flags1.TestFlag(PlayerFlags1.NoAimInput))
                 {
-                    // todo: update HUD shift
                     float aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
                     float aimX = -Input.MouseDeltaX / 4f;
-                    if (_scene.FrameAdvance) // skdebug
+                    if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true
+                        || _scene.FrameAdvance || _scene.FrameAdvanceLastFrame) // skdebug
                     {
                         aimX = aimY = 0;
                     }
+                    UpdateHudShiftY(aimY);
+                    UpdateHudShiftX(aimX);
                     UpdateAimY(aimY);
                     UpdateAimX(aimX);
                     if (Flags1.TestFlag(PlayerFlags1.Grounded))
@@ -351,7 +580,6 @@ namespace MphRead.Entities
                     {
                         MoveRightLeft(PlayerAnimation.WalkLeft, sign: -1);
                     }
-                    // todo: update HUD x shift
                     if (_field684 < Fixed.ToFloat(500) && _field684 > Fixed.ToFloat(-500))
                     {
                         _field684 = 0;
@@ -368,7 +596,6 @@ namespace MphRead.Entities
                     {
                         MoveForwardBack(PlayerAnimation.WalkBackward, sign: -1);
                     }
-                    // todo: update HUD y shift
                     if (_field688 < Fixed.ToFloat(500) && _field688 > Fixed.ToFloat(-500))
                     {
                         _field688 = 0;
@@ -377,9 +604,13 @@ namespace MphRead.Entities
                     {
                         _field688 *= 0.9f; // sktodo: FPS stuff
                     }
+                    if (Cheats.UnlimitedJumps)
+                    {
+                        Flags1 &= ~PlayerFlags1.UsedJump;
+                    }
                     // unimpl-controls: in the up/down code path, the game processes aim reset if that flag is off
-                    if (_jumpPadControlLockMin == 0 && Controls.Jump.IsPressed
-                        && !Flags1.TestAny(PlayerFlags1.NoAimInput | PlayerFlags1.UsedJump))
+                    // unimpl-controls: the aim input disable flag is also checked by the game
+                    if (_jumpPadControlLockMin == 0 && Controls.Jump.IsPressed && !Flags1.TestFlag(PlayerFlags1.UsedJump))
                     {
                         // unimpl-controls: double tap jump is hard coded as an alternate condition to the jump input
                         jumping = true;
@@ -586,7 +817,12 @@ namespace MphRead.Entities
                     if (!Flags2.TestFlag(PlayerFlags2.BipedStuck) && _abilities.TestFlag(AbilityFlags.AltForm)
                         && Controls.Morph.IsPressed || IsMainPlayer && CameraSequence.Current?.ForceAlt == true)
                     {
-                        TrySwitchForms();
+                        if (TrySwitchForms() && IsMainPlayer && IsMorphing)
+                        {
+                            // the game only does this when using the touch screen button, but this is equivalent,
+                            // and we want to call this beause it updates the reticle expansion
+                            HudOnMorphStart(teleported: false);
+                        }
                         anim1 = PlayerAnimation.Morph;
                         anim2 = PlayerAnimation.Morph;
                     }
@@ -617,9 +853,12 @@ namespace MphRead.Entities
                 {
                     if (Flags1.TestFlag(PlayerFlags1.Grounded))
                     {
-                        if (Biped1Anim == PlayerAnimation.Idle && ++_timeIdle > 300 * 2 && _timeSinceInput > 300 * 2) // todo: FPS stuff
+                        if (Biped1Anim == PlayerAnimation.Idle)
                         {
-                            SetBiped1Animation(PlayerAnimation.Flourish, AnimFlags.NoLoop);
+                            if (++_timeIdle > 300 * 2 && _timeSinceInput > 300 * 2) // todo: FPS stuff
+                            {
+                                SetBiped1Animation(PlayerAnimation.Flourish, AnimFlags.NoLoop);
+                            }
                         }
                         else if (!Biped1Flags.TestFlag(AnimFlags.NoLoop) || Biped1Flags.TestFlag(AnimFlags.Ended))
                         {
@@ -720,7 +959,10 @@ namespace MphRead.Entities
             }
             // todo: update license stats
             _timeSinceShot = 0;
-            // todo: update HUD
+            if (IsMainPlayer)
+            {
+                HudOnFiredShot();
+            }
             if (CurrentWeapon == BeamType.Missile)
             {
                 Flags1 |= PlayerFlags1.ShotMissile;
@@ -779,15 +1021,17 @@ namespace MphRead.Entities
                 if (Values.AltFormStrafe != 0)
                 {
                     // Trace, Sylux, Weavel
-                    if (Controls.MouseAim)
+                    if (Controls.MouseAim && !Flags1.TestFlag(PlayerFlags1.NoAimInput))
                     {
-                        // todo: update HUD shift
                         float aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
                         float aimX = -Input.MouseDeltaX / 4f;
-                        if (_scene.FrameAdvance) // skdebug
+                        if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true
+                            || _scene.FrameAdvance || _scene.FrameAdvanceLastFrame) // skdebug
                         {
                             aimX = aimY = 0;
                         }
+                        UpdateHudShiftY(aimY);
+                        UpdateHudShiftX(aimX);
                         UpdateAimY(aimY);
                         UpdateAimX(aimX);
                         if ((Hunter == Hunter.Trace || Hunter == Hunter.Weavel) && Flags1.TestFlag(PlayerFlags1.Grounded))
@@ -896,7 +1140,6 @@ namespace MphRead.Entities
                         {
                             MoveRightLeft(walkAnim: 2, sign: -1); // TraceAltAnim.MoveLeft or WeavelAltAnim.MoveLeft
                         }
-                        // todo: update HUD x shift
                         // todo: update field684
                         if (Controls.MoveUp.IsDown)
                         {
@@ -906,7 +1149,6 @@ namespace MphRead.Entities
                         {
                             MoveForwardBack(walkAnim: 5, sign: -1); // TraceAltAnim.MoveBackward or WeavelAltAnim.MoveBackward
                         }
-                        // todo: update HUD y shift
                         // todo: update field684
                         // unimpl-controls: in the up/down code path, the game processes aim reset if that flag is off
                     }
@@ -1111,7 +1353,7 @@ namespace MphRead.Entities
                                 _boostDamage = (ushort)(Values.AltAttackDamage * _boostCharge / (Values.BoostChargeMax * 2)); // todo: FPS stuff
                                 if (IsMainPlayer)
                                 {
-                                    // todo: update HUD
+                                    _boostInst.SetAnimation(start: 0, target: 10, frames: 11, afterAnim: 0);
                                 }
                                 if (_boostEffect != null)
                                 {
@@ -1629,13 +1871,16 @@ namespace MphRead.Entities
                 {
                     for (int j = 0; j < player.Controls.All.Length; j++)
                     {
-                        ButtonControl control = player.Controls.All[j];
+                        Keybind control = player.Controls.All[j];
                         if (control.Type == ButtonType.Key)
                         {
-                            bool prevDown = prevKeyboardSnap?.IsKeyDown(control.Key) ?? false;
-                            control.IsDown = keyboardSnap.IsKeyDown(control.Key);
-                            control.IsPressed = control.IsDown && !prevDown;
-                            control.IsReleased = !control.IsDown && prevDown;
+                            if (control.Key != Keys.Unknown)
+                            {
+                                bool prevDown = prevKeyboardSnap?.IsKeyDown(control.Key) ?? false;
+                                control.IsDown = keyboardSnap.IsKeyDown(control.Key);
+                                control.IsPressed = control.IsDown && !prevDown;
+                                control.IsReleased = !control.IsDown && prevDown;
+                            }
                         }
                         else if (control.Type == ButtonType.Mouse)
                         {
@@ -1680,7 +1925,7 @@ namespace MphRead.Entities
         ScrollDown
     }
 
-    public class ButtonControl
+    public class Keybind
     {
         public ButtonType Type { get; set; }
         public Keys Key { get; set; }
@@ -1691,19 +1936,19 @@ namespace MphRead.Entities
         public bool IsDown { get; set; }
         public bool IsReleased { get; set; }
 
-        public ButtonControl(Keys key)
+        public Keybind(Keys key)
         {
             Type = ButtonType.Key;
             Key = key;
         }
 
-        public ButtonControl(MouseButton mouseButton)
+        public Keybind(MouseButton mouseButton)
         {
             Type = ButtonType.Mouse;
             MouseButton = mouseButton;
         }
 
-        public ButtonControl(ButtonType scrollType)
+        public Keybind(ButtonType scrollType)
         {
             if (scrollType != ButtonType.ScrollUp && scrollType != ButtonType.ScrollDown)
             {
@@ -1717,37 +1962,50 @@ namespace MphRead.Entities
     {
         public bool MouseAim { get; set; }
         public bool KeyboardAim { get; set; }
-        public ButtonControl MoveLeft { get; }
-        public ButtonControl MoveRight { get; }
-        public ButtonControl MoveUp { get; }
-        public ButtonControl MoveDown { get; }
-        public ButtonControl AimLeft { get; }
-        public ButtonControl AimRight { get; }
-        public ButtonControl AimUp { get; }
-        public ButtonControl AimDown { get; }
-        public ButtonControl Shoot { get; }
-        public ButtonControl Zoom { get; }
-        public ButtonControl Jump { get; }
-        public ButtonControl Morph { get; }
-        public ButtonControl Boost { get; }
-        public ButtonControl AltAttack { get; }
-        // todo: weapon switch modes (scroll through all, pick slot + scroll affinity, many buttons, radial menu, "curve" menu)
-        public ButtonControl NextWeapon { get; }
-        public ButtonControl PrevWeapon { get; }
-        public ButtonControl WeaponMenu { get; }
+        public Keybind MoveLeft { get; }
+        public Keybind MoveRight { get; }
+        public Keybind MoveUp { get; }
+        public Keybind MoveDown { get; }
+        public Keybind AimLeft { get; }
+        public Keybind AimRight { get; }
+        public Keybind AimUp { get; }
+        public Keybind AimDown { get; }
+        public Keybind Shoot { get; }
+        public Keybind Zoom { get; }
+        public Keybind Jump { get; }
+        public Keybind Morph { get; }
+        public Keybind Boost { get; }
+        public Keybind AltAttack { get; }
+        public Keybind NextWeapon { get; }
+        public Keybind PrevWeapon { get; }
+        public Keybind WeaponMenu { get; }
+        public Keybind PowerBeam { get; }
+        public Keybind Missile { get; }
+        public Keybind VoltDriver { get; }
+        public Keybind Battlehammer { get; }
+        public Keybind Imperialist { get; }
+        public Keybind Judicator { get; }
+        public Keybind Magmaul { get; }
+        public Keybind ShockCoil { get; }
+        public Keybind OmegaCannon { get; }
+        public Keybind AffinitySlot { get; }
+        public Keybind Pause { get; }
 
         public bool InvertAimY { get; }
         public bool InvertAimX { get; }
+        public bool ScrollAllWeapons { get; }
 
-        public ButtonControl[] All { get; }
+        public Keybind[] All { get; }
 
-        public PlayerControls(ButtonControl moveLeft, ButtonControl moveRight, ButtonControl moveUp, ButtonControl moveDown,
-            ButtonControl aimLeft, ButtonControl aimRight, ButtonControl aimUp, ButtonControl aimDown, ButtonControl shoot,
-            ButtonControl zoom, ButtonControl jump, ButtonControl morph, ButtonControl boost, ButtonControl altAttack,
-            ButtonControl nextWeapon, ButtonControl prevWeapon, ButtonControl weaponMenu)
+        public PlayerControls(Keybind moveLeft, Keybind moveRight, Keybind moveUp, Keybind moveDown, Keybind aimLeft, Keybind aimRight,
+            Keybind aimUp, Keybind aimDown, Keybind shoot, Keybind zoom, Keybind jump, Keybind morph, Keybind boost, Keybind altAttack,
+            Keybind nextWeapon, Keybind prevWeapon, Keybind weaponMenu, Keybind powerBeam, Keybind missile, Keybind voltDriver,
+            Keybind battlehammer, Keybind imperialist, Keybind judicator, Keybind magmaul, Keybind shockCoil, Keybind omegaCannon,
+            Keybind affinitySlot, Keybind pause)
         {
             MouseAim = true;
             KeyboardAim = true;
+            ScrollAllWeapons = false;
             MoveLeft = moveLeft;
             MoveRight = moveRight;
             MoveUp = moveUp;
@@ -1765,10 +2023,22 @@ namespace MphRead.Entities
             NextWeapon = nextWeapon;
             PrevWeapon = prevWeapon;
             WeaponMenu = weaponMenu;
+            PowerBeam = powerBeam;
+            Missile = missile;
+            VoltDriver = voltDriver;
+            Battlehammer = battlehammer;
+            Imperialist = imperialist;
+            Judicator = judicator;
+            Magmaul = magmaul;
+            ShockCoil = shockCoil;
+            OmegaCannon = omegaCannon;
+            AffinitySlot = affinitySlot;
+            Pause = pause;
             All = new[]
             {
-                moveLeft, moveRight, moveUp, moveDown, aimLeft, aimRight, aimUp, aimDown, shoot, zoom,
-                jump, morph, boost, altAttack, nextWeapon, prevWeapon, weaponMenu
+                moveLeft, moveRight, moveUp, moveDown, aimLeft, aimRight, aimUp, aimDown, shoot, zoom, jump, morph, boost,
+                altAttack, nextWeapon, prevWeapon, weaponMenu, powerBeam, missile, voltDriver, battlehammer, imperialist,
+                judicator, magmaul, shockCoil, omegaCannon, affinitySlot, pause
             };
         }
 
@@ -1793,23 +2063,34 @@ namespace MphRead.Entities
         public static PlayerControls GetDefault()
         {
             return new PlayerControls(
-                moveLeft: new ButtonControl(Keys.A),
-                moveRight: new ButtonControl(Keys.D),
-                moveUp: new ButtonControl(Keys.W),
-                moveDown: new ButtonControl(Keys.S),
-                aimLeft: new ButtonControl(Keys.Left),
-                aimRight: new ButtonControl(Keys.Right),
-                aimUp: new ButtonControl(Keys.Up),
-                aimDown: new ButtonControl(Keys.Down),
-                shoot: new ButtonControl(MouseButton.Left),
-                zoom: new ButtonControl(MouseButton.Right),
-                jump: new ButtonControl(Keys.Space),
-                morph: new ButtonControl(Keys.C),
-                boost: new ButtonControl(Keys.Space),
-                altAttack: new ButtonControl(Keys.Q),
-                nextWeapon: new ButtonControl(Keys.H),
-                prevWeapon: new ButtonControl(Keys.H),
-                weaponMenu: new ButtonControl(MouseButton.Middle)
+                moveLeft: new Keybind(Keys.A),
+                moveRight: new Keybind(Keys.D),
+                moveUp: new Keybind(Keys.W),
+                moveDown: new Keybind(Keys.S),
+                aimLeft: new Keybind(Keys.Left),
+                aimRight: new Keybind(Keys.Right),
+                aimUp: new Keybind(Keys.Up),
+                aimDown: new Keybind(Keys.Down),
+                shoot: new Keybind(MouseButton.Left),
+                zoom: new Keybind(MouseButton.Right),
+                jump: new Keybind(Keys.Space),
+                morph: new Keybind(Keys.C),
+                boost: new Keybind(Keys.Space),
+                altAttack: new Keybind(Keys.Q),
+                nextWeapon: new Keybind(ButtonType.ScrollDown),
+                prevWeapon: new Keybind(ButtonType.ScrollUp),
+                weaponMenu: new Keybind(MouseButton.Middle),
+                powerBeam: new Keybind(Keys.D1),
+                missile: new Keybind(Keys.D2),
+                voltDriver: new Keybind(Keys.D3),
+                battlehammer: new Keybind(Keys.D4),
+                imperialist: new Keybind(Keys.D5),
+                judicator: new Keybind(Keys.D6),
+                magmaul: new Keybind(Keys.D7),
+                shockCoil: new Keybind(Keys.D8),
+                omegaCannon: new Keybind(Keys.D9),
+                affinitySlot: new Keybind(Keys.Unknown),
+                pause: new Keybind(Keys.Tab)
             );
         }
     }

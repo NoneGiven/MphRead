@@ -3,12 +3,20 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 
-namespace MphRead
+namespace MphRead.Text
 {
     public static class Strings
     {
+        // todo: language support
+        private static readonly Dictionary<string, IReadOnlyList<StringTableEntry>> _cache
+            = new Dictionary<string, IReadOnlyList<StringTableEntry>>();
+
         public static IReadOnlyList<StringTableEntry> ReadStringTable(string name, Language language = Language.English)
         {
+            if (_cache.TryGetValue(name, out IReadOnlyList<StringTableEntry>? table))
+            {
+                return table;
+            }
             var entries = new List<StringTableEntry>();
             string path = Path.Combine(Paths.FileSystem, GetFolder(language), name);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
@@ -18,10 +26,21 @@ namespace MphRead
             int offset = name == StringTables.ScanLog ? 8 : 4;
             foreach (RawStringTableEntry entry in Read.DoOffsets<RawStringTableEntry>(bytes, offset, count))
             {
-                string value = Read.ReadString(bytes, entry.Offset, entry.Length);
-                entries.Add(new StringTableEntry(entry, value));
+                // A76E has invalid offsets on some entries
+                // todo?: are those not supposed to be parsed? (e.g. boost)
+                if (entry.Offset < bytes.Length)
+                {
+                    string value = Read.ReadString(bytes, entry.Offset, entry.Length);
+                    entries.Add(new StringTableEntry(entry, value));
+                }
             }
+            _cache.Add(name, entries);
             return entries;
+        }
+
+        public static string GetHudMessage(int id, Language language = Language.English)
+        {
+            return GetHudMessage((uint)id, language);
         }
 
         public static string GetHudMessage(uint id, Language language = Language.English)
@@ -53,8 +72,10 @@ namespace MphRead
         public static string GetMessage(char type, uint id, string table, Language language = Language.English)
         {
             string fullId = type + id.ToString().PadLeft(3, '0');
-            foreach (StringTableEntry entry in ReadStringTable(table, language))
+            IReadOnlyList<StringTableEntry> list = ReadStringTable(table, language);
+            for (int i = 0; i < list.Count; i++)
             {
+                StringTableEntry entry = list[i];
                 if (entry.Id == fullId)
                 {
                     return entry.Value;
@@ -89,7 +110,8 @@ namespace MphRead
             return folder;
         }
 
-        public static IReadOnlyList<string> ReadTextFile(Language language = Language.English, bool useEnGb = false, bool downloadPlay = false)
+        public static IReadOnlyList<string> ReadTextFile(Language language = Language.English,
+            bool useEnGb = false, bool downloadPlay = false)
         {
             string suffix = useEnGb && !downloadPlay ? "en-gb" : "en";
             if (language == Language.French)
@@ -147,6 +169,11 @@ namespace MphRead
             }
             return strings;
         }
+
+        public static void GetModeRules(GameMode mode)
+        {
+
+        }
     }
 
     public static class StringTables
@@ -167,5 +194,39 @@ namespace MphRead
             GameMessages, HudMessagesMP, HudMessagesSP, HudMsgsCommon, LocationNames,
             MBBanner, ScanLog, ShipInSpace, ShipOnGround, WeaponNames
         };
+    }
+
+    public static class Font
+    {
+        public static IReadOnlyList<int> Widths { get; private set; } = null!;
+
+        public static IReadOnlyList<int> Offsets { get; private set; } = null!;
+
+        public static IReadOnlyList<byte> CharacterData { get; private set; } = null!;
+
+        public static void SetData(byte[] widths, byte[] offsets, byte[] chars)
+        {
+            int[] widthData = new int[widths.Length];
+            for (int i = 0; i < widths.Length; i++)
+            {
+                widthData[i] = widths[i];
+            }
+            Widths = widthData;
+            int[] offsetData = new int[offsets.Length];
+            for (int i = 0; i < offsets.Length; i++)
+            {
+                offsetData[i] = (sbyte)offsets[i];
+            }
+            Offsets = offsetData;
+            Debug.Assert(chars.Length > 0 && chars.Length % 2 == 0);
+            byte[] charData = new byte[chars.Length * 2];
+            for (int i = 0; i < chars.Length; i++)
+            {
+                byte data = chars[i];
+                charData[i * 2] = (byte)(data & 0xF);
+                charData[i * 2 + 1] = (byte)(data >> 4);
+            }
+            CharacterData = charData;
+        }
     }
 }

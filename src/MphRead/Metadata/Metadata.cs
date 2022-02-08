@@ -498,6 +498,11 @@ namespace MphRead
         public static readonly Vector3 EmissionOrange = GetColor(0x14F0);
         public static readonly Vector3 EmissionGreen = GetColor(0x1565);
         public static readonly Vector3 EmissionGray = GetColor(0x35AD);
+        public static readonly ColorRgb[] TeamColors = new ColorRgb[2]
+        {
+            new ColorRgb(31, 19, 0), // orange
+            new ColorRgb(0, 31, 0)   // green
+        };
 
         public static readonly Vector3 OctolithLight1Vector = new Vector3(0, 0.3005371f, -0.5f);
         public static readonly Vector3 OctolithLight2Vector = new Vector3(0, 0, -0.5f);
@@ -730,6 +735,11 @@ namespace MphRead
             "SEQ_INDIGO",
             "SEQ_CREDITS",
             "SEQ_FLY_IN_GOREA"
+        };
+
+        public static readonly IReadOnlyList<float> DamageLevels = new float[3]
+        {
+            0.75f, 1, 1.25f
         };
 
         public static ModelMetadata? GetModelByName(string name, MetaDir dir = MetaDir.Models)
@@ -2045,6 +2055,10 @@ namespace MphRead
                 {
                     "filter",
                     new ModelMetadata("filter", animation: false, archive: "common")
+                },
+                {
+                    "hudfont",
+                    new ModelMetadata("hudfont", animation: false)
                 },
                 {
                     "flagbase_bounty",

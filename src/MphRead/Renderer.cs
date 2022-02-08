@@ -14,6 +14,7 @@ using MphRead.Export;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
+using MphRead.Hud;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -79,6 +80,7 @@ namespace MphRead
 
         private CameraMode _cameraMode = CameraMode.Pivot;
         public CameraMode CameraMode => _cameraMode;
+        public bool ShowCursor => PlayerEntity.Main?.Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) == true;
         private float _pivotAngleY = 0.0f;
         private float _pivotAngleX = 0.0f;
         private float _pivotDistance = 5.0f;
@@ -119,6 +121,8 @@ namespace MphRead
         private readonly Dictionary<int, TextureMap> _texPalMap = new Dictionary<int, TextureMap>();
 
         private int _shaderProgramId = 0;
+        private int _rttShaderProgramId = 0;
+        private int _shiftShaderProgramId = 0;
         private readonly ShaderLocations _shaderLocations = new ShaderLocations();
 
         private Vector3 _light1Vector = Vector3.Zero;
@@ -139,8 +143,11 @@ namespace MphRead
         private float _frameTime = 0;
         private float _elapsedTime = 0;
         private ulong _frameCount = 0;
+        private ulong _liveFrames = 0;
         private bool _frameAdvanceOn = false;
+        private bool _frameAdvanceLastFrame = false;
         public bool FrameAdvance => _frameAdvanceOn;
+        public bool FrameAdvanceLastFrame => _frameAdvanceLastFrame;
         private bool _advanceOneFrame = false;
         private bool _recording = false;
         private int _framesRecorded = 0;
@@ -149,7 +156,6 @@ namespace MphRead
         private RoomEntity? _room = null;
         private int _roomId = -1;
         public GameMode GameMode { get; set; } = GameMode.SinglePlayer;
-        public int PlayerCount { get; private set; } = 1;
         public bool Multiplayer => GameMode != GameMode.SinglePlayer;
         public int RoomId => _roomId;
         public int AreaId { get; set; }
@@ -165,6 +171,8 @@ namespace MphRead
         public bool ShowAllNodes => _showAllNodes;
         public float FrameTime => _frameTime;
         public ulong FrameCount => _frameCount;
+        public ulong LiveFrames => _liveFrames;
+        public float ElapsedTime => _elapsedTime;
         public VolumeDisplay ShowVolumes => _showVolumes;
         public bool ShowForceFields => _showVolumes != VolumeDisplay.Portal;
         public float KillHeight => _killHeight;
@@ -185,13 +193,18 @@ namespace MphRead
         private readonly KeyboardState _keyboardState;
         private readonly MouseState _mouseState;
         private readonly Action<string> _setTitle;
+        private readonly Action _close;
 
-        public Scene(Vector2i size, KeyboardState keyboardState, MouseState mouseState, Action<string> setTitle)
+        public Scene(Vector2i size, KeyboardState keyboardState, MouseState mouseState,
+            Action<string> setTitle, Action close)
         {
             Size = size;
             _keyboardState = keyboardState;
             _mouseState = mouseState;
             _setTitle = setTitle;
+            _close = close;
+            Read.ClearCache();
+            GameState.Reset();
             PlayerEntity.Construct(this);
         }
 
@@ -227,6 +240,11 @@ namespace MphRead
             }
             SceneSetup.LoadItemResources(this);
             SceneSetup.LoadEnemyResources(this);
+            GameState.Setup(this);
+            if (Multiplayer)
+            {
+                Menu.ApplySettings();
+            }
             _light1Vector = meta.Light1Vector;
             _light1Color = new Vector3(
                 meta.Light1Color.Red / 31.0f,
@@ -290,13 +308,9 @@ namespace MphRead
             InitEntity(entity);
         }
 
-        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null)
+        public void AddPlayer(Hunter hunter, int recolor = 0, int team = -1, Vector3? position = null)
         {
-            if (_roomLoaded)
-            {
-                // todo?: add this functionality back
-            }
-            else
+            if (!_roomLoaded)
             {
                 var player = PlayerEntity.Create(hunter, recolor);
                 if (player != null)
@@ -305,6 +319,12 @@ namespace MphRead
                     // todo: revisit flags
                     player.LoadFlags |= LoadFlags.SlotActive;
                     player.LoadFlags |= LoadFlags.Active;
+                    player.LoadFlags |= LoadFlags.Initial;
+                    if (team != -1)
+                    {
+                        Debug.Assert(team == 0 || team == 1);
+                        player.TeamIndex = team;
+                    }
                     PlayerEntity.PlayerCount++;
                 }
             }
@@ -369,6 +389,25 @@ namespace MphRead
             OutputStart();
         }
 
+        private int _frameBuffer = 0;
+        private int _screenTexture = 0;
+        private int _renderBuffer = 0;
+
+        public void OnResize()
+        {
+            if (_screenTexture != 0)
+            {
+                GL.BindTexture(TextureTarget.Texture2D, _screenTexture);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, Size.X, Size.Y, 0,
+                    PixelFormat.Rgb, PixelType.UnsignedByte, IntPtr.Zero);
+                GL.BindTexture(TextureTarget.Texture2D, 0);
+                Debug.Assert(_renderBuffer != 0);
+                GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, _renderBuffer);
+                GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.Depth24Stencil8, Size.X, Size.Y);
+                GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
+            }
+        }
+
         private void InitShaders()
         {
             int vertexShader = GL.CreateShader(ShaderType.VertexShader);
@@ -385,8 +424,9 @@ namespace MphRead
                 {
                     Debugger.Break();
                 }
-                throw new ProgramException("Failed to compile shaders.");
+                throw new ProgramException("Failed to compile main shaders.");
             }
+
             _shaderProgramId = GL.CreateProgram();
             GL.AttachShader(_shaderProgramId, vertexShader);
             GL.AttachShader(_shaderProgramId, fragmentShader);
@@ -395,6 +435,82 @@ namespace MphRead
             GL.DetachShader(_shaderProgramId, fragmentShader);
             GL.DeleteShader(fragmentShader);
             GL.DeleteShader(vertexShader);
+
+            vertexShader = GL.CreateShader(ShaderType.VertexShader);
+            GL.ShaderSource(vertexShader, Shaders.RttVertexShader);
+            GL.CompileShader(vertexShader);
+            vertexLog = GL.GetShaderInfoLog(vertexShader);
+            fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
+            GL.ShaderSource(fragmentShader, Shaders.RttFragmentShader);
+            GL.CompileShader(fragmentShader);
+            fragmentLog = GL.GetShaderInfoLog(fragmentShader);
+            if (vertexLog != "" || fragmentLog != "")
+            {
+                if (Debugger.IsAttached)
+                {
+                    Debugger.Break();
+                }
+                throw new ProgramException("Failed to compile RTT shaders.");
+            }
+            _rttShaderProgramId = GL.CreateProgram();
+            GL.AttachShader(_rttShaderProgramId, vertexShader);
+            GL.AttachShader(_rttShaderProgramId, fragmentShader);
+            GL.LinkProgram(_rttShaderProgramId);
+            GL.DetachShader(_rttShaderProgramId, vertexShader);
+            GL.DetachShader(_rttShaderProgramId, fragmentShader);
+            GL.DeleteShader(fragmentShader);
+
+            // use same vertex shader
+            fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
+            GL.ShaderSource(fragmentShader, Shaders.ShiftFragmentShader);
+            GL.CompileShader(fragmentShader);
+            fragmentLog = GL.GetShaderInfoLog(fragmentShader);
+            if (fragmentLog != "")
+            {
+                if (Debugger.IsAttached)
+                {
+                    Debugger.Break();
+                }
+                throw new ProgramException("Failed to compile shift shader.");
+            }
+            _shiftShaderProgramId = GL.CreateProgram();
+            GL.AttachShader(_shiftShaderProgramId, vertexShader);
+            GL.AttachShader(_shiftShaderProgramId, fragmentShader);
+            GL.LinkProgram(_shiftShaderProgramId);
+            GL.DetachShader(_shiftShaderProgramId, vertexShader);
+            GL.DetachShader(_shiftShaderProgramId, fragmentShader);
+            GL.DeleteShader(fragmentShader);
+            GL.DeleteShader(vertexShader);
+
+            _frameBuffer = GL.GenFramebuffer();
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, _frameBuffer);
+            _screenTexture = GL.GenTexture();
+            _textureCount++;
+            GL.BindTexture(TextureTarget.Texture2D, _screenTexture);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, Size.X, Size.Y, 0,
+                PixelFormat.Rgb, PixelType.UnsignedByte, IntPtr.Zero);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
+                TextureTarget.Texture2D, _screenTexture, 0);
+
+            _renderBuffer = GL.GenRenderbuffer();
+            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, _renderBuffer);
+            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.Depth24Stencil8, Size.X, Size.Y);
+            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
+            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment,
+                RenderbufferTarget.Renderbuffer, _renderBuffer);
+
+            FramebufferErrorCode status = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+            if (status != FramebufferErrorCode.FramebufferComplete)
+            {
+                Debugger.Break();
+            }
+
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 
             _shaderLocations.UseLight = GL.GetUniformLocation(_shaderProgramId, "use_light");
             _shaderLocations.ShowColors = GL.GetUniformLocation(_shaderProgramId, "show_colors");
@@ -411,7 +527,6 @@ namespace MphRead
             _shaderLocations.FogColor = GL.GetUniformLocation(_shaderProgramId, "fog_color");
             _shaderLocations.FogMinDistance = GL.GetUniformLocation(_shaderProgramId, "fog_min");
             _shaderLocations.FogMaxDistance = GL.GetUniformLocation(_shaderProgramId, "fog_max");
-
             _shaderLocations.UseOverride = GL.GetUniformLocation(_shaderProgramId, "use_override");
             _shaderLocations.OverrideColor = GL.GetUniformLocation(_shaderProgramId, "override_color");
             _shaderLocations.UsePaletteOverride = GL.GetUniformLocation(_shaderProgramId, "use_pal_override");
@@ -425,7 +540,32 @@ namespace MphRead
             _shaderLocations.TexgenMode = GL.GetUniformLocation(_shaderProgramId, "texgen_mode");
             _shaderLocations.MatrixStack = GL.GetUniformLocation(_shaderProgramId, "mtx_stack");
             _shaderLocations.ToonTable = GL.GetUniformLocation(_shaderProgramId, "toon_table");
-            _shaderLocations.FadeColor = GL.GetUniformLocation(_shaderProgramId, "fade_color");
+
+            _shaderLocations.FadeColor = GL.GetUniformLocation(_rttShaderProgramId, "fade_color");
+            _shaderLocations.LayerAlpha = GL.GetUniformLocation(_rttShaderProgramId, "alpha");
+
+            _shaderLocations.ShiftTable = GL.GetUniformLocation(_shiftShaderProgramId, "shift_table");
+            _shaderLocations.ShiftIndex = GL.GetUniformLocation(_shiftShaderProgramId, "shift_idx");
+            _shaderLocations.ShiftFactor = GL.GetUniformLocation(_shiftShaderProgramId, "shift_fac");
+            _shaderLocations.LerpFactor = GL.GetUniformLocation(_shiftShaderProgramId, "lerp_fac");
+
+            GL.UseProgram(_shiftShaderProgramId);
+
+            float[] shifts = new float[64];
+            for (int i = 0; i < 64; i++)
+            {
+                int val;
+                if ((i & 32) != 0)
+                {
+                    val = 31 - (i & 31);
+                }
+                else
+                {
+                    val = i & 31;
+                }
+                shifts[i] = -((val - 16) << 12) / 4096f / 256f;
+            }
+            GL.Uniform1(_shaderLocations.ShiftTable, 64, shifts);
 
             GL.UseProgram(_shaderProgramId);
 
@@ -831,17 +971,19 @@ namespace MphRead
         public int BindGetTexture(IReadOnlyList<ColorRgba> data, int width, int height)
         {
             _textureCount++;
-            var pixels = new List<uint>();
-            for (int i = 0; i < data.Count; i++)
-            {
-                ColorRgba pixel = data[i];
-                pixels.Add(pixel.ToUint());
-            }
             GL.BindTexture(TextureTarget.Texture2D, _textureCount);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
-                PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
+                PixelFormat.Rgba, PixelType.UnsignedByte, data.ToArray());
             GL.BindTexture(TextureTarget.Texture2D, 0);
             return _textureCount;
+        }
+
+        public void BindTexture(IReadOnlyList<ColorRgba> data, int width, int height, int bindingId)
+        {
+            GL.BindTexture(TextureTarget.Texture2D, bindingId);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
+                PixelFormat.Rgba, PixelType.UnsignedByte, data.ToArray());
+            GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
         public void UpdateMaterials(Model model, int recolorId)
@@ -879,19 +1021,16 @@ namespace MphRead
             }
         }
 
-        public void OnUpdateFrame(double frameTime)
+        public void OnUpdateFrame()
         {
-            if (_recording || Debugger.IsAttached)
-            {
-                _frameTime = 1 / 60f; // todo: FPS stuff
-            }
-            else
-            {
-                _frameTime = (float)frameTime;
-            }
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, _frameBuffer);
+            GL.UseProgram(_shaderProgramId);
             LoadAndUnload();
+            // todo: FPS stuff
+            _frameTime = 1 / 60f;
             if (ProcessFrame)
             {
+                _elapsedTime += _frameTime;
                 PlayerEntity.ProcessInput(_keyboardState, _mouseState);
             }
             OnKeyHeld();
@@ -912,7 +1051,11 @@ namespace MphRead
             _destroyedEntities.Clear();
             if (ProcessFrame)
             {
-                UpdateScene();
+                GameState.ProcessFrame(this);
+                if (GameState.MatchState == MatchState.InProgress)
+                {
+                    UpdateScene();
+                }
             }
             if (ProcessFrame || CameraMode != CameraMode.Player)
             {
@@ -923,17 +1066,21 @@ namespace MphRead
             GetDrawItems();
             if (ProcessFrame)
             {
-                ProcessMessageQueue();
-                _elapsedTime += 1 / 60f; // todo: FPS stuff
+                if (GameState.MatchState == MatchState.InProgress)
+                {
+                    ProcessMessageQueue();
+                    _liveFrames++;
+                }
                 _frameCount++;
+                GameState.UpdateTime(this);
             }
+            _frameAdvanceLastFrame = _frameAdvanceOn;
         }
 
         private void UpdateProjection()
         {
             // todo: update this only when the viewport or camera values change
-            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
-            float aspect = (viewport.Z - viewport.X) / (viewport.W - viewport.Y);
+            float aspect = Size.X / (float)Size.Y;
             _perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(_cameraFov, aspect, _nearClip, _useClip ? _farClip : 10000f);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref _perspectiveMatrix);
             // update frustum info
@@ -1099,17 +1246,101 @@ namespace MphRead
                 RenderItem(item);
             }
             GL.DepthMask(true);
-            GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
+            GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
 
-            PlayerEntity.Main.UpdateHud();
-            if (CameraMode == CameraMode.Player)
+            if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active))
             {
-                DrawHudLayer(Layer3BindingId);
-                DrawHudLayer(Layer1BindingId);
-                DrawHudLayer(Layer2BindingId);
+                if (ProcessFrame)
+                {
+                    PlayerEntity.Main.UpdateHud();
+                }
+                if (CameraMode == CameraMode.Player)
+                {
+                    SetHudLayerUniforms();
+                    PlayerEntity.Main.DrawHudModels();
+                    UnsetHudLayerUniforms();
+                }
             }
+
+            if (PlayerEntity.Main.HudDisruptedState != 0)
+            {
+                float div = _elapsedTime / (1 / 30f);
+                int index = (int)div;
+                float factor = div % 1;
+                GL.UseProgram(_shiftShaderProgramId);
+                GL.Uniform1(_shaderLocations.ShiftFactor, PlayerEntity.Main.HudDisruptionFactor);
+                GL.Uniform1(_shaderLocations.ShiftIndex, index);
+                GL.Uniform1(_shaderLocations.LerpFactor, factor);
+            }
+            else
+            {
+                GL.UseProgram(_rttShaderProgramId);
+                GL.Uniform1(_shaderLocations.LayerAlpha, 1f);
+            }
+            GL.Uniform4(_shaderLocations.FadeColor, Vector4.Zero);
+
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            GL.Disable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.Blend);
+            GL.BindTexture(TextureTarget.Texture2D, _screenTexture);
+
+            GL.Begin(PrimitiveType.TriangleStrip);
+            // top right
+            GL.TexCoord3(1f, 1f, 0f);
+            GL.Vertex3(1f, 1f, 0f);
+            // top left
+            GL.TexCoord3(0f, 1f, 0f);
+            GL.Vertex3(-1f, 1f, 0f);
+            // bottom right
+            GL.TexCoord3(1f, 0f, 0f);
+            GL.Vertex3(1f, -1f, 0f);
+            // bottom left
+            GL.TexCoord3(0f, 0f, 0f);
+            GL.Vertex3(-1f, -1f, 0f);
+            GL.End();
+
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
+            if (PlayerEntity.Main.HudDisruptedState != 0)
+            {
+                GL.UseProgram(_rttShaderProgramId);
+            }
+            if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
+            {
+                DrawHudLayer(Layer4Info); // ice layer
+                DrawHudLayer(Layer3Info); // helmet back
+                DrawHudLayer(Layer1Info); // visor
+                DrawHudLayer(Layer2Info); // helmet front
+                PlayerEntity.Main.DrawHudObjects();
+                if (_fadeType != FadeType.None)
+                {
+                    float percent = _fadePercent;
+                    if (_fadeIn)
+                    {
+                        percent = 1 - percent;
+                    }
+                    GL.Uniform4(_shaderLocations.FadeColor, _fadeColor, _fadeColor, _fadeColor, percent);
+                    GL.Begin(PrimitiveType.TriangleStrip);
+                    // top right
+                    GL.TexCoord3(1f, 1f, 0f);
+                    GL.Vertex3(1f, 1f, 0f);
+                    // top left
+                    GL.TexCoord3(0f, 1f, 0f);
+                    GL.Vertex3(-1f, 1f, 0f);
+                    // bottom right
+                    GL.TexCoord3(1f, 0f, 0f);
+                    GL.Vertex3(1f, -1f, 0f);
+                    // bottom left
+                    GL.TexCoord3(0f, 0f, 0f);
+                    GL.Vertex3(-1f, -1f, 0f);
+                    GL.End();
+                }
+            }
+            GL.Enable(EnableCap.DepthTest);
+            GL.Disable(EnableCap.Blend);
         }
 
         private void LoadAndUnload()
@@ -1300,7 +1531,6 @@ namespace MphRead
             }
         }
 
-        // todo: effect limits for beam effects
         // in-game: 64 effects, 96 elements, 200 particles
         private static readonly int _effectEntryMax = 64;
         private static readonly int _effectElementMax = 96;
@@ -1644,6 +1874,7 @@ namespace MphRead
                         i--;
                         continue;
                     }
+                    element.Transform = element.OwnTransform;
                 }
                 else
                 {
@@ -2202,6 +2433,7 @@ namespace MphRead
 
         private void UpdateScene()
         {
+            PlayerEntity.Main.ProcessHudMessageQueue();
             for (int i = 0; i < _entities.Count; i++)
             {
                 EntityBase entity = _entities[i];
@@ -2213,6 +2445,8 @@ namespace MphRead
                     _destroyedEntities.Add(entity);
                 }
             }
+            PlayerEntity.Main.ProcessModeHud();
+            GameState.UpdateState(this);
         }
 
         private void GetDrawItems()
@@ -2260,7 +2494,7 @@ namespace MphRead
                 RemoveEntity(entity);
             }
 
-            if (ProcessFrame)
+            if (ProcessFrame && GameState.MatchState == MatchState.InProgress)
             {
                 ProcessEffects();
             }
@@ -2332,49 +2566,51 @@ namespace MphRead
 
         private FadeType _fadeType = FadeType.None;
         private float _fadeColor = 0;
-        private float _fadeTarget = 0;
+        private bool _fadeIn = false;
         private float _fadeStart = 0;
         private float _fadeLength = 0;
-        private float _currentFade = 0;
+        private float _fadePercent = 0;
+        private bool _exitAfterFade = false; // skdebug
 
-        public void SetFade(FadeType type, float length, bool overwrite)
+        public void SetFade(FadeType type, float length, bool overwrite, bool exitAfterFade = false)
         {
             if (!overwrite && _fadeType != FadeType.None)
             {
                 return;
             }
             _fadeType = type;
+            _fadePercent = 0;
             if (type == FadeType.None)
             {
                 _fadeType = type;
                 _fadeColor = 0;
-                _fadeTarget = 0;
-                _currentFade = 0;
+                _fadeIn = false;
                 _fadeStart = 0;
                 _fadeLength = 0;
             }
             else if (type == FadeType.FadeInWhite)
             {
                 _fadeColor = 1;
-                _fadeTarget = 0;
+                _fadeIn = true;
             }
             else if (type == FadeType.FadeInBlack)
             {
-                _fadeColor = -1;
-                _fadeTarget = 0;
+                _fadeColor = 0;
+                _fadeIn = true;
             }
             else if (type == FadeType.FadeOutWhite || type == FadeType.FadeOutInWhite)
             {
-                _fadeColor = 0;
-                _fadeTarget = 1;
+                _fadeColor = 1;
+                _fadeIn = false;
             }
             else if (type == FadeType.FadeOutBlack || type == FadeType.FadeOutInBlack)
             {
                 _fadeColor = 0;
-                _fadeTarget = -1;
+                _fadeIn = false;
             }
             _fadeStart = _elapsedTime;
             _fadeLength = length;
+            _exitAfterFade = exitAfterFade;
         }
 
         private void UpdateFade()
@@ -2382,34 +2618,25 @@ namespace MphRead
             Color4 clearColor = _clearColor;
             if (_fadeType != FadeType.None)
             {
-                float percent = (_elapsedTime - _fadeStart) / _fadeLength;
-                if (percent > 1)
+                _fadePercent = (_elapsedTime - _fadeStart) / _fadeLength;
+                if (_fadePercent >= 1)
                 {
-                    percent = 1;
-                }
-                _currentFade = _fadeColor + (_fadeTarget - _fadeColor) * percent;
-                clearColor = new Color4(_clearColor.R + _currentFade, _clearColor.G + _currentFade,
-                    _clearColor.B + _currentFade, _clearColor.A);
-                if (percent == 1)
-                {
+                    _fadePercent = 1;
                     EndFade();
                 }
             }
-            GL.Uniform1(_shaderLocations.FadeColor, _currentFade);
-            GL.ClearColor(clearColor);
+            GL.ClearColor(_clearColor);
         }
 
         private void EndFade()
         {
-            if (_fadeType == FadeType.FadeOutBlack)
+            if (_exitAfterFade)
             {
-                _currentFade = -1;
+                OutputStop();
+                _close.Invoke();
+                return;
             }
-            else if (_fadeType == FadeType.FadeOutWhite)
-            {
-                _currentFade = 1;
-            }
-            else if (_fadeType == FadeType.FadeOutInBlack)
+            if (_fadeType == FadeType.FadeOutInBlack)
             {
                 SetFade(FadeType.FadeInBlack, _fadeLength, overwrite: true);
             }
@@ -2421,8 +2648,8 @@ namespace MphRead
             {
                 _fadeType = FadeType.None;
                 _fadeColor = 0;
-                _fadeTarget = 0;
-                _currentFade = 0;
+                _fadeIn = false;
+                _fadePercent = 0;
                 _fadeStart = 0;
                 _fadeLength = 0;
             }
@@ -2786,20 +3013,13 @@ namespace MphRead
             }
         }
 
-        public int Layer1BindingId { get; set; } = -1;
-        public int Layer2BindingId { get; set; } = -1;
-        public int Layer3BindingId { get; set; } = -1;
+        public LayerInfo Layer1Info { get; } = new LayerInfo();
+        public LayerInfo Layer2Info { get; } = new LayerInfo();
+        public LayerInfo Layer3Info { get; } = new LayerInfo();
+        public LayerInfo Layer4Info { get; } = new LayerInfo();
 
-        public int IceLayerBindingId { get; set; } = -1;
-
-        private void DrawHudLayer(int bindingId)
+        private void SetHudLayerUniforms()
         {
-            if (bindingId == -1)
-            {
-                return;
-            }
-            // todo: if BG layer is shifted, we need this quad to be bigger than the viewport so it can shift appropriately
-            // tood: allow this to be affected by viewer toggles
             GL.Disable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
             Matrix4 identity = Matrix4.Identity;
@@ -2811,9 +3031,40 @@ namespace MphRead
             GL.Uniform3(_shaderLocations.Ambient, Vector3.One);
             GL.Uniform3(_shaderLocations.Specular, Vector3.One);
             GL.Uniform3(_shaderLocations.Emission, Vector3.One);
-            GL.Uniform1(_shaderLocations.MaterialAlpha, 9 / 16f);
             GL.Uniform1(_shaderLocations.MaterialMode, (int)PolygonMode.Modulate);
-            GL.BindTexture(TextureTarget.Texture2D, bindingId);
+            GL.Uniform1(_shaderLocations.TexgenMode, (int)TexgenMode.None);
+            GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref identity);
+            GL.Uniform1(_shaderLocations.UseTexture, 1);
+            GL.Uniform1(_shaderLocations.UseOverride, 0);
+            GL.Uniform1(_shaderLocations.UsePaletteOverride, 0);
+            GL.Uniform1(_shaderLocations.UseFog, 0);
+            if (_faceCulling)
+            {
+                GL.Enable(EnableCap.CullFace);
+                GL.CullFace(CullFaceMode.Back);
+            }
+            GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref identity);
+            var orthoMatrix = Matrix4.CreateOrthographic(Size.X, Size.Y, 0.5f, 1.5f);
+            GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref orthoMatrix);
+        }
+
+        private void UnsetHudLayerUniforms()
+        {
+            GL.Disable(EnableCap.Blend);
+            GL.Enable(EnableCap.DepthTest);
+            GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref _viewMatrix);
+            GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref _perspectiveMatrix);
+        }
+
+        private void DrawHudLayer(LayerInfo info)
+        {
+            if (info.BindingId == -1)
+            {
+                return;
+            }
+            // ltodo: if BG layer is shifted, we need this quad to be bigger than the viewport so it can shift appropriately
+            GL.Uniform1(_shaderLocations.LayerAlpha, info.Alpha);
+            GL.BindTexture(TextureTarget.Texture2D, info.BindingId);
             int minParameter = (int)TextureMinFilter.Nearest;
             int magParameter = (int)TextureMagFilter.Nearest;
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
@@ -2822,33 +3073,217 @@ namespace MphRead
                 TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            GL.Uniform1(_shaderLocations.TexgenMode, (int)TexgenMode.None);
-            GL.UniformMatrix4(_shaderLocations.TextureMatrix, transpose: false, ref identity);
-            GL.Uniform1(_shaderLocations.UseTexture, 1);
-            GL.Uniform1(_shaderLocations.UseOverride, 0);
-            GL.Uniform1(_shaderLocations.UsePaletteOverride, 0);
-            GL.Enable(EnableCap.CullFace);
-            GL.CullFace(CullFaceMode.Back);
-            GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
-            GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref identity);
-            GL.GetFloat(GetPName.Viewport, out Vector4 viewport);
-            float width = viewport.Z - viewport.X;
-            float height = viewport.W - viewport.Y;
-            var orthoMatrix = Matrix4.CreateOrthographic(width, height, 0.5f, 1.5f);
-            GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref orthoMatrix);
-            float size = MathF.Max(width, height) / 2;
+            float viewWidth = Size.X;
+            float viewHeight = Size.Y;
+            float width;
+            float height;
+            if (info.ScaleX == -1 || info.ScaleY == -1)
+            {
+                float size = MathF.Max(viewWidth, viewHeight) / 2;
+                width = size / (viewWidth / 2);
+                height = size / (viewHeight / 2);
+            }
+            else
+            {
+                width = viewWidth * info.ScaleX / 2 / (viewWidth / 2);
+                height = viewHeight * info.ScaleY / 2 / (viewHeight / 2);
+            }
             GL.Begin(PrimitiveType.TriangleStrip);
-            GL.TexCoord3(0f, 0f, 0f);
-            GL.Vertex3(-size, -size, -1f);
+            // top right
             GL.TexCoord3(1f, 0f, 0f);
-            GL.Vertex3(size, -size, -1f);
-            GL.TexCoord3(0f, 1f, 0f);
-            GL.Vertex3(-size, size, -1f);
+            GL.Vertex3(width + info.ShiftX, height + info.ShiftY, 0f);
+            // top left
+            GL.TexCoord3(0f, 0f, 0f);
+            GL.Vertex3(-width + info.ShiftX, height + info.ShiftY, 0f);
+            // bottom right
             GL.TexCoord3(1f, 1f, 0f);
-            GL.Vertex3(size, size, -1f);
+            GL.Vertex3(width + info.ShiftX, -height + info.ShiftY, 0f);
+            // bottom left
+            GL.TexCoord3(0f, 1f, 0f);
+            GL.Vertex3(-width + info.ShiftX, -height + info.ShiftY, 0f);
             GL.End();
-            GL.Disable(EnableCap.Blend);
-            GL.Enable(EnableCap.DepthTest);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
+        public void DrawHudObject(HudObjectInstance inst, int mode = 0)
+        {
+            if (!inst.Enabled)
+            {
+                return;
+            }
+            float x = inst.PositionX;
+            float y = inst.PositionY;
+            float width = inst.Width;
+            float height = inst.Height;
+            bool center = inst.Center;
+            GL.Uniform1(_shaderLocations.LayerAlpha, inst.Alpha);
+            GL.BindTexture(TextureTarget.Texture2D, inst.BindingId);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            float viewWidth = Size.X;
+            float viewHeight = Size.Y;
+            if (mode == 2)
+            {
+                width = width / 256 * viewWidth;
+                height = height / 192 * viewHeight;
+            }
+            else if (mode == 1)
+            {
+                float aspect = height / width;
+                height = height / 192 * viewHeight;
+                width = height / aspect;
+            }
+            else // if (mode == 0)
+            {
+                float aspect = width / height;
+                width = width / 256 * viewWidth;
+                height = width / aspect;
+            }
+            float viewLeft = -viewWidth / 2;
+            float viewTop = viewHeight / 2;
+            float leftPos = viewLeft + x * viewWidth - (center ? (width / 2) : 0);
+            float rightPos = leftPos + width;
+            float topPos = viewTop - y * viewHeight + (center ? (height / 2) : 0);
+            float bottomPos = topPos - height;
+            leftPos /= (viewWidth / 2);
+            rightPos /= (viewWidth / 2);
+            topPos /= (viewHeight / 2);
+            bottomPos /= (viewHeight / 2);
+            GL.Begin(PrimitiveType.TriangleStrip);
+            // top right
+            GL.TexCoord3(1f, 0f, 0f);
+            GL.Vertex3(rightPos, topPos, 0f);
+            // top left
+            GL.TexCoord3(0f, 0f, 0f);
+            GL.Vertex3(leftPos, topPos, 0f);
+            // bottom right
+            GL.TexCoord3(1f, 1f, 0f);
+            GL.Vertex3(rightPos, bottomPos, 0f);
+            // bottom left
+            GL.TexCoord3(0f, 1f, 0f);
+            GL.Vertex3(leftPos, bottomPos, 0f);
+            GL.End();
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
+        public void DrawIconModel(Vector2 position, float angle, ModelInstance inst, ColorRgb color, float alpha)
+        {
+            float scale = Size.Y / 192f;
+            var position3d = new Vector3(position.X * Size.X - Size.X / 2, (1 - position.Y) * Size.Y - (Size.Y / 2), -1f);
+            Matrix4 transform = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(angle))
+                * Matrix4.CreateScale(scale, scale, 1) * Matrix4.CreateTranslation(position3d);
+            GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref transform);
+            Model model = inst.Model;
+            UpdateMaterials(model, 0);
+            GL.Uniform1(_shaderLocations.MaterialAlpha, alpha);
+            GL.BindTexture(TextureTarget.Texture2D, model.Materials[0].TextureBindingId);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            GL.Color3(new Vector3(color.Red / 31f, color.Green / 31f, color.Blue / 31f));
+            GL.CallList(model.Meshes[0].ListId);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            Matrix4 identity = Matrix4.Identity;
+            GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref identity);
+        }
+
+        public void DrawHudFilterModel(ModelInstance inst, float alpha = 1)
+        {
+            Model model = inst.Model;
+            UpdateMaterials(model, 0);
+            Material material = model.Materials[0];
+            GL.Uniform1(_shaderLocations.MaterialAlpha, material.Alpha / 31f * alpha);
+            GL.BindTexture(TextureTarget.Texture2D, material.TextureBindingId);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            float viewWidth = Size.X;
+            float viewHeight = Size.Y;
+            GL.Begin(PrimitiveType.TriangleStrip);
+            // top right
+            GL.TexCoord3(1f, 0f, 0f);
+            GL.Vertex3(viewWidth, viewHeight, -1f);
+            // top left
+            GL.TexCoord3(0f, 0f, 0f);
+            GL.Vertex3(-viewWidth, viewHeight, -1f);
+            // bottom right
+            GL.TexCoord3(1f, 1f, 0f);
+            GL.Vertex3(viewWidth, -viewHeight, -1f);
+            // bottom left
+            GL.TexCoord3(0f, 1f, 0f);
+            GL.Vertex3(-viewWidth, -viewHeight, -1f);
+            GL.End();
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
+        private readonly float[] _hudMatrixStack = new float[16 * 31];
+
+        public void DrawHudDamageModel(ModelInstance inst)
+        {
+            Model model = inst.Model;
+            UpdateMaterials(model, 0);
+            GL.Uniform1(_shaderLocations.MaterialAlpha, 1f);
+            GL.BindTexture(TextureTarget.Texture2D, model.Materials[0].TextureBindingId);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            float viewWidth = Size.X;
+            float viewHeight = Size.Y;
+            float xOffset = -viewWidth / 2;
+            float yOffset = -viewHeight / 2;
+            // ltodo: we only need to update this loop and matrix stack update if the viewport changes
+            for (int i = 1; i < 9; i++)
+            {
+                Node node = inst.Model.Nodes[i];
+                if (node.Enabled)
+                {
+                    float width = node.MaxBounds.X - node.MinBounds.X;
+                    float height = node.MaxBounds.Y - node.MinBounds.Y;
+                    float newWidth = width / 256 * viewWidth;
+                    float newHeight = height / 192 * viewHeight;
+                    newWidth *= model.Scale.X;
+                    newHeight *= model.Scale.Y;
+                    var transform = Matrix4.CreateScale(newWidth / width, newHeight / height, 1);
+                    transform.Row3.Xyz = new Vector3(xOffset, yOffset, -1);
+                    node.Animation = transform;
+                }
+            }
+            model.UpdateMatrixStack();
+            Array.Copy(model.MatrixStackValues.ToArray(), _hudMatrixStack, model.MatrixStackValues.Count);
+            GL.UniformMatrix4(_shaderLocations.MatrixStack, model.NodeMatrixIds.Count, transpose: false, _hudMatrixStack);
+            for (int i = 1; i < 9; i++)
+            {
+                Node node = inst.Model.Nodes[i];
+                if (node.Enabled)
+                {
+                    Mesh mesh = model.Meshes[node.MeshId / 2];
+                    GL.CallList(mesh.ListId);
+                }
+            }
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            Matrix4 identity = Matrix4.Identity;
+            GL.UniformMatrix4(_shaderLocations.MatrixStack, transpose: false, ref identity);
         }
 
         private void DoMaterial(RenderItem item)
@@ -3511,6 +3946,11 @@ namespace MphRead
             Task.Run(async () => await OutputUpdate(_outputCts.Token), _outputCts.Token);
         }
 
+        public void OutputStop()
+        {
+            _outputCts.Cancel();
+        }
+
         private async Task OutputUpdate(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
@@ -3534,7 +3974,11 @@ namespace MphRead
                     Console.WriteLine(output);
                     _currentOutput = output;
                 }
-                await Task.Delay(100, token);
+                try
+                {
+                    await Task.Delay(100, token);
+                }
+                catch (TaskCanceledException) { }
             }
         }
 
@@ -3964,19 +4408,24 @@ namespace MphRead
 
         private static readonly NativeWindowSettings _nativeWindowSettings = new NativeWindowSettings()
         {
-            Size = new Vector2i(800, 600),
+            Size = new Vector2i(1024, 768),
             Title = "MphRead",
             Profile = ContextProfile.Compatability,
-            APIVersion = new Version(3, 2)
+            APIVersion = new Version(3, 2),
+            StartVisible = false
         };
 
         public Scene Scene { get; }
+        private bool _startedHidden = true;
 
         public RenderWindow() : base(_gameWindowSettings, _nativeWindowSettings)
         {
             Scene = new Scene(Size, KeyboardState, MouseState, (string title) =>
             {
                 Title = title;
+            }, () =>
+            {
+                Close();
             });
         }
 
@@ -4002,9 +4451,9 @@ namespace MphRead
             Scene.AddModel(name, recolor, firstHunt, dir, pos);
         }
 
-        public void AddPlayer(Hunter hunter, int recolor = 0, Vector3? position = null)
+        public void AddPlayer(Hunter hunter, int recolor = 0, int team = -1, Vector3? position = null)
         {
-            Scene.AddPlayer(hunter, recolor, position);
+            Scene.AddPlayer(hunter, recolor, team, position);
         }
 
         protected override void OnLoad()
@@ -4015,14 +4464,19 @@ namespace MphRead
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            CursorGrabbed = Scene.CameraMode == CameraMode.Player && !Scene.FrameAdvance;
+            CursorGrabbed = Scene.CameraMode == CameraMode.Player && !Scene.FrameAdvance && !Scene.ShowCursor;
             if (!CursorGrabbed)
             {
                 CursorVisible = true;
             }
-            Scene.OnUpdateFrame(args.Time);
+            Scene.OnUpdateFrame();
             Scene.OnRenderFrame();
             SwapBuffers();
+            if (_startedHidden)
+            {
+                IsVisible = true;
+                _startedHidden = false;
+            }
             Scene.AfterRenderFrame();
             base.OnRenderFrame(args);
         }
@@ -4031,6 +4485,7 @@ namespace MphRead
         {
             GL.Viewport(0, 0, e.Size.X, e.Size.Y);
             Scene.Size = e.Size;
+            Scene.OnResize();
             base.OnResize(e);
         }
 
@@ -4068,6 +4523,7 @@ namespace MphRead
         {
             if (e.Key == Keys.Escape)
             {
+                Scene.OutputStop();
                 Close();
             }
             else

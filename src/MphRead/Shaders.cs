@@ -109,7 +109,6 @@ uniform vec4 pal_override_color;
 uniform float mat_alpha;
 uniform int mat_mode;
 uniform vec3[32] toon_table;
-uniform float fade_color;
 
 varying vec2 texcoord;
 varying vec4 color;
@@ -166,7 +165,69 @@ void main()
         }
         col = vec4((col * (1.0 - density) + fog_color * density).xyz, col.a);
     }
-    gl_FragColor = col + vec4(fade_color, fade_color, fade_color, 0);
+    gl_FragColor = col;
+}
+";
+
+        public static string RttVertexShader { get; } = @"
+#version 120
+
+varying vec2 texcoord;
+
+void main()
+{
+    gl_Position = vec4(gl_Vertex.xy, 0, 1);
+    texcoord = gl_MultiTexCoord0.xy;
+}
+";
+
+        public static string RttFragmentShader { get; } = @"
+#version 120
+
+uniform float alpha;
+uniform vec4 fade_color;
+uniform sampler2D tex;
+varying vec2 texcoord;
+varying vec4 color;
+
+void main()
+{
+    if (fade_color.a > 0) {
+        gl_FragColor = fade_color;
+    }
+    else {
+        gl_FragColor = texture2D(tex, texcoord);
+        gl_FragColor.a *= alpha;
+    }
+}
+";
+
+        public static string ShiftFragmentShader { get; } = @"
+#version 120
+
+uniform float[64] shift_table;
+uniform int shift_idx;
+uniform float shift_fac;
+uniform float lerp_fac;
+uniform sampler2D tex;
+
+varying vec2 texcoord;
+varying vec4 color;
+
+void main()
+{
+    int band = int((1.0 - texcoord.y) * 192.0);
+    int index = int(mod((band + shift_idx + mod(band, 2) * 32), 64));
+    float value1 = shift_table[index];
+    float value2 = shift_table[int(mod(index + 1, 64))];
+    float value = mix(value1, value2, lerp_fac) * shift_fac;
+    vec2 shifted = vec2(texcoord.x + value, texcoord.y);
+    if (shifted.x < 0.0 || shifted.x > 1.0) {
+        gl_FragColor = vec4(0, 0, 0, 1);
+    }
+    else {
+        gl_FragColor = texture2D(tex, shifted);
+    }
 }
 ";
     }
@@ -202,5 +263,10 @@ void main()
         public int MatrixStack { get; set; }
         public int ToonTable { get; set; }
         public int FadeColor { get; set; }
+        public int LayerAlpha { get; set; }
+        public int ShiftTable { get; set; }
+        public int ShiftIndex { get; set; }
+        public int ShiftFactor { get; set; }
+        public int LerpFactor { get; set; }
     }
 }

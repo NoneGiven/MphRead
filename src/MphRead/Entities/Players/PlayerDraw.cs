@@ -21,8 +21,8 @@ namespace MphRead.Entities
             }
             int lod = 0;
             Flags2 &= ~PlayerFlags2.Lod1;
-            // todo: make this configurable
-            if (!IsMainPlayer && (Position - CameraInfo.Position).LengthSquared >= 3 * 3)
+            if (!IsMainPlayer && !Features.MaxPlayerDetail
+                && (Position - Main.CameraInfo.Position).LengthSquared >= 3 * 3)
             {
                 lod = 1;
                 Flags2 |= PlayerFlags2.Lod1;
@@ -319,7 +319,7 @@ namespace MphRead.Entities
                 product.M23 *= -1;
                 product.M32 *= -1;
                 product.M33 *= -1;
-                ulong frame = _scene.FrameCount / 2;
+                ulong frame = _scene.LiveFrames / 2;
                 float rotZ = ((int)(16 * ((781874935307L * (53248 * frame) >> 32) + 2048)) >> 20) * (360 / 4096f);
                 float rotY = ((int)(16 * ((781874935307L * (26624 * frame) + 0x80000000000) >> 32)) >> 20) * (360 / 4096f);
                 var rot = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(rotZ));
@@ -357,7 +357,7 @@ namespace MphRead.Entities
                     float alpha = _curAlpha * pct;
                     if (_health == 0)
                     {
-                        float decrease = 2 * (_respawnTime - _respawnTimer) / 2f; // todo: FPS stuff
+                        float decrease = 2 * (RespawnTime - _respawnTimer) / 2f; // todo: FPS stuff
                         alpha -= decrease;
                     }
                     if (alpha > 0)
@@ -462,7 +462,7 @@ namespace MphRead.Entities
         private void DrawDeathParticles()
         {
             // get current percentage through the first 1/3 of the respawn cooldown
-            float timePct = 1 - ((_respawnTimer - (2 / 3f * _respawnTime)) / (1 / 3f * _respawnTime));
+            float timePct = 1 - ((_respawnTimer - (2 / 3f * RespawnTime)) / (1 / 3f * RespawnTime));
             if (timePct < 0 || timePct > 1)
             {
                 return;

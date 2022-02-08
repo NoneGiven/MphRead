@@ -4,7 +4,7 @@ using System.IO;
 using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
-using MphRead.Hud;
+using MphRead.Text;
 
 namespace MphRead
 {
@@ -25,6 +25,10 @@ namespace MphRead
             if (mode == GameMode.None)
             {
                 mode = metadata.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;
+                if (mode == GameMode.Battle && metadata.Name == "AD1 TRANSFER LOCK BT")
+                {
+                    mode = GameMode.Bounty;
+                }
                 Weapons.Current = metadata.Multiplayer ? Weapons.WeaponsMP : Weapons.Weapons1P;
             }
             else
@@ -32,16 +36,9 @@ namespace MphRead
                 Weapons.Current = scene.Multiplayer ? Weapons.WeaponsMP : Weapons.Weapons1P;
             }
             scene.GameMode = mode;
-            if (playerCount < 1 || playerCount > 4)
+            if (playerCount == 0)
             {
-                if (mode == GameMode.SinglePlayer)
-                {
-                    playerCount = 1;
-                }
-                else
-                {
-                    playerCount = 2;
-                }
+                playerCount = PlayerEntity.PlayerCount;
             }
             if (entityLayerId < 0 || entityLayerId > 15)
             {
@@ -58,7 +55,8 @@ namespace MphRead
             }
             if (nodeLayerMask == 0)
             {
-                nodeLayerMask = GetNodeLayer(mode, metadata.NodeLayer, playerCount);
+                int nodePlayerCount = Features.MaxRoomDetail ? 2 : playerCount;
+                nodeLayerMask = GetNodeLayer(mode, metadata.NodeLayer, nodePlayerCount);
             }
             IReadOnlyList<EntityBase> entities = LoadEntities(metadata, entityLayerId, scene);
             CollisionInstance collision = Collision.GetCollision(metadata, nodeLayerMask);
@@ -68,6 +66,15 @@ namespace MphRead
                 nodeData = ReadNodeData.ReadData(Path.Combine(@"", metadata.NodePath));
             }
             LoadResources(scene);
+            CameraSequence.Current = null;
+            if (scene.Multiplayer && PlayerEntity.PlayerCount > 0)
+            {
+                int seqId = roomId - 93 + 172;
+                if (seqId >= 172 && seqId < 199)
+                {
+                    CameraSequence.Intro = CameraSequence.Load(seqId, scene);
+                }
+            }
             var room = new RoomEntity(name, metadata, collision, nodeData, nodeLayerMask, roomId, scene);
             return (room, metadata, collision, entities);
         }
@@ -275,7 +282,18 @@ namespace MphRead
                 scene.LoadEffect(Metadata.ChargeEffectIds[i]);
                 scene.LoadEffect(Metadata.ChargeLoopEffectIds[i]);
             }
+            PlayerEntity.LoadWeaponNames();
             PlayerEntity.GeneratePlayerVolumes();
+            // todo: use game mode, region, etc.
+            Language language = Language.English;
+            if (Paths.MphKey == "AMHK0")
+            {
+                language = Language.Japanese;
+            }
+            Strings.ReadStringTable(StringTables.HudMsgsCommon, language);
+            Strings.ReadStringTable(StringTables.HudMessagesSP, language);
+            Strings.ReadStringTable(StringTables.HudMessagesMP, language);
+            Extract.LoadRuntimeData();
         }
 
         public static void LoadHunterResources(Hunter hunter, Scene scene)
@@ -421,7 +439,6 @@ namespace MphRead
             // skdebug - the game only loads these if the Omega Cannon item is in the room
             scene.LoadEffect(209); // ultimateProjectile
             scene.LoadEffect(245); // ultimateCol
-            scene.IceLayerBindingId = HudInfo.CharMapToTexture(HudElements.IceLayer, scene);
         }
 
         public static void LoadObjectResources(Scene scene)

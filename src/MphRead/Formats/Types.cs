@@ -367,6 +367,34 @@ namespace MphRead
                 (axis.Z * axis.Z * k) + cos
             );
         }
+
+        // get position as X/Y percentages from viewport top-left to bottom-right
+        public static float ProjectPosition(Vector3 pos, Matrix4 viewMatrix, Matrix4 projectionMtx, out Vector2 dest)
+        {
+            pos = Vec3MultMtx4(pos, viewMatrix);
+            float w = projectionMtx.Row3.W
+                + pos.X * projectionMtx.Row0.W
+                + pos.Y * projectionMtx.Row1.W
+                + pos.Z * projectionMtx.Row2.W;
+            if (w <= 0)
+            {
+                dest = Vector2.Zero;
+                return w;
+            }
+            float x = (projectionMtx.Row3.X
+                + pos.X * projectionMtx.Row0.X
+                + pos.Y * projectionMtx.Row1.X
+                + pos.Z * projectionMtx.Row2.X) / w;
+            float y = (projectionMtx.Row3.Y
+                + pos.X * projectionMtx.Row0.Y
+                + pos.Y * projectionMtx.Row1.Y
+                + pos.Z * projectionMtx.Row2.Y) / w;
+            // results are in percentages from center where bottom-left is (-1,-1) and top-right is (1,1)
+            // we need to convert to percentages from top-left so top-left is (0,0) and bottom-right is (1,1)
+            dest.X = (x + 1) / 2; // -1, 0, 1 --> 0, 0.5, 1
+            dest.Y = (1 - y) / 2; // -1, 0, 1 --> 1, 0.5, 0
+            return w;
+        }
     }
 
     // size: 3
@@ -396,6 +424,26 @@ namespace MphRead
         public static Vector3 operator /(ColorRgb left, float right)
         {
             return new Vector3(left.Red / right, left.Green / right, left.Blue / right);
+        }
+
+        public static bool operator ==(ColorRgb lhs, ColorRgb rhs)
+        {
+            return lhs.Red == rhs.Red && lhs.Green == rhs.Green && lhs.Blue == rhs.Blue;
+        }
+
+        public static bool operator !=(ColorRgb lhs, ColorRgb rhs)
+        {
+            return lhs.Red != rhs.Red || lhs.Green != rhs.Green || lhs.Blue != rhs.Blue;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is ColorRgb other && Red == other.Red && Green == other.Green && Blue == other.Blue;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Red, Green, Blue);
         }
     }
 
@@ -432,10 +480,51 @@ namespace MphRead
         {
             return (uint)((Red << 0) | (Green << 8) | (Blue << 16) | (Alpha << 24));
         }
+
+        public static bool operator ==(ColorRgba lhs, ColorRgba rhs)
+        {
+            return lhs.Red == rhs.Red && lhs.Green == rhs.Green && lhs.Blue == rhs.Blue && lhs.Alpha == rhs.Alpha;
+        }
+
+        public static bool operator !=(ColorRgba lhs, ColorRgba rhs)
+        {
+            return lhs.Red != rhs.Red || lhs.Green != rhs.Green || lhs.Blue != rhs.Blue || lhs.Alpha != rhs.Alpha;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is ColorRgba other
+                && Red == other.Red && Green == other.Green && Blue == other.Blue && Alpha == other.Alpha;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Red, Green, Blue, Alpha);
+        }
     }
 
     public static class TypeExtensions
     {
+        public static Vector2 WithX(this Vector2 vector, float x)
+        {
+            return new Vector2(x, vector.Y);
+        }
+
+        public static Vector2 WithY(this Vector2 vector, float y)
+        {
+            return new Vector2(vector.X, y);
+        }
+
+        public static Vector2 AddX(this Vector2 vector, float x)
+        {
+            return new Vector2(vector.X + x, vector.Y);
+        }
+
+        public static Vector2 AddY(this Vector2 vector, float y)
+        {
+            return new Vector2(vector.X, vector.Y + y);
+        }
+
         public static Vector3 WithX(this Vector3 vector, float x)
         {
             return new Vector3(x, vector.Y, vector.Z);
