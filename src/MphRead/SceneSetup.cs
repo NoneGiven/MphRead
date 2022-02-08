@@ -66,6 +66,7 @@ namespace MphRead
                 nodeData = ReadNodeData.ReadData(Path.Combine(@"", metadata.NodePath));
             }
             LoadResources(scene);
+            CamSeqEntity.ClearData();
             CamSeqEntity.Current = null;
             CameraSequence.Current = null;
             CameraSequence.Intro = null;

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using MphRead.Formats;
 using OpenTK.Mathematics;
 
@@ -36,6 +37,14 @@ namespace MphRead.Entities
                 _sequenceData[seqId] = sequence;
             }
             Sequence = sequence;
+        }
+
+        public static void ClearData()
+        {
+            for (int i = 0; i < _sequenceData.Length; i++)
+            {
+                _sequenceData[i] = null;
+            }
         }
 
         public override void Initialize()
