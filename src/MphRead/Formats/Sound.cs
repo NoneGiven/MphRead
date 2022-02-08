@@ -495,9 +495,9 @@ namespace MphRead.Formats.Sound
         // nxtodo: SFX fields
         public readonly ushort Field0;
         public readonly byte CategoryId;
-        public readonly byte Field3;
+        public readonly byte SlotCount;
         public readonly byte Field4;
-        public readonly byte Field5;
+        public readonly byte Priority;
         public readonly ushort Size;
         public readonly uint Data;
     }
@@ -518,11 +518,11 @@ namespace MphRead.Formats.Sound
     {
         public string Name { get; }
         public string Category { get; }
-        public ushort Field0;
+        public ushort Field0; // ID/index/-1 for missing entries?
         public byte CategoryId;
-        public byte Field3;
-        public byte Field4;
-        public byte Field5;
+        public byte SlotCount;
+        public byte Field4; // volume-related
+        public byte Priority;
         public ushort Size;
         public uint Data;
 
@@ -532,9 +532,9 @@ namespace MphRead.Formats.Sound
             Category = category;
             Field0 = raw.Field0;
             CategoryId = raw.CategoryId;
-            Field3 = raw.Field3;
+            SlotCount = raw.SlotCount;
             Field4 = raw.Field4;
-            Field5 = raw.Field5;
+            Priority = raw.Priority;
             Size = raw.Size;
             Data = raw.Data;
         }
@@ -581,7 +581,7 @@ namespace MphRead.Formats.Sound
         public readonly uint Offset;
         public readonly ushort Size;
         public readonly byte Field6;
-        public readonly byte Field7;
+        public readonly byte SlotCount;
     }
 
     // size: 12
@@ -615,7 +615,7 @@ namespace MphRead.Formats.Sound
         public readonly uint Offset;
         public readonly ushort Size;
         public readonly byte Field6;
-        public readonly byte Field7;
+        public readonly byte SloutCount;
     }
 
     // size: 36
@@ -623,7 +623,7 @@ namespace MphRead.Formats.Sound
     {
         public readonly ushort Field0;
         public readonly ushort Field2;
-        public readonly uint Count1;
+        public readonly uint Count1; // blocks
         public readonly uint Offset1;
         public readonly uint Count2;
         public readonly uint Offset2;
