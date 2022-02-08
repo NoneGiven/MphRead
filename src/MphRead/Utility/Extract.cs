@@ -74,6 +74,7 @@ namespace MphRead
             }
             Paths.SetPath(rootName, newPath);
             var lines = new List<string>();
+            lines.Add(Program.Version.ToString());
             lines.Add($"AMFE0={Paths.AllPaths["AMFE0"]}");
             lines.Add($"AMFP0={Paths.AllPaths["AMFP0"]}");
             lines.Add($"A76E0={Paths.AllPaths["A76E0"]}");

@@ -133,8 +133,8 @@ namespace MphRead
             }
             if (!File.Exists("paths.txt"))
             {
-                Console.WriteLine("Could not find the paths.txt file. You may need to perform first-time setup " +
-                    "by dragging a ROM onto the MphRead executable.");
+                Console.WriteLine("Could not find the paths.txt file.");
+                Console.WriteLine("You may need to perform first-time setup by dragging a ROM onto the MphRead executable.");
                 Console.WriteLine();
                 Console.WriteLine("Press any key to exit...");
                 Console.ReadKey();
