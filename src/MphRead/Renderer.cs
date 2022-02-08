@@ -2567,7 +2567,7 @@ namespace MphRead
             GL.Uniform3(_shaderLocations.Light2Color, color);
         }
 
-        private FadeType _fadeType = FadeType.None;
+        private FadeType _fadeType { get; set; } = FadeType.None;
         private float _fadeColor = 0;
         private bool _fadeIn = false;
         private float _fadeStart = 0;
@@ -2635,6 +2635,7 @@ namespace MphRead
         {
             if (_exitAfterFade)
             {
+                _fadeType = FadeType.None;
                 OutputStop();
                 _close.Invoke();
                 return;
