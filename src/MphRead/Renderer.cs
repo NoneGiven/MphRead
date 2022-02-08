@@ -3062,7 +3062,6 @@ namespace MphRead
             {
                 return;
             }
-            // ltodo: if BG layer is shifted, we need this quad to be bigger than the viewport so it can shift appropriately
             GL.Uniform1(_shaderLocations.LayerAlpha, info.Alpha);
             GL.BindTexture(TextureTarget.Texture2D, info.BindingId);
             int minParameter = (int)TextureMinFilter.Nearest;
