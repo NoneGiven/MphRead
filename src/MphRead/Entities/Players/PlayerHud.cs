@@ -2211,6 +2211,11 @@ namespace MphRead.Entities
             PlayerEntity opponent = Players[_opponentIndex];
             float posX = 93;
             float posY = 182;
+            if (Features.TargetInfoSway)
+            {
+                posX += _objShiftX;
+                posY += _objShiftY;
+            }
             string nickname = GameState.Nicknames[_opponentIndex];
             DrawText2D(posX, posY, Align.Center, 0, nickname);
             HudObjectInstance portrait = _hunterInsts[(int)opponent.Hunter];
