@@ -190,8 +190,6 @@ namespace MphRead.Entities
             _weaponIconInst = new HudObjectInstance(weaponIcon.Width, weaponIcon.Height);
             _weaponIconInst.SetCharacterData(weaponIcon.CharacterData, _scene);
             _weaponIconInst.SetPaletteData(weaponIcon.PaletteData, _scene);
-            _weaponIconInst.PositionX = _hudObjects.WeaponIconPosX / 256f;
-            _weaponIconInst.PositionY = _hudObjects.WeaponIconPosY / 192f;
             _weaponIconInst.SetAnimationFrames(weaponIcon.AnimParams);
             HudObject boost = HudInfo.GetHudObject(HudElements.Boost);
             _boostInst = new HudObjectInstance(boost.Width, boost.Height);
@@ -412,15 +410,12 @@ namespace MphRead.Entities
                         _scene.Layer2Info.Alpha = Features.HelmetOpacity;
                         _scene.Layer2Info.ScaleX = 2;
                         _scene.Layer2Info.ScaleY = 256 / 192f;
-                        if (Features.HudSway)
-                        {
-                            _scene.Layer1Info.ShiftX = _hudShiftX / 256f;
-                            _scene.Layer1Info.ShiftY = _hudShiftY / 192f;
-                            _scene.Layer2Info.ShiftX = _hudShiftX / 256f;
-                            _scene.Layer2Info.ShiftY = _hudShiftY / 192f;
-                            _scene.Layer3Info.ShiftX = -_hudShiftX / 4 / 256f;
-                            _scene.Layer3Info.ShiftY = -_hudShiftY / 4 / 192f;
-                        }
+                        _scene.Layer1Info.ShiftX = _hudShiftX / 256f;
+                        _scene.Layer1Info.ShiftY = _hudShiftY / 192f;
+                        _scene.Layer2Info.ShiftX = _hudShiftX / 256f;
+                        _scene.Layer2Info.ShiftY = _hudShiftY / 192f;
+                        _scene.Layer3Info.ShiftX = -_hudShiftX / 4 / 256f;
+                        _scene.Layer3Info.ShiftY = -_hudShiftY / 4 / 192f;
                     }
                     if (_timeSinceInput < (ulong)Values.GunIdleTime * 2) // todo: FPS stuff
                     {
@@ -798,6 +793,8 @@ namespace MphRead.Entities
                     else
                     {
                         DrawAmmoBar();
+                        _weaponIconInst.PositionX = (_hudObjects.WeaponIconPosX + _objShiftX) / 256f;
+                        _weaponIconInst.PositionY = (_hudObjects.WeaponIconPosY + _objShiftY) / 192f;
                         _scene.DrawHudObject(_weaponIconInst);
                         _scene.DrawHudObject(_targetCircleInst);
                     }
@@ -1156,8 +1153,9 @@ namespace MphRead.Entities
         {
             _healthbarMainMeter.TankAmount = Values.EnergyTank;
             _healthbarMainMeter.TankCount = _healthMax / Values.EnergyTank;
-            DrawMeter(_hudObjects.HealthMainPosX, _hudObjects.HealthMainPosY + _healthbarYOffset, Values.EnergyTank - 1,
-                _health, _healthbarPalette, _healthbarMainMeter, drawText: true, drawTanks: !_scene.Multiplayer);
+            DrawMeter(_hudObjects.HealthMainPosX + _objShiftX, _hudObjects.HealthMainPosY + _healthbarYOffset + _objShiftY,
+                Values.EnergyTank - 1, _health, _healthbarPalette, _healthbarMainMeter,
+                drawText: true, drawTanks: !_scene.Multiplayer);
             if (_scene.Multiplayer)
             {
                 int amount = 0;
@@ -1167,8 +1165,9 @@ namespace MphRead.Entities
                 }
                 _healthbarSubMeter.TankAmount = Values.EnergyTank;
                 _healthbarSubMeter.TankCount = _healthMax / Values.EnergyTank;
-                DrawMeter(_hudObjects.HealthSubPosX, _hudObjects.HealthSubPosY + _healthbarYOffset, Values.EnergyTank - 1,
-                    amount, _healthbarPalette, _healthbarSubMeter, drawText: false, drawTanks: false);
+                DrawMeter(_hudObjects.HealthSubPosX + _objShiftX, _hudObjects.HealthSubPosY + _healthbarYOffset + _objShiftY,
+                    Values.EnergyTank - 1, amount, _healthbarPalette, _healthbarSubMeter,
+                    drawText: false, drawTanks: false);
             }
         }
 
@@ -1182,10 +1181,11 @@ namespace MphRead.Entities
             _ammoBarMeter.TankAmount = _ammoMax[info.AmmoType] + 1;
             _ammoBarMeter.TankCount = 0;
             int amount = _ammo[info.AmmoType];
-            DrawMeter(_hudObjects.AmmoBarPosX, _hudObjects.AmmoBarPosY, amount, amount,
+            DrawMeter(_hudObjects.AmmoBarPosX + _objShiftX, _hudObjects.AmmoBarPosY + _objShiftY, amount, amount,
                 _ammoBarPalette, _ammoBarMeter, drawText: false, drawTanks: false);
             amount /= info.AmmoCost;
-            DrawText2D(_hudObjects.AmmoBarPosX + _ammoBarMeter.BarOffsetX, _hudObjects.AmmoBarPosY + _ammoBarMeter.BarOffsetY,
+            DrawText2D(_hudObjects.AmmoBarPosX + _ammoBarMeter.BarOffsetX + _objShiftX,
+                _hudObjects.AmmoBarPosY + _ammoBarMeter.BarOffsetY + _objShiftY,
                 _ammoBarMeter.Align, _ammoBarPalette, $"{amount:00}");
         }
 
@@ -1970,8 +1970,8 @@ namespace MphRead.Entities
         {
             if (_hudIsPrimeHunter)
             {
-                float posX = _hudObjects.PrimePosX;
-                float posY = _hudObjects.PrimePosY;
+                float posX = _hudObjects.PrimePosX + _objShiftX;
+                float posY = _hudObjects.PrimePosY + _objShiftY;
                 _primeHunterInst.PositionX = (posX - 16) / 256f;
                 _primeHunterInst.PositionY = (posY - 16) / 192f;
                 _scene.DrawHudObject(_primeHunterInst);
@@ -2019,8 +2019,8 @@ namespace MphRead.Entities
         {
             if (_doubleDmgTimer > 0)
             {
-                float posX = _hudObjects.DblDmgPosX;
-                float posY = _hudObjects.DblDmgPosY;
+                float posX = _hudObjects.DblDmgPosX + _objShiftX;
+                float posY = _hudObjects.DblDmgPosY + _objShiftY;
                 _doubleDamageInst.PositionX = (posX - 16) / 256f;
                 _doubleDamageInst.PositionY = (posY - 16) / 192f;
                 int frame = 0;
@@ -2091,8 +2091,8 @@ namespace MphRead.Entities
         {
             if (_cloakTimer > 0 && Flags2.TestFlag(PlayerFlags2.Cloaking))
             {
-                float posX = _hudObjects.CloakPosX;
-                float posY = _hudObjects.CloakPosY;
+                float posX = _hudObjects.CloakPosX + _objShiftX;
+                float posY = _hudObjects.CloakPosY + _objShiftY;
                 _cloakInst.PositionX = (posX - 16) / 256f;
                 _cloakInst.PositionY = (posY - 16) / 192f;
                 _cloakInst.Alpha = 0.5f;
@@ -2165,13 +2165,14 @@ namespace MphRead.Entities
             _enemyHealthMeter.TankAmount = max;
             _enemyHealthMeter.TankCount = 0;
             _enemyHealthMeter.Length = _healthbarSubMeter.Length;
-            DrawMeter(_hudObjects.EnemyHealthPosX, _hudObjects.EnemyHealthPosY, max, current, palette,
-                _enemyHealthMeter, drawText: false, drawTanks: false);
+            DrawMeter(_hudObjects.EnemyHealthPosX + _objShiftX, _hudObjects.EnemyHealthPosY + _objShiftY, max, current,
+                palette, _enemyHealthMeter, drawText: false, drawTanks: false);
             // todo: only draw text if we have the scan data
             // else, draw "enemy" instead
             if (text != null)
             {
-                DrawText2D(_hudObjects.EnemyHealthTextPosX, _hudObjects.EnemyHealthTextPosY, Align.Center, palette, text);
+                DrawText2D(_hudObjects.EnemyHealthTextPosX + _objShiftX, _hudObjects.EnemyHealthTextPosY + _objShiftY,
+                    Align.Center, palette, text);
             }
             return current > 0;
         }

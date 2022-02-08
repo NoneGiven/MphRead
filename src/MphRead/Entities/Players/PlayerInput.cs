@@ -362,8 +362,15 @@ namespace MphRead.Entities
                     _pastAimY[i + 1] = past;
                 }
                 _pastAimY[0] = amount;
-                float average = (sum + amount) / 8;
-                _hudShiftY = Math.Clamp(-MathF.Round(average), -8, 8);
+                if (Features.HudSway)
+                {
+                    float average = (sum + amount) / 8;
+                    _hudShiftY = Math.Clamp(-MathF.Round(average), -8, 8);
+                }
+                else
+                {
+                    _hudShiftY = 0;
+                }
                 _objShiftY = -_hudShiftY / 2;
             }
         }
@@ -380,8 +387,15 @@ namespace MphRead.Entities
                     _pastAimX[i + 1] = past;
                 }
                 _pastAimX[0] = amount;
-                float average = (sum + amount) / 8;
-                _hudShiftX = Math.Clamp(MathF.Round(average), -8, 8);
+                if (Features.HudSway)
+                {
+                    float average = (sum + amount) / 8;
+                    _hudShiftX = Math.Clamp(MathF.Round(average), -8, 8);
+                }
+                else
+                {
+                    _hudShiftX = 0;
+                }
                 _objShiftX = _hudShiftX / 2;
             }
         }
