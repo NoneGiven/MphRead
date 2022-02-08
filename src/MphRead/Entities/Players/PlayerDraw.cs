@@ -21,8 +21,8 @@ namespace MphRead.Entities
             }
             int lod = 0;
             Flags2 &= ~PlayerFlags2.Lod1;
-            // todo: make this configurable
-            if (!IsMainPlayer && (Position - CameraInfo.Position).LengthSquared >= 3 * 3)
+            if (!IsMainPlayer && !Features.MaxPlayerDetail
+                && (Position - Main.CameraInfo.Position).LengthSquared >= 3 * 3)
             {
                 lod = 1;
                 Flags2 |= PlayerFlags2.Lod1;

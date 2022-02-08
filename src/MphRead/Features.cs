@@ -15,6 +15,8 @@ namespace MphRead
         public static float VisorOpacity { get; set; } = 0.5f; // 0.5
         public static bool HudSway { get; set; } = true; // true
         public static bool TargetInfoSway { get; set; } = false; // "false"
+        public static bool MaxRoomDetail { get; set; } = false; // false
+        public static bool MaxPlayerDetail { get; set; } = true; // false
     }
 
     public static class Cheats
