@@ -343,6 +343,8 @@ namespace MphRead.Entities
 
         private float _hudShiftX = 0;
         private float _hudShiftY = 0;
+        private float _objShiftX = 0;
+        private float _objShiftY = 0;
 
         public void UpdateHud()
         {
@@ -1758,8 +1760,8 @@ namespace MphRead.Entities
 
         private void DrawModeScore(int messageId, string text)
         {
-            float posX = _hudObjects.ScorePosX;
-            float posY = _hudObjects.ScorePosY;
+            float posX = _hudObjects.ScorePosX + _objShiftX;
+            float posY = _hudObjects.ScorePosY + _objShiftY;
             _textSpacingY = 8;
             string message = Strings.GetHudMessage(messageId);
             // the game wraps text here, but the text used will never wrap (and doesn't have newlines)
@@ -1807,8 +1809,8 @@ namespace MphRead.Entities
             }
             if (drawIcon)
             {
-                _octolithInst.PositionX = _hudObjects.OctolithPosX / 256f;
-                _octolithInst.PositionY = _hudObjects.OctolithPosY / 192f;
+                _octolithInst.PositionX = (_hudObjects.OctolithPosX + _objShiftX) / 256f;
+                _octolithInst.PositionY = (_hudObjects.OctolithPosY + _objShiftY) / 192f;
                 _octolithInst.SetIndex(frame, _scene);
                 _scene.DrawHudObject(_octolithInst);
             }
@@ -1852,24 +1854,28 @@ namespace MphRead.Entities
             string message = Strings.GetHudMessage(210); // bonus
             if (_mainNodeBonus)
             {
-                _nodesInst.PositionX = _hudObjects.NodeBonusPosX / 256f;
-                _nodesInst.PositionY = _hudObjects.NodeBonusPosY / 192f;
+                _nodesInst.PositionX = (_hudObjects.NodeBonusPosX + _objShiftX) / 256f;
+                _nodesInst.PositionY = (_hudObjects.NodeBonusPosY + _objShiftY) / 192f;
                 _nodesInst.SetIndex(GameState.Teams && TeamIndex == 0 ? 2 : 4, _scene);
                 _scene.DrawHudObject(_nodesInst);
                 string text = $"x {_teamNodeCounts[TeamIndex]}";
-                DrawText2D(_hudObjects.NodeBonusPosX + 12, _hudObjects.NodeBonusPosY + 2, Align.Left, 0, text);
-                DrawText2D(_hudObjects.NodeBonusPosX, _hudObjects.NodeBonusPosY + 10, Align.Left, 0, message);
+                DrawText2D(_hudObjects.NodeBonusPosX + 12 + _objShiftX, _hudObjects.NodeBonusPosY + 2 + _objShiftY,
+                    Align.Left, 0, text);
+                DrawText2D(_hudObjects.NodeBonusPosX + _objShiftX, _hudObjects.NodeBonusPosY + 10 + _objShiftY,
+                    Align.Left, 0, message);
             }
             float past = _scene.ElapsedTime % (16 / 30f);
             if (_nodeBonusOpponent != -1 && past < 12 / 30f)
             {
-                _nodesInst.PositionX = _hudObjects.EnemyBonusPosX / 256f;
-                _nodesInst.PositionY = _hudObjects.EnemyBonusPosY / 192f;
+                _nodesInst.PositionX = (_hudObjects.EnemyBonusPosX + _objShiftX) / 256f;
+                _nodesInst.PositionY = (_hudObjects.EnemyBonusPosY + _objShiftY) / 192f;
                 _nodesInst.SetIndex(GameState.Teams && _nodeBonusOpponent == 1 ? 4 : 2, _scene);
                 _scene.DrawHudObject(_nodesInst);
                 string text = $"x {_teamNodeCounts[_nodeBonusOpponent]}";
-                DrawText2D(_hudObjects.EnemyBonusPosX + 12, _hudObjects.EnemyBonusPosY + 2, Align.Left, 2, text);
-                DrawText2D(_hudObjects.EnemyBonusPosX, _hudObjects.EnemyBonusPosY + 10, Align.Left, 2, message);
+                DrawText2D(_hudObjects.EnemyBonusPosX + 12 + _objShiftX, _hudObjects.EnemyBonusPosY + 2 + _objShiftY,
+                    Align.Left, 2, text);
+                DrawText2D(_hudObjects.EnemyBonusPosX + _objShiftX, _hudObjects.EnemyBonusPosY + 10 + _objShiftY,
+                    Align.Left, 2, message);
             }
         }
 
@@ -1950,14 +1956,14 @@ namespace MphRead.Entities
                         frame = 2;
                     }
                 }
-                _nodesInst.PositionX = (_hudObjects.NodeIconPosX + startX - posX) / 256f;
-                _nodesInst.PositionY = (_hudObjects.NodeIconPosY - 8) / 192f;
+                _nodesInst.PositionX = (_hudObjects.NodeIconPosX + startX - posX + _objShiftX) / 256f;
+                _nodesInst.PositionY = (_hudObjects.NodeIconPosY - 8 + _objShiftY) / 192f;
                 _nodesInst.SetIndex(frame, _scene);
                 _scene.DrawHudObject(_nodesInst);
                 posX += 16;
             }
             string text = Strings.GetHudMessage(8); // NODES
-            DrawText2D(_hudObjects.NodeTextPosX, _hudObjects.NodeTextPosY, Align.Center, 0, text);
+            DrawText2D(_hudObjects.NodeTextPosX + _objShiftX, _hudObjects.NodeTextPosY + _objShiftY, Align.Center, 0, text);
         }
 
         private void DrawHudPrimeHunter()

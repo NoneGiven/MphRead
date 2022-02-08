@@ -347,11 +347,24 @@ namespace MphRead.Entities
             }
         }
 
+        private readonly float[] _pastAimX = new float[8];
+        private readonly float[] _pastAimY = new float[8];
+
         private void UpdateHudShiftY(float amount)
         {
             if (IsMainPlayer)
             {
-                _hudShiftY = Math.Clamp(-MathF.Round(amount), -8, 8);
+                float sum = 0;
+                for (int i = 6; i >= 0; i--)
+                {
+                    float past = _pastAimY[i];
+                    sum += past;
+                    _pastAimY[i + 1] = past;
+                }
+                _pastAimY[0] = amount;
+                float average = (sum + amount) / 8;
+                _hudShiftY = Math.Clamp(-MathF.Round(average), -8, 8);
+                _objShiftY = -_hudShiftY / 2;
             }
         }
 
@@ -359,7 +372,17 @@ namespace MphRead.Entities
         {
             if (IsMainPlayer)
             {
-                _hudShiftX = Math.Clamp(MathF.Round(amount), -8, 8);
+                float sum = 0;
+                for (int i = 6; i >= 0; i--)
+                {
+                    float past = _pastAimX[i];
+                    sum += past;
+                    _pastAimX[i + 1] = past;
+                }
+                _pastAimX[0] = amount;
+                float average = (sum + amount) / 8;
+                _hudShiftX = Math.Clamp(MathF.Round(average), -8, 8);
+                _objShiftX = _hudShiftX / 2;
             }
         }
 
