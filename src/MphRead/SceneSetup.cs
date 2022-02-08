@@ -36,16 +36,9 @@ namespace MphRead
                 Weapons.Current = scene.Multiplayer ? Weapons.WeaponsMP : Weapons.Weapons1P;
             }
             scene.GameMode = mode;
-            if (playerCount < 1 || playerCount > 4)
+            if (playerCount == 0)
             {
-                if (mode == GameMode.SinglePlayer)
-                {
-                    playerCount = 1;
-                }
-                else
-                {
-                    playerCount = 2;
-                }
+                playerCount = PlayerEntity.PlayerCount;
             }
             if (entityLayerId < 0 || entityLayerId > 15)
             {
