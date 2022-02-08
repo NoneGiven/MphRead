@@ -55,7 +55,8 @@ namespace MphRead
             }
             if (nodeLayerMask == 0)
             {
-                nodeLayerMask = GetNodeLayer(mode, metadata.NodeLayer, playerCount);
+                int nodePlayerCount = Features.MaxRoomDetail ? 2 : playerCount;
+                nodeLayerMask = GetNodeLayer(mode, metadata.NodeLayer, nodePlayerCount);
             }
             IReadOnlyList<EntityBase> entities = LoadEntities(metadata, entityLayerId, scene);
             CollisionInstance collision = Collision.GetCollision(metadata, nodeLayerMask);
