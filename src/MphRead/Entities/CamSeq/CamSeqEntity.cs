@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using MphRead.Formats;
 using OpenTK.Mathematics;
 
