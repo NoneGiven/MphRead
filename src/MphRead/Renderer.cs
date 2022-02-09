@@ -2436,7 +2436,6 @@ namespace MphRead
 
         private void UpdateScene()
         {
-            Sound.Sfx.Update(_frameTime);
             PlayerEntity.Main.UpdateSounds();
             PlayerEntity.Main.ProcessHudMessageQueue();
             for (int i = 0; i < _entities.Count; i++)
@@ -2452,6 +2451,7 @@ namespace MphRead
             }
             PlayerEntity.Main.ProcessModeHud();
             GameState.UpdateState(this);
+            Sound.Sfx.Update(_frameTime);
         }
 
         private void GetDrawItems()
