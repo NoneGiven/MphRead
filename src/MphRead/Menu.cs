@@ -984,7 +984,7 @@ namespace MphRead
                         else if (selection == 5)
                         {
                             _damageLevel += direction;
-                            if (_damageLevel > damageLevels.Count)
+                            if (_damageLevel >= damageLevels.Count)
                             {
                                 _damageLevel = 0;
                             }

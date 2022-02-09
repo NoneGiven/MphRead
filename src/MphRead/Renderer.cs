@@ -1322,21 +1322,24 @@ namespace MphRead
                     {
                         percent = 1 - percent;
                     }
-                    GL.Uniform4(_shaderLocations.FadeColor, _fadeColor, _fadeColor, _fadeColor, percent);
-                    GL.Begin(PrimitiveType.TriangleStrip);
-                    // top right
-                    GL.TexCoord3(1f, 1f, 0f);
-                    GL.Vertex3(1f, 1f, 0f);
-                    // top left
-                    GL.TexCoord3(0f, 1f, 0f);
-                    GL.Vertex3(-1f, 1f, 0f);
-                    // bottom right
-                    GL.TexCoord3(1f, 0f, 0f);
-                    GL.Vertex3(1f, -1f, 0f);
-                    // bottom left
-                    GL.TexCoord3(0f, 0f, 0f);
-                    GL.Vertex3(-1f, -1f, 0f);
-                    GL.End();
+                    if (percent > 0)
+                    {
+                        GL.Uniform4(_shaderLocations.FadeColor, _fadeColor, _fadeColor, _fadeColor, percent);
+                        GL.Begin(PrimitiveType.TriangleStrip);
+                        // top right
+                        GL.TexCoord3(1f, 1f, 0f);
+                        GL.Vertex3(1f, 1f, 0f);
+                        // top left
+                        GL.TexCoord3(0f, 1f, 0f);
+                        GL.Vertex3(-1f, 1f, 0f);
+                        // bottom right
+                        GL.TexCoord3(1f, 0f, 0f);
+                        GL.Vertex3(1f, -1f, 0f);
+                        // bottom left
+                        GL.TexCoord3(0f, 0f, 0f);
+                        GL.Vertex3(-1f, -1f, 0f);
+                        GL.End();
+                    }
                 }
             }
             GL.Enable(EnableCap.DepthTest);
@@ -2628,11 +2631,19 @@ namespace MphRead
             GL.ClearColor(_clearColor);
         }
 
+        public void DoCleanup()
+        {
+            PlatformEntity.DestroyBeams();
+            EnemyInstanceEntity.DestroyBeams();
+            OutputStop();
+        }
+
         private void EndFade()
         {
             if (_exitAfterFade)
             {
-                OutputStop();
+                _fadeType = FadeType.None;
+                DoCleanup();
                 _close.Invoke();
                 return;
             }
@@ -3945,7 +3956,7 @@ namespace MphRead
             Task.Run(async () => await OutputUpdate(_outputCts.Token), _outputCts.Token);
         }
 
-        public void OutputStop()
+        private void OutputStop()
         {
             _outputCts.Cancel();
         }
@@ -4522,7 +4533,7 @@ namespace MphRead
         {
             if (e.Key == Keys.Escape)
             {
-                Scene.OutputStop();
+                Scene.DoCleanup();
                 Close();
             }
             else

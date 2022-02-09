@@ -66,7 +66,10 @@ namespace MphRead
                 nodeData = ReadNodeData.ReadData(Path.Combine(@"", metadata.NodePath));
             }
             LoadResources(scene);
+            CamSeqEntity.ClearData();
+            CamSeqEntity.Current = null;
             CameraSequence.Current = null;
+            CameraSequence.Intro = null;
             if (scene.Multiplayer && PlayerEntity.PlayerCount > 0)
             {
                 int seqId = roomId - 93 + 172;

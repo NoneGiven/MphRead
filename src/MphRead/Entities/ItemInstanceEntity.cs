@@ -41,7 +41,7 @@ namespace MphRead.Entities
                 ItemType = ItemType.AffinityWeapon;
             }
             // todo: node ref
-            SetUpModel(Metadata.Items[(int)data.ItemType]);
+            SetUpModel(Metadata.Items[(int)ItemType]);
             if (data.DespawnTimer > 0)
             {
                 DespawnTimer = data.DespawnTimer;
