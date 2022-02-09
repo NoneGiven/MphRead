@@ -63,6 +63,11 @@ namespace MphRead.Entities
             }
         }
 
+        public static void DestroyBeams()
+        {
+            _beams = null!;
+        }
+
         public override void Initialize()
         {
             base.Initialize();
