@@ -22,6 +22,8 @@ namespace MphRead
         {
             _modelCache.Clear();
             _fhModelCache.Clear();
+            _effects.Clear();
+            _particleDefs.Clear();
         }
 
         public static ModelInstance GetModelInstance(string name, bool firstHunt = false,
