@@ -48,61 +48,23 @@ namespace MphRead.Formats.Sound
             ExportSample(samples[id], adpcmRoundingError);
         }
 
-        // MPH uses ADPCM, FH uses ADPCM and PCM8
-        private static void ExportSample(SoundSample sample, bool adpcmRoundingError = false)
+        public static byte[] GetWaveData(SoundSample sample, bool adpcmRoundingError = false)
         {
-            string id = sample.Id.ToString().PadLeft(3, '0');
-            if (sample.Data.Count == 0)
-            {
-                throw new WaveExportException($"Sample {id} contains no data.");
-            }
-            if (sample.Format != WaveFormat.ADPCM && sample.Format != WaveFormat.PCM8)
-            {
-                throw new WaveExportException($"Format {sample.Format} is unsupported.");
-            }
-            uint bps = sample.Format == WaveFormat.PCM8 ? 8u : 16u;
-            uint headerSize = 0x2C;
-            uint loopStart;
-            uint loopLength;
-            if (sample.Format == WaveFormat.ADPCM)
-            {
-                loopStart = (sample.LoopStart * 4u - 4u) * 2u;
-                loopLength = sample.LoopLength * 8u;
-            }
-            else
-            {
-                // this is valid for FH's header format only
-                loopStart = sample.LoopStart;
-                loopLength = sample.LoopLength;
-            }
-            uint sampleCount = loopStart + loopLength;
-            uint waveSize = sampleCount * bps / 8 + headerSize;
-            uint decodedSize = sampleCount * (bps / 8);
-            string path = Path.Combine(Paths.Export, "_SFX");
-            Directory.CreateDirectory(path);
-            path = Path.Combine(path, $"{id}.wav");
-            using FileStream file = File.OpenWrite(path);
-            using var writer = new BinaryWriter(file);
-            writer.WriteC("RIFF");
-            writer.Write4(waveSize - 8);
-            writer.WriteC("WAVE");
-            writer.WriteC("fmt ");
-            writer.Write4(16);
-            writer.Write2(1);
-            writer.Write2(1);
-            writer.Write4(sample.SampleRate);
-            writer.Write4(sample.SampleRate * (bps / 8));
-            writer.Write2(bps / 8);
-            writer.Write2(bps);
-            writer.WriteC("data");
-            writer.Write4(decodedSize);
+            var ms = new MemoryStream();
+            var writer = new BinaryWriter(ms);
+            GetWaveData(sample, GetSampleCount(sample), adpcmRoundingError, writer);
+            return ms.ToArray();
+        }
+
+        private static void GetWaveData(SoundSample sample, uint sampleCount, bool adpcmRoundingError, BinaryWriter writer)
+        {
             ReadOnlySpan<byte> data = sample.CreateSpan();
             if (sample.Format == WaveFormat.ADPCM)
             {
                 int transferred = 0;
                 bool low = true;
                 int sampleValue = BitConverter.ToInt16(data[..2]);
-                int stepIndex = BitConverter.ToInt16(data[2..2]);
+                int stepIndex = BitConverter.ToInt16(data[2..4]);
                 transferred += 4;
                 for (int i = 0; i < sampleCount; i++)
                 {
@@ -185,6 +147,62 @@ namespace MphRead.Formats.Sound
                     writer.Write((byte)(data[i] ^ 0x80));
                 }
             }
+        }
+
+        private static uint GetSampleCount(SoundSample sample)
+        {
+            uint loopStart;
+            uint loopLength;
+            if (sample.Format == WaveFormat.ADPCM)
+            {
+                loopStart = (sample.LoopStart * 4u - 4u) * 2u;
+                loopLength = sample.LoopLength * 8u;
+            }
+            else
+            {
+                // this is valid for FH's header format only
+                loopStart = sample.LoopStart;
+                loopLength = sample.LoopLength;
+            }
+            return loopStart + loopLength;
+        }
+
+        // MPH uses ADPCM, FH uses ADPCM and PCM8
+        private static void ExportSample(SoundSample sample, bool adpcmRoundingError = false)
+        {
+            string id = sample.Id.ToString().PadLeft(3, '0');
+            if (sample.Data.Count == 0)
+            {
+                throw new WaveExportException($"Sample {id} contains no data.");
+            }
+            if (sample.Format != WaveFormat.ADPCM && sample.Format != WaveFormat.PCM8)
+            {
+                throw new WaveExportException($"Format {sample.Format} is unsupported.");
+            }
+            uint bps = sample.Format == WaveFormat.PCM8 ? 8u : 16u;
+            uint headerSize = 0x2C;
+            uint sampleCount = GetSampleCount(sample);
+            uint waveSize = sampleCount * bps / 8 + headerSize;
+            uint decodedSize = sampleCount * (bps / 8);
+            string path = Path.Combine(Paths.Export, "_SFX");
+            Directory.CreateDirectory(path);
+            path = Path.Combine(path, $"{id}.wav");
+            using FileStream file = File.OpenWrite(path);
+            using var writer = new BinaryWriter(file);
+            writer.WriteC("RIFF");
+            writer.Write4(waveSize - 8);
+            writer.WriteC("WAVE");
+            writer.WriteC("fmt ");
+            writer.Write4(16);
+            writer.Write2(1);
+            writer.Write2(1);
+            writer.Write4(sample.SampleRate);
+            writer.Write4(sample.SampleRate * (bps / 8));
+            writer.Write2(bps / 8);
+            writer.Write2(bps);
+            writer.WriteC("data");
+            writer.Write4(decodedSize);
+            GetWaveData(sample, sampleCount, adpcmRoundingError, writer);
             Nop();
         }
 
@@ -217,6 +235,8 @@ namespace MphRead.Formats.Sound
                 }
                 else
                 {
+                    // offset is also found in SNDTBLS.DAT, along with the size directly
+                    // misc note: at runtime(?), the lid SFX offsets in the sndtbls list are changed to pointers
                     SoundSampleHeader header = Read.DoOffset<SoundSampleHeader>(bytes, offset);
                     long start = offset + Marshal.SizeOf<SoundSampleHeader>();
                     uint size = (header.LoopStart + header.LoopLength) * 4;
@@ -343,7 +363,7 @@ namespace MphRead.Formats.Sound
                 {
                     entries.Add(new DgnFileEntry(
                         entry.Field0,
-                        entry.Field2,
+                        entry.SfxId,
                         Read.DoOffsets<uint>(bytes, header.Offset + entry.Offset1, entry.Count1),
                         Read.DoOffsets<uint>(bytes, header.Offset + entry.Offset2, entry.Count2),
                         Read.DoOffsets<uint>(bytes, header.Offset + entry.Offset3, entry.Count3),
@@ -382,6 +402,11 @@ namespace MphRead.Formats.Sound
         private readonly byte[] _data;
         public IReadOnlyList<byte> Data => _data;
 
+        public float Volume { get; set; } = 1;
+        public Lazy<byte[]> WaveData { get; }
+        public int BufferId { get; set; }
+        public string? Name { get; set; }
+
         public SoundSample(uint id, uint offset, SoundSampleHeader header, ReadOnlySpan<byte> data)
         {
             if (header.Format < 0 || header.Format > 2)
@@ -396,6 +421,7 @@ namespace MphRead.Formats.Sound
             LoopStart = header.LoopStart;
             LoopLength = header.LoopLength;
             _data = data.ToArray();
+            WaveData = new Lazy<byte[]>(() => SoundRead.GetWaveData(this));
         }
 
         public SoundSample(uint id, uint offset, FhSoundSampleHeader header, ReadOnlySpan<byte> data)
@@ -430,6 +456,7 @@ namespace MphRead.Formats.Sound
                 throw new ProgramException($"Unexpected FH sound header value: {header.Format}");
             }
             _data = data.ToArray();
+            WaveData = new Lazy<byte[]>(() => SoundRead.GetWaveData(this));
         }
 
         private SoundSample(uint id)
@@ -437,6 +464,7 @@ namespace MphRead.Formats.Sound
             Id = id;
             Format = WaveFormat.None;
             _data = Array.Empty<byte>();
+            WaveData = new Lazy<byte[]>(() => _data);
         }
 
         public static SoundSample CreateNull(uint id)
@@ -485,8 +513,8 @@ namespace MphRead.Formats.Sound
     // size: 8
     public readonly struct Sound3dEntry
     {
-        public readonly uint Field0;
-        public readonly uint Field4;
+        public readonly uint FalloffDistance;
+        public readonly uint MaxDistance;
     }
 
     // size: 12
@@ -496,7 +524,7 @@ namespace MphRead.Formats.Sound
         public readonly ushort Field0;
         public readonly byte CategoryId;
         public readonly byte SlotCount;
-        public readonly byte Field4;
+        public readonly byte InitialVolume;
         public readonly byte Priority;
         public readonly ushort Size;
         public readonly uint Data;
@@ -521,7 +549,7 @@ namespace MphRead.Formats.Sound
         public ushort Field0; // ID/index/-1 for missing entries?
         public byte CategoryId;
         public byte SlotCount;
-        public byte Field4; // volume-related
+        public byte InitialVolume;
         public byte Priority;
         public ushort Size;
         public uint Data;
@@ -533,7 +561,7 @@ namespace MphRead.Formats.Sound
             Field0 = raw.Field0;
             CategoryId = raw.CategoryId;
             SlotCount = raw.SlotCount;
-            Field4 = raw.Field4;
+            InitialVolume = raw.InitialVolume;
             Priority = raw.Priority;
             Size = raw.Size;
             Data = raw.Data;
@@ -615,14 +643,14 @@ namespace MphRead.Formats.Sound
         public readonly uint Offset;
         public readonly ushort Size;
         public readonly byte Field6;
-        public readonly byte SloutCount;
+        public readonly byte SlotCount;
     }
 
     // size: 36
     public readonly struct DgnEntry
     {
         public readonly ushort Field0;
-        public readonly ushort Field2;
+        public readonly ushort SfxId;
         public readonly uint Count1; // blocks
         public readonly uint Offset1;
         public readonly uint Count2;
@@ -650,17 +678,17 @@ namespace MphRead.Formats.Sound
     public class DgnFileEntry
     {
         public ushort Field0 { get; }
-        public ushort Field2 { get; }
+        public ushort SfxId { get; }
         public IReadOnlyList<uint> Data1 { get; }
         public IReadOnlyList<uint> Data2 { get; }
         public IReadOnlyList<uint> Data3 { get; }
         public IReadOnlyList<uint> Data4 { get; }
 
-        public DgnFileEntry(ushort field0, ushort field2, IReadOnlyList<uint> data1,
+        public DgnFileEntry(ushort field0, ushort sfxId, IReadOnlyList<uint> data1,
             IReadOnlyList<uint> data2, IReadOnlyList<uint> data3, IReadOnlyList<uint> data4)
         {
             Field0 = field0;
-            Field2 = field2;
+            SfxId = sfxId;
             Data1 = data1;
             Data2 = data2;
             Data3 = data3;

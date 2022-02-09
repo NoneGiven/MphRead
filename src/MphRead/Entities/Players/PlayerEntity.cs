@@ -801,19 +801,37 @@ namespace MphRead.Entities
             MorphCamera = null;
             OctolithFlag = null;
             ResetMorphBallTrail();
-            // todo: stop SFX, play SFX, update SFX handle
+            _soundSource.StopAllSfx();
+            if (IsMainPlayer)
+            {
+                _soundSource.Update(Position, rangeIndex: -1);
+            }
+            else
+            {
+                int rangeIndex = 1;
+                if (!_scene.Multiplayer && Hunter == Hunter.Guardian) // todo: MP1P
+                {
+                    rangeIndex = 21;
+                }
+                _soundSource.Update(Position, rangeIndex);
+                // sfxtodo: if node ref is not active, set sound volume override to 0
+            }
+            if (respawn)
+            {
+                PlayHunterSfx(HunterSfx.Spawn);
+            }
+            // todo: clear weapon SFX handle
             _lastJumpPad = null;
             _jumpPadControlLock = 0;
             _jumpPadControlLockMin = 0;
             _timeSinceJumpPad = UInt16.MaxValue; // the game doesn't do this
             if (IsMainPlayer)
             {
-                // the game only does this in multiplayer, but it can't hard either way
-                // todo: lots of other stuff
+                // the game only does this in multiplayer, but it can't hurt either way
                 ResetReticle();
                 _weaponIconInst.SetIndex(0, _scene);
             }
-            // todo: update HUD effects
+            // todo: reset HUD effects
             _altRollFbX = CameraInfo.Field48;
             _altRollFbZ = CameraInfo.Field4C;
             _altRollLrX = CameraInfo.Field50;
@@ -1074,7 +1092,7 @@ namespace MphRead.Entities
                 }
                 return false;
             }
-            BeamProjectileEntity.StopChargeSfx(CurrentWeapon, Hunter);
+            StopBeamChargeSfx(CurrentWeapon);
             UpdateZoom(false);
             PreviousWeapon = CurrentWeapon;
             CurrentWeapon = WeaponSelection = beam;
@@ -1621,7 +1639,25 @@ namespace MphRead.Entities
                 }
                 if (_health > 0)
                 {
-                    // todo: update SFX and music
+                    _soundSource.StopAllSfx(force: true);
+                    if (IsMainPlayer)
+                    {
+                        // sfxtodo: stop various SFX
+                        if (_scene.Multiplayer)
+                        {
+                            PlayHunterSfx(HunterSfx.Death);
+                        }
+                        else
+                        {
+                            // sfxtodo: stop more SFX and play death SFX script
+                        }
+                    }
+                    else
+                    {
+                        // mustodo: update hunter music
+                        PlayHunterSfx(HunterSfx.Death);
+                    }
+                    StopBeamChargeSfx(CurrentWeapon);
                 }
                 // todo: if bot and some AI flags, set health
                 // else...
@@ -1629,7 +1665,7 @@ namespace MphRead.Entities
                 UpdateZoom(false);
                 if (_boostCharge > 0)
                 {
-                    // todo: update SFX
+                    // sfxtodo: update SFX
                 }
                 _boostCharge = 0;
                 GameState.Deaths[SlotIndex]++;
@@ -1880,12 +1916,12 @@ namespace MphRead.Entities
                     {
                         if (flags.TestFlag(DamageFlags.Halfturret))
                         {
-                            // todo: play SFX
+                            _soundSource.PlaySfx(SfxId.SHOTGUN_FREEZE);
                             _halfturret.OnFrozen();
                         }
                         else // todo?: if wifi, only do this if main player
                         {
-                            // todo: play SFX
+                            _soundSource.PlaySfx(SfxId.SHOTGUN_FREEZE);
                             if (IsMainPlayer)
                             {
                                 _drawIceLayer = true;
@@ -1913,7 +1949,7 @@ namespace MphRead.Entities
                         {
                             skipSfx = true;
                             HudOnDisrupted();
-                            // todo: play SFX
+                            _soundSource.PlaySfx(SfxId.LOB_DISRUPT);
                         }
                     }
                     if (beam.Afflictions.TestFlag(Affliction.Burn))
@@ -1934,11 +1970,11 @@ namespace MphRead.Entities
                 }
                 if (!skipSfx && !flags.TestFlag(DamageFlags.NoSfx))
                 {
-                    // todo: play SFX
+                    PlayHunterSfx(HunterSfx.Damage);
                 }
                 if (IsMainPlayer && !IsAltForm)
                 {
-                    // todo: play SFX
+                    PlayRandomDamageSfx();
                 }
             }
             _timeSinceDamage = 0;

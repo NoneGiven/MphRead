@@ -163,7 +163,7 @@ namespace MphRead.Entities
                         flags |= DamageFlags.Halfturret;
                     }
                     target.TakeDamage(damage, flags, dir, attacker);
-                    // todo: play SFX
+                    attacker._soundSource.PlaySfx(SfxId.SPIRE_ALT_ATTACK_HIT);
                 }
             }
             else if (attacker.Hunter == Hunter.Noxus && attacker._altAttackTime >= attacker.Values.AltAttackStartup * 2) // todo: FPS stuff
@@ -197,7 +197,7 @@ namespace MphRead.Entities
                             flags |= DamageFlags.Halfturret;
                         }
                         target.TakeDamage(damage, flags, dir, attacker);
-                        // todo: play SFX
+                        attacker._soundSource.PlaySfx(SfxId.NOX_ALT_ATTACK_HIT);
                         target._scene.SpawnEffect(235, Vector3.UnitX, Vector3.UnitY, target.Position); // noxHit
                         attacker.EndAltAttack();
                     }
@@ -239,7 +239,8 @@ namespace MphRead.Entities
                 flags |= DamageFlags.Halfturret;
             }
             target.TakeDamage(damage, flags, dir, attacker);
-            // todo: play SFX
+            SfxId sfx = attacker.Hunter == Hunter.Weavel ? SfxId.WEAVEL_ALT_ATTACK_HIT : SfxId.TRACE_ALT_ATTACK_HIT;
+            attacker._soundSource.PlaySfx(sfx);
             attacker.EndAltAttack();
         }
 

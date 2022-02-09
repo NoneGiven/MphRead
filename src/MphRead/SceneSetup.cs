@@ -78,6 +78,7 @@ namespace MphRead
                     CameraSequence.Intro = CameraSequence.Load(seqId, scene);
                 }
             }
+            Sound.Sfx.Load();
             var room = new RoomEntity(name, metadata, collision, nodeData, nodeLayerMask, roomId, scene);
             return (room, metadata, collision, entities);
         }

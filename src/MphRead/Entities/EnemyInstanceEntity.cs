@@ -92,6 +92,12 @@ namespace MphRead.Entities
             }
         }
 
+        public override void Destroy()
+        {
+            _soundSource.StopAllSfx(force: true);
+            base.Destroy();
+        }
+
         public override void GetPosition(out Vector3 position)
         {
             position = _hurtVolume.GetCenter();
@@ -117,7 +123,6 @@ namespace MphRead.Entities
             HitPlayers[3] = false;
         }
 
-        // todo: stop SFX on destroy
         public override bool Process()
         {
             bool inRange = false;
@@ -183,7 +188,9 @@ namespace MphRead.Entities
                     {
                         DoMovement();
                     }
-                    // todo: positional audio, node ref
+                    int rangeIndex = Metadata.EnemyAudioRangeIndices[(int)EnemyType];
+                    _soundSource.Update(Position, rangeIndex);
+                    // sfxtodo: if node ref is not active, set sound volume override to 0
                     ClearHitPlayers();
                     for (int i = 0; i < _scene.Entities.Count; i++)
                     {
@@ -404,7 +411,8 @@ namespace MphRead.Entities
                     {
                         Detach();
                     }
-                    // todo: play SFX
+                    _soundSource.StopAllSfx();
+                    // sfxtodo: play death SFX
                     int effectId;
                     if (EnemyType == EnemyType.FireSpawn)
                     {

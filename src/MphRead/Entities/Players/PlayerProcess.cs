@@ -112,7 +112,24 @@ namespace MphRead.Entities
                 }
             }
             _volume = CollisionVolume.Move(_volumeUnxf, Position);
-            // todo: update positional audio and SFX
+            if (IsMainPlayer && !IsAltForm)
+            {
+                _soundSource.Update(Position, rangeIndex: -1);
+            }
+            else
+            {
+                int rangeIndex = 1;
+                if (!_scene.Multiplayer && Hunter == Hunter.Guardian) // todo: MP1P
+                {
+                    rangeIndex = 21;
+                }
+                _soundSource.Update(Position, rangeIndex);
+                // sfxtodo: if node ref is not active, set sound volume override to 0
+            }
+            if (IsMainPlayer)
+            {
+                // todo: update low health SFX
+            }
             if (_damageInvulnTimer > 0)
             {
                 _damageInvulnTimer--;
@@ -891,6 +908,10 @@ namespace MphRead.Entities
 
         public void ActivateJumpPad(JumpPadEntity jumpPad, Vector3 vector, ushort lockTime)
         {
+            if (_timeSinceJumpPad > 5 * 2) // todo: FPS stuff
+            {
+                _soundSource.PlaySfx(SfxId.JUMP_PAD);
+            }
             Speed = vector;
             _jumpPadAccel = vector;
             _lastJumpPad = jumpPad;
@@ -1192,7 +1213,7 @@ namespace MphRead.Entities
             {
                 if (IsMainPlayer && (CameraSequence.Current == null || !CameraSequence.Current.BlockInput))
                 {
-                    // todo: play SFX
+                    _soundSource.PlayFreeSfx(SfxId.BEAM_SWITCH_FAIL);
                 }
                 return false;
             }
@@ -1225,7 +1246,10 @@ namespace MphRead.Entities
                 AfterSwitch();
                 return true;
             }
-            // todo: play SFX
+            if (IsMainPlayer)
+            {
+                _soundSource.PlayFreeSfx(SfxId.BEAM_SWITCH_FAIL);
+            }
             return false;
         }
 
@@ -1486,12 +1510,12 @@ namespace MphRead.Entities
             }
             if (EquipInfo.ChargeLevel > 0)
             {
-                // todo: stop SFX
+                StopBeamChargeSfx(CurrentWeapon);
                 SetGunAnimation(GunAnimation.Idle, AnimFlags.NoLoop);
             }
             EquipInfo.ChargeLevel = 0;
             SetBipedAnimation(PlayerAnimation.Morph, AnimFlags.NoLoop);
-            // todo: play SFX
+            PlayHunterSfx(HunterSfx.Morph);
         }
 
         private void ExitAltForm()
@@ -1521,7 +1545,7 @@ namespace MphRead.Entities
             UpdateZoom(false);
             EquipInfo.ChargeLevel = 0;
             EquipInfo.SmokeLevel = 0;
-            // todo: play SFX
+            PlayHunterSfx(HunterSfx.Unmorph);
             if (IsAltForm)
             {
                 UpdateForm(altForm: false);
@@ -1861,7 +1885,7 @@ namespace MphRead.Entities
 
         public override void Destroy()
         {
-            // todo: stop SFX
+            _soundSource.StopAllSfx();
             if (_furlEffect != null)
             {
                 _scene.UnlinkEffectEntry(_furlEffect);

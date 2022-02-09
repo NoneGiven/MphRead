@@ -2052,11 +2052,6 @@ namespace MphRead.Entities
             }
             return Vector3.Cross(Vector3.UnitZ, up).Normalized();
         }
-
-        public static void StopChargeSfx(BeamType beam, Hunter hunter)
-        {
-            //  todo: SFX stuff
-        }
     }
 
     [Flags]

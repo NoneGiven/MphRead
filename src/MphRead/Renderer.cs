@@ -2436,6 +2436,8 @@ namespace MphRead
 
         private void UpdateScene()
         {
+            Sound.Sfx.Update(_frameTime);
+            PlayerEntity.Main.UpdateSounds();
             PlayerEntity.Main.ProcessHudMessageQueue();
             for (int i = 0; i < _entities.Count; i++)
             {
@@ -2637,6 +2639,7 @@ namespace MphRead
             {
                 _fadeType = FadeType.None;
                 OutputStop();
+                Sound.Sfx.ShutDown();
                 _close.Invoke();
                 return;
             }
@@ -4527,6 +4530,7 @@ namespace MphRead
             if (e.Key == Keys.Escape)
             {
                 Scene.OutputStop();
+                Sound.Sfx.ShutDown();
                 Close();
             }
             else
