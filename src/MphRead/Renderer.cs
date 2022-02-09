@@ -2567,7 +2567,7 @@ namespace MphRead
             GL.Uniform3(_shaderLocations.Light2Color, color);
         }
 
-        private FadeType _fadeType { get; set; } = FadeType.None;
+        private FadeType _fadeType = FadeType.None;
         private float _fadeColor = 0;
         private bool _fadeIn = false;
         private float _fadeStart = 0;
@@ -2631,12 +2631,19 @@ namespace MphRead
             GL.ClearColor(_clearColor);
         }
 
+        public void DoCleanup()
+        {
+            PlatformEntity.DestroyBeams();
+            EnemyInstanceEntity.DestroyBeams();
+            OutputStop();
+        }
+
         private void EndFade()
         {
             if (_exitAfterFade)
             {
                 _fadeType = FadeType.None;
-                OutputStop();
+                DoCleanup();
                 _close.Invoke();
                 return;
             }
@@ -3949,7 +3956,7 @@ namespace MphRead
             Task.Run(async () => await OutputUpdate(_outputCts.Token), _outputCts.Token);
         }
 
-        public void OutputStop()
+        private void OutputStop()
         {
             _outputCts.Cancel();
         }
@@ -4526,7 +4533,7 @@ namespace MphRead
         {
             if (e.Key == Keys.Escape)
             {
-                Scene.OutputStop();
+                Scene.DoCleanup();
                 Close();
             }
             else
