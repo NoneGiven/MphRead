@@ -120,7 +120,7 @@ namespace MphRead.Entities.Enemies
         {
             if (_health == 0)
             {
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.LAVA_DEMON_DIE_SCR, noUpdate: true);
                 if (_effectEntry != null)
                 {
                     _scene.UnlinkEffectEntry(_effectEntry);
@@ -185,16 +185,15 @@ namespace MphRead.Entities.Enemies
                 AnimationInfo anim = model.AnimInfo;
                 if (anim.Flags[0].TestFlag(AnimFlags.Ended))
                 {
+                    _soundSource.PlaySfx(SfxId.LAVA_DEMON_ATTACK_SCR);
                     if (anim.Index[0] == 1)
                     {
-                        // todo: play SFX
                         model.SetAnimation(0, AnimFlags.NoLoop);
                         _animFrameCount = anim.FrameCount[0];
                         _wristId = 0;
                     }
                     else if (anim.Index[0] == 0)
                     {
-                        // todo: play SFX
                         model.SetAnimation(1, AnimFlags.NoLoop);
                         _animFrameCount = anim.FrameCount[0];
                         _wristId = 1;
@@ -321,7 +320,7 @@ namespace MphRead.Entities.Enemies
             }
             _models[0].SetAnimation(1, AnimFlags.NoLoop);
             _attackDelay = Values.AttackDelay * 2; // todo: FPS stuff
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.LAVA_DEMON_ATTACK_SCR);
             return true;
         }
 
@@ -365,6 +364,7 @@ namespace MphRead.Entities.Enemies
             int effectId = _spawner.Data.Fields.S06.EnemySubtype == 1 ? 132 : 95; // iceDemonRise, lavaDemonRise
             _scene.SpawnEffect(effectId, transform);
             _models[0].SetAnimation(3, AnimFlags.NoLoop);
+            _soundSource.PlaySfx(SfxId.LAVA_DEMON_APPEAR_SCR);
             return true;
         }
 
@@ -393,7 +393,7 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             _animFrameCount = _models[0].AnimInfo.FrameCount[0];
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.LAVA_DEMON_DISAPPEAR_SCR);
             _models[0].SetAnimation(2, AnimFlags.NoLoop);
             _attackCount = Values.AttackCountMin + Rng.GetRandomInt2((uint)(Values.AttackCountMax + 1 - Values.AttackCountMin));
             _wristId = 1;

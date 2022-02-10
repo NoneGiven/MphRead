@@ -125,7 +125,7 @@ namespace MphRead.Entities.Enemies
 
         private void State01()
         {
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.MOCHTROID_FLY, loop: true);
             _bobAngle += _bobSpeed / 2; // todo: FPS stuff
             if (_bobAngle >= 360)
             {

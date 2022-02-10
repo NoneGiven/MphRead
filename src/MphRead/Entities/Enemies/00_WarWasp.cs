@@ -121,7 +121,7 @@ namespace MphRead.Entities.Enemies
             {
                 ContactDamagePlayer(3, knockback: false);
             }
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.WASP_IDLE, loop: true);
             CallStateProcess();
         }
 
@@ -361,7 +361,7 @@ namespace MphRead.Entities.Enemies
             _attackTarget = PlayerEntity.Main.Position;
             _stepCount = 40 * 2; // todo: FPS stuff
             _models[0].SetAnimation(3, AnimFlags.NoLoop);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.WASP_ATTACK_SCR);
             return true;
         }
 
