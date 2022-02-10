@@ -981,6 +981,15 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
+
+                void PlaySfx(SfxId sfx)
+                {
+                    if (IsMainPlayer) // sfxtodo: and sound isn't paused for jingle
+                    {
+                        _soundSource.PlayFreeSfx(sfx);
+                    }
+                }
+
                 bool pickedUp = false;
                 switch (item.ItemType)
                 {
@@ -992,7 +1001,7 @@ namespace MphRead.Entities
                         pickedUp = true;
                         _timeSinceHeal = 0;
                         GainHealth(_healthPickupAmounts[(int)item.ItemType]);
-                        // todo: play SFX
+                        PlaySfx(item.ItemType == ItemType.HealthSmall ? SfxId.POWER_UP1 : SfxId.POWER_UP2);
                     }
                     break;
                 case ItemType.UASmall:
@@ -1006,13 +1015,14 @@ namespace MphRead.Entities
                     if (item.ItemType == ItemType.UABig || item.ItemType == ItemType.MissileBig)
                     {
                         amount = _scene.Multiplayer ? 100 : 250;
+                        PlaySfx(SfxId.AMMO_POWER_UP2);
                     }
                     else
                     {
                         amount = _scene.Multiplayer ? 50 : 100;
+                        PlaySfx(SfxId.AMMO_POWER_UP1);
                     }
                     _ammo[slot] += amount;
-                    // todo: play SFX
                     if (_ammo[slot] > _ammoMax[slot])
                     {
                         _ammo[slot] = _ammoMax[slot];
@@ -1029,7 +1039,6 @@ namespace MphRead.Entities
                 case ItemType.AffinityWeapon:
                     pickedUp = true;
                     PickUpWeapon(item.ItemType);
-                    // todo: play SFX
                     break;
                 case ItemType.DoubleDamage:
                     pickedUp = true;
@@ -1037,7 +1046,8 @@ namespace MphRead.Entities
                     _doubleDmgTimer = 900 * 2; // todo: FPS stuff
                     if (IsMainPlayer)
                     {
-                        // todo: play and update SFX
+                        _soundSource.PlayFreeSfx(SfxId.DOUBLE_DAMAGE_POWER_UP);
+                        // sfxtodo: update timer SFX
                         UpdateDoubleDamageSpeed(1);
                     }
                     break;
@@ -1048,7 +1058,8 @@ namespace MphRead.Entities
                     Flags2 |= PlayerFlags2.Cloaking;
                     if (IsMainPlayer)
                     {
-                        // todo: play SFX
+                        _soundSource.PlayFreeSfx(SfxId.CLOAK_POWER_UP);
+                        // sfxtodo: update timer SFX
                     }
                     break;
                 case ItemType.Deathalt:
@@ -1059,7 +1070,10 @@ namespace MphRead.Entities
                     {
                         TrySwitchForms(force: true);
                     }
-                    // todo: play SFX
+                    if (IsMainPlayer)
+                    {
+                        _soundSource.PlayFreeSfx(SfxId.DOUBLE_DAMAGE_POWER_UP);
+                    }
                     break;
                 case ItemType.EnergyTank:
                     if (!IsBot)
@@ -1093,7 +1107,10 @@ namespace MphRead.Entities
                     break;
                 case ItemType.ArtifactKey:
                     pickedUp = true;
-                    // todo: play SFX
+                    if (IsMainPlayer)
+                    {
+                        _soundSource.PlayFreeSfx(SfxId.KEY_PICKUP);
+                    }
                     break;
                 default:
                     pickedUp = true;
@@ -1114,6 +1131,10 @@ namespace MphRead.Entities
                 if (Hunter == Hunter.Samus || Hunter == Hunter.Guardian) // game doesn't check for Guardian
                 {
                     _ammo[1] = Math.Min(_ammo[1] + 50, _ammoMax[1]);
+                    if (IsMainPlayer) // sfxtodo: and sound isn't paused for jingle
+                    {
+                        _soundSource.PlayFreeSfx(SfxId.AMMO_POWER_UP1);
+                    }
                     return;
                 }
                 weapon = Weapons.GetAffinityBeam(Hunter);
@@ -1167,6 +1188,14 @@ namespace MphRead.Entities
                         UpdateAffinityWeaponSlot(weapon, slot: 2);
                     }
                 }
+                if (IsMainPlayer) // sfxtodo: and sound isn't paused for jingle
+                {
+                    _soundSource.PlayFreeSfx(SfxId.WEAPON_POWER_UP);
+                }
+            }
+            else if (IsMainPlayer) // sfxtodo: and sound isn't paused for jingle
+            {
+                _soundSource.PlayFreeSfx(SfxId.AMMO_POWER_UP1);
             }
         }
 
