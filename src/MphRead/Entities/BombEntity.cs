@@ -599,7 +599,7 @@ namespace MphRead.Entities
 
         public override void Destroy()
         {
-            // todo: SFX and stuff
+            _soundSource.StopAllSfx();
             if (BombType == BombType.Lockjaw)
             {
                 for (int i = BombIndex; i < Owner.SyluxBombCount - 1; i++)

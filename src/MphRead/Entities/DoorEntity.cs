@@ -218,11 +218,12 @@ namespace MphRead.Entities
                 {
                     _soundSource.PlaySfx(SfxId.LOCK_ANIM, recency: Single.MaxValue, sourceOnly: true);
                 }
-                int flags = (int)Flags;
-                int bits = (flags << 22) >> 30;
+                uint flags = (uint)Flags;
+                uint bits = (flags << 22) >> 30;
                 if (bits < 2)
                 {
                     bits = (bits + 1) & 3;
+                    flags &= 0xFFFFFCFF;
                     flags |= bits << 8;
                     Flags = (DoorFlags)flags;
                 }
