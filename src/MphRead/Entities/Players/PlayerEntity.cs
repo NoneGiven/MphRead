@@ -224,6 +224,7 @@ namespace MphRead.Entities
         public BeamType CurrentWeapon { get; private set; }
         public BeamType PreviousWeapon { get; private set; }
         public BeamType WeaponSelection { get; private set; }
+        private int _missileSfxHandle = -1;
         public readonly Effectiveness[] BeamEffectiveness = new Effectiveness[9];
         public GunAnimation GunAnimation { get; private set; }
         private ushort _bombCooldown = 0;
@@ -820,7 +821,7 @@ namespace MphRead.Entities
             {
                 PlayHunterSfx(HunterSfx.Spawn);
             }
-            // todo: clear weapon SFX handle
+            _missileSfxHandle = -1;
             _lastJumpPad = null;
             _jumpPadControlLock = 0;
             _jumpPadControlLockMin = 0;
@@ -1237,11 +1238,20 @@ namespace MphRead.Entities
             {
                 if (anim == GunAnimation.MissileClose)
                 {
-                    // todo: play SFX
+                    _soundSource.StopSfxByHandle(_missileSfxHandle);
+                    _missileSfxHandle = -1;
+                    if (!IsAltForm)
+                    {
+                        PlayMissileSfx(HunterSfx.MissileClose);
+                    }
                 }
                 else if (anim == GunAnimation.MissileOpen && EquipInfo.ChargeLevel == 0)
                 {
-                    // todo: play SFX
+                    _soundSource.StopSfxByHandle(_missileSfxHandle);
+                    if (!IsAltForm && _health > 0)
+                    {
+                        _missileSfxHandle = PlayMissileSfx(HunterSfx.MissileSwitch);
+                    }
                 }
             }
             if (anim == GunAnimation.FullChargeMissile || anim == GunAnimation.ChargingMissile || anim == GunAnimation.MissileClose

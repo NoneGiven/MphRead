@@ -197,7 +197,16 @@ namespace MphRead.Entities
                     Target = null;
                 }
             }
-            // todo: homing SFX
+            if (Flags.TestFlag(BeamFlags.Charged)
+                && (Beam != BeamType.Missile || Flags.TestFlag(BeamFlags.Homing)))
+            {
+                // only relevant for the affinity missile beeping sound in practice
+                int sfx = Metadata.BeamSfx[(int)Beam, (int)BeamSfx.AffinityCharge];
+                if (sfx != -1)
+                {
+                    _soundSource.PlaySfx(sfx, loop: true);
+                }
+            }
             if (Flags.TestFlag(BeamFlags.HasModel))
             {
                 UpdateAnimFrames(_models[0]);

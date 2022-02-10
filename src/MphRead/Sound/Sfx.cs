@@ -81,6 +81,11 @@ namespace MphRead.Sound
         {
             Sfx.StopSoundFromSource(this, id);
         }
+
+        public void StopSfxByHandle(int handle)
+        {
+            Sfx.StopSoundByHandle(handle);
+        }
     }
 
     // sktodo: pause all sounds when debugger breaks, frame advance is on, etc.
@@ -239,6 +244,21 @@ namespace MphRead.Sound
                 if (channel.Source == source && channel.SfxId == id)
                 {
                     channel.Stop();
+                }
+            }
+        }
+
+        public static void StopSoundByHandle(int handle)
+        {
+            if (handle >= 0)
+            {
+                for (int i = 0; i < _channels.Length; i++)
+                {
+                    SoundChannel channel = _channels[i];
+                    if (channel.Handle == handle)
+                    {
+                        channel.Stop();
+                    }
                 }
             }
         }

@@ -42,9 +42,14 @@ namespace MphRead.Entities
             }
         }
 
-        private void PlayMissileSfx(HunterSfx sfx)
+        private int PlayMissileSfx(HunterSfx sfx)
         {
-            _soundSource.PlayFreeSfx(0);
+            int id = Metadata.HunterSfx[(int)Hunter, (int)sfx];
+            if (id == -1) // sfxtodo: or if sound is paused for jingle
+            {
+                return -1;
+            }
+            return _soundSource.PlayFreeSfx(id);
         }
 
         private float _damageSfxTimer = 0;

@@ -509,7 +509,12 @@ namespace MphRead.Entities
             }
             UpdateGunAnimation();
             UpdateAnimFrames(_gunModel);
-            // todo: update weapon SFX
+            if (IsMainPlayer && _gunModel.AnimInfo.Frame[0] == 15 && _scene.FrameCount % 2 == 0 // todo: FPS stuff
+                && (GunAnimation == GunAnimation.Unknown9 || GunAnimation == GunAnimation.MissileShot))
+            {
+                _soundSource.StopSfxByHandle(_missileSfxHandle);
+                _missileSfxHandle = PlayMissileSfx(HunterSfx.MissileOpen);
+            }
             PickUpItems();
             if (!IsAltForm)
             {
