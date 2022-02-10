@@ -35,10 +35,10 @@ namespace MphRead.Sound
             }
         }
 
-        public void PlaySfx(SfxId id, bool loop = false, bool ignoreParams = false,
+        public void PlaySfx(SfxId id, bool loop = false, bool noUpdate = false,
             float recency = -1, bool sourceOnly = false)
         {
-            PlaySfx((int)id, loop, ignoreParams, recency, sourceOnly);
+            PlaySfx((int)id, loop, noUpdate, recency, sourceOnly);
         }
 
         public void PlayFreeSfx(SfxId id)
@@ -46,13 +46,13 @@ namespace MphRead.Sound
             PlayFreeSfx((int)id);
         }
 
-        public void PlaySfx(int id, bool loop = false, bool ignoreParams = false,
+        public void PlaySfx(int id, bool loop = false, bool noUpdate = false,
             float recency = -1, bool sourceOnly = false)
         {
             // sktodo: support DGN and scripts
             if (id >= 0 && (id & 0xC000) == 0)
             {
-                Sfx.PlaySample(id, this, loop, ignoreParams, recency, sourceOnly);
+                Sfx.PlaySample(id, this, loop, noUpdate, recency, sourceOnly);
             }
         }
 
@@ -61,7 +61,7 @@ namespace MphRead.Sound
             if (id >= 0)
             {
                 Debug.Assert((id & 0xC000) == 0);
-                return Sfx.PlaySample(id, null, loop: false, ignoreParams: false,
+                return Sfx.PlaySample(id, null, loop: false, noUpdate: false,
                     recency: -1, sourceOnly: false);
             }
             return -1;
@@ -99,7 +99,7 @@ namespace MphRead.Sound
             public float SampleVolume { get; set; } = 1;
             public float PlayTime { get; set; } = -1;
             public int SfxId { get; set; } = -1;
-            public bool IgnoreParams { get; set; }
+            public bool NoUpdate { get; set; }
             public bool Loop { get; set; }
 
             public int Handle { get; set; } = -1;
@@ -120,7 +120,7 @@ namespace MphRead.Sound
                     AL.Source(ChannelId, ALSourcef.MaxDistance, Single.MaxValue);
                     AL.Source(ChannelId, ALSourcef.RolloffFactor, 1);
                 }
-                else if (!IgnoreParams)
+                else if (!NoUpdate)
                 {
                     // sktodo: velocity, maybe also direction?
                     Vector3 sourcePos = Source.Position;
@@ -142,7 +142,7 @@ namespace MphRead.Sound
                 SfxId = -1;
                 Source = null;
                 SampleVolume = 1;
-                IgnoreParams = false;
+                NoUpdate = false;
                 Loop = false;
                 Handle = -1;
             }
@@ -161,7 +161,7 @@ namespace MphRead.Sound
 
         public static float Volume { get; set; } = 0.35f;
 
-        public static int PlaySample(int id, SoundSource? source, bool loop, bool ignoreParams,
+        public static int PlaySample(int id, SoundSource? source, bool loop, bool noUpdate,
             float recency, bool sourceOnly)
         {
             Debug.Assert(id >= 0 && id < _samples.Count);
@@ -185,9 +185,9 @@ namespace MphRead.Sound
             SoundChannel channel = FindChannel(source);
             channel.Source = source;
             channel.PlayTime = 0;
-            channel.IgnoreParams = false;
+            channel.NoUpdate = false;
             channel.Update();
-            channel.IgnoreParams = ignoreParams;
+            channel.NoUpdate = noUpdate;
             channel.SampleVolume = sample.Volume;
             if (channel.BufferId != bufferId)
             {
@@ -227,7 +227,7 @@ namespace MphRead.Sound
                 SoundChannel channel = _channels[i];
                 if (channel.Source == source)
                 {
-                    if ((force || channel.Loop) && (!force || !channel.IgnoreParams))
+                    if ((force || channel.Loop) && (!force || !channel.NoUpdate))
                     {
                         channel.Stop();
                     }

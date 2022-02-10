@@ -1673,10 +1673,7 @@ namespace MphRead.Entities
                 // else...
                 _health = 0;
                 UpdateZoom(false);
-                if (_boostCharge > 0)
-                {
-                    // sfxtodo: update SFX
-                }
+                // the game stops the boost charge SFX here, but that SFX is empty
                 _boostCharge = 0;
                 GameState.Deaths[SlotIndex]++;
                 if (this == Main && beamType == BeamType.OmegaCannon)

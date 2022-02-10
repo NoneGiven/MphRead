@@ -475,7 +475,7 @@ namespace MphRead.Entities
                 {
                     recency = 0;
                 }
-                _soundSource.PlaySfx(sfx & ~0xA0000, ignoreParams: ignoreParams, recency: recency, sourceOnly: sourceOnly);
+                _soundSource.PlaySfx(sfx & ~0xA0000, noUpdate: ignoreParams, recency: recency, sourceOnly: sourceOnly);
             }
         }
 

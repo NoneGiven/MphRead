@@ -73,7 +73,7 @@ namespace MphRead.Entities
             int sfx = Metadata.BeamSfx[(int)beam, (int)BeamSfx.Empty];
             if (sfx != -1)
             {
-                _soundSource.PlaySfx(sfx, ignoreParams: true);
+                _soundSource.PlaySfx(sfx, noUpdate: true);
             }
         }
 
@@ -132,6 +132,14 @@ namespace MphRead.Entities
             {
                 _soundSource.StopSfx(sfx);
             }
+        }
+
+        public void StopContinuousBeamSfx(BeamType beam)
+        {
+            int sfx = Metadata.BeamSfx[(int)beam, (int)BeamSfx.Shot];
+            _soundSource.StopSfx(sfx);
+            sfx = Metadata.BeamSfx[(int)beam, (int)BeamSfx.AffinityChargeShot];
+            _soundSource.StopSfx(sfx);
         }
 
         public void UpdateSounds()

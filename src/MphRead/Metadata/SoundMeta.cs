@@ -95,7 +95,7 @@ namespace MphRead
         ChargeHit = 5,
         Empty = 6,
         Switch = 7,
-        AffinityCharge = 8,
+        Homing = 8,
         AffinityChargeShot = 9
     }
 

@@ -1537,10 +1537,7 @@ namespace MphRead.Entities
             Flags1 &= ~PlayerFlags1.Morphing;
             Flags1 |= PlayerFlags1.Unmorphing;
             SwitchCamera(CameraType.First, _facingVector);
-            if (_boostCharge > 0)
-            {
-                // todo: update SFX
-            }
+            // the game stops the boost charge SFX here, but that SFX is empty
             _boostCharge = 0;
             SetBipedAnimation(PlayerAnimation.Unmorph, AnimFlags.NoLoop);
             if (Flags2.TestFlag(PlayerFlags2.AltAttack))

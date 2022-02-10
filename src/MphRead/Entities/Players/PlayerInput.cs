@@ -1351,12 +1351,13 @@ namespace MphRead.Entities
                         }
                         else
                         {
-                            if (_boostCharge > 0)
-                            {
-                                // sfxtodo: transition SFX
-                            }
                             if (_boostCharge > Values.BoostChargeMin * 2) // todo: FPS stuff
                             {
+                                if (_boostCharge > 0)
+                                {
+                                    int sfx = Metadata.HunterSfx[(int)Hunter, (int)HunterSfx.Boost];
+                                    _soundSource.PlaySfx(sfx);
+                                }
                                 float boostHCap = Fixed.ToFloat(Values.BoostSpeedCap) * _boostCharge
                                     / (Values.BoostChargeMax * 2); // todo: FPS stuff
                                 if (_hSpeedCap < boostHCap)
