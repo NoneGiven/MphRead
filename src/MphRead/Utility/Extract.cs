@@ -114,6 +114,7 @@ namespace MphRead
             public RomDataValues BeamSfx { get; set; } = null!;
             public RomDataValues EnemyDamageSfx { get; set; } = null!;
             public RomDataValues EnemyDeathSfx { get; set; } = null!;
+            public RomDataValues PlatformSfx { get; set; } = null!;
         }
 
         private static void ExtractRomData(string rootName)
@@ -348,6 +349,10 @@ namespace MphRead
             Metadata.SetHunterSfxData(hunterSfx);
             Metadata.SetEnemyDamageSfxData(enemyDamageSfx);
             Metadata.SetEnemyDeathSfxData(enemyDeathSfx);
+            // overlay9_15 (or overlay9_12 for A76E0)
+            bytes = File.ReadAllBytes(Path.Combine(Paths.FileSystem, "_bin", data.PlatformSfx.File));
+            byte[] platformSfx = bytes[data.PlatformSfx.Offset..(data.PlatformSfx.Offset + data.PlatformSfx.Size)];
+            Metadata.SetPlatformSfxData(platformSfx);
         }
 
         private static readonly IReadOnlyDictionary<string, RomData> _romData = new Dictionary<string, RomData>()
@@ -363,7 +368,8 @@ namespace MphRead
                     BeamSfx = new RomDataValues("overlay9_2", 0x1D8B8, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1D96C, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0x9B574, 208),
-                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0x9B644, 208)
+                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0x9B644, 208),
+                    PlatformSfx = new RomDataValues("overlay9_12", 0x81E4, 360)
                 }
             },
             {
@@ -377,7 +383,8 @@ namespace MphRead
                     BeamSfx = new RomDataValues("overlay9_2", 0x1DA98, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1DB4C, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0xC54A8, 208),
-                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC5578, 208)
+                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC5578, 208),
+                    PlatformSfx = new RomDataValues("overlay9_15", 0x8284, 360)
                 }
             },
             {
@@ -391,7 +398,8 @@ namespace MphRead
                     BeamSfx = new RomDataValues("overlay9_2", 0x1DAF8, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1DBAC, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0xC5D30, 208),
-                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC5E00, 208)
+                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC5E00, 208),
+                    PlatformSfx = new RomDataValues("overlay9_15", 0x8284, 360)
                 }
             },
             {
@@ -405,7 +413,8 @@ namespace MphRead
                     BeamSfx = new RomDataValues("overlay9_2", 0x1DAF8, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1DBAC, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0xC7278, 208),
-                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC7348, 208)
+                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC7348, 208),
+                    PlatformSfx = new RomDataValues("overlay9_15", 0x8284, 360)
                 }
             },
             {
@@ -419,7 +428,8 @@ namespace MphRead
                     BeamSfx = new RomDataValues("overlay9_2", 0x1DAF8, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1DBAC, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0xC7238, 208),
-                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC7308, 208)
+                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC7308, 208),
+                    PlatformSfx = new RomDataValues("overlay9_15", 0x8284, 360)
                 }
             },
             {
@@ -433,7 +443,8 @@ namespace MphRead
                     BeamSfx = new RomDataValues("overlay9_2", 0x1DA98, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1DB4C, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0xC5D50, 208),
-                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC5E20, 208)
+                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC5E20, 208),
+                    PlatformSfx = new RomDataValues("overlay9_15", 0x8284, 360)
                 }
             },
             {
@@ -447,7 +458,8 @@ namespace MphRead
                     BeamSfx = new RomDataValues("overlay9_2", 0x1DAF8, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1DBAC, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0xC5DD0, 208),
-                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC5EA0, 208)
+                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC5EA0, 208),
+                    PlatformSfx = new RomDataValues("overlay9_15", 0x8284, 360)
                 }
             },
             {
@@ -461,7 +473,8 @@ namespace MphRead
                     BeamSfx = new RomDataValues("overlay9_2", 0x1BE4A, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1BEFE, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0xBE4DC, 208),
-                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0xBE5AC, 208)
+                    EnemyDeathSfx = new RomDataValues("arm9.bin", 0xBE5AC, 208),
+                    PlatformSfx = new RomDataValues("overlay9_15", 0x7CC0, 360)
                 }
             },
             {

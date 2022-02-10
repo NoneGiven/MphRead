@@ -58,6 +58,7 @@ namespace MphRead
                 int nodePlayerCount = Features.MaxRoomDetail ? 2 : playerCount;
                 nodeLayerMask = GetNodeLayer(mode, metadata.NodeLayer, nodePlayerCount);
             }
+            Extract.LoadRuntimeData();
             IReadOnlyList<EntityBase> entities = LoadEntities(metadata, entityLayerId, scene);
             CollisionInstance collision = Collision.GetCollision(metadata, nodeLayerMask);
             NodeData? nodeData = null;
@@ -297,7 +298,6 @@ namespace MphRead
             Strings.ReadStringTable(StringTables.HudMsgsCommon, language);
             Strings.ReadStringTable(StringTables.HudMessagesSP, language);
             Strings.ReadStringTable(StringTables.HudMessagesMP, language);
-            Extract.LoadRuntimeData();
         }
 
         public static void LoadHunterResources(Hunter hunter, Scene scene)

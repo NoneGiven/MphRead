@@ -11,6 +11,7 @@ namespace MphRead
             203, 106, 96, 107, 108, 295, 300, 111, 109, 325
         };
 
+        public static int[,] PlatformSfx { get; private set; } = null!;
         public static int[,] HunterSfx { get; private set; } = null!;
         public static int[,] BeamSfx { get; private set; } = null!;
         public static int[] EnemyDamageSfx { get; private set; } = null!;
@@ -24,6 +25,11 @@ namespace MphRead
         public static void SetBeamSfxData(byte[] data)
         {
             BeamSfx = ParseSfxData2(data, rows: 9, columns: 10);
+        }
+
+        public static void SetPlatformSfxData(byte[] data)
+        {
+            PlatformSfx = ParseSfxData2(data, rows: 45, columns: 4);
         }
 
         public static void SetEnemyDamageSfxData(byte[] data)
