@@ -1709,6 +1709,7 @@ namespace MphRead
             entry.Parity = (int)(_frameCount % 2);
             entry.EffectEntry = null;
             entry.EntityCollision = entCol;
+            entry.Definition = element;
             entry.RoField1 = 0;
             entry.RoField2 = 0;
             entry.RoField3 = 0;
@@ -1727,6 +1728,7 @@ namespace MphRead
             }
             _activeElements.Remove(element);
             element.EntityCollision = null;
+            element.Definition = null;
             element.Model = null!;
             element.Nodes.Clear();
             element.EffectName = "";
@@ -1850,6 +1852,28 @@ namespace MphRead
                     element.TextureBindingIds.Add(material.TextureBindingId);
                 }
             }
+        }
+
+        public int CountElements(int effectId)
+        {
+            Effect? effect = Read.GetEffect(effectId);
+            if (effect == null)
+            {
+                return 0;
+            }
+            int count = 0;
+            for (int i = 0; i < effect.Elements.Count; i++)
+            {
+                EffectElement element = effect.Elements[i];
+                for (int j = 0; j < _activeElements.Count; j++)
+                {
+                    if (_activeElements[j].Definition == element)
+                    {
+                        count++;
+                    }
+                }
+            }
+            return count;
         }
 
         private void ProcessEffects()
