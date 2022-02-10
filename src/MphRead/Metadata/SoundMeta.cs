@@ -7,18 +7,30 @@ namespace MphRead
     {
         public static int[,] HunterSfx { get; private set; } = null!;
         public static int[,] BeamSfx { get; private set; } = null!;
+        public static int[] EnemyDamageSfx { get; private set; } = null!;
+        public static int[] EnemyDeathSfx { get; private set; } = null!;
 
         public static void SetHunterSfxData(byte[] data)
         {
-            HunterSfx = ParseSfxData(data, rows: 8, columns: 17);
+            HunterSfx = ParseSfxData2(data, rows: 8, columns: 17);
         }
 
         public static void SetBeamSfxData(byte[] data)
         {
-            BeamSfx = ParseSfxData(data, rows: 9, columns: 10);
+            BeamSfx = ParseSfxData2(data, rows: 9, columns: 10);
         }
 
-        private static int[,] ParseSfxData(byte[] data, int rows, int columns)
+        public static void SetEnemyDamageSfxData(byte[] data)
+        {
+            EnemyDamageSfx = ParseSfxData4(data, count: 52);
+        }
+
+        public static void SetEnemyDeathSfxData(byte[] data)
+        {
+            EnemyDeathSfx = ParseSfxData4(data, count: 52);
+        }
+
+        private static int[,] ParseSfxData2(byte[] data, int rows, int columns)
         {
             Debug.Assert(data.Length > 0 && data.Length % 2 == 0);
             Debug.Assert(data.Length / 2 == rows * columns);
@@ -32,6 +44,21 @@ namespace MphRead
                     ushort value = BitConverter.ToUInt16(data[start..end]);
                     dest[r, c] = value == 0xFFFF ? -1 : value;
                 }
+            }
+            return dest;
+        }
+
+        private static int[] ParseSfxData4(byte[] data, int count)
+        {
+            Debug.Assert(data.Length > 0 && data.Length % 4 == 0);
+            Debug.Assert(data.Length / 4 == count);
+            int[] dest = new int[count];
+            for (int i = 0; i < count; i++)
+            {
+                int start = i * 4;
+                int end = start + 4;
+                uint value = BitConverter.ToUInt32(data[start..end]);
+                dest[i] = value == 0xFFFFFFFF ? -1 : (int)value;
             }
             return dest;
         }

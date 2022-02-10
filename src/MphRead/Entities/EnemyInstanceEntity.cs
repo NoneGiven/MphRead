@@ -417,7 +417,7 @@ namespace MphRead.Entities
                         Detach();
                     }
                     _soundSource.StopAllSfx();
-                    // sfxtodo: play death SFX
+                    PlayEnemySfx(Metadata.EnemyDeathSfx[(int)EnemyType], ignoreParams: true);
                     int effectId;
                     if (EnemyType == EnemyType.FireSpawn)
                     {
@@ -435,7 +435,7 @@ namespace MphRead.Entities
                 else
                 {
                     _timeSinceDamage = 0;
-                    // todo: play SFX
+                    PlayEnemySfx(Metadata.EnemyDamageSfx[(int)EnemyType], ignoreParams: false);
                     switch (_data.Type)
                     {
                     case EnemyType.Zoomer:
@@ -454,6 +454,28 @@ namespace MphRead.Entities
                         break;
                     }
                 }
+            }
+        }
+
+        private void PlayEnemySfx(int sfx, bool ignoreParams)
+        {
+            if (sfx != -1)
+            {
+                // sfxtodo: these are our equivalents to SFX_SINGLE and SFX_CHECK_RECENT w/ zero time, respectively,
+                // but this will need updating to account for only SFX_SINGLE updating DGN parameters
+                // --> although none of these damage SFX are actually DGN
+                float recency = -1;
+                bool sourceOnly = false;
+                if ((sfx & 0x20000) != 0)
+                {
+                    recency = Single.MaxValue;
+                    sourceOnly = true;
+                }
+                else if ((sfx & 0x80000) != 0)
+                {
+                    recency = 0;
+                }
+                _soundSource.PlaySfx(sfx & ~0xA0000, ignoreParams: ignoreParams, recency: recency, sourceOnly: sourceOnly);
             }
         }
 

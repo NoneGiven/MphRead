@@ -42,6 +42,11 @@ namespace MphRead.Entities
             }
         }
 
+        private void PlayMissileSfx(HunterSfx sfx)
+        {
+            _soundSource.PlayFreeSfx(0);
+        }
+
         private float _damageSfxTimer = 0;
 
         private void PlayRandomDamageSfx()
