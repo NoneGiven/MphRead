@@ -1501,7 +1501,7 @@ namespace MphRead.Entities
                         _bombCooldown = 150 * 2;
                     }
                 }
-                // todo: play SFX
+                bomb.PlaySpawnSfx();
             }
         }
 
