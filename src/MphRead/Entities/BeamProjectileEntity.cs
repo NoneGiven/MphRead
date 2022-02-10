@@ -45,6 +45,7 @@ namespace MphRead.Entities
         public EntityBase? Owner { get; set; }
         public WeaponInfo? RicochetWeapon { get; set; }
         public EffectEntry? Effect { get; set; }
+        public EffectEntry? MuzzleEffect { get; set; }
         public EntityBase? Target { get; set; }
         public EquipInfo? Equip { get; set; }
 
@@ -1314,6 +1315,15 @@ namespace MphRead.Entities
             if (Effect != null)
             {
                 _scene.DetachEffectEntry(Effect, setExpired: true);
+                Effect = null;
+            }
+            if (MuzzleEffect != null)
+            {
+                if (Flags.TestFlag(BeamFlags.DestroyMuzzle))
+                {
+                    _scene.UnlinkEffectEntry(MuzzleEffect);
+                }
+                MuzzleEffect = null;
             }
             Owner = null;
             Effect = null;
@@ -1410,6 +1420,7 @@ namespace MphRead.Entities
                 return BeamResultFlags.NoSpawn;
             }
             equip.SetAmmo?.Invoke(ammo - cost);
+            EffectEntry? muzzleEffect = null;
             if (!spawnFlags.TestFlag(BeamSpawnFlags.NoMuzzle))
             {
                 byte effectId = weapon.MuzzleEffects[charged ? 1 : 0];
@@ -1421,7 +1432,7 @@ namespace MphRead.Entities
                     Matrix4 transform = GetTransformMatrix(effFacing, effUp);
                     transform.Row3.Xyz = position;
                     // the game does this by spawning a CBeamEffect, but that's unncessary for muzzle effects
-                    scene.SpawnEffect(effectId - 3, transform);
+                    muzzleEffect = scene.SpawnEffectGetEntry(effectId - 3, transform);
                 }
             }
             int projectiles = (int)GetAmount(weapon.Projectiles, weapon.MinChargeProjectiles, weapon.ChargedProjectiles);
@@ -1681,6 +1692,11 @@ namespace MphRead.Entities
                         beam.Effect = scene.SpawnEffectGetEntry(effectId, transform);
                         beam.Effect?.SetElementExtension(true);
                     }
+                }
+                beam.MuzzleEffect = muzzleEffect;
+                if (spawnFlags.TestFlag(BeamSpawnFlags.DestroyMuzzle))
+                {
+                    beam.Flags |= BeamFlags.DestroyMuzzle;
                 }
                 Debug.Assert(beam.Target == null);
                 if (beam.Flags.TestFlag(BeamFlags.Homing))
@@ -2149,7 +2165,8 @@ namespace MphRead.Entities
         RadiusIndex1 = 0x200, // pair with bit 10: index 0-3 of radius for enemy beam collision with player beams
         RadiusIndex2 = 0x400,
         LifeDrain = 0x800,
-        SurfaceCollision = 0x1000
+        SurfaceCollision = 0x1000,
+        DestroyMuzzle = 0x2000 // viewer only
     }
 
     [Flags]
@@ -2159,7 +2176,8 @@ namespace MphRead.Entities
         DoubleDamage = 0x1,
         Charged = 0x2,
         NoMuzzle = 0x4,
-        PrimeHunter = 0x8
+        PrimeHunter = 0x8,
+        DestroyMuzzle = 0x10 // viewer only
     }
 
     [Flags]

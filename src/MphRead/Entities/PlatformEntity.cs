@@ -703,7 +703,12 @@ namespace MphRead.Entities
                     Matrix4 transform = GetTransform();
                     Vector3 spawnPos = Matrix.Vec3MultMtx4(_beamSpawnPos, transform);
                     Vector3 spawnDir = Matrix.Vec3MultMtx3(_beamSpawnDir, transform).Normalized();
-                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, _scene);
+                    BeamSpawnFlags spawnFlags = BeamSpawnFlags.None;
+                    if (_equipInfo.Weapon.Flags.TestFlag(WeaponFlags.Continuous))
+                    {
+                        spawnFlags = BeamSpawnFlags.DestroyMuzzle;
+                    }
+                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, spawnFlags, _scene);
                     BeamSfxInfo sfxInfo = _beamSfx[_data.BeamId];
                     if (sfxInfo.Data.Id != -1)
                     {
