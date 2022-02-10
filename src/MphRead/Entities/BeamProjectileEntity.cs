@@ -151,7 +151,8 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // todo: positional audio (w/ BeamKind check), node refs
+            _soundSource.Update(Position, rangeIndex: Beam == BeamType.Missile ? 3 : 2);
+            // sfxtodo: if node ref is not active, set sound volume override to 0
             if (Target != null)
             {
                 for (int i = 0; i < _scene.MessageQueue.Count; i++)
@@ -491,7 +492,10 @@ namespace MphRead.Entities
                     anyRes.Position.Z + anyRes.Plane.Z * amt
                 );
                 bool ricochet = true;
-                // todo: sfx and stuff
+                if (DrawFuncId == 12)
+                {
+                    _soundSource.PlaySfx(SfxId.BIGEYE_ATTACK1C, ignoreParams: true);
+                }
                 if (colWith != null)
                 {
                     if (colWith.Type == EntityType.Player || colWith.Type == EntityType.Halfturret)
@@ -689,7 +693,7 @@ namespace MphRead.Entities
                         }
                         if (other.DrawFuncId == 12) // Slench tear
                         {
-                            // todo: play SFX
+                            _soundSource.PlaySfx(SfxId.BIGEYE_ATTACK1C, ignoreParams: true);
                             ItemType item = ItemType.None;
                             uint rand = Rng.GetRandomInt2(100);
                             if (_scene.AreaId == 0) // Slench 1 (Alinos 1)
@@ -724,11 +728,11 @@ namespace MphRead.Entities
                         }
                         else if (other.DrawFuncId == 11) // Omega Cannon
                         {
-                            // todo: play SFX
+                            _soundSource.PlaySfx(SfxId.GOREA_ATTACK3B, ignoreParams: true);
                         }
                         else
                         {
-                            // todo: play SFX
+                            _soundSource.PlaySfx(SfxId.LOB_GUN_HIT, ignoreParams: true);
                         }
                         other.OnCollision(anyRes, this);
                         ricochet = false;
@@ -751,7 +755,18 @@ namespace MphRead.Entities
                             bool noSplat = anyRes.Terrain == Terrain.Lava || anyRes.EntityCollision != null;
                             SpawnCollisionEffect(anyRes, noSplat);
                         }
-                        // todo: play SFX
+                        if (RicochetWeapon != null)
+                        {
+                            PlayRiccochetSfx();
+                        }
+                        else if (anyRes.Terrain <= Terrain.Lava)
+                        {
+                            // sfxtodo: update beam SFX
+                        }
+                        else
+                        {
+                            _soundSource.PlaySfx(SfxId.GENERIC_HIT, ignoreParams: true);
+                        }
                         OnCollision(anyRes, colWith: null);
                         ricochet = false;
                     }
@@ -764,6 +779,30 @@ namespace MphRead.Entities
                 {
                     SpawnSniperBeam();
                 }
+            }
+        }
+
+        private void PlayRiccochetSfx()
+        {
+            bool charged = Flags.TestFlag(BeamFlags.Charged);
+            if (charged && Beam == BeamType.Magmaul)
+            {
+                // sfxtodo: update beam SFX
+                return;
+            }
+            int sfx = Metadata.BeamSfx[(int)Beam, (int)BeamSfx.Riccochet];
+            if (sfx != -1)
+            {
+                float a3; // sfxtodo: calculate and use this for DGN
+                if (Beam == BeamType.Judicator)
+                {
+                    a3 = Rng.GetRandomInt1(0xFFFF);
+                }
+                else
+                {
+                    a3 = 0xFFFF * (Speed * 2 / Fixed.ToFloat(3300));
+                }
+                _soundSource.PlaySfx(sfx, ignoreParams: true);
             }
         }
 
@@ -803,7 +842,7 @@ namespace MphRead.Entities
                 }
                 PastPositions[0] = Position;
             }
-            // todo: sfx
+            PlayRiccochetSfx();
         }
 
         public void OnCollision(CollisionResult colRes, EntityBase? colWith)
@@ -1233,6 +1272,7 @@ namespace MphRead.Entities
 
         public override void Destroy()
         {
+            _soundSource.StopAllSfx();
             if (Effect != null)
             {
                 _scene.DetachEffectEntry(Effect, setExpired: true);
@@ -1634,6 +1674,7 @@ namespace MphRead.Entities
                         }
                     }
                 }
+                beam._soundSource.Update(beam.Position, rangeIndex: 0);
                 scene.AddEntity(beam);
             }
             return result;

@@ -35,9 +35,10 @@ namespace MphRead.Sound
             }
         }
 
-        public void PlaySfx(SfxId id, bool loop = false, bool ignoreParams = false, bool single = false)
+        public void PlaySfx(SfxId id, bool loop = false, bool ignoreParams = false,
+            float recency = -1, bool sourceOnly = false)
         {
-            PlaySfx((int)id, loop, ignoreParams, single);
+            PlaySfx((int)id, loop, ignoreParams, recency, sourceOnly);
         }
 
         public void PlayFreeSfx(SfxId id)
@@ -45,12 +46,13 @@ namespace MphRead.Sound
             PlayFreeSfx((int)id);
         }
 
-        public void PlaySfx(int id, bool loop = false, bool ignoreParams = false, bool single = false)
+        public void PlaySfx(int id, bool loop = false, bool ignoreParams = false,
+            float recency = -1, bool sourceOnly = false)
         {
             // sktodo: support DGN and scripts
             if (id >= 0 && (id & 0xC000) == 0)
             {
-                Sfx.PlaySample(id, this, loop, ignoreParams, single);
+                Sfx.PlaySample(id, this, loop, ignoreParams, recency, sourceOnly);
             }
         }
 
@@ -59,7 +61,8 @@ namespace MphRead.Sound
             if (id >= 0)
             {
                 Debug.Assert((id & 0xC000) == 0);
-                Sfx.PlaySample(id, null, loop: false, ignoreParams: false, single: false);
+                Sfx.PlaySample(id, null, loop: false, ignoreParams: false,
+                    recency: -1, sourceOnly: false);
             }
         }
 
@@ -146,12 +149,20 @@ namespace MphRead.Sound
         private static IReadOnlyList<Sound3dEntry> _rangeData = null!;
         public static IReadOnlyList<Sound3dEntry> RangeData => _rangeData;
 
-        public static float Volume { get; set; } = 0.5f;
+        public static float Volume { get; set; } = 0.45f;
 
-        public static void PlaySample(int id, SoundSource? source, bool loop, bool ignoreParams, bool single)
+        public static void PlaySample(int id, SoundSource? source, bool loop, bool ignoreParams,
+            float recency, bool sourceOnly)
         {
             Debug.Assert(id >= 0 && id < _samples.Count);
-            if (single && source != null && IsSourcePlayingSample(source, id))
+            if (loop)
+            {
+                // sfxtodo: this is a different code path, and it includes requests flagged with SFX_SINGLE
+                // --> this "is this playing" path updates DGN parameters wen true, while the "recency" path doesn't
+                recency = Single.MaxValue;
+                sourceOnly = true;
+            }
+            if (recency >= 0 && CheckRecentSamplePlay(id, recency, sourceOnly ? source : null))
             {
                 return;
             }
@@ -180,12 +191,13 @@ namespace MphRead.Sound
             AL.SourcePlay(channel.Handle);
         }
 
-        private static bool IsSourcePlayingSample(SoundSource source, int id)
+        private static bool CheckRecentSamplePlay(int id, float recency, SoundSource? source)
         {
             for (int i = 0; i < _channels.Length; i++)
             {
                 SoundChannel channel = _channels[i];
-                if (channel.Source == source && channel.SfxId == id)
+                if ((source == null || channel.Source == source)
+                    && channel.SfxId == id && channel.PlayTime <= recency)
                 {
                     return true;
                 }
@@ -328,10 +340,10 @@ namespace MphRead.Sound
             {
                 _channels[i] = new SoundChannel(_channelIds[i]);
             }
-            // sktodo: control this with a setting
-            // sktodo: either way, the panning from left to right is way too harsh
-            // sktodo: low quality sound effect interpolation should be better
-            AL.DistanceModel(ALDistanceModel.LinearDistanceClamped);
+            if (!Features.LogSpatialAudio)
+            {
+                AL.DistanceModel(ALDistanceModel.LinearDistanceClamped);
+            }
         }
 
         public static void ShutDown()

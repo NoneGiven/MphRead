@@ -21,6 +21,11 @@ namespace MphRead.Entities
             }
             else
             {
+                float recency = -1;
+                if (sfx == HunterSfx.Damage)
+                {
+                    recency = 5 / 30f;
+                }
                 // the game only does this if not Guardian, but the SFX switched to are the same there anyway
                 if (!IsMainPlayer)
                 {
@@ -33,7 +38,7 @@ namespace MphRead.Entities
                         id = Metadata.HunterSfx[(int)Hunter, (int)HunterSfx.DeathEnemy];
                     }
                 }
-                _soundSource.PlaySfx(id);
+                _soundSource.PlaySfx(id, recency: recency, sourceOnly: true);
             }
         }
 
@@ -69,7 +74,7 @@ namespace MphRead.Entities
             {
                 // sfxtodo: use this value for DGN (set + initial on new, update on existing)
                 a3 = homing ? a3 + 0x3FFF : 0;
-                _soundSource.PlaySfx(Metadata.BeamSfx[(int)beam, (int)BeamSfx.Shot], single: true);
+                _soundSource.PlaySfx(Metadata.BeamSfx[(int)beam, (int)BeamSfx.Shot], loop: true);
                 return;
             }
             BeamSfx sfx;
@@ -106,7 +111,7 @@ namespace MphRead.Entities
             int sfx = GetBeamChargeSfx(beam);
             if (sfx != -1)
             {
-                _soundSource.PlaySfx(sfx, loop: true, single: true);
+                _soundSource.PlaySfx(sfx, loop: true);
             }
         }
 

@@ -17,6 +17,7 @@ namespace MphRead
         public static bool TargetInfoSway { get; set; } = false; // "false"
         public static bool MaxRoomDetail { get; set; } = false; // false
         public static bool MaxPlayerDetail { get; set; } = true; // false
+        public static bool LogSpatialAudio { get; set; } = true; // false
     }
 
     public static class Cheats

@@ -151,7 +151,7 @@ namespace MphRead.Entities.Enemies
                 }
             }
             ContactDamagePlayer(_values.ContactDamage, knockback: false);
-            _soundSource.PlaySfx(SfxId.WASP_IDLE, loop: true, single: true);
+            _soundSource.PlaySfx(SfxId.WASP_IDLE, loop: true);
             CallStateProcess();
         }
 
