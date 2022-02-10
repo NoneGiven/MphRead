@@ -168,7 +168,7 @@ namespace MphRead.Entities.Enemies
                     _subId = _state2;
                     if (_state1 == 2)
                     {
-                        // todo: stop SFX
+                        _soundSource.StopSfx(SfxId.PSYCHOBIT_CHARGE);
                     }
                     if (_effect == null)
                     {
@@ -324,7 +324,7 @@ namespace MphRead.Entities.Enemies
                 _shotCount--;
                 _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
                 _shotTimer = (ushort)(_values.ShotTime * 2); // todo: FPS stuff
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.PSYCHOBIT_BEAM);
                 _models[0].SetAnimation(0, AnimFlags.NoLoop);
             }
             CallSubroutine(Metadata.Enemy23Subroutines, this);
@@ -338,7 +338,7 @@ namespace MphRead.Entities.Enemies
                 _speed = Vector3.Zero;
                 _curFacing = FacingVector;
                 _models[0].SetAnimation(1);
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.PSYCHOBIT_CHARGE, cancellable: true);
             }
         }
 
@@ -441,7 +441,7 @@ namespace MphRead.Entities.Enemies
             _speedFactor = 0;
             _curFacing = facing;
             _models[0].SetAnimation(1);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.PSYCHOBIT_CHARGE, cancellable: true);
             SpawnEffect();
             return true;
         }
@@ -519,7 +519,7 @@ namespace MphRead.Entities.Enemies
                 {
                     _speed = Vector3.Zero;
                     _models[0].SetAnimation(1);
-                    // todo: play SFX
+                    _soundSource.PlaySfx(SfxId.PSYCHOBIT_CHARGE, cancellable: true);
                     SpawnEffect();
                     return true;
                 }
@@ -534,7 +534,7 @@ namespace MphRead.Entities.Enemies
                 _delayTimer--;
                 return false;
             }
-            // todo: stop SFX
+            _soundSource.StopSfx(SfxId.PSYCHOBIT_CHARGE);
             _models[0].SetAnimation(0, AnimFlags.NoLoop);
             _aimVec = (PlayerEntity.Main.Position + Position).Normalized();
             return true;
@@ -554,7 +554,7 @@ namespace MphRead.Entities.Enemies
             }
             if (_state1 == 2)
             {
-                // todo: stop SFX
+                _soundSource.StopSfx(SfxId.PSYCHOBIT_CHARGE);
             }
         }
 

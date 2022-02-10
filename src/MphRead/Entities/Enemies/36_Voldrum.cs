@@ -83,7 +83,6 @@ namespace MphRead.Entities.Enemies
 
         protected override void EnemyProcess()
         {
-            // todo: update SFX
             if (!_grounded)
             {
                 _speed.Y -= Fixed.ToFloat(110) / 4; // todo: FPS stuff
@@ -102,6 +101,7 @@ namespace MphRead.Entities.Enemies
                 ContactDamagePlayer(_values.ContactDamage, knockback: true);
             }
             CallStateProcess();
+            UpdateRollSfx();
         }
 
         protected override bool HandleCollision()
@@ -162,7 +162,7 @@ namespace MphRead.Entities.Enemies
                 _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
                 _shotTimer = (ushort)(_values.ShotTime * 2); // todo: FPS stuff
                 _models[0].SetAnimation(0);
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.GUARD_BOT_ATTACK2);
             }
             CallSubroutine(Metadata.Enemy36Subroutines, this);
         }

@@ -36,9 +36,9 @@ namespace MphRead.Sound
         }
 
         public void PlaySfx(SfxId id, bool loop = false, bool noUpdate = false,
-            float recency = -1, bool sourceOnly = false)
+            float recency = -1, bool sourceOnly = false, bool cancellable = false)
         {
-            PlaySfx((int)id, loop, noUpdate, recency, sourceOnly);
+            PlaySfx((int)id, loop, noUpdate, recency, sourceOnly, cancellable);
         }
 
         public void PlayFreeSfx(SfxId id)
@@ -47,12 +47,12 @@ namespace MphRead.Sound
         }
 
         public void PlaySfx(int id, bool loop = false, bool noUpdate = false,
-            float recency = -1, bool sourceOnly = false)
+            float recency = -1, bool sourceOnly = false, bool cancellable = false)
         {
             // sktodo: support DGN and scripts
             if (id >= 0 && (id & 0xC000) == 0)
             {
-                Sfx.PlaySample(id, this, loop, noUpdate, recency, sourceOnly);
+                Sfx.PlaySample(id, this, loop, noUpdate, recency, sourceOnly, cancellable);
             }
         }
 
@@ -62,7 +62,7 @@ namespace MphRead.Sound
             {
                 Debug.Assert((id & 0xC000) == 0);
                 return Sfx.PlaySample(id, null, loop: false, noUpdate: false,
-                    recency: -1, sourceOnly: false);
+                    recency: -1, sourceOnly: false, cancellable: false);
             }
             return -1;
         }
@@ -101,6 +101,7 @@ namespace MphRead.Sound
             public int SfxId { get; set; } = -1;
             public bool NoUpdate { get; set; }
             public bool Loop { get; set; }
+            public bool Cancellable { get; set; }
 
             public int Handle { get; set; } = -1;
             public static int NextHandle { get; set; } = 0;
@@ -144,6 +145,7 @@ namespace MphRead.Sound
                 SampleVolume = 1;
                 NoUpdate = false;
                 Loop = false;
+                Cancellable = false;
                 Handle = -1;
             }
         }
@@ -162,7 +164,7 @@ namespace MphRead.Sound
         public static float Volume { get; set; } = 0.35f;
 
         public static int PlaySample(int id, SoundSource? source, bool loop, bool noUpdate,
-            float recency, bool sourceOnly)
+            float recency, bool sourceOnly, bool cancellable)
         {
             Debug.Assert(id >= 0 && id < _samples.Count);
             if (loop)
@@ -197,6 +199,7 @@ namespace MphRead.Sound
             // sktodo: loop points (needs opentk update)
             AL.Source(channel.ChannelId, ALSourceb.Looping, loop);
             channel.Loop = loop;
+            channel.Cancellable = cancellable;
             channel.SfxId = id;
             channel.Handle = SoundChannel.NextHandle++;
             AL.SourcePlay(channel.ChannelId);
@@ -227,7 +230,7 @@ namespace MphRead.Sound
                 SoundChannel channel = _channels[i];
                 if (channel.Source == source)
                 {
-                    if ((force || channel.Loop) && (!force || !channel.NoUpdate))
+                    if ((force || channel.Loop || channel.Cancellable) && (!force || !channel.NoUpdate))
                     {
                         channel.Stop();
                     }

@@ -63,7 +63,7 @@ namespace MphRead.Entities.Enemies
         {
             if (_state1 == 0)
             {
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.DRIPSTANK_IDLE, loop: true);
                 Func214DCB8();
                 UpdateCollision();
                 Func214E750(); // the game checks this return value, but it's always 0
@@ -73,7 +73,7 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state1 == 1)
             {
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.DRIPSTANK_IDLE, loop: true);
                 Func214DCB8();
                 UpdateCollision();
                 if (!Func214E5EC() && !Func214E58C())
@@ -92,7 +92,7 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state1 == 2)
             {
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.DRIPSTANK_IDLE, loop: true);
                 Func214DCB8();
                 UpdateCollision();
                 _speed = UpVector * Fixed.ToFloat(-307);
@@ -106,7 +106,7 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state1 == 3)
             {
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.DRIPSTANK_IDLE, loop: true);
                 Func214DCB8();
                 UpdateCollision();
                 if (!Func214E5EC())
@@ -121,7 +121,7 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state1 == 4)
             {
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.DRIPSTANK_IDLE, loop: true);
                 Func214DCB8();
                 UpdateCollision();
                 _speed = UpVector * Fixed.ToFloat(-307);
@@ -140,7 +140,7 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state1 == 6)
             {
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.DRIPSTANK_IDLE, loop: true);
                 Func214DCB8();
                 UpdateCollision();
                 _speed = UpVector * Fixed.ToFloat(-307);
@@ -154,7 +154,7 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state1 == 7)
             {
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.DRIPSTANK_IDLE, loop: true);
                 Func214DCB8();
                 UpdateCollision();
                 _speed = UpVector * Fixed.ToFloat(-307);
@@ -168,7 +168,7 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state1 == 8)
             {
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.DRIPSTANK_IDLE, loop: true);
                 Func214DCB8();
                 UpdateCollision();
                 Func214E668(Fixed.ToFloat(654));
@@ -300,7 +300,7 @@ namespace MphRead.Entities.Enemies
                 {
                     _models[0].SetAnimation(7, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node, AnimFlags.NoLoop);
                     _state1 = _state2 = 17;
-                    // todo: stop SFX
+                    _soundSource.StopSfx(SfxId.DRIPSTANK_IDLE);
                     _speed = Vector3.Zero;
                     Func214D9B0();
                     _field234 = func;
@@ -596,7 +596,7 @@ namespace MphRead.Entities.Enemies
             _flags &= ~QuadtroidFlags.Bit0;
             _models[0].SetAnimation(11, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node, AnimFlags.NoLoop);
             _state1 = _state2 = 9;
-            // todo: stop SFX
+            _soundSource.StopSfx(SfxId.DRIPSTANK_IDLE);
             _speed = Vector3.Zero;
         }
 
@@ -607,7 +607,7 @@ namespace MphRead.Entities.Enemies
                 _hitByBeam = false;
                 _models[0].SetAnimation(7, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node, AnimFlags.NoLoop);
                 _state1 = _state2 = 17;
-                // todo: stop SFX
+                _soundSource.StopSfx(SfxId.DRIPSTANK_IDLE);
                 _speed = Vector3.Zero;
                 Func214D9B0();
             }
@@ -703,7 +703,7 @@ namespace MphRead.Entities.Enemies
         private void Func214D9F8()
         {
             Debug.Assert(_target != null);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.DRIPSTANK_ATTACK2, loop: true);
             if (--_field238 < 0)
             {
                 _target.TakeDamage(2, DamageFlags.NoDmgInvuln, null, this);
@@ -763,7 +763,7 @@ namespace MphRead.Entities.Enemies
                 _hitByBomb = false;
                 _models[0].SetAnimation(8, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node, AnimFlags.NoLoop);
                 _state1 = _state2 = 18;
-                // todo: stop SFX
+                _soundSource.StopSfx(SfxId.DRIPSTANK_IDLE);
                 _speed = Vector3.Zero;
                 _flags |= QuadtroidFlags.Bit7;
                 Func214D9B0();
@@ -821,7 +821,7 @@ namespace MphRead.Entities.Enemies
             _flags &= ~QuadtroidFlags.Bit0;
             _state1 = _state2 = 10;
             _speed = Vector3.Zero;
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.DRIPSTANK_ATTACK1);
         }
 
         private void Func214E314(Vector3 vec)
@@ -1017,7 +1017,7 @@ namespace MphRead.Entities.Enemies
 
         private void Func214D9B0()
         {
-            // todo: stop SFX
+            _soundSource.StopSfx(SfxId.DRIPSTANK_ATTACK2);
             if (_target != null)
             {
                 _target.AttachedEnemy = null;

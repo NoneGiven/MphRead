@@ -74,7 +74,7 @@ namespace MphRead.Entities.Enemies
                 float radii = PlayerEntity.Main.Volume.SphereRadius + 1.5f;
                 if ((Position - PlayerEntity.Main.Volume.SpherePosition).LengthSquared < radii * radii)
                 {
-                    // todo: play SFX
+                    _soundSource.PlaySfx(SfxId.GEEMER_EXTEND);
                     SetAnimation(GeemerAnim.Extend, AnimFlags.NoLoop);
                     _extendTimer = 0;
                     _speed = Vector3.Zero;
@@ -86,7 +86,7 @@ namespace MphRead.Entities.Enemies
                 float radii = PlayerEntity.Main.Volume.SphereRadius + 1.5f;
                 if ((Position - PlayerEntity.Main.Volume.SpherePosition).LengthSquared >= radii * radii)
                 {
-                    // todo: play SFX
+                    _soundSource.PlaySfx(SfxId.GEEMER_RETRACT);
                     _speed = Vector3.Zero;
                     SetAnimation(GeemerAnim.Retract, AnimFlags.NoLoop);
                     return;
@@ -113,7 +113,7 @@ namespace MphRead.Entities.Enemies
                 return;
             }
             // todo: everything after this is the same as Zoomer (without the hit_player or sub call at the end)
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.ZOOMER_IDLE_LOOP, loop: true);
             if (!_seekingVolume)
             {
                 if (_volumeCheckDelay > 0)
@@ -237,7 +237,7 @@ namespace MphRead.Entities.Enemies
                 {
                     if (_models[0].AnimInfo.Index[0] == 2)
                     {
-                        // todo: play SFX
+                        _soundSource.PlaySfx(SfxId.GEEMER_EXTEND);
                         SetAnimation(GeemerAnim.Extend, AnimFlags.NoLoop);
                         _extendTimer = 60 * 2; // todo: FPS stuff
                         _speed = Vector3.Zero;
