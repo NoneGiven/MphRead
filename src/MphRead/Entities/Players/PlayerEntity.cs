@@ -902,6 +902,7 @@ namespace MphRead.Entities
 
         public void Teleport(Vector3 position, Vector3 facing, NodeRef nodeRef)
         {
+            _soundSource.PlaySfx(SfxId.TELEPORT_OUT, noUpdate: true);
             _gunVec1 = facing;
             _facingVector = facing;
             SetTransform(facing, _upVector, position);

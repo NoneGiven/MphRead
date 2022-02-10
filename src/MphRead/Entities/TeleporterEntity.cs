@@ -143,7 +143,9 @@ namespace MphRead.Entities
             {
                 return true;
             }
-            // todo: positional audio, node ref
+            _soundSource.Update(Position, rangeIndex: 23);
+            // sfxtodo: if node ref is not active, set sound volume override to 0
+            _soundSource.PlaySfx(SfxId.TELEPORTER_LOOP, loop: true);
             bool activated = false;
             Vector3 testPos = Position.AddY(1);
             for (int i = 0; i < _scene.Entities.Count; i++)
@@ -175,12 +177,12 @@ namespace MphRead.Entities
                             {
                                 if (_targetRoomId == -1)
                                 {
-                                    // todo: play SFX
                                     player.Teleport(_targetPos.AddY(0.5f), FacingVector, _targetNodeRef);
                                 }
                                 else
                                 {
                                     // todo: teleport to new room
+                                    // sfxtodo: play SFX
                                 }
                                 player.Speed = new Vector3(0, player.Speed.Y, 0);
                                 // todo: update bot AI flag
@@ -247,11 +249,15 @@ namespace MphRead.Entities
             {
                 _bool3 = true;
                 _bool4 = false;
-                // todo: positional audio
+                _soundSource.Update(Position, rangeIndex: 23);
                 AnimationInfo animInfo = _models[0].AnimInfo;
                 if (animInfo.Index[0] == 2)
                 {
-                    // todo: play SFX
+                    if (_scene.FrameCount > 1 && animInfo.Flags[0].TestFlag(AnimFlags.Reverse)
+                        && animInfo.Frame[0] < animInfo.FrameCount[0] / 2 && _scene.FrameCount % 2 == 0) // todo: FPS stuff
+                    {
+                        _soundSource.PlaySfx(SfxId.TELEPORT_ACTIVATE);
+                    }
                     animInfo.Flags[0] |= AnimFlags.NoLoop;
                     animInfo.Flags[0] &= ~AnimFlags.Ended;
                     animInfo.Flags[0] &= ~AnimFlags.Reverse;
