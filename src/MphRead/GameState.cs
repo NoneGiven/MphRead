@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Entities;
 using MphRead.Formats;
+using MphRead.Sound;
 
 namespace MphRead
 {
@@ -137,6 +138,8 @@ namespace MphRead
             }
             ForceEndGame = false;
             _stateChanged = false;
+            _lastAlarmTime = 0;
+            _nextAlarmIndex = 0;
         }
 
         public static void UpdateTime(Scene scene)
@@ -150,6 +153,12 @@ namespace MphRead
 
         private static bool _stateChanged = false;
         private static float _matchEndTime = 0;
+        private static float _lastAlarmTime = 0;
+        private static int _nextAlarmIndex = 0;
+        private static readonly IReadOnlyList<float> _alarmIntervals = new float[4]
+        {
+            1 / 30f, 8 / 30f, 15 / 30f, 6 / 30f
+        };
 
         public static void ProcessFrame(Scene scene)
         {
@@ -196,9 +205,36 @@ namespace MphRead
                 }
                 ModeState(scene);
                 // todo: escape sequence stuff
-                if (!scene.Multiplayer || MatchTime > 0 && !ForceEndGame)
+                if (MatchTime > 0 && !ForceEndGame)
                 {
-                    // todo: update music, play timer alarm
+                    // mustodo: update music
+                    var time = TimeSpan.FromSeconds(MatchTime);
+                    if (time.TotalMinutes < 1 && time.Seconds <= 9)
+                    {
+                        float comparison = 1;
+                        if (time.Seconds <= 5)
+                        {
+                            if (Features.HalfSecondAlarm)
+                            {
+                                comparison = 0.5f;
+                            }
+                            else
+                            {
+                                comparison = _alarmIntervals[_nextAlarmIndex];
+                            }
+                        }
+                        if (_lastAlarmTime == 0 || scene.ElapsedTime - _lastAlarmTime >= comparison)
+                        {
+                            Sfx.PlaySample((int)SfxId.ALARM, source: null, loop: false, noUpdate: false,
+                                recency: -1, sourceOnly: false, cancellable: false);
+                            _lastAlarmTime = scene.ElapsedTime;
+                            _nextAlarmIndex++;
+                            if (_nextAlarmIndex >= _alarmIntervals.Count)
+                            {
+                                _nextAlarmIndex = 0;
+                            } 
+                        }
+                    }
                 }
                 else
                 {
