@@ -124,12 +124,12 @@ namespace MphRead.Entities
                     rangeIndex = 21;
                 }
                 _soundSource.Update(Position, rangeIndex);
-                // sfxtodo: if node ref is not active, set sound volume override to 0
             }
             if (IsMainPlayer)
             {
-                // todo: update low health SFX
+                UpdateHealthSfx(_health);
             }
+            // sfxtodo: else, if node ref is not active, set sound volume override to 0
             if (_damageInvulnTimer > 0)
             {
                 _damageInvulnTimer--;

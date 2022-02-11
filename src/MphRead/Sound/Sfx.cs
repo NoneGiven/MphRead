@@ -41,9 +41,9 @@ namespace MphRead.Sound
             PlaySfx((int)id, loop, noUpdate, recency, sourceOnly, cancellable);
         }
 
-        public void PlayFreeSfx(SfxId id)
+        public int PlayFreeSfx(SfxId id)
         {
-            PlayFreeSfx((int)id);
+            return PlayFreeSfx((int)id);
         }
 
         public void PlaySfx(int id, bool loop = false, bool noUpdate = false,
@@ -85,6 +85,11 @@ namespace MphRead.Sound
         public void StopSfxByHandle(int handle)
         {
             Sfx.StopSoundByHandle(handle);
+        }
+
+        public bool IsHandlePlaying(int handle)
+        {
+            return Sfx.IsHandlePlaying(handle);
         }
 
         public int CountPlayingSfx(SfxId id)
@@ -274,6 +279,22 @@ namespace MphRead.Sound
                     }
                 }
             }
+        }
+
+        public static bool IsHandlePlaying(int handle)
+        {
+            if (handle >= 0)
+            {
+                for (int i = 0; i < _channels.Length; i++)
+                {
+                    SoundChannel channel = _channels[i];
+                    if (channel.Handle == handle)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         private static SoundChannel FindChannel(SoundSource? source)

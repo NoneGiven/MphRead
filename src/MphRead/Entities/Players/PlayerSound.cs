@@ -142,6 +142,25 @@ namespace MphRead.Entities
             _soundSource.StopSfx(sfx);
         }
 
+        private int _healthSfxHandle = -1;
+
+        private void UpdateHealthSfx(int health)
+        {
+            // sfxtodo: don't update if sound is paused for jingle
+            if (health > 0 && health < 25)
+            {
+                if (!_soundSource.IsHandlePlaying(_healthSfxHandle))
+                {
+                    _healthSfxHandle = _soundSource.PlayFreeSfx(SfxId.ENERGY_ALARM);
+                }
+            }
+            else if (_healthSfxHandle != -1)
+            {
+                _soundSource.StopSfxByHandle(_healthSfxHandle);
+                _healthSfxHandle = -1;
+            }
+        }
+
         public void UpdateSounds()
         {
             if (_damageSfxTimer > 0)
