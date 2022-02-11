@@ -323,7 +323,8 @@ namespace MphRead.Entities
             }
             else
             {
-                if (PlayerEntity.Main.TeamIndex == _data.TeamId)
+                if (Bugfixes.CorrectBountySfx && _carrier.TeamIndex == PlayerEntity.Main.TeamIndex
+                    || !Bugfixes.CorrectBountySfx && _carrier.IsMainPlayer)
                 {
                     // sfxtodo: play voice
                     _soundSource.PlayFreeSfx(SfxId.SCORE);

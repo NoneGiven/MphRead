@@ -5,6 +5,7 @@ namespace MphRead
         public static bool SmoothCamSeqHandoff { get; set; } = false;
         public static bool BetterCamSeqNodeRef { get; set; } = true;
         public static bool NoStrayRespawnText { get; set; } = false;
+        public static bool CorrectBountySfx { get; set; } = true;
     }
 
     public static class Features
