@@ -86,6 +86,16 @@ namespace MphRead.Sound
         {
             Sfx.StopSoundByHandle(handle);
         }
+
+        public int CountPlayingSfx(SfxId id)
+        {
+            return Sfx.CountPlayingSfx((int)id);
+        }
+
+        public int CountPlayingSfx(int id)
+        {
+            return Sfx.CountPlayingSfx(id);
+        }
     }
 
     // sktodo: pause all sounds when debugger breaks, frame advance is on, etc.
@@ -347,6 +357,20 @@ namespace MphRead.Sound
                     }
                 }
             }
+        }
+
+        public static int CountPlayingSfx(int id)
+        {
+            int count = 0;
+            for (int i = 0; i < _channels.Length; i++)
+            {
+                SoundChannel channel = _channels[i];
+                if (channel.Handle != -1 && channel.SfxId == id)
+                {
+                    count++;
+                }
+            }
+            return count;
         }
 
         public static void Load()
