@@ -417,7 +417,7 @@ namespace MphRead.Entities
                         Detach();
                     }
                     _soundSource.StopAllSfx();
-                    PlayEnemySfx(Metadata.EnemyDeathSfx[(int)EnemyType], ignoreParams: true);
+                    PlayEnemySfx(Metadata.EnemyDeathSfx[(int)EnemyType], noUpdate: true);
                     int effectId;
                     if (EnemyType == EnemyType.FireSpawn)
                     {
@@ -435,7 +435,7 @@ namespace MphRead.Entities
                 else
                 {
                     _timeSinceDamage = 0;
-                    PlayEnemySfx(Metadata.EnemyDamageSfx[(int)EnemyType], ignoreParams: false);
+                    PlayEnemySfx(Metadata.EnemyDamageSfx[(int)EnemyType], noUpdate: false);
                     switch (_data.Type)
                     {
                     case EnemyType.Zoomer:
@@ -457,7 +457,7 @@ namespace MphRead.Entities
             }
         }
 
-        private void PlayEnemySfx(int sfx, bool ignoreParams)
+        private void PlayEnemySfx(int sfx, bool noUpdate)
         {
             if (sfx != -1)
             {
@@ -475,7 +475,7 @@ namespace MphRead.Entities
                 {
                     recency = 0;
                 }
-                _soundSource.PlaySfx(sfx & ~0xA0000, noUpdate: ignoreParams, recency: recency, sourceOnly: sourceOnly);
+                _soundSource.PlaySfx(sfx & ~0xA0000, noUpdate: noUpdate, recency: recency, sourceOnly: sourceOnly);
             }
         }
 
