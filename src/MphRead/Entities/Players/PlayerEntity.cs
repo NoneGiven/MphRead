@@ -1086,7 +1086,7 @@ namespace MphRead.Entities
             {
                 if (IsMainPlayer)
                 {
-                    // todo: play SFX
+                    _soundSource.PlayFreeSfx(SfxId.BEAM_SWITCH_FAIL);
                     if (!hasAmmo)
                     {
                         ShowNoAmmoMessage();
@@ -1115,9 +1115,13 @@ namespace MphRead.Entities
             _timeSinceInput = 0;
             if (!silent)
             {
-                if (IsMainPlayer && !IsAltForm)
+                if (IsMainPlayer && !IsAltForm && beam != BeamType.Missile)
                 {
-                    // todo: play SFX
+                    int sfx = Metadata.HunterSfx[(int)Hunter, (int)HunterSfx.BeamSwitch];
+                    if (sfx != -1)
+                    {
+                        _soundSource.PlayFreeSfx(sfx);
+                    }
                 }
                 if (beam == BeamType.Missile)
                 {
@@ -1162,7 +1166,7 @@ namespace MphRead.Entities
         {
             if (IsMainPlayer && EquipInfo.Zoomed != zoom)
             {
-                // todo: play SFX
+                _soundSource.PlayFreeSfx(zoom ? SfxId.SNIPER_ZOOM_IN : SfxId.SNIPER_ZOOM_OUT);
                 if (CurrentWeapon == BeamType.Imperialist)
                 {
                     HudOnZoom(zoom);

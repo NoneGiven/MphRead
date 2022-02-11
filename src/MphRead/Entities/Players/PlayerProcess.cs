@@ -301,7 +301,8 @@ namespace MphRead.Entities
                 {
                     Flags2 &= ~PlayerFlags2.Cloaking;
                     _targetAlpha = 1;
-                    // todo: stop and play SFX
+                    _soundSource.PlayFreeSfx(SfxId.CLOAK_OFF);
+                    // sfxtodo: update SFX
                 }
             }
             else

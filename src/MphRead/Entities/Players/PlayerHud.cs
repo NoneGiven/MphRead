@@ -343,6 +343,7 @@ namespace MphRead.Entities
         private float _hudShiftY = 0;
         private float _objShiftX = 0;
         private float _objShiftY = 0;
+        private bool _hudWeaponMenuOpen = false;
 
         public void UpdateHud()
         {
@@ -358,7 +359,16 @@ namespace MphRead.Entities
             WeaponSelection = CurrentWeapon;
             if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
             {
+                if (!_hudWeaponMenuOpen)
+                {
+                    _soundSource.PlayFreeSfx(SfxId.HUD_WEAPON_SWITCH1);
+                }
+                _hudWeaponMenuOpen = true;
                 UpdateWeaponSelect();
+            }
+            else
+            {
+                _hudWeaponMenuOpen = false;
             }
             _targetCircleInst.Enabled = false;
             _ammoBarMeter.BarInst.Enabled = false;
@@ -523,8 +533,11 @@ namespace MphRead.Entities
             }
         }
 
+        private int _hudPreviousWeaponSelection = -1;
+
         private void UpdateWeaponSelect()
         {
+            BeamType previousWeapon = WeaponSelection;
             int selection = -1;
             float x = Input.MouseState?.X ?? 0;
             float y = Input.MouseState?.Y ?? 0;
@@ -588,6 +601,11 @@ namespace MphRead.Entities
                 weaponInst.Enabled = available;
                 HudObjectInstance boxInst = _selectBoxInsts[i];
                 boxInst.SetIndex(available ? (i == selection ? 2 : 1) : 0, _scene);
+            }
+            if (selection != _hudPreviousWeaponSelection)
+            {
+                _soundSource.PlayFreeSfx(SfxId.HUD_WEAPON_SWITCH2);
+                _hudPreviousWeaponSelection = selection;
             }
         }
 
@@ -2258,6 +2276,7 @@ namespace MphRead.Entities
                 DrawText2D(posX, posY, Align.Left, 0, line, new ColorRgba(0x7F5A), maxLength: characters);
                 posY += 13 + _rulesLengths[i].Newlines * 8;
                 // todo: play SFX, somewhere
+                // skhere
             }
             _textSpacingY = 0;
         }

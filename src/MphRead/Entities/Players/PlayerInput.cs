@@ -108,8 +108,6 @@ namespace MphRead.Entities
             bool selected = false;
             if (!Controls.WeaponMenu.IsDown)
             {
-                Flags1 &= ~PlayerFlags1.NoAimInput;
-                Flags1 &= ~PlayerFlags1.WeaponMenuOpen;
                 if (WeaponSelection != BeamType.None)
                 {
                     if (WeaponSelection != CurrentWeapon)
@@ -117,12 +115,14 @@ namespace MphRead.Entities
                         TryEquipWeapon(WeaponSelection);
                         selected = true;
                     }
-                    else if (IsMainPlayer)
+                    else if (IsMainPlayer && Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
                     {
-                        // todo: play SFX
+                        _soundSource.PlayFreeSfx(SfxId.BEAM_SWITCH_FAIL);
                     }
                     WeaponSelection = CurrentWeapon;
                 }
+                Flags1 &= ~PlayerFlags1.NoAimInput;
+                Flags1 &= ~PlayerFlags1.WeaponMenuOpen;
             }
             if (!selected)
             {
