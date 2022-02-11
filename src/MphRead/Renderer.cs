@@ -151,7 +151,8 @@ namespace MphRead
         private bool _advanceOneFrame = false;
         private bool _recording = false;
         private int _framesRecorded = 0;
-        public bool ProcessFrame => _frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame;
+        public bool ProcessFrame => (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame) && !_exiting;
+        private bool _exiting = false;
         private bool _roomLoaded = false;
         private RoomEntity? _room = null;
         private int _roomId = -1;
@@ -2659,6 +2660,7 @@ namespace MphRead
 
         public void DoCleanup()
         {
+            _exiting = true;
             PlatformEntity.DestroyBeams();
             EnemyInstanceEntity.DestroyBeams();
             Sound.Sfx.ShutDown();
