@@ -1432,7 +1432,14 @@ namespace MphRead.Entities
                     Matrix4 transform = GetTransformMatrix(effFacing, effUp);
                     transform.Row3.Xyz = position;
                     // the game does this by spawning a CBeamEffect, but that's unncessary for muzzle effects
-                    muzzleEffect = scene.SpawnEffectGetEntry(effectId - 3, transform);
+                    if (spawnFlags.TestFlag(BeamSpawnFlags.DestroyMuzzle))
+                    {
+                        muzzleEffect = scene.SpawnEffectGetEntry(effectId - 3, transform);
+                    }
+                    else
+                    {
+                        scene.SpawnEffect(effectId - 3, transform);
+                    }
                 }
             }
             int projectiles = (int)GetAmount(weapon.Projectiles, weapon.MinChargeProjectiles, weapon.ChargedProjectiles);
@@ -1693,9 +1700,9 @@ namespace MphRead.Entities
                         beam.Effect?.SetElementExtension(true);
                     }
                 }
-                beam.MuzzleEffect = muzzleEffect;
                 if (spawnFlags.TestFlag(BeamSpawnFlags.DestroyMuzzle))
                 {
+                    beam.MuzzleEffect = muzzleEffect;
                     beam.Flags |= BeamFlags.DestroyMuzzle;
                 }
                 Debug.Assert(beam.Target == null);
