@@ -69,13 +69,13 @@ namespace MphRead.Entities.Enemies
                 // begin teleporting in
                 _models[0].SetAnimation(5, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node, AnimFlags.NoLoop);
                 _field170 = 30 * 2; // todo: FPS stuff
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.MOCHTROID_TELEPORT_IN);
             }
         }
 
         private void UpdateMovement()
         {
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.MOCHTROID_FLY, loop: true);
             _field188 = _spawner.Position - Position;
             _field188 = new Vector3(-_field188.Z, 0, _field188.X);
             if (_field188 != Vector3.Zero)

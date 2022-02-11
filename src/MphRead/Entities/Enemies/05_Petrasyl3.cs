@@ -68,7 +68,7 @@ namespace MphRead.Entities.Enemies
                 // begin teleporting in
                 _models[0].SetAnimation(6, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node, AnimFlags.NoLoop);
                 _field170 = 20 * 2; // todo: FPS stuff
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.MOCHTROID_TELEPORT_IN);
             }
             else if (_state2 == 1)
             {
@@ -96,7 +96,7 @@ namespace MphRead.Entities.Enemies
 
         private void UpdateMovement()
         {
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.MOCHTROID_FLY, loop: true);
             var toTarget = new Vector3(Position.X - _initialPos.X, _targetY - _initialPos.Y, Position.Z - _initialPos.Z);
             _bobAngle += _bobSpeed / 2; // todo: FPS stuff
             if (_bobAngle >= 360)
