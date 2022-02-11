@@ -132,11 +132,12 @@ namespace MphRead.Entities
                     {
                         if (PlayerEntity.Main.TeamIndex == _data.TeamId)
                         {
-                            // todo: play voice, update music
+                            // sfxtodo: play voice
+                            // mustodo: update music
                         }
                         else
                         {
-                            // todo: play SFX
+                            _soundSource.PlayFreeSfx(SfxId.FLAG_ACQUIRED);
                         }
                     }
                     else
@@ -144,12 +145,14 @@ namespace MphRead.Entities
                         // todo: update music
                         if (_carrier == PlayerEntity.Main)
                         {
-                            // todo: play SFX, play voice
+                            // sfxtodo: play voice
+                            _soundSource.PlayFreeSfx(SfxId.FLAG_ACQUIRED);
                             PlayerEntity.Main.QueueHudMessage(128, 133, 90 / 30f, 1, 202); // return to base
                         }
                         else
                         {
-                            // todo: play voice, update music
+                            // sfxtodo: play voice
+                            // mustodo: update music
                         }
                     }
                 }
@@ -197,7 +200,7 @@ namespace MphRead.Entities
             {
                 if (!_atBase)
                 {
-                    // todo: play SFX
+                    _soundSource.PlayFreeSfx(SfxId.FLAG_RESET2);
                     // your octolith reset! / enemy octolith reset!
                     int messageId = PlayerEntity.Main.TeamIndex == _data.TeamId ? 201 : 207;
                     PlayerEntity.Main.QueueHudMessage(128, 133, 60 / 30f, 1, messageId);
@@ -227,18 +230,18 @@ namespace MphRead.Entities
                 if (PlayerEntity.Main.TeamIndex == _data.TeamId)
                 {
                     messageId = 201; // your octolith reset!
-                    // todo: play SFX
+                    _soundSource.PlayFreeSfx(SfxId.FLAG_RESET2);
                 }
                 else
                 {
                     messageId = 207; // enemy octolith reset!
-                    // todo: play SFX
+                    _soundSource.PlayFreeSfx(SfxId.FLAG_RESET1);
                 }
             }
             else
             {
                 messageId = 257; // octolith reset!
-                // todo: play SFX
+                _soundSource.PlayFreeSfx(SfxId.FLAG_RESET2);
             }
             PlayerEntity.Main.QueueHudMessage(128, 133, 60 / 30f, 1, messageId);
         }
@@ -255,37 +258,38 @@ namespace MphRead.Entities
                     if (reset)
                     {
                         messageId = 201; // your octolith reset!
-                        // todo: play SFX
+                        _soundSource.PlayFreeSfx(SfxId.FLAG_RESET2);
                     }
                     else
                     {
                         messageId = 230; // the enemy dropped your octolith!
-                        // todo: play voice
+                        // sfxtodo: play voice
                     }
                 }
                 else if (reset)
                 {
                     messageId = 207; // enemy octolith reset!
-                    // todo: play SFX
+                    _soundSource.PlayFreeSfx(SfxId.FLAG_RESET1);
                 }
                 else
                 {
                     messageId = 231; // your team dropped the octolith!
-                    // todo: play SFX
+                    _soundSource.PlayFreeSfx(SfxId.FLAG_DROPPED);
                 }
             }
             else if (reset)
             {
                 messageId = 257; // octolith reset!
-                // todo: play SFX
+                _soundSource.PlayFreeSfx(SfxId.FLAG_RESET2);
             }
             else
             {
                 messageId = 229; // the octolith has been dropped!
-                // todo: play voice, play SFX
+                _soundSource.PlayFreeSfx(SfxId.FLAG_DROPPED);
             }
             PlayerEntity.Main.QueueHudMessage(128, 133, 60 / 30f, 1, messageId);
-            // todo: stop SFX, update music
+            // sfxtodo: stop timed SFX
+            // mustodo: update music
             if (reset)
             {
                 SetAtBase();
@@ -310,26 +314,28 @@ namespace MphRead.Entities
             {
                 if (PlayerEntity.Main.TeamIndex == _data.TeamId)
                 {
-                    // todo: play voice, play SFX
+                    _soundSource.PlayFreeSfx(SfxId.SCORE);
                 }
                 else
                 {
-                    // todo: play SFX
+                    _soundSource.PlayFreeSfx(SfxId.SCORED_ON);
                 }
             }
             else
             {
                 if (PlayerEntity.Main.TeamIndex == _data.TeamId)
                 {
-                    // todo: play voice, play SFX
+                    // sfxtodo: play voice
+                    _soundSource.PlayFreeSfx(SfxId.SCORE);
                 }
                 else
                 {
-                    // todo: play SFX
+                    _soundSource.PlayFreeSfx(SfxId.SCORED_ON);
                 }
                 PlayerEntity.Main.QueueHudMessage(128, 133, 90 / 30f, 1, 203); // bounty received
             }
-            // todo: stop SFX, update music
+            // sfxtodo: stop timed SFX
+            // mustodo: update music
             GameState.Points[_carrier.SlotIndex]++;
             GameState.OctolithScores[_carrier.SlotIndex]++;
             SetAtBase();
