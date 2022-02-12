@@ -50,16 +50,16 @@ namespace MphRead.Formats.Sound
 
         public static byte[] GetWaveData(SoundSample sample, bool adpcmRoundingError = false)
         {
-            var ms = new MemoryStream();
-            var writer = new BinaryWriter(ms);
-            GetWaveData(sample, GetSampleCount(sample), adpcmRoundingError, writer);
+            using var ms = new MemoryStream();
+            using var writer = new BinaryWriter(ms);
+            GetWaveData(sample.CreateSpan(), sample.Format, GetSampleCount(sample), adpcmRoundingError, writer);
             return ms.ToArray();
         }
 
-        private static void GetWaveData(SoundSample sample, uint sampleCount, bool adpcmRoundingError, BinaryWriter writer)
+        private static void GetWaveData(ReadOnlySpan<byte> data, WaveFormat format, uint sampleCount,
+            bool adpcmRoundingError, BinaryWriter writer)
         {
-            ReadOnlySpan<byte> data = sample.CreateSpan();
-            if (sample.Format == WaveFormat.ADPCM)
+            if (format == WaveFormat.ADPCM)
             {
                 int transferred = 0;
                 bool low = true;
@@ -142,6 +142,7 @@ namespace MphRead.Formats.Sound
             }
             else
             {
+                Debug.Assert(format == WaveFormat.PCM8);
                 for (int i = 0; i < sampleCount; i++)
                 {
                     writer.Write((byte)(data[i] ^ 0x80));
@@ -171,22 +172,28 @@ namespace MphRead.Formats.Sound
         private static void ExportSample(SoundSample sample, bool adpcmRoundingError = false)
         {
             string id = sample.Id.ToString().PadLeft(3, '0');
-            if (sample.Data.Count == 0)
+            byte[] waveData = GetWaveData(sample, adpcmRoundingError);
+            ExportAudio(waveData, GetSampleCount(sample), sample.SampleRate, sample.Format, id);
+        }
+
+        private static void ExportAudio(ReadOnlySpan<byte> waveData, uint sampleCount, ushort sampleRate,
+            WaveFormat format, string name)
+        {
+            if (waveData.Length == 0)
             {
-                throw new WaveExportException($"Sample {id} contains no data.");
+                throw new WaveExportException($"Sample {name} contains no data.");
             }
-            if (sample.Format != WaveFormat.ADPCM && sample.Format != WaveFormat.PCM8)
+            if (format != WaveFormat.ADPCM && format != WaveFormat.PCM8)
             {
-                throw new WaveExportException($"Format {sample.Format} is unsupported.");
+                throw new WaveExportException($"Format {format} is unsupported.");
             }
-            uint bps = sample.Format == WaveFormat.PCM8 ? 8u : 16u;
+            uint bps = format == WaveFormat.PCM8 ? 8u : 16u;
             uint headerSize = 0x2C;
-            uint sampleCount = GetSampleCount(sample);
             uint waveSize = sampleCount * bps / 8 + headerSize;
             uint decodedSize = sampleCount * (bps / 8);
             string path = Path.Combine(Paths.Export, "_SFX");
             Directory.CreateDirectory(path);
-            path = Path.Combine(path, $"{id}.wav");
+            path = Path.Combine(path, $"{name}.wav");
             using FileStream file = File.OpenWrite(path);
             using var writer = new BinaryWriter(file);
             writer.WriteC("RIFF");
@@ -196,13 +203,16 @@ namespace MphRead.Formats.Sound
             writer.Write4(16);
             writer.Write2(1);
             writer.Write2(1);
-            writer.Write4(sample.SampleRate);
-            writer.Write4(sample.SampleRate * (bps / 8));
+            writer.Write4(sampleRate);
+            writer.Write4(sampleRate * (bps / 8));
             writer.Write2(bps / 8);
             writer.Write2(bps);
             writer.WriteC("data");
             writer.Write4(decodedSize);
-            GetWaveData(sample, sampleCount, adpcmRoundingError, writer);
+            for (int i = 0; i < waveData.Length; i++)
+            {
+                writer.Write(waveData[i]);
+            }
             Nop();
         }
 
@@ -376,17 +386,470 @@ namespace MphRead.Formats.Sound
         }
 
         public static void Nop() { }
+
+        public static SoundData ReadSdat()
+        {
+            string path = Path.Combine(Paths.FileSystem, "data", "sound", "sound_data.sdat");
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
+            SdatHeader sdatHeader = Read.ReadStruct<SdatHeader>(bytes);
+            Debug.Assert(sdatHeader.Type.MarshalString() == "SDAT");
+            Debug.Assert(sdatHeader.Magic == 0x100FEFF);
+            Debug.Assert(sdatHeader.SymbolBlockOffset != 0);
+            Debug.Assert(sdatHeader.InfoBlockOffset != 0);
+            Debug.Assert(sdatHeader.FatOffset != 0);
+            Debug.Assert(sdatHeader.FileBlockOffset != 0);
+
+            // symbols
+            BlockHeader symbHeader = Read.DoOffset<BlockHeader>(bytes, sdatHeader.SymbolBlockOffset);
+            Debug.Assert(symbHeader.Type.MarshalString() == "SYMB");
+            Debug.Assert(symbHeader.SeqOffset != 0);
+            Debug.Assert(symbHeader.SeqarcOffset != 0);
+            Debug.Assert(symbHeader.BankOffset != 0);
+            Debug.Assert(symbHeader.WavearcOffset != 0);
+            Debug.Assert(symbHeader.PlayerOffset != 0);
+            Debug.Assert(symbHeader.GroupOffset != 0);
+            Debug.Assert(symbHeader.StrmPlayerOffset != 0);
+            Debug.Assert(symbHeader.StrmOffset != 0);
+
+            static IReadOnlyList<string> GetNames(ReadOnlySpan<byte> bytes, uint offset)
+            {
+                var results = new List<string>();
+                uint count = Read.SpanReadUint(bytes, offset);
+                foreach (uint entryOffset in Read.DoOffsets<uint>(bytes, offset + 4, count))
+                {
+                    if (entryOffset != 0)
+                    {
+                        results.Add(Read.ReadString(bytes, entryOffset));
+                    }
+                }
+                return results;
+            }
+
+            ReadOnlySpan<byte> symbBytes = bytes[(int)sdatHeader.SymbolBlockOffset..];
+            IReadOnlyList<string> seqNames = GetNames(symbBytes, symbHeader.SeqOffset);
+            IReadOnlyList<string> bankNames = GetNames(symbBytes, symbHeader.BankOffset);
+            IReadOnlyList<string> wavearcNames = GetNames(symbBytes, symbHeader.WavearcOffset);
+            IReadOnlyList<string> playerNames = GetNames(symbBytes, symbHeader.PlayerOffset);
+            IReadOnlyList<string> groupNames = GetNames(symbBytes, symbHeader.GroupOffset);
+            IReadOnlyList<string> strmPlayerNames = GetNames(symbBytes, symbHeader.StrmPlayerOffset);
+            IReadOnlyList<string> strmNames = GetNames(symbBytes, symbHeader.StrmOffset);
+            var seqarcNames = new List<(string, IReadOnlyList<string>)>();
+            uint arcOffset = symbHeader.SeqarcOffset;
+            uint seqarcCount = Read.SpanReadUint(symbBytes, arcOffset);
+            IReadOnlyList<SeqArcEntries> seqarcs = Read.DoOffsets<SeqArcEntries>(symbBytes, arcOffset + 4, seqarcCount);
+            foreach (SeqArcEntries seqarc in seqarcs)
+            {
+                string arcName = Read.ReadString(symbBytes, seqarc.EntryOffset);
+                IReadOnlyList<string> fileNames = GetNames(symbBytes, seqarc.FilesOffset);
+                seqarcNames.Add((arcName, fileNames));
+            }
+
+            // info
+            BlockHeader infoHeader = Read.DoOffset<BlockHeader>(bytes, sdatHeader.InfoBlockOffset);
+            Debug.Assert(infoHeader.Type.MarshalString() == "INFO");
+            Debug.Assert(infoHeader.SeqOffset != 0);
+            Debug.Assert(infoHeader.SeqarcOffset != 0);
+            Debug.Assert(infoHeader.BankOffset != 0);
+            Debug.Assert(infoHeader.WavearcOffset != 0);
+            Debug.Assert(infoHeader.PlayerOffset != 0);
+            Debug.Assert(infoHeader.GroupOffset != 0);
+            Debug.Assert(infoHeader.StrmPlayerOffset != 0);
+            Debug.Assert(infoHeader.StrmOffset != 0);
+
+            static IReadOnlyList<T> GetStructs<T>(ReadOnlySpan<byte> bytes, uint offset) where T : struct
+            {
+                var results = new List<T>();
+                uint count = Read.SpanReadUint(bytes, offset);
+                foreach (uint strOffset in Read.DoOffsets<uint>(bytes, offset + 4, count))
+                {
+                    if (strOffset != 0)
+                    {
+                        results.Add(Read.DoOffset<T>(bytes, strOffset));
+                    }
+                }
+                return results;
+            }
+
+            ReadOnlySpan<byte> infoBytes = bytes[(int)sdatHeader.InfoBlockOffset..];
+            IReadOnlyList<SeqInfo> seqInfo = GetStructs<SeqInfo>(infoBytes, infoHeader.SeqOffset);
+            IReadOnlyList<uint> seqarcInfo = GetStructs<uint>(infoBytes, infoHeader.SeqarcOffset);
+            IReadOnlyList<BankInfo> bankInfo = GetStructs<BankInfo>(infoBytes, infoHeader.BankOffset);
+            IReadOnlyList<uint> wavearcInfo = GetStructs<uint>(infoBytes, infoHeader.WavearcOffset);
+            IReadOnlyList<PlayerInfo> playerInfo = GetStructs<PlayerInfo>(infoBytes, infoHeader.PlayerOffset);
+            IReadOnlyList<StrmPlayerInfo> strmPlayerInfo = GetStructs<StrmPlayerInfo>(infoBytes, infoHeader.StrmPlayerOffset);
+            IReadOnlyList<StrmInfo> strmInfo = GetStructs<StrmInfo>(infoBytes, infoHeader.StrmOffset);
+            var groupInfo = new List<IReadOnlyList<GroupItemInfo>>();
+            uint groupOffset = infoHeader.GroupOffset;
+            uint groupCount = Read.SpanReadUint(infoBytes, groupOffset);
+            groupOffset += 4;
+            for (int i = 0; i < groupCount; i++)
+            {
+                uint itemCount = Read.SpanReadUint(infoBytes, groupOffset);
+                groupOffset += 4;
+                groupInfo.Add(Read.DoOffsets<GroupItemInfo>(infoBytes, groupOffset, itemCount));
+                groupOffset += itemCount * 8;
+            }
+
+            // FAT
+            uint fatOffset = sdatHeader.FatOffset;
+            SdatFatHeader fatHeader = Read.DoOffset<SdatFatHeader>(bytes, fatOffset);
+            Debug.Assert(fatHeader.Type.MarshalString() == "FAT ");
+            fatOffset += 12;
+            IReadOnlyList<SdatFatEntry> fatEntries = Read.DoOffsets<SdatFatEntry>(bytes, fatOffset, fatHeader.Count);
+            SdatFileHeader fileHeader = Read.DoOffset<SdatFileHeader>(bytes, sdatHeader.FileBlockOffset);
+            Debug.Assert(fileHeader.Type.MarshalString() == "FILE");
+            Debug.Assert(fileHeader.Count == fatHeader.Count);
+            int filesRead = 0;
+
+            // SSEQ
+            foreach (SeqInfo info in seqInfo)
+            {
+                // mustodo: read SSEQ files
+                filesRead++;
+            }
+
+            // SSAR
+            foreach (uint fileId in seqarcInfo)
+            {
+                // mustodo: read SSAR files
+                filesRead++;
+            }
+
+            // SBNK
+            foreach (BankInfo info in bankInfo)
+            {
+                // mustodo: read SBNK files
+                filesRead++;
+            }
+
+            // SWAR
+            foreach (uint fileId in wavearcInfo)
+            {
+                // mustodo: read SWAR files
+                filesRead++;
+            }
+
+            // STRM
+            var streams = new List<SoundStream>();
+            for (int i = 0; i < strmInfo.Count; i++)
+            {
+                StrmInfo info = strmInfo[i];
+                string name = strmNames[i];
+                SdatFatEntry entry = fatEntries[(int)info.FileId];
+                SoundStreamHeader header = Read.DoOffset<SoundStreamHeader>(bytes, entry.Offset);
+                Debug.Assert(header.Type.MarshalString() == "STRM");
+                Debug.Assert(header.HeadType.MarshalString() == "HEAD");
+                Debug.Assert(header.Channels == 1 || header.Channels == 2);
+                Debug.Assert(header.BlockCount > 1 || header.BlockSize == header.LastBlockSize);
+                Debug.Assert(header.BlockCount > 1 || header.BlockSamples == header.LastBlockSamples);
+                var format = (WaveFormat)header.Format;
+                Debug.Assert(format == WaveFormat.PCM8 || format == WaveFormat.ADPCM);
+                Debug.Assert(format == WaveFormat.ADPCM || header.BlockCount == 1);
+                var channels = new List<byte[]>();
+                uint channelSize = header.BlockSamples * (header.BlockCount - 1) + header.LastBlockSamples;
+                if (format == WaveFormat.ADPCM)
+                {
+                    channelSize *= 2;
+                }
+                for (uint j = 0; j < header.Channels; j++)
+                {
+                    Console.WriteLine(j);
+                    byte[] channel = new byte[channelSize];
+                    using var ms = new MemoryStream(channel);
+                    using var writer = new BinaryWriter(ms);
+                    uint start = entry.Offset + header.DataOffset + header.BlockSize * j;
+                    for (int k = 0; k < header.BlockCount; k++)
+                    {
+                        uint size;
+                        uint samples;
+                        uint increment;
+                        if (k == header.BlockCount - 1)
+                        {
+                            size = header.LastBlockSize;
+                            samples = header.LastBlockSamples;
+                            increment = 0;
+                        }
+                        else
+                        {
+                            size = header.BlockSize;
+                            samples = header.BlockSamples;
+                            if (j > 0 && k == header.BlockCount - 2)
+                            {
+                                increment = size + header.LastBlockSize;
+                            }
+                            else
+                            {
+                                increment = size * header.Channels;
+                            }
+                        }
+                        uint end = start + size;
+                        ReadOnlySpan<byte> data = bytes[(int)start..(int)end];
+                        GetWaveData(data, format, samples, adpcmRoundingError: false, writer);
+                        start += increment;
+                    }
+                    channels.Add(channel);
+                }
+                streams.Add(new SoundStream(i, name, header, channels, info.Volume / 127f));
+                filesRead++;
+            }
+            Debug.Assert(filesRead == fileHeader.Count);
+            return new SoundData(streams);
+        }
+
+        public static void ExportStream(SoundStream stream)
+        {
+            for (int i = 0; i < stream.Channels.Count; i++)
+            {
+                byte[] channel = stream.Channels[i];
+                string id = stream.Id.ToString().PadLeft(3, '0');
+                string suffix = "";
+                if (stream.Channels.Count == 2)
+                {
+                    suffix = i == 0 ? "_L" : "_R";
+                }
+                string filename = $"{id}_{stream.Name}{suffix}";
+                int length = channel.Length;
+                if (stream.Format == WaveFormat.ADPCM)
+                {
+                    length /= 2;
+                }
+                ExportAudio(channel, (uint)length, stream.SampleRate, stream.Format, filename);
+            }
+        }
+
+        public static byte[] GetStreamBufferData(SoundStream stream)
+        {
+            int length = stream.Channels[0].Length * stream.Channels.Count;
+            byte[] data = new byte[length];
+            for (int i = 0; i < length;)
+            {
+                for (int j = 0; j < stream.Channels.Count; j++)
+                {
+                    data[i] = stream.Channels[j][i / stream.Channels.Count];
+                    i++;
+                }
+            }
+            return data;
+        }
+
+        private readonly struct SeqArcEntries
+        {
+            public readonly uint EntryOffset;
+            public readonly uint FilesOffset;
+
+            public SeqArcEntries(uint entryOffset, uint filesOffset)
+            {
+                EntryOffset = entryOffset;
+                FilesOffset = filesOffset;
+            }
+        }
+    }
+
+    // size: 64
+    public readonly struct SdatHeader
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public readonly char[] Type; // SDAT - no terminator
+        public readonly uint Magic;
+        public readonly uint FileSize;
+        public readonly ushort HeaderSize;
+        public readonly ushort BlockCount;
+        public readonly uint SymbolBlockOffset;
+        public readonly uint SymbolBlockSize;
+        public readonly uint InfoBlockOffset;
+        public readonly uint InfoBlockSize;
+        public readonly uint FatOffset;
+        public readonly uint FatSize;
+        public readonly uint FileBlockOffset;
+        public readonly uint FileBlockSize;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly byte[] Reserved;
+    }
+
+    // size: 64
+    public readonly struct BlockHeader
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public readonly char[] Type; // SYMB or INFO - no terminator
+        public readonly uint HeaderSize;
+        public readonly uint SeqOffset; // relative offsets
+        public readonly uint SeqarcOffset;
+        public readonly uint BankOffset;
+        public readonly uint WavearcOffset;
+        public readonly uint PlayerOffset;
+        public readonly uint GroupOffset;
+        public readonly uint StrmPlayerOffset;
+        public readonly uint StrmOffset;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
+        public readonly byte[] Reserved;
+    }
+
+    // size: 12
+    public readonly struct SdatFatHeader
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public readonly char[] Type; // FAT_ - no terminator
+        public readonly uint Size;
+        public readonly uint Count;
+    }
+
+    // size: 16
+    public readonly struct SdatFatEntry
+    {
+        public readonly uint Offset;
+        public readonly uint Size;
+        public readonly uint Pointer; // set at runtime
+        public readonly uint Reserved;
+    }
+
+    // size: 16
+    public readonly struct SdatFileHeader
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public readonly char[] Type; // FILE - no terminator
+        public readonly uint Size;
+        public readonly uint Count;
+        public readonly uint Reserved;
+    }
+
+    // size: 12
+    public readonly struct SeqInfo
+    {
+        public readonly uint FileId;
+        public readonly ushort BankNo;
+        public readonly byte Volume;
+        public readonly byte ChannelPriority;
+        public readonly byte PlayerPriority;
+        public readonly byte PlayerNo;
+        public readonly ushort Reserved;
+    }
+
+    // size: 12
+    public readonly struct BankInfo
+    {
+        public readonly uint FileId;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public readonly ushort[] WaveArcNo;
+    }
+
+    // size: 8
+    public readonly struct PlayerInfo
+    {
+        public readonly byte MaxSequences;
+        public readonly byte Padding1;
+        public readonly ushort AllocateChannelBits;
+        public readonly uint HeapSize;
+    }
+
+    // size: 8
+    public readonly struct GroupItemInfo
+    {
+        public readonly byte Type; // 0 - seq, 1 - bank, 2 - wavearc, 3 - seqarc
+        public readonly byte LoadTypes; // 1 - sequence | 2 - bank | 4 - wave
+        public readonly ushort Padding2;
+        public readonly uint LoadIndex;
+    }
+
+    // size: 24
+    public readonly struct StrmPlayerInfo
+    {
+        public readonly byte ChannelCount;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public readonly byte[] ChannelNumbers;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 7)]
+        public readonly byte[] Reserved;
+    }
+
+    // size: 8
+    public readonly struct StrmInfo
+    {
+        public readonly uint FileId;
+        public readonly byte Volume;
+        public readonly byte PlayerPriority;
+        public readonly byte PlayerNo;
+        public readonly byte Flags;
     }
 
     // size: 12
     public readonly struct SoundSampleHeader
     {
-        public readonly byte Format;
+        public readonly byte Format; // 0 - PCM8, 1 - PCM16, 2 - ADPCM
         public readonly byte LoopFlag; // boolean
         public readonly ushort SampleRate;
         public readonly ushort Timer; // SND_TIMER_CLOCK / SampleRate
         public readonly ushort LoopStart; // number of 32-bit words
         public readonly uint LoopLength; // number of 32-bit words
+    }
+
+    // size: 104
+    public readonly struct SoundStreamHeader
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public readonly char[] Type; // STRM - no terminator
+        public readonly uint Magic;
+        public readonly uint DataSize;
+        public readonly ushort Size;
+        public readonly ushort DataBlocks;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public readonly char[] HeadType; // HEAD - no terminator
+        public readonly uint HeaderSize;
+        public readonly byte Format; // 0 - PCM8, 1 - PCM16, 2 - ADPCM
+        public readonly byte LoopFlag; // boolean
+        public readonly byte Channels;
+        public readonly byte Padding25;
+        public readonly ushort SampleRate;
+        public readonly ushort Timer; // SND_TIMER_CLOCK / SampleRate
+        public readonly uint LoopStart;
+        public readonly uint LoopEnd;
+        public readonly uint DataOffset;
+        public readonly uint BlockCount;
+        public readonly uint BlockSize;
+        public readonly uint BlockSamples;
+        public readonly uint LastBlockSize;
+        public readonly uint LastBlockSamples;
+        // not included: 32 reserved bytes, "DATA"/size fields before data blocks
+    }
+
+    public class SoundData
+    {
+        public IReadOnlyList<SoundStream> Streams { get; }
+
+        public SoundData(IReadOnlyList<SoundStream> streams)
+        {
+            Streams = streams;
+        }
+    }
+
+    public class SoundStream
+    {
+        public int Id { get; }
+        public string Name { get; }
+        public WaveFormat Format { get; }
+        public bool Loop { get; }
+        public ushort SampleRate { get; }
+        public uint LoopStart { get; }
+        public uint LoopEnd { get; }
+
+        private readonly IReadOnlyList<byte[]> _channels;
+        public IReadOnlyList<byte[]> Channels => _channels;
+
+        public float Volume { get; set; } = 1;
+        public Lazy<byte[]> BufferData { get; }
+
+        public SoundStream(int id, string name, SoundStreamHeader header,
+            IReadOnlyList<byte[]> channels, float volume)
+        {
+            Id = id;
+            Name = name;
+            Format = (WaveFormat)header.Format;
+            Loop = header.LoopFlag != 0;
+            SampleRate = header.SampleRate;
+            LoopStart = header.LoopStart;
+            LoopEnd = header.LoopEnd;
+            _channels = channels;
+            Volume = volume;
+            BufferData = new Lazy<byte[]>(() => SoundRead.GetStreamBufferData(this));
+        }
     }
 
     public class SoundSample
@@ -694,44 +1157,6 @@ namespace MphRead.Formats.Sound
             Data3 = data3;
             Data4 = data4;
         }
-    }
-
-    // size: 64
-    public readonly struct SdatHeader
-    {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public readonly char[] Type; // SDAT - no terminator
-        public readonly uint Magic;
-        public readonly uint FileSize;
-        public readonly ushort HeaderSize;
-        public readonly ushort BlockCount;
-        public readonly uint SymbolBlockOffset;
-        public readonly uint SymbolBlockSize;
-        public readonly uint InfoBlockOffset;
-        public readonly uint InfoBlockSize;
-        public readonly uint FatOffset;
-        public readonly uint FatSize;
-        public readonly uint FileBlockOffset;
-        public readonly uint FileBlockSize;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public readonly byte[] Reserved;
-    }
-
-    public readonly struct SymbolBlockHeader
-    {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public readonly char[] Type; // SYMB - no terminator
-        public readonly uint HeaderSize;
-        public readonly uint SeqOffset; // relative offsets
-        public readonly uint SeqarcOffset;
-        public readonly uint BankOffset;
-        public readonly uint WavearcOffset;
-        public readonly uint PlayerOffset;
-        public readonly uint GroupOffset;
-        public readonly uint Player2Offset;
-        public readonly uint StrmOffset;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
-        public readonly byte[] Reserved;
     }
 
     public class WaveExportException : ProgramException

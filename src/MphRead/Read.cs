@@ -1131,12 +1131,12 @@ namespace MphRead
             return (T)result;
         }
 
-        public static string ReadString(ReadOnlySpan<byte> bytes, uint offset, int length)
+        public static string ReadString(ReadOnlySpan<byte> bytes, uint offset, int length = Int32.MaxValue)
         {
             return ReadString(bytes, (int)offset, length);
         }
 
-        public static string ReadString(ReadOnlySpan<byte> bytes, int offset, int length = -1)
+        public static string ReadString(ReadOnlySpan<byte> bytes, int offset, int length = Int32.MaxValue)
         {
             int end = offset;
             for (int i = 0; i < length; i++)
