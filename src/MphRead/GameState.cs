@@ -232,7 +232,7 @@ namespace MphRead
                             if (_nextAlarmIndex >= _alarmIntervals.Count)
                             {
                                 _nextAlarmIndex = 0;
-                            } 
+                            }
                         }
                     }
                 }
@@ -488,7 +488,7 @@ namespace MphRead
                 int teamPoints = TeamPoints[PlayerEntity.Main.TeamIndex];
                 if (teamPoints != prevTeamPoints[PlayerEntity.Main.TeamIndex] && teamPoints == PointGoal - 1)
                 {
-                    // todo: play voice
+                    Sfx.QueueStream((int)VoiceId.VOICE_ONE_KILL_TO_WIN, delay: 1, expiration: 0);
                 }
             }
             else if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
@@ -512,7 +512,7 @@ namespace MphRead
                     }
                     if (TeamDeaths[player.TeamIndex] > PointGoal && player.RespawnTimer == PlayerEntity.RespawnTime)
                     {
-                        // todo: play voice
+                        Sfx.QueueStream((int)VoiceId.VOICE_ELIMINATED, delay: 0, expiration: 0);
                     }
                 }
                 if (PlayerEntity.Main.LoadFlags.TestAny(LoadFlags.Active) && opponents == 1 && lastTeam != -1)
@@ -520,7 +520,7 @@ namespace MphRead
                     int teamDeaths = TeamDeaths[lastTeam];
                     if (teamDeaths != prevTeamDeaths[lastTeam] && teamDeaths == PointGoal)
                     {
-                        // todo: play voice
+                        Sfx.QueueStream((int)VoiceId.VOICE_ONE_KILL_TO_WIN, delay: 1, expiration: 0);
                     }
                 }
             }

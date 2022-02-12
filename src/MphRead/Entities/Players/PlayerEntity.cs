@@ -1825,7 +1825,7 @@ namespace MphRead.Entities
                                 }
                                 if (GameState.KillStreak[attacker.SlotIndex] == 5)
                                 {
-                                    // todo: play voice
+                                    _soundSource.QueueStream(VoiceId.VOICE_CONSECUTIVE_KILLS, delay: 1);
                                     string message;
                                     if (attacker.IsMainPlayer)
                                     {
@@ -1851,7 +1851,7 @@ namespace MphRead.Entities
                                         GameState.PrimesKilled[attacker.SlotIndex]++;
                                         if (Main.IsPrimeHunter)
                                         {
-                                            // todo: play voice
+                                            _soundSource.QueueStream(VoiceId.VOICE_PRIME, delay: 1);
                                         }
                                         string nickname = GameState.Nicknames[attacker.SlotIndex];
                                         string message = Strings.GetHudMessage(241); // %s is the new prime hunter!

@@ -1431,7 +1431,7 @@ namespace MphRead.Entities
             }
             if (reveal == 1)
             {
-                // todo: play voice
+                _soundSource.QueueStream(VoiceId.VOICE_CAMPING, delay: 1);
                 QueueHudMessage(128, 150, 60 / 30f, 0, 234); // COWARD DETECTED!
             }
         }

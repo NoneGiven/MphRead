@@ -282,7 +282,7 @@ namespace MphRead.Entities
             {
                 if (nodeCount >= 2)
                 {
-                    // sfxtodo: play voice
+                    _soundSource.QueueStream(VoiceId.VOICE_MULTI_NODE, delay: 1, expiration: 35 / 30f);
                 }
             }
             else if (value1 == 3)
