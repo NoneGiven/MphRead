@@ -111,9 +111,25 @@ namespace MphRead
         AffinityChargeShot = 9
     }
 
+    public enum VoiceId
+    {
+        None = -1,
+        VOICE_CONSECUTIVE_KILLS = 0,
+        VOICE_ONE_KILL_TO_WIN = 1,
+        VOICE_ELIMINATED =  2,
+        VOICE_CAMPING = 3,
+        VOICE_PRIME = 4,
+        VOICE_BOUNTY = 5,
+        VOICE_OCTO_PICKUP = 6,
+        VOICE_OCTO_SCORE = 7,
+        VOICE_OCTO_RESET = 8,
+        VOICE_MULTI_NODE = 9,
+        VOICE_EVACUATE = 10
+    }
+
     public enum SfxId
     {
-        NONE = -1,
+        None = -1,
         // normal SFX
         LID_CLOSE = 0,
         LID_OPEN = 1,

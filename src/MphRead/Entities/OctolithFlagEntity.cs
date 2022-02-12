@@ -132,7 +132,7 @@ namespace MphRead.Entities
                     {
                         if (PlayerEntity.Main.TeamIndex == _data.TeamId)
                         {
-                            // sfxtodo: play voice
+                            _soundSource.QueueStream(VoiceId.VOICE_OCTO_PICKUP, delay: 1, expiration: 2);
                             // mustodo: update music
                         }
                         else
@@ -145,13 +145,13 @@ namespace MphRead.Entities
                         // todo: update music
                         if (_carrier == PlayerEntity.Main)
                         {
-                            // sfxtodo: play voice
+                            _soundSource.QueueStream(VoiceId.VOICE_OCTO_PICKUP, delay: 1, expiration: 2);
                             _soundSource.PlayFreeSfx(SfxId.FLAG_ACQUIRED);
                             PlayerEntity.Main.QueueHudMessage(128, 133, 90 / 30f, 1, 202); // return to base
                         }
                         else
                         {
-                            // sfxtodo: play voice
+                            _soundSource.QueueStream(VoiceId.VOICE_OCTO_PICKUP, delay: 1, expiration: 2);
                             // mustodo: update music
                         }
                     }
@@ -263,7 +263,7 @@ namespace MphRead.Entities
                     else
                     {
                         messageId = 230; // the enemy dropped your octolith!
-                        // sfxtodo: play voice
+                        _soundSource.QueueStream(VoiceId.VOICE_OCTO_RESET, delay: 1, expiration: 2);
                     }
                 }
                 else if (reset)
@@ -284,6 +284,7 @@ namespace MphRead.Entities
             }
             else
             {
+                _soundSource.QueueStream(VoiceId.VOICE_OCTO_RESET, delay: 1, expiration: 2);
                 messageId = 229; // the octolith has been dropped!
                 _soundSource.PlayFreeSfx(SfxId.FLAG_DROPPED);
             }
@@ -314,6 +315,7 @@ namespace MphRead.Entities
             {
                 if (PlayerEntity.Main.TeamIndex == _data.TeamId)
                 {
+                    _soundSource.QueueStream(VoiceId.VOICE_OCTO_SCORE, delay: 40 / 30f);
                     _soundSource.PlayFreeSfx(SfxId.SCORE);
                 }
                 else
@@ -326,10 +328,7 @@ namespace MphRead.Entities
                 if (Bugfixes.CorrectBountySfx && _carrier.TeamIndex == PlayerEntity.Main.TeamIndex
                     || !Bugfixes.CorrectBountySfx && _carrier.IsMainPlayer)
                 {
-                    if (_carrier.IsMainPlayer)
-                    {
-                        // sfxtodo: play voice
-                    }
+                    _soundSource.QueueStream(VoiceId.VOICE_BOUNTY, delay: 40 / 30f);
                     _soundSource.PlayFreeSfx(SfxId.SCORE);
                 }
                 else

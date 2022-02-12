@@ -101,6 +101,16 @@ namespace MphRead.Sound
         {
             return Sfx.CountPlayingSfx(id);
         }
+
+        public void QueueStream(VoiceId id, float delay = 0, float expiration = 0)
+        {
+            Sfx.QueueStream((int)id, delay, expiration);
+        }
+
+        public void QueueStream(int id, float delay = 0, float expiration = 0)
+        {
+            Sfx.QueueStream(id, delay, expiration);
+        }
     }
 
     // sktodo: pause all sounds when debugger breaks, frame advance is on, etc.
