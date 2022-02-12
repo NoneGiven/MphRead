@@ -2254,6 +2254,8 @@ namespace MphRead.Entities
             DrawText2D(posX + 5, posY + 14, Align.Left, 0, score);
         }
 
+        private int _prevIntroChars = 0;
+
         private void DrawModeRules()
         {
             string? header = _rulesLines[0];
@@ -2275,9 +2277,14 @@ namespace MphRead.Entities
                 float posX = _rulesInfo.Offsets[i] + 12;
                 DrawText2D(posX, posY, Align.Left, 0, line, new ColorRgba(0x7F5A), maxLength: characters);
                 posY += 13 + _rulesLengths[i].Newlines * 8;
-                // todo: play SFX, somewhere
-                // skhere
             }
+            // todo?: ideally this should be in a process method, not draw
+            if (totalCharacters != _prevIntroChars && totalCharacters > _rulesLengths[0].Length
+                && totalCharacters <= _rulesLengths[_rulesInfo.Count - 1].Length)
+            {
+                _soundSource.PlayFreeSfx(SfxId.LETTER_BLIP);
+            }
+            _prevIntroChars = totalCharacters;
             _textSpacingY = 0;
         }
 
