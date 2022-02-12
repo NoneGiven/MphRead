@@ -360,6 +360,13 @@ namespace MphRead.Sound
             Vector3 listenerFacing = PlayerEntity.Main.CameraInfo.Facing;
             AL.Listener(ALListener3f.Position, ref listenerPos);
             AL.Listener(ALListenerfv.Orientation, ref listenerFacing, ref listenerUp);
+            Debug.Assert(_streamChannel != -1);
+            Debug.Assert(_streamBuffer != -1);
+            Vector3 sourcePos = PlayerEntity.Main.CameraInfo.Position;
+            AL.Source(_streamChannel, ALSource3f.Position, ref sourcePos);
+            AL.Source(_streamChannel, ALSourcef.ReferenceDistance, Single.MaxValue);
+            AL.Source(_streamChannel, ALSourcef.MaxDistance, Single.MaxValue);
+            AL.Source(_streamChannel, ALSourcef.RolloffFactor, 1);
             for (int i = 0; i < _channels.Length; i++)
             {
                 SoundChannel channel = _channels[i];
@@ -378,6 +385,7 @@ namespace MphRead.Sound
                     }
                 }
             }
+            UpdateStreams(time);
         }
 
         public static int CountPlayingSfx(int id)
@@ -392,6 +400,103 @@ namespace MphRead.Sound
                 }
             }
             return count;
+        }
+
+        private class QueueItem
+        {
+            public SoundStream? Stream { get; set; }
+            public float DelayTimer { get; set; }
+            public float ExpirationTimer { get; set; }
+            public bool Playing { get; set; }
+        }
+
+        public static SoundData _soundData = null!;
+        private static readonly LinkedList<QueueItem> _activeQueue = new LinkedList<QueueItem>();
+        private static readonly Queue<QueueItem> _inactiveQueue = new Queue<QueueItem>(16);
+        private static int _streamChannel = -1;
+        private static int _streamBuffer = -1;
+
+        public static void QueueStream(int id, float delay, float expiration)
+        {
+            if (_inactiveQueue.Count == 0)
+            {
+                return;
+            }
+            Debug.Assert(id >= 0 && id < _soundData.Streams.Count);
+            QueueItem item = _inactiveQueue.Dequeue();
+            item.Stream = _soundData.Streams[id];
+            item.DelayTimer = delay;
+            item.ExpirationTimer = expiration;
+            item.Playing = false;
+            _activeQueue.AddLast(item);
+        }
+
+        private static void UpdateStreams(float time)
+        {
+            int index = 0;
+            LinkedListNode<QueueItem>? node = _activeQueue.First;
+            while (node != null)
+            {
+                LinkedListNode<QueueItem>? next = node.Next;
+                QueueItem item = node.Value;
+                Debug.Assert(item.Stream != null);
+                if (index == 0 && item.Playing)
+                {
+                    AL.GetSource(_streamChannel, ALGetSourcei.SourceState, out int value);
+                    var state = (ALSourceState)value;
+                    if (state != ALSourceState.Initial && state != ALSourceState.Playing)
+                    {
+                        AL.SourceStop(_streamChannel);
+                        AL.Source(_streamChannel, ALSourcei.Buffer, 0);
+                        item.Stream = null;
+                        _activeQueue.Remove(node);
+                        node = next;
+                        index++;
+                        continue;
+                    }
+                }
+                else if (item.DelayTimer > 0)
+                {
+                    item.DelayTimer -= time;
+                    if (item.DelayTimer <= 0)
+                    {
+                        item.DelayTimer = 0;
+                    }
+                }
+                if (item.DelayTimer == 0 && !item.Playing && index == 0)
+                {
+                    ALFormat format;
+                    if (item.Stream.Format == WaveFormat.ADPCM)
+                    {
+                        format = item.Stream.Channels.Count == 2 ? ALFormat.Stereo16 : ALFormat.Mono16;
+                    }
+                    else // if (item.Stream.Format == WaveFormat.PCM8)
+                    {
+                        format = item.Stream.Channels.Count == 2 ? ALFormat.Stereo8 : ALFormat.Mono8;
+                    }
+                    AL.BufferData(_streamBuffer, format, item.Stream.BufferData.Value, item.Stream.SampleRate);
+                    AL.Source(_streamChannel, ALSourcei.Buffer, _streamBuffer);
+                    // sktodo: loop points
+                    AL.Source(_streamChannel, ALSourceb.Looping, item.Stream.Loop);
+                    AL.Source(_streamChannel, ALSourcef.Gain, Volume * item.Stream.Volume);
+                    AL.SourcePlay(_streamChannel);
+                    item.Playing = true;
+                    node = next;
+                    index++;
+                    continue;
+                }
+                if (index > 0 && item.ExpirationTimer > 0)
+                {
+                    item.ExpirationTimer -= time;
+                    if (item.ExpirationTimer <= 0)
+                    {
+                        item.ExpirationTimer = 0;
+                        _activeQueue.Remove(node);
+                    }
+                }
+                node = next;
+                index++;
+            }
         }
 
         public static void Load()
@@ -409,6 +514,15 @@ namespace MphRead.Sound
                 _ = sample.WaveData.Value;
             }
             _rangeData = SoundRead.ReadSound3dList();
+            _soundData = SoundRead.ReadSdat();
+            foreach (SoundStream stream in _soundData.Streams)
+            {
+                _ = stream.BufferData.Value;
+            }
+            for (int i = 0; i < 16; i++)
+            {
+                _inactiveQueue.Enqueue(new QueueItem());
+            }
             _device = ALC.OpenDevice(null);
             _context = ALC.CreateContext(_device, new ALContextAttributes());
             ALC.MakeContextCurrent(_context);
@@ -418,6 +532,8 @@ namespace MphRead.Sound
             {
                 _channels[i] = new SoundChannel(_channelIds[i]);
             }
+            _streamBuffer = AL.GenBuffer();
+            _streamChannel = AL.GenSource();
             if (!Features.LogSpatialAudio)
             {
                 AL.DistanceModel(ALDistanceModel.LinearDistanceClamped);

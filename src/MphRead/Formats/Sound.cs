@@ -553,7 +553,6 @@ namespace MphRead.Formats.Sound
                 }
                 for (uint j = 0; j < header.Channels; j++)
                 {
-                    Console.WriteLine(j);
                     byte[] channel = new byte[channelSize];
                     using var ms = new MemoryStream(channel);
                     using var writer = new BinaryWriter(ms);
@@ -619,14 +618,21 @@ namespace MphRead.Formats.Sound
 
         public static byte[] GetStreamBufferData(SoundStream stream)
         {
+            int bytesPerSample = stream.Format == WaveFormat.ADPCM ? 2 : 1;
             int length = stream.Channels[0].Length * stream.Channels.Count;
             byte[] data = new byte[length];
-            for (int i = 0; i < length;)
+            for (int i = 0; i < stream.Channels.Count; i++)
             {
-                for (int j = 0; j < stream.Channels.Count; j++)
+                byte[] channel = stream.Channels[i];
+                int destIndex = i * bytesPerSample;
+                int srcIndex = 0;
+                for (int j = 0; j < channel.Length; j += bytesPerSample)
                 {
-                    data[i] = stream.Channels[j][i / stream.Channels.Count];
-                    i++;
+                    for (int k = 0; k < bytesPerSample; k++)
+                    {
+                        data[destIndex++] = channel[srcIndex++];
+                    }
+                    destIndex += bytesPerSample * (stream.Channels.Count - 1);
                 }
             }
             return data;
