@@ -221,6 +221,8 @@ namespace MphRead.Sound
                 AL.Source(channel.ChannelId, ALSourcei.Buffer, bufferId);
                 channel.BufferId = bufferId;
             }
+            // sktodo: this volume multiplication isn't really right
+            AL.Source(channel.ChannelId, ALSourcef.Gain, Volume * channel.SampleVolume);
             // sktodo: loop points (needs opentk update)
             AL.Source(channel.ChannelId, ALSourceb.Looping, loop);
             channel.Loop = loop;

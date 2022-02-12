@@ -2279,12 +2279,12 @@ namespace MphRead.Entities
                 posY += 13 + _rulesLengths[i].Newlines * 8;
             }
             // todo?: ideally this should be in a process method, not draw
-            if (totalCharacters != _prevIntroChars && totalCharacters > _rulesLengths[0].Length
+            if (totalCharacters > _prevIntroChars && totalCharacters > _rulesLengths[0].Length
                 && totalCharacters <= _rulesLengths[_rulesInfo.Count - 1].Length)
             {
                 _soundSource.PlayFreeSfx(SfxId.LETTER_BLIP);
+                _prevIntroChars = totalCharacters;
             }
-            _prevIntroChars = totalCharacters;
             _textSpacingY = 0;
         }
 
