@@ -394,9 +394,9 @@ namespace MphRead.Entities
             {
                 if (!IsAltForm && !IsMorphing && !IsUnmorphing)
                 {
-                    if (!Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && !_showScoreboard)
+                    if (!Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && !_showScoreboard
+                        && GameState.MatchState == MatchState.InProgress)
                     {
-                        // sktodo: HUD shift
                         if (_drawIceLayer)
                         {
                             // ice layer

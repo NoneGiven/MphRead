@@ -250,6 +250,19 @@ namespace MphRead.Sound
             return false;
         }
 
+        public static void StopAllSound()
+        {
+            for (int i = 0; i < _channels.Length; i++)
+            {
+                SoundChannel channel = _channels[i];
+                if (channel.BufferId != -1)
+                {
+                    channel.Stop();
+                }
+            }
+            AL.SourceStop(_streamChannel);
+        }
+
         public static void StopSoundFromSource(SoundSource source, bool force)
         {
             for (int i = 0; i < _channels.Length; i++)

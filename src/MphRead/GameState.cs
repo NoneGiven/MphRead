@@ -261,7 +261,9 @@ namespace MphRead
                     scene.SetFade(FadeType.None, length: 0, overwrite: true);
                     _stateChanged = true;
                     _matchEndTime = scene.ElapsedTime;
-                    // todo: stop SFX, update music
+                    Sfx.StopAllSound();
+                    // sfxtodo: stop more kinds of SFX?
+                    // mustodo: stop music and play timeout jingle
                 }
             }
             else if (MatchState == MatchState.GameOver)

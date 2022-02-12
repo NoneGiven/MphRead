@@ -1168,12 +1168,16 @@ namespace MphRead
             _advanceOneFrame = false;
         }
 
-        public void OnRenderFrame()
+        public bool OnRenderFrame()
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
             GL.ClearStencil(0);
 
             UpdateUniforms();
+            if (_exiting)
+            {
+                return false;
+            } 
             // pass 1: opaque
             GL.ColorMask(true, true, true, true);
             GL.Enable(EnableCap.AlphaTest);
@@ -1345,6 +1349,7 @@ namespace MphRead
             }
             GL.Enable(EnableCap.DepthTest);
             GL.Disable(EnableCap.Blend);
+            return true;
         }
 
         private void LoadAndUnload()
@@ -4509,7 +4514,10 @@ namespace MphRead
                 CursorVisible = true;
             }
             Scene.OnUpdateFrame();
-            Scene.OnRenderFrame();
+            if (!Scene.OnRenderFrame())
+            {
+                return;
+            }
             SwapBuffers();
             if (_startedHidden)
             {
