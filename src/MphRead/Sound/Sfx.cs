@@ -157,8 +157,6 @@ namespace MphRead.Sound
                     AL.Source(channelId, ALSourcei.Buffer, bufferId);
                     BufferIds[index] = bufferId;
                 }
-                // sfxtodo: volume
-                AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume * Samples[index].Volume);
                 // sfxtodo: loop points (needs opentk update)
                 AL.Source(channelId, ALSourceb.Looping, loop);
                 AL.SourcePlay(channelId);
@@ -176,7 +174,6 @@ namespace MphRead.Sound
                         AL.Source(channelId, ALSourcef.ReferenceDistance, Single.MaxValue);
                         AL.Source(channelId, ALSourcef.MaxDistance, Single.MaxValue);
                         AL.Source(channelId, ALSourcef.RolloffFactor, 1);
-                        AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume * Samples[i].Volume);
                     }
                 }
                 else if (!NoUpdate)
@@ -193,13 +190,14 @@ namespace MphRead.Sound
                 }
             }
 
-            // sktodo: pitch
             public void UpdateParameters()
             {
                 for (int i = 0; i < Count; i++)
                 {
+                    int channelId = ChannelIds[i];
                     // sfxtodo: this volume multiplication isn't really right
-                    AL.Source(ChannelIds[i], ALSourcef.Gain, Sfx.Volume * Volume * Samples[i].Volume);
+                    AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume * Samples[i].Volume);
+                    AL.Source(channelId, ALSourcef.Pitch, Pitch);
                 }
             }
 
