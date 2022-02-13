@@ -503,6 +503,8 @@ namespace MphRead.Entities
             {
                 recency = Single.MaxValue;
             }
+            // the game mistakenly checks the flags local variable for the no update/own params bit, instead of the source flags
+            // the game also checks the source flags for the check recent bit, but it's not needed since single or loop is always set
             bool noUpdate = data.Flags.TestFlag(PlatSfxFlags.NoUpdate);
             int id = environment ? Metadata.EnvironmentSfxIds[data.Id] : data.Id;
             _soundSource.PlaySfx(id, loop, noUpdate, recency, sourceOnly);

@@ -371,14 +371,32 @@ namespace MphRead.Formats.Sound
                 uint entryCount = Read.SpanReadUint(bytes, header.Offset);
                 foreach (DgnEntry entry in Read.DoOffsets<DgnEntry>(bytes, header.Offset + 4, entryCount))
                 {
-                    entries.Add(new DgnFileEntry(
-                        entry.Field0,
+                    var newEntry = new DgnFileEntry(
                         entry.SfxId,
-                        Read.DoOffsets<uint>(bytes, header.Offset + entry.Offset1, entry.Count1),
-                        Read.DoOffsets<uint>(bytes, header.Offset + entry.Offset2, entry.Count2),
-                        Read.DoOffsets<uint>(bytes, header.Offset + entry.Offset3, entry.Count3),
-                        Read.DoOffsets<uint>(bytes, header.Offset + entry.Offset4, entry.Count4)
-                    ));
+                        Read.DoOffsets<DgnData>(bytes, header.Offset + entry.Offset1, entry.Count1),
+                        Read.DoOffsets<DgnData>(bytes, header.Offset + entry.Offset2, entry.Count2),
+                        Read.DoOffsets<DgnData>(bytes, header.Offset + entry.Offset3, entry.Count3),
+                        Read.DoOffsets<DgnData>(bytes, header.Offset + entry.Offset4, entry.Count4)
+                    );
+
+                    static void CheckStuff(IReadOnlyList<DgnData> data)
+                    {
+                        foreach (DgnData item in data)
+                        {
+                            int flags = item.Value & 0xC000;
+                            if (flags != 0 && flags != 0x4000)
+                            {
+                                Debugger.Break();
+                            }
+                        }
+                    }
+
+                    CheckStuff(newEntry.Data1);
+                    CheckStuff(newEntry.Data2);
+                    CheckStuff(newEntry.Data3);
+                    CheckStuff(newEntry.Data4);
+
+                    entries.Add(newEntry);
                 }
                 files.Add(new DgnFile(names[i], header, entries));
             }
@@ -874,6 +892,7 @@ namespace MphRead.Formats.Sound
         public float Volume { get; set; } = 1;
         public Lazy<byte[]> WaveData { get; }
         public int BufferId { get; set; }
+        public int References { get; set; }
         public string? Name { get; set; }
 
         public SoundSample(uint id, uint offset, SoundSampleHeader header, ReadOnlySpan<byte> data)
@@ -989,8 +1008,7 @@ namespace MphRead.Formats.Sound
     // size: 12
     public readonly struct RawSoundTableEntry
     {
-        // nxtodo: SFX fields
-        public readonly ushort Field0;
+        public readonly ushort Exists; // -1 - doesn't exist, 0 - exists
         public readonly byte CategoryId;
         public readonly byte SlotCount;
         public readonly byte InitialVolume;
@@ -1015,7 +1033,6 @@ namespace MphRead.Formats.Sound
     {
         public string Name { get; }
         public string Category { get; }
-        public ushort Field0; // ID/index/-1 for missing entries?
         public byte CategoryId;
         public byte SlotCount;
         public byte InitialVolume;
@@ -1027,7 +1044,6 @@ namespace MphRead.Formats.Sound
         {
             Name = name;
             Category = category;
-            Field0 = raw.Field0;
             CategoryId = raw.CategoryId;
             SlotCount = raw.SlotCount;
             InitialVolume = raw.InitialVolume;
@@ -1077,7 +1093,7 @@ namespace MphRead.Formats.Sound
     {
         public readonly uint Offset;
         public readonly ushort Size;
-        public readonly byte Field6;
+        public readonly byte InitialVolume;
         public readonly byte SlotCount;
     }
 
@@ -1111,14 +1127,14 @@ namespace MphRead.Formats.Sound
     {
         public readonly uint Offset;
         public readonly ushort Size;
-        public readonly byte Field6;
+        public readonly byte InitialVolume;
         public readonly byte SlotCount;
     }
 
     // size: 36
     public readonly struct DgnEntry
     {
-        public readonly ushort Field0;
+        public readonly ushort Unused0;
         public readonly ushort SfxId;
         public readonly uint Count1; // blocks
         public readonly uint Offset1;
@@ -1128,6 +1144,13 @@ namespace MphRead.Formats.Sound
         public readonly uint Offset3;
         public readonly uint Count4;
         public readonly uint Offset4;
+    }
+
+    // size: 4
+    public readonly struct DgnData
+    {
+        public readonly ushort Amount;
+        public readonly ushort Value;
     }
 
     public class DgnFile
@@ -1146,18 +1169,16 @@ namespace MphRead.Formats.Sound
 
     public class DgnFileEntry
     {
-        public ushort Field0 { get; }
-        public ushort SfxId { get; }
-        public IReadOnlyList<uint> Data1 { get; }
-        public IReadOnlyList<uint> Data2 { get; }
-        public IReadOnlyList<uint> Data3 { get; }
-        public IReadOnlyList<uint> Data4 { get; }
+        public SfxId SfxId { get; }
+        public IReadOnlyList<DgnData> Data1 { get; }
+        public IReadOnlyList<DgnData> Data2 { get; }
+        public IReadOnlyList<DgnData> Data3 { get; }
+        public IReadOnlyList<DgnData> Data4 { get; }
 
-        public DgnFileEntry(ushort field0, ushort sfxId, IReadOnlyList<uint> data1,
-            IReadOnlyList<uint> data2, IReadOnlyList<uint> data3, IReadOnlyList<uint> data4)
+        public DgnFileEntry(ushort sfxId, IReadOnlyList<DgnData> data1, IReadOnlyList<DgnData> data2,
+            IReadOnlyList<DgnData> data3, IReadOnlyList<DgnData> data4)
         {
-            Field0 = field0;
-            SfxId = sfxId;
+            SfxId = (SfxId)sfxId;
             Data1 = data1;
             Data2 = data2;
             Data3 = data3;
