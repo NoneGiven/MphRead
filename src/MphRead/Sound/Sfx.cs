@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using MphRead.Entities;
 using MphRead.Formats.Sound;
 using OpenTK.Audio.OpenAL;
-using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 
 namespace MphRead.Sound
@@ -50,10 +48,17 @@ namespace MphRead.Sound
         public void PlaySfx(int id, bool loop = false, bool noUpdate = false,
             float recency = -1, bool sourceOnly = false, bool cancellable = false)
         {
-            // sktodo: support DGN and scripts
-            if (id >= 0 && (id & 0xC000) == 0)
+            // sktodo: support scripts
+            if (id >= 0 && (id & 0x4000) == 0)
             {
-                Sfx.PlaySample(id, this, loop, noUpdate, recency, sourceOnly, cancellable);
+                if ((id & 0x8000) != 0)
+                {
+                    Sfx.PlayDgn(id, this, loop, noUpdate, recency, sourceOnly, cancellable);
+                }
+                else
+                {
+                    Sfx.PlaySample(id, this, loop, noUpdate, recency, sourceOnly, cancellable);
+                }
             }
         }
 
@@ -117,59 +122,6 @@ namespace MphRead.Sound
     // sfxtodo: pause all sounds when debugger breaks, frame advance is on, etc.
     public static class Sfx
     {
-        private static readonly DgnSound[] _dgnSounds = new DgnSound[16];
-
-        private class DgnSound
-        {
-            public int SfxId { get; set; } = -1;
-            public DgnFile? DgnFile { get; set; }
-            public bool Loop { get; set; }
-            public float Volume { get; set; } = 1;
-            public float Pitch { get; set; } = 1;
-            public SoundSource? Source { get; set; }
-            public SoundChannel?[] Channels { get; } = new SoundChannel?[3];
-
-            public void Stop()
-            {
-                // sktodo
-            }
-        }
-
-        public static void PlayDgn(int id, SoundSource source, bool loop, bool noUpdate,
-            float recency, bool sourceOnly, bool cancellable)
-        {
-            int dgnId = id & 0x3FFF;
-            Debug.Assert(id >= 0 && id <= _dgnFiles.Count);
-            DgnFile dgnFile = _dgnFiles[dgnId];
-            Debug.Assert(dgnFile.Entries.Count > 0 && dgnFile.Entries.Count <= 3);
-            DgnSound? sound = null;
-            for (int i = 0; i < _dgnSounds.Length; i++)
-            {
-                DgnSound slot = _dgnSounds[i];
-                if (slot.SfxId == -1)
-                {
-                    sound = slot;
-                    break;
-                }
-            }
-            if (sound == null)
-            {
-                // this is not expected to happen
-                sound = _dgnSounds[0];
-                sound.Stop();
-            }
-            sound.Source = source;
-            sound.SfxId = id;
-            sound.DgnFile = dgnFile;
-            sound.Loop = loop;
-
-            for (int i = 0; i < dgnFile.Entries.Count; i++)
-            {
-                DgnFileEntry entry = dgnFile.Entries[i];
-                sound.Channels[i] = PlaySample((int)entry.SfxId, source, loop, noUpdate, recency, sourceOnly, cancellable);
-            }
-        }
-
         public class SoundChannel
         {
             public int Count { get; set; }
@@ -179,6 +131,7 @@ namespace MphRead.Sound
             public SoundSample[] Samples { get; } = new SoundSample[3];
             public SoundSource? Source { get; set; }
             public float Volume { get; set; } = 1;
+            public float Pitch { get; set; } = 1;
             public float PlayTime { get; set; } = -1;
             public int SfxId { get; set; } = -1;
             public bool NoUpdate { get; set; }
@@ -211,8 +164,7 @@ namespace MphRead.Sound
                 AL.SourcePlay(channelId);
             }
 
-            // sktodo: pitch
-            public void Update()
+            public void UpdatePosition()
             {
                 if (Source == null)
                 {
@@ -224,7 +176,6 @@ namespace MphRead.Sound
                         AL.Source(channelId, ALSourcef.ReferenceDistance, Single.MaxValue);
                         AL.Source(channelId, ALSourcef.MaxDistance, Single.MaxValue);
                         AL.Source(channelId, ALSourcef.RolloffFactor, 1);
-                        // sfxtodo: this volume multiplication isn't really right
                         AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume * Samples[i].Volume);
                     }
                 }
@@ -238,9 +189,17 @@ namespace MphRead.Sound
                         AL.Source(channelId, ALSourcef.ReferenceDistance, Source.ReferenceDistance);
                         AL.Source(channelId, ALSourcef.MaxDistance, Source.MaxDistance);
                         AL.Source(channelId, ALSourcef.RolloffFactor, Source.RolloffFactor);
-                        // sfxtodo: volume
-                        AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume * Samples[i].Volume);
                     }
+                }
+            }
+
+            // sktodo: pitch
+            public void UpdateParameters()
+            {
+                for (int i = 0; i < Count; i++)
+                {
+                    // sfxtodo: this volume multiplication isn't really right
+                    AL.Source(ChannelIds[i], ALSourcef.Gain, Sfx.Volume * Volume * Samples[i].Volume);
                 }
             }
 
@@ -264,10 +223,12 @@ namespace MphRead.Sound
                 SfxId = -1;
                 Source = null;
                 Volume = 1;
+                Pitch = 1;
                 NoUpdate = false;
                 Loop = false;
                 Cancellable = false;
                 Handle = -1;
+                Count = 0;
             }
         }
 
@@ -288,9 +249,45 @@ namespace MphRead.Sound
         public static SoundChannel? PlaySample(int id, SoundSource? source, bool loop, bool noUpdate,
             float recency, bool sourceOnly, bool cancellable)
         {
+            SoundChannel? channel = SetUpChannel(id, source, loop, noUpdate, recency, sourceOnly, cancellable);
+            if (channel == null)
+            {
+                return null;
+            }
+            SetUpSample(id, channel, index: 0);
+            StartChannel(channel, noUpdate);
+            return channel;
+        }
+
+        public static SoundChannel? PlayDgn(int id, SoundSource? source, bool loop, bool noUpdate,
+            float recency, bool sourceOnly, bool cancellable)
+        {
+            // sktodo: needs initial volume and pitch updates
+            Debug.Assert((id & 0x8000) != 0);
+            int dgnId = id & 0x3FFF;
+            Debug.Assert(dgnId >= 0 && dgnId <= _dgnFiles.Count);
+            SoundChannel? channel = SetUpChannel(id, source, loop, noUpdate, recency, sourceOnly, cancellable);
+            if (channel == null)
+            {
+                return null;
+            }
+            DgnFile dgnFile = _dgnFiles[dgnId];
+            Debug.Assert(dgnFile.Entries.Count > 0 && dgnFile.Entries.Count <= 3);
+            for (int i = 0; i < dgnFile.Entries.Count; i++)
+            {
+                DgnFileEntry entry = dgnFile.Entries[i];
+                SetUpSample((int)entry.SfxId, channel, index: i);
+            }
+            StartChannel(channel, noUpdate);
+            return channel;
+        }
+
+        public static SoundChannel? SetUpChannel(int id, SoundSource? source, bool loop, bool noUpdate,
+            float recency, bool sourceOnly, bool cancellable)
+        {
             if (loop)
             {
-                // sfxtodo: this is a different code path, and it includes requests flagged with SFX_SINGLE
+                // sktodo: this is a different code path, and it includes requests flagged with SFX_SINGLE
                 // --> this "is this playing" path updates DGN parameters wen true, while the "recency" path doesn't
                 recency = Single.MaxValue;
                 sourceOnly = true;
@@ -302,25 +299,36 @@ namespace MphRead.Sound
             SoundChannel channel = FindChannel(source);
             channel.Source = source;
             channel.PlayTime = 0;
-            channel.NoUpdate = false;
-            channel.Update();
-            channel.NoUpdate = noUpdate;
             channel.Loop = loop;
             channel.Cancellable = cancellable;
             channel.SfxId = id;
             channel.Handle = SoundChannel.NextHandle++;
-            // sktodo: separate - DGN version needs multiple SFX plus initial volume and pitch updates
+            return channel;
+        }
+
+        private static void SetUpSample(int id, SoundChannel channel, int index)
+        {
             Debug.Assert(id >= 0 && id < _samples.Count);
             SoundSample sample = _samples[id];
+            channel.Count++;
+            channel.Samples[index] = sample;
+            sample.References++;
             if (sample.BufferId == 0)
             {
                 sample.BufferId = BufferData(sample);
             }
-            channel.Count = 1;
-            channel.Samples[0] = sample;
-            sample.References++;
-            channel.PlayChannel(index: 0, loop);
-            return channel;
+        }
+
+        private static void StartChannel(SoundChannel channel, bool noUpdate)
+        {
+            channel.NoUpdate = false;
+            channel.UpdatePosition();
+            channel.NoUpdate = noUpdate;
+            channel.UpdateParameters();
+            for (int i = 0; i < channel.Count; i++)
+            {
+                channel.PlayChannel(index: i, channel.Loop);
+            }
         }
 
         // recency = 0 --> started playing on the current frame
@@ -342,7 +350,6 @@ namespace MphRead.Sound
 
         public static void StopAllSound()
         {
-            // sktodo: stop DGN
             for (int i = 0; i < _channels.Length; i++)
             {
                 SoundChannel channel = _channels[i];
@@ -356,7 +363,6 @@ namespace MphRead.Sound
 
         public static void StopSoundFromSource(SoundSource source, bool force)
         {
-            // sktodo: stop DGN
             for (int i = 0; i < _channels.Length; i++)
             {
                 SoundChannel channel = _channels[i];
@@ -372,7 +378,6 @@ namespace MphRead.Sound
 
         public static void StopSoundFromSource(SoundSource source, int id)
         {
-            // sktodo: stop DGN by ID
             Debug.Assert(id >= 0);
             for (int i = 0; i < _channels.Length; i++)
             {
@@ -456,7 +461,7 @@ namespace MphRead.Sound
                 SoundChannel channel = _channels[i];
                 for (int j = 0; j < channel.Count; j++)
                 {
-                    _usedBufferIds.Add(channel.BufferIds[j]);
+                    _usedBufferIds.Add(channel.Samples[j].BufferId);
                 }
             }
             for (int i = 0; i < _bufferIds.Length; i++)
@@ -507,7 +512,8 @@ namespace MphRead.Sound
                     if (playing)
                     {
                         channel.PlayTime += time;
-                        channel.Update();
+                        channel.UpdatePosition();
+                        channel.UpdateParameters();
                     }
                     else
                     {
@@ -664,10 +670,6 @@ namespace MphRead.Sound
             }
             _streamBuffer = AL.GenBuffer();
             _streamChannel = AL.GenSource();
-            for (int i = 0; i < _dgnSounds.Length; i++)
-            {
-                _dgnSounds[i] = new DgnSound();
-            }
             if (!Features.LogSpatialAudio)
             {
                 AL.DistanceModel(ALDistanceModel.LinearDistanceClamped);
