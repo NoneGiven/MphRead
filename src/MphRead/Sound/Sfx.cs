@@ -247,7 +247,7 @@ namespace MphRead.Sound
         public static SoundChannel? PlaySample(int id, SoundSource? source, bool loop, bool noUpdate,
             float recency, bool sourceOnly, bool cancellable)
         {
-            SoundChannel? channel = SetUpChannel(id, source, loop, noUpdate, recency, sourceOnly, cancellable);
+            SoundChannel? channel = SetUpChannel(id, source, loop, recency, sourceOnly, cancellable);
             if (channel == null)
             {
                 return null;
@@ -264,7 +264,7 @@ namespace MphRead.Sound
             Debug.Assert((id & 0x8000) != 0);
             int dgnId = id & 0x3FFF;
             Debug.Assert(dgnId >= 0 && dgnId <= _dgnFiles.Count);
-            SoundChannel? channel = SetUpChannel(id, source, loop, noUpdate, recency, sourceOnly, cancellable);
+            SoundChannel? channel = SetUpChannel(id, source, loop, recency, sourceOnly, cancellable);
             if (channel == null)
             {
                 return null;
@@ -280,7 +280,7 @@ namespace MphRead.Sound
             return channel;
         }
 
-        public static SoundChannel? SetUpChannel(int id, SoundSource? source, bool loop, bool noUpdate,
+        public static SoundChannel? SetUpChannel(int id, SoundSource? source, bool loop,
             float recency, bool sourceOnly, bool cancellable)
         {
             if (loop)
@@ -496,6 +496,8 @@ namespace MphRead.Sound
                 SoundChannel channel = _channels[i];
                 if (channel.PlayTime >= 0)
                 {
+                    // sktodo: DGN need to stop and start based on volume,
+                    // and unlink on the next frame if all their entries have stopped
                     bool playing = false;
                     for (int j = 0; j < channel.Count; j++)
                     {
