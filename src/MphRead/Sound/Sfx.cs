@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using MphRead.Entities;
 using MphRead.Formats.Sound;
@@ -247,8 +248,8 @@ namespace MphRead.Sound
         public static SoundChannel? PlaySample(int id, SoundSource? source, bool loop, bool noUpdate,
             float recency, bool sourceOnly, bool cancellable)
         {
-            SoundChannel? channel = SetUpChannel(id, source, loop, recency, sourceOnly, cancellable);
-            if (channel == null)
+            bool setUp = SetUpChannel(id, source, loop, recency, sourceOnly, cancellable, out SoundChannel channel);
+            if (!setUp)
             {
                 return null;
             }
@@ -258,14 +259,15 @@ namespace MphRead.Sound
         }
 
         public static SoundChannel? PlayDgn(int id, SoundSource? source, bool loop, bool noUpdate,
-            float recency, bool sourceOnly, bool cancellable)
+            float recency, bool sourceOnly, bool cancellable/*, float amountA, float amountB*/)
         {
             // sktodo: needs initial volume and pitch updates
             Debug.Assert((id & 0x8000) != 0);
             int dgnId = id & 0x3FFF;
             Debug.Assert(dgnId >= 0 && dgnId <= _dgnFiles.Count);
-            SoundChannel? channel = SetUpChannel(id, source, loop, recency, sourceOnly, cancellable);
-            if (channel == null)
+            bool setUp = SetUpChannel(id, source, loop, recency, sourceOnly, cancellable, out SoundChannel channel);
+            // // skhere
+            if (!setUp)
             {
                 return null;
             }
@@ -280,8 +282,8 @@ namespace MphRead.Sound
             return channel;
         }
 
-        public static SoundChannel? SetUpChannel(int id, SoundSource? source, bool loop,
-            float recency, bool sourceOnly, bool cancellable)
+        public static bool SetUpChannel(int id, SoundSource? source, bool loop,
+            float recency, bool sourceOnly, bool cancellable, out SoundChannel channel)
         {
             if (loop)
             {
@@ -290,18 +292,23 @@ namespace MphRead.Sound
                 recency = Single.MaxValue;
                 sourceOnly = true;
             }
-            if (recency >= 0 && CheckRecentSamplePlay(id, recency, sourceOnly ? source : null))
+            if (recency >= 0)
             {
-                return null;
+                SoundChannel? recent = FindRecentSamplePlay(id, recency, sourceOnly ? source : null);
+                if (recent != null)
+                {
+                    channel = recent;
+                    return false;
+                }
             }
-            SoundChannel channel = FindChannel(source);
+            channel = FindChannel(source);
             channel.Source = source;
             channel.PlayTime = 0;
             channel.Loop = loop;
             channel.Cancellable = cancellable;
             channel.SfxId = id;
             channel.Handle = SoundChannel.NextHandle++;
-            return channel;
+            return true;
         }
 
         private static void SetUpSample(int id, SoundChannel channel, int index)
@@ -332,7 +339,7 @@ namespace MphRead.Sound
         // recency = 0 --> started playing on the current frame
         // receny = 1 --> started playing within the last second
         // recency = Single.MaxValue --> playing at all
-        private static bool CheckRecentSamplePlay(int id, float recency, SoundSource? source)
+        private static SoundChannel? FindRecentSamplePlay(int id, float recency, SoundSource? source)
         {
             for (int i = 0; i < _channels.Length; i++)
             {
@@ -340,10 +347,10 @@ namespace MphRead.Sound
                 if ((source == null || channel.Source == source)
                     && channel.SfxId == id && channel.PlayTime <= recency)
                 {
-                    return true;
+                    return channel;
                 }
             }
-            return false;
+            return null;
         }
 
         public static void StopAllSound()
