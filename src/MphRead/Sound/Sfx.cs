@@ -195,16 +195,17 @@ namespace MphRead.Sound
                 _channelIds[2] = channel2;
             }
 
-            public void PlayChannel(int index, int bufferId, bool loop)
+            public void PlayChannel(int index, bool loop)
             {
                 int channelId = _channelIds[index];
+                int bufferId = Samples[index].BufferId;
                 if (BufferIds[index] != bufferId)
                 {
                     AL.Source(channelId, ALSourcei.Buffer, bufferId);
                     BufferIds[index] = bufferId;
                 }
-                // sfxtodo: this volume multiplication isn't really right
-                AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume);
+                // sfxtodo: volume
+                AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume * Samples[index].Volume);
                 // sfxtodo: loop points (needs opentk update)
                 AL.Source(channelId, ALSourceb.Looping, loop);
                 AL.SourcePlay(channelId);
@@ -224,7 +225,7 @@ namespace MphRead.Sound
                         AL.Source(channelId, ALSourcef.MaxDistance, Single.MaxValue);
                         AL.Source(channelId, ALSourcef.RolloffFactor, 1);
                         // sfxtodo: this volume multiplication isn't really right
-                        AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume);
+                        AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume * Samples[i].Volume);
                     }
                 }
                 else if (!NoUpdate)
@@ -237,8 +238,8 @@ namespace MphRead.Sound
                         AL.Source(channelId, ALSourcef.ReferenceDistance, Source.ReferenceDistance);
                         AL.Source(channelId, ALSourcef.MaxDistance, Source.MaxDistance);
                         AL.Source(channelId, ALSourcef.RolloffFactor, Source.RolloffFactor);
-                        // sfxtodo: this volume multiplication isn't really right
-                        AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume);
+                        // sfxtodo: volume
+                        AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume * Samples[i].Volume);
                     }
                 }
             }
@@ -287,7 +288,6 @@ namespace MphRead.Sound
         public static SoundChannel? PlaySample(int id, SoundSource? source, bool loop, bool noUpdate,
             float recency, bool sourceOnly, bool cancellable)
         {
-            Debug.Assert(id >= 0 && id < _samples.Count);
             if (loop)
             {
                 // sfxtodo: this is a different code path, and it includes requests flagged with SFX_SINGLE
@@ -299,28 +299,27 @@ namespace MphRead.Sound
             {
                 return null;
             }
-            SoundSample sample = _samples[id];
-            // sktodo: use samples' buffer IDs
-            if (sample.BufferId == 0)
-            {
-                sample.BufferId = BufferData(sample);
-            }
             SoundChannel channel = FindChannel(source);
             channel.Source = source;
             channel.PlayTime = 0;
             channel.NoUpdate = false;
             channel.Update();
             channel.NoUpdate = noUpdate;
-            channel.Volume = sample.Volume;
             channel.Loop = loop;
             channel.Cancellable = cancellable;
             channel.SfxId = id;
             channel.Handle = SoundChannel.NextHandle++;
-            // sktodo: separate
+            // sktodo: separate - DGN version needs multiple SFX plus initial volume and pitch updates
+            Debug.Assert(id >= 0 && id < _samples.Count);
+            SoundSample sample = _samples[id];
+            if (sample.BufferId == 0)
+            {
+                sample.BufferId = BufferData(sample);
+            }
             channel.Count = 1;
             channel.Samples[0] = sample;
             sample.References++;
-            channel.PlayChannel(index: 0, sample.BufferId, loop);
+            channel.PlayChannel(index: 0, loop);
             return channel;
         }
 
