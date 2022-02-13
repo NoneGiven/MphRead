@@ -108,6 +108,13 @@ namespace MphRead.Entities
             {
                 // avoid any frame time issues by just getting rid of continuous beams as soon as they're no longer being replaced
                 // --> in game they stick around for a frame or two, but their lifespan will have already made it so they can't interact
+                if (Flags.TestFlag(BeamFlags.Continuous) && Owner?.Type == EntityType.Player)
+                {
+                    // the game does this instead of PlayBeamHitSfx in the Lifespan <= 0 condition below
+                    StopHomingSfx();
+                    var playerOwner = (PlayerEntity)Owner;
+                    playerOwner.StopContinuousBeamSfx(Beam);
+                }
                 return false;
             }
             Age += _scene.FrameTime;
@@ -223,14 +230,9 @@ namespace MphRead.Entities
                 colRes.Position = Position;
                 SpawnCollisionEffect(colRes, noSplat: true);
                 OnCollision(colRes, colWith: null);
-                if (Flags.TestFlag(BeamFlags.Continuous) && Owner?.Type == EntityType.Player)
+                if (!Flags.TestFlag(BeamFlags.Continuous) || (Owner?.Type) != EntityType.Player)
                 {
-                    StopHomingSfx();
-                    var playerOwner = (PlayerEntity)Owner;
-                    playerOwner.StopContinuousBeamSfx(Beam);
-                }
-                else
-                {
+                    // the alternative condition is handled above when the last continuous beam is removed
                     PlayBeamHitSfx();
                 }
             }

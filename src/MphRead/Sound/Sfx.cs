@@ -618,6 +618,12 @@ namespace MphRead.Sound
                         var state = (ALSourceState)value;
                         if (state == ALSourceState.Playing)
                         {
+                            if (channel.Volume[j] == 0)
+                            {
+                                // DGN reduced to zero volume
+                                AL.SourceStop(channel.ChannelIds[j]);
+                                continue;
+                            }
                             playing = true;
                             break;
                         }

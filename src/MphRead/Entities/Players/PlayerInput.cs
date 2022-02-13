@@ -1003,8 +1003,8 @@ namespace MphRead.Entities
             }
             bool continuous = EquipInfo.Weapon.Flags.TestFlag(WeaponFlags.Continuous);
             bool homing = result.TestFlag(BeamResultFlags.Homing);
-            float a3 = 0x3FFF * (_shockCoilTimer / (30f * 2)); // sfxtodo (and also FPS stuff)
-            PlayBeamShotSfx(EquipInfo.Weapon.Beam, charged, continuous, homing, a3);
+            float amountA = 0x3FFF * _shockCoilTimer / (30f * 2); // todo: FPS stuff
+            PlayBeamShotSfx(EquipInfo.Weapon.Beam, charged, continuous, homing, amountA);
             if (EquipInfo.Weapon.Beam == BeamType.Imperialist && EquipInfo.GetAmmo() >= EquipInfo.Weapon.AmmoCost)
             {
                 _soundSource.PlaySfx(SfxId.SNIPER_RELOAD);

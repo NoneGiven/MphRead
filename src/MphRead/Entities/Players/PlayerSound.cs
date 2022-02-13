@@ -77,14 +77,13 @@ namespace MphRead.Entities
             }
         }
 
-        private void PlayBeamShotSfx(BeamType beam, bool charged, bool continuous, bool homing, float a3)
+        private void PlayBeamShotSfx(BeamType beam, bool charged, bool continuous, bool homing, float amountA)
         {
             StopBeamChargeSfx(beam);
             if (continuous)
             {
-                // sfxtodo: use this value for DGN (set + initial on new, update on existing)
-                a3 = homing ? a3 + 0x3FFF : 0;
-                _soundSource.PlaySfx(Metadata.BeamSfx[(int)beam, (int)BeamSfx.Shot], loop: true);
+                amountA = homing ? amountA + 0x3FFF : 0;
+                _soundSource.PlaySfx(Metadata.BeamSfx[(int)beam, (int)BeamSfx.Shot], loop: true, amountA: amountA);
                 return;
             }
             BeamSfx sfx;
