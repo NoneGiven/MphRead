@@ -224,7 +224,6 @@ namespace MphRead.Entities
         public BeamType CurrentWeapon { get; private set; }
         public BeamType PreviousWeapon { get; private set; }
         public BeamType WeaponSelection { get; private set; }
-        private int _missileSfxHandle = -1;
         public readonly Effectiveness[] BeamEffectiveness = new Effectiveness[9];
         public GunAnimation GunAnimation { get; private set; }
         private ushort _bombCooldown = 0;
@@ -236,6 +235,10 @@ namespace MphRead.Entities
         private ushort _altAttackCooldown = 0;
         private ushort _altAttackTime = 0;
         private float _altSpinSpeed = 0;
+
+        private int _missileSfxHandle = -1;
+        private float _walkSfxTimer = 0;
+        private int _walkSfxIndex = 0;
 
         public Team Team { get; set; } = Team.None;
         public int TeamIndex { get; set; } = -1;
@@ -290,7 +293,6 @@ namespace MphRead.Entities
         private float _buttonAimY = 0;
 
         private ushort _timeIdle = 0;
-        private ushort _field43A = 0;
         private int _field450 = 0;
         private byte _crushBits = 0;
         private Vector3 _field4E8; // stores gun vec 2
@@ -561,7 +563,8 @@ namespace MphRead.Entities
             _damageInvulnTimer = 0;
             _spawnInvulnTimer = 0;
             _abilities = AbilityFlags.None;
-            _field43A = 0;
+            _walkSfxTimer = 0;
+            _walkSfxIndex = 0;
             _field450 = 0;
             if (TeamIndex == -1)
             {

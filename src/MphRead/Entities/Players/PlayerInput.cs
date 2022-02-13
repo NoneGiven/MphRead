@@ -1856,7 +1856,8 @@ namespace MphRead.Entities
                 if (_timeSinceGrounded >= 8 * 2) // todo: FPS stuff
                 {
                     Flags1 &= ~PlayerFlags1.Grounded;
-                    // todo: clear SFX field
+                    _walkSfxTimer = 0;
+                    _walkSfxIndex = 0;
                 }
             }
             bool burning = false;
@@ -1865,17 +1866,10 @@ namespace MphRead.Entities
             {
                 burning = true;
             }
-            // todo: update burning SFX
+            // sktodo: update burning SFX
             if ((!IsAltForm || Hunter == Hunter.Weavel) && Flags1.TestFlag(PlayerFlags1.Grounded))
             {
-                if (Flags1.TestFlag(PlayerFlags1.MovingBiped))
-                {
-                    // todo: play SFX
-                }
-                else
-                {
-                    // todo: stop SFX
-                }
+                UpdateWalkSfx();
             }
         }
 

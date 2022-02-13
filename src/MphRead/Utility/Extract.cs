@@ -110,8 +110,9 @@ namespace MphRead
             public RomDataValues FontWidths { get; set; } = null!;
             public RomDataValues FontOffsets { get; set; } = null!;
             public RomDataValues FontCharData { get; set; } = null!;
-            public RomDataValues HunterSfx { get; set; } = null!;
+            public RomDataValues TerrianSfx { get; set; } = null!;
             public RomDataValues BeamSfx { get; set; } = null!;
+            public RomDataValues HunterSfx { get; set; } = null!;
             public RomDataValues EnemyDamageSfx { get; set; } = null!;
             public RomDataValues EnemyDeathSfx { get; set; } = null!;
             public RomDataValues PlatformSfx { get; set; } = null!;
@@ -343,8 +344,10 @@ namespace MphRead
             Text.Font.SetData(widths, offsets, chars);
             // overlay9_2
             bytes = File.ReadAllBytes(Path.Combine(Paths.FileSystem, "_bin", data.BeamSfx.File));
+            byte[] terrainSfx = bytes[data.TerrianSfx.Offset..(data.TerrianSfx.Offset + data.TerrianSfx.Size)];
             byte[] beamSfx = bytes[data.BeamSfx.Offset..(data.BeamSfx.Offset + data.BeamSfx.Size)];
             byte[] hunterSfx = bytes[data.HunterSfx.Offset..(data.HunterSfx.Offset + data.HunterSfx.Size)];
+            Metadata.SetTerrainSfxData(terrainSfx);
             Metadata.SetBeamSfxData(beamSfx);
             Metadata.SetHunterSfxData(hunterSfx);
             Metadata.SetEnemyDamageSfxData(enemyDamageSfx);
@@ -365,6 +368,7 @@ namespace MphRead
                     FontWidths = new RomDataValues("arm9.bin", 0x95C68, 480),
                     FontOffsets = new RomDataValues("arm9.bin", 0x95A88, 480),
                     FontCharData = new RomDataValues("arm9.bin", 0x96348, 0x4000),
+                    TerrianSfx = new RomDataValues("overlay9_2", 0x1D828, 144),
                     BeamSfx = new RomDataValues("overlay9_2", 0x1D8B8, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1D96C, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0x9B574, 208),
@@ -380,6 +384,7 @@ namespace MphRead
                     FontWidths = new RomDataValues("arm9.bin", 0xBF9B0, 480),
                     FontOffsets = new RomDataValues("arm9.bin", 0xBFB90, 480),
                     FontCharData = new RomDataValues("arm9.bin", 0xC0270, 0x4000),
+                    TerrianSfx = new RomDataValues("overlay9_2", 0x1DA08, 144),
                     BeamSfx = new RomDataValues("overlay9_2", 0x1DA98, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1DB4C, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0xC54A8, 208),
@@ -395,6 +400,7 @@ namespace MphRead
                     FontWidths = new RomDataValues("arm9.bin", 0xC020C, 480),
                     FontOffsets = new RomDataValues("arm9.bin", 0xC03EC, 480),
                     FontCharData = new RomDataValues("arm9.bin", 0xC0ACC, 0x4000),
+                    TerrianSfx = new RomDataValues("overlay9_2", 0x1DA68, 144),
                     BeamSfx = new RomDataValues("overlay9_2", 0x1DAF8, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1DBAC, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0xC5D30, 208),
@@ -410,6 +416,7 @@ namespace MphRead
                     FontWidths = new RomDataValues("arm9.bin", 0xC1754, 480),
                     FontOffsets = new RomDataValues("arm9.bin", 0xC1934, 480),
                     FontCharData = new RomDataValues("arm9.bin", 0xC2014, 0x4000),
+                    TerrianSfx = new RomDataValues("overlay9_2", 0x1DA68, 144),
                     BeamSfx = new RomDataValues("overlay9_2", 0x1DAF8, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1DBAC, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0xC7278, 208),
@@ -425,6 +432,7 @@ namespace MphRead
                     FontWidths = new RomDataValues("arm9.bin", 0xC1714, 480),
                     FontOffsets = new RomDataValues("arm9.bin", 0xC18F4, 480),
                     FontCharData = new RomDataValues("arm9.bin", 0xC1FD4, 0x4000),
+                    TerrianSfx = new RomDataValues("overlay9_2", 0x1DA68, 144),
                     BeamSfx = new RomDataValues("overlay9_2", 0x1DAF8, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1DBAC, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0xC7238, 208),
@@ -440,6 +448,7 @@ namespace MphRead
                     FontWidths = new RomDataValues("arm9.bin", 0xC022C, 480),
                     FontOffsets = new RomDataValues("arm9.bin", 0xC040C, 480),
                     FontCharData = new RomDataValues("arm9.bin", 0xC0AEC, 0x4000),
+                    TerrianSfx = new RomDataValues("overlay9_2", 0x1DA08, 144),
                     BeamSfx = new RomDataValues("overlay9_2", 0x1DA98, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1DB4C, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0xC5D50, 208),
@@ -455,6 +464,7 @@ namespace MphRead
                     FontWidths = new RomDataValues("arm9.bin", 0xC02AC, 480),
                     FontOffsets = new RomDataValues("arm9.bin", 0xC048C, 480),
                     FontCharData = new RomDataValues("arm9.bin", 0xC0B6C, 0x4000),
+                    TerrianSfx = new RomDataValues("overlay9_2", 0x1DA68, 144),
                     BeamSfx = new RomDataValues("overlay9_2", 0x1DAF8, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1DBAC, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0xC5DD0, 208),
@@ -470,6 +480,7 @@ namespace MphRead
                     FontWidths = new RomDataValues("arm9.bin", 0xBD580, 480),
                     FontOffsets = new RomDataValues("arm9.bin", 0xBD760, 480),
                     FontCharData = new RomDataValues("arm9.bin", 0xB9560, 0x4000),
+                    TerrianSfx = new RomDataValues("overlay9_2", 0x1BDBA, 144),
                     BeamSfx = new RomDataValues("overlay9_2", 0x1BE4A, 180),
                     HunterSfx = new RomDataValues("overlay9_2", 0x1BEFE, 272),
                     EnemyDamageSfx = new RomDataValues("arm9.bin", 0xBE4DC, 208),

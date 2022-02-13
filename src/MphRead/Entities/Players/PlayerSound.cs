@@ -160,6 +160,42 @@ namespace MphRead.Entities
             }
         }
 
+        private void UpdateWalkSfx()
+        {
+            if (!Flags1.TestFlag(PlayerFlags1.MovingBiped) || _hSpeedMag <= 0)
+            {
+                _walkSfxTimer = 10 / 30;
+                _walkSfxIndex = 0;
+                return;
+            }
+            _walkSfxTimer += _scene.FrameTime;
+            int sfxId = -1;
+            if (_walkSfxTimer >= 15 / 30f)
+            {
+                if (_walkSfxIndex == 0)
+                {
+                    sfxId = Metadata.TerrainSfx[(int)_standTerrain, (int)TerrainSfx.Walk1];
+                    _walkSfxIndex = 1;
+                }
+            }
+            if (_walkSfxTimer >= 25 / 30f)
+            {
+                Debug.Assert(_walkSfxIndex == 1);
+                sfxId = Metadata.TerrainSfx[(int)_standTerrain, (int)TerrainSfx.Walk2];
+                _walkSfxTimer = 5 / 30f;
+                _walkSfxIndex = 0;
+            }
+            if (_standTerrain == Terrain.Lava && Hunter != Hunter.Spire)
+            {
+                sfxId = -1;
+            }
+            float amountB = Rng.GetRandomInt1(0x7FFF) * 2;
+            if (sfxId != -1)
+            {
+                _soundSource.PlaySfx(sfxId, amountA: 0xFFFF, amountB: amountB);
+            }
+        }
+
         public void UpdateSounds()
         {
             if (_damageSfxTimer > 0)

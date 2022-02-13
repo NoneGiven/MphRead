@@ -14,6 +14,7 @@ namespace MphRead
         public static int[,] PlatformSfx { get; private set; } = null!;
         public static int[,] HunterSfx { get; private set; } = null!;
         public static int[,] BeamSfx { get; private set; } = null!;
+        public static int[,] TerrainSfx { get; private set; } = null!;
         public static int[] EnemyDamageSfx { get; private set; } = null!;
         public static int[] EnemyDeathSfx { get; private set; } = null!;
 
@@ -25,6 +26,11 @@ namespace MphRead
         public static void SetBeamSfxData(byte[] data)
         {
             BeamSfx = ParseSfxData2(data, rows: 9, columns: 10);
+        }
+
+        public static void SetTerrainSfxData(byte[] data)
+        {
+            TerrainSfx = ParseSfxData2(data, rows: 12, columns: 6);
         }
 
         public static void SetPlatformSfxData(byte[] data)
@@ -109,6 +115,16 @@ namespace MphRead
         Switch = 7,
         Homing = 8,
         AffinityChargeShot = 9
+    }
+
+    public enum TerrainSfx
+    {
+        Walk1 = 0,
+        Walk2 = 1,
+        Land = 2,
+        Slide = 3,
+        Roll = 4,
+        TraceAlt = 5
     }
 
     public enum VoiceId
