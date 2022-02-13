@@ -776,7 +776,7 @@ namespace MphRead.Entities
                         }
                         if (RicochetWeapon != null)
                         {
-                            PlayRiccochetSfx();
+                            PlayRicochetSfx();
                         }
                         else if (anyRes.Terrain <= Terrain.Lava)
                         {
@@ -837,10 +837,10 @@ namespace MphRead.Entities
                 }
                 PastPositions[0] = Position;
             }
-            PlayRiccochetSfx();
+            PlayRicochetSfx();
         }
 
-        private void PlayRiccochetSfx()
+        private void PlayRicochetSfx()
         {
             bool charged = Flags.TestFlag(BeamFlags.Charged);
             if (charged && Beam == BeamType.Magmaul)
@@ -848,19 +848,19 @@ namespace MphRead.Entities
                 PlayBeamHitSfx();
                 return;
             }
-            int sfx = Metadata.BeamSfx[(int)Beam, (int)BeamSfx.Riccochet];
+            int sfx = Metadata.BeamSfx[(int)Beam, (int)BeamSfx.Ricochet];
             if (sfx != -1)
             {
-                float a3; // sfxtodo: calculate and use this for DGN
+                float amountA; // sfxtodo: calculate and use this for DGN
                 if (Beam == BeamType.Judicator)
                 {
-                    a3 = Rng.GetRandomInt1(0xFFFF);
+                    amountA = Rng.GetRandomInt1(0xFFFF);
                 }
                 else
                 {
-                    a3 = 0xFFFF * (Speed * 2 / Fixed.ToFloat(3300));
+                    amountA = 0xFFFF * (Speed * 2) / Fixed.ToFloat(3300); // todo: FPS stuff
                 }
-                _soundSource.PlaySfx(sfx, noUpdate: true);
+                _soundSource.PlaySfx(sfx, noUpdate: true, amountA: amountA);
             }
         }
 

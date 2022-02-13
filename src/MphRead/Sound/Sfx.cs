@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using MphRead.Entities;
 using MphRead.Formats.Sound;
@@ -36,9 +35,10 @@ namespace MphRead.Sound
         }
 
         public void PlaySfx(SfxId id, bool loop = false, bool noUpdate = false,
-            float recency = -1, bool sourceOnly = false, bool cancellable = false)
+            float recency = -1, bool sourceOnly = false, bool cancellable = false,
+            float amountA = 0, float amountB = 0)
         {
-            PlaySfx((int)id, loop, noUpdate, recency, sourceOnly, cancellable);
+            PlaySfx((int)id, loop, noUpdate, recency, sourceOnly, cancellable, amountA, amountB);
         }
 
         public int PlayFreeSfx(SfxId id)
@@ -47,14 +47,15 @@ namespace MphRead.Sound
         }
 
         public void PlaySfx(int id, bool loop = false, bool noUpdate = false,
-            float recency = -1, bool sourceOnly = false, bool cancellable = false)
+            float recency = -1, bool sourceOnly = false, bool cancellable = false,
+            float amountA = 0, float amountB = 0)
         {
             // sktodo: support scripts
             if (id >= 0 && (id & 0x4000) == 0)
             {
                 if ((id & 0x8000) != 0)
                 {
-                    Sfx.PlayDgn(id, this, loop, noUpdate, recency, sourceOnly, cancellable);
+                    Sfx.PlayDgn(id, this, loop, noUpdate, recency, cancellable, amountA, amountB);
                 }
                 else
                 {
@@ -130,9 +131,10 @@ namespace MphRead.Sound
             public IReadOnlyList<int> ChannelIds => _channelIds;
             public int[] BufferIds { get; } = new int[3];
             public SoundSample[] Samples { get; } = new SoundSample[3];
+            public DgnFile? DgnFile { get; set; }
             public SoundSource? Source { get; set; }
-            public float Volume { get; set; } = 1;
-            public float Pitch { get; set; } = 1;
+            public float[] Volume { get; } = new float[3] { 1, 1, 1 };
+            public float[] Pitch { get; } = new float[3] { 1, 1, 1 };
             public float PlayTime { get; set; } = -1;
             public int SfxId { get; set; } = -1;
             public bool NoUpdate { get; set; }
@@ -197,8 +199,8 @@ namespace MphRead.Sound
                 {
                     int channelId = ChannelIds[i];
                     // sfxtodo: this volume multiplication isn't really right
-                    AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume * Samples[i].Volume);
-                    AL.Source(channelId, ALSourcef.Pitch, Pitch);
+                    AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume[i] * Samples[i].Volume);
+                    AL.Source(channelId, ALSourcef.Pitch, Pitch[i]);
                 }
             }
 
@@ -220,9 +222,14 @@ namespace MphRead.Sound
                 }
                 PlayTime = -1;
                 SfxId = -1;
+                DgnFile = null;
                 Source = null;
-                Volume = 1;
-                Pitch = 1;
+                Volume[0] = 1;
+                Volume[1] = 1;
+                Volume[2] = 1;
+                Pitch[0] = 1;
+                Pitch[1] = 1;
+                Pitch[2] = 1;
                 NoUpdate = false;
                 Loop = false;
                 Cancellable = false;
@@ -258,28 +265,29 @@ namespace MphRead.Sound
             return channel;
         }
 
-        public static SoundChannel? PlayDgn(int id, SoundSource? source, bool loop, bool noUpdate,
-            float recency, bool sourceOnly, bool cancellable/*, float amountA, float amountB*/)
+        public static void PlayDgn(int id, SoundSource? source, bool loop, bool noUpdate,
+            float recency, bool cancellable, float amountA, float amountB)
         {
-            // sktodo: needs initial volume and pitch updates
             Debug.Assert((id & 0x8000) != 0);
             int dgnId = id & 0x3FFF;
             Debug.Assert(dgnId >= 0 && dgnId <= _dgnFiles.Count);
-            bool setUp = SetUpChannel(id, source, loop, recency, sourceOnly, cancellable, out SoundChannel channel);
-            // // skhere
+            bool setUp = SetUpChannel(id, source, loop, recency, sourceOnly: true, cancellable, out SoundChannel channel);
             if (!setUp)
             {
-                return null;
+                UpdateDgn(channel, amountA, amountB);
+                return;
             }
             DgnFile dgnFile = _dgnFiles[dgnId];
             Debug.Assert(dgnFile.Entries.Count > 0 && dgnFile.Entries.Count <= 3);
+            channel.DgnFile = dgnFile;
             for (int i = 0; i < dgnFile.Entries.Count; i++)
             {
                 DgnFileEntry entry = dgnFile.Entries[i];
                 SetUpSample((int)entry.SfxId, channel, index: i);
             }
+            UpdateDgn(channel, amountA, amountB);
             StartChannel(channel, noUpdate);
-            return channel;
+            return;
         }
 
         public static bool SetUpChannel(int id, SoundSource? source, bool loop,
@@ -287,8 +295,6 @@ namespace MphRead.Sound
         {
             if (loop)
             {
-                // sktodo: this is a different code path, and it includes requests flagged with SFX_SINGLE
-                // --> this "is this playing" path updates DGN parameters wen true, while the "recency" path doesn't
                 recency = Single.MaxValue;
                 sourceOnly = true;
             }
@@ -351,6 +357,106 @@ namespace MphRead.Sound
                 }
             }
             return null;
+        }
+
+        private static void UpdateDgn(SoundChannel channel, float amountA, float amountB)
+        {
+            Debug.Assert(channel.DgnFile != null);
+            for (int i = 0; i < channel.Count; i++)
+            {
+                DgnFileEntry entry = channel.DgnFile.Entries[i];
+                float volumeA = GetDgnValue(entry.Data1, amountA);
+                float volumeB = GetDgnValue(entry.Data2, amountB);
+                float pitchA = GetDgnValue(entry.Data3, amountA);
+                float pitchB = GetDgnValue(entry.Data4, amountB);
+                float volumeFac = volumeA / 127f * volumeB;
+                volumeFac = volumeFac / 127f * channel.DgnFile.Header.InitialVolume;
+                channel.Volume[i] = volumeFac / 127f;
+                float pitchFac = pitchA / 0x2000 * pitchB;
+                Debug.Assert(pitchFac >= 0);
+                if (pitchFac >= 0x4000)
+                {
+                    pitchFac = 0x3FFF;
+                }
+                else if (pitchFac == 0)
+                {
+                    pitchFac = 1;
+                }
+                int pitchInt = (int)pitchFac;
+                if (pitchFac <= 0xFFF)
+                {
+                    pitchInt = -((0x600000 / pitchInt) >> 1);
+                }
+                else if (pitchFac <= 0x1FFF)
+                {
+                    pitchInt = (768 * (pitchInt - 0x2000)) >> 12;
+                }
+                else
+                {
+                    pitchInt = (768 * (pitchInt - 0x2000)) >> 13;
+                }
+                float semitones = pitchInt / 64f;
+                float octaves = MathF.Abs(semitones / 12f);
+                if (semitones >= 0)
+                {
+                    channel.Pitch[i] = MathF.Pow(2, octaves);
+                }
+                else
+                {
+                    channel.Pitch[i] = MathF.Pow(0.5f, octaves);
+                }
+            }
+        }
+
+        private static float GetDgnValue(IReadOnlyList<DgnData> data, float amount)
+        {
+            DgnData first = data[0];
+            if (amount <= first.Amount)
+            {
+                return first.Value & 0x3FFF;
+            }
+            DgnData last = data[^1];
+            if (amount >= last.Amount)
+            {
+                return last.Value & 0x3FFF;
+            }
+            if (data.Count == 1)
+            {
+                return 0;
+            }
+            DgnData data1;
+            DgnData data2;
+            int i = 0;
+            while (true)
+            {
+                data1 = data[i];
+                data2 = data[i + 1];
+                if (amount < data2.Amount)
+                {
+                    break;
+                }
+                if (++i >= data.Count - 1)
+                {
+                    return 0;
+                }
+            }
+            float diff = amount - data1.Amount;
+            float ratio = diff / (data2.Amount - data1.Amount);
+            float value1 = data1.Value & 0x3FFF;
+            float value2 = data2.Value & 0x3FFF;
+            float flags2 = data2.Value & 0xC000;
+            if (flags2 == 0x4000)
+            {
+                // sin
+                return value1 + (value2 - value1) * MathF.Sin(MathF.PI / 2 * ratio);
+            }
+            if (flags2 == 0x8000)
+            {
+                Debug.Assert(false);
+                return 0;
+            }
+            // lerp
+            return value1 + (value2 - value1) * ratio;
         }
 
         public static void StopAllSound()

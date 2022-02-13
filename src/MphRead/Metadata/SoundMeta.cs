@@ -101,7 +101,7 @@ namespace MphRead
     {
         Charge = 0,
         Shot = 1,
-        Riccochet = 2,
+        Ricochet = 2,
         ChargeShot = 3,
         Hit = 4,
         ChargeHit = 5,
