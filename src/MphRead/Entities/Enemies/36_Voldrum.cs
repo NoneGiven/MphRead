@@ -83,6 +83,7 @@ namespace MphRead.Entities.Enemies
 
         protected override void EnemyProcess()
         {
+            bool sfxGrounded = true;
             if (!_grounded)
             {
                 _speed.Y -= Fixed.ToFloat(110) / 4; // todo: FPS stuff
@@ -90,18 +91,29 @@ namespace MphRead.Entities.Enemies
             if (_state1 == 2 || _state1 == 3)
             {
                 bool discard = false;
-                HandleBlockingCollision(Position, _hurtVolume, updateSpeed: true, ref _grounded, ref discard);
+                if (!HandleBlockingCollision(Position, _hurtVolume, updateSpeed: true, ref _grounded, ref discard))
+                {
+                    sfxGrounded = false;
+                }
             }
             else if (_state1 != 1 && _state1 != 4) // 0 or 5
             {
-                HandleCollision();
+                if (!HandleCollision())
+                {
+                    sfxGrounded = false;
+                }
             }
             if (_state1 != 0 && _state1 != 5)
             {
                 ContactDamagePlayer(_values.ContactDamage, knockback: true);
             }
             CallStateProcess();
-            UpdateRollSfx();
+            if (_state1 != 0)
+            {
+                sfxGrounded = false;
+            }
+            float amount = 0xFFFF * _speedFactor * 2 / (_maxSpeedFactor * 2); // todo: FPS suff
+            UpdateRollSfx(amount, sfxGrounded);
         }
 
         protected override bool HandleCollision()
