@@ -853,7 +853,7 @@ namespace MphRead.Entities
             int sfx = Metadata.BeamSfx[(int)Beam, (int)BeamSfx.Ricochet];
             if (sfx != -1)
             {
-                float amountA; // sfxtodo: calculate and use this for DGN
+                float amountA;
                 if (Beam == BeamType.Judicator)
                 {
                     amountA = Rng.GetRandomInt1(0xFFFF);

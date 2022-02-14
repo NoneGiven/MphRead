@@ -461,9 +461,6 @@ namespace MphRead.Entities
         {
             if (sfx != -1)
             {
-                // sfxtodo: these are our equivalents to SFX_SINGLE and SFX_CHECK_RECENT w/ zero time, respectively,
-                // but this will need updating to account for only SFX_SINGLE updating DGN parameters
-                // --> although none of these damage SFX are actually DGN
                 float recency = -1;
                 bool sourceOnly = false;
                 if ((sfx & 0x20000) != 0)

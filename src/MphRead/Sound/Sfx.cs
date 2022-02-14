@@ -595,7 +595,6 @@ namespace MphRead.Sound
                     break;
                 }
             }
-            // sfxtodo: if we don't find an unused buffer, we should stop SFX currently playing with the one we overwrite
             ALFormat format = sample.Format == WaveFormat.ADPCM ? ALFormat.Mono16 : ALFormat.Mono8;
             AL.BufferData(bufferId, format, sample.WaveData.Value, sample.SampleRate);
             return bufferId;
