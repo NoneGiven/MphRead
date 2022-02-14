@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace MphRead.Entities
@@ -348,8 +349,108 @@ namespace MphRead.Entities
             }
         }
 
-        public void UpdateSounds()
+        private static readonly IReadOnlyList<SfxId> _dblDamageIds = new SfxId[3]
         {
+            SfxId.DBL_DAMAGE_A, SfxId.DBL_DAMAGE_B, SfxId.DBL_DAMAGE_C
+        };
+
+        private int _dblDamageSfxHandle = -1;
+        private SfxId _dblDamageSfxId = SfxId.None;
+
+        private void UpdateDoubleDamageSfx(int index, bool play)
+        {
+            if (index != -1)
+            {
+                if (play)
+                {
+                    if (_dblDamageSfxHandle != -1)
+                    {
+                        _soundSource.StopSfxByHandle(_dblDamageSfxHandle);
+                        _dblDamageSfxHandle = -1;
+                    }
+                    _dblDamageSfxId = _dblDamageIds[index];
+                }
+                else
+                {
+                    if (_dblDamageSfxHandle != -1)
+                    {
+                        _soundSource.StopSfxByHandle(_dblDamageSfxHandle);
+                    }
+                    _dblDamageSfxHandle = -1;
+                    _dblDamageSfxId = SfxId.None;
+                }
+            }
+            else if (_dblDamageSfxHandle != -1)
+            {
+                _soundSource.StopSfxByHandle(_dblDamageSfxHandle);
+            }
+        }
+
+        private static readonly IReadOnlyList<SfxId> _cloakSfxIds = new SfxId[3]
+        {
+            SfxId.CLOAK_A, SfxId.CLOAK_B, SfxId.CLOAK_C
+        };
+
+        private int _cloakSfxHandle = -1;
+        private SfxId _cloakSfxId = SfxId.None;
+
+        private void UpdateCloakSfx(int index, bool play)
+        {
+            if (index != -1)
+            {
+                if (play)
+                {
+                    if (_cloakSfxHandle != -1)
+                    {
+                        _soundSource.StopSfxByHandle(_cloakSfxHandle);
+                        _cloakSfxHandle = -1;
+                    }
+                    _cloakSfxId = _cloakSfxIds[index];
+                }
+                else
+                {
+                    if (_cloakSfxHandle != -1)
+                    {
+                        _soundSource.StopSfxByHandle(_cloakSfxHandle);
+                    }
+                    _cloakSfxHandle = -1;
+                    _cloakSfxId = SfxId.None;
+                }
+            }
+            else if (_cloakSfxHandle != -1)
+            {
+                _soundSource.StopSfxByHandle(_cloakSfxHandle);
+            }
+        }
+
+        private bool _flagCarrySfxOn = false;
+        private int _flagCarrySfxHandle = -1;
+
+        public void StartFlagCarrySfx()
+        {
+            _flagCarrySfxOn = true;
+        }
+
+        public void StopFlagCarrySfx()
+        {
+            _soundSource.StopSfxByHandle(_flagCarrySfxHandle);
+            _flagCarrySfxHandle = -1;
+            _flagCarrySfxOn = false;
+        }
+
+        private float _sfxStopTimer = 0;
+
+        public void UpdateTimedSounds()
+        {
+            if (_sfxStopTimer > 0)
+            {
+                _sfxStopTimer -= _scene.FrameTime;
+                if (_sfxStopTimer <= 0)
+                {
+                    _sfxStopTimer = 0;
+                    // sfxtodo: stop timed/env/source SFX (and set this timer for 1P death)
+                }
+            }
             if (_damageSfxTimer > 0)
             {
                 _damageSfxTimer -= _scene.FrameTime;
@@ -358,6 +459,47 @@ namespace MphRead.Entities
                     _damageSfxTimer = 0;
                 }
             }
+            if (_dblDamageSfxId != SfxId.None && !_soundSource.IsHandlePlaying(_dblDamageSfxHandle))
+            {
+                _dblDamageSfxHandle = _soundSource.PlayFreeSfx(_dblDamageSfxId);
+            }
+            if (_cloakSfxId != SfxId.None && !_soundSource.IsHandlePlaying(_cloakSfxHandle))
+            {
+                _cloakSfxHandle = _soundSource.PlayFreeSfx(_cloakSfxId);
+            }
+            if (_flagCarrySfxOn && !_soundSource.IsHandlePlaying(_flagCarrySfxHandle))
+            {
+                _flagCarrySfxHandle = _soundSource.PlayFreeSfx(SfxId.FLAG_CARRIED);
+            }
+            // the game plays the unused WEAPON_ALARM alarm SFX here
+            for (int i = 0; i < _scene.MessageQueue.Count; i++)
+            {
+                MessageInfo message = _scene.MessageQueue[i];
+                if (message.ExecuteFrame != _scene.FrameCount)
+                {
+                    continue;
+                }
+                if (message.Message == Message.PlaySfxScript)
+                {
+                    int id = (int)message.Param1;
+                    if (id == -1)
+                    {
+                        // sfxtodo: set door unlock SFX
+                    }
+                    else
+                    {
+                        // sfxtodo: play SFX script
+                    }
+                }
+                else if (message.Message == Message.UpdateMusic)
+                {
+                    // mustodo: update music
+                }
+            }
+            // sfxtodo: escape sequence and pause stuff
+            // sktodo: unlock SFX
+            // sfxtodo: play/stop scroll SFX
+            // sfxtodo: update env SFX?
         }
     }
 }

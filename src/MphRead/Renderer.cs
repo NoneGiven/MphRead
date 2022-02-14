@@ -2466,7 +2466,7 @@ namespace MphRead
 
         private void UpdateScene()
         {
-            PlayerEntity.Main.UpdateSounds();
+            PlayerEntity.Main.UpdateTimedSounds();
             PlayerEntity.Main.ProcessHudMessageQueue();
             for (int i = 0; i < _entities.Count; i++)
             {

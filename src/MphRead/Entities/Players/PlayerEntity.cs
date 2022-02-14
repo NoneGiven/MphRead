@@ -619,7 +619,8 @@ namespace MphRead.Entities
             LoadFlags |= LoadFlags.Spawned;
             if (IsMainPlayer)
             {
-                // todo: update SFX
+                UpdateDoubleDamageSfx(index: 0, play: false);
+                UpdateCloakSfx(index: 0, play: false);
             }
             _abilities = AbilityFlags.AltForm;
             if (Hunter == Hunter.Samus)
@@ -1652,7 +1653,10 @@ namespace MphRead.Entities
                     _soundSource.StopAllSfx(force: true);
                     if (IsMainPlayer)
                     {
-                        // sfxtodo: stop various SFX
+                        // the game stops the unused weapon alarm SFX here
+                        UpdateDoubleDamageSfx(index: 0, play: false);
+                        UpdateCloakSfx(index: 0, play: false);
+                        // sfxtodo: stop SFX scripts
                         if (_scene.Multiplayer)
                         {
                             PlayHunterSfx(HunterSfx.Death);

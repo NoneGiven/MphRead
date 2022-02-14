@@ -295,14 +295,27 @@ namespace MphRead.Entities
                 if (_cloakTimer > 0)
                 {
                     _targetAlpha = 3 / 31f;
-                    // todo: update SFX
+                    if (IsMainPlayer)
+                    {
+                        if (_cloakTimer == 210 * 2) // todo: FPS stuff
+                        {
+                            UpdateCloakSfx(index: 1, play: true);
+                        }
+                        else if (_cloakTimer == 120 * 2) // todo: FPS stuff
+                        {
+                            UpdateCloakSfx(index: 2, play: true);
+                        }
+                    }
                 }
                 else
                 {
                     Flags2 &= ~PlayerFlags2.Cloaking;
                     _targetAlpha = 1;
                     _soundSource.PlayFreeSfx(SfxId.CLOAK_OFF);
-                    // sfxtodo: update SFX
+                    if (IsMainPlayer)
+                    {
+                        UpdateCloakSfx(index: 0, play: false);
+                    }
                 }
             }
             else
@@ -846,7 +859,7 @@ namespace MphRead.Entities
                     // the game checks this last, so it might create and destroy the effect on the same frame
                     if (_doubleDmgTimer == 0)
                     {
-                        // todo: stop SFX
+                        UpdateDoubleDamageSfx(index: 0, play: false);
                         if (_doubleDmgEffect != null)
                         {
                             _scene.UnlinkEffectEntry(_doubleDmgEffect);
@@ -874,12 +887,12 @@ namespace MphRead.Entities
                         }
                         if (_doubleDmgTimer == 210 * 2) // todo: FPS stuff
                         {
-                            // todo: update SFX
+                            UpdateDoubleDamageSfx(index: 1, play: true);
                             UpdateDoubleDamageSpeed(2);
                         }
                         else if (_doubleDmgTimer == 120 * 2) // todo: FPS stuff
                         {
-                            // todo: update SFX
+                            UpdateDoubleDamageSfx(index: 2, play: true);
                             UpdateDoubleDamageSpeed(3);
                         }
                     }
@@ -1055,7 +1068,7 @@ namespace MphRead.Entities
                     if (IsMainPlayer)
                     {
                         _soundSource.PlayFreeSfx(SfxId.DOUBLE_DAMAGE_POWER_UP);
-                        // sfxtodo: update timer SFX
+                        UpdateDoubleDamageSfx(index: 0, play: true);
                         UpdateDoubleDamageSpeed(1);
                     }
                     break;
@@ -1067,7 +1080,7 @@ namespace MphRead.Entities
                     if (IsMainPlayer)
                     {
                         _soundSource.PlayFreeSfx(SfxId.CLOAK_POWER_UP);
-                        // sfxtodo: update timer SFX
+                        UpdateCloakSfx(index: 0, play: true);
                     }
                     break;
                 case ItemType.Deathalt:
