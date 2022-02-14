@@ -61,6 +61,7 @@ namespace MphRead.Entities
         private readonly float _backwardSpeed;
         private int _currentAnimState = 0; // todo: names
         private int _currentAnimId = 0;
+        private float _moveSfxAmount = 0;
 
         // todo: would be nice to have the ability to manipulate these transforms manually
         private readonly Vector3 _posOffset;
@@ -1118,8 +1119,17 @@ namespace MphRead.Entities
             }
             if ((_moveSfx.Start1.Id & 0x8000) != 0) // DGN
             {
-                // sfxtodo: DGN stuff
-                _soundSource.PlaySfx(_moveSfx.Start1.Id, loop: true);
+                float speed = _stateFlags.TestFlag(PlatStateFlags.Reverse) ? _backwardSpeed : _forwardSpeed;
+                float amount = 0xFFFF * speed * 2 / Fixed.ToFloat(1640); // todo: FPS stuff
+                if (_state == PlatformState.Moving && amount > 0)
+                {
+                    _moveSfxAmount = amount;
+                }
+                else
+                {
+                    _moveSfxAmount = ExponentialDecay(0.875f, _moveSfxAmount);
+                }
+                _soundSource.PlaySfx(_moveSfx.Start1.Id, loop: true, amountA: _moveSfxAmount);
             }
         }
 
