@@ -161,7 +161,7 @@ namespace MphRead.Entities
             }
         }
 
-        private void UpdateWalkSfx()
+        private void UpdateWalkingSfx()
         {
             if (!Flags1.TestFlag(PlayerFlags1.MovingBiped) || _hSpeedMag <= 0)
             {
@@ -195,6 +195,13 @@ namespace MphRead.Entities
             {
                 _soundSource.PlaySfx(sfxId, amountA: 0xFFFF, amountB: amountB);
             }
+        }
+
+        private void PlayLandingSfx()
+        {
+            int sfxId = Metadata.TerrainSfx[(int)_standTerrain, (int)TerrainSfx.Land];
+            float amountA = 0xFFFF * _timeBeforeLanding / (90f * 2); // todo: FPS stuff
+            _soundSource.PlaySfx(sfxId, amountA: amountA);
         }
 
         private void UpdateBurningSfx(bool burning)

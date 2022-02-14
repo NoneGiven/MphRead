@@ -1846,7 +1846,7 @@ namespace MphRead.Entities
             }
             if (Flags1.TestFlag(PlayerFlags1.Standing) || Flags2.TestFlag(PlayerFlags2.SpireClimbing))
             {
-                _field438 = _timeSinceGrounded;
+                _timeBeforeLanding = _timeSinceGrounded;
                 _timeSinceGrounded = 0;
                 Flags1 |= PlayerFlags1.Grounded;
             }
@@ -1869,7 +1869,7 @@ namespace MphRead.Entities
             UpdateBurningSfx(burning);
             if ((!IsAltForm || Hunter == Hunter.Weavel) && Flags1.TestFlag(PlayerFlags1.Grounded))
             {
-                UpdateWalkSfx();
+                UpdateWalkingSfx();
             }
         }
 

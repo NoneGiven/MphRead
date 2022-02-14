@@ -398,7 +398,7 @@ namespace MphRead.Entities
         private ushort _timeStanding = 0;
         private ushort _timeSinceStanding = 0;
         private ushort _timeSinceGrounded = 0;
-        private ushort _field438 = 0;
+        private ushort _timeBeforeLanding = 0;
         private Vector3 _fieldC0;
         private ushort _field449 = 0;
         private float _field44C = 0; // basically landing speed/force?

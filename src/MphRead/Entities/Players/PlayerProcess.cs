@@ -506,7 +506,14 @@ namespace MphRead.Entities
             }
             if (_health > 0)
             {
-                // todo: play landing SFX
+                if (Flags1.TestFlag(PlayerFlags1.Grounded) && !Flags1.TestFlag(PlayerFlags1.GroundedPrevious))
+                {
+                    PlayLandingSfx();
+                }
+                if (IsAltForm)
+                {
+                    // sktodo: play alt move SFX
+                }
             }
             UpdateGunAnimation();
             UpdateAnimFrames(_gunModel);
