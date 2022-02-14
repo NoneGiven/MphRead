@@ -1866,7 +1866,7 @@ namespace MphRead.Entities
             {
                 burning = true;
             }
-            // sktodo: update burning SFX
+            UpdateBurningSfx(burning);
             if ((!IsAltForm || Hunter == Hunter.Weavel) && Flags1.TestFlag(PlayerFlags1.Grounded))
             {
                 UpdateWalkSfx();

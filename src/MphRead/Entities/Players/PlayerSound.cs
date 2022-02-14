@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 
 namespace MphRead.Entities
@@ -193,6 +194,31 @@ namespace MphRead.Entities
             if (sfxId != -1)
             {
                 _soundSource.PlaySfx(sfxId, amountA: 0xFFFF, amountB: amountB);
+            }
+        }
+
+        private void UpdateBurningSfx(bool burning)
+        {
+            float prevAmount = _burnSfxAmount;
+            float newAmount = 0xFFFF;
+            if (!burning)
+            {
+                float decay = MathF.Pow(0.875f, 30);
+                newAmount = prevAmount * MathF.Pow(decay, _scene.FrameTime);
+                if (newAmount < 50)
+                {
+                    newAmount = 0;
+                }
+            }
+            if (newAmount > 0)
+            {
+                _burnSfxAmount = newAmount;
+                _soundSource.PlaySfx(SfxId.DGN_LAVA_DAMAGE, loop: true, amountA: newAmount);
+            }
+            else if (prevAmount > 0)
+            {
+                _burnSfxAmount = 0;
+                _soundSource.StopSfx(SfxId.DGN_LAVA_DAMAGE);
             }
         }
 

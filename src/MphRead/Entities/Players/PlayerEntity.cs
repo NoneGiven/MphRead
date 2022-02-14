@@ -239,6 +239,7 @@ namespace MphRead.Entities
         private int _missileSfxHandle = -1;
         private float _walkSfxTimer = 0;
         private int _walkSfxIndex = 0;
+        private float _burnSfxAmount = 0;
 
         public Team Team { get; set; } = Team.None;
         public int TeamIndex { get; set; } = -1;
@@ -293,7 +294,6 @@ namespace MphRead.Entities
         private float _buttonAimY = 0;
 
         private ushort _timeIdle = 0;
-        private int _field450 = 0;
         private byte _crushBits = 0;
         private Vector3 _field4E8; // stores gun vec 2
         private float _altTiltX = 0;
@@ -565,7 +565,7 @@ namespace MphRead.Entities
             _abilities = AbilityFlags.None;
             _walkSfxTimer = 0;
             _walkSfxIndex = 0;
-            _field450 = 0;
+            _burnSfxAmount = 0;
             if (TeamIndex == -1)
             {
                 TeamIndex = SlotIndex;
@@ -1141,20 +1141,14 @@ namespace MphRead.Entities
                     CurrentWeapon = WeaponSelection = beam;
                 }
             }
-            int slot = 0;
-            if (beam == BeamType.Missile)
-            {
-                slot = 1;
-            }
-            else if (beam != BeamType.PowerBeam)
+            if (beam != BeamType.PowerBeam && beam != BeamType.Missile)
             {
                 UpdateAffinityWeaponSlot(beam);
-                slot = 2;
             }
             if (IsMainPlayer)
             {
                 HudOnWeaponSwitch(beam);
-                // todo?: update weapon HUD objects
+                // the game update the bottom screen weapon HUD objects here
             }
             return true;
         }
@@ -1187,10 +1181,7 @@ namespace MphRead.Entities
                 _availableWeapons[BeamType.OmegaCannon] = false;
             }
             _weaponSlots[slot] = beam;
-            if (IsMainPlayer)
-            {
-                // todo: update HUD
-            }
+            // the game updates the bottom screen weapon icon here
         }
 
         private void UnequipOmegaCannon()
