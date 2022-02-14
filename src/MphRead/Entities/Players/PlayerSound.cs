@@ -196,10 +196,8 @@ namespace MphRead.Entities
             }
         }
 
-        private void UpdateAltMovemenetSfx()
+        private int GetAltMovementSfx()
         {
-            float newAmount = 0xFFFF * _hSpeedMag / Fixed.ToFloat(Values.AltMinHSpeed);
-            UpdateMovementSfxAmount(newAmount);
             int sfxId;
             if (Hunter == Hunter.Samus)
             {
@@ -213,6 +211,14 @@ namespace MphRead.Entities
             {
                 sfxId = Metadata.HunterSfx[(int)Hunter, (int)HunterSfx.Roll];
             }
+            return sfxId;
+        }
+
+        private void UpdateAltMovementSfx()
+        {
+            float newAmount = 0xFFFF * _hSpeedMag / Fixed.ToFloat(Values.AltMinHSpeed);
+            UpdateMovementSfxAmount(newAmount);
+            int sfxId = GetAltMovementSfx();
             if (sfxId != -1)
             {
                 _soundSource.PlaySfx(sfxId, loop: true, amountA: _moveSfxAmount);
@@ -286,6 +292,28 @@ namespace MphRead.Entities
             if (curSfx != prevSfx && prevSfx != -1)
             {
                 _soundSource.StopSfx(prevSfx);
+            }
+        }
+
+        private void StopAltFormSfx()
+        {
+            if (IsAltForm)
+            {
+                int sfxId = Metadata.TerrainSfx[(int)_standTerrain, (int)TerrainSfx.Slide];
+                if (sfxId != -1)
+                {
+                    _soundSource.StopSfx(sfxId);
+                }
+            }
+            else
+            {
+                _soundSource.StopSfx(SfxId.NOX_TOP_ATTACK2);
+                _soundSource.StopSfx(SfxId.NOX_TOP_ENERGY_DRAIN2);
+                int sfxId = GetAltMovementSfx();
+                if (sfxId != -1)
+                {
+                    _soundSource.StopSfx(sfxId);
+                }
             }
         }
 

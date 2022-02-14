@@ -512,7 +512,7 @@ namespace MphRead.Entities
                 }
                 if (IsAltForm)
                 {
-                    UpdateAltMovemenetSfx();
+                    UpdateAltMovementSfx();
                 }
             }
             UpdateGunAnimation();
@@ -1656,7 +1656,7 @@ namespace MphRead.Entities
                 Position += _volumeUnxf.SpherePosition - bipedVolume.SpherePosition;
                 _volumeUnxf = bipedVolume;
             }
-            // todo: stop SFX
+            StopAltFormSfx();
         }
 
         private void CreateBurnEffect()
