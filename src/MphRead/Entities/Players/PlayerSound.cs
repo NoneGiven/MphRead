@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 
 namespace MphRead.Entities
@@ -197,6 +196,85 @@ namespace MphRead.Entities
             }
         }
 
+        private void UpdateAltMovemenetSfx()
+        {
+            float prevAmount = _altMoveSfxAmount;
+            float newAmount;
+            if (!Flags1.TestFlag(PlayerFlags1.Grounded))
+            {
+                newAmount = ExponentialDecay(0.5f, prevAmount);
+            }
+            else if (_scene.FrameCount % 2 == 0) // todo: FPS stuff
+            {
+                newAmount = 0xFFFF * _hSpeedMag / Fixed.ToFloat(Values.AltMinHSpeed);
+                if (newAmount < prevAmount)
+                {
+                    newAmount = prevAmount + (newAmount - prevAmount) / 4;
+                }
+                else
+                {
+                    newAmount = prevAmount + (newAmount - prevAmount) / 2;
+                }
+            }
+            else
+            {
+                newAmount = _altMoveSfxAmount;
+            }
+            if (newAmount < 1000)
+            {
+                newAmount = 0;
+            }
+            _altMoveSfxAmount = newAmount;
+            int sfxId;
+            if (Hunter == Hunter.Samus)
+            {
+                sfxId = Metadata.TerrainSfx[(int)_standTerrain, (int)TerrainSfx.Roll];
+            }
+            else if (Hunter == Hunter.Trace)
+            {
+                sfxId = Metadata.TerrainSfx[(int)_standTerrain, (int)TerrainSfx.TraceAlt];
+            }
+            else
+            {
+                sfxId = Metadata.HunterSfx[(int)Hunter, (int)HunterSfx.Roll];
+            }
+            if (sfxId != -1)
+            {
+                _soundSource.PlaySfx(sfxId, loop: true, amountA: newAmount);
+            }
+        }
+
+        private void StopTerrainSfx(Terrain prevTerrain)
+        {
+            int curSfx;
+            int prevSfx;
+            if (Hunter == Hunter.Samus)
+            {
+                curSfx = Metadata.TerrainSfx[(int)_standTerrain, (int)TerrainSfx.Roll];
+                prevSfx = Metadata.TerrainSfx[(int)prevTerrain, (int)TerrainSfx.Roll];
+            }
+            else if (Hunter == Hunter.Trace)
+            {
+                curSfx = Metadata.TerrainSfx[(int)_standTerrain, (int)TerrainSfx.TraceAlt];
+                prevSfx = Metadata.TerrainSfx[(int)prevTerrain, (int)TerrainSfx.TraceAlt];
+            }
+            else
+            {
+                curSfx = Metadata.HunterSfx[(int)Hunter, (int)HunterSfx.Roll];
+                prevSfx = curSfx;
+            }
+            if (curSfx != prevSfx && prevSfx != -1)
+            {
+                _soundSource.StopSfx(prevSfx);
+            }
+            curSfx = Metadata.TerrainSfx[(int)_standTerrain, (int)TerrainSfx.Slide];
+            prevSfx = Metadata.TerrainSfx[(int)prevTerrain, (int)TerrainSfx.Slide];
+            if (curSfx != prevSfx && prevSfx != -1)
+            {
+                _soundSource.StopSfx(prevSfx);
+            }
+        }
+
         private void PlayLandingSfx()
         {
             int sfxId = Metadata.TerrainSfx[(int)_standTerrain, (int)TerrainSfx.Land];
@@ -210,8 +288,7 @@ namespace MphRead.Entities
             float newAmount = 0xFFFF;
             if (!burning)
             {
-                float decay = MathF.Pow(0.875f, 30);
-                newAmount = prevAmount * MathF.Pow(decay, _scene.FrameTime);
+                newAmount = ExponentialDecay(0.875f, prevAmount);
                 if (newAmount < 50)
                 {
                     newAmount = 0;

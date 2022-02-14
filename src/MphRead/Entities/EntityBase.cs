@@ -711,6 +711,12 @@ namespace MphRead.Entities
             float displacement = velocity * _scene.FrameTime + (newVelocity - velocity) / 2 * _scene.FrameTime;
             return (newVelocity, displacement);
         }
+
+        protected float ExponentialDecay(float step, float value)
+        {
+            float decay = MathF.Pow(step, 30);
+            return value * MathF.Pow(decay, _scene.FrameTime);
+        }
     }
 
     public class ModelEntity : EntityBase

@@ -512,7 +512,7 @@ namespace MphRead.Entities
                 }
                 if (IsAltForm)
                 {
-                    // sktodo: play alt move SFX
+                    UpdateAltMovemenetSfx();
                 }
             }
             UpdateGunAnimation();

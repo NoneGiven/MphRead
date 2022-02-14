@@ -1770,6 +1770,7 @@ namespace MphRead.Entities
             {
                 _horizColTimer++;
             }
+            Terrain prevTerrain = _standTerrain;
             bool standingPrev = Flags1.TestFlag(PlayerFlags1.Standing);
             bool noUnmorphPev = Flags1.TestFlag(PlayerFlags1.NoUnmorph);
             Flags1 &= ~PlayerFlags1.Standing;
@@ -1806,7 +1807,10 @@ namespace MphRead.Entities
             {
                 _fieldC0 = Vector3.UnitY;
             }
-            // todo: stop SFX if terrain changed
+            if (_standTerrain != prevTerrain)
+            {
+                StopTerrainSfx(prevTerrain);
+            } 
             if (Flags1.TestFlag(PlayerFlags1.Standing) && !Flags1.TestFlag(PlayerFlags1.StandingPrevious))
             {
                 // landing

@@ -240,6 +240,7 @@ namespace MphRead.Entities
         private float _walkSfxTimer = 0;
         private int _walkSfxIndex = 0;
         private float _burnSfxAmount = 0;
+        private float _altMoveSfxAmount = 0;
 
         public Team Team { get; set; } = Team.None;
         public int TeamIndex { get; set; } = -1;

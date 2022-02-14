@@ -286,8 +286,15 @@ namespace MphRead.Sound
                 SetUpSample((int)entry.SfxId, channel, index: i);
             }
             UpdateDgn(channel, amountA, amountB);
-            StartChannel(channel, noUpdate);
-            return;
+            for (int i = 0; i < channel.Count; i++)
+            {
+                if (channel.Volume[i] > 0)
+                {
+                    StartChannel(channel, noUpdate);
+                    return;
+                }
+            }
+            channel.Stop();
         }
 
         public static bool SetUpChannel(int id, SoundSource? source, bool loop,
@@ -370,8 +377,12 @@ namespace MphRead.Sound
                 float pitchA = GetDgnValue(entry.Data3, amountA);
                 float pitchB = GetDgnValue(entry.Data4, amountB);
                 float volumeFac = volumeA / 127f * volumeB;
-                volumeFac = volumeFac / 127f * channel.DgnFile.Header.InitialVolume;
-                channel.Volume[i] = volumeFac / 127f;
+                volumeFac = volumeFac / 127f * channel.DgnFile.Header.InitialVolume / 127f;
+                if (volumeFac < 1 / 130f)
+                {
+                    volumeFac = 0;
+                }
+                channel.Volume[i] = volumeFac;
                 float pitchFac = pitchA / 0x2000 * pitchB;
                 Debug.Assert(pitchFac >= 0);
                 if (pitchFac >= 0x4000)
