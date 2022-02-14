@@ -1636,7 +1636,7 @@ namespace MphRead.Entities
                     Speed = Speed.WithZ(0);
                 }
             }
-            float slideSfxPct = 0;
+            float slideSfxAmount = 0;
             float speedFactor;
             if (IsAltForm || IsMorphing)
             {
@@ -1677,10 +1677,10 @@ namespace MphRead.Entities
                 speedFactor += (1 - speedFactor) * Metadata.SlipSpeedFactors[_slipperiness];
                 if (!Flags1.TestFlag(PlayerFlags1.MovingBiped))
                 {
-                    slideSfxPct = _hSpeedMag / _hSpeedCap * (16 - 1 / 4096f);
+                    slideSfxAmount = 0xFFFF * _hSpeedMag / Fixed.ToFloat(Values.WalkSpeedCap);
                 }
             }
-            // todo: play SFX (with slideSfxPct)
+            UpdateSlidingSfx(slideSfxAmount);
             Vector3 speedMul = Speed.WithX(Speed.X * speedFactor).WithZ(Speed.Z * speedFactor);
             Speed += (speedMul - Speed) / 2; // todo: FPS stuff
             if (Flags1.TestFlag(PlayerFlags1.UsedJumpPad))
@@ -1810,7 +1810,7 @@ namespace MphRead.Entities
             if (_standTerrain != prevTerrain)
             {
                 StopTerrainSfx(prevTerrain);
-            } 
+            }
             if (Flags1.TestFlag(PlayerFlags1.Standing) && !Flags1.TestFlag(PlayerFlags1.StandingPrevious))
             {
                 // landing

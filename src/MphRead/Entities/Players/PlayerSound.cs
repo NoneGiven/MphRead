@@ -198,33 +198,8 @@ namespace MphRead.Entities
 
         private void UpdateAltMovemenetSfx()
         {
-            float prevAmount = _altMoveSfxAmount;
-            float newAmount;
-            if (!Flags1.TestFlag(PlayerFlags1.Grounded))
-            {
-                newAmount = ExponentialDecay(0.5f, prevAmount);
-            }
-            else if (_scene.FrameCount % 2 == 0) // todo: FPS stuff
-            {
-                newAmount = 0xFFFF * _hSpeedMag / Fixed.ToFloat(Values.AltMinHSpeed);
-                if (newAmount < prevAmount)
-                {
-                    newAmount = prevAmount + (newAmount - prevAmount) / 4;
-                }
-                else
-                {
-                    newAmount = prevAmount + (newAmount - prevAmount) / 2;
-                }
-            }
-            else
-            {
-                newAmount = _altMoveSfxAmount;
-            }
-            if (newAmount < 1000)
-            {
-                newAmount = 0;
-            }
-            _altMoveSfxAmount = newAmount;
+            float newAmount = 0xFFFF * _hSpeedMag / Fixed.ToFloat(Values.AltMinHSpeed);
+            UpdateMovementSfxAmount(newAmount);
             int sfxId;
             if (Hunter == Hunter.Samus)
             {
@@ -240,8 +215,47 @@ namespace MphRead.Entities
             }
             if (sfxId != -1)
             {
-                _soundSource.PlaySfx(sfxId, loop: true, amountA: newAmount);
+                _soundSource.PlaySfx(sfxId, loop: true, amountA: _moveSfxAmount);
             }
+        }
+
+        private void UpdateSlidingSfx(float newAmount)
+        {
+            UpdateMovementSfxAmount(newAmount);
+            int sfxId = Metadata.TerrainSfx[(int)_standTerrain, (int)TerrainSfx.Slide];
+            if (sfxId != -1)
+            {
+                _soundSource.PlaySfx(sfxId, loop: true, amountA: _moveSfxAmount);
+            }
+        }
+
+        private void UpdateMovementSfxAmount(float newAmount)
+        {
+            float prevAmount = _moveSfxAmount;
+            if (!Flags1.TestFlag(PlayerFlags1.Grounded))
+            {
+                newAmount = ExponentialDecay(0.5f, prevAmount);
+            }
+            else if (_scene.FrameCount % 2 == 0) // todo: FPS stuff
+            {
+                if (newAmount < prevAmount)
+                {
+                    newAmount = prevAmount + (newAmount - prevAmount) / 4;
+                }
+                else
+                {
+                    newAmount = prevAmount + (newAmount - prevAmount) / 2;
+                }
+            }
+            else
+            {
+                newAmount = _moveSfxAmount;
+            }
+            if (newAmount < 1000)
+            {
+                newAmount = 0;
+            }
+            _moveSfxAmount = newAmount;
         }
 
         private void StopTerrainSfx(Terrain prevTerrain)
