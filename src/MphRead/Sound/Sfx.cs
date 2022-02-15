@@ -75,6 +75,11 @@ namespace MphRead.Sound
             return -1;
         }
 
+        public void PlayEnvironmentSfx(int id)
+        {
+            Sfx.PlayEnvironmentSfx(id, this);
+        }
+
         public void StopAllSfx(bool force = false)
         {
             Sfx.StopSoundFromSource(this, force);
@@ -650,6 +655,7 @@ namespace MphRead.Sound
                     }
                 }
             }
+            UpdateEnvironmentSfx();
             UpdateStreams(time);
         }
 
@@ -665,6 +671,79 @@ namespace MphRead.Sound
                 }
             }
             return count;
+        }
+
+        private class EnvironmentItem
+        {
+            public int SfxId { get; }
+            public int Instances { get; set; }
+            public int Handle { get; set; } = -1;
+            public SoundSource Source { get; }
+            public float DistanceSquared { get; set; } = Single.MaxValue;
+
+            public EnvironmentItem(SfxId sfxId)
+            {
+                SfxId = (int)sfxId;
+                Source = new SoundSource();
+            }
+        }
+
+        private static readonly IReadOnlyList<EnvironmentItem> _environmentItems = new EnvironmentItem[10]
+        {
+            new EnvironmentItem(SfxId.ELECTRO_WAVE2),
+            new EnvironmentItem(SfxId.ELECTRICITY),
+            new EnvironmentItem(SfxId.ELECTRIC_BARRIER),
+            new EnvironmentItem(SfxId.ENERGY_BALL),
+            new EnvironmentItem(SfxId.BLUE_FLAME),
+            new EnvironmentItem(SfxId.CYLINDER_BOSS_ATTACK),
+            new EnvironmentItem(SfxId.CYLINDER_BOSS_SPIN),
+            new EnvironmentItem(SfxId.BUBBLES),
+            new EnvironmentItem(SfxId.ELEVATOR2_START),
+            new EnvironmentItem(SfxId.GOREA_ATTACK3_LOOP)
+        };
+
+        public static void PlayEnvironmentSfx(int index, SoundSource source)
+        {
+            // in-game, environment SFX update their volume to the source's if it's greater, but that volume is already
+            // the rest of the 3D sound calculation, and the pan_x is also added as a percentage of the difference based on volume
+            // --> we can't really do that, so we just take the parameters of the closest source, and have no panning (for now?)
+            Debug.Assert(index >= 0 && index < _environmentItems.Count);
+            EnvironmentItem item = _environmentItems[index];
+            CameraInfo? camInfo = PlayerEntity.Main.CameraInfo;
+            float distSqr = Vector3.DistanceSquared(source.Position, camInfo.Position);
+            if (distSqr < item.DistanceSquared)
+            {
+                item.DistanceSquared = distSqr;
+                float dist = MathF.Sqrt(distSqr);
+                item.Source.Position = camInfo.Position + camInfo.Facing * dist;
+                item.Source.ReferenceDistance = source.ReferenceDistance;
+                item.Source.MaxDistance = source.MaxDistance;
+                item.Source.RolloffFactor = source.RolloffFactor;
+            }
+            item.Instances++;
+        }
+
+        public static void UpdateEnvironmentSfx()
+        {
+            foreach (EnvironmentItem item in _environmentItems)
+            {
+                if (item.Instances > 0)
+                {
+                    SoundChannel? channel = PlaySample(item.SfxId, item.Source, loop: true,
+                        noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                    if (channel != null)
+                    {
+                        item.Handle = channel.Handle;
+                    }
+                }
+                else if (item.Handle != -1)
+                {
+                    StopSoundByHandle(item.Handle);
+                    item.Handle = -1;
+                }
+                item.Instances = 0;
+                item.DistanceSquared = Single.MaxValue;
+            }
         }
 
         private class QueueItem

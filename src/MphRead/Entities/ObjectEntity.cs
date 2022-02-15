@@ -435,7 +435,7 @@ namespace MphRead.Entities
                         if (sfxInfo != null && sfxInfo.Environment && (sfxInfo.Data & 0x80) == 0
                             && (_data.EffectOnIntervals & (1 << _effectIntervalIndex)) != 0)
                         {
-                            _soundSource.PlaySfx(Metadata.EnvironmentSfxIds[sfxInfo.SfxId], loop: true);
+                            _soundSource.PlayEnvironmentSfx(sfxInfo.SfxId);
                         }
                     }
                     else
@@ -497,7 +497,7 @@ namespace MphRead.Entities
                     && ((sfxInfo.Data & 0x40) == 0 || _scene.CountElements(_data.EffectId) > 0))
                 {
                     _soundSource.Update(Position, rangeIndex: sfxInfo.Data & 0x3F);
-                    _soundSource.PlaySfx(Metadata.EnvironmentSfxIds[sfxInfo.SfxId], loop: true);
+                    _soundSource.PlayEnvironmentSfx(sfxInfo.SfxId);
                 }
             }
             if (_effectEntry != null)

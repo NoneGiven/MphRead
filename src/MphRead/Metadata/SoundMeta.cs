@@ -6,11 +6,6 @@ namespace MphRead
 {
     public static partial class Metadata
     {
-        public static readonly IReadOnlyList<int> EnvironmentSfxIds = new int[10]
-        {
-            203, 106, 96, 107, 108, 295, 300, 111, 109, 325
-        };
-
         public static int[,] PlatformSfx { get; private set; } = null!;
         public static int[,] HunterSfx { get; private set; } = null!;
         public static int[,] BeamSfx { get; private set; } = null!;
