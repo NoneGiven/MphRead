@@ -225,6 +225,8 @@ namespace MphRead.Sound
                     // sfxtodo: this volume multiplication isn't really right
                     AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume[i] * Samples[i].Volume);
                     AL.Source(channelId, ALSourcef.Pitch, Pitch[i]);
+                    AL.Source(channelId, ALSourceb.SourceRelative, false);
+                    AL.Source(channelId, ALSourcef.RolloffFactor, 1);
                 }
             }
 
@@ -880,6 +882,21 @@ namespace MphRead.Sound
                     return;
                 }
                 UpdateInstance(inst, inst.NoUpdate);
+                // -1 indicates no panning, which is not the same as 0 which indicates centered panning
+                // in the latter case, the center pan overrides any sourced positional audio
+                if (entry.Pan > -1)
+                {
+                    Debug.WriteLine($"panning {inst.ScriptFile.Name} #{inst.ScriptIndex}");
+                    int channelId = inst.Channels[index].Id;
+                    AL.Source(channelId, ALSourceb.SourceRelative, true);
+                    AL.Source(channelId, ALSourcef.RolloffFactor, 0);
+                    Vector3 position = Vector3.Zero;
+                    if (MathF.Abs(entry.Pan) > 1 / 128f)
+                    {
+                        position = new Vector3(entry.Pan, 0, -MathF.Sqrt(1 - entry.Pan * entry.Pan));
+                    }
+                    AL.Source(channelId, ALSource3f.Position, ref position);
+                }
                 inst.PlayChannel(index, loop: (entry.SfxData & 0x4000) != 0);
             }
         }
