@@ -15,14 +15,16 @@ namespace MphRead.Sound
         public float ReferenceDistance { get; set; } = 1;
         public float MaxDistance { get; set; } = Single.MaxValue;
         public float RolloffFactor { get; set; } = 1;
+        public bool Self { get; set; }
 
         public void Update(Vector3 position, int rangeIndex)
         {
             if (rangeIndex == -1)
             {
-                Position = PlayerEntity.Main.CameraInfo.Position + PlayerEntity.Main.CameraInfo.Facing;
+                Position = PlayerEntity.Main.CameraInfo.Position;
                 ReferenceDistance = Single.MaxValue;
                 MaxDistance = Single.MaxValue;
+                Self = true;
             }
             else
             {
@@ -31,6 +33,7 @@ namespace MphRead.Sound
                 Sound3dEntry rangeData = Sfx.RangeData[rangeIndex];
                 ReferenceDistance = rangeData.FalloffDistance / 4096f;
                 MaxDistance = rangeData.MaxDistance / 4096f;
+                Self = false;
             }
         }
 
@@ -173,7 +176,7 @@ namespace MphRead.Sound
 
             public void UpdatePosition()
             {
-                if (Source == null)
+                if (Source == null || Source.Self)
                 {
                     Vector3 sourcePos = PlayerEntity.Main.CameraInfo.Position;
                     for (int i = 0; i < _maxPerInst; i++)
