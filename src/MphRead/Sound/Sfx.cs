@@ -132,17 +132,19 @@ namespace MphRead.Sound
     // sfxtodo: pause all sounds when debugger breaks, frame advance is on, etc.
     public static class Sfx
     {
+        private const int _maxPerInst = 12;
+
         public class SoundInstance
         {
             public int Count { get; set; }
-            public SoundSample[] Samples { get; } = new SoundSample[8];
-            public SoundChannel[] Channels { get; } = new SoundChannel[8];
+            public SoundSample[] Samples { get; } = new SoundSample[_maxPerInst];
+            public SoundChannel[] Channels { get; } = new SoundChannel[_maxPerInst];
             public DgnFile? DgnFile { get; set; }
             public SfxScriptFile? ScriptFile { get; set; }
             public int ScriptIndex { get; set; } = -1;
             public SoundSource? Source { get; set; }
-            public float[] Volume { get; } = new float[8];
-            public float[] Pitch { get; } = new float[8];
+            public float[] Volume { get; } = new float[_maxPerInst];
+            public float[] Pitch { get; } = new float[_maxPerInst];
             public float PlayTime { get; set; } = -1;
             public int SfxId { get; set; } = -1;
             public bool NoUpdate { get; set; }
@@ -154,7 +156,7 @@ namespace MphRead.Sound
 
             public SoundInstance()
             {
-                for (int i = 0; i < 8; i++)
+                for (int i = 0; i < _maxPerInst; i++)
                 {
                     Volume[i] = 1;
                     Pitch[i] = 1;
@@ -174,7 +176,7 @@ namespace MphRead.Sound
                 if (Source == null)
                 {
                     Vector3 sourcePos = PlayerEntity.Main.CameraInfo.Position;
-                    for (int i = 0; i < Channels.Length; i++)
+                    for (int i = 0; i < _maxPerInst; i++)
                     {
                         SoundChannel? channel = Channels[i];
                         if (channel == null)
@@ -191,7 +193,7 @@ namespace MphRead.Sound
                 else if (!NoUpdate)
                 {
                     Vector3 sourcePos = Source.Position;
-                    for (int i = 0; i < Channels.Length; i++)
+                    for (int i = 0; i < _maxPerInst; i++)
                     {
                         SoundChannel? channel = Channels[i];
                         if (channel == null)
@@ -209,7 +211,7 @@ namespace MphRead.Sound
 
             public void UpdateParameters()
             {
-                for (int i = 0; i < Channels.Length; i++)
+                for (int i = 0; i < _maxPerInst; i++)
                 {
                     SoundChannel? channel = Channels[i];
                     if (channel == null)
@@ -225,7 +227,7 @@ namespace MphRead.Sound
 
             public void Stop()
             {
-                for (int i = 0; i < 8; i++)
+                for (int i = 0; i < _maxPerInst; i++)
                 {
                     SoundChannel channel = Channels[i];
                     if (channel != null)
@@ -363,14 +365,17 @@ namespace MphRead.Sound
             Debug.Assert((id & 0x4000) != 0);
             int scriptId = id & 0x3FFF;
             Debug.Assert(scriptId >= 0 && scriptId < _sfxScripts.Count);
+            SfxScriptFile script = _sfxScripts[scriptId];
+            if (script.Entries.Count == 0) // e.g. TELEPORT_ACTIVATE_SCR (54)
+            {
+                return;
+            }
             bool setUp = SetUpInstance(id, source, loop: false, recency, sourceOnly, cancellable, out SoundInstance inst);
             if (!setUp)
             {
                 return;
             }
             inst.NoUpdate = noUpdate;
-            SfxScriptFile script = _sfxScripts[scriptId];
-            Debug.Assert(script.Entries.Count > 0 && script.Entries.Count <= 22);
             inst.ScriptFile = script;
         }
 
@@ -774,7 +779,7 @@ namespace MphRead.Sound
             for (int i = 0; i < _instances.Length; i++)
             {
                 SoundInstance inst = _instances[i];
-                for (int j = 0; j < inst.Samples.Length; j++)
+                for (int j = 0; j < _maxPerInst; j++)
                 {
                     if (inst.Samples[j] == dest.Sample)
                     {
@@ -789,12 +794,16 @@ namespace MphRead.Sound
         private static void UpdateScript(SoundInstance inst, float time)
         {
             Debug.Assert(inst.ScriptFile != null);
-            if (inst.ScriptIndex != -1)
+            if (inst.PlayTime >= 0)
             {
                 inst.PlayTime += time;
             }
+            else
+            {
+                inst.PlayTime = 0;
+            }
             int playingCount = 0;
-            for (int i = 0; i < inst.Channels.Length; i++)
+            for (int i = 0; i < _maxPerInst; i++)
             {
                 SoundChannel? channel = inst.Channels[i];
                 if (channel != null)
@@ -815,11 +824,10 @@ namespace MphRead.Sound
                     }
                 }
             }
-            if (inst.ScriptIndex + 1 >= inst.ScriptFile.Entries.Count)
+            if (inst.ScriptIndex >= inst.ScriptFile.Entries.Count - 1)
             {
                 if (playingCount == 0)
                 {
-                    Debug.WriteLine($"stopped {inst.ScriptFile.Name}");
                     inst.Stop();
                     return;
                 }
@@ -843,13 +851,10 @@ namespace MphRead.Sound
                     {
                         StopSoundFromSource(inst.Source, sfxId);
                     }
-                }
-                if (playingCount >= 8)
-                {
-                    Debugger.Break();
+                    continue;
                 }
                 int index = -1;
-                for (int j = 0; j < inst.Channels.Length; j++)
+                for (int j = 0; j < _maxPerInst; j++)
                 {
                     if (inst.Channels[j] == null)
                     {
@@ -859,7 +864,7 @@ namespace MphRead.Sound
                 }
                 if (index == -1)
                 {
-                    Debug.Assert(false, "SFX script tried to play more than 8 concurrent channels");
+                    Debug.Assert(false, $"SFX script played more than {_maxPerInst} concurrent channels");
                     inst.Stop();
                     return;
                 }
@@ -1175,7 +1180,7 @@ namespace MphRead.Sound
             for (int i = 0; i < _instances.Length; i++)
             {
                 SoundInstance inst = _instances[i];
-                for (int j = 0; j < inst.Channels.Length; j++)
+                for (int j = 0; j < _maxPerInst; j++)
                 {
                     SoundChannel? channel = inst.Channels[j];
                     if (channel == null)
