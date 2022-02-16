@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Security.Authentication.ExtendedProtection;
 using System.Threading.Tasks;
 using MphRead.Entities;
 using MphRead.Formats.Sound;
@@ -50,12 +51,15 @@ namespace MphRead.Sound
             float recency = -1, bool sourceOnly = false, bool cancellable = false,
             float amountA = 0, float amountB = 0)
         {
-            // sktodo: support scripts
-            if (id >= 0 && (id & 0x4000) == 0)
+            if (id >= 0)
             {
                 if ((id & 0x8000) != 0)
                 {
                     Sfx.PlayDgn(id, this, loop, noUpdate, recency, cancellable, amountA, amountB);
+                }
+                else if ((id & 0x4000) != 0)
+                {
+                    Sfx.PlayScript(id, this, noUpdate, recency, sourceOnly, cancellable);
                 }
                 else
                 {
@@ -137,6 +141,8 @@ namespace MphRead.Sound
             public int[] BufferIds { get; } = new int[3];
             public SoundSample[] Samples { get; } = new SoundSample[3];
             public DgnFile? DgnFile { get; set; }
+            public SfxScriptFile? ScriptFile { get; set; }
+            public int ScriptIndex { get; set; } = -1;
             public SoundSource? Source { get; set; }
             public float[] Volume { get; } = new float[3] { 1, 1, 1 };
             public float[] Pitch { get; } = new float[3] { 1, 1, 1 };
@@ -228,6 +234,8 @@ namespace MphRead.Sound
                 PlayTime = -1;
                 SfxId = -1;
                 DgnFile = null;
+                ScriptFile = null;
+                ScriptIndex = -1;
                 Source = null;
                 Volume[0] = 1;
                 Volume[1] = 1;
@@ -252,6 +260,8 @@ namespace MphRead.Sound
 
         private static IReadOnlyList<SoundSample> _samples = null!;
         private static IReadOnlyList<DgnFile> _dgnFiles = null!;
+        private static IReadOnlyList<SfxScriptFile> _sfxScripts = null!;
+        public static IReadOnlyList<SfxScriptFile> SfxScripts => _sfxScripts; // skdebug
         private static IReadOnlyList<Sound3dEntry> _rangeData = null!;
         public static IReadOnlyList<Sound3dEntry> RangeData => _rangeData;
 
@@ -275,7 +285,7 @@ namespace MphRead.Sound
         {
             Debug.Assert((id & 0x8000) != 0);
             int dgnId = id & 0x3FFF;
-            Debug.Assert(dgnId >= 0 && dgnId <= _dgnFiles.Count);
+            Debug.Assert(dgnId >= 0 && dgnId < _dgnFiles.Count);
             bool setUp = SetUpChannel(id, source, loop, recency, sourceOnly: true, cancellable, out SoundChannel channel);
             if (!setUp)
             {
@@ -299,7 +309,25 @@ namespace MphRead.Sound
                     return;
                 }
             }
+            // no volume was above 0
             channel.Stop();
+        }
+
+        public static void PlayScript(int id, SoundSource? source, bool noUpdate, float recency, bool sourceOnly, bool cancellable)
+        {
+            Debug.Assert((id & 0x4000) != 0);
+            int scriptId = id & 0x3FFF;
+            Debug.Assert(scriptId >= 0 && scriptId < _sfxScripts.Count);
+            bool setUp = SetUpChannel(id, source, loop: false, recency, sourceOnly, cancellable, out SoundChannel channel);
+            if (!setUp)
+            {
+                return;
+            }
+            channel.NoUpdate = noUpdate;
+            SfxScriptFile script = _sfxScripts[scriptId];
+            // sktodo: script time shouldn't advance on the first frame
+            Debug.Assert(script.Entries.Count > 0 && script.Entries.Count <= 22);
+            channel.ScriptFile = script;
         }
 
         public static bool SetUpChannel(int id, SoundSource? source, bool loop,
@@ -342,12 +370,17 @@ namespace MphRead.Sound
             }
         }
 
-        private static void StartChannel(SoundChannel channel, bool noUpdate)
+        private static void UpdateChannel(SoundChannel channel, bool noUpdate)
         {
             channel.NoUpdate = false;
             channel.UpdatePosition();
             channel.NoUpdate = noUpdate;
             channel.UpdateParameters();
+        }
+
+        private static void StartChannel(SoundChannel channel, bool noUpdate)
+        {
+            UpdateChannel(channel, noUpdate);
             for (int i = 0; i < channel.Count; i++)
             {
                 channel.PlayChannel(index: i, channel.Loop);
@@ -369,6 +402,34 @@ namespace MphRead.Sound
                 }
             }
             return null;
+        }
+
+        public static float CalculatePitchDiv(float pitchFac)
+        {
+            if (pitchFac == 0)
+            {
+                pitchFac = 1;
+            }
+            int pitchInt = (int)pitchFac;
+            if (pitchFac <= 0xFFF)
+            {
+                pitchInt = -((0x600000 / pitchInt) >> 1);
+            }
+            else if (pitchFac <= 0x1FFF)
+            {
+                pitchInt = (768 * (pitchInt - 0x2000)) >> 12;
+            }
+            else
+            {
+                pitchInt = (768 * (pitchInt - 0x2000)) >> 13;
+            }
+            float semitones = pitchInt / 64f;
+            float octaves = MathF.Abs(semitones / 12f);
+            if (semitones >= 0)
+            {
+                return MathF.Pow(2, octaves);
+            }
+            return MathF.Pow(0.5f, octaves);
         }
 
         private static void UpdateDgn(SoundChannel channel, float amountA, float amountB)
@@ -394,33 +455,7 @@ namespace MphRead.Sound
                 {
                     pitchFac = 0x3FFF;
                 }
-                else if (pitchFac == 0)
-                {
-                    pitchFac = 1;
-                }
-                int pitchInt = (int)pitchFac;
-                if (pitchFac <= 0xFFF)
-                {
-                    pitchInt = -((0x600000 / pitchInt) >> 1);
-                }
-                else if (pitchFac <= 0x1FFF)
-                {
-                    pitchInt = (768 * (pitchInt - 0x2000)) >> 12;
-                }
-                else
-                {
-                    pitchInt = (768 * (pitchInt - 0x2000)) >> 13;
-                }
-                float semitones = pitchInt / 64f;
-                float octaves = MathF.Abs(semitones / 12f);
-                if (semitones >= 0)
-                {
-                    channel.Pitch[i] = MathF.Pow(2, octaves);
-                }
-                else
-                {
-                    channel.Pitch[i] = MathF.Pow(0.5f, octaves);
-                }
+                channel.Pitch[i] = CalculatePitchDiv(pitchFac);
             }
         }
 
@@ -516,6 +551,19 @@ namespace MphRead.Sound
             }
         }
 
+        public static void StopSoundById(int id)
+        {
+            Debug.Assert(id >= 0);
+            for (int i = 0; i < _channels.Length; i++)
+            {
+                SoundChannel channel = _channels[i];
+                if (channel.SfxId == id)
+                {
+                    channel.Stop();
+                }
+            }
+        }
+
         public static void StopSoundByHandle(int handle)
         {
             if (handle >= 0)
@@ -586,9 +634,13 @@ namespace MphRead.Sound
             for (int i = 0; i < _channels.Length; i++)
             {
                 SoundChannel channel = _channels[i];
-                for (int j = 0; j < channel.Count; j++)
+                for (int j = 0; j < 3; j++)
                 {
-                    _usedBufferIds.Add(channel.Samples[j].BufferId);
+                    SoundSample otherSample = channel.Samples[j];
+                    if (otherSample != null)
+                    {
+                        _usedBufferIds.Add(otherSample.BufferId);
+                    }
                 }
             }
             for (int i = 0; i < _bufferIds.Length; i++)
@@ -603,6 +655,75 @@ namespace MphRead.Sound
             ALFormat format = sample.Format == WaveFormat.ADPCM ? ALFormat.Mono16 : ALFormat.Mono8;
             AL.BufferData(bufferId, format, sample.WaveData.Value, sample.SampleRate);
             return bufferId;
+        }
+
+        private static void UpdateScript(SoundChannel channel, float time)
+        {
+            Debug.Assert(channel.ScriptFile != null);
+            if (channel.ScriptIndex != -1)
+            {
+                channel.PlayTime += time;
+            }
+            // sktodo: only check this if the index is at the max
+            int playingCount = 0;
+            for (int i = 0; i < 3; i++)
+            {
+                int channelId = channel.ChannelIds[i];
+                if (channelId != -1)
+                {
+                    AL.GetSource(channelId, ALGetSourcei.SourceState, out int value);
+                    var state = (ALSourceState)value;
+                    if (state == ALSourceState.Playing)
+                    {
+                        playingCount++;
+                    }
+                }
+            }
+            if (channel.ScriptIndex + 1 >= channel.ScriptFile.Entries.Count)
+            {
+                if (playingCount == 0)
+                {
+                    Debug.WriteLine($"stopped {channel.ScriptFile.Name}");
+                    channel.Stop();
+                    return;
+                }
+            }
+            for (int i = channel.ScriptIndex + 1; i < channel.ScriptFile.Entries.Count; i++)
+            {
+                SfxScriptEntry entry = channel.ScriptFile.Entries[i];
+                if (entry.Delay > channel.PlayTime)
+                {
+                    break;
+                }
+                channel.ScriptIndex = i;
+                int sfxId = entry.SfxData & 0x3FFF;
+                if ((entry.SfxData & 0x8000) != 0)
+                {
+                    if (channel.Source == null)
+                    {
+                        StopSoundById(sfxId);
+                    }
+                    else
+                    {
+                        StopSoundFromSource(channel.Source, sfxId);
+                    }
+                }
+                if (playingCount >= 3)
+                {
+                    Debugger.Break();
+                }
+                int index = i % 3; // sktodo: ?
+                // sktodo: handle pan by forcing relative position and overriding it
+                channel.Volume[index] = entry.Volume;
+                channel.Pitch[index] = entry.Pitch;
+                SetUpSample(sfxId, channel, index);
+                if (channel.Count > 3) // sktodo: ???
+                {
+                    channel.Count = 3;
+                }
+                UpdateChannel(channel, channel.NoUpdate);
+                channel.PlayChannel(index, loop: (entry.SfxData & 0x4000) != 0);
+            }
         }
 
         public static void Update(float time)
@@ -624,8 +745,11 @@ namespace MphRead.Sound
                 SoundChannel channel = _channels[i];
                 if (channel.PlayTime >= 0)
                 {
-                    // sktodo: DGN need to stop and start based on volume,
-                    // and unlink on the next frame if all their entries have stopped
+                    if (channel.ScriptFile != null)
+                    {
+                        UpdateScript(channel, time);
+                        continue;
+                    }
                     bool playing = false;
                     for (int j = 0; j < channel.Count; j++)
                     {
@@ -858,6 +982,7 @@ namespace MphRead.Sound
             }
             _rangeData = SoundRead.ReadSound3dList();
             _dgnFiles = SoundRead.ReadDgnFiles();
+            _sfxScripts = SoundRead.ReadSfxScriptFiles();
             _soundData = SoundRead.ReadSdat();
             foreach (SoundStream stream in _soundData.Streams)
             {

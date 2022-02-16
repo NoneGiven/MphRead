@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using MphRead.Sound;
 
 namespace MphRead.Formats.Sound
 {
@@ -344,11 +345,14 @@ namespace MphRead.Formats.Sound
             var files = new List<SfxScriptFile>();
             IReadOnlyList<SfxScriptHeader> headers = Read.DoOffsets<SfxScriptHeader>(bytes, 4, fileCount);
             IReadOnlyList<string> names = Read.ReadStrings(bytes, headers[^1].Offset + headers[^1].Size, fileCount);
+            int max = 0;
             for (int i = 0; i < headers.Count; i++)
             {
                 SfxScriptHeader header = headers[i];
                 uint entryCount = Read.SpanReadUint(bytes, header.Offset);
-                files.Add(new SfxScriptFile(names[i], header, Read.DoOffsets<SfxScriptEntry>(bytes, header.Offset + 4, entryCount)));
+                IReadOnlyList<RawSfxScriptEntry> raw = Read.DoOffsets<RawSfxScriptEntry>(bytes, header.Offset + 4, entryCount);
+                files.Add(new SfxScriptFile(names[i], header, raw));
+                max = Math.Max(max, raw.Count);
             }
             return files;
         }
@@ -1096,7 +1100,7 @@ namespace MphRead.Formats.Sound
     }
 
     // size: 12
-    public readonly struct SfxScriptEntry
+    public readonly struct RawSfxScriptEntry
     {
         public readonly ushort SfxId;
         public readonly ushort Delay;
@@ -1106,17 +1110,44 @@ namespace MphRead.Formats.Sound
         public readonly uint Handle; // set at runtime
     }
 
+    public class SfxScriptEntry
+    {
+        public int SfxData { get; }
+        public float Delay { get; }
+        public float Volume { get; }
+        public float Pan { get; } = -1;
+        public float Pitch { get; }
+        public int Handle { get; set; } = -1;
+
+        public SfxScriptEntry(RawSfxScriptEntry raw, SfxScriptHeader header)
+        {
+            SfxData = raw.SfxId;
+            Delay = raw.Delay / 30f;
+            Volume = raw.Volume / 127f * header.InitialVolume / 127f;
+            if (raw.Pan != 255)
+            {
+                int rawPan = raw.Pan;
+                if (rawPan == 127)
+                {
+                    rawPan = 128;
+                }
+                Pan = (rawPan - 64) / 64f / 2f;
+            }
+            Pitch = Sfx.CalculatePitchDiv(raw.Pitch);
+        }
+    }
+
     public class SfxScriptFile
     {
         public string Name { get; }
         public SfxScriptHeader Header { get; }
         public IReadOnlyList<SfxScriptEntry> Entries { get; }
 
-        public SfxScriptFile(string name, SfxScriptHeader header, IReadOnlyList<SfxScriptEntry> entries)
+        public SfxScriptFile(string name, SfxScriptHeader header, IReadOnlyList<RawSfxScriptEntry> entries)
         {
             Name = name;
             Header = header;
-            Entries = entries;
+            Entries = entries.Select(e => new SfxScriptEntry(e, header)).ToList();
         }
     }
 
