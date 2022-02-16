@@ -28,11 +28,12 @@ namespace MphRead.Sound
             }
             else
             {
+                IReadOnlyList<Sound3dEntry> rangeData = Sfx.Instance.RangeData;
                 Position = position;
-                Debug.Assert(rangeIndex >= 0 && rangeIndex < Sfx.RangeData.Count);
-                Sound3dEntry rangeData = Sfx.RangeData[rangeIndex];
-                ReferenceDistance = rangeData.FalloffDistance / 4096f;
-                MaxDistance = rangeData.MaxDistance / 4096f;
+                Debug.Assert(rangeIndex >= 0 && rangeIndex < rangeData.Count);
+                Sound3dEntry data = rangeData[rangeIndex];
+                ReferenceDistance = data.FalloffDistance / 4096f;
+                MaxDistance = data.MaxDistance / 4096f;
                 Self = false;
             }
         }
@@ -57,15 +58,15 @@ namespace MphRead.Sound
             {
                 if ((id & 0x8000) != 0)
                 {
-                    Sfx.PlayDgn(id, this, loop, noUpdate, recency, cancellable, amountA, amountB);
+                    Sfx.Instance.PlayDgn(id, this, loop, noUpdate, recency, cancellable, amountA, amountB);
                 }
                 else if ((id & 0x4000) != 0)
                 {
-                    Sfx.PlayScript(id, this, noUpdate, recency, sourceOnly, cancellable);
+                    Sfx.Instance.PlayScript(id, this, noUpdate, recency, sourceOnly, cancellable);
                 }
                 else
                 {
-                    Sfx.PlaySample(id, this, loop, noUpdate, recency, sourceOnly, cancellable);
+                    Sfx.Instance.PlaySample(id, this, loop, noUpdate, recency, sourceOnly, cancellable);
                 }
             }
         }
@@ -77,10 +78,11 @@ namespace MphRead.Sound
                 Debug.Assert((id & 0x8000) == 0);
                 if ((id & 0x4000) != 0)
                 {
-                    Sfx.PlayScript(id, null, noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                    Sfx.Instance.PlayScript(id, null, noUpdate: false, recency: -1,
+                        sourceOnly: false, cancellable: false);
                     return -1;
                 }
-                return Sfx.PlaySample(id, null, loop: false, noUpdate: false,
+                return Sfx.Instance.PlaySample(id, null, loop: false, noUpdate: false,
                     recency: -1, sourceOnly: false, cancellable: false)?.Handle ?? -1;
             }
             return -1;
@@ -88,12 +90,12 @@ namespace MphRead.Sound
 
         public void PlayEnvironmentSfx(int id)
         {
-            Sfx.PlayEnvironmentSfx(id, this);
+            Sfx.Instance.PlayEnvironmentSfx(id, this);
         }
 
         public void StopAllSfx(bool force = false)
         {
-            Sfx.StopSoundFromSource(this, force);
+            Sfx.Instance.StopSoundFromSource(this, force);
         }
 
         public void StopSfx(SfxId id)
@@ -103,47 +105,42 @@ namespace MphRead.Sound
 
         public void StopSfx(int id)
         {
-            Sfx.StopSoundFromSource(this, id);
+            Sfx.Instance.StopSoundFromSource(this, id);
         }
 
         public void StopSfxByHandle(int handle)
         {
-            Sfx.StopSoundByHandle(handle);
+            Sfx.Instance.StopSoundByHandle(handle);
         }
 
         public void StopFreeSfxScripts()
         {
-            Sfx.StopFreeSfxScripts();
+            Sfx.Instance.StopFreeSfxScripts();
         }
 
         public bool IsHandlePlaying(int handle)
         {
-            return Sfx.IsHandlePlaying(handle);
+            return Sfx.Instance.IsHandlePlaying(handle);
         }
 
         public int CountPlayingSfx(SfxId id)
         {
-            return Sfx.CountPlayingSfx((int)id);
+            return Sfx.Instance.CountPlayingSfx((int)id);
         }
 
         public int CountPlayingSfx(int id)
         {
-            return Sfx.CountPlayingSfx(id);
+            return Sfx.Instance.CountPlayingSfx(id);
         }
 
         public void QueueStream(VoiceId id, float delay = 0, float expiration = 0)
-        {
-            Sfx.QueueStream((int)id, delay, expiration);
-        }
-
-        public void QueueStream(int id, float delay = 0, float expiration = 0)
         {
             Sfx.QueueStream(id, delay, expiration);
         }
     }
 
     // sfxtodo: pause all sounds when debugger breaks, frame advance is on, etc.
-    public static class Sfx
+    public class Sfx
     {
         private const int _maxPerInst = 12;
 
@@ -305,23 +302,21 @@ namespace MphRead.Sound
             }
         }
 
-        // sktodo: clear all of this stuff on shutdown
-        private static ALDevice _device = ALDevice.Null;
-        private static ALContext _context = ALContext.Null;
-        private static readonly SoundBuffer[] _buffers = new SoundBuffer[64];
-        private static readonly SoundChannel[] _channels = new SoundChannel[128];
-        private static readonly SoundInstance[] _instances = new SoundInstance[128];
+        private ALDevice _device = ALDevice.Null;
+        private ALContext _context = ALContext.Null;
+        private readonly SoundBuffer[] _buffers = new SoundBuffer[64];
+        private readonly SoundChannel[] _channels = new SoundChannel[128];
+        private readonly SoundInstance[] _instances = new SoundInstance[128];
 
-        private static IReadOnlyList<SoundSample> _samples = null!;
-        private static IReadOnlyList<DgnFile> _dgnFiles = null!;
-        private static IReadOnlyList<SfxScriptFile> _sfxScripts = null!;
-        public static IReadOnlyList<SfxScriptFile> SfxScripts => _sfxScripts; // skdebug
-        private static IReadOnlyList<Sound3dEntry> _rangeData = null!;
-        public static IReadOnlyList<Sound3dEntry> RangeData => _rangeData;
+        private IReadOnlyList<SoundSample> _samples = null!;
+        private IReadOnlyList<DgnFile> _dgnFiles = null!;
+        private IReadOnlyList<SfxScriptFile> _sfxScripts = null!;
+        private IReadOnlyList<Sound3dEntry> _rangeData = null!;
+        public IReadOnlyList<Sound3dEntry> RangeData => _rangeData;
 
         public static float Volume { get; set; } = 0.35f;
 
-        public static SoundInstance? PlaySample(int id, SoundSource? source, bool loop, bool noUpdate,
+        public SoundInstance? PlaySample(int id, SoundSource? source, bool loop, bool noUpdate,
             float recency, bool sourceOnly, bool cancellable)
         {
             bool setUp = SetUpInstance(id, source, loop, recency, sourceOnly, cancellable, out SoundInstance inst);
@@ -337,7 +332,7 @@ namespace MphRead.Sound
             return inst;
         }
 
-        public static void PlayDgn(int id, SoundSource? source, bool loop, bool noUpdate,
+        public void PlayDgn(int id, SoundSource? source, bool loop, bool noUpdate,
             float recency, bool cancellable, float amountA, float amountB)
         {
             Debug.Assert((id & 0x8000) != 0);
@@ -374,7 +369,7 @@ namespace MphRead.Sound
             inst.Stop();
         }
 
-        public static void PlayScript(int id, SoundSource? source, bool noUpdate,
+        public void PlayScript(int id, SoundSource? source, bool noUpdate,
             float recency, bool sourceOnly, bool cancellable)
         {
             Debug.Assert((id & 0x4000) != 0);
@@ -394,7 +389,7 @@ namespace MphRead.Sound
             inst.ScriptFile = script;
         }
 
-        public static bool SetUpInstance(int id, SoundSource? source, bool loop,
+        public bool SetUpInstance(int id, SoundSource? source, bool loop,
             float recency, bool sourceOnly, bool cancellable, out SoundInstance inst)
         {
             if (loop)
@@ -421,7 +416,7 @@ namespace MphRead.Sound
             return true;
         }
 
-        private static bool SetUpSample(int id, SoundInstance inst, int index)
+        private bool SetUpSample(int id, SoundInstance inst, int index)
         {
             Debug.Assert(id >= 0 && id < _samples.Count);
             SoundSample sample = _samples[id];
@@ -459,7 +454,7 @@ namespace MphRead.Sound
             return true;
         }
 
-        private static void UpdateInstance(SoundInstance inst, bool noUpdate)
+        private void UpdateInstance(SoundInstance inst, bool noUpdate)
         {
             inst.NoUpdate = false;
             inst.UpdatePosition();
@@ -467,7 +462,7 @@ namespace MphRead.Sound
             inst.UpdateParameters();
         }
 
-        private static void StartInstance(SoundInstance inst, bool noUpdate)
+        private void StartInstance(SoundInstance inst, bool noUpdate)
         {
             UpdateInstance(inst, noUpdate);
             for (int i = 0; i < inst.Count; i++)
@@ -479,7 +474,7 @@ namespace MphRead.Sound
         // recency = 0 --> started playing on the current frame
         // receny = 1 --> started playing within the last second
         // recency = Single.MaxValue --> playing at all
-        private static SoundInstance? FindRecentSamplePlay(int id, float recency, SoundSource? source)
+        private SoundInstance? FindRecentSamplePlay(int id, float recency, SoundSource? source)
         {
             for (int i = 0; i < _instances.Length; i++)
             {
@@ -521,7 +516,7 @@ namespace MphRead.Sound
             return MathF.Pow(0.5f, octaves);
         }
 
-        private static void UpdateDgn(SoundInstance inst, float amountA, float amountB)
+        private void UpdateDgn(SoundInstance inst, float amountA, float amountB)
         {
             Debug.Assert(inst.DgnFile != null);
             for (int i = 0; i < inst.Count; i++)
@@ -548,7 +543,7 @@ namespace MphRead.Sound
             }
         }
 
-        private static float GetDgnValue(IReadOnlyList<DgnData> data, float amount)
+        private float GetDgnValue(IReadOnlyList<DgnData> data, float amount)
         {
             DgnData first = data[0];
             if (amount <= first.Amount)
@@ -599,7 +594,7 @@ namespace MphRead.Sound
             return value1 + (value2 - value1) * ratio;
         }
 
-        public static void StopAllSound()
+        public void StopAllSound()
         {
             for (int i = 0; i < _instances.Length; i++)
             {
@@ -612,7 +607,7 @@ namespace MphRead.Sound
             AL.SourceStop(_streamInstance);
         }
 
-        public static void StopSoundFromSource(SoundSource source, bool force)
+        public void StopSoundFromSource(SoundSource source, bool force)
         {
             for (int i = 0; i < _instances.Length; i++)
             {
@@ -627,7 +622,7 @@ namespace MphRead.Sound
             }
         }
 
-        public static void StopSoundFromSource(SoundSource source, int id)
+        public void StopSoundFromSource(SoundSource source, int id)
         {
             Debug.Assert(id >= 0);
             for (int i = 0; i < _instances.Length; i++)
@@ -640,7 +635,7 @@ namespace MphRead.Sound
             }
         }
 
-        public static void StopSoundById(int id)
+        public void StopSoundById(int id)
         {
             Debug.Assert(id >= 0);
             for (int i = 0; i < _instances.Length; i++)
@@ -653,7 +648,7 @@ namespace MphRead.Sound
             }
         }
 
-        public static void StopSoundByHandle(int handle)
+        public void StopSoundByHandle(int handle)
         {
             if (handle >= 0)
             {
@@ -668,7 +663,7 @@ namespace MphRead.Sound
             }
         }
 
-        public static void StopFreeSfxScripts()
+        public void StopFreeSfxScripts()
         {
             for (int i = 0; i < _instances.Length; i++)
             {
@@ -680,7 +675,7 @@ namespace MphRead.Sound
             }
         }
 
-        public static bool IsHandlePlaying(int handle)
+        public bool IsHandlePlaying(int handle)
         {
             if (handle >= 0)
             {
@@ -696,7 +691,7 @@ namespace MphRead.Sound
             return false;
         }
 
-        private static SoundInstance FindInstance(SoundSource? source)
+        private SoundInstance FindInstance(SoundSource? source)
         {
             float maxTime = 0;
             SoundInstance? resultBySource = null;
@@ -726,7 +721,7 @@ namespace MphRead.Sound
             return anyResult;
         }
 
-        private static SoundChannel? GetChannel(int bufferId)
+        private SoundChannel? GetChannel(int bufferId)
         {
             if (bufferId > 0)
             {
@@ -752,7 +747,7 @@ namespace MphRead.Sound
             return null;
         }
 
-        private static void BufferData(SoundSample sample)
+        private void BufferData(SoundSample sample)
         {
             SoundBuffer? dest = null;
 
@@ -818,7 +813,7 @@ namespace MphRead.Sound
             DoBuffer();
         }
 
-        private static void UpdateScript(SoundInstance inst, float time)
+        private void UpdateScript(SoundInstance inst, float time)
         {
             Debug.Assert(inst.ScriptFile != null);
             if (inst.PlayTime >= 0)
@@ -924,6 +919,11 @@ namespace MphRead.Sound
 
         public static void Update(float time)
         {
+            Instance.UpdateInstance(time);
+        }
+
+        private void UpdateInstance(float time)
+        {
             Vector3 listenerPos = PlayerEntity.Main.CameraInfo.Position;
             Vector3 listenerUp = PlayerEntity.Main.CameraInfo.UpVector;
             Vector3 listenerFacing = PlayerEntity.Main.CameraInfo.Facing;
@@ -980,7 +980,7 @@ namespace MphRead.Sound
             UpdateStreams(time);
         }
 
-        public static int CountPlayingSfx(int id)
+        public int CountPlayingSfx(int id)
         {
             int count = 0;
             for (int i = 0; i < _instances.Length; i++)
@@ -1023,7 +1023,7 @@ namespace MphRead.Sound
             new EnvironmentItem(SfxId.GOREA_ATTACK3_LOOP)
         };
 
-        public static void PlayEnvironmentSfx(int index, SoundSource source)
+        public void PlayEnvironmentSfx(int index, SoundSource source)
         {
             // in-game, environment SFX update their volume to the source's if it's greater, but that volume is already
             // the rest of the 3D sound calculation, and the pan_x is also added as a percentage of the difference based on volume
@@ -1044,7 +1044,7 @@ namespace MphRead.Sound
             item.Instances++;
         }
 
-        public static void UpdateEnvironmentSfx()
+        public void UpdateEnvironmentSfx()
         {
             foreach (EnvironmentItem item in _environmentItems)
             {
@@ -1075,13 +1075,18 @@ namespace MphRead.Sound
             public bool Playing { get; set; }
         }
 
-        public static SoundData _soundData = null!;
-        private static readonly LinkedList<QueueItem> _activeQueue = new LinkedList<QueueItem>();
-        private static readonly Queue<QueueItem> _inactiveQueue = new Queue<QueueItem>(16);
-        private static int _streamInstance = -1;
-        private static int _streamBuffer = -1;
+        public SoundData _soundData = null!;
+        private readonly LinkedList<QueueItem> _activeQueue = new LinkedList<QueueItem>();
+        private readonly Queue<QueueItem> _inactiveQueue = new Queue<QueueItem>(16);
+        private int _streamInstance = -1;
+        private int _streamBuffer = -1;
 
-        public static void QueueStream(int id, float delay, float expiration)
+        public static void QueueStream(VoiceId id, float delay = 0, float expiration = 0)
+        {
+            Instance.QueueStream((int)id, delay, expiration);
+        }
+
+        private void QueueStream(int id, float delay, float expiration)
         {
             if (_inactiveQueue.Count == 0)
             {
@@ -1096,7 +1101,7 @@ namespace MphRead.Sound
             _activeQueue.AddLast(item);
         }
 
-        private static void UpdateStreams(float time)
+        private void UpdateStreams(float time)
         {
             int index = 0;
             LinkedListNode<QueueItem>? node = _activeQueue.First;
@@ -1164,7 +1169,15 @@ namespace MphRead.Sound
             }
         }
 
+        public static Sfx Instance { get; private set; } = null!;
+
         public static void Load()
+        {
+            Instance = new Sfx();
+            Instance.LoadInstance();
+        }
+
+        private void LoadInstance()
         {
             _samples = SoundRead.ReadSoundSamples();
             SoundTable table = SoundRead.ReadSoundTables();
@@ -1218,6 +1231,15 @@ namespace MphRead.Sound
 
         public static void ShutDown()
         {
+            if (Instance != null)
+            {
+                Instance.ShutDownInstance();
+                Instance = null!;
+            }
+        }
+
+        private void ShutDownInstance()
+        {
             for (int i = 0; i < _instances.Length; i++)
             {
                 SoundInstance inst = _instances[i];
@@ -1245,22 +1267,6 @@ namespace MphRead.Sound
                 _context = ALContext.Null;
                 _device = ALDevice.Null;
             });
-        }
-
-        public static void Test()
-        {
-            IReadOnlyList<SoundSample> samples = SoundRead.ReadSoundSamples();
-            SoundSample sample = samples[0];
-            byte[] data = SoundRead.GetWaveData(sample);
-            ALDevice device = ALC.OpenDevice(null);
-            ALContext context = ALC.CreateContext(device, new ALContextAttributes());
-            ALC.MakeContextCurrent(context);
-            int buffer = AL.GenBuffer();
-            int source = AL.GenSource();
-            ALFormat format = sample.Format == WaveFormat.ADPCM ? ALFormat.Mono16 : ALFormat.Mono8;
-            AL.BufferData(buffer, format, data, sample.SampleRate);
-            AL.Source(source, ALSourcei.Buffer, buffer);
-            AL.SourcePlay(source);
         }
     }
 }

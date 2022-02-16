@@ -227,8 +227,8 @@ namespace MphRead
                             }
                             if (_lastAlarmTime == 0 || scene.ElapsedTime - _lastAlarmTime >= comparison)
                             {
-                                Sfx.PlaySample((int)SfxId.ALARM, source: null, loop: false, noUpdate: false,
-                                    recency: -1, sourceOnly: false, cancellable: false);
+                                Sfx.Instance.PlaySample((int)SfxId.ALARM, source: null, loop: false,
+                                    noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
                                 _lastAlarmTime = scene.ElapsedTime;
                                 _nextAlarmIndex++;
                                 if (_nextAlarmIndex >= _alarmIntervals.Count)
@@ -264,7 +264,7 @@ namespace MphRead
                     scene.SetFade(FadeType.None, length: 0, overwrite: true);
                     _stateChanged = true;
                     _matchEndTime = scene.ElapsedTime;
-                    Sfx.StopAllSound();
+                    Sfx.Instance.StopAllSound();
                     // sfxtodo: stop more kinds of SFX?
                     // mustodo: stop music and play timeout jingle
                 }
@@ -493,7 +493,7 @@ namespace MphRead
                 int teamPoints = TeamPoints[PlayerEntity.Main.TeamIndex];
                 if (teamPoints != prevTeamPoints[PlayerEntity.Main.TeamIndex] && teamPoints == PointGoal - 1)
                 {
-                    Sfx.QueueStream((int)VoiceId.VOICE_ONE_KILL_TO_WIN, delay: 1, expiration: 0);
+                    Sfx.QueueStream(VoiceId.VOICE_ONE_KILL_TO_WIN, delay: 1);
                 }
             }
             else if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
@@ -517,7 +517,7 @@ namespace MphRead
                     }
                     if (TeamDeaths[player.TeamIndex] > PointGoal && player.RespawnTimer == PlayerEntity.RespawnTime)
                     {
-                        Sfx.QueueStream((int)VoiceId.VOICE_ELIMINATED, delay: 0, expiration: 0);
+                        Sfx.QueueStream(VoiceId.VOICE_ELIMINATED);
                     }
                 }
                 if (PlayerEntity.Main.LoadFlags.TestAny(LoadFlags.Active) && opponents == 1 && lastTeam != -1)
@@ -525,7 +525,7 @@ namespace MphRead
                     int teamDeaths = TeamDeaths[lastTeam];
                     if (teamDeaths != prevTeamDeaths[lastTeam] && teamDeaths == PointGoal)
                     {
-                        Sfx.QueueStream((int)VoiceId.VOICE_ONE_KILL_TO_WIN, delay: 1, expiration: 0);
+                        Sfx.QueueStream(VoiceId.VOICE_ONE_KILL_TO_WIN, delay: 1);
                     }
                 }
             }
