@@ -352,14 +352,14 @@ namespace MphRead.Hud
 
     public class HudInfo
     {
-        private readonly struct UiPartHeader
+        public readonly struct UiPartHeader
         {
             public readonly int Magic; // always zero
             public readonly int CharDataSize;
             public readonly int PalDataSize;
         }
 
-        private readonly struct ScrDatInfo
+        public readonly struct ScrDatInfo
         {
             public readonly ushort CharsX;
             public readonly ushort CharsY;
@@ -489,7 +489,7 @@ namespace MphRead.Hud
             { (1, 2), (1, 4), (2, 4), (4, 8) }  // tall
         };
 
-        private readonly struct UiObjectHeader
+        public readonly struct UiObjectHeader
         {
             public readonly ushort FrameCount;
             public readonly ushort ImageCount;

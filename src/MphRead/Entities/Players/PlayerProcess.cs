@@ -1731,7 +1731,7 @@ namespace MphRead.Entities
             _scene.SpawnEffect(effectId, facing, up, spawnPos);
         }
 
-        private void CreateIceBreakEffectBiped(Model model, Matrix4 transform)
+        private void CreateIceBreakEffectBiped(Model model)
         {
             Debug.Assert(model.Nodes.Count > 1);
             int effectId = 231; // iceShatter

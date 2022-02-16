@@ -1663,7 +1663,8 @@ namespace MphRead.Entities
                         }
                         else
                         {
-                            // sfxtodo: stop more SFX and play death SFX script
+                            // sfxtodo: stop more SFX
+                            _soundSource.PlayFreeSfx(SfxId.SAMUS_DEATH);
                         }
                     }
                     else

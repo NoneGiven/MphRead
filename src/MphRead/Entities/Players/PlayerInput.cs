@@ -53,7 +53,7 @@ namespace MphRead.Entities
                         else if (Flags2.TestFlag(PlayerFlags2.DrawnThirdPerson))
                         {
                             int lod = Flags2.TestFlag(PlayerFlags2.Lod1) ? 1 : 0;
-                            CreateIceBreakEffectBiped(_bipedModelLods[lod].Model, _modelTransform);
+                            CreateIceBreakEffectBiped(_bipedModelLods[lod].Model);
                         }
                     }
                 }

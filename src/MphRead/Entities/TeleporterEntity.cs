@@ -12,7 +12,7 @@ namespace MphRead.Entities
         private readonly Matrix4 _artifact2Transform;
         private readonly Matrix4 _artifact3Transform;
 
-        private bool _big = false;
+        private readonly bool _big = false;
         public new bool Active { get; set; }
         private bool _bool3 = false; // todo: names
         private bool _bool4 = false;
