@@ -1007,6 +1007,17 @@ namespace MphRead.Sound
                 SfxId = (int)sfxId;
                 Source = new SoundSource();
             }
+
+            public void Reset()
+            {
+                if (Handle != -1)
+                {
+                    Sfx.Instance.StopSoundByHandle(Handle);
+                }
+                Handle = -1;
+                Instances = 0;
+                DistanceSquared = Single.MaxValue;
+            }
         }
 
         private static readonly IReadOnlyList<EnvironmentItem> _environmentItems = new EnvironmentItem[10]
@@ -1259,6 +1270,11 @@ namespace MphRead.Sound
                     }
                 }
             }
+            for (int i = 0; i < _environmentItems.Count; i++)
+            {
+                _environmentItems[i].Reset();
+            }
+            AL.SourceStop(_streamInstance);
             ALC.MakeContextCurrent(ALContext.Null);
             Task.Run(() =>
             {
