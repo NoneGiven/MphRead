@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Security.Authentication.ExtendedProtection;
 using System.Threading.Tasks;
 using MphRead.Entities;
 using MphRead.Formats.Sound;
@@ -133,19 +132,17 @@ namespace MphRead.Sound
     // sfxtodo: pause all sounds when debugger breaks, frame advance is on, etc.
     public static class Sfx
     {
-        public class SoundChannel
+        public class SoundInstance
         {
             public int Count { get; set; }
-            private readonly int[] _channelIds = new int[3];
-            public IReadOnlyList<int> ChannelIds => _channelIds;
-            public int[] BufferIds { get; } = new int[3];
-            public SoundSample[] Samples { get; } = new SoundSample[3];
+            public SoundSample[] Samples { get; } = new SoundSample[8];
+            public SoundChannel[] Channels { get; } = new SoundChannel[8];
             public DgnFile? DgnFile { get; set; }
             public SfxScriptFile? ScriptFile { get; set; }
             public int ScriptIndex { get; set; } = -1;
             public SoundSource? Source { get; set; }
-            public float[] Volume { get; } = new float[3] { 1, 1, 1 };
-            public float[] Pitch { get; } = new float[3] { 1, 1, 1 };
+            public float[] Volume { get; } = new float[8];
+            public float[] Pitch { get; } = new float[8];
             public float PlayTime { get; set; } = -1;
             public int SfxId { get; set; } = -1;
             public bool NoUpdate { get; set; }
@@ -155,22 +152,18 @@ namespace MphRead.Sound
             public int Handle { get; set; } = -1;
             public static int NextHandle { get; set; } = 0;
 
-            public SoundChannel(int channel0, int channel1, int channel2)
+            public SoundInstance()
             {
-                _channelIds[0] = channel0;
-                _channelIds[1] = channel1;
-                _channelIds[2] = channel2;
+                for (int i = 0; i < 8; i++)
+                {
+                    Volume[i] = 1;
+                    Pitch[i] = 1;
+                }
             }
 
             public void PlayChannel(int index, bool loop)
             {
-                int channelId = _channelIds[index];
-                int bufferId = Samples[index].BufferId;
-                if (BufferIds[index] != bufferId)
-                {
-                    AL.Source(channelId, ALSourcei.Buffer, bufferId);
-                    BufferIds[index] = bufferId;
-                }
+                int channelId = Channels[index].Id;
                 // sfxtodo: loop points (needs opentk update)
                 AL.Source(channelId, ALSourceb.Looping, loop);
                 AL.SourcePlay(channelId);
@@ -181,9 +174,14 @@ namespace MphRead.Sound
                 if (Source == null)
                 {
                     Vector3 sourcePos = PlayerEntity.Main.CameraInfo.Position;
-                    for (int i = 0; i < Count; i++)
+                    for (int i = 0; i < Channels.Length; i++)
                     {
-                        int channelId = ChannelIds[i];
+                        SoundChannel? channel = Channels[i];
+                        if (channel == null)
+                        {
+                            continue;
+                        }
+                        int channelId = channel.Id;
                         AL.Source(channelId, ALSource3f.Position, ref sourcePos);
                         AL.Source(channelId, ALSourcef.ReferenceDistance, Single.MaxValue);
                         AL.Source(channelId, ALSourcef.MaxDistance, Single.MaxValue);
@@ -193,9 +191,14 @@ namespace MphRead.Sound
                 else if (!NoUpdate)
                 {
                     Vector3 sourcePos = Source.Position;
-                    for (int i = 0; i < Count; i++)
+                    for (int i = 0; i < Channels.Length; i++)
                     {
-                        int channelId = ChannelIds[i];
+                        SoundChannel? channel = Channels[i];
+                        if (channel == null)
+                        {
+                            continue;
+                        }
+                        int channelId = channel.Id;
                         AL.Source(channelId, ALSource3f.Position, ref sourcePos);
                         AL.Source(channelId, ALSourcef.ReferenceDistance, Source.ReferenceDistance);
                         AL.Source(channelId, ALSourcef.MaxDistance, Source.MaxDistance);
@@ -206,9 +209,14 @@ namespace MphRead.Sound
 
             public void UpdateParameters()
             {
-                for (int i = 0; i < Count; i++)
+                for (int i = 0; i < Channels.Length; i++)
                 {
-                    int channelId = ChannelIds[i];
+                    SoundChannel? channel = Channels[i];
+                    if (channel == null)
+                    {
+                        continue;
+                    }
+                    int channelId = channel.Id;
                     // sfxtodo: this volume multiplication isn't really right
                     AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume[i] * Samples[i].Volume);
                     AL.Source(channelId, ALSourcef.Pitch, Pitch[i]);
@@ -217,19 +225,23 @@ namespace MphRead.Sound
 
             public void Stop()
             {
-                for (int i = 0; i < Count; i++)
+                for (int i = 0; i < 8; i++)
                 {
-                    int channelId = ChannelIds[i];
-                    AL.SourceStop(channelId);
-                    AL.Source(channelId, ALSourcei.Buffer, 0);
-                    BufferIds[i] = 0;
-                    SoundSample sample = Samples[i];
-                    sample.References--;
-                    if (sample.References == 0)
+                    SoundChannel channel = Channels[i];
+                    if (channel != null)
                     {
-                        sample.BufferId = 0;
+                        AL.SourceStop(channel.Id);
+                        channel.InUse = false;
+                        Channels[i] = null!;
                     }
-                    Samples[i] = null!;
+                    SoundSample sample = Samples[i];
+                    if (sample != null)
+                    {
+                        sample.References--;
+                        Samples[i] = null!;
+                    }
+                    Volume[i] = 1;
+                    Pitch[i] = 1;
                 }
                 PlayTime = -1;
                 SfxId = -1;
@@ -237,12 +249,6 @@ namespace MphRead.Sound
                 ScriptFile = null;
                 ScriptIndex = -1;
                 Source = null;
-                Volume[0] = 1;
-                Volume[1] = 1;
-                Volume[2] = 1;
-                Pitch[0] = 1;
-                Pitch[1] = 1;
-                Pitch[2] = 1;
                 NoUpdate = false;
                 Loop = false;
                 Cancellable = false;
@@ -251,12 +257,35 @@ namespace MphRead.Sound
             }
         }
 
+        public class SoundChannel
+        {
+            public int Id { get; }
+            public bool InUse { get; set; }
+            public int BufferId { get; set; }
+
+            public SoundChannel(int id)
+            {
+                Id = id;
+            }
+        }
+
+        public class SoundBuffer
+        {
+            public int Id { get; }
+            public SoundSample? Sample { get; set; }
+
+            public SoundBuffer(int id)
+            {
+                Id = id;
+            }
+        }
+
         // sfxtodo: clear all of this stuff on shutdown
         private static ALDevice _device = ALDevice.Null;
         private static ALContext _context = ALContext.Null;
-        private static readonly int[] _bufferIds = new int[15];
-        private static readonly int[] _channelIds = new int[85 * 3];
-        private static readonly SoundChannel[] _channels = new SoundChannel[85];
+        private static readonly SoundBuffer[] _buffers = new SoundBuffer[32];
+        private static readonly SoundChannel[] _channels = new SoundChannel[128];
+        private static readonly SoundInstance[] _instances = new SoundInstance[128];
 
         private static IReadOnlyList<SoundSample> _samples = null!;
         private static IReadOnlyList<DgnFile> _dgnFiles = null!;
@@ -267,17 +296,20 @@ namespace MphRead.Sound
 
         public static float Volume { get; set; } = 0.35f;
 
-        public static SoundChannel? PlaySample(int id, SoundSource? source, bool loop, bool noUpdate,
+        public static SoundInstance? PlaySample(int id, SoundSource? source, bool loop, bool noUpdate,
             float recency, bool sourceOnly, bool cancellable)
         {
-            bool setUp = SetUpChannel(id, source, loop, recency, sourceOnly, cancellable, out SoundChannel channel);
+            bool setUp = SetUpInstance(id, source, loop, recency, sourceOnly, cancellable, out SoundInstance inst);
             if (!setUp)
             {
                 return null;
             }
-            SetUpSample(id, channel, index: 0);
-            StartChannel(channel, noUpdate);
-            return channel;
+            if (!SetUpSample(id, inst, index: 0))
+            {
+                return null;
+            }
+            StartInstance(inst, noUpdate);
+            return inst;
         }
 
         public static void PlayDgn(int id, SoundSource? source, bool loop, bool noUpdate,
@@ -286,52 +318,56 @@ namespace MphRead.Sound
             Debug.Assert((id & 0x8000) != 0);
             int dgnId = id & 0x3FFF;
             Debug.Assert(dgnId >= 0 && dgnId < _dgnFiles.Count);
-            bool setUp = SetUpChannel(id, source, loop, recency, sourceOnly: true, cancellable, out SoundChannel channel);
+            bool setUp = SetUpInstance(id, source, loop, recency, sourceOnly: true, cancellable, out SoundInstance inst);
             if (!setUp)
             {
-                UpdateDgn(channel, amountA, amountB);
+                UpdateDgn(inst, amountA, amountB);
                 return;
             }
             DgnFile dgnFile = _dgnFiles[dgnId];
             Debug.Assert(dgnFile.Entries.Count > 0 && dgnFile.Entries.Count <= 3);
-            channel.DgnFile = dgnFile;
+            inst.DgnFile = dgnFile;
             for (int i = 0; i < dgnFile.Entries.Count; i++)
             {
                 DgnFileEntry entry = dgnFile.Entries[i];
-                SetUpSample((int)entry.SfxId, channel, index: i);
-            }
-            UpdateDgn(channel, amountA, amountB);
-            for (int i = 0; i < channel.Count; i++)
-            {
-                if (channel.Volume[i] > 0)
+                if (!SetUpSample((int)entry.SfxId, inst, index: i))
                 {
-                    StartChannel(channel, noUpdate);
+                    inst.Stop();
+                    return;
+                }
+            }
+            UpdateDgn(inst, amountA, amountB);
+            for (int i = 0; i < inst.Count; i++)
+            {
+                if (inst.Volume[i] > 0)
+                {
+                    StartInstance(inst, noUpdate);
                     return;
                 }
             }
             // no volume was above 0
-            channel.Stop();
+            inst.Stop();
         }
 
-        public static void PlayScript(int id, SoundSource? source, bool noUpdate, float recency, bool sourceOnly, bool cancellable)
+        public static void PlayScript(int id, SoundSource? source, bool noUpdate,
+            float recency, bool sourceOnly, bool cancellable)
         {
             Debug.Assert((id & 0x4000) != 0);
             int scriptId = id & 0x3FFF;
             Debug.Assert(scriptId >= 0 && scriptId < _sfxScripts.Count);
-            bool setUp = SetUpChannel(id, source, loop: false, recency, sourceOnly, cancellable, out SoundChannel channel);
+            bool setUp = SetUpInstance(id, source, loop: false, recency, sourceOnly, cancellable, out SoundInstance inst);
             if (!setUp)
             {
                 return;
             }
-            channel.NoUpdate = noUpdate;
+            inst.NoUpdate = noUpdate;
             SfxScriptFile script = _sfxScripts[scriptId];
-            // sktodo: script time shouldn't advance on the first frame
             Debug.Assert(script.Entries.Count > 0 && script.Entries.Count <= 22);
-            channel.ScriptFile = script;
+            inst.ScriptFile = script;
         }
 
-        public static bool SetUpChannel(int id, SoundSource? source, bool loop,
-            float recency, bool sourceOnly, bool cancellable, out SoundChannel channel)
+        public static bool SetUpInstance(int id, SoundSource? source, bool loop,
+            float recency, bool sourceOnly, bool cancellable, out SoundInstance inst)
         {
             if (loop)
             {
@@ -340,65 +376,90 @@ namespace MphRead.Sound
             }
             if (recency >= 0)
             {
-                SoundChannel? recent = FindRecentSamplePlay(id, recency, sourceOnly ? source : null);
+                SoundInstance? recent = FindRecentSamplePlay(id, recency, sourceOnly ? source : null);
                 if (recent != null)
                 {
-                    channel = recent;
+                    inst = recent;
                     return false;
                 }
             }
-            channel = FindChannel(source);
-            channel.Source = source;
-            channel.PlayTime = 0;
-            channel.Loop = loop;
-            channel.Cancellable = cancellable;
-            channel.SfxId = id;
-            channel.Handle = SoundChannel.NextHandle++;
+            inst = FindInstance(source);
+            inst.Source = source;
+            inst.PlayTime = 0;
+            inst.Loop = loop;
+            inst.Cancellable = cancellable;
+            inst.SfxId = id;
+            inst.Handle = SoundInstance.NextHandle++;
             return true;
         }
 
-        private static void SetUpSample(int id, SoundChannel channel, int index)
+        private static bool SetUpSample(int id, SoundInstance inst, int index)
         {
             Debug.Assert(id >= 0 && id < _samples.Count);
             SoundSample sample = _samples[id];
-            channel.Count++;
-            channel.Samples[index] = sample;
-            sample.References++;
+            SoundSample? prevSample = inst.Samples[index];
+            if (prevSample != sample)
+            {
+                if (prevSample != null)
+                {
+                    prevSample.References--;
+                }
+                inst.Samples[index] = sample;
+                sample.References++;
+            }
+            SoundChannel? channel = inst.Channels[index];
+            if (channel == null)
+            {
+                channel = GetChannel(sample.BufferId);
+                if (channel == null)
+                {
+                    return false;
+                }
+                inst.Channels[index] = channel;
+                inst.Count++;
+            }
+            channel.InUse = true;
             if (sample.BufferId == 0)
             {
-                sample.BufferId = BufferData(sample);
+                BufferData(sample);
             }
-        }
-
-        private static void UpdateChannel(SoundChannel channel, bool noUpdate)
-        {
-            channel.NoUpdate = false;
-            channel.UpdatePosition();
-            channel.NoUpdate = noUpdate;
-            channel.UpdateParameters();
-        }
-
-        private static void StartChannel(SoundChannel channel, bool noUpdate)
-        {
-            UpdateChannel(channel, noUpdate);
-            for (int i = 0; i < channel.Count; i++)
+            if (channel.BufferId != sample.BufferId)
             {
-                channel.PlayChannel(index: i, channel.Loop);
+                AL.Source(channel.Id, ALSourcei.Buffer, sample.BufferId);
+                channel.BufferId = sample.BufferId;
+            }
+            return true;
+        }
+
+        private static void UpdateInstance(SoundInstance inst, bool noUpdate)
+        {
+            inst.NoUpdate = false;
+            inst.UpdatePosition();
+            inst.NoUpdate = noUpdate;
+            inst.UpdateParameters();
+        }
+
+        private static void StartInstance(SoundInstance inst, bool noUpdate)
+        {
+            UpdateInstance(inst, noUpdate);
+            for (int i = 0; i < inst.Count; i++)
+            {
+                inst.PlayChannel(index: i, inst.Loop);
             }
         }
 
         // recency = 0 --> started playing on the current frame
         // receny = 1 --> started playing within the last second
         // recency = Single.MaxValue --> playing at all
-        private static SoundChannel? FindRecentSamplePlay(int id, float recency, SoundSource? source)
+        private static SoundInstance? FindRecentSamplePlay(int id, float recency, SoundSource? source)
         {
-            for (int i = 0; i < _channels.Length; i++)
+            for (int i = 0; i < _instances.Length; i++)
             {
-                SoundChannel channel = _channels[i];
-                if ((source == null || channel.Source == source)
-                    && channel.SfxId == id && channel.PlayTime <= recency)
+                SoundInstance inst = _instances[i];
+                if ((source == null || inst.Source == source)
+                    && inst.SfxId == id && inst.PlayTime <= recency)
                 {
-                    return channel;
+                    return inst;
                 }
             }
             return null;
@@ -432,30 +493,30 @@ namespace MphRead.Sound
             return MathF.Pow(0.5f, octaves);
         }
 
-        private static void UpdateDgn(SoundChannel channel, float amountA, float amountB)
+        private static void UpdateDgn(SoundInstance inst, float amountA, float amountB)
         {
-            Debug.Assert(channel.DgnFile != null);
-            for (int i = 0; i < channel.Count; i++)
+            Debug.Assert(inst.DgnFile != null);
+            for (int i = 0; i < inst.Count; i++)
             {
-                DgnFileEntry entry = channel.DgnFile.Entries[i];
+                DgnFileEntry entry = inst.DgnFile.Entries[i];
                 float volumeA = GetDgnValue(entry.Data1, amountA);
                 float volumeB = GetDgnValue(entry.Data2, amountB);
                 float pitchA = GetDgnValue(entry.Data3, amountA);
                 float pitchB = GetDgnValue(entry.Data4, amountB);
                 float volumeFac = volumeA / 127f * volumeB;
-                volumeFac = volumeFac / 127f * channel.DgnFile.Header.InitialVolume / 127f;
+                volumeFac = volumeFac / 127f * inst.DgnFile.Header.InitialVolume / 127f;
                 if (volumeFac < 1 / 130f)
                 {
                     volumeFac = 0;
                 }
-                channel.Volume[i] = volumeFac;
+                inst.Volume[i] = volumeFac;
                 float pitchFac = pitchA / 0x2000 * pitchB;
                 Debug.Assert(pitchFac >= 0);
                 if (pitchFac >= 0x4000)
                 {
                     pitchFac = 0x3FFF;
                 }
-                channel.Pitch[i] = CalculatePitchDiv(pitchFac);
+                inst.Pitch[i] = CalculatePitchDiv(pitchFac);
             }
         }
 
@@ -512,27 +573,27 @@ namespace MphRead.Sound
 
         public static void StopAllSound()
         {
-            for (int i = 0; i < _channels.Length; i++)
+            for (int i = 0; i < _instances.Length; i++)
             {
-                SoundChannel channel = _channels[i];
-                if (channel.SfxId != -1)
+                SoundInstance inst = _instances[i];
+                if (inst.SfxId != -1)
                 {
-                    channel.Stop();
+                    inst.Stop();
                 }
             }
-            AL.SourceStop(_streamChannel);
+            AL.SourceStop(_streamInstance);
         }
 
         public static void StopSoundFromSource(SoundSource source, bool force)
         {
-            for (int i = 0; i < _channels.Length; i++)
+            for (int i = 0; i < _instances.Length; i++)
             {
-                SoundChannel channel = _channels[i];
-                if (channel.Source == source)
+                SoundInstance inst = _instances[i];
+                if (inst.Source == source)
                 {
-                    if ((force || channel.Loop || channel.Cancellable) && (!force || !channel.NoUpdate))
+                    if ((force || inst.Loop || inst.Cancellable) && (!force || !inst.NoUpdate))
                     {
-                        channel.Stop();
+                        inst.Stop();
                     }
                 }
             }
@@ -541,12 +602,12 @@ namespace MphRead.Sound
         public static void StopSoundFromSource(SoundSource source, int id)
         {
             Debug.Assert(id >= 0);
-            for (int i = 0; i < _channels.Length; i++)
+            for (int i = 0; i < _instances.Length; i++)
             {
-                SoundChannel channel = _channels[i];
-                if (channel.Source == source && channel.SfxId == id)
+                SoundInstance inst = _instances[i];
+                if (inst.Source == source && inst.SfxId == id)
                 {
-                    channel.Stop();
+                    inst.Stop();
                 }
             }
         }
@@ -554,12 +615,12 @@ namespace MphRead.Sound
         public static void StopSoundById(int id)
         {
             Debug.Assert(id >= 0);
-            for (int i = 0; i < _channels.Length; i++)
+            for (int i = 0; i < _instances.Length; i++)
             {
-                SoundChannel channel = _channels[i];
-                if (channel.SfxId == id)
+                SoundInstance inst = _instances[i];
+                if (inst.SfxId == id)
                 {
-                    channel.Stop();
+                    inst.Stop();
                 }
             }
         }
@@ -568,12 +629,12 @@ namespace MphRead.Sound
         {
             if (handle >= 0)
             {
-                for (int i = 0; i < _channels.Length; i++)
+                for (int i = 0; i < _instances.Length; i++)
                 {
-                    SoundChannel channel = _channels[i];
-                    if (channel.Handle == handle)
+                    SoundInstance inst = _instances[i];
+                    if (inst.Handle == handle)
                     {
-                        channel.Stop();
+                        inst.Stop();
                     }
                 }
             }
@@ -583,10 +644,10 @@ namespace MphRead.Sound
         {
             if (handle >= 0)
             {
-                for (int i = 0; i < _channels.Length; i++)
+                for (int i = 0; i < _instances.Length; i++)
                 {
-                    SoundChannel channel = _channels[i];
-                    if (channel.Handle == handle)
+                    SoundInstance inst = _instances[i];
+                    if (inst.Handle == handle)
                     {
                         return true;
                     }
@@ -595,26 +656,26 @@ namespace MphRead.Sound
             return false;
         }
 
-        private static SoundChannel FindChannel(SoundSource? source)
+        private static SoundInstance FindInstance(SoundSource? source)
         {
             float maxTime = 0;
-            SoundChannel? resultBySource = null;
-            SoundChannel? anyResult = null;
-            for (int i = 0; i < _channels.Length; i++)
+            SoundInstance? resultBySource = null;
+            SoundInstance? anyResult = null;
+            for (int i = 0; i < _instances.Length; i++)
             {
-                SoundChannel channel = _channels[i];
-                if (channel.PlayTime < 0)
+                SoundInstance inst = _instances[i];
+                if (inst.PlayTime < 0)
                 {
-                    return channel;
+                    return inst;
                 }
-                if (channel.PlayTime >= maxTime)
+                if (inst.PlayTime >= maxTime)
                 {
-                    if (source != null && channel.Source == source)
+                    if (source != null && inst.Source == source)
                     {
-                        resultBySource = channel;
+                        resultBySource = inst;
                     }
-                    anyResult = channel;
-                    maxTime = channel.PlayTime;
+                    anyResult = inst;
+                    maxTime = inst.PlayTime;
                 }
             }
             if (resultBySource != null)
@@ -625,104 +686,181 @@ namespace MphRead.Sound
             return anyResult;
         }
 
-        private static readonly HashSet<int> _usedBufferIds = new HashSet<int>(64);
-
-        private static int BufferData(SoundSample sample)
+        private static SoundChannel? GetChannel(int bufferId)
         {
-            int bufferId = _bufferIds[0];
-            _usedBufferIds.Clear();
-            for (int i = 0; i < _channels.Length; i++)
+            if (bufferId > 0)
             {
-                SoundChannel channel = _channels[i];
-                for (int j = 0; j < 3; j++)
+                for (int i = 0; i < _channels.Length; i++)
                 {
-                    SoundSample otherSample = channel.Samples[j];
-                    if (otherSample != null)
+                    SoundChannel channel = _channels[i];
+                    if (channel.BufferId == bufferId && !channel.InUse)
                     {
-                        _usedBufferIds.Add(otherSample.BufferId);
+                        return channel;
                     }
                 }
             }
-            for (int i = 0; i < _bufferIds.Length; i++)
+            for (int i = 0; i < _channels.Length; i++)
             {
-                int id = _bufferIds[i];
-                if (!_usedBufferIds.Contains(id))
+                SoundChannel channel = _channels[i];
+                if (!channel.InUse)
                 {
-                    bufferId = id;
+                    return channel;
+                }
+            }
+            // not expected to happen
+            Debugger.Break();
+            return null;
+        }
+
+        private static void BufferData(SoundSample sample)
+        {
+            SoundBuffer? dest = null;
+
+            void DoBuffer()
+            {
+                if (dest.Sample != null)
+                {
+                    dest.Sample.BufferId = 0;
+                }
+                dest.Sample = sample;
+                ALFormat format = sample.Format == WaveFormat.ADPCM ? ALFormat.Mono16 : ALFormat.Mono8;
+                AL.BufferData(dest.Id, format, sample.WaveData.Value, sample.SampleRate);
+                sample.BufferId = dest.Id;
+            }
+
+            for (int i = 0; i < _buffers.Length; i++)
+            {
+                SoundBuffer buffer = _buffers[i];
+                if (buffer.Sample == null)
+                {
+                    dest = buffer;
                     break;
                 }
             }
-            ALFormat format = sample.Format == WaveFormat.ADPCM ? ALFormat.Mono16 : ALFormat.Mono8;
-            AL.BufferData(bufferId, format, sample.WaveData.Value, sample.SampleRate);
-            return bufferId;
+            if (dest != null)
+            {
+                DoBuffer();
+                return;
+            }
+
+            for (int i = 0; i < _buffers.Length; i++)
+            {
+                SoundBuffer buffer = _buffers[i];
+                Debug.Assert(buffer.Sample != null);
+                if (buffer.Sample.References == 0)
+                {
+                    dest = buffer;
+                    break;
+                }
+            }
+            if (dest != null)
+            {
+                DoBuffer();
+                return;
+            }
+
+            // not expected to happen
+            Debugger.Break();
+            dest = _buffers[0];
+            Debug.Assert(dest.Sample != null);
+            for (int i = 0; i < _instances.Length; i++)
+            {
+                SoundInstance inst = _instances[i];
+                for (int j = 0; j < inst.Samples.Length; j++)
+                {
+                    if (inst.Samples[j] == dest.Sample)
+                    {
+                        inst.Stop();
+                        break;
+                    }
+                }
+            }
+            DoBuffer();
         }
 
-        private static void UpdateScript(SoundChannel channel, float time)
+        private static void UpdateScript(SoundInstance inst, float time)
         {
-            Debug.Assert(channel.ScriptFile != null);
-            if (channel.ScriptIndex != -1)
+            Debug.Assert(inst.ScriptFile != null);
+            if (inst.ScriptIndex != -1)
             {
-                channel.PlayTime += time;
+                inst.PlayTime += time;
             }
-            // sktodo: only check this if the index is at the max
             int playingCount = 0;
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < inst.Channels.Length; i++)
             {
-                int channelId = channel.ChannelIds[i];
-                if (channelId != -1)
+                SoundChannel? channel = inst.Channels[i];
+                if (channel != null)
                 {
-                    AL.GetSource(channelId, ALGetSourcei.SourceState, out int value);
+                    AL.GetSource(channel.Id, ALGetSourcei.SourceState, out int value);
                     var state = (ALSourceState)value;
                     if (state == ALSourceState.Playing)
                     {
                         playingCount++;
                     }
+                    else
+                    {
+                        inst.Channels[i] = null!;
+                    }
                 }
             }
-            if (channel.ScriptIndex + 1 >= channel.ScriptFile.Entries.Count)
+            if (inst.ScriptIndex + 1 >= inst.ScriptFile.Entries.Count)
             {
                 if (playingCount == 0)
                 {
-                    Debug.WriteLine($"stopped {channel.ScriptFile.Name}");
-                    channel.Stop();
+                    Debug.WriteLine($"stopped {inst.ScriptFile.Name}");
+                    inst.Stop();
                     return;
                 }
             }
-            for (int i = channel.ScriptIndex + 1; i < channel.ScriptFile.Entries.Count; i++)
+            for (int i = inst.ScriptIndex + 1; i < inst.ScriptFile.Entries.Count; i++)
             {
-                SfxScriptEntry entry = channel.ScriptFile.Entries[i];
-                if (entry.Delay > channel.PlayTime)
+                SfxScriptEntry entry = inst.ScriptFile.Entries[i];
+                if (entry.Delay > inst.PlayTime)
                 {
                     break;
                 }
-                channel.ScriptIndex = i;
+                inst.ScriptIndex = i;
                 int sfxId = entry.SfxData & 0x3FFF;
                 if ((entry.SfxData & 0x8000) != 0)
                 {
-                    if (channel.Source == null)
+                    if (inst.Source == null)
                     {
                         StopSoundById(sfxId);
                     }
                     else
                     {
-                        StopSoundFromSource(channel.Source, sfxId);
+                        StopSoundFromSource(inst.Source, sfxId);
                     }
                 }
-                if (playingCount >= 3)
+                if (playingCount >= 8)
                 {
                     Debugger.Break();
                 }
-                int index = i % 3; // sktodo: ?
-                // sktodo: handle pan by forcing relative position and overriding it
-                channel.Volume[index] = entry.Volume;
-                channel.Pitch[index] = entry.Pitch;
-                SetUpSample(sfxId, channel, index);
-                if (channel.Count > 3) // sktodo: ???
+                int index = -1;
+                for (int j = 0; j < inst.Channels.Length; j++)
                 {
-                    channel.Count = 3;
+                    if (inst.Channels[j] == null)
+                    {
+                        index = j;
+                        break;
+                    }
                 }
-                UpdateChannel(channel, channel.NoUpdate);
-                channel.PlayChannel(index, loop: (entry.SfxData & 0x4000) != 0);
+                if (index == -1)
+                {
+                    Debug.Assert(false, "SFX script tried to play more than 8 concurrent channels");
+                    inst.Stop();
+                    return;
+                }
+                // sktodo: handle pan by forcing relative position and overriding it
+                inst.Volume[index] = entry.Volume;
+                inst.Pitch[index] = entry.Pitch;
+                if (!SetUpSample(sfxId, inst, index))
+                {
+                    inst.Stop();
+                    return;
+                }
+                UpdateInstance(inst, inst.NoUpdate);
+                inst.PlayChannel(index, loop: (entry.SfxData & 0x4000) != 0);
             }
         }
 
@@ -733,34 +871,35 @@ namespace MphRead.Sound
             Vector3 listenerFacing = PlayerEntity.Main.CameraInfo.Facing;
             AL.Listener(ALListener3f.Position, ref listenerPos);
             AL.Listener(ALListenerfv.Orientation, ref listenerFacing, ref listenerUp);
-            Debug.Assert(_streamChannel != -1);
+            Debug.Assert(_streamInstance != -1);
             Debug.Assert(_streamBuffer != -1);
             Vector3 sourcePos = PlayerEntity.Main.CameraInfo.Position;
-            AL.Source(_streamChannel, ALSource3f.Position, ref sourcePos);
-            AL.Source(_streamChannel, ALSourcef.ReferenceDistance, Single.MaxValue);
-            AL.Source(_streamChannel, ALSourcef.MaxDistance, Single.MaxValue);
-            AL.Source(_streamChannel, ALSourcef.RolloffFactor, 1);
-            for (int i = 0; i < _channels.Length; i++)
+            AL.Source(_streamInstance, ALSource3f.Position, ref sourcePos);
+            AL.Source(_streamInstance, ALSourcef.ReferenceDistance, Single.MaxValue);
+            AL.Source(_streamInstance, ALSourcef.MaxDistance, Single.MaxValue);
+            AL.Source(_streamInstance, ALSourcef.RolloffFactor, 1);
+            for (int i = 0; i < _instances.Length; i++)
             {
-                SoundChannel channel = _channels[i];
-                if (channel.PlayTime >= 0)
+                SoundInstance inst = _instances[i];
+                if (inst.PlayTime >= 0)
                 {
-                    if (channel.ScriptFile != null)
+                    if (inst.ScriptFile != null)
                     {
-                        UpdateScript(channel, time);
+                        UpdateScript(inst, time);
                         continue;
                     }
                     bool playing = false;
-                    for (int j = 0; j < channel.Count; j++)
+                    for (int j = 0; j < inst.Count; j++)
                     {
-                        AL.GetSource(channel.ChannelIds[j], ALGetSourcei.SourceState, out int value);
+                        int channelId = inst.Channels[j].Id;
+                        AL.GetSource(channelId, ALGetSourcei.SourceState, out int value);
                         var state = (ALSourceState)value;
                         if (state == ALSourceState.Playing)
                         {
-                            if (channel.Volume[j] == 0)
+                            if (inst.Volume[j] == 0)
                             {
                                 // DGN reduced to zero volume
-                                AL.SourceStop(channel.ChannelIds[j]);
+                                AL.SourceStop(channelId);
                                 continue;
                             }
                             playing = true;
@@ -769,13 +908,13 @@ namespace MphRead.Sound
                     }
                     if (playing)
                     {
-                        channel.PlayTime += time;
-                        channel.UpdatePosition();
-                        channel.UpdateParameters();
+                        inst.PlayTime += time;
+                        inst.UpdatePosition();
+                        inst.UpdateParameters();
                     }
                     else
                     {
-                        channel.Stop();
+                        inst.Stop();
                     }
                 }
             }
@@ -786,10 +925,10 @@ namespace MphRead.Sound
         public static int CountPlayingSfx(int id)
         {
             int count = 0;
-            for (int i = 0; i < _channels.Length; i++)
+            for (int i = 0; i < _instances.Length; i++)
             {
-                SoundChannel channel = _channels[i];
-                if (channel.Handle != -1 && channel.SfxId == id)
+                SoundInstance inst = _instances[i];
+                if (inst.Handle != -1 && inst.SfxId == id)
                 {
                     count++;
                 }
@@ -853,11 +992,11 @@ namespace MphRead.Sound
             {
                 if (item.Instances > 0)
                 {
-                    SoundChannel? channel = PlaySample(item.SfxId, item.Source, loop: true,
+                    SoundInstance? inst = PlaySample(item.SfxId, item.Source, loop: true,
                         noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
-                    if (channel != null)
+                    if (inst != null)
                     {
-                        item.Handle = channel.Handle;
+                        item.Handle = inst.Handle;
                     }
                 }
                 else if (item.Handle != -1)
@@ -881,7 +1020,7 @@ namespace MphRead.Sound
         public static SoundData _soundData = null!;
         private static readonly LinkedList<QueueItem> _activeQueue = new LinkedList<QueueItem>();
         private static readonly Queue<QueueItem> _inactiveQueue = new Queue<QueueItem>(16);
-        private static int _streamChannel = -1;
+        private static int _streamInstance = -1;
         private static int _streamBuffer = -1;
 
         public static void QueueStream(int id, float delay, float expiration)
@@ -910,12 +1049,12 @@ namespace MphRead.Sound
                 Debug.Assert(item.Stream != null);
                 if (index == 0 && item.Playing)
                 {
-                    AL.GetSource(_streamChannel, ALGetSourcei.SourceState, out int value);
+                    AL.GetSource(_streamInstance, ALGetSourcei.SourceState, out int value);
                     var state = (ALSourceState)value;
                     if (state != ALSourceState.Initial && state != ALSourceState.Playing)
                     {
-                        AL.SourceStop(_streamChannel);
-                        AL.Source(_streamChannel, ALSourcei.Buffer, 0);
+                        AL.SourceStop(_streamInstance);
+                        AL.Source(_streamInstance, ALSourcei.Buffer, 0);
                         item.Stream = null;
                         _activeQueue.Remove(node);
                         node = next;
@@ -943,11 +1082,11 @@ namespace MphRead.Sound
                         format = item.Stream.Channels.Count == 2 ? ALFormat.Stereo8 : ALFormat.Mono8;
                     }
                     AL.BufferData(_streamBuffer, format, item.Stream.BufferData.Value, item.Stream.SampleRate);
-                    AL.Source(_streamChannel, ALSourcei.Buffer, _streamBuffer);
+                    AL.Source(_streamInstance, ALSourcei.Buffer, _streamBuffer);
                     // sfxtodo: loop points
-                    AL.Source(_streamChannel, ALSourceb.Looping, item.Stream.Loop);
-                    AL.Source(_streamChannel, ALSourcef.Gain, Volume * item.Stream.Volume);
-                    AL.SourcePlay(_streamChannel);
+                    AL.Source(_streamInstance, ALSourceb.Looping, item.Stream.Loop);
+                    AL.Source(_streamInstance, ALSourcef.Gain, Volume * item.Stream.Volume);
+                    AL.SourcePlay(_streamInstance);
                     item.Playing = true;
                     node = next;
                     index++;
@@ -995,14 +1134,24 @@ namespace MphRead.Sound
             _device = ALC.OpenDevice(null);
             _context = ALC.CreateContext(_device, new ALContextAttributes());
             ALC.MakeContextCurrent(_context);
-            AL.GenBuffers(_bufferIds);
-            AL.GenSources(_channelIds);
-            for (int i = 0; i < _channelIds.Length; i += 3)
+            int[] bufferIds = new int[_buffers.Length];
+            AL.GenBuffers(bufferIds);
+            for (int i = 0; i < _buffers.Length; i++)
             {
-                _channels[i / 3] = new SoundChannel(_channelIds[i], _channelIds[i + 1], _channelIds[i + 2]);
+                _buffers[i] = new SoundBuffer(bufferIds[i]);
+            }
+            int[] channelIds = new int[_channels.Length];
+            AL.GenSources(channelIds);
+            for (int i = 0; i < _channels.Length; i++)
+            {
+                _channels[i] = new SoundChannel(channelIds[i]);
+            }
+            for (int i = 0; i < _instances.Length; i++)
+            {
+                _instances[i] = new SoundInstance();
             }
             _streamBuffer = AL.GenBuffer();
-            _streamChannel = AL.GenSource();
+            _streamInstance = AL.GenSource();
             if (!Features.LogSpatialAudio)
             {
                 AL.DistanceModel(ALDistanceModel.LinearDistanceClamped);
@@ -1011,16 +1160,21 @@ namespace MphRead.Sound
 
         public static void ShutDown()
         {
-            for (int i = 0; i < _channels.Length; i++)
+            for (int i = 0; i < _instances.Length; i++)
             {
-                SoundChannel channel = _channels[i];
-                for (int j = 0; j < channel.Count; j++)
+                SoundInstance inst = _instances[i];
+                for (int j = 0; j < inst.Channels.Length; j++)
                 {
-                    AL.GetSource(channel.ChannelIds[j], ALGetSourcei.SourceState, out int value);
+                    SoundChannel? channel = inst.Channels[j];
+                    if (channel == null)
+                    {
+                        continue;
+                    }
+                    AL.GetSource(channel.Id, ALGetSourcei.SourceState, out int value);
                     var state = (ALSourceState)value;
                     if (state == ALSourceState.Playing)
                     {
-                        channel.Stop();
+                        inst.Stop();
                         break;
                     }
                 }
