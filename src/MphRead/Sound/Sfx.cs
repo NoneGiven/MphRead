@@ -809,6 +809,9 @@ namespace MphRead.Sound
                     {
                         channel.Stop();
                         inst.Channels[i] = null!;
+                        SoundSample sample = inst.Samples[i];
+                        sample.References--;
+                        inst.Samples[i] = null!;
                     }
                 }
             }
