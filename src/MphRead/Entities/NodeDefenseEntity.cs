@@ -264,19 +264,19 @@ namespace MphRead.Entities
             }
             if (value1 == 1)
             {
-                // sfxtodo: stop CAPTURE_RING_SCRIPT1
+                _soundSource.StopFreeSfxScripts();
                 if (nodeCount == 0)
                 {
-                    // sfxtodo: play CAPTURE_RING_SCRIPT1
+                    _soundSource.PlayFreeSfx(SfxId.CAPTURE_RING_SCRIPT1);
                 }
                 else if (nodeCount == 1)
                 {
-                    // sfxtodo: play CAPTURE_RING_SCRIPT2
+                    _soundSource.PlayFreeSfx(SfxId.CAPTURE_RING_SCRIPT2);
                 }
                 else
                 {
-                    // sfxtodo: play CAPTURE_RING_SCRIPT3
-                } 
+                    _soundSource.PlayFreeSfx(SfxId.CAPTURE_RING_SCRIPT3);
+                }
             }
             else if (value1 == 2)
             {
@@ -287,7 +287,7 @@ namespace MphRead.Entities
             }
             else if (value1 == 3)
             {
-                // sfxtodo: stop CAPTURE_RING_SCRIPT1
+                _soundSource.StopFreeSfxScripts();
                 _soundSource.PlayFreeSfx(SfxId.CAPTURE_RING_FAIL);
             }
             float prevRotation = _curRotation;

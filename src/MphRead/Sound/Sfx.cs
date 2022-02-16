@@ -74,7 +74,12 @@ namespace MphRead.Sound
         {
             if (id >= 0)
             {
-                Debug.Assert((id & 0xC000) == 0);
+                Debug.Assert((id & 0x8000) == 0);
+                if ((id & 0x4000) != 0)
+                {
+                    Sfx.PlayScript(id, null, noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                    return -1;
+                }
                 return Sfx.PlaySample(id, null, loop: false, noUpdate: false,
                     recency: -1, sourceOnly: false, cancellable: false)?.Handle ?? -1;
             }
@@ -104,6 +109,11 @@ namespace MphRead.Sound
         public void StopSfxByHandle(int handle)
         {
             Sfx.StopSoundByHandle(handle);
+        }
+
+        public void StopFreeSfxScripts()
+        {
+            Sfx.StopFreeSfxScripts();
         }
 
         public bool IsHandlePlaying(int handle)
@@ -658,6 +668,18 @@ namespace MphRead.Sound
             }
         }
 
+        public static void StopFreeSfxScripts()
+        {
+            for (int i = 0; i < _instances.Length; i++)
+            {
+                SoundInstance inst = _instances[i];
+                if (inst.ScriptFile != null)
+                {
+                    inst.Stop();
+                }
+            }
+        }
+
         public static bool IsHandlePlaying(int handle)
         {
             if (handle >= 0)
@@ -873,7 +895,6 @@ namespace MphRead.Sound
                     inst.Stop();
                     return;
                 }
-                // sktodo: handle pan by forcing relative position and overriding it
                 inst.Volume[index] = entry.Volume;
                 inst.Pitch[index] = entry.Pitch;
                 if (!SetUpSample(sfxId, inst, index))
