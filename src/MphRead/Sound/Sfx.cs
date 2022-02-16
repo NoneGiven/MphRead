@@ -230,8 +230,7 @@ namespace MphRead.Sound
                     SoundChannel channel = Channels[i];
                     if (channel != null)
                     {
-                        AL.SourceStop(channel.Id);
-                        channel.InUse = false;
+                        channel.Stop();
                         Channels[i] = null!;
                     }
                     SoundSample sample = Samples[i];
@@ -267,6 +266,15 @@ namespace MphRead.Sound
             {
                 Id = id;
             }
+
+            public void Stop()
+            {
+                AL.SourceStop(Id);
+                // buffer must be disassociated from sources in order to buffer new data
+                AL.Source(Id, ALSourcei.Buffer, 0);
+                InUse = false;
+                BufferId = 0;
+            }
         }
 
         public class SoundBuffer
@@ -280,10 +288,10 @@ namespace MphRead.Sound
             }
         }
 
-        // sfxtodo: clear all of this stuff on shutdown
+        // sktodo: clear all of this stuff on shutdown
         private static ALDevice _device = ALDevice.Null;
         private static ALContext _context = ALContext.Null;
-        private static readonly SoundBuffer[] _buffers = new SoundBuffer[32];
+        private static readonly SoundBuffer[] _buffers = new SoundBuffer[64];
         private static readonly SoundChannel[] _channels = new SoundChannel[128];
         private static readonly SoundInstance[] _instances = new SoundInstance[128];
 
@@ -799,6 +807,7 @@ namespace MphRead.Sound
                     }
                     else
                     {
+                        channel.Stop();
                         inst.Channels[i] = null!;
                     }
                 }
