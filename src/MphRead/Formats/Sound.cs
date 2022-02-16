@@ -7,8 +7,6 @@ using System.Runtime.InteropServices;
 
 namespace MphRead.Formats.Sound
 {
-    // todo: are any bytes not being read in SFXSCRIPTFILES or DGNFILES?
-    // (we know there are in sound_data, and we know there aren't in the rest of the current ones)
     public static partial class SoundRead
     {
         public static void ExportSamples(bool adpcmRoundingError = false)
@@ -1102,9 +1100,9 @@ namespace MphRead.Formats.Sound
     {
         public readonly ushort SfxId;
         public readonly ushort Delay;
-        public readonly byte Param1; // todo: these are passed to play_sfx_2; what are they?
-        public readonly byte Param2;
-        public readonly ushort Param3;
+        public readonly byte Volume;
+        public readonly byte Pan;
+        public readonly ushort Pitch;
         public readonly uint Handle; // set at runtime
     }
 
@@ -1170,10 +1168,10 @@ namespace MphRead.Formats.Sound
     public class DgnFileEntry
     {
         public SfxId SfxId { get; }
-        public IReadOnlyList<DgnData> Data1 { get; }
-        public IReadOnlyList<DgnData> Data2 { get; }
-        public IReadOnlyList<DgnData> Data3 { get; }
-        public IReadOnlyList<DgnData> Data4 { get; }
+        public IReadOnlyList<DgnData> Data1 { get; } // volume as percentage of max
+        public IReadOnlyList<DgnData> Data2 { get; } // max volume
+        public IReadOnlyList<DgnData> Data3 { get; } // pitch as percentage of max
+        public IReadOnlyList<DgnData> Data4 { get; } // max pitch
 
         public DgnFileEntry(ushort sfxId, IReadOnlyList<DgnData> data1, IReadOnlyList<DgnData> data2,
             IReadOnlyList<DgnData> data3, IReadOnlyList<DgnData> data4)
