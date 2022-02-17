@@ -155,14 +155,14 @@ namespace MphRead.Formats.Sound
             uint loopLength;
             if (sample.Format == WaveFormat.ADPCM)
             {
-                loopStart = (sample.LoopStart * 4u - 4u) * 2u;
-                loopLength = sample.LoopLength * 8u;
+                loopStart = (sample.SampleStart * 4u - 4u) * 2u;
+                loopLength = sample.SampleLength * 8u;
             }
             else
             {
                 // this is valid for FH's header format only
-                loopStart = sample.LoopStart;
-                loopLength = sample.LoopLength;
+                loopStart = sample.SampleStart;
+                loopLength = sample.SampleLength;
             }
             return loopStart + loopLength;
         }
@@ -885,8 +885,10 @@ namespace MphRead.Formats.Sound
         public WaveFormat Format { get; }
         public bool Loop { get; }
         public ushort SampleRate { get; }
-        public uint LoopStart { get; }
-        public uint LoopLength { get; }
+        public uint SampleStart { get; }
+        public uint SampleLength { get; }
+        public int LoopStart { get; }
+        public int LoopLength { get; }
 
         private readonly byte[] _data;
         public IReadOnlyList<byte> Data => _data;
@@ -894,6 +896,7 @@ namespace MphRead.Formats.Sound
         public float Volume { get; set; } = 1;
         public Lazy<byte[]> WaveData { get; }
         public int BufferId { get; set; }
+        public int BufferCount { get; set; }
         public int References { get; set; }
         public string? Name { get; set; }
 
@@ -908,10 +911,15 @@ namespace MphRead.Formats.Sound
             Format = (WaveFormat)header.Format;
             Loop = header.LoopFlag != 0;
             SampleRate = header.SampleRate;
-            LoopStart = header.LoopStart;
-            LoopLength = header.LoopLength;
+            SampleStart = header.LoopStart;
+            SampleLength = header.LoopLength;
             _data = data.ToArray();
             WaveData = new Lazy<byte[]>(() => SoundRead.GetWaveData(this));
+            if (Format == WaveFormat.ADPCM)
+            {
+                LoopStart = (int)((SampleStart * 4u - 4u) * 2u);
+                LoopLength = (int)(SampleLength * 8u);
+            }
         }
 
         public SoundSample(uint id, uint offset, FhSoundSampleHeader header, ReadOnlySpan<byte> data)
@@ -923,23 +931,23 @@ namespace MphRead.Formats.Sound
             {
                 Format = WaveFormat.ADPCM;
                 Loop = header.LoopStart > 1;
-                LoopStart = header.LoopStart;
+                SampleStart = header.LoopStart;
                 if (header.LoopEnd * 4 > data.Length)
                 {
                     // a few FH sounds seem to have the length off by one
-                    LoopLength = (header.LoopEnd - header.LoopStart - 1);
+                    SampleLength = (header.LoopEnd - header.LoopStart - 1);
                 }
                 else
                 {
-                    LoopLength = (header.LoopEnd - header.LoopStart);
+                    SampleLength = (header.LoopEnd - header.LoopStart);
                 }
             }
             else if (header.Format == 0)
             {
                 Format = WaveFormat.PCM8;
                 Loop = header.LoopStart > 0;
-                LoopStart = header.LoopStart;
-                LoopLength = header.LoopEnd - header.LoopStart;
+                SampleStart = header.LoopStart;
+                SampleLength = header.LoopEnd - header.LoopStart;
             }
             else
             {
@@ -947,6 +955,18 @@ namespace MphRead.Formats.Sound
             }
             _data = data.ToArray();
             WaveData = new Lazy<byte[]>(() => SoundRead.GetWaveData(this));
+            if (Format == WaveFormat.ADPCM)
+            {
+                LoopStart = (int)((SampleStart * 4u - 4u) * 2u);
+                LoopLength = (int)(SampleLength * 8u);
+            }
+            else
+            {
+                Debug.Assert(Format == WaveFormat.PCM8);
+                // this is valid for FH's header format only
+                LoopStart = (int)SampleStart;
+                LoopLength = (int)SampleLength;
+            }
         }
 
         private SoundSample(uint id)
@@ -965,6 +985,36 @@ namespace MphRead.Formats.Sound
         public ReadOnlySpan<byte> CreateSpan()
         {
             return new ReadOnlySpan<byte>(_data);
+        }
+
+        public ReadOnlySpan<byte> GetIntro()
+        {
+            if (LoopStart == 0)
+            {
+                return new ReadOnlySpan<byte>();
+            }
+            byte[] data = WaveData.Value;
+            int factor = Format == WaveFormat.ADPCM ? 2 : 1;
+            return new ReadOnlySpan<byte>(data, 0, LoopStart * factor);
+        }
+
+        public ReadOnlySpan<byte> GetLoop()
+        {
+            byte[] data = WaveData.Value;
+            int factor = Format == WaveFormat.ADPCM ? 2 : 1;
+            return new ReadOnlySpan<byte>(data, LoopStart * factor, LoopLength * factor);
+        }
+
+        public ReadOnlySpan<byte> GetOutro()
+        {
+            byte[] data = WaveData.Value;
+            int factor = Format == WaveFormat.ADPCM ? 2 : 1;
+            int start = (LoopStart + LoopLength) * factor;
+            if (start >= data.Length)
+            {
+                return new ReadOnlySpan<byte>();
+            }
+            return new ReadOnlySpan<byte>(data, start, data.Length - start);
         }
     }
 

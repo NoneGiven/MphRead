@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using MphRead.Entities;
@@ -157,7 +158,7 @@ namespace MphRead.Sound
             public float PlayTime { get; set; } = -1;
             public int SfxId { get; set; } = -1;
             public bool NoUpdate { get; set; }
-            public bool Loop { get; set; }
+            public bool[] Loop { get; } = new bool[_maxPerInst];
             public bool Cancellable { get; set; }
 
             public int Handle { get; set; } = -1;
@@ -172,11 +173,41 @@ namespace MphRead.Sound
                 }
             }
 
-            public void PlayChannel(int index, bool loop)
+            public void PlayChannel(int index)
             {
                 int channelId = Channels[index].Id;
-                AL.Source(channelId, ALSourceb.Looping, loop);
+                SoundSample sample = Samples[index];
+                AL.Source(channelId, ALSourceb.Looping, sample.BufferCount == 1 && Loop[index]);
                 AL.SourcePlay(channelId);
+            }
+
+            public void UpdateLoop()
+            {
+                for (int i = 0; i < _maxPerInst; i++)
+                {
+                    if (!Loop[i])
+                    {
+                        continue;
+                    }
+                    SoundChannel? channel = Channels[i];
+                    if (channel == null)
+                    {
+                        continue;
+                    }
+                    SoundSample? sample = Samples[i];
+                    Debug.Assert(sample != null && sample.BufferId != 0);
+                    if (sample.BufferCount == 1)
+                    {
+                        continue;
+                    }
+                    AL.GetSource(channel.Id, ALGetSourcei.Buffer, out int buffer);
+                    if (buffer > sample.BufferId)
+                    {
+                        AL.SourceUnqueueBuffers(channel.Id, numEntries: 1);
+                        sample.BufferCount--;
+                        AL.Source(channel.Id, ALSourceb.Looping, true);
+                    }
+                }
             }
 
             public void UpdatePosition()
@@ -253,6 +284,7 @@ namespace MphRead.Sound
                     }
                     Volume[i] = 1;
                     Pitch[i] = 1;
+                    Loop[i] = false;
                 }
                 PlayTime = -1;
                 SfxId = -1;
@@ -261,7 +293,6 @@ namespace MphRead.Sound
                 ScriptIndex = -1;
                 Source = null;
                 NoUpdate = false;
-                Loop = false;
                 Cancellable = false;
                 Handle = -1;
                 Count = 0;
@@ -283,7 +314,8 @@ namespace MphRead.Sound
             {
                 AL.SourceStop(Id);
                 // buffer must be disassociated from sources in order to buffer new data
-                AL.Source(Id, ALSourcei.Buffer, 0);
+                AL.SourceUnqueueBuffers(Id, numEntries: 1);
+                AL.SourceUnqueueBuffers(Id, numEntries: 1);
                 InUse = false;
                 BufferId = 0;
             }
@@ -326,6 +358,7 @@ namespace MphRead.Sound
             {
                 return null;
             }
+            inst.Loop[0] = loop;
             StartInstance(inst, noUpdate);
             return inst;
         }
@@ -353,6 +386,7 @@ namespace MphRead.Sound
                     inst.Stop();
                     return;
                 }
+                inst.Loop[i] = loop;
             }
             UpdateDgn(inst, amountA, amountB);
             for (int i = 0; i < inst.Count; i++)
@@ -387,7 +421,7 @@ namespace MphRead.Sound
             inst.ScriptFile = script;
         }
 
-        public bool SetUpInstance(int id, SoundSource? source, bool loop,
+        private bool SetUpInstance(int id, SoundSource? source, bool loop,
             float recency, bool sourceOnly, bool cancellable, out SoundInstance inst)
         {
             if (loop)
@@ -407,7 +441,6 @@ namespace MphRead.Sound
             inst = FindInstance(source);
             inst.Source = source;
             inst.PlayTime = 0;
-            inst.Loop = loop;
             inst.Cancellable = cancellable;
             inst.SfxId = id;
             inst.Handle = SoundInstance.NextHandle++;
@@ -446,7 +479,15 @@ namespace MphRead.Sound
             }
             if (channel.BufferId != sample.BufferId)
             {
-                AL.Source(channel.Id, ALSourcei.Buffer, sample.BufferId);
+                int bufferId = sample.BufferId;
+                if (sample.BufferCount == 1)
+                {
+                    AL.SourceQueueBuffers(channel.Id, new int[1] { bufferId });
+                }
+                else
+                {
+                    AL.SourceQueueBuffers(channel.Id, new int[2] { bufferId, bufferId + 1 });
+                }
                 channel.BufferId = sample.BufferId;
             }
             return true;
@@ -465,7 +506,7 @@ namespace MphRead.Sound
             UpdateInstance(inst, noUpdate);
             for (int i = 0; i < inst.Count; i++)
             {
-                inst.PlayChannel(index: i, inst.Loop);
+                inst.PlayChannel(index: i);
             }
         }
 
@@ -612,7 +653,16 @@ namespace MphRead.Sound
                 SoundInstance inst = _instances[i];
                 if (inst.Source == source)
                 {
-                    if ((force || inst.Loop || inst.Cancellable) && (!force || !inst.NoUpdate))
+                    bool loop = false;
+                    for (int j = 0; j < _maxPerInst; j++)
+                    {
+                        if (inst.Loop[j])
+                        {
+                            loop = true;
+                            break;
+                        }
+                    }
+                    if ((force || loop || inst.Cancellable) && (!force || !inst.NoUpdate))
                     {
                         inst.Stop();
                     }
@@ -757,7 +807,19 @@ namespace MphRead.Sound
                 }
                 dest.Sample = sample;
                 ALFormat format = sample.Format == WaveFormat.ADPCM ? ALFormat.Mono16 : ALFormat.Mono8;
-                AL.BufferData(dest.Id, format, sample.WaveData.Value, sample.SampleRate);
+                ReadOnlySpan<byte> intro = sample.GetIntro();
+                ReadOnlySpan<byte> loop = sample.GetLoop();
+                if (intro.Length > 0)
+                {
+                    AL.BufferData(dest.Id, format, intro, sample.SampleRate);
+                    AL.BufferData(dest.Id + 1, format, loop, sample.SampleRate);
+                    sample.BufferCount = 2;
+                }
+                else
+                {
+                    AL.BufferData(dest.Id, format, loop, sample.SampleRate);
+                    sample.BufferCount = 1;
+                }
                 sample.BufferId = dest.Id;
             }
 
@@ -841,6 +903,7 @@ namespace MphRead.Sound
                         SoundSample sample = inst.Samples[i];
                         sample.References--;
                         inst.Samples[i] = null!;
+                        inst.Loop[i] = false;
                     }
                 }
             }
@@ -911,7 +974,8 @@ namespace MphRead.Sound
                     }
                     AL.Source(channelId, ALSource3f.Position, ref position);
                 }
-                inst.PlayChannel(index, loop: (entry.SfxData & 0x4000) != 0);
+                inst.Loop[index] = (entry.SfxData & 0x4000) != 0;
+                inst.PlayChannel(index);
             }
         }
 
@@ -939,6 +1003,7 @@ namespace MphRead.Sound
                 SoundInstance inst = _instances[i];
                 if (inst.PlayTime >= 0)
                 {
+                    inst.UpdateLoop();
                     if (inst.ScriptFile != null)
                     {
                         if (inst.Source == null || !SfxMute)
@@ -1241,11 +1306,11 @@ namespace MphRead.Sound
             _device = ALC.OpenDevice(null);
             _context = ALC.CreateContext(_device, new ALContextAttributes());
             ALC.MakeContextCurrent(_context);
-            int[] bufferIds = new int[_buffers.Length * 3];
+            int[] bufferIds = new int[_buffers.Length * 2];
             AL.GenBuffers(bufferIds);
             for (int i = 0; i < _buffers.Length; i++)
             {
-                _buffers[i] = new SoundBuffer(bufferIds[i * 3]);
+                _buffers[i] = new SoundBuffer(bufferIds[i * 2]);
             }
             int[] channelIds = new int[_channels.Length];
             AL.GenSources(channelIds);
