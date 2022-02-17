@@ -139,7 +139,6 @@ namespace MphRead.Sound
         }
     }
 
-    // sfxtodo: pause all sounds when debugger breaks, frame advance is on, etc.
     public class Sfx
     {
         private const int _maxPerInst = 12;
