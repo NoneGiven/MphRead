@@ -229,7 +229,6 @@ namespace MphRead.Sound
                         continue;
                     }
                     int channelId = channel.Id;
-                    // sfxtodo: this volume multiplication isn't really right
                     float mute = SfxMute && (ScriptFile == null || Source != null) ? 0 : 1;
                     AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume[i] * Samples[i].Volume * mute);
                     AL.Source(channelId, ALSourcef.Pitch, Pitch[i]);
