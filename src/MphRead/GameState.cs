@@ -266,6 +266,7 @@ namespace MphRead
                     _matchEndTime = scene.ElapsedTime;
                     Sfx.Instance.StopFreeSfxScripts();
                     Sfx.Instance.StopAllSound();
+                    PlayerEntity.Main.StopLongSfx();
                     // sfxtodo: stop more kinds of SFX?
                     // mustodo: stop music and play timeout jingle
                 }

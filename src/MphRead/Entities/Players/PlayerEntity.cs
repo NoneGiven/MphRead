@@ -1663,7 +1663,8 @@ namespace MphRead.Entities
                         }
                         else
                         {
-                            _sfxStopTimer = 10 / 30f;
+                            // skdebug - this should be set once the room is reloading
+                            //_sfxStopTimer = 10 / 30f;
                             // mustodo?: update music or something?
                             _soundSource.PlayFreeSfx(SfxId.SAMUS_DEATH);
                         }

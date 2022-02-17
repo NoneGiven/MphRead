@@ -487,7 +487,7 @@ namespace MphRead.Entities
             }
         }
 
-        private void StopLongSfx()
+        public void StopLongSfx()
         {
             StopTimedSfx();
             if (Sfx.LongSfxMute == 0)
@@ -519,7 +519,7 @@ namespace MphRead.Entities
                 if (_sfxStopTimer <= 0)
                 {
                     _sfxStopTimer = 0;
-                    // sfxtodo: stop timed/env/source SFX (and set this timer for 1P death)
+                    StopLongSfx();
                 }
             }
             if (_damageSfxTimer > 0)
