@@ -230,7 +230,8 @@ namespace MphRead.Sound
                     }
                     int channelId = channel.Id;
                     // sfxtodo: this volume multiplication isn't really right
-                    AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume[i] * Samples[i].Volume * (SfxMute ? 0 : 1));
+                    float mute = SfxMute && (ScriptFile == null || Source != null) ? 0 : 1;
+                    AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume[i] * Samples[i].Volume * mute);
                     AL.Source(channelId, ALSourcef.Pitch, Pitch[i]);
                     AL.Source(channelId, ALSourceb.SourceRelative, false);
                     AL.Source(channelId, ALSourcef.RolloffFactor, 1);
@@ -943,7 +944,7 @@ namespace MphRead.Sound
                 {
                     if (inst.ScriptFile != null)
                     {
-                        if (!SfxMute)
+                        if (inst.Source == null || !SfxMute)
                         {
                             UpdateScript(inst, time);
                         }

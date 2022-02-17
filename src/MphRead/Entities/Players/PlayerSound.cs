@@ -452,7 +452,7 @@ namespace MphRead.Entities
         public float DoorUnlockSfxTimer = 0;
         public float DoorChimeSfxTimer = 0;
 
-        private void StopTimedSfx()
+        public void StopTimedSfx()
         {
             if (Sfx.TimedSfxMute == 0)
             {
@@ -471,7 +471,7 @@ namespace MphRead.Entities
             Sfx.TimedSfxMute++;
         }
 
-        private void RestartTimedSfx()
+        public void RestartTimedSfx()
         {
             if (--Sfx.TimedSfxMute <= 0)
             {
@@ -498,7 +498,7 @@ namespace MphRead.Entities
             Sfx.LongSfxMute++;
         }
 
-        private void RestartLongSfx()
+        public void RestartLongSfx()
         {
             RestartTimedSfx();
             if (--Sfx.LongSfxMute <= 0)
