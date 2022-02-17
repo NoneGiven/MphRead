@@ -918,7 +918,7 @@ namespace MphRead.Sound
 
         public static void Update(float time)
         {
-            Instance.UpdateInstance(time);
+            Instance?.UpdateInstance(time);
         }
 
         private void UpdateInstance(float time)
