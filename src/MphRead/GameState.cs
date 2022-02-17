@@ -333,6 +333,8 @@ namespace MphRead
                 PlayerEntity player = PlayerEntity.Players[i];
                 if (player.LoadFlags.TestFlag(LoadFlags.Active) && TeamPoints[player.TeamIndex] >= PointGoal)
                 {
+                    // deal with multiple nodes points on the same frame
+                    TeamPoints[player.TeamIndex] = PointGoal;
                     MatchTime = 0;
                     break;
                 }
