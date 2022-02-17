@@ -1012,7 +1012,7 @@ namespace MphRead.Sound
             {
                 if (Handle != -1)
                 {
-                    Sfx.Instance.StopSoundByHandle(Handle);
+                    Instance.StopSoundByHandle(Handle);
                 }
                 Handle = -1;
                 Instances = 0;
