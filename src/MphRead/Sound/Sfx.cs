@@ -230,7 +230,7 @@ namespace MphRead.Sound
                     }
                     int channelId = channel.Id;
                     // sfxtodo: this volume multiplication isn't really right
-                    AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume[i] * Samples[i].Volume * (SfxMute > 0 ? 0 : 1));
+                    AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume[i] * Samples[i].Volume * (SfxMute ? 0 : 1));
                     AL.Source(channelId, ALSourcef.Pitch, Pitch[i]);
                     AL.Source(channelId, ALSourceb.SourceRelative, false);
                     AL.Source(channelId, ALSourcef.RolloffFactor, 1);
@@ -943,7 +943,7 @@ namespace MphRead.Sound
                 {
                     if (inst.ScriptFile != null)
                     {
-                        if (SfxMute == 0)
+                        if (!SfxMute)
                         {
                             UpdateScript(inst, time);
                         }
@@ -979,7 +979,7 @@ namespace MphRead.Sound
                     }
                 }
             }
-            if (EnvironmentSfxMute == 0)
+            if (LongSfxMute == 0)
             {
                 UpdateEnvironmentSfx();
             }
@@ -1063,8 +1063,9 @@ namespace MphRead.Sound
 
         private void UpdateEnvironmentSfx()
         {
-            foreach (EnvironmentItem item in _environmentItems)
+            for (int i = 0; i < _environmentItems.Count; i++)
             {
+                EnvironmentItem item = _environmentItems[i];
                 if (item.Instances > 0)
                 {
                     SoundInstance? inst = PlaySample(item.SfxId, item.Source, loop: true,
@@ -1081,6 +1082,18 @@ namespace MphRead.Sound
                 }
                 item.Instances = 0;
                 item.DistanceSquared = Single.MaxValue;
+            }
+        }
+
+        public void StopEnvironmentSfx()
+        {
+            for (int i = 0; i < _environmentItems.Count; i++)
+            {
+                EnvironmentItem item = _environmentItems[i];
+                if (item.Instances > 0)
+                {
+                    item.Reset();
+                }
             }
         }
 
@@ -1188,19 +1201,19 @@ namespace MphRead.Sound
 
         public static Sfx Instance { get; private set; } = null!;
 
-        public static int SfxMute { get; set; }
+        public static bool SfxMute { get; set; }
         public static int ForceFieldSfxMute { get; set; }
         public static int TimedSfxMute { get; set; }
-        public static int EnvironmentSfxMute { get; set; }
+        public static int LongSfxMute { get; set; }
 
         public static void Load()
         {
             Instance = new Sfx();
             Instance.LoadInstance();
-            SfxMute = 0;
+            SfxMute = false;
             ForceFieldSfxMute = 0;
             TimedSfxMute = 0;
-            EnvironmentSfxMute = 0;
+            LongSfxMute = 0;
         }
 
         private void LoadInstance()

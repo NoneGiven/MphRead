@@ -1656,14 +1656,15 @@ namespace MphRead.Entities
                         // the game stops the unused weapon alarm SFX here
                         UpdateDoubleDamageSfx(index: 0, play: false);
                         UpdateCloakSfx(index: 0, play: false);
-                        // sfxtodo: stop SFX scripts
+                        _soundSource.StopFreeSfxScripts();
                         if (_scene.Multiplayer)
                         {
                             PlayHunterSfx(HunterSfx.Death);
                         }
                         else
                         {
-                            // sfxtodo: stop more SFX
+                            _sfxStopTimer = 10 / 30f;
+                            // mustodo?: update music or something?
                             _soundSource.PlayFreeSfx(SfxId.SAMUS_DEATH);
                         }
                     }

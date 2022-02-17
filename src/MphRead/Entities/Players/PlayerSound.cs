@@ -359,6 +359,7 @@ namespace MphRead.Entities
             SfxId.DBL_DAMAGE_A, SfxId.DBL_DAMAGE_B, SfxId.DBL_DAMAGE_C
         };
 
+        public bool _dblDamageSfxMuted = false;
         private int _dblDamageSfxHandle = -1;
         private SfxId _dblDamageSfxId = SfxId.None;
 
@@ -396,6 +397,7 @@ namespace MphRead.Entities
             SfxId.CLOAK_A, SfxId.CLOAK_B, SfxId.CLOAK_C
         };
 
+        private bool _cloakSfxMuted = false;
         private int _cloakSfxHandle = -1;
         private SfxId _cloakSfxId = SfxId.None;
 
@@ -429,6 +431,7 @@ namespace MphRead.Entities
         }
 
         private bool _flagCarrySfxOn = false;
+        private bool _flagCarrySfxMuted = false;
         private int _flagCarrySfxHandle = -1;
 
         public void StartFlagCarrySfx()
@@ -448,6 +451,64 @@ namespace MphRead.Entities
         public float ForceFieldSfxTimer = 0;
         public float DoorUnlockSfxTimer = 0;
         public float DoorChimeSfxTimer = 0;
+
+        private void StopTimedSfx()
+        {
+            if (Sfx.TimedSfxMute == 0)
+            {
+                // the game stops the double damage and cloak SFX, but we just mute them
+                _dblDamageSfxMuted = true;
+                _cloakSfxMuted = true;
+                if (_flagCarrySfxOn)
+                {
+                    _flagCarrySfxOn = false;
+                    _flagCarrySfxMuted = true;
+                }
+                UpdateHealthSfx(health: 0);
+                // the game also suspends the weapon alarm SFX here
+                // sfxtodo: stop/mute scan SFX
+            }
+            Sfx.TimedSfxMute++;
+        }
+
+        private void RestartTimedSfx()
+        {
+            if (--Sfx.TimedSfxMute <= 0)
+            {
+                _dblDamageSfxMuted = false;
+                _cloakSfxMuted = false;
+                Sfx.TimedSfxMute = 0;
+                if (_flagCarrySfxMuted)
+                {
+                    _flagCarrySfxMuted = false;
+                    _flagCarrySfxOn = true;
+                }
+                // the game also restarts the weapon alarm SFX here
+            }
+        }
+
+        private void StopLongSfx()
+        {
+            StopTimedSfx();
+            if (Sfx.LongSfxMute == 0)
+            {
+                Sfx.SfxMute = true;
+                Sfx.Instance.StopEnvironmentSfx();
+            }
+            Sfx.LongSfxMute++;
+        }
+
+        private void RestartLongSfx()
+        {
+            RestartTimedSfx();
+            if (--Sfx.LongSfxMute <= 0)
+            {
+                Sfx.LongSfxMute = 0;
+                // the game does this along with the timed SFX,
+                // even though it's the long SFX suppression that sets this true
+                Sfx.SfxMute = false;
+            }
+        }
 
         public void UpdateTimedSounds()
         {
@@ -469,11 +530,11 @@ namespace MphRead.Entities
                     _damageSfxTimer = 0;
                 }
             }
-            if (_dblDamageSfxId != SfxId.None && !_soundSource.IsHandlePlaying(_dblDamageSfxHandle))
+            if (_dblDamageSfxId != SfxId.None && !_soundSource.IsHandlePlaying(_dblDamageSfxHandle) && !_dblDamageSfxMuted)
             {
                 _dblDamageSfxHandle = _soundSource.PlayFreeSfx(_dblDamageSfxId);
             }
-            if (_cloakSfxId != SfxId.None && !_soundSource.IsHandlePlaying(_cloakSfxHandle))
+            if (_cloakSfxId != SfxId.None && !_soundSource.IsHandlePlaying(_cloakSfxHandle) && !_cloakSfxMuted)
             {
                 _cloakSfxHandle = _soundSource.PlayFreeSfx(_cloakSfxId);
             }
@@ -507,7 +568,7 @@ namespace MphRead.Entities
                 }
             }
             // sfxtodo: escape sequence and pause stuff
-            if (Sfx.EnvironmentSfxMute == 0 && DoorUnlockSfxTimer > 0)
+            if (Sfx.LongSfxMute == 0 && DoorUnlockSfxTimer > 0)
             {
                 DoorUnlockSfxTimer -= _scene.FrameTime;
                 if (DoorUnlockSfxTimer <= 1 / 30f)
