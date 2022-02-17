@@ -175,7 +175,6 @@ namespace MphRead.Sound
             public void PlayChannel(int index, bool loop)
             {
                 int channelId = Channels[index].Id;
-                // sfxtodo: loop points (needs opentk update)
                 AL.Source(channelId, ALSourceb.Looping, loop);
                 AL.SourcePlay(channelId);
             }
@@ -1175,7 +1174,6 @@ namespace MphRead.Sound
                     }
                     AL.BufferData(_streamBuffer, format, item.Stream.BufferData.Value, item.Stream.SampleRate);
                     AL.Source(_streamInstance, ALSourcei.Buffer, _streamBuffer);
-                    // sfxtodo: loop points
                     AL.Source(_streamInstance, ALSourceb.Looping, item.Stream.Loop);
                     AL.Source(_streamInstance, ALSourcef.Gain, Volume * item.Stream.Volume);
                     AL.SourcePlay(_streamInstance);
@@ -1243,11 +1241,11 @@ namespace MphRead.Sound
             _device = ALC.OpenDevice(null);
             _context = ALC.CreateContext(_device, new ALContextAttributes());
             ALC.MakeContextCurrent(_context);
-            int[] bufferIds = new int[_buffers.Length];
+            int[] bufferIds = new int[_buffers.Length * 3];
             AL.GenBuffers(bufferIds);
             for (int i = 0; i < _buffers.Length; i++)
             {
-                _buffers[i] = new SoundBuffer(bufferIds[i]);
+                _buffers[i] = new SoundBuffer(bufferIds[i * 3]);
             }
             int[] channelIds = new int[_channels.Length];
             AL.GenSources(channelIds);
