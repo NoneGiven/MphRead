@@ -645,16 +645,13 @@ namespace MphRead.Entities
                                 float pct = Vector3.Distance(Position, SpawnPosition) / MaxDistance;
                                 damage = GetInterpolatedValue(DamageInterpolation, Damage, 0, pct);
                             }
-                            if (damage > 0)
+                            if (damage > 0 && (Beam != BeamType.ShockCoil || _scene.FrameCount % 2 == 0)) // todo: FPS stuff
                             {
-                                if (Beam != BeamType.ShockCoil || _scene.FrameCount % 2 == 0) // todo: FPS stuff
-                                {
-                                    enemy.TakeDamage((uint)damage, this);
-                                    SpawnCollisionEffect(anyRes, noSplat: true);
-                                }
-                                OnCollision(anyRes, colWith);
-                                PlayBeamHitSfx();
+                                enemy.TakeDamage((uint)damage, this);
+                                SpawnCollisionEffect(anyRes, noSplat: true);
                             }
+                            OnCollision(anyRes, colWith);
+                            PlayBeamHitSfx();
                         }
                         ricochet = false;
                     }
