@@ -1177,7 +1177,7 @@ namespace MphRead
             if (_exiting)
             {
                 return false;
-            } 
+            }
             // pass 1: opaque
             GL.ColorMask(true, true, true, true);
             GL.Enable(EnableCap.AlphaTest);

@@ -126,7 +126,7 @@ namespace MphRead
         None = -1,
         VOICE_CONSECUTIVE_KILLS = 0,
         VOICE_ONE_KILL_TO_WIN = 1,
-        VOICE_ELIMINATED =  2,
+        VOICE_ELIMINATED = 2,
         VOICE_CAMPING = 3,
         VOICE_PRIME = 4,
         VOICE_BOUNTY = 5,
