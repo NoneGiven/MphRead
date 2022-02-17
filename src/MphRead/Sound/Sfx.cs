@@ -230,7 +230,7 @@ namespace MphRead.Sound
                     }
                     int channelId = channel.Id;
                     // sfxtodo: this volume multiplication isn't really right
-                    AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume[i] * Samples[i].Volume);
+                    AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume[i] * Samples[i].Volume * (SfxMute > 0 ? 0 : 1));
                     AL.Source(channelId, ALSourcef.Pitch, Pitch[i]);
                     AL.Source(channelId, ALSourceb.SourceRelative, false);
                     AL.Source(channelId, ALSourcef.RolloffFactor, 1);
@@ -943,7 +943,10 @@ namespace MphRead.Sound
                 {
                     if (inst.ScriptFile != null)
                     {
-                        UpdateScript(inst, time);
+                        if (SfxMute == 0)
+                        {
+                            UpdateScript(inst, time);
+                        }
                         continue;
                     }
                     bool playing = false;
@@ -976,7 +979,10 @@ namespace MphRead.Sound
                     }
                 }
             }
-            UpdateEnvironmentSfx();
+            if (EnvironmentSfxMute == 0)
+            {
+                UpdateEnvironmentSfx();
+            }
             UpdateStreams(time);
         }
 
@@ -1055,7 +1061,7 @@ namespace MphRead.Sound
             item.Instances++;
         }
 
-        public void UpdateEnvironmentSfx()
+        private void UpdateEnvironmentSfx()
         {
             foreach (EnvironmentItem item in _environmentItems)
             {
@@ -1182,10 +1188,19 @@ namespace MphRead.Sound
 
         public static Sfx Instance { get; private set; } = null!;
 
+        public static int SfxMute { get; set; }
+        public static int ForceFieldSfxMute { get; set; }
+        public static int TimedSfxMute { get; set; }
+        public static int EnvironmentSfxMute { get; set; }
+
         public static void Load()
         {
             Instance = new Sfx();
             Instance.LoadInstance();
+            SfxMute = 0;
+            ForceFieldSfxMute = 0;
+            TimedSfxMute = 0;
+            EnvironmentSfxMute = 0;
         }
 
         private void LoadInstance()

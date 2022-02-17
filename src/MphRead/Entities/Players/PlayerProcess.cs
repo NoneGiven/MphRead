@@ -4,6 +4,7 @@ using System.Diagnostics;
 using MphRead.Entities.Enemies;
 using MphRead.Formats;
 using MphRead.Formats.Culling;
+using MphRead.Sound;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -993,7 +994,8 @@ namespace MphRead.Entities
                     Vector3 between = item.Position - Position;
                     Vector3 lateral = between.WithY(0);
                     if (Vector3.Dot(lateral, lateral) < distSqr
-                        && between.Y >= Fixed.ToFloat(Values.MinPickupHeight) && between.Y <= Fixed.ToFloat(Values.MaxPickupHeight))
+                        && between.Y >= Fixed.ToFloat(Values.MinPickupHeight)
+                        && between.Y <= Fixed.ToFloat(Values.MaxPickupHeight))
                     {
                         inRange = true;
                     }
@@ -1022,7 +1024,10 @@ namespace MphRead.Entities
                         pickedUp = true;
                         _timeSinceHeal = 0;
                         GainHealth(_healthPickupAmounts[(int)item.ItemType]);
-                        PlaySfx(item.ItemType == ItemType.HealthSmall ? SfxId.POWER_UP1 : SfxId.POWER_UP2);
+                        if (Sfx.TimedSfxMute == 0)
+                        {
+                            PlaySfx(item.ItemType == ItemType.HealthSmall ? SfxId.POWER_UP1 : SfxId.POWER_UP2);
+                        }
                     }
                     break;
                 case ItemType.UASmall:
@@ -1152,7 +1157,7 @@ namespace MphRead.Entities
                 if (Hunter == Hunter.Samus || Hunter == Hunter.Guardian) // game doesn't check for Guardian
                 {
                     _ammo[1] = Math.Min(_ammo[1] + 50, _ammoMax[1]);
-                    if (IsMainPlayer) // sfxtodo: and sound isn't paused for jingle
+                    if (IsMainPlayer && Sfx.TimedSfxMute == 0)
                     {
                         _soundSource.PlayFreeSfx(SfxId.AMMO_POWER_UP1);
                     }
@@ -1209,12 +1214,12 @@ namespace MphRead.Entities
                         UpdateAffinityWeaponSlot(weapon, slot: 2);
                     }
                 }
-                if (IsMainPlayer) // sfxtodo: and sound isn't paused for jingle
+                if (IsMainPlayer && Sfx.TimedSfxMute == 0)
                 {
                     _soundSource.PlayFreeSfx(SfxId.WEAPON_POWER_UP);
                 }
             }
-            else if (IsMainPlayer) // sfxtodo: and sound isn't paused for jingle
+            else if (IsMainPlayer && Sfx.TimedSfxMute == 0)
             {
                 _soundSource.PlayFreeSfx(SfxId.AMMO_POWER_UP1);
             }

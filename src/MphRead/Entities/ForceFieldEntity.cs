@@ -1,5 +1,6 @@
 using MphRead.Entities.Enemies;
 using MphRead.Formats;
+using MphRead.Sound;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -107,11 +108,10 @@ namespace MphRead.Entities
                 {
                     if (CameraSequence.Current == null)
                     {
-                        // sfxtodo: set up timed SFX
+                        PlayerEntity.Main.ForceFieldSfxTimer = 2 / 30f;
                     }
-                    else if (_soundSource.CountPlayingSfx(SfxId.GEN_OFF) == 0)
+                    else if (Sfx.ForceFieldSfxMute == 0 && _soundSource.CountPlayingSfx(SfxId.GEN_OFF) == 0)
                     {
-                        // sfxtodo: don't play if force field SFX are suppressed
                         _soundSource.PlayFreeSfx(SfxId.GEN_OFF);
                     }
                     // todo: room state

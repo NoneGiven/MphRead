@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
+using MphRead.Formats;
+using MphRead.Sound;
 
 namespace MphRead.Entities
 {
@@ -46,7 +48,7 @@ namespace MphRead.Entities
         private int PlayMissileSfx(HunterSfx sfx)
         {
             int id = Metadata.HunterSfx[(int)Hunter, (int)sfx];
-            if (id == -1) // sfxtodo: or if sound is paused for jingle
+            if (id == -1 || Sfx.TimedSfxMute > 0)
             {
                 return -1;
             }
@@ -146,7 +148,10 @@ namespace MphRead.Entities
 
         private void UpdateHealthSfx(int health)
         {
-            // sfxtodo: don't update if sound is paused for jingle
+            if (Sfx.TimedSfxMute > 0)
+            {
+                return;
+            }
             if (health > 0 && health < 25)
             {
                 if (!_soundSource.IsHandlePlaying(_healthSfxHandle))
@@ -438,10 +443,15 @@ namespace MphRead.Entities
             _flagCarrySfxOn = false;
         }
 
+        private readonly SoundSource _timedSfxSource = new SoundSource();
         private float _sfxStopTimer = 0;
+        public float ForceFieldSfxTimer = 0;
+        public float DoorUnlockSfxTimer = 0;
+        public float DoorChimeSfxTimer = 0;
 
         public void UpdateTimedSounds()
         {
+            _timedSfxSource.Update(Position, rangeIndex: -1);
             if (_sfxStopTimer > 0)
             {
                 _sfxStopTimer -= _scene.FrameTime;
@@ -484,11 +494,11 @@ namespace MphRead.Entities
                     int id = (int)message.Param1;
                     if (id == -1)
                     {
-                        // sfxtodo: set door unlock SFX
+                        DoorChimeSfxTimer = 2 / 30f;
                     }
-                    else
+                    else if (id <= 104)
                     {
-                        // sfxtodo: play SFX script
+                        _timedSfxSource.PlaySfx(id | 0x4000, recency: 0, sourceOnly: true);
                     }
                 }
                 else if (message.Message == Message.UpdateMusic)
@@ -497,9 +507,45 @@ namespace MphRead.Entities
                 }
             }
             // sfxtodo: escape sequence and pause stuff
-            // sktodo: unlock SFX
+            if (Sfx.EnvironmentSfxMute == 0 && DoorUnlockSfxTimer > 0)
+            {
+                DoorUnlockSfxTimer -= _scene.FrameTime;
+                if (DoorUnlockSfxTimer <= 1 / 30f)
+                {
+                    DoorUnlockSfxTimer = 0;
+                    if (_soundSource.CountPlayingSfx(SfxId.UNLOCK_ANIM) == 0)
+                    {
+                        _soundSource.PlayFreeSfx(SfxId.UNLOCK_ANIM);
+                    }
+                }
+            }
+            if (DoorChimeSfxTimer > 0)
+            {
+                DoorChimeSfxTimer -= _scene.FrameTime;
+                if (DoorChimeSfxTimer <= 1 / 30f)
+                {
+                    DoorChimeSfxTimer = 0;
+                    if (Sfx.TimedSfxMute == 0 && (CameraSequence.Current == null || !CameraSequence.Current.BlockInput)
+                        && _soundSource.CountPlayingSfx(SfxId.DOOR_UNLOCK) == 0)
+                    {
+                        // the game doesn't check whether the cam seq blocks input
+                        _soundSource.PlayFreeSfx(SfxId.DOOR_UNLOCK);
+                    }
+                }
+            }
+            if (ForceFieldSfxTimer > 0)
+            {
+                ForceFieldSfxTimer -= _scene.FrameTime;
+                if (ForceFieldSfxTimer <= 0)
+                {
+                    ForceFieldSfxTimer = 0;
+                    if (Sfx.TimedSfxMute == 0)
+                    {
+                        _timedSfxSource.PlaySfx(SfxId.GEN_OFF, recency: 5 / 30f, sourceOnly: true);
+                    }
+                }
+            }
             // sfxtodo: play/stop scroll SFX
-            // sfxtodo: update env SFX?
         }
     }
 }

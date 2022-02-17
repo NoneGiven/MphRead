@@ -218,7 +218,7 @@ namespace MphRead.Entities
                             {
                                 if (door.Flags.TestFlag(DoorFlags.Locked) && door.Data.PaletteId == 8)
                                 {
-                                    door.Unlock(updateState: true, sfxBool: true);
+                                    door.Unlock(updateState: true, noLockAnimSfx: true);
                                 }
                                 door.Flags |= DoorFlags.ShotOpen;
                             }

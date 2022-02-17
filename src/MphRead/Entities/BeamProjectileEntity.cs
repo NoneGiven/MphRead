@@ -673,7 +673,7 @@ namespace MphRead.Entities
                                 {
                                     if (door.Data.PaletteId == (int)Beam)
                                     {
-                                        door.Unlock(updateState: true, sfxBool: true);
+                                        door.Unlock(updateState: true, noLockAnimSfx: true);
                                     }
                                     else if (!_scene.Multiplayer)
                                     {

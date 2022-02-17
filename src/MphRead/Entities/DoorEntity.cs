@@ -271,11 +271,15 @@ namespace MphRead.Entities
             }
         }
 
-        public void Unlock(bool updateState, bool sfxBool)
+        public void Unlock(bool updateState, bool noLockAnimSfx)
         {
             // todo: return if in room transition
             Flags |= DoorFlags.Unlocked;
-            // todo: something with SFX
+            PlayerEntity.Main.DoorChimeSfxTimer = 2 / 30f;
+            if (!noLockAnimSfx)
+            {
+                PlayerEntity.Main.DoorUnlockSfxTimer = 2 / 30f;
+            }
             _lock.SetAnimation(1, AnimFlags.NoLoop);
             _scene.SpawnEffect(114, UpVector, FacingVector, LockPosition); // lockDefeat
             if (updateState)
@@ -288,7 +292,7 @@ namespace MphRead.Entities
         {
             if (info.Message == Message.Unlock)
             {
-                Unlock(updateState: true, sfxBool: false);
+                Unlock(updateState: true, noLockAnimSfx: false);
             }
             else if (info.Message == Message.Lock)
             {
@@ -301,7 +305,7 @@ namespace MphRead.Entities
                     EntityBase entity = _scene.Entities[i];
                     if (entity.Type == EntityType.Door && entity.Id == -1)
                     {
-                        ((DoorEntity)entity).Unlock(updateState: true, sfxBool: false);
+                        ((DoorEntity)entity).Unlock(updateState: true, noLockAnimSfx: false);
                     }
                 }
             }
