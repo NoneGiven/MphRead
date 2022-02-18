@@ -183,7 +183,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.JumpPad)
                 {
-                    results.Add(new JumpPadEntity(((Entity<JumpPadEntityData>)entity).Data, scene));
+                    results.Add(new JumpPadEntity(((Entity<JumpPadEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.FhJumpPad)
                 {

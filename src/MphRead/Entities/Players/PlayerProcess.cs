@@ -1550,6 +1550,7 @@ namespace MphRead.Entities
             {
                 _altModel.SetAnimation((int)WeavelAltAnim.Idle);
                 Flags2 |= PlayerFlags2.Halfturret;
+                _halfturret.NodeRef = NodeRef;
                 _scene.AddEntity(_halfturret);
             }
             else if (Hunter == Hunter.Samus)

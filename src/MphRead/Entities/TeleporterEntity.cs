@@ -335,6 +335,14 @@ namespace MphRead.Entities
             return base.GetModelRecolor(inst, index);
         }
 
+        public override void GetDrawInfo()
+        {
+            if (IsVisible(NodeRef))
+            {
+                base.GetDrawInfo();
+            }
+        }
+
         public override void GetDisplayVolumes()
         {
             if (_scene.ShowVolumes == VolumeDisplay.Teleporter)

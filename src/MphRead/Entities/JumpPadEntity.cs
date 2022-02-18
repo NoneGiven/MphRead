@@ -16,7 +16,8 @@ namespace MphRead.Entities
 
         private ushort _cooldownTimer = 0;
 
-        public JumpPadEntity(JumpPadEntityData data, Scene scene) : base(EntityType.JumpPad, scene)
+        public JumpPadEntity(JumpPadEntityData data, string nodeName, Scene scene)
+            : base(EntityType.JumpPad, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -143,6 +144,14 @@ namespace MphRead.Entities
                 return Matrix4.CreateScale(inst.Model.Scale) * _beamTransform * _transform;
             }
             return base.GetModelTransform(inst, index);
+        }
+
+        public override void GetDrawInfo()
+        {
+            if (IsVisible(NodeRef))
+            {
+                base.GetDrawInfo();
+            }
         }
 
         public override void GetDisplayVolumes()
