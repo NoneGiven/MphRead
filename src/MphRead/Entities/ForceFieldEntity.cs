@@ -62,7 +62,7 @@ namespace MphRead.Entities
             base.Initialize();
             if (_active && _data.Type != 9)
             {
-                _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock, _scene) as Enemy49Entity;
+                _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock, NodeRef, _scene) as Enemy49Entity;
                 if (_lock != null)
                 {
                     _scene.AddEntity(_lock);
@@ -130,7 +130,7 @@ namespace MphRead.Entities
                 // todo: scan ID, room state
                 if (_lock == null && _data.Type != 9)
                 {
-                    _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock, _scene) as Enemy49Entity;
+                    _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock, NodeRef, _scene) as Enemy49Entity;
                     if (_lock != null)
                     {
                         _scene.AddEntity(_lock);

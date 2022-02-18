@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
@@ -25,7 +26,8 @@ namespace MphRead.Entities.Enemies
         private byte _maxMoveIndex = 0;
         private float _circleAngle = 0;
 
-        public Enemy00Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        public Enemy00Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(data, nodeRef, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);

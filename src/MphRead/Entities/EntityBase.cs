@@ -135,6 +135,13 @@ namespace MphRead.Entities
             _nodeName = nodeName;
         }
 
+        protected EntityBase(EntityType type, NodeRef nodeRef, Scene scene)
+        {
+            Type = type;
+            _scene = scene;
+            NodeRef = nodeRef;
+        }
+
         public virtual void Initialize()
         {
             _anyLighting |= _models.Any(n => n.Model.Materials.Any(m => m.Lighting != 0));

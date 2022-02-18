@@ -19,7 +19,8 @@ namespace MphRead.Entities
         // used if there is no base model
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xC8, 0x00, 0xC8).AsVector4();
 
-        public ItemSpawnEntity(ItemSpawnEntityData data, Scene scene) : base(EntityType.ItemSpawn, scene)
+        public ItemSpawnEntity(ItemSpawnEntityData data, string nodeName, Scene scene)
+            : base(EntityType.ItemSpawn, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -140,6 +141,14 @@ namespace MphRead.Entities
                 {
                     Item.Position = Position.AddY(1);
                 }
+            }
+        }
+
+        public override void GetDrawInfo()
+        {
+            if (IsVisible(NodeRef))
+            {
+                base.GetDrawInfo();
             }
         }
 

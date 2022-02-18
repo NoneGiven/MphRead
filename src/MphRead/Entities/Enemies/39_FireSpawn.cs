@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using MphRead.Effects;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
@@ -28,7 +29,8 @@ namespace MphRead.Entities.Enemies
 
         public Enemy39Values Values { get; private set; }
 
-        public Enemy39Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        public Enemy39Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(data, nodeRef, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);
@@ -86,7 +88,7 @@ namespace MphRead.Entities.Enemies
             inst.SetAnimation(3, AnimFlags.Paused);
             _wristNodeL = inst.Model.GetNodeByName("Wrist_L");
             _wristNodeR = inst.Model.GetNodeByName("Wrist_R");
-            _hitZone = EnemySpawnEntity.SpawnEnemy(this, EnemyType.HitZone, _scene) as Enemy50Entity;
+            _hitZone = EnemySpawnEntity.SpawnEnemy(this, EnemyType.HitZone, NodeRef, _scene) as Enemy50Entity;
             if (_hitZone != null)
             {
                 _scene.AddEntity(_hitZone);

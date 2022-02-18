@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
@@ -16,7 +17,8 @@ namespace MphRead.Entities.Enemies
 
         public SpawnerModelType ModelType { get; private set; }
 
-        public Enemy40Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        public Enemy40Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(data, nodeRef, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -54,7 +55,8 @@ namespace MphRead.Entities
 
         protected static BeamProjectileEntity[] _beams = null!;
 
-        public EnemyInstanceEntity(EnemyInstanceEntityData data, Scene scene) : base(EntityType.EnemyInstance, scene)
+        public EnemyInstanceEntity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(EntityType.EnemyInstance, nodeRef, scene)
         {
             _data = data;
             if (_beams == null)
@@ -280,7 +282,10 @@ namespace MphRead.Entities
 
         protected void DrawGeneric()
         {
-            // todo: is_visible
+            if (!Flags.TestFlag(EnemyFlags.NoMaxDistance) && !IsVisible(NodeRef))
+            {
+                return;
+            }
             if (_timeSinceDamage < 5 * 2) // todo: FPS stuff
             {
                 PaletteOverride = Metadata.RedPalette;

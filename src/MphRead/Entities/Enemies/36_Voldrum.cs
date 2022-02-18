@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
@@ -15,7 +16,8 @@ namespace MphRead.Entities.Enemies
         private ushort _shotCount = 0;
         private ushort _shotTimer = 0;
 
-        public Enemy36Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        public Enemy36Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(data, nodeRef, scene)
         {
             _stateProcesses = new Action[6]
             {

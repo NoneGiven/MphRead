@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
@@ -43,7 +44,8 @@ namespace MphRead.Entities.Enemies
         private int _ammo = 1000;
         private EffectEntry? _effect = null;
 
-        public Enemy23Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        public Enemy23Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(data, nodeRef, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);

@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
@@ -24,7 +25,8 @@ namespace MphRead.Entities.Enemies
 
         private ushort _extendTimer = 0;
 
-        public Enemy12Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        public Enemy12Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(data, nodeRef, scene)
         {
             // technically this enemy has one state function and one behavior, but they're no-ops
             var spawner = data.Spawner as EnemySpawnEntity;

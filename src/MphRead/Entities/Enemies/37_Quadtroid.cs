@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
@@ -28,7 +29,8 @@ namespace MphRead.Entities.Enemies
 
         private Action? _field234 = null;
 
-        public Enemy37Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        public Enemy37Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(data, nodeRef, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);
