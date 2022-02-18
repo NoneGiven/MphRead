@@ -159,7 +159,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.EnemySpawn)
                 {
-                    results.Add(new EnemySpawnEntity(((Entity<EnemySpawnEntityData>)entity).Data, scene));
+                    results.Add(new EnemySpawnEntity(((Entity<EnemySpawnEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.FhEnemySpawn)
                 {

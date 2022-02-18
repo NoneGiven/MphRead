@@ -1,5 +1,6 @@
 using System;
 using MphRead.Entities.Enemies;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -32,8 +33,8 @@ namespace MphRead.Entities
 
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x00, 0x00, 0x8B).AsVector4();
 
-        // todo: enemy and item spawners should preload the models and effects that will be used when they spawn their entities
-        public EnemySpawnEntity(EnemySpawnEntityData data, Scene scene) : base(EntityType.EnemySpawn, scene)
+        public EnemySpawnEntity(EnemySpawnEntityData data, string nodeName, Scene scene)
+            : base(EntityType.EnemySpawn, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -45,7 +46,7 @@ namespace MphRead.Entities
             }
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             AddPlaceholderModel();
-            // todo: start suspended, update based on range/node ref (w/ "camera is player" option)
+            Flags |= SpawnerFlags.Suspended;
         }
 
         public override void Initialize()
@@ -91,15 +92,56 @@ namespace MphRead.Entities
             {
                 _cooldownTimer--;
             }
-            if (Flags.TestFlag(SpawnerFlags.Suspended) && _cooldownTimer > 0)
+            if (Flags.TestFlag(SpawnerFlags.Suspended) && _cooldownTimer == 0)
             {
-                // todo: remove Suspended flag based on node ref
+                if (NodeRef != NodeRef.None && _scene.CameraMode == CameraMode.Player) // skdebug
+                {
+                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    {
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type != EntityType.Player)
+                        {
+                            continue;
+                        }
+                        var player = (PlayerEntity)entity;
+                        if (player.Health > 0 && player.NodeRef == NodeRef)
+                        {
+                            Flags &= ~SpawnerFlags.Suspended;
+                        }
+                    }
+                }
+                else
+                {
+                    Flags &= ~SpawnerFlags.Suspended;
+                }
             }
             if (Flags.TestFlag(SpawnerFlags.Suspended))
             {
                 return base.Process();
             }
-            bool inRange = true; // todo: do range check
+            float distSqr = _data.ActiveDistance.FloatValue;
+            distSqr *= distSqr;
+            bool inRange = false;
+            if (_scene.CameraMode == CameraMode.Player) // skdebug
+            {
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Player)
+                    {
+                        continue;
+                    }
+                    if (Vector3.DistanceSquared(Position, entity.Position) < distSqr)
+                    {
+                        inRange = true;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                inRange = true;
+            }
             if (!inRange)
             {
                 Flags |= SpawnerFlags.Suspended;
