@@ -110,7 +110,14 @@ namespace MphRead.Entities.Enemies
             _stepDistance = step / 2; // todo: FPS stuff
             float distance = travel.Length;
             _stepCount = (int)(distance / _stepDistance) + 1;
-            _speed = travel * (_stepDistance / distance);
+            if (distance == 0)
+            {
+                _speed = Vector3.Zero;
+            }
+            else
+            {
+                _speed = travel * (_stepDistance / distance);
+            }
         }
 
         private void StartMovingTowardPosition()

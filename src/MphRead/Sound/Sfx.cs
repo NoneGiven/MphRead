@@ -1135,6 +1135,7 @@ namespace MphRead.Sound
                     if (inst != null)
                     {
                         item.Handle = inst.Handle;
+                        inst.UpdateLoop();
                     }
                 }
                 else if (item.Handle != -1)
