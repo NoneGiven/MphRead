@@ -796,8 +796,17 @@ namespace MphRead.Entities
             }
             else if (_animFlags.TestFlag(PlatAnimFlags.Draw))
             {
-                bool draw = true;
-                // todo: use draw always, draw when node ref, and is_visible
+                bool draw = false;
+                if (Flags.TestFlag(PlatformFlags.DrawAlways))
+                {
+                    draw = true;
+                }
+                else if (IsVisible(NodeRef))
+                {
+                    // todo?: the game has two conditions, one for checking the node ref when that flag is set,
+                    // and one for full is_entity_visible -- but these flags are never set anyway
+                    draw = true;
+                }
                 if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parentEntCol != null)
                 {
                     Debug.Assert(_parent != null);
