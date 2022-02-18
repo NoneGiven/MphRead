@@ -67,7 +67,7 @@ namespace MphRead.Entities.Enemies
             _activeVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume2, Position);
             _locationVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume1, Position);
             Metadata.LoadEffectiveness(Values.Effectiveness, BeamEffectiveness);
-            // todo: scan ID
+            _scanId = Values.ScanId;
             WeaponInfo weapon = Weapons.EnemyWeapons[version];
             weapon.UnchargedDamage = Values.BeamDamage;
             weapon.SplashDamage = Values.SplashDamage;

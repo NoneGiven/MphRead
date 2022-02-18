@@ -74,6 +74,7 @@ namespace MphRead.Entities
         {
             base.Initialize();
             _owner = _data.Spawner;
+            _scanId = Metadata.EnemyScanIds[(int)_data.Type];
             Metadata.LoadEffectiveness(_data.Type, BeamEffectiveness);
             Flags = EnemyFlags.CollidePlayer | EnemyFlags.CollideBeam;
             if (EnemyInitialize() && _data.Spawner is EnemySpawnEntity spawner)

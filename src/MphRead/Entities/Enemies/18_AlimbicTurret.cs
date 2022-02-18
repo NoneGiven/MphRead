@@ -65,7 +65,7 @@ namespace MphRead.Entities.Enemies
             _values = Metadata.Enemy18Values[(int)_spawner.Data.Fields.S06.EnemySubtype];
             _health = _healthMax = _values.HealthMax;
             Metadata.LoadEffectiveness(_values.Effectiveness, BeamEffectiveness);
-            // todo: scan ID
+            _scanId = _values.ScanId;
             _rangeVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume1, Position);
             _shotCount = (ushort)(_values.MinShots + Rng.GetRandomInt2(_values.MaxShots + 1 - _values.MinShots));
             _shotTimer = (ushort)(_values.ShotCooldown * 2); // todo: FPS stuff

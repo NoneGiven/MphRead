@@ -46,7 +46,7 @@ namespace MphRead.Entities.Enemies
             Debug.Assert(_homeVolume.Type == VolumeType.Cylinder);
             _health = _healthMax = _values.HealthMax;
             Metadata.LoadEffectiveness(_values.Effectiveness, BeamEffectiveness);
-            // todo: scan ID
+            _scanId = _values.ScanId;
             WeaponInfo weapon = Weapons.EnemyWeapons[version];
             weapon.UnchargedDamage = _values.BeamDamage;
             weapon.SplashDamage = _values.SplashDamage;

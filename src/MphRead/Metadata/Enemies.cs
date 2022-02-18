@@ -1351,6 +1351,16 @@ namespace MphRead
             4, 4
         };
 
+        public static readonly IReadOnlyList<int> EnemyScanIds = new int[52]
+        {
+            214, 210, 0, 224, 224, 224, 224, 0, 0, 0,
+            215, 213, 211, 0, 0, 0, 212, 219, 219, 0,
+            0, 226, 0, 216, 243, 0, 241, 0, 244, 242,
+            467, 0, 466, 0, 0, 217, 217, 218, 221, 222,
+            0, 227, 227, 227, 227, 227, 220, 245, 0, 0,
+            0, 0
+        };
+
         public static float GetDamageMultiplier(Effectiveness effectiveness)
         {
             int index = (int)effectiveness;

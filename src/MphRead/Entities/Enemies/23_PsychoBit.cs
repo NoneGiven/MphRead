@@ -75,7 +75,7 @@ namespace MphRead.Entities.Enemies
             _values = Metadata.Enemy23Values[(int)_spawner.Data.Fields.S06.EnemySubtype];
             _health = _healthMax = _values.HealthMax;
             Metadata.LoadEffectiveness(_values.Effectiveness, BeamEffectiveness);
-            // todo: scan ID
+            _scanId = _values.ScanId;
             _curFacing = facing;
             _homeVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume1, Position);
             _nearVolume = new CollisionVolume(Vector3.Zero, 1); // gets moved in the process function
