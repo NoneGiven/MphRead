@@ -150,7 +150,7 @@ namespace MphRead.Entities.Enemies
             }
             ContactDamagePlayer(_values.ContactDamage, knockback: true);
             _nearVolume = CollisionVolume.Move(new CollisionVolume(Vector3.Zero, 1), Position);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.PSYCHOBIT_FLY, loop: true);
             CallStateProcess();
         }
 
@@ -451,7 +451,7 @@ namespace MphRead.Entities.Enemies
             return Behavior00();
         }
 
-        // todo: same as Behavior00 except using te first pair of factors and not setting animation
+        // todo: same as Behavior00 except using the first pair of factors and not setting animation
         public bool Behavior05()
         {
             Vector3 facing = FacingVector;
@@ -540,7 +540,6 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        // todo: function name?
         private void MoveAway()
         {
             PickRoamTarget();
