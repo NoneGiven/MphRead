@@ -28,7 +28,8 @@ namespace MphRead.Entities
         public new bool Active => _active;
         public Enemy49Entity? Lock => _lock;
 
-        public ForceFieldEntity(ForceFieldEntityData data, Scene scene) : base(EntityType.ForceField, scene)
+        public ForceFieldEntity(ForceFieldEntityData data, string nodeName, Scene scene)
+            : base(EntityType.ForceField, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -136,6 +137,14 @@ namespace MphRead.Entities
                         _scene.AddEntity(_lock);
                     }
                 }
+            }
+        }
+
+        public override void GetDrawInfo()
+        {
+            if (Alpha > 0 && IsVisible(NodeRef))
+            {
+                base.GetDrawInfo();
             }
         }
     }

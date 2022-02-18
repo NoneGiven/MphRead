@@ -17,7 +17,8 @@ namespace MphRead.Entities
 
         public new bool Active { get; set; }
 
-        public ArtifactEntity(ArtifactEntityData data, Scene scene) : base(EntityType.Artifact, scene)
+        public ArtifactEntity(ArtifactEntityData data, string nodeName, Scene scene)
+            : base(EntityType.Artifact, nodeName, scene)
         {
             // todo: load resources for simple octolith/dropped octolith when needed
             _data = data;
@@ -161,7 +162,7 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo()
         {
-            if (Active)
+            if (Active && IsVisible(NodeRef))
             {
                 base.GetDrawInfo();
             }

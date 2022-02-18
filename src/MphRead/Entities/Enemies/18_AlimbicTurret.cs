@@ -294,7 +294,6 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        // sktodo
         protected override bool EnemyGetDrawInfo()
         {
             // todo: is_visible
@@ -335,7 +334,10 @@ namespace MphRead.Entities.Enemies
             }
             model.UpdateMatrixStack();
             UpdateMaterials(inst, Recolor);
-            GetDrawItems(inst, 0);
+            if (IsVisible(NodeRef))
+            {
+                GetDrawItems(inst, 0);
+            }
             PaletteOverride = null;
             _rotNodePos = _rotNode.Animation.Row3.Xyz;
             return true;

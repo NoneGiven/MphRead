@@ -223,7 +223,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Artifact)
                 {
-                    results.Add(new ArtifactEntity(((Entity<ArtifactEntityData>)entity).Data, scene));
+                    results.Add(new ArtifactEntity(((Entity<ArtifactEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.CameraSequence)
                 {
@@ -231,7 +231,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {
-                    results.Add(new ForceFieldEntity(((Entity<ForceFieldEntityData>)entity).Data, scene));
+                    results.Add(new ForceFieldEntity(((Entity<ForceFieldEntityData>)entity).Data, nodeName, scene));
                 }
                 else
                 {
