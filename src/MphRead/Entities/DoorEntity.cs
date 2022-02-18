@@ -19,7 +19,8 @@ namespace MphRead.Entities
         public Vector3 LockPosition => (_transform * _lockTransform).Row3.Xyz;
         public DoorEntityData Data => _data;
 
-        public DoorEntity(DoorEntityData data, Scene scene) : base(EntityType.Door, scene)
+        public DoorEntity(DoorEntityData data, string nodeName, Scene scene)
+            : base(EntityType.Door, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -69,7 +70,7 @@ namespace MphRead.Entities
         public override void Initialize()
         {
             base.Initialize();
-            _scene.LoadEffect(114); // lockDefeat - todo: load in entity setup
+            _scene.LoadEffect(114); // lockDefeat
         }
 
         public override void GetPosition(out Vector3 position)
@@ -330,7 +331,10 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo()
         {
-            // todo?: is_visible
+            if (!IsVisible(NodeRef))
+            {
+                return;
+            }
             _lock.Active = false;
             if (Locked && Flags.TestFlag(DoorFlags.ShowLock) && !Flags.TestFlag(DoorFlags.ShouldOpen)
                 && (AnimInfo.Index[0] != 0 || AnimInfo.Flags[0].TestFlag(AnimFlags.Ended)))

@@ -400,6 +400,16 @@ namespace MphRead.Entities
             }
         }
 
+        protected bool IsVisible(NodeRef nodeRef)
+        {
+            // todo?: use position, cull radius, and frustum info and support second node ref
+            if (nodeRef == NodeRef.None || _scene.CameraMode != CameraMode.Player) // skdebug
+            {
+                return true;
+            }
+            return _scene.IsNodeRefVisible(nodeRef);
+        }
+
         public virtual void GetDrawInfo()
         {
             for (int i = 0; i < _models.Count; i++)
@@ -695,12 +705,6 @@ namespace MphRead.Entities
 
         public virtual void CheckBeamReflection(ref bool result)
         {
-        }
-
-        protected bool IsVisible()
-        {
-            // sktodo: this
-            return true;
         }
 
         protected (float, float) ConstantAcceleration(float step, float velocity,

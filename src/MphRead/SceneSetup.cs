@@ -143,7 +143,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Door)
                 {
-                    results.Add(new DoorEntity(((Entity<DoorEntityData>)entity).Data, scene));
+                    results.Add(new DoorEntity(((Entity<DoorEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.FhDoor)
                 {

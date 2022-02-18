@@ -31,7 +31,7 @@ namespace MphRead.Entities
             _bipedModel2.SetModel(_bipedModelLods[lod].Model);
             Flags2 &= ~PlayerFlags2.DrawnThirdPerson;
             bool drawBiped = false;
-            if (IsMainPlayer || IsVisible())
+            if (IsMainPlayer || IsVisible(NodeRef))
             {
                 drawBiped = !IsMainPlayer || CameraType != CameraType.First || CameraSequence.Current != null
                     || _camSwitchTimer < Values.CamSwitchTime * 2; // todo: FPS stuff

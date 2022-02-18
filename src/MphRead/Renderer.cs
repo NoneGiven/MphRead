@@ -357,6 +357,11 @@ namespace MphRead
             return Room?.GetNodeRefByPosition(position) ?? NodeRef.None;
         }
 
+        public bool IsNodeRefVisible(NodeRef nodeRef)
+        {
+            return Room?.IsNodeRefVisible(nodeRef) ?? false;
+        }
+
         public void OnLoad()
         {
             GL.ClearColor(_clearColor);
