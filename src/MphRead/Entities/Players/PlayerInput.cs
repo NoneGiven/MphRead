@@ -97,8 +97,27 @@ namespace MphRead.Entities
             /* 8 */ BeamType.OmegaCannon
         };
 
+        private void SwitchVisors(bool reset)
+        {
+            ScanVisor = !ScanVisor;
+            // sktodo: everything else
+        }
+
         private void ProcessTouchInput()
         {
+            if (!_scene.Multiplayer && Controls.ScanVisor.IsPressed) // the game also checks explicitly for Samus
+            {
+                // sktodo: SFX
+                if (ScanVisor)
+                {
+                    SwitchVisors(reset: false);
+                }
+                else
+                {
+                    SwitchVisors(reset: false);
+                    UpdateZoom(zoom: false);
+                }
+            }
             if ((_scene.Multiplayer || _weaponSlots[2] != BeamType.OmegaCannon) && Controls.WeaponMenu.IsDown)
             {
                 Flags1 |= PlayerFlags1.NoAimInput;
@@ -1998,6 +2017,7 @@ namespace MphRead.Entities
         public Keybind Jump { get; }
         public Keybind Morph { get; }
         public Keybind Boost { get; }
+        public Keybind ScanVisor { get; }
         public Keybind AltAttack { get; }
         public Keybind NextWeapon { get; }
         public Keybind PrevWeapon { get; }
@@ -2021,10 +2041,10 @@ namespace MphRead.Entities
         public Keybind[] All { get; }
 
         public PlayerControls(Keybind moveLeft, Keybind moveRight, Keybind moveUp, Keybind moveDown, Keybind aimLeft, Keybind aimRight,
-            Keybind aimUp, Keybind aimDown, Keybind shoot, Keybind zoom, Keybind jump, Keybind morph, Keybind boost, Keybind altAttack,
-            Keybind nextWeapon, Keybind prevWeapon, Keybind weaponMenu, Keybind powerBeam, Keybind missile, Keybind voltDriver,
-            Keybind battlehammer, Keybind imperialist, Keybind judicator, Keybind magmaul, Keybind shockCoil, Keybind omegaCannon,
-            Keybind affinitySlot, Keybind pause)
+            Keybind aimUp, Keybind aimDown, Keybind shoot, Keybind zoom, Keybind jump, Keybind morph, Keybind boost, Keybind scanVisor,
+            Keybind altAttack, Keybind nextWeapon, Keybind prevWeapon, Keybind weaponMenu, Keybind powerBeam, Keybind missile,
+            Keybind voltDriver, Keybind battlehammer, Keybind imperialist, Keybind judicator, Keybind magmaul, Keybind shockCoil,
+            Keybind omegaCannon, Keybind affinitySlot, Keybind pause)
         {
             MouseAim = true;
             KeyboardAim = true;
@@ -2042,6 +2062,7 @@ namespace MphRead.Entities
             Jump = jump;
             Morph = morph;
             Boost = boost;
+            ScanVisor = scanVisor;
             AltAttack = altAttack;
             NextWeapon = nextWeapon;
             PrevWeapon = prevWeapon;
@@ -2060,8 +2081,8 @@ namespace MphRead.Entities
             All = new[]
             {
                 moveLeft, moveRight, moveUp, moveDown, aimLeft, aimRight, aimUp, aimDown, shoot, zoom, jump, morph, boost,
-                altAttack, nextWeapon, prevWeapon, weaponMenu, powerBeam, missile, voltDriver, battlehammer, imperialist,
-                judicator, magmaul, shockCoil, omegaCannon, affinitySlot, pause
+                scanVisor, altAttack, nextWeapon, prevWeapon, weaponMenu, powerBeam, missile, voltDriver, battlehammer,
+                imperialist, judicator, magmaul, shockCoil, omegaCannon, affinitySlot, pause
             };
         }
 
@@ -2099,6 +2120,7 @@ namespace MphRead.Entities
                 jump: new Keybind(Keys.Space),
                 morph: new Keybind(Keys.C),
                 boost: new Keybind(Keys.Space),
+                scanVisor: new Keybind(Keys.E),
                 altAttack: new Keybind(Keys.Q),
                 nextWeapon: new Keybind(ButtonType.ScrollDown),
                 prevWeapon: new Keybind(ButtonType.ScrollUp),

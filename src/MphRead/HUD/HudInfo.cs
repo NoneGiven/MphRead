@@ -385,19 +385,22 @@ namespace MphRead.Hud
         private static readonly int _layerHeaderSize = Marshal.SizeOf<UiPartHeader>();
         private static readonly int _scrDatInfoSize = Marshal.SizeOf<ScrDatInfo>();
 
-        public static int CharMapToTexture(string path, Scene scene)
+        public static (int, IReadOnlyList<ushort>) CharMapToTexture(string path, Scene scene,
+            IReadOnlyList<ushort>? paletteOverride = null)
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
-            return CharMapToTexture(bytes, startX: 0, startY: 0, tilesX: 0, tilesY: 0, scene);
+            return CharMapToTexture(bytes, startX: 0, startY: 0, tilesX: 0, tilesY: 0, scene, paletteOverride);
         }
 
-        public static int CharMapToTexture(string path, int startX, int startY, int tilesX, int tilesY, Scene scene)
+        public static (int, IReadOnlyList<ushort>) CharMapToTexture(string path, int startX, int startY,
+            int tilesX, int tilesY, Scene scene, IReadOnlyList<ushort>? paletteOverride = null)
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
-            return CharMapToTexture(bytes, startX, startY, tilesX, tilesY, scene);
+            return CharMapToTexture(bytes, startX, startY, tilesX, tilesY, scene, paletteOverride);
         }
 
-        private static int CharMapToTexture(ReadOnlySpan<byte> bytes, int startX, int startY, int tilesX, int tilesY, Scene scene)
+        private static (int, IReadOnlyList<ushort>) CharMapToTexture(ReadOnlySpan<byte> bytes, int startX, int startY,
+            int tilesX, int tilesY, Scene scene, IReadOnlyList<ushort>? paletteOverride = null)
         {
             UiPartHeader header = Read.ReadStruct<UiPartHeader>(bytes);
             Debug.Assert(header.Magic == 0);
@@ -414,6 +417,18 @@ namespace MphRead.Hud
                 .Select(v => new ScreenData(v)).ToList();
             offset += info.ScrDataSize;
             Debug.Assert(Read.DoOffsets<byte>(bytes, offset, bytes.Length - offset).All(x => x == 0));
+
+            if (paletteOverride != null)
+            {
+                var newPalette = new List<ushort>();
+                newPalette.Add(paletteData[0]);
+                newPalette.Add(paletteData[1]);
+                for (int i = 1; i < paletteOverride.Count; i++)
+                {
+                    newPalette.Add(paletteOverride[i]);
+                }
+                paletteData = newPalette;
+            }
 
             var characters = new List<List<ColorRgba>>();
             Debug.Assert(characterData.Count % 32 == 0);
@@ -478,7 +493,7 @@ namespace MphRead.Hud
                     }
                 }
             }
-            return scene.BindGetTexture(texture, width, height);
+            return (scene.BindGetTexture(texture, width, height), paletteData);
         }
 
         private static readonly (int Width, int Height)[,] _objectDimensions = new (int, int)[3, 4]
@@ -1328,6 +1343,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localSamus\bg_top.bin",
                 helmetDrop: @"_archives\localSamus\bg_top_drop.bin",
                 visor: @"_archives\localSamus\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localSamus\hud_energybar.bin",
                 healthBarB: @"_archives\localSamus\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1392,6 +1408,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localKanden\bg_top.bin",
                 helmetDrop: @"_archives\localKanden\bg_top_drop.bin",
                 visor: @"_archives\localKanden\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localKanden\hud_energybar.bin",
                 healthBarB: @"_archives\localKanden\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1456,6 +1473,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localTrace\bg_top.bin",
                 helmetDrop: @"_archives\localTrace\bg_top_drop.bin",
                 visor: @"_archives\localTrace\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localTrace\hud_energybar.bin",
                 healthBarB: @"_archives\localTrace\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1520,6 +1538,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localSylux\bg_top.bin",
                 helmetDrop: @"_archives\localSylux\bg_top_drop.bin",
                 visor: @"_archives\localSylux\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localSylux\hud_energybar.bin",
                 healthBarB: @"_archives\localSylux\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1584,6 +1603,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localNox\bg_top.bin",
                 helmetDrop: @"_archives\localNox\bg_top_drop.bin",
                 visor: @"_archives\localNox\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localNox\hud_energybar.bin",
                 healthBarB: @"_archives\localNox\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1648,6 +1668,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localSpire\bg_top.bin",
                 helmetDrop: @"_archives\localSpire\bg_top_drop.bin",
                 visor: @"_archives\localSpire\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localSpire\hud_energybar.bin",
                 healthBarB: @"_archives\localSpire\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1712,6 +1733,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localWeavel\bg_top.bin",
                 helmetDrop: @"_archives\localWeavel\bg_top_drop.bin",
                 visor: @"_archives\localWeavel\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localWeavel\hud_energybar.bin",
                 healthBarB: @"_archives\localWeavel\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1776,6 +1798,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localWeavel\bg_top.bin", // todo: modify HUD graphics/palettes for Guardians
                 helmetDrop: @"_archives\localWeavel\bg_top_drop.bin",
                 visor: @"_archives\localKanden\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localSamus\hud_energybar.bin",
                 healthBarB: @"_archives\localSamus\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -2297,6 +2320,7 @@ namespace MphRead.Hud
         public readonly string Helmet;
         public readonly string HelmetDrop;
         public readonly string Visor;
+        public readonly string ScanVisor;
         public readonly string HealthBarA;
         public readonly string HealthBarB;
         public readonly string? EnergyTanks;
@@ -2356,20 +2380,22 @@ namespace MphRead.Hud
         public readonly int CloakTextPosY;
         public readonly Align CloakAlign;
 
-        public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB, string? energyTanks,
-            string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar, string reticle,
-            string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectIcon, string selectBox,
-            string damageBar, int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY,
-            int healthOffsetYAlt, int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY, int enemyHealthPosX,
-            int enemyHealthPosY, int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX, int scorePosY, Align scoreAlign,
-            int octolithPosX, int octolithPosY, int primePosX, int primePosY, int primeTextPosX, int primeTextPosY, Align primeAlign,
-            int nodeBonusPosX, int nodeBonusPosY, int enemyBonusPosX, int enemyBonusPosY, int nodeIconPosX, int nodeIconPosY,
-            int nodeTextPosX, int nodeTextPosY, int dblDmgPosX, int dblDmgPosY, int dblDmgTextPosX, int dblDmgTextPosY,
-            Align dblDmgAlign, int cloakPosX, int cloakPosY, int cloakTextPosX, int cloakTextPosY, Align cloakAlign)
+        public HudObjects(string helmet, string helmetDrop, string visor, string scanVisor, string healthBarA, string healthBarB,
+            string? energyTanks, string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar,
+            string reticle, string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectIcon,
+            string selectBox, string damageBar, int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY,
+            int healthOffsetY, int healthOffsetYAlt, int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY,
+            int enemyHealthPosX, int enemyHealthPosY, int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX,
+            int scorePosY, Align scoreAlign, int octolithPosX, int octolithPosY, int primePosX, int primePosY, int primeTextPosX,
+            int primeTextPosY, Align primeAlign, int nodeBonusPosX, int nodeBonusPosY, int enemyBonusPosX, int enemyBonusPosY,
+            int nodeIconPosX, int nodeIconPosY, int nodeTextPosX, int nodeTextPosY, int dblDmgPosX, int dblDmgPosY,
+            int dblDmgTextPosX, int dblDmgTextPosY, Align dblDmgAlign, int cloakPosX, int cloakPosY, int cloakTextPosX,
+            int cloakTextPosY, Align cloakAlign)
         {
             Helmet = helmet;
             HelmetDrop = helmetDrop;
             Visor = visor;
+            ScanVisor = scanVisor;
             HealthBarA = healthBarA;
             HealthBarB = healthBarB;
             EnergyTanks = energyTanks;

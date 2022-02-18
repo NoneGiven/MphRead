@@ -50,15 +50,23 @@ namespace MphRead.Entities
         private int _iceLayerBindingId = -1;
         private int _helmetBindingId = -1;
         private int _helmetDropBindingId = -1;
-        private int _visorBindingId = -1; // todo: support other visor views
+        private int _visorBindingId = -1;
+        private int _scanBindingId = -1;
 
         public void SetUpHud()
         {
-            _iceLayerBindingId = HudInfo.CharMapToTexture(HudElements.IceLayer,
+            (_iceLayerBindingId, _) = HudInfo.CharMapToTexture(HudElements.IceLayer,
                 startX: 16, startY: 0, tilesX: 32, tilesY: 32, _scene);
-            _helmetBindingId = HudInfo.CharMapToTexture(_hudObjects.Helmet, _scene);
-            _helmetDropBindingId = HudInfo.CharMapToTexture(_hudObjects.HelmetDrop, _scene);
-            _visorBindingId = HudInfo.CharMapToTexture(_hudObjects.Visor, startX: 0, startY: 0, tilesX: 0, tilesY: 32, _scene);
+            (_helmetBindingId, _) = HudInfo.CharMapToTexture(_hudObjects.Helmet, _scene);
+            (_helmetDropBindingId, _) = HudInfo.CharMapToTexture(_hudObjects.HelmetDrop, _scene);
+            (_visorBindingId, IReadOnlyList<ushort>? visorPal) = HudInfo.CharMapToTexture(_hudObjects.Visor, startX: 0, startY: 0,
+                tilesX: 0, tilesY: 32, _scene);
+            if (Hunter == Hunter.Samus)
+            {
+                visorPal = null;
+            } 
+            (_scanBindingId, _) = HudInfo.CharMapToTexture(_hudObjects.ScanVisor, startX: 0, startY: 96,
+                tilesX: 0, tilesY: 32, _scene, visorPal);
             // todo: only load what needs to be loaded for the mode
             _filterModel = Read.GetModelInstance("filter");
             _scene.LoadModel(_filterModel.Model);
@@ -344,6 +352,7 @@ namespace MphRead.Entities
         private float _objShiftX = 0;
         private float _objShiftY = 0;
         private bool _hudWeaponMenuOpen = false;
+        public bool ScanVisor { get; private set; }
 
         public void UpdateHud()
         {
@@ -411,7 +420,7 @@ namespace MphRead.Entities
                         _scene.Layer3Info.ScaleX = 2;
                         _scene.Layer3Info.ScaleY = 256 / 192f;
                         // visor
-                        _scene.Layer1Info.BindingId = _visorBindingId;
+                        _scene.Layer1Info.BindingId = ScanVisor ? _scanBindingId : _visorBindingId;
                         _scene.Layer1Info.Alpha = Features.VisorOpacity;
                         _scene.Layer1Info.ScaleX = 1;
                         _scene.Layer1Info.ScaleY = 256 / 192f;
