@@ -688,19 +688,22 @@ namespace MphRead.Entities
 
         private void HudOnWeaponSwitch(BeamType beam)
         {
+            SetCombatVisor();
             if (beam != BeamType.Imperialist || _sniperReticle)
             {
                 _sniperReticle = false;
-                ResetReticle(); // todo: only do this if scan visor is off
+                ResetReticle();
             }
             else
             {
                 _sniperReticle = true;
-                _targetCircleInst.SetCharacterData(_sniperCircleObj.CharacterData, _sniperCircleObj.Width,
+                if (!ScanVisor)
+                {
+                    _targetCircleInst.SetCharacterData(_sniperCircleObj.CharacterData, _sniperCircleObj.Width,
                     _sniperCircleObj.Height, _scene);
+                }
             }
             _weaponIconInst.SetAnimation(start: 9, target: 27, frames: 19, afterAnim: (int)beam);
-            SetCombatVisor();
         }
 
         private void HudOnZoom(bool zoom)
@@ -708,7 +711,6 @@ namespace MphRead.Entities
             if (_hudZoom != zoom)
             {
                 _hudZoom = zoom;
-                // todo: only do the rest if scan visor is off
                 if (_hudZoom)
                 {
                     _targetCircleInst.SetAnimation(start: 0, target: 2, frames: 2);
