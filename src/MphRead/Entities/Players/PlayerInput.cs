@@ -97,17 +97,12 @@ namespace MphRead.Entities
             /* 8 */ BeamType.OmegaCannon
         };
 
-        private void SwitchVisors(bool reset)
-        {
-            ScanVisor = !ScanVisor;
-            // sktodo: everything else
-        }
-
         private void ProcessTouchInput()
         {
-            if (!_scene.Multiplayer && Controls.ScanVisor.IsPressed) // the game also checks explicitly for Samus
+            // the game explicitly checks for Samus, and doesn't check if the weapon menu is open
+            if (!_scene.Multiplayer && Controls.ScanVisor.IsPressed && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
             {
-                // sktodo: SFX
+                // scantodo: SFX
                 if (ScanVisor)
                 {
                     SwitchVisors(reset: false);

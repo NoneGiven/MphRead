@@ -219,8 +219,9 @@ namespace MphRead.Formats
             }
             Current = this;
             // todo?: the game only does the rest when ptr_tbl_idx is 14
-            // todo: close dialogs, turn off scan visor if 1P
+            // todo: close dialogs
             PlayerEntity.Main.HudEndDisrupted();
+            PlayerEntity.Main.ResetCombatVisor();
         }
 
         public void Restart(ushort transitionTimer = 0, ushort transitionTime = 0)

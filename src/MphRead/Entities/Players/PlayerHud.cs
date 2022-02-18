@@ -64,7 +64,7 @@ namespace MphRead.Entities
             if (Hunter == Hunter.Samus)
             {
                 visorPal = null;
-            } 
+            }
             (_scanBindingId, _) = HudInfo.CharMapToTexture(_hudObjects.ScanVisor, startX: 0, startY: 96,
                 tilesX: 0, tilesY: 32, _scene, visorPal);
             // todo: only load what needs to be loaded for the mode
@@ -370,6 +370,10 @@ namespace MphRead.Entities
             {
                 if (!_hudWeaponMenuOpen)
                 {
+                    if (ScanVisor)
+                    {
+                        SwitchVisors(reset: false);
+                    }
                     _soundSource.PlayFreeSfx(SfxId.HUD_WEAPON_SWITCH1);
                 }
                 _hudWeaponMenuOpen = true;
@@ -679,7 +683,7 @@ namespace MphRead.Entities
         private void HudOnMorphStart(bool teleported)
         {
             _targetCircleInst.SetIndex(0, _scene);
-            // todo: turn off scan visor, possibly other stuff (if it's not just touch screen updates)
+            SetCombatVisor();
         }
 
         private void HudOnWeaponSwitch(BeamType beam)
@@ -696,6 +700,7 @@ namespace MphRead.Entities
                     _sniperCircleObj.Height, _scene);
             }
             _weaponIconInst.SetAnimation(start: 9, target: 27, frames: 19, afterAnim: (int)beam);
+            SetCombatVisor();
         }
 
         private void HudOnZoom(bool zoom)
@@ -817,7 +822,7 @@ namespace MphRead.Entities
                     {
                         DrawBoostBombs();
                     }
-                    else
+                    else if (!ScanVisor)
                     {
                         DrawAmmoBar();
                         _weaponIconInst.PositionX = (_hudObjects.WeaponIconPosX + _objShiftX) / 256f;

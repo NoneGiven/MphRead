@@ -837,7 +837,16 @@ namespace MphRead.Entities
                 ResetReticle();
                 _weaponIconInst.SetIndex(0, _scene);
             }
-            // todo: reset HUD effects
+            _cloakTextTimer = 30 / 30f;
+            _doubleDamageTextTimer = 60 / 30f;
+            _drawIceLayer = false;
+            _hudShiftX = 0;
+            _hudShiftY = 0;
+            _objShiftX = 0;
+            _objShiftY = 0;
+            ScanVisor = false;
+            SwitchVisors(reset: true);
+            // todo: close dialogs, update more UI fields
             _altRollFbX = CameraInfo.Field48;
             _altRollFbZ = CameraInfo.Field4C;
             _altRollLrX = CameraInfo.Field50;
@@ -1579,7 +1588,7 @@ namespace MphRead.Entities
                     ItemSpawnEntity.SpawnItemDrop(EnemySpawner.Data.ItemType, Position,
                         NodeRef, EnemySpawner.Data.ItemChance, _scene);
                 }
-                // todo: update HUD to cancel scan visor
+                ResetCombatVisor();
                 if (Flags2.TestFlag(PlayerFlags2.Halfturret))
                 {
                     _halfturret.Die();
@@ -1939,6 +1948,7 @@ namespace MphRead.Entities
                             _soundSource.PlaySfx(SfxId.SHOTGUN_FREEZE);
                             if (IsMainPlayer)
                             {
+                                ResetCombatVisor();
                                 _drawIceLayer = true;
                             }
                             if (_frozenTimer == 0)
