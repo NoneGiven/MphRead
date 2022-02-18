@@ -71,7 +71,7 @@ namespace MphRead.Entities.Enemies
                 Flags |= EnemyFlags.Visible;
                 _models[0].SetAnimation(7, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node, AnimFlags.NoLoop);
                 _field170 = 10 * 2; // todo: FPS stuff
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.MOCHTROID_TELEPORT_IN);
             }
             else if (_state2 == 1)
             {
@@ -101,7 +101,7 @@ namespace MphRead.Entities.Enemies
                         updateSpeed = true;
                     }
                 }
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.MOCHTROID_TELEPORT_OUT);
             }
             else if (_state2 == 3)
             {
@@ -121,7 +121,7 @@ namespace MphRead.Entities.Enemies
                     _field170 = (ushort)(10 * 2 - _field172); // todo: FPS stuff
                     _models[0].AnimInfo.Frame[0] = (10 * (10 - _field170 / 2) - 1) / 10; // todo: FPS stuff
                 }
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.MOCHTROID_TELEPORT_IN);
             }
             if (updateSpeed)
             {
@@ -283,7 +283,7 @@ namespace MphRead.Entities.Enemies
 
         private void State1()
         {
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.MOCHTROID_FLY, loop: true);
             UpdateMovement();
             if (HitPlayers[PlayerEntity.Main.SlotIndex])
             {
@@ -296,7 +296,7 @@ namespace MphRead.Entities.Enemies
             }
             if (CallSubroutine(Metadata.Enemy06Subroutines, this))
             {
-                // todo: stop SFX
+                _soundSource.StopSfx(SfxId.MOCHTROID_FLY);
                 UpdateState();
             }
         }
@@ -332,7 +332,7 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
-            // todo: stop SFX
+            _soundSource.StopSfx(SfxId.MOCHTROID_FLY);
             return true;
         }
 

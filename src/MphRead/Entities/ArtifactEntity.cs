@@ -72,7 +72,9 @@ namespace MphRead.Entities
             }
             if (Active)
             {
-                // todo: positional audio, node ref, SFX, set scan ID
+                _soundSource.Update(Position, rangeIndex: 7);
+                // sfxtodo: if node ref is not active, set sound volume override to 0
+                _soundSource.PlaySfx(SfxId.ARTIFACT_LOOP, loop: true);
                 if (CameraSequence.Current?.BlockInput == true)
                 {
                     return base.Process();
@@ -142,10 +144,13 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    // todo: play SFX, update story save, show dialog (may send dialog message)
+                    // sfxtodo: play correct SFX
+                    // todo: update story save, show dialog (may send dialog message)
+                    _soundSource.PlayFreeSfx(SfxId.ARTIFACT1); // skdebug
                 }
                 Active = false;
-                // todo: room state, stop SFX
+                // todo: room state
+                _soundSource.StopAllSfx(force: true);
             }
             else
             {
@@ -207,7 +212,7 @@ namespace MphRead.Entities
 
         public override void Destroy()
         {
-            // todo: stop SFX
+            _soundSource.StopAllSfx(force: true);
             base.Destroy();
         }
 

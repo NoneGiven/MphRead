@@ -65,7 +65,7 @@ namespace MphRead.Entities.Enemies
             {
                 model.SetAnimation(0);
             }
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.ZOOMER_IDLE_LOOP, loop: true);
             if (!_seekingVolume)
             {
                 if (_volumeCheckDelay > 0)

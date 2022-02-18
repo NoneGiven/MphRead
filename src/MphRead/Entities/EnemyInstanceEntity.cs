@@ -97,6 +97,12 @@ namespace MphRead.Entities
             }
         }
 
+        public override void Destroy()
+        {
+            _soundSource.StopAllSfx(force: true);
+            base.Destroy();
+        }
+
         public override void GetPosition(out Vector3 position)
         {
             position = _hurtVolume.GetCenter();
@@ -122,7 +128,6 @@ namespace MphRead.Entities
             HitPlayers[3] = false;
         }
 
-        // todo: stop SFX on destroy
         public override bool Process()
         {
             bool inRange = false;
@@ -188,7 +193,9 @@ namespace MphRead.Entities
                     {
                         DoMovement();
                     }
-                    // todo: positional audio, node ref
+                    int rangeIndex = Metadata.EnemyAudioRangeIndices[(int)EnemyType];
+                    _soundSource.Update(Position, rangeIndex);
+                    // sfxtodo: if node ref is not active, set sound volume override to 0
                     ClearHitPlayers();
                     for (int i = 0; i < _scene.Entities.Count; i++)
                     {
@@ -409,7 +416,8 @@ namespace MphRead.Entities
                     {
                         Detach();
                     }
-                    // todo: play SFX
+                    _soundSource.StopAllSfx();
+                    PlayEnemySfx(Metadata.EnemyDeathSfx[(int)EnemyType], noUpdate: true);
                     int effectId;
                     if (EnemyType == EnemyType.FireSpawn)
                     {
@@ -427,7 +435,7 @@ namespace MphRead.Entities
                 else
                 {
                     _timeSinceDamage = 0;
-                    // todo: play SFX
+                    PlayEnemySfx(Metadata.EnemyDamageSfx[(int)EnemyType], noUpdate: false);
                     switch (_data.Type)
                     {
                     case EnemyType.Zoomer:
@@ -446,6 +454,25 @@ namespace MphRead.Entities
                         break;
                     }
                 }
+            }
+        }
+
+        private void PlayEnemySfx(int sfx, bool noUpdate)
+        {
+            if (sfx != -1)
+            {
+                float recency = -1;
+                bool sourceOnly = false;
+                if ((sfx & 0x20000) != 0)
+                {
+                    recency = Single.MaxValue;
+                    sourceOnly = true;
+                }
+                else if ((sfx & 0x80000) != 0)
+                {
+                    recency = 0;
+                }
+                _soundSource.PlaySfx(sfx & ~0xA0000, noUpdate: noUpdate, recency: recency, sourceOnly: sourceOnly);
             }
         }
 

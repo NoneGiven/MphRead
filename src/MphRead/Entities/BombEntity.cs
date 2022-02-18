@@ -94,7 +94,8 @@ namespace MphRead.Entities
         public override bool Process()
         {
             EntityBase? hitEntity = null;
-            // todo: positional audio, node ref, SFX
+            _soundSource.Update(Position, rangeIndex: 5);
+            // sfxtodo: if node ref is not active, set sound volume override to 0
             if (Countdown > 0)
             {
                 Countdown--;
@@ -217,7 +218,7 @@ namespace MphRead.Entities
                             {
                                 if (door.Flags.TestFlag(DoorFlags.Locked) && door.Data.PaletteId == 8)
                                 {
-                                    door.Unlock(updateState: true, sfxBool: true);
+                                    door.Unlock(updateState: true, noLockAnimSfx: true);
                                 }
                                 door.Flags |= DoorFlags.ShotOpen;
                             }
@@ -296,7 +297,9 @@ namespace MphRead.Entities
                     _scene.SpawnEffect(145, Transform); // bombBlue
                 }
                 Countdown = 0;
-                // todo: stop SFX
+                _soundSource.StopSfx(SfxId.KANDEN_ALT_ATTACK);
+                _soundSource.StopSfx(SfxId.MORPH_BALL_BOMB_PLACE);
+                _soundSource.PlaySfx(SfxId.MORPH_BALL_BOMB);
                 if (hitEntity == null)
                 {
                     // if an entity was hit, this message was sent elsewhere
@@ -596,7 +599,7 @@ namespace MphRead.Entities
 
         public override void Destroy()
         {
-            // todo: SFX and stuff
+            _soundSource.StopAllSfx();
             if (BombType == BombType.Lockjaw)
             {
                 for (int i = BombIndex; i < Owner.SyluxBombCount - 1; i++)
@@ -617,6 +620,14 @@ namespace MphRead.Entities
             Effect = null;
             Owner = null!;
             _scene.UnlinkBomb(this);
+        }
+
+        public void PlaySpawnSfx()
+        {
+            _soundSource.Update(Position, rangeIndex: 5);
+            // sfxtodo: if node ref is not active, set sound volume override to 0
+            SfxId sfx = BombType == BombType.Stinglarva ? SfxId.KANDEN_ALT_ATTACK : SfxId.MORPH_BALL_BOMB_PLACE;
+            _soundSource.PlaySfx(sfx);
         }
 
         public static BombEntity? Spawn(PlayerEntity owner, Matrix4 transform, Scene scene)

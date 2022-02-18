@@ -736,6 +736,7 @@ namespace MphRead.Effects
         public List<int> TextureBindingIds { get; } = new List<int>();
         public List<EffectParticle> Particles { get; } = new List<EffectParticle>(); // todo: pre-size?
 
+        public EffectElement? Definition { get; set; }
         public EntityCollision? EntityCollision { get; set; }
         public EffectEntry? EffectEntry { get; set; }
         public Model Model { get; set; } = null!;

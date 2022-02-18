@@ -1,4 +1,6 @@
 using MphRead.Entities.Enemies;
+using MphRead.Formats;
+using MphRead.Sound;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -104,14 +106,26 @@ namespace MphRead.Entities
                 }
                 if (!_scene.Multiplayer)
                 {
-                    // todo: SFX, room state
+                    if (CameraSequence.Current == null)
+                    {
+                        PlayerEntity.Main.ForceFieldSfxTimer = 2 / 30f;
+                    }
+                    else if (Sfx.ForceFieldSfxMute == 0 && _soundSource.CountPlayingSfx(SfxId.GEN_OFF) == 0)
+                    {
+                        _soundSource.PlayFreeSfx(SfxId.GEN_OFF);
+                    }
+                    // todo: room state
                 }
                 _active = false;
                 // todo: scan ID
             }
             else if (info.Message == Message.Lock)
             {
-                // todo: SFX
+                if (!_active && !_scene.Multiplayer && CameraSequence.Current != null
+                    && _soundSource.CountPlayingSfx(SfxId.FORCEFIELD_APPEAR) == 0)
+                {
+                    _soundSource.PlayFreeSfx(SfxId.FORCEFIELD_APPEAR);
+                }
                 _active = true;
                 // todo: scan ID, room state
                 if (_lock == null && _data.Type != 9)

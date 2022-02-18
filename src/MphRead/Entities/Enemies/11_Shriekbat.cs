@@ -119,7 +119,7 @@ namespace MphRead.Entities.Enemies
             _moveTimer *= 2; // todo: FPS stuff
             _speed *= 0.6f / mag;
             _speed /= 2; // todo: FPS stuff
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.SHRIEKBAT_ATTACK);
             _models[0].SetAnimation(1);
             return true;
         }
@@ -154,7 +154,7 @@ namespace MphRead.Entities.Enemies
             _speed *= 0.3f / mag;
             _speed /= 2; // todo: FPS stuff
             _models[0].SetAnimation(2);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.SHRIEKBAT_PRE_ATTACK_SCR);
             return true;
         }
 

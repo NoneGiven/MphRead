@@ -132,7 +132,7 @@ namespace MphRead.Entities
             _contested = false;
             int slot = 0;
             bool occupiedByAny = false;
-            // todo: update positional audio
+            _soundSource.Update(Position, rangeIndex: 17);
             for (int i = 0; i < _scene.Entities.Count; i++)
             {
                 EntityBase entity = _scene.Entities[i];
@@ -199,7 +199,7 @@ namespace MphRead.Entities
             }
             else
             {
-                if (_occupiedBy[PlayerEntity.Main.SlotIndex])
+                if (prevOccupiedBy[PlayerEntity.Main.SlotIndex])
                 {
                     // todo: update music
                     if (value1 != 2)
@@ -248,22 +248,47 @@ namespace MphRead.Entities
                     GameState.Points[_capturedPlayer.SlotIndex]++;
                     _scoreTimer = 0;
                 }
+                // these SFX are empty
                 if (nodeCount == 1)
                 {
-                    // todo: play SFX
+                    _soundSource.PlaySfx(SfxId.DATA_SLOW, loop: true);
                 }
                 else if (nodeCount > 1)
                 {
-                    // todo: play SFX
+                    _soundSource.PlaySfx(SfxId.DATA_FAST, loop: true);
                 }
             }
             if (value2 != 0 && nodeCount >= 2)
             {
                 value1 = 5;
             }
-            if (value1 != 0)
+            if (value1 == 1)
             {
-                // todo: update SFX
+                _soundSource.StopFreeSfxScripts();
+                if (nodeCount == 0)
+                {
+                    _soundSource.PlayFreeSfx(SfxId.CAPTURE_RING_SCRIPT1);
+                }
+                else if (nodeCount == 1)
+                {
+                    _soundSource.PlayFreeSfx(SfxId.CAPTURE_RING_SCRIPT2);
+                }
+                else
+                {
+                    _soundSource.PlayFreeSfx(SfxId.CAPTURE_RING_SCRIPT3);
+                }
+            }
+            else if (value1 == 2)
+            {
+                if (nodeCount >= 2)
+                {
+                    _soundSource.QueueStream(VoiceId.VOICE_MULTI_NODE, delay: 1, expiration: 35 / 30f);
+                }
+            }
+            else if (value1 == 3)
+            {
+                _soundSource.StopFreeSfxScripts();
+                _soundSource.PlayFreeSfx(SfxId.CAPTURE_RING_FAIL);
             }
             float prevRotation = _curRotation;
             _curRotation += rotation;

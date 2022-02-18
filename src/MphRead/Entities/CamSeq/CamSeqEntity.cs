@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using MphRead.Formats;
+using MphRead.Sound;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -103,7 +103,28 @@ namespace MphRead.Entities
                     }
                     else
                     {
-                        // todo: stop SFX scripts, stop/restart long running/env SFX, play paused music
+                        int sfxData = CameraSequence.SfxData[Data.SequenceId];
+                        int scriptId = sfxData & 0x1FFF;
+                        if (scriptId != 0)
+                        {
+                            Sfx.Instance.StopFreeSfxScripts();
+                        }
+                        if ((sfxData & 0x4000) != 0)
+                        {
+                            if (Sfx.ForceFieldSfxMute > 0)
+                            {
+                                Sfx.ForceFieldSfxMute--;
+                            }
+                        }
+                        if ((sfxData & 0x8000) != 0)
+                        {
+                            PlayerEntity.Main.RestartLongSfx();
+                        }
+                        else
+                        {
+                            PlayerEntity.Main.RestartTimedSfx();
+                        }
+                        // mustodo: play paused music
                         _active = false;
                         Sequence.End();
                         Current = null;
@@ -123,18 +144,41 @@ namespace MphRead.Entities
                 return;
             }
             // todo: test music mask
+            int sfxData = CameraSequence.SfxData[Data.SequenceId];
             if (_delayTimer == 0)
             {
                 if (Data.Loop == 0)
                 {
-                    // todo: stop SFX
+                    if ((sfxData & 0x2000) != 0)
+                    {
+                        Sfx.Instance.StopSoundById((int)SfxId.CHIME1);
+                    }
+                    if ((sfxData & 0x4000) != 0)
+                    {
+                        Sfx.ForceFieldSfxMute++;
+                    }
+                    if ((sfxData & 0x8000) != 0)
+                    {
+                        PlayerEntity.Main.StopLongSfx();
+                    }
+                    else
+                    {
+                        PlayerEntity.Main.StopTimedSfx();
+                    }
                 }
-                // todo: stop SFX
+                // mustodo: stop music or something
             }
             _delayTimer++;
             if (_delayTimer > Data.DelayFrames * 2) // todo: FPS stuff
             {
-                // todo: update SFX scripts and music
+                // mustodo: update music
+                int scriptId = sfxData & 0x1FFF;
+                if (scriptId != 0)
+                {
+                    Sfx.Instance.StopFreeSfxScripts();
+                    Sfx.Instance.PlayScript(scriptId | 0x4000, source: null,
+                        noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                }
                 Start();
             }
         }
@@ -164,8 +208,8 @@ namespace MphRead.Entities
 
         private void Cancel()
         {
-            // todo: something with SFX
             PlayerEntity player = PlayerEntity.Main;
+            player.RestartLongSfx();
             bool currentSeq = CameraSequence.Current == Sequence;
             bool playerCam = Sequence.CamInfoRef == player.CameraInfo;
             SendEndEvent();

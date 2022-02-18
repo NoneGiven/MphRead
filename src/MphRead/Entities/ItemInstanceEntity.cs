@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using MphRead.Effects;
 using OpenTK.Mathematics;
 
@@ -66,6 +67,11 @@ namespace MphRead.Entities
             facing = Vector3.UnitZ;
         }
 
+        private static readonly IReadOnlyList<int> _sfxIds = new int[22]
+        {
+            33, 33, 33, -1, 34, -1, 34, -1, -1, -1, -1, -1, -1, 33, 33, 33, 33, -1, -1, -1, -1, -1
+        };
+
         public override bool Process()
         {
             if (!_linkDone)
@@ -74,7 +80,8 @@ namespace MphRead.Entities
                 _linkDone = true;
             }
             // todo: inv pos
-            // todo: position audio, node ref
+            _soundSource.Update(Position, rangeIndex: 7);
+            // sfxtodo: if node ref is not active, set sound volume override to 0
             if (_effectEntry != null)
             {
                 Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY, Position);
@@ -105,7 +112,11 @@ namespace MphRead.Entities
                 }
                 return false;
             }
-            // todo: play SFX
+            int sfx = _sfxIds[(int)ItemType];
+            if (sfx != -1)
+            {
+                _soundSource.PlaySfx(sfx, loop: true);
+            }
             if (Owner == null && !_scene.Multiplayer && PlayerEntity.Main.EquipInfo.Weapon != null)
             {
                 EquipInfo equip = PlayerEntity.Main.EquipInfo;
@@ -140,6 +151,7 @@ namespace MphRead.Entities
             {
                 _scene.UnlinkEffectEntry(_effectEntry);
             }
+            _soundSource.StopAllSfx(force: true);
         }
     }
 

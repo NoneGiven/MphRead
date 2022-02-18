@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
+using MphRead.Sound;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -33,6 +34,8 @@ namespace MphRead.Entities
         public EntityCollision?[] EntityCollision { get; } = new EntityCollision?[2];
         // todo: look into getting rid of this in favor of EntityCollision
         public Matrix4 CollisionTransform => _colAttachNode == null ? _transform : _colAttachNode.Animation;
+
+        protected readonly SoundSource _soundSource = new SoundSource();
 
         public Matrix4 Transform
         {
@@ -707,6 +710,12 @@ namespace MphRead.Entities
             newVelocity = Math.Clamp(newVelocity, minVelocity, maxVelocity);
             float displacement = velocity * _scene.FrameTime + (newVelocity - velocity) / 2 * _scene.FrameTime;
             return (newVelocity, displacement);
+        }
+
+        protected float ExponentialDecay(float step, float value)
+        {
+            float decay = MathF.Pow(step, 30);
+            return value * MathF.Pow(decay, _scene.FrameTime);
         }
     }
 

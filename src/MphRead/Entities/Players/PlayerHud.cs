@@ -343,6 +343,7 @@ namespace MphRead.Entities
         private float _hudShiftY = 0;
         private float _objShiftX = 0;
         private float _objShiftY = 0;
+        private bool _hudWeaponMenuOpen = false;
 
         public void UpdateHud()
         {
@@ -358,7 +359,16 @@ namespace MphRead.Entities
             WeaponSelection = CurrentWeapon;
             if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
             {
+                if (!_hudWeaponMenuOpen)
+                {
+                    _soundSource.PlayFreeSfx(SfxId.HUD_WEAPON_SWITCH1);
+                }
+                _hudWeaponMenuOpen = true;
                 UpdateWeaponSelect();
+            }
+            else
+            {
+                _hudWeaponMenuOpen = false;
             }
             _targetCircleInst.Enabled = false;
             _ammoBarMeter.BarInst.Enabled = false;
@@ -384,9 +394,9 @@ namespace MphRead.Entities
             {
                 if (!IsAltForm && !IsMorphing && !IsUnmorphing)
                 {
-                    if (!Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && !_showScoreboard)
+                    if (!Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && !_showScoreboard
+                        && GameState.MatchState == MatchState.InProgress)
                     {
-                        // sktodo: HUD shift
                         if (_drawIceLayer)
                         {
                             // ice layer
@@ -523,8 +533,11 @@ namespace MphRead.Entities
             }
         }
 
+        private int _hudPreviousWeaponSelection = -1;
+
         private void UpdateWeaponSelect()
         {
+            BeamType previousWeapon = WeaponSelection;
             int selection = -1;
             float x = Input.MouseState?.X ?? 0;
             float y = Input.MouseState?.Y ?? 0;
@@ -588,6 +601,11 @@ namespace MphRead.Entities
                 weaponInst.Enabled = available;
                 HudObjectInstance boxInst = _selectBoxInsts[i];
                 boxInst.SetIndex(available ? (i == selection ? 2 : 1) : 0, _scene);
+            }
+            if (selection != _hudPreviousWeaponSelection)
+            {
+                _soundSource.PlayFreeSfx(SfxId.HUD_WEAPON_SWITCH2);
+                _hudPreviousWeaponSelection = selection;
             }
         }
 
@@ -1413,7 +1431,7 @@ namespace MphRead.Entities
             }
             if (reveal == 1)
             {
-                // todo: play voice
+                _soundSource.QueueStream(VoiceId.VOICE_CAMPING, delay: 1);
                 QueueHudMessage(128, 150, 60 / 30f, 0, 234); // COWARD DETECTED!
             }
         }
@@ -2236,6 +2254,8 @@ namespace MphRead.Entities
             DrawText2D(posX + 5, posY + 14, Align.Left, 0, score);
         }
 
+        private int _prevIntroChars = 0;
+
         private void DrawModeRules()
         {
             string? header = _rulesLines[0];
@@ -2257,7 +2277,13 @@ namespace MphRead.Entities
                 float posX = _rulesInfo.Offsets[i] + 12;
                 DrawText2D(posX, posY, Align.Left, 0, line, new ColorRgba(0x7F5A), maxLength: characters);
                 posY += 13 + _rulesLengths[i].Newlines * 8;
-                // todo: play SFX, somewhere
+            }
+            // todo?: ideally this should be in a process method, not draw
+            if (totalCharacters > _prevIntroChars && totalCharacters > _rulesLengths[0].Length
+                && totalCharacters <= _rulesLengths[_rulesInfo.Count - 1].Length)
+            {
+                _soundSource.PlayFreeSfx(SfxId.LETTER_BLIP);
+                _prevIntroChars = totalCharacters;
             }
             _textSpacingY = 0;
         }

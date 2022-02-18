@@ -45,6 +45,7 @@ namespace MphRead.Entities
         public EntityBase? Owner { get; set; }
         public WeaponInfo? RicochetWeapon { get; set; }
         public EffectEntry? Effect { get; set; }
+        public EffectEntry? MuzzleEffect { get; set; }
         public EntityBase? Target { get; set; }
         public EquipInfo? Equip { get; set; }
 
@@ -107,6 +108,13 @@ namespace MphRead.Entities
             {
                 // avoid any frame time issues by just getting rid of continuous beams as soon as they're no longer being replaced
                 // --> in game they stick around for a frame or two, but their lifespan will have already made it so they can't interact
+                if (Flags.TestFlag(BeamFlags.Continuous) && Owner?.Type == EntityType.Player)
+                {
+                    // the game does this instead of PlayBeamHitSfx in the Lifespan <= 0 condition below
+                    StopHomingSfx();
+                    var playerOwner = (PlayerEntity)Owner;
+                    playerOwner.StopContinuousBeamSfx(Beam);
+                }
                 return false;
             }
             Age += _scene.FrameTime;
@@ -151,7 +159,8 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // todo: positional audio (w/ BeamKind check), node refs
+            _soundSource.Update(Position, rangeIndex: Beam == BeamType.Missile ? 3 : 2);
+            // sfxtodo: if node ref is not active, set sound volume override to 0
             if (Target != null)
             {
                 for (int i = 0; i < _scene.MessageQueue.Count; i++)
@@ -196,7 +205,16 @@ namespace MphRead.Entities
                     Target = null;
                 }
             }
-            // todo: homing SFX
+            if (Flags.TestFlag(BeamFlags.Charged)
+                && (Beam != BeamType.Missile || Flags.TestFlag(BeamFlags.Homing)))
+            {
+                // only relevant for the affinity missile beeping sound in practice
+                int sfx = Metadata.BeamSfx[(int)Beam, (int)BeamSfx.Homing];
+                if (sfx != -1)
+                {
+                    _soundSource.PlaySfx(sfx, loop: true);
+                }
+            }
             if (Flags.TestFlag(BeamFlags.HasModel))
             {
                 UpdateAnimFrames(_models[0]);
@@ -212,7 +230,11 @@ namespace MphRead.Entities
                 colRes.Position = Position;
                 SpawnCollisionEffect(colRes, noSplat: true);
                 OnCollision(colRes, colWith: null);
-                // todo: sfx etc.
+                if (!Flags.TestFlag(BeamFlags.Continuous) || (Owner?.Type) != EntityType.Player)
+                {
+                    // the alternative condition is handled above when the last continuous beam is removed
+                    PlayBeamHitSfx();
+                }
             }
             return true;
         }
@@ -491,7 +513,10 @@ namespace MphRead.Entities
                     anyRes.Position.Z + anyRes.Plane.Z * amt
                 );
                 bool ricochet = true;
-                // todo: sfx and stuff
+                if (DrawFuncId == 12)
+                {
+                    _soundSource.PlaySfx(SfxId.BIGEYE_ATTACK1C, noUpdate: true);
+                }
                 if (colWith != null)
                 {
                     if (colWith.Type == EntityType.Player || colWith.Type == EntityType.Halfturret)
@@ -591,7 +616,7 @@ namespace MphRead.Entities
                             }
                         }
                         OnCollision(anyRes, colWith);
-                        // todo: update SFX
+                        PlayBeamHitSfx();
                         ricochet = false;
                     }
                     else if (colWith.Type == EntityType.EnemyInstance)
@@ -620,16 +645,13 @@ namespace MphRead.Entities
                                 float pct = Vector3.Distance(Position, SpawnPosition) / MaxDistance;
                                 damage = GetInterpolatedValue(DamageInterpolation, Damage, 0, pct);
                             }
-                            if (damage > 0)
+                            if (damage > 0 && (Beam != BeamType.ShockCoil || _scene.FrameCount % 2 == 0)) // todo: FPS stuff
                             {
-                                if (Beam != BeamType.ShockCoil || _scene.FrameCount % 2 == 0) // todo: FPS stuff
-                                {
-                                    enemy.TakeDamage((uint)damage, this);
-                                    SpawnCollisionEffect(anyRes, noSplat: true);
-                                }
-                                OnCollision(anyRes, colWith);
-                                // todo: update SFX
+                                enemy.TakeDamage((uint)damage, this);
+                                SpawnCollisionEffect(anyRes, noSplat: true);
                             }
+                            OnCollision(anyRes, colWith);
+                            PlayBeamHitSfx();
                         }
                         ricochet = false;
                     }
@@ -638,7 +660,7 @@ namespace MphRead.Entities
                         var door = (DoorEntity)colWith;
                         SpawnCollisionEffect(anyRes, noSplat: true);
                         OnCollision(anyRes, colWith);
-                        // todo: update SFX
+                        PlayBeamHitSfx();
                         if (Owner?.Type == EntityType.Player)
                         {
                             var player = (PlayerEntity)Owner;
@@ -648,7 +670,7 @@ namespace MphRead.Entities
                                 {
                                     if (door.Data.PaletteId == (int)Beam)
                                     {
-                                        door.Unlock(updateState: true, sfxBool: true);
+                                        door.Unlock(updateState: true, noLockAnimSfx: true);
                                     }
                                     else if (!_scene.Multiplayer)
                                     {
@@ -669,7 +691,7 @@ namespace MphRead.Entities
                         {
                             SpawnCollisionEffect(anyRes, noSplat: true);
                             OnCollision(anyRes, colWith);
-                            // todo: update SFX
+                            PlayBeamHitSfx();
                             forceField.Lock?.LockHit(this);
                             ricochet = false;
                         }
@@ -682,14 +704,14 @@ namespace MphRead.Entities
                             SpawnCollisionEffect(anyRes, noSplat: true);
                         }
                         OnCollision(anyRes, colWith);
-                        // todo: update SFX
+                        PlayBeamHitSfx();
                         if (other.Flags.TestFlag(BeamFlags.ForceEffect))
                         {
                             other.SpawnCollisionEffect(anyRes, noSplat: true);
                         }
                         if (other.DrawFuncId == 12) // Slench tear
                         {
-                            // todo: play SFX
+                            _soundSource.PlaySfx(SfxId.BIGEYE_ATTACK1C, noUpdate: true);
                             ItemType item = ItemType.None;
                             uint rand = Rng.GetRandomInt2(100);
                             if (_scene.AreaId == 0) // Slench 1 (Alinos 1)
@@ -724,11 +746,11 @@ namespace MphRead.Entities
                         }
                         else if (other.DrawFuncId == 11) // Omega Cannon
                         {
-                            // todo: play SFX
+                            _soundSource.PlaySfx(SfxId.GOREA_ATTACK3B, noUpdate: true);
                         }
                         else
                         {
-                            // todo: play SFX
+                            _soundSource.PlaySfx(SfxId.LOB_GUN_HIT, noUpdate: true);
                         }
                         other.OnCollision(anyRes, this);
                         ricochet = false;
@@ -751,7 +773,18 @@ namespace MphRead.Entities
                             bool noSplat = anyRes.Terrain == Terrain.Lava || anyRes.EntityCollision != null;
                             SpawnCollisionEffect(anyRes, noSplat);
                         }
-                        // todo: play SFX
+                        if (RicochetWeapon != null)
+                        {
+                            PlayRicochetSfx();
+                        }
+                        else if (anyRes.Terrain <= Terrain.Lava)
+                        {
+                            PlayBeamHitSfx();
+                        }
+                        else
+                        {
+                            _soundSource.PlaySfx(SfxId.GENERIC_HIT, noUpdate: true);
+                        }
                         OnCollision(anyRes, colWith: null);
                         ricochet = false;
                     }
@@ -803,7 +836,51 @@ namespace MphRead.Entities
                 }
                 PastPositions[0] = Position;
             }
-            // todo: sfx
+            PlayRicochetSfx();
+        }
+
+        private void PlayRicochetSfx()
+        {
+            bool charged = Flags.TestFlag(BeamFlags.Charged);
+            if (charged && Beam == BeamType.Magmaul)
+            {
+                PlayBeamHitSfx();
+                return;
+            }
+            int sfx = Metadata.BeamSfx[(int)Beam, (int)BeamSfx.Ricochet];
+            if (sfx != -1)
+            {
+                float amountA;
+                if (Beam == BeamType.Judicator)
+                {
+                    amountA = Rng.GetRandomInt1(0xFFFF);
+                }
+                else
+                {
+                    amountA = 0xFFFF * (Speed * 2) / Fixed.ToFloat(3300); // todo: FPS stuff
+                }
+                _soundSource.PlaySfx(sfx, noUpdate: true, amountA: amountA);
+            }
+        }
+
+        private void StopHomingSfx()
+        {
+            int sfx = Metadata.BeamSfx[(int)Beam, (int)BeamSfx.Homing];
+            if (sfx != -1)
+            {
+                _soundSource.StopSfx(sfx);
+            }
+        }
+
+        private void PlayBeamHitSfx()
+        {
+            StopHomingSfx();
+            BeamSfx type = Flags.TestFlag(BeamFlags.Charged) ? BeamSfx.ChargeHit : BeamSfx.Hit;
+            int sfx = Metadata.BeamSfx[(int)Beam, (int)type];
+            if (sfx != -1)
+            {
+                _soundSource.PlaySfx(sfx, noUpdate: true);
+            }
         }
 
         public void OnCollision(CollisionResult colRes, EntityBase? colWith)
@@ -847,7 +924,7 @@ namespace MphRead.Entities
             if (Owner != null)
             {
                 _scene.SendMessage(Message.Impact, this, Owner, colWith ?? (object)0, 0);
-                // todo: stop SFX
+                StopHomingSfx();
             }
         }
 
@@ -891,7 +968,7 @@ namespace MphRead.Entities
                             if (Owner != null)
                             {
                                 _scene.SendMessage(Message.Impact, this, Owner, player, 0);
-                                // todo: stop SFX
+                                StopHomingSfx();
                             }
                         }
                     }
@@ -923,7 +1000,7 @@ namespace MphRead.Entities
                     if (Owner != null)
                     {
                         _scene.SendMessage(Message.Impact, this, Owner, enemy, 0);
-                        // todo: stop beam SFX
+                        StopHomingSfx();
                     }
                 }
             }
@@ -1233,9 +1310,19 @@ namespace MphRead.Entities
 
         public override void Destroy()
         {
+            _soundSource.StopAllSfx();
             if (Effect != null)
             {
                 _scene.DetachEffectEntry(Effect, setExpired: true);
+                Effect = null;
+            }
+            if (MuzzleEffect != null)
+            {
+                if (Flags.TestFlag(BeamFlags.DestroyMuzzle))
+                {
+                    _scene.UnlinkEffectEntry(MuzzleEffect);
+                }
+                MuzzleEffect = null;
             }
             Owner = null;
             Effect = null;
@@ -1332,6 +1419,7 @@ namespace MphRead.Entities
                 return BeamResultFlags.NoSpawn;
             }
             equip.SetAmmo?.Invoke(ammo - cost);
+            EffectEntry? muzzleEffect = null;
             if (!spawnFlags.TestFlag(BeamSpawnFlags.NoMuzzle))
             {
                 byte effectId = weapon.MuzzleEffects[charged ? 1 : 0];
@@ -1343,7 +1431,14 @@ namespace MphRead.Entities
                     Matrix4 transform = GetTransformMatrix(effFacing, effUp);
                     transform.Row3.Xyz = position;
                     // the game does this by spawning a CBeamEffect, but that's unncessary for muzzle effects
-                    scene.SpawnEffect(effectId - 3, transform);
+                    if (spawnFlags.TestFlag(BeamSpawnFlags.DestroyMuzzle))
+                    {
+                        muzzleEffect = scene.SpawnEffectGetEntry(effectId - 3, transform);
+                    }
+                    else
+                    {
+                        scene.SpawnEffect(effectId - 3, transform);
+                    }
                 }
             }
             int projectiles = (int)GetAmount(weapon.Projectiles, weapon.MinChargeProjectiles, weapon.ChargedProjectiles);
@@ -1604,6 +1699,11 @@ namespace MphRead.Entities
                         beam.Effect?.SetElementExtension(true);
                     }
                 }
+                if (spawnFlags.TestFlag(BeamSpawnFlags.DestroyMuzzle))
+                {
+                    beam.MuzzleEffect = muzzleEffect;
+                    beam.Flags |= BeamFlags.DestroyMuzzle;
+                }
                 Debug.Assert(beam.Target == null);
                 if (beam.Flags.TestFlag(BeamFlags.Homing))
                 {
@@ -1634,6 +1734,7 @@ namespace MphRead.Entities
                         }
                     }
                 }
+                beam._soundSource.Update(beam.Position, rangeIndex: 0);
                 scene.AddEntity(beam);
             }
             return result;
@@ -2052,11 +2153,6 @@ namespace MphRead.Entities
             }
             return Vector3.Cross(Vector3.UnitZ, up).Normalized();
         }
-
-        public static void StopChargeSfx(BeamType beam, Hunter hunter)
-        {
-            //  todo: SFX stuff
-        }
     }
 
     [Flags]
@@ -2075,7 +2171,8 @@ namespace MphRead.Entities
         RadiusIndex1 = 0x200, // pair with bit 10: index 0-3 of radius for enemy beam collision with player beams
         RadiusIndex2 = 0x400,
         LifeDrain = 0x800,
-        SurfaceCollision = 0x1000
+        SurfaceCollision = 0x1000,
+        DestroyMuzzle = 0x2000 // viewer only
     }
 
     [Flags]
@@ -2085,7 +2182,8 @@ namespace MphRead.Entities
         DoubleDamage = 0x1,
         Charged = 0x2,
         NoMuzzle = 0x4,
-        PrimeHunter = 0x8
+        PrimeHunter = 0x8,
+        DestroyMuzzle = 0x10 // viewer only
     }
 
     [Flags]

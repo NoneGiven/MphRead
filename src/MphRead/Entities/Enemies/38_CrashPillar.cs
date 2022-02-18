@@ -265,7 +265,7 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             _models[0].SetAnimation(0, AnimFlags.NoLoop | AnimFlags.Reverse);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.STATUE_TURN_SCR);
             return true;
         }
 
@@ -276,7 +276,7 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             _models[0].SetAnimation(0, AnimFlags.NoLoop);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.STATUE_ACTIVATE_SCR);
             return true;
         }
 
@@ -299,7 +299,7 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.STATUE_TURN_SCR);
             return true;
         }
 
@@ -346,7 +346,7 @@ namespace MphRead.Entities.Enemies
             _jumpHeight = Position.Y + 2.8f;
             _delayTimer = 15 * 2; // todo: FPS stuff
             _aimSteps = 8 * 2; // todo: FPS stuff
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.STATUE_ATTACK_SCR);
             return true;
         }
 
@@ -362,7 +362,7 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             _models[0].SetAnimation(2, AnimFlags.NoLoop);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.STATUE_HOP_SCR);
             return true;
         }
 
@@ -373,7 +373,7 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             _models[0].SetAnimation(2, AnimFlags.NoLoop);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.STATUE_HOP_SCR);
             return true;
         }
 
@@ -412,7 +412,7 @@ namespace MphRead.Entities.Enemies
             }
             _delayTimer = 15 * 2; // todo: FPS stuff
             _models[0].SetAnimation(2, AnimFlags.NoLoop);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.STATUE_HOP_SCR);
             return true;
         }
 

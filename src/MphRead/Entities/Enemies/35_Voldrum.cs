@@ -28,6 +28,7 @@ namespace MphRead.Entities.Enemies
         private bool _increaseSpeed = false;
         protected float _speedFactor = 0;
         protected float _speedInc = 0;
+        private float _rollSfxAmount = 0;
 
         // todo: FPS stuff
         protected float _speedIncAmount = 410 / 4096f * (1 / 3f) / 2;
@@ -83,7 +84,7 @@ namespace MphRead.Entities.Enemies
 
         protected override void EnemyProcess()
         {
-            // todo: update SFX
+            bool sfxGrounded = true;
             if (!_grounded)
             {
                 _speed.Y -= Fixed.ToFloat(110) / 4; // todo: FPS stuff
@@ -91,17 +92,59 @@ namespace MphRead.Entities.Enemies
             if (_state1 == 2)
             {
                 bool discard = false;
-                HandleBlockingCollision(Position, _hurtVolume, updateSpeed: true, ref _grounded, ref discard);
+                if (!HandleBlockingCollision(Position, _hurtVolume, updateSpeed: true, ref _grounded, ref discard))
+                {
+                    sfxGrounded = false;
+                }
             }
             else if (_state1 == 0 || _state1 == 6)
             {
-                HandleCollision();
+                if (!HandleCollision())
+                {
+                    sfxGrounded = false;
+                }
             }
             if (_state1 != 3 && _state1 != 4)
             {
                 ContactDamagePlayer(2, knockback: true);
             }
             CallStateProcess();
+            if (_state1 != 0 && _state1 != 6)
+            {
+                sfxGrounded = false;
+            }
+            float amount = 0xFFFF * _speedFactor * 2 / 0.2f; // todo: FPS suff
+            UpdateRollSfx(amount, sfxGrounded);
+        }
+
+        protected void UpdateRollSfx(float newAmount, bool grounded)
+        {
+            float prevAmount = _rollSfxAmount;
+            if (!grounded)
+            {
+                newAmount = ExponentialDecay(0.5f, prevAmount);
+            }
+            else if (_scene.FrameCount % 2 == 0) // todo: FPS stuff
+            {
+                if (newAmount < prevAmount)
+                {
+                    newAmount = prevAmount + (newAmount - prevAmount) / 4;
+                }
+                else
+                {
+                    newAmount = prevAmount + (newAmount - prevAmount) / 2;
+                }
+            }
+            else
+            {
+                newAmount = _rollSfxAmount;
+            }
+            if (newAmount < 20)
+            {
+                newAmount = 0;
+            }
+            _rollSfxAmount = newAmount;
+            _soundSource.PlaySfx(SfxId.DGN_GUARD_BOT_ROLL, loop: true, amountA: _rollSfxAmount);
         }
 
         protected virtual bool HandleCollision()
@@ -317,7 +360,7 @@ namespace MphRead.Entities.Enemies
             _speed = new Vector3(0, 0.2f / 2, 0); // todo: FPS stuff
             _timeInAir = 0;
             _airborne = false;
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.GUARD_BOT_JUMP);
             return true;
         }
 
@@ -341,7 +384,7 @@ namespace MphRead.Entities.Enemies
             _speedFactor = 0.6f / 2; // todo: FPS stuff
             _ramDelay = 40 * 2; // todo: FPS stuff
             _models[0].SetAnimation(0);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.GUARD_BOT_ATTACK1);
             return true;
         }
 
@@ -382,7 +425,7 @@ namespace MphRead.Entities.Enemies
             PickRoamTarget();
             _speed = new Vector3(0, 0.2f / 2, 0); // todo: FPS stuff
             _models[0].SetAnimation(4);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.GUARD_BOT_JUMP);
             return true;
         }
 

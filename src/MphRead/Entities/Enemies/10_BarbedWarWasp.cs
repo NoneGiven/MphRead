@@ -151,7 +151,7 @@ namespace MphRead.Entities.Enemies
                 }
             }
             ContactDamagePlayer(_values.ContactDamage, knockback: false);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.WASP_IDLE, loop: true);
             CallStateProcess();
         }
 
@@ -192,7 +192,7 @@ namespace MphRead.Entities.Enemies
                 Vector3 spawnPos = Position.AddY(-0.5f);
                 BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, _aimVector, BeamSpawnFlags.None, _scene);
                 _shotCount--;
-                // todo: play SFX
+                PlayBeamShotSfx();
             }
             else if (_shotTimer == 15 * 2) // todo: FPS stuff
             {
@@ -201,6 +201,16 @@ namespace MphRead.Entities.Enemies
             }
             _shotTimer--;
             CallSubroutine(Metadata.Enemy10Subroutines, this);
+        }
+
+        // the game shares this function with the player, but we don't need all the logic
+        private void PlayBeamShotSfx()
+        {
+            int sfx = Metadata.BeamSfx[(int)_equipInfo.Weapon.Beam, (int)BeamSfx.Shot];
+            if (sfx != -1)
+            {
+                _soundSource.PlaySfx(sfx);
+            }
         }
 
         private void State4()

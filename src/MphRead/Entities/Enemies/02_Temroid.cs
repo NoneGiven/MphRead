@@ -95,7 +95,7 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state2 == 2)
             {
-                // todo: stop SFX
+                _soundSource.StopAllSfx();
                 _models[0].SetAnimation(10, AnimFlags.NoLoop);
                 _speed = Vector3.Zero;
             }

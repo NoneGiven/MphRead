@@ -61,6 +61,7 @@ namespace MphRead.Entities
         private readonly float _backwardSpeed;
         private int _currentAnimState = 0; // todo: names
         private int _currentAnimId = 0;
+        private float _moveSfxAmount = 0;
 
         // todo: would be nice to have the ability to manipulate these transforms manually
         private readonly Vector3 _posOffset;
@@ -75,6 +76,8 @@ namespace MphRead.Entities
         private float _moveIncrement = 0;
         private Vector3 _visiblePosition;
         private Vector3 _prevVisiblePosition;
+        private readonly int _sfxRangeIndex;
+        private readonly MoveSfxInfo _moveSfx;
 
         private static BeamProjectileEntity[] _beams = null!;
 
@@ -211,6 +214,21 @@ namespace MphRead.Entities
                     }
                 }
             }
+            _sfxRangeIndex = 14;
+            if (_data.ModelId == 7) // Door_Unit4_RM1
+            {
+                _sfxRangeIndex = 26;
+            }
+            else if (_data.ModelId == 34) // unit1_mover2
+            {
+                _sfxRangeIndex = 33;
+            }
+            _moveSfx = new MoveSfxInfo(
+                start1: new SfxData(Metadata.PlatformSfx[_data.ModelId, 0]),
+                start2: new SfxData(Metadata.PlatformSfx[_data.ModelId, 1]),
+                stop: new SfxData(Metadata.PlatformSfx[_data.ModelId, 2]),
+                destoryed: new SfxData(Metadata.PlatformSfx[_data.ModelId, 3])
+            );
         }
 
         public static void DestroyBeams()
@@ -293,6 +311,7 @@ namespace MphRead.Entities
 
         public override void Destroy()
         {
+            _soundSource.StopAllSfx(force: true);
             for (int i = 0; i < _effects.Count; i++)
             {
                 EffectEntry? effectEntry = _effects[i];
@@ -392,7 +411,11 @@ namespace MphRead.Entities
                         }
                     }
                     _animFlags &= ~PlatAnimFlags.Draw;
-                    // todo: stop sfx, room state
+                    if (Flags.TestFlag(PlatformFlags.BeamSpawner))
+                    {
+                        _soundSource.StopAllSfx();
+                    }
+                    // todo: room state
                 }
             }
         }
@@ -420,6 +443,19 @@ namespace MphRead.Entities
                     else
                     {
                         _stateFlags &= ~PlatStateFlags.Reverse;
+                    }
+                    if (_data.NoPort != 0)
+                    {
+                        SfxData startSfx = _moveSfx.Start1;
+                        if (_posList.Count == 2 && _data.ForCutscene == 1)
+                        {
+                            startSfx = _moveSfx.Start2;
+                        }
+                        PlaySfx(startSfx);
+                    }
+                    else
+                    {
+                        // todo: update port flags
                     }
                 }
             }
@@ -452,6 +488,98 @@ namespace MphRead.Entities
                 Deactivate();
             }
         }
+
+        private void PlaySfx(SfxData data)
+        {
+            bool environment = data.Flags.TestFlag(PlatSfxFlags.Environment);
+            if (data.Id == 0 && !environment || (data.Id & 0x8000) != 0) // DGN
+            {
+                return;
+            }
+            float recency = -1;
+            bool sourceOnly = true;
+            bool loop = data.Flags.TestFlag(PlatSfxFlags.Loop) || environment;
+            if (!loop)
+            {
+                recency = Single.MaxValue;
+            }
+            // the game mistakenly checks the flags local variable for the no update/own params bit, instead of the source flags
+            // the game also checks the source flags for the check recent bit, but it's not needed since single or loop is always set
+            bool noUpdate = data.Flags.TestFlag(PlatSfxFlags.NoUpdate);
+            if (environment)
+            {
+                _soundSource.PlayEnvironmentSfx(data.Id);
+            }
+            else
+            {
+                _soundSource.PlaySfx(data.Id, loop, noUpdate, recency, sourceOnly);
+            }
+        }
+
+        private enum PlatSfxFlags
+        {
+            None = 0,
+            Environment = 0x400,
+            NoUpdate = 0x800,
+            CheckRecent = 0x1000,
+            Loop = 0x2000
+        }
+
+        private struct SfxData
+        {
+            public readonly int Id;
+            public readonly PlatSfxFlags Flags;
+
+            public SfxData(int data)
+            {
+                Id = data & 0xC3FF;
+                Flags = (PlatSfxFlags)(data & 0x3C00);
+            }
+
+            public SfxData(int id, PlatSfxFlags flags)
+            {
+                Id = id;
+                Flags = flags;
+            }
+        }
+
+        private class MoveSfxInfo
+        {
+            public readonly SfxData Start1;
+            public readonly SfxData Start2;
+            public readonly SfxData Stop;
+            public readonly SfxData Destoryed;
+
+            public MoveSfxInfo(SfxData start1, SfxData start2, SfxData stop, SfxData destoryed)
+            {
+                Start1 = start1;
+                Start2 = start2;
+                Stop = stop;
+                Destoryed = destoryed;
+            }
+        }
+
+        private class BeamSfxInfo
+        {
+            public readonly SfxData Data;
+            public readonly float Offset;
+            public int RangeIndex;
+
+            public BeamSfxInfo(int id, PlatSfxFlags flags, float offset, int rangeIndex)
+            {
+                Data = new SfxData(id, flags);
+                Offset = offset;
+                RangeIndex = rangeIndex;
+            }
+        }
+
+        private static readonly IReadOnlyList<BeamSfxInfo> _beamSfx = new BeamSfxInfo[4]
+        {
+            new BeamSfxInfo(140, PlatSfxFlags.None, 0, 0),
+            new BeamSfxInfo(-1, PlatSfxFlags.None, 0, 0),
+            new BeamSfxInfo(2, PlatSfxFlags.Environment | PlatSfxFlags.Loop, Fixed.ToFloat(5310), 14),
+            new BeamSfxInfo(0, PlatSfxFlags.Environment | PlatSfxFlags.Loop, 0, 37)
+        };
 
         public override bool Process()
         {
@@ -560,6 +688,7 @@ namespace MphRead.Entities
                     spawnBeam = false;
                 }
             }
+            bool soundUpdated = false;
             // todo: don't spawn beam when node ref is not visible, unless the flag for that is set
             //_stateFlags |= PlatStateFlags.Awake; // skdebug?
             if (spawnBeam && _animFlags.TestFlag(PlatAnimFlags.Draw) && !_animFlags.TestFlag(PlatAnimFlags.DisableReflect)
@@ -570,7 +699,10 @@ namespace MphRead.Entities
                     _beamIntervalIndex++;
                     _beamIntervalIndex %= 16;
                     _beamActive = (_data.BeamOnIntervals & (1 << _beamIntervalIndex)) != 0;
-                    // todo: SFX
+                    if (!_beamActive)
+                    {
+                        _soundSource.StopAllSfx();
+                    }
                     _beamIntervalTimer = _beamInterval;
                 }
                 if (_beamActive)
@@ -579,7 +711,20 @@ namespace MphRead.Entities
                     Matrix4 transform = GetTransform();
                     Vector3 spawnPos = Matrix.Vec3MultMtx4(_beamSpawnPos, transform);
                     Vector3 spawnDir = Matrix.Vec3MultMtx3(_beamSpawnDir, transform).Normalized();
-                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, _scene);
+                    BeamSpawnFlags spawnFlags = BeamSpawnFlags.None;
+                    if (_equipInfo.Weapon.Flags.TestFlag(WeaponFlags.Continuous))
+                    {
+                        spawnFlags = BeamSpawnFlags.DestroyMuzzle;
+                    }
+                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, spawnFlags, _scene);
+                    BeamSfxInfo sfxInfo = _beamSfx[_data.BeamId];
+                    if (sfxInfo.Data.Id != -1)
+                    {
+                        Vector3 sfxPos = spawnPos + spawnDir * sfxInfo.Offset;
+                        _soundSource.Update(sfxPos, sfxInfo.RangeIndex);
+                        PlaySfx(sfxInfo.Data);
+                        soundUpdated = true;
+                    }
                     if (!_equipInfo.Weapon.Flags.TestFlag(WeaponFlags.RepeatFire))
                     {
                         _beamActive = false;
@@ -595,8 +740,13 @@ namespace MphRead.Entities
                 SetPlatAnimation(_currentAnimState, AnimFlags.None);
                 _currentAnimState = -2;
                 _stateFlags &= ~PlatStateFlags.WasAwake;
+                // the game also sets unused flags for SamusShip
             }
-            // todo: SFX and other stuff
+            if (!soundUpdated)
+            {
+                _soundSource.Update(_visiblePosition, _sfxRangeIndex);
+                // sfxtodo: if not Platform_Unit4_C1 (5) and node ref is not active, set sound volume override to 0
+            }
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects
             Model model = _models[0].Model;
             for (int i = 0; i < 4; i++)
@@ -830,6 +980,11 @@ namespace MphRead.Entities
 
         private void UpdateState()
         {
+            bool cutscene = false;
+            if (_posList.Count == 2 && _data.ForCutscene == 1)
+            {
+                cutscene = true;
+            }
             if (_state == PlatformState.Moving)
             {
                 if (_recoilTimer > 0)
@@ -844,10 +999,28 @@ namespace MphRead.Entities
                 if (_moveTimer > 0)
                 {
                     _moveTimer--;
-                    // todo: sfx everywhere
+                    SfxData startSfx = _moveSfx.Start1;
+                    if (startSfx.Flags.TestFlag(PlatSfxFlags.Environment))
+                    {
+                        PlaySfx(startSfx);
+                    }
                 }
                 else
                 {
+                    bool reverse = _stateFlags.TestFlag(PlatStateFlags.Reverse);
+                    if (_data.ModelId != 5 // Platform_Unit4_C1
+                        || !reverse && _fromIndex >= _posList.Count - 2 || reverse && _fromIndex <= 1)
+                    {
+                        SfxData startSfx = cutscene ? _moveSfx.Start2 : _moveSfx.Start1;
+                        if (startSfx.Flags.TestFlag(PlatSfxFlags.Loop) && (startSfx.Id & 0x8000) == 0)
+                        {
+                            _soundSource.StopAllSfx();
+                        }
+                        if (!cutscene)
+                        {
+                            PlaySfx(_moveSfx.Stop);
+                        }
+                    }
                     _fromIndex = _toIndex;
                     for (int i = 0; i < _lifetimeMessages.Length; i++)
                     {
@@ -929,6 +1102,11 @@ namespace MphRead.Entities
                     }
                     if (_state == PlatformState.Moving)
                     {
+                        SfxData startSfx = cutscene ? _moveSfx.Start2 : _moveSfx.Start1;
+                        if (startSfx.Flags.TestFlag(PlatSfxFlags.Loop))
+                        {
+                            PlaySfx(startSfx);
+                        }
                         UpdateMovement();
                     }
                 }
@@ -943,6 +1121,20 @@ namespace MphRead.Entities
                 {
                     Activate();
                 }
+            }
+            if ((_moveSfx.Start1.Id & 0x8000) != 0) // DGN
+            {
+                float speed = _stateFlags.TestFlag(PlatStateFlags.Reverse) ? _backwardSpeed : _forwardSpeed;
+                float amount = 0xFFFF * speed * 2 / Fixed.ToFloat(1640); // todo: FPS stuff
+                if (_state == PlatformState.Moving && amount > 0)
+                {
+                    _moveSfxAmount = amount;
+                }
+                else
+                {
+                    _moveSfxAmount = ExponentialDecay(0.875f, _moveSfxAmount);
+                }
+                _soundSource.PlaySfx(_moveSfx.Start1.Id, loop: true, amountA: _moveSfxAmount);
             }
         }
 
@@ -1152,7 +1344,7 @@ namespace MphRead.Entities
                                             if (Flags.TestFlag(PlatformFlags.Breakable))
                                             {
                                                 _scene.SendMessage(Message.PlatformSleep, this, this, 0, 0);
-                                                // todo: play SFX
+                                                PlaySfx(_moveSfx.Destoryed);
                                             }
                                             Vector3 spawnPos = _visiblePosition.AddY(1);
                                             ItemSpawnEntity.SpawnItemDrop(_data.ItemType, spawnPos, _data.ItemChance, _scene);

@@ -251,7 +251,7 @@ namespace MphRead.Entities.Enemies
             Vector3 facing = FacingVector;
             _speed.X = facing.X * 0.15f / 2; // todo: FPS stuff
             _speed.Z = facing.Z * 0.15f / 2; // todo: FPS stuff
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.HANGING_TERROR_WALK, loop: true);
             CallSubroutine();
         }
 
@@ -334,7 +334,7 @@ namespace MphRead.Entities.Enemies
 
         private void State14()
         {
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.HANGING_TERROR_WALK, loop: true);
             CallSubroutine();
         }
 
@@ -410,7 +410,7 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             SetNodeAnim(6);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.HANGING_TERROR_WARN);
             return true;
         }
 
@@ -457,7 +457,7 @@ namespace MphRead.Entities.Enemies
                     _speed.X = 0;
                     _speed.Z = 0;
                     _stepCount = 60 * 2; // todo: FPS stuff
-                    // todo: play SFX
+                    _soundSource.PlaySfx(SfxId.HANGING_TERROR_SCREAM_SCR);
                     return true;
                 }
             }
@@ -532,8 +532,9 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             SetNodeAnim(14, AnimFlags.NoLoop);
-            // todo: 47 calls stop_sfx here while 46 does not
-            // todo: play SFX
+            // in-game, 47 calls stop_sfx here while 46 does not
+            _soundSource.StopSfx(SfxId.HANGING_TERROR_WALK);
+            _soundSource.PlaySfx(SfxId.HANGING_TERROR_SCREAM_SCR);
             _stepCount = 50 * 2; // todo: FPS stuff
             return true;
         }
@@ -585,7 +586,7 @@ namespace MphRead.Entities.Enemies
             _stepCount = 10 * 2; // todo: FPS stuff
             _aimAngleStep = angle / _stepCount;
             _speed = Vector3.Zero;
-            // todo: stop SFX
+            _soundSource.StopSfx(SfxId.HANGING_TERROR_WALK);
             return true;
         }
 
@@ -611,7 +612,7 @@ namespace MphRead.Entities.Enemies
             _stepCount = (ushort)((distance / _stepDistance) + 1);
             _speed = travel * (_stepDistance / distance);
             SetNodeAnim(12, AnimFlags.NoLoop);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.HANGING_TERROR_DROP);
             return true;
         }
 
@@ -642,7 +643,7 @@ namespace MphRead.Entities.Enemies
             }
             StartRecoil();
             SetNodeAnim(7, AnimFlags.NoLoop);
-            // todo: stop SFX
+            _soundSource.StopSfx(SfxId.HANGING_TERROR_WALK);
             return true;
         }
 
@@ -673,7 +674,7 @@ namespace MphRead.Entities.Enemies
             _stepCount = 0;
             _speed = Vector3.Zero;
             _delayTimer = 15 * 2; // todo: FPS stuff
-            // todo: stop SFX
+            _soundSource.StopSfx(SfxId.HANGING_TERROR_WALK);
             return true;
         }
 
@@ -683,7 +684,7 @@ namespace MphRead.Entities.Enemies
             {
                 SetNodeAnim(16);
                 PickMoveTarget(_homeVolume);
-                // todo: stop SFX
+                _soundSource.StopSfx(SfxId.HANGING_TERROR_WALK);
                 _speed = Vector3.Zero;
                 _targetVec = (_moveTarget - Position).WithY(0).Normalized();
                 float angle = MathHelper.RadiansToDegrees(MathF.Acos(Vector3.Dot(FacingVector, _targetVec)));
@@ -710,7 +711,7 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             SetNodeAnim(16);
-            // todo: stop SFX
+            _soundSource.StopSfx(SfxId.HANGING_TERROR_WALK);
             _speed = Vector3.Zero;
             _targetVec = (PlayerEntity.Main.Position - Position).WithY(0).Normalized();
             float angle = MathHelper.RadiansToDegrees(MathF.Acos(Vector3.Dot(FacingVector, _targetVec)));
@@ -771,7 +772,8 @@ namespace MphRead.Entities.Enemies
             SetNodeAnim(1);
             _speed = Vector3.Zero;
             _stepCount = 38 * 2; // todo: FPS stuff
-            // todo: stop SFX, play SFX
+            _soundSource.StopSfx(SfxId.HANGING_TERROR_WALK);
+            _soundSource.PlaySfx(SfxId.HANGING_TERROR_ATTACK1_SCR);
             return true;
         }
 
@@ -782,7 +784,8 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             SetNodeAnim(14, AnimFlags.NoLoop);
-            // todo: stop SFX, play SFX
+            _soundSource.StopSfx(SfxId.HANGING_TERROR_WALK);
+            _soundSource.PlaySfx(SfxId.HANGING_TERROR_SCREAM_SCR);
             _speed = Vector3.Zero;
             return true;
         }

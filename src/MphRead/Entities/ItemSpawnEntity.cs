@@ -69,16 +69,15 @@ namespace MphRead.Entities
                     _spawnCooldown = (ushort)(_data.SpawnInterval * 2); // todo: FPS stuff
                     _spawnCount++;
                     Item.Owner = this;
-                    if (_data.ItemType == ItemType.ArtifactKey)
+                    if (_data.ItemType != ItemType.ArtifactKey)
                     {
-                        if (_playKeySfx)
-                        {
-                            // todo: play SFX
-                        }
+                        _soundSource.Update(Position, rangeIndex: 7);
+                        // sfxtodo: if node ref is not active, set sound volume override to 0
+                        _soundSource.PlaySfx(SfxId.ITEM_SPAWN1);
                     }
-                    else
+                    else if (_playKeySfx)
                     {
-                        // todo: positional audio, node ref, SFX
+                        _soundSource.PlayFreeSfx(SfxId.KEY_APPEAR);
                     }
                     _playKeySfx = false;
                 }

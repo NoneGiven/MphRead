@@ -5,6 +5,7 @@ namespace MphRead
         public static bool SmoothCamSeqHandoff { get; set; } = false;
         public static bool BetterCamSeqNodeRef { get; set; } = true;
         public static bool NoStrayRespawnText { get; set; } = false;
+        public static bool CorrectBountySfx { get; set; } = true;
     }
 
     public static class Features
@@ -17,6 +18,8 @@ namespace MphRead
         public static bool TargetInfoSway { get; set; } = false; // "false"
         public static bool MaxRoomDetail { get; set; } = false; // false
         public static bool MaxPlayerDetail { get; set; } = true; // false
+        public static bool LogSpatialAudio { get; set; } = false; // false
+        public static bool HalfSecondAlarm { get; set; } = false; // false
     }
 
     public static class Cheats

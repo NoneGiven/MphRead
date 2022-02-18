@@ -151,7 +151,8 @@ namespace MphRead
         private bool _advanceOneFrame = false;
         private bool _recording = false;
         private int _framesRecorded = 0;
-        public bool ProcessFrame => _frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame;
+        public bool ProcessFrame => (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame) && !_exiting;
+        private bool _exiting = false;
         private bool _roomLoaded = false;
         private RoomEntity? _room = null;
         private int _roomId = -1;
@@ -1167,12 +1168,16 @@ namespace MphRead
             _advanceOneFrame = false;
         }
 
-        public void OnRenderFrame()
+        public bool OnRenderFrame()
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
             GL.ClearStencil(0);
 
             UpdateUniforms();
+            if (_exiting)
+            {
+                return false;
+            }
             // pass 1: opaque
             GL.ColorMask(true, true, true, true);
             GL.Enable(EnableCap.AlphaTest);
@@ -1344,6 +1349,7 @@ namespace MphRead
             }
             GL.Enable(EnableCap.DepthTest);
             GL.Disable(EnableCap.Blend);
+            return true;
         }
 
         private void LoadAndUnload()
@@ -1709,6 +1715,7 @@ namespace MphRead
             entry.Parity = (int)(_frameCount % 2);
             entry.EffectEntry = null;
             entry.EntityCollision = entCol;
+            entry.Definition = element;
             entry.RoField1 = 0;
             entry.RoField2 = 0;
             entry.RoField3 = 0;
@@ -1727,6 +1734,7 @@ namespace MphRead
             }
             _activeElements.Remove(element);
             element.EntityCollision = null;
+            element.Definition = null;
             element.Model = null!;
             element.Nodes.Clear();
             element.EffectName = "";
@@ -1850,6 +1858,28 @@ namespace MphRead
                     element.TextureBindingIds.Add(material.TextureBindingId);
                 }
             }
+        }
+
+        public int CountElements(int effectId)
+        {
+            Effect? effect = Read.GetEffect(effectId);
+            if (effect == null)
+            {
+                return 0;
+            }
+            int count = 0;
+            for (int i = 0; i < effect.Elements.Count; i++)
+            {
+                EffectElement element = effect.Elements[i];
+                for (int j = 0; j < _activeElements.Count; j++)
+                {
+                    if (_activeElements[j].Definition == element)
+                    {
+                        count++;
+                    }
+                }
+            }
+            return count;
         }
 
         private void ProcessEffects()
@@ -2436,6 +2466,7 @@ namespace MphRead
 
         private void UpdateScene()
         {
+            PlayerEntity.Main.UpdateTimedSounds();
             PlayerEntity.Main.ProcessHudMessageQueue();
             for (int i = 0; i < _entities.Count; i++)
             {
@@ -2450,6 +2481,7 @@ namespace MphRead
             }
             PlayerEntity.Main.ProcessModeHud();
             GameState.UpdateState(this);
+            Sound.Sfx.Update(_frameTime);
         }
 
         private void GetDrawItems()
@@ -2633,8 +2665,10 @@ namespace MphRead
 
         public void DoCleanup()
         {
+            _exiting = true;
             PlatformEntity.DestroyBeams();
             EnemyInstanceEntity.DestroyBeams();
+            Sound.Sfx.ShutDown();
             OutputStop();
         }
 
@@ -4480,7 +4514,10 @@ namespace MphRead
                 CursorVisible = true;
             }
             Scene.OnUpdateFrame();
-            Scene.OnRenderFrame();
+            if (!Scene.OnRenderFrame())
+            {
+                return;
+            }
             SwapBuffers();
             if (_startedHidden)
             {

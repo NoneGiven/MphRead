@@ -106,20 +106,20 @@ namespace MphRead.Entities
                 Flags &= ~DoorFlags.ShouldOpen;
             }
             // todo: if should open and this is a loading door, clear should open and start room transition
-            // todo: update SFX
+            _soundSource.Update(Position, rangeIndex: 6);
             if (Flags.TestFlag(DoorFlags.ShouldOpen))
             {
                 if (AnimInfo.Index[0] != 0)
                 {
                     _models[0].SetAnimation(0, 0, SetFlags.Texture | SetFlags.Texcoord | SetFlags.Node, AnimFlags.NoLoop);
-                    // todo: play SFX
+                    _soundSource.PlaySfx(SfxId.DOOR3_OPEN_SCR);
                 }
                 else if (AnimInfo.Flags[0].TestFlag(AnimFlags.Ended) && AnimInfo.Flags[0].TestFlag(AnimFlags.Reverse))
                 {
                     AnimInfo.Flags[0] &= ~AnimFlags.Ended;
                     AnimInfo.Flags[0] &= ~AnimFlags.Paused;
                     AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
-                    // todo: play SFX
+                    _soundSource.PlaySfx(_data.DoorType == DoorType.Boss ? SfxId.DOOR2_OPEN : SfxId.DOOR_OPEN);
                 }
             }
             else if (AnimInfo.Index[0] == 0 && AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
@@ -131,7 +131,13 @@ namespace MphRead.Entities
                     AnimInfo.Flags[0] &= ~AnimFlags.Paused;
                     AnimInfo.Flags[0] |= AnimFlags.Reverse;
                     AnimInfo.Flags[1] = AnimInfo.Flags[0];
-                    // todo: play SFX
+                    SfxId sfx = _data.DoorType switch
+                    {
+                        DoorType.Boss => SfxId.DOOR2_CLOSE_SCR,
+                        DoorType.Thin => SfxId.DOOR3_CLOSE_SCR,
+                        _ => SfxId.DOOR_CLOSE
+                    };
+                    _soundSource.PlaySfx(sfx);
                 }
                 else if (_data.DoorType == DoorType.Thin)
                 {
@@ -142,7 +148,11 @@ namespace MphRead.Entities
             {
                 if (_data.DoorType == DoorType.Boss && AnimInfo.Flags[1].TestFlag(AnimFlags.Reverse))
                 {
-                    // todo: play SFX
+                    _soundSource.StopSfx(SfxId.DOOR2_LOOP);
+                    if (AnimInfo.Frame[1] < 2)
+                    {
+                        _soundSource.PlaySfx(SfxId.DOOR2_PRE_OPEN, recency: Single.MaxValue, sourceOnly: true);
+                    }
                 }
                 AnimInfo.Flags[1] &= ~AnimFlags.Ended;
                 AnimInfo.Flags[1] &= ~AnimFlags.Paused;
@@ -150,7 +160,7 @@ namespace MphRead.Entities
             }
             else if (_data.DoorType == DoorType.Boss && AnimInfo.Flags[1].TestFlag(AnimFlags.Reverse))
             {
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.DOOR2_LOOP, loop: true);
             }
             UpdateAnimFrames(_models[0]);
             UpdateAnimFrames(_models[1]);
@@ -206,13 +216,14 @@ namespace MphRead.Entities
                 // todo: bits 8/9 and 10 are basically a counter and a bool, and we should just replace them with that
                 if (Flags.TestFlag(DoorFlags.Bit10) && _scene.FrameCount > 3 * 2) // todo: FPS stuff
                 {
-                    // todo: play SFX
+                    _soundSource.PlaySfx(SfxId.LOCK_ANIM, recency: Single.MaxValue, sourceOnly: true);
                 }
-                int flags = (int)Flags;
-                int bits = (flags << 22) >> 30;
+                uint flags = (uint)Flags;
+                uint bits = (flags << 22) >> 30;
                 if (bits < 2)
                 {
                     bits = (bits + 1) & 3;
+                    flags &= 0xFFFFFCFF;
                     flags |= bits << 8;
                     Flags = (DoorFlags)flags;
                 }
@@ -260,11 +271,15 @@ namespace MphRead.Entities
             }
         }
 
-        public void Unlock(bool updateState, bool sfxBool)
+        public void Unlock(bool updateState, bool noLockAnimSfx)
         {
             // todo: return if in room transition
             Flags |= DoorFlags.Unlocked;
-            // todo: something with SFX
+            PlayerEntity.Main.DoorChimeSfxTimer = 2 / 30f;
+            if (!noLockAnimSfx)
+            {
+                PlayerEntity.Main.DoorUnlockSfxTimer = 2 / 30f;
+            }
             _lock.SetAnimation(1, AnimFlags.NoLoop);
             _scene.SpawnEffect(114, UpVector, FacingVector, LockPosition); // lockDefeat
             if (updateState)
@@ -277,7 +292,7 @@ namespace MphRead.Entities
         {
             if (info.Message == Message.Unlock)
             {
-                Unlock(updateState: true, sfxBool: false);
+                Unlock(updateState: true, noLockAnimSfx: false);
             }
             else if (info.Message == Message.Lock)
             {
@@ -290,7 +305,7 @@ namespace MphRead.Entities
                     EntityBase entity = _scene.Entities[i];
                     if (entity.Type == EntityType.Door && entity.Id == -1)
                     {
-                        ((DoorEntity)entity).Unlock(updateState: true, sfxBool: false);
+                        ((DoorEntity)entity).Unlock(updateState: true, noLockAnimSfx: false);
                     }
                 }
             }

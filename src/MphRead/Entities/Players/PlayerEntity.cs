@@ -236,6 +236,12 @@ namespace MphRead.Entities
         private ushort _altAttackTime = 0;
         private float _altSpinSpeed = 0;
 
+        private int _missileSfxHandle = -1;
+        private float _walkSfxTimer = 0;
+        private int _walkSfxIndex = 0;
+        private float _burnSfxAmount = 0;
+        private float _moveSfxAmount = 0;
+
         public Team Team { get; set; } = Team.None;
         public int TeamIndex { get; set; } = -1;
         public int SlotIndex { get; private set; }
@@ -289,8 +295,6 @@ namespace MphRead.Entities
         private float _buttonAimY = 0;
 
         private ushort _timeIdle = 0;
-        private ushort _field43A = 0;
-        private int _field450 = 0;
         private byte _crushBits = 0;
         private Vector3 _field4E8; // stores gun vec 2
         private float _altTiltX = 0;
@@ -395,7 +399,7 @@ namespace MphRead.Entities
         private ushort _timeStanding = 0;
         private ushort _timeSinceStanding = 0;
         private ushort _timeSinceGrounded = 0;
-        private ushort _field438 = 0;
+        private ushort _timeBeforeLanding = 0;
         private Vector3 _fieldC0;
         private ushort _field449 = 0;
         private float _field44C = 0; // basically landing speed/force?
@@ -560,8 +564,9 @@ namespace MphRead.Entities
             _damageInvulnTimer = 0;
             _spawnInvulnTimer = 0;
             _abilities = AbilityFlags.None;
-            _field43A = 0;
-            _field450 = 0;
+            _walkSfxTimer = 0;
+            _walkSfxIndex = 0;
+            _burnSfxAmount = 0;
             if (TeamIndex == -1)
             {
                 TeamIndex = SlotIndex;
@@ -614,7 +619,8 @@ namespace MphRead.Entities
             LoadFlags |= LoadFlags.Spawned;
             if (IsMainPlayer)
             {
-                // todo: update SFX
+                UpdateDoubleDamageSfx(index: 0, play: false);
+                UpdateCloakSfx(index: 0, play: false);
             }
             _abilities = AbilityFlags.AltForm;
             if (Hunter == Hunter.Samus)
@@ -801,19 +807,37 @@ namespace MphRead.Entities
             MorphCamera = null;
             OctolithFlag = null;
             ResetMorphBallTrail();
-            // todo: stop SFX, play SFX, update SFX handle
+            _soundSource.StopAllSfx();
+            if (IsMainPlayer)
+            {
+                _soundSource.Update(Position, rangeIndex: -1);
+            }
+            else
+            {
+                int rangeIndex = 1;
+                if (!_scene.Multiplayer && Hunter == Hunter.Guardian) // todo: MP1P
+                {
+                    rangeIndex = 21;
+                }
+                _soundSource.Update(Position, rangeIndex);
+                // sfxtodo: if node ref is not active, set sound volume override to 0
+            }
+            if (respawn)
+            {
+                PlayHunterSfx(HunterSfx.Spawn);
+            }
+            _missileSfxHandle = -1;
             _lastJumpPad = null;
             _jumpPadControlLock = 0;
             _jumpPadControlLockMin = 0;
             _timeSinceJumpPad = UInt16.MaxValue; // the game doesn't do this
             if (IsMainPlayer)
             {
-                // the game only does this in multiplayer, but it can't hard either way
-                // todo: lots of other stuff
+                // the game only does this in multiplayer, but it can't hurt either way
                 ResetReticle();
                 _weaponIconInst.SetIndex(0, _scene);
             }
-            // todo: update HUD effects
+            // todo: reset HUD effects
             _altRollFbX = CameraInfo.Field48;
             _altRollFbZ = CameraInfo.Field4C;
             _altRollLrX = CameraInfo.Field50;
@@ -883,6 +907,7 @@ namespace MphRead.Entities
 
         public void Teleport(Vector3 position, Vector3 facing, NodeRef nodeRef)
         {
+            _soundSource.PlaySfx(SfxId.TELEPORT_OUT, noUpdate: true);
             _gunVec1 = facing;
             _facingVector = facing;
             SetTransform(facing, _upVector, position);
@@ -1066,7 +1091,7 @@ namespace MphRead.Entities
             {
                 if (IsMainPlayer)
                 {
-                    // todo: play SFX
+                    _soundSource.PlayFreeSfx(SfxId.BEAM_SWITCH_FAIL);
                     if (!hasAmmo)
                     {
                         ShowNoAmmoMessage();
@@ -1074,7 +1099,7 @@ namespace MphRead.Entities
                 }
                 return false;
             }
-            BeamProjectileEntity.StopChargeSfx(CurrentWeapon, Hunter);
+            StopBeamChargeSfx(CurrentWeapon);
             UpdateZoom(false);
             PreviousWeapon = CurrentWeapon;
             CurrentWeapon = WeaponSelection = beam;
@@ -1095,9 +1120,13 @@ namespace MphRead.Entities
             _timeSinceInput = 0;
             if (!silent)
             {
-                if (IsMainPlayer && !IsAltForm)
+                if (IsMainPlayer && !IsAltForm && beam != BeamType.Missile)
                 {
-                    // todo: play SFX
+                    int sfx = Metadata.HunterSfx[(int)Hunter, (int)HunterSfx.BeamSwitch];
+                    if (sfx != -1)
+                    {
+                        _soundSource.PlayFreeSfx(sfx);
+                    }
                 }
                 if (beam == BeamType.Missile)
                 {
@@ -1114,20 +1143,14 @@ namespace MphRead.Entities
                     CurrentWeapon = WeaponSelection = beam;
                 }
             }
-            int slot = 0;
-            if (beam == BeamType.Missile)
-            {
-                slot = 1;
-            }
-            else if (beam != BeamType.PowerBeam)
+            if (beam != BeamType.PowerBeam && beam != BeamType.Missile)
             {
                 UpdateAffinityWeaponSlot(beam);
-                slot = 2;
             }
             if (IsMainPlayer)
             {
                 HudOnWeaponSwitch(beam);
-                // todo?: update weapon HUD objects
+                // the game update the bottom screen weapon HUD objects here
             }
             return true;
         }
@@ -1142,7 +1165,7 @@ namespace MphRead.Entities
         {
             if (IsMainPlayer && EquipInfo.Zoomed != zoom)
             {
-                // todo: play SFX
+                _soundSource.PlayFreeSfx(zoom ? SfxId.SNIPER_ZOOM_IN : SfxId.SNIPER_ZOOM_OUT);
                 if (CurrentWeapon == BeamType.Imperialist)
                 {
                     HudOnZoom(zoom);
@@ -1160,10 +1183,7 @@ namespace MphRead.Entities
                 _availableWeapons[BeamType.OmegaCannon] = false;
             }
             _weaponSlots[slot] = beam;
-            if (IsMainPlayer)
-            {
-                // todo: update HUD
-            }
+            // the game updates the bottom screen weapon icon here
         }
 
         private void UnequipOmegaCannon()
@@ -1219,11 +1239,20 @@ namespace MphRead.Entities
             {
                 if (anim == GunAnimation.MissileClose)
                 {
-                    // todo: play SFX
+                    _soundSource.StopSfxByHandle(_missileSfxHandle);
+                    _missileSfxHandle = -1;
+                    if (!IsAltForm)
+                    {
+                        PlayMissileSfx(HunterSfx.MissileClose);
+                    }
                 }
                 else if (anim == GunAnimation.MissileOpen && EquipInfo.ChargeLevel == 0)
                 {
-                    // todo: play SFX
+                    _soundSource.StopSfxByHandle(_missileSfxHandle);
+                    if (!IsAltForm && _health > 0)
+                    {
+                        _missileSfxHandle = PlayMissileSfx(HunterSfx.MissileSwitch);
+                    }
                 }
             }
             if (anim == GunAnimation.FullChargeMissile || anim == GunAnimation.ChargingMissile || anim == GunAnimation.MissileClose
@@ -1621,16 +1650,37 @@ namespace MphRead.Entities
                 }
                 if (_health > 0)
                 {
-                    // todo: update SFX and music
+                    _soundSource.StopAllSfx(force: true);
+                    if (IsMainPlayer)
+                    {
+                        // the game stops the unused weapon alarm SFX here
+                        UpdateDoubleDamageSfx(index: 0, play: false);
+                        UpdateCloakSfx(index: 0, play: false);
+                        _soundSource.StopFreeSfxScripts();
+                        if (_scene.Multiplayer)
+                        {
+                            PlayHunterSfx(HunterSfx.Death);
+                        }
+                        else
+                        {
+                            // skdebug - this should be set once the room is reloading
+                            //_sfxStopTimer = 10 / 30f;
+                            // mustodo?: update music or something?
+                            _soundSource.PlayFreeSfx(SfxId.SAMUS_DEATH);
+                        }
+                    }
+                    else
+                    {
+                        // mustodo: update hunter music
+                        PlayHunterSfx(HunterSfx.Death);
+                    }
+                    StopBeamChargeSfx(CurrentWeapon);
                 }
                 // todo: if bot and some AI flags, set health
                 // else...
                 _health = 0;
                 UpdateZoom(false);
-                if (_boostCharge > 0)
-                {
-                    // todo: update SFX
-                }
+                // the game stops the boost charge SFX here, but that SFX is empty
                 _boostCharge = 0;
                 GameState.Deaths[SlotIndex]++;
                 if (this == Main && beamType == BeamType.OmegaCannon)
@@ -1777,7 +1827,7 @@ namespace MphRead.Entities
                                 }
                                 if (GameState.KillStreak[attacker.SlotIndex] == 5)
                                 {
-                                    // todo: play voice
+                                    _soundSource.QueueStream(VoiceId.VOICE_CONSECUTIVE_KILLS, delay: 1);
                                     string message;
                                     if (attacker.IsMainPlayer)
                                     {
@@ -1803,7 +1853,7 @@ namespace MphRead.Entities
                                         GameState.PrimesKilled[attacker.SlotIndex]++;
                                         if (Main.IsPrimeHunter)
                                         {
-                                            // todo: play voice
+                                            _soundSource.QueueStream(VoiceId.VOICE_PRIME, delay: 1);
                                         }
                                         string nickname = GameState.Nicknames[attacker.SlotIndex];
                                         string message = Strings.GetHudMessage(241); // %s is the new prime hunter!
@@ -1880,12 +1930,12 @@ namespace MphRead.Entities
                     {
                         if (flags.TestFlag(DamageFlags.Halfturret))
                         {
-                            // todo: play SFX
+                            _soundSource.PlaySfx(SfxId.SHOTGUN_FREEZE);
                             _halfturret.OnFrozen();
                         }
                         else // todo?: if wifi, only do this if main player
                         {
-                            // todo: play SFX
+                            _soundSource.PlaySfx(SfxId.SHOTGUN_FREEZE);
                             if (IsMainPlayer)
                             {
                                 _drawIceLayer = true;
@@ -1913,7 +1963,7 @@ namespace MphRead.Entities
                         {
                             skipSfx = true;
                             HudOnDisrupted();
-                            // todo: play SFX
+                            _soundSource.PlaySfx(SfxId.LOB_DISRUPT);
                         }
                     }
                     if (beam.Afflictions.TestFlag(Affliction.Burn))
@@ -1934,11 +1984,11 @@ namespace MphRead.Entities
                 }
                 if (!skipSfx && !flags.TestFlag(DamageFlags.NoSfx))
                 {
-                    // todo: play SFX
+                    PlayHunterSfx(HunterSfx.Damage);
                 }
                 if (IsMainPlayer && !IsAltForm)
                 {
-                    // todo: play SFX
+                    PlayRandomDamageSfx();
                 }
             }
             _timeSinceDamage = 0;

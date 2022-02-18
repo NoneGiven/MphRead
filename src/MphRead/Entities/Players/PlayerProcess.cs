@@ -4,6 +4,7 @@ using System.Diagnostics;
 using MphRead.Entities.Enemies;
 using MphRead.Formats;
 using MphRead.Formats.Culling;
+using MphRead.Sound;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -112,7 +113,24 @@ namespace MphRead.Entities
                 }
             }
             _volume = CollisionVolume.Move(_volumeUnxf, Position);
-            // todo: update positional audio and SFX
+            if (IsMainPlayer && !IsAltForm)
+            {
+                _soundSource.Update(Position, rangeIndex: -1);
+            }
+            else
+            {
+                int rangeIndex = 1;
+                if (!_scene.Multiplayer && Hunter == Hunter.Guardian) // todo: MP1P
+                {
+                    rangeIndex = 21;
+                }
+                _soundSource.Update(Position, rangeIndex);
+            }
+            if (IsMainPlayer)
+            {
+                UpdateHealthSfx(_health);
+            }
+            // sfxtodo: else, if node ref is not active, set sound volume override to 0
             if (_damageInvulnTimer > 0)
             {
                 _damageInvulnTimer--;
@@ -278,13 +296,27 @@ namespace MphRead.Entities
                 if (_cloakTimer > 0)
                 {
                     _targetAlpha = 3 / 31f;
-                    // todo: update SFX
+                    if (IsMainPlayer)
+                    {
+                        if (_cloakTimer == 210 * 2) // todo: FPS stuff
+                        {
+                            UpdateCloakSfx(index: 1, play: true);
+                        }
+                        else if (_cloakTimer == 120 * 2) // todo: FPS stuff
+                        {
+                            UpdateCloakSfx(index: 2, play: true);
+                        }
+                    }
                 }
                 else
                 {
                     Flags2 &= ~PlayerFlags2.Cloaking;
                     _targetAlpha = 1;
-                    // todo: stop and play SFX
+                    _soundSource.PlayFreeSfx(SfxId.CLOAK_OFF);
+                    if (IsMainPlayer)
+                    {
+                        UpdateCloakSfx(index: 0, play: false);
+                    }
                 }
             }
             else
@@ -488,11 +520,23 @@ namespace MphRead.Entities
             }
             if (_health > 0)
             {
-                // todo: play landing SFX
+                if (Flags1.TestFlag(PlayerFlags1.Grounded) && !Flags1.TestFlag(PlayerFlags1.GroundedPrevious))
+                {
+                    PlayLandingSfx();
+                }
+                if (IsAltForm)
+                {
+                    UpdateAltMovementSfx();
+                }
             }
             UpdateGunAnimation();
             UpdateAnimFrames(_gunModel);
-            // todo: update weapon SFX
+            if (IsMainPlayer && _gunModel.AnimInfo.Frame[0] == 15 && _scene.FrameCount % 2 == 0 // todo: FPS stuff
+                && (GunAnimation == GunAnimation.Unknown9 || GunAnimation == GunAnimation.MissileShot))
+            {
+                _soundSource.StopSfxByHandle(_missileSfxHandle);
+                _missileSfxHandle = PlayMissileSfx(HunterSfx.MissileOpen);
+            }
             PickUpItems();
             if (!IsAltForm)
             {
@@ -816,7 +860,7 @@ namespace MphRead.Entities
                     // the game checks this last, so it might create and destroy the effect on the same frame
                     if (_doubleDmgTimer == 0)
                     {
-                        // todo: stop SFX
+                        UpdateDoubleDamageSfx(index: 0, play: false);
                         if (_doubleDmgEffect != null)
                         {
                             _scene.UnlinkEffectEntry(_doubleDmgEffect);
@@ -844,12 +888,12 @@ namespace MphRead.Entities
                         }
                         if (_doubleDmgTimer == 210 * 2) // todo: FPS stuff
                         {
-                            // todo: update SFX
+                            UpdateDoubleDamageSfx(index: 1, play: true);
                             UpdateDoubleDamageSpeed(2);
                         }
                         else if (_doubleDmgTimer == 120 * 2) // todo: FPS stuff
                         {
-                            // todo: update SFX
+                            UpdateDoubleDamageSfx(index: 2, play: true);
                             UpdateDoubleDamageSpeed(3);
                         }
                     }
@@ -891,6 +935,10 @@ namespace MphRead.Entities
 
         public void ActivateJumpPad(JumpPadEntity jumpPad, Vector3 vector, ushort lockTime)
         {
+            if (_timeSinceJumpPad > 5 * 2) // todo: FPS stuff
+            {
+                _soundSource.PlaySfx(SfxId.JUMP_PAD);
+            }
             Speed = vector;
             _jumpPadAccel = vector;
             _lastJumpPad = jumpPad;
@@ -946,7 +994,8 @@ namespace MphRead.Entities
                     Vector3 between = item.Position - Position;
                     Vector3 lateral = between.WithY(0);
                     if (Vector3.Dot(lateral, lateral) < distSqr
-                        && between.Y >= Fixed.ToFloat(Values.MinPickupHeight) && between.Y <= Fixed.ToFloat(Values.MaxPickupHeight))
+                        && between.Y >= Fixed.ToFloat(Values.MinPickupHeight)
+                        && between.Y <= Fixed.ToFloat(Values.MaxPickupHeight))
                     {
                         inRange = true;
                     }
@@ -955,6 +1004,15 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
+
+                void PlaySfx(SfxId sfx)
+                {
+                    if (IsMainPlayer) // sfxtodo: and sound isn't paused for jingle
+                    {
+                        _soundSource.PlayFreeSfx(sfx);
+                    }
+                }
+
                 bool pickedUp = false;
                 switch (item.ItemType)
                 {
@@ -966,7 +1024,10 @@ namespace MphRead.Entities
                         pickedUp = true;
                         _timeSinceHeal = 0;
                         GainHealth(_healthPickupAmounts[(int)item.ItemType]);
-                        // todo: play SFX
+                        if (Sfx.TimedSfxMute == 0)
+                        {
+                            PlaySfx(item.ItemType == ItemType.HealthSmall ? SfxId.POWER_UP1 : SfxId.POWER_UP2);
+                        }
                     }
                     break;
                 case ItemType.UASmall:
@@ -980,13 +1041,14 @@ namespace MphRead.Entities
                     if (item.ItemType == ItemType.UABig || item.ItemType == ItemType.MissileBig)
                     {
                         amount = _scene.Multiplayer ? 100 : 250;
+                        PlaySfx(SfxId.AMMO_POWER_UP2);
                     }
                     else
                     {
                         amount = _scene.Multiplayer ? 50 : 100;
+                        PlaySfx(SfxId.AMMO_POWER_UP1);
                     }
                     _ammo[slot] += amount;
-                    // todo: play SFX
                     if (_ammo[slot] > _ammoMax[slot])
                     {
                         _ammo[slot] = _ammoMax[slot];
@@ -1003,7 +1065,6 @@ namespace MphRead.Entities
                 case ItemType.AffinityWeapon:
                     pickedUp = true;
                     PickUpWeapon(item.ItemType);
-                    // todo: play SFX
                     break;
                 case ItemType.DoubleDamage:
                     pickedUp = true;
@@ -1011,7 +1072,8 @@ namespace MphRead.Entities
                     _doubleDmgTimer = 900 * 2; // todo: FPS stuff
                     if (IsMainPlayer)
                     {
-                        // todo: play and update SFX
+                        _soundSource.PlayFreeSfx(SfxId.DOUBLE_DAMAGE_POWER_UP);
+                        UpdateDoubleDamageSfx(index: 0, play: true);
                         UpdateDoubleDamageSpeed(1);
                     }
                     break;
@@ -1022,7 +1084,8 @@ namespace MphRead.Entities
                     Flags2 |= PlayerFlags2.Cloaking;
                     if (IsMainPlayer)
                     {
-                        // todo: play SFX
+                        _soundSource.PlayFreeSfx(SfxId.CLOAK_POWER_UP);
+                        UpdateCloakSfx(index: 0, play: true);
                     }
                     break;
                 case ItemType.Deathalt:
@@ -1033,7 +1096,10 @@ namespace MphRead.Entities
                     {
                         TrySwitchForms(force: true);
                     }
-                    // todo: play SFX
+                    if (IsMainPlayer)
+                    {
+                        _soundSource.PlayFreeSfx(SfxId.DOUBLE_DAMAGE_POWER_UP);
+                    }
                     break;
                 case ItemType.EnergyTank:
                     if (!IsBot)
@@ -1067,7 +1133,10 @@ namespace MphRead.Entities
                     break;
                 case ItemType.ArtifactKey:
                     pickedUp = true;
-                    // todo: play SFX
+                    if (IsMainPlayer)
+                    {
+                        _soundSource.PlayFreeSfx(SfxId.KEY_PICKUP);
+                    }
                     break;
                 default:
                     pickedUp = true;
@@ -1088,6 +1157,10 @@ namespace MphRead.Entities
                 if (Hunter == Hunter.Samus || Hunter == Hunter.Guardian) // game doesn't check for Guardian
                 {
                     _ammo[1] = Math.Min(_ammo[1] + 50, _ammoMax[1]);
+                    if (IsMainPlayer && Sfx.TimedSfxMute == 0)
+                    {
+                        _soundSource.PlayFreeSfx(SfxId.AMMO_POWER_UP1);
+                    }
                     return;
                 }
                 weapon = Weapons.GetAffinityBeam(Hunter);
@@ -1141,6 +1214,14 @@ namespace MphRead.Entities
                         UpdateAffinityWeaponSlot(weapon, slot: 2);
                     }
                 }
+                if (IsMainPlayer && Sfx.TimedSfxMute == 0)
+                {
+                    _soundSource.PlayFreeSfx(SfxId.WEAPON_POWER_UP);
+                }
+            }
+            else if (IsMainPlayer && Sfx.TimedSfxMute == 0)
+            {
+                _soundSource.PlayFreeSfx(SfxId.AMMO_POWER_UP1);
             }
         }
 
@@ -1192,7 +1273,7 @@ namespace MphRead.Entities
             {
                 if (IsMainPlayer && (CameraSequence.Current == null || !CameraSequence.Current.BlockInput))
                 {
-                    // todo: play SFX
+                    _soundSource.PlayFreeSfx(SfxId.BEAM_SWITCH_FAIL);
                 }
                 return false;
             }
@@ -1225,7 +1306,10 @@ namespace MphRead.Entities
                 AfterSwitch();
                 return true;
             }
-            // todo: play SFX
+            if (IsMainPlayer)
+            {
+                _soundSource.PlayFreeSfx(SfxId.BEAM_SWITCH_FAIL);
+            }
             return false;
         }
 
@@ -1486,12 +1570,12 @@ namespace MphRead.Entities
             }
             if (EquipInfo.ChargeLevel > 0)
             {
-                // todo: stop SFX
+                StopBeamChargeSfx(CurrentWeapon);
                 SetGunAnimation(GunAnimation.Idle, AnimFlags.NoLoop);
             }
             EquipInfo.ChargeLevel = 0;
             SetBipedAnimation(PlayerAnimation.Morph, AnimFlags.NoLoop);
-            // todo: play SFX
+            PlayHunterSfx(HunterSfx.Morph);
         }
 
         private void ExitAltForm()
@@ -1508,10 +1592,7 @@ namespace MphRead.Entities
             Flags1 &= ~PlayerFlags1.Morphing;
             Flags1 |= PlayerFlags1.Unmorphing;
             SwitchCamera(CameraType.First, _facingVector);
-            if (_boostCharge > 0)
-            {
-                // todo: update SFX
-            }
+            // the game stops the boost charge SFX here, but that SFX is empty
             _boostCharge = 0;
             SetBipedAnimation(PlayerAnimation.Unmorph, AnimFlags.NoLoop);
             if (Flags2.TestFlag(PlayerFlags2.AltAttack))
@@ -1521,7 +1602,7 @@ namespace MphRead.Entities
             UpdateZoom(false);
             EquipInfo.ChargeLevel = 0;
             EquipInfo.SmokeLevel = 0;
-            // todo: play SFX
+            PlayHunterSfx(HunterSfx.Unmorph);
             if (IsAltForm)
             {
                 UpdateForm(altForm: false);
@@ -1593,7 +1674,7 @@ namespace MphRead.Entities
                 Position += _volumeUnxf.SpherePosition - bipedVolume.SpherePosition;
                 _volumeUnxf = bipedVolume;
             }
-            // todo: stop SFX
+            StopAltFormSfx();
         }
 
         private void CreateBurnEffect()
@@ -1655,7 +1736,7 @@ namespace MphRead.Entities
             _scene.SpawnEffect(effectId, facing, up, spawnPos);
         }
 
-        private void CreateIceBreakEffectBiped(Model model, Matrix4 transform)
+        private void CreateIceBreakEffectBiped(Model model)
         {
             Debug.Assert(model.Nodes.Count > 1);
             int effectId = 231; // iceShatter
@@ -1861,7 +1942,7 @@ namespace MphRead.Entities
 
         public override void Destroy()
         {
-            // todo: stop SFX
+            _soundSource.StopAllSfx();
             if (_furlEffect != null)
             {
                 _scene.UnlinkEffectEntry(_furlEffect);

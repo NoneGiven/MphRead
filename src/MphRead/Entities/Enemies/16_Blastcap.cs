@@ -172,7 +172,7 @@ namespace MphRead.Entities.Enemies
                 _agitateTimer--;
                 return false;
             }
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.BLASTCAP_AGITATE);
             _agitateTimer = 60 * 2; // todo: FPS stuff
             _models[0].SetAnimation(0, AnimFlags.NoLoop);
             return true;

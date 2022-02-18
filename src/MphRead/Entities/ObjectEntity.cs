@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats.Collision;
@@ -137,6 +138,7 @@ namespace MphRead.Entities
 
         public override void Destroy()
         {
+            _soundSource.StopAllSfx(force: true);
             if (_effectEntry != null)
             {
                 _scene.UnlinkEffectEntry(_effectEntry);
@@ -182,6 +184,16 @@ namespace MphRead.Entities
             }
         }
 
+        private static readonly IReadOnlyList<SfxId> _secretSwitchSfx = new SfxId[6]
+        {
+            SfxId.GOREA_SWITCH1,
+            SfxId.GOREA_SWITCH1,
+            SfxId.GOREA_SWITCH1,
+            SfxId.GOREA_SWITCH4,
+            SfxId.GOREA_SWITCH5,
+            SfxId.GOREA_SWITCH6
+        };
+
         private void UpdateState(int state)
         {
             if (_state == state)
@@ -200,7 +212,7 @@ namespace MphRead.Entities
                 {
                     if (state <= 1)
                     {
-                        // todo: play SFX
+                        _soundSource.PlayFreeSfx(SfxId.EXPOSE_ARTIFACT);
                         _models[0].SetAnimation(animId, 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node, AnimFlags.NoLoop);
                         EntityCollision? entCol = EntityCollision[1];
                         if (entCol?.Collision != null)
@@ -230,7 +242,7 @@ namespace MphRead.Entities
                     else if (state != 1)
                     {
                         _models[0].SetAnimation(animId, AnimFlags.NoLoop);
-                        // todo: play SFX
+                        _soundSource.PlayFreeSfx(SfxId.CHIME1);
                         needsUpdate = false;
                     }
                     else if (_models[0].AnimInfo.Index[0] == _meta.AnimationIds[0])
@@ -244,7 +256,7 @@ namespace MphRead.Entities
                 else if (_data.ModelId == 53) // WallSwitch
                 {
                     _models[0].SetAnimation(animId, AnimFlags.NoLoop);
-                    // todo: play SFX
+                    _soundSource.PlayFreeSfx(SfxId.F2_SWITCH);
                     needsUpdate = false;
                 }
                 else if (_data.ModelId >= 47 && _data.ModelId <= 52 && (state == 1 || state == 2)) // SecretSwitch
@@ -253,7 +265,12 @@ namespace MphRead.Entities
                     {
                         return;
                     }
-                    // todo: play SFX
+                    SfxId sfx = SfxId.GOREA_SWITCH_DEACTIVATE;
+                    if (state != 1)
+                    {
+                        sfx = _secretSwitchSfx[_data.ModelId - 47];
+                    }
+                    _soundSource.PlaySfx(sfx);
                     _models[0].SetAnimation(animId, AnimFlags.NoLoop);
                     needsUpdate = false;
                 }
@@ -276,6 +293,32 @@ namespace MphRead.Entities
                 // todo: scan ID
             }
         }
+
+        private class EffectSfxInfo
+        {
+            public readonly int SfxId;
+            public readonly byte Data;
+            public readonly bool Environment;
+
+            public EffectSfxInfo(int sfxId, byte data, bool environment = true)
+            {
+                SfxId = sfxId;
+                Data = data;
+                Environment = environment;
+            }
+        }
+
+        private static readonly IReadOnlyDictionary<int, EffectSfxInfo> _sfxInfo = new Dictionary<int, EffectSfxInfo>()
+        {
+            { 10, new EffectSfxInfo(102 | 0x4000, 0x1B, environment: false) },
+            { 88, new EffectSfxInfo(4, 0xE3) },
+            { 89, new EffectSfxInfo(57 | 0x4000, 0x1B, environment: false) },
+            { 97, new EffectSfxInfo(57 | 0x4000, 0x1B, environment: false) },
+            { 106, new EffectSfxInfo(1, 0x1F) },
+            { 127, new EffectSfxInfo(7, 0xA4) },
+            { 186, new EffectSfxInfo(3, 0x8F) },
+            { 199, new EffectSfxInfo(2, 0x9C) }
+        };
 
         public override bool Process()
         {
@@ -317,7 +360,7 @@ namespace MphRead.Entities
             }
             else if (_data.ModelId >= 47 && _data.ModelId <= 52) // SecretSwitch
             {
-                // todo: update audio
+                _soundSource.Update(Position, rangeIndex: 32);
                 if (_state == 1 && _models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
                 {
                     UpdateState(0);
@@ -374,6 +417,7 @@ namespace MphRead.Entities
                 {
                     processEffect = _state != 0;
                 }
+                _sfxInfo.TryGetValue(_data.EffectId, out EffectSfxInfo? sfxInfo);
                 if (processEffect)
                 {
                     if (!_effectProcessing)
@@ -381,9 +425,18 @@ namespace MphRead.Entities
                         _effectIntervalTimer = 0;
                         _effectIntervalIndex = 15;
                     }
+                    if (sfxInfo != null)
+                    {
+                        _soundSource.Update(Position, rangeIndex: sfxInfo.Data & 0x3F);
+                        // sfxtodo: if node ref is not active, set sound volume override to 0
+                    }
                     if (--_effectIntervalTimer > 0)
                     {
-                        // todo: lots of SFX stuff
+                        if (sfxInfo != null && sfxInfo.Environment && (sfxInfo.Data & 0x80) == 0
+                            && (_data.EffectOnIntervals & (1 << _effectIntervalIndex)) != 0)
+                        {
+                            _soundSource.PlayEnvironmentSfx(sfxInfo.SfxId);
+                        }
                     }
                     else
                     {
@@ -403,6 +456,10 @@ namespace MphRead.Entities
                                 {
                                     _effectEntry = _scene.SpawnEffectGetEntry(_data.EffectId, Transform);
                                     _effectEntry?.SetElementExtension(true);
+                                    if (sfxInfo != null && !sfxInfo.Environment)
+                                    {
+                                        _soundSource.PlaySfx(sfxInfo.SfxId);
+                                    }
                                 }
                             }
                         }
@@ -426,13 +483,22 @@ namespace MphRead.Entities
                                 offset.Z *= Fixed.ToFloat(2 * (Rng.GetRandomInt1(0x1000u) - 2048));
                                 spawnPos += Matrix.Vec3MultMtx3(offset, GetTransformMatrix(spawnFacing, spawnUp));
                             }
-                            // todo: play SFX
                             _scene.SpawnEffect(_data.EffectId, spawnFacing, spawnUp, spawnPos, entCol: entCol);
+                            if (sfxInfo != null && !sfxInfo.Environment)
+                            {
+                                _soundSource.PlaySfx(sfxInfo.SfxId);
+                            }
                         }
                         _effectIntervalTimer = _effectInterval;
                     }
                 }
                 _effectProcessing = processEffect;
+                if (sfxInfo != null && sfxInfo.Environment && (sfxInfo.Data & 0x80) != 0
+                    && ((sfxInfo.Data & 0x40) == 0 || _scene.CountElements(_data.EffectId) > 0))
+                {
+                    _soundSource.Update(Position, rangeIndex: sfxInfo.Data & 0x3F);
+                    _soundSource.PlayEnvironmentSfx(sfxInfo.SfxId);
+                }
             }
             if (_effectEntry != null)
             {

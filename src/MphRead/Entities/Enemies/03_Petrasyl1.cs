@@ -86,7 +86,7 @@ namespace MphRead.Entities.Enemies
                 _field194 = (-_field194).Normalized();
                 SetTransform(_field194, UpVector, Position);
                 _field170 = 20 * 2; // todo: FPS stuff
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.MOCHTROID_TELEPORT_IN);
             }
             else if (_state2 == 1)
             {
@@ -106,7 +106,7 @@ namespace MphRead.Entities.Enemies
                 Flags |= EnemyFlags.Invincible;
                 _speed = Vector3.Zero;
                 _field172 = 20 * 2; // todo: FPS stuff
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.MOCHTROID_TELEPORT_OUT);
             }
         }
 
@@ -125,7 +125,7 @@ namespace MphRead.Entities.Enemies
 
         private void State01()
         {
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.MOCHTROID_FLY, loop: true);
             _bobAngle += _bobSpeed / 2; // todo: FPS stuff
             if (_bobAngle >= 360)
             {
@@ -177,7 +177,7 @@ namespace MphRead.Entities.Enemies
             }
             if (CallSubroutine(Metadata.Enemy03Subroutines, this))
             {
-                // todo: stop SFX
+                _soundSource.StopSfx(SfxId.MOCHTROID_FLY);
                 UpdateState();
             }
         }
