@@ -131,7 +131,8 @@ namespace MphRead.Entities
         public override bool Process()
         {
             bool inRange = false;
-            if (_data.Type == EnemyType.Spawner || Flags.TestFlag(EnemyFlags.NoMaxDistance))
+            if (_data.Type == EnemyType.Spawner || Flags.TestFlag(EnemyFlags.NoMaxDistance)
+                || _scene.CameraMode != CameraMode.Player) // skdebug
             {
                 inRange = true;
             }
@@ -150,33 +151,27 @@ namespace MphRead.Entities
                     Vector3 between = Position - pos;
                     return between.LengthSquared < distSqr && between.Y > -15 && between.Y < 15;
                 }
-                if (_scene.CameraMode != CameraMode.Player) // skdebug
+
+                if (_scene.Multiplayer)
                 {
-                    inRange = true;
-                }
-                if (!inRange)
-                {
-                    if (_scene.Multiplayer)
+                    for (int i = 0; i < _scene.Entities.Count; i++)
                     {
-                        for (int i = 0; i < _scene.Entities.Count; i++)
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type != EntityType.Player)
                         {
-                            EntityBase entity = _scene.Entities[i];
-                            if (entity.Type != EntityType.Player)
-                            {
-                                continue;
-                            }
-                            var player = (PlayerEntity)entity;
-                            if (player.Health > 0 && CheckInRange(player.Position))
-                            {
-                                inRange = true;
-                                break;
-                            }
+                            continue;
+                        }
+                        var player = (PlayerEntity)entity;
+                        if (player.Health > 0 && CheckInRange(player.Position))
+                        {
+                            inRange = true;
+                            break;
                         }
                     }
-                    else
-                    {
-                        inRange = CheckInRange(PlayerEntity.Main.Position);
-                    }
+                }
+                else
+                {
+                    inRange = CheckInRange(PlayerEntity.Main.Position);
                 }
             }
             if (inRange)
