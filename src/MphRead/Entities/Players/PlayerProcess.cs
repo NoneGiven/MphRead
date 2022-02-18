@@ -1620,8 +1620,8 @@ namespace MphRead.Entities
             {
                 Flags1 &= ~PlayerFlags1.AltForm;
             }
-            // todo: update HUD if main player
-            // todo: scan IDs
+            // todo?: update HUD if main player
+            UpdateScanIds();
             if (altForm)
             {
                 CollisionVolume altVolume = PlayerVolumes[(int)Hunter, 2];

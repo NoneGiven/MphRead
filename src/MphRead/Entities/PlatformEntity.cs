@@ -349,6 +349,20 @@ namespace MphRead.Entities
             facing = FacingVector;
         }
 
+        public override int GetScanId(bool alternate)
+        {
+            bool awake = StateFlags.TestFlag(PlatStateFlags.Awake);
+            if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parentEntCol != null && _parent != null)
+            {
+                if (!_parent.StateFlags.TestFlag(PlatStateFlags.Awake)
+                    && !_parent.StateFlags.TestFlag(PlatStateFlags.WasAwake))
+                {
+                    awake = false;
+                }
+            }
+            return awake ? _data.ScanData1 : _data.ScanData2;
+        }
+
         private void SetPlatAnimation(PlatAnimId id, AnimFlags flags)
         {
             int index = _meta.AnimationIds[(int)id];

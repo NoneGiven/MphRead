@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MphRead.Formats;
 using OpenTK.Mathematics;
 
@@ -59,6 +60,12 @@ namespace MphRead.Entities
             }
         }
 
+        private readonly IReadOnlyList<int> _scanIds = new int[32]
+        {
+            48, 48, 48, 48, 48, 48, 48, 48, 40, 41, 42, 40, 41, 42, 40, 41,
+            42, 40, 41, 42, 40, 41, 42, 40, 41, 42, 40, 41, 42, 40, 41, 42
+        };
+
         public override bool Process()
         {
             if (_parent != null)
@@ -76,6 +83,14 @@ namespace MphRead.Entities
                 _soundSource.Update(Position, rangeIndex: 7);
                 // sfxtodo: if node ref is not active, set sound volume override to 0
                 _soundSource.PlaySfx(SfxId.ARTIFACT_LOOP, loop: true);
+                if (_data.ModelId >= 8)
+                {
+                    _scanId = _scanIds[_data.ArtifactId];
+                }
+                else
+                {
+                    _scanId = _scanIds[_data.ModelId * 3 + 8 + _data.ArtifactId];
+                }
                 if (CameraSequence.Current?.BlockInput == true)
                 {
                     return base.Process();
@@ -155,7 +170,7 @@ namespace MphRead.Entities
             }
             else
             {
-                // todo: set scan ID
+                _scanId = 0;
             }
             return base.Process();
         }

@@ -32,7 +32,6 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             bool multiplayer = scene.Multiplayer;
-            // todo: scan ID
             if (data.Invisible != 0)
             {
                 AddPlaceholderModel();
@@ -52,7 +51,6 @@ namespace MphRead.Entities
                 }
                 ModelInstance inst = SetUpModel(modelName);
                 inst.SetAnimation(2, AnimFlags.NoLoop | AnimFlags.Reverse);
-
             }
             string? roomName = data.TargetRoom.MarshalString();
             if (roomName != null)
@@ -106,6 +104,17 @@ namespace MphRead.Entities
             {
                 AddPlaceholderModel();
                 _targetPos = _data.TargetPosition.ToFloatVector();
+            }
+            if (data.Invisible == 0)
+            {
+                if (Active)
+                {
+                    _scanId = _big ? 46 : 26;
+                }
+                else
+                {
+                    _scanId = _big ? 38 : 25;
+                }
             }
         }
 
@@ -226,7 +235,8 @@ namespace MphRead.Entities
                 else
                 {
                     Active = false;
-                    // todo: scan ID, room state
+                    _scanId = 25;
+                    // todo: room state
                     _bool4 = true;
                 }
             }
@@ -237,7 +247,7 @@ namespace MphRead.Entities
             if (!Active)
             {
                 Active = true;
-                // todo: update scan ID
+                _scanId = _big ? 46 : 26;
                 ActivateAnimaton();
             }
         }

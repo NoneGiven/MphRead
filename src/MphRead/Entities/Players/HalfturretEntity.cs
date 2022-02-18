@@ -76,6 +76,7 @@ namespace MphRead.Entities
             _light1Color = Owner.Light1Color;
             _light2Vector = Owner.Light2Vector;
             _light2Color = Owner.Light2Color;
+            _scanId = PlayerEntity.ScanIds[(int)Hunter.Weavel, 1];
         }
 
         public override void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)

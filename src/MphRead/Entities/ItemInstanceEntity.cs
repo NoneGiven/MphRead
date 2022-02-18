@@ -30,12 +30,17 @@ namespace MphRead.Entities
         public int DespawnTimer { get; set; } = -1;
         public ItemSpawnEntity? Owner { get; set; }
 
+        private static readonly IReadOnlyList<int> _scanIds = new int[22]
+        {
+            9, 11, 12, 0, 10, 21, 13, 23, 22, 18, 20, 19, 28, 14, 15, 16, 17, 0, 24, 463, 0, 0
+        };
+
         public ItemInstanceEntity(ItemInstanceEntityData data, NodeRef nodeRef, Scene scene)
             : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance, nodeRef, scene)
         {
             Position = data.Position;
-            // todo: scan ID
             ItemType = data.ItemType;
+            _scanId = _scanIds[(int)data.ItemType];
             if (scene.Multiplayer && GameState.AffinityWeapons && (ItemType == ItemType.VoltDriver
                 || ItemType == ItemType.Battlehammer || ItemType == ItemType.Imperialist
                 || ItemType == ItemType.Judicator || ItemType == ItemType.Magmaul || ItemType == ItemType.ShockCoil))

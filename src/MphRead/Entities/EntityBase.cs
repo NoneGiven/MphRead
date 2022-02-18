@@ -22,6 +22,7 @@ namespace MphRead.Entities
         protected Scene _scene;
         private readonly string? _nodeName;
         public NodeRef NodeRef { get; set; } = NodeRef.None;
+        protected int _scanId = 0;
 
         protected float _drawScale = 1;
         protected Matrix4 _transform = Matrix4.Identity;
@@ -275,6 +276,11 @@ namespace MphRead.Entities
         public virtual bool GetTargetable()
         {
             return true;
+        }
+
+        public virtual int GetScanId(bool alternate)
+        {
+            return _scanId;
         }
 
         public virtual bool Process()

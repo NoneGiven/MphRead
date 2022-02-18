@@ -21,7 +21,6 @@ namespace MphRead.Entities
         private bool _effectProcessing = false;
         private EffectEntry? _effectEntry = null;
         public bool _effectActive = false;
-        private readonly bool _scanVisorOnly = false;
         private int _state = 0;
         private readonly ObjectMetadata? _meta;
 
@@ -45,6 +44,10 @@ namespace MphRead.Entities
             _flags = data.Flags;
             _state = (int)(data.Flags & ObjectFlags.State);
             // todo: room state affecting animation ID
+            if (_state != 0 || _data.ModelId == 53) // WallSwitch
+            {
+                _scanId = _data.ScanId;
+            }
             _flags &= ~ObjectFlags.NoAnimation;
             _flags &= ~ObjectFlags.IsVisible;
             _flags &= ~ObjectFlags.EntityLinked;
@@ -67,11 +70,6 @@ namespace MphRead.Entities
                 }
                 Recolor = _meta.RecolorId;
                 ModelInstance inst = SetUpModel(_meta.Name);
-                // AlimbicGhost_01, GhostSwitch
-                if (data.ModelId == 0 || data.ModelId == 41)
-                {
-                    _scanVisorOnly = true;
-                }
                 _state = (int)(_flags & ObjectFlags.State);
                 int animIndex = _meta.AnimationIds[_state];
                 // AlimbicCapsule
@@ -283,12 +281,12 @@ namespace MphRead.Entities
             // todo: room state
             if (state != 0 || _data.ModelId == 53) // WallSwitch
             {
-                // todo: scan ID
+                _scanId = _data.ScanId;
             }
             else
             {
                 RemoveEffect();
-                // todo: scan ID
+                _scanId = 0;
             }
         }
 
@@ -531,7 +529,7 @@ namespace MphRead.Entities
             _flags |= ObjectFlags.IsVisible;
             if (!_flags.TestFlag(ObjectFlags.NoAnimation) && _data.ModelId != -1)
             {
-                // the game sets non-looping anims for AlimbicGhost/GhostSwitch here when scan visor is off,
+                // the game sets non-looping anims for AlimbicGhost_01/GhostSwitch here when scan visor is off,
                 // but they're not visible so I don't know what the point is
                 if (_scene.ScanVisor || _data.ModelId != 0 && _data.ModelId != 41)
                 {

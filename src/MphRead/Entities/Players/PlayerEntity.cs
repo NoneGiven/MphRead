@@ -200,6 +200,7 @@ namespace MphRead.Entities
         public static readonly PlayerEntity[] _players = new PlayerEntity[4];
         public static IReadOnlyList<PlayerEntity> Players => _players;
         public bool IsMainPlayer => this == Main && _scene.CameraMode == CameraMode.Player;
+        private int _altScanId = 0;
 
         private const int UA = 0;
         private const int Missiles = 1;
@@ -862,7 +863,7 @@ namespace MphRead.Entities
             }
             _enemySpawner = null;
             _lastTarget = null;
-            // todo: scan IDs
+            UpdateScanIds();
             if (respawn && (IsMainPlayer || _scene.Multiplayer))
             {
                 // spawnEffectMP or spawnEffect
@@ -886,6 +887,17 @@ namespace MphRead.Entities
         public override bool GetTargetable()
         {
             return _health != 0;
+        }
+
+        public override int GetScanId(bool alternate)
+        {
+            return alternate ? _altScanId : _scanId;
+        }
+
+        private void UpdateScanIds()
+        {
+            _scanId = ScanIds[(int)Hunter, IsAltForm ? 1 : 0];
+            _altScanId = ScanIds[(int)Hunter, IsAltForm ? 3 : 2];
         }
 
         private void SetBiped1Animation(PlayerAnimation anim, AnimFlags animFlags)
