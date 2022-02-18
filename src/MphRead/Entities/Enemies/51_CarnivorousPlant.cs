@@ -22,6 +22,7 @@ namespace MphRead.Entities.Enemies
             _prevPos = Position;
             Flags |= EnemyFlags.Visible;
             Flags |= EnemyFlags.Static;
+            Flags |= EnemyFlags.NoMaxDistance; // the game doesn't set this
             _health = _healthMax = _spawner.Data.Fields.S07.EnemyHealth;
             _boundingRadius = Fixed.ToFloat(1843);
             _hurtVolumeInit = new CollisionVolume(new Vector3(0, Fixed.ToFloat(409), 0), _boundingRadius);

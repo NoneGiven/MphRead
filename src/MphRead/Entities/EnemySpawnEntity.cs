@@ -27,6 +27,7 @@ namespace MphRead.Entities
         private EntityBase? _entity1;
         private EntityBase? _entity2;
         private EntityBase? _entity3;
+        private NodeRef _rangeNodeRef = NodeRef.None;
 
         public SpawnerFlags Flags { get; set; }
         public EnemySpawnEntityData Data => _data;
@@ -38,6 +39,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
+            _rangeNodeRef = scene.GetNodeRefByName(data.NodeName.MarshalString());
             _cooldownTimer = _data.InitialCooldown * 2; // todo: FPS stuff
             // todo: room state
             if (data.Active != 0 || data.AlwaysActive != 0)
@@ -94,7 +96,7 @@ namespace MphRead.Entities
             }
             if (Flags.TestFlag(SpawnerFlags.Suspended) && _cooldownTimer == 0)
             {
-                if (NodeRef != NodeRef.None && _scene.CameraMode == CameraMode.Player) // skdebug
+                if (_rangeNodeRef != NodeRef.None && _scene.CameraMode == CameraMode.Player) // skdebug
                 {
                     for (int i = 0; i < _scene.Entities.Count; i++)
                     {
@@ -104,7 +106,7 @@ namespace MphRead.Entities
                             continue;
                         }
                         var player = (PlayerEntity)entity;
-                        if (player.Health > 0 && player.NodeRef == NodeRef)
+                        if (player.Health > 0 && player.NodeRef == _rangeNodeRef)
                         {
                             Flags &= ~SpawnerFlags.Suspended;
                         }
@@ -122,7 +124,8 @@ namespace MphRead.Entities
             float distSqr = _data.ActiveDistance.FloatValue;
             distSqr *= distSqr;
             bool inRange = false;
-            if (_scene.CameraMode == CameraMode.Player) // skdebug
+            if (_data.EnemyType != EnemyType.CarnivorousPlant // the game doesn't have this condition
+                && _scene.CameraMode == CameraMode.Player) // skdebug
             {
                 for (int i = 0; i < _scene.Entities.Count; i++)
                 {
