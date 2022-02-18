@@ -146,6 +146,14 @@ namespace MphRead.Entities
             // todo: update logbook
         }
 
+        public override void GetDrawInfo()
+        {
+            if (IsVisible(NodeRef))
+            {
+                base.GetDrawInfo();
+            }
+        }
+
         public override void Destroy()
         {
             if (_effectEntry != null)
