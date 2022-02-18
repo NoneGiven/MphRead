@@ -1,3 +1,4 @@
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -64,7 +65,7 @@ namespace MphRead.Entities
             }
             if (Item == null && _spawnCooldown == 0 && (_data.MaxSpawnCount == 0 || _spawnCount < _data.MaxSpawnCount))
             {
-                Item = SpawnItem(_data.ItemType, Position.AddY(0.65f), _scene);
+                Item = SpawnItem(_data.ItemType, Position.AddY(0.65f), NodeRef, _scene);
                 if (Item != null)
                 {
                     _spawnCooldown = (ushort)(_data.SpawnInterval * 2); // todo: FPS stuff
@@ -152,24 +153,25 @@ namespace MphRead.Entities
             }
         }
 
-        // todo: entity node ref
-        public static ItemInstanceEntity? SpawnItemDrop(ItemType type, Vector3 position, uint chance, Scene scene)
+        public static ItemInstanceEntity? SpawnItemDrop(ItemType type, Vector3 position,
+            NodeRef nodeRef, uint chance, Scene scene)
         {
-            return SpawnItem(type, position, scene, chance, despawnTime: 450 * 2); // todo: FPS stuff
+            return SpawnItem(type, position, nodeRef, scene, chance, despawnTime: 450 * 2); // todo: FPS stuff
         }
 
-        public static ItemInstanceEntity? SpawnItem(ItemType type, Vector3 position, int despawnTime, Scene scene)
+        public static ItemInstanceEntity? SpawnItem(ItemType type, Vector3 position,
+            NodeRef nodeRef, int despawnTime, Scene scene)
         {
-            return SpawnItem(type, position, scene, chance: null, despawnTime);
+            return SpawnItem(type, position, nodeRef, scene, chance: null, despawnTime);
         }
 
-        private static ItemInstanceEntity? SpawnItem(ItemType type, Vector3 position, Scene scene,
-            uint? chance = null, int despawnTime = 0)
+        private static ItemInstanceEntity? SpawnItem(ItemType type, Vector3 position, NodeRef nodeRef,
+            Scene scene, uint? chance = null, int despawnTime = 0)
         {
             ItemInstanceEntity? item = null;
             if (type != ItemType.None && (!chance.HasValue || Rng.GetRandomInt2(100) < chance.Value))
             {
-                item = new ItemInstanceEntity(new ItemInstanceEntityData(position, type, despawnTime), scene);
+                item = new ItemInstanceEntity(new ItemInstanceEntityData(position, type, despawnTime), nodeRef, scene);
                 scene.AddEntity(item);
             }
             return item;

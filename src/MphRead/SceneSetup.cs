@@ -127,7 +127,7 @@ namespace MphRead
                 string nodeName = entity.NodeName;
                 if (entity.Type == EntityType.Platform)
                 {
-                    results.Add(new PlatformEntity(((Entity<PlatformEntityData>)entity).Data, scene));
+                    results.Add(new PlatformEntity(((Entity<PlatformEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.FhPlatform)
                 {

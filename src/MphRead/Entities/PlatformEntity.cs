@@ -84,7 +84,8 @@ namespace MphRead.Entities
         public PlatformEntityData Data => _data;
         public Vector3 Velocity => _velocity;
 
-        public PlatformEntity(PlatformEntityData data, Scene scene) : base(EntityType.Platform, scene)
+        public PlatformEntity(PlatformEntityData data, string nodeName, Scene scene)
+            : base(EntityType.Platform, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -1347,7 +1348,8 @@ namespace MphRead.Entities
                                                 PlaySfx(_moveSfx.Destoryed);
                                             }
                                             Vector3 spawnPos = _visiblePosition.AddY(1);
-                                            ItemSpawnEntity.SpawnItemDrop(_data.ItemType, spawnPos, _data.ItemChance, _scene);
+                                            ItemSpawnEntity.SpawnItemDrop(_data.ItemType, spawnPos,
+                                                NodeRef, _data.ItemChance, _scene);
                                             if (_data.DeadMessage != Message.None && _deathMessageTarget != null)
                                             {
                                                 _scene.SendMessage(_data.DeadMessage, this, _deathMessageTarget,

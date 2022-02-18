@@ -226,7 +226,7 @@ namespace MphRead.Entities
                 {
                     var spawner = (EnemySpawnEntity)_owner;
                     Vector3 pos = _hurtVolume.GetCenter().AddY(0.5f);
-                    ItemSpawnEntity.SpawnItemDrop(spawner.Data.ItemType, pos, spawner.Data.ItemChance, _scene);
+                    ItemSpawnEntity.SpawnItemDrop(spawner.Data.ItemType, pos, NodeRef, spawner.Data.ItemChance, _scene);
                 }
                 return false;
             }

@@ -1576,7 +1576,8 @@ namespace MphRead.Entities
                 {
                     _scene.SendMessage(Message.Destroyed, this, EnemySpawner, 0, 0);
                     Debug.Assert(EnemySpawner.Type == EntityType.EnemySpawn);
-                    ItemSpawnEntity.SpawnItemDrop(EnemySpawner.Data.ItemType, Position, EnemySpawner.Data.ItemChance, _scene);
+                    ItemSpawnEntity.SpawnItemDrop(EnemySpawner.Data.ItemType, Position,
+                        NodeRef, EnemySpawner.Data.ItemChance, _scene);
                 }
                 // todo: update HUD to cancel scan visor
                 if (Flags2.TestFlag(PlayerFlags2.Halfturret))
@@ -1915,7 +1916,7 @@ namespace MphRead.Entities
                         itemType = ItemType.MissileSmall;
                     }
                     Vector3 position = _volume.SpherePosition.AddY(0.35f);
-                    ItemSpawnEntity.SpawnItem(itemType, position, 300 * 2, _scene); // todo: FPS stuff
+                    ItemSpawnEntity.SpawnItem(itemType, position, NodeRef, 300 * 2, _scene); // todo: FPS stuff
                 }
                 WeaponSelection = CurrentWeapon;
                 Flags1 &= ~PlayerFlags1.WeaponMenuOpen;

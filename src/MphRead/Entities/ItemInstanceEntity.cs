@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using MphRead.Effects;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -29,8 +30,8 @@ namespace MphRead.Entities
         public int DespawnTimer { get; set; } = -1;
         public ItemSpawnEntity? Owner { get; set; }
 
-        public ItemInstanceEntity(ItemInstanceEntityData data, Scene scene)
-            : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance, scene)
+        public ItemInstanceEntity(ItemInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance, nodeRef, scene)
         {
             Position = data.Position;
             // todo: scan ID
@@ -211,6 +212,16 @@ namespace MphRead.Entities
 
         public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, int spinModelIndex, int floatModelIndex,
             EntityType type, Scene scene) : base(type, scene)
+        {
+            _spin = GetItemRotation();
+            _spinSpeed = spinSpeed;
+            _spinAxis = spinAxis;
+            _spinModelIndex = spinModelIndex;
+            _floatModelIndex = floatModelIndex;
+        }
+
+        public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, int spinModelIndex, int floatModelIndex,
+            EntityType type, NodeRef nodeRef, Scene scene) : base(type, nodeRef, scene)
         {
             _spin = GetItemRotation();
             _spinSpeed = spinSpeed;
