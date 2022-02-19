@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MphRead.Formats;
 using MphRead.Hud;
 using MphRead.Text;
 using OpenTK.Mathematics;
@@ -173,6 +174,24 @@ namespace MphRead.Entities
                 _curScanTarget.CenterDist = minCenter;
                 update = true;
             }
+            if (_curScanTarget.Entity != prevEnt)
+            {
+                if (prevEnt == null)
+                {
+                    // scantodo: set values
+                }
+                // scantodo: set value
+            }
+            if (_curScanTarget.Entity != null)
+            {
+                CollisionResult discard = default;
+                if (!update || CollisionDetection.CheckBetweenPoints(CameraInfo.Position, _curScanTarget.Position,
+                    TestFlags.Scan, _scene, ref discard))
+                {
+                    _curScanTarget.Entity = null;
+                }
+            }
+            // sktodo: draw lines etc.
         }
 
         private void DrawScanModels()
@@ -199,7 +218,6 @@ namespace MphRead.Entities
 
         private void DrawScanObjects()
         {
-            // sktodo: draw HUD objects
             for (int i = 0; i < _scanTargetCount; i++)
             {
                 ScanTarget target = _scanTargets[i];
@@ -209,6 +227,7 @@ namespace MphRead.Entities
                     HudObjectInstance iconInst = _scanIconInsts[2 * target.Category + (target.Dim ? 1 : 0)];
                     iconInst.PositionX = target.ScreenX;
                     iconInst.PositionY = target.ScreenY;
+                    iconInst.Alpha = 9 / 16f;
                     _scene.DrawHudObject(iconInst);
                 }
             }
