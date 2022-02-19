@@ -199,16 +199,16 @@ namespace MphRead.Entities
             for (int i = 0; i < _scanTargetCount; i++)
             {
                 ScanTarget target = _scanTargets[i];
-                float iconScale = target.Scale;
-                float particleScale = 0.625f;
-                if (iconScale > 0.2f)
-                {
-                    float inv = 0.2f / iconScale;
-                    particleScale *= inv * inv;
-                }
-                iconScale *= Fixed.ToFloat(90);
+                float iconScale = target.Scale * Fixed.ToFloat(90);
                 if (target.Entity != _curScanTarget.Entity || iconScale <= Fixed.ToFloat(14))
                 {
+                    float particleScale = 0.625f;
+                    float value = Fixed.ToFloat(820);
+                    if (target.Scale > value)
+                    {
+                        float inv = value / target.Scale;
+                        particleScale *= inv * inv;
+                    }
                     SingleType particle = _scanParticles[2 * target.Category + (target.Dim ? 1 : 0)];
                     float alpha = target.Dim ? 24 / 31f : 1;
                     _scene.AddSingleParticle(particle, target.Position, Vector3.One, alpha, particleScale);
