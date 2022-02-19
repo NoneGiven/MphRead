@@ -539,11 +539,18 @@ namespace MphRead.Entities
                     }
                 }
             }
-            else if (_data.EffectId != 0)
+            else
             {
-                if (!IsVisible(NodeRef))
+                if (_data.EffectId != 0)
                 {
-                    _flags &= ~ObjectFlags.IsVisible;
+                    if (!IsVisible(NodeRef))
+                    {
+                        _flags &= ~ObjectFlags.IsVisible;
+                    }
+                }
+                if (_scene.ShowInvisibleEntities)
+                {
+                    base.GetDrawInfo();
                 }
             }
         }

@@ -416,7 +416,8 @@ namespace MphRead.Entities
         protected bool IsVisible(NodeRef nodeRef)
         {
             // todo?: use position, cull radius, and frustum info and support second node ref
-            if (nodeRef == NodeRef.None || _scene.CameraMode != CameraMode.Player) // skdebug
+            if (nodeRef == NodeRef.None
+                || _scene.CameraMode != CameraMode.Player || _scene.ShowInvisibleEntities) // skdebug
             {
                 return true;
             }

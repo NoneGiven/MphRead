@@ -119,6 +119,7 @@ namespace MphRead
                     string mphKey = Paths.MphKey;
                     string fhKey = Paths.FhKey;
                     string roomString = roomKey == "AD1 TRANSFER LOCK BT" ? "Transfer Lock (Expanded)" : room;
+                    roomString = $"{roomString} [{roomKey}] - {roomId}";
                     string modeString = _mode == "auto-select" ? "auto-select (Adventure or Battle)" : _mode;
                     Console.Clear();
                     Console.WriteLine($"MphRead Version {Program.Version}");
