@@ -73,11 +73,10 @@ namespace MphRead
                     "damage",
                     new ModelMetadata("damage", dir: MetaDir.Hud)
                 },
-                // todo: can't parse some out of bounds texture/palette offsets from this
-                //{
-                //    "icons",
-                //    new ModelMetadata("icons", dir: MetaDir.Hud)
-                //},
+                {
+                    "icons",
+                    new ModelMetadata("icons", texturePath: @"models\icons_Tex.bin", dir: MetaDir.Hud)
+                },
                 {
                     "hud_icon_arrow",
                     new ModelMetadata("hud_icon_arrow", dir: MetaDir.Hud)

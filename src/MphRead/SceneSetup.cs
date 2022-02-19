@@ -298,6 +298,10 @@ namespace MphRead
             Strings.ReadStringTable(StringTables.HudMsgsCommon, language);
             Strings.ReadStringTable(StringTables.HudMessagesSP, language);
             Strings.ReadStringTable(StringTables.HudMessagesMP, language);
+            if (!scene.Multiplayer)
+            {
+                Strings.ReadStringTable(StringTables.ScanLog);
+            }
         }
 
         public static void LoadHunterResources(Hunter hunter, Scene scene)
@@ -437,9 +441,12 @@ namespace MphRead
             scene.LoadEffect(192); // mortarChargedAffinity
             scene.LoadEffect(231); // iceShatter
             scene.LoadEffect(239); // enemyCol1
-            // todo: lore
             scene.LoadModel(Read.GetSingleParticle(SingleType.Death).Model);
             scene.LoadModel(Read.GetSingleParticle(SingleType.Fuzzball).Model);
+            if (!scene.Multiplayer)
+            {
+                scene.LoadModel(Read.GetModelInstance("icons", dir: MetaDir.Hud).Model);
+            }
             // skdebug - the game only loads these if the Omega Cannon item is in the room
             scene.LoadEffect(209); // ultimateProjectile
             scene.LoadEffect(245); // ultimateCol

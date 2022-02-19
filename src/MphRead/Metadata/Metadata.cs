@@ -107,6 +107,17 @@ namespace MphRead
             };
         }
 
+        public ModelMetadata(string name, string texturePath, MetaDir dir)
+        {
+            Name = name;
+            string directory = _dirs[dir];
+            ModelPath = $@"{directory}\{name}_Model.bin";
+            Recolors = new List<RecolorMetadata>()
+            {
+                new RecolorMetadata("default", ModelPath, texturePath)
+            };
+        }
+
         public ModelMetadata(string name, string? animationPath, string? texturePath = null)
         {
             Name = name;
@@ -1512,7 +1523,17 @@ namespace MphRead
             = new Dictionary<SingleType, (string, string)>()
         {
             { SingleType.Death, ("deathParticle", "death") },
-            { SingleType.Fuzzball, ("particles", "fuzzBall") }
+            { SingleType.Fuzzball, ("particles", "fuzzBall") },
+            { SingleType.Lore, ("icons", "lore") },
+            { SingleType.LoreDim, ("icons", "lore_dim") },
+            { SingleType.Enemy, ("icons", "enemy") },
+            { SingleType.EnemyDim, ("icons", "enemy_dim") },
+            { SingleType.Object, ("icons", "object") },
+            { SingleType.ObjectDim, ("icons", "object_dim") },
+            { SingleType.Equipment, ("icons", "equipment") },
+            { SingleType.EquipmentDim, ("icons", "equipment_dim") },
+            { SingleType.Red, ("icons", "red") },
+            { SingleType.RedDim, ("icons", "red_dim") }
         };
 
         public static readonly IReadOnlyDictionary<string, bool> PreloadResources = new Dictionary<string, bool>()
@@ -3615,20 +3636,6 @@ namespace MphRead
                     "TearParticle",
                     new ModelMetadata("TearParticle", animation: false, texture: true)
                 }
-                // todo: can't parse some out of bounds texture/palette offsets from this
-                //{
-                //    "icons",
-                //    new ModelMetadata("icons",
-                //        modelPath: @"hud\icons_Model.bin",
-                //        animationPath: null,
-                //        collisionPath: null,
-                //        new List<RecolorMetadata>()
-                //        {
-                //            new RecolorMetadata("default",
-                //                modelPath: @"hud\icons_Model.bin")
-                //        }
-                //    )
-                //}
             };
 
         public static readonly IReadOnlyDictionary<string, ModelMetadata> FirstHuntModels

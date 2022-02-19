@@ -349,7 +349,7 @@ namespace MphRead.Entities
             facing = FacingVector;
         }
 
-        public override int GetScanId(bool alternate)
+        public override int GetScanId(bool alternate = false)
         {
             bool awake = StateFlags.TestFlag(PlatStateFlags.Awake);
             if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parentEntCol != null && _parent != null)

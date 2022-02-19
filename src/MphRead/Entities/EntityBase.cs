@@ -278,7 +278,7 @@ namespace MphRead.Entities
             return true;
         }
 
-        public virtual int GetScanId(bool alternate)
+        public virtual int GetScanId(bool alternate = false)
         {
             return _scanId;
         }
@@ -421,6 +421,11 @@ namespace MphRead.Entities
                 return true;
             }
             return _scene.IsNodeRefVisible(nodeRef);
+        }
+
+        public virtual bool ScanVisible()
+        {
+            return IsVisible(NodeRef);
         }
 
         public virtual void GetDrawInfo()

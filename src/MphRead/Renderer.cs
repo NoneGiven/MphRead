@@ -1262,10 +1262,6 @@ namespace MphRead
 
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active))
             {
-                if (ProcessFrame)
-                {
-                    PlayerEntity.Main.UpdateHud();
-                }
                 if (CameraMode == CameraMode.Player)
                 {
                     SetHudLayerUniforms();
@@ -2485,6 +2481,7 @@ namespace MphRead
                 }
             }
             PlayerEntity.Main.ProcessModeHud();
+            PlayerEntity.Main.UpdateHud();
             GameState.UpdateState(this);
             Sound.Sfx.Update(_frameTime);
         }

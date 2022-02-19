@@ -107,7 +107,7 @@ namespace MphRead.Entities
             facing = FacingVector;
         }
 
-        public override int GetScanId(bool alternate)
+        public override int GetScanId(bool alternate = false)
         {
             if (Flags.TestFlag(DoorFlags.ShouldOpen))
             {

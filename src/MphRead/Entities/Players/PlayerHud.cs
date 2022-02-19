@@ -274,6 +274,21 @@ namespace MphRead.Entities
             {
                 LoadModeRules();
             }
+            else
+            {
+                // scantodo: load lines, corners, etc.
+                for (int i = 0; i < _scanIconInsts.Length; i++)
+                {
+                    HudObject scanIcon = HudInfo.GetHudObject(HudElements.ScanIcons[i]);
+                    var scanIconInst = new HudObjectInstance(scanIcon.Width, scanIcon.Height);
+                    scanIconInst.SetCharacterData(scanIcon.CharacterData, _scene);
+                    // scantodo: palette swaps for other hunters
+                    scanIconInst.SetPaletteData(scanIcon.PaletteData, _scene);
+                    scanIconInst.Enabled = true;
+                    scanIconInst.Center = true;
+                    _scanIconInsts[i] = scanIconInst;
+                }
+            }
         }
 
         private RulesInfo _rulesInfo = null!;
@@ -382,6 +397,10 @@ namespace MphRead.Entities
             else
             {
                 _hudWeaponMenuOpen = false;
+            }
+            if (ScanVisor)
+            {
+                UpdateScanHud();
             }
             _targetCircleInst.Enabled = false;
             _ammoBarMeter.BarInst.Enabled = false;
@@ -1739,8 +1758,11 @@ namespace MphRead.Entities
 
         private void DrawHudAdventure()
         {
-            // todo: draw scan visor if enabled
-            // else...
+            if (ScanVisor)
+            {
+                DrawScanObjects();
+                return;
+            }
             if (_scene.RoomId == 92) // Gorea_b2
             {
                 for (int i = 0; i < _scene.Entities.Count; i++)

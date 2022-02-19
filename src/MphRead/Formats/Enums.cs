@@ -486,6 +486,16 @@ namespace MphRead
     public enum SingleType
     {
         Death,
-        Fuzzball
+        Fuzzball,
+        Lore,
+        LoreDim,
+        Enemy,
+        EnemyDim,
+        Object,
+        ObjectDim,
+        Equipment,
+        EquipmentDim,
+        Red,
+        RedDim
     }
 }

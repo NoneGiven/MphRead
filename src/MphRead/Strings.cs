@@ -71,17 +71,52 @@ namespace MphRead.Text
 
         public static string GetMessage(char type, uint id, string table, Language language = Language.English)
         {
-            string fullId = type + id.ToString().PadLeft(3, '0');
+            StringTableEntry? entry = GetEntry(type, id, table, language);
+            return entry?.Value ?? " ";
+        }
+
+        public static StringTableEntry? GetEntry(char type, uint id, string table, Language language = Language.English)
+        {
+            string fullId = $"{type}{id:000}";
             IReadOnlyList<StringTableEntry> list = ReadStringTable(table, language);
             for (int i = 0; i < list.Count; i++)
             {
                 StringTableEntry entry = list[i];
                 if (entry.Id == fullId)
                 {
-                    return entry.Value;
+                    return entry;
                 }
             }
-            return " ";
+            return null;
+        }
+
+        private static readonly IReadOnlyDictionary<char, int> _categoryMap = new Dictionary<char, int>()
+        {
+            ['L'] = 0,
+            ['l'] = 0,
+            ['B'] = 1,
+            ['b'] = 1,
+            ['O'] = 2,
+            ['o'] = 2,
+            ['E'] = 3,
+            ['e'] = 3,
+            ['X'] = 4,
+            ['x'] = 4
+        };
+
+        public static int GetScanEntryCategory(int scanId)
+        {
+            // todo: languagel
+            StringTableEntry? entry = GetEntry('L', (uint)scanId, StringTables.ScanLog);
+            if (entry == null)
+            {
+                return 0;
+            }
+            if (_categoryMap.TryGetValue(entry.Category, out int result))
+            {
+                return result;
+            }
+            return 5;
         }
 
         private static string GetFolder(Language language)
@@ -168,11 +203,6 @@ namespace MphRead.Text
                 strings.Add(text);
             }
             return strings;
-        }
-
-        public static void GetModeRules(GameMode mode)
-        {
-
         }
     }
 

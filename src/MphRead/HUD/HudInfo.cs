@@ -1336,6 +1336,20 @@ namespace MphRead.Hud
             )
         };
 
+        public static IReadOnlyList<string> ScanIcons = new string[10]
+        {
+            @"_archives\spSamus\scan_lore.bin",
+            @"_archives\spSamus\scan_lore_dim.bin",
+            @"_archives\spSamus\scan_enemy.bin",
+            @"_archives\spSamus\scan_enemy_dim.bin",
+            @"_archives\spSamus\scan_object.bin",
+            @"_archives\spSamus\scan_object_dim.bin",
+            @"_archives\spSamus\scan_equipment.bin",
+            @"_archives\spSamus\scan_equipment_dim.bin",
+            @"_archives\spSamus\scan_red.bin",
+            @"_archives\spSamus\scan_red_dim.bin"
+        };
+
         public static IReadOnlyList<HudObjects> HunterObjects = new HudObjects[8]
         {
             // Samus

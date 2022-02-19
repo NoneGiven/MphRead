@@ -889,9 +889,18 @@ namespace MphRead.Entities
             return _health != 0;
         }
 
-        public override int GetScanId(bool alternate)
+        public override int GetScanId(bool alternate = false)
         {
             return alternate ? _altScanId : _scanId;
+        }
+
+        public override bool ScanVisible()
+        {
+            if (Health == 0)
+            {
+                return false;
+            }
+            return base.ScanVisible();
         }
 
         private void UpdateScanIds()

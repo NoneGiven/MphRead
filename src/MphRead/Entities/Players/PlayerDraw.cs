@@ -11,6 +11,10 @@ namespace MphRead.Entities
         public void Draw()
         {
             DrawShadow();
+            if (IsMainPlayer && ScanVisor)
+            {
+                DrawScanModels();
+            }
             if (Flags2.TestFlag(PlayerFlags2.HideModel))
             {
                 return;
