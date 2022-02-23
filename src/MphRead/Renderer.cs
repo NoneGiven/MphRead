@@ -1314,6 +1314,7 @@ namespace MphRead
             {
                 GL.UseProgram(_rttShaderProgramId);
             }
+            GL.Disable(EnableCap.CullFace);
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
             {
                 DrawHudLayer(Layer4Info); // ice layer
@@ -1350,6 +1351,11 @@ namespace MphRead
             }
             GL.Enable(EnableCap.DepthTest);
             GL.Disable(EnableCap.Blend);
+            if (_faceCulling)
+            {
+                GL.Enable(EnableCap.CullFace);
+                GL.CullFace(CullFaceMode.Back);
+            }
             return true;
         }
 
@@ -3201,6 +3207,14 @@ namespace MphRead
             rightPos /= (viewWidth / 2);
             topPos /= (viewHeight / 2);
             bottomPos /= (viewHeight / 2);
+            if (inst.FlipHorizontal)
+            {
+                (rightPos, leftPos) = (leftPos, rightPos);
+            }
+            if (inst.FlipVertical)
+            {
+                (bottomPos, topPos) = (topPos, bottomPos);
+            }
             GL.Begin(PrimitiveType.TriangleStrip);
             // top right
             GL.TexCoord3(1f, 0f, 0f);

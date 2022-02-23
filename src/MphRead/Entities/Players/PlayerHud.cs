@@ -276,13 +276,36 @@ namespace MphRead.Entities
             }
             else
             {
-                // scantodo: load lines, corners, etc.
+                _scanCornerObj = HudInfo.GetHudObject(HudElements.ScanCorner);
+                _scanCornerSmallObj = HudInfo.GetHudObject(HudElements.ScanCornerSmall);
+                _scanCornerInst = new HudObjectInstance(_scanCornerObj.Width, _scanCornerObj.Height);
+                _scanCornerInst.SetCharacterData(_scanCornerObj.CharacterData, _scene);
+                _scanCornerInst.Enabled = true;
+                HudObject lineHoriz = HudInfo.GetHudObject(HudElements.ScanLineHoriz);
+                _scanLineHorizInst = new HudObjectInstance(lineHoriz.Width, lineHoriz.Height);
+                _scanLineHorizInst.SetCharacterData(lineHoriz.CharacterData, _scene);
+                _scanLineHorizInst.Enabled = true;
+                HudObject lineVert = HudInfo.GetHudObject(HudElements.ScanLineVert);
+                _scanLineVertInst = new HudObjectInstance(lineVert.Width, lineVert.Height);
+                _scanLineVertInst.SetCharacterData(lineVert.CharacterData, _scene);
+                _scanLineVertInst.Enabled = true;
+                if (Hunter == Hunter.Samus)
+                {
+                    _scanCornerInst.SetPaletteData(_scanCornerObj.PaletteData, _scene);
+                    _scanLineHorizInst.SetPaletteData(lineHoriz.PaletteData, _scene);
+                    _scanLineVertInst.SetPaletteData(lineVert.PaletteData, _scene);
+                }
+                else
+                {
+                    _scanCornerInst.SetPaletteData(_targetCircleObj.PaletteData, _scene);
+                    _scanLineHorizInst.SetPaletteData(_targetCircleObj.PaletteData, _scene);
+                    _scanLineVertInst.SetPaletteData(_targetCircleObj.PaletteData, _scene);
+                }
                 for (int i = 0; i < _scanIconInsts.Length; i++)
                 {
                     HudObject scanIcon = HudInfo.GetHudObject(HudElements.ScanIcons[i]);
                     var scanIconInst = new HudObjectInstance(scanIcon.Width, scanIcon.Height);
                     scanIconInst.SetCharacterData(scanIcon.CharacterData, _scene);
-                    // scantodo: palette swaps for other hunters
                     scanIconInst.SetPaletteData(scanIcon.PaletteData, _scene);
                     scanIconInst.Enabled = true;
                     scanIconInst.Center = true;
@@ -719,7 +742,7 @@ namespace MphRead.Entities
                 if (!ScanVisor)
                 {
                     _targetCircleInst.SetCharacterData(_sniperCircleObj.CharacterData, _sniperCircleObj.Width,
-                    _sniperCircleObj.Height, _scene);
+                        _sniperCircleObj.Height, _scene);
                 }
             }
             _weaponIconInst.SetAnimation(start: 9, target: 27, frames: 19, afterAnim: (int)beam);

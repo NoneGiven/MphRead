@@ -74,6 +74,8 @@ namespace MphRead.Hud
         public float PositionY;
         public int Width;
         public int Height;
+        public bool FlipHorizontal;
+        public bool FlipVertical;
         public IReadOnlyList<byte>? CharacterData;
         public int PaletteIndex = -1;
         public IReadOnlyList<ColorRgba>? PaletteData;
@@ -1335,6 +1337,11 @@ namespace MphRead.Hud
                 offsets: new int[8] { 0, 0, 0, 0, 0, 12, 12, 12 }
             )
         };
+
+        public static readonly string ScanCorner = @"_archives\spSamus\scan_corner.bin";
+        public static readonly string ScanCornerSmall = @"_archives\spSamus\scan_cornerSm.bin";
+        public static readonly string ScanLineHoriz = @"_archives\spSamus\scan_horizline.bin";
+        public static readonly string ScanLineVert = @"_archives\spSamus\scan_vertline.bin";
 
         public static IReadOnlyList<string> ScanIcons = new string[10]
         {

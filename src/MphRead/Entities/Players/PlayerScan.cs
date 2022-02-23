@@ -89,6 +89,8 @@ namespace MphRead.Entities
         {
             EntityBase? curEnt = _curScanTarget.Entity;
             Vector3 curTargetPos = Vector3.Zero;
+            float curScreenX = 0;
+            float curScreenY = 0;
             float minCenter = Single.MaxValue;
             _scanTargetCount = 0;
             bool update = false;
@@ -157,6 +159,8 @@ namespace MphRead.Entities
                         _curScanTarget.Position = targetPos;
                         _curScanTarget.CenterDist = center;
                         _curScanTarget.Dim = false; // scantodo: use dim icon if scan is in logbook
+                        curScreenX = screenPos.X;
+                        curScreenY = screenPos.Y;
                         update = true;
                     }
                 }
@@ -178,9 +182,11 @@ namespace MphRead.Entities
             {
                 if (prevEnt == null)
                 {
-                    // scantodo: set values
+                    _boxSizeFac = 3;
+                    _boxCornerX = 0;
+                    _boxCornerY = 0;
                 }
-                // scantodo: set value
+                _boxCornerFac = 0.125f;
             }
             if (_curScanTarget.Entity != null)
             {
@@ -191,16 +197,62 @@ namespace MphRead.Entities
                     _curScanTarget.Entity = null;
                 }
             }
-            // sktodo: draw lines etc.
+            float scale = _scene.FrameTime / (1 / 30f);
+            if (_curScanTarget.Entity != null)
+            {
+                if (_boxCornerFac < 1)
+                {
+                    _boxCornerFac += 0.0625f * scale;
+                    if (_boxCornerFac > 1)
+                    {
+                        _boxCornerFac = 1;
+                    }
+                }
+                if (_boxSizeFac > 1)
+                {
+                    _boxSizeFac -= 0.25f * scale;
+                    if (_boxSizeFac < 1)
+                    {
+                        _boxSizeFac = 1;
+                    }
+                }
+                // todo: FPS stuff
+                _boxCornerX += (curScreenX - _boxCornerX) * _boxCornerFac;
+                _boxCornerY += (curScreenY - _boxCornerY) * _boxCornerFac;
+            }
+            else
+            {
+                if (_boxCornerFac > 0.125f)
+                {
+                    _boxCornerFac -= 0.0625f * scale;
+                    if (_boxCornerFac < 0.125f)
+                    {
+                        _boxCornerFac = 0.125f;
+                    }
+                }
+                if (_boxSizeFac < 4)
+                {
+                    _boxSizeFac += 1 * scale;
+                    if (_boxSizeFac > 4)
+                    {
+                        _boxSizeFac = 4;
+                    }
+                }
+            }
         }
+
+        private float _boxCornerFac = 0.125f;
+        private float _boxSizeFac = 4;
+        private float _boxCornerX = 0;
+        private float _boxCornerY = 0;
 
         private void DrawScanModels()
         {
             for (int i = 0; i < _scanTargetCount; i++)
             {
                 ScanTarget target = _scanTargets[i];
-                float iconScale = target.Scale * Fixed.ToFloat(90);
-                if (target.Entity != _curScanTarget.Entity || iconScale <= Fixed.ToFloat(14))
+                float iconScale = target.Scale * 90;
+                if (target.Entity != _curScanTarget.Entity || iconScale <= 14)
                 {
                     float particleScale = 0.625f;
                     float value = Fixed.ToFloat(820);
@@ -221,14 +273,94 @@ namespace MphRead.Entities
             for (int i = 0; i < _scanTargetCount; i++)
             {
                 ScanTarget target = _scanTargets[i];
-                float iconScale = target.Scale * Fixed.ToFloat(90);
-                if (target.Entity == _curScanTarget.Entity && iconScale > Fixed.ToFloat(14))
+                float iconScale = target.Scale * 90;
+                if (target.Entity == _curScanTarget.Entity && iconScale > 14)
                 {
                     HudObjectInstance iconInst = _scanIconInsts[2 * target.Category + (target.Dim ? 1 : 0)];
                     iconInst.PositionX = target.ScreenX;
                     iconInst.PositionY = target.ScreenY;
                     iconInst.Alpha = 9 / 16f;
                     _scene.DrawHudObject(iconInst);
+                }
+            }
+            if (_curScanTarget.Entity != null && _boxSizeFac < 4)
+            {
+                float pixelSize = _curScanTarget.Scale * 90;
+                pixelSize = Math.Clamp(pixelSize, 4, 14);
+                pixelSize *= _boxSizeFac;
+                bool small = pixelSize < 8;
+                if (small)
+                {
+                    _scanCornerInst.SetCharacterData(_scanCornerSmallObj.CharacterData,
+                        _scanCornerSmallObj.Width, _scanCornerSmallObj.Height, _scene);
+                }
+                else
+                {
+                    _scanCornerInst.SetCharacterData(_scanCornerObj.CharacterData,
+                        _scanCornerObj.Width, _scanCornerObj.Height, _scene);
+                }
+                int index = _curScanTarget.Distance < 12 ? 0 : 1;
+                _scanCornerInst.SetIndex(index, _scene);
+                _scanLineHorizInst.SetIndex(index, _scene);
+                _scanLineVertInst.SetIndex(index, _scene);
+                // todo: the box and icon both have notable issues with aspect ratio
+                float offsetX = (pixelSize - 16) / 256f;
+                float offsetY = (pixelSize - 16) / 192f;
+                float leftPos = _boxCornerX - pixelSize / 256f;
+                float rightPos = _boxCornerX + offsetX;
+                float topPos = _boxCornerY - pixelSize / 192f;
+                float bottomPos = _boxCornerY + offsetY;
+                _scanCornerInst.PositionX = leftPos;
+                _scanCornerInst.PositionY = topPos;
+                _scanCornerInst.FlipHorizontal = false;
+                _scanCornerInst.FlipVertical = false;
+                _scene.DrawHudObject(_scanCornerInst, mode: 1);
+                _scanCornerInst.PositionX = rightPos;
+                _scanCornerInst.PositionY = topPos;
+                _scanCornerInst.FlipHorizontal = true;
+                _scanCornerInst.FlipVertical = false;
+                _scene.DrawHudObject(_scanCornerInst, mode: 1);
+                _scanCornerInst.PositionX = rightPos;
+                _scanCornerInst.PositionY = bottomPos;
+                _scanCornerInst.FlipHorizontal = true;
+                _scanCornerInst.FlipVertical = true;
+                _scene.DrawHudObject(_scanCornerInst, mode: 1);
+                _scanCornerInst.PositionX = leftPos;
+                _scanCornerInst.PositionY = bottomPos;
+                _scanCornerInst.FlipHorizontal = false;
+                _scanCornerInst.FlipVertical = true;
+                _scene.DrawHudObject(_scanCornerInst, mode: 1);
+                float curX = 16 / 256f;
+                _scanLineHorizInst.PositionY = _boxCornerY;
+                for (int i = 0; i < 10; i++)
+                {
+                    _scanLineHorizInst.PositionX = _boxCornerX + offsetX + curX;
+                    _scene.DrawHudObject(_scanLineHorizInst);
+                    curX += 16 / 256f;
+                }
+                curX = 32 / 256f;
+                _scanLineHorizInst.PositionY = _boxCornerY;
+                for (int i = 0; i < 10; i++)
+                {
+                    _scanLineHorizInst.PositionX = _boxCornerX - offsetX - curX;
+                    _scene.DrawHudObject(_scanLineHorizInst);
+                    curX += 16 / 256f;
+                }
+                float curY = 16 / 192f;
+                _scanLineVertInst.PositionX = _boxCornerX;
+                for (int i = 0; i < 10; i++)
+                {
+                    _scanLineVertInst.PositionY = _boxCornerY + offsetY + curY;
+                    _scene.DrawHudObject(_scanLineVertInst);
+                    curY += 16 / 192f;
+                }
+                curY = 32 / 192f;
+                _scanLineVertInst.PositionY = _boxCornerY;
+                for (int i = 0; i < 10; i++)
+                {
+                    _scanLineVertInst.PositionY = _boxCornerY - offsetY - curY;
+                    _scene.DrawHudObject(_scanLineVertInst);
+                    curY += 16 / 192f;
                 }
             }
         }
@@ -248,6 +380,11 @@ namespace MphRead.Entities
         };
 
         private readonly HudObjectInstance[] _scanIconInsts = new HudObjectInstance[10];
+        private HudObject _scanCornerObj = null!;
+        private HudObject _scanCornerSmallObj = null!;
+        private HudObjectInstance _scanCornerInst = null!;
+        private HudObjectInstance _scanLineHorizInst = null!;
+        private HudObjectInstance _scanLineVertInst = null!;
 
         private class ScanTarget
         {
