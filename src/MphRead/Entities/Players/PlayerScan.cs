@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using MphRead.Formats;
 using MphRead.Hud;
 using MphRead.Text;
@@ -22,10 +23,9 @@ namespace MphRead.Entities
         };
 
         private bool _silentVisorSwitch = false; // set by dialogs
-        private float _visorNameTime = 30 / 30f;
-        private float _visorNameTimer = 30 / 30f;
-        private int _visorNameId = 0;
-        private bool _scanning = false;
+        private float _visorMessageTime = 30 / 30f;
+        private float _visorMessageTimer = 30 / 30f;
+        private int _visorMessageId = 0;
 
         public void SetCombatVisor()
         {
@@ -45,18 +45,16 @@ namespace MphRead.Entities
 
         private void SwitchVisors(bool reset)
         {
-            _visorNameTime = 30 / 30f;
-            _visorNameTimer = 30 / 30f;
-            // scantodo: SFX
+            _visorMessageTimer = _visorMessageTime = 30 / 30f;
+            // sktodo: SFX
             if (ScanVisor)
             {
-                // todo?: flash radar lights if not reset
                 if (!reset && !_silentVisorSwitch)
                 {
                     _soundSource.PlayFreeSfx(SfxId.SCAN_VISOR_OFF);
                 }
                 ScanVisor = false;
-                _visorNameId = 108; // COMBAT VISOR
+                _visorMessageId = 108; // COMBAT VISOR
                 _scanning = false;
                 _smallReticle = false;
                 _smallReticleTimer = 0;
@@ -64,13 +62,12 @@ namespace MphRead.Entities
             }
             else if (!reset)
             {
-                // scantodo: SFX
+                // sktodo: SFX
                 if (!_silentVisorSwitch)
                 {
-                    // todo?: flash radar lights
                     _soundSource.PlayFreeSfx(SfxId.SCAN_VISOR_ON2);
                     ScanVisor = true;
-                    _visorNameId = 107; // SCAN VISOR
+                    _visorMessageId = 107; // SCAN VISOR
                     _scanning = false;
                     _smallReticle = false;
                     _smallReticleTimer = 0;
@@ -81,6 +78,10 @@ namespace MphRead.Entities
         private void ResetScanValues()
         {
             // sktodo: init values and SFX
+            _scanComplete = false;
+            _scanningTime = 0;
+            _scanningTimer = 0;
+            _scanningEntity = null;
             _curScanTarget.Entity = null;
             _curScanTarget.CenterDist = Single.MaxValue;
         }
@@ -183,8 +184,8 @@ namespace MphRead.Entities
                 if (prevEnt == null)
                 {
                     _boxSizeFac = 3;
-                    _boxCornerX = 0;
-                    _boxCornerY = 0;
+                    _boxCornerX = 0.5f;
+                    _boxCornerY = 0.5f;
                 }
                 _boxCornerFac = 0.125f;
             }
@@ -241,10 +242,91 @@ namespace MphRead.Entities
             }
         }
 
+        private bool _scanning = false;
+        private bool _scanComplete = false;
+        private EntityBase? _scanningEntity = null;
+        private float _scanningTime = 0;
+        private float _scanningTimer = 0;
+
+        private void UpdateScanning(bool scanning)
+        {
+            if (!scanning)
+            {
+                // sktodo: SFX
+                _scanning = false;
+            }
+            else if (_curScanTarget.Entity != null)
+            {
+                if (_curScanTarget.Distance < 12)
+                {
+                    _scanning = true;
+                }
+                else if (_visorMessageTimer == 0)
+                {
+                    _soundSource.PlayFreeSfx(SfxId.SCAN_OUT_OF_RANGE);
+                    _visorMessageId = 118; // OBJECT OUT OF SCAN RANGE
+                    _visorMessageTimer = _visorMessageTime = 60 / 30f;
+                }
+            }
+        }
+
+        // sktodo: draw messages + progress + visor names
+        private void UpdateScanState()
+        {
+            if (_curScanTarget.Entity == null)
+            {
+                // sktodo: SFX
+                _scanning = false;
+            }
+            // scantodo: logbook display
+            // else...
+            EntityBase? curEnt = _curScanTarget.Entity;
+            if (curEnt != null && curEnt != _scanningEntity)
+            {
+                ResetScanValues();
+                _scanningEntity = curEnt;
+                _curScanTarget.Entity = curEnt;
+                // sktodo: SFX
+                _scanning = false;
+                int scanId = _scanningEntity.GetScanId();
+                _scanningTime = Strings.GetScanEntryTime(scanId);
+            }
+            if (_scanning && _scanningTimer < _scanningTime)
+            {
+                // scantodo: if the entity is already logged, complete scan immediately
+                // else...
+                _scanningTimer += _scene.FrameTime;
+                // sktodo: SFX
+            }
+            else if (_scanning && _scanningTimer >= _scanningTime && !_scanComplete && _curScanTarget.Entity != null)
+            {
+                // sktodo: SFX
+                _soundSource.PlayFreeSfx(SfxId.SCAN_COMPLETE);
+                StopLongSfx();
+                _scanComplete = true;
+                // scantodo: load logbook and initialize display
+            }
+            if (_scanComplete)
+            {
+                _scanning = false;
+                // scantodo: pause processing, display logbook
+                AfterScan(); // skdebug
+            }
+        }
+
+        private void AfterScan()
+        {
+            Debug.Assert(_scanningEntity != null);
+            // scantodo: unpauase processing, record logbook, play SFX
+            _scanningEntity.OnScanned();
+            RestartLongSfx();
+            ResetScanValues();
+        }
+
         private float _boxCornerFac = 0.125f;
         private float _boxSizeFac = 4;
-        private float _boxCornerX = 0;
-        private float _boxCornerY = 0;
+        private float _boxCornerX = 0.5f;
+        private float _boxCornerY = 0.5f;
 
         private void DrawScanModels()
         {

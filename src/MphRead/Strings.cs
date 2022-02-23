@@ -119,6 +119,16 @@ namespace MphRead.Text
             return 5;
         }
 
+        public static float GetScanEntryTime(int scanId)
+        {
+            StringTableEntry? entry = GetEntry('L', (uint)scanId, StringTables.ScanLog);
+            if (entry == null)
+            {
+                return 60 / 30f;
+            }
+            return 10 * (entry.Speed & 7) / 30f;
+        }
+
         private static string GetFolder(Language language)
         {
             string folder = "stringTables";

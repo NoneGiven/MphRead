@@ -168,6 +168,15 @@ namespace MphRead.Entities
             facing = FacingVector;
         }
 
+        public override void OnScanned()
+        {
+            if (_data.ScanMessage != Message.None && _scanMsgTarget != null && _data.ModelId != 46) // SniperTarget
+            {
+                // sktodo: only do this if not already in the logbook, or the repeat message flag is set
+                _scene.SendMessage(_data.ScanMessage, this, _scanMsgTarget, -1, 0);
+            }
+        }
+
         public override void HandleMessage(MessageInfo info)
         {
             if (info.Message == Message.Activate)

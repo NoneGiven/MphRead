@@ -394,6 +394,7 @@ namespace MphRead.Entities
 
         public void UpdateHud()
         {
+            UpdateScanState();
             ProcessDoubleDamageHud();
             ProcessCloakHud();
             UpdateHealthbars();
@@ -685,7 +686,10 @@ namespace MphRead.Entities
 
         private void HudOnFiredShot()
         {
-            // todo: check scan visor
+            if (ScanVisor)
+            {
+                return;
+            }
             if (!_smallReticle && !_sniperReticle)
             {
                 _smallReticle = true;
@@ -2246,7 +2250,7 @@ namespace MphRead.Entities
             _enemyHealthMeter.Length = _healthbarSubMeter.Length;
             DrawMeter(_hudObjects.EnemyHealthPosX + _objShiftX, _hudObjects.EnemyHealthPosY + _objShiftY, max, current,
                 palette, _enemyHealthMeter, drawText: false, drawTanks: false);
-            // todo: only draw text if we have the scan data
+            // scantodo: only draw text if we have the logbook data
             // else, draw "enemy" instead
             if (text != null)
             {

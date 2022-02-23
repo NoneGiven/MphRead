@@ -466,7 +466,7 @@ namespace MphRead.Entities
                 }
                 UpdateHealthSfx(health: 0);
                 // the game also suspends the weapon alarm SFX here
-                // sfxtodo: stop/mute scan SFX
+                // scantodo: stop/mute scan SFX
             }
             Sfx.TimedSfxMute++;
         }

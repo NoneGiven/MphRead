@@ -177,7 +177,7 @@ namespace MphRead
         public VolumeDisplay ShowVolumes => _showVolumes;
         public bool ShowForceFields => _showVolumes != VolumeDisplay.Portal;
         public float KillHeight => _killHeight;
-        public bool ScanVisor => _scanVisor;
+        public bool ScanVisor => _cameraMode == CameraMode.Player ? PlayerEntity.Main.ScanVisor : _scanVisor;
         public Vector3 Light1Vector => _light1Vector;
         public Vector3 Light1Color => _light1Color;
         public Vector3 Light2Vector => _light2Vector;
@@ -3807,7 +3807,7 @@ namespace MphRead
             {
                 _showNodeData = !_showNodeData;
             }
-            else if (e.Key == Keys.E && !e.Alt)
+            else if (e.Key == Keys.E && e.Shift && !e.Alt)
             {
                 _scanVisor = !_scanVisor;
             }

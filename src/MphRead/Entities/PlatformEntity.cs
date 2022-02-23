@@ -363,6 +363,15 @@ namespace MphRead.Entities
             return awake ? _data.ScanData1 : _data.ScanData2;
         }
 
+        public override void OnScanned()
+        {
+            if (_data.ScanMessage != Message.None && _scanMessageTarget != null)
+            {
+                // sktodo: only do this if not already in the logbook
+                _scene.SendMessage(_data.ScanMessage, this, _scanMessageTarget, -1, 0);
+            }
+        }
+
         private void SetPlatAnimation(PlatAnimId id, AnimFlags flags)
         {
             int index = _meta.AnimationIds[(int)id];

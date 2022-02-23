@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
@@ -281,6 +282,10 @@ namespace MphRead.Entities
         public virtual int GetScanId(bool alternate = false)
         {
             return _scanId;
+        }
+
+        public virtual void OnScanned()
+        {
         }
 
         public virtual bool Process()

@@ -676,9 +676,27 @@ namespace MphRead.Entities
             UpdateAimVecs();
             if (_frozenTimer == 0 && _health > 0 && !_field6D0)
             {
-                // todo: scan visor
-                // else...
-                if (!IsUnmorphing)
+                if (ScanVisor)
+                {
+                    if (!_scanning && Controls.Scan.IsPressed || _scanning && Controls.Scan.IsDown)
+                    {
+                        UpdateScanning(scanning: true);
+                    }
+                    else
+                    {
+                        UpdateScanning(scanning: false);
+                        if (Controls.Scan != Controls.Shoot && Controls.Shoot.IsPressed)
+                        {
+                            SwitchVisors(reset: false);
+                        }
+                    }
+                    if (EquipInfo.ChargeLevel > 0)
+                    {
+                        EquipInfo.ChargeLevel = 0;
+                        StopBeamChargeSfx(CurrentWeapon);
+                    }
+                }
+                else if (!IsUnmorphing)
                 {
                     if (!Controls.Shoot.IsDown)
                     {
@@ -1993,6 +2011,26 @@ namespace MphRead.Entities
             }
             Type = scrollType;
         }
+
+        public static bool operator ==(Keybind lhs, Keybind rhs)
+        {
+            return lhs.Type == rhs.Type && lhs.Key == rhs.Key && lhs.MouseButton == rhs.MouseButton;
+        }
+
+        public static bool operator !=(Keybind lhs, Keybind rhs)
+        {
+            return lhs.Type != rhs.Type || lhs.Key != rhs.Key || lhs.MouseButton != rhs.MouseButton;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Keybind other && Type == other.Type && Key == other.Key && MouseButton == other.MouseButton;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Type, Key, MouseButton);
+        }
     }
 
     public class PlayerControls
@@ -2012,8 +2050,9 @@ namespace MphRead.Entities
         public Keybind Jump { get; }
         public Keybind Morph { get; }
         public Keybind Boost { get; }
-        public Keybind ScanVisor { get; }
         public Keybind AltAttack { get; }
+        public Keybind ScanVisor { get; }
+        public Keybind Scan { get; }
         public Keybind NextWeapon { get; }
         public Keybind PrevWeapon { get; }
         public Keybind WeaponMenu { get; }
@@ -2036,8 +2075,8 @@ namespace MphRead.Entities
         public Keybind[] All { get; }
 
         public PlayerControls(Keybind moveLeft, Keybind moveRight, Keybind moveUp, Keybind moveDown, Keybind aimLeft, Keybind aimRight,
-            Keybind aimUp, Keybind aimDown, Keybind shoot, Keybind zoom, Keybind jump, Keybind morph, Keybind boost, Keybind scanVisor,
-            Keybind altAttack, Keybind nextWeapon, Keybind prevWeapon, Keybind weaponMenu, Keybind powerBeam, Keybind missile,
+            Keybind aimUp, Keybind aimDown, Keybind shoot, Keybind zoom, Keybind jump, Keybind morph, Keybind boost, Keybind altAttack,
+            Keybind scanVisor, Keybind scan, Keybind nextWeapon, Keybind prevWeapon, Keybind weaponMenu, Keybind powerBeam, Keybind missile,
             Keybind voltDriver, Keybind battlehammer, Keybind imperialist, Keybind judicator, Keybind magmaul, Keybind shockCoil,
             Keybind omegaCannon, Keybind affinitySlot, Keybind pause)
         {
@@ -2057,8 +2096,9 @@ namespace MphRead.Entities
             Jump = jump;
             Morph = morph;
             Boost = boost;
-            ScanVisor = scanVisor;
             AltAttack = altAttack;
+            ScanVisor = scanVisor;
+            Scan = scan;
             NextWeapon = nextWeapon;
             PrevWeapon = prevWeapon;
             WeaponMenu = weaponMenu;
@@ -2076,7 +2116,7 @@ namespace MphRead.Entities
             All = new[]
             {
                 moveLeft, moveRight, moveUp, moveDown, aimLeft, aimRight, aimUp, aimDown, shoot, zoom, jump, morph, boost,
-                scanVisor, altAttack, nextWeapon, prevWeapon, weaponMenu, powerBeam, missile, voltDriver, battlehammer,
+                altAttack, scanVisor, scan, nextWeapon, prevWeapon, weaponMenu, powerBeam, missile, voltDriver, battlehammer,
                 imperialist, judicator, magmaul, shockCoil, omegaCannon, affinitySlot, pause
             };
         }
@@ -2115,8 +2155,9 @@ namespace MphRead.Entities
                 jump: new Keybind(Keys.Space),
                 morph: new Keybind(Keys.C),
                 boost: new Keybind(Keys.Space),
-                scanVisor: new Keybind(Keys.E),
                 altAttack: new Keybind(Keys.Q),
+                scanVisor: new Keybind(Keys.E),
+                scan: new Keybind(Keys.Q),
                 nextWeapon: new Keybind(ButtonType.ScrollDown),
                 prevWeapon: new Keybind(ButtonType.ScrollUp),
                 weaponMenu: new Keybind(MouseButton.Middle),

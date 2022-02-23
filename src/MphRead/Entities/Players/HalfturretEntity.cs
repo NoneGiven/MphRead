@@ -51,7 +51,6 @@ namespace MphRead.Entities
         {
             Recolor = Owner.Recolor;
             base.Initialize();
-            // todo: scan ID
             float minY = Fixed.ToFloat(Owner.Values.MinPickupHeight);
             Vector3 position = Owner.Position.AddY(minY + 0.45f);
             var facing = new Vector3(Owner.Field70, 0, Owner.Field74);
