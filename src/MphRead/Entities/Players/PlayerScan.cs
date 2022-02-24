@@ -143,7 +143,7 @@ namespace MphRead.Entities
                 target.Position = targetPos;
                 target.ScreenX = screenPos.X;
                 target.ScreenY = screenPos.Y;
-                target.Dim = false; // scantodo: use dim icon if scan is in logbook
+                target.Dim = GameState.StorySave.CheckLogbook(scanId);
                 target.Distance = dist;
                 if (pixelX > 58 && pixelX < 198 && pixelY > 64 && pixelY < 128)
                 {
@@ -160,7 +160,7 @@ namespace MphRead.Entities
                         _curScanTarget.Scale = scaleInv;
                         _curScanTarget.Position = targetPos;
                         _curScanTarget.CenterDist = center;
-                        _curScanTarget.Dim = false; // scantodo: use dim icon if scan is in logbook
+                        _curScanTarget.Dim = target.Dim;
                         curScreenX = screenPos.X;
                         curScreenY = screenPos.Y;
                         update = true;
@@ -293,10 +293,18 @@ namespace MphRead.Entities
             }
             if (_scanning && _scanningTimer < _scanningTime)
             {
-                // scantodo: if the entity is already logged, complete scan immediately
-                // else...
-                UpdateScanSfx(index: 1, enable: true);
-                _scanningTimer += _scene.FrameTime;
+                Debug.Assert(_curScanTarget.Entity != null);
+                if (GameState.StorySave.CheckLogbook(_curScanTarget.Entity.GetScanId()))
+                {
+                    UpdateScanSfx(index: 1, enable: false);
+                    _scanningTimer = _scanningTime;
+                    // scantodo: set last page flag and button animation
+                }
+                else
+                {
+                    UpdateScanSfx(index: 1, enable: true);
+                    _scanningTimer += _scene.FrameTime;
+                }
             }
             else if (_scanning && _scanningTimer >= _scanningTime && !_scanComplete && _curScanTarget.Entity != null)
             {
@@ -317,8 +325,15 @@ namespace MphRead.Entities
         private void AfterScan()
         {
             Debug.Assert(_scanningEntity != null);
-            // scantodo: unpauase processing, record logbook, play SFX
             _scanningEntity.OnScanned();
+            int scanId = _scanningEntity.GetScanId();
+            int altScanId = _scanningEntity.GetScanId(alternate: true);
+            GameState.StorySave.UpdateLogbook(scanId);
+            if (altScanId != scanId)
+            {
+                GameState.StorySave.UpdateLogbook(altScanId);
+            }
+            // scantodo: unpauase processing, play SFX
             RestartLongSfx();
             ResetScanValues();
         }
@@ -453,12 +468,14 @@ namespace MphRead.Entities
             float posY = 128 + _objShiftY;
             string text = Strings.GetHudMessage(103); // scanning...
             DrawText2D(128 + _objShiftX, posY - 8, Align.Center, 0, text);
+            int length = _scanProgressMeter.Length;
             _scanProgressMeter.TankAmount = (int)(_scanningTime * 120);
             _scanProgressMeter.Horizontal = true;
             _scanProgressMeter.TankCount = 0;
             _scanProgressMeter.Length = 40;
             DrawMeter(108 + _objShiftX, posY, _scanProgressMeter.TankAmount, (int)(_scanningTimer * 120),
                 _healthbarPalette, _scanProgressMeter, drawText: false, drawTanks: false);
+            _scanProgressMeter.Length = length;
         }
 
         private void UpdateVisorMessage()

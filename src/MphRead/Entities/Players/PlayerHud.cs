@@ -157,6 +157,11 @@ namespace MphRead.Entities
             _healthbarSubMeter.BarInst.SetCharacterData(healthbarSub.CharacterData, _scene);
             _healthbarSubMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
             _healthbarSubMeter.BarInst.Enabled = true;
+            HudObject samusSubBar = healthbarSub;
+            if (Hunter != Hunter.Samus)
+            {
+                samusSubBar = HudInfo.GetHudObject(HudElements.HunterObjects[(int)Hunter.Samus].HealthBarB);
+            }
             if (_scene.Multiplayer)
             {
                 HudObject damageBar = HudInfo.GetHudObject(_hudObjects.DamageBar);
@@ -169,8 +174,8 @@ namespace MphRead.Entities
             else
             {
                 _enemyHealthMeter = HudElements.EnemyHealthbar;
-                _enemyHealthMeter.BarInst = new HudObjectInstance(healthbarSub.Width, healthbarSub.Height);
-                _enemyHealthMeter.BarInst.SetCharacterData(healthbarSub.CharacterData, _scene);
+                _enemyHealthMeter.BarInst = new HudObjectInstance(samusSubBar.Width, samusSubBar.Height);
+                _enemyHealthMeter.BarInst.SetCharacterData(samusSubBar.CharacterData, _scene);
                 _enemyHealthMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
                 _enemyHealthMeter.BarInst.Enabled = true;
             }
@@ -312,11 +317,11 @@ namespace MphRead.Entities
                     scanIconInst.Center = true;
                     _scanIconInsts[i] = scanIconInst;
                 }
-                HudObject scanBar = HudInfo.GetHudObject(HudElements.HunterObjects[(int)Hunter.Samus].HealthBarB);
                 _scanProgressMeter = HudElements.SubHealthbars[(int)Hunter.Samus];
-                _scanProgressMeter.BarInst = new HudObjectInstance(scanBar.Width, scanBar.Height);
-                _scanProgressMeter.BarInst.SetCharacterData(scanBar.CharacterData, _scene);
+                _scanProgressMeter.BarInst = new HudObjectInstance(samusSubBar.Width, samusSubBar.Height);
+                _scanProgressMeter.BarInst.SetCharacterData(samusSubBar.CharacterData, _scene);
                 _scanProgressMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
+                _scanProgressMeter.Horizontal = true;
                 _scanProgressMeter.BarInst.Enabled = true;
             }
         }
@@ -2263,8 +2268,11 @@ namespace MphRead.Entities
             _enemyHealthMeter.Length = _healthbarSubMeter.Length;
             DrawMeter(_hudObjects.EnemyHealthPosX + _objShiftX, _hudObjects.EnemyHealthPosY + _objShiftY, max, current,
                 palette, _enemyHealthMeter, drawText: false, drawTanks: false);
-            // scantodo: only draw text if we have the logbook data
-            // else, draw "enemy" instead
+            int scanId = target.GetScanId();
+            if (scanId != 0 && !_scene.Multiplayer && !GameState.StorySave.CheckLogbook(scanId))
+            {
+                text = Strings.GetMessage('E', 6, StringTables.HudMessagesSP); // enemy
+            }
             if (text != null)
             {
                 DrawText2D(_hudObjects.EnemyHealthTextPosX + _objShiftX, _hudObjects.EnemyHealthTextPosY + _objShiftY,

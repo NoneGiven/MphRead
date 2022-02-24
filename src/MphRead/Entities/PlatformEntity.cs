@@ -365,9 +365,9 @@ namespace MphRead.Entities
 
         public override void OnScanned()
         {
-            if (_data.ScanMessage != Message.None && _scanMessageTarget != null)
+            if (_data.ScanMessage != Message.None && _scanMessageTarget != null
+                && !GameState.StorySave.CheckLogbook(GetScanId()))
             {
-                // sktodo: only do this if not already in the logbook
                 _scene.SendMessage(_data.ScanMessage, this, _scanMessageTarget, -1, 0);
             }
         }

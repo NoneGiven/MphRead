@@ -4,6 +4,7 @@ using System.Diagnostics;
 using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Sound;
+using MphRead.Text;
 
 namespace MphRead
 {
@@ -797,8 +798,12 @@ namespace MphRead
             return 0;
         }
 
+        public static StorySave StorySave { get; private set; } = null!;
+
         public static void Reset()
         {
+            // todo: persist story saves
+            StorySave = new StorySave();
             MatchState = MatchState.InProgress;
             ActivePlayers = 0;
             for (int i = 0; i < 4; i++)
@@ -846,6 +851,41 @@ namespace MphRead
             MatchTime = -1;
             PlayerEntity.Reset();
             CameraSequence.Current = null;
+        }
+    }
+
+    public class StorySave
+    {
+        public byte[] Logbook { get; } = new byte[68];
+        public int ScanCount { get; set; }
+        public int EquipmentCount { get; set; }
+
+        public void UpdateLogbook(int scanId)
+        {
+            Debug.Assert(scanId >= 0 && scanId < 68 * 8);
+            int index = scanId / 8;
+            byte bit = (byte)(1 << (scanId % 8));
+            if ((Logbook[index] & bit) == 0)
+            {
+                Logbook[index] |= bit;
+                int category = Strings.GetScanEntryCategory(scanId);
+                if (category < 3)
+                {
+                    ScanCount++;
+                }
+                else if (category == 3)
+                {
+                    EquipmentCount++;
+                }
+            }
+        }
+
+        public bool CheckLogbook(int scanId)
+        {
+            Debug.Assert(scanId >= 0 && scanId < 68 * 8);
+            int index = scanId / 8;
+            byte bit = (byte)(1 << (scanId % 8));
+            return (Logbook[index] & bit) != 0;
         }
     }
 }

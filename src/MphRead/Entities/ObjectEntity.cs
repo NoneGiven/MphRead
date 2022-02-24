@@ -170,9 +170,9 @@ namespace MphRead.Entities
 
         public override void OnScanned()
         {
-            if (_data.ScanMessage != Message.None && _scanMsgTarget != null && _data.ModelId != 46) // SniperTarget
+            if (_data.ScanMessage != Message.None && _scanMsgTarget != null && _data.ModelId != 46 // SniperTarget
+                && (_data.EffectFlags.TestFlag(ObjEffFlags.RepeatScanMessage) || !GameState.StorySave.CheckLogbook(GetScanId())))
             {
-                // sktodo: only do this if not already in the logbook, or the repeat message flag is set
                 _scene.SendMessage(_data.ScanMessage, this, _scanMsgTarget, -1, 0);
             }
         }

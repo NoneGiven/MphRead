@@ -148,7 +148,11 @@ namespace MphRead.Entities
         {
             DespawnTimer = 0;
             Owner?.OnItemPickedUp();
-            // todo: update logbook
+            if (!_scene.Multiplayer)
+            {
+                int scanId = GetScanId();
+                GameState.StorySave.UpdateLogbook(scanId);
+            }
         }
 
         public override void GetDrawInfo()
