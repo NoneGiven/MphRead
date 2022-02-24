@@ -28,6 +28,7 @@ namespace MphRead.Entities
         private HudObjectInstance _boostInst = null!;
         private HudObjectInstance _bombInst = null!;
         private HudMeter _enemyHealthMeter = null!;
+        private HudMeter _scanProgressMeter = null!;
 
         private HudObjectInstance _octolithInst = null!;
         private HudObjectInstance _primeHunterInst = null!;
@@ -311,6 +312,12 @@ namespace MphRead.Entities
                     scanIconInst.Center = true;
                     _scanIconInsts[i] = scanIconInst;
                 }
+                HudObject scanBar = HudInfo.GetHudObject(HudElements.HunterObjects[(int)Hunter.Samus].HealthBarB);
+                _scanProgressMeter = HudElements.SubHealthbars[(int)Hunter.Samus];
+                _scanProgressMeter.BarInst = new HudObjectInstance(scanBar.Width, scanBar.Height);
+                _scanProgressMeter.BarInst.SetCharacterData(scanBar.CharacterData, _scene);
+                _scanProgressMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
+                _scanProgressMeter.BarInst.Enabled = true;
             }
         }
 
@@ -1787,6 +1794,10 @@ namespace MphRead.Entities
         {
             if (ScanVisor)
             {
+                if (_scanning)
+                {
+                    DrawScanProgress();
+                }
                 DrawScanObjects();
                 return;
             }

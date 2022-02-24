@@ -447,6 +447,19 @@ namespace MphRead.Entities
             }
         }
 
+        private void DrawScanProgress()
+        {
+            float posY = 128 + _objShiftY;
+            string text = Strings.GetHudMessage(103); // scanning...
+            DrawText2D(128 + _objShiftX, posY - 8, Align.Center, 0, text);
+            _scanProgressMeter.TankAmount = (int)(_scanningTime * 120);
+            _scanProgressMeter.Horizontal = true;
+            _scanProgressMeter.TankCount = 0;
+            _scanProgressMeter.Length = 40;
+            DrawMeter(108 + _objShiftX, posY, _scanProgressMeter.TankAmount, (int)(_scanningTimer * 120),
+                _healthbarPalette, _scanProgressMeter, drawText: false, drawTanks: false);
+        }
+
         private static readonly IReadOnlyList<SingleType> _scanParticles = new SingleType[10]
         {
             SingleType.Lore,
