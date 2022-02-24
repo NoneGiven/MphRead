@@ -451,6 +451,44 @@ namespace MphRead.Entities
         public float ForceFieldSfxTimer = 0;
         public float DoorUnlockSfxTimer = 0;
         public float DoorChimeSfxTimer = 0;
+        private readonly bool[] _scanSfxOn = new bool[3];
+        private readonly int[] _scanSfxHandles = new int[3] { -1, -1, -1 };
+        private static readonly IReadOnlyList<SfxId> _scanSfxIds = new SfxId[3]
+        {
+            SfxId.SCAN_VISOR_ON, SfxId.SCAN_STATUS_BAR, SfxId.SCAN_VISOR_LOOP
+        };
+
+        private void UpdateScanSfx(int index, bool enable)
+        {
+            if (index == -1)
+            {
+                for (int i = 0; i < _scanSfxOn.Length; i++)
+                {
+                    if (_scanSfxOn[i])
+                    {
+                        _soundSource.StopSfxByHandle(_scanSfxHandles[i]);
+                        _scanSfxHandles[i] = -1;
+                    }
+                }
+                if (!enable)
+                {
+                    for (int i = 0; i < _scanSfxOn.Length; i++)
+                    {
+                        _scanSfxOn[i] = false;
+                    }
+                }
+            }
+            else if (enable)
+            {
+                _scanSfxOn[index] = true;
+            }
+            else
+            {
+                _soundSource.StopSfxByHandle(_scanSfxHandles[index]);
+                _scanSfxHandles[index] = -1;
+                _scanSfxOn[index] = false;
+            }
+        }
 
         public void StopTimedSfx()
         {
@@ -466,7 +504,7 @@ namespace MphRead.Entities
                 }
                 UpdateHealthSfx(health: 0);
                 // the game also suspends the weapon alarm SFX here
-                // scantodo: stop/mute scan SFX
+                UpdateScanSfx(index: -1, enable: true);
             }
             Sfx.TimedSfxMute++;
         }
@@ -568,6 +606,16 @@ namespace MphRead.Entities
                 }
             }
             // sfxtodo: escape sequence and pause stuff
+            if (Sfx.TimedSfxMute == 0)
+            {
+                for (int i = 0; i < _scanSfxOn.Length; i++)
+                {
+                    if (_scanSfxOn[i] && _scanSfxHandles[i] == -1)
+                    {
+                        _scanSfxHandles[i] = _soundSource.PlayFreeSfx(_scanSfxIds[i]);
+                    }
+                }
+            }
             if (Sfx.LongSfxMute == 0 && DoorUnlockSfxTimer > 0)
             {
                 DoorUnlockSfxTimer -= _scene.FrameTime;

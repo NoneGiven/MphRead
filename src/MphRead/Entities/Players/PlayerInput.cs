@@ -102,13 +102,13 @@ namespace MphRead.Entities
             // the game explicitly checks for Samus, and doesn't check if the weapon menu is open
             if (!_scene.Multiplayer && Controls.ScanVisor.IsPressed && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
             {
-                // scantodo: SFX
                 if (ScanVisor)
                 {
                     SwitchVisors(reset: false);
                 }
                 else
                 {
+                    // todo?: play SFX for the "hold scan" feature
                     SwitchVisors(reset: false);
                     UpdateZoom(zoom: false);
                 }

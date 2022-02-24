@@ -82,7 +82,7 @@ namespace MphRead.Sound
                         sourceOnly: false, cancellable: false);
                     return -1;
                 }
-                return Sfx.Instance.PlaySample(id, null, loop: false, noUpdate: false,
+                return Sfx.Instance.PlaySample(id, null, loop: null, noUpdate: false,
                     recency: -1, sourceOnly: false, cancellable: false)?.Handle ?? -1;
             }
             return -1;
@@ -345,10 +345,11 @@ namespace MphRead.Sound
 
         public static float Volume { get; set; } = 0.35f;
 
-        public SoundInstance? PlaySample(int id, SoundSource? source, bool loop, bool noUpdate,
+        public SoundInstance? PlaySample(int id, SoundSource? source, bool? loop, bool noUpdate,
             float recency, bool sourceOnly, bool cancellable)
         {
-            bool setUp = SetUpInstance(id, source, loop, recency, sourceOnly, cancellable, out SoundInstance inst);
+            bool setUp = SetUpInstance(id, source, loop.GetValueOrDefault(),
+                recency, sourceOnly, cancellable, out SoundInstance inst);
             if (!setUp)
             {
                 return null;
@@ -357,7 +358,7 @@ namespace MphRead.Sound
             {
                 return null;
             }
-            inst.Loop[0] = loop;
+            inst.Loop[0] = loop ?? inst.Samples[0].Loop;
             StartInstance(inst, noUpdate);
             return inst;
         }

@@ -46,7 +46,7 @@ namespace MphRead.Entities
         private void SwitchVisors(bool reset)
         {
             _visorMessageTimer = _visorMessageTime = 30 / 30f;
-            // sktodo: SFX
+            UpdateScanSfx(index: -1, enable: false);
             if (ScanVisor)
             {
                 if (!reset && !_silentVisorSwitch)
@@ -62,28 +62,28 @@ namespace MphRead.Entities
             }
             else if (!reset)
             {
-                // sktodo: SFX
+                UpdateScanSfx(index: 2, enable: true);
                 if (!_silentVisorSwitch)
                 {
                     _soundSource.PlayFreeSfx(SfxId.SCAN_VISOR_ON2);
-                    ScanVisor = true;
-                    _visorMessageId = 107; // SCAN VISOR
-                    _scanning = false;
-                    _smallReticle = false;
-                    _smallReticleTimer = 0;
                 }
+                ScanVisor = true;
+                _visorMessageId = 107; // SCAN VISOR
+                _scanning = false;
+                _smallReticle = false;
+                _smallReticleTimer = 0;
             }
         }
 
         private void ResetScanValues()
         {
-            // sktodo: init values and SFX
             _scanComplete = false;
             _scanningTime = 0;
             _scanningTimer = 0;
             _scanningEntity = null;
             _curScanTarget.Entity = null;
             _curScanTarget.CenterDist = Single.MaxValue;
+            UpdateScanSfx(index: 1, enable: false);
         }
 
         private void UpdateScanHud()
@@ -252,7 +252,7 @@ namespace MphRead.Entities
         {
             if (!scanning)
             {
-                // sktodo: SFX
+                UpdateScanSfx(index: 1, enable: false);
                 _scanning = false;
             }
             else if (_curScanTarget.Entity != null)
@@ -275,7 +275,7 @@ namespace MphRead.Entities
         {
             if (_curScanTarget.Entity == null)
             {
-                // sktodo: SFX
+                UpdateScanSfx(index: 1, enable: false);
                 _scanning = false;
             }
             // scantodo: logbook display
@@ -286,7 +286,7 @@ namespace MphRead.Entities
                 ResetScanValues();
                 _scanningEntity = curEnt;
                 _curScanTarget.Entity = curEnt;
-                // sktodo: SFX
+                UpdateScanSfx(index: 1, enable: false);
                 _scanning = false;
                 int scanId = _scanningEntity.GetScanId();
                 _scanningTime = Strings.GetScanEntryTime(scanId);
@@ -295,12 +295,12 @@ namespace MphRead.Entities
             {
                 // scantodo: if the entity is already logged, complete scan immediately
                 // else...
+                UpdateScanSfx(index: 1, enable: true);
                 _scanningTimer += _scene.FrameTime;
-                // sktodo: SFX
             }
             else if (_scanning && _scanningTimer >= _scanningTime && !_scanComplete && _curScanTarget.Entity != null)
             {
-                // sktodo: SFX
+                UpdateScanSfx(index: 1, enable: false);
                 _soundSource.PlayFreeSfx(SfxId.SCAN_COMPLETE);
                 StopLongSfx();
                 _scanComplete = true;
