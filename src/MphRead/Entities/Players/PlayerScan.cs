@@ -270,7 +270,6 @@ namespace MphRead.Entities
             }
         }
 
-        // sktodo: draw messages + progress + visor names
         private void UpdateScanState()
         {
             if (_curScanTarget.Entity == null)
@@ -449,6 +448,7 @@ namespace MphRead.Entities
 
         private void DrawScanProgress()
         {
+            // the game doesn't apply the X shift, only Y
             float posY = 128 + _objShiftY;
             string text = Strings.GetHudMessage(103); // scanning...
             DrawText2D(128 + _objShiftX, posY - 8, Align.Center, 0, text);
