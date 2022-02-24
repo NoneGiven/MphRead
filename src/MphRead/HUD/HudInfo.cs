@@ -12,7 +12,7 @@ namespace MphRead.Hud
         Left = 0,
         Right = 1,
         Center = 2,
-        Type3 = 3
+        PadCenter = 3
     }
 
     public readonly struct UiAnimParams

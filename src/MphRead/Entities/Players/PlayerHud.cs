@@ -406,6 +406,7 @@ namespace MphRead.Entities
             ProcessCloakHud();
             UpdateHealthbars();
             UpdateAmmoBar();
+            UpdateVisorMessage();
             _weaponIconInst.ProcessAnimation(_scene);
             _boostInst.ProcessAnimation(_scene);
             UpdateBoostBombs();
@@ -1799,6 +1800,7 @@ namespace MphRead.Entities
                     DrawScanProgress();
                 }
                 DrawScanObjects();
+                DrawVisorMessage();
                 return;
             }
             if (_scene.RoomId == 92) // Gorea_b2
@@ -1824,7 +1826,7 @@ namespace MphRead.Entities
                     _lastTarget = null;
                 }
             }
-            // todo: draw visor name
+            DrawVisorMessage();
         }
 
         private string FormatModeScore(int slot)
@@ -2370,6 +2372,11 @@ namespace MphRead.Entities
         private Vector2 DrawText2D(float x, float y, Align type, int palette, ReadOnlySpan<char> text,
             ColorRgba? color = null, float alpha = 1, float fontSpacing = -1, int maxLength = -1)
         {
+            int padAfter = maxLength;
+            if (type == Align.PadCenter)
+            {
+                maxLength = -1;
+            }
             int length = 0;
             for (int i = 0; i < text.Length; i++)
             {
@@ -2471,7 +2478,7 @@ namespace MphRead.Entities
                 }
                 while (end < length);
             }
-            else if (type == Align.Center)
+            else if (type == Align.Center || type == Align.PadCenter)
             {
                 float startX = x;
                 int start = 0;
@@ -2503,7 +2510,11 @@ namespace MphRead.Entities
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
-                            if (color.HasValue)
+                            if (type == Align.PadCenter && i >= padAfter)
+                            {
+                                _textInst.SetData(charFrame: 0, _textInst.PaletteIndex, _scene);
+                            }
+                            else if (color.HasValue)
                             {
                                 _textInst.SetData(index, color.Value, _scene);
                             }
@@ -2527,11 +2538,6 @@ namespace MphRead.Entities
                     }
                 }
                 while (end < length);
-            }
-            else if (type == Align.Type3)
-            {
-                // todo: this
-                Debug.Assert(false);
             }
             return new Vector2(x, y);
         }

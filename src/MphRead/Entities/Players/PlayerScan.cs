@@ -26,6 +26,7 @@ namespace MphRead.Entities
         private float _visorMessageTime = 30 / 30f;
         private float _visorMessageTimer = 30 / 30f;
         private int _visorMessageId = 0;
+        private bool _visorMessageScrollOut = false;
 
         public void SetCombatVisor()
         {
@@ -458,6 +459,44 @@ namespace MphRead.Entities
             _scanProgressMeter.Length = 40;
             DrawMeter(108 + _objShiftX, posY, _scanProgressMeter.TankAmount, (int)(_scanningTimer * 120),
                 _healthbarPalette, _scanProgressMeter, drawText: false, drawTanks: false);
+        }
+
+        private void UpdateVisorMessage()
+        {
+            if (_visorMessageTimer > 0 && _visorMessageId != 0)
+            {
+                _visorMessageTimer -= _scene.FrameTime;
+                if (_visorMessageTimer <= 0)
+                {
+                    if (_visorMessageScrollOut)
+                    {
+                        _visorMessageScrollOut = false;
+                        _visorMessageTimer = 0;
+                    }
+                    else
+                    {
+                        _visorMessageScrollOut = true;
+                        _visorMessageTimer = _visorMessageTime;
+                    }
+                }
+            }
+        }
+
+        private void DrawVisorMessage()
+        {
+            if (_visorMessageTimer > 0 && _visorMessageId != 0)
+            {
+                string text = Strings.GetHudMessage(_visorMessageId);
+                float time = _visorMessageTimer;
+                if (!_visorMessageScrollOut)
+                {
+                    time = _visorMessageTime - _visorMessageTimer;
+                }
+                int characters = (int)(time / (1 / 30f));
+                float posX = 128 + _objShiftX;
+                float posY = 157 + _objShiftY;
+                DrawText2D(posX, posY, Align.PadCenter, 0, text, maxLength: characters);
+            }
         }
 
         private static readonly IReadOnlyList<SingleType> _scanParticles = new SingleType[10]
