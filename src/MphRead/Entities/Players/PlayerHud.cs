@@ -480,7 +480,16 @@ namespace MphRead.Entities
                         _scene.Layer3Info.ScaleX = 2;
                         _scene.Layer3Info.ScaleY = 256 / 192f;
                         // visor
-                        _scene.Layer1Info.BindingId = ScanVisor ? _scanBindingId : _visorBindingId;
+                        if (ScanVisor)
+                        {
+                            _scene.Layer1Info.BindingId = _scanBindingId;
+                            _scene.Layer1Info.MaskId = _scanBindingId;
+                        }
+                        else
+                        {
+                            _scene.Layer1Info.BindingId = _visorBindingId;
+                            _scene.Layer1Info.MaskId = -1;
+                        }
                         _scene.Layer1Info.Alpha = Features.VisorOpacity;
                         _scene.Layer1Info.ScaleX = 1;
                         _scene.Layer1Info.ScaleY = 256 / 192f;

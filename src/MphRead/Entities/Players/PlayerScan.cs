@@ -377,6 +377,7 @@ namespace MphRead.Entities
                     iconInst.PositionX = target.ScreenX;
                     iconInst.PositionY = target.ScreenY;
                     iconInst.Alpha = 9 / 16f;
+                    iconInst.UseMask = true;
                     _scene.DrawHudObject(iconInst);
                 }
             }
@@ -400,6 +401,9 @@ namespace MphRead.Entities
                 _scanCornerInst.SetIndex(index, _scene);
                 _scanLineHorizInst.SetIndex(index, _scene);
                 _scanLineVertInst.SetIndex(index, _scene);
+                _scanCornerInst.UseMask = true;
+                _scanLineHorizInst.UseMask = true;
+                _scanLineVertInst.UseMask = true;
                 // todo: the box and icon both have notable issues with aspect ratio
                 float offsetX = (pixelSize - 16) / 256f;
                 float offsetY = (pixelSize - 16) / 192f;

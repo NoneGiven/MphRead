@@ -76,6 +76,7 @@ namespace MphRead.Hud
         public int Height;
         public bool FlipHorizontal;
         public bool FlipVertical;
+        public bool UseMask;
         public IReadOnlyList<byte>? CharacterData;
         public int PaletteIndex = -1;
         public IReadOnlyList<ColorRgba>? PaletteData;
@@ -345,6 +346,7 @@ namespace MphRead.Hud
     public class LayerInfo
     {
         public int BindingId { get; set; } = -1;
+        public int MaskId { get; set; } = -1;
         public float Alpha { get; set; } = 1;
         public float ScaleX { get; set; } = -1;
         public float ScaleY { get; set; } = -1;

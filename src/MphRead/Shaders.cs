@@ -185,8 +185,12 @@ void main()
 #version 120
 
 uniform float alpha;
+uniform bool use_mask;
+uniform float view_width;
+uniform float view_height;
 uniform vec4 fade_color;
 uniform sampler2D tex;
+uniform sampler2D mask;
 varying vec2 texcoord;
 varying vec4 color;
 
@@ -197,6 +201,14 @@ void main()
     }
     else {
         gl_FragColor = texture2D(tex, texcoord);
+        if (use_mask) {
+            float maskY = gl_FragCoord.y + (view_width - view_height) / 2;
+            vec2 maskTexcoord = vec2(gl_FragCoord.x / view_width, 1 - maskY / view_width);
+            vec4 maskColor = texture2D(mask, maskTexcoord);
+            if (maskColor.a > 0) {
+                gl_FragColor.a = 0;
+            }
+        }
         gl_FragColor.a *= alpha;
     }
 }
@@ -264,6 +276,9 @@ void main()
         public int ToonTable { get; set; }
         public int FadeColor { get; set; }
         public int LayerAlpha { get; set; }
+        public int UseMask { get; set; }
+        public int ViewWidth { get; set; }
+        public int ViewHeight { get; set; }
         public int ShiftTable { get; set; }
         public int ShiftIndex { get; set; }
         public int ShiftFactor { get; set; }

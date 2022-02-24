@@ -549,6 +549,14 @@ namespace MphRead
 
             _shaderLocations.FadeColor = GL.GetUniformLocation(_rttShaderProgramId, "fade_color");
             _shaderLocations.LayerAlpha = GL.GetUniformLocation(_rttShaderProgramId, "alpha");
+            _shaderLocations.UseMask = GL.GetUniformLocation(_rttShaderProgramId, "use_mask");
+            _shaderLocations.ViewWidth = GL.GetUniformLocation(_rttShaderProgramId, "view_width");
+            _shaderLocations.ViewHeight = GL.GetUniformLocation(_rttShaderProgramId, "view_height");
+            int texLocation = GL.GetUniformLocation(_rttShaderProgramId, "tex");
+            int maskLocation = GL.GetUniformLocation(_rttShaderProgramId, "mask");
+            GL.UseProgram(_rttShaderProgramId);
+            GL.Uniform1(texLocation, 0);
+            GL.Uniform1(maskLocation, 1);
 
             _shaderLocations.ShiftTable = GL.GetUniformLocation(_shiftShaderProgramId, "shift_table");
             _shaderLocations.ShiftIndex = GL.GetUniformLocation(_shiftShaderProgramId, "shift_idx");
@@ -1321,7 +1329,22 @@ namespace MphRead
                 DrawHudLayer(Layer3Info); // helmet back
                 DrawHudLayer(Layer1Info); // visor
                 DrawHudLayer(Layer2Info); // helmet front
+                if (Layer1Info.MaskId != -1)
+                {
+                    GL.ActiveTexture(TextureUnit.Texture1);
+                    GL.BindTexture(TextureTarget.Texture2D, Layer1Info.MaskId);
+                    GL.ActiveTexture(TextureUnit.Texture0);
+                    GL.Uniform1(_shaderLocations.ViewWidth, (float)Size.X);
+                    GL.Uniform1(_shaderLocations.ViewHeight, (float)Size.Y);
+                }
                 PlayerEntity.Main.DrawHudObjects();
+                GL.Uniform1(_shaderLocations.UseMask, 0);
+                if (Layer1Info.MaskId != -1)
+                {
+                    GL.ActiveTexture(TextureUnit.Texture1);
+                    GL.BindTexture(TextureTarget.Texture2D, 0);
+                    GL.ActiveTexture(TextureUnit.Texture0);
+                }
                 if (_fadeType != FadeType.None)
                 {
                     float percent = _fadePercent;
@@ -3169,6 +3192,7 @@ namespace MphRead
             float height = inst.Height;
             bool center = inst.Center;
             GL.Uniform1(_shaderLocations.LayerAlpha, inst.Alpha);
+            GL.Uniform1(_shaderLocations.UseMask, inst.UseMask ? 1 : 0);
             GL.BindTexture(TextureTarget.Texture2D, inst.BindingId);
             int minParameter = (int)TextureMinFilter.Nearest;
             int magParameter = (int)TextureMagFilter.Nearest;
