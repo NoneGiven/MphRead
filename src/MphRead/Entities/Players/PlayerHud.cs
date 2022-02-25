@@ -2484,6 +2484,10 @@ namespace MphRead.Entities
                 do
                 {
                     end = text[start..].IndexOf('\n');
+                    if (end != -1)
+                    {
+                        end += start;
+                    }
                     if (end == -1 || length < end)
                     {
                         end = length;
@@ -2532,6 +2536,10 @@ namespace MphRead.Entities
                 do
                 {
                     end = text[start..].IndexOf('\n');
+                    if (end != -1)
+                    {
+                        end += start;
+                    }
                     if (end == -1 || length < end)
                     {
                         end = length;
