@@ -456,9 +456,28 @@ namespace MphRead
 
         public static void UpdateFrame(Scene scene)
         {
-            if (PlayerEntity.Main.DialogType != DialogType.Okay && PlayerEntity.Main.DialogType != DialogType.Event
-                && PlayerEntity.Main.DialogType != DialogType.YesNo)
+            if (!DialogPause)
             {
+                if (PlayerEntity.Main.Health > 0)
+                {
+                    // diagtodo: ship hatch, escape start, escape cancel
+                    for (int i = 0; i < scene.MessageQueue.Count; i++)
+                    {
+                        MessageInfo message = scene.MessageQueue[i];
+                        if (message.Message == Message.ShowPrompt && message.ExecuteFrame == scene.FrameCount)
+                        {
+                            int promptType = (int)message.Param2;
+                            if (promptType == 0)
+                            {
+                                PlayerEntity.Main.ShowDialog(DialogType.Okay, messageId: (int)message.Param1);
+                            }
+                            else if (promptType == 1)
+                            {
+                                PlayerEntity.Main.ShowDialog(DialogType.YesNo, messageId: (int)message.Param1);
+                            }
+                        }
+                    }
+                }
                 for (int i = 0; i < scene.MessageQueue.Count; i++)
                 {
                     MessageInfo message = scene.MessageQueue[i];
@@ -511,13 +530,13 @@ namespace MphRead
                 }
                 else if (countdown <= 50 / 30f && !_whiteoutStarted)
                 {
-                    // todo: whiteout
+                    // diagtodo: whiteout
                     _whiteoutStarted = true;
                 }
                 else
                 {
                     // diagtodo: show continue/quit prompt
-                } 
+                }
             }
         }
 

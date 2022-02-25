@@ -37,6 +37,22 @@ namespace MphRead.Entities
             _silentVisorSwitch = false;
             _dialogValue1 = value1;
             _dialogValue2 = value2;
+
+            bool CheckPrompt()
+            {
+                if (!IsMainPlayer)
+                {
+                    CloseDialogs();
+                    return false;
+                }
+                if (ScanVisor)
+                {
+                    _silentVisorSwitch = true;
+                    SwitchVisors(reset: false);
+                }
+                return true;
+            }
+
             if (type == DialogType.Overlay)
             {
                 ShowDialogOverlay(messageId, duration: param1, warning: param2 != 0);
@@ -47,11 +63,17 @@ namespace MphRead.Entities
             }
             else if (type == DialogType.Okay || type == DialogType.YesNo)
             {
-
+                if (CheckPrompt())
+                {
+                    ShowDialogPrompt(messageId);
+                }
             }
             else if (type == DialogType.Event)
             {
-
+                if (CheckPrompt())
+                {
+                    ShowDialogEvent(messageId, eventType: param1);
+                }
             }
             else
             {
@@ -149,6 +171,68 @@ namespace MphRead.Entities
             _messageBoxInst.SetAnimation(start: 0, target: 65, frames: 66, afterAnim: 65);
         }
 
+        private void ShowDialogPrompt(int messageId)
+        {
+            StringTableEntry? entry = Strings.GetEntry('M', messageId, StringTables.GameMessages);
+            if (entry == null)
+            {
+                CloseDialogs();
+                return;
+            }
+            StopLongSfx();
+            bool discard = false;
+            EndWeaponMenu(ref discard);
+            if (entry.Prefix == 'G') // gunship
+            {
+                _soundSource.PlayFreeSfx(SfxId.GUNSHIP_TRANSMISSION);
+            }
+            else if (entry.Prefix == 'H') // hint
+            {
+                _soundSource.PlayFreeSfx(SfxId.GAME_HINT);
+            }
+            else if (entry.Prefix == 'T') // telepathy
+            {
+                _soundSource.StopFreeSfxScripts();
+                _soundSource.PlayFreeSfx(SfxId.TELEPATHIC_MESSAGE);
+            }
+            else if (entry.Prefix == 'B') // secret switches
+            {
+                _soundSource.PlayFreeSfx(SfxId.GUNSHIP_TRANSMISSION);
+                _soundSource.StopFreeSfxScripts();
+                _soundSource.PlayFreeSfx(SfxId.TELEPATHIC_MESSAGE);
+            }
+            GameState.DialogPause = true;
+            _overlayMessage1 = entry.Value1;
+            _overlayMessage2 = entry.Value2;
+            // todo: avoid allocation
+            if (_dialogValue1 != null)
+            {
+                _overlayMessage1 = _overlayMessage1.Replace("&tab0", _dialogValue1);
+                _overlayMessage2 = _overlayMessage2.Replace("&tab0", _dialogValue1);
+            }
+            if (_dialogValue2 != null)
+            {
+                _overlayMessage1 = _overlayMessage1.Replace("&tab1", _dialogValue2);
+                _overlayMessage2 = _overlayMessage2.Replace("&tab1", _dialogValue2);
+            }
+            Array.Fill(_overlayBuffer1, '\0');
+            Array.Fill(_overlayBuffer2, '\0');
+            int lineCount = WrapText(_overlayMessage1, 142, _overlayBuffer1);
+            WrapText(_overlayMessage2, 200, _overlayBuffer2);
+            _overlayTextOffsetY = lineCount * 5;
+            // diagtodo: split bottom screen text into pages
+            _dialogCharTimer = 0;
+            _dialogPalette = 0;
+            _messageBoxInst.SetPalette(_dialogPalette, _scene);
+            _messageSpacerInst.SetPalette(_dialogPalette, _scene);
+            _messageBoxInst.SetAnimation(start: 0, target: 65, frames: 66, afterAnim: 65);
+        }
+
+        private void ShowDialogEvent(int messageId, int eventType)
+        {
+            
+        }
+
         public void CloseDialogs()
         {
             DialogType = DialogType.None;
@@ -168,7 +252,7 @@ namespace MphRead.Entities
             _messageBoxInst.SetIndex(0, _scene);
         }
 
-        private void UpdateDialogs()
+        public void UpdateDialogs()
         {
             if (!ScanVisor)
             {

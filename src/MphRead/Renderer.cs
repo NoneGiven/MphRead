@@ -1066,7 +1066,7 @@ namespace MphRead
             if (ProcessFrame)
             {
                 GameState.ProcessFrame(this);
-                if (GameState.MatchState == MatchState.InProgress && !GameState.DialogPause)
+                if (GameState.MatchState == MatchState.InProgress)
                 {
                     UpdateScene();
                 }
@@ -2496,23 +2496,30 @@ namespace MphRead
 
         private void UpdateScene()
         {
-            PlayerEntity.Main.UpdateTimedSounds();
-            PlayerEntity.Main.ProcessHudMessageQueue();
-            for (int i = 0; i < _entities.Count; i++)
+            if (!GameState.DialogPause)
             {
-                EntityBase entity = _entities[i];
-                if (!entity.Process())
+                PlayerEntity.Main.UpdateTimedSounds();
+                PlayerEntity.Main.ProcessHudMessageQueue();
+                for (int i = 0; i < _entities.Count; i++)
                 {
-                    SendMessage(Message.Destroyed, entity, null, 0, 0, delay: 1);
-                    // todo: need to handle destroying vs. unloading etc.
-                    entity.Destroy();
-                    _destroyedEntities.Add(entity);
+                    EntityBase entity = _entities[i];
+                    if (!entity.Process())
+                    {
+                        SendMessage(Message.Destroyed, entity, null, 0, 0, delay: 1);
+                        // todo: need to handle destroying vs. unloading etc.
+                        entity.Destroy();
+                        _destroyedEntities.Add(entity);
+                    }
                 }
+                PlayerEntity.Main.ProcessModeHud();
+                PlayerEntity.Main.UpdateHud();
+                GameState.UpdateFrame(this);
+                GameState.UpdateState(this);
             }
-            PlayerEntity.Main.ProcessModeHud();
-            PlayerEntity.Main.UpdateHud();
-            GameState.UpdateFrame(this);
-            GameState.UpdateState(this);
+            else if (!Multiplayer)
+            {
+                PlayerEntity.Main.UpdateDialogs();
+            }
             Sound.Sfx.Update(_frameTime);
         }
 

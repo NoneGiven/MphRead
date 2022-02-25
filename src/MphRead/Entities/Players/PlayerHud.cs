@@ -923,7 +923,11 @@ namespace MphRead.Entities
                         _weaponIconInst.PositionX = (_hudObjects.WeaponIconPosX + _objShiftX) / 256f;
                         _weaponIconInst.PositionY = (_hudObjects.WeaponIconPosY + _objShiftY) / 192f;
                         _scene.DrawHudObject(_weaponIconInst);
-                        _scene.DrawHudObject(_targetCircleInst);
+                        if (!GameState.DialogPause)
+                        {
+                            // the game also doesn't draw other biped HUD objects, and sets visor alpha to 1
+                            _scene.DrawHudObject(_targetCircleInst);
+                        }
                     }
                     DrawModeHud();
                     DrawDoubleDamageHud();

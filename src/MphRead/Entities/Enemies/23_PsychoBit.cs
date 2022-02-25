@@ -152,7 +152,7 @@ namespace MphRead.Entities.Enemies
             }
             ContactDamagePlayer(_values.ContactDamage, knockback: true);
             _nearVolume = CollisionVolume.Move(new CollisionVolume(Vector3.Zero, 1), Position);
-            _soundSource.PlaySfx(SfxId.PSYCHOBIT_FLY, loop: true);
+            //_soundSource.PlaySfx(SfxId.PSYCHOBIT_FLY, loop: true);
             CallStateProcess();
         }
 

@@ -78,11 +78,11 @@ namespace MphRead.Sound
                 Debug.Assert((id & 0x8000) == 0);
                 if ((id & 0x4000) != 0)
                 {
-                    Sfx.Instance.PlayScript(id, null, noUpdate: false, recency: -1,
+                    Sfx.Instance.PlayScript(id, source: null, noUpdate: false, recency: -1,
                         sourceOnly: false, cancellable: false);
                     return -1;
                 }
-                return Sfx.Instance.PlaySample(id, null, loop: null, noUpdate: false,
+                return Sfx.Instance.PlaySample(id, source: null, loop: null, noUpdate: false,
                     recency: -1, sourceOnly: false, cancellable: false)?.Handle ?? -1;
             }
             return -1;
@@ -257,7 +257,7 @@ namespace MphRead.Sound
                         continue;
                     }
                     int channelId = channel.Id;
-                    float mute = SfxMute && (ScriptFile == null || Source != null) ? 0 : 1;
+                    float mute = SfxMute && Source != null ? 0 : 1;
                     AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume[i] * Samples[i].Volume * mute);
                     AL.Source(channelId, ALSourcef.Pitch, Pitch[i]);
                     AL.Source(channelId, ALSourceb.SourceRelative, false);

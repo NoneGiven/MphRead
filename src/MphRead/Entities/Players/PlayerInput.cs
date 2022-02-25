@@ -123,21 +123,7 @@ namespace MphRead.Entities
             bool selected = false;
             if (!Controls.WeaponMenu.IsDown)
             {
-                if (WeaponSelection != BeamType.None)
-                {
-                    if (WeaponSelection != CurrentWeapon)
-                    {
-                        TryEquipWeapon(WeaponSelection);
-                        selected = true;
-                    }
-                    else if (IsMainPlayer && Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
-                    {
-                        _soundSource.PlayFreeSfx(SfxId.BEAM_SWITCH_FAIL);
-                    }
-                    WeaponSelection = CurrentWeapon;
-                }
-                Flags1 &= ~PlayerFlags1.NoAimInput;
-                Flags1 &= ~PlayerFlags1.WeaponMenuOpen;
+                EndWeaponMenu(ref selected);
             }
             if (!selected)
             {
@@ -264,6 +250,25 @@ namespace MphRead.Entities
                     }
                 }
             }
+        }
+
+        private void EndWeaponMenu(ref bool selected)
+        {
+            if (WeaponSelection != BeamType.None)
+            {
+                if (WeaponSelection != CurrentWeapon)
+                {
+                    TryEquipWeapon(WeaponSelection);
+                    selected = true;
+                }
+                else if (IsMainPlayer && Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
+                {
+                    _soundSource.PlayFreeSfx(SfxId.BEAM_SWITCH_FAIL);
+                }
+                WeaponSelection = CurrentWeapon;
+            }
+            Flags1 &= ~PlayerFlags1.NoAimInput;
+            Flags1 &= ~PlayerFlags1.WeaponMenuOpen;
         }
 
         private void UpdateAimFacing()
