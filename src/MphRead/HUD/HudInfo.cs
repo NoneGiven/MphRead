@@ -1275,6 +1275,8 @@ namespace MphRead.Hud
         public static readonly string NodesOG = @"hud\rad_NodesOG.bin";
         public static readonly string NodesRB = @"hud\rad_NodesRB.bin";
         public static readonly string SystemLoad = @"_archives\commonMP\hud_systemload.bin";
+        public static readonly string MessageBox = @"_archives\spSamus\hud_msgBox.bin";
+        public static readonly string MessageSpacer = @"_archives\spSamus\message_spacer.bin";
 
         public static readonly IReadOnlyList<string> Hunters = new string[8]
         {
@@ -1377,8 +1379,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localSamus\hud_ammobar.bin",
                 reticle: @"_archives\localSamus\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localSamus\hud_snipercircle.bin",
-                scanBox: @"_archives\spSamus\hud_scanbox.bin",
-                messageBox: @"_archives\spSamus\hud_msgBox.bin",
                 weaponSelect: @"_archives\localSamus\rad_wepsel.bin",
                 selectIcon: @"_archives\localSamus\wepsel_icon.bin",
                 selectBox: @"_archives\localSamus\wepsel_box.bin",
@@ -1442,8 +1442,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localKanden\hud_ammobar.bin",
                 reticle: @"_archives\localKanden\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localKanden\hud_snipercircle.bin",
-                scanBox: null,
-                messageBox: null, // todo: SP stuff for other hunters
                 weaponSelect: @"_archives\localKanden\rad_wepsel.bin",
                 selectIcon: @"_archives\localKanden\wepsel_icon.bin",
                 selectBox: @"_archives\localKanden\wepsel_box.bin",
@@ -1507,8 +1505,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localTrace\hud_ammobar.bin",
                 reticle: @"_archives\localTrace\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localTrace\hud_snipercircle.bin",
-                scanBox: null,
-                messageBox: null,
                 weaponSelect: @"_archives\localTrace\rad_wepsel.bin",
                 selectIcon: @"_archives\localTrace\wepsel_icon.bin",
                 selectBox: @"_archives\localTrace\wepsel_box.bin",
@@ -1572,8 +1568,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localSylux\hud_ammobar.bin",
                 reticle: @"_archives\localSylux\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localSylux\hud_snipercircle.bin",
-                scanBox: null,
-                messageBox: null,
                 weaponSelect: @"_archives\localSylux\rad_wepsel.bin",
                 selectIcon: @"_archives\localSylux\wepsel_icon.bin",
                 selectBox: @"_archives\localSylux\wepsel_box.bin",
@@ -1637,8 +1631,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localNox\hud_ammobar.bin",
                 reticle: @"_archives\localNox\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localNox\hud_snipercircle.bin",
-                scanBox: null,
-                messageBox: null,
                 weaponSelect: @"_archives\localNox\rad_wepsel.bin",
                 selectIcon: @"_archives\localNox\wepsel_icon.bin",
                 selectBox: @"_archives\localNox\wepsel_box.bin",
@@ -1702,8 +1694,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localSpire\hud_ammobar.bin",
                 reticle: @"_archives\localSpire\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localSpire\hud_snipercircle.bin",
-                scanBox: null,
-                messageBox: null,
                 weaponSelect: @"_archives\localSpire\rad_wepsel.bin",
                 selectIcon: @"_archives\localSpire\wepsel_icon.bin",
                 selectBox: @"_archives\localSpire\wepsel_box.bin",
@@ -1767,8 +1757,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localWeavel\hud_ammobar.bin",
                 reticle: @"_archives\localWeavel\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localWeavel\hud_snipercircle.bin",
-                scanBox: null,
-                messageBox: null,
                 weaponSelect: @"_archives\localWeavel\rad_wepsel.bin",
                 selectIcon: @"_archives\localWeavel\wepsel_icon.bin",
                 selectBox: @"_archives\localWeavel\wepsel_box.bin",
@@ -1832,8 +1820,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localSamus\hud_ammobar.bin",
                 reticle: @"_archives\localSamus\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localSamus\hud_snipercircle.bin",
-                scanBox: @"_archives\spSamus\hud_scanbox.bin",
-                messageBox: @"_archives\spSamus\hud_msgBox.bin",
                 weaponSelect: @"_archives\localSamus\rad_wepsel.bin",
                 selectIcon: @"_archives\localSamus\wepsel_icon.bin",
                 selectBox: @"_archives\localSamus\wepsel_box.bin",
@@ -2354,8 +2340,6 @@ namespace MphRead.Hud
         public readonly string AmmoBar;
         public readonly string Reticle;
         public readonly string SniperReticle;
-        public readonly string? ScanBox;
-        public readonly string? MessageBox;
         public readonly string WeaponSelect;
         public readonly string SelectIcon;
         public readonly string SelectBox;
@@ -2405,7 +2389,7 @@ namespace MphRead.Hud
 
         public HudObjects(string helmet, string helmetDrop, string visor, string scanVisor, string healthBarA, string healthBarB,
             string? energyTanks, string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar,
-            string reticle, string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectIcon,
+            string reticle, string sniperReticle, string weaponSelect, string selectIcon,
             string selectBox, string damageBar, int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY,
             int healthOffsetY, int healthOffsetYAlt, int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY,
             int enemyHealthPosX, int enemyHealthPosY, int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX,
@@ -2429,8 +2413,6 @@ namespace MphRead.Hud
             AmmoBar = ammoBar;
             Reticle = reticle;
             SniperReticle = sniperReticle;
-            ScanBox = scanBox;
-            MessageBox = messageBox;
             WeaponSelect = weaponSelect;
             SelectIcon = selectIcon;
             SelectBox = selectBox;

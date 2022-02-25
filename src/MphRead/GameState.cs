@@ -18,6 +18,8 @@ namespace MphRead
 
     public static class GameState
     {
+        public static bool MenuPause { get; set; }
+        public static bool DialogPause { get; set; }
         public static MatchState MatchState { get; set; } = MatchState.InProgress;
         public static int ActivePlayers { get; set; } = 0;
         public static string[] Nicknames { get; } = new string[4] { "Player1", "Player2", "Player3", "Player4" };
@@ -448,6 +450,38 @@ namespace MphRead
             }
         }
 
+        public static void UpdateFrame(Scene scene)
+        {
+            if (PlayerEntity.Main.DialogType != DialogType.Okay && PlayerEntity.Main.DialogType != DialogType.Event
+                && PlayerEntity.Main.DialogType != DialogType.YesNo)
+            {
+                for (int i = 0; i < scene.MessageQueue.Count; i++)
+                {
+                    MessageInfo message = scene.MessageQueue[i];
+                    if (message.Message == Message.ShowWarning && message.ExecuteFrame == scene.FrameCount)
+                    {
+                        int messageId = (int)message.Param1;
+                        int duration = (int)message.Param2;
+                        if (duration == 0)
+                        {
+                            duration = 15;
+                        }
+                        PlayerEntity.Main.ShowDialog(DialogType.Overlay, messageId, param1: duration, param2: 1);
+                    }
+                }
+                for (int i = 0; i < scene.MessageQueue.Count; i++)
+                {
+                    MessageInfo message = scene.MessageQueue[i];
+                    if (message.Message == Message.ShowOverlay && message.ExecuteFrame == scene.FrameCount)
+                    {
+                        int messageId = (int)message.Param1;
+                        int duration = (int)message.Param2;
+                        PlayerEntity.Main.ShowDialog(DialogType.Overlay, messageId, param1: duration, param2: 0);
+                    }
+                }
+            }
+        }
+
         public static void UpdateState(Scene scene)
         {
             if (PlayerEntity.PlayerCount == 0)
@@ -851,6 +885,8 @@ namespace MphRead
             MatchTime = -1;
             PlayerEntity.Reset();
             CameraSequence.Current = null;
+            MenuPause = false;
+            DialogPause = false;
         }
     }
 

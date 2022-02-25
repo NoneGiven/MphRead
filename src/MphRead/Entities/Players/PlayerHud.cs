@@ -46,6 +46,9 @@ namespace MphRead.Entities
         private HudObjectInstance _starsInst = null!;
         private readonly HudObjectInstance[] _hunterInsts = new HudObjectInstance[8];
 
+        private HudObjectInstance _messageBoxInst = null!;
+        private HudObjectInstance _messageSpacerInst = null!;
+
         private ModelInstance _filterModel = null!;
         private bool _showScoreboard = false;
         private int _iceLayerBindingId = -1;
@@ -53,6 +56,9 @@ namespace MphRead.Entities
         private int _helmetDropBindingId = -1;
         private int _visorBindingId = -1;
         private int _scanBindingId = -1;
+
+        private IReadOnlyList<ColorRgba> _textPaletteData = null!;
+        private IReadOnlyList<ColorRgba> _dialogPaletteData = null!;
 
         public void SetUpHud()
         {
@@ -200,6 +206,7 @@ namespace MphRead.Entities
             _ammoBarMeter.BarInst = new HudObjectInstance(ammoBar.Width, ammoBar.Height);
             _ammoBarMeter.BarInst.SetCharacterData(ammoBar.CharacterData, _scene);
             _ammoBarMeter.BarInst.SetPaletteData(ammoBar.PaletteData, _scene);
+            _textPaletteData = ammoBar.PaletteData;
             HudObject weaponIcon = HudInfo.GetHudObject(_hudObjects.WeaponIcon);
             _weaponIconInst = new HudObjectInstance(weaponIcon.Width, weaponIcon.Height);
             _weaponIconInst.SetCharacterData(weaponIcon.CharacterData, _scene);
@@ -323,6 +330,23 @@ namespace MphRead.Entities
                 _scanProgressMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
                 _scanProgressMeter.Horizontal = true;
                 _scanProgressMeter.BarInst.Enabled = true;
+                HudObject samusAmmo = ammoBar;
+                if (Hunter != Hunter.Samus)
+                {
+                    samusAmmo = HudInfo.GetHudObject(HudElements.HunterObjects[(int)Hunter.Samus].AmmoBar);
+                }
+                _dialogPaletteData = samusAmmo.PaletteData;
+                HudObject messageBox = HudInfo.GetHudObject(HudElements.MessageBox);
+                _messageBoxInst = new HudObjectInstance(messageBox.Width, messageBox.Height);
+                _messageBoxInst.SetCharacterData(messageBox.CharacterData, _scene);
+                _messageBoxInst.SetPaletteData(samusAmmo.PaletteData, _scene);
+                _messageBoxInst.SetAnimationFrames(messageBox.AnimParams);
+                _messageBoxInst.Enabled = true;
+                HudObject messageSpacer = HudInfo.GetHudObject(HudElements.MessageSpacer);
+                _messageSpacerInst = new HudObjectInstance(messageSpacer.Width, messageSpacer.Height);
+                _messageSpacerInst.SetCharacterData(messageSpacer.CharacterData, _scene);
+                _messageSpacerInst.SetPaletteData(samusAmmo.PaletteData, _scene);
+                _messageSpacerInst.Enabled = true;
             }
         }
 
@@ -407,6 +431,7 @@ namespace MphRead.Entities
         public void UpdateHud()
         {
             UpdateScanState();
+            UpdateDialogs();
             ProcessDoubleDamageHud();
             ProcessCloakHud();
             UpdateHealthbars();
@@ -906,6 +931,7 @@ namespace MphRead.Entities
                     DrawHealthbars();
                 }
                 DrawQueuedHudMessages();
+                DrawDialogs();
             }
         }
 
@@ -1814,7 +1840,10 @@ namespace MphRead.Entities
                     DrawScanProgress();
                 }
                 DrawScanObjects();
-                DrawVisorMessage();
+                if (!GameState.DialogPause)
+                {
+                    DrawVisorMessage();
+                }
                 return;
             }
             if (_scene.RoomId == 92) // Gorea_b2

@@ -2511,6 +2511,7 @@ namespace MphRead
             }
             PlayerEntity.Main.ProcessModeHud();
             PlayerEntity.Main.UpdateHud();
+            GameState.UpdateFrame(this);
             GameState.UpdateState(this);
             Sound.Sfx.Update(_frameTime);
         }

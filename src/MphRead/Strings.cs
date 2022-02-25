@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace MphRead.Text
 {
@@ -31,7 +32,22 @@ namespace MphRead.Text
                 if (entry.Offset < bytes.Length)
                 {
                     string value = Read.ReadString(bytes, entry.Offset, entry.Length);
-                    entries.Add(new StringTableEntry(entry, value));
+                    char prefix = '\0';
+                    if (name == StringTables.GameMessages)
+                    {
+                        prefix = value[0];
+                        value = value[1..];
+                    }
+                    string value1 = value;
+                    string value2 = "";
+                    int slashCount = value.Count(c => c == '\\');
+                    if (slashCount == 1)
+                    {
+                        string[] split = value.Split('\\');
+                        value1 = split[0];
+                        value2 = split[1];
+                    }
+                    entries.Add(new StringTableEntry(entry, prefix, value1, value2));
                 }
             }
             _cache.Add(name, entries);
@@ -72,7 +88,12 @@ namespace MphRead.Text
         public static string GetMessage(char type, uint id, string table, Language language = Language.English)
         {
             StringTableEntry? entry = GetEntry(type, id, table, language);
-            return entry?.Value ?? " ";
+            return entry?.Value1 ?? " ";
+        }
+
+        public static StringTableEntry? GetEntry(char type, int id, string table, Language language = Language.English)
+        {
+            return GetEntry(type, (uint)id, table, language);
         }
 
         public static StringTableEntry? GetEntry(char type, uint id, string table, Language language = Language.English)
