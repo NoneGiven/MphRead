@@ -431,7 +431,10 @@ namespace MphRead.Entities
         public void UpdateHud()
         {
             UpdateScanState();
-            UpdateDialogs();
+            if (!_scene.Multiplayer)
+            {
+                UpdateDialogs();
+            }
             ProcessDoubleDamageHud();
             ProcessCloakHud();
             UpdateHealthbars();

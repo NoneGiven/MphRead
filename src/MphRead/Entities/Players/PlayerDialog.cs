@@ -230,7 +230,7 @@ namespace MphRead.Entities
 
         private void ShowDialogEvent(int messageId, int eventType)
         {
-            
+
         }
 
         public void CloseDialogs()
@@ -348,6 +348,7 @@ namespace MphRead.Entities
             }
             if (DialogType == DialogType.Okay || DialogType == DialogType.Event || DialogType == DialogType.YesNo)
             {
+                // diagtodo: use this to draw scan stuff too
                 // diagtodo: draw bottom screen text/buttons    
             }
         }

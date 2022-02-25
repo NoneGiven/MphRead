@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -393,6 +394,8 @@ namespace MphRead
                 }
             }
             OutputStart();
+            GC.Collect(generation: 2, GCCollectionMode.Forced, blocking: true, compacting: true);
+            GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
         }
 
         private int _frameBuffer = 0;

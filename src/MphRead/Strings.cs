@@ -38,7 +38,7 @@ namespace MphRead.Text
                         prefix = value[0];
                         value = value[1..];
                     }
-                    string value1 = value;
+                    string value1 = value.Replace("$", "");
                     string value2 = "";
                     int slashCount = value.Count(c => c == '\\');
                     if (slashCount == 1)
