@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using MphRead.Hud;
 using MphRead.Text;
+using OpenTK.Windowing.Desktop;
 
 namespace MphRead.Entities
 {
@@ -29,6 +30,10 @@ namespace MphRead.Entities
         private int _dialogPalette = 0;
         private float _overlayTextOffsetY = 0;
         private int _prevOverlayCharacters = 0;
+        private bool _showDialogClose = false;
+        private int _dialogPageCount = 0;
+        private int _dialogPageIndex = 0;
+        private readonly int[] _dialogPageLengths = new int[10];
 
         public void ShowDialog(DialogType type, int messageId, int param1 = 0,
             int param2 = 0, string? value1 = null, string? value2 = null)
@@ -81,6 +86,44 @@ namespace MphRead.Entities
             }
         }
 
+        private void BufferDialogPages()
+        {
+            Debug.Assert(_overlayMessage2 != null && _overlayMessage2.Length > 0);
+            WrapText(_overlayMessage2, 200, _overlayBuffer2);
+            int index = 0;
+            int line = 1;
+            int page = 0;
+            int length = 0;
+            char ch = _overlayBuffer2[index];
+            while (ch != '\0')
+            {
+                if (ch == '\n')
+                {
+                    line++;
+                    if (line == 4)
+                    {
+                        _dialogPageLengths[page++] = length;
+                        length = 0;
+                        line = 1;
+                    }
+                    else
+                    {
+                        length++;
+                    }
+                }
+                else
+                {
+                    length++;
+                }
+                if (++index == _overlayBuffer2.Length)
+                {
+                    break;
+                }
+                ch = _overlayBuffer2[index];
+            }
+            _dialogPageLengths[page] = length;
+        }
+
         private void ShowDialogOverlay(int messageId, int duration, bool warning)
         {
             if (ScanVisor)
@@ -99,7 +142,6 @@ namespace MphRead.Entities
             {
                 if (_overlayMessage1 == entry.Value1)
                 {
-                    Debug.Assert(_overlayMessage2 == entry.Value2);
                     _overlayTimer = duration / 30f;
                 }
                 // the game doesn't return if there's an existing but non-same message
@@ -107,24 +149,12 @@ namespace MphRead.Entities
             }
             Debug.Assert(_overlayMessage2 == null);
             _overlayMessage1 = entry.Value1;
-            _overlayMessage2 = entry.Value2;
-            // todo: avoid allocation
-            if (_dialogValue1 != null)
-            {
-                _overlayMessage1 = _overlayMessage1.Replace("&tab0", _dialogValue1);
-                _overlayMessage2 = _overlayMessage2.Replace("&tab0", _dialogValue1);
-            }
-            if (_dialogValue2 != null)
-            {
-                _overlayMessage1 = _overlayMessage1.Replace("&tab1", _dialogValue2);
-                _overlayMessage2 = _overlayMessage2.Replace("&tab1", _dialogValue2);
-            }
+            _overlayMessage2 = null;
+            _dialogValue1 = null;
+            _dialogValue2 = null;
             Array.Fill(_overlayBuffer1, '\0');
-            Array.Fill(_overlayBuffer2, '\0');
             int lineCount = WrapText(_overlayMessage1, 142, _overlayBuffer1);
-            WrapText(_overlayMessage2, 200, _overlayBuffer2);
             _overlayTextOffsetY = lineCount * 5;
-            // diagtodo: split bottom screen text into pages
             _overlayTimer = duration / 30f;
             _dialogCharTimer = 0;
             _dialogPalette = warning ? 3 : 0;
@@ -218,9 +248,8 @@ namespace MphRead.Entities
             Array.Fill(_overlayBuffer1, '\0');
             Array.Fill(_overlayBuffer2, '\0');
             int lineCount = WrapText(_overlayMessage1, 142, _overlayBuffer1);
-            WrapText(_overlayMessage2, 200, _overlayBuffer2);
             _overlayTextOffsetY = lineCount * 5;
-            // diagtodo: split bottom screen text into pages
+            BufferDialogPages();
             _dialogCharTimer = 0;
             _dialogPalette = 0;
             _messageBoxInst.SetPalette(_dialogPalette, _scene);
@@ -244,6 +273,13 @@ namespace MphRead.Entities
             _overlayMessage2 = null;
             _overlayTextOffsetY = 0;
             _prevOverlayCharacters = 0;
+            _showDialogClose = false;
+            _dialogPageCount = 0;
+            _dialogPageIndex = 0;
+            for (int i = 0; i < _dialogPageLengths.Length; i++)
+            {
+                _dialogPageLengths[i] = 0;
+            }
             if (_silentVisorSwitch)
             {
                 SwitchVisors(reset: false);
@@ -349,7 +385,19 @@ namespace MphRead.Entities
             if (DialogType == DialogType.Okay || DialogType == DialogType.Event || DialogType == DialogType.YesNo)
             {
                 // diagtodo: use this to draw scan stuff too
-                // diagtodo: draw bottom screen text/buttons    
+                if (_messageBoxInst.Time - _messageBoxInst.Timer >= 16 / 30f)
+                {
+                    int start = 0;
+                    for (int i = 1; i <= _dialogPageIndex; i++)
+                    {
+                        start += _dialogPageLengths[i - 1];
+                    }
+                    var text = new ReadOnlySpan<char>(_overlayBuffer2, start, _dialogPageLengths[_dialogPageIndex]);
+                    _textInst.SetPaletteData(_dialogPaletteData, _scene);
+                    DrawText2D(128, 76 + 34, Align.Center, palette: 0, text);
+                    _textInst.SetPaletteData(_textPaletteData, _scene);
+                }
+                // diagtodo: draw bottom screen text/buttons
             }
         }
     }

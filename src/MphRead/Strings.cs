@@ -32,13 +32,14 @@ namespace MphRead.Text
                 if (entry.Offset < bytes.Length)
                 {
                     string value = Read.ReadString(bytes, entry.Offset, entry.Length);
+                    value = value.Replace("$", "");
                     char prefix = '\0';
                     if (name == StringTables.GameMessages)
                     {
                         prefix = value[0];
                         value = value[1..];
                     }
-                    string value1 = value.Replace("$", "");
+                    string value1 = value;
                     string value2 = "";
                     int slashCount = value.Count(c => c == '\\');
                     if (slashCount == 1)
