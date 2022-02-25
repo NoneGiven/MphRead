@@ -2707,8 +2707,16 @@ namespace MphRead.Entities
                         if (breakPos > 0)
                         {
                             dest[breakPos] = '\n';
-                            breakPos = 0;
                             lineWidth = 0;
+                            int prevIndex = breakPos + 1;
+                            char prev = dest[prevIndex];
+                            while (prev != '\0' && prevIndex < dest.Length)
+                            {
+                                int index = prev - 32; // todo: starting character
+                                lineWidth += Font.Widths[index];
+                                prev = dest[++prevIndex];
+                            }
+                            breakPos = 0;
                             lines++;
                         }
                     }

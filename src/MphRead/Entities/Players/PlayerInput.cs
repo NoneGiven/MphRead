@@ -100,7 +100,8 @@ namespace MphRead.Entities
         private void ProcessTouchInput()
         {
             // the game explicitly checks for Samus, and doesn't check if the weapon menu is open
-            if (!_scene.Multiplayer && Controls.ScanVisor.IsPressed && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
+            if (!_scene.Multiplayer && Controls.ScanVisor.IsPressed && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen)
+                && !IsAltForm && !IsMorphing)
             {
                 if (ScanVisor)
                 {
@@ -676,8 +677,10 @@ namespace MphRead.Entities
             UpdateAimVecs();
             if (_frozenTimer == 0 && _health > 0 && !_field6D0)
             {
+                bool scanInput = false;
                 if (ScanVisor)
                 {
+                    scanInput = true;
                     if (!_scanning && Controls.Scan.IsPressed || _scanning && Controls.Scan.IsDown)
                     {
                         UpdateScanning(scanning: true);
@@ -685,9 +688,11 @@ namespace MphRead.Entities
                     else
                     {
                         UpdateScanning(scanning: false);
-                        if (Controls.Scan != Controls.Shoot && Controls.Shoot.IsPressed)
+                        if (Controls.Scan != Controls.Shoot
+                            && (Controls.Shoot.IsPressed || Controls.Morph.IsPressed))
                         {
                             SwitchVisors(reset: false);
+                            scanInput = false;
                         }
                     }
                     if (EquipInfo.ChargeLevel > 0)
@@ -696,7 +701,7 @@ namespace MphRead.Entities
                         StopBeamChargeSfx(CurrentWeapon);
                     }
                 }
-                else if (!IsUnmorphing)
+                if (!scanInput && !IsUnmorphing)
                 {
                     if (!Controls.Shoot.IsDown)
                     {
