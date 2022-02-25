@@ -43,7 +43,7 @@ namespace MphRead.Entities
             }
             else if (type == DialogType.Hud)
             {
-
+                ShowDialogHud(messageId, duration: param1, unpause: param2 != 0);
             }
             else if (type == DialogType.Okay || type == DialogType.YesNo)
             {
@@ -106,6 +106,44 @@ namespace MphRead.Entities
             _overlayTimer = duration / 30f;
             _dialogCharTimer = 0;
             _dialogPalette = warning ? 3 : 0;
+            _messageBoxInst.SetPalette(_dialogPalette, _scene);
+            _messageSpacerInst.SetPalette(_dialogPalette, _scene);
+            _messageBoxInst.SetAnimation(start: 0, target: 65, frames: 66, afterAnim: 65);
+        }
+
+        private void ShowDialogHud(int messageId, int duration, bool unpause)
+        {
+            string message = Strings.GetHudMessage(messageId);
+            if (message == null)
+            {
+                // the game does this after updating the current message
+                CloseDialogs();
+                return;
+            }
+            if (_overlayMessage1 != null)
+            {
+                if (_overlayMessage1 == message)
+                {
+                    _overlayTimer = duration / 30f;
+                }
+                // the game doesn't return if there's an existing but non-same message
+                return;
+            }
+            _overlayMessage1 = message;
+            _overlayMessage2 = null;
+            _dialogValue1 = null;
+            _dialogValue2 = null;
+            if (unpause)
+            {
+                GameState.DialogPause = false;
+            }
+            Array.Fill(_overlayBuffer1, '\0');
+            int lineCount = WrapText(_overlayMessage1, 142, _overlayBuffer1);
+            _overlayTextOffsetY = lineCount * 5;
+            _overlayTimer = duration / 30f;
+            _dialogCharTimer = 9999;
+            _prevIntroChars = 9999;
+            _dialogPalette = 2;
             _messageBoxInst.SetPalette(_dialogPalette, _scene);
             _messageSpacerInst.SetPalette(_dialogPalette, _scene);
             _messageBoxInst.SetAnimation(start: 0, target: 65, frames: 66, afterAnim: 65);
@@ -226,7 +264,7 @@ namespace MphRead.Entities
             }
             if (DialogType == DialogType.Okay || DialogType == DialogType.Event || DialogType == DialogType.YesNo)
             {
-                // diagtodo: draw bottom screen text
+                // diagtodo: draw bottom screen text/buttons    
             }
         }
     }

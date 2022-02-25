@@ -1066,7 +1066,7 @@ namespace MphRead
             if (ProcessFrame)
             {
                 GameState.ProcessFrame(this);
-                if (GameState.MatchState == MatchState.InProgress)
+                if (GameState.MatchState == MatchState.InProgress && !GameState.DialogPause)
                 {
                     UpdateScene();
                 }
@@ -1080,7 +1080,7 @@ namespace MphRead
             GetDrawItems();
             if (ProcessFrame)
             {
-                if (GameState.MatchState == MatchState.InProgress)
+                if (GameState.MatchState == MatchState.InProgress && !GameState.DialogPause)
                 {
                     ProcessMessageQueue();
                     _liveFrames++;
@@ -2561,7 +2561,7 @@ namespace MphRead
                 RemoveEntity(entity);
             }
 
-            if (ProcessFrame && GameState.MatchState == MatchState.InProgress)
+            if (ProcessFrame && GameState.MatchState == MatchState.InProgress && !GameState.DialogPause)
             {
                 ProcessEffects();
             }

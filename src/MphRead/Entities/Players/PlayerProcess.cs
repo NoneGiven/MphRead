@@ -756,9 +756,28 @@ namespace MphRead.Entities
                 {
                     _timeSinceDead++;
                 }
-                if (!_scene.Multiplayer)
+                if (!_scene.Multiplayer && IsMainPlayer && _deathCountdown > 0)
                 {
-                    // todo: death countdown, lost octolith, story save, etc.
+                    _deathCountdown -= _scene.FrameTime;
+                    float pct = (150 / 30f - _deathCountdown) / (150 / 30f);
+                    CameraInfo.SetShake(0.15f * pct);
+                    if (!IsAltForm)
+                    {
+                        // todo: lost octolith
+                        _facingVector.Y = ExponentialDecay(0.9f, _facingVector.Y);
+                        _facingVector = _facingVector.Normalized();
+                        _gunVec1 = _facingVector;
+                    }
+                    else
+                    {
+                        // todo: lost octolith
+                    }
+                    if (_deathCountdown <= 1 / 30f && !_deathProcessed)
+                    {
+                        _deathProcessed = true;
+                        Flags2 |= PlayerFlags2.HideModel;
+                        // todo: story save, etc.
+                    }
                 }
                 else if (_respawnTimer <= 1)
                 {

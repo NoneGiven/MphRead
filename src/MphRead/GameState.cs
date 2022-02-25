@@ -20,6 +20,7 @@ namespace MphRead
     {
         public static bool MenuPause { get; set; }
         public static bool DialogPause { get; set; }
+        public static int EscapeState { get; set; }
         public static MatchState MatchState { get; set; } = MatchState.InProgress;
         public static int ActivePlayers { get; set; } = 0;
         public static string[] Nicknames { get; } = new string[4] { "Player1", "Player2", "Player3", "Player4" };
@@ -450,6 +451,9 @@ namespace MphRead
             }
         }
 
+        private static bool _shownOctolithDialog = false;
+        private static bool _whiteoutStarted = false;
+
         public static void UpdateFrame(Scene scene)
         {
             if (PlayerEntity.Main.DialogType != DialogType.Okay && PlayerEntity.Main.DialogType != DialogType.Event
@@ -479,6 +483,41 @@ namespace MphRead
                         PlayerEntity.Main.ShowDialog(DialogType.Overlay, messageId, param1: duration, param2: 0);
                     }
                 }
+            }
+            float countdown = PlayerEntity.Main.DeathCountdown;
+            if (!scene.Multiplayer && PlayerEntity.Main.Health == 0 && countdown > 0)
+            {
+                if (countdown >= 145 / 30f)
+                {
+                    _shownOctolithDialog = false;
+                    _whiteoutStarted = false;
+                    if (EscapeState == 2)
+                    {
+                        // EMERGENCY security system activated.
+                        PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 120, param1: 69, param2: 1);
+                    }
+                    else
+                    {
+                        // EMERGENCY POWER SUIT energy is depleted.
+                        PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 116, param1: 45, param2: 1);
+                    }
+                }
+                else if (countdown <= 90 / 30f && !_shownOctolithDialog)
+                {
+                    // todo: lost octolith
+                    // HUNTER HAS TAKEN AN OCTOLITH
+                    //PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 117, param1: 90, param2: 1);
+                    _shownOctolithDialog = true;
+                }
+                else if (countdown <= 50 / 30f && !_whiteoutStarted)
+                {
+                    // todo: whiteout
+                    _whiteoutStarted = true;
+                }
+                else
+                {
+                    // diagtodo: show continue/quit prompt
+                } 
             }
         }
 
@@ -887,6 +926,7 @@ namespace MphRead
             CameraSequence.Current = null;
             MenuPause = false;
             DialogPause = false;
+            EscapeState = 0;
         }
     }
 

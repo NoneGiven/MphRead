@@ -380,8 +380,9 @@ namespace MphRead.Entities
         private ushort _timeSinceHeal = 0;
         private ushort _respawnTimer = 0;
         public ushort RespawnTimer => _respawnTimer;
-        private ushort _deathCountdown = 0;
-        public ushort DeathCountdown => _deathCountdown;
+        private float _deathCountdown = 0;
+        private bool _deathProcessed = false;
+        public float DeathCountdown => _deathCountdown;
         private ushort _damageInvulnTimer = 0;
         private ushort _spawnInvulnTimer = 0;
         private ushort _camSwitchTimer = 0;
@@ -1734,8 +1735,11 @@ namespace MphRead.Entities
                     }
                     if (IsMainPlayer)
                     {
-                        // todo: update story save, death countdown, lost octolith, etc.
+                        _deathCountdown = 150 / 30f;
+                        _deathProcessed = false;
+                        //_respawnTimer = UInt16.MaxValue; // skdebug
                         CameraInfo.SetShake(0.25f);
+                        // todo: update story save, lost octolith, etc.
                     }
                 }
                 else // multiplayer
