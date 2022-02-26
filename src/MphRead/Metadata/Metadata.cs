@@ -1099,6 +1099,12 @@ namespace MphRead
             "Judicator", "Magmaul", "Shock Coil", "Omega Cannon", "Platform", "Enemy"
         };
 
+        public static readonly IReadOnlyList<string> WeaponNamesUpper = new List<string>()
+        {
+            "POWER BEAM", "VOLT DRIVER", "MISSILES", "BATTLEHAMMER", "IMPERIALIST",
+            "JUDICATOR", "MAGMAUL", "SHOCK COIL", "OMEGA CANNON", "PLATFORM", "ENEMY"
+        };
+
         public static readonly IReadOnlyList<int> WeaponMessageIds = new List<int>()
         {
             0, 109, 0, 110, 111, 112, 113, 114, 115, 0, 0

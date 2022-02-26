@@ -1223,7 +1223,7 @@ namespace MphRead.Entities
                 // todo: only show dialog if we didn't already have the weapon unlock
                 // todo: update story save
                 int weaponId = (int)weapon;
-                string value1 = Metadata.WeaponNames[weaponId];
+                string value1 = Metadata.WeaponNamesUpper[weaponId];
                 string value2 = "";
                 int messageId = Metadata.WeaponMessageIds[weaponId];
                 if (messageId != 0)
