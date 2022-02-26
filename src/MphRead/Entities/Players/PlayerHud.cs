@@ -327,7 +327,6 @@ namespace MphRead.Entities
                     scanIconInst.SetCharacterData(scanIcon.CharacterData, _scene);
                     scanIconInst.SetPaletteData(scanIcon.PaletteData, _scene);
                     scanIconInst.Enabled = true;
-                    scanIconInst.Center = true;
                     _scanIconInsts[i] = scanIconInst;
                 }
                 _scanProgressMeter = HudElements.SubHealthbars[(int)Hunter.Samus];
@@ -976,6 +975,8 @@ namespace MphRead.Entities
                         DrawDoubleDamageHud();
                         DrawCloakHud();
                     }
+                    // todo: once we have masking that can account for various things (in this case, not drawing the scan lines
+                    // on top of the layer for the scan log title box), call DrawModeHud when dialog pause is active
                     if (!GameState.DialogPause || DialogType != DialogType.Event
                         && (Hunter == Hunter.Samus || Hunter == Hunter.Guardian))
                     {

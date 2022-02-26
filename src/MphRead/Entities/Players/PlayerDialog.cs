@@ -13,7 +13,8 @@ namespace MphRead.Entities
         Hud = 1,
         Okay = 3,
         Event = 4,
-        YesNo = 5
+        YesNo = 5,
+        Scan = 6
     }
 
     public enum ConfirmState
@@ -86,7 +87,7 @@ namespace MphRead.Entities
                     CloseDialogs();
                     return false;
                 }
-                if (ScanVisor)
+                if (ScanVisor && DialogType != DialogType.Scan)
                 {
                     _silentVisorSwitch = true;
                     SwitchVisors(reset: false);
@@ -107,6 +108,13 @@ namespace MphRead.Entities
                 if (CheckPrompt())
                 {
                     ShowDialogPrompt(messageId);
+                }
+            }
+            else if (type == DialogType.Scan)
+            {
+                if (CheckPrompt())
+                {
+                    ShowDialogScan();
                 }
             }
             else if (type == DialogType.Event)
@@ -283,6 +291,19 @@ namespace MphRead.Entities
             _messageBoxInst.SetAnimation(start: 0, target: 65, frames: 66, afterAnim: 65);
         }
 
+        private void ShowDialogScan()
+        {
+            StopLongSfx();
+            bool discard = false;
+            EndWeaponMenu(ref discard);
+            GameState.PauseDialog();
+            _dialogCharTimer = 0;
+            _dialogPalette = 0;
+            _messageBoxInst.SetPalette(_dialogPalette, _scene);
+            _messageSpacerInst.SetPalette(_dialogPalette, _scene);
+            _messageBoxInst.SetAnimation(start: 0, target: 65, frames: 66, afterAnim: 65);
+        }
+
         private void ShowDialogEvent(int messageId, EventType eventType)
         {
             StringTableEntry? entry = Strings.GetEntry('M', messageId, StringTables.GameMessages);
@@ -388,7 +409,7 @@ namespace MphRead.Entities
 
         public void UpdateDialogs()
         {
-            if (!ScanVisor)
+            if (!ScanVisor || DialogType == DialogType.Scan)
             {
                 if (DialogType == DialogType.Overlay || DialogType == DialogType.Hud)
                 {
@@ -410,7 +431,8 @@ namespace MphRead.Entities
                     _messageSpacerInst.SetIndex(spacerIndex, _scene);
                 }
             }
-            if (GameState.DialogPause && _messageBoxInst.Time - _messageBoxInst.Timer >= 16 / 30f)
+            if (GameState.DialogPause && (DialogType == DialogType.Scan
+                || _messageBoxInst.Time - _messageBoxInst.Timer >= 16 / 30f))
             {
                 bool closed = false;
                 if (_showDialogConfirm)
@@ -449,10 +471,15 @@ namespace MphRead.Entities
                         {
                             RestartLongSfx();
                         }
+                        bool scan = DialogType == DialogType.Scan;
                         _soundSource.PlayFreeSfx(SfxId.SCAN_OK);
                         CloseDialogs();
                         DialogConfirmState = ConfirmState.Okay;
                         GameState.UnpauseDialog();
+                        if (scan)
+                        {
+                            AfterScan();
+                        }
                     }
                 }
                 if (closed)
@@ -595,9 +622,28 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // sktodo: use this to draw scan stuff too
-            if ((DialogType == DialogType.Okay || DialogType == DialogType.Event || DialogType == DialogType.YesNo)
-                && _messageBoxInst.Time - _messageBoxInst.Timer >= 16 / 30f)
+            int layerIndex = 4;
+            if (DialogType == DialogType.Scan)
+            {
+                Debug.Assert(_overlayMessage1 != null);
+                // the game doesn't apply the X shift, only Y
+                string text = Strings.GetHudMessage(102); // SCAN COMPLETE
+                DrawText2D(128 + _objShiftX, 58 + _objShiftY, Align.Center, palette: 0, text);
+                HudObjectInstance iconInst = _scanIconInsts[_scanCategoryIndex * 2];
+                iconInst.PositionX = 20 / 256f;
+                iconInst.PositionY = 96 / 192f;
+                iconInst.Center = false;
+                iconInst.Alpha = 1;
+                iconInst.UseMask = false;
+                _scene.DrawHudObject(iconInst);
+                Debug.Assert(iconInst.PaletteData != null);
+                _textInst.SetPaletteData(iconInst.PaletteData, _scene);
+                DrawText2D(58, 116, Align.Left, palette: 0, _overlayMessage1);
+                _textInst.SetPaletteData(_textPaletteData, _scene);
+                layerIndex = _scanCategoryLayers[_scanCategoryIndex];
+            }
+            if (((DialogType == DialogType.Okay || DialogType == DialogType.Event || DialogType == DialogType.YesNo)
+                && _messageBoxInst.Time - _messageBoxInst.Timer >= 16 / 30f) || DialogType == DialogType.Scan)
             {
                 int start = 0;
                 for (int i = 1; i <= _dialogPageIndex; i++)
@@ -609,7 +655,7 @@ namespace MphRead.Entities
                 _textInst.SetPaletteData(_dialogPaletteData, _scene);
                 DrawText2D(128, 134, Align.Center, palette: 0, text);
                 _textInst.SetPaletteData(_textPaletteData, _scene);
-                _scene.Layer5Info.BindingId = _dialogBindingIds[4]; // diagtodo: palette selection for scan
+                _scene.Layer5Info.BindingId = _dialogBindingIds[layerIndex];
                 _scene.Layer5Info.Alpha = 1;
                 _scene.Layer5Info.ScaleX = 1;
                 _scene.Layer5Info.ScaleY = 1;

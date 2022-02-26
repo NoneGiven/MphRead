@@ -248,6 +248,7 @@ namespace MphRead.Entities
         private EntityBase? _scanningEntity = null;
         private float _scanningTime = 0;
         private float _scanningTimer = 0;
+        private int _scanCategoryIndex = 0;
 
         private void UpdateScanning(bool scanning)
         {
@@ -271,15 +272,22 @@ namespace MphRead.Entities
             }
         }
 
+        private static readonly IReadOnlyList<int> _scanCategoryLayers = new int[6]
+        {
+            0, 1, 3, 2, 4, 4
+        };
+
         private void UpdateScanState()
         {
+            if (GameState.DialogPause)
+            {
+                return;
+            }
             if (_curScanTarget.Entity == null)
             {
                 UpdateScanSfx(index: 1, enable: false);
                 _scanning = false;
             }
-            // scantodo: logbook display
-            // else...
             EntityBase? curEnt = _curScanTarget.Entity;
             if (curEnt != null && curEnt != _scanningEntity)
             {
@@ -298,7 +306,7 @@ namespace MphRead.Entities
                 {
                     UpdateScanSfx(index: 1, enable: false);
                     _scanningTimer = _scanningTime;
-                    // scantodo: set last page flag and button animation
+                    _showDialogConfirm = true;
                 }
                 else
                 {
@@ -312,13 +320,25 @@ namespace MphRead.Entities
                 _soundSource.PlayFreeSfx(SfxId.SCAN_COMPLETE);
                 StopLongSfx();
                 _scanComplete = true;
-                // scantodo: load logbook and initialize display
             }
             if (_scanComplete)
             {
+                Debug.Assert(_curScanTarget.Entity != null);
                 _scanning = false;
-                // scantodo: pause processing, display logbook
-                AfterScan(); // skdebug
+                int scanId = _curScanTarget.Entity.GetScanId();
+                StringTableEntry? entry = Strings.GetScanEntry(scanId);
+                if (entry == null)
+                {
+                    entry = Strings.EmptyScanEntry;
+                }
+                _scanCategoryIndex = Strings.GetScanEntryCategory(scanId);
+                _overlayMessage1 = entry.Value1;
+                _overlayMessage2 = entry.Value2;
+                Array.Fill(_overlayBuffer1, '\0');
+                Array.Fill(_overlayBuffer2, '\0');
+                int lineCount = WrapText(_overlayMessage1, 256, _overlayBuffer1);
+                BufferDialogPages();
+                ShowDialog(DialogType.Scan, messageId: 0);
             }
         }
 
@@ -333,7 +353,6 @@ namespace MphRead.Entities
             {
                 GameState.StorySave.UpdateLogbook(altScanId);
             }
-            // scantodo: unpauase processing, play SFX
             RestartLongSfx();
             ResetScanValues();
         }
@@ -376,6 +395,7 @@ namespace MphRead.Entities
                     HudObjectInstance iconInst = _scanIconInsts[2 * target.Category + (target.Dim ? 1 : 0)];
                     iconInst.PositionX = target.ScreenX;
                     iconInst.PositionY = target.ScreenY;
+                    iconInst.Center = true;
                     iconInst.Alpha = 9 / 16f;
                     iconInst.UseMask = true;
                     _scene.DrawHudObject(iconInst);

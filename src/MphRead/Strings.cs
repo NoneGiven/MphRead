@@ -126,6 +126,20 @@ namespace MphRead.Text
             ['x'] = 4
         };
 
+        public static readonly StringTableEntry EmptyScanEntry = new StringTableEntry(
+            id: "000",
+            prefix: '\0',
+            value1: "INVALID LOG ENTRY",
+            value2: "This object has no entry in the log book.",
+            speed: 0,
+            category: 'S'
+        );
+
+        public static StringTableEntry? GetScanEntry(int scanId)
+        {
+            return GetEntry('L', (uint)scanId, StringTables.ScanLog);
+        }
+
         public static int GetScanEntryCategory(int scanId)
         {
             // todo: languagel

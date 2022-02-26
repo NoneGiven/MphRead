@@ -523,6 +523,16 @@ namespace MphRead
             Value1 = value1;
             Value2 = value2;
         }
+
+        public StringTableEntry(string id, char prefix, string value1, string value2, byte speed, char category)
+        {
+            Id = id;
+            Prefix = prefix;
+            Value1 = value1;
+            Value2 = value2;
+            Speed = speed;
+            Category = category;
+        }
     }
 
     // todo: review whether we still need this class after the entity refactor (entity classes aren't using it)
