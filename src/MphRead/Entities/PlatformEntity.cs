@@ -132,7 +132,7 @@ namespace MphRead.Entities
                 }
                 ModelInstance inst = SetUpModel(_meta.Name);
                 ModelMetadata modelMeta = Metadata.ModelMetadata[_meta.Name];
-                if (modelMeta.AnimationPath != null)
+                if (meta.Animation)
                 {
                     _animFlags |= PlatAnimFlags.HasAnim;
                 }
