@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using MphRead.Hud;
 using MphRead.Text;
-using OpenTK.Windowing.Desktop;
 
 namespace MphRead.Entities
 {
@@ -385,6 +384,7 @@ namespace MphRead.Entities
             if (DialogType == DialogType.Okay || DialogType == DialogType.Event || DialogType == DialogType.YesNo)
             {
                 // diagtodo: use this to draw scan stuff too
+                // diagtodo: move the dialog up one tile for scan, and some number of tiles for events w/ icon
                 if (_messageBoxInst.Time - _messageBoxInst.Timer >= 16 / 30f)
                 {
                     int start = 0;
@@ -394,10 +394,14 @@ namespace MphRead.Entities
                     }
                     var text = new ReadOnlySpan<char>(_overlayBuffer2, start, _dialogPageLengths[_dialogPageIndex]);
                     _textInst.SetPaletteData(_dialogPaletteData, _scene);
-                    DrawText2D(128, 76 + 34, Align.Center, palette: 0, text);
+                    DrawText2D(128, 134, Align.Center, palette: 0, text);
                     _textInst.SetPaletteData(_textPaletteData, _scene);
+                    _scene.Layer5Info.BindingId = _dialogBindingIds[1]; // diagtodo: palette selection for scan
+                    _scene.Layer5Info.Alpha = 1;
+                    _scene.Layer5Info.ScaleX = 1;
+                    _scene.Layer5Info.ScaleY = 1;
                 }
-                // diagtodo: draw bottom screen text/buttons
+                // sktodo: draw buttons
             }
         }
     }

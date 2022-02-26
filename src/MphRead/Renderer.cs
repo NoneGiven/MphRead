@@ -1332,6 +1332,7 @@ namespace MphRead
                 DrawHudLayer(Layer3Info); // helmet back
                 DrawHudLayer(Layer1Info); // visor
                 DrawHudLayer(Layer2Info); // helmet front
+                DrawHudLayer(Layer5Info); // dialog overlay
                 if (Layer1Info.MaskId != -1)
                 {
                     GL.ActiveTexture(TextureUnit.Texture1);
@@ -3104,6 +3105,7 @@ namespace MphRead
         public LayerInfo Layer2Info { get; } = new LayerInfo();
         public LayerInfo Layer3Info { get; } = new LayerInfo();
         public LayerInfo Layer4Info { get; } = new LayerInfo();
+        public LayerInfo Layer5Info { get; } = new LayerInfo();
 
         private void SetHudLayerUniforms()
         {

@@ -56,6 +56,7 @@ namespace MphRead.Entities
         private int _helmetDropBindingId = -1;
         private int _visorBindingId = -1;
         private int _scanBindingId = -1;
+        private readonly int[] _dialogBindingIds = new int[5] { -1, -1, -1, -1, -1 };
 
         private IReadOnlyList<ColorRgba> _textPaletteData = null!;
         private IReadOnlyList<ColorRgba> _dialogPaletteData = null!;
@@ -66,8 +67,8 @@ namespace MphRead.Entities
                 startX: 16, startY: 0, tilesX: 32, tilesY: 32, _scene);
             (_helmetBindingId, _) = HudInfo.CharMapToTexture(_hudObjects.Helmet, _scene);
             (_helmetDropBindingId, _) = HudInfo.CharMapToTexture(_hudObjects.HelmetDrop, _scene);
-            (_visorBindingId, IReadOnlyList<ushort>? visorPal) = HudInfo.CharMapToTexture(_hudObjects.Visor, startX: 0, startY: 0,
-                tilesX: 0, tilesY: 32, _scene);
+            (_visorBindingId, IReadOnlyList<ushort>? visorPal) = HudInfo.CharMapToTexture(_hudObjects.Visor,
+                startX: 0, startY: 0, tilesX: 0, tilesY: 32, _scene);
             if (Hunter == Hunter.Samus)
             {
                 visorPal = null;
@@ -347,6 +348,11 @@ namespace MphRead.Entities
                 _messageSpacerInst.SetCharacterData(messageSpacer.CharacterData, _scene);
                 _messageSpacerInst.SetPaletteData(samusAmmo.PaletteData, _scene);
                 _messageSpacerInst.Enabled = true;
+                for (int i = 0; i < 5; i++)
+                {
+                    (_dialogBindingIds[i], _) = HudInfo.CharMapToTexture(HudElements.MapScan,
+                        startX: 0, startY: 0, tilesX: 32, tilesY: 24, _scene, paletteId: i);
+                }
             }
         }
 
@@ -475,6 +481,7 @@ namespace MphRead.Entities
             _scene.Layer2Info.BindingId = -1;
             _scene.Layer3Info.BindingId = -1;
             _scene.Layer4Info.BindingId = -1;
+            _scene.Layer5Info.BindingId = -1;
             _scene.Layer1Info.ShiftX = 0;
             _scene.Layer1Info.ShiftY = 0;
             _scene.Layer2Info.ShiftX = 0;
@@ -483,6 +490,8 @@ namespace MphRead.Entities
             _scene.Layer3Info.ShiftY = 0;
             _scene.Layer4Info.ShiftX = 0;
             _scene.Layer4Info.ShiftY = 0;
+            _scene.Layer5Info.ShiftX = 0;
+            _scene.Layer5Info.ShiftY = 0;
             if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true)
             {
                 return;
@@ -916,26 +925,28 @@ namespace MphRead.Entities
             {
                 if (Health > 0)
                 {
-                    if (IsAltForm || IsMorphing || IsUnmorphing)
+                    if (!GameState.DialogPause)
                     {
-                        DrawBoostBombs();
-                    }
-                    else if (!ScanVisor)
-                    {
-                        DrawAmmoBar();
-                        _weaponIconInst.PositionX = (_hudObjects.WeaponIconPosX + _objShiftX) / 256f;
-                        _weaponIconInst.PositionY = (_hudObjects.WeaponIconPosY + _objShiftY) / 192f;
-                        _scene.DrawHudObject(_weaponIconInst);
-                        if (!GameState.DialogPause)
+                        if (IsAltForm || IsMorphing || IsUnmorphing)
                         {
-                            // the game also doesn't draw other biped HUD objects, and sets visor alpha to 1
+                            DrawBoostBombs();
+                        }
+                        else if (!ScanVisor)
+                        {
+                            DrawAmmoBar();
+                            _weaponIconInst.PositionX = (_hudObjects.WeaponIconPosX + _objShiftX) / 256f;
+                            _weaponIconInst.PositionY = (_hudObjects.WeaponIconPosY + _objShiftY) / 192f;
+                            _scene.DrawHudObject(_weaponIconInst);
                             _scene.DrawHudObject(_targetCircleInst);
                         }
+                        DrawModeHud();
+                        DrawDoubleDamageHud();
+                        DrawCloakHud();
                     }
-                    DrawModeHud();
-                    DrawDoubleDamageHud();
-                    DrawCloakHud();
-                    DrawHealthbars();
+                    if (!GameState.DialogPause || Hunter == Hunter.Samus || Hunter == Hunter.Guardian)
+                    {
+                        DrawHealthbars();
+                    }
                 }
                 DrawQueuedHudMessages();
                 DrawDialogs();

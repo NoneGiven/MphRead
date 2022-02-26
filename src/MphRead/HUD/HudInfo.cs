@@ -390,21 +390,21 @@ namespace MphRead.Hud
         private static readonly int _scrDatInfoSize = Marshal.SizeOf<ScrDatInfo>();
 
         public static (int, IReadOnlyList<ushort>) CharMapToTexture(string path, Scene scene,
-            IReadOnlyList<ushort>? paletteOverride = null)
+            IReadOnlyList<ushort>? paletteOverride = null, int paletteId = -1)
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
-            return CharMapToTexture(bytes, startX: 0, startY: 0, tilesX: 0, tilesY: 0, scene, paletteOverride);
+            return CharMapToTexture(bytes, startX: 0, startY: 0, tilesX: 0, tilesY: 0, scene, paletteOverride, paletteId);
         }
 
         public static (int, IReadOnlyList<ushort>) CharMapToTexture(string path, int startX, int startY,
-            int tilesX, int tilesY, Scene scene, IReadOnlyList<ushort>? paletteOverride = null)
+            int tilesX, int tilesY, Scene scene, IReadOnlyList<ushort>? paletteOverride = null, int paletteId = -1)
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
-            return CharMapToTexture(bytes, startX, startY, tilesX, tilesY, scene, paletteOverride);
+            return CharMapToTexture(bytes, startX, startY, tilesX, tilesY, scene, paletteOverride, paletteId);
         }
 
         private static (int, IReadOnlyList<ushort>) CharMapToTexture(ReadOnlySpan<byte> bytes, int startX, int startY,
-            int tilesX, int tilesY, Scene scene, IReadOnlyList<ushort>? paletteOverride = null)
+            int tilesX, int tilesY, Scene scene, IReadOnlyList<ushort>? paletteOverride = null, int paletteId = -1)
         {
             UiPartHeader header = Read.ReadStruct<UiPartHeader>(bytes);
             Debug.Assert(header.Magic == 0);
@@ -434,6 +434,12 @@ namespace MphRead.Hud
                 paletteData = newPalette;
             }
 
+            int paletteOffset = 0;
+            if (paletteId != -1)
+            {
+                paletteOffset = paletteId * 16;
+            }
+
             var characters = new List<List<ColorRgba>>();
             Debug.Assert(characterData.Count % 32 == 0);
             for (int i = 0; i < characterData.Count / 32; i++)
@@ -445,12 +451,68 @@ namespace MphRead.Hud
                     {
                         byte data = characterData[i * 32 + y * 4 + x];
                         int index1 = data & 0xF;
-                        character.Add(index1 == 0 ? new ColorRgba() : new ColorRgba(paletteData[index1]));
                         int index2 = (data & 0xF0) >> 4;
-                        character.Add(index2 == 0 ? new ColorRgba() : new ColorRgba(paletteData[index2]));
+
+                        void AddColor(int index)
+                        {
+                            var color = new ColorRgba();
+                            if (index != 0 && (paletteId == -1 || index != 6))
+                            {
+                                color = new ColorRgba(paletteData[index + paletteOffset]);
+                            }
+                            character.Add(color);
+                        }
+
+                        AddColor(index1);
+                        AddColor(index2);
                     }
                 }
                 characters.Add(character);
+            }
+
+            if (paletteId != -1)
+            {
+                var newScreenData = new List<ScreenData>(screenData.Count + 32 * 10);
+                for (int i = 0; i < 32 * 10; i++)
+                {
+                    newScreenData.Add(new ScreenData(data: 0));
+                }
+                newScreenData.AddRange(screenData);
+                if (paletteId == 4)
+                {
+                    for (int i = 10 * 32; i < 17 * 32; i++)
+                    {
+                        newScreenData[i] = new ScreenData(data: 0);
+                    }
+                }
+                else
+                {
+                    for (int i = 10 * 32; i < 13 * 32; i++)
+                    {
+                        int charId = newScreenData[i].CharacterId;
+                        if (charId == 1 || charId == 2 || charId == 5)
+                        {
+                            newScreenData[i] = new ScreenData(data: 0);
+                        }
+                    }
+                }
+                for (int i = 16 * 32; i < 17 * 32; i++)
+                {
+                    newScreenData[i] = new ScreenData(data: 13);
+                }
+                for (int i = 17 * 32; i < 21 * 32; i++)
+                {
+                    newScreenData[i] = new ScreenData(data: 15);
+                }
+                for (int i = 21 * 32; i < 21 * 32 + 4; i++)
+                {
+                    newScreenData[i] = new ScreenData(data: 21);
+                }
+                for (int i = 21 * 32 + 28; i < 22 * 32; i++)
+                {
+                    newScreenData[i] = new ScreenData(data: 21);
+                }
+                screenData = newScreenData;
             }
 
             if (tilesX == 0)
@@ -1277,6 +1339,7 @@ namespace MphRead.Hud
         public static readonly string SystemLoad = @"_archives\commonMP\hud_systemload.bin";
         public static readonly string MessageBox = @"_archives\spSamus\hud_msgBox.bin";
         public static readonly string MessageSpacer = @"_archives\spSamus\message_spacer.bin";
+        public static readonly string MapScan = @"_archives\spSamus\map_scan.bin";
 
         public static readonly IReadOnlyList<string> Hunters = new string[8]
         {
