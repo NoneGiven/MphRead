@@ -10,6 +10,8 @@ namespace MphRead.Entities
         private ushort _spawnCount = 0;
         private ushort _spawnCooldown = 0;
         private bool _linkDone = false;
+        private EntityBase? _parent = null;
+        private Vector3 _invPos;
         private EntityBase? _pickupNotifyEntity = null;
 
         public ItemSpawnEntityData Data => _data;
@@ -49,12 +51,22 @@ namespace MphRead.Entities
 
         public override bool Process()
         {
-            if (!_linkDone)
+            if (!_linkDone && _data.ParentId != -1)
             {
-                // todo: linked entity (position only)
+                if (_scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
+                {
+                    _parent = parent;
+                }
+                if (_parent != null)
+                {
+                    _invPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
+                } 
                 _linkDone = true;
             }
-            // todo: inv pos
+            if (_linkDone && _parent != null)
+            {
+                Position = Matrix.Vec3MultMtx4(_invPos, _parent.CollisionTransform);
+            }
             if (!Active)
             {
                 return true;
@@ -71,6 +83,7 @@ namespace MphRead.Entities
                     _spawnCooldown = (ushort)(_data.SpawnInterval * 2); // todo: FPS stuff
                     _spawnCount++;
                     Item.Owner = this;
+                    Item.ParentId = _data.ParentId;
                     if (_data.ItemType != ItemType.ArtifactKey)
                     {
                         _soundSource.Update(Position, rangeIndex: 7);

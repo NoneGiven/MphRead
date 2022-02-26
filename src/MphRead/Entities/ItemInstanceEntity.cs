@@ -26,6 +26,9 @@ namespace MphRead.Entities
         public ItemType ItemType { get; }
         private EffectEntry? _effectEntry = null;
         private bool _linkDone = false;
+        public int ParentId { get; set; } = -1;
+        private EntityBase? _parent = null;
+        private Vector3 _invPos;
 
         public int DespawnTimer { get; set; } = -1;
         public ItemSpawnEntity? Owner { get; set; }
@@ -80,12 +83,22 @@ namespace MphRead.Entities
 
         public override bool Process()
         {
-            if (!_linkDone)
+            if (!_linkDone && ParentId != -1)
             {
-                // todo: linked entity (position only)
+                if (_scene.TryGetEntity(ParentId, out EntityBase? parent))
+                {
+                    _parent = parent;
+                }
+                if (_parent != null)
+                {
+                    _invPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
+                }
                 _linkDone = true;
             }
-            // todo: inv pos
+            if (_linkDone && _parent != null)
+            {
+                Position = Matrix.Vec3MultMtx4(_invPos, _parent.CollisionTransform);
+            }
             _soundSource.Update(Position, rangeIndex: 7);
             // sfxtodo: if node ref is not active, set sound volume override to 0
             if (_effectEntry != null)
