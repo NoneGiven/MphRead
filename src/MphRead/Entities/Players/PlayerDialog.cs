@@ -383,6 +383,7 @@ namespace MphRead.Entities
             _dialogButtonInst.SetIndex(0, _scene);
             _dialogArrowInst.SetIndex(0, _scene);
             _dialogCrystalInst.SetIndex(0, _scene);
+            _scene.Layer5Info.BindingId = -1;
         }
 
         public void UpdateDialogs()
