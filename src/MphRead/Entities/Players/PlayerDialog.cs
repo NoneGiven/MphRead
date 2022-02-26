@@ -45,6 +45,8 @@ namespace MphRead.Entities
         private float _overlayTextOffsetY = 0;
         private int _prevOverlayCharacters = 0;
         private bool _showDialogConfirm = false;
+        private float _dialogConfirmTimer = 0;
+        private bool _lastDialogPageSeen = false;
         private int _dialogPageCount = 0;
         private int _dialogPageIndex = 0;
         private readonly int[] _dialogPageLengths = new int[10];
@@ -292,6 +294,8 @@ namespace MphRead.Entities
             _overlayTextOffsetY = 0;
             _prevOverlayCharacters = 0;
             _showDialogConfirm = false;
+            _dialogConfirmTimer = 0;
+            _lastDialogPageSeen = false;
             _dialogPageCount = 0;
             _dialogPageIndex = 0;
             for (int i = 0; i < _dialogPageLengths.Length; i++)
@@ -304,6 +308,8 @@ namespace MphRead.Entities
             }
             _silentVisorSwitch = false;
             _messageBoxInst.SetIndex(0, _scene);
+            _dialogButtonInst.SetIndex(0, _scene);
+            _dialogArrowInst.SetIndex(0, _scene);
         }
 
         public void UpdateDialogs()
@@ -396,9 +402,28 @@ namespace MphRead.Entities
                             _dialogPageIndex--;
                         }
                     }
+                    if (_dialogConfirmTimer > 0)
+                    {
+                        _dialogConfirmTimer -= _scene.FrameTime;
+                    }
+                    if (_dialogPageIndex == _dialogPageCount - 1)
+                    {
+                        _lastDialogPageSeen = true;
+                    }
+                    if (_dialogConfirmTimer <= 0 && _lastDialogPageSeen)
+                    {
+                        if (!_showDialogConfirm)
+                        {
+                            // sktodo: set + update animation
+                        }
+                        _showDialogConfirm = true;
+                    }
+                    if (!_showDialogConfirm && _dialogArrowInst.Timer <= 0)
+                    {
+                        // sktodo: set + update looping animation
+                    }
                 }
             }
-            // diagtodo: lots more stuff
         }
 
         private void DrawDialogs()
@@ -471,7 +496,7 @@ namespace MphRead.Entities
             if (DialogType == DialogType.Okay || DialogType == DialogType.Event || DialogType == DialogType.YesNo)
             {
                 // diagtodo: use this to draw scan stuff too
-                // diagtodo: move the dialog up one tile for scan, and some number of tiles for events w/ icon
+                // diagtodo: move the dialog up for events w/ icon
                 if (_messageBoxInst.Time - _messageBoxInst.Timer >= 16 / 30f)
                 {
                     int start = 0;
@@ -479,10 +504,7 @@ namespace MphRead.Entities
                     {
                         start += _dialogPageLengths[i - 1];
                     }
-                    if (start > 0 && _overlayBuffer2[start] == '\n')
-                    {
-                        start++;
-                    }
+                    start += _dialogPageIndex; // account for trailing newline on each previous page
                     var text = new ReadOnlySpan<char>(_overlayBuffer2, start, _dialogPageLengths[_dialogPageIndex]);
                     _textInst.SetPaletteData(_dialogPaletteData, _scene);
                     DrawText2D(128, 134, Align.Center, palette: 0, text);
@@ -493,7 +515,6 @@ namespace MphRead.Entities
                     _scene.Layer5Info.ScaleY = 1;
                     if (_dialogPageIndex != _dialogPageCount - 1)
                     {
-                        // sktodo: update animtion
                         _dialogArrowInst.PositionX = 169 / 256f;
                         _dialogArrowInst.PositionY = 173 / 192f;
                         _dialogArrowInst.FlipHorizontal = false;
@@ -506,12 +527,10 @@ namespace MphRead.Entities
                         _dialogArrowInst.FlipHorizontal = true;
                         _scene.DrawHudObject(_dialogArrowInst);
                     }
-                    _showDialogConfirm = true; // skdebug
                     if (_showDialogConfirm)
                     {
                         float posX = 112;
                         float posY = 174;
-                        // sktodo: update animtion
                         if (DialogType == DialogType.YesNo)
                         {
                             _dialogButtonInst.PositionX = (posX - _dialogButtonInst.Width) / 256f;

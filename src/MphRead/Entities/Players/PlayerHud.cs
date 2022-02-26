@@ -2727,7 +2727,7 @@ namespace MphRead.Entities
                         int index = ch - 32; // todo: starting character
                         lineWidth += Font.Widths[index];
                     }
-                    if (i < text.Length - 1 && lineWidth > maxWidth)
+                    if (lineWidth > maxWidth)
                     {
                         if (breakPos == 0 && maxWidth >= 8)
                         {

@@ -146,6 +146,16 @@ namespace MphRead.Entities.Enemies
             }
         }
 
+        protected override bool EnemyTakeDamage(EntityBase? source)
+        {
+            if (_health == 0 && _hitZone != null)
+            {
+                _hitZone.SetHealth(0);
+                _hitZone = null;
+            }
+            return false;
+        }
+
         // dropping, returning to home, roaming
         private void PickMoveTarget(CollisionVolume volume)
         {
