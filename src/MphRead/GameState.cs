@@ -18,8 +18,8 @@ namespace MphRead
 
     public static class GameState
     {
-        public static bool MenuPause { get; set; }
-        public static bool DialogPause { get; set; }
+        public static bool MenuPause { get; private set; }
+        public static bool DialogPause { get; private set; }
         public static int EscapeState { get; set; }
         public static MatchState MatchState { get; set; } = MatchState.InProgress;
         public static int ActivePlayers { get; set; } = 0;
@@ -71,6 +71,54 @@ namespace MphRead
         public static int[] PrimesKilled { get; } = new int[4]; // field268 in-game
 
         public static Action<Scene> ModeState { get; private set; } = ModeStateAdventure;
+        private static bool _pausingDialog = false;
+        private static bool _unpausingDialog = false;
+        private static bool _pausingMenu = false;
+        private static bool _unpausingMenu = false;
+
+        public static void PauseMenu()
+        {
+            _pausingMenu = true;
+        }
+
+        public static void UnpauseMenu()
+        {
+            _unpausingMenu = true;
+        }
+
+        public static void PauseDialog()
+        {
+            _pausingDialog = true;
+        }
+
+        public static void UnpauseDialog()
+        {
+            _unpausingDialog = true;
+        }
+
+        public static void ApplyPause()
+        {
+            if (_pausingDialog)
+            {
+                DialogPause = true;
+            }
+            if (_unpausingDialog)
+            {
+                DialogPause = false;
+            }
+            if (_pausingMenu)
+            {
+                MenuPause = true;
+            }
+            if (_unpausingMenu)
+            {
+                MenuPause = false;
+            }
+            _pausingDialog = false;
+            _unpausingDialog = false;
+            _pausingMenu = false;
+            _unpausingMenu = false;
+        }
 
         public static void Setup(Scene scene)
         {
@@ -945,6 +993,10 @@ namespace MphRead
             CameraSequence.Current = null;
             MenuPause = false;
             DialogPause = false;
+            _pausingDialog = false;
+            _unpausingDialog = false;
+            _pausingMenu = false;
+            _unpausingMenu = false;
             EscapeState = 0;
         }
     }

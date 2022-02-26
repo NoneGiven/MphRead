@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Hud;
 using MphRead.Text;
@@ -15,6 +16,20 @@ namespace MphRead.Entities
         YesNo = 5
     }
 
+    public enum ConfirmState
+    {
+        No = 0,
+        Yes = 1,
+        Okay = 2
+    }
+
+    public enum PromptType
+    {
+        Any = 0,
+        ShipHatch = 1,
+        GameOver = 2
+    }
+
     public partial class PlayerEntity
     {
         public DialogType DialogType { get; set; } = DialogType.None;
@@ -29,10 +44,13 @@ namespace MphRead.Entities
         private int _dialogPalette = 0;
         private float _overlayTextOffsetY = 0;
         private int _prevOverlayCharacters = 0;
-        private bool _showDialogClose = false;
+        private bool _showDialogConfirm = false;
         private int _dialogPageCount = 0;
         private int _dialogPageIndex = 0;
         private readonly int[] _dialogPageLengths = new int[10];
+        public ConfirmState DialogConfirmState { get; set; } = ConfirmState.Okay;
+        public PromptType DialogPromptType { get; set; } = PromptType.Any;
+        private bool _ignoreClick = false;
 
         public void ShowDialog(DialogType type, int messageId, int param1 = 0,
             int param2 = 0, string? value1 = null, string? value2 = null)
@@ -121,6 +139,7 @@ namespace MphRead.Entities
                 ch = _overlayBuffer2[index];
             }
             _dialogPageLengths[page] = length;
+            _dialogPageCount = page + 1;
         }
 
         private void ShowDialogOverlay(int messageId, int duration, bool warning)
@@ -186,7 +205,7 @@ namespace MphRead.Entities
             _dialogValue2 = null;
             if (unpause)
             {
-                GameState.DialogPause = false;
+                GameState.UnpauseDialog();
             }
             Array.Fill(_overlayBuffer1, '\0');
             int lineCount = WrapText(_overlayMessage1, 142, _overlayBuffer1);
@@ -230,7 +249,7 @@ namespace MphRead.Entities
                 _soundSource.StopFreeSfxScripts();
                 _soundSource.PlayFreeSfx(SfxId.TELEPATHIC_MESSAGE);
             }
-            GameState.DialogPause = true;
+            GameState.PauseDialog();
             _overlayMessage1 = entry.Value1;
             _overlayMessage2 = entry.Value2;
             // todo: avoid allocation
@@ -272,7 +291,7 @@ namespace MphRead.Entities
             _overlayMessage2 = null;
             _overlayTextOffsetY = 0;
             _prevOverlayCharacters = 0;
-            _showDialogClose = false;
+            _showDialogConfirm = false;
             _dialogPageCount = 0;
             _dialogPageIndex = 0;
             for (int i = 0; i < _dialogPageLengths.Length; i++)
@@ -309,6 +328,74 @@ namespace MphRead.Entities
                 {
                     int spacerIndex = (_messageBoxInst.CurrentFrame & 1) != 0 ? 0 : 1;
                     _messageSpacerInst.SetIndex(spacerIndex, _scene);
+                }
+            }
+            if (GameState.DialogPause)
+            {
+                bool closed = false;
+                if (_showDialogConfirm)
+                {
+                    if (DialogType == DialogType.YesNo)
+                    {
+                        if (CheckButtonPressed(DialogButton.Yes))
+                        {
+                            closed = true;
+                            DialogConfirmState = ConfirmState.Yes;
+                            if (DialogPromptType != PromptType.ShipHatch && DialogPromptType != PromptType.GameOver)
+                            {
+                                CloseDialogs();
+                            }
+                            GameState.UnpauseDialog();
+                        }
+                        else if (CheckButtonPressed(DialogButton.No))
+                        {
+                            closed = true;
+                            DialogConfirmState = ConfirmState.No;
+                            if (DialogPromptType != PromptType.GameOver)
+                            {
+                                CloseDialogs();
+                            }
+                            GameState.UnpauseDialog();
+                        }
+                    }
+                    else if (CheckButtonPressed(DialogButton.Okay))
+                    {
+                        closed = true;
+                        if (DialogType == DialogType.Event)
+                        {
+                            // mustodo: restart music, etc.
+                            RestartLongSfx();
+                        }
+                        else if (GameState.DialogPause)
+                        {
+                            RestartLongSfx();
+                        }
+                        _soundSource.PlayFreeSfx(SfxId.SCAN_OK);
+                        CloseDialogs();
+                        DialogConfirmState = ConfirmState.Okay;
+                        GameState.UnpauseDialog();
+                    }
+                }
+                if (closed)
+                {
+                    _ignoreClick = true;
+                }
+                else
+                {
+                    if (CheckButtonPressed(DialogButton.Right))
+                    {
+                        if (_dialogPageIndex != _dialogPageCount - 1)
+                        {
+                            _dialogPageIndex++;
+                        }
+                    }
+                    else if (CheckButtonPressed(DialogButton.Left))
+                    {
+                        if (_dialogPageIndex != 0)
+                        {
+                            _dialogPageIndex--;
+                        }
+                    }
                 }
             }
             // diagtodo: lots more stuff
@@ -392,17 +479,114 @@ namespace MphRead.Entities
                     {
                         start += _dialogPageLengths[i - 1];
                     }
+                    if (start > 0 && _overlayBuffer2[start] == '\n')
+                    {
+                        start++;
+                    }
                     var text = new ReadOnlySpan<char>(_overlayBuffer2, start, _dialogPageLengths[_dialogPageIndex]);
                     _textInst.SetPaletteData(_dialogPaletteData, _scene);
                     DrawText2D(128, 134, Align.Center, palette: 0, text);
                     _textInst.SetPaletteData(_textPaletteData, _scene);
-                    _scene.Layer5Info.BindingId = _dialogBindingIds[1]; // diagtodo: palette selection for scan
+                    _scene.Layer5Info.BindingId = _dialogBindingIds[4]; // diagtodo: palette selection for scan
                     _scene.Layer5Info.Alpha = 1;
                     _scene.Layer5Info.ScaleX = 1;
                     _scene.Layer5Info.ScaleY = 1;
+                    if (_dialogPageIndex != _dialogPageCount - 1)
+                    {
+                        // sktodo: update animtion
+                        _dialogArrowInst.PositionX = 169 / 256f;
+                        _dialogArrowInst.PositionY = 173 / 192f;
+                        _dialogArrowInst.FlipHorizontal = false;
+                        _scene.DrawHudObject(_dialogArrowInst);
+                    }
+                    if (_dialogPageIndex != 0)
+                    {
+                        _dialogArrowInst.PositionX = 55 / 256f;
+                        _dialogArrowInst.PositionY = 173 / 192f;
+                        _dialogArrowInst.FlipHorizontal = true;
+                        _scene.DrawHudObject(_dialogArrowInst);
+                    }
+                    _showDialogConfirm = true; // skdebug
+                    if (_showDialogConfirm)
+                    {
+                        float posX = 112;
+                        float posY = 174;
+                        // sktodo: update animtion
+                        if (DialogType == DialogType.YesNo)
+                        {
+                            _dialogButtonInst.PositionX = (posX - _dialogButtonInst.Width) / 256f;
+                            _dialogButtonInst.PositionY = posY / 192f;
+                            _scene.DrawHudObject(_dialogButtonInst);
+                            _dialogButtonInst.PositionX = (posX + _dialogButtonInst.Width) / 256f;
+                            _dialogButtonInst.PositionY = posY / 192f;
+                            _scene.DrawHudObject(_dialogButtonInst);
+                            text = Strings.GetHudMessage(105); // yes
+                            float textPosX = posX - _dialogButtonInst.Width / 2;
+                            DrawText2D(textPosX, posY + 5, Align.Center, palette: 0, text);
+                            text = Strings.GetHudMessage(106); // no
+                            textPosX = posX + _dialogButtonInst.Width * 1.5f + 1;
+                            DrawText2D(textPosX, posY + 5, Align.Center, palette: 0, text);
+                        }
+                        else
+                        {
+                            _dialogButtonInst.PositionX = posX / 256f;
+                            _dialogButtonInst.PositionY = posY / 192f;
+                            _scene.DrawHudObject(_dialogButtonInst);
+                            text = Strings.GetHudMessage(104); // ok
+                            DrawText2D(posX + _dialogButtonInst.Width / 2 + 1, posY + 5, Align.Center, palette: 0, text);
+                        }
+                    }
                 }
-                // sktodo: draw buttons
             }
         }
+
+        private bool CheckButtonPressed(DialogButton type)
+        {
+            if (Input.ClickX >= 0 && Input.ClickY >= 0)
+            {
+                float clickX = Input.ClickX / _scene.Size.X;
+                float clickY = Input.ClickY / _scene.Size.Y;
+                ButtonInfo info = _buttonInfo[(int)type];
+                if (clickX >= info.Left && clickX < info.Right && clickY >= info.Top && clickY < info.Bottom)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private readonly struct ButtonInfo
+        {
+            public readonly float Left;
+            public readonly float Right;
+            public readonly float Top;
+            public readonly float Bottom;
+
+            public ButtonInfo(float left, float right, float top, float bottom)
+            {
+                Left = left / 256f;
+                Right = right / 256f;
+                Top = top / 192f;
+                Bottom = bottom / 192f;
+            }
+        }
+
+        private enum DialogButton
+        {
+            Okay = 0,
+            Yes = 1,
+            No = 2,
+            Left = 3,
+            Right = 4
+        }
+
+        private static readonly IReadOnlyList<ButtonInfo> _buttonInfo = new ButtonInfo[5]
+        {
+            new ButtonInfo(left: 111, right: 145, top: 173, bottom: 191),
+            new ButtonInfo(left: 79, right: 113, top: 173, bottom: 191),
+            new ButtonInfo(left: 143, right: 177, top: 173, bottom: 191),
+            new ButtonInfo(left: 55, right: 88, top: 172, bottom: 190),
+            new ButtonInfo(left: 168, right: 201, top: 172, bottom: 190)
+        };
     }
 }

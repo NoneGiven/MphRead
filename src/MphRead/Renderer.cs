@@ -1047,7 +1047,10 @@ namespace MphRead
             _frameTime = 1 / 60f;
             if (ProcessFrame)
             {
-                _elapsedTime += _frameTime;
+                if (GameState.MatchState == MatchState.InProgress && !GameState.DialogPause)
+                {
+                    _elapsedTime += _frameTime;
+                }
                 PlayerEntity.ProcessInput(_keyboardState, _mouseState);
             }
             OnKeyHeld();
@@ -4561,11 +4564,13 @@ namespace MphRead
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            CursorGrabbed = Scene.CameraMode == CameraMode.Player && !Scene.FrameAdvance && !Scene.ShowCursor;
+            CursorGrabbed = Scene.CameraMode == CameraMode.Player
+                && !Scene.FrameAdvance && !Scene.ShowCursor && !GameState.DialogPause;
             if (!CursorGrabbed)
             {
                 CursorVisible = true;
             }
+            GameState.ApplyPause();
             Scene.OnUpdateFrame();
             if (!Scene.OnRenderFrame())
             {

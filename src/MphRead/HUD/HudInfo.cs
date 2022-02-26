@@ -1340,6 +1340,8 @@ namespace MphRead.Hud
         public static readonly string MessageBox = @"_archives\spSamus\hud_msgBox.bin";
         public static readonly string MessageSpacer = @"_archives\spSamus\message_spacer.bin";
         public static readonly string MapScan = @"_archives\spSamus\map_scan.bin";
+        public static readonly string DialogButton = @"_archives\spSamus\scan_ok.bin";
+        public static readonly string DialogArrow = @"_archives\spSamus\scan_arrow.bin";
 
         public static readonly IReadOnlyList<string> Hunters = new string[8]
         {

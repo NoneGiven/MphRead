@@ -1949,20 +1949,52 @@ namespace MphRead.Entities
                         }
                         else if (control.Type == ButtonType.Mouse)
                         {
+                            if (GameState.DialogPause)
+                            {
+                                continue;
+                            }
+                            if (control.MouseButton == MouseButton.Left && player._ignoreClick)
+                            {
+                                control.NeedsRepress = true;
+                            }
+                            bool down = mouseSnap.IsButtonDown(control.MouseButton);
                             bool prevDown = prevMouseSnap?.IsButtonDown(control.MouseButton) ?? false;
-                            control.IsDown = mouseSnap!.IsButtonDown(control.MouseButton);
-                            control.IsPressed = control.IsDown && !prevDown;
-                            control.IsReleased = !control.IsDown && prevDown;
+                            if (control.NeedsRepress && !player._ignoreClick)
+                            {
+                                if (!down || !prevDown)
+                                {
+                                    control.NeedsRepress = false;
+                                } 
+                            }
+                            if (!control.NeedsRepress)
+                            {
+                                control.IsDown = down;
+                                control.IsPressed = control.IsDown && !prevDown;
+                                control.IsReleased = !control.IsDown && prevDown;
+                            }
                         }
                         else
                         {
                             // todo?: deal with overflow or whatever
-                            control.IsDown = control.Type == ButtonType.ScrollUp && mouseSnap.Scroll.Y > (prevMouseSnap?.Scroll.Y ?? 0)
-                                || control.Type == ButtonType.ScrollDown && mouseSnap.Scroll.Y < (prevMouseSnap?.Scroll.Y ?? 0);
+                            float curScrollY = mouseSnap.Scroll.Y;
+                            float prevScrollY = prevMouseSnap?.Scroll.Y ?? 0;
+                            control.IsDown = control.Type == ButtonType.ScrollUp && curScrollY > prevScrollY
+                                || control.Type == ButtonType.ScrollDown && curScrollY < prevScrollY;
                             control.IsPressed = control.IsDown;
                             control.IsReleased = false;
                         }
                     }
+                }
+                player._ignoreClick = false;
+                if (mouseSnap.IsButtonDown(MouseButton.Left) && prevMouseSnap?.IsButtonDown(MouseButton.Left) != true)
+                {
+                    player.Input.ClickX = mouseSnap.X;
+                    player.Input.ClickY = mouseSnap.Y;
+                }
+                else
+                {
+                    player.Input.ClickX = -1;
+                    player.Input.ClickY = -1;
                 }
             }
         }
@@ -1979,6 +2011,8 @@ namespace MphRead.Entities
 
             public float MouseDeltaX => (MouseState?.X - PrevMouseState?.X) ?? 0;
             public float MouseDeltaY => (MouseState?.Y - PrevMouseState?.Y) ?? 0;
+            public float ClickX { get; set; } = -1;
+            public float ClickY { get; set; } = -1;
         }
     }
 
@@ -1996,10 +2030,10 @@ namespace MphRead.Entities
         public Keys Key { get; set; }
         public MouseButton MouseButton { get; set; }
 
-        // todo?: double tap
         public bool IsPressed { get; set; }
         public bool IsDown { get; set; }
         public bool IsReleased { get; set; }
+        public bool NeedsRepress { get; set; }
 
         public Keybind(Keys key)
         {

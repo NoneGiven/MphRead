@@ -48,6 +48,8 @@ namespace MphRead.Entities
 
         private HudObjectInstance _messageBoxInst = null!;
         private HudObjectInstance _messageSpacerInst = null!;
+        private HudObjectInstance _dialogButtonInst = null!;
+        private HudObjectInstance _dialogArrowInst = null!;
 
         private ModelInstance _filterModel = null!;
         private bool _showScoreboard = false;
@@ -353,6 +355,17 @@ namespace MphRead.Entities
                     (_dialogBindingIds[i], _) = HudInfo.CharMapToTexture(HudElements.MapScan,
                         startX: 0, startY: 0, tilesX: 32, tilesY: 24, _scene, paletteId: i);
                 }
+                HudObject dialogButton = HudInfo.GetHudObject(HudElements.DialogButton);
+                _dialogButtonInst = new HudObjectInstance(dialogButton.Width, dialogButton.Height);
+                _dialogButtonInst.SetCharacterData(dialogButton.CharacterData, _scene);
+                _dialogButtonInst.SetPaletteData(dialogButton.PaletteData, _scene);
+                _dialogButtonInst.SetAnimationFrames(dialogButton.AnimParams);
+                _dialogButtonInst.Enabled = true;
+                HudObject dialogArrow = HudInfo.GetHudObject(HudElements.DialogArrow);
+                _dialogArrowInst = new HudObjectInstance(dialogArrow.Width, dialogArrow.Height);
+                _dialogArrowInst.SetCharacterData(dialogArrow.CharacterData, _scene);
+                _dialogArrowInst.SetPaletteData(dialogArrow.PaletteData, _scene);
+                _dialogArrowInst.Enabled = true;
             }
         }
 
