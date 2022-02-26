@@ -1048,13 +1048,13 @@ namespace MphRead
             _frameTime = 1 / 60f;
             if (ProcessFrame)
             {
+                _globalElapsedTime += _frameTime;
                 if (GameState.MatchState == MatchState.InProgress && !GameState.DialogPause)
                 {
                     _elapsedTime += _frameTime;
                 }
                 PlayerEntity.ProcessInput(_keyboardState, _mouseState);
             }
-            _globalElapsedTime += _frameTime;
             OnKeyHeld();
             _singleParticleCount = 0;
             _decalItems.Clear();

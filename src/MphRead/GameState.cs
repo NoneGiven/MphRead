@@ -527,7 +527,7 @@ namespace MphRead
                         // yes to game over (continue)
                         PlayerEntity.Main.RestartLongSfx(); // skdebug
                         scene.SetFade(FadeType.FadeOutInWhite, length: 10 / 30f, overwrite: true); // skdebug
-                        PlayerEntity.Main.RespawnTimer = 10; // skdebug
+                        PlayerEntity.Main.RespawnTimer = 10 * 2; // skdebug
                         // todo: fade out and reload room
                         Sfx.Instance.PlaySample((int)SfxId.MENU_CONFIRM, source: null, loop: false,
                             noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
