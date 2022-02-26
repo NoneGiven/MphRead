@@ -227,7 +227,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.CameraSequence)
                 {
-                    //results.Add(new CamSeqEntity(((Entity<CameraSequenceEntityData>)entity).Data, scene));
+                    results.Add(new CamSeqEntity(((Entity<CameraSequenceEntityData>)entity).Data, scene));
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {

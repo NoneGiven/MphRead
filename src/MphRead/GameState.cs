@@ -369,9 +369,52 @@ namespace MphRead
             }
         }
 
+        private static bool _oublietteUnlocked = false; // skdebug
+        private static bool _hasAllOctoliths = false; // skdebug
+
         public static void ModeStateAdventure(Scene scene)
         {
-            // todo: update save, oubliette stuff, update checkpoints, record boss times
+            // todo: update save
+            if (!_oublietteUnlocked)
+            {
+                for (int i = 0; i < scene.MessageQueue.Count; i++)
+                {
+                    MessageInfo message = scene.MessageQueue[i];
+                    if (message.Message == Message.UnlockOubliette && message.ExecuteFrame == scene.FrameCount)
+                    {
+                        if (_hasAllOctoliths)
+                        {
+                            // todo: play movie and defer dialog
+                            _oublietteUnlocked = true;
+                            // GUNSHIP TRANSMISSION severe timefield disruption detected in the vicinity of the ALIMBIC CLUSTER.
+                            PlayerEntity.Main.ShowDialog(DialogType.Okay, messageId: 43);
+                        }
+                        else
+                        {
+                            for (int j = 0; j < scene.Entities.Count; j++)
+                            {
+                                EntityBase entity = scene.Entities[j];
+                                if (entity.Type == EntityType.CameraSequence)
+                                {
+                                    scene.SendMessage(Message.Activate, null!, entity, param1: 0, param2: 0);
+                                    _oublietteUnlocked = true; // skdebug
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            for (int i = 0; i < scene.MessageQueue.Count; i++)
+            {
+                MessageInfo message = scene.MessageQueue[i];
+                if (message.Message == Message.Checkpoint && message.ExecuteFrame == scene.FrameCount)
+                {
+                    // todo: update checkpoint
+                }
+            }
+            // todo: game timer/boss record stuff
         }
 
         private static void EndIfPointGoalReached()
@@ -507,7 +550,7 @@ namespace MphRead
         {
             PromptType prompt = PlayerEntity.Main.DialogPromptType;
             ConfirmState confirm = PlayerEntity.Main.DialogConfirmState;
-            if (prompt != PromptType.Any && confirm != ConfirmState.None)
+            if (prompt != PromptType.Any && confirm != ConfirmState.Okay)
             {
                 Sfx.Instance.StopFreeSfxScripts();
                 if (confirm == ConfirmState.Yes)
@@ -551,7 +594,7 @@ namespace MphRead
                     UnpauseDialog();
                 }
                 PlayerEntity.Main.DialogPromptType = PromptType.Any;
-                PlayerEntity.Main.DialogConfirmState = ConfirmState.None;
+                PlayerEntity.Main.DialogConfirmState = ConfirmState.Okay;
             }
             if (!DialogPause)
             {
@@ -1066,6 +1109,7 @@ namespace MphRead
             _pausingMenu = false;
             _unpausingMenu = false;
             EscapeState = 0;
+            _oublietteUnlocked = false;
         }
     }
 
