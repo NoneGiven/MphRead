@@ -365,6 +365,7 @@ namespace MphRead.Entities
                 _dialogArrowInst = new HudObjectInstance(dialogArrow.Width, dialogArrow.Height);
                 _dialogArrowInst.SetCharacterData(dialogArrow.CharacterData, _scene);
                 _dialogArrowInst.SetPaletteData(dialogArrow.PaletteData, _scene);
+                _dialogArrowInst.SetAnimationFrames(dialogArrow.AnimParams);
                 _dialogArrowInst.Enabled = true;
             }
         }

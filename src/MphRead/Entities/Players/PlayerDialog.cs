@@ -336,7 +336,7 @@ namespace MphRead.Entities
                     _messageSpacerInst.SetIndex(spacerIndex, _scene);
                 }
             }
-            if (GameState.DialogPause)
+            if (GameState.DialogPause && _messageBoxInst.Time - _messageBoxInst.Timer >= 16 / 30f)
             {
                 bool closed = false;
                 if (_showDialogConfirm)
@@ -414,14 +414,17 @@ namespace MphRead.Entities
                     {
                         if (!_showDialogConfirm)
                         {
-                            // sktodo: set + update animation
+                            _dialogButtonInst.SetAnimation(start: 0, target: 2, frames: 3, afterAnim: 2);
+                            _dialogArrowInst.SetIndex(0, _scene);
                         }
                         _showDialogConfirm = true;
                     }
                     if (!_showDialogConfirm && _dialogArrowInst.Timer <= 0)
                     {
-                        // sktodo: set + update looping animation
+                        _dialogArrowInst.SetAnimation(start: 0, target: 29, frames: 30, afterAnim: 29, loop: true);
                     }
+                    _dialogButtonInst.ProcessAnimation(_scene);
+                    _dialogArrowInst.ProcessAnimation(_scene);
                 }
             }
         }
