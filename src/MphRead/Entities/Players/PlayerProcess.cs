@@ -5,6 +5,7 @@ using MphRead.Entities.Enemies;
 using MphRead.Formats;
 using MphRead.Formats.Culling;
 using MphRead.Sound;
+using MphRead.Text;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -473,7 +474,7 @@ namespace MphRead.Entities
                     {
                         _health += 3;
                         _healthRecovery -= 3;
-                        // todo: update some SFX-related global
+                        _scrollSfxTimer = 2 / 30f;
                     }
                     if (_health > _healthMax)
                     {
@@ -497,7 +498,7 @@ namespace MphRead.Entities
                     {
                         if (_ammoRecovery[i] <= 3)
                         {
-                            // todo: stop SFX
+                            // the game stops the scroll SFX here, which is unnecessary
                             _ammo[i] += _ammoRecovery[i];
                             _ammoRecovery[i] = 0;
                         }
@@ -505,7 +506,7 @@ namespace MphRead.Entities
                         {
                             _ammo[i] += 3;
                             _ammoRecovery[i] -= 3;
-                            // todo: update some SFX-related global
+                            _scrollSfxTimer = 2 / 30f;
                         }
                         if (_ammo[i] > _ammoMax[i])
                         {
@@ -1026,7 +1027,7 @@ namespace MphRead.Entities
 
                 void PlaySfx(SfxId sfx)
                 {
-                    if (IsMainPlayer) // sfxtodo: and sound isn't paused for jingle
+                    if (IsMainPlayer && Sfx.TimedSfxMute == 0)
                     {
                         _soundSource.PlayFreeSfx(sfx);
                     }
@@ -1127,7 +1128,12 @@ namespace MphRead.Entities
                         _timeSincePickup = 0;
                         _healthMax += Values.EnergyTank;
                         _healthRecovery = _healthMax - _health;
-                        // todo: update story save, show dialog
+                        // todo: update story save
+                        if (IsMainPlayer)
+                        {
+                            // ENERGY TANK FOUND the POWER SUIT can now store 100 more UNITS of energy.
+                            ShowDialog(DialogType.Event, messageId: 46, param1: (int)EventType.EnergyTank);
+                        }
                     }
                     break;
                 case ItemType.MissileExpansion:
@@ -1137,7 +1143,12 @@ namespace MphRead.Entities
                         _timeSincePickup = 0;
                         _ammoMax[1] += 100;
                         _ammoRecovery[1] = _ammoMax[1] - _ammo[1];
-                        // todo: update story save, show dialog
+                        // todo: update story save
+                        if (IsMainPlayer)
+                        {
+                            // MISSILE EXPANSION FOUND your MISSILE capacity is increased by 10 UNITS.
+                            ShowDialog(DialogType.Event, messageId: 3, param1: (int)EventType.MissileTank);
+                        }
                     }
                     break;
                 case ItemType.UAExpansion:
@@ -1147,7 +1158,12 @@ namespace MphRead.Entities
                         _timeSincePickup = 0;
                         _ammoMax[0] += 300;
                         _ammoRecovery[0] = _ammoMax[0] - _ammo[0];
-                        // todo: update story save, show dialog
+                        // todo: update story save
+                        if (IsMainPlayer)
+                        {
+                            // UA EXPANSION FOUND your UNIVERSAL AMMO capacity is increased by 30 UNITS.
+                            ShowDialog(DialogType.Event, messageId: 46, param1: (int)EventType.UATank);
+                        }
                     }
                     break;
                 case ItemType.ArtifactKey:
@@ -1202,7 +1218,21 @@ namespace MphRead.Entities
             {
                 return;
             }
-            // todo: update story save
+            if (!_scene.Multiplayer)
+            {
+                // todo: only show dialog if we didn't already have the weapon unlock
+                // todo: update story save
+                int weaponId = (int)weapon;
+                string value1 = Metadata.WeaponNames[weaponId];
+                string value2 = "";
+                int messageId = Metadata.WeaponMessageIds[weaponId];
+                if (messageId != 0)
+                {
+                    value2 = Strings.GetHudMessage(messageId);
+                }
+                // &tab0 FOUND you've obtained the &tab0. &tab1
+                ShowDialog(DialogType.Event, messageId: 5, param1: weaponId, value1: value1, value2: value2);
+            }
             WeaponInfo info = Weapons.Current[(int)weapon];
             if (_ammo[info.AmmoType] < 60)
             {

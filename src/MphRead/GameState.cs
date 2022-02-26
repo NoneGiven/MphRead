@@ -508,7 +508,21 @@ namespace MphRead
             {
                 if (PlayerEntity.Main.Health > 0)
                 {
-                    // diagtodo: ship hatch, escape start, escape cancel
+                    for (int i = 0; i < scene.MessageQueue.Count; i++)
+                    {
+                        MessageInfo message = scene.MessageQueue[i];
+                        if (message.Message == Message.ShipHatch && message.ExecuteFrame == scene.FrameCount)
+                        {
+                            PlayerEntity.Main.DialogPromptType = PromptType.ShipHatch;
+                            // todo: set checkpoint and update story save
+                            // HUNTER GUNSHIP enter your ship?
+                            PlayerEntity.Main.ShowDialog(DialogType.YesNo, messageId: 1);
+                            Sfx.Instance.StopFreeSfxScripts();
+                            Sfx.Instance.PlayScript((int)SfxId.RETURN_TO_SHIP_SCR, source: null,
+                                noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                        }
+                    }
+                    // diagtodo: escape start, escape cancel
                     for (int i = 0; i < scene.MessageQueue.Count; i++)
                     {
                         MessageInfo message = scene.MessageQueue[i];
@@ -583,7 +597,7 @@ namespace MphRead
                 }
                 else
                 {
-                    // diagtodo: show continue/quit prompt
+                    // sktodo: show continue/quit prompt
                 }
             }
         }

@@ -1342,6 +1342,9 @@ namespace MphRead.Hud
         public static readonly string MapScan = @"_archives\spSamus\map_scan.bin";
         public static readonly string DialogButton = @"_archives\spSamus\scan_ok.bin";
         public static readonly string DialogArrow = @"_archives\spSamus\scan_arrow.bin";
+        public static readonly string DialogCrystal = @"_archives\spSamus\message_crystalpickup.bin";
+        public static readonly string DialogPickup = @"_archives\spSamus\message_pickups.bin";
+        public static readonly string DialogFrame = @"_archives\spSamus\message_pickupframe.bin";
 
         public static readonly IReadOnlyList<string> Hunters = new string[8]
         {

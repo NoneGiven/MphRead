@@ -108,6 +108,16 @@ namespace MphRead.Sound
             Sfx.Instance.StopSoundFromSource(this, id);
         }
 
+        public void StopFreeSfx(SfxId id)
+        {
+            StopFreeSfx((int)id);
+        }
+
+        public void StopFreeSfx(int id)
+        {
+            Sfx.Instance.StopSoundById(id);
+        }
+
         public void StopSfxByHandle(int handle)
         {
             Sfx.Instance.StopSoundByHandle(handle);

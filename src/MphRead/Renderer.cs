@@ -1091,7 +1091,10 @@ namespace MphRead
                     ProcessMessageQueue();
                     _liveFrames++;
                 }
-                _frameCount++;
+                if (!GameState.DialogPause)
+                {
+                    _frameCount++;
+                }
                 GameState.UpdateTime(this);
             }
             _frameAdvanceLastFrame = _frameAdvanceOn;

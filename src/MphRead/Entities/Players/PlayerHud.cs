@@ -50,6 +50,9 @@ namespace MphRead.Entities
         private HudObjectInstance _messageSpacerInst = null!;
         private HudObjectInstance _dialogButtonInst = null!;
         private HudObjectInstance _dialogArrowInst = null!;
+        private HudObjectInstance _dialogCrystalInst = null!;
+        private HudObjectInstance _dialogPickupInst = null!;
+        private HudObjectInstance _dialogFrameInst = null!;
 
         private ModelInstance _filterModel = null!;
         private bool _showScoreboard = false;
@@ -367,6 +370,22 @@ namespace MphRead.Entities
                 _dialogArrowInst.SetPaletteData(dialogArrow.PaletteData, _scene);
                 _dialogArrowInst.SetAnimationFrames(dialogArrow.AnimParams);
                 _dialogArrowInst.Enabled = true;
+                HudObject dialogCrystal = HudInfo.GetHudObject(HudElements.DialogCrystal);
+                _dialogCrystalInst = new HudObjectInstance(dialogCrystal.Width, dialogCrystal.Height);
+                _dialogCrystalInst.SetCharacterData(dialogCrystal.CharacterData, _scene);
+                _dialogCrystalInst.SetPaletteData(dialogCrystal.PaletteData, _scene);
+                _dialogCrystalInst.SetAnimationFrames(dialogCrystal.AnimParams);
+                _dialogCrystalInst.Enabled = true;
+                HudObject dialogPickup = HudInfo.GetHudObject(HudElements.DialogPickup);
+                _dialogPickupInst = new HudObjectInstance(dialogPickup.Width, dialogPickup.Height);
+                _dialogPickupInst.SetCharacterData(dialogPickup.CharacterData, _scene);
+                _dialogPickupInst.SetPaletteData(dialogPickup.PaletteData, _scene);
+                _dialogPickupInst.Enabled = true;
+                HudObject dialogFrame = HudInfo.GetHudObject(HudElements.DialogFrame);
+                _dialogFrameInst = new HudObjectInstance(dialogFrame.Width, dialogFrame.Height);
+                _dialogFrameInst.SetCharacterData(dialogFrame.CharacterData, _scene);
+                _dialogFrameInst.SetPaletteData(dialogFrame.PaletteData, _scene);
+                _dialogFrameInst.Enabled = true;
             }
         }
 
@@ -957,7 +976,8 @@ namespace MphRead.Entities
                         DrawDoubleDamageHud();
                         DrawCloakHud();
                     }
-                    if (!GameState.DialogPause || Hunter == Hunter.Samus || Hunter == Hunter.Guardian)
+                    if (!GameState.DialogPause || DialogType != DialogType.Event
+                        && (Hunter == Hunter.Samus || Hunter == Hunter.Guardian))
                     {
                         DrawHealthbars();
                     }

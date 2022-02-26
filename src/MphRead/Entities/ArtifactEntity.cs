@@ -66,6 +66,11 @@ namespace MphRead.Entities
             42, 40, 41, 42, 40, 41, 42, 40, 41, 42, 40, 41, 42, 40, 41, 42
         };
 
+        private readonly IReadOnlyList<int> _octolithMessageIds = new int[8]
+        {
+            14, 31, 32, 33, 34, 35, 36, 51
+        };
+
         public override bool Process()
         {
             if (_parent != null)
@@ -151,18 +156,31 @@ namespace MphRead.Entities
                     // todo: update story save
                     if (Id == -1)
                     {
-                        // todo: show reclaimed octolith dialog
+                        // OCTOLITH RECLAIMED you recovered a stolen OCTOLITH!
+                        PlayerEntity.Main.ShowDialog(DialogType.Event, messageId: 54, param1: (int)EventType.Octolith);
                     }
                     else
                     {
-                        // todo: start movie, update global state and story save
+                        // todo: start movie, update global state and story save, defer the dialog
+                        // OCTOLITH ACQUIRED you obtained an OCTOLITH!
+                        PlayerEntity.Main.ShowDialog(DialogType.Event, messageId: 7, param1: (int)EventType.Octolith);
+                        int messageId = _octolithMessageIds[0]; // todo: get index from story save
+                        _scene.SendMessage(Message.ShowPrompt, this, null, param1: messageId, param2: 0, delay: 1);
                     }
                 }
                 else
                 {
-                    // sfxtodo: play correct SFX
-                    // todo: update story save, show dialog (may send dialog message)
-                    _soundSource.PlayFreeSfx(SfxId.ARTIFACT1); // skdebug
+                    int collected = 1;
+                    // todo: update story save
+                    _soundSource.PlayFreeSfx(SfxId.ARTIFACT1); // sfxtodo: play correct SFX
+                    // ARTIFACT DISCOVERED you retrieved an ALIMBIC ARTIFACT!
+                    PlayerEntity.Main.ShowDialog(DialogType.Event, messageId: 6, param1: (int)EventType.Artifact);
+                    if (collected > 2)
+                    {
+                        // PORTAL ACTIVATED long-range thermomagnetic-resonance scanners indicate remote
+                        // and inaccessible chambers. use the PORTAL to access the inaccessible.
+                        _scene.SendMessage(Message.ShowPrompt, this, null, param1: 13, param2: 0, delay: 1);
+                    }
                 }
                 Active = false;
                 // todo: room state

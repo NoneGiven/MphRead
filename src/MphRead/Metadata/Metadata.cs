@@ -1095,8 +1095,13 @@ namespace MphRead
 
         public static readonly IReadOnlyList<string> WeaponNames = new List<string>()
         {
-            "Power Beam", "Volt Driver", "Missiles", "Battlehammer", "Imperialist", "Judicator", "Magmaul", "Shock Coil", "Omega Cannon",
-            "Platform", "Enemy"
+            "Power Beam", "Volt Driver", "Missiles", "Battlehammer", "Imperialist",
+            "Judicator", "Magmaul", "Shock Coil", "Omega Cannon", "Platform", "Enemy"
+        };
+
+        public static readonly IReadOnlyList<int> WeaponMessageIds = new List<int>()
+        {
+            0, 109, 0, 110, 111, 112, 113, 114, 115, 0, 0
         };
 
         public static Vector3 GetEventColor(Message eventId)
@@ -1125,7 +1130,7 @@ namespace MphRead
             {
                 return new Vector3(0f, 0f, 0.858f);
             }
-            if (eventId == Message.SavePoint) // light yellow
+            if (eventId == Message.ShipHatch) // light yellow
             {
                 return new Vector3(1f, 1f, 0.6f);
             }

@@ -30,6 +30,22 @@ namespace MphRead.Entities
         GameOver = 2
     }
 
+    public enum EventType
+    {
+        EnergyTank = 0,
+        VoltDriver = 1,
+        MissileTank = 2,
+        Battlehammer = 3,
+        Imperialist = 4,
+        Judicator = 5,
+        Magmaul = 6,
+        ShockCoil = 7,
+        OmegaCannon = 8,
+        Artifact = 15,
+        Octolith = 16,
+        UATank = 17
+    }
+
     public partial class PlayerEntity
     {
         public DialogType DialogType { get; set; } = DialogType.None;
@@ -52,6 +68,7 @@ namespace MphRead.Entities
         private readonly int[] _dialogPageLengths = new int[10];
         public ConfirmState DialogConfirmState { get; set; } = ConfirmState.Okay;
         public PromptType DialogPromptType { get; set; } = PromptType.Any;
+        private EventType _eventType = EventType.EnergyTank;
         private bool _ignoreClick = false;
 
         public void ShowDialog(DialogType type, int messageId, int param1 = 0,
@@ -96,7 +113,7 @@ namespace MphRead.Entities
             {
                 if (CheckPrompt())
                 {
-                    ShowDialogEvent(messageId, eventType: param1);
+                    ShowDialogEvent(messageId, eventType: (EventType)param1);
                 }
             }
             else
@@ -254,6 +271,33 @@ namespace MphRead.Entities
             GameState.PauseDialog();
             _overlayMessage1 = entry.Value1;
             _overlayMessage2 = entry.Value2;
+            Array.Fill(_overlayBuffer1, '\0');
+            Array.Fill(_overlayBuffer2, '\0');
+            int lineCount = WrapText(_overlayMessage1, 142, _overlayBuffer1);
+            _overlayTextOffsetY = lineCount * 5;
+            BufferDialogPages();
+            _dialogCharTimer = 0;
+            _dialogPalette = 0;
+            _messageBoxInst.SetPalette(_dialogPalette, _scene);
+            _messageSpacerInst.SetPalette(_dialogPalette, _scene);
+            _messageBoxInst.SetAnimation(start: 0, target: 65, frames: 66, afterAnim: 65);
+        }
+
+        private void ShowDialogEvent(int messageId, EventType eventType)
+        {
+            StringTableEntry? entry = Strings.GetEntry('M', messageId, StringTables.GameMessages);
+            if (entry == null)
+            {
+                CloseDialogs();
+                return;
+            }
+            StopLongSfx();
+            bool discard = false;
+            EndWeaponMenu(ref discard);
+            GameState.PauseDialog();
+            _eventType = eventType;
+            _overlayMessage1 = entry.Value1;
+            _overlayMessage2 = entry.Value2;
             // todo: avoid allocation
             if (_dialogValue1 != null)
             {
@@ -275,11 +319,39 @@ namespace MphRead.Entities
             _messageBoxInst.SetPalette(_dialogPalette, _scene);
             _messageSpacerInst.SetPalette(_dialogPalette, _scene);
             _messageBoxInst.SetAnimation(start: 0, target: 65, frames: 66, afterAnim: 65);
-        }
-
-        private void ShowDialogEvent(int messageId, int eventType)
-        {
-
+            if (_eventType == EventType.EnergyTank || _eventType == EventType.MissileTank || _eventType == EventType.UATank)
+            {
+                _soundSource.PlayFreeSfx(SfxId.GET_ITEM);
+                _dialogConfirmTimer = 60 / 30f;
+                // todo?: it's lame that UA tank is the only pickup without a frame/icon
+                if (_eventType != EventType.UATank)
+                {
+                    _dialogPickupInst.SetIndex((int)_eventType, _scene);
+                }
+            }
+            else if (_eventType >= EventType.VoltDriver && _eventType <= EventType.ShockCoil)
+            {
+                // mustodo: stop music, play seq
+                _soundSource.PlayFreeSfx(SfxId.WEAPON_POWER_UP);
+                _dialogConfirmTimer = 150 / 30f;
+                _dialogPickupInst.SetIndex((int)_eventType, _scene);
+            }
+            else if (_eventType == EventType.OmegaCannon || _eventType == EventType.Artifact)
+            {
+                _soundSource.PlayFreeSfx(SfxId.GET_ITEM2);
+                _dialogConfirmTimer = 60 / 30f;
+                if (_eventType == EventType.OmegaCannon)
+                {
+                    // the game doesn't do this because it shares the Omega Cannon event type with artifacts
+                    _dialogPickupInst.SetIndex((int)_eventType, _scene);
+                }
+            }
+            else if (_eventType == EventType.Octolith)
+            {
+                // mustodo: stop music, play seq
+                _dialogCrystalInst.SetAnimation(start: 0, target: 35, frames: 36, loop: true);
+                _dialogConfirmTimer = 150 / 30f;
+            }
         }
 
         public void CloseDialogs()
@@ -310,6 +382,7 @@ namespace MphRead.Entities
             _messageBoxInst.SetIndex(0, _scene);
             _dialogButtonInst.SetIndex(0, _scene);
             _dialogArrowInst.SetIndex(0, _scene);
+            _dialogCrystalInst.SetIndex(0, _scene);
         }
 
         public void UpdateDialogs()
@@ -349,8 +422,9 @@ namespace MphRead.Entities
                             DialogConfirmState = ConfirmState.Yes;
                             if (DialogPromptType != PromptType.ShipHatch && DialogPromptType != PromptType.GameOver)
                             {
-                                CloseDialogs();
+                                // CloseDialogs();
                             }
+                            CloseDialogs(); // skdebug
                             GameState.UnpauseDialog();
                         }
                         else if (CheckButtonPressed(DialogButton.No))
@@ -359,8 +433,9 @@ namespace MphRead.Entities
                             DialogConfirmState = ConfirmState.No;
                             if (DialogPromptType != PromptType.GameOver)
                             {
-                                CloseDialogs();
+                                //CloseDialogs();
                             }
+                            CloseDialogs(); // skdebug
                             GameState.UnpauseDialog();
                         }
                     }
@@ -426,15 +501,20 @@ namespace MphRead.Entities
                     _dialogButtonInst.ProcessAnimation(_scene);
                     _dialogArrowInst.ProcessAnimation(_scene);
                 }
+                if (DialogType == DialogType.Event && _messageBoxInst.Timer <= 0)
+                {
+                    _dialogCrystalInst.ProcessAnimation(_scene);
+                }
             }
         }
 
         private void DrawDialogs()
         {
+            float baseY = DialogType == DialogType.Event ? 27 : 47;
             if (!ScanVisor && _overlayMessage1 != null)
             {
                 float posX = 64 / 256f;
-                float posY = 47 / 192f;
+                float posY = baseY / 192f;
                 float width = _messageBoxInst.Width / 256f;
                 float height = _messageBoxInst.Height / 192f;
                 float spacerOffset = 0;
@@ -475,16 +555,12 @@ namespace MphRead.Entities
                 _messageBoxInst.FlipHorizontal = true;
                 _messageBoxInst.FlipVertical = true;
                 _scene.DrawHudObject(_messageBoxInst, mode: 1);
-                if (DialogType == DialogType.Event && _messageBoxInst.Timer <= 0)
-                {
-                    // diagtodo: draw frame and icon
-                }
                 if (_messageBoxInst.Time - _messageBoxInst.Timer >= 16 / 30f)
                 {
                     _textSpacingY = 10;
                     _textInst.SetPaletteData(_dialogPaletteData, _scene);
                     int characters = (int)(_dialogCharTimer / (1 / 30f));
-                    DrawText2D(128, 81 - _overlayTextOffsetY, Align.PadCenter, _dialogPalette,
+                    DrawText2D(128, baseY + 34 - _overlayTextOffsetY, Align.PadCenter, _dialogPalette,
                         _overlayBuffer1, maxLength: characters);
                     _textInst.SetPaletteData(_textPaletteData, _scene);
                     _textSpacingY = 0;
@@ -496,67 +572,89 @@ namespace MphRead.Entities
                     }
                 }
             }
-            if (DialogType == DialogType.Okay || DialogType == DialogType.Event || DialogType == DialogType.YesNo)
+            if (DialogType == DialogType.Event && _messageBoxInst.Timer <= 0
+                && _messageBoxInst.Time - _messageBoxInst.Timer >= 16 / 30f)
             {
-                // diagtodo: use this to draw scan stuff too
-                // diagtodo: move the dialog up for events w/ icon
-                if (_messageBoxInst.Time - _messageBoxInst.Timer >= 16 / 30f)
+                if (_eventType <= EventType.OmegaCannon || _eventType == EventType.Octolith || _eventType == EventType.UATank)
                 {
-                    int start = 0;
-                    for (int i = 1; i <= _dialogPageIndex; i++)
+                    float posX = 64 + _messageBoxInst.Width - _dialogFrameInst.Width / 2;
+                    float posY = baseY + 2 * _messageBoxInst.Height - 12;
+                    _dialogFrameInst.Alpha = 0.5f;
+                    _dialogFrameInst.PositionX = posX / 256f;
+                    _dialogFrameInst.PositionY = posY / 192f;
+                    _scene.DrawHudObject(_dialogFrameInst);
+                    if (_eventType == EventType.Octolith)
                     {
-                        start += _dialogPageLengths[i - 1];
+                        _dialogCrystalInst.PositionX = (posX + 16) / 256f;
+                        _dialogCrystalInst.PositionY = posY / 192f;
+                        _scene.DrawHudObject(_dialogCrystalInst);
                     }
-                    start += _dialogPageIndex; // account for trailing newline on each previous page
-                    var text = new ReadOnlySpan<char>(_overlayBuffer2, start, _dialogPageLengths[_dialogPageIndex]);
-                    _textInst.SetPaletteData(_dialogPaletteData, _scene);
-                    DrawText2D(128, 134, Align.Center, palette: 0, text);
-                    _textInst.SetPaletteData(_textPaletteData, _scene);
-                    _scene.Layer5Info.BindingId = _dialogBindingIds[4]; // diagtodo: palette selection for scan
-                    _scene.Layer5Info.Alpha = 1;
-                    _scene.Layer5Info.ScaleX = 1;
-                    _scene.Layer5Info.ScaleY = 1;
-                    if (_dialogPageIndex != _dialogPageCount - 1)
+                    else if (_eventType != EventType.UATank)
                     {
-                        _dialogArrowInst.PositionX = 169 / 256f;
-                        _dialogArrowInst.PositionY = 173 / 192f;
-                        _dialogArrowInst.FlipHorizontal = false;
-                        _scene.DrawHudObject(_dialogArrowInst);
+                        _dialogPickupInst.PositionX = (posX + 16) / 256f;
+                        _dialogPickupInst.PositionY = (posY + 16) / 192f;
+                        _scene.DrawHudObject(_dialogPickupInst);
                     }
-                    if (_dialogPageIndex != 0)
+                }
+            }
+            // sktodo: use this to draw scan stuff too
+            if ((DialogType == DialogType.Okay || DialogType == DialogType.Event || DialogType == DialogType.YesNo)
+                && _messageBoxInst.Time - _messageBoxInst.Timer >= 16 / 30f)
+            {
+                int start = 0;
+                for (int i = 1; i <= _dialogPageIndex; i++)
+                {
+                    start += _dialogPageLengths[i - 1];
+                }
+                start += _dialogPageIndex; // account for trailing newline on each previous page
+                var text = new ReadOnlySpan<char>(_overlayBuffer2, start, _dialogPageLengths[_dialogPageIndex]);
+                _textInst.SetPaletteData(_dialogPaletteData, _scene);
+                DrawText2D(128, 134, Align.Center, palette: 0, text);
+                _textInst.SetPaletteData(_textPaletteData, _scene);
+                _scene.Layer5Info.BindingId = _dialogBindingIds[4]; // diagtodo: palette selection for scan
+                _scene.Layer5Info.Alpha = 1;
+                _scene.Layer5Info.ScaleX = 1;
+                _scene.Layer5Info.ScaleY = 1;
+                if (_dialogPageIndex != _dialogPageCount - 1)
+                {
+                    _dialogArrowInst.PositionX = 169 / 256f;
+                    _dialogArrowInst.PositionY = 173 / 192f;
+                    _dialogArrowInst.FlipHorizontal = false;
+                    _scene.DrawHudObject(_dialogArrowInst);
+                }
+                if (_dialogPageIndex != 0)
+                {
+                    _dialogArrowInst.PositionX = 55 / 256f;
+                    _dialogArrowInst.PositionY = 173 / 192f;
+                    _dialogArrowInst.FlipHorizontal = true;
+                    _scene.DrawHudObject(_dialogArrowInst);
+                }
+                if (_showDialogConfirm)
+                {
+                    float posX = 112;
+                    float posY = 174;
+                    if (DialogType == DialogType.YesNo)
                     {
-                        _dialogArrowInst.PositionX = 55 / 256f;
-                        _dialogArrowInst.PositionY = 173 / 192f;
-                        _dialogArrowInst.FlipHorizontal = true;
-                        _scene.DrawHudObject(_dialogArrowInst);
+                        _dialogButtonInst.PositionX = (posX - _dialogButtonInst.Width) / 256f;
+                        _dialogButtonInst.PositionY = posY / 192f;
+                        _scene.DrawHudObject(_dialogButtonInst);
+                        _dialogButtonInst.PositionX = (posX + _dialogButtonInst.Width) / 256f;
+                        _dialogButtonInst.PositionY = posY / 192f;
+                        _scene.DrawHudObject(_dialogButtonInst);
+                        text = Strings.GetHudMessage(105); // yes
+                        float textPosX = posX - _dialogButtonInst.Width / 2;
+                        DrawText2D(textPosX, posY + 5, Align.Center, palette: 0, text);
+                        text = Strings.GetHudMessage(106); // no
+                        textPosX = posX + _dialogButtonInst.Width * 1.5f + 1;
+                        DrawText2D(textPosX, posY + 5, Align.Center, palette: 0, text);
                     }
-                    if (_showDialogConfirm)
+                    else
                     {
-                        float posX = 112;
-                        float posY = 174;
-                        if (DialogType == DialogType.YesNo)
-                        {
-                            _dialogButtonInst.PositionX = (posX - _dialogButtonInst.Width) / 256f;
-                            _dialogButtonInst.PositionY = posY / 192f;
-                            _scene.DrawHudObject(_dialogButtonInst);
-                            _dialogButtonInst.PositionX = (posX + _dialogButtonInst.Width) / 256f;
-                            _dialogButtonInst.PositionY = posY / 192f;
-                            _scene.DrawHudObject(_dialogButtonInst);
-                            text = Strings.GetHudMessage(105); // yes
-                            float textPosX = posX - _dialogButtonInst.Width / 2;
-                            DrawText2D(textPosX, posY + 5, Align.Center, palette: 0, text);
-                            text = Strings.GetHudMessage(106); // no
-                            textPosX = posX + _dialogButtonInst.Width * 1.5f + 1;
-                            DrawText2D(textPosX, posY + 5, Align.Center, palette: 0, text);
-                        }
-                        else
-                        {
-                            _dialogButtonInst.PositionX = posX / 256f;
-                            _dialogButtonInst.PositionY = posY / 192f;
-                            _scene.DrawHudObject(_dialogButtonInst);
-                            text = Strings.GetHudMessage(104); // ok
-                            DrawText2D(posX + _dialogButtonInst.Width / 2 + 1, posY + 5, Align.Center, palette: 0, text);
-                        }
+                        _dialogButtonInst.PositionX = posX / 256f;
+                        _dialogButtonInst.PositionY = posY / 192f;
+                        _scene.DrawHudObject(_dialogButtonInst);
+                        text = Strings.GetHudMessage(104); // ok
+                        DrawText2D(posX + _dialogButtonInst.Width / 2 + 1, posY + 5, Align.Center, palette: 0, text);
                     }
                 }
             }

@@ -548,6 +548,8 @@ namespace MphRead.Entities
             }
         }
 
+        private float _scrollSfxTimer = 0;
+
         public void UpdateTimedSounds()
         {
             _timedSfxSource.Update(Position, rangeIndex: -1);
@@ -654,7 +656,18 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // sfxtodo: play/stop scroll SFX
+            if (_scrollSfxTimer > 0)
+            {
+                if (_scrollSfxTimer < 2 / 30f)
+                {
+                    _soundSource.StopFreeSfx(SfxId.FAST_SCROLL_UP_LOOP);
+                }
+                else if (_soundSource.CountPlayingSfx(SfxId.FAST_SCROLL_UP_LOOP) == 0)
+                {
+                    _soundSource.PlayFreeSfx(SfxId.FAST_SCROLL_UP_LOOP);
+                }
+                _scrollSfxTimer -= _scene.FrameTime;
+            }
         }
     }
 }
