@@ -379,7 +379,7 @@ namespace MphRead.Entities
         private ushort _timeSincePickup = 0;
         private ushort _timeSinceHeal = 0;
         private ushort _respawnTimer = 0;
-        public ushort RespawnTimer => _respawnTimer;
+        public ushort RespawnTimer { get => _respawnTimer; set => _respawnTimer = value; }
         private float _deathCountdown = 0;
         private bool _deathProcessed = false;
         public float DeathCountdown => _deathCountdown;
@@ -1737,7 +1737,7 @@ namespace MphRead.Entities
                     {
                         _deathCountdown = 150 / 30f;
                         _deathProcessed = false;
-                        //_respawnTimer = UInt16.MaxValue; // skdebug
+                        _respawnTimer = UInt16.MaxValue;
                         CameraInfo.SetShake(0.25f);
                         // todo: update story save, lost octolith, etc.
                     }

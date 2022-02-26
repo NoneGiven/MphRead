@@ -18,6 +18,7 @@ namespace MphRead.Entities
 
     public enum ConfirmState
     {
+        None = -1,
         No = 0,
         Yes = 1,
         Okay = 2
@@ -66,7 +67,7 @@ namespace MphRead.Entities
         private int _dialogPageCount = 0;
         private int _dialogPageIndex = 0;
         private readonly int[] _dialogPageLengths = new int[10];
-        public ConfirmState DialogConfirmState { get; set; } = ConfirmState.Okay;
+        public ConfirmState DialogConfirmState { get; set; } = ConfirmState.None;
         public PromptType DialogPromptType { get; set; } = PromptType.Any;
         private EventType _eventType = EventType.EnergyTank;
         private bool _ignoreClick = false;
@@ -420,12 +421,11 @@ namespace MphRead.Entities
                         {
                             closed = true;
                             DialogConfirmState = ConfirmState.Yes;
-                            if (DialogPromptType != PromptType.ShipHatch && DialogPromptType != PromptType.GameOver)
+                            // skdebug - also don't close if continuing from game over
+                            if (DialogPromptType != PromptType.ShipHatch)
                             {
-                                // CloseDialogs();
+                                CloseDialogs();
                             }
-                            CloseDialogs(); // skdebug
-                            GameState.UnpauseDialog();
                         }
                         else if (CheckButtonPressed(DialogButton.No))
                         {
@@ -433,10 +433,8 @@ namespace MphRead.Entities
                             DialogConfirmState = ConfirmState.No;
                             if (DialogPromptType != PromptType.GameOver)
                             {
-                                //CloseDialogs();
+                                CloseDialogs();
                             }
-                            CloseDialogs(); // skdebug
-                            GameState.UnpauseDialog();
                         }
                     }
                     else if (CheckButtonPressed(DialogButton.Okay))
@@ -454,7 +452,6 @@ namespace MphRead.Entities
                         _soundSource.PlayFreeSfx(SfxId.SCAN_OK);
                         CloseDialogs();
                         DialogConfirmState = ConfirmState.Okay;
-                        GameState.UnpauseDialog();
                     }
                 }
                 if (closed)

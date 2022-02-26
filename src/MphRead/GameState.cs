@@ -501,9 +501,58 @@ namespace MphRead
 
         private static bool _shownOctolithDialog = false;
         private static bool _whiteoutStarted = false;
+        private static bool _gameOverShown = false;
 
         public static void UpdateFrame(Scene scene)
         {
+            PromptType prompt = PlayerEntity.Main.DialogPromptType;
+            ConfirmState confirm = PlayerEntity.Main.DialogConfirmState;
+            if (prompt != PromptType.Any && confirm != ConfirmState.None)
+            {
+                Sfx.Instance.StopFreeSfxScripts();
+                if (confirm == ConfirmState.Yes)
+                {
+                    if (prompt == PromptType.ShipHatch)
+                    {
+                        // yes to ship hatch (enter)
+                        // todo: update story save
+                        scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, exitAfterFade: true);
+                        // mustodo: stop music
+                        // todo: fade SFX
+                        Sfx.Instance.PlaySample((int)SfxId.RETURN_TO_SHIP_YES, source: null, loop: false,
+                            noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                    }
+                    else if (prompt == PromptType.GameOver)
+                    {
+                        // yes to game over (continue)
+                        PlayerEntity.Main.RestartLongSfx(); // skdebug
+                        scene.SetFade(FadeType.FadeOutInWhite, length: 10 / 30f, overwrite: true); // skdebug
+                        PlayerEntity.Main.RespawnTimer = 10; // skdebug
+                        // todo: fade out and reload room
+                        Sfx.Instance.PlaySample((int)SfxId.MENU_CONFIRM, source: null, loop: false,
+                            noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                        UnpauseDialog();
+                    }
+                }
+                else if (prompt == PromptType.GameOver)
+                {
+                    // no to game over (quit)
+                    scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, exitAfterFade: true);
+                    // mustodo: stop music
+                    Sfx.Instance.PlaySample((int)SfxId.QUIT_GAME, source: null, loop: false,
+                        noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                }
+                else
+                {
+                    // no to ship hatch (resume)
+                    PlayerEntity.Main.RestartLongSfx();
+                    Sfx.Instance.PlaySample((int)SfxId.RETURN_TO_SHIP_NO, source: null, loop: false,
+                        noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                    UnpauseDialog();
+                }
+                PlayerEntity.Main.DialogPromptType = PromptType.Any;
+                PlayerEntity.Main.DialogConfirmState = ConfirmState.None;
+            }
             if (!DialogPause)
             {
                 if (PlayerEntity.Main.Health > 0)
@@ -572,6 +621,7 @@ namespace MphRead
                 {
                     _shownOctolithDialog = false;
                     _whiteoutStarted = false;
+                    _gameOverShown = false;
                     if (EscapeState == 2)
                     {
                         // EMERGENCY security system activated.
@@ -583,21 +633,25 @@ namespace MphRead
                         PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 116, param1: 45, param2: 1);
                     }
                 }
-                else if (countdown <= 90 / 30f && !_shownOctolithDialog)
+                else if (countdown <= 1 / 30f && !_gameOverShown)
                 {
-                    // todo: lost octolith
-                    // HUNTER HAS TAKEN AN OCTOLITH
-                    //PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 117, param1: 90, param2: 1);
-                    _shownOctolithDialog = true;
+                    PlayerEntity.Main.CameraInfo.SetShake(0);
+                    //ENERGY DEPLETED continue from last checkpoint?
+                    PlayerEntity.Main.DialogPromptType = PromptType.GameOver;
+                    PlayerEntity.Main.ShowDialog(DialogType.YesNo, messageId: 2);
+                    _gameOverShown = true;
                 }
                 else if (countdown <= 50 / 30f && !_whiteoutStarted)
                 {
                     // diagtodo: whiteout
                     _whiteoutStarted = true;
                 }
-                else
+                else if (countdown <= 90 / 30f && !_shownOctolithDialog)
                 {
-                    // sktodo: show continue/quit prompt
+                    // todo: lost octolith
+                    // HUNTER HAS TAKEN AN OCTOLITH
+                    //PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 117, param1: 90, param2: 1);
+                    _shownOctolithDialog = true;
                 }
             }
         }

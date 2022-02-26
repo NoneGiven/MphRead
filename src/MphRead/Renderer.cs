@@ -143,6 +143,7 @@ namespace MphRead
 
         private float _frameTime = 0;
         private float _elapsedTime = 0;
+        private float _globalElapsedTime = 0;
         private ulong _frameCount = 0;
         private ulong _liveFrames = 0;
         private bool _frameAdvanceOn = false;
@@ -1053,6 +1054,7 @@ namespace MphRead
                 }
                 PlayerEntity.ProcessInput(_keyboardState, _mouseState);
             }
+            _globalElapsedTime += _frameTime;
             OnKeyHeld();
             _singleParticleCount = 0;
             _decalItems.Clear();
@@ -2529,6 +2531,7 @@ namespace MphRead
             else if (!Multiplayer)
             {
                 PlayerEntity.Main.UpdateDialogs();
+                GameState.UpdateFrame(this);
             }
             Sound.Sfx.Update(_frameTime);
         }
@@ -2625,7 +2628,10 @@ namespace MphRead
             UseRoomLights();
             GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
             GL.Uniform1(_shaderLocations.ShowColors, _showColors ? 1 : 0);
-            UpdateFade();
+            if (ProcessFrame)
+            {
+                UpdateFade();
+            }
         }
 
         private void UseRoomLights()
@@ -2692,7 +2698,7 @@ namespace MphRead
                 _fadeColor = 0;
                 _fadeIn = false;
             }
-            _fadeStart = _elapsedTime;
+            _fadeStart = _globalElapsedTime;
             _fadeLength = length;
             _exitAfterFade = exitAfterFade;
         }
@@ -2702,7 +2708,7 @@ namespace MphRead
             Color4 clearColor = _clearColor;
             if (_fadeType != FadeType.None)
             {
-                _fadePercent = (_elapsedTime - _fadeStart) / _fadeLength;
+                _fadePercent = (_globalElapsedTime - _fadeStart) / _fadeLength;
                 if (_fadePercent >= 1)
                 {
                     _fadePercent = 1;
@@ -2710,6 +2716,12 @@ namespace MphRead
                 }
             }
             GL.ClearColor(_clearColor);
+        }
+
+        public void QuitGame()
+        {
+            DoCleanup();
+            _close.Invoke();
         }
 
         public void DoCleanup()
