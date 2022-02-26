@@ -896,6 +896,7 @@ namespace MphRead.Formats.Sound
         public float Volume { get; set; } = 1;
         public Lazy<byte[]> WaveData { get; }
         public int BufferId { get; set; }
+        public int MaxBuffers { get; set; }
         public int BufferCount { get; set; }
         public int References { get; set; }
         public string? Name { get; set; }

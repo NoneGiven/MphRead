@@ -487,6 +487,10 @@ namespace MphRead.Sound
             {
                 BufferData(sample);
             }
+            else
+            {
+                sample.BufferCount = sample.MaxBuffers;
+            } 
             if (channel.BufferId != sample.BufferId)
             {
                 int bufferId = sample.BufferId;
@@ -823,12 +827,12 @@ namespace MphRead.Sound
                 {
                     AL.BufferData(dest.Id, format, intro, sample.SampleRate);
                     AL.BufferData(dest.Id + 1, format, loop, sample.SampleRate);
-                    sample.BufferCount = 2;
+                    sample.BufferCount = sample.MaxBuffers = 2;
                 }
                 else
                 {
                     AL.BufferData(dest.Id, format, loop, sample.SampleRate);
-                    sample.BufferCount = 1;
+                    sample.BufferCount = sample.MaxBuffers = 1;
                 }
                 sample.BufferId = dest.Id;
             }
