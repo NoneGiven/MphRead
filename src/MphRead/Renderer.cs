@@ -1302,8 +1302,8 @@ namespace MphRead
             else
             {
                 GL.UseProgram(_rttShaderProgramId);
-                GL.Uniform1(_shaderLocations.LayerAlpha, 1f);
             }
+            GL.Uniform1(_shaderLocations.LayerAlpha, 1f);
             GL.Uniform4(_shaderLocations.FadeColor, Vector4.Zero);
 
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
