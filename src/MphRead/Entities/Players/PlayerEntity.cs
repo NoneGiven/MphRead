@@ -871,6 +871,10 @@ namespace MphRead.Entities
                 int effectId = _scene.Multiplayer && PlayerCount > 2 ? 33 : 31;
                 _scene.SpawnEffect(effectId, Vector3.UnitX, Vector3.UnitY, Position);
             }
+            if (IsMainPlayer)
+            {
+                EndWhiteout();
+            }
         }
 
         public override void GetPosition(out Vector3 position)

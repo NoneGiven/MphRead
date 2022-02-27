@@ -483,6 +483,7 @@ namespace MphRead.Entities
             UpdateBoostBombs();
             UpdateDamageIndicators();
             UpdateDisruptedState();
+            UpdateWhiteoutState();
             WeaponSelection = CurrentWeapon;
             if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
             {
@@ -917,6 +918,80 @@ namespace MphRead.Entities
                     HudDisruptedState = 1;
                 }
             }
+        }
+
+        public int HudWhiteoutState { get; private set; } = -1;
+        public float HudWhiteoutFactor { get; private set; } = 0;
+        private float _whiteoutAmount = 0;
+        private float _whiteoutTime = 0;
+
+        public void BeginWhiteout()
+        {
+            HudWhiteoutState = 0;
+            HudWhiteoutFactor = 0;
+            _whiteoutTime = _scene.GlobalElapsedTime;
+            UpdateWhiteoutTable(value: 0);
+        }
+
+        private void EndWhiteout()
+        {
+            HudWhiteoutState = 0;
+            HudWhiteoutFactor = 0;
+        }
+
+        private void UpdateWhiteoutState()
+        {
+            float GetPosition()
+            {
+                float time = _scene.GlobalElapsedTime - _whiteoutTime;
+                float timeSquared = time * time;
+                float timeCubed = timeSquared * time;
+                float jerk = 0.12f; // 16 fx32 (0.004f) per frame @ 30 fps
+                float initAcceleration = 0;
+                float initVelocity = 1;
+                float initPosition = 0;
+                // the game has limits on the acceleration and velocity, but the limits on
+                // first the factor and then the position are reached before those
+                Debug.Assert(initAcceleration + jerk * time < 120); // acceleration
+                Debug.Assert(initVelocity + initAcceleration * time + 0.5f * jerk * timeSquared < 480); // velocity
+                return initPosition + initVelocity * time + 0.5f * initAcceleration * timeSquared + 1 / 6f * jerk * timeCubed;
+            }
+
+            if (HudWhiteoutState == 0)
+            {
+                HudWhiteoutFactor += 1.40625f * _scene.FrameTime;
+                if (HudWhiteoutFactor >= 1)
+                {
+                    HudWhiteoutFactor = 1;
+                    HudWhiteoutState = 1;
+                }
+                _whiteoutAmount = GetPosition();
+                Debug.Assert(_whiteoutAmount < 96);
+            }
+            else if (HudWhiteoutState == 1)
+            {
+                _whiteoutAmount = GetPosition();
+                if (_whiteoutAmount >= 96)
+                {
+                    _whiteoutAmount = 96;
+                    HudWhiteoutState = 2;
+                    _whiteoutTime = _scene.GlobalElapsedTime;
+                }
+                UpdateWhiteoutTable(_whiteoutAmount);
+            }
+            else if (HudWhiteoutState == 2)
+            {
+                float time = _scene.GlobalElapsedTime - _whiteoutTime;
+                float value = 0; // sktodo
+                Array.Fill(HudWhiteoutTable, value);
+            }
+        }
+
+        public static readonly float[] HudWhiteoutTable = new float[192];
+
+        private void UpdateWhiteoutTable(float value)
+        {
+            // sktodo
         }
 
         public void DrawHudObjects()

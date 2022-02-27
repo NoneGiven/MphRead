@@ -686,7 +686,7 @@ namespace MphRead
                 }
                 else if (countdown <= 50 / 30f && !_whiteoutStarted)
                 {
-                    // diagtodo: whiteout
+                    PlayerEntity.Main.BeginWhiteout();
                     _whiteoutStarted = true;
                 }
                 else if (countdown <= 90 / 30f && !_shownOctolithDialog)

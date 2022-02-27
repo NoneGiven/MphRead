@@ -176,6 +176,7 @@ namespace MphRead
         public ulong FrameCount => _frameCount;
         public ulong LiveFrames => _liveFrames;
         public float ElapsedTime => _elapsedTime;
+        public float GlobalElapsedTime => _globalElapsedTime;
         public VolumeDisplay ShowVolumes => _showVolumes;
         public bool ShowForceFields => _showVolumes != VolumeDisplay.Portal;
         public float KillHeight => _killHeight;
@@ -566,6 +567,8 @@ namespace MphRead
             _shaderLocations.ShiftIndex = GL.GetUniformLocation(_shiftShaderProgramId, "shift_idx");
             _shaderLocations.ShiftFactor = GL.GetUniformLocation(_shiftShaderProgramId, "shift_fac");
             _shaderLocations.LerpFactor = GL.GetUniformLocation(_shiftShaderProgramId, "lerp_fac");
+            _shaderLocations.WhiteoutTable = GL.GetUniformLocation(_shiftShaderProgramId, "white_table");
+            _shaderLocations.WhiteoutFactor = GL.GetUniformLocation(_shiftShaderProgramId, "white_fac");
 
             GL.UseProgram(_shiftShaderProgramId);
 
@@ -1279,17 +1282,14 @@ namespace MphRead
             GL.Disable(EnableCap.StencilTest);
             GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
 
-            if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active))
+            if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
             {
-                if (CameraMode == CameraMode.Player)
-                {
-                    SetHudLayerUniforms();
-                    PlayerEntity.Main.DrawHudModels();
-                    UnsetHudLayerUniforms();
-                }
+                SetHudLayerUniforms();
+                PlayerEntity.Main.DrawHudModels();
+                UnsetHudLayerUniforms();
             }
 
-            if (PlayerEntity.Main.HudDisruptedState != 0)
+            if (PlayerEntity.Main.HudDisruptedState != 0 || PlayerEntity.Main.HudWhiteoutState != -1)
             {
                 float div = _elapsedTime / (1 / 30f);
                 int index = (int)div;
@@ -1298,6 +1298,11 @@ namespace MphRead
                 GL.Uniform1(_shaderLocations.ShiftFactor, PlayerEntity.Main.HudDisruptionFactor);
                 GL.Uniform1(_shaderLocations.ShiftIndex, index);
                 GL.Uniform1(_shaderLocations.LerpFactor, factor);
+                GL.Uniform1(_shaderLocations.WhiteoutFactor, PlayerEntity.Main.HudWhiteoutFactor);
+                if (PlayerEntity.Main.HudWhiteoutFactor > 0)
+                {
+                    // skhere
+                }
             }
             else
             {
@@ -1329,7 +1334,7 @@ namespace MphRead
 
             GL.BindTexture(TextureTarget.Texture2D, 0);
 
-            if (PlayerEntity.Main.HudDisruptedState != 0)
+            if (PlayerEntity.Main.HudDisruptedState != 0 || PlayerEntity.Main.HudWhiteoutState != -1)
             {
                 GL.UseProgram(_rttShaderProgramId);
             }
@@ -2508,10 +2513,14 @@ namespace MphRead
 
         private void UpdateScene()
         {
+            bool playerActive = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active);
             if (!GameState.DialogPause)
             {
-                PlayerEntity.Main.UpdateTimedSounds();
-                PlayerEntity.Main.ProcessHudMessageQueue();
+                if (playerActive)
+                {
+                    PlayerEntity.Main.UpdateTimedSounds();
+                    PlayerEntity.Main.ProcessHudMessageQueue();
+                }
                 for (int i = 0; i < _entities.Count; i++)
                 {
                     EntityBase entity = _entities[i];
@@ -2523,14 +2532,20 @@ namespace MphRead
                         _destroyedEntities.Add(entity);
                     }
                 }
-                PlayerEntity.Main.ProcessModeHud();
-                PlayerEntity.Main.UpdateHud();
+                if (playerActive)
+                {
+                    PlayerEntity.Main.ProcessModeHud();
+                    PlayerEntity.Main.UpdateHud();
+                }
                 GameState.UpdateFrame(this);
                 GameState.UpdateState(this);
             }
             else if (!Multiplayer)
             {
-                PlayerEntity.Main.UpdateDialogs();
+                if (playerActive)
+                {
+                    PlayerEntity.Main.UpdateDialogs();
+                }
                 GameState.UpdateFrame(this);
             }
             Sound.Sfx.Update(_frameTime);

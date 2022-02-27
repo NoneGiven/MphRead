@@ -221,6 +221,8 @@ uniform float[64] shift_table;
 uniform int shift_idx;
 uniform float shift_fac;
 uniform float lerp_fac;
+uniform float[192] white_table;
+uniform float white_fac;
 uniform sampler2D tex;
 
 varying vec2 texcoord;
@@ -239,6 +241,9 @@ void main()
     }
     else {
         gl_FragColor = texture2D(tex, shifted);
+    }
+    if (white_fac > 0) {
+        // sktodo
     }
 }
 ";
@@ -283,5 +288,7 @@ void main()
         public int ShiftIndex { get; set; }
         public int ShiftFactor { get; set; }
         public int LerpFactor { get; set; }
+        public int WhiteoutTable { get; set; }
+        public int WhiteoutFactor { get; set; }
     }
 }
