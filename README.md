@@ -1,8 +1,9 @@
 # MphRead
-This project is a model viewer, scene renderer, and general parser for file formats used in the Nintendo DS game Metroid Prime Hunters. The renderer is implemented using OpenGL via the [OpenTK](https://github.com/opentk/opentk) library. Documentation of various game features can be found in the [wiki](https://github.com/NoneGiven/MphRead/wiki).
+This project is a reverse engineering and game recreation effort comprising a model viewer, scene renderer, and general parser for file formats used in the Nintendo DS game Metroid Prime Hunters. The renderer is implemented using OpenGL via the [OpenTK](https://github.com/opentk/opentk) library with audio through [OpenAL Soft](https://github.com/kcat/openal-soft). Documentation of various game features can be found in the [wiki](https://github.com/NoneGiven/MphRead/wiki).
 
 ## Features
 - Renders individual models or complete game rooms with entities
+- Recreates the player controls and gameplay of the original
 - Processes and renders particle systems and effects
 - Visualizes collision data for rooms and entities
 - Plays in-engine camera sequences (cutscenes)
@@ -10,8 +11,8 @@ This project is a model viewer, scene renderer, and general parser for file form
 - Generates Python scripts to import model animations and more into Blender
 
 ## Planned
-- Music and SFX playback
-- - Room editor and save editor
+- Music playback
+- Room editor and save editor
 - Render more things, implement more gameplay logic
 - And even more!
 
@@ -27,11 +28,11 @@ If you do not want to build from source, simply download and run the latest [rel
 
 ### With Visual Studio
 
-With a recent version of [Visual Studio 2019](https://visualstudio.microsoft.com/vs/) installed, you should be able to open the solution and build immediately.
+With a recent version of [Visual Studio 2022](https://visualstudio.microsoft.com/vs/) installed, you should be able to open the solution and build immediately.
 
 ### Without Visual Studio
 
-- Install the [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download/dotnet-core/3.1).
+- Install the [.NET 6.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/6.0).
 - Run `dotnet build` in the `src/MphRead` directory.
 
 ## Acknowledgements
@@ -47,4 +48,4 @@ A significant portion of this project's code was based on the file format inform
 
 ## Special Thanks
 
-This project is an ongoing reverse engineering effort developed parallel to **[hackyourlife's mph-viewer](https://github.com/hackyourlife/mph-viewer)**, a model viewer implementation in C. Major features such as the transparency rendering implementation are derived from its source code.
+This project's reverse engineering effort was developed parallel to **[hackyourlife's mph-viewer](https://github.com/hackyourlife/mph-viewer)**, a model viewer implementation in C. Major features such as the transparency rendering implementation were derived from its source code.
