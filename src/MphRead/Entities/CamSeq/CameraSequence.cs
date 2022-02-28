@@ -219,7 +219,7 @@ namespace MphRead.Formats
             }
             Current = this;
             // todo?: the game only does the rest when ptr_tbl_idx is 14
-            // todo: close dialogs
+            PlayerEntity.Main.CloseDialogs();
             PlayerEntity.Main.HudEndDisrupted();
             PlayerEntity.Main.ResetCombatVisor();
         }

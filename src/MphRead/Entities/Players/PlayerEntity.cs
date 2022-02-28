@@ -848,7 +848,8 @@ namespace MphRead.Entities
             _objShiftY = 0;
             ScanVisor = false;
             SwitchVisors(reset: true);
-            // todo: close dialogs, update more UI fields
+            CloseDialogs();
+            // todo: update more UI fields
             _altRollFbX = CameraInfo.Field48;
             _altRollFbZ = CameraInfo.Field4C;
             _altRollLrX = CameraInfo.Field50;
@@ -1762,7 +1763,7 @@ namespace MphRead.Entities
                     {
                         if (IsMainPlayer)
                         {
-                            // todo: update HUD to close dialogs
+                            CloseDialogs();
                             if (attacker == this)
                             {
                                 QueueHudMessage(128, 70, 140, 90 / 30f, 2, 235); // YOU SELF-DESTRUCTED!
