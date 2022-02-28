@@ -240,85 +240,6 @@ namespace MphRead.Sound
         }
     }
 
-    public class SfxInstanceBase
-    {
-        public virtual IReadOnlyList<Sound3dEntry> RangeData { get; } = new List<Sound3dEntry>();
-
-        public virtual void QueueStream(int id, float delay, float expiration)
-        {
-        }
-
-        public virtual void StopSoundByHandle(int handle)
-        {
-        }
-
-        public virtual void PlayDgn(int id, SoundSource? source, bool loop, bool noUpdate,
-            float recency, bool cancellable, float amountA, float amountB)
-        {
-        }
-
-        public virtual void PlayScript(int id, SoundSource? source, bool noUpdate,
-            float recency, bool sourceOnly, bool cancellable)
-        {
-        }
-
-        public virtual int PlaySample(int id, SoundSource? source, bool? loop, bool noUpdate,
-            float recency, bool sourceOnly, bool cancellable)
-        {
-            return -1;
-        }
-
-        public virtual void PlayEnvironmentSfx(int index, SoundSource source)
-        {
-        }
-
-        public virtual void StopSoundFromSource(SoundSource source, bool force)
-        {
-        }
-
-        public virtual void StopSoundFromSource(SoundSource source, int id)
-        {
-        }
-
-        public virtual void StopEnvironmentSfx()
-        {
-        }
-
-        public virtual void StopAllSound()
-        {
-        }
-
-        public virtual void StopSoundById(int id)
-        {
-        }
-
-        public virtual void StopFreeSfxScripts()
-        {
-        }
-
-        public virtual bool IsHandlePlaying(int handle)
-        {
-            return false;
-        }
-
-        public virtual int CountPlayingSfx(int id)
-        {
-            return 0;
-        }
-
-        public virtual void Update(float time)
-        {
-        }
-
-        public virtual void Load()
-        {
-        }
-
-        public virtual void ShutDown()
-        {
-        }
-    }
-
     public class SfxInstance : SfxInstanceBase
     {
         private const int _maxPerInst = 12;
@@ -1503,6 +1424,85 @@ namespace MphRead.Sound
                 _context = ALContext.Null;
                 _device = ALDevice.Null;
             });
+        }
+    }
+
+    public class SfxInstanceBase
+    {
+        public virtual IReadOnlyList<Sound3dEntry> RangeData { get; } = new List<Sound3dEntry>();
+
+        public virtual void QueueStream(int id, float delay, float expiration)
+        {
+        }
+
+        public virtual void StopSoundByHandle(int handle)
+        {
+        }
+
+        public virtual void PlayDgn(int id, SoundSource? source, bool loop, bool noUpdate,
+            float recency, bool cancellable, float amountA, float amountB)
+        {
+        }
+
+        public virtual void PlayScript(int id, SoundSource? source, bool noUpdate,
+            float recency, bool sourceOnly, bool cancellable)
+        {
+        }
+
+        public virtual int PlaySample(int id, SoundSource? source, bool? loop, bool noUpdate,
+            float recency, bool sourceOnly, bool cancellable)
+        {
+            return -1;
+        }
+
+        public virtual void PlayEnvironmentSfx(int index, SoundSource source)
+        {
+        }
+
+        public virtual void StopSoundFromSource(SoundSource source, bool force)
+        {
+        }
+
+        public virtual void StopSoundFromSource(SoundSource source, int id)
+        {
+        }
+
+        public virtual void StopEnvironmentSfx()
+        {
+        }
+
+        public virtual void StopAllSound()
+        {
+        }
+
+        public virtual void StopSoundById(int id)
+        {
+        }
+
+        public virtual void StopFreeSfxScripts()
+        {
+        }
+
+        public virtual bool IsHandlePlaying(int handle)
+        {
+            return false;
+        }
+
+        public virtual int CountPlayingSfx(int id)
+        {
+            return 0;
+        }
+
+        public virtual void Update(float time)
+        {
+        }
+
+        public virtual void Load()
+        {
+        }
+
+        public virtual void ShutDown()
+        {
         }
     }
 }
