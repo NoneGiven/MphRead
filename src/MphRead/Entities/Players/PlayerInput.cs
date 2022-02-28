@@ -1999,7 +1999,7 @@ namespace MphRead.Entities
             }
         }
 
-        private PlayerControls Controls { get; } = PlayerControls.GetDefault();
+        public PlayerControls Controls { get; } = PlayerControls.GetDefault();
         private PlayerInput Input { get; } = new PlayerInput();
 
         private class PlayerInput

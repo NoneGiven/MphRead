@@ -278,6 +278,7 @@ namespace MphRead
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
+            _inputMode = _cameraMode == CameraMode.Player ? InputMode.PlayerOnly : InputMode.CameraOnly;
             _roomId = room.RoomId;
         }
 
@@ -1056,7 +1057,14 @@ namespace MphRead
                 {
                     _elapsedTime += _frameTime;
                 }
-                PlayerEntity.ProcessInput(_keyboardState, _mouseState);
+                if (_inputMode != InputMode.CameraOnly)
+                {
+                    PlayerEntity.ProcessInput(_keyboardState, _mouseState);
+                }
+                else
+                {
+                    PlayerEntity.Main.Controls.ClearAll();
+                }
             }
             OnKeyHeld();
             _singleParticleCount = 0;
@@ -3502,6 +3510,7 @@ namespace MphRead
         public void LookAt(Vector3 target)
         {
             _cameraMode = CameraMode.Roam;
+            _inputMode = InputMode.CameraOnly;
             _cameraPosition = target.AddZ(5);
             _cameraFacing = -Vector3.UnitZ;
             _cameraUp = Vector3.UnitY;
@@ -3510,12 +3519,15 @@ namespace MphRead
 
         public void OnMouseClick(bool down)
         {
-            _leftMouse = down;
+            if (_inputMode != InputMode.PlayerOnly)
+            {
+                _leftMouse = down;
+            }
         }
 
         public void OnMouseMove(float deltaX, float deltaY)
         {
-            if (_leftMouse && AllowCameraMovement)
+            if (_leftMouse && AllowCameraMovement && _inputMode != InputMode.PlayerOnly)
             {
                 if (_cameraMode == CameraMode.Pivot)
                 {
@@ -3533,7 +3545,7 @@ namespace MphRead
 
         public void OnMouseWheel(float offsetY)
         {
-            if (_cameraMode == CameraMode.Pivot && AllowCameraMovement)
+            if (_cameraMode == CameraMode.Pivot && AllowCameraMovement && _inputMode != InputMode.PlayerOnly)
             {
                 _pivotDistance += offsetY / -1.5f;
                 if (_pivotDistance < 0)
@@ -3558,6 +3570,77 @@ namespace MphRead
         public void OnKeyDown(KeyboardKeyEventArgs e)
         {
             if (Selection.OnKeyDown(e, this))
+            {
+                return;
+            }
+            if (e.Key == Keys.R)
+            {
+                if (e.Control && e.Shift)
+                {
+                    _recording = !_recording;
+                    _framesRecorded = 0;
+                }
+                else if (AllowCameraMovement && _inputMode != InputMode.PlayerOnly)
+                {
+                    ResetCamera();
+                }
+            }
+            if (e.Key == Keys.P)
+            {
+                if (e.Alt)
+                {
+                    UpdatePointModule();
+                }
+                else if (e.Shift)
+                {
+                    if (_cameraMode != CameraMode.Player)
+                    {
+                        if (_inputMode == InputMode.All)
+                        {
+                            _inputMode = InputMode.PlayerOnly;
+                        }
+                        else if (_inputMode == InputMode.PlayerOnly)
+                        {
+                            _inputMode = InputMode.CameraOnly;
+                        }
+                        else
+                        {
+                            _inputMode = InputMode.All;
+                        }
+                    }
+                }
+                else
+                {
+                    if (_cameraMode == CameraMode.Pivot)
+                    {
+                        _cameraMode = CameraMode.Roam;
+                        _inputMode = InputMode.CameraOnly;
+                    }
+                    else if (_cameraMode == CameraMode.Roam)
+                    {
+                        _cameraMode = CameraMode.Player;
+                        _inputMode = InputMode.PlayerOnly;
+                    }
+                    else
+                    {
+                        _cameraMode = CameraMode.Pivot;
+                        _inputMode = InputMode.CameraOnly;
+                    }
+                    ResetCamera();
+                }
+            }
+            else if (e.Key == Keys.Enter)
+            {
+                _frameAdvanceOn = !_frameAdvanceOn;
+            }
+            else if (e.Key == Keys.Period)
+            {
+                if (_frameAdvanceOn)
+                {
+                    _advanceOneFrame = true;
+                }
+            }
+            if (_inputMode == InputMode.PlayerOnly)
             {
                 return;
             }
@@ -3881,52 +3964,6 @@ namespace MphRead
             {
                 _scanVisor = !_scanVisor;
             }
-            else if (e.Key == Keys.R)
-            {
-                if (e.Control && e.Shift)
-                {
-                    _recording = !_recording;
-                    _framesRecorded = 0;
-                }
-                else if (AllowCameraMovement)
-                {
-                    ResetCamera();
-                }
-            }
-            else if (e.Key == Keys.P)
-            {
-                if (e.Alt)
-                {
-                    UpdatePointModule();
-                }
-                else
-                {
-                    if (_cameraMode == CameraMode.Pivot)
-                    {
-                        _cameraMode = CameraMode.Roam;
-                    }
-                    else if (_cameraMode == CameraMode.Roam)
-                    {
-                        _cameraMode = CameraMode.Player;
-                    }
-                    else
-                    {
-                        _cameraMode = CameraMode.Pivot;
-                    }
-                    ResetCamera();
-                }
-            }
-            else if (e.Key == Keys.Enter)
-            {
-                _frameAdvanceOn = !_frameAdvanceOn;
-            }
-            else if (e.Key == Keys.Period)
-            {
-                if (_frameAdvanceOn)
-                {
-                    _advanceOneFrame = true;
-                }
-            }
             else if (e.Control && e.Key == Keys.O)
             {
                 _promptState = PromptState.Load;
@@ -3940,6 +3977,15 @@ namespace MphRead
             }
         }
 
+        private enum InputMode
+        {
+            All,
+            PlayerOnly,
+            CameraOnly
+        }
+
+        private InputMode _inputMode = InputMode.All;
+
         private void OnKeyHeld()
         {
             if (_keyboardState.IsKeyDown(Keys.LeftAlt) || _keyboardState.IsKeyDown(Keys.RightAlt))
@@ -3947,7 +3993,7 @@ namespace MphRead
                 Selection.OnKeyHeld(_keyboardState);
                 return;
             }
-            if (!AllowCameraMovement)
+            if (!AllowCameraMovement || _inputMode == InputMode.PlayerOnly)
             {
                 return;
             }
