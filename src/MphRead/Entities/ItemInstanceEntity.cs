@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using MphRead.Effects;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -25,16 +26,24 @@ namespace MphRead.Entities
         public ItemType ItemType { get; }
         private EffectEntry? _effectEntry = null;
         private bool _linkDone = false;
+        public int ParentId { get; set; } = -1;
+        private EntityBase? _parent = null;
+        private Vector3 _invPos;
 
         public int DespawnTimer { get; set; } = -1;
         public ItemSpawnEntity? Owner { get; set; }
 
-        public ItemInstanceEntity(ItemInstanceEntityData data, Scene scene)
-            : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance, scene)
+        private static readonly IReadOnlyList<int> _scanIds = new int[22]
+        {
+            9, 11, 12, 0, 10, 21, 13, 23, 22, 18, 20, 19, 28, 14, 15, 16, 17, 0, 24, 463, 0, 0
+        };
+
+        public ItemInstanceEntity(ItemInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance, nodeRef, scene)
         {
             Position = data.Position;
-            // todo: scan ID
             ItemType = data.ItemType;
+            _scanId = _scanIds[(int)data.ItemType];
             if (scene.Multiplayer && GameState.AffinityWeapons && (ItemType == ItemType.VoltDriver
                 || ItemType == ItemType.Battlehammer || ItemType == ItemType.Imperialist
                 || ItemType == ItemType.Judicator || ItemType == ItemType.Magmaul || ItemType == ItemType.ShockCoil))
@@ -74,12 +83,22 @@ namespace MphRead.Entities
 
         public override bool Process()
         {
-            if (!_linkDone)
+            if (!_linkDone && ParentId != -1)
             {
-                // todo: linked entity (position only)
+                if (_scene.TryGetEntity(ParentId, out EntityBase? parent))
+                {
+                    _parent = parent;
+                }
+                if (_parent != null)
+                {
+                    _invPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
+                }
                 _linkDone = true;
             }
-            // todo: inv pos
+            if (_linkDone && _parent != null)
+            {
+                Position = Matrix.Vec3MultMtx4(_invPos, _parent.CollisionTransform);
+            }
             _soundSource.Update(Position, rangeIndex: 7);
             // sfxtodo: if node ref is not active, set sound volume override to 0
             if (_effectEntry != null)
@@ -142,7 +161,19 @@ namespace MphRead.Entities
         {
             DespawnTimer = 0;
             Owner?.OnItemPickedUp();
-            // todo: update logbook
+            if (!_scene.Multiplayer)
+            {
+                int scanId = GetScanId();
+                GameState.StorySave.UpdateLogbook(scanId);
+            }
+        }
+
+        public override void GetDrawInfo()
+        {
+            if (IsVisible(NodeRef))
+            {
+                base.GetDrawInfo();
+            }
         }
 
         public override void Destroy()
@@ -211,6 +242,16 @@ namespace MphRead.Entities
 
         public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, int spinModelIndex, int floatModelIndex,
             EntityType type, Scene scene) : base(type, scene)
+        {
+            _spin = GetItemRotation();
+            _spinSpeed = spinSpeed;
+            _spinAxis = spinAxis;
+            _spinModelIndex = spinModelIndex;
+            _floatModelIndex = floatModelIndex;
+        }
+
+        public SpinningEntityBase(float spinSpeed, Vector3 spinAxis, int spinModelIndex, int floatModelIndex,
+            EntityType type, NodeRef nodeRef, Scene scene) : base(type, nodeRef, scene)
         {
             _spin = GetItemRotation();
             _spinSpeed = spinSpeed;

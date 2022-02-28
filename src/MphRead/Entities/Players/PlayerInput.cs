@@ -99,6 +99,21 @@ namespace MphRead.Entities
 
         private void ProcessTouchInput()
         {
+            // the game explicitly checks for Samus, and doesn't check if the weapon menu is open
+            if (!_scene.Multiplayer && Controls.ScanVisor.IsPressed && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen)
+                && !IsAltForm && !IsMorphing)
+            {
+                if (ScanVisor)
+                {
+                    SwitchVisors(reset: false);
+                }
+                else
+                {
+                    // todo?: play SFX for the "hold scan" feature
+                    SwitchVisors(reset: false);
+                    UpdateZoom(zoom: false);
+                }
+            }
             if ((_scene.Multiplayer || _weaponSlots[2] != BeamType.OmegaCannon) && Controls.WeaponMenu.IsDown)
             {
                 Flags1 |= PlayerFlags1.NoAimInput;
@@ -108,21 +123,7 @@ namespace MphRead.Entities
             bool selected = false;
             if (!Controls.WeaponMenu.IsDown)
             {
-                if (WeaponSelection != BeamType.None)
-                {
-                    if (WeaponSelection != CurrentWeapon)
-                    {
-                        TryEquipWeapon(WeaponSelection);
-                        selected = true;
-                    }
-                    else if (IsMainPlayer && Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
-                    {
-                        _soundSource.PlayFreeSfx(SfxId.BEAM_SWITCH_FAIL);
-                    }
-                    WeaponSelection = CurrentWeapon;
-                }
-                Flags1 &= ~PlayerFlags1.NoAimInput;
-                Flags1 &= ~PlayerFlags1.WeaponMenuOpen;
+                EndWeaponMenu(ref selected);
             }
             if (!selected)
             {
@@ -251,6 +252,25 @@ namespace MphRead.Entities
             }
         }
 
+        private void EndWeaponMenu(ref bool selected)
+        {
+            if (WeaponSelection != BeamType.None)
+            {
+                if (WeaponSelection != CurrentWeapon)
+                {
+                    TryEquipWeapon(WeaponSelection);
+                    selected = true;
+                }
+                else if (IsMainPlayer && Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
+                {
+                    _soundSource.PlayFreeSfx(SfxId.BEAM_SWITCH_FAIL);
+                }
+                WeaponSelection = CurrentWeapon;
+            }
+            Flags1 &= ~PlayerFlags1.NoAimInput;
+            Flags1 &= ~PlayerFlags1.WeaponMenuOpen;
+        }
+
         private void UpdateAimFacing()
         {
             float dot = Vector3.Dot(_gunVec1, _facingVector);
@@ -274,7 +294,7 @@ namespace MphRead.Entities
             if (EquipInfo.Zoomed)
             {
                 float fovFactor = CameraInfo.Fov - Fixed.ToFloat(Values.NormalFov) * 2;
-                sensitivity *= -Fixed.ToFloat(Values.Field70) * fovFactor;
+                sensitivity /= -Fixed.ToFloat(Values.Field70) * fovFactor;
             }
             amount *= sensitivity;
             // unimpl-controls: these calculations are different when exact aim is not set
@@ -314,7 +334,7 @@ namespace MphRead.Entities
             if (EquipInfo.Zoomed)
             {
                 float fovFactor = CameraInfo.Fov - Fixed.ToFloat(Values.NormalFov) * 2;
-                sensitivity *= -Fixed.ToFloat(Values.Field70) * fovFactor;
+                sensitivity /= -Fixed.ToFloat(Values.Field70) * fovFactor;
             }
             amount *= sensitivity;
             // unimpl-controls: these calculations are different when exact aim is not set
@@ -662,9 +682,31 @@ namespace MphRead.Entities
             UpdateAimVecs();
             if (_frozenTimer == 0 && _health > 0 && !_field6D0)
             {
-                // todo: scan visor
-                // else...
-                if (!IsUnmorphing)
+                bool scanInput = false;
+                if (ScanVisor)
+                {
+                    scanInput = true;
+                    if (!_scanning && Controls.Scan.IsPressed || _scanning && Controls.Scan.IsDown)
+                    {
+                        UpdateScanning(scanning: true);
+                    }
+                    else
+                    {
+                        UpdateScanning(scanning: false);
+                        if (Controls.Scan != Controls.Shoot
+                            && (Controls.Shoot.IsPressed || Controls.Morph.IsPressed))
+                        {
+                            SwitchVisors(reset: false);
+                            scanInput = false;
+                        }
+                    }
+                    if (EquipInfo.ChargeLevel > 0)
+                    {
+                        EquipInfo.ChargeLevel = 0;
+                        StopBeamChargeSfx(CurrentWeapon);
+                    }
+                }
+                if (!scanInput && !IsUnmorphing)
                 {
                     if (!Controls.Shoot.IsDown)
                     {
@@ -1907,25 +1949,57 @@ namespace MphRead.Entities
                         }
                         else if (control.Type == ButtonType.Mouse)
                         {
+                            if (GameState.DialogPause)
+                            {
+                                continue;
+                            }
+                            if (control.MouseButton == MouseButton.Left && player._ignoreClick)
+                            {
+                                control.NeedsRepress = true;
+                            }
+                            bool down = mouseSnap.IsButtonDown(control.MouseButton);
                             bool prevDown = prevMouseSnap?.IsButtonDown(control.MouseButton) ?? false;
-                            control.IsDown = mouseSnap!.IsButtonDown(control.MouseButton);
-                            control.IsPressed = control.IsDown && !prevDown;
-                            control.IsReleased = !control.IsDown && prevDown;
+                            if (control.NeedsRepress && !player._ignoreClick)
+                            {
+                                if (!down || !prevDown)
+                                {
+                                    control.NeedsRepress = false;
+                                }
+                            }
+                            if (!control.NeedsRepress)
+                            {
+                                control.IsDown = down;
+                                control.IsPressed = control.IsDown && !prevDown;
+                                control.IsReleased = !control.IsDown && prevDown;
+                            }
                         }
                         else
                         {
                             // todo?: deal with overflow or whatever
-                            control.IsDown = control.Type == ButtonType.ScrollUp && mouseSnap.Scroll.Y > (prevMouseSnap?.Scroll.Y ?? 0)
-                                || control.Type == ButtonType.ScrollDown && mouseSnap.Scroll.Y < (prevMouseSnap?.Scroll.Y ?? 0);
+                            float curScrollY = mouseSnap.Scroll.Y;
+                            float prevScrollY = prevMouseSnap?.Scroll.Y ?? 0;
+                            control.IsDown = control.Type == ButtonType.ScrollUp && curScrollY > prevScrollY
+                                || control.Type == ButtonType.ScrollDown && curScrollY < prevScrollY;
                             control.IsPressed = control.IsDown;
                             control.IsReleased = false;
                         }
                     }
                 }
+                player._ignoreClick = false;
+                if (mouseSnap.IsButtonDown(MouseButton.Left) && prevMouseSnap?.IsButtonDown(MouseButton.Left) != true)
+                {
+                    player.Input.ClickX = mouseSnap.X;
+                    player.Input.ClickY = mouseSnap.Y;
+                }
+                else
+                {
+                    player.Input.ClickX = -1;
+                    player.Input.ClickY = -1;
+                }
             }
         }
 
-        private PlayerControls Controls { get; } = PlayerControls.GetDefault();
+        public PlayerControls Controls { get; } = PlayerControls.GetDefault();
         private PlayerInput Input { get; } = new PlayerInput();
 
         private class PlayerInput
@@ -1937,6 +2011,8 @@ namespace MphRead.Entities
 
             public float MouseDeltaX => (MouseState?.X - PrevMouseState?.X) ?? 0;
             public float MouseDeltaY => (MouseState?.Y - PrevMouseState?.Y) ?? 0;
+            public float ClickX { get; set; } = -1;
+            public float ClickY { get; set; } = -1;
         }
     }
 
@@ -1954,10 +2030,10 @@ namespace MphRead.Entities
         public Keys Key { get; set; }
         public MouseButton MouseButton { get; set; }
 
-        // todo?: double tap
         public bool IsPressed { get; set; }
         public bool IsDown { get; set; }
         public bool IsReleased { get; set; }
+        public bool NeedsRepress { get; set; }
 
         public Keybind(Keys key)
         {
@@ -1979,6 +2055,26 @@ namespace MphRead.Entities
             }
             Type = scrollType;
         }
+
+        public static bool operator ==(Keybind lhs, Keybind rhs)
+        {
+            return lhs.Type == rhs.Type && lhs.Key == rhs.Key && lhs.MouseButton == rhs.MouseButton;
+        }
+
+        public static bool operator !=(Keybind lhs, Keybind rhs)
+        {
+            return lhs.Type != rhs.Type || lhs.Key != rhs.Key || lhs.MouseButton != rhs.MouseButton;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Keybind other && Type == other.Type && Key == other.Key && MouseButton == other.MouseButton;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Type, Key, MouseButton);
+        }
     }
 
     public class PlayerControls
@@ -1999,6 +2095,8 @@ namespace MphRead.Entities
         public Keybind Morph { get; }
         public Keybind Boost { get; }
         public Keybind AltAttack { get; }
+        public Keybind ScanVisor { get; }
+        public Keybind Scan { get; }
         public Keybind NextWeapon { get; }
         public Keybind PrevWeapon { get; }
         public Keybind WeaponMenu { get; }
@@ -2022,9 +2120,9 @@ namespace MphRead.Entities
 
         public PlayerControls(Keybind moveLeft, Keybind moveRight, Keybind moveUp, Keybind moveDown, Keybind aimLeft, Keybind aimRight,
             Keybind aimUp, Keybind aimDown, Keybind shoot, Keybind zoom, Keybind jump, Keybind morph, Keybind boost, Keybind altAttack,
-            Keybind nextWeapon, Keybind prevWeapon, Keybind weaponMenu, Keybind powerBeam, Keybind missile, Keybind voltDriver,
-            Keybind battlehammer, Keybind imperialist, Keybind judicator, Keybind magmaul, Keybind shockCoil, Keybind omegaCannon,
-            Keybind affinitySlot, Keybind pause)
+            Keybind scanVisor, Keybind scan, Keybind nextWeapon, Keybind prevWeapon, Keybind weaponMenu, Keybind powerBeam, Keybind missile,
+            Keybind voltDriver, Keybind battlehammer, Keybind imperialist, Keybind judicator, Keybind magmaul, Keybind shockCoil,
+            Keybind omegaCannon, Keybind affinitySlot, Keybind pause)
         {
             MouseAim = true;
             KeyboardAim = true;
@@ -2043,6 +2141,8 @@ namespace MphRead.Entities
             Morph = morph;
             Boost = boost;
             AltAttack = altAttack;
+            ScanVisor = scanVisor;
+            Scan = scan;
             NextWeapon = nextWeapon;
             PrevWeapon = prevWeapon;
             WeaponMenu = weaponMenu;
@@ -2060,8 +2160,8 @@ namespace MphRead.Entities
             All = new[]
             {
                 moveLeft, moveRight, moveUp, moveDown, aimLeft, aimRight, aimUp, aimDown, shoot, zoom, jump, morph, boost,
-                altAttack, nextWeapon, prevWeapon, weaponMenu, powerBeam, missile, voltDriver, battlehammer, imperialist,
-                judicator, magmaul, shockCoil, omegaCannon, affinitySlot, pause
+                altAttack, scanVisor, scan, nextWeapon, prevWeapon, weaponMenu, powerBeam, missile, voltDriver, battlehammer,
+                imperialist, judicator, magmaul, shockCoil, omegaCannon, affinitySlot, pause
             };
         }
 
@@ -2100,6 +2200,8 @@ namespace MphRead.Entities
                 morph: new Keybind(Keys.C),
                 boost: new Keybind(Keys.Space),
                 altAttack: new Keybind(Keys.Q),
+                scanVisor: new Keybind(Keys.E),
+                scan: new Keybind(Keys.Q),
                 nextWeapon: new Keybind(ButtonType.ScrollDown),
                 prevWeapon: new Keybind(ButtonType.ScrollUp),
                 weaponMenu: new Keybind(MouseButton.Middle),

@@ -22,6 +22,7 @@ namespace MphRead.Entities
         protected Scene _scene;
         private readonly string? _nodeName;
         public NodeRef NodeRef { get; set; } = NodeRef.None;
+        protected int _scanId = 0;
 
         protected float _drawScale = 1;
         protected Matrix4 _transform = Matrix4.Identity;
@@ -133,6 +134,13 @@ namespace MphRead.Entities
             Type = type;
             _scene = scene;
             _nodeName = nodeName;
+        }
+
+        protected EntityBase(EntityType type, NodeRef nodeRef, Scene scene)
+        {
+            Type = type;
+            _scene = scene;
+            NodeRef = nodeRef;
         }
 
         public virtual void Initialize()
@@ -270,6 +278,15 @@ namespace MphRead.Entities
             return true;
         }
 
+        public virtual int GetScanId(bool alternate = false)
+        {
+            return _scanId;
+        }
+
+        public virtual void OnScanned()
+        {
+        }
+
         public virtual bool Process()
         {
             if (Active)
@@ -398,6 +415,22 @@ namespace MphRead.Entities
                     GetItems(inst, index, model.Nodes[node.NextIndex], polygonId);
                 }
             }
+        }
+
+        protected bool IsVisible(NodeRef nodeRef)
+        {
+            // todo?: use position, cull radius, and frustum info and support second node ref
+            if (nodeRef == NodeRef.None
+                || _scene.CameraMode != CameraMode.Player || _scene.ShowInvisibleEntities) // skdebug
+            {
+                return true;
+            }
+            return _scene.IsNodeRefVisible(nodeRef);
+        }
+
+        public virtual bool ScanVisible()
+        {
+            return IsVisible(NodeRef);
         }
 
         public virtual void GetDrawInfo()
@@ -695,12 +728,6 @@ namespace MphRead.Entities
 
         public virtual void CheckBeamReflection(ref bool result)
         {
-        }
-
-        protected bool IsVisible()
-        {
-            // sktodo: this
-            return true;
         }
 
         protected (float, float) ConstantAcceleration(float step, float velocity,

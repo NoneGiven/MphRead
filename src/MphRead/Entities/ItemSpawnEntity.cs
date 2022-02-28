@@ -1,3 +1,4 @@
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -9,6 +10,8 @@ namespace MphRead.Entities
         private ushort _spawnCount = 0;
         private ushort _spawnCooldown = 0;
         private bool _linkDone = false;
+        private EntityBase? _parent = null;
+        private Vector3 _invPos;
         private EntityBase? _pickupNotifyEntity = null;
 
         public ItemSpawnEntityData Data => _data;
@@ -19,7 +22,8 @@ namespace MphRead.Entities
         // used if there is no base model
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xC8, 0x00, 0xC8).AsVector4();
 
-        public ItemSpawnEntity(ItemSpawnEntityData data, Scene scene) : base(EntityType.ItemSpawn, scene)
+        public ItemSpawnEntity(ItemSpawnEntityData data, string nodeName, Scene scene)
+            : base(EntityType.ItemSpawn, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -47,12 +51,22 @@ namespace MphRead.Entities
 
         public override bool Process()
         {
-            if (!_linkDone)
+            if (!_linkDone && _data.ParentId != -1)
             {
-                // todo: linked entity (position only)
+                if (_scene.TryGetEntity(_data.ParentId, out EntityBase? parent))
+                {
+                    _parent = parent;
+                }
+                if (_parent != null)
+                {
+                    _invPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
+                }
                 _linkDone = true;
             }
-            // todo: inv pos
+            if (_linkDone && _parent != null)
+            {
+                Position = Matrix.Vec3MultMtx4(_invPos, _parent.CollisionTransform);
+            }
             if (!Active)
             {
                 return true;
@@ -63,12 +77,13 @@ namespace MphRead.Entities
             }
             if (Item == null && _spawnCooldown == 0 && (_data.MaxSpawnCount == 0 || _spawnCount < _data.MaxSpawnCount))
             {
-                Item = SpawnItem(_data.ItemType, Position.AddY(0.65f), _scene);
+                Item = SpawnItem(_data.ItemType, Position.AddY(0.65f), NodeRef, _scene);
                 if (Item != null)
                 {
                     _spawnCooldown = (ushort)(_data.SpawnInterval * 2); // todo: FPS stuff
                     _spawnCount++;
                     Item.Owner = this;
+                    Item.ParentId = _data.ParentId;
                     if (_data.ItemType != ItemType.ArtifactKey)
                     {
                         _soundSource.Update(Position, rangeIndex: 7);
@@ -143,24 +158,33 @@ namespace MphRead.Entities
             }
         }
 
-        // todo: entity node ref
-        public static ItemInstanceEntity? SpawnItemDrop(ItemType type, Vector3 position, uint chance, Scene scene)
+        public override void GetDrawInfo()
         {
-            return SpawnItem(type, position, scene, chance, despawnTime: 450 * 2); // todo: FPS stuff
+            if (IsVisible(NodeRef))
+            {
+                base.GetDrawInfo();
+            }
         }
 
-        public static ItemInstanceEntity? SpawnItem(ItemType type, Vector3 position, int despawnTime, Scene scene)
+        public static ItemInstanceEntity? SpawnItemDrop(ItemType type, Vector3 position,
+            NodeRef nodeRef, uint chance, Scene scene)
         {
-            return SpawnItem(type, position, scene, chance: null, despawnTime);
+            return SpawnItem(type, position, nodeRef, scene, chance, despawnTime: 450 * 2); // todo: FPS stuff
         }
 
-        private static ItemInstanceEntity? SpawnItem(ItemType type, Vector3 position, Scene scene,
-            uint? chance = null, int despawnTime = 0)
+        public static ItemInstanceEntity? SpawnItem(ItemType type, Vector3 position,
+            NodeRef nodeRef, int despawnTime, Scene scene)
+        {
+            return SpawnItem(type, position, nodeRef, scene, chance: null, despawnTime);
+        }
+
+        private static ItemInstanceEntity? SpawnItem(ItemType type, Vector3 position, NodeRef nodeRef,
+            Scene scene, uint? chance = null, int despawnTime = 0)
         {
             ItemInstanceEntity? item = null;
             if (type != ItemType.None && (!chance.HasValue || Rng.GetRandomInt2(100) < chance.Value))
             {
-                item = new ItemInstanceEntity(new ItemInstanceEntityData(position, type, despawnTime), scene);
+                item = new ItemInstanceEntity(new ItemInstanceEntityData(position, type, despawnTime), nodeRef, scene);
                 scene.AddEntity(item);
             }
             return item;

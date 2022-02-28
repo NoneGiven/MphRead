@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -142,6 +143,7 @@ namespace MphRead
 
         private float _frameTime = 0;
         private float _elapsedTime = 0;
+        private float _globalElapsedTime = 0;
         private ulong _frameCount = 0;
         private ulong _liveFrames = 0;
         private bool _frameAdvanceOn = false;
@@ -174,10 +176,11 @@ namespace MphRead
         public ulong FrameCount => _frameCount;
         public ulong LiveFrames => _liveFrames;
         public float ElapsedTime => _elapsedTime;
+        public float GlobalElapsedTime => _globalElapsedTime;
         public VolumeDisplay ShowVolumes => _showVolumes;
         public bool ShowForceFields => _showVolumes != VolumeDisplay.Portal;
         public float KillHeight => _killHeight;
-        public bool ScanVisor => _scanVisor;
+        public bool ScanVisor => _cameraMode == CameraMode.Player ? PlayerEntity.Main.ScanVisor : _scanVisor;
         public Vector3 Light1Vector => _light1Vector;
         public Vector3 Light1Color => _light1Color;
         public Vector3 Light2Vector => _light2Vector;
@@ -275,6 +278,7 @@ namespace MphRead
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
+            _inputMode = _cameraMode == CameraMode.Player ? InputMode.PlayerOnly : InputMode.CameraOnly;
             _roomId = room.RoomId;
         }
 
@@ -357,6 +361,11 @@ namespace MphRead
             return Room?.GetNodeRefByPosition(position) ?? NodeRef.None;
         }
 
+        public bool IsNodeRefVisible(NodeRef nodeRef)
+        {
+            return Room?.IsNodeRefVisible(nodeRef) ?? false;
+        }
+
         public void OnLoad()
         {
             GL.ClearColor(_clearColor);
@@ -388,6 +397,8 @@ namespace MphRead
                 }
             }
             OutputStart();
+            GC.Collect(generation: 2, GCCollectionMode.Forced, blocking: true, compacting: true);
+            GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
         }
 
         private int _frameBuffer = 0;
@@ -544,11 +555,21 @@ namespace MphRead
 
             _shaderLocations.FadeColor = GL.GetUniformLocation(_rttShaderProgramId, "fade_color");
             _shaderLocations.LayerAlpha = GL.GetUniformLocation(_rttShaderProgramId, "alpha");
+            _shaderLocations.UseMask = GL.GetUniformLocation(_rttShaderProgramId, "use_mask");
+            _shaderLocations.ViewWidth = GL.GetUniformLocation(_rttShaderProgramId, "view_width");
+            _shaderLocations.ViewHeight = GL.GetUniformLocation(_rttShaderProgramId, "view_height");
+            int texLocation = GL.GetUniformLocation(_rttShaderProgramId, "tex");
+            int maskLocation = GL.GetUniformLocation(_rttShaderProgramId, "mask");
+            GL.UseProgram(_rttShaderProgramId);
+            GL.Uniform1(texLocation, 0);
+            GL.Uniform1(maskLocation, 1);
 
             _shaderLocations.ShiftTable = GL.GetUniformLocation(_shiftShaderProgramId, "shift_table");
             _shaderLocations.ShiftIndex = GL.GetUniformLocation(_shiftShaderProgramId, "shift_idx");
             _shaderLocations.ShiftFactor = GL.GetUniformLocation(_shiftShaderProgramId, "shift_fac");
             _shaderLocations.LerpFactor = GL.GetUniformLocation(_shiftShaderProgramId, "lerp_fac");
+            _shaderLocations.WhiteoutTable = GL.GetUniformLocation(_shiftShaderProgramId, "white_table");
+            _shaderLocations.WhiteoutFactor = GL.GetUniformLocation(_shiftShaderProgramId, "white_fac");
 
             GL.UseProgram(_shiftShaderProgramId);
 
@@ -1031,8 +1052,19 @@ namespace MphRead
             _frameTime = 1 / 60f;
             if (ProcessFrame)
             {
-                _elapsedTime += _frameTime;
-                PlayerEntity.ProcessInput(_keyboardState, _mouseState);
+                _globalElapsedTime += _frameTime;
+                if (GameState.MatchState == MatchState.InProgress && !GameState.DialogPause)
+                {
+                    _elapsedTime += _frameTime;
+                }
+                if (_inputMode != InputMode.CameraOnly)
+                {
+                    PlayerEntity.ProcessInput(_keyboardState, _mouseState);
+                }
+                else
+                {
+                    PlayerEntity.Main.Controls.ClearAll();
+                }
             }
             OnKeyHeld();
             _singleParticleCount = 0;
@@ -1067,12 +1099,15 @@ namespace MphRead
             GetDrawItems();
             if (ProcessFrame)
             {
-                if (GameState.MatchState == MatchState.InProgress)
+                if (GameState.MatchState == MatchState.InProgress && !GameState.DialogPause)
                 {
                     ProcessMessageQueue();
                     _liveFrames++;
                 }
-                _frameCount++;
+                if (!GameState.DialogPause)
+                {
+                    _frameCount++;
+                }
                 GameState.UpdateTime(this);
             }
             _frameAdvanceLastFrame = _frameAdvanceOn;
@@ -1255,21 +1290,14 @@ namespace MphRead
             GL.Disable(EnableCap.StencilTest);
             GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
 
-            if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active))
+            if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
             {
-                if (ProcessFrame)
-                {
-                    PlayerEntity.Main.UpdateHud();
-                }
-                if (CameraMode == CameraMode.Player)
-                {
-                    SetHudLayerUniforms();
-                    PlayerEntity.Main.DrawHudModels();
-                    UnsetHudLayerUniforms();
-                }
+                SetHudLayerUniforms();
+                PlayerEntity.Main.DrawHudModels();
+                UnsetHudLayerUniforms();
             }
 
-            if (PlayerEntity.Main.HudDisruptedState != 0)
+            if (PlayerEntity.Main.HudDisruptedState != 0 || PlayerEntity.Main.HudWhiteoutState != -1)
             {
                 float div = _elapsedTime / (1 / 30f);
                 int index = (int)div;
@@ -1278,12 +1306,17 @@ namespace MphRead
                 GL.Uniform1(_shaderLocations.ShiftFactor, PlayerEntity.Main.HudDisruptionFactor);
                 GL.Uniform1(_shaderLocations.ShiftIndex, index);
                 GL.Uniform1(_shaderLocations.LerpFactor, factor);
+                GL.Uniform1(_shaderLocations.WhiteoutFactor, PlayerEntity.Main.HudWhiteoutFactor);
+                if (PlayerEntity.Main.HudWhiteoutFactor != 0)
+                {
+                    GL.Uniform1(_shaderLocations.WhiteoutTable, 192, PlayerEntity.HudWhiteoutTable);
+                }
             }
             else
             {
                 GL.UseProgram(_rttShaderProgramId);
-                GL.Uniform1(_shaderLocations.LayerAlpha, 1f);
             }
+            GL.Uniform1(_shaderLocations.LayerAlpha, 1f);
             GL.Uniform4(_shaderLocations.FadeColor, Vector4.Zero);
 
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
@@ -1309,17 +1342,34 @@ namespace MphRead
 
             GL.BindTexture(TextureTarget.Texture2D, 0);
 
-            if (PlayerEntity.Main.HudDisruptedState != 0)
+            if (PlayerEntity.Main.HudDisruptedState != 0 || PlayerEntity.Main.HudWhiteoutState != -1)
             {
                 GL.UseProgram(_rttShaderProgramId);
             }
+            GL.Disable(EnableCap.CullFace);
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
             {
                 DrawHudLayer(Layer4Info); // ice layer
                 DrawHudLayer(Layer3Info); // helmet back
                 DrawHudLayer(Layer1Info); // visor
                 DrawHudLayer(Layer2Info); // helmet front
+                DrawHudLayer(Layer5Info); // dialog overlay
+                if (Layer1Info.MaskId != -1)
+                {
+                    GL.ActiveTexture(TextureUnit.Texture1);
+                    GL.BindTexture(TextureTarget.Texture2D, Layer1Info.MaskId);
+                    GL.ActiveTexture(TextureUnit.Texture0);
+                    GL.Uniform1(_shaderLocations.ViewWidth, (float)Size.X);
+                    GL.Uniform1(_shaderLocations.ViewHeight, (float)Size.Y);
+                }
                 PlayerEntity.Main.DrawHudObjects();
+                GL.Uniform1(_shaderLocations.UseMask, 0);
+                if (Layer1Info.MaskId != -1)
+                {
+                    GL.ActiveTexture(TextureUnit.Texture1);
+                    GL.BindTexture(TextureTarget.Texture2D, 0);
+                    GL.ActiveTexture(TextureUnit.Texture0);
+                }
                 if (_fadeType != FadeType.None)
                 {
                     float percent = _fadePercent;
@@ -1349,6 +1399,11 @@ namespace MphRead
             }
             GL.Enable(EnableCap.DepthTest);
             GL.Disable(EnableCap.Blend);
+            if (_faceCulling)
+            {
+                GL.Enable(EnableCap.CullFace);
+                GL.CullFace(CullFaceMode.Back);
+            }
             return true;
         }
 
@@ -2466,21 +2521,41 @@ namespace MphRead
 
         private void UpdateScene()
         {
-            PlayerEntity.Main.UpdateTimedSounds();
-            PlayerEntity.Main.ProcessHudMessageQueue();
-            for (int i = 0; i < _entities.Count; i++)
+            bool playerActive = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active);
+            if (!GameState.DialogPause)
             {
-                EntityBase entity = _entities[i];
-                if (!entity.Process())
+                if (playerActive)
                 {
-                    SendMessage(Message.Destroyed, entity, null, 0, 0, delay: 1);
-                    // todo: need to handle destroying vs. unloading etc.
-                    entity.Destroy();
-                    _destroyedEntities.Add(entity);
+                    PlayerEntity.Main.UpdateTimedSounds();
+                    PlayerEntity.Main.ProcessHudMessageQueue();
                 }
+                for (int i = 0; i < _entities.Count; i++)
+                {
+                    EntityBase entity = _entities[i];
+                    if (!entity.Process())
+                    {
+                        SendMessage(Message.Destroyed, entity, null, 0, 0, delay: 1);
+                        // todo: need to handle destroying vs. unloading etc.
+                        entity.Destroy();
+                        _destroyedEntities.Add(entity);
+                    }
+                }
+                if (playerActive)
+                {
+                    PlayerEntity.Main.ProcessModeHud();
+                    PlayerEntity.Main.UpdateHud();
+                }
+                GameState.UpdateFrame(this);
+                GameState.UpdateState(this);
             }
-            PlayerEntity.Main.ProcessModeHud();
-            GameState.UpdateState(this);
+            else if (!Multiplayer)
+            {
+                if (playerActive)
+                {
+                    PlayerEntity.Main.UpdateDialogs();
+                }
+                GameState.UpdateFrame(this);
+            }
             Sound.Sfx.Update(_frameTime);
         }
 
@@ -2529,7 +2604,7 @@ namespace MphRead
                 RemoveEntity(entity);
             }
 
-            if (ProcessFrame && GameState.MatchState == MatchState.InProgress)
+            if (ProcessFrame && GameState.MatchState == MatchState.InProgress && !GameState.DialogPause)
             {
                 ProcessEffects();
             }
@@ -2576,7 +2651,10 @@ namespace MphRead
             UseRoomLights();
             GL.Uniform1(_shaderLocations.UseFog, _hasFog && _showFog ? 1 : 0);
             GL.Uniform1(_shaderLocations.ShowColors, _showColors ? 1 : 0);
-            UpdateFade();
+            if (ProcessFrame)
+            {
+                UpdateFade();
+            }
         }
 
         private void UseRoomLights()
@@ -2643,7 +2721,7 @@ namespace MphRead
                 _fadeColor = 0;
                 _fadeIn = false;
             }
-            _fadeStart = _elapsedTime;
+            _fadeStart = _globalElapsedTime;
             _fadeLength = length;
             _exitAfterFade = exitAfterFade;
         }
@@ -2653,7 +2731,7 @@ namespace MphRead
             Color4 clearColor = _clearColor;
             if (_fadeType != FadeType.None)
             {
-                _fadePercent = (_elapsedTime - _fadeStart) / _fadeLength;
+                _fadePercent = (_globalElapsedTime - _fadeStart) / _fadeLength;
                 if (_fadePercent >= 1)
                 {
                     _fadePercent = 1;
@@ -2661,6 +2739,12 @@ namespace MphRead
                 }
             }
             GL.ClearColor(_clearColor);
+        }
+
+        public void QuitGame()
+        {
+            DoCleanup();
+            _close.Invoke();
         }
 
         public void DoCleanup()
@@ -3062,6 +3146,7 @@ namespace MphRead
         public LayerInfo Layer2Info { get; } = new LayerInfo();
         public LayerInfo Layer3Info { get; } = new LayerInfo();
         public LayerInfo Layer4Info { get; } = new LayerInfo();
+        public LayerInfo Layer5Info { get; } = new LayerInfo();
 
         private void SetHudLayerUniforms()
         {
@@ -3161,6 +3246,7 @@ namespace MphRead
             float height = inst.Height;
             bool center = inst.Center;
             GL.Uniform1(_shaderLocations.LayerAlpha, inst.Alpha);
+            GL.Uniform1(_shaderLocations.UseMask, inst.UseMask ? 1 : 0);
             GL.BindTexture(TextureTarget.Texture2D, inst.BindingId);
             int minParameter = (int)TextureMinFilter.Nearest;
             int magParameter = (int)TextureMagFilter.Nearest;
@@ -3199,6 +3285,14 @@ namespace MphRead
             rightPos /= (viewWidth / 2);
             topPos /= (viewHeight / 2);
             bottomPos /= (viewHeight / 2);
+            if (inst.FlipHorizontal)
+            {
+                (rightPos, leftPos) = (leftPos, rightPos);
+            }
+            if (inst.FlipVertical)
+            {
+                (bottomPos, topPos) = (topPos, bottomPos);
+            }
             GL.Begin(PrimitiveType.TriangleStrip);
             // top right
             GL.TexCoord3(1f, 0f, 0f);
@@ -3416,6 +3510,7 @@ namespace MphRead
         public void LookAt(Vector3 target)
         {
             _cameraMode = CameraMode.Roam;
+            _inputMode = InputMode.CameraOnly;
             _cameraPosition = target.AddZ(5);
             _cameraFacing = -Vector3.UnitZ;
             _cameraUp = Vector3.UnitY;
@@ -3424,12 +3519,15 @@ namespace MphRead
 
         public void OnMouseClick(bool down)
         {
-            _leftMouse = down;
+            if (_inputMode != InputMode.PlayerOnly)
+            {
+                _leftMouse = down;
+            }
         }
 
         public void OnMouseMove(float deltaX, float deltaY)
         {
-            if (_leftMouse && AllowCameraMovement)
+            if (_leftMouse && AllowCameraMovement && _inputMode != InputMode.PlayerOnly)
             {
                 if (_cameraMode == CameraMode.Pivot)
                 {
@@ -3447,7 +3545,7 @@ namespace MphRead
 
         public void OnMouseWheel(float offsetY)
         {
-            if (_cameraMode == CameraMode.Pivot && AllowCameraMovement)
+            if (_cameraMode == CameraMode.Pivot && AllowCameraMovement && _inputMode != InputMode.PlayerOnly)
             {
                 _pivotDistance += offsetY / -1.5f;
                 if (_pivotDistance < 0)
@@ -3472,6 +3570,77 @@ namespace MphRead
         public void OnKeyDown(KeyboardKeyEventArgs e)
         {
             if (Selection.OnKeyDown(e, this))
+            {
+                return;
+            }
+            if (e.Key == Keys.R)
+            {
+                if (e.Control && e.Shift)
+                {
+                    _recording = !_recording;
+                    _framesRecorded = 0;
+                }
+                else if (AllowCameraMovement && _inputMode != InputMode.PlayerOnly)
+                {
+                    ResetCamera();
+                }
+            }
+            if (e.Key == Keys.P)
+            {
+                if (e.Alt)
+                {
+                    UpdatePointModule();
+                }
+                else if (e.Shift)
+                {
+                    if (_cameraMode != CameraMode.Player)
+                    {
+                        if (_inputMode == InputMode.All)
+                        {
+                            _inputMode = InputMode.PlayerOnly;
+                        }
+                        else if (_inputMode == InputMode.PlayerOnly)
+                        {
+                            _inputMode = InputMode.CameraOnly;
+                        }
+                        else
+                        {
+                            _inputMode = InputMode.All;
+                        }
+                    }
+                }
+                else
+                {
+                    if (_cameraMode == CameraMode.Pivot)
+                    {
+                        _cameraMode = CameraMode.Roam;
+                        _inputMode = InputMode.CameraOnly;
+                    }
+                    else if (_cameraMode == CameraMode.Roam)
+                    {
+                        _cameraMode = CameraMode.Player;
+                        _inputMode = InputMode.PlayerOnly;
+                    }
+                    else
+                    {
+                        _cameraMode = CameraMode.Pivot;
+                        _inputMode = InputMode.CameraOnly;
+                    }
+                    ResetCamera();
+                }
+            }
+            else if (e.Key == Keys.Enter)
+            {
+                _frameAdvanceOn = !_frameAdvanceOn;
+            }
+            else if (e.Key == Keys.Period)
+            {
+                if (_frameAdvanceOn)
+                {
+                    _advanceOneFrame = true;
+                }
+            }
+            if (_inputMode == InputMode.PlayerOnly)
             {
                 return;
             }
@@ -3791,55 +3960,9 @@ namespace MphRead
             {
                 _showNodeData = !_showNodeData;
             }
-            else if (e.Key == Keys.E && !e.Alt)
+            else if (e.Key == Keys.E && e.Shift && !e.Alt)
             {
                 _scanVisor = !_scanVisor;
-            }
-            else if (e.Key == Keys.R)
-            {
-                if (e.Control && e.Shift)
-                {
-                    _recording = !_recording;
-                    _framesRecorded = 0;
-                }
-                else if (AllowCameraMovement)
-                {
-                    ResetCamera();
-                }
-            }
-            else if (e.Key == Keys.P)
-            {
-                if (e.Alt)
-                {
-                    UpdatePointModule();
-                }
-                else
-                {
-                    if (_cameraMode == CameraMode.Pivot)
-                    {
-                        _cameraMode = CameraMode.Roam;
-                    }
-                    else if (_cameraMode == CameraMode.Roam)
-                    {
-                        _cameraMode = CameraMode.Player;
-                    }
-                    else
-                    {
-                        _cameraMode = CameraMode.Pivot;
-                    }
-                    ResetCamera();
-                }
-            }
-            else if (e.Key == Keys.Enter)
-            {
-                _frameAdvanceOn = !_frameAdvanceOn;
-            }
-            else if (e.Key == Keys.Period)
-            {
-                if (_frameAdvanceOn)
-                {
-                    _advanceOneFrame = true;
-                }
             }
             else if (e.Control && e.Key == Keys.O)
             {
@@ -3854,6 +3977,15 @@ namespace MphRead
             }
         }
 
+        private enum InputMode
+        {
+            All,
+            PlayerOnly,
+            CameraOnly
+        }
+
+        private InputMode _inputMode = InputMode.All;
+
         private void OnKeyHeld()
         {
             if (_keyboardState.IsKeyDown(Keys.LeftAlt) || _keyboardState.IsKeyDown(Keys.RightAlt))
@@ -3861,7 +3993,7 @@ namespace MphRead
                 Selection.OnKeyHeld(_keyboardState);
                 return;
             }
-            if (!AllowCameraMovement)
+            if (!AllowCameraMovement || _inputMode == InputMode.PlayerOnly)
             {
                 return;
             }
@@ -4175,6 +4307,12 @@ namespace MphRead
                 1 => "placeholders",
                 _ => "off"
             };
+            string input = _inputMode switch
+            {
+                InputMode.PlayerOnly => "player only",
+                InputMode.CameraOnly => "camera only",
+                _ => "all",
+            };
             _sb.AppendLine(" - Hold left mouse button or use arrow keys to rotate");
             _sb.AppendLine(" - Hold Shift to move the camera faster");
             _sb.AppendLine($" - T toggles texturing ({OnOff(_showTextures)})");
@@ -4184,10 +4322,11 @@ namespace MphRead
             _sb.AppendLine($" - F toggles texture filtering ({OnOff(_textureFiltering)})");
             _sb.AppendLine($" - L toggles lighting ({OnOff(_lighting)})");
             _sb.AppendLine($" - G toggles fog ({OnOff(_showFog)})");
-            _sb.AppendLine($" - E toggles Scan Visor ({OnOff(_scanVisor)})");
+            _sb.AppendLine($" - Shift+E toggles Scan Visor ({OnOff(_scanVisor)})");
             _sb.AppendLine($" - I toggles invisible entities ({invisible})");
             _sb.AppendLine($" - Z toggles volume display ({volume})");
             _sb.AppendLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
+            _sb.AppendLine($" - Shift+P switches input mode ({input})");
             _sb.AppendLine(" - R resets the camera");
             _sb.AppendLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
             _sb.AppendLine(" - Ctrl+U then enter \"model_id\" to unload");
@@ -4508,11 +4647,13 @@ namespace MphRead
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            CursorGrabbed = Scene.CameraMode == CameraMode.Player && !Scene.FrameAdvance && !Scene.ShowCursor;
+            CursorGrabbed = Scene.CameraMode == CameraMode.Player
+                && !Scene.FrameAdvance && !Scene.ShowCursor && !GameState.DialogPause;
             if (!CursorGrabbed)
             {
                 CursorVisible = true;
             }
+            GameState.ApplyPause();
             Scene.OnUpdateFrame();
             if (!Scene.OnRenderFrame())
             {

@@ -1,8 +1,11 @@
+using MphRead.Formats.Culling;
+
 namespace MphRead.Entities.Enemies
 {
     public class Enemy47Entity : Enemy46Entity
     {
-        public Enemy47Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        public Enemy47Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(data, nodeRef, scene)
         {
         }
 

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Sound;
+using MphRead.Text;
 
 namespace MphRead
 {
@@ -17,6 +18,9 @@ namespace MphRead
 
     public static class GameState
     {
+        public static bool MenuPause { get; private set; }
+        public static bool DialogPause { get; private set; }
+        public static int EscapeState { get; set; }
         public static MatchState MatchState { get; set; } = MatchState.InProgress;
         public static int ActivePlayers { get; set; } = 0;
         public static string[] Nicknames { get; } = new string[4] { "Player1", "Player2", "Player3", "Player4" };
@@ -67,6 +71,54 @@ namespace MphRead
         public static int[] PrimesKilled { get; } = new int[4]; // field268 in-game
 
         public static Action<Scene> ModeState { get; private set; } = ModeStateAdventure;
+        private static bool _pausingDialog = false;
+        private static bool _unpausingDialog = false;
+        private static bool _pausingMenu = false;
+        private static bool _unpausingMenu = false;
+
+        public static void PauseMenu()
+        {
+            _pausingMenu = true;
+        }
+
+        public static void UnpauseMenu()
+        {
+            _unpausingMenu = true;
+        }
+
+        public static void PauseDialog()
+        {
+            _pausingDialog = true;
+        }
+
+        public static void UnpauseDialog()
+        {
+            _unpausingDialog = true;
+        }
+
+        public static void ApplyPause()
+        {
+            if (_pausingDialog)
+            {
+                DialogPause = true;
+            }
+            if (_unpausingDialog)
+            {
+                DialogPause = false;
+            }
+            if (_pausingMenu)
+            {
+                MenuPause = true;
+            }
+            if (_unpausingMenu)
+            {
+                MenuPause = false;
+            }
+            _pausingDialog = false;
+            _unpausingDialog = false;
+            _pausingMenu = false;
+            _unpausingMenu = false;
+        }
 
         public static void Setup(Scene scene)
         {
@@ -317,9 +369,52 @@ namespace MphRead
             }
         }
 
+        private static bool _oublietteUnlocked = false; // skdebug
+        private static bool _hasAllOctoliths = false; // skdebug
+
         public static void ModeStateAdventure(Scene scene)
         {
-            // todo: update save, oubliette stuff, update checkpoints, record boss times
+            // todo: update save
+            if (!_oublietteUnlocked)
+            {
+                for (int i = 0; i < scene.MessageQueue.Count; i++)
+                {
+                    MessageInfo message = scene.MessageQueue[i];
+                    if (message.Message == Message.UnlockOubliette && message.ExecuteFrame == scene.FrameCount)
+                    {
+                        if (_hasAllOctoliths)
+                        {
+                            // todo: play movie and defer dialog
+                            _oublietteUnlocked = true;
+                            // GUNSHIP TRANSMISSION severe timefield disruption detected in the vicinity of the ALIMBIC CLUSTER.
+                            PlayerEntity.Main.ShowDialog(DialogType.Okay, messageId: 43);
+                        }
+                        else
+                        {
+                            for (int j = 0; j < scene.Entities.Count; j++)
+                            {
+                                EntityBase entity = scene.Entities[j];
+                                if (entity.Type == EntityType.CameraSequence)
+                                {
+                                    scene.SendMessage(Message.Activate, null!, entity, param1: 0, param2: 0);
+                                    _oublietteUnlocked = true; // skdebug
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            for (int i = 0; i < scene.MessageQueue.Count; i++)
+            {
+                MessageInfo message = scene.MessageQueue[i];
+                if (message.Message == Message.Checkpoint && message.ExecuteFrame == scene.FrameCount)
+                {
+                    // todo: update checkpoint
+                }
+            }
+            // todo: game timer/boss record stuff
         }
 
         private static void EndIfPointGoalReached()
@@ -443,6 +538,163 @@ namespace MphRead
                 if (Time[PrimeHunter] >= TimeGoal)
                 {
                     MatchTime = 0;
+                }
+            }
+        }
+
+        private static bool _shownOctolithDialog = false;
+        private static bool _whiteoutStarted = false;
+        private static bool _gameOverShown = false;
+
+        public static void UpdateFrame(Scene scene)
+        {
+            PromptType prompt = PlayerEntity.Main.DialogPromptType;
+            ConfirmState confirm = PlayerEntity.Main.DialogConfirmState;
+            if (prompt != PromptType.Any && confirm != ConfirmState.Okay)
+            {
+                Sfx.Instance.StopFreeSfxScripts();
+                if (confirm == ConfirmState.Yes)
+                {
+                    if (prompt == PromptType.ShipHatch)
+                    {
+                        // yes to ship hatch (enter)
+                        // todo: update story save
+                        scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, exitAfterFade: true);
+                        // mustodo: stop music
+                        // todo: fade SFX
+                        Sfx.Instance.PlaySample((int)SfxId.RETURN_TO_SHIP_YES, source: null, loop: false,
+                            noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                    }
+                    else if (prompt == PromptType.GameOver)
+                    {
+                        // yes to game over (continue)
+                        PlayerEntity.Main.RestartLongSfx(); // skdebug
+                        scene.SetFade(FadeType.FadeOutInWhite, length: 10 / 30f, overwrite: true); // skdebug
+                        PlayerEntity.Main.RespawnTimer = 10 * 2; // skdebug
+                        // todo: fade out and reload room
+                        Sfx.Instance.PlaySample((int)SfxId.MENU_CONFIRM, source: null, loop: false,
+                            noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                        UnpauseDialog();
+                    }
+                }
+                else if (prompt == PromptType.GameOver)
+                {
+                    // no to game over (quit)
+                    scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, exitAfterFade: true);
+                    // mustodo: stop music
+                    Sfx.Instance.PlaySample((int)SfxId.QUIT_GAME, source: null, loop: false,
+                        noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                }
+                else
+                {
+                    // no to ship hatch (resume)
+                    PlayerEntity.Main.RestartLongSfx();
+                    Sfx.Instance.PlaySample((int)SfxId.RETURN_TO_SHIP_NO, source: null, loop: false,
+                        noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                    UnpauseDialog();
+                }
+                PlayerEntity.Main.DialogPromptType = PromptType.Any;
+                PlayerEntity.Main.DialogConfirmState = ConfirmState.Okay;
+            }
+            if (!DialogPause)
+            {
+                if (PlayerEntity.Main.Health > 0)
+                {
+                    for (int i = 0; i < scene.MessageQueue.Count; i++)
+                    {
+                        MessageInfo message = scene.MessageQueue[i];
+                        if (message.Message == Message.ShipHatch && message.ExecuteFrame == scene.FrameCount)
+                        {
+                            PlayerEntity.Main.DialogPromptType = PromptType.ShipHatch;
+                            // todo: set checkpoint and update story save
+                            // HUNTER GUNSHIP enter your ship?
+                            PlayerEntity.Main.ShowDialog(DialogType.YesNo, messageId: 1);
+                            Sfx.Instance.StopFreeSfxScripts();
+                            Sfx.Instance.PlayScript((int)SfxId.RETURN_TO_SHIP_SCR, source: null,
+                                noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                        }
+                    }
+                    // diagtodo: escape start, escape cancel
+                    for (int i = 0; i < scene.MessageQueue.Count; i++)
+                    {
+                        MessageInfo message = scene.MessageQueue[i];
+                        if (message.Message == Message.ShowPrompt && message.ExecuteFrame == scene.FrameCount)
+                        {
+                            int promptType = (int)message.Param2;
+                            if (promptType == 0)
+                            {
+                                PlayerEntity.Main.ShowDialog(DialogType.Okay, messageId: (int)message.Param1);
+                            }
+                            else if (promptType == 1)
+                            {
+                                PlayerEntity.Main.ShowDialog(DialogType.YesNo, messageId: (int)message.Param1);
+                            }
+                        }
+                    }
+                }
+                for (int i = 0; i < scene.MessageQueue.Count; i++)
+                {
+                    MessageInfo message = scene.MessageQueue[i];
+                    if (message.Message == Message.ShowWarning && message.ExecuteFrame == scene.FrameCount)
+                    {
+                        int messageId = (int)message.Param1;
+                        int duration = (int)message.Param2;
+                        if (duration == 0)
+                        {
+                            duration = 15;
+                        }
+                        PlayerEntity.Main.ShowDialog(DialogType.Overlay, messageId, param1: duration, param2: 1);
+                    }
+                }
+                for (int i = 0; i < scene.MessageQueue.Count; i++)
+                {
+                    MessageInfo message = scene.MessageQueue[i];
+                    if (message.Message == Message.ShowOverlay && message.ExecuteFrame == scene.FrameCount)
+                    {
+                        int messageId = (int)message.Param1;
+                        int duration = (int)message.Param2;
+                        PlayerEntity.Main.ShowDialog(DialogType.Overlay, messageId, param1: duration, param2: 0);
+                    }
+                }
+            }
+            float countdown = PlayerEntity.Main.DeathCountdown;
+            if (!scene.Multiplayer && PlayerEntity.Main.Health == 0 && countdown > 0)
+            {
+                if (countdown >= 145 / 30f)
+                {
+                    _shownOctolithDialog = false;
+                    _whiteoutStarted = false;
+                    _gameOverShown = false;
+                    if (EscapeState == 2)
+                    {
+                        // EMERGENCY security system activated.
+                        PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 120, param1: 69, param2: 1);
+                    }
+                    else
+                    {
+                        // EMERGENCY POWER SUIT energy is depleted.
+                        PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 116, param1: 45, param2: 1);
+                    }
+                }
+                else if (countdown <= 1 / 30f && !_gameOverShown)
+                {
+                    PlayerEntity.Main.CameraInfo.SetShake(0);
+                    //ENERGY DEPLETED continue from last checkpoint?
+                    PlayerEntity.Main.DialogPromptType = PromptType.GameOver;
+                    PlayerEntity.Main.ShowDialog(DialogType.YesNo, messageId: 2);
+                    _gameOverShown = true;
+                }
+                else if (countdown <= 50 / 30f && !_whiteoutStarted)
+                {
+                    PlayerEntity.Main.BeginWhiteout();
+                    _whiteoutStarted = true;
+                }
+                else if (countdown <= 90 / 30f && !_shownOctolithDialog)
+                {
+                    // todo: lost octolith
+                    // HUNTER HAS TAKEN AN OCTOLITH
+                    //PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 117, param1: 90, param2: 1);
+                    _shownOctolithDialog = true;
                 }
             }
         }
@@ -797,8 +1049,12 @@ namespace MphRead
             return 0;
         }
 
+        public static StorySave StorySave { get; private set; } = null!;
+
         public static void Reset()
         {
+            // todo: persist story saves
+            StorySave = new StorySave();
             MatchState = MatchState.InProgress;
             ActivePlayers = 0;
             for (int i = 0; i < 4; i++)
@@ -846,6 +1102,49 @@ namespace MphRead
             MatchTime = -1;
             PlayerEntity.Reset();
             CameraSequence.Current = null;
+            MenuPause = false;
+            DialogPause = false;
+            _pausingDialog = false;
+            _unpausingDialog = false;
+            _pausingMenu = false;
+            _unpausingMenu = false;
+            EscapeState = 0;
+            _oublietteUnlocked = false;
+        }
+    }
+
+    public class StorySave
+    {
+        public byte[] Logbook { get; } = new byte[68];
+        public int ScanCount { get; set; }
+        public int EquipmentCount { get; set; }
+
+        public void UpdateLogbook(int scanId)
+        {
+            Debug.Assert(scanId >= 0 && scanId < 68 * 8);
+            int index = scanId / 8;
+            byte bit = (byte)(1 << (scanId % 8));
+            if ((Logbook[index] & bit) == 0)
+            {
+                Logbook[index] |= bit;
+                int category = Strings.GetScanEntryCategory(scanId);
+                if (category < 3)
+                {
+                    ScanCount++;
+                }
+                else if (category == 3)
+                {
+                    EquipmentCount++;
+                }
+            }
+        }
+
+        public bool CheckLogbook(int scanId)
+        {
+            Debug.Assert(scanId >= 0 && scanId < 68 * 8);
+            int index = scanId / 8;
+            byte bit = (byte)(1 << (scanId % 8));
+            return (Logbook[index] & bit) != 0;
         }
     }
 }

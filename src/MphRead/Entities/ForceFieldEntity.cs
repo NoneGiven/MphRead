@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MphRead.Entities.Enemies;
 using MphRead.Formats;
 using MphRead.Sound;
@@ -28,7 +29,13 @@ namespace MphRead.Entities
         public new bool Active => _active;
         public Enemy49Entity? Lock => _lock;
 
-        public ForceFieldEntity(ForceFieldEntityData data, Scene scene) : base(EntityType.ForceField, scene)
+        private static readonly IReadOnlyList<int> _scanIds = new int[10]
+        {
+            0, 294, 295, 291, 290, 292, 293, 296, 0, 267
+        };
+
+        public ForceFieldEntity(ForceFieldEntityData data, string nodeName, Scene scene)
+            : base(EntityType.ForceField, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -44,7 +51,7 @@ namespace MphRead.Entities
             _active = data.Active != 0;
             if (_active)
             {
-                // todo: scan ID
+                _scanId = _scanIds[(int)data.Type];
             }
             else
             {
@@ -62,7 +69,7 @@ namespace MphRead.Entities
             base.Initialize();
             if (_active && _data.Type != 9)
             {
-                _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock, _scene) as Enemy49Entity;
+                _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock, NodeRef, _scene) as Enemy49Entity;
                 if (_lock != null)
                 {
                     _scene.AddEntity(_lock);
@@ -117,7 +124,7 @@ namespace MphRead.Entities
                     // todo: room state
                 }
                 _active = false;
-                // todo: scan ID
+                _scanId = 0;
             }
             else if (info.Message == Message.Lock)
             {
@@ -127,15 +134,32 @@ namespace MphRead.Entities
                     _soundSource.PlayFreeSfx(SfxId.FORCEFIELD_APPEAR);
                 }
                 _active = true;
-                // todo: scan ID, room state
+                if (_data.Type == 9)
+                {
+                    // bugfix?: this is a different result than when first created
+                    _scanId = 0;
+                }
+                else
+                {
+                    _scanId = _scanIds[(int)_data.Type];
+                }
+                // todo: room state
                 if (_lock == null && _data.Type != 9)
                 {
-                    _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock, _scene) as Enemy49Entity;
+                    _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock, NodeRef, _scene) as Enemy49Entity;
                     if (_lock != null)
                     {
                         _scene.AddEntity(_lock);
                     }
                 }
+            }
+        }
+
+        public override void GetDrawInfo()
+        {
+            if (Alpha > 0 && IsVisible(NodeRef))
+            {
+                base.GetDrawInfo();
             }
         }
     }

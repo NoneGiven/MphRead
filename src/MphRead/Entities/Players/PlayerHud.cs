@@ -28,6 +28,7 @@ namespace MphRead.Entities
         private HudObjectInstance _boostInst = null!;
         private HudObjectInstance _bombInst = null!;
         private HudMeter _enemyHealthMeter = null!;
+        private HudMeter _scanProgressMeter = null!;
 
         private HudObjectInstance _octolithInst = null!;
         private HudObjectInstance _primeHunterInst = null!;
@@ -45,20 +46,40 @@ namespace MphRead.Entities
         private HudObjectInstance _starsInst = null!;
         private readonly HudObjectInstance[] _hunterInsts = new HudObjectInstance[8];
 
+        private HudObjectInstance _messageBoxInst = null!;
+        private HudObjectInstance _messageSpacerInst = null!;
+        private HudObjectInstance _dialogButtonInst = null!;
+        private HudObjectInstance _dialogArrowInst = null!;
+        private HudObjectInstance _dialogCrystalInst = null!;
+        private HudObjectInstance _dialogPickupInst = null!;
+        private HudObjectInstance _dialogFrameInst = null!;
+
         private ModelInstance _filterModel = null!;
         private bool _showScoreboard = false;
         private int _iceLayerBindingId = -1;
         private int _helmetBindingId = -1;
         private int _helmetDropBindingId = -1;
-        private int _visorBindingId = -1; // todo: support other visor views
+        private int _visorBindingId = -1;
+        private int _scanBindingId = -1;
+        private readonly int[] _dialogBindingIds = new int[5] { -1, -1, -1, -1, -1 };
+
+        private IReadOnlyList<ColorRgba> _textPaletteData = null!;
+        private IReadOnlyList<ColorRgba> _dialogPaletteData = null!;
 
         public void SetUpHud()
         {
-            _iceLayerBindingId = HudInfo.CharMapToTexture(HudElements.IceLayer,
+            (_iceLayerBindingId, _) = HudInfo.CharMapToTexture(HudElements.IceLayer,
                 startX: 16, startY: 0, tilesX: 32, tilesY: 32, _scene);
-            _helmetBindingId = HudInfo.CharMapToTexture(_hudObjects.Helmet, _scene);
-            _helmetDropBindingId = HudInfo.CharMapToTexture(_hudObjects.HelmetDrop, _scene);
-            _visorBindingId = HudInfo.CharMapToTexture(_hudObjects.Visor, startX: 0, startY: 0, tilesX: 0, tilesY: 32, _scene);
+            (_helmetBindingId, _) = HudInfo.CharMapToTexture(_hudObjects.Helmet, _scene);
+            (_helmetDropBindingId, _) = HudInfo.CharMapToTexture(_hudObjects.HelmetDrop, _scene);
+            (_visorBindingId, IReadOnlyList<ushort>? visorPal) = HudInfo.CharMapToTexture(_hudObjects.Visor,
+                startX: 0, startY: 0, tilesX: 0, tilesY: 32, _scene);
+            if (Hunter == Hunter.Samus)
+            {
+                visorPal = null;
+            }
+            (_scanBindingId, _) = HudInfo.CharMapToTexture(_hudObjects.ScanVisor, startX: 0, startY: 96,
+                tilesX: 0, tilesY: 32, _scene, visorPal);
             // todo: only load what needs to be loaded for the mode
             _filterModel = Read.GetModelInstance("filter");
             _scene.LoadModel(_filterModel.Model);
@@ -148,6 +169,11 @@ namespace MphRead.Entities
             _healthbarSubMeter.BarInst.SetCharacterData(healthbarSub.CharacterData, _scene);
             _healthbarSubMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
             _healthbarSubMeter.BarInst.Enabled = true;
+            HudObject samusSubBar = healthbarSub;
+            if (Hunter != Hunter.Samus)
+            {
+                samusSubBar = HudInfo.GetHudObject(HudElements.HunterObjects[(int)Hunter.Samus].HealthBarB);
+            }
             if (_scene.Multiplayer)
             {
                 HudObject damageBar = HudInfo.GetHudObject(_hudObjects.DamageBar);
@@ -160,8 +186,8 @@ namespace MphRead.Entities
             else
             {
                 _enemyHealthMeter = HudElements.EnemyHealthbar;
-                _enemyHealthMeter.BarInst = new HudObjectInstance(healthbarSub.Width, healthbarSub.Height);
-                _enemyHealthMeter.BarInst.SetCharacterData(healthbarSub.CharacterData, _scene);
+                _enemyHealthMeter.BarInst = new HudObjectInstance(samusSubBar.Width, samusSubBar.Height);
+                _enemyHealthMeter.BarInst.SetCharacterData(samusSubBar.CharacterData, _scene);
                 _enemyHealthMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
                 _enemyHealthMeter.BarInst.Enabled = true;
             }
@@ -186,6 +212,7 @@ namespace MphRead.Entities
             _ammoBarMeter.BarInst = new HudObjectInstance(ammoBar.Width, ammoBar.Height);
             _ammoBarMeter.BarInst.SetCharacterData(ammoBar.CharacterData, _scene);
             _ammoBarMeter.BarInst.SetPaletteData(ammoBar.PaletteData, _scene);
+            _textPaletteData = ammoBar.PaletteData;
             HudObject weaponIcon = HudInfo.GetHudObject(_hudObjects.WeaponIcon);
             _weaponIconInst = new HudObjectInstance(weaponIcon.Width, weaponIcon.Height);
             _weaponIconInst.SetCharacterData(weaponIcon.CharacterData, _scene);
@@ -266,6 +293,99 @@ namespace MphRead.Entities
             {
                 LoadModeRules();
             }
+            else
+            {
+                _scanCornerObj = HudInfo.GetHudObject(HudElements.ScanCorner);
+                _scanCornerSmallObj = HudInfo.GetHudObject(HudElements.ScanCornerSmall);
+                _scanCornerInst = new HudObjectInstance(_scanCornerObj.Width, _scanCornerObj.Height);
+                _scanCornerInst.SetCharacterData(_scanCornerObj.CharacterData, _scene);
+                _scanCornerInst.Enabled = true;
+                HudObject lineHoriz = HudInfo.GetHudObject(HudElements.ScanLineHoriz);
+                _scanLineHorizInst = new HudObjectInstance(lineHoriz.Width, lineHoriz.Height);
+                _scanLineHorizInst.SetCharacterData(lineHoriz.CharacterData, _scene);
+                _scanLineHorizInst.Enabled = true;
+                HudObject lineVert = HudInfo.GetHudObject(HudElements.ScanLineVert);
+                _scanLineVertInst = new HudObjectInstance(lineVert.Width, lineVert.Height);
+                _scanLineVertInst.SetCharacterData(lineVert.CharacterData, _scene);
+                _scanLineVertInst.Enabled = true;
+                if (Hunter == Hunter.Samus)
+                {
+                    _scanCornerInst.SetPaletteData(_scanCornerObj.PaletteData, _scene);
+                    _scanLineHorizInst.SetPaletteData(lineHoriz.PaletteData, _scene);
+                    _scanLineVertInst.SetPaletteData(lineVert.PaletteData, _scene);
+                }
+                else
+                {
+                    _scanCornerInst.SetPaletteData(_targetCircleObj.PaletteData, _scene);
+                    _scanLineHorizInst.SetPaletteData(_targetCircleObj.PaletteData, _scene);
+                    _scanLineVertInst.SetPaletteData(_targetCircleObj.PaletteData, _scene);
+                }
+                for (int i = 0; i < _scanIconInsts.Length; i++)
+                {
+                    HudObject scanIcon = HudInfo.GetHudObject(HudElements.ScanIcons[i]);
+                    var scanIconInst = new HudObjectInstance(scanIcon.Width, scanIcon.Height);
+                    scanIconInst.SetCharacterData(scanIcon.CharacterData, _scene);
+                    scanIconInst.SetPaletteData(scanIcon.PaletteData, _scene);
+                    scanIconInst.Enabled = true;
+                    _scanIconInsts[i] = scanIconInst;
+                }
+                _scanProgressMeter = HudElements.SubHealthbars[(int)Hunter.Samus];
+                _scanProgressMeter.BarInst = new HudObjectInstance(samusSubBar.Width, samusSubBar.Height);
+                _scanProgressMeter.BarInst.SetCharacterData(samusSubBar.CharacterData, _scene);
+                _scanProgressMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
+                _scanProgressMeter.Horizontal = true;
+                _scanProgressMeter.BarInst.Enabled = true;
+                HudObject samusAmmo = ammoBar;
+                if (Hunter != Hunter.Samus)
+                {
+                    samusAmmo = HudInfo.GetHudObject(HudElements.HunterObjects[(int)Hunter.Samus].AmmoBar);
+                }
+                _dialogPaletteData = samusAmmo.PaletteData;
+                HudObject messageBox = HudInfo.GetHudObject(HudElements.MessageBox);
+                _messageBoxInst = new HudObjectInstance(messageBox.Width, messageBox.Height);
+                _messageBoxInst.SetCharacterData(messageBox.CharacterData, _scene);
+                _messageBoxInst.SetPaletteData(samusAmmo.PaletteData, _scene);
+                _messageBoxInst.SetAnimationFrames(messageBox.AnimParams);
+                _messageBoxInst.Enabled = true;
+                HudObject messageSpacer = HudInfo.GetHudObject(HudElements.MessageSpacer);
+                _messageSpacerInst = new HudObjectInstance(messageSpacer.Width, messageSpacer.Height);
+                _messageSpacerInst.SetCharacterData(messageSpacer.CharacterData, _scene);
+                _messageSpacerInst.SetPaletteData(samusAmmo.PaletteData, _scene);
+                _messageSpacerInst.Enabled = true;
+                for (int i = 0; i < 5; i++)
+                {
+                    (_dialogBindingIds[i], _) = HudInfo.CharMapToTexture(HudElements.MapScan,
+                        startX: 0, startY: 0, tilesX: 32, tilesY: 24, _scene, paletteId: i);
+                }
+                HudObject dialogButton = HudInfo.GetHudObject(HudElements.DialogButton);
+                _dialogButtonInst = new HudObjectInstance(dialogButton.Width, dialogButton.Height);
+                _dialogButtonInst.SetCharacterData(dialogButton.CharacterData, _scene);
+                _dialogButtonInst.SetPaletteData(dialogButton.PaletteData, _scene);
+                _dialogButtonInst.SetAnimationFrames(dialogButton.AnimParams);
+                _dialogButtonInst.Enabled = true;
+                HudObject dialogArrow = HudInfo.GetHudObject(HudElements.DialogArrow);
+                _dialogArrowInst = new HudObjectInstance(dialogArrow.Width, dialogArrow.Height);
+                _dialogArrowInst.SetCharacterData(dialogArrow.CharacterData, _scene);
+                _dialogArrowInst.SetPaletteData(dialogArrow.PaletteData, _scene);
+                _dialogArrowInst.SetAnimationFrames(dialogArrow.AnimParams);
+                _dialogArrowInst.Enabled = true;
+                HudObject dialogCrystal = HudInfo.GetHudObject(HudElements.DialogCrystal);
+                _dialogCrystalInst = new HudObjectInstance(dialogCrystal.Width, dialogCrystal.Height);
+                _dialogCrystalInst.SetCharacterData(dialogCrystal.CharacterData, _scene);
+                _dialogCrystalInst.SetPaletteData(dialogCrystal.PaletteData, _scene);
+                _dialogCrystalInst.SetAnimationFrames(dialogCrystal.AnimParams);
+                _dialogCrystalInst.Enabled = true;
+                HudObject dialogPickup = HudInfo.GetHudObject(HudElements.DialogPickup);
+                _dialogPickupInst = new HudObjectInstance(dialogPickup.Width, dialogPickup.Height);
+                _dialogPickupInst.SetCharacterData(dialogPickup.CharacterData, _scene);
+                _dialogPickupInst.SetPaletteData(dialogPickup.PaletteData, _scene);
+                _dialogPickupInst.Enabled = true;
+                HudObject dialogFrame = HudInfo.GetHudObject(HudElements.DialogFrame);
+                _dialogFrameInst = new HudObjectInstance(dialogFrame.Width, dialogFrame.Height);
+                _dialogFrameInst.SetCharacterData(dialogFrame.CharacterData, _scene);
+                _dialogFrameInst.SetPaletteData(dialogFrame.PaletteData, _scene);
+                _dialogFrameInst.Enabled = true;
+            }
         }
 
         private RulesInfo _rulesInfo = null!;
@@ -344,23 +464,35 @@ namespace MphRead.Entities
         private float _objShiftX = 0;
         private float _objShiftY = 0;
         private bool _hudWeaponMenuOpen = false;
+        public bool ScanVisor { get; private set; }
 
         public void UpdateHud()
         {
+            UpdateScanState();
+            if (!_scene.Multiplayer)
+            {
+                UpdateDialogs();
+            }
             ProcessDoubleDamageHud();
             ProcessCloakHud();
             UpdateHealthbars();
             UpdateAmmoBar();
+            UpdateVisorMessage();
             _weaponIconInst.ProcessAnimation(_scene);
             _boostInst.ProcessAnimation(_scene);
             UpdateBoostBombs();
             UpdateDamageIndicators();
             UpdateDisruptedState();
+            UpdateWhiteoutState();
             WeaponSelection = CurrentWeapon;
             if (Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen))
             {
                 if (!_hudWeaponMenuOpen)
                 {
+                    if (ScanVisor)
+                    {
+                        SwitchVisors(reset: false);
+                    }
                     _soundSource.PlayFreeSfx(SfxId.HUD_WEAPON_SWITCH1);
                 }
                 _hudWeaponMenuOpen = true;
@@ -370,6 +502,10 @@ namespace MphRead.Entities
             {
                 _hudWeaponMenuOpen = false;
             }
+            if (ScanVisor)
+            {
+                UpdateScanHud();
+            }
             _targetCircleInst.Enabled = false;
             _ammoBarMeter.BarInst.Enabled = false;
             _weaponIconInst.Enabled = false;
@@ -378,6 +514,7 @@ namespace MphRead.Entities
             _scene.Layer2Info.BindingId = -1;
             _scene.Layer3Info.BindingId = -1;
             _scene.Layer4Info.BindingId = -1;
+            _scene.Layer5Info.BindingId = -1;
             _scene.Layer1Info.ShiftX = 0;
             _scene.Layer1Info.ShiftY = 0;
             _scene.Layer2Info.ShiftX = 0;
@@ -386,11 +523,13 @@ namespace MphRead.Entities
             _scene.Layer3Info.ShiftY = 0;
             _scene.Layer4Info.ShiftX = 0;
             _scene.Layer4Info.ShiftY = 0;
+            _scene.Layer5Info.ShiftX = 0;
+            _scene.Layer5Info.ShiftY = 0;
             if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true)
             {
                 return;
             }
-            if (_health > 0)
+            if (_health > 0 || _deathCountdown > 0)
             {
                 if (!IsAltForm && !IsMorphing && !IsUnmorphing)
                 {
@@ -411,7 +550,16 @@ namespace MphRead.Entities
                         _scene.Layer3Info.ScaleX = 2;
                         _scene.Layer3Info.ScaleY = 256 / 192f;
                         // visor
-                        _scene.Layer1Info.BindingId = _visorBindingId;
+                        if (ScanVisor)
+                        {
+                            _scene.Layer1Info.BindingId = _scanBindingId;
+                            _scene.Layer1Info.MaskId = _scanBindingId;
+                        }
+                        else
+                        {
+                            _scene.Layer1Info.BindingId = _visorBindingId;
+                            _scene.Layer1Info.MaskId = -1;
+                        }
                         _scene.Layer1Info.Alpha = Features.VisorOpacity;
                         _scene.Layer1Info.ScaleX = 1;
                         _scene.Layer1Info.ScaleY = 256 / 192f;
@@ -630,7 +778,10 @@ namespace MphRead.Entities
 
         private void HudOnFiredShot()
         {
-            // todo: check scan visor
+            if (ScanVisor)
+            {
+                return;
+            }
             if (!_smallReticle && !_sniperReticle)
             {
                 _smallReticle = true;
@@ -670,21 +821,25 @@ namespace MphRead.Entities
         private void HudOnMorphStart(bool teleported)
         {
             _targetCircleInst.SetIndex(0, _scene);
-            // todo: turn off scan visor, possibly other stuff (if it's not just touch screen updates)
+            SetCombatVisor();
         }
 
         private void HudOnWeaponSwitch(BeamType beam)
         {
+            SetCombatVisor();
             if (beam != BeamType.Imperialist || _sniperReticle)
             {
                 _sniperReticle = false;
-                ResetReticle(); // todo: only do this if scan visor is off
+                ResetReticle();
             }
             else
             {
                 _sniperReticle = true;
-                _targetCircleInst.SetCharacterData(_sniperCircleObj.CharacterData, _sniperCircleObj.Width,
-                    _sniperCircleObj.Height, _scene);
+                if (!ScanVisor)
+                {
+                    _targetCircleInst.SetCharacterData(_sniperCircleObj.CharacterData, _sniperCircleObj.Width,
+                        _sniperCircleObj.Height, _scene);
+                }
             }
             _weaponIconInst.SetAnimation(start: 9, target: 27, frames: 19, afterAnim: (int)beam);
         }
@@ -694,7 +849,6 @@ namespace MphRead.Entities
             if (_hudZoom != zoom)
             {
                 _hudZoom = zoom;
-                // todo: only do the rest if scan visor is off
                 if (_hudZoom)
                 {
                     _targetCircleInst.SetAnimation(start: 0, target: 2, frames: 2);
@@ -766,6 +920,100 @@ namespace MphRead.Entities
             }
         }
 
+        public int HudWhiteoutState { get; private set; } = -1;
+        public float HudWhiteoutFactor { get; private set; } = 0;
+        private float _whiteoutAmount = 0;
+        private float _whiteoutTime = 0;
+
+        public void BeginWhiteout()
+        {
+            HudWhiteoutState = 0;
+            HudWhiteoutFactor = 0;
+            _whiteoutTime = _scene.GlobalElapsedTime;
+            UpdateWhiteoutTable(value: 0);
+        }
+
+        private void EndWhiteout()
+        {
+            HudWhiteoutState = -1;
+            HudWhiteoutFactor = 0;
+        }
+
+        private void UpdateWhiteoutState()
+        {
+            float GetPosition()
+            {
+                float time = (_scene.GlobalElapsedTime - _whiteoutTime) * 60;
+                float timeSquared = time * time;
+                float timeCubed = timeSquared * time;
+                float jerk = 0.004f;
+                float initAcceleration = 0;
+                float initVelocity = 1;
+                float initPosition = 0;
+                // the game has limits on the acceleration and velocity, but the limits on
+                // first the factor and then the position are reached before those
+                Debug.Assert(initAcceleration + jerk * time < 120); // acceleration
+                Debug.Assert(initVelocity + initAcceleration * time + 0.5f * jerk * timeSquared < 480); // velocity
+                return initPosition + initVelocity * time + 0.5f * initAcceleration * timeSquared + 1 / 6f * jerk * timeCubed;
+            }
+
+            if (HudWhiteoutState == 0)
+            {
+                HudWhiteoutFactor += 2.8125f * _scene.FrameTime;
+                if (HudWhiteoutFactor >= 1)
+                {
+                    HudWhiteoutFactor = 1;
+                    HudWhiteoutState = 1;
+                }
+                _whiteoutAmount = GetPosition();
+                Debug.Assert(_whiteoutAmount < 96);
+            }
+            else if (HudWhiteoutState == 1)
+            {
+                _whiteoutAmount = GetPosition();
+                if (_whiteoutAmount >= 96)
+                {
+                    _whiteoutAmount = 96;
+                    HudWhiteoutState = 2;
+                    _whiteoutTime = _scene.GlobalElapsedTime;
+                }
+                UpdateWhiteoutTable(_whiteoutAmount);
+            }
+            else if (HudWhiteoutState == 2)
+            {
+                HudWhiteoutFactor = -1; // use the table value directly instead of as a factor
+                float time = _scene.GlobalElapsedTime - _whiteoutTime;
+                float value = 1 - Math.Min(time / (16 / 30f), 1);
+                Array.Fill(HudWhiteoutTable, value);
+            }
+        }
+
+        public static readonly float[] HudWhiteoutTable = new float[192];
+
+        private void UpdateWhiteoutTable(float value)
+        {
+            int trunc = (int)value;
+            float amount = 0.9975f;
+            for (int i = 95; i >= 0; i--)
+            {
+                int index = i - trunc;
+                if (index >= 0)
+                {
+                    Debug.Assert(index <= 95);
+                    float factor = (MathF.Pow(amount, 8) * 32 - 16) / 16f;
+                    Debug.Assert(factor >= -1 && factor <= 1);
+                    HudWhiteoutTable[index] = factor;
+                    HudWhiteoutTable[191 - index] = factor;
+                }
+                amount -= 0.0105f;
+            }
+            for (int j = 95; j >= 95 - trunc && j >= 0; j--)
+            {
+                HudWhiteoutTable[j] = 16;
+                HudWhiteoutTable[191 - j] = 16;
+            }
+        }
+
         public void DrawHudObjects()
         {
             if (GameState.MatchState == MatchState.GameOver)
@@ -804,24 +1052,34 @@ namespace MphRead.Entities
             {
                 if (Health > 0)
                 {
-                    if (IsAltForm || IsMorphing || IsUnmorphing)
+                    if (!GameState.DialogPause)
                     {
-                        DrawBoostBombs();
+                        if (IsAltForm || IsMorphing || IsUnmorphing)
+                        {
+                            DrawBoostBombs();
+                        }
+                        else if (!ScanVisor)
+                        {
+                            DrawAmmoBar();
+                            _weaponIconInst.PositionX = (_hudObjects.WeaponIconPosX + _objShiftX) / 256f;
+                            _weaponIconInst.PositionY = (_hudObjects.WeaponIconPosY + _objShiftY) / 192f;
+                            _scene.DrawHudObject(_weaponIconInst);
+                            _scene.DrawHudObject(_targetCircleInst);
+                        }
+                        DrawModeHud();
+                        DrawDoubleDamageHud();
+                        DrawCloakHud();
                     }
-                    else
+                    // todo: once we have masking that can account for various things (in this case, not drawing the scan lines
+                    // on top of the layer for the scan log title box), call DrawModeHud when dialog pause is active
+                    if (!GameState.DialogPause || DialogType != DialogType.Event
+                        && (Hunter == Hunter.Samus || Hunter == Hunter.Guardian))
                     {
-                        DrawAmmoBar();
-                        _weaponIconInst.PositionX = (_hudObjects.WeaponIconPosX + _objShiftX) / 256f;
-                        _weaponIconInst.PositionY = (_hudObjects.WeaponIconPosY + _objShiftY) / 192f;
-                        _scene.DrawHudObject(_weaponIconInst);
-                        _scene.DrawHudObject(_targetCircleInst);
+                        DrawHealthbars();
                     }
-                    DrawModeHud();
-                    DrawDoubleDamageHud();
-                    DrawCloakHud();
-                    DrawHealthbars();
                 }
                 DrawQueuedHudMessages();
+                DrawDialogs();
             }
         }
 
@@ -1723,8 +1981,19 @@ namespace MphRead.Entities
 
         private void DrawHudAdventure()
         {
-            // todo: draw scan visor if enabled
-            // else...
+            if (ScanVisor)
+            {
+                if (_scanning)
+                {
+                    DrawScanProgress();
+                }
+                DrawScanObjects();
+                if (!GameState.DialogPause)
+                {
+                    DrawVisorMessage();
+                }
+                return;
+            }
             if (_scene.RoomId == 92) // Gorea_b2
             {
                 for (int i = 0; i < _scene.Entities.Count; i++)
@@ -1748,7 +2017,7 @@ namespace MphRead.Entities
                     _lastTarget = null;
                 }
             }
-            // todo: draw visor name
+            DrawVisorMessage();
         }
 
         private string FormatModeScore(int slot)
@@ -2185,8 +2454,11 @@ namespace MphRead.Entities
             _enemyHealthMeter.Length = _healthbarSubMeter.Length;
             DrawMeter(_hudObjects.EnemyHealthPosX + _objShiftX, _hudObjects.EnemyHealthPosY + _objShiftY, max, current,
                 palette, _enemyHealthMeter, drawText: false, drawTanks: false);
-            // todo: only draw text if we have the scan data
-            // else, draw "enemy" instead
+            int scanId = target.GetScanId();
+            if (scanId != 0 && !_scene.Multiplayer && !GameState.StorySave.CheckLogbook(scanId))
+            {
+                text = Strings.GetMessage('E', 6, StringTables.HudMessagesSP); // enemy
+            }
             if (text != null)
             {
                 DrawText2D(_hudObjects.EnemyHealthTextPosX + _objShiftX, _hudObjects.EnemyHealthTextPosY + _objShiftY,
@@ -2294,6 +2566,11 @@ namespace MphRead.Entities
         private Vector2 DrawText2D(float x, float y, Align type, int palette, ReadOnlySpan<char> text,
             ColorRgba? color = null, float alpha = 1, float fontSpacing = -1, int maxLength = -1)
         {
+            int padAfter = maxLength;
+            if (type == Align.PadCenter)
+            {
+                maxLength = -1;
+            }
             int length = 0;
             for (int i = 0; i < text.Length; i++)
             {
@@ -2355,6 +2632,10 @@ namespace MphRead.Entities
                 do
                 {
                     end = text[start..].IndexOf('\n');
+                    if (end != -1)
+                    {
+                        end += start;
+                    }
                     if (end == -1 || length < end)
                     {
                         end = length;
@@ -2395,7 +2676,7 @@ namespace MphRead.Entities
                 }
                 while (end < length);
             }
-            else if (type == Align.Center)
+            else if (type == Align.Center || type == Align.PadCenter)
             {
                 float startX = x;
                 int start = 0;
@@ -2403,6 +2684,10 @@ namespace MphRead.Entities
                 do
                 {
                     end = text[start..].IndexOf('\n');
+                    if (end != -1)
+                    {
+                        end += start;
+                    }
                     if (end == -1 || length < end)
                     {
                         end = length;
@@ -2427,7 +2712,11 @@ namespace MphRead.Entities
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
-                            if (color.HasValue)
+                            if (type == Align.PadCenter && i >= padAfter)
+                            {
+                                _textInst.SetData(charFrame: 0, _textInst.PaletteIndex, _scene);
+                            }
+                            else if (color.HasValue)
                             {
                                 _textInst.SetData(index, color.Value, _scene);
                             }
@@ -2451,11 +2740,6 @@ namespace MphRead.Entities
                     }
                 }
                 while (end < length);
-            }
-            else if (type == Align.Type3)
-            {
-                // todo: this
-                Debug.Assert(false);
             }
             return new Vector2(x, y);
         }
@@ -2560,7 +2844,7 @@ namespace MphRead.Entities
                         int index = ch - 32; // todo: starting character
                         lineWidth += Font.Widths[index];
                     }
-                    if (i < text.Length - 1 && lineWidth > maxWidth)
+                    if (lineWidth > maxWidth)
                     {
                         if (breakPos == 0 && maxWidth >= 8)
                         {
@@ -2571,8 +2855,16 @@ namespace MphRead.Entities
                         if (breakPos > 0)
                         {
                             dest[breakPos] = '\n';
-                            breakPos = 0;
                             lineWidth = 0;
+                            int prevIndex = breakPos + 1;
+                            char prev = dest[prevIndex];
+                            while (prev != '\0' && prevIndex < dest.Length)
+                            {
+                                int index = prev - 32; // todo: starting character
+                                lineWidth += Font.Widths[index];
+                                prev = dest[++prevIndex];
+                            }
+                            breakPos = 0;
                             lines++;
                         }
                     }

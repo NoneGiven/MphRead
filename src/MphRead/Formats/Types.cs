@@ -395,6 +395,39 @@ namespace MphRead
             dest.Y = (1 - y) / 2; // -1, 0, 1 --> 1, 0.5, 0
             return w;
         }
+
+        // same as above, with more information returned
+        public static void GetProjectedValues(Vector3 pos, Vector3 camPos, Matrix4 viewMatrix, Matrix4 projectionMtx,
+            out float dist, out float depth, out float scaleInv, out Vector3 target, out Vector2 screenPos)
+        {
+            Vector3 between = (camPos - pos).Normalized();
+            target = pos + between;
+            dist = Vector3.Distance(camPos, target);
+            pos = Vec3MultMtx4(pos, viewMatrix);
+            depth = projectionMtx.Row3.W
+                + pos.X * projectionMtx.Row0.W
+                + pos.Y * projectionMtx.Row1.W
+                + pos.Z * projectionMtx.Row2.W;
+            if (depth > 0)
+            {
+                scaleInv = 1 / depth;
+            }
+            else
+            {
+                scaleInv = 0;
+                screenPos = Vector2.Zero;
+                return;
+            }
+            float x = (projectionMtx.Row3.X
+                + pos.X * projectionMtx.Row0.X
+                + pos.Y * projectionMtx.Row1.X
+                + pos.Z * projectionMtx.Row2.X) / depth;
+            float y = (projectionMtx.Row3.Y
+                + pos.X * projectionMtx.Row0.Y
+                + pos.Y * projectionMtx.Row1.Y
+                + pos.Z * projectionMtx.Row2.Y) / depth;
+            screenPos = new Vector2(x, y);
+        }
     }
 
     // size: 3

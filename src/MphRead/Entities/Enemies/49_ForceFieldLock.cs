@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
@@ -16,8 +17,10 @@ namespace MphRead.Entities.Enemies
         private int _ammo = -1;
         private Vector3 _ownSpeed; // todo: revisit this?
 
-        // todo?: technically this has a custom draw function, but I don't think we need it (unless it's possible to observe the damage flash)
-        public Enemy49Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        // todo?: technically this has a custom draw function, but I don't think we need it
+        // (unless it's possible to observe the damage flash)
+        public Enemy49Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(data, nodeRef, scene)
         {
             var spawner = data.Spawner as ForceFieldEntity;
             Debug.Assert(spawner != null);

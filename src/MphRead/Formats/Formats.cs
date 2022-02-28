@@ -508,16 +508,30 @@ namespace MphRead
     public class StringTableEntry
     {
         public string Id { get; }
-        public string Value { get; }
+        public char Prefix { get; }
+        public string Value1 { get; }
+        public string Value2 { get; }
         public byte Speed { get; }
         public char Category { get; }
 
-        public StringTableEntry(RawStringTableEntry raw, string value)
+        public StringTableEntry(RawStringTableEntry raw, char prefix, string value1, string value2)
         {
             Id = raw.Id.Reverse().ToArray().MarshalString();
             Speed = raw.Speed;
             Category = raw.Category;
-            Value = value;
+            Prefix = prefix;
+            Value1 = value1;
+            Value2 = value2;
+        }
+
+        public StringTableEntry(string id, char prefix, string value1, string value2, byte speed, char category)
+        {
+            Id = id;
+            Prefix = prefix;
+            Value1 = value1;
+            Value2 = value2;
+            Speed = speed;
+            Category = category;
         }
     }
 

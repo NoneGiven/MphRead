@@ -535,6 +535,11 @@ namespace MphRead.Entities
             return current;
         }
 
+        public bool IsNodeRefVisible(NodeRef nodeRef)
+        {
+            return _activeRoomParts[nodeRef.PartIndex];
+        }
+
         public override void GetDrawInfo()
         {
             if (!Hidden)

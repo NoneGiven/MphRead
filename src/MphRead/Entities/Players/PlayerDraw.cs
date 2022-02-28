@@ -11,6 +11,10 @@ namespace MphRead.Entities
         public void Draw()
         {
             DrawShadow();
+            if (IsMainPlayer && ScanVisor)
+            {
+                DrawScanModels();
+            }
             if (Flags2.TestFlag(PlayerFlags2.HideModel))
             {
                 return;
@@ -31,7 +35,7 @@ namespace MphRead.Entities
             _bipedModel2.SetModel(_bipedModelLods[lod].Model);
             Flags2 &= ~PlayerFlags2.DrawnThirdPerson;
             bool drawBiped = false;
-            if (IsMainPlayer || IsVisible())
+            if (IsMainPlayer || IsVisible(NodeRef))
             {
                 drawBiped = !IsMainPlayer || CameraType != CameraType.First || CameraSequence.Current != null
                     || _camSwitchTimer < Values.CamSwitchTime * 2; // todo: FPS stuff
@@ -357,7 +361,8 @@ namespace MphRead.Entities
                     float alpha = _curAlpha * pct;
                     if (_health == 0)
                     {
-                        float decrease = 2 * (RespawnTime - _respawnTimer) / 2f; // todo: FPS stuff
+                        float respawnTime = _deathCountdown > 0 ? UInt16.MaxValue : RespawnTime;
+                        float decrease = 2 * (respawnTime - _respawnTimer) / 2f; // todo: FPS stuff
                         alpha -= decrease;
                     }
                     if (alpha > 0)

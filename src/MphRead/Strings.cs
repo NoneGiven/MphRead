@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace MphRead.Text
 {
@@ -31,7 +32,23 @@ namespace MphRead.Text
                 if (entry.Offset < bytes.Length)
                 {
                     string value = Read.ReadString(bytes, entry.Offset, entry.Length);
-                    entries.Add(new StringTableEntry(entry, value));
+                    value = value.Replace("$", "");
+                    char prefix = '\0';
+                    if (name == StringTables.GameMessages)
+                    {
+                        prefix = value[0];
+                        value = value[1..];
+                    }
+                    string value1 = value;
+                    string value2 = "";
+                    int slashCount = value.Count(c => c == '\\');
+                    if (slashCount == 1)
+                    {
+                        string[] split = value.Split('\\');
+                        value1 = split[0];
+                        value2 = split[1];
+                    }
+                    entries.Add(new StringTableEntry(entry, prefix, value1, value2));
                 }
             }
             _cache.Add(name, entries);
@@ -71,17 +88,81 @@ namespace MphRead.Text
 
         public static string GetMessage(char type, uint id, string table, Language language = Language.English)
         {
-            string fullId = type + id.ToString().PadLeft(3, '0');
+            StringTableEntry? entry = GetEntry(type, id, table, language);
+            return entry?.Value1 ?? " ";
+        }
+
+        public static StringTableEntry? GetEntry(char type, int id, string table, Language language = Language.English)
+        {
+            return GetEntry(type, (uint)id, table, language);
+        }
+
+        public static StringTableEntry? GetEntry(char type, uint id, string table, Language language = Language.English)
+        {
+            string fullId = $"{type}{id:000}";
             IReadOnlyList<StringTableEntry> list = ReadStringTable(table, language);
             for (int i = 0; i < list.Count; i++)
             {
                 StringTableEntry entry = list[i];
                 if (entry.Id == fullId)
                 {
-                    return entry.Value;
+                    return entry;
                 }
             }
-            return " ";
+            return null;
+        }
+
+        private static readonly IReadOnlyDictionary<char, int> _categoryMap = new Dictionary<char, int>()
+        {
+            ['L'] = 0,
+            ['l'] = 0,
+            ['B'] = 1,
+            ['b'] = 1,
+            ['O'] = 2,
+            ['o'] = 2,
+            ['E'] = 3,
+            ['e'] = 3,
+            ['X'] = 4,
+            ['x'] = 4
+        };
+
+        public static readonly StringTableEntry EmptyScanEntry = new StringTableEntry(
+            id: "000",
+            prefix: '\0',
+            value1: "INVALID LOG ENTRY",
+            value2: "This object has no entry in the log book.",
+            speed: 0,
+            category: 'S'
+        );
+
+        public static StringTableEntry? GetScanEntry(int scanId)
+        {
+            return GetEntry('L', (uint)scanId, StringTables.ScanLog);
+        }
+
+        public static int GetScanEntryCategory(int scanId)
+        {
+            // todo: languagel
+            StringTableEntry? entry = GetEntry('L', (uint)scanId, StringTables.ScanLog);
+            if (entry == null)
+            {
+                return 0;
+            }
+            if (_categoryMap.TryGetValue(entry.Category, out int result))
+            {
+                return result;
+            }
+            return 5;
+        }
+
+        public static float GetScanEntryTime(int scanId)
+        {
+            StringTableEntry? entry = GetEntry('L', (uint)scanId, StringTables.ScanLog);
+            if (entry == null)
+            {
+                return 60 / 30f;
+            }
+            return 10 * (entry.Speed & 7) / 30f;
         }
 
         private static string GetFolder(Language language)
@@ -168,11 +249,6 @@ namespace MphRead.Text
                 strings.Add(text);
             }
             return strings;
-        }
-
-        public static void GetModeRules(GameMode mode)
-        {
-
         }
     }
 

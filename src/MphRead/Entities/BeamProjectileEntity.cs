@@ -5,6 +5,7 @@ using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -740,8 +741,8 @@ namespace MphRead.Entities
                             }
                             if (item != ItemType.None)
                             {
-                                // todo: node ref
-                                ItemSpawnEntity.SpawnItemDrop(item, other.Position, chance: 100, _scene);
+                                NodeRef nodeRef = _scene.GetNodeRefByPosition(other.Position);
+                                ItemSpawnEntity.SpawnItemDrop(item, other.Position, nodeRef, chance: 100, _scene);
                             }
                         }
                         else if (other.DrawFuncId == 11) // Omega Cannon

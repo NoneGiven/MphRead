@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
@@ -33,7 +34,8 @@ namespace MphRead.Entities.Enemies
         private Node _rotNode = null!;
         private Vector3 _rotNodePos;
 
-        public Enemy18Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        public Enemy18Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(data, nodeRef, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);
@@ -63,7 +65,7 @@ namespace MphRead.Entities.Enemies
             _values = Metadata.Enemy18Values[(int)_spawner.Data.Fields.S06.EnemySubtype];
             _health = _healthMax = _values.HealthMax;
             Metadata.LoadEffectiveness(_values.Effectiveness, BeamEffectiveness);
-            // todo: scan ID
+            _scanId = _values.ScanId;
             _rangeVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume1, Position);
             _shotCount = (ushort)(_values.MinShots + Rng.GetRandomInt2(_values.MaxShots + 1 - _values.MinShots));
             _shotTimer = (ushort)(_values.ShotCooldown * 2); // todo: FPS stuff
@@ -292,7 +294,6 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        // sktodo
         protected override bool EnemyGetDrawInfo()
         {
             // todo: is_visible
@@ -333,7 +334,10 @@ namespace MphRead.Entities.Enemies
             }
             model.UpdateMatrixStack();
             UpdateMaterials(inst, Recolor);
-            GetDrawItems(inst, 0);
+            if (IsVisible(NodeRef))
+            {
+                GetDrawItems(inst, 0);
+            }
             PaletteOverride = null;
             _rotNodePos = _rotNode.Animation.Row3.Xyz;
             return true;

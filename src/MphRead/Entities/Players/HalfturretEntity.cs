@@ -51,7 +51,6 @@ namespace MphRead.Entities
         {
             Recolor = Owner.Recolor;
             base.Initialize();
-            // todo: scan ID
             float minY = Fixed.ToFloat(Owner.Values.MinPickupHeight);
             Vector3 position = Owner.Position.AddY(minY + 0.45f);
             var facing = new Vector3(Owner.Field70, 0, Owner.Field74);
@@ -76,6 +75,7 @@ namespace MphRead.Entities
             _light1Color = Owner.Light1Color;
             _light2Vector = Owner.Light2Vector;
             _light2Color = Owner.Light2Color;
+            _scanId = PlayerEntity.ScanIds[(int)Hunter.Weavel, 1];
         }
 
         public override void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
@@ -335,10 +335,13 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo()
         {
+            if (!IsVisible(NodeRef))
+            {
+                return;
+            }
             ModelInstance inst = _models[0];
             Model model = inst.Model;
             AnimationInfo animInfo = inst.AnimInfo;
-            // todo: is_visible
             if (_timeSinceDamage < Owner.Values.DamageFlashTime * 2) // todo: FPS stuff
             {
                 PaletteOverride = Metadata.RedPalette;

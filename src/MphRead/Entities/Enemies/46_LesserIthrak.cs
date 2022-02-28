@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
@@ -37,7 +38,8 @@ namespace MphRead.Entities.Enemies
 
         protected Material _mouthMaterial = null!;
 
-        public Enemy46Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        public Enemy46Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(data, nodeRef, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);
@@ -95,7 +97,7 @@ namespace MphRead.Entities.Enemies
 
         private void SpawnHitZone()
         {
-            _hitZone = EnemySpawnEntity.SpawnEnemy(this, EnemyType.HitZone, _scene) as Enemy50Entity;
+            _hitZone = EnemySpawnEntity.SpawnEnemy(this, EnemyType.HitZone, NodeRef, _scene) as Enemy50Entity;
             if (_hitZone != null)
             {
                 _scene.AddEntity(_hitZone);
@@ -142,6 +144,16 @@ namespace MphRead.Entities.Enemies
             {
                 _speed.Y -= Fixed.ToFloat(100) / 4; // todo: FPS stuff
             }
+        }
+
+        protected override bool EnemyTakeDamage(EntityBase? source)
+        {
+            if (_health == 0 && _hitZone != null)
+            {
+                _hitZone.SetHealth(0);
+                _hitZone = null;
+            }
+            return false;
         }
 
         // dropping, returning to home, roaming

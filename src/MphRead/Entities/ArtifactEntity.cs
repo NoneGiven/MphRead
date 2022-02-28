@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MphRead.Formats;
 using OpenTK.Mathematics;
 
@@ -17,7 +18,8 @@ namespace MphRead.Entities
 
         public new bool Active { get; set; }
 
-        public ArtifactEntity(ArtifactEntityData data, Scene scene) : base(EntityType.Artifact, scene)
+        public ArtifactEntity(ArtifactEntityData data, string nodeName, Scene scene)
+            : base(EntityType.Artifact, nodeName, scene)
         {
             // todo: load resources for simple octolith/dropped octolith when needed
             _data = data;
@@ -58,6 +60,17 @@ namespace MphRead.Entities
             }
         }
 
+        private readonly IReadOnlyList<int> _scanIds = new int[32]
+        {
+            48, 48, 48, 48, 48, 48, 48, 48, 40, 41, 42, 40, 41, 42, 40, 41,
+            42, 40, 41, 42, 40, 41, 42, 40, 41, 42, 40, 41, 42, 40, 41, 42
+        };
+
+        private readonly IReadOnlyList<int> _octolithMessageIds = new int[8]
+        {
+            14, 31, 32, 33, 34, 35, 36, 51
+        };
+
         public override bool Process()
         {
             if (_parent != null)
@@ -75,6 +88,14 @@ namespace MphRead.Entities
                 _soundSource.Update(Position, rangeIndex: 7);
                 // sfxtodo: if node ref is not active, set sound volume override to 0
                 _soundSource.PlaySfx(SfxId.ARTIFACT_LOOP, loop: true);
+                if (_data.ModelId >= 8)
+                {
+                    _scanId = _scanIds[_data.ArtifactId];
+                }
+                else
+                {
+                    _scanId = _scanIds[_data.ModelId * 3 + 8 + _data.ArtifactId];
+                }
                 if (CameraSequence.Current?.BlockInput == true)
                 {
                     return base.Process();
@@ -135,18 +156,31 @@ namespace MphRead.Entities
                     // todo: update story save
                     if (Id == -1)
                     {
-                        // todo: show reclaimed octolith dialog
+                        // OCTOLITH RECLAIMED you recovered a stolen OCTOLITH!
+                        PlayerEntity.Main.ShowDialog(DialogType.Event, messageId: 54, param1: (int)EventType.Octolith);
                     }
                     else
                     {
-                        // todo: start movie, update global state and story save
+                        // todo: start movie, update global state and story save, defer the dialog
+                        // OCTOLITH ACQUIRED you obtained an OCTOLITH!
+                        PlayerEntity.Main.ShowDialog(DialogType.Event, messageId: 7, param1: (int)EventType.Octolith);
+                        int messageId = _octolithMessageIds[0]; // todo: get index from story save
+                        _scene.SendMessage(Message.ShowPrompt, this, null, param1: messageId, param2: 0, delay: 1);
                     }
                 }
                 else
                 {
-                    // sfxtodo: play correct SFX
-                    // todo: update story save, show dialog (may send dialog message)
-                    _soundSource.PlayFreeSfx(SfxId.ARTIFACT1); // skdebug
+                    int collected = 1;
+                    // todo: update story save
+                    _soundSource.PlayFreeSfx(SfxId.ARTIFACT1); // sfxtodo: play correct SFX
+                    // ARTIFACT DISCOVERED you retrieved an ALIMBIC ARTIFACT!
+                    PlayerEntity.Main.ShowDialog(DialogType.Event, messageId: 6, param1: (int)EventType.Artifact);
+                    if (collected > 2)
+                    {
+                        // PORTAL ACTIVATED long-range thermomagnetic-resonance scanners indicate remote
+                        // and inaccessible chambers. use the PORTAL to access the inaccessible.
+                        _scene.SendMessage(Message.ShowPrompt, this, null, param1: 13, param2: 0, delay: 1);
+                    }
                 }
                 Active = false;
                 // todo: room state
@@ -154,14 +188,14 @@ namespace MphRead.Entities
             }
             else
             {
-                // todo: set scan ID
+                _scanId = 0;
             }
             return base.Process();
         }
 
         public override void GetDrawInfo()
         {
-            if (Active)
+            if (Active && IsVisible(NodeRef))
             {
                 base.GetDrawInfo();
             }

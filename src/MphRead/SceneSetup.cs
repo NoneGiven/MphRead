@@ -127,7 +127,7 @@ namespace MphRead
                 string nodeName = entity.NodeName;
                 if (entity.Type == EntityType.Platform)
                 {
-                    results.Add(new PlatformEntity(((Entity<PlatformEntityData>)entity).Data, scene));
+                    results.Add(new PlatformEntity(((Entity<PlatformEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.FhPlatform)
                 {
@@ -135,7 +135,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Object)
                 {
-                    results.Add(new ObjectEntity(((Entity<ObjectEntityData>)entity).Data, scene));
+                    results.Add(new ObjectEntity(((Entity<ObjectEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.PlayerSpawn || entity.Type == EntityType.FhPlayerSpawn)
                 {
@@ -143,7 +143,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Door)
                 {
-                    results.Add(new DoorEntity(((Entity<DoorEntityData>)entity).Data, scene));
+                    results.Add(new DoorEntity(((Entity<DoorEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.FhDoor)
                 {
@@ -151,7 +151,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.ItemSpawn)
                 {
-                    results.Add(new ItemSpawnEntity(((Entity<ItemSpawnEntityData>)entity).Data, scene));
+                    results.Add(new ItemSpawnEntity(((Entity<ItemSpawnEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.FhItemSpawn)
                 {
@@ -183,7 +183,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.JumpPad)
                 {
-                    results.Add(new JumpPadEntity(((Entity<JumpPadEntityData>)entity).Data, scene));
+                    results.Add(new JumpPadEntity(((Entity<JumpPadEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.FhJumpPad)
                 {
@@ -223,7 +223,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.Artifact)
                 {
-                    results.Add(new ArtifactEntity(((Entity<ArtifactEntityData>)entity).Data, scene));
+                    results.Add(new ArtifactEntity(((Entity<ArtifactEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.CameraSequence)
                 {
@@ -231,7 +231,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.ForceField)
                 {
-                    results.Add(new ForceFieldEntity(((Entity<ForceFieldEntityData>)entity).Data, scene));
+                    results.Add(new ForceFieldEntity(((Entity<ForceFieldEntityData>)entity).Data, nodeName, scene));
                 }
                 else
                 {
@@ -298,6 +298,10 @@ namespace MphRead
             Strings.ReadStringTable(StringTables.HudMsgsCommon, language);
             Strings.ReadStringTable(StringTables.HudMessagesSP, language);
             Strings.ReadStringTable(StringTables.HudMessagesMP, language);
+            if (!scene.Multiplayer)
+            {
+                Strings.ReadStringTable(StringTables.ScanLog);
+            }
         }
 
         public static void LoadHunterResources(Hunter hunter, Scene scene)
@@ -437,9 +441,12 @@ namespace MphRead
             scene.LoadEffect(192); // mortarChargedAffinity
             scene.LoadEffect(231); // iceShatter
             scene.LoadEffect(239); // enemyCol1
-            // todo: lore
             scene.LoadModel(Read.GetSingleParticle(SingleType.Death).Model);
             scene.LoadModel(Read.GetSingleParticle(SingleType.Fuzzball).Model);
+            if (!scene.Multiplayer)
+            {
+                scene.LoadModel(Read.GetModelInstance("icons", dir: MetaDir.Hud).Model);
+            }
             // skdebug - the game only loads these if the Omega Cannon item is in the room
             scene.LoadEffect(209); // ultimateProjectile
             scene.LoadEffect(245); // ultimateCol

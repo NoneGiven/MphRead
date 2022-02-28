@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -54,7 +55,8 @@ namespace MphRead.Entities
 
         protected static BeamProjectileEntity[] _beams = null!;
 
-        public EnemyInstanceEntity(EnemyInstanceEntityData data, Scene scene) : base(EntityType.EnemyInstance, scene)
+        public EnemyInstanceEntity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(EntityType.EnemyInstance, nodeRef, scene)
         {
             _data = data;
             if (_beams == null)
@@ -72,6 +74,7 @@ namespace MphRead.Entities
         {
             base.Initialize();
             _owner = _data.Spawner;
+            _scanId = Metadata.EnemyScanIds[(int)_data.Type];
             Metadata.LoadEffectiveness(_data.Type, BeamEffectiveness);
             Flags = EnemyFlags.CollidePlayer | EnemyFlags.CollideBeam;
             if (EnemyInitialize() && _data.Spawner is EnemySpawnEntity spawner)
@@ -224,7 +227,7 @@ namespace MphRead.Entities
                 {
                     var spawner = (EnemySpawnEntity)_owner;
                     Vector3 pos = _hurtVolume.GetCenter().AddY(0.5f);
-                    ItemSpawnEntity.SpawnItemDrop(spawner.Data.ItemType, pos, spawner.Data.ItemChance, _scene);
+                    ItemSpawnEntity.SpawnItemDrop(spawner.Data.ItemType, pos, NodeRef, spawner.Data.ItemChance, _scene);
                 }
                 return false;
             }
@@ -280,7 +283,10 @@ namespace MphRead.Entities
 
         protected void DrawGeneric()
         {
-            // todo: is_visible
+            if (!Flags.TestFlag(EnemyFlags.NoMaxDistance) && !IsVisible(NodeRef))
+            {
+                return;
+            }
             if (_timeSinceDamage < 5 * 2) // todo: FPS stuff
             {
                 PaletteOverride = Metadata.RedPalette;

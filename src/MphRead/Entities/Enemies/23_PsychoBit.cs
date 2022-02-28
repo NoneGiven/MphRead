@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
@@ -43,7 +44,8 @@ namespace MphRead.Entities.Enemies
         private int _ammo = 1000;
         private EffectEntry? _effect = null;
 
-        public Enemy23Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        public Enemy23Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(data, nodeRef, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);
@@ -73,7 +75,7 @@ namespace MphRead.Entities.Enemies
             _values = Metadata.Enemy23Values[(int)_spawner.Data.Fields.S06.EnemySubtype];
             _health = _healthMax = _values.HealthMax;
             Metadata.LoadEffectiveness(_values.Effectiveness, BeamEffectiveness);
-            // todo: scan ID
+            _scanId = _values.ScanId;
             _curFacing = facing;
             _homeVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume1, Position);
             _nearVolume = new CollisionVolume(Vector3.Zero, 1); // gets moved in the process function
@@ -150,7 +152,7 @@ namespace MphRead.Entities.Enemies
             }
             ContactDamagePlayer(_values.ContactDamage, knockback: true);
             _nearVolume = CollisionVolume.Move(new CollisionVolume(Vector3.Zero, 1), Position);
-            // todo: play SFX
+            _soundSource.PlaySfx(SfxId.PSYCHOBIT_FLY, loop: true);
             CallStateProcess();
         }
 
@@ -451,7 +453,7 @@ namespace MphRead.Entities.Enemies
             return Behavior00();
         }
 
-        // todo: same as Behavior00 except using te first pair of factors and not setting animation
+        // todo: same as Behavior00 except using the first pair of factors and not setting animation
         public bool Behavior05()
         {
             Vector3 facing = FacingVector;
@@ -540,7 +542,6 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        // todo: function name?
         private void MoveAway()
         {
             PickRoamTarget();

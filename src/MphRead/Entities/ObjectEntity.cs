@@ -21,7 +21,6 @@ namespace MphRead.Entities
         private bool _effectProcessing = false;
         private EffectEntry? _effectEntry = null;
         public bool _effectActive = false;
-        private readonly bool _scanVisorOnly = false;
         private int _state = 0;
         private readonly ObjectMetadata? _meta;
 
@@ -34,7 +33,8 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x22, 0x8B, 0x22).AsVector4();
         public ObjectEntityData Data => _data;
 
-        public ObjectEntity(ObjectEntityData data, Scene scene) : base(EntityType.Object, scene)
+        public ObjectEntity(ObjectEntityData data, string nodeName, Scene scene)
+            : base(EntityType.Object, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -44,6 +44,10 @@ namespace MphRead.Entities
             _flags = data.Flags;
             _state = (int)(data.Flags & ObjectFlags.State);
             // todo: room state affecting animation ID
+            if (_state != 0 || _data.ModelId == 53) // WallSwitch
+            {
+                _scanId = _data.ScanId;
+            }
             _flags &= ~ObjectFlags.NoAnimation;
             _flags &= ~ObjectFlags.IsVisible;
             _flags &= ~ObjectFlags.EntityLinked;
@@ -55,10 +59,7 @@ namespace MphRead.Entities
             if (data.ModelId == -1)
             {
                 AddPlaceholderModel();
-                // todo: use this for visibility
                 _flags |= ObjectFlags.NoAnimation;
-                // todo: this should get cleared if there's an effect ID and "is_visible" returns false
-                _flags |= ObjectFlags.IsVisible;
             }
             else
             {
@@ -69,11 +70,6 @@ namespace MphRead.Entities
                 }
                 Recolor = _meta.RecolorId;
                 ModelInstance inst = SetUpModel(_meta.Name);
-                // AlimbicGhost_01, GhostSwitch
-                if (data.ModelId == 0 || data.ModelId == 41)
-                {
-                    _scanVisorOnly = true;
-                }
                 _state = (int)(_flags & ObjectFlags.State);
                 int animIndex = _meta.AnimationIds[_state];
                 // AlimbicCapsule
@@ -170,6 +166,15 @@ namespace MphRead.Entities
             position = _visiblePosition;
             up = UpVector;
             facing = FacingVector;
+        }
+
+        public override void OnScanned()
+        {
+            if (_data.ScanMessage != Message.None && _scanMsgTarget != null && _data.ModelId != 46 // SniperTarget
+                && (_data.EffectFlags.TestFlag(ObjEffFlags.RepeatScanMessage) || !GameState.StorySave.CheckLogbook(GetScanId())))
+            {
+                _scene.SendMessage(_data.ScanMessage, this, _scanMsgTarget, -1, 0);
+            }
         }
 
         public override void HandleMessage(MessageInfo info)
@@ -285,12 +290,12 @@ namespace MphRead.Entities
             // todo: room state
             if (state != 0 || _data.ModelId == 53) // WallSwitch
             {
-                // todo: scan ID
+                _scanId = _data.ScanId;
             }
             else
             {
                 RemoveEffect();
-                // todo: scan ID
+                _scanId = 0;
             }
         }
 
@@ -383,7 +388,6 @@ namespace MphRead.Entities
                 }
                 _flags |= ObjectFlags.EntityLinked;
             }
-            ShouldDraw = !_scanVisorOnly || _scene.ScanVisor;
             if (_parentEntCol != null)
             {
                 Transform = _invTransform * _parentEntCol.Transform;
@@ -405,17 +409,20 @@ namespace MphRead.Entities
                 {
                     processEffect = true;
                 }
-                else if (_data.EffectFlags.TestFlag(ObjEffFlags.UseEffectVolume))
-                {
-                    // todo: add an option to disable this check
-                    Vector3 cameraPosition = _scene.CameraMode == CameraMode.Player
-                        ? PlayerEntity.Main.CameraInfo.Position
-                        : _scene.CameraPosition; // skdebug
-                    processEffect = _effectVolume.TestPoint(cameraPosition);
-                }
                 else if (_flags.TestFlag(ObjectFlags.IsVisible))
                 {
-                    processEffect = _state != 0;
+                    if (_data.EffectFlags.TestFlag(ObjEffFlags.UseEffectVolume))
+                    {
+                        // todo: add an option to disable this check
+                        Vector3 cameraPosition = _scene.CameraMode == CameraMode.Player
+                            ? PlayerEntity.Main.CameraInfo.Position
+                            : _scene.CameraPosition; // skdebug
+                        processEffect = _effectVolume.TestPoint(cameraPosition);
+                    }
+                    else
+                    {
+                        processEffect = _state != 0;
+                    }
                 }
                 _sfxInfo.TryGetValue(_data.EffectId, out EffectSfxInfo? sfxInfo);
                 if (processEffect)
@@ -522,6 +529,37 @@ namespace MphRead.Entities
                 else
                 {
                     _scene.DetachEffectEntry(_effectEntry, setExpired: false);
+                }
+            }
+        }
+
+        public override void GetDrawInfo()
+        {
+            _flags |= ObjectFlags.IsVisible;
+            if (!_flags.TestFlag(ObjectFlags.NoAnimation) && _data.ModelId != -1)
+            {
+                // the game sets non-looping anims for AlimbicGhost_01/GhostSwitch here when scan visor is off,
+                // but they're not visible so I don't know what the point is
+                if (_scene.ScanVisor || _data.ModelId != 0 && _data.ModelId != 41)
+                {
+                    if (IsVisible(NodeRef))
+                    {
+                        base.GetDrawInfo();
+                    }
+                }
+            }
+            else
+            {
+                if (_data.EffectId != 0)
+                {
+                    if (!IsVisible(NodeRef))
+                    {
+                        _flags &= ~ObjectFlags.IsVisible;
+                    }
+                }
+                if (_scene.ShowInvisibleEntities)
+                {
+                    base.GetDrawInfo();
                 }
             }
         }

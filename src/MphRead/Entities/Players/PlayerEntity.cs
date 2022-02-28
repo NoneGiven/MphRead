@@ -200,6 +200,7 @@ namespace MphRead.Entities
         public static readonly PlayerEntity[] _players = new PlayerEntity[4];
         public static IReadOnlyList<PlayerEntity> Players => _players;
         public bool IsMainPlayer => this == Main && _scene.CameraMode == CameraMode.Player;
+        private int _altScanId = 0;
 
         private const int UA = 0;
         private const int Missiles = 1;
@@ -378,9 +379,10 @@ namespace MphRead.Entities
         private ushort _timeSincePickup = 0;
         private ushort _timeSinceHeal = 0;
         private ushort _respawnTimer = 0;
-        public ushort RespawnTimer => _respawnTimer;
-        private ushort _deathCountdown = 0;
-        public ushort DeathCountdown => _deathCountdown;
+        public ushort RespawnTimer { get => _respawnTimer; set => _respawnTimer = value; }
+        private float _deathCountdown = 0;
+        private bool _deathProcessed = false;
+        public float DeathCountdown => _deathCountdown;
         private ushort _damageInvulnTimer = 0;
         private ushort _spawnInvulnTimer = 0;
         private ushort _camSwitchTimer = 0;
@@ -837,7 +839,17 @@ namespace MphRead.Entities
                 ResetReticle();
                 _weaponIconInst.SetIndex(0, _scene);
             }
-            // todo: reset HUD effects
+            _cloakTextTimer = 30 / 30f;
+            _doubleDamageTextTimer = 60 / 30f;
+            _drawIceLayer = false;
+            _hudShiftX = 0;
+            _hudShiftY = 0;
+            _objShiftX = 0;
+            _objShiftY = 0;
+            ScanVisor = false;
+            SwitchVisors(reset: true);
+            CloseDialogs();
+            // todo: update more UI fields
             _altRollFbX = CameraInfo.Field48;
             _altRollFbZ = CameraInfo.Field4C;
             _altRollLrX = CameraInfo.Field50;
@@ -853,12 +865,26 @@ namespace MphRead.Entities
             }
             _enemySpawner = null;
             _lastTarget = null;
-            // todo: scan IDs
+            UpdateScanIds();
             if (respawn && (IsMainPlayer || _scene.Multiplayer))
             {
                 // spawnEffectMP or spawnEffect
                 int effectId = _scene.Multiplayer && PlayerCount > 2 ? 33 : 31;
                 _scene.SpawnEffect(effectId, Vector3.UnitX, Vector3.UnitY, Position);
+            }
+            if (IsMainPlayer)
+            {
+                EndWhiteout();
+                if (IsAltForm || IsMorphing)
+                {
+                    _healthbarYOffset = _hudObjects.HealthOffsetYAlt;
+                    _boostBombsYOffset = 160;
+                }
+                else
+                {
+                    _healthbarYOffset = _hudObjects.HealthOffsetY;
+                    _boostBombsYOffset = 208;
+                }
             }
         }
 
@@ -877,6 +903,26 @@ namespace MphRead.Entities
         public override bool GetTargetable()
         {
             return _health != 0;
+        }
+
+        public override int GetScanId(bool alternate = false)
+        {
+            return alternate ? _altScanId : _scanId;
+        }
+
+        public override bool ScanVisible()
+        {
+            if (Health == 0)
+            {
+                return false;
+            }
+            return base.ScanVisible();
+        }
+
+        private void UpdateScanIds()
+        {
+            _scanId = ScanIds[(int)Hunter, IsAltForm ? 1 : 0];
+            _altScanId = ScanIds[(int)Hunter, IsAltForm ? 3 : 2];
         }
 
         private void SetBiped1Animation(PlayerAnimation anim, AnimFlags animFlags)
@@ -1576,9 +1622,10 @@ namespace MphRead.Entities
                 {
                     _scene.SendMessage(Message.Destroyed, this, EnemySpawner, 0, 0);
                     Debug.Assert(EnemySpawner.Type == EntityType.EnemySpawn);
-                    ItemSpawnEntity.SpawnItemDrop(EnemySpawner.Data.ItemType, Position, EnemySpawner.Data.ItemChance, _scene);
+                    ItemSpawnEntity.SpawnItemDrop(EnemySpawner.Data.ItemType, Position,
+                        NodeRef, EnemySpawner.Data.ItemChance, _scene);
                 }
-                // todo: update HUD to cancel scan visor
+                ResetCombatVisor();
                 if (Flags2.TestFlag(PlayerFlags2.Halfturret))
                 {
                     _halfturret.Die();
@@ -1703,8 +1750,11 @@ namespace MphRead.Entities
                     }
                     if (IsMainPlayer)
                     {
-                        // todo: update story save, death countdown, lost octolith, etc.
+                        _deathCountdown = 150 / 30f;
+                        _deathProcessed = false;
+                        _respawnTimer = UInt16.MaxValue;
                         CameraInfo.SetShake(0.25f);
+                        // todo: update story save, lost octolith, etc.
                     }
                 }
                 else // multiplayer
@@ -1713,7 +1763,7 @@ namespace MphRead.Entities
                     {
                         if (IsMainPlayer)
                         {
-                            // todo: update HUD to close dialogs
+                            CloseDialogs();
                             if (attacker == this)
                             {
                                 QueueHudMessage(128, 70, 140, 90 / 30f, 2, 235); // YOU SELF-DESTRUCTED!
@@ -1915,7 +1965,7 @@ namespace MphRead.Entities
                         itemType = ItemType.MissileSmall;
                     }
                     Vector3 position = _volume.SpherePosition.AddY(0.35f);
-                    ItemSpawnEntity.SpawnItem(itemType, position, 300 * 2, _scene); // todo: FPS stuff
+                    ItemSpawnEntity.SpawnItem(itemType, position, NodeRef, 300 * 2, _scene); // todo: FPS stuff
                 }
                 WeaponSelection = CurrentWeapon;
                 Flags1 &= ~PlayerFlags1.WeaponMenuOpen;
@@ -1938,6 +1988,7 @@ namespace MphRead.Entities
                             _soundSource.PlaySfx(SfxId.SHOTGUN_FREEZE);
                             if (IsMainPlayer)
                             {
+                                ResetCombatVisor();
                                 _drawIceLayer = true;
                             }
                             if (_frozenTimer == 0)

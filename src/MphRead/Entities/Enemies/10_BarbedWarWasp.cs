@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities.Enemies
@@ -30,7 +31,8 @@ namespace MphRead.Entities.Enemies
         private ushort _shotCount = 0;
         private ushort _shotTimer = 0;
 
-        public Enemy10Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        public Enemy10Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(data, nodeRef, scene)
         {
             var spawner = data.Spawner as EnemySpawnEntity;
             Debug.Assert(spawner != null);
@@ -60,7 +62,7 @@ namespace MphRead.Entities.Enemies
             _values = Metadata.Enemy10Values[(int)_spawner.Data.Fields.S08.EnemySubtype];
             _health = _healthMax = _values.HealthMax;
             Metadata.LoadEffectiveness(_values.Effectiveness, BeamEffectiveness);
-            // todo: scan ID
+            _scanId = _values.ScanId;
             _homeVolume = CollisionVolume.Move(_spawner.Data.Fields.S08.WarWasp.Volume2, Position);
             _movementVolume = CollisionVolume.Move(_spawner.Data.Fields.S08.WarWasp.Volume1, Position);
             WeaponInfo weapon = Weapons.EnemyWeapons[version];

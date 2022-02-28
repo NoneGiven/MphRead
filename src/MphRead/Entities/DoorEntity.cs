@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -19,7 +20,13 @@ namespace MphRead.Entities
         public Vector3 LockPosition => (_transform * _lockTransform).Row3.Xyz;
         public DoorEntityData Data => _data;
 
-        public DoorEntity(DoorEntityData data, Scene scene) : base(EntityType.Door, scene)
+        private static readonly IReadOnlyList<int> _scanIds = new int[10]
+        {
+            0, 255, 264, 252, 256, 253, 254, 249, 266, 265
+        };
+
+        public DoorEntity(DoorEntityData data, string nodeName, Scene scene)
+            : base(EntityType.Door, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -52,7 +59,7 @@ namespace MphRead.Entities
             inst.AnimInfo.Flags[1] |= AnimFlags.Reverse;
             _lock = SetUpModel(meta.LockName);
             _lockTransform = Matrix4.CreateTranslation(0, meta.LockOffset, 0);
-            // todo: scan ID
+            UpdateScanId();
             // todo: use flags and room state to determine lock/color state
             if (_data.Locked != 0)
             {
@@ -66,10 +73,26 @@ namespace MphRead.Entities
             // todo: connector/room IDs, node refs, ports
         }
 
+        private void UpdateScanId()
+        {
+            if (_data.DoorType == DoorType.Boss)
+            {
+                _scanId = 269;
+            }
+            else if (Flags.TestFlag(DoorFlags.Locked))
+            {
+                _scanId = _scanIds[(int)_data.PaletteId];
+            }
+            else
+            {
+                _scanId = 251;
+            }
+        }
+
         public override void Initialize()
         {
             base.Initialize();
-            _scene.LoadEffect(114); // lockDefeat - todo: load in entity setup
+            _scene.LoadEffect(114); // lockDefeat
         }
 
         public override void GetPosition(out Vector3 position)
@@ -84,6 +107,15 @@ namespace MphRead.Entities
             facing = FacingVector;
         }
 
+        public override int GetScanId(bool alternate = false)
+        {
+            if (Flags.TestFlag(DoorFlags.ShouldOpen))
+            {
+                return 0;
+            }
+            return _scanId;
+        }
+
         public override bool Process()
         {
             if (Unlocked && _lock.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
@@ -91,7 +123,7 @@ namespace MphRead.Entities
                 Flags &= ~DoorFlags.Locked;
                 // todo: room state
             }
-            // todo: update scan ID
+            UpdateScanId();
             if (Locked && !Unlocked)
             {
                 Flags &= ~DoorFlags.ShotOpen;
@@ -330,7 +362,10 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo()
         {
-            // todo?: is_visible
+            if (!IsVisible(NodeRef))
+            {
+                return;
+            }
             _lock.Active = false;
             if (Locked && Flags.TestFlag(DoorFlags.ShowLock) && !Flags.TestFlag(DoorFlags.ShouldOpen)
                 && (AnimInfo.Index[0] != 0 || AnimInfo.Flags[0].TestFlag(AnimFlags.Ended)))

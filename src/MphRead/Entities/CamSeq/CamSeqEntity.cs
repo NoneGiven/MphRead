@@ -139,7 +139,7 @@ namespace MphRead.Entities
         private void TryStart()
         {
             PlayerEntity player = PlayerEntity.Main;
-            if (player.Health == 0 && player.DeathCountdown > 0 && Data.BlockInput != 0) // todo: or if some pause global
+            if (player.Health == 0 && player.DeathCountdown > 0 && Data.BlockInput != 0 || GameState.DialogPause)
             {
                 return;
             }

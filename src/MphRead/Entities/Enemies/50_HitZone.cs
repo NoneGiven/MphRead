@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using MphRead.Formats.Culling;
 
 namespace MphRead.Entities.Enemies
 {
@@ -6,7 +7,8 @@ namespace MphRead.Entities.Enemies
     {
         private readonly EnemyInstanceEntity _enemyOwner;
 
-        public Enemy50Entity(EnemyInstanceEntityData data, Scene scene) : base(data, scene)
+        public Enemy50Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
+            : base(data, nodeRef, scene)
         {
             var owner = data.Spawner as EnemyInstanceEntity;
             Debug.Assert(owner != null);

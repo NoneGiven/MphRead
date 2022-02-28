@@ -12,7 +12,7 @@ namespace MphRead.Hud
         Left = 0,
         Right = 1,
         Center = 2,
-        Type3 = 3
+        PadCenter = 3
     }
 
     public readonly struct UiAnimParams
@@ -74,6 +74,9 @@ namespace MphRead.Hud
         public float PositionY;
         public int Width;
         public int Height;
+        public bool FlipHorizontal;
+        public bool FlipVertical;
+        public bool UseMask;
         public IReadOnlyList<byte>? CharacterData;
         public int PaletteIndex = -1;
         public IReadOnlyList<ColorRgba>? PaletteData;
@@ -343,6 +346,7 @@ namespace MphRead.Hud
     public class LayerInfo
     {
         public int BindingId { get; set; } = -1;
+        public int MaskId { get; set; } = -1;
         public float Alpha { get; set; } = 1;
         public float ScaleX { get; set; } = -1;
         public float ScaleY { get; set; } = -1;
@@ -385,19 +389,22 @@ namespace MphRead.Hud
         private static readonly int _layerHeaderSize = Marshal.SizeOf<UiPartHeader>();
         private static readonly int _scrDatInfoSize = Marshal.SizeOf<ScrDatInfo>();
 
-        public static int CharMapToTexture(string path, Scene scene)
+        public static (int, IReadOnlyList<ushort>) CharMapToTexture(string path, Scene scene,
+            IReadOnlyList<ushort>? paletteOverride = null, int paletteId = -1)
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
-            return CharMapToTexture(bytes, startX: 0, startY: 0, tilesX: 0, tilesY: 0, scene);
+            return CharMapToTexture(bytes, startX: 0, startY: 0, tilesX: 0, tilesY: 0, scene, paletteOverride, paletteId);
         }
 
-        public static int CharMapToTexture(string path, int startX, int startY, int tilesX, int tilesY, Scene scene)
+        public static (int, IReadOnlyList<ushort>) CharMapToTexture(string path, int startX, int startY,
+            int tilesX, int tilesY, Scene scene, IReadOnlyList<ushort>? paletteOverride = null, int paletteId = -1)
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
-            return CharMapToTexture(bytes, startX, startY, tilesX, tilesY, scene);
+            return CharMapToTexture(bytes, startX, startY, tilesX, tilesY, scene, paletteOverride, paletteId);
         }
 
-        private static int CharMapToTexture(ReadOnlySpan<byte> bytes, int startX, int startY, int tilesX, int tilesY, Scene scene)
+        private static (int, IReadOnlyList<ushort>) CharMapToTexture(ReadOnlySpan<byte> bytes, int startX, int startY,
+            int tilesX, int tilesY, Scene scene, IReadOnlyList<ushort>? paletteOverride = null, int paletteId = -1)
         {
             UiPartHeader header = Read.ReadStruct<UiPartHeader>(bytes);
             Debug.Assert(header.Magic == 0);
@@ -415,6 +422,24 @@ namespace MphRead.Hud
             offset += info.ScrDataSize;
             Debug.Assert(Read.DoOffsets<byte>(bytes, offset, bytes.Length - offset).All(x => x == 0));
 
+            if (paletteOverride != null)
+            {
+                var newPalette = new List<ushort>();
+                newPalette.Add(paletteData[0]);
+                newPalette.Add(paletteData[1]);
+                for (int i = 1; i < paletteOverride.Count; i++)
+                {
+                    newPalette.Add(paletteOverride[i]);
+                }
+                paletteData = newPalette;
+            }
+
+            int paletteOffset = 0;
+            if (paletteId != -1)
+            {
+                paletteOffset = paletteId * 16;
+            }
+
             var characters = new List<List<ColorRgba>>();
             Debug.Assert(characterData.Count % 32 == 0);
             for (int i = 0; i < characterData.Count / 32; i++)
@@ -426,12 +451,68 @@ namespace MphRead.Hud
                     {
                         byte data = characterData[i * 32 + y * 4 + x];
                         int index1 = data & 0xF;
-                        character.Add(index1 == 0 ? new ColorRgba() : new ColorRgba(paletteData[index1]));
                         int index2 = (data & 0xF0) >> 4;
-                        character.Add(index2 == 0 ? new ColorRgba() : new ColorRgba(paletteData[index2]));
+
+                        void AddColor(int index)
+                        {
+                            var color = new ColorRgba();
+                            if (index != 0 && (paletteId == -1 || index != 6))
+                            {
+                                color = new ColorRgba(paletteData[index + paletteOffset]);
+                            }
+                            character.Add(color);
+                        }
+
+                        AddColor(index1);
+                        AddColor(index2);
                     }
                 }
                 characters.Add(character);
+            }
+
+            if (paletteId != -1)
+            {
+                var newScreenData = new List<ScreenData>(screenData.Count + 32 * 10);
+                for (int i = 0; i < 32 * 10; i++)
+                {
+                    newScreenData.Add(new ScreenData(data: 0));
+                }
+                newScreenData.AddRange(screenData);
+                if (paletteId == 4)
+                {
+                    for (int i = 10 * 32; i < 17 * 32; i++)
+                    {
+                        newScreenData[i] = new ScreenData(data: 0);
+                    }
+                }
+                else
+                {
+                    for (int i = 10 * 32; i < 13 * 32; i++)
+                    {
+                        int charId = newScreenData[i].CharacterId;
+                        if (charId == 1 || charId == 2 || charId == 5)
+                        {
+                            newScreenData[i] = new ScreenData(data: 0);
+                        }
+                    }
+                }
+                for (int i = 16 * 32; i < 17 * 32; i++)
+                {
+                    newScreenData[i] = new ScreenData(data: 13);
+                }
+                for (int i = 17 * 32; i < 21 * 32; i++)
+                {
+                    newScreenData[i] = new ScreenData(data: 15);
+                }
+                for (int i = 21 * 32; i < 21 * 32 + 4; i++)
+                {
+                    newScreenData[i] = new ScreenData(data: 21);
+                }
+                for (int i = 21 * 32 + 28; i < 22 * 32; i++)
+                {
+                    newScreenData[i] = new ScreenData(data: 21);
+                }
+                screenData = newScreenData;
             }
 
             if (tilesX == 0)
@@ -478,7 +559,7 @@ namespace MphRead.Hud
                     }
                 }
             }
-            return scene.BindGetTexture(texture, width, height);
+            return (scene.BindGetTexture(texture, width, height), paletteData);
         }
 
         private static readonly (int Width, int Height)[,] _objectDimensions = new (int, int)[3, 4]
@@ -1256,6 +1337,14 @@ namespace MphRead.Hud
         public static readonly string NodesOG = @"hud\rad_NodesOG.bin";
         public static readonly string NodesRB = @"hud\rad_NodesRB.bin";
         public static readonly string SystemLoad = @"_archives\commonMP\hud_systemload.bin";
+        public static readonly string MessageBox = @"_archives\spSamus\hud_msgBox.bin";
+        public static readonly string MessageSpacer = @"_archives\spSamus\message_spacer.bin";
+        public static readonly string MapScan = @"_archives\spSamus\map_scan.bin";
+        public static readonly string DialogButton = @"_archives\spSamus\scan_ok.bin";
+        public static readonly string DialogArrow = @"_archives\spSamus\scan_arrow.bin";
+        public static readonly string DialogCrystal = @"_archives\spSamus\message_crystalpickup.bin";
+        public static readonly string DialogPickup = @"_archives\spSamus\message_pickups.bin";
+        public static readonly string DialogFrame = @"_archives\spSamus\message_pickupframe.bin";
 
         public static readonly IReadOnlyList<string> Hunters = new string[8]
         {
@@ -1321,6 +1410,25 @@ namespace MphRead.Hud
             )
         };
 
+        public static readonly string ScanCorner = @"_archives\spSamus\scan_corner.bin";
+        public static readonly string ScanCornerSmall = @"_archives\spSamus\scan_cornerSm.bin";
+        public static readonly string ScanLineHoriz = @"_archives\spSamus\scan_horizline.bin";
+        public static readonly string ScanLineVert = @"_archives\spSamus\scan_vertline.bin";
+
+        public static IReadOnlyList<string> ScanIcons = new string[10]
+        {
+            @"_archives\spSamus\scan_lore.bin",
+            @"_archives\spSamus\scan_lore_dim.bin",
+            @"_archives\spSamus\scan_enemy.bin",
+            @"_archives\spSamus\scan_enemy_dim.bin",
+            @"_archives\spSamus\scan_object.bin",
+            @"_archives\spSamus\scan_object_dim.bin",
+            @"_archives\spSamus\scan_equipment.bin",
+            @"_archives\spSamus\scan_equipment_dim.bin",
+            @"_archives\spSamus\scan_red.bin",
+            @"_archives\spSamus\scan_red_dim.bin"
+        };
+
         public static IReadOnlyList<HudObjects> HunterObjects = new HudObjects[8]
         {
             // Samus
@@ -1328,6 +1436,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localSamus\bg_top.bin",
                 helmetDrop: @"_archives\localSamus\bg_top_drop.bin",
                 visor: @"_archives\localSamus\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localSamus\hud_energybar.bin",
                 healthBarB: @"_archives\localSamus\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1338,8 +1447,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localSamus\hud_ammobar.bin",
                 reticle: @"_archives\localSamus\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localSamus\hud_snipercircle.bin",
-                scanBox: @"_archives\spSamus\hud_scanbox.bin",
-                messageBox: @"_archives\spSamus\hud_msgBox.bin",
                 weaponSelect: @"_archives\localSamus\rad_wepsel.bin",
                 selectIcon: @"_archives\localSamus\wepsel_icon.bin",
                 selectBox: @"_archives\localSamus\wepsel_box.bin",
@@ -1392,6 +1499,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localKanden\bg_top.bin",
                 helmetDrop: @"_archives\localKanden\bg_top_drop.bin",
                 visor: @"_archives\localKanden\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localKanden\hud_energybar.bin",
                 healthBarB: @"_archives\localKanden\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1402,8 +1510,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localKanden\hud_ammobar.bin",
                 reticle: @"_archives\localKanden\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localKanden\hud_snipercircle.bin",
-                scanBox: null,
-                messageBox: null, // todo: SP stuff for other hunters
                 weaponSelect: @"_archives\localKanden\rad_wepsel.bin",
                 selectIcon: @"_archives\localKanden\wepsel_icon.bin",
                 selectBox: @"_archives\localKanden\wepsel_box.bin",
@@ -1456,6 +1562,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localTrace\bg_top.bin",
                 helmetDrop: @"_archives\localTrace\bg_top_drop.bin",
                 visor: @"_archives\localTrace\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localTrace\hud_energybar.bin",
                 healthBarB: @"_archives\localTrace\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1466,8 +1573,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localTrace\hud_ammobar.bin",
                 reticle: @"_archives\localTrace\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localTrace\hud_snipercircle.bin",
-                scanBox: null,
-                messageBox: null,
                 weaponSelect: @"_archives\localTrace\rad_wepsel.bin",
                 selectIcon: @"_archives\localTrace\wepsel_icon.bin",
                 selectBox: @"_archives\localTrace\wepsel_box.bin",
@@ -1520,6 +1625,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localSylux\bg_top.bin",
                 helmetDrop: @"_archives\localSylux\bg_top_drop.bin",
                 visor: @"_archives\localSylux\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localSylux\hud_energybar.bin",
                 healthBarB: @"_archives\localSylux\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1530,8 +1636,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localSylux\hud_ammobar.bin",
                 reticle: @"_archives\localSylux\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localSylux\hud_snipercircle.bin",
-                scanBox: null,
-                messageBox: null,
                 weaponSelect: @"_archives\localSylux\rad_wepsel.bin",
                 selectIcon: @"_archives\localSylux\wepsel_icon.bin",
                 selectBox: @"_archives\localSylux\wepsel_box.bin",
@@ -1584,6 +1688,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localNox\bg_top.bin",
                 helmetDrop: @"_archives\localNox\bg_top_drop.bin",
                 visor: @"_archives\localNox\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localNox\hud_energybar.bin",
                 healthBarB: @"_archives\localNox\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1594,8 +1699,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localNox\hud_ammobar.bin",
                 reticle: @"_archives\localNox\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localNox\hud_snipercircle.bin",
-                scanBox: null,
-                messageBox: null,
                 weaponSelect: @"_archives\localNox\rad_wepsel.bin",
                 selectIcon: @"_archives\localNox\wepsel_icon.bin",
                 selectBox: @"_archives\localNox\wepsel_box.bin",
@@ -1648,6 +1751,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localSpire\bg_top.bin",
                 helmetDrop: @"_archives\localSpire\bg_top_drop.bin",
                 visor: @"_archives\localSpire\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localSpire\hud_energybar.bin",
                 healthBarB: @"_archives\localSpire\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1658,8 +1762,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localSpire\hud_ammobar.bin",
                 reticle: @"_archives\localSpire\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localSpire\hud_snipercircle.bin",
-                scanBox: null,
-                messageBox: null,
                 weaponSelect: @"_archives\localSpire\rad_wepsel.bin",
                 selectIcon: @"_archives\localSpire\wepsel_icon.bin",
                 selectBox: @"_archives\localSpire\wepsel_box.bin",
@@ -1712,6 +1814,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localWeavel\bg_top.bin",
                 helmetDrop: @"_archives\localWeavel\bg_top_drop.bin",
                 visor: @"_archives\localWeavel\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localWeavel\hud_energybar.bin",
                 healthBarB: @"_archives\localWeavel\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1722,8 +1825,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localWeavel\hud_ammobar.bin",
                 reticle: @"_archives\localWeavel\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localWeavel\hud_snipercircle.bin",
-                scanBox: null,
-                messageBox: null,
                 weaponSelect: @"_archives\localWeavel\rad_wepsel.bin",
                 selectIcon: @"_archives\localWeavel\wepsel_icon.bin",
                 selectBox: @"_archives\localWeavel\wepsel_box.bin",
@@ -1776,6 +1877,7 @@ namespace MphRead.Hud
                 helmet: @"_archives\localWeavel\bg_top.bin", // todo: modify HUD graphics/palettes for Guardians
                 helmetDrop: @"_archives\localWeavel\bg_top_drop.bin",
                 visor: @"_archives\localKanden\bg_top_ovl.bin",
+                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
                 healthBarA: @"_archives\localSamus\hud_energybar.bin",
                 healthBarB: @"_archives\localSamus\hud_energybar2.bin",
                 energyTanks: @"_archives\spSamus\hud_etank.bin",
@@ -1786,8 +1888,6 @@ namespace MphRead.Hud
                 ammoBar: @"_archives\localSamus\hud_ammobar.bin",
                 reticle: @"_archives\localSamus\hud_targetcircle.bin",
                 sniperReticle: @"_archives\localSamus\hud_snipercircle.bin",
-                scanBox: @"_archives\spSamus\hud_scanbox.bin",
-                messageBox: @"_archives\spSamus\hud_msgBox.bin",
                 weaponSelect: @"_archives\localSamus\rad_wepsel.bin",
                 selectIcon: @"_archives\localSamus\wepsel_icon.bin",
                 selectBox: @"_archives\localSamus\wepsel_box.bin",
@@ -2297,6 +2397,7 @@ namespace MphRead.Hud
         public readonly string Helmet;
         public readonly string HelmetDrop;
         public readonly string Visor;
+        public readonly string ScanVisor;
         public readonly string HealthBarA;
         public readonly string HealthBarB;
         public readonly string? EnergyTanks;
@@ -2307,8 +2408,6 @@ namespace MphRead.Hud
         public readonly string AmmoBar;
         public readonly string Reticle;
         public readonly string SniperReticle;
-        public readonly string? ScanBox;
-        public readonly string? MessageBox;
         public readonly string WeaponSelect;
         public readonly string SelectIcon;
         public readonly string SelectBox;
@@ -2356,20 +2455,22 @@ namespace MphRead.Hud
         public readonly int CloakTextPosY;
         public readonly Align CloakAlign;
 
-        public HudObjects(string helmet, string helmetDrop, string visor, string healthBarA, string healthBarB, string? energyTanks,
-            string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar, string reticle,
-            string sniperReticle, string? scanBox, string? messageBox, string weaponSelect, string selectIcon, string selectBox,
-            string damageBar, int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY, int healthOffsetY,
-            int healthOffsetYAlt, int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY, int enemyHealthPosX,
-            int enemyHealthPosY, int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX, int scorePosY, Align scoreAlign,
-            int octolithPosX, int octolithPosY, int primePosX, int primePosY, int primeTextPosX, int primeTextPosY, Align primeAlign,
-            int nodeBonusPosX, int nodeBonusPosY, int enemyBonusPosX, int enemyBonusPosY, int nodeIconPosX, int nodeIconPosY,
-            int nodeTextPosX, int nodeTextPosY, int dblDmgPosX, int dblDmgPosY, int dblDmgTextPosX, int dblDmgTextPosY,
-            Align dblDmgAlign, int cloakPosX, int cloakPosY, int cloakTextPosX, int cloakTextPosY, Align cloakAlign)
+        public HudObjects(string helmet, string helmetDrop, string visor, string scanVisor, string healthBarA, string healthBarB,
+            string? energyTanks, string weaponIcon, string doubleDamage, string cloaking, string primeHunter, string ammoBar,
+            string reticle, string sniperReticle, string weaponSelect, string selectIcon,
+            string selectBox, string damageBar, int healthMainPosX, int healthMainPosY, int healthSubPosX, int healthSubPosY,
+            int healthOffsetY, int healthOffsetYAlt, int ammoBarPosX, int ammoBarPosY, int weaponIconPosX, int weaponIconPosY,
+            int enemyHealthPosX, int enemyHealthPosY, int enemyHealthTextPosX, int enemyHealthTextPosY, int scorePosX,
+            int scorePosY, Align scoreAlign, int octolithPosX, int octolithPosY, int primePosX, int primePosY, int primeTextPosX,
+            int primeTextPosY, Align primeAlign, int nodeBonusPosX, int nodeBonusPosY, int enemyBonusPosX, int enemyBonusPosY,
+            int nodeIconPosX, int nodeIconPosY, int nodeTextPosX, int nodeTextPosY, int dblDmgPosX, int dblDmgPosY,
+            int dblDmgTextPosX, int dblDmgTextPosY, Align dblDmgAlign, int cloakPosX, int cloakPosY, int cloakTextPosX,
+            int cloakTextPosY, Align cloakAlign)
         {
             Helmet = helmet;
             HelmetDrop = helmetDrop;
             Visor = visor;
+            ScanVisor = scanVisor;
             HealthBarA = healthBarA;
             HealthBarB = healthBarB;
             EnergyTanks = energyTanks;
@@ -2380,8 +2481,6 @@ namespace MphRead.Hud
             AmmoBar = ammoBar;
             Reticle = reticle;
             SniperReticle = sniperReticle;
-            ScanBox = scanBox;
-            MessageBox = messageBox;
             WeaponSelect = weaponSelect;
             SelectIcon = selectIcon;
             SelectBox = selectBox;

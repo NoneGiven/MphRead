@@ -335,7 +335,7 @@ namespace MphRead
         Impact = 20,
         Death = 21,
         Unused22 = 22, // note: area volumes are set to never dispatch this as an inside event
-        SavePoint = 23,
+        ShipHatch = 23,
         Unused24 = 24, // sent by some alt fom movement button press, but never checked
         Unused25 = 25, // only one one area volume in the test level
         ShowPrompt = 26,
@@ -486,6 +486,16 @@ namespace MphRead
     public enum SingleType
     {
         Death,
-        Fuzzball
+        Fuzzball,
+        Lore,
+        LoreDim,
+        Enemy,
+        EnemyDim,
+        Object,
+        ObjectDim,
+        Equipment,
+        EquipmentDim,
+        Red,
+        RedDim
     }
 }

@@ -84,7 +84,8 @@ namespace MphRead.Entities
         public PlatformEntityData Data => _data;
         public Vector3 Velocity => _velocity;
 
-        public PlatformEntity(PlatformEntityData data, Scene scene) : base(EntityType.Platform, scene)
+        public PlatformEntity(PlatformEntityData data, string nodeName, Scene scene)
+            : base(EntityType.Platform, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -131,7 +132,7 @@ namespace MphRead.Entities
                 }
                 ModelInstance inst = SetUpModel(_meta.Name);
                 ModelMetadata modelMeta = Metadata.ModelMetadata[_meta.Name];
-                if (modelMeta.AnimationPath != null)
+                if (meta.Animation)
                 {
                     _animFlags |= PlatAnimFlags.HasAnim;
                 }
@@ -346,6 +347,29 @@ namespace MphRead.Entities
             }
             up = UpVector;
             facing = FacingVector;
+        }
+
+        public override int GetScanId(bool alternate = false)
+        {
+            bool awake = StateFlags.TestFlag(PlatStateFlags.Awake);
+            if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parentEntCol != null && _parent != null)
+            {
+                if (!_parent.StateFlags.TestFlag(PlatStateFlags.Awake)
+                    && !_parent.StateFlags.TestFlag(PlatStateFlags.WasAwake))
+                {
+                    awake = false;
+                }
+            }
+            return awake ? _data.ScanData1 : _data.ScanData2;
+        }
+
+        public override void OnScanned()
+        {
+            if (_data.ScanMessage != Message.None && _scanMessageTarget != null
+                && !GameState.StorySave.CheckLogbook(GetScanId()))
+            {
+                _scene.SendMessage(_data.ScanMessage, this, _scanMessageTarget, -1, 0);
+            }
         }
 
         private void SetPlatAnimation(PlatAnimId id, AnimFlags flags)
@@ -795,8 +819,17 @@ namespace MphRead.Entities
             }
             else if (_animFlags.TestFlag(PlatAnimFlags.Draw))
             {
-                bool draw = true;
-                // todo: use draw always, draw when node ref, and is_visible
+                bool draw = false;
+                if (Flags.TestFlag(PlatformFlags.DrawAlways))
+                {
+                    draw = true;
+                }
+                else if (IsVisible(NodeRef))
+                {
+                    // todo?: the game has two conditions, one for checking the node ref when that flag is set,
+                    // and one for full is_entity_visible -- but these flags are never set anyway
+                    draw = true;
+                }
                 if (Flags.TestFlag(PlatformFlags.SyluxShip) && _parentEntCol != null)
                 {
                     Debug.Assert(_parent != null);
@@ -1347,7 +1380,8 @@ namespace MphRead.Entities
                                                 PlaySfx(_moveSfx.Destoryed);
                                             }
                                             Vector3 spawnPos = _visiblePosition.AddY(1);
-                                            ItemSpawnEntity.SpawnItemDrop(_data.ItemType, spawnPos, _data.ItemChance, _scene);
+                                            ItemSpawnEntity.SpawnItemDrop(_data.ItemType, spawnPos,
+                                                NodeRef, _data.ItemChance, _scene);
                                             if (_data.DeadMessage != Message.None && _deathMessageTarget != null)
                                             {
                                                 _scene.SendMessage(_data.DeadMessage, this, _deathMessageTarget,
