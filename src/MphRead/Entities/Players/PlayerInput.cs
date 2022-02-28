@@ -1964,7 +1964,7 @@ namespace MphRead.Entities
                                 if (!down || !prevDown)
                                 {
                                     control.NeedsRepress = false;
-                                } 
+                                }
                             }
                             if (!control.NeedsRepress)
                             {

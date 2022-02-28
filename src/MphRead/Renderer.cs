@@ -4307,6 +4307,12 @@ namespace MphRead
                 1 => "placeholders",
                 _ => "off"
             };
+            string input = _inputMode switch
+            {
+                InputMode.PlayerOnly => "player only",
+                InputMode.CameraOnly => "camera only",
+                _ => "all",
+            };
             _sb.AppendLine(" - Hold left mouse button or use arrow keys to rotate");
             _sb.AppendLine(" - Hold Shift to move the camera faster");
             _sb.AppendLine($" - T toggles texturing ({OnOff(_showTextures)})");
@@ -4316,10 +4322,11 @@ namespace MphRead
             _sb.AppendLine($" - F toggles texture filtering ({OnOff(_textureFiltering)})");
             _sb.AppendLine($" - L toggles lighting ({OnOff(_lighting)})");
             _sb.AppendLine($" - G toggles fog ({OnOff(_showFog)})");
-            _sb.AppendLine($" - E toggles Scan Visor ({OnOff(_scanVisor)})");
+            _sb.AppendLine($" - Shift+E toggles Scan Visor ({OnOff(_scanVisor)})");
             _sb.AppendLine($" - I toggles invisible entities ({invisible})");
             _sb.AppendLine($" - Z toggles volume display ({volume})");
             _sb.AppendLine($" - P switches camera mode ({(_cameraMode == CameraMode.Pivot ? "pivot" : "roam")})");
+            _sb.AppendLine($" - Shift+P switches input mode ({input})");
             _sb.AppendLine(" - R resets the camera");
             _sb.AppendLine(" - Ctrl+O then enter \"model_name [recolor]\" to load");
             _sb.AppendLine(" - Ctrl+U then enter \"model_id\" to unload");

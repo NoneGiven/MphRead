@@ -60,7 +60,7 @@ namespace MphRead.Entities
                 if (_parent != null)
                 {
                     _invPos = Matrix.Vec3MultMtx4(Position, _parent.CollisionTransform.Inverted());
-                } 
+                }
                 _linkDone = true;
             }
             if (_linkDone && _parent != null)
