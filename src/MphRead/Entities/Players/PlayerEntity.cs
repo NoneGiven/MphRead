@@ -874,6 +874,16 @@ namespace MphRead.Entities
             if (IsMainPlayer)
             {
                 EndWhiteout();
+                if (IsAltForm || IsMorphing)
+                {
+                    _healthbarYOffset = _hudObjects.HealthOffsetYAlt;
+                    _boostBombsYOffset = 160;
+                }
+                else
+                {
+                    _healthbarYOffset = _hudObjects.HealthOffsetY;
+                    _boostBombsYOffset = 208;
+                }
             }
         }
 

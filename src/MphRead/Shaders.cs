@@ -242,8 +242,27 @@ void main()
     else {
         gl_FragColor = texture2D(tex, shifted);
     }
-    if (white_fac > 0) {
-        // sktodo
+    if (white_fac != 0) {
+        float factor = white_table[band];
+        if (white_fac < 0) {
+            gl_FragColor = vec4(factor, factor, factor, 1);
+        }
+        else {
+            factor *= white_fac;
+            if (factor >= 0) {
+                float r = gl_FragColor.r + (1 - gl_FragColor.r) * factor;
+                float g = gl_FragColor.g + (1 - gl_FragColor.g) * factor;
+                float b = gl_FragColor.b + (1 - gl_FragColor.b) * factor;
+                gl_FragColor = vec4(r, g, b, 1);
+            }
+            else {
+                factor = -factor;
+                float r = gl_FragColor.r  - gl_FragColor.r * factor;
+                float g = gl_FragColor.g  - gl_FragColor.g * factor;
+                float b = gl_FragColor.b  - gl_FragColor.b * factor;
+                gl_FragColor = vec4(r, g, b, 1);
+            }
+        }
     }
 }
 ";

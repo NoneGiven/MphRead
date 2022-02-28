@@ -1299,9 +1299,9 @@ namespace MphRead
                 GL.Uniform1(_shaderLocations.ShiftIndex, index);
                 GL.Uniform1(_shaderLocations.LerpFactor, factor);
                 GL.Uniform1(_shaderLocations.WhiteoutFactor, PlayerEntity.Main.HudWhiteoutFactor);
-                if (PlayerEntity.Main.HudWhiteoutFactor > 0)
+                if (PlayerEntity.Main.HudWhiteoutFactor != 0)
                 {
-                    // skhere
+                    GL.Uniform1(_shaderLocations.WhiteoutTable, 192, PlayerEntity.HudWhiteoutTable);
                 }
             }
             else

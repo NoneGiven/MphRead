@@ -529,7 +529,7 @@ namespace MphRead.Entities
             {
                 return;
             }
-            if (_health > 0)
+            if (_health > 0 || _deathCountdown > 0)
             {
                 if (!IsAltForm && !IsMorphing && !IsUnmorphing)
                 {
@@ -935,7 +935,7 @@ namespace MphRead.Entities
 
         private void EndWhiteout()
         {
-            HudWhiteoutState = 0;
+            HudWhiteoutState = -1;
             HudWhiteoutFactor = 0;
         }
 
@@ -943,10 +943,10 @@ namespace MphRead.Entities
         {
             float GetPosition()
             {
-                float time = _scene.GlobalElapsedTime - _whiteoutTime;
+                float time = (_scene.GlobalElapsedTime - _whiteoutTime) * 60;
                 float timeSquared = time * time;
                 float timeCubed = timeSquared * time;
-                float jerk = 0.12f; // 16 fx32 (0.004f) per frame @ 30 fps
+                float jerk = 0.004f;
                 float initAcceleration = 0;
                 float initVelocity = 1;
                 float initPosition = 0;
@@ -959,7 +959,7 @@ namespace MphRead.Entities
 
             if (HudWhiteoutState == 0)
             {
-                HudWhiteoutFactor += 1.40625f * _scene.FrameTime;
+                HudWhiteoutFactor += 2.8125f * _scene.FrameTime;
                 if (HudWhiteoutFactor >= 1)
                 {
                     HudWhiteoutFactor = 1;
@@ -981,8 +981,9 @@ namespace MphRead.Entities
             }
             else if (HudWhiteoutState == 2)
             {
+                HudWhiteoutFactor = -1; // use the table value directly instead of as a factor
                 float time = _scene.GlobalElapsedTime - _whiteoutTime;
-                float value = 0; // sktodo
+                float value = 1 - Math.Min(time / (16 / 30f), 1);
                 Array.Fill(HudWhiteoutTable, value);
             }
         }
@@ -991,7 +992,26 @@ namespace MphRead.Entities
 
         private void UpdateWhiteoutTable(float value)
         {
-            // sktodo
+            int trunc = (int)value;
+            float amount = 0.9975f;
+            for (int i = 95; i >= 0; i--)
+            {
+                int index = i - trunc;
+                if (index >= 0)
+                {
+                    Debug.Assert(index <= 95);
+                    float factor = (MathF.Pow(amount, 8) * 32 - 16) / 16f;
+                    Debug.Assert(factor >= -1 && factor <= 1);
+                    HudWhiteoutTable[index] = factor;
+                    HudWhiteoutTable[191 - index] = factor;
+                }
+                amount -= 0.0105f;
+            }
+            for (int j = 95; j >= 95 - trunc && j >= 0; j--)
+            {
+                HudWhiteoutTable[j] = 16;
+                HudWhiteoutTable[191 - j] = 16;
+            }
         }
 
         public void DrawHudObjects()

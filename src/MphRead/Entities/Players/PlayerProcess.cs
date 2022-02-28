@@ -777,6 +777,10 @@ namespace MphRead.Entities
                     {
                         _deathProcessed = true;
                         Flags2 |= PlayerFlags2.HideModel;
+                        // make the visor layer show up
+                        Flags1 &= ~PlayerFlags1.AltForm;
+                        Flags1 &= ~PlayerFlags1.Morphing;
+                        Flags1 &= ~PlayerFlags1.Unmorphing;
                         // todo: story save, etc.
                     }
                 }

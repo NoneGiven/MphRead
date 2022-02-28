@@ -361,7 +361,8 @@ namespace MphRead.Entities
                     float alpha = _curAlpha * pct;
                     if (_health == 0)
                     {
-                        float decrease = 2 * (RespawnTime - _respawnTimer) / 2f; // todo: FPS stuff
+                        float respawnTime = _deathCountdown > 0 ? UInt16.MaxValue : RespawnTime;
+                        float decrease = 2 * (respawnTime - _respawnTimer) / 2f; // todo: FPS stuff
                         alpha -= decrease;
                     }
                     if (alpha > 0)
