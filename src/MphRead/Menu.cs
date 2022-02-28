@@ -10,6 +10,7 @@ namespace MphRead
 
         public static void ShowMenuPrompts()
         {
+            bool audioLoaded = Sound.Sfx.CheckAudioLoad();
             int prompt = 0;
             int selection = 10;
             int roomId = 95;
@@ -142,6 +143,13 @@ namespace MphRead
                     s--;
                     if (prompt == 0)
                     {
+                        if (!audioLoaded)
+                        {
+                            Console.WriteLine();
+                            Console.WriteLine("WARNING: Audio system could not be loaded. " +
+                                "Sound effects and music will not be played.");
+                            Console.WriteLine("You may need to install OpenAL on your system.");
+                        }
                         ConsoleKeyInfo keyInfo = Console.ReadKey();
                         if (keyInfo.Key == ConsoleKey.Escape)
                         {
