@@ -358,6 +358,8 @@ namespace MphRead.Formats.Collision
         public CollisionInfo Info { get; }
         public bool IsEntity { get; }
 
+        public Vector3 Translation { get; set; }
+
         public CollisionInstance(string name, CollisionInfo info, bool isEntity)
         {
             Name = name;

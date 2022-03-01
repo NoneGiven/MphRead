@@ -10,10 +10,10 @@ namespace MphRead.Formats
     public class CollisionCandidate
     {
         public EntityCollision? EntityCollision { get; set; }
-        public MphCollisionInfo Collision { get; set; }
+        public CollisionInstance Collision { get; set; }
         public CollisionEntry Entry { get; set; }
 
-        public CollisionCandidate(MphCollisionInfo collision, CollisionEntry entry)
+        public CollisionCandidate(CollisionInstance collision, CollisionEntry entry)
         {
             Collision = collision;
             Entry = entry;
@@ -107,7 +107,9 @@ namespace MphRead.Formats
             for (int i = 0; i < candidates.Count; i++)
             {
                 CollisionCandidate candidate = candidates[i];
-                MphCollisionInfo info = candidate.Collision;
+                CollisionInstance inst = candidate.Collision;
+                // sktodo: handle FH collision
+                var info = (MphCollisionInfo)inst.Info;
                 Debug.Assert(candidate.Entry.DataCount > 0);
                 if (candidate.EntityCollision != lastEntCol)
                 {
@@ -118,8 +120,8 @@ namespace MphRead.Formats
                     }
                     else
                     {
-                        transPoint1 = point1;
-                        transPoint2 = point2;
+                        transPoint1 = point1 - inst.Translation;
+                        transPoint2 = point2 - inst.Translation;
                     }
                 }
                 for (int j = 0; j < candidate.Entry.DataCount; j++)
@@ -393,7 +395,9 @@ namespace MphRead.Formats
             for (int i = 0; i < candidates.Count; i++)
             {
                 CollisionCandidate candidate = candidates[i];
-                MphCollisionInfo info = candidate.Collision;
+                CollisionInstance inst = candidate.Collision;
+                // sktodo: handle FH collision
+                var info = (MphCollisionInfo)inst.Info;
                 Debug.Assert(candidate.Entry.DataCount > 0);
                 if (candidate.EntityCollision != lastEntCol)
                 {
@@ -404,8 +408,8 @@ namespace MphRead.Formats
                     }
                     else
                     {
-                        transPoint1 = point1;
-                        transPoint2 = point2;
+                        transPoint1 = point1 - inst.Translation;
+                        transPoint2 = point2 - inst.Translation;
                     }
                 }
                 for (int j = 0; j < candidate.Entry.DataCount; j++)
@@ -587,7 +591,10 @@ namespace MphRead.Formats
             for (int i = 0; i < candidates.Count; i++)
             {
                 CollisionCandidate candidate = candidates[i];
-                MphCollisionInfo info = candidate.Collision;
+                CollisionInstance inst = candidate.Collision;
+                // sktodo: handle FH collision
+                var info = (MphCollisionInfo)inst.Info;
+                Vector3 transPoint = point - inst.Translation;
                 Debug.Assert(candidate.Entry.DataCount > 0);
                 for (int j = 0; j < candidate.Entry.DataCount; j++)
                 {
@@ -606,7 +613,7 @@ namespace MphRead.Formats
                         _seenData.Add(data);
                     }
                     Vector4 plane = info.Planes[data.PlaneIndex];
-                    float dot = Vector3.Dot(point, plane.Xyz) - plane.W;
+                    float dot = Vector3.Dot(transPoint, plane.Xyz) - plane.W;
                     float resDot = dot;
                     if (dot <= 0 || dot > radius)
                     {
@@ -622,7 +629,7 @@ namespace MphRead.Formats
                         Vector3 edgeDir = (point1 - point2).Normalized();
                         var cross = Vector3.Cross(edgeDir, plane.Xyz);
                         float dot1 = Vector3.Dot(cross, point2);
-                        float dot2 = Vector3.Dot(point, cross);
+                        float dot2 = Vector3.Dot(transPoint, cross);
                         return dot2 - dot1;
                     }
 
@@ -650,7 +657,8 @@ namespace MphRead.Formats
                         Debug.Assert(data.PointIndexCount > 0);
                         // pick up where left off with the p1 index
                         float dotDiff = GetEdgeDotDifference(p1);
-                        // the game continues in the next loop based on this condition, but the condition doesn't change, so the whole loop is skipped
+                        // the game continues in the next loop based on this condition,
+                        // but the condition doesn't change, so the whole loop is skipped
                         if (dotDiff < 0 && dotDiff >= -radius)
                         {
                             for (int p2 = 0; p2 < data.PointIndexCount; p2++)
@@ -661,11 +669,11 @@ namespace MphRead.Formats
                                 Vector3 point2 = info.Points[info.PointIndices[index + 1]];
                                 Vector3 edge = point2 - point1;
                                 float dot1 = Vector3.Dot(edge, edge);
-                                float dot2 = Vector3.Dot(edge, point - point1);
+                                float dot2 = Vector3.Dot(edge, transPoint - point1);
                                 float div = dot2 / dot1;
                                 if (div < 0 || div >= 1)
                                 {
-                                    Vector3 vec1 = point - point1;
+                                    Vector3 vec1 = transPoint - point1;
                                     float mag1 = vec1.Length;
                                     if (mag1 > radius)
                                     {
@@ -684,7 +692,7 @@ namespace MphRead.Formats
                                     }
                                     break;
                                 }
-                                Vector3 vec2 = point - (point1 + edge * div);
+                                Vector3 vec2 = transPoint - (point1 + edge * div);
                                 float mag2 = vec2.Length;
                                 if (mag2 <= radius)
                                 {
@@ -749,58 +757,66 @@ namespace MphRead.Formats
 
         private static void GetRoomCandidatesForLimits(Vector3 limitMin, Vector3 limitMax, Scene scene)
         {
-            // sktodo: handle FH collision
-            if (scene.Room == null || scene.Room.RoomCollision.Info.FirstHunt)
+            if (scene.Room == null)
             {
                 return;
             }
-            var info = (MphCollisionInfo)scene.Room.RoomCollision.Info;
-            float size = 4;
-            int partsX = info.Header.PartsX;
-            int partsY = info.Header.PartsY;
-            int partsZ = info.Header.PartsZ;
-            Vector3 minPos = info.MinPosition;
-            int minXPart = (int)((limitMin.X - minPos.X) / size);
-            int maxXPart = (int)((limitMax.X - minPos.X) / size);
-            int minYPart = (int)((limitMin.Y - minPos.Y) / size);
-            int maxYPart = (int)((limitMax.Y - minPos.Y) / size);
-            int minZPart = (int)((limitMin.Z - minPos.Z) / size);
-            int maxZPart = (int)((limitMax.Z - minPos.Z) / size);
-            if (maxXPart >= 0 && minXPart <= partsX && maxYPart >= 0 && minYPart <= partsY && maxZPart >= 0 && minZPart <= partsZ)
+            for (int i = 0; i < scene.Room.RoomCollision.Count; i++)
             {
-                minXPart = Math.Max(minXPart, 0);
-                minYPart = Math.Max(minYPart, 0);
-                minZPart = Math.Max(minZPart, 0);
-                maxXPart = Math.Min(maxXPart, partsX - 1);
-                maxYPart = Math.Min(maxYPart, partsY - 1);
-                maxZPart = Math.Min(maxZPart, partsZ - 1);
-                int xIndex = minXPart;
-                int yIndex = minYPart;
-                int zIndex = minZPart;
-                while (yIndex <= maxYPart)
+                // sktodo: handle FH collision
+                CollisionInstance inst = scene.Room.RoomCollision[i];
+                if (inst.Info.FirstHunt)
                 {
-                    while (zIndex <= maxZPart)
+                    continue;
+                }
+                var info = (MphCollisionInfo)inst.Info;
+                float size = 4;
+                int partsX = info.Header.PartsX;
+                int partsY = info.Header.PartsY;
+                int partsZ = info.Header.PartsZ;
+                Vector3 minPos = info.MinPosition + inst.Translation;
+                int minXPart = (int)((limitMin.X - minPos.X) / size);
+                int maxXPart = (int)((limitMax.X - minPos.X) / size);
+                int minYPart = (int)((limitMin.Y - minPos.Y) / size);
+                int maxYPart = (int)((limitMax.Y - minPos.Y) / size);
+                int minZPart = (int)((limitMin.Z - minPos.Z) / size);
+                int maxZPart = (int)((limitMax.Z - minPos.Z) / size);
+                if (maxXPart >= 0 && minXPart <= partsX && maxYPart >= 0 && minYPart <= partsY && maxZPart >= 0 && minZPart <= partsZ)
+                {
+                    minXPart = Math.Max(minXPart, 0);
+                    minYPart = Math.Max(minYPart, 0);
+                    minZPart = Math.Max(minZPart, 0);
+                    maxXPart = Math.Min(maxXPart, partsX - 1);
+                    maxYPart = Math.Min(maxYPart, partsY - 1);
+                    maxZPart = Math.Min(maxZPart, partsZ - 1);
+                    int xIndex = minXPart;
+                    int yIndex = minYPart;
+                    int zIndex = minZPart;
+                    while (yIndex <= maxYPart)
                     {
-                        while (xIndex <= maxXPart)
+                        while (zIndex <= maxZPart)
                         {
-                            int entryIndex = yIndex * partsX * partsZ + zIndex * partsX + xIndex;
-                            CollisionEntry entry = info.Entries[entryIndex++];
-                            if (entry.DataCount > 0)
+                            while (xIndex <= maxXPart)
                             {
-                                CollisionCandidate item = _inactiveItems.Dequeue();
-                                item.Collision = info;
-                                item.Entry = entry;
-                                item.EntityCollision = null;
-                                _tempItems.Push(item);
+                                int entryIndex = yIndex * partsX * partsZ + zIndex * partsX + xIndex;
+                                CollisionEntry entry = info.Entries[entryIndex++];
+                                if (entry.DataCount > 0)
+                                {
+                                    CollisionCandidate item = _inactiveItems.Dequeue();
+                                    item.Collision = inst;
+                                    item.Entry = entry;
+                                    item.EntityCollision = null;
+                                    _tempItems.Push(item);
+                                }
+                                xIndex++;
                             }
-                            xIndex++;
+                            xIndex = minXPart;
+                            zIndex++;
                         }
                         xIndex = minXPart;
-                        zIndex++;
+                        zIndex = minZPart;
+                        yIndex++;
                     }
-                    xIndex = minXPart;
-                    zIndex = minZPart;
-                    yIndex++;
                 }
             }
             while (_tempItems.Count > 0)
@@ -861,7 +877,8 @@ namespace MphRead.Formats
                     if (entMin.X <= limitMax.X && entMax.X >= limitMin.X && entMin.Y <= limitMax.Y
                         && entMax.Y >= limitMin.Y && entMin.Z <= limitMax.Z && entMax.Z >= limitMin.Z)
                     {
-                        var info = (MphCollisionInfo)entCol.Collision.Info;
+                        CollisionInstance inst = entCol.Collision;
+                        var info = (MphCollisionInfo)inst.Info;
                         int entryIndex = 0;
                         int xIndex = 0;
                         int yIndex = 0;
@@ -876,7 +893,7 @@ namespace MphRead.Formats
                                     if (entry.DataCount > 0)
                                     {
                                         CollisionCandidate item = _inactiveItems.Dequeue();
-                                        item.Collision = info;
+                                        item.Collision = inst;
                                         item.Entry = entry;
                                         item.EntityCollision = entCol;
                                         _tempItems.Push(item);
@@ -901,249 +918,275 @@ namespace MphRead.Formats
 
         private static void GetRoomCandidatesForPoints(Vector3 point1, Vector3 point2, Scene scene)
         {
-            // sktodo: handle FH collision
-            if (scene.Room == null || scene.Room.RoomCollision.Info.FirstHunt)
+            if (scene.Room == null)
             {
                 return;
             }
-            var info = (MphCollisionInfo)scene.Room.RoomCollision.Info;
-            float size = 4;
-            int partsX = info.Header.PartsX;
-            int partsY = info.Header.PartsY;
-            int partsZ = info.Header.PartsZ;
-            Vector3 minPos = info.MinPosition;
-            var maxPos = new Vector3(
-                minPos.X + partsX * size - Fixed.ToFloat(20),
-                minPos.Y + partsY * size - Fixed.ToFloat(20),
-                minPos.Z + partsZ * size - Fixed.ToFloat(20)
-            );
+            for (int i = 0; i < scene.Room.RoomCollision.Count; i++)
+            {
+                // sktodo: handle FH collision
+                CollisionInstance inst = scene.Room.RoomCollision[i];
+                if (inst.Info.FirstHunt)
+                {
+                    continue;
+                }
+                var info = (MphCollisionInfo)inst.Info;
+                float size = 4;
+                int partsX = info.Header.PartsX;
+                int partsY = info.Header.PartsY;
+                int partsZ = info.Header.PartsZ;
+                Vector3 minPos = info.MinPosition + inst.Translation;
+                var maxPos = new Vector3(
+                    minPos.X + partsX * size - Fixed.ToFloat(20),
+                    minPos.Y + partsY * size - Fixed.ToFloat(20),
+                    minPos.Z + partsZ * size - Fixed.ToFloat(20)
+                );
 
-            int TestBounds(Vector3 point)
-            {
-                int bits = 0;
-                if (point.X < minPos.X)
+                int TestBounds(Vector3 point)
                 {
-                    bits |= 0x1;
+                    int bits = 0;
+                    if (point.X < minPos.X)
+                    {
+                        bits |= 0x1;
+                    }
+                    if (point.X > maxPos.X)
+                    {
+                        bits |= 0x2;
+                    }
+                    if (point.Y < minPos.Y)
+                    {
+                        bits |= 0x4;
+                    }
+                    if (point.Y > maxPos.Y)
+                    {
+                        bits |= 0x8;
+                    }
+                    if (point.Z < minPos.Z)
+                    {
+                        bits |= 0x10;
+                    }
+                    if (point.Z > maxPos.Z)
+                    {
+                        bits |= 0x20;
+                    }
+                    return bits;
                 }
-                if (point.X > maxPos.X)
-                {
-                    bits |= 0x2;
-                }
-                if (point.Y < minPos.Y)
-                {
-                    bits |= 0x4;
-                }
-                if (point.Y > maxPos.Y)
-                {
-                    bits |= 0x8;
-                }
-                if (point.Z < minPos.Z)
-                {
-                    bits |= 0x10;
-                }
-                if (point.Z > maxPos.Z)
-                {
-                    bits |= 0x20;
-                }
-                return bits;
-            }
 
-            int test1 = TestBounds(point1);
-            int test2 = TestBounds(point2);
-            if ((test1 & test2) != 0)
-            {
-                // if any coordinate of both points is outside the bounds
-                return;
-            }
-            bool inside = false;
-            if (test1 == 0)
-            {
-                // if no coordinates of point 1 are outside the bounds
-                inside = true;
-            }
-            else
-            {
-                if ((test1 & 0x3) != 0)
+                int test1 = TestBounds(point1);
+                int test2 = TestBounds(point2);
+                if ((test1 & test2) != 0)
                 {
-                    // x coordinate
-                    float v7;
-                    float v8;
-                    if ((test1 & 0x1) != 0)
+                    // if any coordinate of both points is outside the bounds
+                    return;
+                }
+                bool inside = false;
+                if (test1 == 0)
+                {
+                    // if no coordinates of point 1 are outside the bounds
+                    inside = true;
+                }
+                else
+                {
+                    if ((test1 & 0x3) != 0)
                     {
-                        // less than min
-                        v7 = minPos.X - point1.X;
-                        v8 = minPos.X - point2.X;
-                    }
-                    else // if ((test1 & 0x2) != 0)
-                    {
-                        // greater than max
-                        v7 = point1.X - maxPos.X;
-                        v8 = point2.X - maxPos.X;
-                    }
-                    if (v7 >= 0 && v8 < 0)
-                    {
-                        float div = v7 / (v7 - v8);
-                        var newPoint = new Vector3(
-                            (point2.X - point1.X) * div + point1.X,
-                            (point2.Y - point1.Y) * div + point1.Y,
-                            (point2.Z - point1.Z) * div + point1.Z
-                        );
-                        if (newPoint.Y >= minPos.Y && newPoint.Y <= maxPos.Y
-                          && newPoint.Z >= minPos.Z && newPoint.Z <= maxPos.Z)
+                        // x coordinate
+                        float v7;
+                        float v8;
+                        if ((test1 & 0x1) != 0)
                         {
-                            point1 = newPoint;
-                            inside = true;
+                            // less than min
+                            v7 = minPos.X - point1.X;
+                            v8 = minPos.X - point2.X;
+                        }
+                        else // if ((test1 & 0x2) != 0)
+                        {
+                            // greater than max
+                            v7 = point1.X - maxPos.X;
+                            v8 = point2.X - maxPos.X;
+                        }
+                        if (v7 >= 0 && v8 < 0)
+                        {
+                            float div = v7 / (v7 - v8);
+                            var newPoint = new Vector3(
+                                (point2.X - point1.X) * div + point1.X,
+                                (point2.Y - point1.Y) * div + point1.Y,
+                                (point2.Z - point1.Z) * div + point1.Z
+                            );
+                            if (newPoint.Y >= minPos.Y && newPoint.Y <= maxPos.Y
+                              && newPoint.Z >= minPos.Z && newPoint.Z <= maxPos.Z)
+                            {
+                                point1 = newPoint;
+                                inside = true;
+                            }
+                        }
+                    }
+                    if (!inside && (test1 & 0xC) != 0)
+                    {
+                        // y coordinate
+                        float v7;
+                        float v8;
+                        if ((test1 & 0x4) != 0)
+                        {
+                            // less than min
+                            v7 = minPos.Y - point1.Y;
+                            v8 = minPos.Y - point2.Y;
+                        }
+                        else // if ((test1 & 0x8) != 0)
+                        {
+                            // greater than max
+                            v7 = point1.Y - maxPos.Y;
+                            v8 = point2.Y - maxPos.Y;
+                        }
+                        if (v7 >= 0 && v8 < 0)
+                        {
+                            float div = v7 / (v7 - v8);
+                            var newPoint = new Vector3(
+                                (point2.X - point1.X) * div + point1.X,
+                                (point2.Y - point1.Y) * div + point1.Y,
+                                (point2.Z - point1.Z) * div + point1.Z
+                            );
+                            if (newPoint.X >= minPos.X && newPoint.X <= maxPos.X
+                              && newPoint.Z >= minPos.Z && newPoint.Z <= maxPos.Z)
+                            {
+                                point1 = newPoint;
+                                inside = true;
+                            }
+                        }
+                    }
+                    if (!inside && (test1 & 0x30) != 0)
+                    {
+                        // y coordinate
+                        float v7;
+                        float v8;
+                        if ((test1 & 0x10) != 0)
+                        {
+                            // less than min
+                            v7 = minPos.Z - point1.Z;
+                            v8 = minPos.Z - point2.Z;
+                        }
+                        else // if ((test1 & 0x20) != 0)
+                        {
+                            // greater than max
+                            v7 = point1.Z - maxPos.Z;
+                            v8 = point2.Z - maxPos.Z;
+                        }
+                        if (v7 >= 0 && v8 < 0)
+                        {
+                            float div = v7 / (v7 - v8);
+                            var newPoint = new Vector3(
+                                (point2.X - point1.X) * div + point1.X,
+                                (point2.Y - point1.Y) * div + point1.Y,
+                                (point2.Z - point1.Z) * div + point1.Z
+                            );
+                            if (newPoint.X >= minPos.X && newPoint.X <= maxPos.X
+                              && newPoint.Y >= minPos.Y && newPoint.Y <= maxPos.Y)
+                            {
+                                point1 = newPoint;
+                                inside = true;
+                            }
                         }
                     }
                 }
-                if (!inside && (test1 & 0xC) != 0)
+                if (!inside)
                 {
-                    // y coordinate
-                    float v7;
-                    float v8;
-                    if ((test1 & 0x4) != 0)
+                    return;
+                }
+                Vector3 dir = (point2 - point1).Normalized();
+                dir = new Vector3(
+                    Fixed.ToFloat(Fixed.ToInt(dir.X)),
+                    Fixed.ToFloat(Fixed.ToInt(dir.Y)),
+                    Fixed.ToFloat(Fixed.ToInt(dir.Z))
+                );
+                float step = Fixed.ToFloat(0x400);
+                int curX = (int)((point1.X - minPos.X) * step);
+                int endX = (int)((point2.X - minPos.X) * step);
+                int curY = (int)((point1.Y - minPos.Y) * step);
+                int endY = (int)((point2.Y - minPos.Y) * step);
+                int curZ = (int)((point1.Z - minPos.Z) * step);
+                int endZ = (int)((point2.Z - minPos.Z) * step);
+                int xSign = dir.X <= 0 ? -1 : 1;
+                int xLimit = dir.X <= 0 ? -1 : partsX;
+                float xStart = dir.X <= 0
+                    ? curX * size + minPos.X
+                    : (curX + 1) * size + minPos.X;
+                int ySign = dir.Y <= 0 ? -1 : 1;
+                int yLimit = dir.Y <= 0 ? -1 : partsY;
+                float yStart = dir.Y <= 0
+                    ? curY * size + minPos.Y
+                    : (curY + 1) * size + minPos.Y;
+                int zSign = dir.Z <= 0 ? -1 : 1;
+                int zLimit = dir.Z <= 0 ? -1 : partsZ;
+                float zStart = dir.Z <= 0
+                    ? curZ * size + minPos.Z
+                    : (curZ + 1) * size + minPos.Z;
+                float xNext = 1000000;
+                float yNext = 1000000;
+                float zNext = 1000000;
+                float xInc = 0;
+                float yInc = 0;
+                float zInc = 0;
+                if (dir.X != 0)
+                {
+                    float div = 1f / dir.X;
+                    xNext = (xStart - point1.X) * div;
+                    xInc = xSign * div * size;
+                }
+                if (dir.Y != 0)
+                {
+                    float div = 1f / dir.Y;
+                    yNext = (yStart - point1.Y) * div;
+                    yInc = ySign * div * size;
+                }
+                if (dir.Z != 0)
+                {
+                    float div = 1f / dir.Z;
+                    zNext = (zStart - point1.Z) * div;
+                    zInc = zSign * div * size;
+                }
+                while (true)
+                {
+                    if (curX >= 0 && curX < partsX && curY >= 0 && curY < partsY && curZ >= 0 && curZ < partsZ)
                     {
-                        // less than min
-                        v7 = minPos.Y - point1.Y;
-                        v8 = minPos.Y - point2.Y;
-                    }
-                    else // if ((test1 & 0x8) != 0)
-                    {
-                        // greater than max
-                        v7 = point1.Y - maxPos.Y;
-                        v8 = point2.Y - maxPos.Y;
-                    }
-                    if (v7 >= 0 && v8 < 0)
-                    {
-                        float div = v7 / (v7 - v8);
-                        var newPoint = new Vector3(
-                            (point2.X - point1.X) * div + point1.X,
-                            (point2.Y - point1.Y) * div + point1.Y,
-                            (point2.Z - point1.Z) * div + point1.Z
-                        );
-                        if (newPoint.X >= minPos.X && newPoint.X <= maxPos.X
-                          && newPoint.Z >= minPos.Z && newPoint.Z <= maxPos.Z)
+                        int entryIndex = curX + partsX * (curZ + curY * partsZ);
+                        CollisionEntry entry = info.Entries[entryIndex];
+                        if (entry.DataCount > 0)
                         {
-                            point1 = newPoint;
-                            inside = true;
+                            CollisionCandidate item = _inactiveItems.Dequeue();
+                            item.Collision = inst;
+                            item.Entry = entry;
+                            item.EntityCollision = null;
+                            _tempItems.Push(item);
                         }
                     }
-                }
-                if (!inside && (test1 & 0x30) != 0)
-                {
-                    // y coordinate
-                    float v7;
-                    float v8;
-                    if ((test1 & 0x10) != 0)
+                    if (curX == endX && curY == endY && curZ == endZ)
                     {
-                        // less than min
-                        v7 = minPos.Z - point1.Z;
-                        v8 = minPos.Z - point2.Z;
+                        // if last block checked is the block where the destination point is
+                        break;
                     }
-                    else // if ((test1 & 0x20) != 0)
+                    // increment component to adjacent block based on the direction
+                    // --> if any block index surpasses its limit, exit
+                    if (xNext >= yNext)
                     {
-                        // greater than max
-                        v7 = point1.Z - maxPos.Z;
-                        v8 = point2.Z - maxPos.Z;
-                    }
-                    if (v7 >= 0 && v8 < 0)
-                    {
-                        float div = v7 / (v7 - v8);
-                        var newPoint = new Vector3(
-                            (point2.X - point1.X) * div + point1.X,
-                            (point2.Y - point1.Y) * div + point1.Y,
-                            (point2.Z - point1.Z) * div + point1.Z
-                        );
-                        if (newPoint.X >= minPos.X && newPoint.X <= maxPos.X
-                          && newPoint.Y >= minPos.Y && newPoint.Y <= maxPos.Y)
+                        if (yNext >= zNext)
                         {
-                            point1 = newPoint;
-                            inside = true;
+                            curZ += zSign;
+                            if (curZ == zLimit)
+                            {
+                                break;
+                            }
+                            zNext += zInc;
+                        }
+                        else
+                        {
+                            curY += ySign;
+                            if (curY == yLimit)
+                            {
+                                break;
+                            }
+                            yNext += yInc;
                         }
                     }
-                }
-            }
-            if (!inside)
-            {
-                return;
-            }
-            Vector3 dir = (point2 - point1).Normalized();
-            dir = new Vector3(
-                Fixed.ToFloat(Fixed.ToInt(dir.X)),
-                Fixed.ToFloat(Fixed.ToInt(dir.Y)),
-                Fixed.ToFloat(Fixed.ToInt(dir.Z))
-            );
-            float step = Fixed.ToFloat(0x400);
-            int curX = (int)((point1.X - minPos.X) * step);
-            int endX = (int)((point2.X - minPos.X) * step);
-            int curY = (int)((point1.Y - minPos.Y) * step);
-            int endY = (int)((point2.Y - minPos.Y) * step);
-            int curZ = (int)((point1.Z - minPos.Z) * step);
-            int endZ = (int)((point2.Z - minPos.Z) * step);
-            int xSign = dir.X <= 0 ? -1 : 1;
-            int xLimit = dir.X <= 0 ? -1 : partsX;
-            float xStart = dir.X <= 0
-                ? curX * size + minPos.X
-                : (curX + 1) * size + minPos.X;
-            int ySign = dir.Y <= 0 ? -1 : 1;
-            int yLimit = dir.Y <= 0 ? -1 : partsY;
-            float yStart = dir.Y <= 0
-                ? curY * size + minPos.Y
-                : (curY + 1) * size + minPos.Y;
-            int zSign = dir.Z <= 0 ? -1 : 1;
-            int zLimit = dir.Z <= 0 ? -1 : partsZ;
-            float zStart = dir.Z <= 0
-                ? curZ * size + minPos.Z
-                : (curZ + 1) * size + minPos.Z;
-            float xNext = 1000000;
-            float yNext = 1000000;
-            float zNext = 1000000;
-            float xInc = 0;
-            float yInc = 0;
-            float zInc = 0;
-            if (dir.X != 0)
-            {
-                float div = 1f / dir.X;
-                xNext = (xStart - point1.X) * div;
-                xInc = xSign * div * size;
-            }
-            if (dir.Y != 0)
-            {
-                float div = 1f / dir.Y;
-                yNext = (yStart - point1.Y) * div;
-                yInc = ySign * div * size;
-            }
-            if (dir.Z != 0)
-            {
-                float div = 1f / dir.Z;
-                zNext = (zStart - point1.Z) * div;
-                zInc = zSign * div * size;
-            }
-            while (true)
-            {
-                if (curX >= 0 && curX < partsX && curY >= 0 && curY < partsY && curZ >= 0 && curZ < partsZ)
-                {
-                    int entryIndex = curX + partsX * (curZ + curY * partsZ);
-                    CollisionEntry entry = info.Entries[entryIndex];
-                    if (entry.DataCount > 0)
-                    {
-                        CollisionCandidate item = _inactiveItems.Dequeue();
-                        item.Collision = info;
-                        item.Entry = entry;
-                        item.EntityCollision = null;
-                        _tempItems.Push(item);
-                    }
-                }
-                if (curX == endX && curY == endY && curZ == endZ)
-                {
-                    // if last block checked is the block where the destination point is
-                    break;
-                }
-                // increment component to adjacent block based on the direction
-                // --> if any block index surpasses its limit, exit
-                if (xNext >= yNext)
-                {
-                    if (yNext >= zNext)
+                    else if (xNext >= zNext)
                     {
                         curZ += zSign;
                         if (curZ == zLimit)
@@ -1154,31 +1197,13 @@ namespace MphRead.Formats
                     }
                     else
                     {
-                        curY += ySign;
-                        if (curY == yLimit)
+                        curX += xSign;
+                        if (curX == xLimit)
                         {
                             break;
                         }
-                        yNext += yInc;
+                        xNext += xInc;
                     }
-                }
-                else if (xNext >= zNext)
-                {
-                    curZ += zSign;
-                    if (curZ == zLimit)
-                    {
-                        break;
-                    }
-                    zNext += zInc;
-                }
-                else
-                {
-                    curX += xSign;
-                    if (curX == xLimit)
-                    {
-                        break;
-                    }
-                    xNext += xInc;
                 }
             }
             while (_tempItems.Count > 0)

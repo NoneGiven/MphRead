@@ -12,7 +12,8 @@ namespace MphRead.Entities
 {
     public class RoomEntity : EntityBase
     {
-        public CollisionInstance RoomCollision { get; }
+        private readonly List<CollisionInstance> _roomCollision = new List<CollisionInstance>();
+        public IReadOnlyList<CollisionInstance> RoomCollision => _roomCollision;
         private readonly IReadOnlyList<Portal> _portals = new List<Portal>();
         private readonly List<List<(Portal Portal, bool OtherSide)>> _portalSides = new List<List<(Portal, bool)>>();
         private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
@@ -136,7 +137,11 @@ namespace MphRead.Entities
             Debug.Assert(model.Nodes.Any(n => n.RoomPartId >= 0));
             _portals = portals;
             _forceFields = forceFields;
-            RoomCollision = collision; // todo: transform if connector
+            _roomCollision.Add(collision);
+            // ttodo: load all connectors, except the current one if any
+            // ttodo: transform collision if connector
+            // ttodo: make non-dummy doors load their own loader doors
+            // skhere
             RoomId = roomId;
             for (int i = 0; i < _roomPartMax; i++)
             {
@@ -147,7 +152,11 @@ namespace MphRead.Entities
 
         protected override void GetCollisionDrawInfo()
         {
-            RoomCollision.Info.GetDrawInfo(RoomCollision.Info.Points, Type, _scene);
+            for (int i = 0; i < _roomCollision.Count; i++)
+            {
+                CollisionInfo info = _roomCollision[i].Info;
+                info.GetDrawInfo(info.Points, Type, _scene);
+            }
         }
 
         private const int _roomPartMax = 32;
@@ -801,7 +810,6 @@ namespace MphRead.Entities
 
         public override void GetDisplayVolumes()
         {
-
             if (_scene.ShowVolumes == VolumeDisplay.NodeBounds)
             {
                 if (Selection.Node != null && Nodes.Contains(Selection.Node))
