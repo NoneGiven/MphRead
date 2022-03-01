@@ -73,6 +73,16 @@ namespace MphRead.Entities
             // todo: connector/room IDs, node refs, ports
         }
 
+        public override void Initialize()
+        {
+            base.Initialize();
+            _scene.LoadEffect(114); // lockDefeat
+            if (_data.ConnectorId != 255 && _scene.Room != null)
+            {
+                _scene.Room.AddConnector(this);
+            }
+        }
+
         private void UpdateScanId()
         {
             if (_data.DoorType == DoorType.Boss)
@@ -87,12 +97,6 @@ namespace MphRead.Entities
             {
                 _scanId = 251;
             }
-        }
-
-        public override void Initialize()
-        {
-            base.Initialize();
-            _scene.LoadEffect(114); // lockDefeat
         }
 
         public override void GetPosition(out Vector3 position)

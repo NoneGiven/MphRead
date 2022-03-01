@@ -864,13 +864,13 @@ namespace MphRead.Entities
             Debug.Assert(_scene.Room != null);
             if (_scene.Multiplayer)
             {
-                if (Position.Y < _scene.Room.Metadata.PlayerMin.Y)
+                if (Position.Y < _scene.Room.Meta.PlayerMin.Y)
                 {
                     TakeDamage(0, DamageFlags.Death, direction: null, source: null);
                 }
-                Position = Vector3.Clamp(Position, _scene.Room.Metadata.PlayerMin.WithY(Position.Y), _scene.Room.Metadata.PlayerMax);
+                Position = Vector3.Clamp(Position, _scene.Room.Meta.PlayerMin.WithY(Position.Y), _scene.Room.Meta.PlayerMax);
             }
-            if (Position.Y < _scene.Room.Metadata.KillHeight)
+            if (Position.Y < _scene.Room.Meta.KillHeight)
             {
                 TakeDamage(0, DamageFlags.Death, direction: null, source: null);
             }
@@ -1850,7 +1850,7 @@ namespace MphRead.Entities
                 }
                 var candidate = (PlayerSpawnEntity)spawn;
                 // skdebug - 1P spawns
-                if ((candidate.IsActive || !_scene.Room.Metadata.Multiplayer) && candidate.Cooldown == 0
+                if ((candidate.IsActive || !_scene.Room.Meta.Multiplayer) && candidate.Cooldown == 0
                     && (_scene.FrameCount > 0 || !candidate.Availability))
                 {
                     // todo: if CTF mode, check team index

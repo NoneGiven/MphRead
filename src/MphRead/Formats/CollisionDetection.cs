@@ -111,18 +111,12 @@ namespace MphRead.Formats
                 // sktodo: handle FH collision
                 var info = (MphCollisionInfo)inst.Info;
                 Debug.Assert(candidate.Entry.DataCount > 0);
-                if (candidate.EntityCollision != lastEntCol)
+                transPoint1 = point1 - inst.Translation;
+                transPoint2 = point2 - inst.Translation;
+                if (candidate.EntityCollision != lastEntCol && candidate.EntityCollision != null)
                 {
-                    if (candidate.EntityCollision != null)
-                    {
-                        transPoint1 = Matrix.Vec3MultMtx4(point1, candidate.EntityCollision.Inverse1);
-                        transPoint2 = Matrix.Vec3MultMtx4(point2, candidate.EntityCollision.Inverse1);
-                    }
-                    else
-                    {
-                        transPoint1 = point1 - inst.Translation;
-                        transPoint2 = point2 - inst.Translation;
-                    }
+                    transPoint1 = Matrix.Vec3MultMtx4(point1, candidate.EntityCollision.Inverse1);
+                    transPoint2 = Matrix.Vec3MultMtx4(point2, candidate.EntityCollision.Inverse1);
                 }
                 for (int j = 0; j < candidate.Entry.DataCount; j++)
                 {
@@ -171,8 +165,17 @@ namespace MphRead.Formats
                                     }
                                     else
                                     {
-                                        result.Position = pos;
-                                        result.Plane = plane;
+                                        Vector3 translation = candidate.Collision.Translation;
+                                        if (translation != Vector3.Zero)
+                                        {
+                                            result.Position = pos + translation;
+                                            result.Plane = plane.AddW(Vector3.Dot(plane.Xyz, translation));
+                                        }
+                                        else
+                                        {
+                                            result.Position = pos;
+                                            result.Plane = plane;
+                                        }
                                     }
                                     minDist = dist;
                                     result.Field0 = 0;
@@ -399,18 +402,12 @@ namespace MphRead.Formats
                 // sktodo: handle FH collision
                 var info = (MphCollisionInfo)inst.Info;
                 Debug.Assert(candidate.Entry.DataCount > 0);
-                if (candidate.EntityCollision != lastEntCol)
+                transPoint1 = point1 - inst.Translation;
+                transPoint2 = point2 - inst.Translation;
+                if (candidate.EntityCollision != lastEntCol && candidate.EntityCollision != null)
                 {
-                    if (candidate.EntityCollision != null)
-                    {
-                        transPoint1 = Matrix.Vec3MultMtx4(point1, candidate.EntityCollision.Inverse1);
-                        transPoint2 = Matrix.Vec3MultMtx4(point2, candidate.EntityCollision.Inverse1);
-                    }
-                    else
-                    {
-                        transPoint1 = point1 - inst.Translation;
-                        transPoint2 = point2 - inst.Translation;
-                    }
+                    transPoint1 = Matrix.Vec3MultMtx4(point1, candidate.EntityCollision.Inverse1);
+                    transPoint2 = Matrix.Vec3MultMtx4(point2, candidate.EntityCollision.Inverse1);
                 }
                 for (int j = 0; j < candidate.Entry.DataCount; j++)
                 {
@@ -496,10 +493,21 @@ namespace MphRead.Formats
                                 }
                                 else
                                 {
-                                    result.Plane = plane;
-                                    result.Position = vec;
-                                    result.EdgePoint1 = edgePoint1;
-                                    result.EdgePoint2 = edgePoint2;
+                                    Vector3 translation = candidate.Collision.Translation;
+                                    if (translation != Vector3.Zero)
+                                    {
+                                        result.Plane = plane.AddW(Vector3.Dot(plane.Xyz, translation));
+                                        result.Position = vec + translation;
+                                        result.EdgePoint1 = edgePoint1 + translation;
+                                        result.EdgePoint2 = edgePoint2 + translation;
+                                    }
+                                    else
+                                    {
+                                        result.Plane = plane;
+                                        result.Position = vec;
+                                        result.EdgePoint1 = edgePoint1;
+                                        result.EdgePoint2 = edgePoint2;
+                                    }
                                 }
                                 results[count++] = result;
                             }
@@ -525,8 +533,17 @@ namespace MphRead.Formats
                         }
                         else
                         {
-                            result.Plane = plane;
-                            result.Position = vec;
+                            Vector3 translation = candidate.Collision.Translation;
+                            if (translation != Vector3.Zero)
+                            {
+                                result.Plane = plane.AddW(Vector3.Dot(plane.Xyz, translation));
+                                result.Position = vec + translation;
+                            }
+                            else
+                            {
+                                result.Plane = plane;
+                                result.Position = vec;
+                            }
                         }
                         results[count++] = result;
                     }
@@ -574,6 +591,16 @@ namespace MphRead.Formats
             TestFlags flags, Scene scene, CollisionResult[] results)
         {
             _seenData.Clear();
+
+            static Vector4 MovePlane(Vector4 plane, Vector3 translation)
+            {
+                if (translation == Vector3.Zero)
+                {
+                    return plane;
+                }
+                return plane.AddW(Vector3.Dot(plane.Xyz, translation));
+            }
+
             int count = 0;
             ushort mask = 0;
             if (flags.TestFlag(TestFlags.Players))
@@ -649,7 +676,7 @@ namespace MphRead.Formats
                     if (noNegCos)
                     {
                         results[count].Field0 = 0;
-                        results[count].Plane = plane;
+                        results[count].Plane = MovePlane(plane, inst.Translation);
                         foundBlocker = true;
                     }
                     if (!foundBlocker)
@@ -684,11 +711,11 @@ namespace MphRead.Formats
                                     results[count].Field0 = 2;
                                     if (getSimpleNormal)
                                     {
-                                        results[count].Plane = plane;
+                                        results[count].Plane = MovePlane(plane, inst.Translation);
                                     }
                                     else
                                     {
-                                        results[count].Plane = new Vector4(vec1 / mag1, plane.W);
+                                        results[count].Plane = MovePlane(new Vector4(vec1 / mag1, plane.W), inst.Translation);
                                     }
                                     break;
                                 }
@@ -701,11 +728,11 @@ namespace MphRead.Formats
                                     results[count].Field0 = 1;
                                     if (getSimpleNormal)
                                     {
-                                        results[count].Plane = plane;
+                                        results[count].Plane = MovePlane(plane, inst.Translation);
                                     }
                                     else
                                     {
-                                        results[count].Plane = new Vector4(vec2 / mag2, plane.W);
+                                        results[count].Plane = MovePlane(new Vector4(vec2 / mag2, plane.W), inst.Translation);
                                     }
                                     break;
                                 }
@@ -977,7 +1004,7 @@ namespace MphRead.Formats
                 if ((test1 & test2) != 0)
                 {
                     // if any coordinate of both points is outside the bounds
-                    return;
+                    continue;
                 }
                 bool inside = false;
                 if (test1 == 0)
@@ -1089,7 +1116,7 @@ namespace MphRead.Formats
                 }
                 if (!inside)
                 {
-                    return;
+                    continue;
                 }
                 Vector3 dir = (point2 - point1).Normalized();
                 dir = new Vector3(

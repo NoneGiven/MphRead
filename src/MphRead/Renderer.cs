@@ -278,7 +278,7 @@ namespace MphRead
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
-            _inputMode = _cameraMode == CameraMode.Player ? InputMode.PlayerOnly : InputMode.CameraOnly;
+            _inputMode = _cameraMode == CameraMode.Player ? InputMode.All : InputMode.CameraOnly;
             _roomId = room.RoomId;
         }
 
@@ -3619,7 +3619,7 @@ namespace MphRead
                     else if (_cameraMode == CameraMode.Roam)
                     {
                         _cameraMode = CameraMode.Player;
-                        _inputMode = InputMode.PlayerOnly;
+                        _inputMode = InputMode.All;
                     }
                     else
                     {

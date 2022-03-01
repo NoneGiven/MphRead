@@ -20,11 +20,12 @@ namespace MphRead.Entities
         private IReadOnlyList<Node> Nodes => _models[0].Model.Nodes;
         private readonly RoomMetadata _meta;
         private readonly NodeData? _nodeData;
+        private readonly List<ModelInstance> _connectorModels = new List<ModelInstance>();
         private readonly float[]? _emptyMatrixStack;
 
         protected override bool UseNodeTransform => false; // default -- will use transform if setting is enabled
         public int RoomId { get; private set; }
-        public RoomMetadata Metadata => _meta;
+        public RoomMetadata Meta => _meta;
 
         private readonly Dictionary<Node, Node> _nodePairs = new Dictionary<Node, Node>();
         private readonly HashSet<Node> _excludedNodes = new HashSet<Node>();
@@ -137,11 +138,8 @@ namespace MphRead.Entities
             Debug.Assert(model.Nodes.Any(n => n.RoomPartId >= 0));
             _portals = portals;
             _forceFields = forceFields;
+            collision.Translation = Vector3.Zero;
             _roomCollision.Add(collision);
-            // ttodo: load all connectors, except the current one if any
-            // ttodo: transform collision if connector
-            // ttodo: make non-dummy doors load their own loader doors
-            // skhere
             RoomId = roomId;
             for (int i = 0; i < _roomPartMax; i++)
             {
@@ -150,12 +148,69 @@ namespace MphRead.Entities
             }
         }
 
+        private static readonly IReadOnlyList<Vector3> _connectorSizes = new Vector3[27]
+        {
+            new Vector3(10, 0, 0),
+            new Vector3(10, 0, 0),
+            new Vector3(0, 0, 10),
+            new Vector3(0, 0, 10),
+            new Vector3(10, 0, 0),
+            new Vector3(10, 0, 0),
+            new Vector3(0, 0, 10),
+            new Vector3(0, 0, 10),
+            new Vector3(Fixed.ToFloat(0xA60F), 0, 0),
+            new Vector3(Fixed.ToFloat(0xA60F), 0, 0),
+            new Vector3(0, 0, Fixed.ToFloat(0xA60F)),
+            new Vector3(0, 0, Fixed.ToFloat(0xA60F)),
+            new Vector3(10, 0, 0),
+            new Vector3(10, 0, 0),
+            new Vector3(0, 0, 10),
+            new Vector3(0, 0, 10),
+            new Vector3(10, 0, 0),
+            new Vector3(10, 0, 0),
+            new Vector3(0, 0, 10),
+            new Vector3(0, 0, 10),
+            new Vector3(0, Fixed.ToFloat(0x24B9), Fixed.ToFloat(0x16A77)),
+            new Vector3(0, Fixed.ToFloat(-7659), Fixed.ToFloat(0x16A76)),
+            new Vector3(10, 0, 0),
+            new Vector3(10, 0, 0),
+            new Vector3(0, 0, 20),
+            new Vector3(0, 0, 10),
+            new Vector3(0, 0, 10)
+        };
+
+        public void AddConnector(DoorEntity door)
+        {
+            // ttodo: set up portals/node refs and draw the connector model
+            // ttodo: add the loader door
+            // ttodo: no need to load this connector if it's the current one being used for loading
+            int connectorId = (int)door.Data.ConnectorId;
+            Debug.Assert(connectorId >= 0 && connectorId < _connectorSizes.Count);
+            Vector3 size = _connectorSizes[connectorId];
+            Vector3 doorFacing = door.FacingVector;
+            if (doorFacing.X > Fixed.ToFloat(2896) || doorFacing.Z > Fixed.ToFloat(2896))
+            {
+                size *= -1;
+            }
+            // sktodo: load all the connector models and collsiion for the planet in scene setup
+            RoomMetadata? meta = Metadata.GetRoomById(connectorId);
+            Debug.Assert(meta != null);
+            ModelInstance conInst = Read.GetRoomModelInstance(meta.Name);
+            _scene.LoadModel(conInst.Model);
+            _connectorModels.Add(conInst);
+            CollisionInstance collision = Collision.GetCollision(meta, roomLayerMask: -1);
+            collision.Translation = door.Position + size / 2;
+            _roomCollision.Add(collision);
+            // skhere
+        }
+
         protected override void GetCollisionDrawInfo()
         {
             for (int i = 0; i < _roomCollision.Count; i++)
             {
-                CollisionInfo info = _roomCollision[i].Info;
-                info.GetDrawInfo(info.Points, Type, _scene);
+                CollisionInstance inst = _roomCollision[i];
+                CollisionInfo info = inst.Info;
+                info.GetDrawInfo(info.Points, inst.Translation, Type, _scene);
             }
         }
 
@@ -568,6 +623,19 @@ namespace MphRead.Entities
                 {
                     DrawRoomParts(inst);
                 }
+                // sktodo: add portal between room and connector and update node refs between them
+                for (int i = 0; i < _connectorModels.Count; i++)
+                {
+                    ModelInstance conInst = _connectorModels[i];
+                    _scene.UpdateMaterials(conInst.Model, recolorId: 0);
+                    var transform = Matrix4.CreateTranslation(_roomCollision[i + 1].Translation);
+                    IReadOnlyList<Node> nodes = conInst.Model.Nodes;
+                    for (int j = 0; j < nodes.Count; j++)
+                    {
+                        nodes[j].Animation = transform;
+                    }
+                    DrawAllNodes(conInst, connector: true);
+                }
             }
             if (_scene.ShowCollision && (_scene.ColEntDisplay == EntityType.All || _scene.ColEntDisplay == Type))
             {
@@ -708,17 +776,18 @@ namespace MphRead.Entities
             }
         }
 
-        private void DrawAllNodes(ModelInstance inst)
+        private void DrawAllNodes(ModelInstance inst, bool connector = false)
         {
             _excludedNodes.Clear();
-            for (int i = 0; i < Nodes.Count; i++)
+            IReadOnlyList<Node> nodes = inst.Model.Nodes;
+            for (int i = 0; i < nodes.Count; i++)
             {
-                Node pnode = Nodes[i];
+                Node pnode = nodes[i];
                 if (!pnode.Enabled)
                 {
                     continue;
                 }
-                if (_scene.ShowAllNodes)
+                if (_scene.ShowAllNodes || connector)
                 {
                     GetItems(inst, pnode);
                 }
@@ -727,7 +796,7 @@ namespace MphRead.Entities
                     int nodeIndex = pnode.ChildIndex;
                     while (nodeIndex != -1)
                     {
-                        Node node = Nodes[nodeIndex];
+                        Node node = nodes[nodeIndex];
                         if (!_excludedNodes.Contains(node))
                         {
                             GetItems(inst, node);
@@ -740,7 +809,7 @@ namespace MphRead.Entities
                     }
                 }
             }
-            if (_scene.ShowForceFields)
+            if (_scene.ShowForceFields && !connector)
             {
                 for (int i = 0; i < _forceFields.Count; i++)
                 {

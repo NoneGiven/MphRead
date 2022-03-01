@@ -462,7 +462,7 @@ namespace MphRead.Entities
                 EntityCollision? entCol = EntityCollision[i];
                 if (entCol?.Collision != null && entCol.Collision.Active)
                 {
-                    entCol.Collision.Info.GetDrawInfo(entCol.DrawPoints, Type, _scene);
+                    entCol.Collision.Info.GetDrawInfo(entCol.DrawPoints, Vector3.Zero, Type, _scene);
                 }
             }
         }

@@ -183,7 +183,7 @@ namespace MphRead.Entities
                     }
                 }
                 Debug.Assert(_scene.Room != null);
-                if (Position.Y < _scene.Room.Metadata.KillHeight)
+                if (Position.Y < _scene.Room.Meta.KillHeight)
                 {
                     Reset();
                 }

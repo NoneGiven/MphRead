@@ -377,6 +377,10 @@ namespace MphRead.Entities
 
         public void CloseDialogs()
         {
+            if (_scene.Multiplayer)
+            {
+                return;
+            }
             DialogType = DialogType.None;
             _overlayTimer = 0;
             _dialogCharTimer = 0;
