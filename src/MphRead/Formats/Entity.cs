@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using MphRead.Entities;
+using OpenTK.Mathematics;
 
 namespace MphRead
 {
@@ -38,6 +39,16 @@ namespace MphRead
         public readonly Vector3Fx Position;
         public readonly Vector3Fx UpVector;
         public readonly Vector3Fx FacingVector;
+
+        public EntityDataHeader(ushort type, short entityId, Vector3 position,
+            Vector3 upVector, Vector3 facingVector)
+        {
+            Type = type;
+            EntityId = entityId;
+            Position = position.ToVector3Fx();
+            UpVector = upVector.ToVector3Fx();
+            FacingVector = facingVector.ToVector3Fx();
+        }
     }
 
     // size: 588
@@ -183,6 +194,34 @@ namespace MphRead
         public readonly char[] EntityFilename;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] RoomName;
+
+        public DoorEntityData(EntityDataHeader header, string? nodeName, uint paletteId, DoorType doorType, uint connectorId,
+            byte targetLayerId, byte locked, byte outConnectorId, byte outLoaderId, string? entityFilename, string? roomName)
+        {
+            Header = header;
+            NodeName = new char[16];
+            if (nodeName != null)
+            {
+                nodeName.CopyTo(NodeName);
+            }
+            PaletteId = paletteId;
+            DoorType = doorType;
+            ConnectorId = connectorId;
+            TargetLayerId = targetLayerId;
+            Locked = locked;
+            OutConnectorId = outConnectorId;
+            OutLoaderId = outLoaderId;
+            EntityFilename = new char[16];
+            if (entityFilename != null)
+            {
+                entityFilename.CopyTo(EntityFilename);
+            }
+            RoomName = new char[16];
+            if (roomName != null)
+            {
+                roomName.CopyTo(RoomName);
+            }
+        }
     }
 
     // size: 64

@@ -181,8 +181,7 @@ namespace MphRead.Entities
 
         public void AddConnector(DoorEntity door)
         {
-            // ttodo: set up portals/node refs and draw the connector model
-            // ttodo: add the loader door
+            // ttodo: set up portals/node refs
             // ttodo: no need to load this connector if it's the current one being used for loading
             int connectorId = (int)door.Data.ConnectorId;
             Debug.Assert(connectorId >= 0 && connectorId < _connectorSizes.Count);
@@ -201,7 +200,25 @@ namespace MphRead.Entities
             CollisionInstance collision = Collision.GetCollision(meta, roomLayerMask: -1);
             collision.Translation = door.Position + size / 2;
             _roomCollision.Add(collision);
-            // skhere
+            // sktodo: get door's target room ID and copy the entity filename to the new door
+            //var target = Metadata.GetRoomById(door.Data.RoomName)
+            var header = new EntityDataHeader((ushort)EntityType.Door, entityId: -1,
+                door.Position + size, door.UpVector, -doorFacing);
+            var data = new DoorEntityData(header, nodeName: null, door.Data.PaletteId, door.Data.DoorType,
+                connectorId: 255, targetLayerId: 0, locked: 0, outConnectorId: 255,
+                outLoaderId: door.Data.OutLoaderId, entityFilename: null, roomName: null);
+            IReadOnlyList<Node> nodes = conInst.Model.Nodes;
+            string nodeName = "rmMain";
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                Node node = nodes[i];
+                if (node.Name.StartsWith("rm"))
+                {
+                    nodeName = node.Name;
+                    break;
+                }
+            }
+            _scene.AddEntity(new DoorEntity(data, nodeName, _scene));
         }
 
         protected override void GetCollisionDrawInfo()

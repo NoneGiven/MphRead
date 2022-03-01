@@ -142,7 +142,6 @@ namespace MphRead
             Z = new Fixed(z);
         }
 
-
         public Vector3Fx(string x, string y, string z)
         {
             X = new Fixed(Int32.Parse(x.Replace("0x", ""), System.Globalization.NumberStyles.HexNumber));
@@ -591,6 +590,11 @@ namespace MphRead
         public static Vector3i ToFixedVector(this Vector3 vector)
         {
             return new Vector3i(Fixed.ToInt(vector.X), Fixed.ToInt(vector.Y), Fixed.ToInt(vector.Z));
+        }
+
+        public static Vector3Fx ToVector3Fx(this Vector3 vector)
+        {
+            return new Vector3Fx(Fixed.ToInt(vector.X), Fixed.ToInt(vector.Y), Fixed.ToInt(vector.Z));
         }
 
         public static Vector4 WithX(this Vector4 vector, float x)
