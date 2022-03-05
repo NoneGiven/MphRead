@@ -564,6 +564,7 @@ namespace MphRead.Entities
                 _scene.UnloadModel(_unloadModel);
             }
             LoaderDoor = null;
+            GC.Collect(generation: 2, GCCollectionMode.Forced, blocking: false, compacting: true);
             GameState.TransitionState = TransitionState.None;
         }
 
