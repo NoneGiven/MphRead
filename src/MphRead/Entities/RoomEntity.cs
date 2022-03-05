@@ -69,6 +69,10 @@ namespace MphRead.Entities
             {
                 // todo?: unload collision, etc.
                 _unloadModel = _models[0].Model;
+                if (_unloadModel == inst.Model)
+                {
+                    _unloadModel = null;
+                }
                 _models[0] = inst;
             }
             inst.Model.FilterNodes(layerMask);
@@ -563,6 +567,7 @@ namespace MphRead.Entities
             {
                 _scene.UnloadModel(_unloadModel);
             }
+            _unloadModel = null;
             LoaderDoor = null;
             GC.Collect(generation: 2, GCCollectionMode.Forced, blocking: false, compacting: true);
             GameState.TransitionState = TransitionState.None;
