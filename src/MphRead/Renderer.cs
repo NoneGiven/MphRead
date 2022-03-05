@@ -243,6 +243,8 @@ namespace MphRead
                 InitEntity(entity);
             }
             SceneSetup.LoadItemResources(this);
+            SceneSetup.LoadObjectResources(this);
+            SceneSetup.LoadPlatformResources(this);
             SceneSetup.LoadEnemyResources(this);
             GameState.Setup(this);
             if (Multiplayer)
@@ -2548,6 +2550,7 @@ namespace MphRead
             if (LoadedEntities.TryDequeue(out EntityBase? entity))
             {
                 InitializeEntity(entity);
+                SceneSetup.LoadEntityResources(entity, this);
             }
         }
 
