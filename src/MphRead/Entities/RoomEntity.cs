@@ -955,7 +955,7 @@ namespace MphRead.Entities
                         continue;
                     }
                     _scene.UpdateMaterials(conInst.Model, recolorId: 0);
-                    if (GameState.InRoomTransition)
+                    if (GameState.InRoomTransition || _partVisInfoHead == null || _scene.ShowAllNodes)
                     {
                         var transform = Matrix4.CreateTranslation(_roomCollision[i + 1].Translation);
                         IReadOnlyList<Node> nodes = conInst.Model.Nodes;
