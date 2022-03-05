@@ -1,3 +1,4 @@
+using System;
 using MphRead.Formats;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
@@ -52,30 +53,17 @@ namespace MphRead.Entities
                 ModelInstance inst = SetUpModel(modelName);
                 inst.SetAnimation(2, AnimFlags.NoLoop | AnimFlags.Reverse);
             }
-            string? roomName = data.TargetRoom.MarshalString();
-            if (roomName != null)
+            if (data.EntityFilename[0] != '\0')
             {
                 for (int i = 0; i < Metadata.RoomList.Count; i++)
                 {
-                    RoomMetadata meta = Metadata.RoomList[i];
-                    if (meta.EntityPath != null && meta.EntityPath.Split('\\')[^1].StartsWith(roomName))
+                    RoomMetadata room = Metadata.RoomList[i];
+                    string? filename = room.EntityFilename;
+                    if (filename != null && Compare(data.EntityFilename, filename))
                     {
-                        _targetRoomId = meta.Id;
+                        _targetRoomId = room.Id;
+                        break;
                     }
-                }
-            }
-            // skdebug
-            if (roomName == "Gorea_Land_Ent.")
-            {
-                if (Id == 6)
-                {
-                    _targetRoomId = -1;
-                    _targetPos = new Vector3(0.064697266f, 1.1169434f, 28.408691f);
-                }
-                else if (Id == 7)
-                {
-                    _targetRoomId = -1;
-                    _targetPos = new Vector3(-7.100342f, -1f, -22.510742f);
                 }
             }
             // todo: use room state/artifact bits/etc. to determine active state
@@ -116,6 +104,11 @@ namespace MphRead.Entities
                     _scanId = _big ? 38 : 25;
                 }
             }
+        }
+
+        private bool Compare(ReadOnlySpan<char> data, ReadOnlySpan<char> room)
+        {
+            return MemoryExtensions.StartsWith(room, data[..15], StringComparison.InvariantCultureIgnoreCase);
         }
 
         public override void Initialize()

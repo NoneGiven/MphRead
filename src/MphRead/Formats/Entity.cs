@@ -494,7 +494,7 @@ namespace MphRead
         public readonly byte Active; // boolean
         public readonly byte Invisible; // bolean
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 15)]
-        public readonly char[] TargetRoom;
+        public readonly char[] EntityFilename;
         public readonly ushort Unused38; // always 0
         public readonly ushort Unused3A; // always UInt16.MaxValue
         public readonly Vector3Fx TargetPosition;

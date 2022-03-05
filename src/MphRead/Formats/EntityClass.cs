@@ -992,7 +992,7 @@ namespace MphRead.Editor
             ArtifactId = raw.ArtifactId;
             Active = raw.Active != 0;
             Invisible = raw.Invisible != 0;
-            TargetRoom = raw.TargetRoom.MarshalString();
+            TargetRoom = raw.EntityFilename.MarshalString();
             TargetPosition = raw.TargetPosition.ToFloatVector();
             TeleporterNodeName = raw.NodeName.MarshalString();
         }
