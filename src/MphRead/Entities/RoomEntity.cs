@@ -67,7 +67,8 @@ namespace MphRead.Entities
             }
             else
             {
-                // ttodo: unload previous room model
+                // todo?: unload collision, etc.
+                _unloadModel = _models[0].Model;
                 _models[0] = inst;
             }
             inst.Model.FilterNodes(layerMask);
@@ -466,6 +467,8 @@ namespace MphRead.Entities
             GameState.TransitionState = TransitionState.End;
         }
 
+        private Model? _unloadModel = null;
+
         private void EndTransition()
         {
             RoomMetadata? roomMeta = Metadata.GetRoomById(GameState.TransitionRoomId);
@@ -555,6 +558,10 @@ namespace MphRead.Entities
                         beamEffect.Reposition(offset);
                     }
                 }
+            }
+            if (_unloadModel != null)
+            {
+                _scene.UnloadModel(_unloadModel);
             }
             LoaderDoor = null;
             GameState.TransitionState = TransitionState.None;

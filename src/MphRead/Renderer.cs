@@ -1475,7 +1475,7 @@ namespace MphRead
             }
         }
 
-        private void UnloadModel(Model model)
+        public void UnloadModel(Model model)
         {
             if (_texPalMap.TryGetValue(model.Id, out TextureMap? map))
             {
