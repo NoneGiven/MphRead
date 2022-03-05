@@ -287,6 +287,20 @@ namespace MphRead
             }
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
+
+            if (_shaderProgramId != 0)
+            {
+                SetShaderFog();
+            }
+        }
+
+        private void SetShaderFog()
+        {
+            float fogMin = _fogOffset / (float)0x7FFF;
+            float fogMax = (_fogOffset + 32 * (0x400 >> _fogSlope)) / (float)0x7FFF;
+            GL.Uniform4(_shaderLocations.FogColor, _fogColor);
+            GL.Uniform1(_shaderLocations.FogMinDistance, fogMin);
+            GL.Uniform1(_shaderLocations.FogMaxDistance, fogMax);
         }
 
         // called before load
@@ -621,12 +635,7 @@ namespace MphRead
                 floats.Add(vector.Z);
             }
             GL.Uniform3(_shaderLocations.ToonTable, Metadata.ToonTable.Count, floats.ToArray());
-
-            float fogMin = _fogOffset / (float)0x7FFF;
-            float fogMax = (_fogOffset + 32 * (0x400 >> _fogSlope)) / (float)0x7FFF;
-            GL.Uniform4(_shaderLocations.FogColor, _fogColor);
-            GL.Uniform1(_shaderLocations.FogMinDistance, fogMin);
-            GL.Uniform1(_shaderLocations.FogMaxDistance, fogMax);
+            SetShaderFog();
         }
 
         public void InitEntity(EntityBase entity)
