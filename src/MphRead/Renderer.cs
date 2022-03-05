@@ -249,6 +249,14 @@ namespace MphRead
             {
                 Menu.ApplySettings();
             }
+            SetRoomValues(meta);
+            _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
+            _inputMode = _cameraMode == CameraMode.Player ? InputMode.All : InputMode.CameraOnly;
+            _roomId = room.RoomId;
+        }
+
+        public void SetRoomValues(RoomMetadata meta)
+        {
             _light1Vector = meta.Light1Vector;
             _light1Color = new Vector3(
                 meta.Light1Color.Red / 31.0f,
@@ -277,9 +285,6 @@ namespace MphRead
             }
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
-            _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
-            _inputMode = _cameraMode == CameraMode.Player ? InputMode.All : InputMode.CameraOnly;
-            _roomId = room.RoomId;
         }
 
         // called before load
@@ -303,11 +308,21 @@ namespace MphRead
         // called after load -- entity needs init
         public void AddEntity(EntityBase entity)
         {
+            InsertEntity(entity);
+            InitializeEntity(entity);
+        }
+
+        public void InsertEntity(EntityBase entity)
+        {
             _entities.Add(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
             }
+        }
+
+        public void InitializeEntity(EntityBase entity)
+        {
             // important to call in this order because the entity may add models (at least in development)
             entity.Initialize();
             InitEntity(entity);
@@ -344,6 +359,11 @@ namespace MphRead
         {
             _entityMap.Remove(entity.Id);
             _entities.Remove(entity);
+        }
+
+        public void RemoveEntityFromMap(EntityBase entity)
+        {
+            _entityMap.Remove(entity.Id);
         }
 
         public NodeRef UpdateNodeRef(NodeRef current, Vector3 prevPos, Vector3 curPos)
@@ -909,10 +929,10 @@ namespace MphRead
             LoadModel(Read.GetModelInstance(name, firstHunt).Model);
         }
 
-        public void LoadModel(Model model)
+        public void LoadModel(Model model, bool isRoom = false)
         {
             InitTextures(model);
-            GenerateLists(model, isRoom: false);
+            GenerateLists(model, isRoom);
         }
 
         private void InitTextures(Model model)
@@ -1066,6 +1086,7 @@ namespace MphRead
                     PlayerEntity.Main.Controls.ClearAll();
                 }
             }
+            _room?.UpdateTransition();
             OnKeyHeld();
             _singleParticleCount = 0;
             _decalItems.Clear();
@@ -2519,6 +2540,17 @@ namespace MphRead
             return _nextPolygonId++;
         }
 
+        public ConcurrentQueue<EntityBase> LoadedEntities { get; } = new ConcurrentQueue<EntityBase>();
+        public bool InitEntities { get; set; }
+
+        public void InitLoadedEntity()
+        {
+            if (LoadedEntities.TryDequeue(out EntityBase? entity))
+            {
+                InitializeEntity(entity);
+            }
+        }
+
         private void UpdateScene()
         {
             bool playerActive = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active);
@@ -2532,7 +2564,7 @@ namespace MphRead
                 for (int i = 0; i < _entities.Count; i++)
                 {
                     EntityBase entity = _entities[i];
-                    if (!entity.Process())
+                    if (entity.Initialized && !entity.Process())
                     {
                         SendMessage(Message.Destroyed, entity, null, 0, 0, delay: 1);
                         // todo: need to handle destroying vs. unloading etc.
@@ -2569,6 +2601,10 @@ namespace MphRead
             for (int i = 0; i < _entities.Count; i++)
             {
                 EntityBase entity = _entities[i];
+                if (!entity.Initialized)
+                {
+                    continue;
+                }
                 if (entity.Type != EntityType.Player || _destroyedEntities.Contains(entity))
                 {
                     continue;
@@ -2584,6 +2620,10 @@ namespace MphRead
             for (int i = 0; i < _entities.Count; i++)
             {
                 EntityBase entity = _entities[i];
+                if (!entity.Initialized)
+                {
+                    continue;
+                }
                 if (entity.Type == EntityType.Player || entity.Type == EntityType.Room || _destroyedEntities.Contains(entity))
                 {
                     continue;
@@ -2754,6 +2794,7 @@ namespace MphRead
             EnemyInstanceEntity.DestroyBeams();
             Sound.Sfx.ShutDown();
             OutputStop();
+            Selection.Clear();
         }
 
         private void EndFade()

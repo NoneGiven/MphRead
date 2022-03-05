@@ -331,6 +331,25 @@ namespace MphRead.Formats.Collision
             Unknown00 = raw.Field5C;
             Unknown01 = raw.Field5D;
         }
+
+        public Portal(string nodeName1, string nodeName2, IReadOnlyList<Vector3> points,
+            IReadOnlyList<Vector4> planes, Vector4 plane)
+        {
+            Name = $"port_{nodeName1}_{nodeName2}";
+            NodeName1 = nodeName1;
+            NodeName2 = nodeName2;
+            LayerMask = 4;
+            IsForceField = false;
+            Points = points;
+            Planes = planes;
+            Plane = plane;
+            Position = new Vector3(
+                points.Sum(p => p.X) / points.Count,
+                points.Sum(p => p.Y) / points.Count,
+                points.Sum(p => p.Z) / points.Count
+            );
+            Flags = 1;
+        }
     }
 
     [Flags]

@@ -792,7 +792,7 @@ namespace MphRead.Formats
             {
                 // sktodo: handle FH collision
                 CollisionInstance inst = scene.Room.RoomCollision[i];
-                if (inst.Info.FirstHunt)
+                if (inst.Info.FirstHunt || !inst.Active)
                 {
                     continue;
                 }
@@ -953,7 +953,7 @@ namespace MphRead.Formats
             {
                 // sktodo: handle FH collision
                 CollisionInstance inst = scene.Room.RoomCollision[i];
-                if (inst.Info.FirstHunt)
+                if (inst.Info.FirstHunt || !inst.Active)
                 {
                     continue;
                 }

@@ -98,5 +98,10 @@ namespace MphRead
                 }
             }
         }
+
+        public void ClearMessageQueue()
+        {
+            _queue.Clear();
+        }
     }
 }

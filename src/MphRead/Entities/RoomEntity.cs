@@ -3,6 +3,8 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
@@ -14,14 +16,16 @@ namespace MphRead.Entities
     {
         private readonly List<CollisionInstance> _roomCollision = new List<CollisionInstance>();
         public IReadOnlyList<CollisionInstance> RoomCollision => _roomCollision;
-        private readonly IReadOnlyList<Portal> _portals = new List<Portal>();
+        private readonly List<Portal> _portals = new List<Portal>();
         private readonly List<List<(Portal Portal, bool OtherSide)>> _portalSides = new List<List<(Portal, bool)>>();
-        private readonly IReadOnlyList<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
+        private readonly List<PortalNodeRef> _forceFields = new List<PortalNodeRef>();
         private IReadOnlyList<Node> Nodes => _models[0].Model.Nodes;
-        private readonly RoomMetadata _meta;
-        private readonly NodeData? _nodeData;
+        private int _nextRoomPartId = 0;
+        private int _doorPortalCount = 0;
+        private RoomMetadata _meta = null!;
+        private NodeData? _nodeData;
         private readonly List<ModelInstance> _connectorModels = new List<ModelInstance>();
-        private readonly float[]? _emptyMatrixStack;
+        private readonly float[] _emptyMatrixStack = Array.Empty<float>();
 
         protected override bool UseNodeTransform => false; // default -- will use transform if setting is enabled
         public int RoomId { get; private set; }
@@ -31,12 +35,41 @@ namespace MphRead.Entities
         private readonly HashSet<Node> _excludedNodes = new HashSet<Node>();
         private readonly List<Node> _morphCameraExcludeNodes = new List<Node>();
 
-        public RoomEntity(string name, RoomMetadata meta, CollisionInstance collision, NodeData? nodeData,
-            int layerMask, int roomId, Scene scene) : base(EntityType.Room, scene)
+        // 1. move some/most of the setup from the constructor to a public method
+        // 2. have scenesetup.load call that method with the room entity it creates
+        // 3. have the room transition function call it with this instances
+        // 4. --> the things that it updates should all be skipped in processing during room transition
+        public RoomEntity(Scene scene) : base(EntityType.Room, scene)
         {
+            for (int i = 0; i < _roomPartMax; i++)
+            {
+                _partVisInfo[i] = new RoomPartVisInfo();
+                _roomFrustumItems[i] = new RoomFrustumItem();
+            }
+        }
+
+        public void Setup(string name, RoomMetadata meta, CollisionInstance collision, NodeData? nodeData,
+            int layerMask, int roomId)
+        {
+            _portals.Clear();
+            _portalSides.Clear();
+            _forceFields.Clear();
+            _nodePairs.Clear();
+            _morphCameraExcludeNodes.Clear();
+            _nextRoomPartId = 0;
+            _doorPortalCount = 0;
             ModelInstance inst = Read.GetRoomModelInstance(name);
-            _models.Add(inst);
-            inst.SetAnimation(0);
+            if (_models.Count == 0)
+            {
+                _models.Add(inst);
+                _scene.LoadModel(inst.Model, isRoom: true);
+                inst.SetAnimation(0);
+            }
+            else
+            {
+                // ttodo: unload previous room model
+                _models[0] = inst;
+            }
             inst.Model.FilterNodes(layerMask);
             if (meta.Name == "UNIT2_C6") // Tetra Vista
             {
@@ -58,71 +91,76 @@ namespace MphRead.Entities
                 _morphCameraExcludeNodes.Add(Nodes[16]);
             }
             _meta = meta;
-            Model model = inst.Model;
             _nodeData = nodeData;
-            if (nodeData != null)
+            if (nodeData != null && _models.Count < 2)
             {
                 // using cached instance messes with placeholders since the room entity doesn't update its instances normally
                 _models.Add(Read.GetModelInstance("pick_wpn_missile", noCache: true));
-                _emptyMatrixStack = Array.Empty<float>();
             }
-            int partId = 0;
-            var portals = new List<Portal>();
-            var forceFields = new List<PortalNodeRef>();
+            Model model = inst.Model;
             // portals are already filtered by layer mask
-            portals.AddRange(collision.Info.Portals);
-            if (portals.Count > 0)
+            _portals.AddRange(collision.Info.Portals);
+            if (_portals.Count > 0)
             {
-                IEnumerable<string> parts = portals.Select(p => p.NodeName1).Concat(portals.Select(p => p.NodeName2)).Distinct();
-                foreach (Node node in inst.Model.Nodes)
+                IEnumerable<string> parts = _portals.Select(p => p.NodeName1).Concat(_portals.Select(p => p.NodeName2)).Distinct();
+                for (int i = 0; i < inst.Model.Nodes.Count; i++)
                 {
+                    Node node = inst.Model.Nodes[i];
                     if (parts.Contains(node.Name))
                     {
-                        node.RoomPartId = partId++;
+                        node.RoomPartId = _nextRoomPartId++;
                         _portalSides.Add(new List<(Portal, bool)>());
                     }
                 }
-                foreach (Portal portal in portals)
+                for (int i = 0; i < _portals.Count; i++)
                 {
-                    for (int i = 0; i < model.Nodes.Count; i++)
+                    Portal portal = _portals[i];
+                    for (int j = 0; j < model.Nodes.Count; j++)
                     {
-                        Node node = model.Nodes[i];
+                        Node node = model.Nodes[j];
                         if (node.Name == portal.NodeName1)
                         {
                             Debug.Assert(node.RoomPartId >= 0);
                             Debug.Assert(node.ChildIndex != -1);
-                            portal.NodeRef1 = new NodeRef(node.RoomPartId, node.ChildIndex);
+                            portal.NodeRef1 = new NodeRef(node.RoomPartId, node.ChildIndex, modelIndex: 0);
                             _portalSides[node.RoomPartId].Add((portal, false));
                         }
                         if (node.Name == portal.NodeName2)
                         {
                             Debug.Assert(node.RoomPartId >= 0);
                             Debug.Assert(node.ChildIndex != -1);
-                            portal.NodeRef2 = new NodeRef(node.RoomPartId, node.ChildIndex);
+                            portal.NodeRef2 = new NodeRef(node.RoomPartId, node.ChildIndex, modelIndex: 0);
                             _portalSides[node.RoomPartId].Add((portal, true));
                         }
                     }
                 }
-                IEnumerable<Portal> pmags = portals.Where(p => p.Name.StartsWith("pmag"));
-                foreach (Portal portal in pmags)
+                int pmagCount = 0;
+                for (int i = 0; i < _portals.Count; i++)
                 {
-                    for (int i = 0; i < model.Nodes.Count; i++)
+                    Portal portal = _portals[i];
+                    if (!portal.Name.StartsWith("pmag"))
                     {
-                        if (model.Nodes[i].Name == $"geo{portal.Name[1..]}")
+                        continue;
+                    }
+                    pmagCount++;
+                    for (int j = 0; j < model.Nodes.Count; j++)
+                    {
+                        if (model.Nodes[j].Name == $"geo{portal.Name[1..]}")
                         {
-                            forceFields.Add(new PortalNodeRef(portal, i));
+                            _forceFields.Add(new PortalNodeRef(portal, j));
                             break;
                         }
                     }
                 }
                 // biodefense chamber 04 and 07 don't have the red portal geometry nodes
-                Debug.Assert(forceFields.Count == pmags.Count()
+                Debug.Assert(_forceFields.Count == pmagCount
                     || model.Name == "biodefense chamber 04" || model.Name == "biodefense chamber 07");
             }
             else if (meta.RoomNodeName != null
                 && model.Nodes.TryFind(n => n.Name == meta.RoomNodeName && n.ChildIndex != -1, out Node? roomNode))
             {
-                roomNode.RoomPartId = 0;
+                roomNode.RoomPartId = _nextRoomPartId;
+                _nextRoomPartId++;
             }
             else
             {
@@ -130,21 +168,66 @@ namespace MphRead.Entities
                 {
                     if (node.Name.StartsWith("rm"))
                     {
-                        node.RoomPartId = 0;
+                        node.RoomPartId = _nextRoomPartId;
+                        _nextRoomPartId++;
                         break;
                     }
                 }
             }
             Debug.Assert(model.Nodes.Any(n => n.RoomPartId >= 0));
-            _portals = portals;
-            _forceFields = forceFields;
             collision.Translation = Vector3.Zero;
-            _roomCollision.Add(collision);
-            RoomId = roomId;
-            for (int i = 0; i < _roomPartMax; i++)
+            if (_roomCollision.Count == 0)
             {
-                _partVisInfo[i] = new RoomPartVisInfo();
-                _roomFrustumItems[i] = new RoomFrustumItem();
+                _roomCollision.Add(collision);
+            }
+            else
+            {
+                _roomCollision[0] = collision;
+            }
+            RoomId = roomId;
+        }
+
+        private void AddDoorPortal(DoorEntity door)
+        {
+            _doorPortalCount++;
+            string roomNodeName = "";
+            int roomPartId = -1;
+            int roomNodeIndex = -1;
+            IReadOnlyList<Node> roomNodes = _models[0].Model.Nodes;
+            for (int j = 0; j < roomNodes.Count; j++)
+            {
+                Node node = roomNodes[j];
+                if (node.ChildIndex == door.NodeRef.NodeIndex && node.RoomPartId == door.NodeRef.PartIndex)
+                {
+                    roomNodeName = node.Name;
+                    roomPartId = node.RoomPartId;
+                    roomNodeIndex = node.ChildIndex;
+                }
+            }
+            if (roomPartId == -1)
+            {
+                throw new ProgramException("Connector did not match room part node.");
+            }
+            RoomMetadata? meta = Metadata.GetRoomById((int)door.Data.ConnectorId);
+            Debug.Assert(meta != null);
+            ModelInstance conInst = Read.GetRoomModelInstance(meta.Name); // cached
+            IReadOnlyList<Node> conNodes = conInst.Model.Nodes;
+            for (int j = 0; j < conNodes.Count; j++)
+            {
+                Node node = conNodes[j];
+                if (node.Name.StartsWith("rm"))
+                {
+                    node.RoomPartId = _nextRoomPartId++;
+                    var sides = new List<(Portal, bool)>();
+                    Portal portal = door.SetUpPort(roomNodeName, node.Name);
+                    portal.NodeRef1 = new NodeRef(roomPartId, roomNodeIndex, modelIndex: 0);
+                    portal.NodeRef2 = new NodeRef(node.RoomPartId, node.ChildIndex, modelIndex: _doorPortalCount);
+                    _portalSides[roomPartId].Add((portal, false));
+                    sides.Add((portal, true));
+                    _portalSides.Add(sides);
+                    _portals.Add(portal);
+                    break;
+                }
             }
         }
 
@@ -181,8 +264,6 @@ namespace MphRead.Entities
 
         public void AddConnector(DoorEntity door)
         {
-            // ttodo: set up portals/node refs
-            // ttodo: no need to load this connector if it's the current one being used for loading
             int connectorId = (int)door.Data.ConnectorId;
             Debug.Assert(connectorId >= 0 && connectorId < _connectorSizes.Count);
             Vector3 size = _connectorSizes[connectorId];
@@ -191,7 +272,6 @@ namespace MphRead.Entities
             {
                 size *= -1;
             }
-            // sktodo: load all the connector models and collsiion for the planet in scene setup
             RoomMetadata? meta = Metadata.GetRoomById(connectorId);
             Debug.Assert(meta != null);
             ModelInstance conInst = Read.GetRoomModelInstance(meta.Name);
@@ -200,8 +280,12 @@ namespace MphRead.Entities
             CollisionInstance collision = Collision.GetCollision(meta, roomLayerMask: -1);
             collision.Translation = door.Position + size / 2;
             _roomCollision.Add(collision);
-            // sktodo: get door's target room ID and copy the entity filename to the new door
-            //var target = Metadata.GetRoomById(door.Data.RoomName)
+            if (GameState.InRoomTransition)
+            {
+                conInst.Active = false;
+                collision.Active = false;
+            }
+            // todo?: update visited connectors
             var header = new EntityDataHeader((ushort)EntityType.Door, entityId: -1,
                 door.Position + size, door.UpVector, -doorFacing);
             var data = new DoorEntityData(header, nodeName: null, door.Data.PaletteId, door.Data.DoorType,
@@ -218,7 +302,238 @@ namespace MphRead.Entities
                     break;
                 }
             }
-            _scene.AddEntity(new DoorEntity(data, nodeName, _scene));
+            var newDoor = new DoorEntity(data, nodeName, _scene, door.TargetRoomId);
+            _scene.AddEntity(newDoor);
+            door.LoaderDoor = newDoor;
+            newDoor.ConnectorDoor = door;
+            if (!GameState.InRoomTransition)
+            {
+                AddDoorPortal(door);
+            }
+        }
+
+        public void UpdateTransition()
+        {
+            if (GameState.TransitionState == TransitionState.Start)
+            {
+                StartTransition();
+            }
+            else if (GameState.TransitionState == TransitionState.Process)
+            {
+                _scene.InitLoadedEntity();
+            }
+            else if (GameState.TransitionState == TransitionState.End)
+            {
+                EndTransition();
+            }
+        }
+
+        private static readonly IReadOnlyList<bool> _keepEntities = new bool[27]
+        {
+            false, false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, true, true, false, true, true, true
+        };
+
+        public DoorEntity? LoaderDoor { get; set; }
+
+        private void StartTransition()
+        {
+            Debug.Assert(LoaderDoor != null);
+            GameState.TransitionState = TransitionState.Process;
+            // mustodo: update music
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type == EntityType.Room)
+                {
+                    continue;
+                }
+                if (entity.Type == EntityType.Door)
+                {
+                    var door = (DoorEntity)entity;
+                    if (door == LoaderDoor || door.LoaderDoor == LoaderDoor)
+                    {
+                        _scene.RemoveEntityFromMap(door);
+                    }
+                    else
+                    {
+                        _scene.RemoveEntity(door);
+                        door.Destroy();
+                        i--;
+                    }
+                }
+                else if (_keepEntities[(int)entity.Type])
+                {
+                    // todo: MP1P
+                    if (entity.Type == EntityType.Player && entity != PlayerEntity.Main
+                        || entity.Type == EntityType.Halfturret && entity != PlayerEntity.Main.Halfturret)
+                    {
+                        _scene.RemoveEntity(entity);
+                        entity.Destroy();
+                        i--;
+                    }
+                    else if (entity.Type == EntityType.BeamProjectile)
+                    {
+                        var beam = (BeamProjectileEntity)entity;
+                        if (beam.Owner != PlayerEntity.Main)
+                        {
+                            _scene.RemoveEntity(beam);
+                            beam.Destroy();
+                            i--;
+                        }
+                    }
+                }
+                else
+                {
+                    _scene.RemoveEntity(entity);
+                    entity.Destroy();
+                    i--;
+                }
+            }
+            _scene.ClearMessageQueue();
+            // todo?: unload more stuff
+            // todo: update escape state
+            for (int i = 0; i < PlayerEntity.Players.Count; i++)
+            {
+                PlayerEntity player = PlayerEntity.Players[i];
+                player.ResetReferences();
+            }
+            _scene.AreaId = Metadata.GetAreaInfo(LoaderDoor.TargetRoomId);
+            _loaderTask = Task.Run(ProcessTransition);
+        }
+
+        // ttodo: cancel on close/quit
+        private Task? _loaderTask = null;
+
+        private void ProcessTransition()
+        {
+            Debug.Assert(LoaderDoor != null);
+            RoomMetadata? roomMeta = Metadata.GetRoomById(LoaderDoor.TargetRoomId);
+            Debug.Assert(roomMeta != null);
+            // todo: pass boss flags
+            (_, IReadOnlyList<EntityBase> entities) = SceneSetup.SetUpRoom(_scene.GameMode, playerCount: 0,
+                BossFlags.None, nodeLayerMask: 0, LoaderDoor.Data.TargetLayerId, roomMeta, room: this, _scene);
+            for (int i = 0; i < entities.Count; i++)
+            {
+                EntityBase entity = entities[i];
+                entity.Initialized = false;
+                _scene.InsertEntity(entity);
+                _scene.LoadedEntities.Enqueue(entity);
+            }
+            while (!_scene.LoadedEntities.IsEmpty)
+            {
+                Thread.Sleep(10);
+            }
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type != EntityType.Door)
+                {
+                    continue;
+                }
+                var door = (DoorEntity)entity;
+                if (door.Data.ConnectorId == 255 || door.Portal != null)
+                {
+                    continue;
+                }
+                AddDoorPortal(door);
+            }
+            GameState.TransitionState = TransitionState.End;
+        }
+
+        private void EndTransition()
+        {
+            RoomMetadata? roomMeta = Metadata.GetRoomById(GameState.TransitionRoomId);
+            Debug.Assert(roomMeta != null);
+            ModelInstance inst = _models[0];
+            _scene.LoadModel(inst.Model, isRoom: true);
+            inst.SetAnimation(0);
+            _scene.SetRoomValues(roomMeta);
+            for (int i = 0; i < _connectorModels.Count; i++)
+            {
+                ModelInstance conInst = _connectorModels[i];
+                CollisionInstance conCol = _roomCollision[i + 1];
+                if (conInst.Active)
+                {
+                    _connectorModels.RemoveAt(i);
+                    _roomCollision.RemoveAt(i + 1);
+                    i--;
+                }
+                else
+                {
+                    conInst.Active = true;
+                    conCol.Active = true;
+                }
+            }
+            Vector3 offset = Vector3.Zero;
+            DoorEntity? prevConnector = null;
+            NodeRef nodeRef = NodeRef.None;
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                entity.Initialized = true;
+                if (LoaderDoor != null && entity.Type == EntityType.Door)
+                {
+                    var door = (DoorEntity)entity;
+                    if (door == LoaderDoor || door.LoaderDoor == LoaderDoor)
+                    {
+                        if (door.LoaderDoor == LoaderDoor)
+                        {
+                            prevConnector = door;
+                        }
+                        _scene.RemoveEntity(door);
+                        door.Destroy();
+                        i--;
+                    }
+                    else if (door.Data.OutConnectorId == LoaderDoor.Data.OutLoaderId)
+                    {
+                        // new connector replacing the loader
+                        Debug.Assert(door.Portal != null);
+                        door.Flags |= DoorFlags.ShotOpen;
+                        door.Flags &= ~DoorFlags.Locked;
+                        door.SetAnimationFrame(LoaderDoor.GetAnimationFrame());
+                        offset = door.Position - LoaderDoor.Position;
+                        nodeRef = door.Portal.NodeRef2;
+                        Debug.Assert(door.LoaderDoor != null);
+                        DoorEntity newLoader = door.LoaderDoor;
+                        prevConnector ??= LoaderDoor.ConnectorDoor;
+                        Debug.Assert(prevConnector != null);
+                        // new loader replacing the connector
+                        newLoader.SetAnimationFrame(prevConnector.GetAnimationFrame());
+                        if (prevConnector.Flags.TestFlag(DoorFlags.ShotOpen) &&
+                            !newLoader.Flags.TestFlag(DoorFlags.Locked))
+                        {
+                            newLoader.Flags |= DoorFlags.ShotOpen;
+                        }
+                    }
+                }
+            }
+            if (LoaderDoor != null)
+            {
+                Debug.Assert(nodeRef != NodeRef.None);
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type == EntityType.Player)
+                    {
+                        var player = (PlayerEntity)entity;
+                        player.Reposition(offset, nodeRef);
+                    }
+                    else if (entity.Type == EntityType.Bomb)
+                    {
+                        var bomb = (BombEntity)entity;
+                        bomb.Reposition(offset);
+                    }
+                    else if (entity.Type == EntityType.BeamEffect)
+                    {
+                        var beamEffect = (BeamEffectEntity)entity;
+                        beamEffect.Reposition(offset);
+                    }
+                }
+            }
+            LoaderDoor = null;
+            _loaderTask = null;
+            GameState.TransitionState = TransitionState.None;
         }
 
         protected override void GetCollisionDrawInfo()
@@ -287,7 +602,6 @@ namespace MphRead.Entities
                 return;
             }
             Debug.Assert(curNodeRef.NodeIndex != -1);
-            // todo: handle multiple rooms (connectors)
             RoomPartVisInfo curVisInfo = GetPartVisInfo(curNodeRef);
             curVisInfo.ViewMinX = 0;
             curVisInfo.ViewMaxX = 1;
@@ -556,7 +870,7 @@ namespace MphRead.Entities
                 {
                     Debug.Assert(node.RoomPartId >= 0);
                     Debug.Assert(node.ChildIndex != -1);
-                    return new NodeRef(node.RoomPartId, node.ChildIndex);
+                    return new NodeRef(node.RoomPartId, node.ChildIndex, modelIndex: 0);
                 }
             }
             return NodeRef.None;
@@ -625,33 +939,42 @@ namespace MphRead.Entities
         {
             if (!Hidden)
             {
-                ModelInstance inst = _models[0];
-                UpdateTransforms(inst, 0);
-                if (_scene.ProcessFrame)
-                {
-                    ClearRoomPartState();
-                    UpdateRoomParts();
-                }
-                if (_partVisInfoHead == null || _scene.ShowAllNodes)
-                {
-                    DrawAllNodes(inst);
-                }
-                else
-                {
-                    DrawRoomParts(inst);
-                }
-                // sktodo: add portal between room and connector and update node refs between them
                 for (int i = 0; i < _connectorModels.Count; i++)
                 {
                     ModelInstance conInst = _connectorModels[i];
-                    _scene.UpdateMaterials(conInst.Model, recolorId: 0);
-                    var transform = Matrix4.CreateTranslation(_roomCollision[i + 1].Translation);
-                    IReadOnlyList<Node> nodes = conInst.Model.Nodes;
-                    for (int j = 0; j < nodes.Count; j++)
+                    if (!conInst.Active)
                     {
-                        nodes[j].Animation = transform;
+                        continue;
                     }
-                    DrawAllNodes(conInst, connector: true);
+                    _scene.UpdateMaterials(conInst.Model, recolorId: 0);
+                    if (GameState.InRoomTransition)
+                    {
+                        var transform = Matrix4.CreateTranslation(_roomCollision[i + 1].Translation);
+                        IReadOnlyList<Node> nodes = conInst.Model.Nodes;
+                        for (int j = 0; j < nodes.Count; j++)
+                        {
+                            nodes[j].Animation = transform;
+                        }
+                        DrawAllNodes(conInst, connector: true);
+                    }
+                }
+                if (!GameState.InRoomTransition)
+                {
+                    ModelInstance inst = _models[0];
+                    UpdateTransforms(inst, 0);
+                    if (_scene.ProcessFrame)
+                    {
+                        ClearRoomPartState();
+                        UpdateRoomParts();
+                    }
+                    if (_partVisInfoHead == null || _scene.ShowAllNodes)
+                    {
+                        DrawAllNodes(inst);
+                    }
+                    else
+                    {
+                        DrawRoomParts(inst);
+                    }
                 }
             }
             if (_scene.ShowCollision && (_scene.ColEntDisplay == EntityType.All || _scene.ColEntDisplay == Type))
@@ -660,7 +983,6 @@ namespace MphRead.Entities
             }
             if (_nodeData != null && _scene.ShowNodeData)
             {
-                Debug.Assert(_emptyMatrixStack != null);
                 Debug.Assert(_models.Count == 2);
                 ModelInstance inst = _models[1];
                 int polygonId = _scene.GetNextPolygonId();
@@ -701,7 +1023,7 @@ namespace MphRead.Entities
             }
         }
 
-        private bool IsNodeVisible(FrustumInfo frustumInfo, Node node, int mask)
+        private bool IsNodeVisible(FrustumInfo frustumInfo, Node node, int mask, Vector3 offset)
         {
             float[] bounds = node.Bounds;
             for (int i = 0; i < frustumInfo.Count; i++)
@@ -712,13 +1034,15 @@ namespace MphRead.Entities
                 // right plane = false if min bounds are on outer side, left plane = false if max bounds are on outer side,
                 // bottom plane = false if max bounds are on outer side, top plane = false if min bounds are on outer side
                 Vector4 plane = frustumPlane.Plane;
-                if (plane.X * bounds[frustumPlane.XIndex2] + plane.Y * bounds[frustumPlane.YIndex2]
-                    + plane.Z * bounds[frustumPlane.ZIndex2] - plane.W < 0)
+                if (plane.X * (bounds[frustumPlane.XIndex2] + offset.X)
+                    + plane.Y * (bounds[frustumPlane.YIndex2] + offset.Y)
+                    + plane.Z * (bounds[frustumPlane.ZIndex2] + offset.Z) - plane.W < 0)
                 {
                     return false;
                 }
-                if (plane.X * bounds[frustumPlane.XIndex1] + plane.Y * bounds[frustumPlane.YIndex1]
-                    + plane.Z * bounds[frustumPlane.ZIndex1] - plane.W >= 0)
+                if (plane.X * (bounds[frustumPlane.XIndex1] + offset.X)
+                    + plane.Y * (bounds[frustumPlane.YIndex1] + offset.Y)
+                    + plane.Z * (bounds[frustumPlane.ZIndex1] + offset.Z) - plane.W >= 0)
                 {
                     mask &= ~(1 << i);
                 }
@@ -726,7 +1050,7 @@ namespace MphRead.Entities
             return true;
         }
 
-        private void DrawRoomParts(ModelInstance inst)
+        private void DrawRoomParts(ModelInstance roomInst)
         {
             _excludedNodes.Clear();
             if (PlayerEntity.Main.MorphCamera != null)
@@ -741,11 +1065,28 @@ namespace MphRead.Entities
             {
                 RoomFrustumItem? frustumItem = _roomFrustumLinks[roomPart.NodeRef.PartIndex];
                 int nodeIndex = roomPart.NodeRef.NodeIndex;
+                int modelIndex = roomPart.NodeRef.ModelIndex;
                 Debug.Assert(frustumItem != null);
                 Debug.Assert(nodeIndex != -1);
+                Debug.Assert(modelIndex != -1);
+                Vector3 offset = Vector3.Zero;
+                ModelInstance partInst;
+                if (modelIndex == 0)
+                {
+                    partInst = _models[0];
+                }
+                else
+                {
+                    partInst = _connectorModels[modelIndex - 1];
+                    offset = _roomCollision[modelIndex].Translation;
+                }
+                if (!partInst.Active)
+                {
+                    continue;
+                }
                 while (nodeIndex != -1)
                 {
-                    Node? node = inst.Model.Nodes[nodeIndex];
+                    Node? node = partInst.Model.Nodes[nodeIndex];
                     Debug.Assert(node.ChildIndex == -1);
                     if (!node.Enabled || node.MeshCount == 0 || _excludedNodes.Contains(node))
                     {
@@ -755,9 +1096,12 @@ namespace MphRead.Entities
                     RoomFrustumItem? frustumLink = frustumItem;
                     while (frustumLink != null)
                     {
-                        if (IsNodeVisible(frustumLink.Info, node, 0x8FFF))
+                        if (IsNodeVisible(frustumLink.Info, node, 0x8FFF, offset))
                         {
-                            GetItems(inst, node);
+                            Matrix4 animation = node.Animation;
+                            animation.Row3.Xyz = offset;
+                            node.Animation = animation;
+                            GetItems(partInst, node);
                             if (_nodePairs.TryGetValue(node, out Node? exclude))
                             {
                                 _excludedNodes.Add(exclude);
@@ -780,12 +1124,12 @@ namespace MphRead.Entities
                     if (pnode.ChildIndex != -1)
                     {
                         Node node = Nodes[pnode.ChildIndex];
-                        GetItems(inst, node, forceField.Portal);
+                        GetItems(roomInst, node, forceField.Portal);
                         int nextIndex = node.NextIndex;
                         while (nextIndex != -1)
                         {
                             node = Nodes[nextIndex];
-                            GetItems(inst, node, forceField.Portal);
+                            GetItems(roomInst, node, forceField.Portal);
                             nextIndex = node.NextIndex;
                         }
                     }

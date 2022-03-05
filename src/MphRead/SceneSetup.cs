@@ -36,36 +36,7 @@ namespace MphRead
                 Weapons.Current = scene.Multiplayer ? Weapons.WeaponsMP : Weapons.Weapons1P;
             }
             scene.GameMode = mode;
-            if (playerCount == 0)
-            {
-                playerCount = PlayerEntity.PlayerCount;
-            }
-            if (entityLayerId < 0 || entityLayerId > 15)
-            {
-                if (mode == GameMode.SinglePlayer)
-                {
-                    // todo: finer state changes for target layer ID (forced fights);
-                    // there are two doors with ID 3 in UNIT1_RM6, the rest are set in-game
-                    entityLayerId = ((int)bossFlags >> 2 * scene.AreaId) & 3;
-                }
-                else
-                {
-                    entityLayerId = Metadata.GetMultiplayerEntityLayer(mode, playerCount);
-                }
-            }
-            if (nodeLayerMask == 0)
-            {
-                int nodePlayerCount = Features.MaxRoomDetail ? 2 : playerCount;
-                nodeLayerMask = GetNodeLayer(mode, metadata.NodeLayer, nodePlayerCount);
-            }
             Extract.LoadRuntimeData();
-            IReadOnlyList<EntityBase> entities = LoadEntities(metadata, entityLayerId, scene);
-            CollisionInstance collision = Collision.GetCollision(metadata, nodeLayerMask);
-            NodeData? nodeData = null;
-            if (metadata.NodePath != null)
-            {
-                nodeData = ReadNodeData.ReadData(Path.Combine(@"", metadata.NodePath));
-            }
             LoadResources(scene);
             CamSeqEntity.ClearData();
             CamSeqEntity.Current = null;
@@ -80,8 +51,45 @@ namespace MphRead
                 }
             }
             Sound.Sfx.Load();
-            var room = new RoomEntity(name, metadata, collision, nodeData, nodeLayerMask, roomId, scene);
+            var room = new RoomEntity(scene);
+            (CollisionInstance collision, IReadOnlyList<EntityBase> entities) = SetUpRoom(mode, playerCount,
+                bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene);
             return (room, metadata, collision, entities);
+        }
+
+        public static (CollisionInstance, IReadOnlyList<EntityBase>) SetUpRoom(GameMode mode,
+            int playerCount, BossFlags bossFlags, int nodeLayerMask, int entityLayerId,
+            RoomMetadata metadata, RoomEntity room, Scene scene)
+        {
+            if (playerCount == 0)
+            {
+                playerCount = PlayerEntity.PlayerCount;
+            }
+            if (entityLayerId < 0 || entityLayerId > 15)
+            {
+                if (mode == GameMode.SinglePlayer)
+                {
+                    entityLayerId = ((int)bossFlags >> 2 * scene.AreaId) & 3;
+                }
+                else
+                {
+                    entityLayerId = Metadata.GetMultiplayerEntityLayer(mode, playerCount);
+                }
+            }
+            if (nodeLayerMask == 0)
+            {
+                int nodePlayerCount = Features.MaxRoomDetail ? 2 : playerCount;
+                nodeLayerMask = GetNodeLayer(mode, metadata.NodeLayer, nodePlayerCount);
+            }
+            IReadOnlyList<EntityBase> entities = LoadEntities(metadata, entityLayerId, scene);
+            CollisionInstance collision = Collision.GetCollision(metadata, nodeLayerMask);
+            NodeData? nodeData = null;
+            if (metadata.NodePath != null)
+            {
+                nodeData = ReadNodeData.ReadData(Path.Combine(@"", metadata.NodePath));
+            }
+            room.Setup(metadata.Name, metadata, collision, nodeData, nodeLayerMask, metadata.Id);
+            return (collision, entities);
         }
 
         public static int GetNodeLayer(GameMode mode, int roomLayer, int playerCount)

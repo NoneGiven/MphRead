@@ -420,6 +420,7 @@ namespace MphRead
         {
             foreach (Node node in Nodes)
             {
+                node.Enabled = true;
                 if (!node.Name.StartsWith("_"))
                 {
                     continue;

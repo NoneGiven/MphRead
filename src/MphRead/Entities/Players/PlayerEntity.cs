@@ -888,6 +888,17 @@ namespace MphRead.Entities
             }
         }
 
+        public void ResetReferences()
+        {
+            // Field35C and point module are also reset here
+            AttachedEnemy = null;
+            MorphCamera = null;
+            _lastJumpPad = null;
+            OctolithFlag = null;
+            _enemySpawner = null;
+            _lastTarget = null;
+        }
+
         public override void GetPosition(out Vector3 position)
         {
             position = Position.AddY(IsAltForm ? 0 : 0.5f);
@@ -966,6 +977,30 @@ namespace MphRead.Entities
             {
                 ResumeOwnCamera();
                 CameraInfo.Update();
+            }
+        }
+
+        public void Reposition(Vector3 offset, NodeRef nodeRef)
+        {
+            Position += offset;
+            PrevPosition += offset;
+            _aimPosition += offset;
+            _gunDrawPos += offset;
+            _muzzlePos += offset;
+            CameraInfo camInfo = CameraInfo;
+            camInfo.Position += offset;
+            camInfo.PrevPosition += offset;
+            camInfo.Target += offset;
+            _volume = CollisionVolume.Move(_volumeUnxf, Position);
+            for (int i = 0; i < _beams.Length; i++)
+            {
+                _beams[i].Reposition(offset);
+            }
+            NodeRef = nodeRef;
+            camInfo.NodeRef = nodeRef;
+            if (Flags2.TestFlag(PlayerFlags2.Halfturret))
+            {
+                Halfturret.Reposition(offset, nodeRef);
             }
         }
 

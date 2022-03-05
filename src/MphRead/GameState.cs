@@ -16,12 +16,23 @@ namespace MphRead
         Disconnected = 3
     }
 
+    public enum TransitionState
+    {
+        None = 0,
+        Start = 1,
+        Process = 2,
+        End = 3
+    }
+
     public static class GameState
     {
         public static bool MenuPause { get; private set; }
         public static bool DialogPause { get; private set; }
         public static int EscapeState { get; set; }
         public static MatchState MatchState { get; set; } = MatchState.InProgress;
+        public static TransitionState TransitionState { get; set; } = TransitionState.None;
+        public static bool InRoomTransition => TransitionState != TransitionState.None;
+        public static int TransitionRoomId { get; set; } = -1;
         public static int ActivePlayers { get; set; } = 0;
         public static string[] Nicknames { get; } = new string[4] { "Player1", "Player2", "Player3", "Player4" };
         public static int[] Stars { get; } = new int[4];
@@ -1056,6 +1067,8 @@ namespace MphRead
             // todo: persist story saves
             StorySave = new StorySave();
             MatchState = MatchState.InProgress;
+            TransitionState = TransitionState.None;
+            TransitionRoomId = -1;
             ActivePlayers = 0;
             for (int i = 0; i < 4; i++)
             {

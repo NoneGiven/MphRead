@@ -93,6 +93,17 @@ namespace MphRead.Entities
             }
         }
 
+        public void Reposition(Vector3 offset)
+        {
+            SpawnPosition += offset;
+            Position += offset;
+            BackPosition += offset;
+            for (int i = 0; i < PastPositions.Length; i++)
+            {
+                PastPositions[i] += offset;
+            }
+        }
+
         public override bool Process()
         {
             if (Lifespan <= 0)
@@ -679,8 +690,10 @@ namespace MphRead.Entities
                                         _scene.SendMessage(Message.ShowWarning, this, null, 40, 90 * 2, 5 * 2); // todo: FPS stuff
                                     }
                                 }
-                                // todo: don't do this if in room transition
-                                door.Flags |= DoorFlags.ShotOpen;
+                                if (!GameState.InRoomTransition)
+                                {
+                                    door.Flags |= DoorFlags.ShotOpen;
+                                }
                             }
                         }
                         ricochet = false;
