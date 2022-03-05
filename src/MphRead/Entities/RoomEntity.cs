@@ -222,6 +222,11 @@ namespace MphRead.Entities
                     Portal portal = door.SetUpPort(roomNodeName, node.Name);
                     portal.NodeRef1 = new NodeRef(roomPartId, roomNodeIndex, modelIndex: 0);
                     portal.NodeRef2 = new NodeRef(node.RoomPartId, node.ChildIndex, modelIndex: _doorPortalCount);
+                    if (_portalSides.Count == 0)
+                    {
+                        Debug.Assert(roomPartId == 0);
+                        _portalSides.Add(new List<(Portal, bool)>());
+                    }
                     _portalSides[roomPartId].Add((portal, false));
                     sides.Add((portal, true));
                     _portalSides.Add(sides);
@@ -399,13 +404,17 @@ namespace MphRead.Entities
                 player.ResetReferences();
             }
             _scene.AreaId = Metadata.GetAreaInfo(LoaderDoor.TargetRoomId);
-            _loaderTask = Task.Run(ProcessTransition);
+            Task.Run(() => ProcessTransition(_cts.Token), _cts.Token);
         }
 
-        // ttodo: cancel on close/quit
-        private Task? _loaderTask = null;
+        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
-        private void ProcessTransition()
+        public void CancelTransition()
+        {
+            _cts.Cancel();
+        }
+
+        private void ProcessTransition(CancellationToken token)
         {
             Debug.Assert(LoaderDoor != null);
             RoomMetadata? roomMeta = Metadata.GetRoomById(LoaderDoor.TargetRoomId);
@@ -413,16 +422,28 @@ namespace MphRead.Entities
             // todo: pass boss flags
             (_, IReadOnlyList<EntityBase> entities) = SceneSetup.SetUpRoom(_scene.GameMode, playerCount: 0,
                 BossFlags.None, nodeLayerMask: 0, LoaderDoor.Data.TargetLayerId, roomMeta, room: this, _scene);
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
             for (int i = 0; i < entities.Count; i++)
             {
                 EntityBase entity = entities[i];
                 entity.Initialized = false;
                 _scene.InsertEntity(entity);
                 _scene.LoadedEntities.Enqueue(entity);
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
             }
             while (!_scene.LoadedEntities.IsEmpty)
             {
                 Thread.Sleep(10);
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
             }
             for (int i = 0; i < _scene.Entities.Count; i++)
             {
@@ -437,6 +458,10 @@ namespace MphRead.Entities
                     continue;
                 }
                 AddDoorPortal(door);
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
             }
             GameState.TransitionState = TransitionState.End;
         }
@@ -532,7 +557,6 @@ namespace MphRead.Entities
                 }
             }
             LoaderDoor = null;
-            _loaderTask = null;
             GameState.TransitionState = TransitionState.None;
         }
 
@@ -957,7 +981,8 @@ namespace MphRead.Entities
                     _scene.UpdateMaterials(conInst.Model, recolorId: 0);
                     if (GameState.InRoomTransition || _partVisInfoHead == null || _scene.ShowAllNodes)
                     {
-                        var transform = Matrix4.CreateTranslation(_roomCollision[i + 1].Translation);
+                        var transform = Matrix4.CreateScale(conInst.Model.Scale);
+                        transform.Row3.Xyz = _roomCollision[i + 1].Translation;
                         IReadOnlyList<Node> nodes = conInst.Model.Nodes;
                         for (int j = 0; j < nodes.Count; j++)
                         {
@@ -1079,6 +1104,7 @@ namespace MphRead.Entities
                 Debug.Assert(modelIndex != -1);
                 Vector3 offset = Vector3.Zero;
                 ModelInstance partInst;
+                Matrix4 transform = Matrix4.Identity;
                 if (modelIndex == 0)
                 {
                     partInst = _models[0];
@@ -1087,6 +1113,8 @@ namespace MphRead.Entities
                 {
                     partInst = _connectorModels[modelIndex - 1];
                     offset = _roomCollision[modelIndex].Translation;
+                    transform = Matrix4.CreateScale(partInst.Model.Scale);
+                    transform.Row3.Xyz = offset;
                 }
                 if (!partInst.Active)
                 {
@@ -1106,9 +1134,10 @@ namespace MphRead.Entities
                     {
                         if (IsNodeVisible(frustumLink.Info, node, 0x8FFF, offset))
                         {
-                            Matrix4 animation = node.Animation;
-                            animation.Row3.Xyz = offset;
-                            node.Animation = animation;
+                            if (offset != Vector3.Zero)
+                            {
+                                node.Animation = transform;
+                            }
                             GetItems(partInst, node);
                             if (_nodePairs.TryGetValue(node, out Node? exclude))
                             {

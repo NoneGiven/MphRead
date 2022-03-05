@@ -483,7 +483,7 @@ namespace MphRead.Entities
 
         public override void Destroy()
         {
-            // sktodo: stop SFX
+            _soundSource.StopSfx(SfxId.DOOR_OPEN);
             LoaderDoor = null;
             ConnectorDoor = null;
             Portal = null;

@@ -1085,8 +1085,8 @@ namespace MphRead
                 {
                     PlayerEntity.Main.Controls.ClearAll();
                 }
+                _room?.UpdateTransition();
             }
-            _room?.UpdateTransition();
             OnKeyHeld();
             _singleParticleCount = 0;
             _decalItems.Clear();
@@ -2790,6 +2790,7 @@ namespace MphRead
         public void DoCleanup()
         {
             _exiting = true;
+            _room?.CancelTransition();
             PlatformEntity.DestroyBeams();
             EnemyInstanceEntity.DestroyBeams();
             Sound.Sfx.ShutDown();
