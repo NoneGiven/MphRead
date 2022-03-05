@@ -258,6 +258,7 @@ namespace MphRead.Formats.Collision
 
     public class Portal
     {
+        public bool Active { get; set; } = true;
         public string Name { get; }
         public string NodeName1 { get; }
         public string NodeName2 { get; }

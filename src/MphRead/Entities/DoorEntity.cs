@@ -146,6 +146,7 @@ namespace MphRead.Entities
                 new Vector4(up, Vector3.Dot(up, points[0]))
             };
             Portal = new Portal(roomNodeName, conNodeName, points, planes, plane);
+            Portal.Active = false;
             return Portal;
         }
 
@@ -288,7 +289,7 @@ namespace MphRead.Entities
             }
             UpdateAnimFrames(_models[0]);
             UpdateAnimFrames(_models[1]);
-            bool activatePortal = false;
+            bool portalActive = false;
             if (Flags.TestFlag(DoorFlags.ShouldOpen))
             {
                 // todo: FPS stuff
@@ -298,7 +299,7 @@ namespace MphRead.Entities
                 }
                 if (_data.DoorType != DoorType.Standard || AnimInfo.Frame[0] >= 10)
                 {
-                    activatePortal = true;
+                    portalActive = true;
                 }
             }
             else
@@ -309,21 +310,24 @@ namespace MphRead.Entities
                     {
                         if (AnimInfo.Index[0] == 0)
                         {
-                            activatePortal = true;
+                            portalActive = true;
                         }
                     }
                     else if (!AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
                     {
-                        activatePortal = true;
+                        portalActive = true;
                     }
                 }
                 else
                 {
-                    activatePortal = true;
+                    portalActive = true;
                 }
                 Flags &= ~DoorFlags.Open;
             }
-            // ttodo: port flags
+            if (Portal != null)
+            {
+                Portal.Active = portalActive;
+            }
             Flags &= ~DoorFlags.Opening;
             Flags &= ~DoorFlags.Bit10;
             if (Flags.TestFlag(DoorFlags.ShouldOpen))
@@ -408,6 +412,10 @@ namespace MphRead.Entities
                 inst.SetAnimation(0, 0, SetFlags.Texture | SetFlags.Texcoord | SetFlags.Node, AnimFlags.Ended | AnimFlags.NoLoop);
                 inst.AnimInfo.Flags[0] |= AnimFlags.Reverse;
             }
+            if (Portal != null)
+            {
+                Portal.Active = false;
+            }
         }
 
         public void Lock(bool updateState)
@@ -483,7 +491,7 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo()
         {
-            if (!IsVisible(NodeRef))
+            if (!IsVisible(NodeRef) && (Portal == null || !IsVisible(Portal.NodeRef2)))
             {
                 return;
             }

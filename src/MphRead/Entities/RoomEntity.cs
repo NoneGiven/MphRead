@@ -632,6 +632,10 @@ namespace MphRead.Entities
             for (int i = 0; i < _portals.Count; i++)
             {
                 Portal portal = _portals[i];
+                if (!portal.Active)
+                {
+                    continue;
+                }
                 if (portal.NodeRef1 == frustumItem.NodeRef)
                 {
                     otherSide = false;
@@ -912,6 +916,10 @@ namespace MphRead.Entities
             for (int i = 0; i < _portals.Count; i++)
             {
                 Portal portal = _portals[i];
+                if (!portal.Active)
+                {
+                    continue;
+                }
                 if (portal.NodeRef1.PartIndex == current.PartIndex)
                 {
                     if (CollisionDetection.CheckPortBetweenPoints(portal, prevPos, curPos, otherSide: false))
@@ -1258,6 +1266,10 @@ namespace MphRead.Entities
                 for (int i = 0; i < _portals.Count; i++)
                 {
                     Portal portal = _portals[i];
+                    if (!portal.Active)
+                    {
+                        continue;
+                    }
                     int count = portal.Points.Count;
                     Vector3[] verts = ArrayPool<Vector3>.Shared.Rent(count);
                     for (int j = 0; j < count; j++)
