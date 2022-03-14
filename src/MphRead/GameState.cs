@@ -110,6 +110,10 @@ namespace MphRead
 
         public static void ApplyPause()
         {
+            if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true)
+            {
+                return;
+            }
             if (_pausingDialog)
             {
                 DialogPause = true;
