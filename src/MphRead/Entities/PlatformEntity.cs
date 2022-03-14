@@ -172,8 +172,27 @@ namespace MphRead.Entities
             _forwardSpeed = data.ForwardSpeed.FloatValue / 2f; // todo: FPS stuff
             _backwardSpeed = data.BackwardSpeed.FloatValue / 2f; // todo: FPS stuff
             UpdatePosition();
+            _moveSfx = new MoveSfxInfo(
+                start1: new SfxData(Metadata.PlatformSfx[_data.ModelId, 0]),
+                start2: new SfxData(Metadata.PlatformSfx[_data.ModelId, 1]),
+                stop: new SfxData(Metadata.PlatformSfx[_data.ModelId, 2]),
+                destoryed: new SfxData(Metadata.PlatformSfx[_data.ModelId, 3])
+            );
             _animFlags |= PlatAnimFlags.Draw;
-            // todo: room state
+            Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+            if (Flags.TestFlag(PlatformFlags.Bit17) && !Flags.TestFlag(PlatformFlags.Bit21))
+            {
+                int state = GameState.StorySave.GetRoomState(scene.RoomId, Id);
+                if (state == 1)
+                {
+                    _fromIndex = _data.PositionCount - 1;
+                    UpdatePosition();
+                }
+                else if (state == 2)
+                {
+                    _animFlags &= ~PlatAnimFlags.Draw;
+                }
+            }
             if (Flags.TestFlag(PlatformFlags.SamusShip))
             {
                 SleepWake(wake: true, instant: true);
@@ -192,8 +211,17 @@ namespace MphRead.Entities
                 {
                     SleepWake(wake: true, instant: true);
                 }
-                // todo: more room state
-                //_animFlags |= PlatAnimFlags.Active;
+                if (Flags.TestFlag(PlatformFlags.Bit21))
+                {
+                    if (GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: _data.Active != 0) != 0)
+                    {
+                        _animFlags |= PlatAnimFlags.Active;
+                    }
+                }
+                else if (_data.Active != 0)
+                {
+                    _animFlags |= PlatAnimFlags.Active;
+                }
                 if (_animFlags.TestFlag(PlatAnimFlags.Active))
                 {
                     Activate();
@@ -224,12 +252,6 @@ namespace MphRead.Entities
             {
                 _sfxRangeIndex = 33;
             }
-            _moveSfx = new MoveSfxInfo(
-                start1: new SfxData(Metadata.PlatformSfx[_data.ModelId, 0]),
-                start2: new SfxData(Metadata.PlatformSfx[_data.ModelId, 1]),
-                stop: new SfxData(Metadata.PlatformSfx[_data.ModelId, 2]),
-                destoryed: new SfxData(Metadata.PlatformSfx[_data.ModelId, 3])
-            );
         }
 
         public static void DestroyBeams()
