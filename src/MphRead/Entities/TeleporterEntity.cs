@@ -68,8 +68,15 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // todo: use room state/artifact bits/etc. to determine active state
-            Active = data.Active != 0;
+            if (_scene.GameMode == GameMode.SinglePlayer)
+            {
+                int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: data.Active != 0);
+                Active = state != 0;
+            }
+            else
+            {
+                Active = data.Active != 0;
+            }
             // 0-7 = big teleporter using the corresponding artifact model
             // 8, 10, 11, 255 = small teleporter (no apparent meaning to each value beyond that)
             if (data.ArtifactId < 8)
@@ -97,6 +104,21 @@ namespace MphRead.Entities
             }
             if (data.Invisible == 0)
             {
+                if (_big)
+                {
+                    Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+                    bool active = true; // todo: use artifact count from story save
+                    if (active) // todo: and not in escape sequence
+                    {
+                        Active = true;
+                        GameState.StorySave.SetRoomState(scene.RoomId, Id, state: 3);
+                    }
+                    else
+                    {
+                        Active = false;
+                        GameState.StorySave.SetRoomState(scene.RoomId, Id, state: 1);
+                    }
+                }
                 if (Active)
                 {
                     _scanId = _big ? 46 : 26;

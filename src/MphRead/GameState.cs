@@ -1166,6 +1166,8 @@ namespace MphRead
                 return 3;
             }
             roomId -= 27;
+            activeState &= 3;
+            inactiveState &= 3;
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
             int pairMask = 3 << pairIndex;
@@ -1179,9 +1181,30 @@ namespace MphRead
 
         public int GetRoomState(int roomId, int entityId)
         {
+            if (entityId == -1 || roomId < 27 || roomId > 92)
+            {
+                return 0;
+            }
+            roomId -= 27;
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
             return (RoomState[roomId, byteIndex] >> pairIndex) & 3;
+        }
+
+        public void SetRoomState(int roomId, int entityId, int state)
+        {
+            if (entityId == -1 || roomId < 27 || roomId > 92)
+            {
+                return;
+            }
+            roomId -= 27;
+            state &= 3;
+            (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
+            pairIndex *= 2;
+            int pairMask = 3 << pairIndex;
+            RoomState[roomId, byteIndex] &= (byte)~pairMask;
+            RoomState[roomId, byteIndex] |= (byte)(state << pairIndex);
+            return;
         }
 
         public void UpdateLogbook(int scanId)

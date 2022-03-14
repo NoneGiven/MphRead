@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using MphRead.Formats;
 using OpenTK.Mathematics;
 
@@ -32,8 +33,8 @@ namespace MphRead.Entities
             {
                 SetUpModel("ArtifactBase");
             }
-            // todo: room state
-            Active = _data.Active != 0;
+            Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+            Active = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: _data.Active != 0, activeState: 2) != 0;
         }
 
         public override void Initialize()

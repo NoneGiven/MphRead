@@ -43,7 +43,13 @@ namespace MphRead.Entities
             UpdateVisiblePosition();
             _flags = data.Flags;
             _state = (int)(data.Flags & ObjectFlags.State);
-            // todo: room state affecting animation ID
+            Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+            if (GameState.StorySave.GetRoomState(scene.RoomId, Id) == 0)
+            {
+                Debug.Assert(_state >= 0 && _state <= 2);
+                GameState.StorySave.SetRoomState(scene.RoomId, Id, _state + 1);
+            }
+            _state = GameState.StorySave.GetRoomState(scene.RoomId, Id);
             if (_state != 0 || _data.ModelId == 53) // WallSwitch
             {
                 _scanId = _data.ScanId;
@@ -87,6 +93,10 @@ namespace MphRead.Entities
                         inst.AnimInfo.Frame[0] = inst.AnimInfo.FrameCount[0] - 1;
                     }
                 }
+                else if (_meta.IgnoreAnimation)
+                {
+                    inst.SetAnimation(-1);
+                }
                 else if (animIndex >= 0)
                 {
                     AnimFlags animFlags = AnimFlags.None;
@@ -107,14 +117,14 @@ namespace MphRead.Entities
                     SetCollision(Collision.GetCollision(modelMeta), attach: inst);
                     if (modelMeta.ExtraCollisionPath != null)
                     {
-                        // in game, collision isn't even set up unless state starts at 2, but we should still set it up ("reactivation")
+                        // in game, collision isn't even set up unless state starts at 2,
+                        // but we should still set it up ("reactivation")
                         SetCollision(Collision.GetCollision(modelMeta, extra: true), slot: 1);
+                        if (_state != 2)
+                        {
+                            EntityCollision[1]!.Collision!.Active = false;
+                        }
                     }
-                }
-                // temporary -- room state/end flag processing
-                if (inst.Model.Name == "SecretSwitch" || inst.Model.Name == "AlimbicStatue_lod0")
-                {
-                    inst.SetAnimation(-1);
                 }
             }
         }
