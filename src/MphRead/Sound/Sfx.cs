@@ -1049,7 +1049,6 @@ namespace MphRead.Sound
                 // in the latter case, the center pan overrides any sourced positional audio
                 if (entry.Pan > -1)
                 {
-                    Debug.WriteLine($"panning {inst.ScriptFile.Name} #{inst.ScriptIndex}");
                     int channelId = inst.Channels[index].Id;
                     AL.Source(channelId, ALSourceb.SourceRelative, true);
                     AL.Source(channelId, ALSourcef.RolloffFactor, 0);
