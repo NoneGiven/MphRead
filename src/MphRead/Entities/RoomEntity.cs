@@ -345,9 +345,9 @@ namespace MphRead.Entities
         };
 
         public DoorEntity? LoaderDoor { get; set; }
-        public int TargetTeleporterId { get; set; } = -1;
+        public int LoadEntityId { get; set; } = -1;
 
-        public void ProcessTeleport()
+        public void LoadRoom()
         {
             _soundSource.StopFreeSfx(SfxId.SAMUS_DEATH);
             PlayerEntity? player = PlayerEntity.Main;
@@ -369,7 +369,8 @@ namespace MphRead.Entities
             player.Initialize();
             _scene.InitEntity(player);
             _scene.InitEntity(player.Halfturret);
-            _scene.SetFade(FadeType.FadeInBlack, length: 10 / 30f, overwrite: true);
+            FadeType fadeType = _scene.FadeType == FadeType.FadeOutWhite ? FadeType.FadeInWhite : FadeType.FadeOutBlack;
+            _scene.SetFade(fadeType, length: 10 / 30f, overwrite: true);
         }
 
         private void StartTransition(bool fromDoor)
@@ -384,7 +385,7 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
-                if (entity.Type == EntityType.Door)
+                if (LoaderDoor != null && entity.Type == EntityType.Door)
                 {
                     var door = (DoorEntity)entity;
                     if (door == LoaderDoor || door.LoaderDoor == LoaderDoor)

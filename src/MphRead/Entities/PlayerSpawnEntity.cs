@@ -5,6 +5,7 @@ namespace MphRead.Entities
     public class PlayerSpawnEntity : EntityBase
     {
         private readonly PlayerSpawnEntityData _data;
+        public PlayerSpawnEntityData Data => _data;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x7F, 0x00, 0x00).AsVector4();
         private bool _active = false;
 

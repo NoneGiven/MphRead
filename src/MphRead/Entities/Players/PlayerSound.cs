@@ -536,10 +536,10 @@ namespace MphRead.Entities
             Sfx.LongSfxMute++;
         }
 
-        public void RestartLongSfx()
+        public void RestartLongSfx(bool force = false)
         {
             RestartTimedSfx();
-            if (--Sfx.LongSfxMute <= 0)
+            if (force || --Sfx.LongSfxMute <= 0)
             {
                 Sfx.LongSfxMute = 0;
                 // the game does this along with the timed SFX,

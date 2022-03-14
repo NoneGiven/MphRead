@@ -81,15 +81,16 @@ namespace MphRead.Entities
             {
                 if (_respawnTimer == 0) // todo: and this slot was not spawned by an enemy spawner
                 {
-                    if (_scene.Room?.TargetTeleporterId >= 0)
+                    if (_scene.Room?.LoadEntityId >= 0)
                     {
+                        bool spawned = false;
                         for (int i = 0; i < _scene.Entities.Count; i++)
                         {
                             EntityBase entity = _scene.Entities[i];
                             if (entity.Type == EntityType.Teleporter)
                             {
                                 var teleporter = (TeleporterEntity)entity;
-                                if (teleporter.Data.LoadIndex == _scene.Room.TargetTeleporterId)
+                                if (teleporter.Data.LoadIndex == _scene.Room.LoadEntityId)
                                 {
                                     teleporter.SetTriggered();
                                     Spawn(teleporter.Position, teleporter.FacingVector, teleporter.UpVector,
@@ -101,14 +102,31 @@ namespace MphRead.Entities
                                         ResumeOwnCamera();
                                         HudOnMorphStart();
                                     }
+                                    spawned = true;
                                     break;
                                 }
                             }
                         }
-                        _scene.Room.TargetTeleporterId = -1;
+                        if (!spawned)
+                        {
+                            for (int i = 0; i < _scene.Entities.Count; i++)
+                            {
+                                EntityBase entity = _scene.Entities[i];
+                                if (entity.Type == EntityType.Door)
+                                {
+                                    var door = (DoorEntity)entity;
+                                    if (door.Data.OutConnectorId == _scene.Room.LoadEntityId)
+                                    {
+                                        Vector3 facing = door.FacingVector;
+                                        Vector3 position = door.Position + facing * 2;
+                                        Spawn(position, facing, door.UpVector, door.NodeRef, respawn: true);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        _scene.Room.LoadEntityId = -1;
                         GameState.TransitionAltForm = false;
-                        // todo: else, load at the right door for a checkpoint respawn
-                        // skhere 4
                     }
                     else
                     {
@@ -1879,39 +1897,46 @@ namespace MphRead.Entities
                     continue;
                 }
                 var candidate = (PlayerSpawnEntity)spawn;
-                // skdebug - 1P spawns
-                if ((candidate.IsActive || !_scene.Room.Meta.Multiplayer) && candidate.Cooldown == 0
-                    && (_scene.FrameCount > 0 || !candidate.Availability))
+                // skdebug - remove once we have room state for 1P spawns
+                if (!candidate.IsActive && _scene.Room.Meta.Multiplayer || candidate.Cooldown != 0
+                    || _scene.FrameCount == 0 && candidate.Availability)
                 {
-                    // todo: if CTF mode, check team index
-                    float minDistSqr = 100;
-                    for (int j = 0; j < _scene.Entities.Count; j++)
+                    limit++;
+                    continue;
+                }
+                if (_scene.GameMode == GameMode.Capture && candidate.Data.TeamIndex != -1
+                    && candidate.Data.TeamIndex != TeamIndex)
+                {
+                    limit++;
+                    continue;
+                }
+                float minDistSqr = 100;
+                for (int j = 0; j < _scene.Entities.Count; j++)
+                {
+                    EntityBase entity = _scene.Entities[j];
+                    if (entity.Type != EntityType.Player)
                     {
-                        EntityBase entity = _scene.Entities[j];
-                        if (entity.Type != EntityType.Player)
+                        continue;
+                    }
+                    var player = (PlayerEntity)entity;
+                    if (player.Health > 0)
+                    {
+                        Vector3 between = candidate.Position - player.Position;
+                        float distSqr = Vector3.Dot(between, between);
+                        if (distSqr < minDistSqr)
                         {
-                            continue;
-                        }
-                        var player = (PlayerEntity)entity;
-                        if (player.Health > 0)
-                        {
-                            Vector3 between = candidate.Position - player.Position;
-                            float distSqr = Vector3.Dot(between, between);
-                            if (distSqr < minDistSqr)
-                            {
-                                minDistSqr = distSqr;
-                            }
+                            minDistSqr = distSqr;
                         }
                     }
-                    if (minDistSqr >= 100)
-                    {
-                        valid.Add(candidate);
-                    }
-                    else if (minDistSqr > bestDistance)
-                    {
-                        bestDistance = minDistSqr;
-                        bestAvailable = candidate;
-                    }
+                }
+                if (minDistSqr >= 100)
+                {
+                    valid.Add(candidate);
+                }
+                else if (minDistSqr > bestDistance)
+                {
+                    bestDistance = minDistSqr;
+                    bestAvailable = candidate;
                 }
                 limit++;
             }

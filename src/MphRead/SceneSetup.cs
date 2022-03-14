@@ -183,7 +183,7 @@ namespace MphRead
                 }
                 else if (entity.Type == EntityType.AreaVolume)
                 {
-                    results.Add(new AreaVolumeEntity(((Entity<AreaVolumeEntityData>)entity).Data, scene));
+                    results.Add(new AreaVolumeEntity(((Entity<AreaVolumeEntityData>)entity).Data, nodeName, scene));
                 }
                 else if (entity.Type == EntityType.FhAreaVolume)
                 {

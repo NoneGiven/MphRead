@@ -192,8 +192,8 @@ namespace MphRead.Entities
                                     }
                                     GameState.TransitionAltForm = PlayerEntity.Main.IsAltForm;
                                     GameState.TransitionRoomId = _targetRoomId;
-                                    _scene.Room.TargetTeleporterId = _data.TargetIndex;
-                                    _scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, AfterFade.Teleport);
+                                    _scene.Room.LoadEntityId = _data.TargetIndex;
+                                    _scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, AfterFade.LoadRoom);
                                 }
                                 player.Speed = new Vector3(0, player.Speed.Y, 0);
                                 // todo: update bot AI flag

@@ -74,7 +74,7 @@ namespace MphRead
     {
         None,
         Exit,
-        Teleport
+        LoadRoom
     }
 
     public partial class Scene
@@ -1390,6 +1390,7 @@ namespace MphRead
                 GL.UseProgram(_rttShaderProgramId);
             }
             GL.Disable(EnableCap.CullFace);
+            GL.Uniform4(_shaderLocations.FadeColor, _fadeColor, _fadeColor, _fadeColor, 0);
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
             {
                 DrawHudLayer(Layer4Info); // ice layer
@@ -2741,6 +2742,7 @@ namespace MphRead
         }
 
         private FadeType _fadeType = FadeType.None;
+        public FadeType FadeType => _fadeType;
         private float _fadeColor = 0;
         private bool _fadeIn = false;
         private float _fadeStart = 0;
@@ -2838,10 +2840,10 @@ namespace MphRead
             {
                 SetFade(FadeType.FadeInWhite, _fadeLength, overwrite: true);
             }
-            else if (_afterFade == AfterFade.Teleport)
+            else if (_afterFade == AfterFade.LoadRoom)
             {
                 Debug.Assert(_room != null);
-                _room.ProcessTeleport();
+                _room.LoadRoom();
             }
             else
             {

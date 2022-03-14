@@ -447,9 +447,7 @@ namespace MphRead.Entities
                         {
                             closed = true;
                             DialogConfirmState = ConfirmState.Yes;
-                            // skhere 2
-                            // skdebug - also don't close if continuing from game over
-                            if (DialogPromptType != PromptType.ShipHatch)
+                            if (DialogPromptType != PromptType.ShipHatch && DialogPromptType != PromptType.GameOver)
                             {
                                 CloseDialogs();
                             }

@@ -609,10 +609,17 @@ namespace MphRead.Entities
                 _spireAltNodes[2] = null;
                 _spireAltNodes[3] = null;
             }
-            // todo: respawn and/or checkpoint or something
             for (int i = 0; i < _bipedIceTransforms.Length; i++)
             {
                 _bipedIceTransforms[i] = Matrix4.Identity;
+            }
+            // todo?: some other kind of respawn?
+            int checkpointId = GameState.StorySave.CheckpointEntityId;
+            if (IsMainPlayer && _scene.GameMode == GameMode.SinglePlayer
+                && checkpointId != -1 && _scene.TryGetEntity(checkpointId, out EntityBase? checkpoint))
+            {
+                checkpoint.GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing);
+                Spawn(position, facing, up, checkpoint.NodeRef, respawn: false);
             }
         }
 
@@ -677,7 +684,6 @@ namespace MphRead.Entities
             {
                 // todo: get current health from story save
                 // --> not necessarily health max, e.g. when teleporting
-                // skhere 3
                 _health = _healthMax;
             }
             else
@@ -1747,8 +1753,7 @@ namespace MphRead.Entities
                         }
                         else
                         {
-                            // skdebug - this should be set once checkpoint reloading is implemented
-                            //_sfxStopTimer = 10 / 30f;
+                            _sfxStopTimer = 10 / 30f;
                             // mustodo?: update music or something?
                             _soundSource.PlayFreeSfx(SfxId.SAMUS_DEATH);
                         }

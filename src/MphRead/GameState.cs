@@ -418,12 +418,20 @@ namespace MphRead
                     }
                 }
             }
-            for (int i = 0; i < scene.MessageQueue.Count; i++)
+            if (PlayerEntity.Main.Health > 0)
             {
-                MessageInfo message = scene.MessageQueue[i];
-                if (message.Message == Message.Checkpoint && message.ExecuteFrame == scene.FrameCount)
+                for (int i = 0; i < scene.MessageQueue.Count; i++)
                 {
-                    // todo: update checkpoint
+                    MessageInfo message = scene.MessageQueue[i];
+                    if (message.Message == Message.Checkpoint && message.ExecuteFrame == scene.FrameCount)
+                    {
+                        Debug.Assert(scene.Room != null);
+                        scene.SendMessage(Message.SetActive, null!, message.Sender, param1: 0, param2: 0);
+                        StorySave.CheckpointEntityId = message.Sender.Id;
+                        StorySave.CheckpointRoomId = scene.Room.RoomId;
+                        // todo: update clean save
+                        break;
+                    }
                 }
             }
             // todo: game timer/boss record stuff
@@ -579,15 +587,33 @@ namespace MphRead
                     }
                     else if (prompt == PromptType.GameOver)
                     {
-                        // skhere 1
                         // yes to game over (continue)
-                        PlayerEntity.Main.RestartLongSfx(); // skdebug
-                        scene.SetFade(FadeType.FadeOutInWhite, length: 10 / 30f, overwrite: true); // skdebug
-                        PlayerEntity.Main.RespawnTimer = 10 * 2; // skdebug
-                        // todo: fade out and reload room
+                        Debug.Assert(scene.Room != null);
+                        if (StorySave.CheckpointRoomId == -1)
+                        {
+                            StorySave.CheckpointRoomId = scene.Room.RoomId;
+                        }
+                        if (StorySave.CheckpointEntityId == -1)
+                        {
+                            for (int i = 0; i < scene.Entities.Count; i++)
+                            {
+                                EntityBase entity = scene.Entities[i];
+                                if (entity.Type == EntityType.PlayerSpawn)
+                                {
+                                    // todo?: not sure if this needs to use checkpoints or have better logic
+                                    // --> can it even happen at all or otuside of landing areas?
+                                    StorySave.CheckpointEntityId = entity.Id;
+                                    break;
+                                }
+                            }
+                        }
+                        // if no ID is set, we'll still spawn, just using the respawn point code path
+                        TransitionRoomId = StorySave.CheckpointRoomId;
                         Sfx.Instance.PlaySample((int)SfxId.MENU_CONFIRM, source: null, loop: false,
                             noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                        scene.SetFade(FadeType.FadeOutWhite, length: 10 / 30f, overwrite: true, AfterFade.LoadRoom);
                         UnpauseDialog();
+                        PlayerEntity.Main.RestartLongSfx(force: true);
                     }
                 }
                 else if (prompt == PromptType.GameOver)
@@ -618,13 +644,17 @@ namespace MphRead
                         MessageInfo message = scene.MessageQueue[i];
                         if (message.Message == Message.ShipHatch && message.ExecuteFrame == scene.FrameCount)
                         {
+                            Debug.Assert(scene.Room != null);
                             PlayerEntity.Main.DialogPromptType = PromptType.ShipHatch;
-                            // todo: set checkpoint and update story save
+                            StorySave.CheckpointEntityId = message.Sender.Id;
+                            StorySave.CheckpointRoomId = scene.Room.RoomId;
+                            // todo: update clean save
                             // HUNTER GUNSHIP enter your ship?
                             PlayerEntity.Main.ShowDialog(DialogType.YesNo, messageId: 1);
                             Sfx.Instance.StopFreeSfxScripts();
                             Sfx.Instance.PlayScript((int)SfxId.RETURN_TO_SHIP_SCR, source: null,
                                 noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                            break;
                         }
                     }
                     // diagtodo: escape start, escape cancel
@@ -1134,6 +1164,8 @@ namespace MphRead
         public byte[] Logbook { get; } = new byte[68];
         public int ScanCount { get; set; }
         public int EquipmentCount { get; set; }
+        public int CheckpointEntityId { get; set; } = -1;
+        public int CheckpointRoomId { get; set; } = -1;
 
         public void UpdateLogbook(int scanId)
         {
