@@ -490,6 +490,21 @@ namespace MphRead.Entities
             }
         }
 
+        public void StopAllSfx()
+        {
+            StopFlagCarrySfx();
+            // the game also suspends the weapon alarm SFX here
+            UpdateHealthSfx(health: 0);
+            UpdateDoubleDamageSfx(index: 0, play: false);
+            UpdateCloakSfx(index: 0, play: false);
+            UpdateScanSfx(index: -1, enable: false);
+            // mustodo: update music
+            _soundSource.StopFreeSfxScripts();
+            _soundSource.StopFreeSfx(SfxId.FAST_SCROLL_UP_LOOP);
+            Sfx.Instance.StopEnvironmentSfx();
+            Sfx.Instance.StopAllSound();
+        }
+
         public void StopTimedSfx()
         {
             if (Sfx.TimedSfxMute == 0)
@@ -509,13 +524,13 @@ namespace MphRead.Entities
             Sfx.TimedSfxMute++;
         }
 
-        public void RestartTimedSfx()
+        public void RestartTimedSfx(bool force = false)
         {
-            if (--Sfx.TimedSfxMute <= 0)
+            if (force || --Sfx.TimedSfxMute <= 0)
             {
+                Sfx.TimedSfxMute = 0;
                 _dblDamageSfxMuted = false;
                 _cloakSfxMuted = false;
-                Sfx.TimedSfxMute = 0;
                 if (_flagCarrySfxMuted)
                 {
                     _flagCarrySfxMuted = false;
@@ -538,7 +553,7 @@ namespace MphRead.Entities
 
         public void RestartLongSfx(bool force = false)
         {
-            RestartTimedSfx();
+            RestartTimedSfx(force);
             if (force || --Sfx.LongSfxMute <= 0)
             {
                 Sfx.LongSfxMute = 0;

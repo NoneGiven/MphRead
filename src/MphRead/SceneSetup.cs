@@ -54,6 +54,7 @@ namespace MphRead
             var room = new RoomEntity(scene);
             (CollisionInstance collision, IReadOnlyList<EntityBase> entities) = SetUpRoom(mode, playerCount,
                 bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene);
+            GameState.StorySave.CheckpointRoomId = room.RoomId;
             return (room, metadata, collision, entities);
         }
 

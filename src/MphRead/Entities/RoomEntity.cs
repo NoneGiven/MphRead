@@ -349,8 +349,8 @@ namespace MphRead.Entities
 
         public void LoadRoom()
         {
-            _soundSource.StopFreeSfx(SfxId.SAMUS_DEATH);
             PlayerEntity? player = PlayerEntity.Main;
+            player.StopAllSfx();
             Hunter hunter = player.Hunter;
             int recolor = player.Recolor;
             StartTransition(fromDoor: false);
@@ -369,7 +369,7 @@ namespace MphRead.Entities
             player.Initialize();
             _scene.InitEntity(player);
             _scene.InitEntity(player.Halfturret);
-            FadeType fadeType = _scene.FadeType == FadeType.FadeOutWhite ? FadeType.FadeInWhite : FadeType.FadeOutBlack;
+            FadeType fadeType = _scene.FadeType == FadeType.FadeOutWhite ? FadeType.FadeInWhite : FadeType.FadeInBlack;
             _scene.SetFade(fadeType, length: 10 / 30f, overwrite: true);
         }
 

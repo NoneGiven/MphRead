@@ -589,25 +589,11 @@ namespace MphRead
                     {
                         // yes to game over (continue)
                         Debug.Assert(scene.Room != null);
-                        if (StorySave.CheckpointRoomId == -1)
+                        if (StorySave.CheckpointRoomId == -1) // skdebug
                         {
                             StorySave.CheckpointRoomId = scene.Room.RoomId;
                         }
-                        if (StorySave.CheckpointEntityId == -1)
-                        {
-                            for (int i = 0; i < scene.Entities.Count; i++)
-                            {
-                                EntityBase entity = scene.Entities[i];
-                                if (entity.Type == EntityType.PlayerSpawn)
-                                {
-                                    // todo?: not sure if this needs to use checkpoints or have better logic
-                                    // --> can it even happen at all or otuside of landing areas?
-                                    StorySave.CheckpointEntityId = entity.Id;
-                                    break;
-                                }
-                            }
-                        }
-                        // if no ID is set, we'll still spawn, just using the respawn point code path
+                        // if CheckpointEntityId isn't set, we'll still spawn, just using the respawn point code path
                         TransitionRoomId = StorySave.CheckpointRoomId;
                         Sfx.Instance.PlaySample((int)SfxId.MENU_CONFIRM, source: null, loop: false,
                             noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
