@@ -675,7 +675,8 @@ namespace MphRead.Entities
             }
             else if (IsMainPlayer) // todo: MP1P
             {
-                // todo: get from story save
+                // todo: get current health from story save
+                // --> not necessarily health max, e.g. when teleporting
                 _health = _healthMax;
             }
             else
@@ -1745,7 +1746,7 @@ namespace MphRead.Entities
                         }
                         else
                         {
-                            // skdebug - this should be set once the room is reloading
+                            // skdebug - this should be set once checkpoint reloading is implemented
                             //_sfxStopTimer = 10 / 30f;
                             // mustodo?: update music or something?
                             _soundSource.PlayFreeSfx(SfxId.SAMUS_DEATH);
@@ -1767,7 +1768,7 @@ namespace MphRead.Entities
                 GameState.Deaths[SlotIndex]++;
                 if (this == Main && beamType == BeamType.OmegaCannon)
                 {
-                    _scene.SetFade(FadeType.FadeInWhite, 90 * (1 / 30f), overwrite: true);
+                    _scene.SetFade(FadeType.FadeInWhite, 90 / 30f, overwrite: true);
                 }
                 Speed = Vector3.Zero;
                 _respawnTimer = RespawnTime;

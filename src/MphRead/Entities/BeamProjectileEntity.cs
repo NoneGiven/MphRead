@@ -957,7 +957,7 @@ namespace MphRead.Entities
                 {
                     if (Beam == BeamType.OmegaCannon && player == PlayerEntity.Main)
                     {
-                        _scene.SetFade(FadeType.FadeInWhite, 15 * (1 / 30f), overwrite: false);
+                        _scene.SetFade(FadeType.FadeInWhite, 15 / 30f, overwrite: false);
                     }
                 }
 

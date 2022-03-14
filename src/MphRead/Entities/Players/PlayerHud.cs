@@ -818,7 +818,7 @@ namespace MphRead.Entities
             _targetCircleInst.ProcessAnimation(_scene);
         }
 
-        private void HudOnMorphStart(bool teleported)
+        private void HudOnMorphStart()
         {
             _targetCircleInst.SetIndex(0, _scene);
             SetCombatVisor();

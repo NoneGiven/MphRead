@@ -326,11 +326,11 @@ namespace MphRead.Entities
         {
             if (GameState.TransitionState == TransitionState.Start)
             {
-                StartTransition();
+                StartTransition(fromDoor: true);
             }
             else if (GameState.TransitionState == TransitionState.Process)
             {
-                _scene.InitLoadedEntity();
+                _scene.InitLoadedEntity(count: 1); // todo: revisit this count?
             }
             else if (GameState.TransitionState == TransitionState.End)
             {
@@ -345,10 +345,36 @@ namespace MphRead.Entities
         };
 
         public DoorEntity? LoaderDoor { get; set; }
+        public int TargetTeleporterId { get; set; } = -1;
 
-        private void StartTransition()
+        public void ProcessTeleport()
         {
-            Debug.Assert(LoaderDoor != null);
+            _soundSource.StopFreeSfx(SfxId.SAMUS_DEATH);
+            PlayerEntity? player = PlayerEntity.Main;
+            Hunter hunter = player.Hunter;
+            int recolor = player.Recolor;
+            StartTransition(fromDoor: false);
+            PlayerEntity.Reset();
+            PlayerEntity.Construct(_scene);
+            player = PlayerEntity.Create(hunter, recolor);
+            Debug.Assert(player != null);
+            // todo: revisit flags
+            player.LoadFlags |= LoadFlags.SlotActive;
+            player.LoadFlags |= LoadFlags.Active;
+            player.LoadFlags |= LoadFlags.Initial;
+            PlayerEntity.PlayerCount++;
+            ProcessTransition(CancellationToken.None);
+            EndTransition();
+            _scene.InsertEntity(player);
+            player.Initialize();
+            _scene.InitEntity(player);
+            _scene.InitEntity(player.Halfturret);
+            _scene.SetFade(FadeType.FadeInBlack, length: 10 / 30f, overwrite: true);
+        }
+
+        private void StartTransition(bool fromDoor)
+        {
+            Debug.Assert(GameState.TransitionRoomId != -1);
             GameState.TransitionState = TransitionState.Process;
             // mustodo: update music
             for (int i = 0; i < _scene.Entities.Count; i++)
@@ -372,7 +398,7 @@ namespace MphRead.Entities
                         i--;
                     }
                 }
-                else if (_keepEntities[(int)entity.Type])
+                else if (LoaderDoor != null && _keepEntities[(int)entity.Type])
                 {
                     // todo: MP1P
                     if (entity.Type == EntityType.Player && entity != PlayerEntity.Main
@@ -408,8 +434,11 @@ namespace MphRead.Entities
                 PlayerEntity player = PlayerEntity.Players[i];
                 player.ResetReferences();
             }
-            _scene.AreaId = Metadata.GetAreaInfo(LoaderDoor.TargetRoomId);
-            Task.Run(() => ProcessTransition(_cts.Token), _cts.Token);
+            _scene.AreaId = Metadata.GetAreaInfo(GameState.TransitionRoomId);
+            if (fromDoor)
+            {
+                Task.Run(() => ProcessTransition(_cts.Token), _cts.Token);
+            }
         }
 
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
@@ -421,12 +450,21 @@ namespace MphRead.Entities
 
         private void ProcessTransition(CancellationToken token)
         {
-            Debug.Assert(LoaderDoor != null);
-            RoomMetadata? roomMeta = Metadata.GetRoomById(LoaderDoor.TargetRoomId);
+            Debug.Assert(GameState.TransitionRoomId != -1);
+            RoomMetadata? roomMeta = Metadata.GetRoomById(GameState.TransitionRoomId);
             Debug.Assert(roomMeta != null);
             // todo: pass boss flags
+            int entityLayer = -1;
+            if (LoaderDoor != null)
+            {
+                entityLayer = LoaderDoor.Data.TargetLayerId;
+            }
+            else
+            {
+                Rng.SetRng2(0);
+            }
             (_, IReadOnlyList<EntityBase> entities) = SceneSetup.SetUpRoom(_scene.GameMode, playerCount: 0,
-                BossFlags.None, nodeLayerMask: 0, LoaderDoor.Data.TargetLayerId, roomMeta, room: this, _scene);
+                BossFlags.None, nodeLayerMask: 0, entityLayer, roomMeta, room: this, _scene);
             if (token.IsCancellationRequested)
             {
                 return;
@@ -442,12 +480,19 @@ namespace MphRead.Entities
                     return;
                 }
             }
-            while (!_scene.LoadedEntities.IsEmpty)
+            if (LoaderDoor == null)
             {
-                Thread.Sleep(10);
-                if (token.IsCancellationRequested)
+                _scene.InitLoadedEntity(count: -1);
+            }
+            else
+            {
+                while (!_scene.LoadedEntities.IsEmpty)
                 {
-                    return;
+                    Thread.Sleep(10);
+                    if (token.IsCancellationRequested)
+                    {
+                        return;
+                    }
                 }
             }
             for (int i = 0; i < _scene.Entities.Count; i++)
@@ -571,6 +616,7 @@ namespace MphRead.Entities
             LoaderDoor = null;
             GC.Collect(generation: 2, GCCollectionMode.Forced, blocking: false, compacting: true);
             GameState.TransitionState = TransitionState.None;
+            GameState.TransitionRoomId = -1;
         }
 
         protected override void GetCollisionDrawInfo()

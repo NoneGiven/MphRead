@@ -81,34 +81,63 @@ namespace MphRead.Entities
             {
                 if (_respawnTimer == 0) // todo: and this slot was not spawned by an enemy spawner
                 {
-                    // todo: if we loaded into this room through a door or teleporter, respawn in the right place
-                    // else...
-                    int time = GetTimeUntilRespawn();
-                    if (IsMainPlayer && _scene.Multiplayer) // todo: and some global is not set
+                    if (_scene.Room?.TargetTeleporterId >= 0)
                     {
-                        // press FIRE to begin / press FIRE to respawn
-                        int messageId = CameraSequence.Current?.IsIntro == true ? 245 : 244;
-                        if (!Bugfixes.NoStrayRespawnText || time > 0
-                            || _scene.GameMode != GameMode.Survival && _scene.GameMode != GameMode.SurvivalTeams)
+                        for (int i = 0; i < _scene.Entities.Count; i++)
                         {
-                            QueueHudMessage(128, 162, 1 / 1000f, 0, messageId);
-                            if (time < 150 * 2) // todo: FPS stuff
+                            EntityBase entity = _scene.Entities[i];
+                            if (entity.Type == EntityType.Teleporter)
                             {
-                                string message = Text.Strings.GetHudMessage(246); // SPAWNING IN %d...
-                                int seconds = (time + 30 * 2) / (30 * 2); // todo: FPS stuff
-                                QueueHudMessage(128, 152, 1 / 1000f, 0, message.Replace("%d", seconds.ToString()));
+                                var teleporter = (TeleporterEntity)entity;
+                                if (teleporter.Data.LoadIndex == _scene.Room.TargetTeleporterId)
+                                {
+                                    teleporter.SetTriggered();
+                                    Spawn(teleporter.Position, teleporter.FacingVector, teleporter.UpVector,
+                                        teleporter.NodeRef, respawn: true);
+                                    if (GameState.TransitionAltForm)
+                                    {
+                                        TrySwitchForms(force: true);
+                                        UpdateForm(altForm: true);
+                                        ResumeOwnCamera();
+                                        HudOnMorphStart();
+                                    }
+                                    break;
+                                }
                             }
                         }
+                        _scene.Room.TargetTeleporterId = -1;
+                        GameState.TransitionAltForm = false;
+                        // todo: else, load at the right door for a checkpoint respawn
                     }
-                    if (!_scene.Multiplayer || Controls.Shoot.IsDown || time <= 0 || IsBot) // todo: or forced
+                    else
                     {
-                        // todo?: something with wi-fi
-                        // else...
-                        PlayerSpawnEntity? respawn = GetRespawnPoint();
-                        if (respawn != null)
+                        int time = GetTimeUntilRespawn();
+                        if (IsMainPlayer && _scene.Multiplayer) // todo: and some global is not set
                         {
-                            Vector3 position = ForcedSpawnPos ?? respawn.Position;
-                            Spawn(position, respawn.FacingVector, respawn.UpVector, respawn.NodeRef, respawn: true);
+                            // press FIRE to begin / press FIRE to respawn
+                            int messageId = CameraSequence.Current?.IsIntro == true ? 245 : 244;
+                            if (!Bugfixes.NoStrayRespawnText || time > 0
+                                || _scene.GameMode != GameMode.Survival && _scene.GameMode != GameMode.SurvivalTeams)
+                            {
+                                QueueHudMessage(128, 162, 1 / 1000f, 0, messageId);
+                                if (time < 150 * 2) // todo: FPS stuff
+                                {
+                                    string message = Text.Strings.GetHudMessage(246); // SPAWNING IN %d...
+                                    int seconds = (time + 30 * 2) / (30 * 2); // todo: FPS stuff
+                                    QueueHudMessage(128, 152, 1 / 1000f, 0, message.Replace("%d", seconds.ToString()));
+                                }
+                            }
+                        }
+                        if (!_scene.Multiplayer || Controls.Shoot.IsDown || time <= 0 || IsBot) // todo: or forced
+                        {
+                            // todo?: something with wi-fi
+                            // else...
+                            PlayerSpawnEntity? respawn = GetRespawnPoint();
+                            if (respawn != null)
+                            {
+                                Vector3 position = ForcedSpawnPos ?? respawn.Position;
+                                Spawn(position, respawn.FacingVector, respawn.UpVector, respawn.NodeRef, respawn: true);
+                            }
                         }
                     }
                 }

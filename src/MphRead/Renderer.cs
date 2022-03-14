@@ -70,6 +70,13 @@ namespace MphRead
         Player
     }
 
+    public enum AfterFade
+    {
+        None,
+        Exit,
+        Teleport
+    }
+
     public partial class Scene
     {
         public Vector2i Size { get; set; }
@@ -2558,9 +2565,10 @@ namespace MphRead
         public ConcurrentQueue<EntityBase> LoadedEntities { get; } = new ConcurrentQueue<EntityBase>();
         public bool InitEntities { get; set; }
 
-        public void InitLoadedEntity()
+        public void InitLoadedEntity(int count)
         {
-            if (LoadedEntities.TryDequeue(out EntityBase? entity))
+            int i = 0;
+            while ((count == -1 || i++ < count) && LoadedEntities.TryDequeue(out EntityBase? entity))
             {
                 InitializeEntity(entity);
                 SceneSetup.LoadEntityResources(entity, this);
@@ -2738,9 +2746,9 @@ namespace MphRead
         private float _fadeStart = 0;
         private float _fadeLength = 0;
         private float _fadePercent = 0;
-        private bool _exitAfterFade = false; // skdebug
+        private AfterFade _afterFade = AfterFade.None;
 
-        public void SetFade(FadeType type, float length, bool overwrite, bool exitAfterFade = false)
+        public void SetFade(FadeType type, float length, bool overwrite, AfterFade afterFade = AfterFade.None)
         {
             if (!overwrite && _fadeType != FadeType.None)
             {
@@ -2778,7 +2786,7 @@ namespace MphRead
             }
             _fadeStart = _globalElapsedTime;
             _fadeLength = length;
-            _exitAfterFade = exitAfterFade;
+            _afterFade = afterFade;
         }
 
         private void UpdateFade()
@@ -2815,7 +2823,7 @@ namespace MphRead
 
         private void EndFade()
         {
-            if (_exitAfterFade)
+            if (_afterFade == AfterFade.Exit)
             {
                 _fadeType = FadeType.None;
                 DoCleanup();
@@ -2829,6 +2837,11 @@ namespace MphRead
             else if (_fadeType == FadeType.FadeOutInWhite)
             {
                 SetFade(FadeType.FadeInWhite, _fadeLength, overwrite: true);
+            }
+            else if (_afterFade == AfterFade.Teleport)
+            {
+                Debug.Assert(_room != null);
+                _room.ProcessTeleport();
             }
             else
             {

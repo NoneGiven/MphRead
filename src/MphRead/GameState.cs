@@ -33,6 +33,7 @@ namespace MphRead
         public static TransitionState TransitionState { get; set; } = TransitionState.None;
         public static bool InRoomTransition => TransitionState != TransitionState.None;
         public static int TransitionRoomId { get; set; } = -1;
+        public static bool TransitionAltForm { get; set; }
         public static int ActivePlayers { get; set; } = 0;
         public static string[] Nicknames { get; } = new string[4] { "Player1", "Player2", "Player3", "Player4" };
         public static int[] Stars { get; } = new int[4];
@@ -365,7 +366,7 @@ namespace MphRead
                 if (MatchTime == 0)
                 {
                     MatchTime = -1;
-                    scene.SetFade(FadeType.FadeOutBlack, 20 / 30f, overwrite: true, exitAfterFade: true);
+                    scene.SetFade(FadeType.FadeOutBlack, 20 / 30f, overwrite: true, AfterFade.Exit);
                 }
             }
         }
@@ -570,7 +571,7 @@ namespace MphRead
                     {
                         // yes to ship hatch (enter)
                         // todo: update story save
-                        scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, exitAfterFade: true);
+                        scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, AfterFade.Exit);
                         // mustodo: stop music
                         // todo: fade SFX
                         Sfx.Instance.PlaySample((int)SfxId.RETURN_TO_SHIP_YES, source: null, loop: false,
@@ -591,7 +592,7 @@ namespace MphRead
                 else if (prompt == PromptType.GameOver)
                 {
                     // no to game over (quit)
-                    scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, exitAfterFade: true);
+                    scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, AfterFade.Exit);
                     // mustodo: stop music
                     Sfx.Instance.PlaySample((int)SfxId.QUIT_GAME, source: null, loop: false,
                         noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
@@ -1069,6 +1070,7 @@ namespace MphRead
             MatchState = MatchState.InProgress;
             TransitionState = TransitionState.None;
             TransitionRoomId = -1;
+            TransitionAltForm = false;
             ActivePlayers = 0;
             for (int i = 0; i < 4; i++)
             {

@@ -866,7 +866,7 @@ namespace MphRead.Entities
                         {
                             // the game only does this when using the touch screen button, but this is equivalent,
                             // and we want to call this beause it updates the reticle expansion
-                            HudOnMorphStart(teleported: false);
+                            HudOnMorphStart();
                         }
                         anim1 = PlayerAnimation.Morph;
                         anim2 = PlayerAnimation.Morph;

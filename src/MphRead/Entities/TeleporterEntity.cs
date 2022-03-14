@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using MphRead.Formats;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
@@ -8,6 +9,7 @@ namespace MphRead.Entities
     public class TeleporterEntity : EntityBase
     {
         private readonly TeleporterEntityData _data;
+        public TeleporterEntityData Data => _data;
         private readonly Vector3 _targetPos = Vector3.Zero;
         private readonly Matrix4 _artifact1Transform;
         private readonly Matrix4 _artifact2Transform;
@@ -171,7 +173,7 @@ namespace MphRead.Entities
                     if (CollisionDetection.CheckCylinderOverlapSphere(player.PrevPosition, player.Volume.SpherePosition,
                         testPos, 1.75f, ref discard))
                     {
-                        if (!_triggeredSlots[player.SlotIndex] && _targetRoomId == -1) // skdebug
+                        if (!_triggeredSlots[player.SlotIndex])
                         {
                             float radius = _big ? 1.5f : 1;
                             if (CollisionDetection.CheckCylinderOverlapSphere(player.PrevPosition, player.Volume.SpherePosition,
@@ -181,10 +183,17 @@ namespace MphRead.Entities
                                 {
                                     player.Teleport(_targetPos.AddY(0.5f), FacingVector, _targetNodeRef);
                                 }
-                                else
+                                else if (GameState.TransitionRoomId == -1) // the game doesn't do this check
                                 {
-                                    // todo: teleport to new room
-                                    // sfxtodo: play SFX
+                                    Debug.Assert(_scene.Room != null);
+                                    if (_soundSource.CountPlayingSfx(SfxId.TELEPORT_OUT) == 0)
+                                    {
+                                        _soundSource.PlayFreeSfx(SfxId.TELEPORT_OUT);
+                                    }
+                                    GameState.TransitionAltForm = PlayerEntity.Main.IsAltForm;
+                                    GameState.TransitionRoomId = _targetRoomId;
+                                    _scene.Room.TargetTeleporterId = _data.TargetIndex;
+                                    _scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, AfterFade.Teleport);
                                 }
                                 player.Speed = new Vector3(0, player.Speed.Y, 0);
                                 // todo: update bot AI flag
@@ -207,6 +216,14 @@ namespace MphRead.Entities
                 _bool4 = true;
             }
             return true;
+        }
+
+        public void SetTriggered()
+        {
+            for (int i = 0; i < _triggeredSlots.Length; i++)
+            {
+                _triggeredSlots[i] = true;
+            }
         }
 
         public override void HandleMessage(MessageInfo info)
