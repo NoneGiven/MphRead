@@ -164,11 +164,10 @@ namespace MphRead
         private bool _exiting = false;
         private bool _roomLoaded = false;
         private RoomEntity? _room = null;
-        private int _roomId = -1;
         public GameMode GameMode { get; set; } = GameMode.SinglePlayer;
         public bool Multiplayer => GameMode != GameMode.SinglePlayer;
-        public int RoomId => _roomId;
-        public int AreaId { get; set; }
+        public int RoomId { get; set; } = -1;
+        public int AreaId { get; set; } = -1;
 
         public Matrix4 ViewMatrix => _viewMatrix;
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
@@ -261,7 +260,6 @@ namespace MphRead
             SetRoomValues(meta);
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
             _inputMode = _cameraMode == CameraMode.Player ? InputMode.All : InputMode.CameraOnly;
-            _roomId = room.RoomId;
         }
 
         public void SetRoomValues(RoomMetadata meta)

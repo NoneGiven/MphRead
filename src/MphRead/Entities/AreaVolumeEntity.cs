@@ -42,8 +42,22 @@ namespace MphRead.Entities
                 _cooldownTime--;
             }
             _cooldownTime *= 2; // todo: FPS stuff
-            // todo: room state
-            Active = data.Active != 0 || data.AlwaysActive != 0;
+            if (_scene.GameMode == GameMode.SinglePlayer)
+            {
+                int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: data.Active != 0);
+                if (data.AlwaysActive != 0)
+                {
+                    Active = data.Active != 0;
+                }
+                else
+                {
+                    Active = state != 0;
+                }
+            }
+            else
+            {
+                Active = data.Active != 0;
+            }
         }
 
         public override void Initialize()

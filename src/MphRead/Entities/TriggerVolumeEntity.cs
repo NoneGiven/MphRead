@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using MphRead.Formats;
 using OpenTK.Mathematics;
 
@@ -29,11 +30,19 @@ namespace MphRead.Entities
             _parentEventColor = Metadata.GetEventColor(data.ParentMessage);
             _childEventColor = Metadata.GetEventColor(data.ChildMessage);
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
-            _volume = CollisionVolume.Move(_data.Volume, Position);
+            _volume = CollisionVolume.Move(data.Volume, Position);
             AddPlaceholderModel();
-            // todo: room state
-            Active = data.Active != 0 || data.AlwaysActive != 0;
-            _delayTimer = _data.RepeatDelay * 2; // todo: FPS stuff
+            Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+            int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: data.Active != 0);
+            if (data.AlwaysActive != 0)
+            {
+                Active = data.Active != 0;
+            }
+            else
+            {
+                Active = state != 0;
+            }
+            _delayTimer = data.RepeatDelay * 2; // todo: FPS stuff
             // todo: music event stuff
         }
 

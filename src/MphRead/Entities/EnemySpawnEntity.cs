@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using MphRead.Entities.Enemies;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
@@ -41,8 +42,18 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             _rangeNodeRef = scene.GetNodeRefByName(data.NodeName.MarshalString());
             _cooldownTimer = _data.InitialCooldown * 2; // todo: FPS stuff
-            // todo: room state
-            if (data.Active != 0 || data.AlwaysActive != 0)
+            Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+            bool active = false;
+            int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: data.Active != 0);
+            if (data.AlwaysActive != 0)
+            {
+                active = data.Active != 0;
+            }
+            else
+            {
+                active = state != 0;
+            }
+            if (active)
             {
                 Flags |= SpawnerFlags.Active;
             }

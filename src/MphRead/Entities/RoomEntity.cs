@@ -190,6 +190,7 @@ namespace MphRead.Entities
                 _roomCollision[0] = collision;
             }
             RoomId = roomId;
+            _scene.RoomId = roomId;
         }
 
         private void AddDoorPortal(DoorEntity door)

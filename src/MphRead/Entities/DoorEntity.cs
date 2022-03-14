@@ -65,12 +65,13 @@ namespace MphRead.Entities
             inst.AnimInfo.Flags[1] |= AnimFlags.Reverse;
             _lock = SetUpModel(meta.LockName);
             _lockTransform = Matrix4.CreateTranslation(0, meta.LockOffset, 0);
-            UpdateScanId();
-            // todo: use flags and room state to determine lock/color state
-            if (_data.Locked != 0)
+            Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+            int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: _data.Locked != 0);
+            if (state != 0)
             {
                 Flags |= DoorFlags.Locked;
             }
+            UpdateScanId();
             Flags |= DoorFlags.Closed;
             if (_data.PaletteId == 9) // any beam door
             {

@@ -28,11 +28,24 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             Position = data.Header.Position.ToFloatVector(); // vecs from header are not used
-            // todo: room state
-            Active = data.Enabled != 0;
             AlwaysActive = data.AlwaysActive != 0;
+            if (_scene.GameMode == GameMode.SinglePlayer)
+            {
+                int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: data.Enabled != 0);
+                if (AlwaysActive)
+                {
+                    Active = data.Enabled != 0;
+                }
+                else
+                {
+                    Active = state != 0;
+                }
+            }
+            else
+            {
+                Active = data.Enabled != 0;
+            }
             _spawnCooldown = (ushort)(data.SpawnDelay * 2); // todo: FPS stuff
-            // todo: node ref
             if (data.HasBase != 0)
             {
                 SetUpModel("items_base");

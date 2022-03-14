@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using MphRead.Entities.Enemies;
 using MphRead.Formats;
 using MphRead.Sound;
@@ -46,9 +47,9 @@ namespace MphRead.Entities
             _height = data.Height.FloatValue;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             Scale = new Vector3(_width, _height, 1.0f);
-            // todo: node ref
-            // todo: room state
-            _active = data.Active != 0;
+            Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+            int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: _data.Active != 0);
+            _active = state != 0;
             if (_active)
             {
                 _scanId = _scanIds[(int)data.Type];

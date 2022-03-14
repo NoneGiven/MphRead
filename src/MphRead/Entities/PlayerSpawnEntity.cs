@@ -24,8 +24,14 @@ namespace MphRead.Entities
         {
             base.Initialize();
             SetTransform(_data.Header.FacingVector, _data.Header.UpVector, _data.Header.Position);
-            // todo: room state
-            _active = _data.Active != 0;
+            if (_scene.GameMode == GameMode.SinglePlayer)
+            {
+                _active = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: _data.Active != 0) != 0;
+            }
+            else
+            {
+                _active = _data.Active != 0;
+            }
             AddPlaceholderModel();
         }
 

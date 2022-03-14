@@ -1147,11 +1147,42 @@ namespace MphRead
 
     public class StorySave
     {
+        public byte[,] RoomState { get; } = new byte[66, 60];
         public byte[] Logbook { get; } = new byte[68];
         public int ScanCount { get; set; }
         public int EquipmentCount { get; set; }
         public int CheckpointEntityId { get; set; } = -1;
         public int CheckpointRoomId { get; set; } = -1;
+
+        public int InitRoomState(int roomId, int entityId, bool active,
+            int activeState = 3, int inactiveState = 1)
+        {
+            if (entityId == -1 || roomId < 27)
+            {
+                return 0;
+            }
+            if (roomId > 92) // skdebug
+            {
+                return 3;
+            }
+            roomId -= 27;
+            (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
+            pairIndex *= 2;
+            int pairMask = 3 << pairIndex;
+            if ((RoomState[roomId, byteIndex] & pairMask) == 0)
+            {
+                RoomState[roomId, byteIndex] &= (byte)~pairMask;
+                RoomState[roomId, byteIndex] |= (byte)((active ? activeState : inactiveState) << pairIndex);
+            }
+            return GetRoomState(roomId, entityId) - 1;
+        }
+
+        public int GetRoomState(int roomId, int entityId)
+        {
+            (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
+            pairIndex *= 2;
+            return (RoomState[roomId, byteIndex] >> pairIndex) & 3;
+        }
 
         public void UpdateLogbook(int scanId)
         {
