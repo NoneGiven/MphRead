@@ -50,7 +50,7 @@ namespace MphRead
                     CameraSequence.Intro = CameraSequence.Load(seqId, scene);
                 }
             }
-            Sound.Sfx.Load();
+            Sound.Sfx.Load(scene);
             var room = new RoomEntity(scene);
             (CollisionInstance collision, IReadOnlyList<EntityBase> entities) = SetUpRoom(mode, playerCount,
                 bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene);
