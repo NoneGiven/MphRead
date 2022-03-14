@@ -230,6 +230,7 @@ namespace MphRead
             GameMode = mode;
             (RoomEntity room, RoomMetadata meta, CollisionInstance collision, IReadOnlyList<EntityBase> entities)
                 = SceneSetup.LoadRoom(name, this, playerCount, bossFlags, nodeLayerMask, entityLayerId);
+            GameState.StorySave.SetVisitedRoom(RoomId);
             if (GameMode == GameMode.None)
             {
                 GameMode = meta.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;

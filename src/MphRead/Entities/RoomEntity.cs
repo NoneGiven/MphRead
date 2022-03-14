@@ -610,6 +610,7 @@ namespace MphRead.Entities
                     }
                 }
             }
+            GameState.StorySave.SetVisitedRoom(RoomId);
             if (_unloadModel != null)
             {
                 _scene.UnloadModel(_unloadModel);

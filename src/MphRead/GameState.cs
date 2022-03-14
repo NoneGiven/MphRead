@@ -1148,6 +1148,7 @@ namespace MphRead
     public class StorySave
     {
         public byte[,] RoomState { get; } = new byte[66, 60];
+        public byte[] VisitedRooms { get; } = new byte[9];
         public byte[] Logbook { get; } = new byte[68];
         public int ScanCount { get; set; }
         public int EquipmentCount { get; set; }
@@ -1205,6 +1206,28 @@ namespace MphRead
             RoomState[roomId, byteIndex] &= (byte)~pairMask;
             RoomState[roomId, byteIndex] |= (byte)(state << pairIndex);
             return;
+        }
+
+        public bool CheckVisitedRoom(int roomId)
+        {
+            if (roomId < 27 || roomId > 92)
+            {
+                return false;
+            }
+            roomId -= 27;
+            (int byteIndex, int bitIndex) = Math.DivRem(roomId, 8);
+            return (VisitedRooms[byteIndex] & (1 << bitIndex)) != 0;
+        }
+
+        public void SetVisitedRoom(int roomId)
+        {
+            if (roomId < 27 || roomId > 92)
+            {
+                return;
+            }
+            roomId -= 27;
+            (int byteIndex, int bitIndex) = Math.DivRem(roomId, 8);
+            VisitedRooms[byteIndex] |= (byte)(1 << bitIndex);
         }
 
         public void UpdateLogbook(int scanId)

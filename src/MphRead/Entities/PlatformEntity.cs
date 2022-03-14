@@ -197,9 +197,19 @@ namespace MphRead.Entities
             {
                 SleepWake(wake: true, instant: true);
                 _currentAnimState = -2;
-                // todo: room state for initial landing
-                SetPlatAnimation(PlatAnimId.InstantWake, AnimFlags.None);
-                _animFlags |= PlatAnimFlags.Active;
+                if (GameState.StorySave.CheckVisitedRoom(scene.RoomId))
+                {
+                    SetPlatAnimation(PlatAnimId.InstantWake, AnimFlags.None);
+                }
+                else
+                {
+                    SetPlatAnimation(PlatAnimId.Wake, AnimFlags.NoLoop);
+                    _currentAnimState = GetAnimation(PlatAnimId.InstantWake);
+                }
+                if (data.Active != 0)
+                {
+                    _animFlags |= PlatAnimFlags.Active;
+                }
             }
             else
             {
