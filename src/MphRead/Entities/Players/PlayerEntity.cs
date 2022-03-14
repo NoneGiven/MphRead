@@ -677,6 +677,7 @@ namespace MphRead.Entities
             {
                 // todo: get current health from story save
                 // --> not necessarily health max, e.g. when teleporting
+                // skhere 3
                 _health = _healthMax;
             }
             else

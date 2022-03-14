@@ -579,6 +579,7 @@ namespace MphRead
                     }
                     else if (prompt == PromptType.GameOver)
                     {
+                        // skhere 1
                         // yes to game over (continue)
                         PlayerEntity.Main.RestartLongSfx(); // skdebug
                         scene.SetFade(FadeType.FadeOutInWhite, length: 10 / 30f, overwrite: true); // skdebug

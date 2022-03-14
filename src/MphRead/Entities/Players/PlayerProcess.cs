@@ -108,6 +108,7 @@ namespace MphRead.Entities
                         _scene.Room.TargetTeleporterId = -1;
                         GameState.TransitionAltForm = false;
                         // todo: else, load at the right door for a checkpoint respawn
+                        // skhere 4
                     }
                     else
                     {
