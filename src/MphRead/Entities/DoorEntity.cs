@@ -67,7 +67,7 @@ namespace MphRead.Entities
             _lockTransform = Matrix4.CreateTranslation(0, meta.LockOffset, 0);
             Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
             int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: _data.Locked != 0);
-            if (state != 0)
+            if (state != 0 && !Cheats.UnlockAllDoors)
             {
                 Flags |= DoorFlags.Locked;
             }
