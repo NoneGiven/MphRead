@@ -381,7 +381,7 @@ namespace MphRead.Entities
                     UpdateState(0);
                 }
             }
-            if (_state == 0 && _data.EffectId == 0) // skdebug
+            if (_state == 0)
             {
                 return true;
             }
