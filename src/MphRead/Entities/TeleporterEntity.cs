@@ -268,8 +268,11 @@ namespace MphRead.Entities
                 {
                     Active = false;
                     _scanId = 25;
-                    // todo: room state
                     _bool4 = true;
+                    if (_scene.GameMode == GameMode.SinglePlayer)
+                    {
+                        GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
+                    }
                 }
             }
         }

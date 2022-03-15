@@ -49,12 +49,18 @@ namespace MphRead.Entities
             if (info.Message == Message.Activate || (info.Message == Message.SetActive && (int)info.Param1 != 0))
             {
                 _active = true;
-                // todo: room state
+                if (_scene.GameMode == GameMode.SinglePlayer)
+                {
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
+                }
             }
             else if (info.Message == Message.SetActive && (int)info.Param1 == 0)
             {
                 _active = false;
-                // todo: room state
+                if (_scene.GameMode == GameMode.SinglePlayer)
+                {
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
+                }
             }
         }
     }

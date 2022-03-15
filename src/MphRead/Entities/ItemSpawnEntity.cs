@@ -127,12 +127,18 @@ namespace MphRead.Entities
             {
                 Active = true;
                 _playKeySfx = true;
-                // todo: room state
+                if (_scene.GameMode == GameMode.SinglePlayer)
+                {
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
+                }
             }
             else if (info.Message == Message.SetActive && (int)info.Param1 == 0)
             {
                 Active = false;
-                // todo: room state
+                if (_scene.GameMode == GameMode.SinglePlayer)
+                {
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
+                }
                 if (Item != null)
                 {
                     Item.DespawnTimer = 0;

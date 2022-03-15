@@ -190,7 +190,7 @@ namespace MphRead.Entities
         private void Deactivate()
         {
             Active = false;
-            // todo: room state
+            GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
         }
 
         public override void HandleMessage(MessageInfo info)
@@ -225,14 +225,14 @@ namespace MphRead.Entities
                 else if (info.Message == Message.Activate)
                 {
                     Active = true;
-                    // todo: room state
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
                 }
                 else if (info.Message == Message.SetActive)
                 {
                     if ((int)info.Param1 != 0)
                     {
                         Active = true;
-                        // todo: room state
+                        GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
                     }
                     else
                     {
@@ -241,7 +241,7 @@ namespace MphRead.Entities
                         {
                             _delayTimer = _data.RepeatDelay * 2; // todo: FPS stuff
                         }
-                        // todo: room state
+                        GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                     }
                 }
             }
