@@ -645,6 +645,7 @@ namespace MphRead.Entities
                     }
                 }
             }
+            // todo: determine whether to play movie (that is, spawn boss), update bot AI, lock doors for encounter
             GameState.StorySave.SetVisitedRoom(RoomId);
             if (_unloadModel != null)
             {

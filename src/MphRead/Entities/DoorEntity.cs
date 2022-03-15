@@ -202,7 +202,7 @@ namespace MphRead.Entities
             if (Unlocked && _lock.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
             {
                 Flags &= ~DoorFlags.Locked;
-                // todo: room state
+                GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
             }
             UpdateScanId();
             if (Locked && !Unlocked)
@@ -438,7 +438,7 @@ namespace MphRead.Entities
             Flags |= DoorFlags.Locked;
             if (updateState)
             {
-                // todo: if 1P mode, update room state
+                GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
             }
         }
 
@@ -458,7 +458,7 @@ namespace MphRead.Entities
             _scene.SpawnEffect(114, UpVector, FacingVector, LockPosition); // lockDefeat
             if (updateState)
             {
-                // todo: if 1P mode, update room state
+                GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
             }
         }
 
