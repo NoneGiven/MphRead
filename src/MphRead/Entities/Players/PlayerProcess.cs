@@ -1905,9 +1905,7 @@ namespace MphRead.Entities
                     continue;
                 }
                 var candidate = (PlayerSpawnEntity)spawn;
-                // skdebug - remove once we have room state for 1P spawns
-                if (!candidate.IsActive && _scene.Room.Meta.Multiplayer || candidate.Cooldown != 0
-                    || _scene.FrameCount == 0 && candidate.Availability)
+                if (!candidate.IsActive || candidate.Cooldown != 0 || _scene.FrameCount == 0 && candidate.Availability)
                 {
                     limit++;
                     continue;
@@ -1951,7 +1949,6 @@ namespace MphRead.Entities
             if (valid.Count > 0)
             {
                 int index = (int)(_scene.FrameCount % (ulong)valid.Count);
-                index = 0; // skdebug
                 chosenSpawn = valid[index];
             }
             else
