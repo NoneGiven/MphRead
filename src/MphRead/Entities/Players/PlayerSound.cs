@@ -502,7 +502,7 @@ namespace MphRead.Entities
             _soundSource.StopFreeSfxScripts();
             _soundSource.StopFreeSfx(SfxId.FAST_SCROLL_UP_LOOP);
             Sfx.Instance.StopEnvironmentSfx();
-            Sfx.Instance.StopAllSound();
+            Sfx.Instance.StopAllSound(force: false);
         }
 
         public void StopTimedSfx()

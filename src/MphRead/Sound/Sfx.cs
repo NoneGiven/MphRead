@@ -281,6 +281,18 @@ namespace MphRead.Sound
                 AL.SourcePlay(channelId);
             }
 
+            public bool IsLooping()
+            {
+                for (int i = 0; i < _maxPerInst; i++)
+                {
+                    if (Loop[i])
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             public void UpdateLoop()
             {
                 for (int i = 0; i < _maxPerInst; i++)
@@ -760,12 +772,12 @@ namespace MphRead.Sound
             return value1 + (value2 - value1) * ratio;
         }
 
-        public override void StopAllSound()
+        public override void StopAllSound(bool force = true)
         {
             for (int i = 0; i < _instances.Length; i++)
             {
                 SoundInstance inst = _instances[i];
-                if (inst.SfxId != -1)
+                if (inst.SfxId != -1 && (force || inst.Source != null || inst.IsLooping()))
                 {
                     inst.Stop();
                 }
@@ -1528,7 +1540,7 @@ namespace MphRead.Sound
         {
         }
 
-        public virtual void StopAllSound()
+        public virtual void StopAllSound(bool force = false)
         {
         }
 

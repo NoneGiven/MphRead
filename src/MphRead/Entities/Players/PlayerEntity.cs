@@ -614,12 +614,15 @@ namespace MphRead.Entities
                 _bipedIceTransforms[i] = Matrix4.Identity;
             }
             // todo?: some other kind of respawn?
-            int checkpointId = GameState.StorySave.CheckpointEntityId;
-            if (IsMainPlayer && _scene.GameMode == GameMode.SinglePlayer
-                && checkpointId != -1 && _scene.TryGetEntity(checkpointId, out EntityBase? checkpoint))
+            if (_scene.Room == null || _scene.Room.LoadEntityId == -1)
             {
-                checkpoint.GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing);
-                Spawn(position, facing, up, checkpoint.NodeRef, respawn: false);
+                int checkpointId = GameState.StorySave.CheckpointEntityId;
+                if (IsMainPlayer && _scene.GameMode == GameMode.SinglePlayer
+                    && checkpointId != -1 && _scene.TryGetEntity(checkpointId, out EntityBase? checkpoint))
+                {
+                    checkpoint.GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing);
+                    Spawn(position, facing, up, checkpoint.NodeRef, respawn: false);
+                }
             }
         }
 

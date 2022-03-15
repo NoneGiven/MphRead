@@ -83,46 +83,54 @@ namespace MphRead.Entities
                 {
                     if (_scene.Room?.LoadEntityId >= 0)
                     {
-                        bool spawned = false;
+                        TeleporterEntity? targetTeleporter = null;
                         for (int i = 0; i < _scene.Entities.Count; i++)
                         {
                             EntityBase entity = _scene.Entities[i];
                             if (entity.Type == EntityType.Teleporter)
                             {
                                 var teleporter = (TeleporterEntity)entity;
+                                targetTeleporter = teleporter;
                                 if (teleporter.Data.LoadIndex == _scene.Room.LoadEntityId)
                                 {
-                                    teleporter.SetTriggered();
-                                    Spawn(teleporter.Position, teleporter.FacingVector, teleporter.UpVector,
-                                        teleporter.NodeRef, respawn: true);
-                                    if (GameState.TransitionAltForm)
-                                    {
-                                        TrySwitchForms(force: true);
-                                        UpdateForm(altForm: true);
-                                        ResumeOwnCamera();
-                                        HudOnMorphStart();
-                                    }
-                                    spawned = true;
                                     break;
                                 }
                             }
                         }
-                        if (!spawned)
+                        if (targetTeleporter != null)
                         {
+                            targetTeleporter.SetTriggered();
+                            Spawn(targetTeleporter.Position, targetTeleporter.FacingVector,
+                                targetTeleporter.UpVector, targetTeleporter.NodeRef, respawn: true);
+                            if (GameState.TransitionAltForm)
+                            {
+                                TrySwitchForms(force: true);
+                                UpdateForm(altForm: true);
+                                ResumeOwnCamera();
+                                HudOnMorphStart();
+                            }
+                        }
+                        else
+                        {
+                            DoorEntity? targetDoor = null;
                             for (int i = 0; i < _scene.Entities.Count; i++)
                             {
                                 EntityBase entity = _scene.Entities[i];
                                 if (entity.Type == EntityType.Door)
                                 {
                                     var door = (DoorEntity)entity;
+                                    targetDoor = door;
                                     if (door.Data.OutConnectorId == _scene.Room.LoadEntityId)
                                     {
-                                        Vector3 facing = door.FacingVector;
-                                        Vector3 position = door.Position + facing * 2;
-                                        Spawn(position, facing, door.UpVector, door.NodeRef, respawn: true);
                                         break;
                                     }
                                 }
+                            }
+                            if (targetDoor != null)
+                            {
+                                Vector3 facing = targetDoor.FacingVector;
+                                Vector3 position = targetDoor.Position + facing * 2;
+                                Spawn(position, facing, targetDoor.UpVector, targetDoor.NodeRef, respawn: true);
                             }
                         }
                         _scene.Room.LoadEntityId = -1;
