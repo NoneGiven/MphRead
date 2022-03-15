@@ -1153,6 +1153,7 @@ namespace MphRead
     {
         public byte[,] RoomState { get; } = new byte[66, 60];
         public byte[] VisitedRooms { get; } = new byte[9];
+        public byte[] TriggerState { get; } = new byte[4];
         public byte[] Logbook { get; } = new byte[68];
         public int ScanCount { get; set; }
         public int EquipmentCount { get; set; }

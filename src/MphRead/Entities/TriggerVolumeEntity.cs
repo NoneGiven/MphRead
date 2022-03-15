@@ -182,7 +182,11 @@ namespace MphRead.Entities
             }
             else if (_data.Subtype == TriggerType.StateBits)
             {
-                // todo: check global state bits
+                int index = _data.RequiredStateBit;
+                if ((GameState.StorySave.TriggerState[index / 8] & (1 << (index % 8))) != 0)
+                {
+                    Trigger();
+                }
             }
             return base.Process();
         }

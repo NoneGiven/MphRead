@@ -67,9 +67,15 @@ namespace MphRead
 
         private void DispatchMessage(MessageInfo info)
         {
-            if (info.Message == Message.SetTriggerState || info.Message == Message.ClearTriggerState)
+            if (info.Message == Message.SetTriggerState)
             {
-                // todo: this
+                int index = (int)info.Param1;
+                GameState.StorySave.TriggerState[index / 8] |= (byte)(1 << (index % 8));
+            }
+            else if (info.Message == Message.ClearTriggerState)
+            {
+                int index = (int)info.Param1;
+                GameState.StorySave.TriggerState[index / 8] &= (byte)~(1 << (index % 8));
             }
             else if (info.Target != null)
             {
