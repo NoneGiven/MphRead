@@ -1027,6 +1027,7 @@ namespace MphRead.Entities
             }
             else if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true)
             {
+                DrawDialogs();
                 return;
             }
             else if (CameraSequence.Current?.IsIntro == true)

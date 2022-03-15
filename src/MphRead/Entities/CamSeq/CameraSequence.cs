@@ -214,10 +214,13 @@ namespace MphRead.Formats
                 }
             }
             Current = this;
-            // todo?: the game only does the rest when ptr_tbl_idx is 14
-            PlayerEntity.Main.CloseDialogs();
-            PlayerEntity.Main.HudEndDisrupted();
-            PlayerEntity.Main.ResetCombatVisor();
+            // the game only does the rest when ptr_tbl_idx is 14
+            if (SequenceId > 3)
+            {
+                PlayerEntity.Main.CloseDialogs();
+                PlayerEntity.Main.HudEndDisrupted();
+                PlayerEntity.Main.ResetCombatVisor();
+            }
         }
 
         public void Restart(ushort transitionTimer = 0, ushort transitionTime = 0)
