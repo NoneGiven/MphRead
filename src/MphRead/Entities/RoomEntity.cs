@@ -319,6 +319,7 @@ namespace MphRead.Entities
             }
             var newDoor = new DoorEntity(data, nodeName, _scene, door.TargetRoomId);
             _scene.AddEntity(newDoor);
+            newDoor.ConnectorInactive = true;
             door.LoaderDoor = newDoor;
             newDoor.ConnectorDoor = door;
             if (!GameState.InRoomTransition)
@@ -340,6 +341,20 @@ namespace MphRead.Entities
             }
             door.ConnectorModel.Active = true;
             door.ConnectorCollision.Active = true;
+            Debug.Assert(door.LoaderDoor != null);
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type == EntityType.Door)
+                {
+                    var other = (DoorEntity)entity;
+                    if (other.LoaderDoor != null)
+                    {
+                        other.LoaderDoor.ConnectorInactive = true;
+                    }
+                }
+            }
+            door.LoaderDoor.ConnectorInactive = false;
         }
 
         public void UpdateTransition()

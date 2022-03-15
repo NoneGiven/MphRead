@@ -312,7 +312,7 @@ namespace MphRead.Entities
                         continue;
                     }
                     var door = (DoorEntity)entity;
-                    if (door.Flags.TestFlag(DoorFlags.Open))
+                    if (door.Flags.TestFlag(DoorFlags.Open) || door.ConnectorInactive)
                     {
                         continue;
                     }

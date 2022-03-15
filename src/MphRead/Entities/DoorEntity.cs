@@ -22,6 +22,7 @@ namespace MphRead.Entities
         public Portal? Portal { get; private set; }
         public ModelInstance? ConnectorModel { get; set; }
         public CollisionInstance? ConnectorCollision { get; set; }
+        public bool ConnectorInactive { get; set; }
 
         private bool Locked => Flags.TestFlag(DoorFlags.Locked);
         private bool Unlocked => Flags.TestFlag(DoorFlags.Unlocked);
@@ -192,6 +193,12 @@ namespace MphRead.Entities
 
         public override bool Process()
         {
+            if (ConnectorInactive)
+            {
+                Flags &= ~DoorFlags.ShotOpen;
+                Flags &= ~DoorFlags.ShouldOpen;
+                ForceClose();
+            }
             if (Unlocked && _lock.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
             {
                 Flags &= ~DoorFlags.Locked;
@@ -501,6 +508,10 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo()
         {
+            if (ConnectorInactive)
+            {
+                return;
+            }
             if (!IsVisible(NodeRef) && (Portal == null || !IsVisible(Portal.NodeRef2)))
             {
                 return;
