@@ -4,6 +4,7 @@ using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -750,9 +751,11 @@ namespace MphRead.Entities
                     spawnBeam = false;
                 }
             }
+            if (Flags.TestFlag(PlatformFlags.NoBeamIfCull) && !IsVisible(NodeRef))
+            {
+                spawnBeam = false;
+            }
             bool soundUpdated = false;
-            // todo: don't spawn beam when node ref is not visible, unless the flag for that is set
-            //_stateFlags |= PlatStateFlags.Awake; // skdebug?
             if (spawnBeam && _animFlags.TestFlag(PlatAnimFlags.Draw) && !_animFlags.TestFlag(PlatAnimFlags.DisableReflect)
                 && _stateFlags.TestFlag(PlatStateFlags.Awake) && Flags.TestFlag(PlatformFlags.BeamSpawner) && _data.BeamId > -1)
             {
@@ -792,6 +795,10 @@ namespace MphRead.Entities
                         _beamActive = false;
                     }
                 }
+            }
+            if (!Flags.TestFlag(PlatformFlags.SkipNodeRef) && NodeRef != NodeRef.None)
+            {
+                NodeRef = _scene.UpdateNodeRef(NodeRef, _prevVisiblePosition, _visiblePosition);
             }
             if (!_models[0].IsPlaceholder && _animFlags.TestFlag(PlatAnimFlags.HasAnim) && _currentAnimId >= 0)
             {
@@ -1555,7 +1562,7 @@ namespace MphRead.Entities
         SamusShip = 0x80000,
         Breakable = 0x100000,
         PersistRoomState = 0x200000,
-        DrawIfCull = 0x400000,
+        NoBeamIfCull = 0x400000,
         NoRecoil = 0x800000,
         Bit24 = 0x1000000,
         Bit25 = 0x2000000,
