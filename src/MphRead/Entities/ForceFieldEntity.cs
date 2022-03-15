@@ -122,7 +122,7 @@ namespace MphRead.Entities
                     {
                         _soundSource.PlayFreeSfx(SfxId.GEN_OFF);
                     }
-                    // todo: room state
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                 }
                 _active = false;
                 _scanId = 0;
@@ -144,7 +144,7 @@ namespace MphRead.Entities
                 {
                     _scanId = _scanIds[(int)_data.Type];
                 }
-                // todo: room state
+                GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
                 if (_lock == null && _data.Type != 9)
                 {
                     _lock = EnemySpawnEntity.SpawnEnemy(this, EnemyType.ForceFieldLock, NodeRef, _scene) as Enemy49Entity;

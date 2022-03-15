@@ -297,7 +297,8 @@ namespace MphRead.Entities
             _state = state;
             _effectIntervalTimer = 0;
             _effectIntervalIndex = 15;
-            // todo: room state
+            Debug.Assert(_state >= 0 && _state <= 2);
+            GameState.StorySave.SetRoomState(_scene.RoomId, Id, _state + 1);
             if (state != 0 || _data.ModelId == 53) // WallSwitch
             {
                 _scanId = _data.ScanId;

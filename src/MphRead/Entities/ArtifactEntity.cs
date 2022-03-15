@@ -184,7 +184,7 @@ namespace MphRead.Entities
                     }
                 }
                 Active = false;
-                // todo: room state
+                GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                 _soundSource.StopAllSfx(force: true);
             }
             else
@@ -207,19 +207,19 @@ namespace MphRead.Entities
             if (info.Message != Message.Activate)
             {
                 Active = true;
-                // todo: room state
+                GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
             }
             else if (info.Message != Message.SetActive)
             {
                 if ((int)info.Param1 != 0)
                 {
                     Active = true;
-                    // todo: room state
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
                 }
                 else
                 {
                     Active = false;
-                    // todo: room state
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                 }
             }
             else if (info.Message != Message.MoveItemSpawner)

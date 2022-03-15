@@ -180,7 +180,7 @@ namespace MphRead.Entities
             );
             _animFlags |= PlatAnimFlags.Draw;
             Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
-            if (Flags.TestFlag(PlatformFlags.Bit17) && !Flags.TestFlag(PlatformFlags.Bit21))
+            if (Flags.TestFlag(PlatformFlags.UseRoomState) && !Flags.TestFlag(PlatformFlags.PersistRoomState))
             {
                 int state = GameState.StorySave.GetRoomState(scene.RoomId, Id);
                 if (state == 1)
@@ -221,7 +221,7 @@ namespace MphRead.Entities
                 {
                     SleepWake(wake: true, instant: true);
                 }
-                if (Flags.TestFlag(PlatformFlags.Bit21))
+                if (Flags.TestFlag(PlatformFlags.PersistRoomState))
                 {
                     if (GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: _data.Active != 0) != 0)
                     {
@@ -471,7 +471,7 @@ namespace MphRead.Entities
                     {
                         _soundSource.StopAllSfx();
                     }
-                    // todo: room state
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
                 }
             }
         }
@@ -479,7 +479,10 @@ namespace MphRead.Entities
         private void Activate()
         {
             _animFlags |= PlatAnimFlags.Active;
-            // todo: more room state
+            if (Flags.TestFlag(PlatformFlags.UseRoomState) && Flags.TestFlag(PlatformFlags.PersistRoomState))
+            {
+                GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
+            }
             if (_state == PlatformState.Inactive)
             {
                 if (Flags.TestFlag(PlatformFlags.DripMoat))
@@ -523,7 +526,10 @@ namespace MphRead.Entities
             {
                 _state = PlatformState.Inactive;
                 _animFlags &= ~PlatAnimFlags.Active;
-                // todo: more room state
+                if (Flags.TestFlag(PlatformFlags.UseRoomState) && Flags.TestFlag(PlatformFlags.PersistRoomState))
+                {
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
+                }
                 if (Flags.TestFlag(PlatformFlags.DripMoat))
                 {
                     _scene.SendMessage(Message.DripMoatPlatform, this, PlayerEntity.Main, 0, 0);
@@ -1100,7 +1106,17 @@ namespace MphRead.Entities
                             }
                         }
                     }
-                    // todo: room state etc.
+                    if (Flags.TestFlag(PlatformFlags.UseRoomState) && !Flags.TestFlag(PlatformFlags.PersistRoomState))
+                    {
+                        if (_fromIndex == 0)
+                        {
+                            GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
+                        }
+                        else if (_fromIndex == _data.PositionCount - 1)
+                        {
+                            GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 2);
+                        }
+                    }
                     if (_state != PlatformState.Inactive)
                     {
                         _state = PlatformState.Waiting;
@@ -1534,11 +1550,11 @@ namespace MphRead.Entities
         SyluxShip = 0x4000,
         Bit15 = 0x8000,
         BeamReflection = 0x10000,
-        Bit17 = 0x20000,
+        UseRoomState = 0x20000,
         BeamTarget = 0x40000,
         SamusShip = 0x80000,
         Breakable = 0x100000,
-        Bit21 = 0x200000,
+        PersistRoomState = 0x200000,
         DrawIfCull = 0x400000,
         NoRecoil = 0x800000,
         Bit24 = 0x1000000,

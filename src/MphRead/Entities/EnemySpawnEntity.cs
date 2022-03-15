@@ -208,7 +208,7 @@ namespace MphRead.Entities
         private void DeactivateAndSendMessages()
         {
             Flags &= ~SpawnerFlags.Active;
-            // todo: room state/story save
+            GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
             if (_entity1 != null)
             {
                 _scene.SendMessage(_data.Message1, this, _entity1, -1, 0);
@@ -240,7 +240,7 @@ namespace MphRead.Entities
                         && ((EnemyInstanceEntity)info.Sender).EnemyType == EnemyType.Spawner)
                     {
                         Flags &= ~SpawnerFlags.Active;
-                        // todo: room state
+                        GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                     }
                     else
                     {
@@ -256,19 +256,19 @@ namespace MphRead.Entities
             else if (info.Message == Message.Activate)
             {
                 Flags |= SpawnerFlags.Active;
-                // todo: room state
+                GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
             }
             else if (info.Message == Message.SetActive)
             {
                 if ((int)info.Param1 != 0)
                 {
                     Flags |= SpawnerFlags.Active;
-                    // todo: room state
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
                 }
                 else
                 {
                     Flags &= ~SpawnerFlags.Active;
-                    // todo: room state
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                 }
             }
             else if (info.Message == Message.Unknown36)
