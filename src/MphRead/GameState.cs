@@ -24,14 +24,23 @@ namespace MphRead
         End = 3
     }
 
+    public enum EscapeState
+    {
+        None = 0,
+        Event = 1,
+        Escape = 2
+    }
+
     public static class GameState
     {
         public static bool MenuPause { get; private set; }
         public static bool DialogPause { get; private set; }
-        public static int EscapeState { get; set; }
         public static MatchState MatchState { get; set; } = MatchState.InProgress;
         public static TransitionState TransitionState { get; set; } = TransitionState.None;
         public static bool InRoomTransition => TransitionState != TransitionState.None;
+        public static EscapeState EscapeState { get; set; } = EscapeState.None;
+        public static float EscapeTimer { get; set; } = -1;
+        public static bool EscapePaused { get; set; }
         public static int TransitionRoomId { get; set; } = -1;
         public static bool TransitionAltForm { get; set; }
         public static int ActivePlayers { get; set; } = 0;
@@ -272,7 +281,31 @@ namespace MphRead
                     }
                 }
                 ModeState(scene);
-                // todo: escape sequence stuff
+                if (!scene.Multiplayer && EscapeTimer != -1)
+                {
+                    // bugfix?: this fade check seems to count things like the Omega Cannon flash
+                    if (!EscapePaused && !MenuPause && !DialogPause && scene.FadeType == FadeType.None
+                        && CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) != true)
+                    {
+                        EscapeTimer -= scene.FrameTime;
+                        if (EscapeState == EscapeState.Escape)
+                        {
+                            UpdateEscapeSounds(EscapeTimer);
+                        }
+                        else
+                        {
+                            UpdateEventSounds(EscapeTimer);
+                        }
+                    }
+                    if (EscapeTimer <= 0)
+                    {
+                        if (EscapeState == EscapeState.Escape && PlayerEntity.Main.Health > 0)
+                        {
+                            scene.SendMessage(Message.Death, null!, PlayerEntity.Main, 0, 0);
+                        }
+                        EscapeTimer = -1;
+                    }
+                }
                 if (MatchTime != 0 && !ForceEndGame)
                 {
                     // mustodo: update music
@@ -647,7 +680,22 @@ namespace MphRead
                             break;
                         }
                     }
-                    // diagtodo: escape start, escape cancel
+                    for (int i = 0; i < scene.MessageQueue.Count; i++)
+                    {
+                        MessageInfo message = scene.MessageQueue[i];
+                        if (message.Message == Message.EscapeUpdate1 && message.ExecuteFrame == scene.FrameCount)
+                        {
+                            UpdateEscapeState((int)message.Param1 * 30, (int)message.Param2);
+                        }
+                    }
+                    for (int i = 0; i < scene.MessageQueue.Count; i++)
+                    {
+                        MessageInfo message = scene.MessageQueue[i];
+                        if (message.Message == Message.EscapeUpdate2 && message.ExecuteFrame == scene.FrameCount)
+                        {
+                            UpdateEscapeState((int)message.Param1, (int)message.Param2);
+                        }
+                    }
                     for (int i = 0; i < scene.MessageQueue.Count; i++)
                     {
                         MessageInfo message = scene.MessageQueue[i];
@@ -698,7 +746,7 @@ namespace MphRead
                     _shownOctolithDialog = false;
                     _whiteoutStarted = false;
                     _gameOverShown = false;
-                    if (EscapeState == 2)
+                    if (EscapeState == EscapeState.Escape)
                     {
                         // EMERGENCY security system activated.
                         PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 120, param1: 69, param2: 1);
@@ -730,6 +778,76 @@ namespace MphRead
                     _shownOctolithDialog = true;
                 }
             }
+        }
+
+        public static void ResetEscapeState(bool updateSounds)
+        {
+            EscapeState = EscapeState.None;
+            EscapeTimer = -1;
+            EscapePaused = false;
+            if (updateSounds)
+            {
+                UpdateEventSounds(timer: -1);
+            }
+        }
+
+        private static void UpdateEscapeState(int frames, int stateId)
+        {
+            var state = (EscapeState)stateId;
+            float time = frames / 30f;
+            if (state == EscapeState.None)
+            {
+                EscapeTimer = -1;
+                UpdateEventSounds(timer: -1);
+            }
+            else if (time == 0)
+            {
+                EscapePaused = !EscapePaused;
+            }
+            else if (EscapeState != state || EscapeTimer == -1)
+            {
+                EscapeTimer = time;
+                EscapePaused = false;
+                if (state == EscapeState.Escape)
+                {
+                    Sfx.QueueStream(VoiceId.VOICE_EVACUATE);
+                    Sfx.QueueStream(VoiceId.VOICE_EVACUATE, delay: 3);
+                    Sfx.QueueStream(VoiceId.VOICE_EVACUATE, delay: 6);
+                    // mustodo: play music and update tempo
+                    StorySave.TriggerState[2] |= 0x80;
+                }
+                else
+                {
+                    UpdateEventSounds(timer: -1);
+                }
+            }
+            EscapeState = state;
+        }
+
+        private static bool _playedTimedEventSfx = false;
+
+        private static void UpdateEventSounds(float timer)
+        {
+            // mustodo: update tempo
+            if (timer > 165 / 30f)
+            {
+                _playedTimedEventSfx = false;
+            }
+            else if (timer >= 0 && !_playedTimedEventSfx)
+            {
+                PlayerEntity.Main.PlayTimedSfx(SfxId.PUZZLE_TIMER1_SCR);
+                _playedTimedEventSfx = true;
+            }
+            else if (timer < 0)
+            {
+                PlayerEntity.Main.StopTimedSfx(SfxId.PUZZLE_TIMER1_SCR);
+                _playedTimedEventSfx = false;
+            }
+        }
+
+        private static void UpdateEscapeSounds(float timer)
+        {
+            // mustodo: update tempo and/or switch tracks
         }
 
         public static void UpdateState(Scene scene)
@@ -1144,7 +1262,9 @@ namespace MphRead
             _unpausingDialog = false;
             _pausingMenu = false;
             _unpausingMenu = false;
-            EscapeState = 0;
+            EscapeState = EscapeState.None;
+            EscapeTimer = -1;
+            EscapePaused = false;
             _oublietteUnlocked = false;
         }
     }

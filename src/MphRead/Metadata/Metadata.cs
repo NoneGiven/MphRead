@@ -1165,7 +1165,7 @@ namespace MphRead
             {
                 return new Vector3(0.972f, 0.086f, 0.831f);
             }
-            if (eventId == Message.EscapeStart) // mint
+            if (eventId == Message.EscapeUpdate1) // mint
             {
                 return new Vector3(0.619f, 0.980f, 0.678f);
             }
@@ -1229,7 +1229,7 @@ namespace MphRead
             {
                 return new Vector3(1f, 0.765f, 0.49f);
             }
-            if (eventId == Message.EscapeCancel) // sky blue
+            if (eventId == Message.EscapeUpdate2) // sky blue
             {
                 return new Vector3(0.165f, 0.816f, 0.894f);
             }

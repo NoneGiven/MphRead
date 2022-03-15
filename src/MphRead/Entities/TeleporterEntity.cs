@@ -108,7 +108,7 @@ namespace MphRead.Entities
                 {
                     Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
                     bool active = true; // todo: use artifact count from story save
-                    if (active) // todo: and not in escape sequence
+                    if (active && (GameState.EscapeTimer == -1 || GameState.EscapeState != EscapeState.Escape))
                     {
                         Active = true;
                         GameState.StorySave.SetRoomState(scene.RoomId, Id, state: 3);
@@ -157,8 +157,12 @@ namespace MphRead.Entities
                 }
                 else if (_big && !Active)
                 {
-                    // todo: activate based on story state
-                    Activate();
+                    bool active = true; // todo: use artifact count from story save
+                    if (active && PlayerEntity.Main.Health > 0
+                        && (GameState.EscapeTimer == -1 || GameState.EscapeState != EscapeState.Escape))
+                    {
+                        Activate();
+                    }
                 }
                 if (_bool4 && (animInfo.Index[0] != 0 || animInfo.Frame[0] == animInfo.FrameCount[0] - 1))
                 {

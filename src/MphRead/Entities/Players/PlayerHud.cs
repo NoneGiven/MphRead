@@ -1051,6 +1051,10 @@ namespace MphRead.Entities
             }
             else
             {
+                if (!_scene.Multiplayer && !GameState.DialogPause)
+                {
+                    DrawEscapeTime();
+                }
                 if (Health > 0)
                 {
                     if (!GameState.DialogPause)
@@ -1236,6 +1240,18 @@ namespace MphRead.Entities
             {
                 _scene.DrawIconModel(proj, angle: 0, inst, color, alpha);
             }
+        }
+
+        private void DrawEscapeTime()
+        {
+            if (GameState.EscapeTimer < 0)
+            {
+                return;
+            }
+            var time = TimeSpan.FromSeconds(GameState.EscapeTimer);
+            int palette = time.TotalSeconds < 10 ? 2 : 0;
+            string text = $"{time.Hours * 60 + time.Minutes}:{time.Seconds:00}:{time.Milliseconds / 10:00}";
+            DrawText2D(128 + _objShiftX, 180 + _objShiftY, Align.Center, palette, text);
         }
 
         private string FormatTime(TimeSpan time)

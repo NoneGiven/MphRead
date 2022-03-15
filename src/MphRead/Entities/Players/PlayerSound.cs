@@ -505,6 +505,16 @@ namespace MphRead.Entities
             Sfx.Instance.StopAllSound(force: false);
         }
 
+        public void PlayTimedSfx(SfxId id)
+        {
+            _timedSfxSource.PlaySfx(id, recency: 0, sourceOnly: true);
+        }
+
+        public void StopTimedSfx(SfxId id)
+        {
+            _timedSfxSource.StopSfx(id);
+        }
+
         public void StopTimedSfx()
         {
             if (Sfx.TimedSfxMute == 0)

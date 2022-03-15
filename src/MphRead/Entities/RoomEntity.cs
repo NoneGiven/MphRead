@@ -191,6 +191,14 @@ namespace MphRead.Entities
             }
             RoomId = roomId;
             _scene.RoomId = roomId;
+            if (!_scene.Multiplayer)
+            {
+                GameState.DamageLevel = 1;
+                if (LoadEntityId == -1)
+                {
+                    GameState.ResetEscapeState(updateSounds: true);
+                }
+            }
         }
 
         private NodeRef AddDoorPortal(DoorEntity door)
@@ -465,7 +473,10 @@ namespace MphRead.Entities
             }
             _scene.ClearMessageQueue();
             // todo?: unload more stuff
-            // todo: update escape state
+            if (GameState.EscapeTimer != -1 && GameState.EscapeState != EscapeState.Escape)
+            {
+                GameState.ResetEscapeState(updateSounds: false);
+            }
             for (int i = 0; i < PlayerEntity.Players.Count; i++)
             {
                 PlayerEntity player = PlayerEntity.Players[i];

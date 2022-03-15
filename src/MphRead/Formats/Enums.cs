@@ -363,10 +363,10 @@ namespace MphRead
         PlaySfxScript = 54, // param 1: script 1, or -1 to stop/suppress SFX or something
         UnlockOubliette = 56,
         Checkpoint = 57,
-        EscapeStart = 58,
+        EscapeUpdate1 = 58,
         SetSeekPlayerY = 59,
         LoadOubliette = 60,
-        EscapeCancel = 61
+        EscapeUpdate2 = 61
     }
 
     public enum FhMessage : uint
