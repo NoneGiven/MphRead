@@ -193,7 +193,7 @@ namespace MphRead.Entities
             _scene.RoomId = roomId;
         }
 
-        private void AddDoorPortal(DoorEntity door)
+        private NodeRef AddDoorPortal(DoorEntity door)
         {
             _doorPortalCount++;
             string roomNodeName = "";
@@ -237,9 +237,10 @@ namespace MphRead.Entities
                     sides.Add((portal, true));
                     _portalSides.Add(sides);
                     _portals.Add(portal);
-                    break;
+                    return portal.NodeRef2;
                 }
             }
+            return NodeRef.None;
         }
 
         private static readonly IReadOnlyList<Vector3> _connectorSizes = new Vector3[27]
@@ -324,7 +325,7 @@ namespace MphRead.Entities
             newDoor.ConnectorDoor = door;
             if (!GameState.InRoomTransition)
             {
-                AddDoorPortal(door);
+                newDoor.NodeRef = AddDoorPortal(door);
             }
         }
 
@@ -543,7 +544,8 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
-                AddDoorPortal(door);
+                Debug.Assert(door.LoaderDoor != null);
+                door.LoaderDoor.NodeRef = AddDoorPortal(door);
                 if (token.IsCancellationRequested)
                 {
                     return;
