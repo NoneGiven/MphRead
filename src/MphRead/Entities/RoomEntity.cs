@@ -191,14 +191,6 @@ namespace MphRead.Entities
             }
             RoomId = roomId;
             _scene.RoomId = roomId;
-            if (!_scene.Multiplayer)
-            {
-                GameState.DamageLevel = 1;
-                if (LoadEntityId == -1)
-                {
-                    GameState.ResetEscapeState(updateSounds: true);
-                }
-            }
         }
 
         private NodeRef AddDoorPortal(DoorEntity door)

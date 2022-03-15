@@ -763,6 +763,7 @@ namespace MphRead
                     //ENERGY DEPLETED continue from last checkpoint?
                     PlayerEntity.Main.DialogPromptType = PromptType.GameOver;
                     PlayerEntity.Main.ShowDialog(DialogType.YesNo, messageId: 2);
+                    ResetEscapeState(updateSounds: true); // the game does when reloading the room
                     _gameOverShown = true;
                 }
                 else if (countdown <= 50 / 30f && !_whiteoutStarted)
