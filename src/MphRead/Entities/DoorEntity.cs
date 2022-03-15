@@ -20,6 +20,8 @@ namespace MphRead.Entities
         public DoorEntity? LoaderDoor { get; set; }
         public DoorEntity? ConnectorDoor { get; set; }
         public Portal? Portal { get; private set; }
+        public ModelInstance? ConnectorModel { get; set; }
+        public CollisionInstance? ConnectorCollision { get; set; }
 
         private bool Locked => Flags.TestFlag(DoorFlags.Locked);
         private bool Unlocked => Flags.TestFlag(DoorFlags.Unlocked);
@@ -293,6 +295,11 @@ namespace MphRead.Entities
             bool portalActive = false;
             if (Flags.TestFlag(DoorFlags.ShouldOpen))
             {
+                if (ConnectorModel?.Active == false)
+                {
+                    Debug.Assert(_scene.Room != null);
+                    _scene.Room.ActivateConnector(this);
+                }
                 // todo: FPS stuff
                 if (AnimInfo.Frame[0] > AnimInfo.FrameCount[0] / 2)
                 {
@@ -488,6 +495,8 @@ namespace MphRead.Entities
             LoaderDoor = null;
             ConnectorDoor = null;
             Portal = null;
+            ConnectorModel = null;
+            ConnectorCollision = null;
         }
 
         public override void GetDrawInfo()
@@ -516,11 +525,11 @@ namespace MphRead.Entities
 
         protected override int GetModelRecolor(ModelInstance inst, int index)
         {
-            if (index == 1)
+            if (index == 1 || !Flags.TestFlag(DoorFlags.Locked))
             {
                 return 0;
             }
-            return base.GetModelRecolor(inst, index);
+            return Recolor;
         }
     }
 

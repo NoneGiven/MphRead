@@ -291,11 +291,15 @@ namespace MphRead.Entities
             CollisionInstance collision = Collision.GetCollision(meta, roomLayerMask: -1);
             collision.Translation = door.Position + size / 2;
             _roomCollision.Add(collision);
-            if (GameState.InRoomTransition)
+            conInst.Active = false;
+            collision.Active = false;
+            if (!GameState.InRoomTransition)
             {
-                conInst.Active = false;
-                collision.Active = false;
+                // hack -- keep track of which connectors belong to the current room
+                conInst.NodeAnimIgnoreRoot = true;
             }
+            door.ConnectorModel = conInst;
+            door.ConnectorCollision = collision;
             // todo?: update visited connectors
             var header = new EntityDataHeader((ushort)EntityType.Door, entityId: -1,
                 door.Position + size, door.UpVector, -doorFacing);
@@ -321,6 +325,21 @@ namespace MphRead.Entities
             {
                 AddDoorPortal(door);
             }
+        }
+
+        public void ActivateConnector(DoorEntity door)
+        {
+            Debug.Assert(door.ConnectorModel != null);
+            Debug.Assert(door.ConnectorCollision != null);
+            for (int i = 0; i < _connectorModels.Count; i++)
+            {
+                ModelInstance conInst = _connectorModels[i];
+                CollisionInstance conCol = _roomCollision[i + 1];
+                conInst.Active = false;
+                conCol.Active = false;
+            }
+            door.ConnectorModel.Active = true;
+            door.ConnectorCollision.Active = true;
         }
 
         public void UpdateTransition()
@@ -532,7 +551,7 @@ namespace MphRead.Entities
             {
                 ModelInstance conInst = _connectorModels[i];
                 CollisionInstance conCol = _roomCollision[i + 1];
-                if (conInst.Active)
+                if (conInst.NodeAnimIgnoreRoot)
                 {
                     _connectorModels.RemoveAt(i);
                     _roomCollision.RemoveAt(i + 1);
@@ -540,8 +559,7 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    conInst.Active = true;
-                    conCol.Active = true;
+                    conInst.NodeAnimIgnoreRoot = true;
                 }
             }
             Vector3 offset = Vector3.Zero;
@@ -1180,6 +1198,7 @@ namespace MphRead.Entities
                 }
                 if (!partInst.Active)
                 {
+                    roomPart = roomPart.Next;
                     continue;
                 }
                 while (nodeIndex != -1)
