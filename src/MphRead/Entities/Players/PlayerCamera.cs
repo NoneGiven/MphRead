@@ -453,7 +453,7 @@ namespace MphRead.Entities
                         continue;
                     }
                     var door = (DoorEntity)entity;
-                    if (door.Flags.TestFlag(DoorFlags.Open))
+                    if (door.Flags.TestFlag(DoorFlags.Open) || door.ConnectorInactive)
                     {
                         continue;
                     }
@@ -580,7 +580,7 @@ namespace MphRead.Entities
                 Vector3 camVec = CameraInfo.Position - CameraInfo.Target;
                 camVec = camVec != Vector3.Zero ? camVec.Normalized() : _facingVector;
                 Vector3 posVec = Volume.SpherePosition + camVec * Fixed.ToFloat(Values.Field78);
-                posVec = Vector3.Clamp(posVec, _scene.Room.Metadata.CameraMin, _scene.Room.Metadata.CameraMax);
+                posVec = Vector3.Clamp(posVec, _scene.Room.Meta.CameraMin, _scene.Room.Meta.CameraMax);
                 CameraInfo.Position = _field544 + (posVec - _field544) * pct;
             }
             else
@@ -677,7 +677,7 @@ namespace MphRead.Entities
                 float z = CameraInfo.Facing.Z;
                 CameraInfo.Facing.X = x * cosX + z * sinX;
                 CameraInfo.Facing.Z = x * -sinX + z * cosX;
-                var pos = Vector3.Clamp(CameraInfo.Position, _scene.Room.Metadata.CameraMin, _scene.Room.Metadata.CameraMax);
+                var pos = Vector3.Clamp(CameraInfo.Position, _scene.Room.Meta.CameraMin, _scene.Room.Meta.CameraMax);
                 CameraInfo.Position = pos;
                 CameraInfo.Target = CameraInfo.Position + CameraInfo.Facing;
             }

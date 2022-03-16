@@ -7,33 +7,43 @@ namespace MphRead.Formats.Culling
     {
         public int PartIndex;
         public int NodeIndex;
+        public int ModelIndex;
 
-        public static readonly NodeRef None = new NodeRef { PartIndex = -1, NodeIndex = -1 };
+        public static readonly NodeRef None = new NodeRef
+        {
+            PartIndex = -1,
+            NodeIndex = -1,
+            ModelIndex = -1
+        };
 
-        public NodeRef(int partIndex, int nodeIndex)
+        public NodeRef(int partIndex, int nodeIndex, int modelIndex)
         {
             PartIndex = partIndex;
             NodeIndex = nodeIndex;
+            ModelIndex = modelIndex;
         }
 
         public static bool operator ==(NodeRef lhs, NodeRef rhs)
         {
-            return lhs.PartIndex == rhs.PartIndex && lhs.NodeIndex == rhs.NodeIndex;
+            return lhs.PartIndex == rhs.PartIndex && lhs.NodeIndex == rhs.NodeIndex
+                && lhs.ModelIndex == rhs.ModelIndex;
         }
 
         public static bool operator !=(NodeRef lhs, NodeRef rhs)
         {
-            return lhs.PartIndex != rhs.PartIndex || lhs.NodeIndex != rhs.NodeIndex;
+            return lhs.PartIndex != rhs.PartIndex || lhs.NodeIndex != rhs.NodeIndex
+                || lhs.ModelIndex != rhs.ModelIndex;
         }
 
         public override bool Equals(object? obj)
         {
-            return obj is NodeRef other && PartIndex == other.PartIndex && NodeIndex == other.NodeIndex;
+            return obj is NodeRef other && PartIndex == other.PartIndex
+                && NodeIndex == other.NodeIndex && ModelIndex == other.ModelIndex;
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(PartIndex, NodeIndex);
+            return HashCode.Combine(PartIndex, NodeIndex, ModelIndex);
         }
     }
 

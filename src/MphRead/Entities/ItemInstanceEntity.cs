@@ -117,7 +117,7 @@ namespace MphRead.Entities
                     Owner.Item = null;
                     if (!_scene.Multiplayer)
                     {
-                        // todo: room state
+                        GameState.StorySave.SetRoomState(_scene.RoomId, Owner.Id, state: 1);
                         if (!Owner.AlwaysActive)
                         {
                             Owner.Active = false;

@@ -26,5 +26,6 @@ namespace MphRead
     {
         public static bool FreeWeaponSelect { get; set; } = true;
         public static bool UnlimitedJumps { get; set; } = false;
+        public static bool UnlockAllDoors { get; set; } = false;
     }
 }

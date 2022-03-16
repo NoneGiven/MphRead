@@ -31,8 +31,14 @@ namespace MphRead.Entities
             _beamTransform = GetTransformMatrix(beamVector, beamVector.X != 0 || beamVector.Z != 0 ? Vector3.UnitY : Vector3.UnitX);
             _beamTransform.Row3.Y = 0.25f;
             _beamVector = Matrix.Vec3MultMtx3(beamVector, Transform) * _data.Speed.FloatValue;
-            // todo: room state
-            Active = data.Active != 0;
+            if (_scene.GameMode == GameMode.SinglePlayer)
+            {
+                Active = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: data.Active != 0) != 0;
+            }
+            else
+            {
+                Active = data.Active != 0;
+            }
             beamInst.Active = Active;
         }
 
@@ -119,19 +125,28 @@ namespace MphRead.Entities
             if (info.Message == Message.Activate)
             {
                 Active = true;
-                // todo: room state
+                if (_scene.GameMode == GameMode.SinglePlayer)
+                {
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
+                }
             }
             else if (info.Message == Message.SetActive)
             {
                 if ((int)info.Param1 != 0)
                 {
                     Active = true;
-                    // todo: room state
+                    if (_scene.GameMode == GameMode.SinglePlayer)
+                    {
+                        GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
+                    }
                 }
                 else
                 {
                     Active = false;
-                    // todo: room state
+                    if (_scene.GameMode == GameMode.SinglePlayer)
+                    {
+                        GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
+                    }
                 }
             }
             _models[1].Active = Active;

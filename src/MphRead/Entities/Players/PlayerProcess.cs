@@ -81,34 +81,90 @@ namespace MphRead.Entities
             {
                 if (_respawnTimer == 0) // todo: and this slot was not spawned by an enemy spawner
                 {
-                    // todo: if we loaded into this room through a door or teleporter, respawn in the right place
-                    // else...
-                    int time = GetTimeUntilRespawn();
-                    if (IsMainPlayer && _scene.Multiplayer) // todo: and some global is not set
+                    if (_scene.Room?.LoadEntityId >= 0)
                     {
-                        // press FIRE to begin / press FIRE to respawn
-                        int messageId = CameraSequence.Current?.IsIntro == true ? 245 : 244;
-                        if (!Bugfixes.NoStrayRespawnText || time > 0
-                            || _scene.GameMode != GameMode.Survival && _scene.GameMode != GameMode.SurvivalTeams)
+                        TeleporterEntity? targetTeleporter = null;
+                        for (int i = 0; i < _scene.Entities.Count; i++)
                         {
-                            QueueHudMessage(128, 162, 1 / 1000f, 0, messageId);
-                            if (time < 150 * 2) // todo: FPS stuff
+                            EntityBase entity = _scene.Entities[i];
+                            if (entity.Type == EntityType.Teleporter)
                             {
-                                string message = Text.Strings.GetHudMessage(246); // SPAWNING IN %d...
-                                int seconds = (time + 30 * 2) / (30 * 2); // todo: FPS stuff
-                                QueueHudMessage(128, 152, 1 / 1000f, 0, message.Replace("%d", seconds.ToString()));
+                                var teleporter = (TeleporterEntity)entity;
+                                targetTeleporter = teleporter;
+                                if (teleporter.Data.LoadIndex == _scene.Room.LoadEntityId)
+                                {
+                                    break;
+                                }
                             }
                         }
-                    }
-                    if (!_scene.Multiplayer || Controls.Shoot.IsDown || time <= 0 || IsBot) // todo: or forced
-                    {
-                        // todo?: something with wi-fi
-                        // else...
-                        PlayerSpawnEntity? respawn = GetRespawnPoint();
-                        if (respawn != null)
+                        if (targetTeleporter != null)
                         {
-                            Vector3 position = ForcedSpawnPos ?? respawn.Position;
-                            Spawn(position, respawn.FacingVector, respawn.UpVector, respawn.NodeRef, respawn: true);
+                            targetTeleporter.SetTriggered();
+                            Spawn(targetTeleporter.Position, targetTeleporter.FacingVector,
+                                targetTeleporter.UpVector, targetTeleporter.NodeRef, respawn: true);
+                            if (GameState.TransitionAltForm)
+                            {
+                                TrySwitchForms(force: true);
+                                UpdateForm(altForm: true);
+                                ResumeOwnCamera();
+                                HudOnMorphStart();
+                            }
+                        }
+                        else
+                        {
+                            DoorEntity? targetDoor = null;
+                            for (int i = 0; i < _scene.Entities.Count; i++)
+                            {
+                                EntityBase entity = _scene.Entities[i];
+                                if (entity.Type == EntityType.Door)
+                                {
+                                    var door = (DoorEntity)entity;
+                                    targetDoor = door;
+                                    if (door.Data.OutConnectorId == _scene.Room.LoadEntityId)
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                            if (targetDoor != null)
+                            {
+                                Vector3 facing = targetDoor.FacingVector;
+                                Vector3 position = targetDoor.Position + facing * 2;
+                                Spawn(position, facing, targetDoor.UpVector, targetDoor.NodeRef, respawn: true);
+                            }
+                        }
+                        _scene.Room.LoadEntityId = -1;
+                        GameState.TransitionAltForm = false;
+                    }
+                    else
+                    {
+                        int time = GetTimeUntilRespawn();
+                        if (IsMainPlayer && _scene.Multiplayer) // todo: and some global is not set
+                        {
+                            // press FIRE to begin / press FIRE to respawn
+                            int messageId = CameraSequence.Current?.IsIntro == true ? 245 : 244;
+                            if (!Bugfixes.NoStrayRespawnText || time > 0
+                                || _scene.GameMode != GameMode.Survival && _scene.GameMode != GameMode.SurvivalTeams)
+                            {
+                                QueueHudMessage(128, 162, 1 / 1000f, 0, messageId);
+                                if (time < 150 * 2) // todo: FPS stuff
+                                {
+                                    string message = Text.Strings.GetHudMessage(246); // SPAWNING IN %d...
+                                    int seconds = (time + 30 * 2) / (30 * 2); // todo: FPS stuff
+                                    QueueHudMessage(128, 152, 1 / 1000f, 0, message.Replace("%d", seconds.ToString()));
+                                }
+                            }
+                        }
+                        if (!_scene.Multiplayer || Controls.Shoot.IsDown || time <= 0 || IsBot) // todo: or forced
+                        {
+                            // todo?: something with wi-fi
+                            // else...
+                            PlayerSpawnEntity? respawn = GetRespawnPoint();
+                            if (respawn != null)
+                            {
+                                Vector3 position = ForcedSpawnPos ?? respawn.Position;
+                                Spawn(position, respawn.FacingVector, respawn.UpVector, respawn.NodeRef, respawn: true);
+                            }
                         }
                     }
                 }
@@ -864,13 +920,13 @@ namespace MphRead.Entities
             Debug.Assert(_scene.Room != null);
             if (_scene.Multiplayer)
             {
-                if (Position.Y < _scene.Room.Metadata.PlayerMin.Y)
+                if (Position.Y < _scene.Room.Meta.PlayerMin.Y)
                 {
                     TakeDamage(0, DamageFlags.Death, direction: null, source: null);
                 }
-                Position = Vector3.Clamp(Position, _scene.Room.Metadata.PlayerMin.WithY(Position.Y), _scene.Room.Metadata.PlayerMax);
+                Position = Vector3.Clamp(Position, _scene.Room.Meta.PlayerMin.WithY(Position.Y), _scene.Room.Meta.PlayerMax);
             }
-            if (Position.Y < _scene.Room.Metadata.KillHeight)
+            if (Position.Y < _scene.Room.Meta.KillHeight)
             {
                 TakeDamage(0, DamageFlags.Death, direction: null, source: null);
             }
@@ -1132,7 +1188,7 @@ namespace MphRead.Entities
                         _timeSincePickup = 0;
                         _healthMax += Values.EnergyTank;
                         _healthRecovery = _healthMax - _health;
-                        // todo: update story save
+                        GameState.StorySave.HealthMax = _healthMax;
                         if (IsMainPlayer)
                         {
                             // ENERGY TANK FOUND the POWER SUIT can now store 100 more UNITS of energy.
@@ -1147,7 +1203,7 @@ namespace MphRead.Entities
                         _timeSincePickup = 0;
                         _ammoMax[1] += 100;
                         _ammoRecovery[1] = _ammoMax[1] - _ammo[1];
-                        // todo: update story save
+                        GameState.StorySave.AmmoMax[1] = _ammoMax[1];
                         if (IsMainPlayer)
                         {
                             // MISSILE EXPANSION FOUND your MISSILE capacity is increased by 10 UNITS.
@@ -1162,7 +1218,7 @@ namespace MphRead.Entities
                         _timeSincePickup = 0;
                         _ammoMax[0] += 300;
                         _ammoRecovery[0] = _ammoMax[0] - _ammo[0];
-                        // todo: update story save
+                        GameState.StorySave.AmmoMax[0] = _ammoMax[0];
                         if (IsMainPlayer)
                         {
                             // UA EXPANSION FOUND your UNIVERSAL AMMO capacity is increased by 30 UNITS.
@@ -1222,10 +1278,9 @@ namespace MphRead.Entities
             {
                 return;
             }
-            if (!_scene.Multiplayer)
+            if (!_scene.Multiplayer && (GameState.StorySave.Weapons & (1 << (int)weapon)) == 0)
             {
-                // todo: only show dialog if we didn't already have the weapon unlock
-                // todo: update story save
+                GameState.StorySave.Weapons |= (ushort)(1 << (int)weapon);
                 int weaponId = (int)weapon;
                 string value1 = Metadata.WeaponNamesUpper[weaponId];
                 string value2 = "";
@@ -1849,46 +1904,50 @@ namespace MphRead.Entities
                     continue;
                 }
                 var candidate = (PlayerSpawnEntity)spawn;
-                // skdebug - 1P spawns
-                if ((candidate.IsActive || !_scene.Room.Metadata.Multiplayer) && candidate.Cooldown == 0
-                    && (_scene.FrameCount > 0 || !candidate.Availability))
+                if (!candidate.IsActive || candidate.Cooldown != 0 || _scene.FrameCount == 0 && candidate.Availability)
                 {
-                    // todo: if CTF mode, check team index
-                    float minDistSqr = 100;
-                    for (int j = 0; j < _scene.Entities.Count; j++)
+                    limit++;
+                    continue;
+                }
+                if (_scene.GameMode == GameMode.Capture && candidate.Data.TeamIndex != -1
+                    && candidate.Data.TeamIndex != TeamIndex)
+                {
+                    limit++;
+                    continue;
+                }
+                float minDistSqr = 100;
+                for (int j = 0; j < _scene.Entities.Count; j++)
+                {
+                    EntityBase entity = _scene.Entities[j];
+                    if (entity.Type != EntityType.Player)
                     {
-                        EntityBase entity = _scene.Entities[j];
-                        if (entity.Type != EntityType.Player)
+                        continue;
+                    }
+                    var player = (PlayerEntity)entity;
+                    if (player.Health > 0)
+                    {
+                        Vector3 between = candidate.Position - player.Position;
+                        float distSqr = Vector3.Dot(between, between);
+                        if (distSqr < minDistSqr)
                         {
-                            continue;
-                        }
-                        var player = (PlayerEntity)entity;
-                        if (player.Health > 0)
-                        {
-                            Vector3 between = candidate.Position - player.Position;
-                            float distSqr = Vector3.Dot(between, between);
-                            if (distSqr < minDistSqr)
-                            {
-                                minDistSqr = distSqr;
-                            }
+                            minDistSqr = distSqr;
                         }
                     }
-                    if (minDistSqr >= 100)
-                    {
-                        valid.Add(candidate);
-                    }
-                    else if (minDistSqr > bestDistance)
-                    {
-                        bestDistance = minDistSqr;
-                        bestAvailable = candidate;
-                    }
+                }
+                if (minDistSqr >= 100)
+                {
+                    valid.Add(candidate);
+                }
+                else if (minDistSqr > bestDistance)
+                {
+                    bestDistance = minDistSqr;
+                    bestAvailable = candidate;
                 }
                 limit++;
             }
             if (valid.Count > 0)
             {
                 int index = (int)(_scene.FrameCount % (ulong)valid.Count);
-                index = 0; // skdebug
                 chosenSpawn = valid[index];
             }
             else

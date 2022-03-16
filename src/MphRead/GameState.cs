@@ -16,12 +16,33 @@ namespace MphRead
         Disconnected = 3
     }
 
+    public enum TransitionState
+    {
+        None = 0,
+        Start = 1,
+        Process = 2,
+        End = 3
+    }
+
+    public enum EscapeState
+    {
+        None = 0,
+        Event = 1,
+        Escape = 2
+    }
+
     public static class GameState
     {
         public static bool MenuPause { get; private set; }
         public static bool DialogPause { get; private set; }
-        public static int EscapeState { get; set; }
         public static MatchState MatchState { get; set; } = MatchState.InProgress;
+        public static TransitionState TransitionState { get; set; } = TransitionState.None;
+        public static bool InRoomTransition => TransitionState != TransitionState.None;
+        public static EscapeState EscapeState { get; set; } = EscapeState.None;
+        public static float EscapeTimer { get; set; } = -1;
+        public static bool EscapePaused { get; set; }
+        public static int TransitionRoomId { get; set; } = -1;
+        public static bool TransitionAltForm { get; set; }
         public static int ActivePlayers { get; set; } = 0;
         public static string[] Nicknames { get; } = new string[4] { "Player1", "Player2", "Player3", "Player4" };
         public static int[] Stars { get; } = new int[4];
@@ -98,6 +119,10 @@ namespace MphRead
 
         public static void ApplyPause()
         {
+            if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true)
+            {
+                return;
+            }
             if (_pausingDialog)
             {
                 DialogPause = true;
@@ -256,7 +281,31 @@ namespace MphRead
                     }
                 }
                 ModeState(scene);
-                // todo: escape sequence stuff
+                if (!scene.Multiplayer && EscapeTimer != -1)
+                {
+                    // bugfix?: this fade check seems to count things like the Omega Cannon flash
+                    if (!EscapePaused && !MenuPause && !DialogPause && scene.FadeType == FadeType.None
+                        && CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) != true)
+                    {
+                        EscapeTimer -= scene.FrameTime;
+                        if (EscapeState == EscapeState.Escape)
+                        {
+                            UpdateEscapeSounds(EscapeTimer);
+                        }
+                        else
+                        {
+                            UpdateEventSounds(EscapeTimer);
+                        }
+                    }
+                    if (EscapeTimer <= 0)
+                    {
+                        if (EscapeState == EscapeState.Escape && PlayerEntity.Main.Health > 0)
+                        {
+                            scene.SendMessage(Message.Death, null!, PlayerEntity.Main, 0, 0);
+                        }
+                        EscapeTimer = -1;
+                    }
+                }
                 if (MatchTime != 0 && !ForceEndGame)
                 {
                     // mustodo: update music
@@ -354,7 +403,7 @@ namespace MphRead
                 if (MatchTime == 0)
                 {
                     MatchTime = -1;
-                    scene.SetFade(FadeType.FadeOutBlack, 20 / 30f, overwrite: true, exitAfterFade: true);
+                    scene.SetFade(FadeType.FadeOutBlack, 20 / 30f, overwrite: true, AfterFade.Exit);
                 }
             }
         }
@@ -369,23 +418,21 @@ namespace MphRead
             }
         }
 
-        private static bool _oublietteUnlocked = false; // skdebug
-        private static bool _hasAllOctoliths = false; // skdebug
-
         public static void ModeStateAdventure(Scene scene)
         {
-            // todo: update save
-            if (!_oublietteUnlocked)
+            PlayerEntity.Main.SaveStatus();
+            if ((StorySave.Areas & 0x100) == 0)
             {
                 for (int i = 0; i < scene.MessageQueue.Count; i++)
                 {
                     MessageInfo message = scene.MessageQueue[i];
                     if (message.Message == Message.UnlockOubliette && message.ExecuteFrame == scene.FrameCount)
                     {
-                        if (_hasAllOctoliths)
+                        if (StorySave.CurrentOctoliths == 0xFF)
                         {
                             // todo: play movie and defer dialog
-                            _oublietteUnlocked = true;
+                            StorySave.Areas |= 0x100;
+                            StorySave.CurrentOctoliths = 0;
                             // GUNSHIP TRANSMISSION severe timefield disruption detected in the vicinity of the ALIMBIC CLUSTER.
                             PlayerEntity.Main.ShowDialog(DialogType.Okay, messageId: 43);
                         }
@@ -397,7 +444,6 @@ namespace MphRead
                                 if (entity.Type == EntityType.CameraSequence)
                                 {
                                     scene.SendMessage(Message.Activate, null!, entity, param1: 0, param2: 0);
-                                    _oublietteUnlocked = true; // skdebug
                                     break;
                                 }
                             }
@@ -406,12 +452,20 @@ namespace MphRead
                     }
                 }
             }
-            for (int i = 0; i < scene.MessageQueue.Count; i++)
+            if (PlayerEntity.Main.Health > 0)
             {
-                MessageInfo message = scene.MessageQueue[i];
-                if (message.Message == Message.Checkpoint && message.ExecuteFrame == scene.FrameCount)
+                for (int i = 0; i < scene.MessageQueue.Count; i++)
                 {
-                    // todo: update checkpoint
+                    MessageInfo message = scene.MessageQueue[i];
+                    if (message.Message == Message.Checkpoint && message.ExecuteFrame == scene.FrameCount)
+                    {
+                        Debug.Assert(scene.Room != null);
+                        scene.SendMessage(Message.SetActive, null!, message.Sender, param1: 0, param2: 0);
+                        StorySave.CheckpointEntityId = message.Sender.Id;
+                        StorySave.CheckpointRoomId = scene.Room.RoomId;
+                        UpdateCleanSave(force: false);
+                        break;
+                    }
                 }
             }
             // todo: game timer/boss record stuff
@@ -559,7 +613,7 @@ namespace MphRead
                     {
                         // yes to ship hatch (enter)
                         // todo: update story save
-                        scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, exitAfterFade: true);
+                        scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, AfterFade.Exit);
                         // mustodo: stop music
                         // todo: fade SFX
                         Sfx.Instance.PlaySample((int)SfxId.RETURN_TO_SHIP_YES, source: null, loop: false,
@@ -568,19 +622,25 @@ namespace MphRead
                     else if (prompt == PromptType.GameOver)
                     {
                         // yes to game over (continue)
-                        PlayerEntity.Main.RestartLongSfx(); // skdebug
-                        scene.SetFade(FadeType.FadeOutInWhite, length: 10 / 30f, overwrite: true); // skdebug
-                        PlayerEntity.Main.RespawnTimer = 10 * 2; // skdebug
-                        // todo: fade out and reload room
+                        RestoreCleanSave();
+                        Debug.Assert(scene.Room != null);
+                        if (StorySave.CheckpointRoomId == -1) // skdebug
+                        {
+                            StorySave.CheckpointRoomId = scene.Room.RoomId;
+                        }
+                        // if CheckpointEntityId isn't set, we'll still spawn, just using the respawn point code path
+                        TransitionRoomId = StorySave.CheckpointRoomId;
                         Sfx.Instance.PlaySample((int)SfxId.MENU_CONFIRM, source: null, loop: false,
                             noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                        scene.SetFade(FadeType.FadeOutWhite, length: 10 / 30f, overwrite: true, AfterFade.LoadRoom);
                         UnpauseDialog();
+                        PlayerEntity.Main.RestartLongSfx(force: true);
                     }
                 }
                 else if (prompt == PromptType.GameOver)
                 {
                     // no to game over (quit)
-                    scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, exitAfterFade: true);
+                    scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, AfterFade.Exit);
                     // mustodo: stop music
                     Sfx.Instance.PlaySample((int)SfxId.QUIT_GAME, source: null, loop: false,
                         noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
@@ -605,16 +665,36 @@ namespace MphRead
                         MessageInfo message = scene.MessageQueue[i];
                         if (message.Message == Message.ShipHatch && message.ExecuteFrame == scene.FrameCount)
                         {
+                            Debug.Assert(scene.Room != null);
+                            ResetEscapeState(updateSounds: false); // skdebug
                             PlayerEntity.Main.DialogPromptType = PromptType.ShipHatch;
-                            // todo: set checkpoint and update story save
+                            StorySave.CheckpointEntityId = message.Sender.Id;
+                            StorySave.CheckpointRoomId = scene.Room.RoomId;
+                            UpdateCleanSave(force: true);
                             // HUNTER GUNSHIP enter your ship?
                             PlayerEntity.Main.ShowDialog(DialogType.YesNo, messageId: 1);
                             Sfx.Instance.StopFreeSfxScripts();
                             Sfx.Instance.PlayScript((int)SfxId.RETURN_TO_SHIP_SCR, source: null,
                                 noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                            break;
                         }
                     }
-                    // diagtodo: escape start, escape cancel
+                    for (int i = 0; i < scene.MessageQueue.Count; i++)
+                    {
+                        MessageInfo message = scene.MessageQueue[i];
+                        if (message.Message == Message.EscapeUpdate1 && message.ExecuteFrame == scene.FrameCount)
+                        {
+                            UpdateEscapeState((int)message.Param1 * 30, (int)message.Param2);
+                        }
+                    }
+                    for (int i = 0; i < scene.MessageQueue.Count; i++)
+                    {
+                        MessageInfo message = scene.MessageQueue[i];
+                        if (message.Message == Message.EscapeUpdate2 && message.ExecuteFrame == scene.FrameCount)
+                        {
+                            UpdateEscapeState((int)message.Param1, (int)message.Param2);
+                        }
+                    }
                     for (int i = 0; i < scene.MessageQueue.Count; i++)
                     {
                         MessageInfo message = scene.MessageQueue[i];
@@ -665,7 +745,7 @@ namespace MphRead
                     _shownOctolithDialog = false;
                     _whiteoutStarted = false;
                     _gameOverShown = false;
-                    if (EscapeState == 2)
+                    if (EscapeState == EscapeState.Escape)
                     {
                         // EMERGENCY security system activated.
                         PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 120, param1: 69, param2: 1);
@@ -682,6 +762,7 @@ namespace MphRead
                     //ENERGY DEPLETED continue from last checkpoint?
                     PlayerEntity.Main.DialogPromptType = PromptType.GameOver;
                     PlayerEntity.Main.ShowDialog(DialogType.YesNo, messageId: 2);
+                    ResetEscapeState(updateSounds: true); // the game does when reloading the room
                     _gameOverShown = true;
                 }
                 else if (countdown <= 50 / 30f && !_whiteoutStarted)
@@ -697,6 +778,76 @@ namespace MphRead
                     _shownOctolithDialog = true;
                 }
             }
+        }
+
+        public static void ResetEscapeState(bool updateSounds)
+        {
+            EscapeState = EscapeState.None;
+            EscapeTimer = -1;
+            EscapePaused = false;
+            if (updateSounds)
+            {
+                UpdateEventSounds(timer: -1);
+            }
+        }
+
+        private static void UpdateEscapeState(int frames, int stateId)
+        {
+            var state = (EscapeState)stateId;
+            float time = frames / 30f;
+            if (state == EscapeState.None)
+            {
+                EscapeTimer = -1;
+                UpdateEventSounds(timer: -1);
+            }
+            else if (time == 0)
+            {
+                EscapePaused = !EscapePaused;
+            }
+            else if (EscapeState != state || EscapeTimer == -1)
+            {
+                EscapeTimer = time;
+                EscapePaused = false;
+                if (state == EscapeState.Escape)
+                {
+                    Sfx.QueueStream(VoiceId.VOICE_EVACUATE);
+                    Sfx.QueueStream(VoiceId.VOICE_EVACUATE, delay: 3);
+                    Sfx.QueueStream(VoiceId.VOICE_EVACUATE, delay: 6);
+                    // mustodo: play music and update tempo
+                    StorySave.TriggerState[2] |= 0x80;
+                }
+                else
+                {
+                    UpdateEventSounds(timer: -1);
+                }
+            }
+            EscapeState = state;
+        }
+
+        private static bool _playedTimedEventSfx = false;
+
+        private static void UpdateEventSounds(float timer)
+        {
+            // mustodo: update tempo
+            if (timer > 165 / 30f)
+            {
+                _playedTimedEventSfx = false;
+            }
+            else if (timer >= 0 && !_playedTimedEventSfx)
+            {
+                PlayerEntity.Main.PlayTimedSfx(SfxId.PUZZLE_TIMER1_SCR);
+                _playedTimedEventSfx = true;
+            }
+            else if (timer < 0)
+            {
+                PlayerEntity.Main.StopTimedSfx(SfxId.PUZZLE_TIMER1_SCR);
+                _playedTimedEventSfx = false;
+            }
+        }
+
+        private static void UpdateEscapeSounds(float timer)
+        {
+            // mustodo: update tempo and/or switch tracks
         }
 
         public static void UpdateState(Scene scene)
@@ -1049,13 +1200,56 @@ namespace MphRead
             return 0;
         }
 
+        private static StorySave _cleanStorySave = null!;
         public static StorySave StorySave { get; private set; } = null!;
+
+        public static void UpdateCleanSave(bool force)
+        {
+            if (!force && EscapeTimer != -1 && EscapeState == EscapeState.Escape)
+            {
+                return;
+            }
+            StorySave.CopyTo(_cleanStorySave);
+        }
+
+        public static void RestoreCleanSave()
+        {
+            // todo: save and restore more fields
+            ushort prevFoundOctos = StorySave.FoundOctoliths;
+            ushort prevCurOctos = StorySave.CurrentOctoliths;
+            uint prevLostOctos = StorySave.LostOctoliths;
+            _cleanStorySave.CopyTo(StorySave);
+            int curCurCount = 0;
+            int prevCurCount = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                if ((StorySave.CurrentOctoliths & (1 << i)) != 0)
+                {
+                    curCurCount++;
+                }
+                if ((prevCurOctos & (1 << i)) != 0)
+                {
+                    prevCurCount++;
+                }
+            }
+            if (curCurCount > prevCurCount)
+            {
+                // octolith has been lost -- need to restore values from the dirty save
+                StorySave.FoundOctoliths = prevFoundOctos;
+                StorySave.CurrentOctoliths = prevCurOctos;
+                StorySave.LostOctoliths = prevLostOctos;
+            }
+        }
 
         public static void Reset()
         {
             // todo: persist story saves
+            _cleanStorySave = new StorySave();
             StorySave = new StorySave();
             MatchState = MatchState.InProgress;
+            TransitionState = TransitionState.None;
+            TransitionRoomId = -1;
+            TransitionAltForm = false;
             ActivePlayers = 0;
             for (int i = 0; i < 4; i++)
             {
@@ -1108,16 +1302,179 @@ namespace MphRead
             _unpausingDialog = false;
             _pausingMenu = false;
             _unpausingMenu = false;
-            EscapeState = 0;
-            _oublietteUnlocked = false;
+            EscapeState = EscapeState.None;
+            EscapeTimer = -1;
+            EscapePaused = false;
         }
     }
 
     public class StorySave
     {
+        public byte[,] RoomState { get; } = new byte[66, 60];
+        public byte[] VisitedRooms { get; } = new byte[9];
+        public byte[] TriggerState { get; } = new byte[4];
         public byte[] Logbook { get; } = new byte[68];
         public int ScanCount { get; set; }
         public int EquipmentCount { get; set; }
+        public int CheckpointEntityId { get; set; } = -1;
+        public int CheckpointRoomId { get; set; } = -1;
+        public int Health { get; set; }
+        public int HealthMax { get; set; }
+        public int[] Ammo { get; } = new int[2];
+        public int[] AmmoMax { get; } = new int[2];
+        public int[] WeaponSlots { get; } = new int[3];
+        public ushort Weapons { get; set; } // sktodo: don't persist Omega Cannon
+        public ushort Artifacts { get; set; }
+        public ushort FoundOctoliths { get; set; }
+        public ushort CurrentOctoliths { get; set; }
+        public uint LostOctoliths { get; set; } = UInt32.MaxValue;
+        public ushort Areas { get; set; } = 0xC; // Celestial Archives 1 & 2
+
+        public StorySave()
+        {
+            PlayerValues values = Metadata.PlayerValues[0];
+            // skdebug
+            Health = HealthMax = 799; // values.EnergyTank - 1;
+            Ammo[0] = AmmoMax[0] = 4000; // 400
+            Ammo[1] = 950; // 0
+            AmmoMax[1] = 950; // 50
+            WeaponSlots[0] = (int)BeamType.PowerBeam;
+            WeaponSlots[1] = (int)BeamType.Missile;
+            WeaponSlots[2] = (int)BeamType.None;
+            Weapons = 0xFF; // (int)BeamType.PowerBeam | (int)BeamType.Missile
+            // todo: initialize more fields
+            UpdateLogbook(1); // SCAN VISOR
+            UpdateLogbook(2); // THERMAL POSITIONER
+            UpdateLogbook(3); // ARM CANNON
+            UpdateLogbook(4); // POWER BEAM
+            UpdateLogbook(5); // MISSILE LAUNCHER
+            UpdateLogbook(6); // MORPH BALL
+            UpdateLogbook(7); // MORPH BALL BOMB
+            UpdateLogbook(27); // JUMP BOOTS
+            UpdateLogbook(29); // CHARGE SHOT
+        }
+
+        public int InitRoomState(int roomId, int entityId, bool active,
+            int activeState = 3, int inactiveState = 1)
+        {
+            if (entityId == -1 || roomId < 27)
+            {
+                return 0;
+            }
+            if (roomId > 92) // skdebug
+            {
+                return 2;
+            }
+            roomId -= 27;
+            activeState &= 3;
+            inactiveState &= 3;
+            (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
+            pairIndex *= 2;
+            int pairMask = 3 << pairIndex;
+            if ((RoomState[roomId, byteIndex] & pairMask) == 0)
+            {
+                RoomState[roomId, byteIndex] &= (byte)~pairMask;
+                RoomState[roomId, byteIndex] |= (byte)((active ? activeState : inactiveState) << pairIndex);
+            }
+            return GetRoomState(roomId + 27, entityId);
+        }
+
+        public int GetRoomState(int roomId, int entityId)
+        {
+            if (entityId == -1 || roomId < 27 || roomId > 92)
+            {
+                return 0;
+            }
+            roomId -= 27;
+            (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
+            pairIndex *= 2;
+            return ((RoomState[roomId, byteIndex] >> pairIndex) & 3) - 1;
+        }
+
+        public void SetRoomState(int roomId, int entityId, int state)
+        {
+            if (entityId == -1 || roomId < 27 || roomId > 92)
+            {
+                return;
+            }
+            roomId -= 27;
+            state &= 3;
+            (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
+            pairIndex *= 2;
+            int pairMask = 3 << pairIndex;
+            RoomState[roomId, byteIndex] &= (byte)~pairMask;
+            RoomState[roomId, byteIndex] |= (byte)(state << pairIndex);
+            return;
+        }
+
+        public bool CheckVisitedRoom(int roomId)
+        {
+            if (roomId < 27 || roomId > 92)
+            {
+                return false;
+            }
+            roomId -= 27;
+            (int byteIndex, int bitIndex) = Math.DivRem(roomId, 8);
+            return (VisitedRooms[byteIndex] & (1 << bitIndex)) != 0;
+        }
+
+        public void SetVisitedRoom(int roomId)
+        {
+            if (roomId < 27 || roomId > 92)
+            {
+                return;
+            }
+            roomId -= 27;
+            (int byteIndex, int bitIndex) = Math.DivRem(roomId, 8);
+            VisitedRooms[byteIndex] |= (byte)(1 << bitIndex);
+        }
+
+        public bool CheckFoundOctolith(int areaId)
+        {
+            return (FoundOctoliths & (1 << areaId)) != 0;
+        }
+
+        public int CountFoundOctoliths()
+        {
+            int count = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                if (CheckFoundOctolith(i))
+                {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        public void UpdateFoundOctolith(int areaId)
+        {
+            FoundOctoliths |= (ushort)(1 << areaId);
+            CurrentOctoliths |= (ushort)(1 << areaId);
+        }
+
+        public bool CheckFoundArtifact(int artifactId, int modelId)
+        {
+            return (Artifacts & (1 << (artifactId + 3 * modelId))) != 0;
+        }
+
+        public int CountFoundArtifacts(int modelId)
+        {
+            int count = 0;
+            for (int i = 0; i < 3; i++)
+            {
+                if (CheckFoundArtifact(i, modelId))
+                {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        public void UpdateFoundArtifact(int artifactId, int modelId)
+        {
+            Artifacts |= (ushort)(1 << (artifactId + 3 * modelId));
+        }
 
         public void UpdateLogbook(int scanId)
         {
@@ -1145,6 +1502,18 @@ namespace MphRead
             int index = scanId / 8;
             byte bit = (byte)(1 << (scanId % 8));
             return (Logbook[index] & bit) != 0;
+        }
+
+        public void CopyTo(StorySave other)
+        {
+            Array.Copy(RoomState, other.RoomState, length: RoomState.Length);
+            VisitedRooms.CopyTo(other.VisitedRooms, index: 0);
+            TriggerState.CopyTo(other.TriggerState, index: 0);
+            Logbook.CopyTo(other.Logbook, index: 0);
+            other.ScanCount = ScanCount;
+            other.EquipmentCount = EquipmentCount;
+            other.CheckpointEntityId = CheckpointEntityId;
+            other.CheckpointRoomId = CheckpointRoomId;
         }
     }
 }

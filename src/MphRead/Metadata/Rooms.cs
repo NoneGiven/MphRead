@@ -24,6 +24,7 @@ namespace MphRead
         public string CollisionPath { get; }
         public string? TexturePath { get; }
         public string? EntityPath { get; }
+        public string? EntityFilename { get; }
         public string? NodePath { get; }
         public string? RoomNodeName { get; }
         public uint BattleTimeLimit { get; }
@@ -77,6 +78,7 @@ namespace MphRead
                 CollisionPath = $@"_archives\{archive}\{collisionPath}";
             }
             TexturePath = texturePath == null ? null : $@"levels\textures\{texturePath}";
+            EntityFilename = entityPath;
             EntityPath = entityPath == null ? null : $@"levels\entities\{entityPath}";
             NodePath = nodePath == null ? null : $@"levels\nodeData\{nodePath}";
             RoomNodeName = roomNodeName;

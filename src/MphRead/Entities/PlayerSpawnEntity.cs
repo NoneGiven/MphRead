@@ -5,6 +5,7 @@ namespace MphRead.Entities
     public class PlayerSpawnEntity : EntityBase
     {
         private readonly PlayerSpawnEntityData _data;
+        public PlayerSpawnEntityData Data => _data;
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x7F, 0x00, 0x00).AsVector4();
         private bool _active = false;
 
@@ -23,8 +24,14 @@ namespace MphRead.Entities
         {
             base.Initialize();
             SetTransform(_data.Header.FacingVector, _data.Header.UpVector, _data.Header.Position);
-            // todo: room state
-            _active = _data.Active != 0;
+            if (_scene.GameMode == GameMode.SinglePlayer)
+            {
+                _active = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: _data.Active != 0) != 0;
+            }
+            else
+            {
+                _active = _data.Active != 0;
+            }
             AddPlaceholderModel();
         }
 
@@ -42,12 +49,18 @@ namespace MphRead.Entities
             if (info.Message == Message.Activate || (info.Message == Message.SetActive && (int)info.Param1 != 0))
             {
                 _active = true;
-                // todo: room state
+                if (_scene.GameMode == GameMode.SinglePlayer)
+                {
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
+                }
             }
             else if (info.Message == Message.SetActive && (int)info.Param1 == 0)
             {
                 _active = false;
-                // todo: room state
+                if (_scene.GameMode == GameMode.SinglePlayer)
+                {
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
+                }
             }
         }
     }

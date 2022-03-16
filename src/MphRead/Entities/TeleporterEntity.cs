@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using MphRead.Formats;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
@@ -7,6 +9,7 @@ namespace MphRead.Entities
     public class TeleporterEntity : EntityBase
     {
         private readonly TeleporterEntityData _data;
+        public TeleporterEntityData Data => _data;
         private readonly Vector3 _targetPos = Vector3.Zero;
         private readonly Matrix4 _artifact1Transform;
         private readonly Matrix4 _artifact2Transform;
@@ -52,43 +55,38 @@ namespace MphRead.Entities
                 ModelInstance inst = SetUpModel(modelName);
                 inst.SetAnimation(2, AnimFlags.NoLoop | AnimFlags.Reverse);
             }
-            string? roomName = data.TargetRoom.MarshalString();
-            if (roomName != null)
+            if (data.EntityFilename[0] != '\0')
             {
                 for (int i = 0; i < Metadata.RoomList.Count; i++)
                 {
-                    RoomMetadata meta = Metadata.RoomList[i];
-                    if (meta.EntityPath != null && meta.EntityPath.Split('\\')[^1].StartsWith(roomName))
+                    RoomMetadata room = Metadata.RoomList[i];
+                    string? filename = room.EntityFilename;
+                    if (filename != null && Compare(data.EntityFilename, filename))
                     {
-                        _targetRoomId = meta.Id;
+                        _targetRoomId = room.Id;
+                        break;
                     }
                 }
             }
-            // skdebug
-            if (roomName == "Gorea_Land_Ent.")
+            if (_scene.GameMode == GameMode.SinglePlayer)
             {
-                if (Id == 6)
-                {
-                    _targetRoomId = -1;
-                    _targetPos = new Vector3(0.064697266f, 1.1169434f, 28.408691f);
-                }
-                else if (Id == 7)
-                {
-                    _targetRoomId = -1;
-                    _targetPos = new Vector3(-7.100342f, -1f, -22.510742f);
-                }
+                int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: data.Active != 0);
+                Active = state != 0;
             }
-            // todo: use room state/artifact bits/etc. to determine active state
-            Active = data.Active != 0;
+            else
+            {
+                Active = data.Active != 0;
+            }
             // 0-7 = big teleporter using the corresponding artifact model
             // 8, 10, 11, 255 = small teleporter (no apparent meaning to each value beyond that)
             if (data.ArtifactId < 8)
             {
-                // todo: set artifacts active based on state
                 string name = $"Artifact0{data.ArtifactId + 1}";
                 ModelInstance inst = SetUpModel(name);
-                _models.Add(inst);
-                _models.Add(inst);
+                inst.SetAnimation(-1);
+                inst = SetUpModel(name);
+                inst.SetAnimation(-1);
+                inst = SetUpModel(name);
                 inst.SetAnimation(-1);
                 float angleY = MathHelper.DegreesToRadians(337 * (360 / 4096f));
                 float angleZ = MathHelper.DegreesToRadians(360 * (360 / 4096f));
@@ -103,10 +101,25 @@ namespace MphRead.Entities
             if (multiplayer)
             {
                 AddPlaceholderModel();
-                _targetPos = _data.TargetPosition.ToFloatVector();
+                _targetPos = data.TargetPosition.ToFloatVector();
             }
             if (data.Invisible == 0)
             {
+                if (_big)
+                {
+                    Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+                    bool active = GameState.StorySave.CountFoundArtifacts(data.ArtifactId) > 2;
+                    if (active && (GameState.EscapeTimer == -1 || GameState.EscapeState != EscapeState.Escape))
+                    {
+                        Active = true;
+                        GameState.StorySave.SetRoomState(scene.RoomId, Id, state: 3);
+                    }
+                    else
+                    {
+                        Active = false;
+                        GameState.StorySave.SetRoomState(scene.RoomId, Id, state: 1);
+                    }
+                }
                 if (Active)
                 {
                     _scanId = _big ? 46 : 26;
@@ -116,6 +129,11 @@ namespace MphRead.Entities
                     _scanId = _big ? 38 : 25;
                 }
             }
+        }
+
+        private bool Compare(ReadOnlySpan<char> data, ReadOnlySpan<char> room)
+        {
+            return MemoryExtensions.StartsWith(room, data[..15], StringComparison.InvariantCultureIgnoreCase);
         }
 
         public override void Initialize()
@@ -140,8 +158,12 @@ namespace MphRead.Entities
                 }
                 else if (_big && !Active)
                 {
-                    // todo: activate based on story state
-                    Activate();
+                    bool active = GameState.StorySave.CountFoundArtifacts(_data.ArtifactId) > 2;
+                    if (active && PlayerEntity.Main.Health > 0
+                        && (GameState.EscapeTimer == -1 || GameState.EscapeState != EscapeState.Escape))
+                    {
+                        Activate();
+                    }
                 }
                 if (_bool4 && (animInfo.Index[0] != 0 || animInfo.Frame[0] == animInfo.FrameCount[0] - 1))
                 {
@@ -178,7 +200,7 @@ namespace MphRead.Entities
                     if (CollisionDetection.CheckCylinderOverlapSphere(player.PrevPosition, player.Volume.SpherePosition,
                         testPos, 1.75f, ref discard))
                     {
-                        if (!_triggeredSlots[player.SlotIndex] && _targetRoomId == -1) // skdebug
+                        if (!_triggeredSlots[player.SlotIndex])
                         {
                             float radius = _big ? 1.5f : 1;
                             if (CollisionDetection.CheckCylinderOverlapSphere(player.PrevPosition, player.Volume.SpherePosition,
@@ -188,10 +210,17 @@ namespace MphRead.Entities
                                 {
                                     player.Teleport(_targetPos.AddY(0.5f), FacingVector, _targetNodeRef);
                                 }
-                                else
+                                else if (GameState.TransitionRoomId == -1) // the game doesn't do this check
                                 {
-                                    // todo: teleport to new room
-                                    // sfxtodo: play SFX
+                                    Debug.Assert(_scene.Room != null);
+                                    if (_soundSource.CountPlayingSfx(SfxId.TELEPORT_OUT) == 0)
+                                    {
+                                        _soundSource.PlayFreeSfx(SfxId.TELEPORT_OUT);
+                                    }
+                                    GameState.TransitionAltForm = PlayerEntity.Main.IsAltForm;
+                                    GameState.TransitionRoomId = _targetRoomId;
+                                    _scene.Room.LoadEntityId = _data.TargetIndex;
+                                    _scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, AfterFade.LoadRoom);
                                 }
                                 player.Speed = new Vector3(0, player.Speed.Y, 0);
                                 // todo: update bot AI flag
@@ -216,6 +245,14 @@ namespace MphRead.Entities
             return true;
         }
 
+        public void SetTriggered()
+        {
+            for (int i = 0; i < _triggeredSlots.Length; i++)
+            {
+                _triggeredSlots[i] = true;
+            }
+        }
+
         public override void HandleMessage(MessageInfo info)
         {
             if (_big)
@@ -236,8 +273,11 @@ namespace MphRead.Entities
                 {
                     Active = false;
                     _scanId = 25;
-                    // todo: room state
                     _bool4 = true;
+                    if (_scene.GameMode == GameMode.SinglePlayer)
+                    {
+                        GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
+                    }
                 }
             }
         }
@@ -347,6 +387,13 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo()
         {
+            if (_models.Count == 4)
+            {
+                StorySave save = GameState.StorySave;
+                _models[1].Active = save.CheckFoundArtifact(artifactId: 0, _data.ArtifactId);
+                _models[2].Active = save.CheckFoundArtifact(artifactId: 1, _data.ArtifactId);
+                _models[3].Active = save.CheckFoundArtifact(artifactId: 2, _data.ArtifactId);
+            }
             if (IsVisible(NodeRef))
             {
                 base.GetDrawInfo();

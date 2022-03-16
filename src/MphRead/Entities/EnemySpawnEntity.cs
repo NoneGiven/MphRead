@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using MphRead.Entities.Enemies;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
@@ -41,8 +42,18 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             _rangeNodeRef = scene.GetNodeRefByName(data.NodeName.MarshalString());
             _cooldownTimer = _data.InitialCooldown * 2; // todo: FPS stuff
-            // todo: room state
-            if (data.Active != 0 || data.AlwaysActive != 0)
+            Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+            bool active = false;
+            int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: data.Active != 0);
+            if (data.AlwaysActive != 0)
+            {
+                active = data.Active != 0;
+            }
+            else
+            {
+                active = state != 0;
+            }
+            if (active)
             {
                 Flags |= SpawnerFlags.Active;
             }
@@ -197,7 +208,25 @@ namespace MphRead.Entities
         private void DeactivateAndSendMessages()
         {
             Flags &= ~SpawnerFlags.Active;
-            // todo: room state/story save
+            GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
+            if (_data.EnemyType != EnemyType.Hunter || _data.Fields.S09.EncounterType == 1)
+            {
+                // todo: update comopleted encounters in story save
+            }
+            if (_data.EnemyType == EnemyType.Cretaphid)
+            {
+                GameState.StorySave.Areas |= 3; // Alinos 1 & 2
+                // todo: update boss flags in story save
+            }
+            else if (_data.EnemyType == EnemyType.Slench)
+            {
+                GameState.StorySave.Areas |= 0xF0; // VDO 1 & 2, Arcterra 1 & 2
+                // todo: update boss flags in story save
+            }
+            else if (_data.EnemyType == EnemyType.Gorea1A)
+            {
+                // todo: update boss flags in story save
+            }
             if (_entity1 != null)
             {
                 _scene.SendMessage(_data.Message1, this, _entity1, -1, 0);
@@ -229,7 +258,7 @@ namespace MphRead.Entities
                         && ((EnemyInstanceEntity)info.Sender).EnemyType == EnemyType.Spawner)
                     {
                         Flags &= ~SpawnerFlags.Active;
-                        // todo: room state
+                        GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                     }
                     else
                     {
@@ -245,19 +274,19 @@ namespace MphRead.Entities
             else if (info.Message == Message.Activate)
             {
                 Flags |= SpawnerFlags.Active;
-                // todo: room state
+                GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
             }
             else if (info.Message == Message.SetActive)
             {
                 if ((int)info.Param1 != 0)
                 {
                     Flags |= SpawnerFlags.Active;
-                    // todo: room state
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
                 }
                 else
                 {
                     Flags &= ~SpawnerFlags.Active;
-                    // todo: room state
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                 }
             }
             else if (info.Message == Message.Unknown36)

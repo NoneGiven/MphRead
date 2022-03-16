@@ -44,6 +44,14 @@ namespace MphRead.Entities
             }
         }
 
+        public void Set(ushort value)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                _array[i] = (value & (1 << i)) != 0;
+            }
+        }
+
         public void CopyFrom(AvailableArray source)
         {
             for (int i = 0; i < _array.Length; i++)
@@ -519,15 +527,15 @@ namespace MphRead.Entities
             }
             if (_scene.Multiplayer)
             {
-                _healthMax = (ushort)(2 * Values.EnergyTank - 1);
+                _healthMax = 2 * Values.EnergyTank - 1;
                 _ammoMax[UA] = _ammoMax[Missiles] = Values.MpAmmoCap;
             }
             else
             {
-                // todo: get from story save
-                _healthMax = 799;
-                _ammoMax[UA] = 4000;
-                _ammoMax[Missiles] = 950;
+                StorySave save = GameState.StorySave;
+                _healthMax = save.HealthMax;
+                _ammoMax[UA] = save.AmmoMax[UA];
+                _ammoMax[Missiles] = save.AmmoMax[Missiles];
             }
             InitializeWeapon();
             _availableWeapons[BeamType.PowerBeam] = true;
@@ -609,10 +617,20 @@ namespace MphRead.Entities
                 _spireAltNodes[2] = null;
                 _spireAltNodes[3] = null;
             }
-            // todo: respawn and/or checkpoint or something
             for (int i = 0; i < _bipedIceTransforms.Length; i++)
             {
                 _bipedIceTransforms[i] = Matrix4.Identity;
+            }
+            // todo?: some other kind of respawn?
+            if (_scene.Room == null || _scene.Room.LoadEntityId == -1)
+            {
+                int checkpointId = GameState.StorySave.CheckpointEntityId;
+                if (IsMainPlayer && _scene.GameMode == GameMode.SinglePlayer
+                    && checkpointId != -1 && _scene.TryGetEntity(checkpointId, out EntityBase? checkpoint))
+                {
+                    checkpoint.GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing);
+                    Spawn(position, facing, up, checkpoint.NodeRef, respawn: false);
+                }
             }
         }
 
@@ -675,8 +693,8 @@ namespace MphRead.Entities
             }
             else if (IsMainPlayer) // todo: MP1P
             {
-                // todo: get from story save
-                _health = _healthMax;
+                _healthMax = GameState.StorySave.HealthMax;
+                _health = GameState.StorySave.Health;
             }
             else
             {
@@ -888,6 +906,40 @@ namespace MphRead.Entities
             }
         }
 
+        public void SaveStatus()
+        {
+            if (Health == 0)
+            {
+                return;
+            }
+            StorySave save = GameState.StorySave;
+            for (int i = 0; i < _weaponSlots.Length; i++)
+            {
+                save.WeaponSlots[i] = (int)_weaponSlots[i];
+            }
+            for (int i = 0; i < _ammo.Length; i++)
+            {
+                save.Ammo[i] = _ammo[i];
+            }
+            save.Health = _health;
+            if (_scene.FadeType == FadeType.None)
+            {
+                save.CheckpointRoomId = -1;
+                save.CheckpointEntityId = -1;
+            }
+        }
+
+        public void ResetReferences()
+        {
+            // Field35C and point module are also reset here
+            AttachedEnemy = null;
+            MorphCamera = null;
+            _lastJumpPad = null;
+            OctolithFlag = null;
+            _enemySpawner = null;
+            _lastTarget = null;
+        }
+
         public override void GetPosition(out Vector3 position)
         {
             position = Position.AddY(IsAltForm ? 0 : 0.5f);
@@ -966,6 +1018,30 @@ namespace MphRead.Entities
             {
                 ResumeOwnCamera();
                 CameraInfo.Update();
+            }
+        }
+
+        public void Reposition(Vector3 offset, NodeRef nodeRef)
+        {
+            Position += offset;
+            PrevPosition += offset;
+            _aimPosition += offset;
+            _gunDrawPos += offset;
+            _muzzlePos += offset;
+            CameraInfo camInfo = CameraInfo;
+            camInfo.Position += offset;
+            camInfo.PrevPosition += offset;
+            camInfo.Target += offset;
+            _volume = CollisionVolume.Move(_volumeUnxf, Position);
+            for (int i = 0; i < _beams.Length; i++)
+            {
+                _beams[i].Reposition(offset);
+            }
+            NodeRef = nodeRef;
+            camInfo.NodeRef = nodeRef;
+            if (Flags2.TestFlag(PlayerFlags2.Halfturret))
+            {
+                Halfturret.Reposition(offset, nodeRef);
             }
         }
 
@@ -1076,14 +1152,17 @@ namespace MphRead.Entities
             _availableCharges.ClearAll();
             if (!_scene.Multiplayer && IsMainPlayer) // todo: MP1P
             {
-                // todo: load available arrays, weapon slots, and ammo amounts from story save
-                _availableWeapons.SetAll();
-                _availableCharges.SetAll();
-                _weaponSlots[0] = BeamType.PowerBeam;
-                _weaponSlots[1] = BeamType.Missile;
-                _weaponSlots[2] = BeamType.VoltDriver;
-                _ammo[UA] = _ammoMax[UA];
-                _ammo[Missiles] = _ammoMax[Missiles];
+                _availableWeapons.Set(GameState.StorySave.Weapons);
+                _availableCharges.CopyFrom(_availableWeapons);
+                StorySave save = GameState.StorySave;
+                for (int i = 0; i < _weaponSlots.Length; i++)
+                {
+                    _weaponSlots[i] = (BeamType)save.WeaponSlots[i];
+                }
+                for (int i = 0; i < _ammo.Length; i++)
+                {
+                    _ammo[i] = save.Ammo[i];
+                }
             }
             else if (!_scene.Multiplayer && IsBot)
             {
@@ -1710,8 +1789,7 @@ namespace MphRead.Entities
                         }
                         else
                         {
-                            // skdebug - this should be set once the room is reloading
-                            //_sfxStopTimer = 10 / 30f;
+                            _sfxStopTimer = 10 / 30f;
                             // mustodo?: update music or something?
                             _soundSource.PlayFreeSfx(SfxId.SAMUS_DEATH);
                         }
@@ -1732,7 +1810,7 @@ namespace MphRead.Entities
                 GameState.Deaths[SlotIndex]++;
                 if (this == Main && beamType == BeamType.OmegaCannon)
                 {
-                    _scene.SetFade(FadeType.FadeInWhite, 90 * (1 / 30f), overwrite: true);
+                    _scene.SetFade(FadeType.FadeInWhite, 90 / 30f, overwrite: true);
                 }
                 Speed = Vector3.Zero;
                 _respawnTimer = RespawnTime;
@@ -2113,7 +2191,7 @@ namespace MphRead.Entities
                     {
                         dirVertical = -dirUpDown;
                     }
-                    // sktodo: diagonals (behind feature switch)
+                    // todo: diagonals (behind feature switch)
                     PlayerAnimation anim = PlayerAnimation.None;
                     if (dirVertical <= dirHorizontal)
                     {

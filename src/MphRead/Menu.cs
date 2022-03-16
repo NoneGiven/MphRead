@@ -581,7 +581,8 @@ namespace MphRead
                                 {
                                     name = name[..1].ToUpper() + name[1..];
                                 }
-                                if (Enum.TryParse(name, out Hunter hunter) && hunter != Hunter.Random)
+                                if (Enum.TryParse(name, out Hunter hunter)
+                                    && Enum.IsDefined(hunter) && hunter != Hunter.Random)
                                 {
                                     player = hunter.ToString();
                                 }

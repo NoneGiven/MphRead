@@ -136,18 +136,14 @@ namespace MphRead.Formats
             {
                 _scene.SetFade(fadeType, fadeTime, overwrite: false);
             }
-            if (curFrame.HoldTime == 0 && curFrame.MoveTime == 0)
-            {
-                // make zero-length frames last for 2 frames (equivalent to 1 frame in game)
-                _keyframeElapsed += _scene.FrameTime / 2;
-            }
-            else
-            {
-                _keyframeElapsed += _scene.FrameTime;
-            }
+            _keyframeElapsed += _scene.FrameTime;
             if (_keyframeElapsed >= frameLength)
             {
                 _keyframeElapsed -= frameLength;
+                if (_keyframeElapsed >= 1 / 60f)
+                {
+                    _keyframeElapsed = 1 / 60f - 1 / 4096f;
+                }
                 _keyframeIndex++;
                 if (_keyframeIndex >= Keyframes.Count)
                 {
@@ -218,10 +214,13 @@ namespace MphRead.Formats
                 }
             }
             Current = this;
-            // todo?: the game only does the rest when ptr_tbl_idx is 14
-            PlayerEntity.Main.CloseDialogs();
-            PlayerEntity.Main.HudEndDisrupted();
-            PlayerEntity.Main.ResetCombatVisor();
+            // the game only does the rest when ptr_tbl_idx is 14
+            if (SequenceId > 3)
+            {
+                PlayerEntity.Main.CloseDialogs();
+                PlayerEntity.Main.HudEndDisrupted();
+                PlayerEntity.Main.ResetCombatVisor();
+            }
         }
 
         public void Restart(ushort transitionTimer = 0, ushort transitionTime = 0)

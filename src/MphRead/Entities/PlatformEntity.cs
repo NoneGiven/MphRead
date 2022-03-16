@@ -4,6 +4,7 @@ using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -172,15 +173,44 @@ namespace MphRead.Entities
             _forwardSpeed = data.ForwardSpeed.FloatValue / 2f; // todo: FPS stuff
             _backwardSpeed = data.BackwardSpeed.FloatValue / 2f; // todo: FPS stuff
             UpdatePosition();
+            _moveSfx = new MoveSfxInfo(
+                start1: new SfxData(Metadata.PlatformSfx[_data.ModelId, 0]),
+                start2: new SfxData(Metadata.PlatformSfx[_data.ModelId, 1]),
+                stop: new SfxData(Metadata.PlatformSfx[_data.ModelId, 2]),
+                destoryed: new SfxData(Metadata.PlatformSfx[_data.ModelId, 3])
+            );
             _animFlags |= PlatAnimFlags.Draw;
-            // todo: room state
+            Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+            if (Flags.TestFlag(PlatformFlags.UseRoomState) && !Flags.TestFlag(PlatformFlags.PersistRoomState))
+            {
+                int state = GameState.StorySave.GetRoomState(scene.RoomId, Id);
+                if (state == 1)
+                {
+                    _fromIndex = _data.PositionCount - 1;
+                    UpdatePosition();
+                }
+                else if (state == 2)
+                {
+                    _animFlags &= ~PlatAnimFlags.Draw;
+                }
+            }
             if (Flags.TestFlag(PlatformFlags.SamusShip))
             {
                 SleepWake(wake: true, instant: true);
                 _currentAnimState = -2;
-                // todo: room state for initial landing
-                SetPlatAnimation(PlatAnimId.InstantWake, AnimFlags.None);
-                _animFlags |= PlatAnimFlags.Active;
+                if (GameState.StorySave.CheckVisitedRoom(scene.RoomId))
+                {
+                    SetPlatAnimation(PlatAnimId.InstantWake, AnimFlags.None);
+                }
+                else
+                {
+                    SetPlatAnimation(PlatAnimId.Wake, AnimFlags.NoLoop);
+                    _currentAnimState = GetAnimation(PlatAnimId.InstantWake);
+                }
+                if (data.Active != 0)
+                {
+                    _animFlags |= PlatAnimFlags.Active;
+                }
             }
             else
             {
@@ -192,8 +222,17 @@ namespace MphRead.Entities
                 {
                     SleepWake(wake: true, instant: true);
                 }
-                // todo: more room state
-                //_animFlags |= PlatAnimFlags.Active;
+                if (Flags.TestFlag(PlatformFlags.PersistRoomState))
+                {
+                    if (GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: _data.Active != 0) != 0)
+                    {
+                        _animFlags |= PlatAnimFlags.Active;
+                    }
+                }
+                else if (_data.Active != 0)
+                {
+                    _animFlags |= PlatAnimFlags.Active;
+                }
                 if (_animFlags.TestFlag(PlatAnimFlags.Active))
                 {
                     Activate();
@@ -224,12 +263,6 @@ namespace MphRead.Entities
             {
                 _sfxRangeIndex = 33;
             }
-            _moveSfx = new MoveSfxInfo(
-                start1: new SfxData(Metadata.PlatformSfx[_data.ModelId, 0]),
-                start2: new SfxData(Metadata.PlatformSfx[_data.ModelId, 1]),
-                stop: new SfxData(Metadata.PlatformSfx[_data.ModelId, 2]),
-                destoryed: new SfxData(Metadata.PlatformSfx[_data.ModelId, 3])
-            );
         }
 
         public static void DestroyBeams()
@@ -439,7 +472,7 @@ namespace MphRead.Entities
                     {
                         _soundSource.StopAllSfx();
                     }
-                    // todo: room state
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
                 }
             }
         }
@@ -447,7 +480,10 @@ namespace MphRead.Entities
         private void Activate()
         {
             _animFlags |= PlatAnimFlags.Active;
-            // todo: more room state
+            if (Flags.TestFlag(PlatformFlags.UseRoomState) && Flags.TestFlag(PlatformFlags.PersistRoomState))
+            {
+                GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
+            }
             if (_state == PlatformState.Inactive)
             {
                 if (Flags.TestFlag(PlatformFlags.DripMoat))
@@ -491,7 +527,10 @@ namespace MphRead.Entities
             {
                 _state = PlatformState.Inactive;
                 _animFlags &= ~PlatAnimFlags.Active;
-                // todo: more room state
+                if (Flags.TestFlag(PlatformFlags.UseRoomState) && Flags.TestFlag(PlatformFlags.PersistRoomState))
+                {
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
+                }
                 if (Flags.TestFlag(PlatformFlags.DripMoat))
                 {
                     _scene.SendMessage(Message.DripMoatPlatform, this, PlayerEntity.Main, 0, 0);
@@ -712,9 +751,11 @@ namespace MphRead.Entities
                     spawnBeam = false;
                 }
             }
+            if (Flags.TestFlag(PlatformFlags.NoBeamIfCull) && !IsVisible(NodeRef))
+            {
+                spawnBeam = false;
+            }
             bool soundUpdated = false;
-            // todo: don't spawn beam when node ref is not visible, unless the flag for that is set
-            //_stateFlags |= PlatStateFlags.Awake; // skdebug?
             if (spawnBeam && _animFlags.TestFlag(PlatAnimFlags.Draw) && !_animFlags.TestFlag(PlatAnimFlags.DisableReflect)
                 && _stateFlags.TestFlag(PlatStateFlags.Awake) && Flags.TestFlag(PlatformFlags.BeamSpawner) && _data.BeamId > -1)
             {
@@ -754,6 +795,10 @@ namespace MphRead.Entities
                         _beamActive = false;
                     }
                 }
+            }
+            if (!Flags.TestFlag(PlatformFlags.SkipNodeRef) && NodeRef != NodeRef.None)
+            {
+                NodeRef = _scene.UpdateNodeRef(NodeRef, _prevVisiblePosition, _visiblePosition);
             }
             if (!_models[0].IsPlaceholder && _animFlags.TestFlag(PlatAnimFlags.HasAnim) && _currentAnimId >= 0)
             {
@@ -1068,7 +1113,17 @@ namespace MphRead.Entities
                             }
                         }
                     }
-                    // todo: room state etc.
+                    if (Flags.TestFlag(PlatformFlags.UseRoomState) && !Flags.TestFlag(PlatformFlags.PersistRoomState))
+                    {
+                        if (_fromIndex == 0)
+                        {
+                            GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
+                        }
+                        else if (_fromIndex == _data.PositionCount - 1)
+                        {
+                            GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 2);
+                        }
+                    }
                     if (_state != PlatformState.Inactive)
                     {
                         _state = PlatformState.Waiting;
@@ -1502,12 +1557,12 @@ namespace MphRead.Entities
         SyluxShip = 0x4000,
         Bit15 = 0x8000,
         BeamReflection = 0x10000,
-        Bit17 = 0x20000,
+        UseRoomState = 0x20000,
         BeamTarget = 0x40000,
         SamusShip = 0x80000,
         Breakable = 0x100000,
-        Bit21 = 0x200000,
-        DrawIfCull = 0x400000,
+        PersistRoomState = 0x200000,
+        NoBeamIfCull = 0x400000,
         NoRecoil = 0x800000,
         Bit24 = 0x1000000,
         Bit25 = 0x2000000,

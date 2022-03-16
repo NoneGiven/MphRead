@@ -104,11 +104,8 @@ namespace MphRead.Entities
                     else
                     {
                         int sfxData = CameraSequence.SfxData[Data.SequenceId];
-                        int scriptId = sfxData & 0x1FFF;
-                        if (scriptId != 0)
-                        {
-                            Sfx.Instance.StopFreeSfxScripts();
-                        }
+                        // the game stops free SFX scripts here, but we don't have the kind of
+                        // "detach" action we need to do that without cutting off ending sounds
                         if ((sfxData & 0x4000) != 0)
                         {
                             if (Sfx.ForceFieldSfxMute > 0)
@@ -129,7 +126,7 @@ namespace MphRead.Entities
                         Sequence.End();
                         Current = null;
                         PlayerEntity.Main.RefreshExternalCamera();
-                        SendEndEvent();
+                        SendEndMessage();
                     }
                 }
             }
@@ -212,7 +209,7 @@ namespace MphRead.Entities
             player.RestartLongSfx();
             bool currentSeq = CameraSequence.Current == Sequence;
             bool playerCam = Sequence.CamInfoRef == player.CameraInfo;
-            SendEndEvent();
+            SendEndMessage();
             Sequence.End();
             _active = false;
             if (currentSeq)
@@ -229,7 +226,7 @@ namespace MphRead.Entities
             }
         }
 
-        private void SendEndEvent()
+        private void SendEndMessage()
         {
             if (Data.EndMessage != Message.None)
             {

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using MphRead.Formats;
 using OpenTK.Mathematics;
 
@@ -29,11 +30,19 @@ namespace MphRead.Entities
             _parentEventColor = Metadata.GetEventColor(data.ParentMessage);
             _childEventColor = Metadata.GetEventColor(data.ChildMessage);
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
-            _volume = CollisionVolume.Move(_data.Volume, Position);
+            _volume = CollisionVolume.Move(data.Volume, Position);
             AddPlaceholderModel();
-            // todo: room state
-            Active = data.Active != 0 || data.AlwaysActive != 0;
-            _delayTimer = _data.RepeatDelay * 2; // todo: FPS stuff
+            Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+            int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: data.Active != 0);
+            if (data.AlwaysActive != 0)
+            {
+                Active = data.Active != 0;
+            }
+            else
+            {
+                Active = state != 0;
+            }
+            _delayTimer = data.RepeatDelay * 2; // todo: FPS stuff
             // todo: music event stuff
         }
 
@@ -173,7 +182,11 @@ namespace MphRead.Entities
             }
             else if (_data.Subtype == TriggerType.StateBits)
             {
-                // todo: check global state bits
+                int index = _data.RequiredStateBit;
+                if ((GameState.StorySave.TriggerState[index / 8] & (1 << (index % 8))) != 0)
+                {
+                    Trigger();
+                }
             }
             return base.Process();
         }
@@ -181,7 +194,7 @@ namespace MphRead.Entities
         private void Deactivate()
         {
             Active = false;
-            // todo: room state
+            GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
         }
 
         public override void HandleMessage(MessageInfo info)
@@ -216,14 +229,14 @@ namespace MphRead.Entities
                 else if (info.Message == Message.Activate)
                 {
                     Active = true;
-                    // todo: room state
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
                 }
                 else if (info.Message == Message.SetActive)
                 {
                     if ((int)info.Param1 != 0)
                     {
                         Active = true;
-                        // todo: room state
+                        GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
                     }
                     else
                     {
@@ -232,7 +245,7 @@ namespace MphRead.Entities
                         {
                             _delayTimer = _data.RepeatDelay * 2; // todo: FPS stuff
                         }
-                        // todo: room state
+                        GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                     }
                 }
             }

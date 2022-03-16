@@ -15,6 +15,7 @@ namespace MphRead.Entities
         public virtual int Recolor { get; set; }
         public EntityType Type { get; }
         public bool ShouldDraw { get; protected set; } = true;
+        public bool Initialized { get; set; } = true;
         public bool Active { get; protected set; } = true;
         public bool Hidden { get; set; }
         public float Alpha { get; set; } = 1.0f;
@@ -462,7 +463,7 @@ namespace MphRead.Entities
                 EntityCollision? entCol = EntityCollision[i];
                 if (entCol?.Collision != null && entCol.Collision.Active)
                 {
-                    entCol.Collision.Info.GetDrawInfo(entCol.DrawPoints, Type, _scene);
+                    entCol.Collision.Info.GetDrawInfo(entCol.DrawPoints, Vector3.Zero, Type, _scene);
                 }
             }
         }

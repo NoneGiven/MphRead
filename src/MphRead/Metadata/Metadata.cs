@@ -318,14 +318,17 @@ namespace MphRead
     public class ObjectMetadata
     {
         public bool Lighting { get; }
+        public bool IgnoreAnimation { get; }
         public string Name { get; }
         public IReadOnlyList<int> AnimationIds { get; }
         public int RecolorId { get; }
 
-        public ObjectMetadata(string name, bool lighting = false, int paletteId = 0, List<int>? animationIds = null)
+        public ObjectMetadata(string name, bool lighting = false, int paletteId = 0,
+            bool ignoreAnim = false, List<int>? animationIds = null)
         {
             Name = name;
             Lighting = lighting;
+            IgnoreAnimation = ignoreAnim;
             RecolorId = paletteId;
             if (animationIds == null)
             {
@@ -942,7 +945,7 @@ namespace MphRead
             /* 41 */ new ObjectMetadata("GhostSwitch"),
             /* 42 */ new ObjectMetadata("Switch", lighting: true),
             /* 43 */ new ObjectMetadata("Guardian_Stasis", animationIds: new List<int>() { -1, 0, 0, 0 }),
-            /* 44 */ new ObjectMetadata("AlimbicStatue_lod0", animationIds: new List<int>() { -1, 0, 0, 0 }),
+            /* 44 */ new ObjectMetadata("AlimbicStatue_lod0", ignoreAnim: true, animationIds: new List<int>() { -1, 0, 0, 0 }),
             /* 45 */ new ObjectMetadata("AlimbicCapsule"),
             /* 46 */ new ObjectMetadata("SniperTarget", lighting: true, animationIds: new List<int>() { 0, 2, 1, 0 }),
             /* 47 */ new ObjectMetadata("SecretSwitch", paletteId: 1, animationIds: new List<int>() { 1, 2, 0, 0 }),
@@ -1162,7 +1165,7 @@ namespace MphRead
             {
                 return new Vector3(0.972f, 0.086f, 0.831f);
             }
-            if (eventId == Message.EscapeStart) // mint
+            if (eventId == Message.EscapeUpdate1) // mint
             {
                 return new Vector3(0.619f, 0.980f, 0.678f);
             }
@@ -1226,7 +1229,7 @@ namespace MphRead
             {
                 return new Vector3(1f, 0.765f, 0.49f);
             }
-            if (eventId == Message.EscapeCancel) // sky blue
+            if (eventId == Message.EscapeUpdate2) // sky blue
             {
                 return new Vector3(0.165f, 0.816f, 0.894f);
             }

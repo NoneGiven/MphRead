@@ -258,6 +258,7 @@ namespace MphRead.Formats.Collision
 
     public class Portal
     {
+        public bool Active { get; set; } = true;
         public string Name { get; }
         public string NodeName1 { get; }
         public string NodeName2 { get; }
@@ -331,6 +332,25 @@ namespace MphRead.Formats.Collision
             Unknown00 = raw.Field5C;
             Unknown01 = raw.Field5D;
         }
+
+        public Portal(string nodeName1, string nodeName2, IReadOnlyList<Vector3> points,
+            IReadOnlyList<Vector4> planes, Vector4 plane)
+        {
+            Name = $"port_{nodeName1}_{nodeName2}";
+            NodeName1 = nodeName1;
+            NodeName2 = nodeName2;
+            LayerMask = 4;
+            IsForceField = false;
+            Points = points;
+            Planes = planes;
+            Plane = plane;
+            Position = new Vector3(
+                points.Sum(p => p.X) / points.Count,
+                points.Sum(p => p.Y) / points.Count,
+                points.Sum(p => p.Z) / points.Count
+            );
+            Flags = 1;
+        }
     }
 
     [Flags]
@@ -358,6 +378,8 @@ namespace MphRead.Formats.Collision
         public CollisionInfo Info { get; }
         public bool IsEntity { get; }
 
+        public Vector3 Translation { get; set; }
+
         public CollisionInstance(string name, CollisionInfo info, bool isEntity)
         {
             Name = name;
@@ -382,7 +404,8 @@ namespace MphRead.Formats.Collision
             FirstHunt = firstHunt;
         }
 
-        public abstract void GetDrawInfo(IReadOnlyList<Vector3> points, EntityType entityType, Scene scene);
+        public abstract void GetDrawInfo(IReadOnlyList<Vector3> points, Vector3 translation,
+            EntityType entityType, Scene scene);
     }
 
     public class MphCollisionInfo : CollisionInfo
@@ -423,7 +446,8 @@ namespace MphRead.Formats.Collision
             /* 11 */ new Vector4(0.85f, 0.85f, 0.85f, 1f) // unused (dark gray)
         };
 
-        public override void GetDrawInfo(IReadOnlyList<Vector3> points, EntityType entityType, Scene scene)
+        public override void GetDrawInfo(IReadOnlyList<Vector3> points, Vector3 translation,
+            EntityType entityType, Scene scene)
         {
             //EntityBase? target = scene.Entities.FirstOrDefault(e => e.Type == EntityType.Model);
             //if (target != null)
@@ -497,7 +521,7 @@ namespace MphRead.Formats.Collision
                 for (int j = 0; j < data.PointIndexCount; j++)
                 {
                     ushort pointIndex = PointIndices[data.PointStartIndex + j];
-                    verts[j] = points[pointIndex];
+                    verts[j] = points[pointIndex] + translation;
                 }
                 scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.PointIndexCount);
             }
@@ -728,7 +752,8 @@ namespace MphRead.Formats.Collision
             TreeNodes = treeNodes;
         }
 
-        public override void GetDrawInfo(IReadOnlyList<Vector3> points, EntityType entityType, Scene scene)
+        public override void GetDrawInfo(IReadOnlyList<Vector3> points, Vector3 translation,
+            EntityType entityType, Scene scene)
         {
             //GetPartition(points, scene);
             //return;
@@ -743,7 +768,7 @@ namespace MphRead.Formats.Collision
                 for (int j = 0; j < data.VectorCount; j++)
                 {
                     FhCollisionVector vector = Vectors[data.VectorStartIndex + j];
-                    verts[j] = points[vector.Point2Index];
+                    verts[j] = points[vector.Point2Index] + translation;
                 }
                 scene.AddRenderItem(CullingMode.Back, polygonId, color, RenderItemType.Ngon, verts, data.VectorCount);
             }

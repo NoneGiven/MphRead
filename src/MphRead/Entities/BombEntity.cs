@@ -91,6 +91,12 @@ namespace MphRead.Entities
             }
         }
 
+        public void Reposition(Vector3 offset)
+        {
+            Position += offset;
+            _target = null;
+        }
+
         public override bool Process()
         {
             EntityBase? hitEntity = null;

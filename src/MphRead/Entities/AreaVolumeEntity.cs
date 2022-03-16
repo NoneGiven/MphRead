@@ -22,7 +22,8 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0xFF, 0x00).AsVector4();
         public AreaVolumeEntityData Data => _data;
 
-        public AreaVolumeEntity(AreaVolumeEntityData data, Scene scene) : base(EntityType.AreaVolume, scene)
+        public AreaVolumeEntity(AreaVolumeEntityData data, string nodeName, Scene scene)
+            : base(EntityType.AreaVolume, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -41,8 +42,22 @@ namespace MphRead.Entities
                 _cooldownTime--;
             }
             _cooldownTime *= 2; // todo: FPS stuff
-            // todo: room state
-            Active = data.Active != 0 || data.AlwaysActive != 0;
+            if (_scene.GameMode == GameMode.SinglePlayer)
+            {
+                int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: data.Active != 0);
+                if (data.AlwaysActive != 0)
+                {
+                    Active = data.Active != 0;
+                }
+                else
+                {
+                    Active = state != 0;
+                }
+            }
+            else
+            {
+                Active = data.Active != 0;
+            }
         }
 
         public override void Initialize()
@@ -68,19 +83,28 @@ namespace MphRead.Entities
             if (info.Message == Message.Activate)
             {
                 Active = true;
-                // todo: room state
+                if (_scene.GameMode == GameMode.SinglePlayer)
+                {
+                    GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
+                }
             }
             else if (info.Message == Message.SetActive)
             {
                 if ((int)info.Param1 != 0)
                 {
                     Active = true;
-                    // todo: room state
+                    if (_scene.GameMode == GameMode.SinglePlayer)
+                    {
+                        GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
+                    }
                 }
                 else
                 {
                     Active = false;
-                    // todo: room state
+                    if (_scene.GameMode == GameMode.SinglePlayer)
+                    {
+                        GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
+                    }
                 }
             }
         }

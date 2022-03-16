@@ -66,6 +66,12 @@ namespace MphRead.Entities
             }
         }
 
+        public void Reposition(Vector3 offset)
+        {
+            // todo?: update more effect stuff?
+            Position += offset;
+        }
+
         public override bool Process()
         {
             if (_lifespan-- <= 0)

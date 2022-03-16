@@ -430,8 +430,11 @@ namespace MphRead.Entities
                     {
                         effectId = Metadata.GetEnemyDeathEffect(EnemyType);
                     }
-                    Matrix4 transform = Transform.ClearScale();
-                    _scene.SpawnEffect(effectId, transform);
+                    if (effectId > 0)
+                    {
+                        Matrix4 transform = Transform.ClearScale();
+                        _scene.SpawnEffect(effectId, transform);
+                    }
                 }
                 else
                 {

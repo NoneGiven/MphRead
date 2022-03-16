@@ -21,7 +21,7 @@ namespace MphRead.Sound
         {
             if (rangeIndex == -1)
             {
-                Position = PlayerEntity.Main.CameraInfo.Position;
+                Position = Sfx.Instance.GetListenerPosition();
                 ReferenceDistance = Single.MaxValue;
                 MaxDistance = Single.MaxValue;
                 Self = true;
@@ -212,12 +212,12 @@ namespace MphRead.Sound
             Instance.QueueStream((int)id, delay, expiration);
         }
 
-        public static void Load()
+        public static void Load(Scene scene)
         {
             Instance = new SfxInstance();
             try
             {
-                Instance.Load();
+                Instance.Load(scene);
             }
             catch (DllNotFoundException)
             {
@@ -281,6 +281,18 @@ namespace MphRead.Sound
                 AL.SourcePlay(channelId);
             }
 
+            public bool IsLooping()
+            {
+                for (int i = 0; i < _maxPerInst; i++)
+                {
+                    if (Loop[i])
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             public void UpdateLoop()
             {
                 for (int i = 0; i < _maxPerInst; i++)
@@ -314,7 +326,7 @@ namespace MphRead.Sound
             {
                 if (Source == null || Source.Self)
                 {
-                    Vector3 sourcePos = PlayerEntity.Main.CameraInfo.Position;
+                    Vector3 sourcePos = Sfx.Instance.GetListenerPosition();
                     for (int i = 0; i < _maxPerInst; i++)
                     {
                         SoundChannel? channel = Channels[i];
@@ -443,6 +455,47 @@ namespace MphRead.Sound
         private IReadOnlyList<SfxScriptFile> _sfxScripts = null!;
         private IReadOnlyList<Sound3dEntry> _rangeData = null!;
         public override IReadOnlyList<Sound3dEntry> RangeData => _rangeData;
+
+        private Scene? _scene = null;
+
+        public override Vector3 GetListenerPosition()
+        {
+            if (_scene == null)
+            {
+                return base.GetListenerPosition();
+            }
+            if (_scene.CameraMode == CameraMode.Player)
+            {
+                return PlayerEntity.Main.CameraInfo.Position;
+            }
+            return _scene.CameraPosition;
+        }
+
+        public override Vector3 GetListenerUp()
+        {
+            if (_scene == null)
+            {
+                return base.GetListenerUp();
+            }
+            if (_scene.CameraMode == CameraMode.Player)
+            {
+                return PlayerEntity.Main.CameraInfo.UpVector;
+            }
+            return _scene.ViewMatrix.Row1.Xyz.Normalized();
+        }
+
+        public override Vector3 GetListenerFacing()
+        {
+            if (_scene == null)
+            {
+                return base.GetListenerFacing();
+            }
+            if (_scene.CameraMode == CameraMode.Player)
+            {
+                return PlayerEntity.Main.CameraInfo.Facing;
+            }
+            return _scene.ViewMatrix.Row2.Xyz.Normalized();
+        }
 
         public override int PlaySample(int id, SoundSource? source, bool? loop, bool noUpdate,
             float recency, bool sourceOnly, bool cancellable)
@@ -719,12 +772,12 @@ namespace MphRead.Sound
             return value1 + (value2 - value1) * ratio;
         }
 
-        public override void StopAllSound()
+        public override void StopAllSound(bool force = true)
         {
             for (int i = 0; i < _instances.Length; i++)
             {
                 SoundInstance inst = _instances[i];
-                if (inst.SfxId != -1)
+                if (inst.SfxId != -1 && (force || inst.Source != null || inst.IsLooping()))
                 {
                     inst.Stop();
                 }
@@ -1049,7 +1102,6 @@ namespace MphRead.Sound
                 // in the latter case, the center pan overrides any sourced positional audio
                 if (entry.Pan > -1)
                 {
-                    Debug.WriteLine($"panning {inst.ScriptFile.Name} #{inst.ScriptIndex}");
                     int channelId = inst.Channels[index].Id;
                     AL.Source(channelId, ALSourceb.SourceRelative, true);
                     AL.Source(channelId, ALSourcef.RolloffFactor, 0);
@@ -1067,15 +1119,14 @@ namespace MphRead.Sound
 
         public override void Update(float time)
         {
-            Vector3 listenerPos = PlayerEntity.Main.CameraInfo.Position;
-            Vector3 listenerUp = PlayerEntity.Main.CameraInfo.UpVector;
-            Vector3 listenerFacing = PlayerEntity.Main.CameraInfo.Facing;
+            Vector3 listenerPos = GetListenerPosition();
+            Vector3 listenerUp = GetListenerUp();
+            Vector3 listenerFacing = GetListenerFacing();
             AL.Listener(ALListener3f.Position, ref listenerPos);
             AL.Listener(ALListenerfv.Orientation, ref listenerFacing, ref listenerUp);
             Debug.Assert(_streamInstance != -1);
             Debug.Assert(_streamBuffer != -1);
-            Vector3 sourcePos = PlayerEntity.Main.CameraInfo.Position;
-            AL.Source(_streamInstance, ALSource3f.Position, ref sourcePos);
+            AL.Source(_streamInstance, ALSource3f.Position, ref listenerPos);
             AL.Source(_streamInstance, ALSourcef.ReferenceDistance, Single.MaxValue);
             AL.Source(_streamInstance, ALSourcef.MaxDistance, Single.MaxValue);
             AL.Source(_streamInstance, ALSourcef.RolloffFactor, 1);
@@ -1191,13 +1242,14 @@ namespace MphRead.Sound
             // --> we can't really do that, so we just take the parameters of the closest source, and have no panning (for now?)
             Debug.Assert(index >= 0 && index < _environmentItems.Count);
             EnvironmentItem item = _environmentItems[index];
-            CameraInfo? camInfo = PlayerEntity.Main.CameraInfo;
-            float distSqr = Vector3.DistanceSquared(source.Position, camInfo.Position);
+            Vector3 listenerPos = GetListenerPosition();
+            Vector3 listenerFacing = GetListenerFacing();
+            float distSqr = Vector3.DistanceSquared(source.Position, listenerPos);
             if (distSqr < item.DistanceSquared)
             {
                 item.DistanceSquared = distSqr;
                 float dist = MathF.Sqrt(distSqr);
-                item.Source.Position = camInfo.Position + camInfo.Facing * dist;
+                item.Source.Position = listenerPos + listenerFacing * dist;
                 item.Source.ReferenceDistance = source.ReferenceDistance;
                 item.Source.MaxDistance = source.MaxDistance;
                 item.Source.RolloffFactor = source.RolloffFactor;
@@ -1338,8 +1390,9 @@ namespace MphRead.Sound
             }
         }
 
-        public override void Load()
+        public override void Load(Scene scene)
         {
+            _scene = scene;
             _samples = SoundRead.ReadSoundSamples();
             SoundTable table = SoundRead.ReadSoundTables();
             Debug.Assert(_samples.Count == table.Entries.Count);
@@ -1424,12 +1477,28 @@ namespace MphRead.Sound
                 _context = ALContext.Null;
                 _device = ALDevice.Null;
             });
+            _scene = null;
         }
     }
 
     public class SfxInstanceBase
     {
         public virtual IReadOnlyList<Sound3dEntry> RangeData { get; } = new List<Sound3dEntry>();
+
+        public virtual Vector3 GetListenerPosition()
+        {
+            return Vector3.Zero;
+        }
+
+        public virtual Vector3 GetListenerUp()
+        {
+            return Vector3.UnitY;
+        }
+
+        public virtual Vector3 GetListenerFacing()
+        {
+            return -Vector3.UnitZ;
+        }
 
         public virtual void QueueStream(int id, float delay, float expiration)
         {
@@ -1471,7 +1540,7 @@ namespace MphRead.Sound
         {
         }
 
-        public virtual void StopAllSound()
+        public virtual void StopAllSound(bool force = false)
         {
         }
 
@@ -1497,7 +1566,7 @@ namespace MphRead.Sound
         {
         }
 
-        public virtual void Load()
+        public virtual void Load(Scene scene)
         {
         }
 

@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats;
+using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -24,7 +25,7 @@ namespace MphRead.Entities
         private float _ySpeed = 0;
         private bool _grounded = false;
         private Vector3 _aimVector;
-        private ushort _targetTimer = 0;
+        private ushort _targetTimer = 0; // todo: is this always zero?
         private ushort _cooldownTimer = 0;
         private float _cooldownFactor = 1.5f;
 
@@ -83,6 +84,14 @@ namespace MphRead.Entities
             position = Position;
             up = Vector3.UnitY;
             facing = FacingVector;
+        }
+
+        public void Reposition(Vector3 offset, NodeRef nodeRef)
+        {
+            Position += offset;
+            _target = null;
+            _targetTimer = 0;
+            NodeRef = nodeRef;
         }
 
         public void OnTakeDamage(EntityBase attacker, uint damage)
@@ -256,7 +265,7 @@ namespace MphRead.Entities
             }
             // todo?: wifi stuff
             Debug.Assert(_scene.Room != null);
-            if (Position.Y < _scene.Room.Metadata.KillHeight)
+            if (Position.Y < _scene.Room.Meta.KillHeight)
             {
                 Die();
             }

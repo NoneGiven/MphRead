@@ -70,6 +70,13 @@ namespace MphRead
         Player
     }
 
+    public enum AfterFade
+    {
+        None,
+        Exit,
+        LoadRoom
+    }
+
     public partial class Scene
     {
         public Vector2i Size { get; set; }
@@ -157,11 +164,10 @@ namespace MphRead
         private bool _exiting = false;
         private bool _roomLoaded = false;
         private RoomEntity? _room = null;
-        private int _roomId = -1;
         public GameMode GameMode { get; set; } = GameMode.SinglePlayer;
         public bool Multiplayer => GameMode != GameMode.SinglePlayer;
-        public int RoomId => _roomId;
-        public int AreaId { get; set; }
+        public int RoomId { get; set; } = -1;
+        public int AreaId { get; set; } = -1;
 
         public Matrix4 ViewMatrix => _viewMatrix;
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
@@ -224,6 +230,7 @@ namespace MphRead
             GameMode = mode;
             (RoomEntity room, RoomMetadata meta, CollisionInstance collision, IReadOnlyList<EntityBase> entities)
                 = SceneSetup.LoadRoom(name, this, playerCount, bossFlags, nodeLayerMask, entityLayerId);
+            GameState.StorySave.SetVisitedRoom(RoomId);
             if (GameMode == GameMode.None)
             {
                 GameMode = meta.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;
@@ -243,12 +250,21 @@ namespace MphRead
                 InitEntity(entity);
             }
             SceneSetup.LoadItemResources(this);
+            SceneSetup.LoadObjectResources(this);
+            SceneSetup.LoadPlatformResources(this);
             SceneSetup.LoadEnemyResources(this);
             GameState.Setup(this);
             if (Multiplayer)
             {
                 Menu.ApplySettings();
             }
+            SetRoomValues(meta);
+            _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
+            _inputMode = _cameraMode == CameraMode.Player ? InputMode.All : InputMode.CameraOnly;
+        }
+
+        public void SetRoomValues(RoomMetadata meta)
+        {
             _light1Vector = meta.Light1Vector;
             _light1Color = new Vector3(
                 meta.Light1Color.Red / 31.0f,
@@ -277,9 +293,20 @@ namespace MphRead
             }
             _killHeight = meta.KillHeight;
             _farClip = meta.FarClip;
-            _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
-            _inputMode = _cameraMode == CameraMode.Player ? InputMode.PlayerOnly : InputMode.CameraOnly;
-            _roomId = room.RoomId;
+
+            if (_shaderProgramId != 0)
+            {
+                SetShaderFog();
+            }
+        }
+
+        private void SetShaderFog()
+        {
+            float fogMin = _fogOffset / (float)0x7FFF;
+            float fogMax = (_fogOffset + 32 * (0x400 >> _fogSlope)) / (float)0x7FFF;
+            GL.Uniform4(_shaderLocations.FogColor, _fogColor);
+            GL.Uniform1(_shaderLocations.FogMinDistance, fogMin);
+            GL.Uniform1(_shaderLocations.FogMaxDistance, fogMax);
         }
 
         // called before load
@@ -303,11 +330,21 @@ namespace MphRead
         // called after load -- entity needs init
         public void AddEntity(EntityBase entity)
         {
+            InsertEntity(entity);
+            InitializeEntity(entity);
+        }
+
+        public void InsertEntity(EntityBase entity)
+        {
             _entities.Add(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
             }
+        }
+
+        public void InitializeEntity(EntityBase entity)
+        {
             // important to call in this order because the entity may add models (at least in development)
             entity.Initialize();
             InitEntity(entity);
@@ -344,6 +381,11 @@ namespace MphRead
         {
             _entityMap.Remove(entity.Id);
             _entities.Remove(entity);
+        }
+
+        public void RemoveEntityFromMap(EntityBase entity)
+        {
+            _entityMap.Remove(entity.Id);
         }
 
         public NodeRef UpdateNodeRef(NodeRef current, Vector3 prevPos, Vector3 curPos)
@@ -599,12 +641,7 @@ namespace MphRead
                 floats.Add(vector.Z);
             }
             GL.Uniform3(_shaderLocations.ToonTable, Metadata.ToonTable.Count, floats.ToArray());
-
-            float fogMin = _fogOffset / (float)0x7FFF;
-            float fogMax = (_fogOffset + 32 * (0x400 >> _fogSlope)) / (float)0x7FFF;
-            GL.Uniform4(_shaderLocations.FogColor, _fogColor);
-            GL.Uniform1(_shaderLocations.FogMinDistance, fogMin);
-            GL.Uniform1(_shaderLocations.FogMaxDistance, fogMax);
+            SetShaderFog();
         }
 
         public void InitEntity(EntityBase entity)
@@ -909,10 +946,10 @@ namespace MphRead
             LoadModel(Read.GetModelInstance(name, firstHunt).Model);
         }
 
-        public void LoadModel(Model model)
+        public void LoadModel(Model model, bool isRoom = false)
         {
             InitTextures(model);
-            GenerateLists(model, isRoom: false);
+            GenerateLists(model, isRoom);
         }
 
         private void InitTextures(Model model)
@@ -1065,6 +1102,7 @@ namespace MphRead
                 {
                     PlayerEntity.Main.Controls.ClearAll();
                 }
+                _room?.UpdateTransition();
             }
             OnKeyHeld();
             _singleParticleCount = 0;
@@ -1096,6 +1134,10 @@ namespace MphRead
                 UpdateCameraPosition();
             }
             UpdateProjection();
+            if (ProcessFrame && PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && !GameState.DialogPause)
+            {
+                PlayerEntity.Main.UpdateHud();
+            }
             GetDrawItems();
             if (ProcessFrame)
             {
@@ -1347,6 +1389,7 @@ namespace MphRead
                 GL.UseProgram(_rttShaderProgramId);
             }
             GL.Disable(EnableCap.CullFace);
+            GL.Uniform4(_shaderLocations.FadeColor, _fadeColor, _fadeColor, _fadeColor, 0);
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
             {
                 DrawHudLayer(Layer4Info); // ice layer
@@ -1454,7 +1497,7 @@ namespace MphRead
             }
         }
 
-        private void UnloadModel(Model model)
+        public void UnloadModel(Model model)
         {
             if (_texPalMap.TryGetValue(model.Id, out TextureMap? map))
             {
@@ -2519,6 +2562,19 @@ namespace MphRead
             return _nextPolygonId++;
         }
 
+        public ConcurrentQueue<EntityBase> LoadedEntities { get; } = new ConcurrentQueue<EntityBase>();
+        public bool InitEntities { get; set; }
+
+        public void InitLoadedEntity(int count)
+        {
+            int i = 0;
+            while ((count == -1 || i++ < count) && LoadedEntities.TryDequeue(out EntityBase? entity))
+            {
+                InitializeEntity(entity);
+                SceneSetup.LoadEntityResources(entity, this);
+            }
+        }
+
         private void UpdateScene()
         {
             bool playerActive = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active);
@@ -2532,7 +2588,7 @@ namespace MphRead
                 for (int i = 0; i < _entities.Count; i++)
                 {
                     EntityBase entity = _entities[i];
-                    if (!entity.Process())
+                    if (entity.Initialized && !entity.Process())
                     {
                         SendMessage(Message.Destroyed, entity, null, 0, 0, delay: 1);
                         // todo: need to handle destroying vs. unloading etc.
@@ -2543,7 +2599,6 @@ namespace MphRead
                 if (playerActive)
                 {
                     PlayerEntity.Main.ProcessModeHud();
-                    PlayerEntity.Main.UpdateHud();
                 }
                 GameState.UpdateFrame(this);
                 GameState.UpdateState(this);
@@ -2569,6 +2624,10 @@ namespace MphRead
             for (int i = 0; i < _entities.Count; i++)
             {
                 EntityBase entity = _entities[i];
+                if (!entity.Initialized)
+                {
+                    continue;
+                }
                 if (entity.Type != EntityType.Player || _destroyedEntities.Contains(entity))
                 {
                     continue;
@@ -2584,6 +2643,10 @@ namespace MphRead
             for (int i = 0; i < _entities.Count; i++)
             {
                 EntityBase entity = _entities[i];
+                if (!entity.Initialized)
+                {
+                    continue;
+                }
                 if (entity.Type == EntityType.Player || entity.Type == EntityType.Room || _destroyedEntities.Contains(entity))
                 {
                     continue;
@@ -2678,14 +2741,15 @@ namespace MphRead
         }
 
         private FadeType _fadeType = FadeType.None;
+        public FadeType FadeType => _fadeType;
         private float _fadeColor = 0;
         private bool _fadeIn = false;
         private float _fadeStart = 0;
         private float _fadeLength = 0;
         private float _fadePercent = 0;
-        private bool _exitAfterFade = false; // skdebug
+        private AfterFade _afterFade = AfterFade.None;
 
-        public void SetFade(FadeType type, float length, bool overwrite, bool exitAfterFade = false)
+        public void SetFade(FadeType type, float length, bool overwrite, AfterFade afterFade = AfterFade.None)
         {
             if (!overwrite && _fadeType != FadeType.None)
             {
@@ -2723,7 +2787,7 @@ namespace MphRead
             }
             _fadeStart = _globalElapsedTime;
             _fadeLength = length;
-            _exitAfterFade = exitAfterFade;
+            _afterFade = afterFade;
         }
 
         private void UpdateFade()
@@ -2750,15 +2814,17 @@ namespace MphRead
         public void DoCleanup()
         {
             _exiting = true;
+            _room?.CancelTransition();
             PlatformEntity.DestroyBeams();
             EnemyInstanceEntity.DestroyBeams();
             Sound.Sfx.ShutDown();
             OutputStop();
+            Selection.Clear();
         }
 
         private void EndFade()
         {
-            if (_exitAfterFade)
+            if (_afterFade == AfterFade.Exit)
             {
                 _fadeType = FadeType.None;
                 DoCleanup();
@@ -2772,6 +2838,11 @@ namespace MphRead
             else if (_fadeType == FadeType.FadeOutInWhite)
             {
                 SetFade(FadeType.FadeInWhite, _fadeLength, overwrite: true);
+            }
+            else if (_afterFade == AfterFade.LoadRoom)
+            {
+                Debug.Assert(_room != null);
+                _room.LoadRoom();
             }
             else
             {
@@ -3619,7 +3690,7 @@ namespace MphRead
                     else if (_cameraMode == CameraMode.Roam)
                     {
                         _cameraMode = CameraMode.Player;
-                        _inputMode = InputMode.PlayerOnly;
+                        _inputMode = InputMode.All;
                     }
                     else
                     {
