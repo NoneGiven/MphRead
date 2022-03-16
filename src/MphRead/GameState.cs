@@ -418,12 +418,10 @@ namespace MphRead
             }
         }
 
-        private static bool _oublietteUnlocked = false; // skdebug
-
         public static void ModeStateAdventure(Scene scene)
         {
             PlayerEntity.Main.SaveStatus();
-            if (!_oublietteUnlocked)
+            if ((StorySave.Areas & 0x100) == 0)
             {
                 for (int i = 0; i < scene.MessageQueue.Count; i++)
                 {
@@ -433,7 +431,7 @@ namespace MphRead
                         if (StorySave.CurrentOctoliths == 0xFF)
                         {
                             // todo: play movie and defer dialog
-                            _oublietteUnlocked = true; // sktodo
+                            StorySave.Areas |= 0x100;
                             StorySave.CurrentOctoliths = 0;
                             // GUNSHIP TRANSMISSION severe timefield disruption detected in the vicinity of the ALIMBIC CLUSTER.
                             PlayerEntity.Main.ShowDialog(DialogType.Okay, messageId: 43);
@@ -446,7 +444,6 @@ namespace MphRead
                                 if (entity.Type == EntityType.CameraSequence)
                                 {
                                     scene.SendMessage(Message.Activate, null!, entity, param1: 0, param2: 0);
-                                    _oublietteUnlocked = true; // skdebug
                                     break;
                                 }
                             }
@@ -1308,7 +1305,6 @@ namespace MphRead
             EscapeState = EscapeState.None;
             EscapeTimer = -1;
             EscapePaused = false;
-            _oublietteUnlocked = false;
         }
     }
 
@@ -1332,6 +1328,7 @@ namespace MphRead
         public ushort FoundOctoliths { get; set; }
         public ushort CurrentOctoliths { get; set; }
         public uint LostOctoliths { get; set; } = UInt32.MaxValue;
+        public ushort Areas { get; set; } = 0xC; // Celestial Archives 1 & 2
 
         public StorySave()
         {
