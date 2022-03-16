@@ -423,7 +423,7 @@ namespace MphRead
 
         public static void ModeStateAdventure(Scene scene)
         {
-            // todo: update save
+            PlayerEntity.Main.SaveStatus();
             if (!_oublietteUnlocked)
             {
                 for (int i = 0; i < scene.MessageQueue.Count; i++)
@@ -466,7 +466,7 @@ namespace MphRead
                         scene.SendMessage(Message.SetActive, null!, message.Sender, param1: 0, param2: 0);
                         StorySave.CheckpointEntityId = message.Sender.Id;
                         StorySave.CheckpointRoomId = scene.Room.RoomId;
-                        // todo: update clean save
+                        UpdateCleanSave(force: false);
                         break;
                     }
                 }
@@ -625,6 +625,7 @@ namespace MphRead
                     else if (prompt == PromptType.GameOver)
                     {
                         // yes to game over (continue)
+                        RestoreCleanSave();
                         Debug.Assert(scene.Room != null);
                         if (StorySave.CheckpointRoomId == -1) // skdebug
                         {
@@ -672,7 +673,7 @@ namespace MphRead
                             PlayerEntity.Main.DialogPromptType = PromptType.ShipHatch;
                             StorySave.CheckpointEntityId = message.Sender.Id;
                             StorySave.CheckpointRoomId = scene.Room.RoomId;
-                            // todo: update clean save
+                            UpdateCleanSave(force: true);
                             // HUNTER GUNSHIP enter your ship?
                             PlayerEntity.Main.ShowDialog(DialogType.YesNo, messageId: 1);
                             Sfx.Instance.StopFreeSfxScripts();
@@ -1202,11 +1203,27 @@ namespace MphRead
             return 0;
         }
 
+        private static StorySave _cleanStorySave = null!;
         public static StorySave StorySave { get; private set; } = null!;
+
+        public static void UpdateCleanSave(bool force)
+        {
+            if (!force && EscapeTimer != -1 && EscapeState == EscapeState.Escape)
+            {
+                return;
+            }
+            StorySave.CopyTo(_cleanStorySave);
+        }
+
+        public static void RestoreCleanSave()
+        {
+            _cleanStorySave.CopyTo(StorySave);
+        }
 
         public static void Reset()
         {
             // todo: persist story saves
+            _cleanStorySave = new StorySave();
             StorySave = new StorySave();
             MatchState = MatchState.InProgress;
             TransitionState = TransitionState.None;
@@ -1281,6 +1298,27 @@ namespace MphRead
         public int EquipmentCount { get; set; }
         public int CheckpointEntityId { get; set; } = -1;
         public int CheckpointRoomId { get; set; } = -1;
+        public int Health { get; set; }
+        public int HealthMax { get; set; }
+        public int[] Ammo { get; } = new int[2];
+        public int[] AmmoMax { get; } = new int[2];
+        public int[] WeaponSlots { get; } = new int[3];
+        public ushort UnlockedWeapons { get; set; } // sktodo: don't persist Omega Cannon
+
+        public StorySave()
+        {
+            PlayerValues values = Metadata.PlayerValues[0];
+            // skdebug
+            Health = HealthMax = 799; // values.EnergyTank - 1;
+            Ammo[0] = AmmoMax[0] = 4000; // 400
+            Ammo[1] = 950; // 0
+            AmmoMax[1] = 950; // 50
+            WeaponSlots[0] = (int)BeamType.PowerBeam;
+            WeaponSlots[1] = (int)BeamType.Missile;
+            WeaponSlots[2] = (int)BeamType.None;
+            UnlockedWeapons = 0xFF; // (int)BeamType.PowerBeam | (int)BeamType.Missile
+            // sktodo: default logbook, etc.
+        }
 
         public int InitRoomState(int roomId, int entityId, bool active,
             int activeState = 3, int inactiveState = 1)
@@ -1383,6 +1421,18 @@ namespace MphRead
             int index = scanId / 8;
             byte bit = (byte)(1 << (scanId % 8));
             return (Logbook[index] & bit) != 0;
+        }
+
+        public void CopyTo(StorySave other)
+        {
+            Array.Copy(RoomState, other.RoomState, length: RoomState.Length);
+            VisitedRooms.CopyTo(other.VisitedRooms, index: 0);
+            TriggerState.CopyTo(other.TriggerState, index: 0);
+            Logbook.CopyTo(other.Logbook, index: 0);
+            other.ScanCount = ScanCount;
+            other.EquipmentCount = EquipmentCount;
+            other.CheckpointEntityId = CheckpointEntityId;
+            other.CheckpointRoomId = CheckpointRoomId;
         }
     }
 }

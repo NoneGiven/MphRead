@@ -1188,7 +1188,7 @@ namespace MphRead.Entities
                         _timeSincePickup = 0;
                         _healthMax += Values.EnergyTank;
                         _healthRecovery = _healthMax - _health;
-                        // todo: update story save
+                        GameState.StorySave.HealthMax = _healthMax;
                         if (IsMainPlayer)
                         {
                             // ENERGY TANK FOUND the POWER SUIT can now store 100 more UNITS of energy.
@@ -1203,7 +1203,7 @@ namespace MphRead.Entities
                         _timeSincePickup = 0;
                         _ammoMax[1] += 100;
                         _ammoRecovery[1] = _ammoMax[1] - _ammo[1];
-                        // todo: update story save
+                        GameState.StorySave.AmmoMax[1] = _ammoMax[1];
                         if (IsMainPlayer)
                         {
                             // MISSILE EXPANSION FOUND your MISSILE capacity is increased by 10 UNITS.
@@ -1218,7 +1218,7 @@ namespace MphRead.Entities
                         _timeSincePickup = 0;
                         _ammoMax[0] += 300;
                         _ammoRecovery[0] = _ammoMax[0] - _ammo[0];
-                        // todo: update story save
+                        GameState.StorySave.AmmoMax[0] = _ammoMax[0];
                         if (IsMainPlayer)
                         {
                             // UA EXPANSION FOUND your UNIVERSAL AMMO capacity is increased by 30 UNITS.
@@ -1278,10 +1278,9 @@ namespace MphRead.Entities
             {
                 return;
             }
-            if (!_scene.Multiplayer)
+            if (!_scene.Multiplayer && (GameState.StorySave.UnlockedWeapons & (1 << (int)weapon)) == 0)
             {
-                // todo: only show dialog if we didn't already have the weapon unlock
-                // todo: update story save
+                GameState.StorySave.UnlockedWeapons |= (ushort)(1 << (int)weapon);
                 int weaponId = (int)weapon;
                 string value1 = Metadata.WeaponNamesUpper[weaponId];
                 string value2 = "";
