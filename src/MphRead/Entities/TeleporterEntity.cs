@@ -81,11 +81,12 @@ namespace MphRead.Entities
             // 8, 10, 11, 255 = small teleporter (no apparent meaning to each value beyond that)
             if (data.ArtifactId < 8)
             {
-                // todo: set artifacts active based on state
                 string name = $"Artifact0{data.ArtifactId + 1}";
                 ModelInstance inst = SetUpModel(name);
-                _models.Add(inst);
-                _models.Add(inst);
+                inst.SetAnimation(-1);
+                inst = SetUpModel(name);
+                inst.SetAnimation(-1);
+                inst = SetUpModel(name);
                 inst.SetAnimation(-1);
                 float angleY = MathHelper.DegreesToRadians(337 * (360 / 4096f));
                 float angleZ = MathHelper.DegreesToRadians(360 * (360 / 4096f));
@@ -100,14 +101,14 @@ namespace MphRead.Entities
             if (multiplayer)
             {
                 AddPlaceholderModel();
-                _targetPos = _data.TargetPosition.ToFloatVector();
+                _targetPos = data.TargetPosition.ToFloatVector();
             }
             if (data.Invisible == 0)
             {
                 if (_big)
                 {
                     Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
-                    bool active = true; // todo: use artifact count from story save
+                    bool active = GameState.StorySave.CountFoundArtifacts(data.ArtifactId) > 2;
                     if (active && (GameState.EscapeTimer == -1 || GameState.EscapeState != EscapeState.Escape))
                     {
                         Active = true;
@@ -157,7 +158,7 @@ namespace MphRead.Entities
                 }
                 else if (_big && !Active)
                 {
-                    bool active = true; // todo: use artifact count from story save
+                    bool active = GameState.StorySave.CountFoundArtifacts(_data.ArtifactId) > 2;
                     if (active && PlayerEntity.Main.Health > 0
                         && (GameState.EscapeTimer == -1 || GameState.EscapeState != EscapeState.Escape))
                     {
@@ -386,6 +387,13 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo()
         {
+            if (_models.Count == 4)
+            {
+                StorySave save = GameState.StorySave;
+                _models[1].Active = save.CheckFoundArtifact(artifactId: 0, _data.ArtifactId);
+                _models[2].Active = save.CheckFoundArtifact(artifactId: 1, _data.ArtifactId);
+                _models[3].Active = save.CheckFoundArtifact(artifactId: 2, _data.ArtifactId);
+            }
             if (IsVisible(NodeRef))
             {
                 base.GetDrawInfo();

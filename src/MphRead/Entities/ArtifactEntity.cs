@@ -35,6 +35,21 @@ namespace MphRead.Entities
             }
             Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
             Active = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: _data.Active != 0, activeState: 2) != 0;
+            if (data.ModelId < 8)
+            {
+                if (GameState.StorySave.CheckFoundArtifact(data.ArtifactId, data.ModelId))
+                {
+                    Active = false;
+                }
+            }
+            else if (Id != -1)
+            {
+                // the game does this by checking both current and lost octoliths, but this is simpler
+                if (GameState.StorySave.CheckFoundOctolith(data.ArtifactId))
+                {
+                    Active = false;
+                }
+            }
         }
 
         public override void Initialize()
@@ -154,7 +169,7 @@ namespace MphRead.Entities
                 }
                 if (_data.ModelId >= 8)
                 {
-                    // todo: update story save
+                    GameState.StorySave.UpdateFoundOctolith(_data.ArtifactId);
                     if (Id == -1)
                     {
                         // OCTOLITH RECLAIMED you recovered a stolen OCTOLITH!
@@ -162,21 +177,33 @@ namespace MphRead.Entities
                     }
                     else
                     {
-                        // todo: start movie, update global state and story save, defer the dialog
+                        // todo: start movie, update global state and story save, defer the second dialog
                         // OCTOLITH ACQUIRED you obtained an OCTOLITH!
                         PlayerEntity.Main.ShowDialog(DialogType.Event, messageId: 7, param1: (int)EventType.Octolith);
-                        int messageId = _octolithMessageIds[0]; // todo: get index from story save
+                        int collected = GameState.StorySave.CountFoundOctoliths();
+                        int messageId = _octolithMessageIds[collected - 1];
                         _scene.SendMessage(Message.ShowPrompt, this, null, param1: messageId, param2: 0, delay: 1);
                     }
                 }
                 else
                 {
-                    int collected = 1;
-                    // todo: update story save
-                    _soundSource.PlayFreeSfx(SfxId.ARTIFACT1); // sfxtodo: play correct SFX
+                    int collected = GameState.StorySave.CountFoundArtifacts(_data.ModelId);
+                    if (collected >= 2)
+                    {
+                        _soundSource.PlayFreeSfx(SfxId.ARTIFACT3);
+                    }
+                    else if (collected == 1)
+                    {
+                        _soundSource.PlayFreeSfx(SfxId.ARTIFACT2);
+                    }
+                    else
+                    {
+                        _soundSource.PlayFreeSfx(SfxId.ARTIFACT1);
+                    }
+                    GameState.StorySave.UpdateFoundArtifact(_data.ArtifactId, _data.ModelId);
                     // ARTIFACT DISCOVERED you retrieved an ALIMBIC ARTIFACT!
                     PlayerEntity.Main.ShowDialog(DialogType.Event, messageId: 6, param1: (int)EventType.Artifact);
-                    if (collected > 2)
+                    if (collected >= 2)
                     {
                         // PORTAL ACTIVATED long-range thermomagnetic-resonance scanners indicate remote
                         // and inaccessible chambers. use the PORTAL to access the inaccessible.

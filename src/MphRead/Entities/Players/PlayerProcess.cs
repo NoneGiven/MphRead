@@ -1278,9 +1278,9 @@ namespace MphRead.Entities
             {
                 return;
             }
-            if (!_scene.Multiplayer && (GameState.StorySave.UnlockedWeapons & (1 << (int)weapon)) == 0)
+            if (!_scene.Multiplayer && (GameState.StorySave.Weapons & (1 << (int)weapon)) == 0)
             {
-                GameState.StorySave.UnlockedWeapons |= (ushort)(1 << (int)weapon);
+                GameState.StorySave.Weapons |= (ushort)(1 << (int)weapon);
                 int weaponId = (int)weapon;
                 string value1 = Metadata.WeaponNamesUpper[weaponId];
                 string value2 = "";

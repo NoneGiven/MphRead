@@ -419,7 +419,6 @@ namespace MphRead
         }
 
         private static bool _oublietteUnlocked = false; // skdebug
-        private static bool _hasAllOctoliths = false; // skdebug
 
         public static void ModeStateAdventure(Scene scene)
         {
@@ -431,10 +430,11 @@ namespace MphRead
                     MessageInfo message = scene.MessageQueue[i];
                     if (message.Message == Message.UnlockOubliette && message.ExecuteFrame == scene.FrameCount)
                     {
-                        if (_hasAllOctoliths)
+                        if (StorySave.CurrentOctoliths == 0xFF)
                         {
                             // todo: play movie and defer dialog
-                            _oublietteUnlocked = true;
+                            _oublietteUnlocked = true; // sktodo
+                            StorySave.CurrentOctoliths = 0;
                             // GUNSHIP TRANSMISSION severe timefield disruption detected in the vicinity of the ALIMBIC CLUSTER.
                             PlayerEntity.Main.ShowDialog(DialogType.Okay, messageId: 43);
                         }
@@ -1217,7 +1217,31 @@ namespace MphRead
 
         public static void RestoreCleanSave()
         {
+            // todo: save and restore more fields
+            ushort prevFoundOctos = StorySave.FoundOctoliths;
+            ushort prevCurOctos = StorySave.CurrentOctoliths;
+            uint prevLostOctos = StorySave.LostOctoliths;
             _cleanStorySave.CopyTo(StorySave);
+            int curCurCount = 0;
+            int prevCurCount = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                if ((StorySave.CurrentOctoliths & (1 << i)) != 0)
+                {
+                    curCurCount++;
+                }
+                if ((prevCurOctos & (1 << i)) != 0)
+                {
+                    prevCurCount++;
+                }
+            }
+            if (curCurCount > prevCurCount)
+            {
+                // octolith has been lost -- need to restore values from the dirty save
+                StorySave.FoundOctoliths = prevFoundOctos;
+                StorySave.CurrentOctoliths = prevCurOctos;
+                StorySave.LostOctoliths = prevLostOctos;
+            }
         }
 
         public static void Reset()
@@ -1303,7 +1327,11 @@ namespace MphRead
         public int[] Ammo { get; } = new int[2];
         public int[] AmmoMax { get; } = new int[2];
         public int[] WeaponSlots { get; } = new int[3];
-        public ushort UnlockedWeapons { get; set; } // sktodo: don't persist Omega Cannon
+        public ushort Weapons { get; set; } // sktodo: don't persist Omega Cannon
+        public ushort Artifacts { get; set; }
+        public ushort FoundOctoliths { get; set; }
+        public ushort CurrentOctoliths { get; set; }
+        public uint LostOctoliths { get; set; } = UInt32.MaxValue;
 
         public StorySave()
         {
@@ -1316,8 +1344,17 @@ namespace MphRead
             WeaponSlots[0] = (int)BeamType.PowerBeam;
             WeaponSlots[1] = (int)BeamType.Missile;
             WeaponSlots[2] = (int)BeamType.None;
-            UnlockedWeapons = 0xFF; // (int)BeamType.PowerBeam | (int)BeamType.Missile
-            // sktodo: default logbook, etc.
+            Weapons = 0xFF; // (int)BeamType.PowerBeam | (int)BeamType.Missile
+            // todo: initialize more fields
+            UpdateLogbook(1); // SCAN VISOR
+            UpdateLogbook(2); // THERMAL POSITIONER
+            UpdateLogbook(3); // ARM CANNON
+            UpdateLogbook(4); // POWER BEAM
+            UpdateLogbook(5); // MISSILE LAUNCHER
+            UpdateLogbook(6); // MORPH BALL
+            UpdateLogbook(7); // MORPH BALL BOMB
+            UpdateLogbook(27); // JUMP BOOTS
+            UpdateLogbook(29); // CHARGE SHOT
         }
 
         public int InitRoomState(int roomId, int entityId, bool active,
@@ -1393,6 +1430,53 @@ namespace MphRead
             roomId -= 27;
             (int byteIndex, int bitIndex) = Math.DivRem(roomId, 8);
             VisitedRooms[byteIndex] |= (byte)(1 << bitIndex);
+        }
+
+        public bool CheckFoundOctolith(int areaId)
+        {
+            return (FoundOctoliths & (1 << areaId)) != 0;
+        }
+
+        public int CountFoundOctoliths()
+        {
+            int count = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                if (CheckFoundOctolith(i))
+                {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        public void UpdateFoundOctolith(int areaId)
+        {
+            FoundOctoliths |= (ushort)(1 << areaId);
+            CurrentOctoliths |= (ushort)(1 << areaId);
+        }
+
+        public bool CheckFoundArtifact(int artifactId, int modelId)
+        {
+            return (Artifacts & (1 << (artifactId + 3 * modelId))) != 0;
+        }
+
+        public int CountFoundArtifacts(int modelId)
+        {
+            int count = 0;
+            for (int i = 0; i < 3; i++)
+            {
+                if (CheckFoundArtifact(i, modelId))
+                {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        public void UpdateFoundArtifact(int artifactId, int modelId)
+        {
+            Artifacts |= (ushort)(1 << (artifactId + 3 * modelId));
         }
 
         public void UpdateLogbook(int scanId)

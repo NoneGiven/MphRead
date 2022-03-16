@@ -1152,7 +1152,7 @@ namespace MphRead.Entities
             _availableCharges.ClearAll();
             if (!_scene.Multiplayer && IsMainPlayer) // todo: MP1P
             {
-                _availableWeapons.Set(GameState.StorySave.UnlockedWeapons);
+                _availableWeapons.Set(GameState.StorySave.Weapons);
                 _availableCharges.CopyFrom(_availableWeapons);
                 StorySave save = GameState.StorySave;
                 for (int i = 0; i < _weaponSlots.Length; i++)
