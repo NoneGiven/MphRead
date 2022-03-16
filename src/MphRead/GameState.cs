@@ -668,6 +668,7 @@ namespace MphRead
                         if (message.Message == Message.ShipHatch && message.ExecuteFrame == scene.FrameCount)
                         {
                             Debug.Assert(scene.Room != null);
+                            ResetEscapeState(updateSounds: false); // skdebug
                             PlayerEntity.Main.DialogPromptType = PromptType.ShipHatch;
                             StorySave.CheckpointEntityId = message.Sender.Id;
                             StorySave.CheckpointRoomId = scene.Room.RoomId;
