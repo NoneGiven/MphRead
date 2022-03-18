@@ -340,6 +340,7 @@ namespace MphRead.Entities
                 _scene.UnlinkEffectEntry(_burnEffect);
                 _burnEffect = null;
             }
+            base.Destroy();
         }
 
         public override void GetDrawInfo()

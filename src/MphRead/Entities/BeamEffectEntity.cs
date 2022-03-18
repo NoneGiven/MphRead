@@ -84,6 +84,7 @@ namespace MphRead.Entities
         public override void Destroy()
         {
             _scene.UnlinkBeamEffect(this);
+            base.Destroy();
         }
 
         public static BeamEffectEntity? Create(BeamEffectEntityData data, Scene scene)

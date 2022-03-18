@@ -626,6 +626,7 @@ namespace MphRead.Entities
             Effect = null;
             Owner = null!;
             _scene.UnlinkBomb(this);
+            base.Destroy();
         }
 
         public void PlaySpawnSfx()

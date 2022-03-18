@@ -2091,6 +2091,7 @@ namespace MphRead.Entities
                 _scene.UnlinkEffectEntry(_deathaltEffect);
                 _deathaltEffect = null;
             }
+            base.Destroy();
         }
     }
 }

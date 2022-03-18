@@ -504,6 +504,7 @@ namespace MphRead.Entities
             Portal = null;
             ConnectorModel = null;
             ConnectorCollision = null;
+            base.Destroy();
         }
 
         public override void GetDrawInfo()

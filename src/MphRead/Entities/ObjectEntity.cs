@@ -149,6 +149,7 @@ namespace MphRead.Entities
             {
                 _scene.UnlinkEffectEntry(_effectEntry);
             }
+            base.Destroy();
         }
 
         private void UpdateVisiblePosition()

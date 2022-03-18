@@ -1344,6 +1344,7 @@ namespace MphRead.Entities
             RicochetWeapon = null;
             Equip = null;
             _trailModel = null;
+            base.Destroy();
         }
 
         private static BeamProjectileEntity ChooseBeamSlot(EquipInfo equip, EntityBase owner)

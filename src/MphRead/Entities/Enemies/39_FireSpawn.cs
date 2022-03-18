@@ -411,6 +411,7 @@ namespace MphRead.Entities.Enemies
                 _scene.UnlinkEffectEntry(_effectEntry);
                 _effectEntry = null;
             }
+            base.Destroy();
         }
 
         #region Boilerplate
