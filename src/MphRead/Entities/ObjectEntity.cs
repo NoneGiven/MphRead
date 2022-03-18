@@ -268,7 +268,7 @@ namespace MphRead.Entities
                         needsUpdate = false;
                     }
                 }
-                else if (_data.ModelId == 53) // WallSwitch
+                else if (_data.ModelId == 53 && state == 1) // WallSwitch
                 {
                     _models[0].SetAnimation(animId, AnimFlags.NoLoop);
                     _soundSource.PlayFreeSfx(SfxId.F2_SWITCH);
