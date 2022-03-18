@@ -364,6 +364,7 @@ namespace MphRead.Entities
                 unaffected = true;
             }
             bool dead = false;
+            bool doubleDead = false;
             if (!unaffected)
             {
                 if (beamSource?.Owner?.Type == EntityType.Player)
@@ -377,6 +378,10 @@ namespace MphRead.Entities
                 if (damage >= _health)
                 {
                     dead = true;
+                    if (_health <= 0)
+                    {
+                        doubleDead = true;
+                    }
                     _health = 0;
                 }
                 else
@@ -406,6 +411,10 @@ namespace MphRead.Entities
             }
             else
             {
+                if (doubleDead && Bugfixes.NoDoubleEnemyDeath)
+                {
+                    return;
+                }
                 if (beamSource != null)
                 {
                     beamSource.SpawnDamageEffect(effectiveness);
