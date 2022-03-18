@@ -76,7 +76,6 @@ namespace MphRead.Entities
                 }
                 Recolor = _meta.RecolorId;
                 ModelInstance inst = SetUpModel(_meta.Name);
-                _state = (int)(_flags & ObjectFlags.State);
                 int animIndex = _meta.AnimationIds[_state];
                 // AlimbicCapsule
                 if (data.ModelId == 45)
