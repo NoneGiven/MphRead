@@ -345,6 +345,18 @@ namespace MphRead.Entities
             {
                 return new Enemy18Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
             }
+            if (type == EnemyType.Cretaphid)
+            {
+                return new Enemy19Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.CretaphidEye)
+            {
+                return new Enemy20Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.CretaphidCrystal)
+            {
+                return new Enemy21Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
             if (type == EnemyType.PsychoBit1)
             {
                 return new Enemy23Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);

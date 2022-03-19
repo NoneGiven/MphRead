@@ -1223,16 +1223,16 @@ namespace MphRead.Sound
 
         private static readonly IReadOnlyList<EnvironmentItem> _environmentItems = new EnvironmentItem[10]
         {
-            new EnvironmentItem(SfxId.ELECTRO_WAVE2),
-            new EnvironmentItem(SfxId.ELECTRICITY),
-            new EnvironmentItem(SfxId.ELECTRIC_BARRIER),
-            new EnvironmentItem(SfxId.ENERGY_BALL),
-            new EnvironmentItem(SfxId.BLUE_FLAME),
-            new EnvironmentItem(SfxId.CYLINDER_BOSS_ATTACK),
-            new EnvironmentItem(SfxId.CYLINDER_BOSS_SPIN),
-            new EnvironmentItem(SfxId.BUBBLES),
-            new EnvironmentItem(SfxId.ELEVATOR2_START),
-            new EnvironmentItem(SfxId.GOREA_ATTACK3_LOOP)
+            /* 0 */ new EnvironmentItem(SfxId.ELECTRO_WAVE2),
+            /* 1 */ new EnvironmentItem(SfxId.ELECTRICITY),
+            /* 2 */ new EnvironmentItem(SfxId.ELECTRIC_BARRIER),
+            /* 3 */ new EnvironmentItem(SfxId.ENERGY_BALL),
+            /* 4 */ new EnvironmentItem(SfxId.BLUE_FLAME),
+            /* 5 */ new EnvironmentItem(SfxId.CYLINDER_BOSS_ATTACK),
+            /* 6 */ new EnvironmentItem(SfxId.CYLINDER_BOSS_SPIN),
+            /* 7 */ new EnvironmentItem(SfxId.BUBBLES),
+            /* 8 */ new EnvironmentItem(SfxId.ELEVATOR2_START),
+            /* 9 */ new EnvironmentItem(SfxId.GOREA_ATTACK3_LOOP)
         };
 
         public override void PlayEnvironmentSfx(int index, SoundSource source)

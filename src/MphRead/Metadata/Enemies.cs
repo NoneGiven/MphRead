@@ -465,6 +465,491 @@ namespace MphRead
             }
         };
 
+        public static IReadOnlyList<EnemySubroutine<Enemy19Entity>> Enemy19Subroutines = new EnemySubroutine<Enemy19Entity>[27]
+        {
+            // state 0
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(1, Enemy19Entity.Behavior05)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(4, Enemy19Entity.Behavior02)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[2]
+            {
+                new EnemyBehavior<Enemy19Entity>(3, Enemy19Entity.Behavior07),
+                new EnemyBehavior<Enemy19Entity>(4, Enemy19Entity.Behavior02)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[2]
+            {
+                new EnemyBehavior<Enemy19Entity>(1, Enemy19Entity.Behavior08),
+                new EnemyBehavior<Enemy19Entity>(4, Enemy19Entity.Behavior02)
+            }),
+            // state 4
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(5, Enemy19Entity.Behavior04)
+            }),
+            // state 5
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[3]
+            {
+                new EnemyBehavior<Enemy19Entity>(7, Enemy19Entity.Behavior09),
+                new EnemyBehavior<Enemy19Entity>(9, Enemy19Entity.Behavior10),
+                new EnemyBehavior<Enemy19Entity>(6, Enemy19Entity.Behavior12)
+            }),
+            // state 6
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[3]
+            {
+                new EnemyBehavior<Enemy19Entity>(7, Enemy19Entity.Behavior09),
+                new EnemyBehavior<Enemy19Entity>(9, Enemy19Entity.Behavior10),
+                new EnemyBehavior<Enemy19Entity>(5, Enemy19Entity.Behavior11)
+            }),
+            // state 7
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(8, Enemy19Entity.Behavior03)
+            }),
+            // state 8
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(10, Enemy19Entity.Behavior00)
+            }),
+            // state 9
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(1, Enemy19Entity.Behavior06)
+            }),
+            // state 10
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(13, Enemy19Entity.Behavior02)
+            }),
+            // state 11
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(13, Enemy19Entity.Behavior02)
+            }),
+            // state 12
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(13, Enemy19Entity.Behavior02)
+            }),
+            // state 13
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(14, Enemy19Entity.Behavior04)
+            }),
+            // state 14
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[3]
+            {
+                new EnemyBehavior<Enemy19Entity>(16, Enemy19Entity.Behavior09),
+                new EnemyBehavior<Enemy19Entity>(18, Enemy19Entity.Behavior10),
+                new EnemyBehavior<Enemy19Entity>(15, Enemy19Entity.Behavior12)
+            }),
+            // state 15
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[3]
+            {
+                new EnemyBehavior<Enemy19Entity>(16, Enemy19Entity.Behavior09),
+                new EnemyBehavior<Enemy19Entity>(18, Enemy19Entity.Behavior10),
+                new EnemyBehavior<Enemy19Entity>(14, Enemy19Entity.Behavior12)
+            }),
+            // state 16
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(17, Enemy19Entity.Behavior03)
+            }),
+            // state 17
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(19, Enemy19Entity.Behavior00)
+            }),
+            // state 18
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(10, Enemy19Entity.Behavior06)
+            }),
+            // state 19
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(22, Enemy19Entity.Behavior02)
+            }),
+            // state 20
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(22, Enemy19Entity.Behavior02)
+            }),
+            // state 21
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(22, Enemy19Entity.Behavior02)
+            }),
+            // state 22
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(23, Enemy19Entity.Behavior04)
+            }),
+            // state 23
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[3]
+            {
+                new EnemyBehavior<Enemy19Entity>(23, Enemy19Entity.Behavior09),
+                new EnemyBehavior<Enemy19Entity>(25, Enemy19Entity.Behavior10),
+                new EnemyBehavior<Enemy19Entity>(24, Enemy19Entity.Behavior12)
+            }),
+            // state 24
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[3]
+            {
+                new EnemyBehavior<Enemy19Entity>(23, Enemy19Entity.Behavior09),
+                new EnemyBehavior<Enemy19Entity>(25, Enemy19Entity.Behavior10),
+                new EnemyBehavior<Enemy19Entity>(23, Enemy19Entity.Behavior12)
+            }),
+            // state 25
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(19, Enemy19Entity.Behavior06)
+            }),
+            // state 26
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(23, Enemy19Entity.Behavior01)
+            })
+        };
+
+        public static IReadOnlyList<Enemy19Values> Enemy19Values = new Enemy19Values[4]
+        {
+            new Enemy19Values()
+            {
+                CrystalHealth = 490,
+                Field2 = 60,
+                Seg0Value3 = 360,
+                Seg1Value3 = 200,
+                Seg2Value3 = 0,
+                Seg0Value1 = 30,
+                Seg1Value1 = 20,
+                Seg2Value1 = 13,
+                Seg0Value0 = 1,
+                Seg1Value0 = 1,
+                Seg2Value0 = 1,
+                Seg0Value2 = 150,
+                Seg1Value2 = 120,
+                Seg2Value2 = 90,
+                CrystalBeamDamage = new ushort[3] { 6, 6, 6 },
+                EyeBeamDamage = new ushort[3] { 3, 3, 3 },
+                EyeSplashDamage = new ushort[3] { 0, 0, 0 },
+                EyeContactDamage = new ushort[3] { 3, 3, 3 },
+                Field34 = 3547,
+                Field38 = 3547,
+                Field3C = 3547,
+                Field40 = 2457,
+                Field44 = 2048,
+                Field48 = 3686,
+                Field4C = 163840,
+                Field50 = 143360,
+                Field54 = 73728,
+                Seg0Field10 = 122880,
+                Seg1Field10 = 81920,
+                Seg2Field10 = -40960,
+                Seg0FieldC = 327680,
+                Seg1FieldC = 307200,
+                Seg2FieldC = 225280,
+                Seg0Field14 = 3481,
+                Seg1Field14 = 3072,
+                Seg2Field14 = 4096,
+                EyeHealth = 12,
+                ItemChanceHealth = 8,
+                ItemChanceMissile = 5,
+                ItemChanceUa = 0,
+                ItemChanceNone = 87,
+                Field82 = new byte[12] { 5, 5, 5, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+                Field8E = new byte[12] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+                Field9A = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                FieldA6 = new byte[12] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+                FieldB2 = new ushort[12] { 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
+                FieldCA = new ushort[12] { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 },
+                FieldE2 = new ushort[12] { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 },
+                FieldFA = new ushort[12] { 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200 },
+                Field112 = new ushort[12] { 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20 },
+                Field12A = new byte[12] { 2, 2, 2, 5, 5, 5, 5, 2, 2, 2, 2, 2 },
+                Field136 = new byte[12] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+                Field142 = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field14E = new byte[12] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+                Field15A = new ushort[12] { 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
+                Field172 = new ushort[12] { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 },
+                Field18A = new ushort[12] { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 },
+                Field1A2 = new ushort[12] { 280, 280, 280, 280, 280, 280, 280, 280, 280, 280, 280, 280 },
+                Field1BA = new ushort[12] { 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20 },
+                Field1D2 = new byte[12] { 2, 2, 2, 2, 2, 2, 2, 5, 5, 5, 5, 5 },
+                Field1DE = new byte[12] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+                Field1EA = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field1F6 = new byte[12] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+                Field202 = new ushort[12] { 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
+                Field21A = new ushort[12] { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 },
+                Field232 = new ushort[12] { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 },
+                Field24A = new ushort[12] { 360, 360, 360, 360, 360, 360, 360, 360, 360, 360, 360, 360 },
+                Field262 = new ushort[12] { 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20 },
+                ItemChanceA = 0,
+                ItemChanceB = 0,
+                ItemChanceC = 0,
+                ItemChanceD = 0,
+                Padding27E = 0,
+                CollisionRadius = 3276,
+                ScanId = 0,
+                CrystalScanId = 226,
+                CrystalEffectiveness = 0xAAAA,
+                EyeScanId = 0,
+                EyeEffectiveness = 0xAA9A
+            },
+            new Enemy19Values()
+            {
+                CrystalHealth = 540,
+                Field2 = 60,
+                Seg0Value3 = 400,
+                Seg1Value3 = 230,
+                Seg2Value3 = 0,
+                Seg0Value1 = 15,
+                Seg1Value1 = 12,
+                Seg2Value1 = 9,
+                Seg0Value0 = 10,
+                Seg1Value0 = 10,
+                Seg2Value0 = 10,
+                Seg0Value2 = 150,
+                Seg1Value2 = 120,
+                Seg2Value2 = 90,
+                CrystalBeamDamage = new ushort[3] { 10, 10, 10 },
+                EyeBeamDamage = new ushort[3] { 5, 5, 5 },
+                EyeSplashDamage = new ushort[3] { 0, 0, 0 },
+                EyeContactDamage = new ushort[3] { 3, 3, 3 },
+                Field34 = 3547,
+                Field38 = 3547,
+                Field3C = 3547,
+                Field40 = 2457,
+                Field44 = 2048,
+                Field48 = 3686,
+                Field4C = 163840,
+                Field50 = 143360,
+                Field54 = 73728,
+                Seg0Field10 = 122880,
+                Seg1Field10 = 81920,
+                Seg2Field10 = 40960,
+                Seg0FieldC = 245760,
+                Seg1FieldC = 204800,
+                Seg2FieldC = 143360,
+                Seg0Field14 = 3072,
+                Seg1Field14 = 4096,
+                Seg2Field14 = 4096,
+                EyeHealth = 4,
+                ItemChanceHealth = 10,
+                ItemChanceMissile = 5,
+                ItemChanceUa = 5,
+                ItemChanceNone = 80,
+                Field82 = new byte[12] { 1, 1, 1, 0, 0, 0, 0, 4, 4, 4, 4, 4 },
+                Field8E = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field9A = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                FieldA6 = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                FieldB2 = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                FieldCA = new ushort[12] { 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130 },
+                FieldE2 = new ushort[12] { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 },
+                FieldFA = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Field112 = new ushort[12] { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 },
+                Field12A = new byte[12] { 0, 0, 0, 4, 4, 4, 4, 1, 1, 1, 1, 1 },
+                Field136 = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field142 = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field14E = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field15A = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Field172 = new ushort[12] { 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130 },
+                Field18A = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45 },
+                Field1A2 = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Field1BA = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45 },
+                Field1D2 = new byte[12] { 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1 },
+                Field1DE = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field1EA = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field1F6 = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field202 = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Field21A = new ushort[12] { 60, 90, 30, 60, 90, 120, 30, 60, 90, 120, 90, 30 },
+                Field232 = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45 },
+                Field24A = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Field262 = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45 },
+                ItemChanceA = 0,
+                ItemChanceB = 0,
+                ItemChanceC = 0,
+                ItemChanceD = 0,
+                Padding27E = 0,
+                CollisionRadius = 3276,
+                ScanId = 0,
+                CrystalScanId = 198,
+                CrystalEffectiveness = 0xD5EA,
+                EyeScanId = 0,
+                EyeEffectiveness = 0xAAAA
+            },
+            new Enemy19Values()
+            {
+                CrystalHealth = 570,
+                Field2 = 60,
+                Seg0Value3 = 420,
+                Seg1Value3 = 230,
+                Seg2Value3 = 0,
+                Seg0Value1 = 15,
+                Seg1Value1 = 12,
+                Seg2Value1 = 9,
+                Seg0Value0 = 10,
+                Seg1Value0 = 10,
+                Seg2Value0 = 10,
+                Seg0Value2 = 150,
+                Seg1Value2 = 120,
+                Seg2Value2 = 90,
+                CrystalBeamDamage = new ushort[3] { 12, 12, 12 },
+                EyeBeamDamage = new ushort[3] { 4, 4, 4 },
+                EyeSplashDamage = new ushort[3] { 1, 1, 1 },
+                EyeContactDamage = new ushort[3] { 8, 8, 8 },
+                Field34 = 3547,
+                Field38 = 3547,
+                Field3C = 3547,
+                Field40 = 2457,
+                Field44 = 2048,
+                Field48 = 3686,
+                Field4C = 163840,
+                Field50 = 143360,
+                Field54 = 73728,
+                Seg0Field10 = 122880,
+                Seg1Field10 = 81920,
+                Seg2Field10 = -40960,
+                Seg0FieldC = 327680,
+                Seg1FieldC = 307200,
+                Seg2FieldC = 225280,
+                Seg0Field14 = 3481,
+                Seg1Field14 = 3072,
+                Seg2Field14 = 4096,
+                EyeHealth = 4,
+                ItemChanceHealth = 8,
+                ItemChanceMissile = 5,
+                ItemChanceUa = 5,
+                ItemChanceNone = 82,
+                Field82 = new byte[12] { 0, 0, 0, 1, 1, 1, 1, 4, 4, 4, 4, 4 },
+                Field8E = new byte[12] { 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field9A = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                FieldA6 = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                FieldB2 = new ushort[12] { 5, 5, 5, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                FieldCA = new ushort[12] { 30, 30, 30, 130, 130, 130, 130, 130, 130, 130, 130, 130 },
+                FieldE2 = new ushort[12] { 30, 30, 30, 50, 50, 50, 50, 50, 50, 50, 50, 50 },
+                FieldFA = new ushort[12] { 180, 180, 180, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Field112 = new ushort[12] { 20, 20, 20, 50, 50, 50, 50, 50, 50, 50, 50, 50 },
+                Field12A = new byte[12] { 1, 1, 1, 0, 0, 0, 0, 4, 4, 4, 4, 4 },
+                Field136 = new byte[12] { 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1 },
+                Field142 = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field14E = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field15A = new ushort[12] { 10, 10, 10, 5, 5, 5, 5, 10, 10, 10, 10, 10 },
+                Field172 = new ushort[12] { 130, 130, 130, 30, 30, 30, 30, 130, 130, 130, 130, 130 },
+                Field18A = new ushort[12] { 45, 45, 45, 30, 30, 30, 30, 45, 45, 45, 45, 45 },
+                Field1A2 = new ushort[12] { 10, 10, 10, 220, 220, 220, 220, 10, 10, 10, 10, 10 },
+                Field1BA = new ushort[12] { 45, 45, 45, 20, 20, 20, 20, 45, 45, 45, 45, 45 },
+                Field1D2 = new byte[12] { 1, 1, 1, 4, 4, 4, 4, 0, 0, 0, 0, 0 },
+                Field1DE = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2 },
+                Field1EA = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field1F6 = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field202 = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 5, 5, 5, 5, 5 },
+                Field21A = new ushort[12] { 40, 40, 40, 40, 40, 40, 40, 30, 30, 30, 30, 30 },
+                Field232 = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 30, 30, 30, 30, 30 },
+                Field24A = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 260, 260, 260, 260, 260 },
+                Field262 = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 20, 20, 20, 20, 20 },
+                ItemChanceA = 0,
+                ItemChanceB = 0,
+                ItemChanceC = 0,
+                ItemChanceD = 0,
+                Padding27E = 0,
+                CollisionRadius = 3276,
+                ScanId = 0,
+                CrystalScanId = 199,
+                CrystalEffectiveness = 0xD5EA,
+                EyeScanId = 0,
+                EyeEffectiveness = 0xAAAA
+            },
+            new Enemy19Values()
+            {
+                CrystalHealth = 550,
+                Field2 = 60,
+                Seg0Value3 = 385,
+                Seg1Value3 = 220,
+                Seg2Value3 = 0,
+                Seg0Value1 = 12,
+                Seg1Value1 = 10,
+                Seg2Value1 = 8,
+                Seg0Value0 = 10,
+                Seg1Value0 = 10,
+                Seg2Value0 = 10,
+                Seg0Value2 = 150,
+                Seg1Value2 = 120,
+                Seg2Value2 = 90,
+                CrystalBeamDamage = new ushort[3] { 18, 18, 18 },
+                EyeBeamDamage = new ushort[3] { 4, 4, 4 },
+                EyeSplashDamage = new ushort[3] { 1, 1, 1 },
+                EyeContactDamage = new ushort[3] { 10, 10, 10 },
+                Field34 = 3547,
+                Field38 = 3547,
+                Field3C = 3547,
+                Field40 = 2457,
+                Field44 = 2048,
+                Field48 = 3686,
+                Field4C = 163840,
+                Field50 = 143360,
+                Field54 = 73728,
+                Seg0Field10 = 122880,
+                Seg1Field10 = 81920,
+                Seg2Field10 = -40960,
+                Seg0FieldC = 327680,
+                Seg1FieldC = 307200,
+                Seg2FieldC = 225280,
+                Seg0Field14 = 3481,
+                Seg1Field14 = 3072,
+                Seg2Field14 = 4096,
+                EyeHealth = 4,
+                ItemChanceHealth = 8,
+                ItemChanceMissile = 5,
+                ItemChanceUa = 5,
+                ItemChanceNone = 82,
+                Field82 = new byte[12] { 0, 0, 0, 1, 1, 1, 1, 4, 4, 4, 4, 4 },
+                Field8E = new byte[12] { 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                Field9A = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                FieldA6 = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                FieldB2 = new ushort[12] { 5, 5, 5, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                FieldCA = new ushort[12] { 30, 30, 30, 130, 130, 130, 130, 130, 130, 130, 130, 130 },
+                FieldE2 = new ushort[12] { 30, 30, 30, 50, 50, 50, 50, 50, 50, 50, 50, 50 },
+                FieldFA = new ushort[12] { 180, 180, 180, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Field112 = new ushort[12] { 20, 20, 20, 50, 50, 50, 50, 50, 50, 50, 50, 50 },
+                Field12A = new byte[12] { 1, 1, 1, 0, 0, 0, 0, 4, 4, 4, 4, 4 },
+                Field136 = new byte[12] { 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0 },
+                Field142 = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field14E = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field15A = new ushort[12] { 10, 10, 10, 5, 5, 5, 5, 10, 10, 10, 10, 10 },
+                Field172 = new ushort[12] { 130, 130, 130, 30, 30, 30, 30, 130, 130, 130, 130, 130 },
+                Field18A = new ushort[12] { 45, 45, 45, 30, 30, 30, 30, 45, 45, 45, 45, 45 },
+                Field1A2 = new ushort[12] { 10, 10, 10, 220, 220, 220, 220, 10, 10, 10, 10, 10 },
+                Field1BA = new ushort[12] { 45, 45, 45, 20, 20, 20, 20, 45, 45, 45, 45, 45 },
+                Field1D2 = new byte[12] { 1, 1, 1, 4, 4, 4, 4, 0, 0, 0, 0, 0 },
+                Field1DE = new byte[12] { 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2 },
+                Field1EA = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field1F6 = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Field202 = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 5, 5, 5, 5, 5 },
+                Field21A = new ushort[12] { 130, 130, 130, 130, 130, 130, 130, 30, 30, 30, 30, 30 },
+                Field232 = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 30, 30, 30, 30, 30 },
+                Field24A = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 260, 260, 260, 260, 260 },
+                Field262 = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 20, 20, 20, 20, 20 },
+                ItemChanceA = 0,
+                ItemChanceB = 0,
+                ItemChanceC = 0,
+                ItemChanceD = 0,
+                Padding27E = 0,
+                CollisionRadius = 3276,
+                ScanId = 0,
+                CrystalScanId = 200,
+                CrystalEffectiveness = 0xD5E6,
+                EyeScanId = 0,
+                EyeEffectiveness = 0xAAAA
+            }
+        };
+
         public static IReadOnlyList<EnemySubroutine<Enemy23Entity>> Enemy23Subroutines = new EnemySubroutine<Enemy23Entity>[11]
         {
             // state 0

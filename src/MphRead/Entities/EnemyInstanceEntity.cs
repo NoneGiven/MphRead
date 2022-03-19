@@ -79,7 +79,7 @@ namespace MphRead.Entities
             Flags = EnemyFlags.CollidePlayer | EnemyFlags.CollideBeam;
             if (EnemyInitialize() && _data.Spawner is EnemySpawnEntity spawner)
             {
-                // todo: linked entity collision transform -- although I don't think this is ever used for enemies/spawners
+                // sktodo: linked entity collision transform
             }
             _prevPos = Position;
             if (_data.Type == EnemyType.Gorea1A || _data.Type == EnemyType.GoreaHead || _data.Type == EnemyType.GoreaArm
