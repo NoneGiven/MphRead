@@ -23,7 +23,7 @@ namespace MphRead.Entities.Enemies
         private int _crystalShotTimer = 0;
         private int _crystalUpTimer = 0;
 
-        private readonly EquipInfo[] _equipInfo = new EquipInfo[2];
+        public EquipInfo[] EquipInfo { get; } = new EquipInfo[2];
         private int _ammo0 = 1000;
         private int _ammo1 = 1000;
 
@@ -140,14 +140,14 @@ namespace MphRead.Entities.Enemies
             SpawnCrystal();
             WeaponInfo laserWeapon = Weapons.BossWeapons[1];
             WeaponInfo plasmaWeapon = Weapons.BossWeapons[2];
-            _equipInfo[0] = new EquipInfo(laserWeapon, _beams);
-            _equipInfo[1] = new EquipInfo(plasmaWeapon, _beams);
-            _equipInfo[0].GetAmmo = () => _ammo0;
-            _equipInfo[0].SetAmmo = (newAmmo) => _ammo0 = newAmmo;
-            _equipInfo[1].GetAmmo = () => _ammo1;
-            _equipInfo[1].SetAmmo = (newAmmo) => _ammo1 = newAmmo;
-            _equipInfo[0].ChargeLevel = laserWeapon.FullCharge;
-            _equipInfo[1].ChargeLevel = plasmaWeapon.FullCharge;
+            EquipInfo[0] = new EquipInfo(laserWeapon, _beams);
+            EquipInfo[1] = new EquipInfo(plasmaWeapon, _beams);
+            EquipInfo[0].GetAmmo = () => _ammo0;
+            EquipInfo[0].SetAmmo = (newAmmo) => _ammo0 = newAmmo;
+            EquipInfo[1].GetAmmo = () => _ammo1;
+            EquipInfo[1].SetAmmo = (newAmmo) => _ammo1 = newAmmo;
+            EquipInfo[0].ChargeLevel = laserWeapon.FullCharge;
+            EquipInfo[1].ChargeLevel = plasmaWeapon.FullCharge;
             SetPhase0();
             _crystalShotTimer = GetPhaseValue(PhaseValue.CrystalShotTime) * 2; // todo: FPS stuff
             _crystalShotDelay = GetPhaseValue(PhaseValue.CrystalShotDelay) * 2; // todo: FPS stuff

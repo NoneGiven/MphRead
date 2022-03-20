@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using MphRead.Formats;
 using MphRead.Formats.Culling;
@@ -306,12 +307,19 @@ namespace MphRead.Entities.Enemies
 
         private void SpawnBeam()
         {
-            // sktodo
-        }
-
-        private void UpdateBeamTransform()
-        {
-            // sktodo
+            Debug.Assert(BeamType == 0 || BeamType == 1);
+            ushort damage = _cretaphid.Values.EyeBeamDamage[SegmentIndex];
+            EquipInfo equipInfo = _cretaphid.EquipInfo[BeamType];
+            equipInfo.Weapon.UnchargedDamage = damage;
+            equipInfo.Weapon.SplashDamage = damage;
+            equipInfo.Weapon.HeadshotDamage = damage;
+            Vector3 facing = FacingVector;
+            Vector3 spawnDir = (PlayerEntity.Main.Position.AddY(0.5f) - Position).Normalized();
+            if (Vector3.Dot(facing, spawnDir) < -1)
+            {
+                spawnDir = facing;
+            }
+            BeamProjectileEntity.Spawn(this, equipInfo, Position, spawnDir, BeamSpawnFlags.None, _scene);
         }
 
         private void CheckBeamCollision()
@@ -341,8 +349,55 @@ namespace MphRead.Entities.Enemies
 
         protected override bool EnemyTakeDamage(EntityBase? source)
         {
+            if (_health == 0)
+            {
+                _health = 1;
+                _state1 = _state2 = 7;
+                Flags |= EnemyFlags.Invincible;
+                _models[0].SetAnimation(2, AnimFlags.NoLoop);
+                ItemType itemType = ItemType.None;
+                Enemy19Values values = _cretaphid.Values;
+                int chanceTotal = values.ItemChanceHealth + values.ItemChanceMissile
+                    + values.ItemChanceUa + values.ItemChanceNone;
+                uint rand = Rng.GetRandomInt2(chanceTotal);
+                if (rand < values.ItemChanceHealth)
+                {
+                    itemType = ItemType.HealthMedium;
+                }
+                else
+                {
+                    rand -= values.ItemChanceHealth;
+                    if (rand < values.ItemChanceMissile)
+                    {
+                        itemType = ItemType.MissileSmall;
+                    }
+                    else
+                    {
+                        rand -= values.ItemChanceMissile;
+                        if (rand < values.ItemChanceUa)
+                        {
+                            itemType = ItemType.UASmall;
+                        }
+                    }
+                }
+                if (itemType != ItemType.None)
+                {
+                    ItemSpawnEntity.SpawnItem(itemType, Position, NodeRef,
+                        despawnTime: 300 * 2, _scene); // todo: FPS stuff
+                }
+            }
+            return false;
+        }
+
+        private void UpdateBeamTransform()
+        {
             // sktodo
-            return base.EnemyTakeDamage(source);
+        }
+
+        protected override bool EnemyGetDrawInfo()
+        {
+            // sktodo
+            return true;
         }
     }
 }
