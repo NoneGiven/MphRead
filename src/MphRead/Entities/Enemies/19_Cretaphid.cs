@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using MphRead.Formats.Culling;
+using MphRead.Sound;
 using OpenTK.Mathematics;
 
 
@@ -31,8 +32,9 @@ namespace MphRead.Entities.Enemies
         private readonly Enemy20Entity?[] _eyes = new Enemy20Entity?[_eyeCount];
         private Enemy21Entity? _crystal = null!;
         private ModelInstance _model = null!;
-        private ModelInstance _beamModel = null!;
-        private ModelInstance _beamColModel = null!;
+        public ModelInstance BeamModel { get; private set; } = null!;
+        public ModelInstance BeamColModel { get; private set; } = null!;
+        public SoundSource SounceSource => _soundSource;
 
         private const ushort _flashPeriod = 10 * 2; // todo: FPS stuff
         private const ushort _flashLength = 5 * 2; // todo: FPS stuff
@@ -84,17 +86,17 @@ namespace MphRead.Entities.Enemies
             _model.Model.ComputeNodeMatrices(index: 0);
             if (_subtype == 0)
             {
-                _beamModel = SetUpModel("cylBossLaser");
+                BeamModel = SetUpModel("cylBossLaser");
             }
             else if (_subtype == 1)
             {
-                _beamModel = SetUpModel("cylBossLaserY");
+                BeamModel = SetUpModel("cylBossLaserY");
             }
             else if (_subtype == 2)
             {
-                _beamModel = SetUpModel("cylBossLaserG");
+                BeamModel = SetUpModel("cylBossLaserG");
             }
-            _beamColModel = SetUpModel("cylBossLaserColl");
+            BeamColModel = SetUpModel("cylBossLaserColl");
             _segments[0] = new SegmentInfo();
             _segments[1] = new SegmentInfo();
             _segments[2] = new SegmentInfo();
@@ -186,7 +188,7 @@ namespace MphRead.Entities.Enemies
                 _scene.AddEntity(eye);
                 _eyes[i] = eye;
                 eye.EyeIndex = i;
-                eye.Flag = true;
+                eye.BeamActive = true;
                 Node node = _model.Model.GetNodeByName(_eyeNodes[i])!;
                 eye.SetUp(node, Values.EyeScanId, Values.EyeEffectiveness, Values.EyeHealth, Position, radius: 1);
             }
@@ -207,13 +209,13 @@ namespace MphRead.Entities.Enemies
                     eye = newEye;
                     _eyes[i] = eye;
                     eye.EyeIndex = i;
-                    eye.Flag = false;
+                    eye.BeamActive = false;
                     Node node = _model.Model.GetNodeByName(_eyeNodes[i])!;
                     eye.SetUp(node, Values.EyeScanId, Values.EyeEffectiveness, Values.EyeHealth, Position, radius: 0.5f);
                 }
                 else if (_subtype == 0)
                 {
-                    eye.Field189 = 1;
+                    eye.EyeActive = true;
                 }
                 eye.UpdateState(9);
             }
@@ -311,7 +313,7 @@ namespace MphRead.Entities.Enemies
             }
         }
 
-        private void Sub2135F54()
+        public void Sub2135F54()
         {
             if (PhaseIndex == 0)
             {
@@ -319,12 +321,12 @@ namespace MphRead.Entities.Enemies
                 {
                     Enemy20Entity? eye = _eyes[i];
                     Debug.Assert(eye != null);
-                    eye.UpdateState(Values.Field82[i]);
-                    eye.Field187 = Values.Field8E[i];
-                    uint rand = Rng.GetRandomInt2(Values.FieldA6[i] + 1 - Values.Field9A[i]);
-                    eye.Field18A = (byte)(Values.Field9A[i] + rand);
-                    eye.Field18C = (byte)Values.FieldB2[i];
-                    eye.Field18E = eye.Field18C;
+                    eye.UpdateState(Values.Phase0EyeState[i]);
+                    eye.BeamType = Values.Phase0BeamType[i];
+                    uint rand = Rng.GetRandomInt2(Values.Phase0BeamSpawnMax[i] + 1 - Values.Phase0BeamSpawnMin[i]);
+                    eye.BeamSpawnCount = (ushort)(Values.Phase0BeamSpawnMin[i] + rand);
+                    eye.BeamSpawnCooldown = Values.Phase0BeamCooldown[i] * 2; // todo: FPS stuff
+                    eye.BeamSpawnTimer = eye.BeamSpawnCooldown;
                 }
             }
             else if (PhaseIndex == 1)
@@ -333,12 +335,12 @@ namespace MphRead.Entities.Enemies
                 {
                     Enemy20Entity? eye = _eyes[i];
                     Debug.Assert(eye != null);
-                    eye.UpdateState(Values.Field12A[i]);
-                    eye.Field187 = Values.Field136[i];
-                    uint rand = Rng.GetRandomInt2(Values.Field14E[i] + 1 - Values.Field142[i]);
-                    eye.Field18A = (byte)(Values.Field142[i] + rand);
-                    eye.Field18C = (byte)Values.Field15A[i];
-                    eye.Field18E = eye.Field18C;
+                    eye.UpdateState(Values.Phase1EyeState[i]);
+                    eye.BeamType = Values.Phase1BeamType[i];
+                    uint rand = Rng.GetRandomInt2(Values.Phase1BeamSpawnMax[i] + 1 - Values.Phase1BeamSpawnMin[i]);
+                    eye.BeamSpawnCount = (ushort)(Values.Phase1BeamSpawnMin[i] + rand);
+                    eye.BeamSpawnCooldown = Values.Phase1BeamCooldown[i] * 2; // todo: FPS stuff
+                    eye.BeamSpawnTimer = eye.BeamSpawnCooldown;
                 }
             }
             else if (PhaseIndex == 2)
@@ -347,13 +349,33 @@ namespace MphRead.Entities.Enemies
                 {
                     Enemy20Entity? eye = _eyes[i];
                     Debug.Assert(eye != null);
-                    eye.UpdateState(Values.Field1D2[i]);
-                    eye.Field187 = Values.Field1DE[i];
-                    uint rand = Rng.GetRandomInt2(Values.Field1F6[i] + 1 - Values.Field1EA[i]);
-                    eye.Field18A = (byte)(Values.Field1EA[i] + rand);
-                    eye.Field18C = (byte)Values.Field202[i];
-                    eye.Field18E = eye.Field18C;
+                    eye.UpdateState(Values.Phase2EyeState[i]);
+                    eye.BeamType = Values.Phase2BeamType[i];
+                    uint rand = Rng.GetRandomInt2(Values.Phase2BeamSpawnMax[i] + 1 - Values.Phase2BeamSpawnMin[i]);
+                    eye.BeamSpawnCount = (ushort)(Values.Phase2BeamSpawnMin[i] + rand);
+                    eye.BeamSpawnCooldown = Values.Phase2BeamCooldown[i] * 2; // todo: FPS stuff
+                    eye.BeamSpawnTimer = eye.BeamSpawnCooldown;
                 }
+            }
+        }
+
+        public void Sub213619C(Enemy20Entity eye)
+        {
+            int index = eye.EyeIndex;
+            if (PhaseIndex == 0)
+            {
+                uint rand = Rng.GetRandomInt2(Values.Phase0BeamSpawnMax[index] + 1 - Values.Phase0BeamSpawnMin[index]);
+                eye.BeamSpawnCount = (ushort)(Values.Phase0BeamSpawnMin[index] + rand);
+            }
+            else if (PhaseIndex == 1)
+            {
+                uint rand = Rng.GetRandomInt2(Values.Phase1BeamSpawnMax[index] + 1 - Values.Phase1BeamSpawnMin[index]);
+                eye.BeamSpawnCount = (ushort)(Values.Phase1BeamSpawnMin[index] + rand);
+            }
+            else if (PhaseIndex == 2)
+            {
+                uint rand = Rng.GetRandomInt2(Values.Phase2BeamSpawnMax[index] + 1 - Values.Phase2BeamSpawnMin[index]);
+                eye.BeamSpawnCount = (ushort)(Values.Phase2BeamSpawnMin[index] + rand);
             }
         }
 
@@ -471,7 +493,7 @@ namespace MphRead.Entities.Enemies
                     {
                         Enemy20Entity? eye = _eyes[i];
                         Debug.Assert(eye != null);
-                        eye.Field189 = 0;
+                        eye.EyeActive = false;
                         eye.UpdateState(5);
                     }
                 }
@@ -633,7 +655,7 @@ namespace MphRead.Entities.Enemies
             if (_flashTimer < _flashLength && (_state1 == 3 || _state1 == 16 || _state1 == 26))
             {
                 PaletteOverride = Metadata.WhitePalette;
-            } 
+            }
             for (int i = 0; i < 3; i++)
             {
                 SegmentInfo segment = _segments[i];
@@ -785,33 +807,33 @@ namespace MphRead.Entities.Enemies
         public byte ItemChanceMissile { get; init; }
         public byte ItemChanceUa { get; init; }
         public byte ItemChanceNone { get; init; }
-        public byte[] Field82 { get; init; } // 12
-        public byte[] Field8E { get; init; } // 12
-        public byte[] Field9A { get; init; } // 12
-        public byte[] FieldA6 { get; init; } // 12
-        public ushort[] FieldB2 { get; init; } // 12
-        public ushort[] FieldCA { get; init; } // 12
-        public ushort[] FieldE2 { get; init; } // 12
-        public ushort[] FieldFA { get; init; } // 12
-        public ushort[] Field112 { get; init; } // 12
-        public byte[] Field12A { get; init; } // 12
-        public byte[] Field136 { get; init; } // 12
-        public byte[] Field142 { get; init; } // 12
-        public byte[] Field14E { get; init; } // 12
-        public ushort[] Field15A { get; init; } // 12
-        public ushort[] Field172 { get; init; } // 12
-        public ushort[] Field18A { get; init; } // 12
-        public ushort[] Field1A2 { get; init; } // 12
-        public ushort[] Field1BA { get; init; } // 12
-        public byte[] Field1D2 { get; init; } // 12
-        public byte[] Field1DE { get; init; } // 12
-        public byte[] Field1EA { get; init; } // 12
-        public byte[] Field1F6 { get; init; } // 12
-        public ushort[] Field202 { get; init; } // 12
-        public ushort[] Field21A { get; init; } // 12
-        public ushort[] Field232 { get; init; } // 12
-        public ushort[] Field24A { get; init; } // 12
-        public ushort[] Field262 { get; init; } // 12
+        public byte[] Phase0EyeState { get; init; } // 12
+        public byte[] Phase0BeamType { get; init; } // 12
+        public byte[] Phase0BeamSpawnMin { get; init; } // 12
+        public byte[] Phase0BeamSpawnMax { get; init; } // 12
+        public ushort[] Phase0BeamCooldown { get; init; } // 12
+        public ushort[] Phase0EyeStateTimer0 { get; init; } // 12
+        public ushort[] Phase0EyeStateTimer1 { get; init; } // 12
+        public ushort[] Phase0EyeStateTimer2 { get; init; } // 12
+        public ushort[] Phase0EyeStateTimer3 { get; init; } // 12
+        public byte[] Phase1EyeState { get; init; } // 12
+        public byte[] Phase1BeamType { get; init; } // 12
+        public byte[] Phase1BeamSpawnMin { get; init; } // 12
+        public byte[] Phase1BeamSpawnMax { get; init; } // 12
+        public ushort[] Phase1BeamCooldown { get; init; } // 12
+        public ushort[] Phase1EyeStateTimer0 { get; init; } // 12
+        public ushort[] Phase1EyeStateTimer1 { get; init; } // 12
+        public ushort[] Phase1EyeStateTimer2 { get; init; } // 12
+        public ushort[] Phase1EyeStateTimer3 { get; init; } // 12
+        public byte[] Phase2EyeState { get; init; } // 12
+        public byte[] Phase2BeamType { get; init; } // 12
+        public byte[] Phase2BeamSpawnMin { get; init; } // 12
+        public byte[] Phase2BeamSpawnMax { get; init; } // 12
+        public ushort[] Phase2BeamCooldown { get; init; } // 12
+        public ushort[] Phase2EyeStateTimer0 { get; init; } // 12
+        public ushort[] Phase2EyeStateTimer1 { get; init; } // 12
+        public ushort[] Phase2EyeStateTimer2 { get; init; } // 12
+        public ushort[] Phase2EyeStateTimer3 { get; init; } // 12
         public byte ItemChanceA { get; init; } // set at runtime
         public byte ItemChanceB { get; init; } // set at runtime
         public byte ItemChanceC { get; init; } // set at runtime

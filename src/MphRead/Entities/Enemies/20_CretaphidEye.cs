@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using MphRead.Formats;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
@@ -7,17 +8,18 @@ namespace MphRead.Entities.Enemies
     public class Enemy20Entity : EnemyInstanceEntity
     {
         private readonly Enemy19Entity _cretaphid;
-        private ushort _field184 = 0;
-        private int _field180 = 0;
-        public byte Field187 { get; set; } = 2;
-        public byte Field189 { get; set; } = 1;
-        public byte Field18A { get; set; }
-        public byte Field18C { get; set; }
-        public byte Field18E { get; set; }
+        private int _stateTimer = 0;
+        private float _beamLength = 0;
+        public ushort BeamType { get; set; } = 2;
+        public bool EyeActive { get; set; } = true;
+        public ushort BeamSpawnCount { get; set; }
+        public int BeamSpawnCooldown { get; set; }
+        public int BeamSpawnTimer { get; set; }
 
         private Node _attachNode = null!;
+        private Matrix4 _beamTransform = Matrix4.Identity;
         public int EyeIndex { get; set; }
-        public bool Flag { get; set; }
+        public bool BeamActive { get; set; }
         public int SegmentIndex { get; private set; }
 
         public Enemy20Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
@@ -44,6 +46,10 @@ namespace MphRead.Entities.Enemies
             {
                 SegmentIndex = 0;
             }
+            _beamLength = 0;
+            _stateTimer = 0;
+            BeamType = 2;
+            EyeActive = true;
             _attachNode = attachNode;
             _scanId = scanId;
             Metadata.LoadEffectiveness(effectiveness, BeamEffectiveness);
@@ -74,15 +80,16 @@ namespace MphRead.Entities.Enemies
                     Flags |= EnemyFlags.Invincible;
                     if (_cretaphid.PhaseIndex == 0)
                     {
-                        _field184 = _cretaphid.Values.FieldCA[EyeIndex];
+
+                        _stateTimer = _cretaphid.Values.Phase0EyeStateTimer0[EyeIndex] * 2; // todo: FPS stuff
                     }
                     else if (_cretaphid.PhaseIndex == 1)
                     {
-                        _field184 = _cretaphid.Values.Field172[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase1EyeStateTimer0[EyeIndex] * 2; // todo: FPS stuff
                     }
                     else if (_cretaphid.PhaseIndex == 2)
                     {
-                        _field184 = _cretaphid.Values.Field21A[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase2EyeStateTimer0[EyeIndex] * 2; // todo: FPS stuff
                     }
                 }
                 else if (newState == 1)
@@ -91,15 +98,15 @@ namespace MphRead.Entities.Enemies
                     Flags &= ~EnemyFlags.Invincible;
                     if (_cretaphid.PhaseIndex == 0)
                     {
-                        _field184 = _cretaphid.Values.FieldE2[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase0EyeStateTimer1[EyeIndex] * 2; // todo: FPS stuff
                     }
                     else if (_cretaphid.PhaseIndex == 1)
                     {
-                        _field184 = _cretaphid.Values.Field18A[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase1EyeStateTimer1[EyeIndex] * 2; // todo: FPS stuff
                     }
                     else if (_cretaphid.PhaseIndex == 2)
                     {
-                        _field184 = _cretaphid.Values.Field232[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase2EyeStateTimer1[EyeIndex] * 2; // todo: FPS stuff
                     }
                 }
                 else if (newState == 2)
@@ -111,18 +118,18 @@ namespace MphRead.Entities.Enemies
                 {
                     _models[0].SetAnimation(3, AnimFlags.NoLoop | AnimFlags.Reverse | AnimFlags.Paused);
                     Flags |= EnemyFlags.Invincible;
-                    Flag = false;
+                    BeamActive = false;
                     if (_cretaphid.PhaseIndex == 0)
                     {
-                        _field184 = _cretaphid.Values.FieldFA[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase0EyeStateTimer2[EyeIndex] * 2; // todo: FPS stuff
                     }
                     else if (_cretaphid.PhaseIndex == 1)
                     {
-                        _field184 = _cretaphid.Values.Field1A2[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase1EyeStateTimer2[EyeIndex] * 2; // todo: FPS stuff
                     }
                     else if (_cretaphid.PhaseIndex == 2)
                     {
-                        _field184 = _cretaphid.Values.Field24A[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase2EyeStateTimer2[EyeIndex] * 2; // todo: FPS stuff
                     }
                 }
                 else if (newState == 4)
@@ -131,15 +138,15 @@ namespace MphRead.Entities.Enemies
                     Flags &= ~EnemyFlags.Invincible;
                     if (_cretaphid.PhaseIndex == 0)
                     {
-                        _field184 = _cretaphid.Values.Field112[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase0EyeStateTimer3[EyeIndex] * 2; // todo: FPS stuff
                     }
                     else if (_cretaphid.PhaseIndex == 1)
                     {
-                        _field184 = _cretaphid.Values.Field1BA[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase1EyeStateTimer3[EyeIndex] * 2; // todo: FPS stuff
                     }
                     else if (_cretaphid.PhaseIndex == 2)
                     {
-                        _field184 = _cretaphid.Values.Field262[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase2EyeStateTimer3[EyeIndex] * 2; // todo: FPS stuff
                     }
                 }
                 else if (newState == 5)
@@ -148,15 +155,15 @@ namespace MphRead.Entities.Enemies
                     Flags |= EnemyFlags.Invincible;
                     if (_cretaphid.PhaseIndex == 0)
                     {
-                        _field184 = _cretaphid.Values.FieldCA[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase0EyeStateTimer0[EyeIndex] * 2; // todo: FPS stuff
                     }
                     else if (_cretaphid.PhaseIndex == 1)
                     {
-                        _field184 = _cretaphid.Values.Field172[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase1EyeStateTimer0[EyeIndex] * 2; // todo: FPS stuff
                     }
                     else if (_cretaphid.PhaseIndex == 2)
                     {
-                        _field184 = _cretaphid.Values.Field21A[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase2EyeStateTimer0[EyeIndex] * 2; // todo: FPS stuff
                     }
                 }
                 else if (newState == 6)
@@ -164,18 +171,18 @@ namespace MphRead.Entities.Enemies
                     _soundSource.PlayEnvironmentSfx(5); // CYLINDER_BOSS_ATTACK
                     _models[0].SetAnimation(3, AnimFlags.NoLoop | AnimFlags.Reverse | AnimFlags.Paused);
                     Flags |= EnemyFlags.Invincible;
-                    Flag = false;
+                    BeamActive = false;
                     if (_cretaphid.PhaseIndex == 0)
                     {
-                        _field184 = _cretaphid.Values.FieldFA[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase0EyeStateTimer2[EyeIndex] * 2; // todo: FPS stuff
                     }
                     else if (_cretaphid.PhaseIndex == 1)
                     {
-                        _field184 = _cretaphid.Values.Field1A2[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase1EyeStateTimer2[EyeIndex] * 2; // todo: FPS stuff
                     }
                     else if (_cretaphid.PhaseIndex == 2)
                     {
-                        _field184 = _cretaphid.Values.Field24A[EyeIndex];
+                        _stateTimer = _cretaphid.Values.Phase2EyeStateTimer2[EyeIndex] * 2; // todo: FPS stuff
                     }
                 }
                 else if (newState == 9)
@@ -185,6 +192,157 @@ namespace MphRead.Entities.Enemies
                 }
             }
             _state1 = _state2 = newState;
+        }
+
+        protected override void EnemyProcess()
+        {
+            if (!EyeActive)
+            {
+                return;
+            }
+
+            void ProgressState(byte state)
+            {
+                if (_stateTimer > 0)
+                {
+                    _stateTimer--;
+                }
+                else
+                {
+                    UpdateState(state);
+                }
+            }
+
+            if (_state1 == 0)
+            {
+                ProgressState(1);
+            }
+            else if (_state1 == 1)
+            {
+                ProgressState(3);
+            }
+            else if (_state1 == 3)
+            {
+                if (BeamType == 2)
+                {
+                    _cretaphid.SounceSource.PlayEnvironmentSfx(5); // CYLINDER_BOSS_ATTACK
+                }
+                else if (BeamType <= 1)
+                {
+                    if (BeamSpawnTimer > 0)
+                    {
+                        BeamSpawnTimer--;
+                    }
+                    else if (BeamSpawnCount > 0)
+                    {
+                        BeamSpawnCount--;
+                        BeamSpawnTimer = BeamSpawnCooldown;
+                        SpawnBeam();
+                    }
+                }
+                if (_stateTimer > 0)
+                {
+                    _stateTimer--;
+                }
+                else
+                {
+                    BeamSpawnTimer = BeamSpawnCooldown;
+                    _cretaphid.Sub213619C(this);
+                    UpdateState(4);
+                }
+            }
+            else if (_state1 == 4)
+            {
+                ProgressState(0);
+            }
+            else if (_state1 == 5)
+            {
+                ProgressState(6);
+            }
+            else if (_state1 == 6)
+            {
+                if (BeamType <= 1)
+                {
+                    if (BeamSpawnTimer > 0)
+                    {
+                        BeamSpawnTimer--;
+                    }
+                    else if (BeamSpawnCount > 0)
+                    {
+                        BeamSpawnCount--;
+                        BeamSpawnTimer = BeamSpawnCooldown;
+                        SpawnBeam();
+                    }
+                }
+                if (_stateTimer > 0)
+                {
+                    _stateTimer--;
+                    _cretaphid.SounceSource.PlayEnvironmentSfx(5); // CYLINDER_BOSS_ATTACK
+                }
+                else
+                {
+                    BeamSpawnTimer = BeamSpawnCooldown;
+                    _cretaphid.Sub213619C(this);
+                    UpdateState(5);
+                }
+            }
+            else if (_state1 == 7)
+            {
+                if (_models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
+                {
+                    _health = 0;
+                }
+            }
+            else if (_state1 == 9)
+            {
+                if (_models[0].AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
+                {
+                    _cretaphid.Sub2135F54();
+                }
+            }
+            UpdateBeamTransform();
+            CheckBeamCollision();
+        }
+
+        private void SpawnBeam()
+        {
+            // sktodo
+        }
+
+        private void UpdateBeamTransform()
+        {
+            // sktodo
+        }
+
+        private void CheckBeamCollision()
+        {
+            PlayerEntity player = PlayerEntity.Main;
+            Vector3 beamCylTop = Position + _beamTransform.Row2.Xyz;
+            float radii = player.Volume.SphereRadius + Fixed.ToFloat(_cretaphid.Values.CollisionRadius);
+            CollisionResult discard = default;
+            bool collided = false;
+            if (player.IsAltForm)
+            {
+                collided = CollisionDetection.CheckCylinderOverlapSphere(Position, beamCylTop,
+                    player.Volume.SpherePosition, radii, ref discard);
+            }
+            else
+            {
+                Vector3 twoBottom = player.Volume.SpherePosition.AddY(-0.5f);
+                collided = CollisionDetection.CheckCylindersOverlap(Position, beamCylTop, twoBottom,
+                    Vector3.UnitY, twoDot: 2, radii, ref discard);
+            }
+            if (collided)
+            {
+                ushort damage = _cretaphid.Values.EyeContactDamage[SegmentIndex];
+                player.TakeDamage(damage, DamageFlags.None, Vector3.Zero, this);
+            }
+        }
+
+        protected override bool EnemyTakeDamage(EntityBase? source)
+        {
+            // sktodo
+            return base.EnemyTakeDamage(source);
         }
     }
 }
