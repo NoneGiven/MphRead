@@ -9,8 +9,8 @@ namespace MphRead.Entities.Enemies
         private readonly Enemy19Entity _cretaphid;
         private ushort _field184 = 0;
         private int _field180 = 0;
-        private byte _field189 = 1;
         public byte Field187 { get; set; } = 2;
+        public byte Field189 { get; set; } = 1;
         public byte Field18A { get; set; }
         public byte Field18C { get; set; }
         public byte Field18E { get; set; }
@@ -28,7 +28,8 @@ namespace MphRead.Entities.Enemies
             _cretaphid = owner;
         }
 
-        public void SetUp(Node attachNode, int scanId, uint effectiveness, ushort health, Vector3 position)
+        public void SetUp(Node attachNode, int scanId, uint effectiveness,
+            ushort health, Vector3 position, float radius)
         {
             HealthbarMessageId = 1;
             if (EyeIndex > 6)
@@ -56,7 +57,7 @@ namespace MphRead.Entities.Enemies
             transform.Row3.Xyz = attachNode.Transform.Row3.Xyz + position;
             Transform = transform;
             _hurtVolumeInit = new CollisionVolume(Vector3.Zero, 0.5f);
-            _boundingRadius = 1;
+            _boundingRadius = radius;
             SetUpModel("CylinderBossEye");
         }
 
@@ -72,15 +73,15 @@ namespace MphRead.Entities.Enemies
                 {
                     _models[0].SetAnimation(3, AnimFlags.NoLoop | AnimFlags.Reverse);
                     Flags |= EnemyFlags.Invincible;
-                    if (_cretaphid.SegmentIndex == 0)
+                    if (_cretaphid.PhaseIndex == 0)
                     {
                         _field184 = _cretaphid.Values.FieldCA[EyeIndex];
                     }
-                    else if (_cretaphid.SegmentIndex == 1)
+                    else if (_cretaphid.PhaseIndex == 1)
                     {
                         _field184 = _cretaphid.Values.Field172[EyeIndex];
                     }
-                    else if (_cretaphid.SegmentIndex == 2)
+                    else if (_cretaphid.PhaseIndex == 2)
                     {
                         _field184 = _cretaphid.Values.Field21A[EyeIndex];
                     }
@@ -89,15 +90,15 @@ namespace MphRead.Entities.Enemies
                 {
                     _models[0].SetAnimation(0, AnimFlags.NoLoop);
                     Flags &= ~EnemyFlags.Invincible;
-                    if (_cretaphid.SegmentIndex == 0)
+                    if (_cretaphid.PhaseIndex == 0)
                     {
                         _field184 = _cretaphid.Values.FieldE2[EyeIndex];
                     }
-                    else if (_cretaphid.SegmentIndex == 1)
+                    else if (_cretaphid.PhaseIndex == 1)
                     {
                         _field184 = _cretaphid.Values.Field18A[EyeIndex];
                     }
-                    else if (_cretaphid.SegmentIndex == 2)
+                    else if (_cretaphid.PhaseIndex == 2)
                     {
                         _field184 = _cretaphid.Values.Field232[EyeIndex];
                     }
@@ -112,15 +113,15 @@ namespace MphRead.Entities.Enemies
                     _models[0].SetAnimation(3, AnimFlags.NoLoop | AnimFlags.Reverse | AnimFlags.Paused);
                     Flags |= EnemyFlags.Invincible;
                     Flag = false;
-                    if (_cretaphid.SegmentIndex == 0)
+                    if (_cretaphid.PhaseIndex == 0)
                     {
                         _field184 = _cretaphid.Values.FieldFA[EyeIndex];
                     }
-                    else if (_cretaphid.SegmentIndex == 1)
+                    else if (_cretaphid.PhaseIndex == 1)
                     {
                         _field184 = _cretaphid.Values.Field1A2[EyeIndex];
                     }
-                    else if (_cretaphid.SegmentIndex == 2)
+                    else if (_cretaphid.PhaseIndex == 2)
                     {
                         _field184 = _cretaphid.Values.Field24A[EyeIndex];
                     }
@@ -129,15 +130,15 @@ namespace MphRead.Entities.Enemies
                 {
                     _models[0].SetAnimation(0, AnimFlags.NoLoop);
                     Flags &= ~EnemyFlags.Invincible;
-                    if (_cretaphid.SegmentIndex == 0)
+                    if (_cretaphid.PhaseIndex == 0)
                     {
                         _field184 = _cretaphid.Values.Field112[EyeIndex];
                     }
-                    else if (_cretaphid.SegmentIndex == 1)
+                    else if (_cretaphid.PhaseIndex == 1)
                     {
                         _field184 = _cretaphid.Values.Field1BA[EyeIndex];
                     }
-                    else if (_cretaphid.SegmentIndex == 2)
+                    else if (_cretaphid.PhaseIndex == 2)
                     {
                         _field184 = _cretaphid.Values.Field262[EyeIndex];
                     }
@@ -146,15 +147,15 @@ namespace MphRead.Entities.Enemies
                 {
                     _models[0].SetAnimation(3, AnimFlags.NoLoop | AnimFlags.Reverse | AnimFlags.Paused);
                     Flags |= EnemyFlags.Invincible;
-                    if (_cretaphid.SegmentIndex == 0)
+                    if (_cretaphid.PhaseIndex == 0)
                     {
                         _field184 = _cretaphid.Values.FieldCA[EyeIndex];
                     }
-                    else if (_cretaphid.SegmentIndex == 1)
+                    else if (_cretaphid.PhaseIndex == 1)
                     {
                         _field184 = _cretaphid.Values.Field172[EyeIndex];
                     }
-                    else if (_cretaphid.SegmentIndex == 2)
+                    else if (_cretaphid.PhaseIndex == 2)
                     {
                         _field184 = _cretaphid.Values.Field21A[EyeIndex];
                     }
@@ -165,15 +166,15 @@ namespace MphRead.Entities.Enemies
                     _models[0].SetAnimation(3, AnimFlags.NoLoop | AnimFlags.Reverse | AnimFlags.Paused);
                     Flags |= EnemyFlags.Invincible;
                     Flag = false;
-                    if (_cretaphid.SegmentIndex == 0)
+                    if (_cretaphid.PhaseIndex == 0)
                     {
                         _field184 = _cretaphid.Values.FieldFA[EyeIndex];
                     }
-                    else if (_cretaphid.SegmentIndex == 1)
+                    else if (_cretaphid.PhaseIndex == 1)
                     {
                         _field184 = _cretaphid.Values.Field1A2[EyeIndex];
                     }
-                    else if (_cretaphid.SegmentIndex == 2)
+                    else if (_cretaphid.PhaseIndex == 2)
                     {
                         _field184 = _cretaphid.Values.Field24A[EyeIndex];
                     }
