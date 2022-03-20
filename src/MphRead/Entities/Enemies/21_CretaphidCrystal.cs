@@ -28,7 +28,6 @@ namespace MphRead.Entities.Enemies
             _health = _healthMax = health;
             Flags |= EnemyFlags.Invincible;
             Flags |= EnemyFlags.NoMaxDistance;
-            // sktodo: transform
             Matrix4 transform = GetTransformMatrix(attachNode.Transform.Row2.Xyz, attachNode.Transform.Row1.Xyz);
             transform.Row3.Xyz = attachNode.Transform.Row3.Xyz + position;
             Transform = transform;

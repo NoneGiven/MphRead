@@ -12,7 +12,7 @@ namespace MphRead.Entities.Enemies
     {
         private readonly EnemySpawnEntity _spawner;
         private int _subtype = 0;
-        private int _phaseFlashTimer = 0; // sktodo: differentiate these fields and make sure _flashTimer updates correctly
+        private int _crystalDownTimer = 0;
         private ushort _flashTimer = 0;
         private readonly ushort[,] _phaseValues = new ushort[3, 4];
         private int _eyeStartIndex = 0;
@@ -34,8 +34,8 @@ namespace MphRead.Entities.Enemies
         private ModelInstance _beamModel = null!;
         private ModelInstance _beamColModel = null!;
 
-        private const ushort _flashReset = 10 * 2; // todo: FPS stuff
-        private const ushort _flashTime = 5 * 2; // todo: FPS stuff
+        private const ushort _flashPeriod = 10 * 2; // todo: FPS stuff
+        private const ushort _flashLength = 5 * 2; // todo: FPS stuff
         private const ushort _eyeCount = 12;
 
         public Enemy19Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
@@ -77,10 +77,11 @@ namespace MphRead.Entities.Enemies
             _subtype = (int)_spawner.Data.Fields.S05.EnemySubtype;
             Values = Metadata.Enemy19Values[_subtype];
             _scanId = Values.ScanId;
-            _phaseFlashTimer = Values.PhaseFlashTime * 2; // todo: FPS stuff
-            _flashTimer = _flashReset;
+            _crystalDownTimer = Values.PhaseFlashTime * 2; // todo: FPS stuff
+            _flashTimer = _flashPeriod;
             _model = SetUpModel("CylinderBoss", animIndex: 2);
-            _model.NodeAnimIgnoreRoot = true; // sktodo: ?
+            _model.NodeAnimIgnoreRoot = true;
+            _model.Model.ComputeNodeMatrices(index: 0);
             if (_subtype == 0)
             {
                 _beamModel = SetUpModel("cylBossLaser");
@@ -182,6 +183,7 @@ namespace MphRead.Entities.Enemies
                 {
                     break;
                 }
+                _scene.AddEntity(eye);
                 _eyes[i] = eye;
                 eye.EyeIndex = i;
                 eye.Flag = true;
@@ -201,6 +203,7 @@ namespace MphRead.Entities.Enemies
                     {
                         return;
                     }
+                    _scene.AddEntity(newEye);
                     eye = newEye;
                     _eyes[i] = eye;
                     eye.EyeIndex = i;
@@ -222,6 +225,7 @@ namespace MphRead.Entities.Enemies
             {
                 return;
             }
+            _scene.AddEntity(crystal);
             _crystal = crystal;
             Node node = _model.Model.GetNodeByName("Crystal_joint")!;
             crystal.SetUp(node, Values.CrystalScanId, Values.CrystalEffectiveness, Values.CrystalHealth, Position);
@@ -293,6 +297,18 @@ namespace MphRead.Entities.Enemies
                 PlayerEntity.Main.TakeDamage(10, DamageFlags.None, direction: FacingVector, this);
             }
             CallStateProcess();
+            // the game does this in the draw function
+            if (_state1 == 3 || _state1 == 16 || _state1 == 26)
+            {
+                if (_flashTimer > 0)
+                {
+                    _flashTimer--;
+                    if (_flashTimer == 0)
+                    {
+                        _flashTimer = _flashPeriod;
+                    }
+                }
+            }
         }
 
         private void Sub2135F54()
@@ -368,7 +384,7 @@ namespace MphRead.Entities.Enemies
                     Debug.Assert(_crystal != null);
                     _state2 = 26;
                     _subId = _state2;
-                    _phaseFlashTimer = 35 * 2; // todo: FPS stuff
+                    _crystalDownTimer = 35 * 2; // todo: FPS stuff
                     _model.SetAnimation(0);
                     _scene.SpawnEffect(74, Vector3.UnitX, Vector3.UnitY, _crystal.Position); // cylCrystalKill3
                     _soundSource.StopAllSfx();
@@ -412,9 +428,9 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior01()
         {
-            if (_phaseFlashTimer > 0)
+            if (_crystalDownTimer > 0)
             {
-                _phaseFlashTimer--;
+                _crystalDownTimer--;
                 return false;
             }
             Debug.Assert(_crystal != null);
@@ -470,14 +486,14 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior03()
         {
-            if (_phaseFlashTimer > 0)
+            if (_crystalDownTimer > 0)
             {
-                _phaseFlashTimer--;
+                _crystalDownTimer--;
                 return false;
             }
             _model.SetAnimation(1, AnimFlags.NoLoop);
-            _phaseFlashTimer = Values.PhaseFlashTime * 2; // todo: FPS stuff
-            _flashTimer = _flashReset;
+            _crystalDownTimer = Values.PhaseFlashTime * 2; // todo: FPS stuff
+            _flashTimer = _flashPeriod;
             return true;
         }
 
@@ -610,8 +626,36 @@ namespace MphRead.Entities.Enemies
 
         protected override bool EnemyGetDrawInfo()
         {
-            // sktodo
-            return base.EnemyGetDrawInfo();
+            if (_health == 0 || !Flags.TestFlag(EnemyFlags.Visible))
+            {
+                return true;
+            }
+            if (_flashTimer < _flashLength && (_state1 == 3 || _state1 == 16 || _state1 == 26))
+            {
+                PaletteOverride = Metadata.WhitePalette;
+            } 
+            for (int i = 0; i < 3; i++)
+            {
+                SegmentInfo segment = _segments[i];
+                float angle = MathHelper.DegreesToRadians(segment.Angle);
+                segment.JointNode.AfterTransform = Matrix4.CreateRotationX(angle);
+            }
+            _model.Model.AnimateNodes2(index: 0, false, Matrix4.Identity, Vector3.One, _model.AnimInfo);
+            var transform = Matrix4.CreateTranslation(Position);
+            for (int i = 0; i < _model.Model.Nodes.Count; i++)
+            {
+                Node node = _model.Model.Nodes[i];
+                node.Animation *= transform; // todo?: could do this in the shader
+            }
+            _model.Model.UpdateMatrixStack();
+            UpdateMaterials(_model, Recolor);
+            GetDrawItems(_model, 0);
+            for (int i = 0; i < 3; i++)
+            {
+                _segments[i].JointNode.AfterTransform = null;
+            }
+            PaletteOverride = null;
+            return true;
         }
 
         #region Boilerplate
