@@ -95,6 +95,11 @@ namespace MphRead.Sound
             Sfx.Instance.PlayEnvironmentSfx(id, this);
         }
 
+        public bool CheckEnvironmentSfx(int id)
+        {
+            return Sfx.Instance.CheckEnvironmentSfx(id);
+        }
+
         public void StopAllSfx(bool force = false)
         {
             Sfx.Instance.StopSoundFromSource(this, force);
@@ -1257,6 +1262,12 @@ namespace MphRead.Sound
             item.Instances++;
         }
 
+        public override bool CheckEnvironmentSfx(int index)
+        {
+            Debug.Assert(index >= 0 && index < _environmentItems.Count);
+            return _environmentItems[index].Instances > 0;
+        }
+
         private void UpdateEnvironmentSfx()
         {
             for (int i = 0; i < _environmentItems.Count; i++)
@@ -1526,6 +1537,11 @@ namespace MphRead.Sound
 
         public virtual void PlayEnvironmentSfx(int index, SoundSource source)
         {
+        }
+
+        public virtual bool CheckEnvironmentSfx(int index)
+        {
+            return false;
         }
 
         public virtual void StopSoundFromSource(SoundSource source, bool force)

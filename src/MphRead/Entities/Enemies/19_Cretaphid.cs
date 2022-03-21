@@ -18,7 +18,7 @@ namespace MphRead.Entities.Enemies
         private readonly int[,] _phaseValues = new int[3, 4];
         private int _eyeStartIndex = 0;
         private int _eyeEndIndex = 0;
-        public int EyeBurnIndex = 0;
+        private int _eyeBurnIndex = 0;
         private float _eyeBurnUpdateTimer = 0;
         public int PhaseIndex { get; private set; }
         private int _crystalShotDelay = 0;
@@ -61,7 +61,6 @@ namespace MphRead.Entities.Enemies
         protected override bool EnemyInitialize()
         {
             Vector3 position = _data.Spawner.Position;
-            // sktodo: need to make sure player position is set at the door by this point?
             Vector3 facing = Vector3.UnitZ;
             if (position != PlayerEntity.Main.Position)
             {
@@ -137,7 +136,7 @@ namespace MphRead.Entities.Enemies
             _phaseValues[2, 3] = Values.Phase2CrystalHealth;
             _eyeStartIndex = 3;
             _eyeEndIndex = 6;
-            EyeBurnIndex = _eyeStartIndex;
+            _eyeBurnIndex = _eyeStartIndex;
             _eyeBurnUpdateTimer = 1 / 30f;
             SpawnEyes();
             SpawnCrystal();
@@ -296,10 +295,15 @@ namespace MphRead.Entities.Enemies
             _eyeBurnUpdateTimer -= _scene.FrameTime;
             if (_eyeBurnUpdateTimer <= 0)
             {
-                EyeBurnIndex++;
-                if (EyeBurnIndex > _eyeEndIndex)
+                _eyeBurnIndex++;
+                if (_eyeBurnIndex > _eyeEndIndex)
                 {
-                    EyeBurnIndex = _eyeStartIndex;
+                    _eyeBurnIndex = _eyeStartIndex;
+                }
+                Enemy20Entity? eye = _eyes[_eyeBurnIndex];
+                if (eye != null)
+                {
+                    eye.SpawnBurn = true;
                 }
                 _eyeBurnUpdateTimer = 1 / 30f;
             }

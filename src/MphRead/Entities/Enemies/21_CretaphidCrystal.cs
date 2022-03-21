@@ -38,6 +38,16 @@ namespace MphRead.Entities.Enemies
             _equipInfo.SetAmmo = (newAmmo) => _ammo = newAmmo;
         }
 
+        protected override void EnemyProcess()
+        {
+            _cretaphid.UpdateTransforms(rootPosition: false);
+            Position = _attachNode.Animation.Row3.Xyz + _cretaphid.Position;
+            if (_health > 0 && !_cretaphid.SounceSource.CheckEnvironmentSfx(5)) // CYLINDER_BOSS_ATTACK
+            {
+                _cretaphid.SounceSource.PlayEnvironmentSfx(6); // CYLINDER_BOSS_SPIN
+            }
+        }
+
         public void SpawnBeam(ushort damage)
         {
             _equipInfo.Weapon.UnchargedDamage = damage;
@@ -45,6 +55,17 @@ namespace MphRead.Entities.Enemies
             _equipInfo.Weapon.HeadshotDamage = damage;
             Vector3 spawnDir = (PlayerEntity.Main.Position.AddY(0.5f) - Position).Normalized();
             BeamProjectileEntity.Spawn(this, _equipInfo, Position, spawnDir, BeamSpawnFlags.None, _scene);
+        }
+
+        protected override bool EnemyTakeDamage(EntityBase? source)
+        {
+            if (_health == 0)
+            {
+                _health = 1;
+                Flags |= EnemyFlags.Invincible;
+                _scene.SendMessage(Message.SetActive, this, _cretaphid, param1: 0, param2: 0);
+            }
+            return false;
         }
     }
 }

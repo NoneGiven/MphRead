@@ -15,6 +15,7 @@ namespace MphRead.Entities.Enemies
         public ushort BeamSpawnCount { get; set; }
         public int BeamSpawnCooldown { get; set; }
         public int BeamSpawnTimer { get; set; }
+        public bool SpawnBurn { get; set; }
 
         private Node _attachNode = null!;
         private Matrix4 _beamTransform = Matrix4.Identity;
@@ -414,16 +415,43 @@ namespace MphRead.Entities.Enemies
             CollisionResult result = default;
             if (CollisionDetection.CheckBetweenPoints(Position, pointTwo, TestFlags.None, _scene, ref result))
             {
-                // sktodo: spawn burn effect
                 _beamCollisionPos = result.Position;
+                if (SpawnBurn)
+                {
+                    Vector3 spawnPos = result.Position + result.Plane.Xyz / 8;
+                    Vector3 spawnUp = result.Plane.Xyz;
+                    if (result.EntityCollision != null)
+                    {
+                        spawnPos = Matrix.Vec3MultMtx4(spawnPos, result.EntityCollision.Inverse1);
+                        spawnUp = Matrix.Vec3MultMtx3(spawnUp, result.EntityCollision.Inverse1);
+                    }
+                    Vector3 spawnFacing = GetCrossVector(spawnUp);
+                    Matrix4 spawnTransform = GetTransformMatrix(spawnFacing, spawnUp, spawnPos);
+                    var ent = BeamEffectEntity.Create(new BeamEffectEntityData(type: 2,
+                        noSplat: false, spawnTransform, result.EntityCollision), _scene);
+                    if (ent != null)
+                    {
+                        _scene.AddEntity(ent);
+                    }
+                }
                 BeamColliding = true;
             }
             else
             {
                 BeamColliding = false;
             }
+            SpawnBurn = false;
             _beamTransform = transform;
             _cretaphid.ResetTransforms();
+        }
+
+        private static Vector3 GetCrossVector(Vector3 up)
+        {
+            if (up.Z <= -0.9f || up.Z >= 0.9f)
+            {
+                return Vector3.Cross(Vector3.UnitX, up).Normalized();
+            }
+            return Vector3.Cross(Vector3.UnitZ, up).Normalized();
         }
 
         protected override bool EnemyGetDrawInfo()

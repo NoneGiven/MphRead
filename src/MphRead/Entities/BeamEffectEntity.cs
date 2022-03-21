@@ -51,7 +51,7 @@ namespace MphRead.Entities
             }
             _lifespan = 0;
             // in-game all the group types are checked, but we're just checking what's actually used
-            if (model.Model.AnimationGroups.Node.Count > 0)
+            if (model.Model.AnimationGroups.Node.Count > 0 && data.Type != 2)
             {
                 _lifespan = (model.Model.AnimationGroups.Node[0].FrameCount - 1) * 2;
             }
