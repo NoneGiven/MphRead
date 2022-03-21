@@ -10,6 +10,8 @@ This project is a reverse engineering and game recreation effort comprising a mo
 - Exports models to COLLADA, textures to PNG, and sound effects to WAV
 - Generates Python scripts to import model animations and more into Blender
 
+**Note:** The version of OpenAL Soft distributed with the Windows version of MphRead may have some audio issues. This may be resolved in a future version, but if you experience issues, you can use [Creative's Windows installer](https://www.openal.org/downloads/) to install a working version.
+
 ## Planned
 - Music playback
 - Room editor and save editor
