@@ -29,7 +29,7 @@ namespace MphRead.Entities.Enemies
         }
 
         // this happens in the spawner's set_entity_refs in-game
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             Transform = _data.Spawner.Transform;
             if (_data.Spawner is EnemySpawnEntity spawner && spawner.ParentEntCol != null)
@@ -69,7 +69,6 @@ namespace MphRead.Entities.Enemies
                 inst.SetAnimation(0);
             }
             _spawner.Flags |= SpawnerFlags.HasModel;
-            return true;
         }
 
         protected override void EnemyProcess()

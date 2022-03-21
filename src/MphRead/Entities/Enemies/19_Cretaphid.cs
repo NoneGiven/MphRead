@@ -7,7 +7,6 @@ using MphRead.Formats.Culling;
 using MphRead.Sound;
 using OpenTK.Mathematics;
 
-
 namespace MphRead.Entities.Enemies
 {
     public class Enemy19Entity : EnemyInstanceEntity
@@ -63,7 +62,7 @@ namespace MphRead.Entities.Enemies
             };
         }
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             Vector3 position = _data.Spawner.Position;
             Vector3 facing = Vector3.UnitZ;
@@ -165,7 +164,6 @@ namespace MphRead.Entities.Enemies
             _crystalShotDelay = GetPhaseValue(PhaseValue.CrystalShotDelay);
             _crystalUpTimer = GetPhaseValue(PhaseValue.CrystalUpTime);
             Sub2135F54();
-            return true;
         }
 
         private enum PhaseValue

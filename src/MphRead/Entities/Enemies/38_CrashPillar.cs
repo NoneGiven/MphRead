@@ -33,7 +33,7 @@ namespace MphRead.Entities.Enemies
             };
         }
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             Vector3 facing = _spawner.FacingVector;
             SetTransform(facing, Vector3.UnitY, _spawner.Position);
@@ -52,7 +52,6 @@ namespace MphRead.Entities.Enemies
             _initalPos = Position;
             _initalFacing = facing;
             SetUpModel(Metadata.EnemyModelNames[38], animIndex: 1);
-            return true;
         }
 
         protected override void EnemyProcess()

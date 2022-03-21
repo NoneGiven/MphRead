@@ -46,7 +46,7 @@ namespace MphRead.Entities.Enemies
             0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1
         };
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             int version = (int)_spawner.Data.Fields.S06.EnemyVersion;
             Recolor = _recolors[version];
@@ -101,7 +101,6 @@ namespace MphRead.Entities.Enemies
                 var hurtVolume = new CollisionVolume(Vector3.UnitY, cylPos, Fixed.ToFloat(10649), Fixed.ToFloat(13844));
                 _hitZone.SetUp(1, hurtVolume, 1);
             }
-            return true;
         }
 
         protected override void EnemyProcess()

@@ -32,7 +32,7 @@ namespace MphRead.Entities.Enemies
             };
         }
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             Flags |= EnemyFlags.Visible;
             Flags |= EnemyFlags.OnRadar;
@@ -58,7 +58,6 @@ namespace MphRead.Entities.Enemies
             _idlePoints[3].X -= facing.Z * idleX;
             _idlePoints[3].Z += facing.X * idleX;
             Func21648A4();
-            return true;
         }
 
         // todo: function names

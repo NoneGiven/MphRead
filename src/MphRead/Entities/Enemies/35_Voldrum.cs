@@ -49,10 +49,9 @@ namespace MphRead.Entities.Enemies
             };
         }
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             Setup();
-            return true;
         }
 
         protected virtual void Setup()

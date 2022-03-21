@@ -35,7 +35,7 @@ namespace MphRead.Entities.Enemies
         }
 
         // todo: identical to Zoomer except for a few values
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             var facing = new Vector3(Rng.GetRandomInt2(4096) / 4096f, 0, Rng.GetRandomInt2(4096) / 4096f);
             if (facing.X == 0 && facing.Z == 0)
@@ -59,7 +59,6 @@ namespace MphRead.Entities.Enemies
             _angleCos = MathF.Cos(MathHelper.DegreesToRadians(_angleInc));
             _homeVolume = CollisionVolume.Move(SpawnFields.Volume1, _spawner.Data.Header.Position.ToFloatVector());
             _direction = Vector3.Cross(facing, up).Normalized();
-            return true;
         }
 
         private void SetAnimation(GeemerAnim anim, AnimFlags flags = AnimFlags.None)

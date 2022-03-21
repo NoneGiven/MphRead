@@ -51,7 +51,7 @@ namespace MphRead.Entities.Enemies
             0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0
         };
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             int version = (int)_spawner.Data.Fields.S06.EnemyVersion;
             Recolor = _recolors[version];
@@ -80,7 +80,6 @@ namespace MphRead.Entities.Enemies
             _equipInfo = new EquipInfo(weapon, _beams);
             _equipInfo.GetAmmo = () => _ammo;
             _equipInfo.SetAmmo = (newAmmo) => _ammo = newAmmo;
-            return true;
         }
 
         protected override void EnemyProcess()

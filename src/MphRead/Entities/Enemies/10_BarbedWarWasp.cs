@@ -49,7 +49,7 @@ namespace MphRead.Entities.Enemies
         };
 
         // todo: this is mostly identical to War Wasp
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             int version = (int)_spawner.Data.Fields.S08.EnemyVersion;
             Recolor = _recolors[version];
@@ -103,7 +103,6 @@ namespace MphRead.Entities.Enemies
             {
                 StartMovingTowardPosition();
             }
-            return true;
         }
 
         private void StartMovingToward(Vector3 target, float step)

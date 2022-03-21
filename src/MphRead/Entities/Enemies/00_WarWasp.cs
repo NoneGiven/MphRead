@@ -38,7 +38,7 @@ namespace MphRead.Entities.Enemies
             };
         }
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             Matrix4 transform = GetTransformMatrix(_spawner.Data.Header.FacingVector.ToFloatVector(), Vector3.UnitY);
             transform.Row3.Xyz = _spawner.Data.Header.Position.ToFloatVector();
@@ -82,7 +82,6 @@ namespace MphRead.Entities.Enemies
             {
                 StartMovingTowardPosition();
             }
-            return true;
         }
 
         private void StartMovingToward(Vector3 target, float step)

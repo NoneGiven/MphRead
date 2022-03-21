@@ -77,7 +77,7 @@ namespace MphRead.Entities
             _scanId = Metadata.EnemyScanIds[(int)_data.Type];
             Metadata.LoadEffectiveness(_data.Type, BeamEffectiveness);
             Flags = EnemyFlags.CollidePlayer | EnemyFlags.CollideBeam;
-            EnemyInitialize(); // todo: doesn't need to return bool
+            EnemyInitialize();
             // the game sets parent collision transform here, but enemies that need it (e.g. spawner, Cretaphid)
             // handle it themselves by just checking the parent spawner's ent col fields
             _prevPos = Position;
@@ -294,12 +294,8 @@ namespace MphRead.Entities
             PaletteOverride = null;
         }
 
-        /// <summary>
-        /// Must return true if overriden.
-        /// </summary>
-        protected virtual bool EnemyInitialize()
+        protected virtual void EnemyInitialize()
         {
-            return false;
         }
 
         protected virtual void EnemyProcess()
