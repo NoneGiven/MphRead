@@ -89,11 +89,11 @@ namespace MphRead.Entities.Enemies
             {
                 BeamModel = SetUpModel("cylBossLaser");
             }
-            else if (_subtype == 1)
+            else if (_subtype == 2)
             {
                 BeamModel = SetUpModel("cylBossLaserY");
             }
-            else if (_subtype == 2)
+            else if (_subtype == 3)
             {
                 BeamModel = SetUpModel("cylBossLaserG");
             }
@@ -427,6 +427,8 @@ namespace MphRead.Entities.Enemies
                     _soundSource.PlaySfx(SfxId.CYLINDER_BOSS_CRYSTAL_SCR); // empty
                 }
                 // sktodo: play movie (i.e. fade out and pick up where the movie leaves off)
+                // sktodo: make sure all eyes are despawned and platform is no longer damaging
+                // (platform also probably resets to the center of the room?)
             }
         }
 
