@@ -4361,7 +4361,7 @@ namespace MphRead
                 smokeChargeAmount: 0
             ),
             new WeaponInfo(
-                description: "Cretaphid Laser",
+                description: "Cretaphid Plasma 1",
                 beam: BeamType.VoltDriver,
                 beamKind: BeamType.VoltDriver,
                 drawFuncIds: new byte[] { 19, 19 },
@@ -4446,7 +4446,7 @@ namespace MphRead
                 smokeChargeAmount: 0
             ),
             new WeaponInfo(
-                description: "Cretaphid Plasma",
+                description: "Cretaphid Plasma 2",
                 beam: BeamType.VoltDriver,
                 beamKind: BeamType.VoltDriver,
                 drawFuncIds: new byte[] { 19, 19 },

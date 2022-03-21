@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 using MphRead.Formats;
 using MphRead.Formats.Culling;
@@ -10,7 +9,7 @@ namespace MphRead.Entities.Enemies
     {
         private readonly Enemy19Entity _cretaphid;
         private int _stateTimer = 0;
-        private float _beamLength = 0;
+        private Vector3 _beamCollisionPos;
         public ushort BeamType { get; set; } = 2;
         public bool EyeActive { get; set; } = true;
         public ushort BeamSpawnCount { get; set; }
@@ -20,7 +19,7 @@ namespace MphRead.Entities.Enemies
         private Node _attachNode = null!;
         private Matrix4 _beamTransform = Matrix4.Identity;
         public int EyeIndex { get; set; }
-        public bool BeamActive { get; set; }
+        public bool BeamColliding { get; set; }
         public int SegmentIndex { get; private set; }
 
         public Enemy20Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
@@ -47,7 +46,7 @@ namespace MphRead.Entities.Enemies
             {
                 SegmentIndex = 0;
             }
-            _beamLength = 0;
+            _beamCollisionPos = Vector3.Zero;
             _stateTimer = 0;
             BeamType = 2;
             EyeActive = true;
@@ -119,7 +118,7 @@ namespace MphRead.Entities.Enemies
                 {
                     _models[0].SetAnimation(3, AnimFlags.NoLoop | AnimFlags.Reverse | AnimFlags.Paused);
                     Flags |= EnemyFlags.Invincible;
-                    BeamActive = false;
+                    BeamColliding = false;
                     if (_cretaphid.PhaseIndex == 0)
                     {
                         _stateTimer = _cretaphid.Values.Phase0EyeStateTimer2[EyeIndex] * 2; // todo: FPS stuff
@@ -172,7 +171,7 @@ namespace MphRead.Entities.Enemies
                     _soundSource.PlayEnvironmentSfx(5); // CYLINDER_BOSS_ATTACK
                     _models[0].SetAnimation(3, AnimFlags.NoLoop | AnimFlags.Reverse | AnimFlags.Paused);
                     Flags |= EnemyFlags.Invincible;
-                    BeamActive = false;
+                    BeamColliding = false;
                     if (_cretaphid.PhaseIndex == 0)
                     {
                         _stateTimer = _cretaphid.Values.Phase0EyeStateTimer2[EyeIndex] * 2; // todo: FPS stuff
@@ -301,7 +300,7 @@ namespace MphRead.Entities.Enemies
                     _cretaphid.Sub2135F54();
                 }
             }
-            UpdateBeamTransform();
+            UpdateTransforms();
             CheckBeamCollision();
         }
 
@@ -324,6 +323,10 @@ namespace MphRead.Entities.Enemies
 
         private void CheckBeamCollision()
         {
+            if (_state1 != 3 && _state1 != 6 || BeamType != 2) // the game doesn't check the beam type
+            {
+                return;
+            }
             PlayerEntity player = PlayerEntity.Main;
             Vector3 beamCylTop = Position + _beamTransform.Row2.Xyz;
             float radii = player.Volume.SphereRadius + Fixed.ToFloat(_cretaphid.Values.CollisionRadius);
@@ -389,14 +392,82 @@ namespace MphRead.Entities.Enemies
             return false;
         }
 
-        private void UpdateBeamTransform()
+        private void UpdateTransforms()
         {
-            // sktodo
+            if (_state1 != 3 && _state1 != 6 || BeamType != 2)
+            {
+                if (_state1 != 3)
+                {
+                    _cretaphid.UpdateTransforms(rootPosition: false);
+                    Position = _attachNode.Animation.Row3.Xyz + _cretaphid.Position;
+                }
+                return;
+            }
+            _cretaphid.UpdateTransforms(rootPosition: false);
+            var transform = Matrix4.CreateScale(1, 1, 20);
+            float angle = MathHelper.DegreesToRadians(_cretaphid.Segments[SegmentIndex].BeamAngle);
+            transform *= Matrix4.CreateRotationX(angle);
+            transform *= _attachNode.Animation;
+            transform.Row3.Xyz += _cretaphid.Position;
+            Position = transform.Row3.Xyz;
+            Vector3 pointTwo = Position + transform.Row2.Xyz;
+            CollisionResult result = default;
+            if (CollisionDetection.CheckBetweenPoints(Position, pointTwo, TestFlags.None, _scene, ref result))
+            {
+                // sktodo: spawn burn effect
+                _beamCollisionPos = result.Position;
+                BeamColliding = true;
+            }
+            else
+            {
+                BeamColliding = false;
+            }
+            _beamTransform = transform;
+            _cretaphid.ResetTransforms();
         }
 
         protected override bool EnemyGetDrawInfo()
         {
-            // sktodo
+            if ((_state1 == 3 || _state1 == 6) && BeamType == 2)
+            {
+                // sktodo: the beam model is being drawn too thin, which also messes up the scrolling animation
+                ModelInstance beamModel = _cretaphid.BeamModel;
+                beamModel.Model.AnimateNodes(index: 0, false, _beamTransform, Vector3.One, beamModel.AnimInfo);
+                beamModel.Model.UpdateMatrixStack();
+                UpdateMaterials(beamModel, 0);
+                GetDrawItems(beamModel, 0);
+                if (BeamColliding)
+                {
+                    // sktodo: the beam col model also looks bad, also not sure why
+                    ModelInstance beamColModel = _cretaphid.BeamColModel;
+                    var translation = Matrix4.CreateTranslation(_beamCollisionPos);
+                    beamColModel.Model.AnimateNodes(index: 0, false, translation, Vector3.One, beamColModel.AnimInfo);
+                    beamColModel.Model.UpdateMatrixStack();
+                    UpdateMaterials(beamColModel, 0);
+                    GetDrawItems(beamColModel, 0);
+                }
+            }
+            ModelInstance model = _models[0];
+            if (_timeSinceDamage < 5 * 2) // todo: FPS stuff
+            {
+                for (int i = 0; i < model.Model.Materials.Count; i++)
+                {
+                    Material material = model.Model.Materials[i];
+                    material.Diffuse = new ColorRgb(31, 0, 0);
+                    material.Lighting = 1;
+                }
+            }
+            model.Model.AnimateNodes(index: 0, false, _attachNode.Animation, Vector3.One, model.AnimInfo);
+            model.Model.UpdateMatrixStack();
+            UpdateMaterials(model, 0);
+            GetDrawItems(model, 0);
+            if (_timeSinceDamage < 5 * 2) // todo: FPS stuff
+            {
+                for (int i = 0; i < model.Model.Materials.Count; i++)
+                {
+                    model.Model.Materials[i].Lighting = 0;
+                }
+            }
             return true;
         }
     }

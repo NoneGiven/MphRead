@@ -15,9 +15,11 @@ namespace MphRead.Entities.Enemies
         private int _subtype = 0;
         private int _crystalDownTimer = 0;
         private ushort _flashTimer = 0;
-        private readonly ushort[,] _phaseValues = new ushort[3, 4];
+        private readonly int[,] _phaseValues = new int[3, 4];
         private int _eyeStartIndex = 0;
         private int _eyeEndIndex = 0;
+        public int EyeBurnIndex = 0;
+        private float _eyeBurnUpdateTimer = 0;
         public int PhaseIndex { get; private set; }
         private int _crystalShotDelay = 0;
         private int _crystalShotTimer = 0;
@@ -28,7 +30,7 @@ namespace MphRead.Entities.Enemies
         private int _ammo1 = 1000;
 
         public Enemy19Values Values { get; private set; }
-        private readonly SegmentInfo[] _segments = new SegmentInfo[3];
+        public SegmentInfo[] Segments { get; } = new SegmentInfo[3];
         private readonly Enemy20Entity?[] _eyes = new Enemy20Entity?[_eyeCount];
         private Enemy21Entity? _crystal = null!;
         private ModelInstance _model = null!;
@@ -97,45 +99,46 @@ namespace MphRead.Entities.Enemies
                 BeamModel = SetUpModel("cylBossLaserG");
             }
             BeamColModel = SetUpModel("cylBossLaserColl");
-            _segments[0] = new SegmentInfo();
-            _segments[1] = new SegmentInfo();
-            _segments[2] = new SegmentInfo();
-            _segments[0].JointNode = _model.Model.GetNodeByName("Upper_joint")!;
-            _segments[1].JointNode = _model.Model.GetNodeByName("Mid_joint")!;
-            _segments[2].JointNode = _model.Model.GetNodeByName("Lower_joint")!;
-            _segments[0].AngleStep = Fixed.ToFloat(Values.Seg0AngleStep);
-            _segments[0].BeamAngle = Fixed.ToFloat(Values.Seg0BeamStartAngle);
-            _segments[0].BeamAngleMax = Fixed.ToFloat(Values.Seg0BeamAngleMax);
-            _segments[0].BeamAngleMin = Fixed.ToFloat(Values.Seg0BeamAngleMin);
-            _segments[0].BeamAngleStep = Fixed.ToFloat(Values.Seg0BeamAngleStep);
-            _segments[0].SpinDirection = 1;
-            _segments[1].AngleStep = Fixed.ToFloat(Values.Seg1AngleStep);
-            _segments[1].BeamAngle = Fixed.ToFloat(Values.Seg1BeamStartAngle);
-            _segments[1].BeamAngleMax = Fixed.ToFloat(Values.Seg1BeamAngleMax);
-            _segments[1].BeamAngleMin = Fixed.ToFloat(Values.Seg1BeamAngleMin);
-            _segments[1].BeamAngleStep = Fixed.ToFloat(Values.Seg1BeamAngleStep);
-            _segments[1].SpinDirection = -1;
-            _segments[2].AngleStep = Fixed.ToFloat(Values.Seg2AngleStep);
-            _segments[2].BeamAngle = Fixed.ToFloat(Values.Seg2BeamStartAngle);
-            _segments[2].BeamAngleMax = Fixed.ToFloat(Values.Seg2BeamAngleMax);
-            _segments[2].BeamAngleMin = Fixed.ToFloat(Values.Seg2BeamAngleMin);
-            _segments[2].BeamAngleStep = Fixed.ToFloat(Values.Seg2BeamAngleStep);
-            _segments[2].SpinDirection = 1;
-            _phaseValues[0, 0] = Values.Seg0Value0;
-            _phaseValues[0, 1] = Values.Phase0CrystalShotTime;
-            _phaseValues[0, 2] = Values.Seg0Value2;
+            Segments[0] = new SegmentInfo();
+            Segments[1] = new SegmentInfo();
+            Segments[2] = new SegmentInfo();
+            Segments[0].JointNode = _model.Model.GetNodeByName("Upper_joint")!;
+            Segments[1].JointNode = _model.Model.GetNodeByName("Mid_joint")!;
+            Segments[2].JointNode = _model.Model.GetNodeByName("Lower_joint")!;
+            Segments[0].AngleStep = Fixed.ToFloat(Values.Seg0AngleStep) / 2; // todo: FPS stuff
+            Segments[0].BeamAngle = Fixed.ToFloat(Values.Seg0BeamStartAngle);
+            Segments[0].BeamAngleMax = Fixed.ToFloat(Values.Seg0BeamAngleMax);
+            Segments[0].BeamAngleMin = Fixed.ToFloat(Values.Seg0BeamAngleMin);
+            Segments[0].BeamAngleStep = Fixed.ToFloat(Values.Seg0BeamAngleStep) / 2; // todo: FPS stuff
+            Segments[0].SpinDirection = 1;
+            Segments[1].AngleStep = Fixed.ToFloat(Values.Seg1AngleStep) / 2; // todo: FPS stuff
+            Segments[1].BeamAngle = Fixed.ToFloat(Values.Seg1BeamStartAngle);
+            Segments[1].BeamAngleMax = Fixed.ToFloat(Values.Seg1BeamAngleMax);
+            Segments[1].BeamAngleMin = Fixed.ToFloat(Values.Seg1BeamAngleMin);
+            Segments[1].BeamAngleStep = Fixed.ToFloat(Values.Seg1BeamAngleStep) / 2; // todo: FPS stuff
+            Segments[1].SpinDirection = -1;
+            Segments[2].AngleStep = Fixed.ToFloat(Values.Seg2AngleStep) / 2; // todo: FPS stuff
+            Segments[2].BeamAngle = Fixed.ToFloat(Values.Seg2BeamStartAngle);
+            Segments[2].BeamAngleMax = Fixed.ToFloat(Values.Seg2BeamAngleMax);
+            Segments[2].BeamAngleMin = Fixed.ToFloat(Values.Seg2BeamAngleMin);
+            Segments[2].BeamAngleStep = Fixed.ToFloat(Values.Seg2BeamAngleStep) / 2; // todo: FPS stuff
+            Segments[2].SpinDirection = 1;
+            _phaseValues[0, 0] = Values.Phase0CrystalShotDelay * 2; // todo: FPS stuff
+            _phaseValues[0, 1] = Values.Phase0CrystalShotTime * 2; // todo: FPS stuff
+            _phaseValues[0, 2] = Values.Phase0CrystalUpTime * 2; // todo: FPS stuff
             _phaseValues[0, 3] = Values.Phase0CrystalHealth;
-            _phaseValues[1, 0] = Values.Seg1Value0;
-            _phaseValues[1, 1] = Values.Phase1CrystalShotTime;
-            _phaseValues[1, 2] = Values.Seg1Value2;
+            _phaseValues[1, 0] = Values.Phase1CrystalShotDelay * 2; // todo: FPS stuff
+            _phaseValues[1, 1] = Values.Phase1CrystalShotTime * 2; // todo: FPS stuff
+            _phaseValues[1, 2] = Values.Phase1CrystalUpTime * 2; // todo: FPS stuff
             _phaseValues[1, 3] = Values.Phase1CrystalHealth;
-            _phaseValues[2, 0] = Values.Seg2Value0;
-            _phaseValues[2, 1] = Values.Phase2CrystalShotTime;
-            _phaseValues[2, 2] = Values.Seg2Value2;
+            _phaseValues[2, 0] = Values.Phase2CrystalShotDelay * 2; // todo: FPS stuff
+            _phaseValues[2, 1] = Values.Phase2CrystalShotTime * 2; // todo: FPS stuff
+            _phaseValues[2, 2] = Values.Phase2CrystalUpTime * 2; // todo: FPS stuff
             _phaseValues[2, 3] = Values.Phase2CrystalHealth;
-            // sktodo: globals
             _eyeStartIndex = 3;
             _eyeEndIndex = 6;
+            EyeBurnIndex = _eyeStartIndex;
+            _eyeBurnUpdateTimer = 1 / 30f;
             SpawnEyes();
             SpawnCrystal();
             WeaponInfo laserWeapon = Weapons.BossWeapons[1];
@@ -149,9 +152,9 @@ namespace MphRead.Entities.Enemies
             EquipInfo[0].ChargeLevel = laserWeapon.FullCharge;
             EquipInfo[1].ChargeLevel = plasmaWeapon.FullCharge;
             SetPhase0();
-            _crystalShotTimer = GetPhaseValue(PhaseValue.CrystalShotTime) * 2; // todo: FPS stuff
-            _crystalShotDelay = GetPhaseValue(PhaseValue.CrystalShotDelay) * 2; // todo: FPS stuff
-            _crystalUpTimer = GetPhaseValue(PhaseValue.CrystalUpTime) * 2; // todo: FPS stuff
+            _crystalShotTimer = GetPhaseValue(PhaseValue.CrystalShotTime);
+            _crystalShotDelay = GetPhaseValue(PhaseValue.CrystalShotDelay);
+            _crystalUpTimer = GetPhaseValue(PhaseValue.CrystalUpTime);
             Sub2135F54();
             return true;
         }
@@ -165,7 +168,7 @@ namespace MphRead.Entities.Enemies
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ushort GetPhaseValue(PhaseValue value)
+        private int GetPhaseValue(PhaseValue value)
         {
             return _phaseValues[PhaseIndex, (int)value];
         }
@@ -188,7 +191,7 @@ namespace MphRead.Entities.Enemies
                 _scene.AddEntity(eye);
                 _eyes[i] = eye;
                 eye.EyeIndex = i;
-                eye.BeamActive = true;
+                eye.BeamColliding = true;
                 Node node = _model.Model.GetNodeByName(_eyeNodes[i])!;
                 eye.SetUp(node, Values.EyeScanId, Values.EyeEffectiveness, Values.EyeHealth, Position, radius: 1);
             }
@@ -209,7 +212,7 @@ namespace MphRead.Entities.Enemies
                     eye = newEye;
                     _eyes[i] = eye;
                     eye.EyeIndex = i;
-                    eye.BeamActive = false;
+                    eye.BeamColliding = false;
                     Node node = _model.Model.GetNodeByName(_eyeNodes[i])!;
                     eye.SetUp(node, Values.EyeScanId, Values.EyeEffectiveness, Values.EyeHealth, Position, radius: 0.5f);
                 }
@@ -236,7 +239,6 @@ namespace MphRead.Entities.Enemies
         private void SetPhase0()
         {
             PhaseIndex = 0;
-            // sktodo: globals
             _eyeStartIndex = 0;
             _eyeEndIndex = 2;
         }
@@ -244,7 +246,6 @@ namespace MphRead.Entities.Enemies
         private void SetPhase1()
         {
             PhaseIndex = 1;
-            // sktodo: globals
             _eyeStartIndex = 3;
             _eyeEndIndex = 6;
         }
@@ -252,7 +253,6 @@ namespace MphRead.Entities.Enemies
         private void SetPhase2()
         {
             PhaseIndex = 2;
-            // sktodo: globals
             _eyeStartIndex = 7;
             _eyeEndIndex = 11;
         }
@@ -263,7 +263,7 @@ namespace MphRead.Entities.Enemies
             // top, middle, bottom
             for (int i = 0; i < 3; i++)
             {
-                SegmentInfo segment = _segments[i];
+                SegmentInfo segment = Segments[i];
                 segment.Angle += segment.SpinDirection * segment.AngleStep;
                 if (segment.Angle >= 360)
                 {
@@ -293,7 +293,16 @@ namespace MphRead.Entities.Enemies
                     segment.BeamAngle -= segment.BeamAngleStep;
                 }
             }
-            // sktodo: globals
+            _eyeBurnUpdateTimer -= _scene.FrameTime;
+            if (_eyeBurnUpdateTimer <= 0)
+            {
+                EyeBurnIndex++;
+                if (EyeBurnIndex > _eyeEndIndex)
+                {
+                    EyeBurnIndex = _eyeStartIndex;
+                }
+                _eyeBurnUpdateTimer = 1 / 30f;
+            }
             if (HitPlayers[PlayerEntity.Main.SlotIndex])
             {
                 PlayerEntity.Main.TakeDamage(10, DamageFlags.None, direction: FacingVector, this);
@@ -433,18 +442,18 @@ namespace MphRead.Entities.Enemies
             Debug.Assert(_crystal != null);
             if (PhaseIndex == 0)
             {
-                _crystal.SetHealth(GetPhaseValue(PhaseValue.CrystalHealth));
+                _crystal.SetHealth((ushort)GetPhaseValue(PhaseValue.CrystalHealth));
                 SetPhase1();
             }
             else if (PhaseIndex == 1)
             {
-                _crystal.SetHealth(GetPhaseValue(PhaseValue.CrystalHealth));
+                _crystal.SetHealth((ushort)GetPhaseValue(PhaseValue.CrystalHealth));
                 SetPhase2();
             }
             Sub2135F54();
-            _crystalShotTimer = GetPhaseValue(PhaseValue.CrystalShotTime) * 2; // todo: FPS stuff
-            _crystalShotDelay = GetPhaseValue(PhaseValue.CrystalShotDelay) * 2; // todo: FPS stuff
-            _crystalUpTimer = GetPhaseValue(PhaseValue.CrystalUpTime) * 2; // todo: FPS stuff
+            _crystalShotTimer = GetPhaseValue(PhaseValue.CrystalShotTime);
+            _crystalShotDelay = GetPhaseValue(PhaseValue.CrystalShotDelay);
+            _crystalUpTimer = GetPhaseValue(PhaseValue.CrystalUpTime);
             return true;
         }
 
@@ -559,9 +568,9 @@ namespace MphRead.Entities.Enemies
                 SetPhase2();
             }
             Sub2135F54();
-            _crystalShotTimer = GetPhaseValue(PhaseValue.CrystalShotTime) * 2; // todo: FPS stuff
-            _crystalShotDelay = GetPhaseValue(PhaseValue.CrystalShotDelay) * 2; // todo: FPS stuff
-            _crystalUpTimer = GetPhaseValue(PhaseValue.CrystalUpTime) * 2; // todo: FPS stuff
+            _crystalShotTimer = GetPhaseValue(PhaseValue.CrystalShotTime);
+            _crystalShotDelay = GetPhaseValue(PhaseValue.CrystalShotDelay);
+            _crystalUpTimer = GetPhaseValue(PhaseValue.CrystalUpTime);
             return true;
         }
 
@@ -627,7 +636,7 @@ namespace MphRead.Entities.Enemies
                 _crystalShotDelay--;
                 return false;
             }
-            _crystalShotDelay = GetPhaseValue(PhaseValue.CrystalShotDelay) * 2; // todo: FPS stuff
+            _crystalShotDelay = GetPhaseValue(PhaseValue.CrystalShotDelay);
             return true;
         }
 
@@ -638,12 +647,40 @@ namespace MphRead.Entities.Enemies
                 _crystalShotTimer--;
                 return false;
             }
-            _crystalShotTimer = GetPhaseValue(PhaseValue.CrystalShotTime) * 2; // todo: FPS stuff
+            _crystalShotTimer = GetPhaseValue(PhaseValue.CrystalShotTime);
             Debug.Assert(_crystal != null);
             _scene.SpawnEffect(67, Vector3.UnitX, Vector3.UnitY, _crystal.Position); // cylCrystalShot
             _crystal.SpawnBeam(Values.CrystalBeamDamage[PhaseIndex]);
             _soundSource.PlaySfx(SfxId.CYLINDER_BOSS_ATTACK2);
             return true;
+        }
+
+        public void UpdateTransforms(bool rootPosition)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                SegmentInfo segment = Segments[i];
+                float angle = MathHelper.DegreesToRadians(segment.Angle);
+                segment.JointNode.AfterTransform = Matrix4.CreateRotationX(angle);
+            }
+            _model.Model.AnimateNodes2(index: 0, false, Matrix4.Identity, Vector3.One, _model.AnimInfo);
+            if (rootPosition)
+            {
+                var transform = Matrix4.CreateTranslation(Position);
+                for (int i = 0; i < _model.Model.Nodes.Count; i++)
+                {
+                    Node node = _model.Model.Nodes[i];
+                    node.Animation *= transform;
+                }
+            }
+        }
+
+        public void ResetTransforms()
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                Segments[i].JointNode.AfterTransform = null;
+            }
         }
 
         protected override bool EnemyGetDrawInfo()
@@ -656,26 +693,11 @@ namespace MphRead.Entities.Enemies
             {
                 PaletteOverride = Metadata.WhitePalette;
             }
-            for (int i = 0; i < 3; i++)
-            {
-                SegmentInfo segment = _segments[i];
-                float angle = MathHelper.DegreesToRadians(segment.Angle);
-                segment.JointNode.AfterTransform = Matrix4.CreateRotationX(angle);
-            }
-            _model.Model.AnimateNodes2(index: 0, false, Matrix4.Identity, Vector3.One, _model.AnimInfo);
-            var transform = Matrix4.CreateTranslation(Position);
-            for (int i = 0; i < _model.Model.Nodes.Count; i++)
-            {
-                Node node = _model.Model.Nodes[i];
-                node.Animation *= transform; // todo?: could do this in the shader
-            }
+            UpdateTransforms(rootPosition: true);
             _model.Model.UpdateMatrixStack();
             UpdateMaterials(_model, Recolor);
             GetDrawItems(_model, 0);
-            for (int i = 0; i < 3; i++)
-            {
-                _segments[i].JointNode.AfterTransform = null;
-            }
+            ResetTransforms();
             PaletteOverride = null;
             return true;
         }
@@ -749,7 +771,7 @@ namespace MphRead.Entities.Enemies
 
         #endregion
 
-        private class SegmentInfo
+        public class SegmentInfo
         {
             public float Angle { get; set; }
             public float AngleStep { get; set; }
@@ -774,12 +796,12 @@ namespace MphRead.Entities.Enemies
         public ushort Phase0CrystalShotTime { get; init; }
         public ushort Phase1CrystalShotTime { get; init; }
         public ushort Phase2CrystalShotTime { get; init; }
-        public ushort Seg0Value0 { get; init; }
-        public ushort Seg1Value0 { get; init; }
-        public ushort Seg2Value0 { get; init; }
-        public ushort Seg0Value2 { get; init; }
-        public ushort Seg1Value2 { get; init; }
-        public ushort Seg2Value2 { get; init; }
+        public ushort Phase0CrystalShotDelay { get; init; }
+        public ushort Phase1CrystalShotDelay { get; init; }
+        public ushort Phase2CrystalShotDelay { get; init; }
+        public ushort Phase0CrystalUpTime { get; init; }
+        public ushort Phase1CrystalUpTime { get; init; }
+        public ushort Phase2CrystalUpTime { get; init; }
         public ushort[] CrystalBeamDamage { get; init; } // 3
         public ushort[] EyeBeamDamage { get; init; } // 3
         public ushort[] EyeSplashDamage { get; init; } // 3
