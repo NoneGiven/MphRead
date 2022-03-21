@@ -90,9 +90,9 @@ namespace MphRead.Entities.Enemies
                 _spawner.Flags &= ~SpawnerFlags.PlayAnimation;
                 if (_animTimer == 0)
                 {
-                    // sktodo: play SFX
+                    _soundSource.PlaySfx(SfxId.ENEMY_SPAWNER_SPAWN);
                 }
-                _animTimer = 30;
+                _animTimer = 15 * 2; // todo: FPS stuff
                 if (ModelType == SpawnerModelType.Spawner)
                 {
                     _models[0].SetAnimation(2, AnimFlags.NoLoop);

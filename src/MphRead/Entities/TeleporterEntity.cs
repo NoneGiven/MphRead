@@ -324,7 +324,7 @@ namespace MphRead.Entities
                 AnimationInfo animInfo = _models[0].AnimInfo;
                 if (animInfo.Index[0] == 2)
                 {
-                    // todo: play SFX
+                    _soundSource.PlaySfx(SfxId.TELEPORT_ACTIVATE);
                     animInfo.Flags[0] |= AnimFlags.NoLoop;
                     animInfo.Flags[0] |= AnimFlags.Reverse;
                     animInfo.Flags[0] &= ~AnimFlags.Ended;
