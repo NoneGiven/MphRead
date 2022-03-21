@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
@@ -14,6 +15,8 @@ namespace MphRead.Entities.Enemies
 
         private readonly EnemySpawnEntity _spawner;
         private byte _animTimer = 0;
+        private EntityCollision? _parentEntCol = null;
+        private Matrix4 _invTransform = Matrix4.Identity;
 
         public SpawnerModelType ModelType { get; private set; }
 
@@ -28,13 +31,21 @@ namespace MphRead.Entities.Enemies
         // this happens in the spawner's set_entity_refs in-game
         protected override bool EnemyInitialize()
         {
-            Transform = _data.Spawner.Transform; // todo: spawner linked entity
+            Transform = _data.Spawner.Transform;
+            if (_data.Spawner is EnemySpawnEntity spawner && spawner.ParentEntCol != null)
+            {
+                _parentEntCol = spawner.ParentEntCol;
+                _invTransform = _transform * spawner.ParentEntCol.Inverse2;
+            }
             _boundingRadius = Fixed.ToFloat(3072);
             _hurtVolumeInit = new CollisionVolume(Vector3.Zero, _boundingRadius);
             _hurtVolume = CollisionVolume.Transform(_hurtVolumeInit, Transform);
             _healthMax = _health = _spawner.Data.SpawnerHealth;
             Flags |= EnemyFlags.Visible;
-            Flags |= EnemyFlags.Static; // todo: unless the spawner has ent col
+            if (_parentEntCol == null)
+            {
+                Flags |= EnemyFlags.Static;
+            }
             string model = "EnemySpawner";
             if (_spawner.Data.EnemyType == EnemyType.WarWasp || _spawner.Data.EnemyType == EnemyType.BarbedWarWasp)
             {
@@ -63,7 +74,10 @@ namespace MphRead.Entities.Enemies
 
         protected override void EnemyProcess()
         {
-            // todo: ent col
+            if (_parentEntCol != null)
+            {
+                Transform = _invTransform * _parentEntCol.Transform;
+            }
             if (_spawner.Flags.TestFlag(SpawnerFlags.Active) && !_spawner.Flags.TestFlag(SpawnerFlags.Suspended))
             {
                 Flags &= ~EnemyFlags.Invincible;
@@ -77,7 +91,7 @@ namespace MphRead.Entities.Enemies
                 _spawner.Flags &= ~SpawnerFlags.PlayAnimation;
                 if (_animTimer == 0)
                 {
-                    // todo: play SFX
+                    // sktodo: play SFX
                 }
                 _animTimer = 30;
                 if (ModelType == SpawnerModelType.Spawner)

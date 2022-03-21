@@ -77,10 +77,9 @@ namespace MphRead.Entities
             _scanId = Metadata.EnemyScanIds[(int)_data.Type];
             Metadata.LoadEffectiveness(_data.Type, BeamEffectiveness);
             Flags = EnemyFlags.CollidePlayer | EnemyFlags.CollideBeam;
-            if (EnemyInitialize() && _data.Spawner is EnemySpawnEntity spawner)
-            {
-                // sktodo: linked entity collision transform
-            }
+            EnemyInitialize(); // todo: doesn't need to return bool
+            // the game sets parent collision transform here, but enemies that need it (e.g. spawner, Cretaphid)
+            // handle it themselves by just checking the parent spawner's ent col fields
             _prevPos = Position;
             if (_data.Type == EnemyType.Gorea1A || _data.Type == EnemyType.GoreaHead || _data.Type == EnemyType.GoreaArm
                 || _data.Type == EnemyType.GoreaLeg || _data.Type == EnemyType.Gorea1B || _data.Type == EnemyType.GoreaSealSphere1

@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using MphRead.Entities.Enemies;
+using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
@@ -28,6 +29,9 @@ namespace MphRead.Entities
         private EntityBase? _entity1;
         private EntityBase? _entity2;
         private EntityBase? _entity3;
+        private EntityBase? _parent;
+        public EntityCollision? ParentEntCol { get; private set; } = null;
+        private Matrix4 _invTransform = Matrix4.Identity;
         private NodeRef _rangeNodeRef = NodeRef.None;
 
         public SpawnerFlags Flags { get; set; }
@@ -77,7 +81,18 @@ namespace MphRead.Entities
             {
                 _scene.TryGetEntity(_data.EntityId3, out _entity3);
             }
-            // todo: linked entity
+            if (_data.LinkedEntityId != -1)
+            {
+                _scene.TryGetEntity(_data.LinkedEntityId, out _parent);
+                if (_parent != null)
+                {
+                    ParentEntCol = _parent.EntityCollision[0];
+                    if (ParentEntCol != null)
+                    {
+                        _invTransform = _transform * ParentEntCol.Inverse2;
+                    }
+                }
+            }
             if (_data.SpawnerHealth > 0)
             {
                 EnemyInstanceEntity? enemy = SpawnEnemy(this, EnemyType.Spawner, NodeRef, _scene);
@@ -100,7 +115,10 @@ namespace MphRead.Entities
             {
                 return base.Process();
             }
-            // todo: linked ent
+            if (ParentEntCol != null)
+            {
+                Transform = _invTransform * ParentEntCol.Transform;
+            }
             if (_cooldownTimer > 0)
             {
                 _cooldownTimer--;

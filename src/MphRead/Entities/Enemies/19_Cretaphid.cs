@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
 using MphRead.Sound;
 using OpenTK.Mathematics;
@@ -29,6 +30,9 @@ namespace MphRead.Entities.Enemies
         private int _ammo0 = 1000;
         private int _ammo1 = 1000;
 
+        private EntityCollision? _parentEntCol = null;
+        private Matrix4 _invTransform = Matrix4.Identity;
+
         public Enemy19Values Values { get; private set; }
         public SegmentInfo[] Segments { get; } = new SegmentInfo[3];
         private readonly Enemy20Entity?[] _eyes = new Enemy20Entity?[_eyeCount];
@@ -41,6 +45,7 @@ namespace MphRead.Entities.Enemies
         private const ushort _flashPeriod = 10 * 2; // todo: FPS stuff
         private const ushort _flashLength = 5 * 2; // todo: FPS stuff
         private const ushort _eyeCount = 12;
+
 
         public Enemy19Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
             : base(data, nodeRef, scene)
@@ -69,6 +74,11 @@ namespace MphRead.Entities.Enemies
             Matrix4 transform = GetTransformMatrix(facing, Vector3.UnitY);
             transform.Row3.Xyz = position;
             Transform = transform;
+            if (_data.Spawner is EnemySpawnEntity spawner && spawner.ParentEntCol != null)
+            {
+                _parentEntCol = spawner.ParentEntCol;
+                _invTransform = _transform * spawner.ParentEntCol.Inverse2;
+            }
             _health = _healthMax = 100;
             Flags |= EnemyFlags.Visible;
             Flags |= EnemyFlags.Invincible;
@@ -258,7 +268,10 @@ namespace MphRead.Entities.Enemies
 
         protected override void EnemyProcess()
         {
-            // sktodo: linked entity
+            if (_parentEntCol != null)
+            {
+                Transform = _invTransform * _parentEntCol.Transform;
+            }
             // top, middle, bottom
             for (int i = 0; i < 3; i++)
             {
