@@ -438,8 +438,7 @@ namespace MphRead.Entities.Enemies
                     _soundSource.PlaySfx(SfxId.CYLINDER_BOSS_CRYSTAL_SCR); // empty
                 }
                 // sktodo: play movie (i.e. fade out and pick up where the movie leaves off)
-                // sktodo: make sure all eyes are despawned and platform is no longer damaging
-                // (platform also probably resets to the center of the room?)
+                // sktodo: reload room
             }
         }
 
@@ -601,12 +600,26 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
+        private void KillEyes()
+        {
+            // the game doesn't do this, because they'll be despawned by the movie playing
+            for (int i = 0; i < _eyeCount; i++)
+            {
+                Enemy20Entity? eye = _eyes[i];
+                if (eye != null)
+                {
+                    eye.SetHealth(0);
+                }
+            }
+        }
+
         private bool Behavior09()
         {
             if (PhaseIndex == 2 && _crystal == null)
             {
                 Flags &= ~EnemyFlags.Invincible;
                 _health = 0;
+                KillEyes();
                 return true;
             }
             Debug.Assert(_crystal != null);
@@ -619,6 +632,7 @@ namespace MphRead.Entities.Enemies
                 _scene.SpawnEffect(74, Vector3.UnitX, Vector3.UnitY, _crystal.Position); // cylCrystalKill3
                 Flags &= ~EnemyFlags.Invincible;
                 _health = 0;
+                KillEyes();
             }
             else
             {
