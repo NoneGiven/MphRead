@@ -220,7 +220,7 @@ namespace MphRead
 
         // called before load
         public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
-            BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
+            BossFlags bossFlags = BossFlags.Unspecified, int nodeLayerMask = 0, int entityLayerId = -1)
         {
             if (_roomLoaded)
             {
@@ -4684,7 +4684,7 @@ namespace MphRead
         }
 
         public void AddRoom(int id, GameMode mode = GameMode.None, int playerCount = 0,
-            BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
+            BossFlags bossFlags = BossFlags.Unspecified, int nodeLayerMask = 0, int entityLayerId = -1)
         {
             RoomMetadata? meta = Metadata.GetRoomById(id);
             if (meta == null)
@@ -4695,7 +4695,7 @@ namespace MphRead
         }
 
         public void AddRoom(string name, GameMode mode = GameMode.None, int playerCount = 0,
-            BossFlags bossFlags = BossFlags.None, int nodeLayerMask = 0, int entityLayerId = -1)
+            BossFlags bossFlags = BossFlags.Unspecified, int nodeLayerMask = 0, int entityLayerId = -1)
         {
             Scene.AddRoom(name, mode, playerCount, bossFlags, nodeLayerMask, entityLayerId);
         }

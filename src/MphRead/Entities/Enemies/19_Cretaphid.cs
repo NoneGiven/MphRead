@@ -437,8 +437,9 @@ namespace MphRead.Entities.Enemies
                     _soundSource.PlaySfx(SfxId.CYLINDER_BOSS_DIE); // empty
                     _soundSource.PlaySfx(SfxId.CYLINDER_BOSS_CRYSTAL_SCR); // empty
                 }
-                // sktodo: play movie (i.e. fade out and pick up where the movie leaves off)
-                // sktodo: reload room
+                // sktodo: don't destroy/respawn the player, and avoid SFX like the door locking
+                GameState.TransitionRoomId = _scene.RoomId;
+                _scene.SetFade(FadeType.FadeOutWhite, length: 40 / 30f, overwrite: true, AfterFade.LoadRoom);
             }
         }
 

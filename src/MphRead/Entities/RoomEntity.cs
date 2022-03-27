@@ -504,7 +504,7 @@ namespace MphRead.Entities
                 Rng.SetRng2(0);
             }
             (_, IReadOnlyList<EntityBase> entities) = SceneSetup.SetUpRoom(_scene.GameMode, playerCount: 0,
-                BossFlags.None, nodeLayerMask: 0, entityLayer, roomMeta, room: this, _scene);
+                BossFlags.Unspecified, nodeLayerMask: 0, entityLayer, roomMeta, room: this, _scene);
             if (token.IsCancellationRequested)
             {
                 return;

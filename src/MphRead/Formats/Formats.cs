@@ -1310,6 +1310,7 @@ namespace MphRead
     [Flags]
     public enum BossFlags
     {
+        Unspecified = -1,
         None = 0x0,
         Unit1B1 = 0x1,
         Unit1B2 = 0x4,
