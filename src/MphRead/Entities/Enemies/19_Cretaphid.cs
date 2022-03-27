@@ -726,7 +726,7 @@ namespace MphRead.Entities.Enemies
             {
                 return true;
             }
-            if (_flashTimer < _flashLength && (_state1 == 3 || _state1 == 16 || _state1 == 26))
+            if (_flashTimer < _flashLength && (_state1 == 7 || _state1 == 16 || _state1 == 26))
             {
                 PaletteOverride = Metadata.WhitePalette;
             }
