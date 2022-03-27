@@ -225,11 +225,14 @@ namespace MphRead.Entities
 
         private void DeactivateAndSendMessages()
         {
+            bool updateSave = false;
+
             void UpdateBossFlags()
             {
                 int flags = (int)GameState.StorySave.BossFlags;
                 flags |= 1 << (2 * _scene.AreaId);
                 GameState.StorySave.BossFlags = (BossFlags)flags;
+                updateSave = true;
             }
 
             Flags &= ~SpawnerFlags.Active;
@@ -263,6 +266,10 @@ namespace MphRead.Entities
             if (_entity3 != null)
             {
                 _scene.SendMessage(_data.Message3, this, _entity3, -1, 0);
+            }
+            if (updateSave)
+            {
+                GameState.UpdateCleanSave(force: false);
             }
         }
 

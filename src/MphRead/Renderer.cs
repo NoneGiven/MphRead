@@ -74,7 +74,8 @@ namespace MphRead
     {
         None,
         Exit,
-        LoadRoom
+        LoadRoom,
+        AfterMovie
     }
 
     public partial class Scene
@@ -2839,10 +2840,10 @@ namespace MphRead
             {
                 SetFade(FadeType.FadeInWhite, _fadeLength, overwrite: true);
             }
-            else if (_afterFade == AfterFade.LoadRoom)
+            else if (_afterFade == AfterFade.LoadRoom || _afterFade == AfterFade.AfterMovie)
             {
                 Debug.Assert(_room != null);
-                _room.LoadRoom();
+                _room.LoadRoom(resume: _afterFade == AfterFade.AfterMovie);
             }
             else
             {

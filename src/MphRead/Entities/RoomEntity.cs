@@ -383,33 +383,44 @@ namespace MphRead.Entities
         public DoorEntity? LoaderDoor { get; set; }
         public int LoadEntityId { get; set; } = -1;
 
-        public void LoadRoom()
+        public void LoadRoom(bool resume)
         {
             PlayerEntity? player = PlayerEntity.Main;
             player.StopAllSfx();
             Hunter hunter = player.Hunter;
             int recolor = player.Recolor;
-            StartTransition(fromDoor: false);
-            PlayerEntity.Reset();
-            PlayerEntity.Construct(_scene);
-            player = PlayerEntity.Create(hunter, recolor);
-            Debug.Assert(player != null);
-            // todo: revisit flags
-            player.LoadFlags |= LoadFlags.SlotActive;
-            player.LoadFlags |= LoadFlags.Active;
-            player.LoadFlags |= LoadFlags.Initial;
-            PlayerEntity.PlayerCount++;
+            StartTransition(fromDoor: false, resume);
+            if (!resume)
+            {
+                PlayerEntity.Reset();
+                PlayerEntity.Construct(_scene);
+                player = PlayerEntity.Create(hunter, recolor);
+                Debug.Assert(player != null);
+                // todo: revisit flags
+                player.LoadFlags |= LoadFlags.SlotActive;
+                player.LoadFlags |= LoadFlags.Active;
+                player.LoadFlags |= LoadFlags.Initial;
+                PlayerEntity.PlayerCount++;
+            }
             ProcessTransition(CancellationToken.None);
             EndTransition();
-            _scene.InsertEntity(player);
-            player.Initialize();
-            _scene.InitEntity(player);
-            _scene.InitEntity(player.Halfturret);
+            if (!resume)
+            {
+                _scene.InsertEntity(player);
+                player.Initialize();
+                _scene.InitEntity(player);
+                _scene.InitEntity(player.Halfturret);
+            }
             FadeType fadeType = _scene.FadeType == FadeType.FadeOutWhite ? FadeType.FadeInWhite : FadeType.FadeInBlack;
-            _scene.SetFade(fadeType, length: 10 / 30f, overwrite: true);
+            float length = 10 / 30f;
+            if (resume)
+            {
+                length = 5 / 30f;
+            }
+            _scene.SetFade(fadeType, length, overwrite: true);
         }
 
-        private void StartTransition(bool fromDoor)
+        private void StartTransition(bool fromDoor, bool resume = false)
         {
             Debug.Assert(GameState.TransitionRoomId != -1);
             GameState.TransitionState = TransitionState.Process;
@@ -417,7 +428,7 @@ namespace MphRead.Entities
             for (int i = 0; i < _scene.Entities.Count; i++)
             {
                 EntityBase entity = _scene.Entities[i];
-                if (entity.Type == EntityType.Room)
+                if (entity.Type == EntityType.Room || entity.Type == EntityType.Player && resume)
                 {
                     continue;
                 }

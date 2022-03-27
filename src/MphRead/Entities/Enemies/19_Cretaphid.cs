@@ -437,9 +437,14 @@ namespace MphRead.Entities.Enemies
                     _soundSource.PlaySfx(SfxId.CYLINDER_BOSS_DIE); // empty
                     _soundSource.PlaySfx(SfxId.CYLINDER_BOSS_CRYSTAL_SCR); // empty
                 }
-                // sktodo: don't destroy/respawn the player, and avoid SFX like the door locking
-                GameState.TransitionRoomId = _scene.RoomId;
-                _scene.SetFade(FadeType.FadeOutWhite, length: 40 / 30f, overwrite: true, AfterFade.LoadRoom);
+                // sktodo: fix camera, avoid SFX like the door locking
+                if (PlayerEntity.Main.Health > 0)
+                {
+                    GameState.StorySave.CheckpointRoomId = -1;
+                    GameState.StorySave.CheckpointEntityId = -1;
+                    GameState.TransitionRoomId = _scene.RoomId;
+                    _scene.SetFade(FadeType.FadeOutWhite, length: 40 / 30f, overwrite: true, AfterFade.AfterMovie);
+                }
             }
         }
 

@@ -178,6 +178,7 @@ namespace MphRead.Entities
                     else
                     {
                         // todo: start movie, update global state and story save, defer the second dialog
+                        GameState.UpdateCleanSave(force: false);
                         // OCTOLITH ACQUIRED you obtained an OCTOLITH!
                         PlayerEntity.Main.ShowDialog(DialogType.Event, messageId: 7, param1: (int)EventType.Octolith);
                         int collected = GameState.StorySave.CountFoundOctoliths();
