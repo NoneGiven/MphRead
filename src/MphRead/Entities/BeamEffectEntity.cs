@@ -31,6 +31,7 @@ namespace MphRead.Entities
 
         public void Spawn(BeamEffectEntityData data)
         {
+            _models.Clear();
             // already loaded by scene setup
             ModelInstance model;
             if (data.Type == 0)
