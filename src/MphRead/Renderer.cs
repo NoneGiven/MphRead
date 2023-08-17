@@ -464,20 +464,27 @@ namespace MphRead
 
         private void InitShaders()
         {
+            string fragmentLog;
+            string vertexLog;
             int vertexShader = GL.CreateShader(ShaderType.VertexShader);
             GL.ShaderSource(vertexShader, Shaders.VertexShader);
             GL.CompileShader(vertexShader);
-            string vertexLog = GL.GetShaderInfoLog(vertexShader);
             int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(fragmentShader, Shaders.FragmentShader);
             GL.CompileShader(fragmentShader);
-            string fragmentLog = GL.GetShaderInfoLog(fragmentShader);
-            if (vertexLog != "" || fragmentLog != "")
+            GL.GetShader(vertexShader, ShaderParameter.CompileStatus, out int vertexStatus);
+            GL.GetShader(fragmentShader, ShaderParameter.CompileStatus, out int fragmentStatus);
+            if (Debugger.IsAttached)
             {
-                if (Debugger.IsAttached)
+                vertexLog = GL.GetShaderInfoLog(vertexShader);
+                fragmentLog = GL.GetShaderInfoLog(fragmentShader);
+                if (vertexLog != "" || fragmentLog != "")
                 {
                     Debugger.Break();
                 }
+            }
+            if (vertexStatus == 0 || fragmentStatus == 0)
+            {
                 throw new ProgramException("Failed to compile main shaders.");
             }
 
@@ -493,17 +500,22 @@ namespace MphRead
             vertexShader = GL.CreateShader(ShaderType.VertexShader);
             GL.ShaderSource(vertexShader, Shaders.RttVertexShader);
             GL.CompileShader(vertexShader);
-            vertexLog = GL.GetShaderInfoLog(vertexShader);
             fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(fragmentShader, Shaders.RttFragmentShader);
             GL.CompileShader(fragmentShader);
-            fragmentLog = GL.GetShaderInfoLog(fragmentShader);
-            if (vertexLog != "" || fragmentLog != "")
+            GL.GetShader(vertexShader, ShaderParameter.CompileStatus, out vertexStatus);
+            GL.GetShader(fragmentShader, ShaderParameter.CompileStatus, out fragmentStatus);
+            if (Debugger.IsAttached)
             {
-                if (Debugger.IsAttached)
+                vertexLog = GL.GetShaderInfoLog(vertexShader);
+                fragmentLog = GL.GetShaderInfoLog(fragmentShader);
+                if (vertexLog != "" || fragmentLog != "")
                 {
                     Debugger.Break();
                 }
+            }
+            if (vertexStatus == 0 || fragmentStatus == 0)
+            {
                 throw new ProgramException("Failed to compile RTT shaders.");
             }
             _rttShaderProgramId = GL.CreateProgram();
@@ -518,13 +530,17 @@ namespace MphRead
             fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(fragmentShader, Shaders.ShiftFragmentShader);
             GL.CompileShader(fragmentShader);
-            fragmentLog = GL.GetShaderInfoLog(fragmentShader);
-            if (fragmentLog != "")
+            GL.GetShader(fragmentShader, ShaderParameter.CompileStatus, out fragmentStatus);
+            if (Debugger.IsAttached)
             {
-                if (Debugger.IsAttached)
+                fragmentLog = GL.GetShaderInfoLog(fragmentShader);
+                if (fragmentLog != "")
                 {
                     Debugger.Break();
                 }
+            }
+            if (fragmentStatus == 0)
+            {
                 throw new ProgramException("Failed to compile shift shader.");
             }
             _shiftShaderProgramId = GL.CreateProgram();
@@ -4638,7 +4654,7 @@ namespace MphRead
             _sb.AppendLine($"Texture ID {material.CurrentTextureId}, Palette ID {material.CurrentPaletteId}");
             _sb.AppendLine($"Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})" +
                 $" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})" +
-                $" Specular ({ material.Specular.Red}, { material.Specular.Green}, { material.Specular.Blue})");
+                $" Specular ({material.Specular.Red}, {material.Specular.Green}, {material.Specular.Blue})");
         }
 
         private string OnOff(bool setting)
@@ -4665,6 +4681,7 @@ namespace MphRead
             Size = new Vector2i(1024, 768),
             Title = "MphRead",
             Profile = ContextProfile.Compatability,
+            Flags = ContextFlags.Default,
             APIVersion = new Version(3, 2),
             StartVisible = false
         };
