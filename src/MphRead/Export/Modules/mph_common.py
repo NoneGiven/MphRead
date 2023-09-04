@@ -22,12 +22,14 @@ def get_materials():
 
 def material_get_node(self, name):
     try:
-        return self.node_tree.nodes[name]
+        for node in self.node_tree.nodes:
+            if node.bl_idname == name:
+                return node                            
     except:
         return None
 
 def material_get_bsdf(self):
-    return self.get_node('Principled BSDF')
+    return self.get_node('ShaderNodeBsdfPrincipled')
 
 def node_get_input(self, name):
     return self.inputs[name]
@@ -84,28 +86,28 @@ def set_common():
         
 def set_vertex_colors(material):
     color = material.add_node('ShaderNodeVertexColor')
-    texture = material.get_node('Image Texture')
+    texture = material.get_node('ShaderNodeTexImage')
     if (texture):
         texture.interpolation = 'Closest'
         mix = material.add_node('ShaderNodeMixRGB')
         mix.blend_type = 'MULTIPLY'
         mix.get_input('Fac').default_value = 1
         material.link_nodes(
-            'Vertex Color', 'Color',
-            'Mix', 'Color1'
+            color, 'Color',
+            mix, 'Color1'
         )
         material.link_nodes(
-            'Image Texture', 'Color',
-            'Mix', 'Color2'
+            texture, 'Color',
+            mix, 'Color2'
         )
         material.link_nodes(
-            'Mix', 'Color',
-            'Principled BSDF', 'Base Color'
+            mix, 'Color',
+            'ShaderNodeBsdfPrincipled', 'Base Color'
         )
     else:
         material.link_nodes(
-            'Vertex Color', 'Color',
-            'Principled BSDF', 'Base Color'
+            color, 'Color',
+            'ShaderNodeBsdfPrincipled', 'Base Color'
         )
     
 def set_material_alpha(name, materialAlpha):
@@ -117,8 +119,8 @@ def set_material_alpha(name, materialAlpha):
     math.inputs[0].default_value = 1.0
     math.inputs[1].default_value = materialAlpha / 31
     material.link_nodes(
-        'Math', 'Value',
-        'Principled BSDF', 'Alpha'
+        math, 'Value',
+        'ShaderNodeBsdfPrincipled', 'Alpha'
     )
     
 def set_texture_alpha(name, materialAlpha, textureAlpha):
@@ -129,12 +131,12 @@ def set_texture_alpha(name, materialAlpha, textureAlpha):
     math.operation = 'MULTIPLY'
     math.inputs[1].default_value = materialAlpha / 31
     material.link_nodes(
-        'Image Texture', 'Alpha',
-        'Math', 0
+        'ShaderNodeTexImage', 'Alpha',
+        math, 0
     )
     material.link_nodes(
-        'Math', 'Value',
-        'Principled BSDF', 'Alpha'
+        math, 'Value',
+        'ShaderNodeBsdfPrincipled', 'Alpha'
     )
         
 def set_billboard(name, mode):
@@ -215,7 +217,7 @@ def set_mirror(name, x, y):
     )
     material.link_nodes(
         combine, 'Vector',
-        'Image Texture', 'Vector'
+        'ShaderNodeTexImage', 'Vector'
     )
 
 def set_uv_anims(anims):
@@ -230,7 +232,7 @@ def set_uv_anims(anims):
     bpy.context.scene.frame_set(0)
 
 def set_uv_anim(mat, anim):
-    mat.delete_node('UV Map')
+    mat.delete_node('ShaderNodeUVMap')
     uvs = mat.add_node('ShaderNodeUVMap')
     rotate = mat.add_node('ShaderNodeVectorRotate')
     translate = mat.add_node('ShaderNodeVectorMath')
@@ -257,15 +259,15 @@ def set_uv_anim(mat, anim):
         translate, 'Vector',
         scale, 'Vector'
     )
-    if mat.get_node('Separate XYZ'):
+    if mat.get_node('ShaderNodeSeparateXYZ'):
         mat.link_nodes(
             scale, 'Vector',
-            'Separate XYZ', 'Vector'
+            'ShaderNodeSeparateXYZ', 'Vector'
         )
     else:
         mat.link_nodes(
             scale, 'Vector',
-            'Image Texture', 'Vector'
+            'ShaderNodeTexImage', 'Vector'
         )
     for i, frame in enumerate(anim):
         scale_input.default_value[0] = frame[0]
@@ -287,22 +289,22 @@ def set_mat_color(name, r, g, b, duplicate, objects):
             obj = get_object(obj_name)
             obj.active_material = mat
     mat.name = mat_name
-    mat.delete_node('Vertex Color')
-    mat.delete_node('RGB')
+    mat.delete_node('ShaderNodeVertexColor')
+    mat.delete_node('ShaderNodeRGB')
     rgb = mat.add_node('ShaderNodeRGB')
     color = rgb.get_output('Color')
     color.default_value[0] = r
     color.default_value[1] = g
     color.default_value[2] = b
-    if mat.get_node('Mix'):
+    if mat.get_node('ShaderNodeMixRGB'):
         mat.link_nodes(
-            'RGB', 'Color',
-            'Mix', 'Color1'
+            rgb, 'Color',
+            'ShaderNodeMixRGB', 'Color1'
         )
     else:
         mat.link_nodes(
-            'RGB', 'Color',
-            'Principled BSDF', 'Base Color'
+            rgb, 'Color',
+            'ShaderNodeBsdfPrincipled', 'Base Color'
         )
 
 def set_mat_anims(anims):
@@ -318,14 +320,14 @@ def set_mat_anims(anims):
 
 def set_mat_anim(mat, anim):
     for i, frame in enumerate(anim):
-        rgb = mat.get_node('RGB')
+        rgb = mat.get_node('ShaderNodeRGB')
         if rgb:
             color = rgb.get_output('Color')
             color.default_value[0] = frame[0]
             color.default_value[1] = frame[1]
             color.default_value[2] = frame[2]
             color.keyframe_insert('default_value', frame = i)
-        alpha = mat.get_node('Math')
+        alpha = mat.get_node('ShaderNodeMath')
         alpha.inputs[1].default_value = frame[3]
         alpha.inputs[1].keyframe_insert('default_value', frame = i)
     bpy.context.scene.frame_end = i
@@ -340,7 +342,7 @@ def set_tex_anims(anims):
 
 def set_tex_anim(mat, anim):
     max_frame = 0
-    tex = mat.get_node('Image Texture')
+    tex = mat.get_node('ShaderNodeTexImage')
     tex.image = bpy.data.images['anim__001.png'].copy()
     tex.image.source = 'SEQUENCE'
     tex.image_user.frame_duration = 1

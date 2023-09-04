@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -22,17 +21,11 @@ namespace MphRead
             IReadOnlyList<Argument> arguments = ParseArguments(args);
             if (arguments.Count == 0)
             {
-                if (Debugger.IsAttached)
-                {
-                    using var renderer = new RenderWindow();
-                    renderer.AddRoom("MP3 PROVING GROUND");
-                    //renderer.AddModel("Crate01");
-                    renderer.Run();
-                }
-                else
-                {
-                    Menu.ShowMenuPrompts();
-                }
+                //using var renderer = new RenderWindow();
+                //renderer.AddRoom("MP3 PROVING GROUND");
+                //renderer.AddModel("Crate01");
+                //renderer.Run();
+                Menu.ShowMenuPrompts();
             }
             else if (arguments.Any(a => a.Name == "setup"))
             {
