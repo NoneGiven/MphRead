@@ -4672,7 +4672,6 @@ namespace MphRead
     {
         private static readonly GameWindowSettings _gameWindowSettings = new GameWindowSettings()
         {
-            RenderFrequency = 60,
             UpdateFrequency = 60
         };
 
@@ -4735,12 +4734,9 @@ namespace MphRead
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            CursorGrabbed = Scene.CameraMode == CameraMode.Player
-                && !Scene.FrameAdvance && !Scene.ShowCursor && !GameState.DialogPause;
-            if (!CursorGrabbed)
-            {
-                CursorVisible = true;
-            }
+            CursorState = Scene.CameraMode == CameraMode.Player && !Scene.FrameAdvance && !Scene.ShowCursor && !GameState.DialogPause
+                ? CursorState.Grabbed
+                : CursorState.Normal;
             GameState.ApplyPause();
             Scene.OnUpdateFrame();
             if (!Scene.OnRenderFrame())
