@@ -4404,8 +4404,8 @@ namespace MphRead
             _sb.AppendLine(" - Hold left mouse button or use arrow keys to rotate");
             _sb.AppendLine(" - Hold Shift to move the camera faster");
             _sb.AppendLine($" - T toggles texturing ({OnOff(_showTextures)})");
-            _sb.AppendLine($" - C toggles vertex colours ({OnOff(_showColors)})");
-            _sb.AppendLine($" - Q toggles wireframe ({OnOff(_wireframe)})");
+            _sb.AppendLine($" - Ctrl+C toggles vertex colors ({OnOff(_showColors)})");
+            _sb.AppendLine($" - Ctrl+Q toggles wireframe ({OnOff(_wireframe)})");
             _sb.AppendLine($" - B toggles face culling ({OnOff(_faceCulling)})");
             _sb.AppendLine($" - F toggles texture filtering ({OnOff(_textureFiltering)})");
             _sb.AppendLine($" - L toggles lighting ({OnOff(_lighting)})");
@@ -4673,7 +4673,6 @@ namespace MphRead
     {
         private static readonly GameWindowSettings _gameWindowSettings = new GameWindowSettings()
         {
-            RenderFrequency = 60,
             UpdateFrequency = 60
         };
 
@@ -4736,12 +4735,9 @@ namespace MphRead
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            CursorGrabbed = Scene.CameraMode == CameraMode.Player
-                && !Scene.FrameAdvance && !Scene.ShowCursor && !GameState.DialogPause;
-            if (!CursorGrabbed)
-            {
-                CursorVisible = true;
-            }
+            CursorState = Scene.CameraMode == CameraMode.Player && !Scene.FrameAdvance && !Scene.ShowCursor && !GameState.DialogPause
+                ? CursorState.Grabbed
+                : CursorState.Normal;
             GameState.ApplyPause();
             Scene.OnUpdateFrame();
             if (!Scene.OnRenderFrame())

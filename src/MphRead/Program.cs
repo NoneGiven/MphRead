@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -9,7 +8,7 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 22, 1, 0);
+        public static Version Version { get; } = new Version(0, 22, 2, 0);
         private static readonly Version _minExtractVersion = new Version(0, 19, 0, 0);
 
         private static void Main(string[] args)
@@ -22,17 +21,11 @@ namespace MphRead
             IReadOnlyList<Argument> arguments = ParseArguments(args);
             if (arguments.Count == 0)
             {
-                if (Debugger.IsAttached)
-                {
-                    using var renderer = new RenderWindow();
-                    renderer.AddRoom("MP3 PROVING GROUND");
-                    //renderer.AddModel("Crate01");
-                    renderer.Run();
-                }
-                else
-                {
-                    Menu.ShowMenuPrompts();
-                }
+                //using var renderer = new RenderWindow();
+                //renderer.AddRoom("MP3 PROVING GROUND");
+                //renderer.AddModel("Crate01");
+                //renderer.Run();
+                Menu.ShowMenuPrompts();
             }
             else if (arguments.Any(a => a.Name == "setup"))
             {
