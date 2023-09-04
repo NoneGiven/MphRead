@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTK" Version="4.7.1" />
+    <PackageReference Include="OpenTK" Version="4.8.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="2.0.0" />
   </ItemGroup>
 

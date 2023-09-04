@@ -183,6 +183,7 @@ namespace MphRead.Entities
                 _scene.UnlinkEffectEntry(_effectEntry);
             }
             _soundSource.StopAllSfx(force: true);
+            base.Destroy();
         }
     }
 

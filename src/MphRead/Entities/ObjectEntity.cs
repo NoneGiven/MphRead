@@ -76,7 +76,6 @@ namespace MphRead.Entities
                 }
                 Recolor = _meta.RecolorId;
                 ModelInstance inst = SetUpModel(_meta.Name);
-                _state = (int)(_flags & ObjectFlags.State);
                 int animIndex = _meta.AnimationIds[_state];
                 // AlimbicCapsule
                 if (data.ModelId == 45)
@@ -149,6 +148,7 @@ namespace MphRead.Entities
             {
                 _scene.UnlinkEffectEntry(_effectEntry);
             }
+            base.Destroy();
         }
 
         private void UpdateVisiblePosition()
@@ -268,7 +268,7 @@ namespace MphRead.Entities
                         needsUpdate = false;
                     }
                 }
-                else if (_data.ModelId == 53) // WallSwitch
+                else if (_data.ModelId == 53 && state == 1) // WallSwitch
                 {
                     _models[0].SetAnimation(animId, AnimFlags.NoLoop);
                     _soundSource.PlayFreeSfx(SfxId.F2_SWITCH);

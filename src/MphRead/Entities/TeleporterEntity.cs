@@ -343,6 +343,7 @@ namespace MphRead.Entities
         public override void Destroy()
         {
             _soundSource.StopAllSfx(force: true);
+            base.Destroy();
         }
 
         protected override Matrix4 GetModelTransform(ModelInstance inst, int index)

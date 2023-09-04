@@ -354,6 +354,7 @@ namespace MphRead.Entities
                     _scene.UnlinkEffectEntry(effectEntry);
                 }
             }
+            base.Destroy();
         }
 
         public override void GetPosition(out Vector3 position)

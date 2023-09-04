@@ -464,20 +464,27 @@ namespace MphRead
 
         private void InitShaders()
         {
+            string fragmentLog;
+            string vertexLog;
             int vertexShader = GL.CreateShader(ShaderType.VertexShader);
             GL.ShaderSource(vertexShader, Shaders.VertexShader);
             GL.CompileShader(vertexShader);
-            string vertexLog = GL.GetShaderInfoLog(vertexShader);
             int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(fragmentShader, Shaders.FragmentShader);
             GL.CompileShader(fragmentShader);
-            string fragmentLog = GL.GetShaderInfoLog(fragmentShader);
-            if (vertexLog != "" || fragmentLog != "")
+            GL.GetShader(vertexShader, ShaderParameter.CompileStatus, out int vertexStatus);
+            GL.GetShader(fragmentShader, ShaderParameter.CompileStatus, out int fragmentStatus);
+            if (Debugger.IsAttached)
             {
-                if (Debugger.IsAttached)
+                vertexLog = GL.GetShaderInfoLog(vertexShader);
+                fragmentLog = GL.GetShaderInfoLog(fragmentShader);
+                if (vertexLog != "" || fragmentLog != "")
                 {
                     Debugger.Break();
                 }
+            }
+            if (vertexStatus == 0 || fragmentStatus == 0)
+            {
                 throw new ProgramException("Failed to compile main shaders.");
             }
 
@@ -493,17 +500,22 @@ namespace MphRead
             vertexShader = GL.CreateShader(ShaderType.VertexShader);
             GL.ShaderSource(vertexShader, Shaders.RttVertexShader);
             GL.CompileShader(vertexShader);
-            vertexLog = GL.GetShaderInfoLog(vertexShader);
             fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(fragmentShader, Shaders.RttFragmentShader);
             GL.CompileShader(fragmentShader);
-            fragmentLog = GL.GetShaderInfoLog(fragmentShader);
-            if (vertexLog != "" || fragmentLog != "")
+            GL.GetShader(vertexShader, ShaderParameter.CompileStatus, out vertexStatus);
+            GL.GetShader(fragmentShader, ShaderParameter.CompileStatus, out fragmentStatus);
+            if (Debugger.IsAttached)
             {
-                if (Debugger.IsAttached)
+                vertexLog = GL.GetShaderInfoLog(vertexShader);
+                fragmentLog = GL.GetShaderInfoLog(fragmentShader);
+                if (vertexLog != "" || fragmentLog != "")
                 {
                     Debugger.Break();
                 }
+            }
+            if (vertexStatus == 0 || fragmentStatus == 0)
+            {
                 throw new ProgramException("Failed to compile RTT shaders.");
             }
             _rttShaderProgramId = GL.CreateProgram();
@@ -518,13 +530,17 @@ namespace MphRead
             fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(fragmentShader, Shaders.ShiftFragmentShader);
             GL.CompileShader(fragmentShader);
-            fragmentLog = GL.GetShaderInfoLog(fragmentShader);
-            if (fragmentLog != "")
+            GL.GetShader(fragmentShader, ShaderParameter.CompileStatus, out fragmentStatus);
+            if (Debugger.IsAttached)
             {
-                if (Debugger.IsAttached)
+                fragmentLog = GL.GetShaderInfoLog(fragmentShader);
+                if (fragmentLog != "")
                 {
                     Debugger.Break();
                 }
+            }
+            if (fragmentStatus == 0)
+            {
                 throw new ProgramException("Failed to compile shift shader.");
             }
             _shiftShaderProgramId = GL.CreateProgram();
@@ -4387,8 +4403,8 @@ namespace MphRead
             _sb.AppendLine(" - Hold left mouse button or use arrow keys to rotate");
             _sb.AppendLine(" - Hold Shift to move the camera faster");
             _sb.AppendLine($" - T toggles texturing ({OnOff(_showTextures)})");
-            _sb.AppendLine($" - C toggles vertex colours ({OnOff(_showColors)})");
-            _sb.AppendLine($" - Q toggles wireframe ({OnOff(_wireframe)})");
+            _sb.AppendLine($" - Ctrl+C toggles vertex colors ({OnOff(_showColors)})");
+            _sb.AppendLine($" - Ctrl+Q toggles wireframe ({OnOff(_wireframe)})");
             _sb.AppendLine($" - B toggles face culling ({OnOff(_faceCulling)})");
             _sb.AppendLine($" - F toggles texture filtering ({OnOff(_textureFiltering)})");
             _sb.AppendLine($" - L toggles lighting ({OnOff(_lighting)})");
@@ -4638,7 +4654,7 @@ namespace MphRead
             _sb.AppendLine($"Texture ID {material.CurrentTextureId}, Palette ID {material.CurrentPaletteId}");
             _sb.AppendLine($"Diffuse ({material.Diffuse.Red}, {material.Diffuse.Green}, {material.Diffuse.Blue})" +
                 $" Ambient ({material.Ambient.Red}, {material.Ambient.Green}, {material.Ambient.Blue})" +
-                $" Specular ({ material.Specular.Red}, { material.Specular.Green}, { material.Specular.Blue})");
+                $" Specular ({material.Specular.Red}, {material.Specular.Green}, {material.Specular.Blue})");
         }
 
         private string OnOff(bool setting)
@@ -4656,7 +4672,6 @@ namespace MphRead
     {
         private static readonly GameWindowSettings _gameWindowSettings = new GameWindowSettings()
         {
-            RenderFrequency = 60,
             UpdateFrequency = 60
         };
 
@@ -4665,6 +4680,7 @@ namespace MphRead
             Size = new Vector2i(1024, 768),
             Title = "MphRead",
             Profile = ContextProfile.Compatability,
+            Flags = ContextFlags.Default,
             APIVersion = new Version(3, 2),
             StartVisible = false
         };
@@ -4718,12 +4734,9 @@ namespace MphRead
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            CursorGrabbed = Scene.CameraMode == CameraMode.Player
-                && !Scene.FrameAdvance && !Scene.ShowCursor && !GameState.DialogPause;
-            if (!CursorGrabbed)
-            {
-                CursorVisible = true;
-            }
+            CursorState = Scene.CameraMode == CameraMode.Player && !Scene.FrameAdvance && !Scene.ShowCursor && !GameState.DialogPause
+                ? CursorState.Grabbed
+                : CursorState.Normal;
             GameState.ApplyPause();
             Scene.OnUpdateFrame();
             if (!Scene.OnRenderFrame())
