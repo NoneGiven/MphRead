@@ -14,9 +14,9 @@ def validate_version(version_str):
     min_version = parse_version(min_version_str)
     version = parse_version(version_str)
     if (version[0] < min_version[0]
-        or version[0] = min_version[0] and version[1] < min_version[1]
-        or version[0] = min_version[0] and version[1] = min_version[1] and version[2] < min_version[2]
-        or version[0] = min_version[0] and version[1] = min_version[1] and version[2] = min_version[2] and version[3] < min_version[3]
+        or version[0] == min_version[0] and version[1] < min_version[1]
+        or version[0] == min_version[0] and version[1] == min_version[1] and version[2] < min_version[2]
+        or version[0] == min_version[0] and version[1] == min_version[1] and version[2] == min_version[2] and version[3] < min_version[3]
     ):
         raise Exception((f"Import script version {version_str} is lower than minimum version {min_version_str} supported by current mph_common."
             " Re-export the model with a later version of MphRead."))
