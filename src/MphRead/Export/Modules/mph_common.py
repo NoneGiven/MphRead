@@ -60,8 +60,8 @@ def node_get_output(self, *names):
             return self.outputs[name]
     return None
 
-def material_get_bsdf_input(self, name):
-    return self.get_bsdf().get_input(name)
+def material_get_bsdf_input(self, *names):
+    return self.get_bsdf().get_input(*names)
 
 def material_add_node(self, kind):
     return self.node_tree.nodes.new(kind)
@@ -103,11 +103,7 @@ def cleanup():
 
 def set_common():
     for material in get_materials():
-        specular = material.get_bsdf_input('Specular IOR Level')
-        if specular:
-            specular.default_value = 0
-        else:
-            material.get_bsdf_input('Specular').default_value = 0
+        material.get_bsdf_input('Specular IOR Level', 'Specular').default_value = 0
         material.shadow_method = 'NONE'
         set_vertex_colors(material)
         
