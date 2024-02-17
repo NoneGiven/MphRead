@@ -1,8 +1,25 @@
 import bpy
 import mathutils
 
+def get_min_version():
+    return '0.23.0.0'
+
 def get_common_version():
-    return '0.22.2.0'
+    # moved to min version support in 0.23.0.0
+    raise Exception(("Import script version is less than 0.23.0.0 and unsupported by current mph_common."
+            " Re-export the model with a later version of MphRead."))
+
+def validate_version(version_str):
+    min_version_str = get_min_version()
+    min_version = parse_version(min_version_str)
+    version = parse_version(version_str)
+    if version[0] < min_version[0] or version[1] < min_version[1] or version[2] < min_version[2] or version[3] < min_version[3]:
+        raise Exception((f"Import script version {version_str} is lower than minimum version {min_version_str} supported by current mph_common."
+            " Re-export the model with a later version of MphRead."))
+
+def parse_version(version):
+    split = version.split('.')
+    return [int(split[0]), int(split[1]), int(split[2]), int(split[3])]
 
 def get_object(name):
     try:
@@ -31,11 +48,17 @@ def material_get_node(self, name):
 def material_get_bsdf(self):
     return self.get_node('ShaderNodeBsdfPrincipled')
 
-def node_get_input(self, name):
-    return self.inputs[name]
+def node_get_input(self, *names):
+    for name in names:
+        if name in self.inputs:
+            return self.inputs[name]
+    return None
 
-def node_get_output(self, name):
-    return self.outputs[name]
+def node_get_output(self, *names):
+    for name in names:
+        if name in self.outputs:
+            return self.outputs[name]
+    return None
 
 def material_get_bsdf_input(self, name):
     return self.get_bsdf().get_input(name)
@@ -80,7 +103,11 @@ def cleanup():
 
 def set_common():
     for material in get_materials():
-        material.get_bsdf_input('Specular').default_value = 0
+        specular = material.get_bsdf_input('Specular IOR Level')
+        if specular:
+            specular.default_value = 0
+        else:
+            material.get_bsdf_input('Specular').default_value = 0
         material.shadow_method = 'NONE'
         set_vertex_colors(material)
         
@@ -365,6 +392,7 @@ def set_node_anims(anims):
         for kf in fcurve.keyframe_points:
             kf.interpolation = 'CONSTANT'
     bpy.context.scene.frame_set(0)
+    bpy.data.objects['Armature'].display_type = 'WIRE'
 
 def set_node_anim(bone, anim):
     for i, frame in enumerate(anim):
