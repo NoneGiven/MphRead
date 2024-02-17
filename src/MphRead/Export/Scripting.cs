@@ -154,7 +154,7 @@ namespace MphRead.Export
             sb.AppendLine("import mathutils");
             sb.AppendLine("from mph_common import *");
             sb.AppendLine();
-            sb.AppendLine($"expected_version = '{Program.Version}'");
+            sb.AppendLine($"export_version = '{Program.Version}'");
             sb.AppendLine($"# recolors: {String.Join(", ", model.Recolors.Select(r => r.Name))}");
             sb.AppendLine($"recolor = '{model.Recolors[0].Name}'");
             int uvAnimCount = model.AnimationGroups.Texcoord.Count(g => g.Animations.Any());
@@ -376,10 +376,7 @@ bpy.ops.object.parent_set(type='ARMATURE_NAME')");
             sb.AppendIndent("set_mat_anims(mat_anims[mat_index])");
             sb.AppendLine();
             sb.AppendLine("if __name__ == '__main__':");
-            sb.AppendIndent("version = get_common_version()");
-            sb.AppendIndent("if expected_version != version:");
-            sb.AppendIndent();
-            sb.AppendIndent("raise Exception(f'Expected mph_common version {expected_version} but found {version} instead.')");
+            sb.AppendIndent("validate_version(export_version)");
             sb.AppendIndent($"import_dae(recolor)");
             return sb.ToString();
         }
