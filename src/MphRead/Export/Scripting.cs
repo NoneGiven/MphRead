@@ -391,7 +391,7 @@ bpy.ops.object.parent_set(type='ARMATURE_NAME')");
 
         public static void AppendIndent(this StringBuilder sb, string text, int indent = 1)
         {
-            foreach (string part in text.Trim().Split("\r\n"))
+            foreach (string part in text.Trim().Split(OperatingSystem.IsWindows() ? "\r\n" : "\n"))
             {
                 for (int i = 0; i < indent; i++)
                 {

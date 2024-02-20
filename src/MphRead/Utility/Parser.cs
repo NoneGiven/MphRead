@@ -130,7 +130,9 @@ namespace MphRead.Utility
             while (true)
             {
                 Console.Clear();
-                Console.WriteLine("1: POLYGON_ATTR\r\nx: quit");
+                Console.WriteLine(
+                    "1: POLYGON_ATTR" + (OperatingSystem.IsWindows() ? "\r\n" : "\n") + "x: quit"
+                );
                 string? type = null;
                 string input = Console.ReadLine() ?? "";
                 if (input == "x" || input == "X")
