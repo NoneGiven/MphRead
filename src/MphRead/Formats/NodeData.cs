@@ -12,11 +12,11 @@ namespace MphRead.Formats
     {
         public static void TestAll()
         {
-            foreach (string path in Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, @"levels\nodeData")))
+            foreach (string path in Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, @"levels/nodeData")))
             {
-                if (!path.EndsWith(@"levels\nodeData\unit2_Land_Node.bin")) // todo: version 4
+                if (!path.EndsWith(@"levels/nodeData/unit2_Land_Node.bin")) // todo: version 4
                 {
-                    ReadData(Path.Combine(@"levels\nodeData", Path.GetFileName(path)));
+                    ReadData(Path.Combine(@"levels/nodeData", Path.GetFileName(path)));
                 }
             }
             Nop();

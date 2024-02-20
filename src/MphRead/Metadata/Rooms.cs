@@ -67,20 +67,20 @@ namespace MphRead
             Archive = archive;
             if (firstHunt || hybrid)
             {
-                ModelPath = $@"levels\models\{modelPath}";
-                AnimationPath = $@"levels\models\{animationPath}";
-                CollisionPath = $@"levels\collision\{collisionPath}";
+                ModelPath = $@"levels/models/{modelPath}";
+                AnimationPath = $@"levels/models/{animationPath}";
+                CollisionPath = $@"levels/collision/{collisionPath}";
             }
             else
             {
-                ModelPath = $@"_archives\{archive}\{modelPath}";
-                AnimationPath = $@"_archives\{archive}\{animationPath}";
-                CollisionPath = $@"_archives\{archive}\{collisionPath}";
+                ModelPath = $@"_archives/{archive}/{modelPath}";
+                AnimationPath = $@"_archives/{archive}/{animationPath}";
+                CollisionPath = $@"_archives/{archive}/{collisionPath}";
             }
-            TexturePath = texturePath == null ? null : $@"levels\textures\{texturePath}";
+            TexturePath = texturePath == null ? null : $@"levels/textures/{texturePath}";
             EntityFilename = entityPath;
-            EntityPath = entityPath == null ? null : $@"levels\entities\{entityPath}";
-            NodePath = nodePath == null ? null : $@"levels\nodeData\{nodePath}";
+            EntityPath = entityPath == null ? null : $@"levels/entities/{entityPath}";
+            NodePath = nodePath == null ? null : $@"levels/nodeData/{nodePath}";
             RoomNodeName = roomNodeName;
             BattleTimeLimit = battleTimeLimit;
             TimeLimit = timeLimit;

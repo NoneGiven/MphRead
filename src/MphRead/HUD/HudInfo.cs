@@ -1292,7 +1292,7 @@ namespace MphRead.Hud
                     }
                 }
                 string name = file.Replace("/", "--");
-                //Export.Images.SaveTexture(Path.Combine(Paths.Export, @"_2D\layertest"), name, width, height, texture);
+                //Export.Images.SaveTexture(Path.Combine(Paths.Export, @"_2D/layertest"), name, width, height, texture);
 
                 for (int i = 0; i < characters.Count; i++)
                 {
@@ -1329,33 +1329,33 @@ namespace MphRead.Hud
 
     public static class HudElements
     {
-        public static readonly string IceLayer = @"_archives\common\bg_ice.bin";
-        public static readonly string Boost = @"_archives\common\hud_boost.bin";
-        public static readonly string Bombs = @"_archives\common\hud_bombs.bin";
-        public static readonly string Stars = @"_archives\commonMP\stars.bin";
-        public static readonly string Octolith = @"_archives\commonMP\radar_octolithLARGE.bin";
-        public static readonly string NodesOG = @"hud\rad_NodesOG.bin";
-        public static readonly string NodesRB = @"hud\rad_NodesRB.bin";
-        public static readonly string SystemLoad = @"_archives\commonMP\hud_systemload.bin";
-        public static readonly string MessageBox = @"_archives\spSamus\hud_msgBox.bin";
-        public static readonly string MessageSpacer = @"_archives\spSamus\message_spacer.bin";
-        public static readonly string MapScan = @"_archives\spSamus\map_scan.bin";
-        public static readonly string DialogButton = @"_archives\spSamus\scan_ok.bin";
-        public static readonly string DialogArrow = @"_archives\spSamus\scan_arrow.bin";
-        public static readonly string DialogCrystal = @"_archives\spSamus\message_crystalpickup.bin";
-        public static readonly string DialogPickup = @"_archives\spSamus\message_pickups.bin";
-        public static readonly string DialogFrame = @"_archives\spSamus\message_pickupframe.bin";
+        public static readonly string IceLayer = @"_archives/common/bg_ice.bin";
+        public static readonly string Boost = @"_archives/common/hud_boost.bin";
+        public static readonly string Bombs = @"_archives/common/hud_bombs.bin";
+        public static readonly string Stars = @"_archives/commonMP/stars.bin";
+        public static readonly string Octolith = @"_archives/commonMP/radar_octolithLARGE.bin";
+        public static readonly string NodesOG = @"hud/rad_NodesOG.bin";
+        public static readonly string NodesRB = @"hud/rad_NodesRB.bin";
+        public static readonly string SystemLoad = @"_archives/commonMP/hud_systemload.bin";
+        public static readonly string MessageBox = @"_archives/spSamus/hud_msgBox.bin";
+        public static readonly string MessageSpacer = @"_archives/spSamus/message_spacer.bin";
+        public static readonly string MapScan = @"_archives/spSamus/map_scan.bin";
+        public static readonly string DialogButton = @"_archives/spSamus/scan_ok.bin";
+        public static readonly string DialogArrow = @"_archives/spSamus/scan_arrow.bin";
+        public static readonly string DialogCrystal = @"_archives/spSamus/message_crystalpickup.bin";
+        public static readonly string DialogPickup = @"_archives/spSamus/message_pickups.bin";
+        public static readonly string DialogFrame = @"_archives/spSamus/message_pickupframe.bin";
 
         public static readonly IReadOnlyList<string> Hunters = new string[8]
         {
-            @"_archives\common\enemy_samus.bin",
-            @"_archives\common\enemy_kanden.bin",
-            @"_archives\common\enemy_trace.bin",
-            @"_archives\common\enemy_sylux.bin",
-            @"_archives\common\enemy_noxus.bin",
-            @"_archives\common\enemy_spyre.bin",
-            @"_archives\common\enemy_weavel.bin",
-            @"_archives\common\enemy_samus.bin" // todo: Guardian portrait
+            @"_archives/common/enemy_samus.bin",
+            @"_archives/common/enemy_kanden.bin",
+            @"_archives/common/enemy_trace.bin",
+            @"_archives/common/enemy_sylux.bin",
+            @"_archives/common/enemy_noxus.bin",
+            @"_archives/common/enemy_spyre.bin",
+            @"_archives/common/enemy_weavel.bin",
+            @"_archives/common/enemy_samus.bin" // todo: Guardian portrait
         };
 
         public static IReadOnlyList<RulesInfo> RulesInfo = new RulesInfo[7]
@@ -1410,47 +1410,47 @@ namespace MphRead.Hud
             )
         };
 
-        public static readonly string ScanCorner = @"_archives\spSamus\scan_corner.bin";
-        public static readonly string ScanCornerSmall = @"_archives\spSamus\scan_cornerSm.bin";
-        public static readonly string ScanLineHoriz = @"_archives\spSamus\scan_horizline.bin";
-        public static readonly string ScanLineVert = @"_archives\spSamus\scan_vertline.bin";
+        public static readonly string ScanCorner = @"_archives/spSamus/scan_corner.bin";
+        public static readonly string ScanCornerSmall = @"_archives/spSamus/scan_cornerSm.bin";
+        public static readonly string ScanLineHoriz = @"_archives/spSamus/scan_horizline.bin";
+        public static readonly string ScanLineVert = @"_archives/spSamus/scan_vertline.bin";
 
         public static IReadOnlyList<string> ScanIcons = new string[10]
         {
-            @"_archives\spSamus\scan_lore.bin",
-            @"_archives\spSamus\scan_lore_dim.bin",
-            @"_archives\spSamus\scan_enemy.bin",
-            @"_archives\spSamus\scan_enemy_dim.bin",
-            @"_archives\spSamus\scan_object.bin",
-            @"_archives\spSamus\scan_object_dim.bin",
-            @"_archives\spSamus\scan_equipment.bin",
-            @"_archives\spSamus\scan_equipment_dim.bin",
-            @"_archives\spSamus\scan_red.bin",
-            @"_archives\spSamus\scan_red_dim.bin"
+            @"_archives/spSamus/scan_lore.bin",
+            @"_archives/spSamus/scan_lore_dim.bin",
+            @"_archives/spSamus/scan_enemy.bin",
+            @"_archives/spSamus/scan_enemy_dim.bin",
+            @"_archives/spSamus/scan_object.bin",
+            @"_archives/spSamus/scan_object_dim.bin",
+            @"_archives/spSamus/scan_equipment.bin",
+            @"_archives/spSamus/scan_equipment_dim.bin",
+            @"_archives/spSamus/scan_red.bin",
+            @"_archives/spSamus/scan_red_dim.bin"
         };
 
         public static IReadOnlyList<HudObjects> HunterObjects = new HudObjects[8]
         {
             // Samus
             new HudObjects(
-                helmet: @"_archives\localSamus\bg_top.bin",
-                helmetDrop: @"_archives\localSamus\bg_top_drop.bin",
-                visor: @"_archives\localSamus\bg_top_ovl.bin",
-                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
-                healthBarA: @"_archives\localSamus\hud_energybar.bin",
-                healthBarB: @"_archives\localSamus\hud_energybar2.bin",
-                energyTanks: @"_archives\spSamus\hud_etank.bin",
-                weaponIcon: @"_archives\localSamus\hud_weaponicon.bin",
-                doubleDamage: @"_archives\localSamus\hud_damage.bin",
-                cloaking: @"_archives\localSamus\cloaking.bin",
-                primeHunter: @"_archives\localSamus\hud_primehunter.bin",
-                ammoBar: @"_archives\localSamus\hud_ammobar.bin",
-                reticle: @"_archives\localSamus\hud_targetcircle.bin",
-                sniperReticle: @"_archives\localSamus\hud_snipercircle.bin",
-                weaponSelect: @"_archives\localSamus\rad_wepsel.bin",
-                selectIcon: @"_archives\localSamus\wepsel_icon.bin",
-                selectBox: @"_archives\localSamus\wepsel_box.bin",
-                damageBar: @"_archives\localSamus\rad_ammobar.bin",
+                helmet: @"_archives/localSamus/bg_top.bin",
+                helmetDrop: @"_archives/localSamus/bg_top_drop.bin",
+                visor: @"_archives/localSamus/bg_top_ovl.bin",
+                scanVisor: @"_archives/localSamus/bg_top_ovl.bin",
+                healthBarA: @"_archives/localSamus/hud_energybar.bin",
+                healthBarB: @"_archives/localSamus/hud_energybar2.bin",
+                energyTanks: @"_archives/spSamus/hud_etank.bin",
+                weaponIcon: @"_archives/localSamus/hud_weaponicon.bin",
+                doubleDamage: @"_archives/localSamus/hud_damage.bin",
+                cloaking: @"_archives/localSamus/cloaking.bin",
+                primeHunter: @"_archives/localSamus/hud_primehunter.bin",
+                ammoBar: @"_archives/localSamus/hud_ammobar.bin",
+                reticle: @"_archives/localSamus/hud_targetcircle.bin",
+                sniperReticle: @"_archives/localSamus/hud_snipercircle.bin",
+                weaponSelect: @"_archives/localSamus/rad_wepsel.bin",
+                selectIcon: @"_archives/localSamus/wepsel_icon.bin",
+                selectBox: @"_archives/localSamus/wepsel_box.bin",
+                damageBar: @"_archives/localSamus/rad_ammobar.bin",
                 healthMainPosX: 93,
                 healthMainPosY: -5,
                 healthSubPosX: 93,
@@ -1496,24 +1496,24 @@ namespace MphRead.Hud
             ),
             // Kanden
             new HudObjects(
-                helmet: @"_archives\localKanden\bg_top.bin",
-                helmetDrop: @"_archives\localKanden\bg_top_drop.bin",
-                visor: @"_archives\localKanden\bg_top_ovl.bin",
-                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
-                healthBarA: @"_archives\localKanden\hud_energybar.bin",
-                healthBarB: @"_archives\localKanden\hud_energybar2.bin",
-                energyTanks: @"_archives\spSamus\hud_etank.bin",
-                weaponIcon: @"_archives\localKanden\hud_weaponicon.bin",
-                doubleDamage: @"_archives\localKanden\hud_damage.bin",
-                cloaking: @"_archives\localKanden\cloaking.bin",
-                primeHunter: @"_archives\localKanden\hud_primehunter.bin",
-                ammoBar: @"_archives\localKanden\hud_ammobar.bin",
-                reticle: @"_archives\localKanden\hud_targetcircle.bin",
-                sniperReticle: @"_archives\localKanden\hud_snipercircle.bin",
-                weaponSelect: @"_archives\localKanden\rad_wepsel.bin",
-                selectIcon: @"_archives\localKanden\wepsel_icon.bin",
-                selectBox: @"_archives\localKanden\wepsel_box.bin",
-                damageBar: @"_archives\localKanden\rad_ammobar.bin",
+                helmet: @"_archives/localKanden/bg_top.bin",
+                helmetDrop: @"_archives/localKanden/bg_top_drop.bin",
+                visor: @"_archives/localKanden/bg_top_ovl.bin",
+                scanVisor: @"_archives/localSamus/bg_top_ovl.bin",
+                healthBarA: @"_archives/localKanden/hud_energybar.bin",
+                healthBarB: @"_archives/localKanden/hud_energybar2.bin",
+                energyTanks: @"_archives/spSamus/hud_etank.bin",
+                weaponIcon: @"_archives/localKanden/hud_weaponicon.bin",
+                doubleDamage: @"_archives/localKanden/hud_damage.bin",
+                cloaking: @"_archives/localKanden/cloaking.bin",
+                primeHunter: @"_archives/localKanden/hud_primehunter.bin",
+                ammoBar: @"_archives/localKanden/hud_ammobar.bin",
+                reticle: @"_archives/localKanden/hud_targetcircle.bin",
+                sniperReticle: @"_archives/localKanden/hud_snipercircle.bin",
+                weaponSelect: @"_archives/localKanden/rad_wepsel.bin",
+                selectIcon: @"_archives/localKanden/wepsel_icon.bin",
+                selectBox: @"_archives/localKanden/wepsel_box.bin",
+                damageBar: @"_archives/localKanden/rad_ammobar.bin",
                 healthMainPosX: 13,
                 healthMainPosY: 0,
                 healthSubPosX: 20,
@@ -1559,24 +1559,24 @@ namespace MphRead.Hud
             ),
             // Trace
             new HudObjects(
-                helmet: @"_archives\localTrace\bg_top.bin",
-                helmetDrop: @"_archives\localTrace\bg_top_drop.bin",
-                visor: @"_archives\localTrace\bg_top_ovl.bin",
-                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
-                healthBarA: @"_archives\localTrace\hud_energybar.bin",
-                healthBarB: @"_archives\localTrace\hud_energybar2.bin",
-                energyTanks: @"_archives\spSamus\hud_etank.bin",
-                weaponIcon: @"_archives\localTrace\hud_weaponicon.bin",
-                doubleDamage: @"_archives\localTrace\hud_damage.bin",
-                cloaking: @"_archives\localTrace\cloaking.bin",
-                primeHunter: @"_archives\localTrace\hud_primehunter.bin",
-                ammoBar: @"_archives\localTrace\hud_ammobar.bin",
-                reticle: @"_archives\localTrace\hud_targetcircle.bin",
-                sniperReticle: @"_archives\localTrace\hud_snipercircle.bin",
-                weaponSelect: @"_archives\localTrace\rad_wepsel.bin",
-                selectIcon: @"_archives\localTrace\wepsel_icon.bin",
-                selectBox: @"_archives\localTrace\wepsel_box.bin",
-                damageBar: @"_archives\localTrace\rad_ammobar.bin",
+                helmet: @"_archives/localTrace/bg_top.bin",
+                helmetDrop: @"_archives/localTrace/bg_top_drop.bin",
+                visor: @"_archives/localTrace/bg_top_ovl.bin",
+                scanVisor: @"_archives/localSamus/bg_top_ovl.bin",
+                healthBarA: @"_archives/localTrace/hud_energybar.bin",
+                healthBarB: @"_archives/localTrace/hud_energybar2.bin",
+                energyTanks: @"_archives/spSamus/hud_etank.bin",
+                weaponIcon: @"_archives/localTrace/hud_weaponicon.bin",
+                doubleDamage: @"_archives/localTrace/hud_damage.bin",
+                cloaking: @"_archives/localTrace/cloaking.bin",
+                primeHunter: @"_archives/localTrace/hud_primehunter.bin",
+                ammoBar: @"_archives/localTrace/hud_ammobar.bin",
+                reticle: @"_archives/localTrace/hud_targetcircle.bin",
+                sniperReticle: @"_archives/localTrace/hud_snipercircle.bin",
+                weaponSelect: @"_archives/localTrace/rad_wepsel.bin",
+                selectIcon: @"_archives/localTrace/wepsel_icon.bin",
+                selectBox: @"_archives/localTrace/wepsel_box.bin",
+                damageBar: @"_archives/localTrace/rad_ammobar.bin",
                 healthMainPosX: 24,
                 healthMainPosY: 135,
                 healthSubPosX: 29,
@@ -1622,24 +1622,24 @@ namespace MphRead.Hud
             ),
             // Sylux
             new HudObjects(
-                helmet: @"_archives\localSylux\bg_top.bin",
-                helmetDrop: @"_archives\localSylux\bg_top_drop.bin",
-                visor: @"_archives\localSylux\bg_top_ovl.bin",
-                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
-                healthBarA: @"_archives\localSylux\hud_energybar.bin",
-                healthBarB: @"_archives\localSylux\hud_energybar2.bin",
-                energyTanks: @"_archives\spSamus\hud_etank.bin",
-                weaponIcon: @"_archives\localSylux\hud_weaponicon.bin",
-                doubleDamage: @"_archives\localSylux\hud_damage.bin",
-                cloaking: @"_archives\localSylux\cloaking.bin",
-                primeHunter: @"_archives\localSylux\hud_primehunter.bin",
-                ammoBar: @"_archives\localSylux\hud_ammobar.bin",
-                reticle: @"_archives\localSylux\hud_targetcircle.bin",
-                sniperReticle: @"_archives\localSylux\hud_snipercircle.bin",
-                weaponSelect: @"_archives\localSylux\rad_wepsel.bin",
-                selectIcon: @"_archives\localSylux\wepsel_icon.bin",
-                selectBox: @"_archives\localSylux\wepsel_box.bin",
-                damageBar: @"_archives\localSylux\rad_ammobar.bin",
+                helmet: @"_archives/localSylux/bg_top.bin",
+                helmetDrop: @"_archives/localSylux/bg_top_drop.bin",
+                visor: @"_archives/localSylux/bg_top_ovl.bin",
+                scanVisor: @"_archives/localSamus/bg_top_ovl.bin",
+                healthBarA: @"_archives/localSylux/hud_energybar.bin",
+                healthBarB: @"_archives/localSylux/hud_energybar2.bin",
+                energyTanks: @"_archives/spSamus/hud_etank.bin",
+                weaponIcon: @"_archives/localSylux/hud_weaponicon.bin",
+                doubleDamage: @"_archives/localSylux/hud_damage.bin",
+                cloaking: @"_archives/localSylux/cloaking.bin",
+                primeHunter: @"_archives/localSylux/hud_primehunter.bin",
+                ammoBar: @"_archives/localSylux/hud_ammobar.bin",
+                reticle: @"_archives/localSylux/hud_targetcircle.bin",
+                sniperReticle: @"_archives/localSylux/hud_snipercircle.bin",
+                weaponSelect: @"_archives/localSylux/rad_wepsel.bin",
+                selectIcon: @"_archives/localSylux/wepsel_icon.bin",
+                selectBox: @"_archives/localSylux/wepsel_box.bin",
+                damageBar: @"_archives/localSylux/rad_ammobar.bin",
                 healthMainPosX: 47,
                 healthMainPosY: 165,
                 healthSubPosX: 51,
@@ -1685,24 +1685,24 @@ namespace MphRead.Hud
             ),
             // Noxus
             new HudObjects(
-                helmet: @"_archives\localNox\bg_top.bin",
-                helmetDrop: @"_archives\localNox\bg_top_drop.bin",
-                visor: @"_archives\localNox\bg_top_ovl.bin",
-                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
-                healthBarA: @"_archives\localNox\hud_energybar.bin",
-                healthBarB: @"_archives\localNox\hud_energybar2.bin",
-                energyTanks: @"_archives\spSamus\hud_etank.bin",
-                weaponIcon: @"_archives\localNox\hud_weaponicon.bin",
-                doubleDamage: @"_archives\localNox\hud_damage.bin",
-                cloaking: @"_archives\localNox\cloaking.bin",
-                primeHunter: @"_archives\localNox\hud_primehunter.bin",
-                ammoBar: @"_archives\localNox\hud_ammobar.bin",
-                reticle: @"_archives\localNox\hud_targetcircle.bin",
-                sniperReticle: @"_archives\localNox\hud_snipercircle.bin",
-                weaponSelect: @"_archives\localNox\rad_wepsel.bin",
-                selectIcon: @"_archives\localNox\wepsel_icon.bin",
-                selectBox: @"_archives\localNox\wepsel_box.bin",
-                damageBar: @"_archives\localNox\rad_ammobar.bin",
+                helmet: @"_archives/localNox/bg_top.bin",
+                helmetDrop: @"_archives/localNox/bg_top_drop.bin",
+                visor: @"_archives/localNox/bg_top_ovl.bin",
+                scanVisor: @"_archives/localSamus/bg_top_ovl.bin",
+                healthBarA: @"_archives/localNox/hud_energybar.bin",
+                healthBarB: @"_archives/localNox/hud_energybar2.bin",
+                energyTanks: @"_archives/spSamus/hud_etank.bin",
+                weaponIcon: @"_archives/localNox/hud_weaponicon.bin",
+                doubleDamage: @"_archives/localNox/hud_damage.bin",
+                cloaking: @"_archives/localNox/cloaking.bin",
+                primeHunter: @"_archives/localNox/hud_primehunter.bin",
+                ammoBar: @"_archives/localNox/hud_ammobar.bin",
+                reticle: @"_archives/localNox/hud_targetcircle.bin",
+                sniperReticle: @"_archives/localNox/hud_snipercircle.bin",
+                weaponSelect: @"_archives/localNox/rad_wepsel.bin",
+                selectIcon: @"_archives/localNox/wepsel_icon.bin",
+                selectBox: @"_archives/localNox/wepsel_box.bin",
+                damageBar: @"_archives/localNox/rad_ammobar.bin",
                 healthMainPosX: 29,
                 healthMainPosY: 0,
                 healthSubPosX: 34,
@@ -1748,24 +1748,24 @@ namespace MphRead.Hud
             ),
             // Spire
             new HudObjects(
-                helmet: @"_archives\localSpire\bg_top.bin",
-                helmetDrop: @"_archives\localSpire\bg_top_drop.bin",
-                visor: @"_archives\localSpire\bg_top_ovl.bin",
-                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
-                healthBarA: @"_archives\localSpire\hud_energybar.bin",
-                healthBarB: @"_archives\localSpire\hud_energybar2.bin",
-                energyTanks: @"_archives\spSamus\hud_etank.bin",
-                weaponIcon: @"_archives\localSpire\hud_weaponicon.bin",
-                doubleDamage: @"_archives\localSpire\hud_damage.bin",
-                cloaking: @"_archives\localSpire\cloaking.bin",
-                primeHunter: @"_archives\localSpire\hud_primehunter.bin",
-                ammoBar: @"_archives\localSpire\hud_ammobar.bin",
-                reticle: @"_archives\localSpire\hud_targetcircle.bin",
-                sniperReticle: @"_archives\localSpire\hud_snipercircle.bin",
-                weaponSelect: @"_archives\localSpire\rad_wepsel.bin",
-                selectIcon: @"_archives\localSpire\wepsel_icon.bin",
-                selectBox: @"_archives\localSpire\wepsel_box.bin",
-                damageBar: @"_archives\localSpire\rad_ammobar.bin",
+                helmet: @"_archives/localSpire/bg_top.bin",
+                helmetDrop: @"_archives/localSpire/bg_top_drop.bin",
+                visor: @"_archives/localSpire/bg_top_ovl.bin",
+                scanVisor: @"_archives/localSamus/bg_top_ovl.bin",
+                healthBarA: @"_archives/localSpire/hud_energybar.bin",
+                healthBarB: @"_archives/localSpire/hud_energybar2.bin",
+                energyTanks: @"_archives/spSamus/hud_etank.bin",
+                weaponIcon: @"_archives/localSpire/hud_weaponicon.bin",
+                doubleDamage: @"_archives/localSpire/hud_damage.bin",
+                cloaking: @"_archives/localSpire/cloaking.bin",
+                primeHunter: @"_archives/localSpire/hud_primehunter.bin",
+                ammoBar: @"_archives/localSpire/hud_ammobar.bin",
+                reticle: @"_archives/localSpire/hud_targetcircle.bin",
+                sniperReticle: @"_archives/localSpire/hud_snipercircle.bin",
+                weaponSelect: @"_archives/localSpire/rad_wepsel.bin",
+                selectIcon: @"_archives/localSpire/wepsel_icon.bin",
+                selectBox: @"_archives/localSpire/wepsel_box.bin",
+                damageBar: @"_archives/localSpire/rad_ammobar.bin",
                 healthMainPosX: 12,
                 healthMainPosY: 0,
                 healthSubPosX: 21,
@@ -1811,24 +1811,24 @@ namespace MphRead.Hud
             ),
             // Weavel
             new HudObjects(
-                helmet: @"_archives\localWeavel\bg_top.bin",
-                helmetDrop: @"_archives\localWeavel\bg_top_drop.bin",
-                visor: @"_archives\localWeavel\bg_top_ovl.bin",
-                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
-                healthBarA: @"_archives\localWeavel\hud_energybar.bin",
-                healthBarB: @"_archives\localWeavel\hud_energybar2.bin",
-                energyTanks: @"_archives\spSamus\hud_etank.bin",
-                weaponIcon: @"_archives\localWeavel\hud_weaponicon.bin",
-                doubleDamage: @"_archives\localWeavel\hud_damage.bin",
-                cloaking: @"_archives\localWeavel\cloaking.bin",
-                primeHunter: @"_archives\localWeavel\hud_primehunter.bin",
-                ammoBar: @"_archives\localWeavel\hud_ammobar.bin",
-                reticle: @"_archives\localWeavel\hud_targetcircle.bin",
-                sniperReticle: @"_archives\localWeavel\hud_snipercircle.bin",
-                weaponSelect: @"_archives\localWeavel\rad_wepsel.bin",
-                selectIcon: @"_archives\localWeavel\wepsel_icon.bin",
-                selectBox: @"_archives\localWeavel\wepsel_box.bin",
-                damageBar: @"_archives\localWeavel\rad_ammobar.bin",
+                helmet: @"_archives/localWeavel/bg_top.bin",
+                helmetDrop: @"_archives/localWeavel/bg_top_drop.bin",
+                visor: @"_archives/localWeavel/bg_top_ovl.bin",
+                scanVisor: @"_archives/localSamus/bg_top_ovl.bin",
+                healthBarA: @"_archives/localWeavel/hud_energybar.bin",
+                healthBarB: @"_archives/localWeavel/hud_energybar2.bin",
+                energyTanks: @"_archives/spSamus/hud_etank.bin",
+                weaponIcon: @"_archives/localWeavel/hud_weaponicon.bin",
+                doubleDamage: @"_archives/localWeavel/hud_damage.bin",
+                cloaking: @"_archives/localWeavel/cloaking.bin",
+                primeHunter: @"_archives/localWeavel/hud_primehunter.bin",
+                ammoBar: @"_archives/localWeavel/hud_ammobar.bin",
+                reticle: @"_archives/localWeavel/hud_targetcircle.bin",
+                sniperReticle: @"_archives/localWeavel/hud_snipercircle.bin",
+                weaponSelect: @"_archives/localWeavel/rad_wepsel.bin",
+                selectIcon: @"_archives/localWeavel/wepsel_icon.bin",
+                selectBox: @"_archives/localWeavel/wepsel_box.bin",
+                damageBar: @"_archives/localWeavel/rad_ammobar.bin",
                 healthMainPosX: 22,
                 healthMainPosY: 118,
                 healthSubPosX: 30,
@@ -1874,24 +1874,24 @@ namespace MphRead.Hud
             ),
             // Guardian
             new HudObjects(
-                helmet: @"_archives\localWeavel\bg_top.bin", // todo: modify HUD graphics/palettes for Guardians
-                helmetDrop: @"_archives\localWeavel\bg_top_drop.bin",
-                visor: @"_archives\localKanden\bg_top_ovl.bin",
-                scanVisor: @"_archives\localSamus\bg_top_ovl.bin",
-                healthBarA: @"_archives\localSamus\hud_energybar.bin",
-                healthBarB: @"_archives\localSamus\hud_energybar2.bin",
-                energyTanks: @"_archives\spSamus\hud_etank.bin",
-                weaponIcon: @"_archives\localSamus\hud_weaponicon.bin",
-                doubleDamage: @"_archives\localSamus\hud_damage.bin",
-                cloaking: @"_archives\localSamus\cloaking.bin",
-                primeHunter: @"_archives\localSamus\hud_primehunter.bin",
-                ammoBar: @"_archives\localSamus\hud_ammobar.bin",
-                reticle: @"_archives\localSamus\hud_targetcircle.bin",
-                sniperReticle: @"_archives\localSamus\hud_snipercircle.bin",
-                weaponSelect: @"_archives\localSamus\rad_wepsel.bin",
-                selectIcon: @"_archives\localSamus\wepsel_icon.bin",
-                selectBox: @"_archives\localSamus\wepsel_box.bin",
-                damageBar: @"_archives\localSamus\rad_ammobar.bin",
+                helmet: @"_archives/localWeavel/bg_top.bin", // todo: modify HUD graphics/palettes for Guardians
+                helmetDrop: @"_archives/localWeavel/bg_top_drop.bin",
+                visor: @"_archives/localKanden/bg_top_ovl.bin",
+                scanVisor: @"_archives/localSamus/bg_top_ovl.bin",
+                healthBarA: @"_archives/localSamus/hud_energybar.bin",
+                healthBarB: @"_archives/localSamus/hud_energybar2.bin",
+                energyTanks: @"_archives/spSamus/hud_etank.bin",
+                weaponIcon: @"_archives/localSamus/hud_weaponicon.bin",
+                doubleDamage: @"_archives/localSamus/hud_damage.bin",
+                cloaking: @"_archives/localSamus/cloaking.bin",
+                primeHunter: @"_archives/localSamus/hud_primehunter.bin",
+                ammoBar: @"_archives/localSamus/hud_ammobar.bin",
+                reticle: @"_archives/localSamus/hud_targetcircle.bin",
+                sniperReticle: @"_archives/localSamus/hud_snipercircle.bin",
+                weaponSelect: @"_archives/localSamus/rad_wepsel.bin",
+                selectIcon: @"_archives/localSamus/wepsel_icon.bin",
+                selectBox: @"_archives/localSamus/wepsel_box.bin",
+                damageBar: @"_archives/localSamus/rad_ammobar.bin",
                 healthMainPosX: 93,
                 healthMainPosY: -5,
                 healthSubPosX: 93,

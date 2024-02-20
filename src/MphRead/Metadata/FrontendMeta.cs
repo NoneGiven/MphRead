@@ -75,7 +75,7 @@ namespace MphRead
                 },
                 {
                     "icons",
-                    new ModelMetadata("icons", texturePath: @"models\icons_Tex.bin", dir: MetaDir.Hud)
+                    new ModelMetadata("icons", texturePath: @"models/icons_Tex.bin", dir: MetaDir.Hud)
                 },
                 {
                     "hud_icon_arrow",

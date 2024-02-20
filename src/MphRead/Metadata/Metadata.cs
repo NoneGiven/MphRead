@@ -76,7 +76,7 @@ namespace MphRead
             [MetaDir.Hud] = "hud",
             [MetaDir.Keyboard] = "keyboard",
             [MetaDir.Keypad] = "keypad",
-            [MetaDir.Logo] = @"logo_screen\MAYA",
+            [MetaDir.Logo] = @"logo_screen/MAYA",
             [MetaDir.MainMenu] = "main menu",
             [MetaDir.Models] = "models",
             [MetaDir.MoviePlayer] = "movieplayer",
@@ -99,8 +99,8 @@ namespace MphRead
         {
             Name = name;
             string directory = _dirs[dir];
-            ModelPath = $@"{directory}\{name}_Model.bin";
-            AnimationPath = anim != null ? $@"{directory}\{anim}_Anim.bin" : null;
+            ModelPath = $@"{directory}/{name}_Model.bin";
+            AnimationPath = anim != null ? $@"{directory}/{anim}_Anim.bin" : null;
             Recolors = new List<RecolorMetadata>()
             {
                 new RecolorMetadata("default", ModelPath, ModelPath)
@@ -111,7 +111,7 @@ namespace MphRead
         {
             Name = name;
             string directory = _dirs[dir];
-            ModelPath = $@"{directory}\{name}_Model.bin";
+            ModelPath = $@"{directory}/{name}_Model.bin";
             Recolors = new List<RecolorMetadata>()
             {
                 new RecolorMetadata("default", ModelPath, texturePath)
@@ -121,7 +121,7 @@ namespace MphRead
         public ModelMetadata(string name, string? animationPath, string? texturePath = null)
         {
             Name = name;
-            ModelPath = $@"models\{name}_Model.bin";
+            ModelPath = $@"models/{name}_Model.bin";
             AnimationPath = animationPath;
             Recolors = new List<RecolorMetadata>()
             {
@@ -134,15 +134,15 @@ namespace MphRead
         {
             Name = name;
             string directory = "models";
-            ModelPath = $@"{directory}\{name}_Model.bin";
+            ModelPath = $@"{directory}/{name}_Model.bin";
             string removed = name.Replace(remove, "");
             if (animation)
             {
-                AnimationPath = animationPath ?? $@"{directory}\{removed}_Anim.bin";
+                AnimationPath = animationPath ?? $@"{directory}/{removed}_Anim.bin";
             }
             if (collision)
             {
-                CollisionPath = $@"{directory}\{removed}_Collision.bin";
+                CollisionPath = $@"{directory}/{removed}_Collision.bin";
             }
             Recolors = new List<RecolorMetadata>()
             {
@@ -164,11 +164,11 @@ namespace MphRead
             }
             if (archive == null)
             {
-                ModelPath = $@"models\{name}{suffix}_Model.bin";
+                ModelPath = $@"models/{name}{suffix}_Model.bin";
             }
             else
             {
-                ModelPath = $@"_archives\{archive}\{name}_Model.bin";
+                ModelPath = $@"_archives/{archive}/{name}_Model.bin";
             }
             if (remove != null)
             {
@@ -186,11 +186,11 @@ namespace MphRead
             {
                 if (archive != null)
                 {
-                    AnimationPath = $@"_archives\{archive}\{name}_Anim.bin";
+                    AnimationPath = $@"_archives/{archive}/{name}_Anim.bin";
                 }
                 else
                 {
-                    AnimationPath = $@"models\{name}{suffix}_Anim.bin";
+                    AnimationPath = $@"models/{name}{suffix}_Anim.bin";
                 }
             }
             if (animationShare != null)
@@ -205,8 +205,8 @@ namespace MphRead
                 {
                     recolorString = recolor.Replace("*", "");
                 }
-                string recolorModel = $@"models\{recolorString}_Model.bin";
-                string texturePath = texture ? $@"models\{recolorString}_Tex.bin" : recolorModel;
+                string recolorModel = $@"models/{recolorString}_Model.bin";
+                string texturePath = texture ? $@"models/{recolorString}_Tex.bin" : recolorModel;
                 recolorList.Add(new RecolorMetadata(recolor, recolorModel, texturePath));
             }
             Recolors = recolorList;
@@ -222,7 +222,7 @@ namespace MphRead
             string path;
             if (archive != null)
             {
-                path = $@"_archives\{archive}";
+                path = $@"_archives/{archive}";
             }
             else
             {
@@ -233,22 +233,22 @@ namespace MphRead
             {
                 suffix = "_mdl";
             }
-            ModelPath = $@"{path}\{name}{suffix}_Model.bin";
+            ModelPath = $@"{path}/{name}{suffix}_Model.bin";
             if (mdlSuffix != MdlSuffix.All)
             {
                 suffix = "";
             }
             if (animation)
             {
-                AnimationPath = animationPath ?? $@"{path}\{name}{addToAnim}{suffix}_Anim.bin";
+                AnimationPath = animationPath ?? $@"{path}/{name}{addToAnim}{suffix}_Anim.bin";
             }
             if (collision)
             {
-                CollisionPath = $@"{path}\{name}{suffix}_Collision.bin";
+                CollisionPath = $@"{path}/{name}{suffix}_Collision.bin";
             }
             if (extraCollision != null)
             {
-                ExtraCollisionPath = $@"{path}\{extraCollision}_Collision.bin";
+                ExtraCollisionPath = $@"{path}/{extraCollision}_Collision.bin";
             }
             string recolorModel = ModelPath;
             if (share != null)
@@ -258,7 +258,7 @@ namespace MphRead
             }
             Recolors = new List<RecolorMetadata>()
             {
-                new RecolorMetadata("default", recolorModel, texture ? $@"models\{name}{suffix}_Tex.bin" : recolorModel)
+                new RecolorMetadata("default", recolorModel, texture ? $@"models/{name}{suffix}_Tex.bin" : recolorModel)
             };
             FirstHunt = firstHunt;
         }
@@ -1648,7 +1648,7 @@ namespace MphRead
                 {
                     "AlimbicBossDoorLock",
                     new ModelMetadata("AlimbicBossDoorLock",
-                        share: @"models\AlimbicTextureShare_img_Model.bin",
+                        share: @"models/AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
@@ -1670,56 +1670,56 @@ namespace MphRead
                 {
                     "AlimbicDoorLock",
                     new ModelMetadata("AlimbicDoorLock",
-                        share: @"models\AlimbicTextureShare_img_Model.bin",
+                        share: @"models/AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
                     "AlimbicDoor",
                     new ModelMetadata("AlimbicDoor",
-                        modelPath: @"models\AlimbicDoor_Model.bin",
-                        animationPath: @"models\AlimbicDoor_Anim.bin",
+                        modelPath: @"models/AlimbicDoor_Model.bin",
+                        animationPath: @"models/AlimbicDoor_Anim.bin",
                         collisionPath: null,
                         new List<RecolorMetadata>()
                         {
                             new RecolorMetadata("pal_01",
-                                modelPath: @"models\AlimbicDoor_Model.bin",
-                                texturePath: @"models\AlimbicDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicDoor_Model.bin",
+                                texturePath: @"models/AlimbicDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_02",
-                                modelPath: @"models\AlimbicDoor_Model.bin",
-                                texturePath: @"models\AlimbicDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicDoor_Model.bin",
+                                texturePath: @"models/AlimbicDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_03",
-                                modelPath: @"models\AlimbicDoor_Model.bin",
-                                texturePath: @"models\AlimbicDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicDoor_Model.bin",
+                                texturePath: @"models/AlimbicDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_04",
-                                modelPath: @"models\AlimbicDoor_Model.bin",
-                                texturePath: @"models\AlimbicDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicDoor_Model.bin",
+                                texturePath: @"models/AlimbicDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_05",
-                                modelPath: @"models\AlimbicDoor_Model.bin",
-                                texturePath: @"models\AlimbicDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicDoor_Model.bin",
+                                texturePath: @"models/AlimbicDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_06",
-                                modelPath: @"models\AlimbicDoor_Model.bin",
-                                texturePath: @"models\AlimbicDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicDoor_Model.bin",
+                                texturePath: @"models/AlimbicDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_07",
-                                modelPath: @"models\AlimbicDoor_Model.bin",
-                                texturePath: @"models\AlimbicDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicDoor_Model.bin",
+                                texturePath: @"models/AlimbicDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_08",
-                                modelPath: @"models\AlimbicDoor_Model.bin",
-                                texturePath: @"models\AlimbicDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicDoor_Model.bin",
+                                texturePath: @"models/AlimbicDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 1 } } })
                         })
                 },
@@ -1742,13 +1742,13 @@ namespace MphRead
                 {
                     "AlimbicMorphBallDoor",
                     new ModelMetadata("AlimbicMorphBallDoor",
-                        share: @"models\AlimbicTextureShare_img_Model.bin",
+                        share: @"models/AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
                     "AlimbicMorphBallDoorLock",
                     new ModelMetadata("AlimbicMorphBallDoorLock",
-                        share: @"models\AlimbicTextureShare_img_Model.bin",
+                        share: @"models/AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
@@ -1762,83 +1762,83 @@ namespace MphRead
                 {
                     "AlimbicThinDoor",
                     new ModelMetadata("AlimbicThinDoor",
-                        modelPath: @"models\AlimbicThinDoor_Model.bin",
-                        animationPath: @"models\AlimbicThinDoor_Anim.bin",
+                        modelPath: @"models/AlimbicThinDoor_Model.bin",
+                        animationPath: @"models/AlimbicThinDoor_Anim.bin",
                         collisionPath: null,
                         new List<RecolorMetadata>()
                         {
                             new RecolorMetadata("pal_01",
-                                modelPath: @"models\AlimbicThinDoor_Model.bin",
-                                texturePath: @"models\AlimbicThinDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicThinDoor_Model.bin",
+                                texturePath: @"models/AlimbicThinDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_02",
-                                modelPath: @"models\AlimbicThinDoor_Model.bin",
-                                texturePath: @"models\AlimbicThinDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicThinDoor_Model.bin",
+                                texturePath: @"models/AlimbicThinDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_03",
-                                modelPath: @"models\AlimbicThinDoor_Model.bin",
-                                texturePath: @"models\AlimbicThinDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicThinDoor_Model.bin",
+                                texturePath: @"models/AlimbicThinDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_04",
-                                modelPath: @"models\AlimbicThinDoor_Model.bin",
-                                texturePath: @"models\AlimbicThinDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicThinDoor_Model.bin",
+                                texturePath: @"models/AlimbicThinDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_05",
-                                modelPath: @"models\AlimbicThinDoor_Model.bin",
-                                texturePath: @"models\AlimbicThinDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicThinDoor_Model.bin",
+                                texturePath: @"models/AlimbicThinDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_06",
-                                modelPath: @"models\AlimbicThinDoor_Model.bin",
-                                texturePath: @"models\AlimbicThinDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicThinDoor_Model.bin",
+                                texturePath: @"models/AlimbicThinDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_07",
-                                modelPath: @"models\AlimbicThinDoor_Model.bin",
-                                texturePath: @"models\AlimbicThinDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicThinDoor_Model.bin",
+                                texturePath: @"models/AlimbicThinDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_08",
-                                modelPath: @"models\AlimbicThinDoor_Model.bin",
-                                texturePath: @"models\AlimbicThinDoor_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicThinDoor_Model.bin",
+                                texturePath: @"models/AlimbicThinDoor_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 1, 2 } } })
                         })
                 },
                 {
                     "Alimbic_Console",
                     new ModelMetadata("Alimbic_Console",
-                        share: @"models\AlimbicEquipTextureShare_img_Model.bin",
+                        share: @"models/AlimbicEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Alimbic_Monitor",
                     new ModelMetadata("Alimbic_Monitor",
-                        share: @"models\AlimbicEquipTextureShare_img_Model.bin",
+                        share: @"models/AlimbicEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Alimbic_Power",
                     new ModelMetadata("Alimbic_Power",
-                        share: @"models\AlimbicEquipTextureShare_img_Model.bin",
+                        share: @"models/AlimbicEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Alimbic_Scanner",
                     new ModelMetadata("Alimbic_Scanner",
-                        share: @"models\AlimbicEquipTextureShare_img_Model.bin",
+                        share: @"models/AlimbicEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Alimbic_Switch",
                     new ModelMetadata("Alimbic_Switch",
-                        share: @"models\AlimbicEquipTextureShare_img_Model.bin",
+                        share: @"models/AlimbicEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
@@ -1851,21 +1851,21 @@ namespace MphRead
                             "img_04",
                             "img_05"
                         },
-                        animationPath: @"models\AlimbicTurret_Anim.bin",
+                        animationPath: @"models/AlimbicTurret_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "alt_ice",
                     new ModelMetadata("alt_ice",
-                        modelPath: @"_archives\common\alt_ice_mdl_Model.bin",
+                        modelPath: @"_archives/common/alt_ice_mdl_Model.bin",
                         animationPath: null,
                         collisionPath: null,
                         new List<RecolorMetadata>()
                         {
                             new RecolorMetadata("default",
-                                modelPath: @"_archives\common\samus_ice_img_Model.bin",
-                                texturePath: @"_archives\common\samus_ice_img_Model.bin",
-                                palettePath: @"_archives\common\samus_ice_img_Model.bin")
+                                modelPath: @"_archives/common/samus_ice_img_Model.bin",
+                                texturePath: @"_archives/common/samus_ice_img_Model.bin",
+                                palettePath: @"_archives/common/samus_ice_img_Model.bin")
                         }, useLightSources: true)
                 },
                 {
@@ -1898,57 +1898,57 @@ namespace MphRead
                 {
                     "Artifact01",
                     new ModelMetadata("Artifact01",
-                        share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animationPath: @"models\Artifact_Anim.bin",
+                        share: @"models/ArtifactTextureShare_img_Model.bin",
+                        animationPath: @"models/Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact02",
                     new ModelMetadata("Artifact02",
-                        share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animationPath: @"models\Artifact_Anim.bin",
+                        share: @"models/ArtifactTextureShare_img_Model.bin",
+                        animationPath: @"models/Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact03",
                     new ModelMetadata("Artifact03",
-                        share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animationPath: @"models\Artifact_Anim.bin",
+                        share: @"models/ArtifactTextureShare_img_Model.bin",
+                        animationPath: @"models/Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact04",
                     new ModelMetadata("Artifact04",
-                        share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animationPath: @"models\Artifact_Anim.bin",
+                        share: @"models/ArtifactTextureShare_img_Model.bin",
+                        animationPath: @"models/Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact05",
                     new ModelMetadata("Artifact05",
-                        share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animationPath: @"models\Artifact_Anim.bin",
+                        share: @"models/ArtifactTextureShare_img_Model.bin",
+                        animationPath: @"models/Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact06",
                     new ModelMetadata("Artifact06",
-                        share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animationPath: @"models\Artifact_Anim.bin",
+                        share: @"models/ArtifactTextureShare_img_Model.bin",
+                        animationPath: @"models/Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact07",
                     new ModelMetadata("Artifact07",
-                        share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animationPath: @"models\Artifact_Anim.bin",
+                        share: @"models/ArtifactTextureShare_img_Model.bin",
+                        animationPath: @"models/Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Artifact08",
                     new ModelMetadata("Artifact08",
-                        share: @"models\ArtifactTextureShare_img_Model.bin",
-                        animationPath: @"models\Artifact_Anim.bin",
+                        share: @"models/ArtifactTextureShare_img_Model.bin",
+                        animationPath: @"models/Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
@@ -1969,7 +1969,7 @@ namespace MphRead
                             "img_03"
                         },
                         mdlSuffix: MdlSuffix.Model,
-                        animationPath: @"models\warWasp_Anim.bin")
+                        animationPath: @"models/warWasp_Anim.bin")
                 },
                 {
                     "BigEyeBall",
@@ -1985,19 +1985,19 @@ namespace MphRead
                 },
                 {
                     "BigEyeSynapse_01",
-                    new ModelMetadata("BigEyeSynapse_01", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_01", animation: true, animationPath: @"models/BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeSynapse_02",
-                    new ModelMetadata("BigEyeSynapse_02", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_02", animation: true, animationPath: @"models/BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeSynapse_03",
-                    new ModelMetadata("BigEyeSynapse_03", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_03", animation: true, animationPath: @"models/BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeSynapse_04",
-                    new ModelMetadata("BigEyeSynapse_04", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
+                    new ModelMetadata("BigEyeSynapse_04", animation: true, animationPath: @"models/BigEyeSynapse_Anim.bin")
                 },
                 {
                     "BigEyeTurret",
@@ -2013,7 +2013,7 @@ namespace MphRead
                 },
                 {
                     "Chomtroid",
-                    new ModelMetadata("Chomtroid", animation: true, animationPath: @"models\Mochtroid_Anim.bin")
+                    new ModelMetadata("Chomtroid", animation: true, animationPath: @"models/Mochtroid_Anim.bin")
                 },
                 {
                     "Crate01",
@@ -2078,7 +2078,7 @@ namespace MphRead
                 {
                     "EnemySpawner",
                     new ModelMetadata("EnemySpawner",
-                        share: @"models\AlimbicTextureShare_img_Model.bin",
+                        share: @"models/AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
@@ -2116,107 +2116,107 @@ namespace MphRead
                 {
                     "ForceField",
                     new ModelMetadata("ForceField",
-                        modelPath: @"models\ForceField_Model.bin",
-                        animationPath: @"models\ForceField_Anim.bin",
+                        modelPath: @"models/ForceField_Model.bin",
+                        animationPath: @"models/ForceField_Anim.bin",
                         collisionPath: null,
                         new List<RecolorMetadata>()
                         {
                             new RecolorMetadata("pal_01",
-                                modelPath: @"models\ForceField_Model.bin",
-                                texturePath: @"models\ForceField_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/ForceField_Model.bin",
+                                texturePath: @"models/ForceField_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_02",
-                                modelPath: @"models\ForceField_Model.bin",
-                                texturePath: @"models\ForceField_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/ForceField_Model.bin",
+                                texturePath: @"models/ForceField_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_03",
-                                modelPath: @"models\ForceField_Model.bin",
-                                texturePath: @"models\ForceField_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/ForceField_Model.bin",
+                                texturePath: @"models/ForceField_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_04",
-                                modelPath: @"models\ForceField_Model.bin",
-                                texturePath: @"models\ForceField_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/ForceField_Model.bin",
+                                texturePath: @"models/ForceField_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_05",
-                                modelPath: @"models\ForceField_Model.bin",
-                                texturePath: @"models\ForceField_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/ForceField_Model.bin",
+                                texturePath: @"models/ForceField_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_06",
-                                modelPath: @"models\ForceField_Model.bin",
-                                texturePath: @"models\ForceField_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/ForceField_Model.bin",
+                                texturePath: @"models/ForceField_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_07",
-                                modelPath: @"models\ForceField_Model.bin",
-                                texturePath: @"models\ForceField_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/ForceField_Model.bin",
+                                texturePath: @"models/ForceField_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_08",
-                                modelPath: @"models\ForceField_Model.bin",
-                                texturePath: @"models\ForceField_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/ForceField_Model.bin",
+                                texturePath: @"models/ForceField_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 0 } } })
                         })
                 },
                 {
                     "ForceFieldLock",
                     new ModelMetadata("ForceFieldLock",
-                        modelPath: @"models\ForceFieldLock_mdl_Model.bin",
-                        animationPath: @"models\ForceFieldLock_mdl_Anim.bin",
+                        modelPath: @"models/ForceFieldLock_mdl_Model.bin",
+                        animationPath: @"models/ForceFieldLock_mdl_Anim.bin",
                         collisionPath: null,
                         new List<RecolorMetadata>()
                         {
                             new RecolorMetadata("pal_01",
-                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
-                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models/AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_02",
-                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
-                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models/AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_03",
-                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
-                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models/AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_04",
-                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
-                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models/AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_05",
-                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
-                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models/AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_06",
-                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
-                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models/AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_07",
-                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
-                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models/AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_08",
-                                modelPath: @"models\AlimbicTextureShare_img_Model.bin",
-                                texturePath: @"models\AlimbicTextureShare_img_Model.bin",
-                                palettePath: @"models\AlimbicPalettes_pal_Model.bin",
+                                modelPath: @"models/AlimbicTextureShare_img_Model.bin",
+                                texturePath: @"models/AlimbicTextureShare_img_Model.bin",
+                                palettePath: @"models/AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
                                 replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 3 } } })
                         })
@@ -2232,40 +2232,40 @@ namespace MphRead
                 {
                     "Generic_Console",
                     new ModelMetadata("Generic_Console",
-                        share: @"models\GenericEquipTextureShare_img_Model.bin",
+                        share: @"models/GenericEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Generic_Monitor",
                     new ModelMetadata("Generic_Monitor",
-                        share: @"models\GenericEquipTextureShare_img_Model.bin",
+                        share: @"models/GenericEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Generic_Power",
                     new ModelMetadata("Generic_Power",
-                        share: @"models\GenericEquipTextureShare_img_Model.bin",
+                        share: @"models/GenericEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Generic_Scanner",
                     new ModelMetadata("Generic_Scanner",
-                        share: @"models\GenericEquipTextureShare_img_Model.bin",
+                        share: @"models/GenericEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Generic_Switch",
                     new ModelMetadata("Generic_Switch",
-                        share: @"models\GenericEquipTextureShare_img_Model.bin",
+                        share: @"models/GenericEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "GhostSwitch",
                     new ModelMetadata("GhostSwitch",
-                        share: @"models\AlimbicTextureShare_img_Model.bin",
+                        share: @"models/AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
@@ -2331,14 +2331,14 @@ namespace MphRead
                             "img_03",
                             "img_04"
                         },
-                        animationPath: @"models\GuardBot01_Anim.bin",
+                        animationPath: @"models/GuardBot01_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "GuardBot2_lod0",
                     new ModelMetadata("GuardBot2_lod0",
                         remove: "_lod0",
-                        animationPath: @"models\GuardBot02_Anim.bin")
+                        animationPath: @"models/GuardBot02_Anim.bin")
                 },
                 {
                     "Guardian_Dead",
@@ -2361,8 +2361,8 @@ namespace MphRead
                         },
                         texture: true,
                         archive: "Guardian",
-                        animationPath: @"_archives\Guardian\Guardian_Anim.bin",
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        animationPath: @"_archives/Guardian/Guardian_Anim.bin",
+                        animationShare: @"models/SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2379,8 +2379,8 @@ namespace MphRead
                             "pal_Team02"
                         },
                         texture: true,
-                        animationPath: @"_archives\Guardian\Guardian_Anim.bin",
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        animationPath: @"_archives/Guardian/Guardian_Anim.bin",
+                        animationShare: @"models/SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2394,33 +2394,33 @@ namespace MphRead
                 {
                     "Ice_Console",
                     new ModelMetadata("Ice_Console",
-                        share: @"models\IceEquipTextureShare_img_Model.bin",
+                        share: @"models/IceEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ice_Monitor",
                     new ModelMetadata("Ice_Monitor",
-                        share: @"models\IceEquipTextureShare_img_Model.bin",
+                        share: @"models/IceEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ice_Power",
                     new ModelMetadata("Ice_Power",
-                        share: @"models\IceEquipTextureShare_img_Model.bin",
+                        share: @"models/IceEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ice_Scanner",
                     new ModelMetadata("Ice_Scanner",
-                        share: @"models\IceEquipTextureShare_img_Model.bin",
+                        share: @"models/IceEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ice_Switch",
                     new ModelMetadata("Ice_Switch",
-                        share: @"models\IceEquipTextureShare_img_Model.bin",
+                        share: @"models/IceEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
@@ -2480,7 +2480,7 @@ namespace MphRead
                         animation: true,
                         texture: true,
                         archive: "Kanden",
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        animationShare: @"models/SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2497,9 +2497,9 @@ namespace MphRead
                             "pal_Team02"
                         },
                         animation: true,
-                        animationPath: $@"_archives\Kanden\Kanden_Anim.bin",
+                        animationPath: $@"_archives/Kanden/Kanden_Anim.bin",
                         texture: true,
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        animationShare: @"models/SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2578,33 +2578,33 @@ namespace MphRead
                 {
                     "Lava_Console",
                     new ModelMetadata("Lava_Console",
-                        share: @"models\LavaEquipTextureShare_img_Model.bin",
+                        share: @"models/LavaEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Lava_Monitor",
                     new ModelMetadata("Lava_Monitor",
-                        share: @"models\LavaEquipTextureShare_img_Model.bin",
+                        share: @"models/LavaEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Lava_Power",
                     new ModelMetadata("Lava_Power",
-                        share: @"models\LavaEquipTextureShare_img_Model.bin",
+                        share: @"models/LavaEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Lava_Scanner",
                     new ModelMetadata("Lava_Scanner",
-                        share: @"models\LavaEquipTextureShare_img_Model.bin",
+                        share: @"models/LavaEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Lava_Switch",
                     new ModelMetadata("Lava_Switch",
-                        share: @"models\LavaEquipTextureShare_img_Model.bin",
+                        share: @"models/LavaEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
@@ -2632,7 +2632,7 @@ namespace MphRead
                         animation: true,
                         texture: true,
                         archive: "Nox",
-                        animationShare: @"models\NoxSharedAnim_Anim.bin",
+                        animationShare: @"models/NoxSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2649,9 +2649,9 @@ namespace MphRead
                             "pal_Team02"
                         },
                         animation: true,
-                        animationPath: $@"_archives\Nox\Nox_Anim.bin",
+                        animationPath: $@"_archives/Nox/Nox_Anim.bin",
                         texture: true,
-                        animationShare: @"models\NoxSharedAnim_Anim.bin",
+                        animationShare: @"models/NoxSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2693,15 +2693,15 @@ namespace MphRead
                 {
                     "nox_ice",
                     new ModelMetadata("nox_ice",
-                        modelPath: @"_archives\common\nox_ice_mdl_Model.bin",
+                        modelPath: @"_archives/common/nox_ice_mdl_Model.bin",
                         animationPath: null,
                         collisionPath: null,
                         new List<RecolorMetadata>()
                         {
                             new RecolorMetadata("default",
-                                modelPath: @"_archives\common\samus_ice_img_Model.bin",
-                                texturePath: @"_archives\common\samus_ice_img_Model.bin",
-                                palettePath: @"_archives\common\samus_ice_img_Model.bin")
+                                modelPath: @"_archives/common/samus_ice_img_Model.bin",
+                                texturePath: @"_archives/common/samus_ice_img_Model.bin",
+                                palettePath: @"_archives/common/samus_ice_img_Model.bin")
                         }, useLightSources: true)
                 },
                 {
@@ -2869,33 +2869,33 @@ namespace MphRead
                 {
                     "Ruins_Console",
                     new ModelMetadata("Ruins_Console",
-                        share: @"models\RuinsEquipTextureShare_img_Model.bin",
+                        share: @"models/RuinsEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ruins_Monitor",
                     new ModelMetadata("Ruins_Monitor",
-                        share: @"models\RuinsEquipTextureShare_img_Model.bin",
+                        share: @"models/RuinsEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ruins_Power",
                     new ModelMetadata("Ruins_Power",
-                        share: @"models\RuinsEquipTextureShare_img_Model.bin",
+                        share: @"models/RuinsEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ruins_Scanner",
                     new ModelMetadata("Ruins_Scanner",
-                        share: @"models\RuinsEquipTextureShare_img_Model.bin",
+                        share: @"models/RuinsEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
                     "Ruins_Switch",
                     new ModelMetadata("Ruins_Switch",
-                        share: @"models\RuinsEquipTextureShare_img_Model.bin",
+                        share: @"models/RuinsEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
                 },
@@ -2919,7 +2919,7 @@ namespace MphRead
                         animation: true,
                         texture: true,
                         archive: "Samus",
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        animationShare: @"models/SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2936,9 +2936,9 @@ namespace MphRead
                             "pal_team02"
                         },
                         animation: true,
-                        animationPath: $@"_archives\Samus\Samus_Anim.bin",
+                        animationPath: $@"_archives/Samus/Samus_Anim.bin",
                         texture: true,
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        animationShare: @"models/SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -2979,60 +2979,60 @@ namespace MphRead
                 {
                     "samus_ice",
                     new ModelMetadata("samus_ice",
-                        modelPath: @"_archives\common\samus_ice_mdl_Model.bin",
+                        modelPath: @"_archives/common/samus_ice_mdl_Model.bin",
                         animationPath: null,
                         collisionPath: null,
                         new List<RecolorMetadata>()
                         {
                             new RecolorMetadata("default",
-                                modelPath: @"_archives\common\samus_ice_img_Model.bin",
-                                texturePath: @"_archives\common\samus_ice_img_Model.bin",
-                                palettePath: @"_archives\common\samus_ice_img_Model.bin"),
+                                modelPath: @"_archives/common/samus_ice_img_Model.bin",
+                                texturePath: @"_archives/common/samus_ice_img_Model.bin",
+                                palettePath: @"_archives/common/samus_ice_img_Model.bin"),
                             // header values indicate that doubleDamage_img_Model.bin was generated as a recolor of samus_ice,
                             // although it's not used as one in practice -- note that the viewer uses the standalone member above
                             new RecolorMetadata("dbl_dmg",
-                                modelPath: @"_archives\common\doubleDamage_img_Model.bin",
-                                texturePath: @"_archives\common\doubleDamage_img_Model.bin",
-                                palettePath: @"_archives\common\doubleDamage_img_Model.bin")
+                                modelPath: @"_archives/common/doubleDamage_img_Model.bin",
+                                texturePath: @"_archives/common/doubleDamage_img_Model.bin",
+                                palettePath: @"_archives/common/doubleDamage_img_Model.bin")
                         }, useLightSources: true)
                 },
                 {
                     "SecretSwitch",
                     new ModelMetadata("SecretSwitch",
-                        modelPath: @"models\SecretSwitch_Model.bin",
-                        animationPath: @"models\SecretSwitch_Anim.bin",
-                        collisionPath: @"models\SecretSwitch_Collision.bin",
+                        modelPath: @"models/SecretSwitch_Model.bin",
+                        animationPath: @"models/SecretSwitch_Anim.bin",
+                        collisionPath: @"models/SecretSwitch_Collision.bin",
                         new List<RecolorMetadata>()
                         {
                             // default and pal_06 are identical
                             new RecolorMetadata("default",
-                                modelPath: @"models\SecretSwitch_Model.bin",
-                                texturePath: @"models\SecretSwitch_Model.bin",
-                                palettePath: @"models\SecretSwitch_Model.bin"),
+                                modelPath: @"models/SecretSwitch_Model.bin",
+                                texturePath: @"models/SecretSwitch_Model.bin",
+                                palettePath: @"models/SecretSwitch_Model.bin"),
                             new RecolorMetadata("pal_01",
-                                modelPath: @"models\SecretSwitch_Model.bin",
-                                texturePath: @"models\SecretSwitch_Model.bin",
-                                palettePath: @"models\SecretSwitch_pal_01_Model.bin"),
+                                modelPath: @"models/SecretSwitch_Model.bin",
+                                texturePath: @"models/SecretSwitch_Model.bin",
+                                palettePath: @"models/SecretSwitch_pal_01_Model.bin"),
                             new RecolorMetadata("pal_02",
-                                modelPath: @"models\SecretSwitch_Model.bin",
-                                texturePath: @"models\SecretSwitch_Model.bin",
-                                palettePath: @"models\SecretSwitch_pal_02_Model.bin"),
+                                modelPath: @"models/SecretSwitch_Model.bin",
+                                texturePath: @"models/SecretSwitch_Model.bin",
+                                palettePath: @"models/SecretSwitch_pal_02_Model.bin"),
                             new RecolorMetadata("pal_03",
-                                modelPath: @"models\SecretSwitch_Model.bin",
-                                texturePath: @"models\SecretSwitch_Model.bin",
-                                palettePath: @"models\SecretSwitch_pal_03_Model.bin"),
+                                modelPath: @"models/SecretSwitch_Model.bin",
+                                texturePath: @"models/SecretSwitch_Model.bin",
+                                palettePath: @"models/SecretSwitch_pal_03_Model.bin"),
                             new RecolorMetadata("pal_04",
-                                modelPath: @"models\SecretSwitch_Model.bin",
-                                texturePath: @"models\SecretSwitch_Model.bin",
-                                palettePath: @"models\SecretSwitch_pal_04_Model.bin"),
+                                modelPath: @"models/SecretSwitch_Model.bin",
+                                texturePath: @"models/SecretSwitch_Model.bin",
+                                palettePath: @"models/SecretSwitch_pal_04_Model.bin"),
                             new RecolorMetadata("pal_05",
-                                modelPath: @"models\SecretSwitch_Model.bin",
-                                texturePath: @"models\SecretSwitch_Model.bin",
-                                palettePath: @"models\SecretSwitch_pal_05_Model.bin"),
+                                modelPath: @"models/SecretSwitch_Model.bin",
+                                texturePath: @"models/SecretSwitch_Model.bin",
+                                palettePath: @"models/SecretSwitch_pal_05_Model.bin"),
                             new RecolorMetadata("pal_06",
-                                modelPath: @"models\SecretSwitch_Model.bin",
-                                texturePath: @"models\SecretSwitch_Model.bin",
-                                palettePath: @"models\SecretSwitch_pal_06_Model.bin")
+                                modelPath: @"models/SecretSwitch_Model.bin",
+                                texturePath: @"models/SecretSwitch_Model.bin",
+                                palettePath: @"models/SecretSwitch_pal_06_Model.bin")
                         })
                 },
                 {
@@ -3075,7 +3075,7 @@ namespace MphRead
                         animation: true,
                         texture: true,
                         archive: "Spire",
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        animationShare: @"models/SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -3092,9 +3092,9 @@ namespace MphRead
                             "pal_Team02"
                         },
                         animation: true,
-                        animationPath: $@"_archives\Spire\Spire_Anim.bin",
+                        animationPath: $@"_archives/Spire/Spire_Anim.bin",
                         texture: true,
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        animationShare: @"models/SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -3141,7 +3141,7 @@ namespace MphRead
                     "Switch",
                     new ModelMetadata("Switch",
                         animation: false,
-                        share: @"models\AlimbicTextureShare_img_Model.bin",
+                        share: @"models/AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
                 },
                 {
@@ -3160,7 +3160,7 @@ namespace MphRead
                         animation: true,
                         texture: true,
                         archive: "Sylux",
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        animationShare: @"models/SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -3177,9 +3177,9 @@ namespace MphRead
                             "pal_Team02"
                         },
                         animation: true,
-                        animationPath: $@"_archives\Sylux\Sylux_Anim.bin",
+                        animationPath: $@"_archives/Sylux/Sylux_Anim.bin",
                         texture: true,
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        animationShare: @"models/SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -3229,93 +3229,93 @@ namespace MphRead
                 {
                     "Teleporter",
                     new ModelMetadata("Teleporter",
-                        modelPath: @"models\Teleporter_mdl_Model.bin",
-                        animationPath: @"models\Teleporter_mdl_Anim.bin",
+                        modelPath: @"models/Teleporter_mdl_Model.bin",
+                        animationPath: @"models/Teleporter_mdl_Anim.bin",
                         collisionPath: null,
                         new List<RecolorMetadata>()
                         {
                             new RecolorMetadata("pal_01",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_01_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_01_Model.bin"),
                             new RecolorMetadata("pal_02",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_02_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_02_Model.bin"),
                             new RecolorMetadata("pal_03",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_03_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_03_Model.bin"),
                             new RecolorMetadata("pal_04",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_04_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_04_Model.bin"),
                             new RecolorMetadata("pal_05",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_05_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_05_Model.bin"),
                             new RecolorMetadata("pal_06",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_06_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_06_Model.bin"),
                             new RecolorMetadata("pal_07",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_07_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_07_Model.bin"),
                             new RecolorMetadata("pal_08",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_08_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_08_Model.bin"),
                             new RecolorMetadata("pal_09",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_09_Model.bin")
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_09_Model.bin")
                         })
                 },
                 {
                     "TeleporterSmall",
                     new ModelMetadata("TeleporterSmall",
-                        modelPath: @"models\TeleporterSmall_mdl_Model.bin",
-                        animationPath: @"models\TeleporterSmall_mdl_Anim.bin",
+                        modelPath: @"models/TeleporterSmall_mdl_Model.bin",
+                        animationPath: @"models/TeleporterSmall_mdl_Anim.bin",
                         collisionPath: null,
                         new List<RecolorMetadata>()
                         {
                             new RecolorMetadata("pal_01",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_01_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_01_Model.bin"),
                             new RecolorMetadata("pal_02",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_02_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_02_Model.bin"),
                             new RecolorMetadata("pal_03",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_03_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_03_Model.bin"),
                             new RecolorMetadata("pal_04",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_04_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_04_Model.bin"),
                             new RecolorMetadata("pal_05",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_05_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_05_Model.bin"),
                             new RecolorMetadata("pal_06",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_06_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_06_Model.bin"),
                             new RecolorMetadata("pal_07",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_07_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_07_Model.bin"),
                             new RecolorMetadata("pal_08",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_08_Model.bin"),
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_08_Model.bin"),
                             new RecolorMetadata("pal_09",
-                                modelPath: @"models\TeleporterTextureShare_img_Model.bin",
-                                texturePath: @"models\TeleporterTextureShare_img_Model.bin",
-                                palettePath: @"models\Teleporter_pal_09_Model.bin")
+                                modelPath: @"models/TeleporterTextureShare_img_Model.bin",
+                                texturePath: @"models/TeleporterTextureShare_img_Model.bin",
+                                palettePath: @"models/Teleporter_pal_09_Model.bin")
                         })
                 },
                 {
@@ -3329,7 +3329,7 @@ namespace MphRead
                 {
                     "ThinDoorLock",
                     new ModelMetadata("ThinDoorLock",
-                        share: @"models\AlimbicTextureShare_img_Model.bin",
+                        share: @"models/AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
                 },
                 {
@@ -3348,7 +3348,7 @@ namespace MphRead
                         animation: true,
                         texture: true,
                         archive: "Trace",
-                        animationShare: @"models\NoxSharedAnim_Anim.bin",
+                        animationShare: @"models/NoxSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -3365,9 +3365,9 @@ namespace MphRead
                             "pal_Team02"
                         },
                         animation: true,
-                        animationPath: $@"_archives\Trace\Trace_Anim.bin",
+                        animationPath: $@"_archives/Trace/Trace_Anim.bin",
                         texture: true,
-                        animationShare: @"models\NoxSharedAnim_Anim.bin",
+                        animationShare: @"models/NoxSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -3546,7 +3546,7 @@ namespace MphRead
                         animation: true,
                         texture: true,
                         archive: "Weavel",
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        animationShare: @"models/SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -3563,9 +3563,9 @@ namespace MphRead
                             "pal_Team02"
                         },
                         animation: true,
-                        animationPath: $@"_archives\Weavel\Weavel_Anim.bin",
+                        animationPath: $@"_archives/Weavel/Weavel_Anim.bin",
                         texture: true,
-                        animationShare: @"models\SamusSharedAnim_Anim.bin",
+                        animationShare: @"models/SamusSharedAnim_Anim.bin",
                         useLightSources: true)
                 },
                 {
@@ -3885,7 +3885,7 @@ namespace MphRead
                             "hi_white",
                             "hi_blue"
                         },
-                        animationPath: @"models\samus_Anim.bin",
+                        animationPath: @"models/samus_Anim.bin",
                         remove: "_hi_yellow",
                         firstHunt: true)
                 },
@@ -3899,7 +3899,7 @@ namespace MphRead
                             "hi_white",
                             "hi_blue"
                         },
-                        animationPath: @"models\samus_Anim.bin",
+                        animationPath: @"models/samus_Anim.bin",
                         remove: "_low_yellow",
                         firstHunt: true)
                 },

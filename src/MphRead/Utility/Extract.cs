@@ -125,7 +125,7 @@ namespace MphRead
                 return;
             }
             byte[] bytes = File.ReadAllBytes(Path.Combine("files", rootName, "_bin", data.FontModel.File));
-            File.WriteAllBytes(Path.Combine("files", rootName, @"models\hudfont_Model.bin"),
+            File.WriteAllBytes(Path.Combine("files", rootName, @"models/hudfont_Model.bin"),
                 bytes[data.FontModel.Offset..(data.FontModel.Offset + data.FontModel.Size)]);
         }
 
