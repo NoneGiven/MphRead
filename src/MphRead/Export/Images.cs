@@ -31,10 +31,10 @@ namespace MphRead.Export
             }
             using var image = Image.LoadPixelData<Rgba32>(buffer, width, height);
             image.Mutate(m => RotateFlipExtensions.RotateFlip(m, RotateMode.None, FlipMode.Vertical));
-            string path = Path.Combine(Paths.Export, "_screenshots");
+            string path = Paths.Combine(Paths.Export, "_screenshots");
             Directory.CreateDirectory(path);
             name ??= DateTimeOffset.Now.ToUnixTimeMilliseconds().ToString();
-            image.SaveAsPng(Path.Combine(path, $"{name}.png"), _encoderComp);
+            image.SaveAsPng(Paths.Combine(path, $"{name}.png"), _encoderComp);
         }
 
         public static void Record(int width, int height, string name)
@@ -61,9 +61,9 @@ namespace MphRead.Export
                 while (_queue.TryDequeue(out (Image Image, string Name) result))
                 {
                     result.Image.Mutate(m => RotateFlipExtensions.RotateFlip(m, RotateMode.None, FlipMode.Vertical));
-                    string path = Path.Combine(Paths.Export, "_screenshots");
+                    string path = Paths.Combine(Paths.Export, "_screenshots");
                     Directory.CreateDirectory(path);
-                    await result.Image.SaveAsPngAsync(Path.Combine(path, $"{result.Name}.png"), _encoderUncomp);
+                    await result.Image.SaveAsPngAsync(Paths.Combine(path, $"{result.Name}.png"), _encoderUncomp);
                     result.Image.Dispose();
                 }
                 await Task.Delay(15);
@@ -72,10 +72,10 @@ namespace MphRead.Export
 
         public static void ExportImages(Model model)
         {
-            string exportPath = Path.Combine(Paths.Export, model.Name);
+            string exportPath = Paths.Combine(Paths.Export, model.Name);
             foreach (Recolor recolor in model.Recolors)
             {
-                string colorPath = Path.Combine(exportPath, recolor.Name);
+                string colorPath = Paths.Combine(exportPath, recolor.Name);
                 Directory.CreateDirectory(colorPath);
                 var usedTextures = new HashSet<int>();
                 int id = 0;
@@ -123,7 +123,7 @@ namespace MphRead.Export
                 }
                 if (usedTextures.Count != recolor.Textures.Count)
                 {
-                    string unusedPath = Path.Combine(colorPath, "unused");
+                    string unusedPath = Paths.Combine(colorPath, "unused");
                     Directory.CreateDirectory(unusedPath);
                     for (int t = 0; t < recolor.Textures.Count; t++)
                     {
@@ -151,10 +151,10 @@ namespace MphRead.Export
 
         public static void ExportPalettes(Model model)
         {
-            string exportPath = Path.Combine(Paths.Export, model.Name);
+            string exportPath = Paths.Combine(Paths.Export, model.Name);
             foreach (Recolor recolor in model.Recolors)
             {
-                string palettePath = Path.Combine(exportPath, recolor.Name, "palettes");
+                string palettePath = Paths.Combine(exportPath, recolor.Name, "palettes");
                 Directory.CreateDirectory(palettePath);
                 for (int p = 0; p < recolor.Palettes.Count; p++)
                 {
@@ -167,7 +167,7 @@ namespace MphRead.Export
 
         public static void SaveTexture(string directory, string filename, ushort width, ushort height, IReadOnlyList<ColorRgba> pixels)
         {
-            string imagePath = Path.Combine(directory, $"{filename}.png");
+            string imagePath = Paths.Combine(directory, $"{filename}.png");
             using var image = new Image<Rgba32>(width, height);
             for (int p = 0; p < pixels.Count; p++)
             {

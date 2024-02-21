@@ -29,7 +29,7 @@ namespace MphRead
             }
             else if (arguments.Any(a => a.Name == "setup"))
             {
-                foreach (string path in Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, "archives")))
+                foreach (string path in Directory.EnumerateFiles(Paths.Combine(Paths.FileSystem, "archives")))
                 {
                     Read.ExtractArchive(Path.GetFileNameWithoutExtension(path));
                 }

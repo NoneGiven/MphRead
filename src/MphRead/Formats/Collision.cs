@@ -64,7 +64,7 @@ namespace MphRead.Formats.Collision
             {
                 return new CollisionInstance(name, info, isEntity);
             }
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path)));
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path)));
             CollisionHeader header = Read.ReadStruct<CollisionHeader>(bytes);
             if (header.Type.MarshalString() == "wc01")
             {

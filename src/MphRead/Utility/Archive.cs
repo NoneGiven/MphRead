@@ -122,7 +122,7 @@ namespace MphRead.Archive
                 string filename = file.Filename.MarshalString();
                 int start = (int)file.Offset;
                 int end = start + (int)file.TargetFileSize;
-                string output = Path.Combine(destination!, filename);
+                string output = Paths.Combine(destination!, filename);
                 File.WriteAllBytes(output, bytes[start..end].ToArray());
                 filesWritten++;
             }

@@ -61,7 +61,7 @@ namespace MphRead.Utility
             //    entities.Add(entity);
             //}
             byte[] bytes = meta.FirstHunt ? RepackFhEntities(entities) : RepackEntities(entities);
-            string path = Path.Combine(Paths.Export, "_pack", Path.GetFileName(entityPath));
+            string path = Paths.Combine(Paths.Export, "_pack", Path.GetFileName(entityPath));
             File.WriteAllBytes(path, bytes);
             Nop();
             return bytes;
@@ -79,7 +79,7 @@ namespace MphRead.Utility
                 {
                     IReadOnlyList<EntityEditorBase> entities = GetFhEntities(meta.EntityPath);
                     byte[] bytes = RepackFhEntities(entities);
-                    byte[] fileBytes = File.ReadAllBytes(Path.Combine(Paths.FhFileSystem, meta.EntityPath));
+                    byte[] fileBytes = File.ReadAllBytes(Paths.Combine(Paths.FhFileSystem, meta.EntityPath));
                     CompareFhEntities(bytes, fileBytes);
                     Nop();
                 }
@@ -87,7 +87,7 @@ namespace MphRead.Utility
                 {
                     IReadOnlyList<EntityEditorBase> entities = GetEntities(meta.EntityPath);
                     byte[] bytes = RepackEntities(entities);
-                    byte[] fileBytes = File.ReadAllBytes(Path.Combine(Paths.FileSystem, meta.EntityPath));
+                    byte[] fileBytes = File.ReadAllBytes(Paths.Combine(Paths.FileSystem, meta.EntityPath));
                     CompareEntities(bytes, fileBytes);
                     Nop();
                 }
@@ -1036,13 +1036,13 @@ namespace MphRead.Utility
             string path2;
             if (meta1.FirstHunt)
             {
-                path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, "data", meta1.EntityPath);
-                path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, "data", meta2.EntityPath);
+                path1 = Paths.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, "data", meta1.EntityPath);
+                path2 = Paths.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, "data", meta2.EntityPath);
             }
             else
             {
-                path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.EntityPath);
-                path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.EntityPath);
+                path1 = Paths.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.EntityPath);
+                path2 = Paths.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.EntityPath);
             }
             byte[] bytes1 = File.ReadAllBytes(path1);
             byte[] bytes2 = File.ReadAllBytes(path2);

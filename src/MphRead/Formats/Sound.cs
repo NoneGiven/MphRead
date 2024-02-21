@@ -190,9 +190,9 @@ namespace MphRead.Formats.Sound
             uint headerSize = 0x2C;
             uint waveSize = sampleCount * bps / 8 + headerSize;
             uint decodedSize = sampleCount * (bps / 8);
-            string path = Path.Combine(Paths.Export, "_SFX");
+            string path = Paths.Combine(Paths.Export, "_SFX");
             Directory.CreateDirectory(path);
-            path = Path.Combine(path, $"{name}.wav");
+            path = Paths.Combine(path, $"{name}.wav");
             using FileStream file = File.OpenWrite(path);
             using var writer = new BinaryWriter(file);
             writer.WriteC("RIFF");
@@ -229,7 +229,7 @@ namespace MphRead.Formats.Sound
         // todo: confirm no unused bytes (given the padding)
         private static IReadOnlyList<SoundSample> ReadSoundSamples(string filename)
         {
-            string path = Path.Combine(Paths.FileSystem, "data", "sound", filename);
+            string path = Paths.Combine(Paths.FileSystem, "data", "sound", filename);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint count = Read.SpanReadUint(bytes, 0);
             Debug.Assert(count > 0);
@@ -268,7 +268,7 @@ namespace MphRead.Formats.Sound
 
         private static IReadOnlyList<SoundSelectEntry> ReadSelectList(string filename)
         {
-            string path = Path.Combine(Paths.FileSystem, "data", "sound", filename);
+            string path = Paths.Combine(Paths.FileSystem, "data", "sound", filename);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint count = Read.SpanReadUint(bytes, 0);
             Debug.Assert(count > 0);
@@ -285,7 +285,7 @@ namespace MphRead.Formats.Sound
 
         public static IReadOnlyList<Sound3dEntry> ReadSound3dList()
         {
-            string path = Path.Combine(Paths.FileSystem, "data", "sound", "SND3DLIST.DAT");
+            string path = Paths.Combine(Paths.FileSystem, "data", "sound", "SND3DLIST.DAT");
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint count = Read.SpanReadUint(bytes, 0);
             Debug.Assert(count > 0);
@@ -294,7 +294,7 @@ namespace MphRead.Formats.Sound
 
         public static SoundTable ReadSoundTables()
         {
-            string path = Path.Combine(Paths.FileSystem, "data", "sound", "SNDTBLS.DAT");
+            string path = Paths.Combine(Paths.FileSystem, "data", "sound", "SNDTBLS.DAT");
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint count = Read.SpanReadUint(bytes, 0);
             Debug.Assert(count > 0);
@@ -314,7 +314,7 @@ namespace MphRead.Formats.Sound
 
         public static IReadOnlyList<RoomMusic> ReadAssignMusic()
         {
-            string path = Path.Combine(Paths.FileSystem, "data", "sound", "ASSIGNMUSIC.DAT");
+            string path = Paths.Combine(Paths.FileSystem, "data", "sound", "ASSIGNMUSIC.DAT");
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint count = Read.SpanReadUint(bytes, 0);
             Debug.Assert(count > 0);
@@ -323,7 +323,7 @@ namespace MphRead.Formats.Sound
 
         public static IReadOnlyList<MusicTrack> ReadInterMusicInfo()
         {
-            string path = Path.Combine(Paths.FileSystem, "data", "sound", "INTERMUSICINFO.DAT");
+            string path = Paths.Combine(Paths.FileSystem, "data", "sound", "INTERMUSICINFO.DAT");
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint count = Read.SpanReadUint(bytes, 0);
             Debug.Assert(count > 0);
@@ -338,7 +338,7 @@ namespace MphRead.Formats.Sound
 
         public static IReadOnlyList<SfxScriptFile> ReadSfxScriptFiles()
         {
-            string path = Path.Combine(Paths.FileSystem, "data", "sound", "SFXSCRIPTFILES.DAT");
+            string path = Paths.Combine(Paths.FileSystem, "data", "sound", "SFXSCRIPTFILES.DAT");
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint fileCount = Read.SpanReadUint(bytes, 0);
             Debug.Assert(fileCount > 0);
@@ -359,7 +359,7 @@ namespace MphRead.Formats.Sound
 
         public static IReadOnlyList<DgnFile> ReadDgnFiles()
         {
-            string path = Path.Combine(Paths.FileSystem, "data", "sound", "DGNFILES.DAT");
+            string path = Paths.Combine(Paths.FileSystem, "data", "sound", "DGNFILES.DAT");
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint fileCount = Read.SpanReadUint(bytes, 0);
             Debug.Assert(fileCount > 0);
@@ -409,7 +409,7 @@ namespace MphRead.Formats.Sound
 
         public static SoundData ReadSdat()
         {
-            string path = Path.Combine(Paths.FileSystem, "data", "sound", "sound_data.sdat");
+            string path = Paths.Combine(Paths.FileSystem, "data", "sound", "sound_data.sdat");
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             SdatHeader sdatHeader = Read.ReadStruct<SdatHeader>(bytes);
             Debug.Assert(sdatHeader.Type.MarshalString() == "SDAT");

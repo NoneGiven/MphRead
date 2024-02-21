@@ -175,7 +175,7 @@ namespace MphRead.Export
             sb.AppendIndent();
             sb.AppendLine("cleanup()");
             sb.AppendIndent();
-            string daePath = Path.GetFullPath(Path.Combine(Paths.Export, model.Name, $"{model.Name}_{{suffix}}.dae"));
+            string daePath = Path.GetFullPath(Paths.Combine(Paths.Export, model.Name, $"{model.Name}_{{suffix}}.dae"));
             sb.AppendLine("bpy.ops.wm.collada_import(filepath =");
             sb.AppendIndent();
             sb.AppendIndent();
