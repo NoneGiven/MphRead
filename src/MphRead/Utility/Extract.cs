@@ -66,11 +66,11 @@ namespace MphRead
             string newPath;
             if (isFh)
             {
-                newPath = Path.GetFullPath(Path.Combine("files", rootName, "data"));
+                newPath = Path.GetFullPath(Paths.Combine("files", rootName, "data"));
             }
             else
             {
-                newPath = Path.GetFullPath(Path.Combine("files", rootName));
+                newPath = Path.GetFullPath(Paths.Combine("files", rootName));
             }
             Paths.SetPath(rootName, newPath);
             var lines = new List<string>();
@@ -124,8 +124,8 @@ namespace MphRead
             {
                 return;
             }
-            byte[] bytes = File.ReadAllBytes(Path.Combine("files", rootName, "_bin", data.FontModel.File));
-            File.WriteAllBytes(Path.Combine("files", rootName, @"models\hudfont_Model.bin"),
+            byte[] bytes = File.ReadAllBytes(Paths.Combine("files", rootName, "_bin", data.FontModel.File));
+            File.WriteAllBytes(Paths.Combine("files", rootName, @"models\hudfont_Model.bin"),
                 bytes[data.FontModel.Offset..(data.FontModel.Offset + data.FontModel.Size)]);
         }
 
@@ -181,19 +181,19 @@ namespace MphRead
                 {
                     (int start, int end) = fileOffsets[(int)file.Index];
                     Debug.Assert(start > 0 && end > start);
-                    File.WriteAllBytes(Path.Combine(path, file.Name), bytes[start..end]);
+                    File.WriteAllBytes(Paths.Combine(path, file.Name), bytes[start..end]);
                 }
                 foreach (DirInfo subdir in dir.Subdirectories)
                 {
-                    WriteFiles(subdir, Path.Combine(path, subdir.Name));
+                    WriteFiles(subdir, Paths.Combine(path, subdir.Name));
                 }
             }
             var root = new DirInfo(rootName, index: 0);
             PopulateDir(root);
-            WriteFiles(root, Path.Combine("files", root.Name));
+            WriteFiles(root, Paths.Combine("files", root.Name));
             if (hasArchives)
             {
-                foreach (string path in Directory.EnumerateFiles(Path.Combine("files", root.Name, "archives")))
+                foreach (string path in Directory.EnumerateFiles(Paths.Combine("files", root.Name, "archives")))
                 {
                     if (Path.GetExtension(path).ToLower() == ".arc")
                     {
@@ -201,12 +201,12 @@ namespace MphRead
                     }
                 }
             }
-            string ftcDir = Path.Combine("files", root.Name, "ftc");
+            string ftcDir = Paths.Combine("files", root.Name, "ftc");
             Directory.CreateDirectory(ftcDir);
             byte[] WriteFile(string name, int offset, int size)
             {
                 byte[] fileBytes = bytes[offset..(offset + size)];
-                File.WriteAllBytes(Path.Combine(ftcDir, name), fileBytes);
+                File.WriteAllBytes(Paths.Combine(ftcDir, name), fileBytes);
                 return fileBytes;
             }
             WriteFile("arm9.bin", header.ARM9Offset, header.ARM9Size);
@@ -229,9 +229,9 @@ namespace MphRead
                 int fileId = items[6];
                 (int overlayStart, int overlayEnd) = fileOffsets[fileId];
                 Debug.Assert(overlayStart > 0 && overlayEnd > overlayStart);
-                File.WriteAllBytes(Path.Combine(ftcDir, $"overlay9_{overlayId}"), bytes[overlayStart..overlayEnd]);
+                File.WriteAllBytes(Paths.Combine(ftcDir, $"overlay9_{overlayId}"), bytes[overlayStart..overlayEnd]);
             }
-            string ftcDest = Path.Combine("files", root.Name, "_bin");
+            string ftcDest = Paths.Combine("files", root.Name, "_bin");
             Directory.CreateDirectory(ftcDest);
             foreach (string path in Directory.EnumerateFiles(ftcDir))
             {
@@ -239,7 +239,7 @@ namespace MphRead
                 if (filename == "arm9.bin" || filename.StartsWith("overlay9_"))
                 {
                     Console.WriteLine($"Decompressing {filename}...");
-                    LZBackward.Decompress(path, Path.Combine(ftcDest, filename));
+                    LZBackward.Decompress(path, Paths.Combine(ftcDest, filename));
                 }
             }
             Nop();
@@ -335,7 +335,7 @@ namespace MphRead
                 return;
             }
             // arm9.bin
-            byte[] bytes = File.ReadAllBytes(Path.Combine(Paths.FileSystem, "_bin", data.FontWidths.File));
+            byte[] bytes = File.ReadAllBytes(Paths.Combine(Paths.FileSystem, "_bin", data.FontWidths.File));
             byte[] widths = bytes[data.FontWidths.Offset..(data.FontWidths.Offset + data.FontWidths.Size)];
             byte[] offsets = bytes[data.FontOffsets.Offset..(data.FontOffsets.Offset + data.FontOffsets.Size)];
             byte[] chars = bytes[data.FontCharData.Offset..(data.FontCharData.Offset + data.FontCharData.Size)];
@@ -343,7 +343,7 @@ namespace MphRead
             byte[] enemyDeathSfx = bytes[data.EnemyDeathSfx.Offset..(data.EnemyDeathSfx.Offset + data.EnemyDeathSfx.Size)];
             Text.Font.SetData(widths, offsets, chars);
             // overlay9_2
-            bytes = File.ReadAllBytes(Path.Combine(Paths.FileSystem, "_bin", data.BeamSfx.File));
+            bytes = File.ReadAllBytes(Paths.Combine(Paths.FileSystem, "_bin", data.BeamSfx.File));
             byte[] terrainSfx = bytes[data.TerrianSfx.Offset..(data.TerrianSfx.Offset + data.TerrianSfx.Size)];
             byte[] beamSfx = bytes[data.BeamSfx.Offset..(data.BeamSfx.Offset + data.BeamSfx.Size)];
             byte[] hunterSfx = bytes[data.HunterSfx.Offset..(data.HunterSfx.Offset + data.HunterSfx.Size)];
@@ -353,7 +353,7 @@ namespace MphRead
             Metadata.SetEnemyDamageSfxData(enemyDamageSfx);
             Metadata.SetEnemyDeathSfxData(enemyDeathSfx);
             // overlay9_15 (or overlay9_12 for A76E0)
-            bytes = File.ReadAllBytes(Path.Combine(Paths.FileSystem, "_bin", data.PlatformSfx.File));
+            bytes = File.ReadAllBytes(Paths.Combine(Paths.FileSystem, "_bin", data.PlatformSfx.File));
             byte[] platformSfx = bytes[data.PlatformSfx.Offset..(data.PlatformSfx.Offset + data.PlatformSfx.Size)];
             Metadata.SetPlatformSfxData(platformSfx);
         }

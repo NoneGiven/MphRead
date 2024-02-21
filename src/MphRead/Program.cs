@@ -8,7 +8,7 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 23, 0, 0);
+        public static Version Version { get; } = new Version(0, 23, 1, 0);
         private static readonly Version _minExtractVersion = new Version(0, 19, 0, 0);
 
         private static void Main(string[] args)
@@ -29,7 +29,7 @@ namespace MphRead
             }
             else if (arguments.Any(a => a.Name == "setup"))
             {
-                foreach (string path in Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, "archives")))
+                foreach (string path in Directory.EnumerateFiles(Paths.Combine(Paths.FileSystem, "archives")))
                 {
                     Read.ExtractArchive(Path.GetFileNameWithoutExtension(path));
                 }

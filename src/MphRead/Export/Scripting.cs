@@ -175,7 +175,7 @@ namespace MphRead.Export
             sb.AppendIndent();
             sb.AppendLine("cleanup()");
             sb.AppendIndent();
-            string daePath = Path.GetFullPath(Path.Combine(Paths.Export, model.Name, $"{model.Name}_{{suffix}}.dae"));
+            string daePath = Path.GetFullPath(Paths.Combine(Paths.Export, model.Name, $"{model.Name}_{{suffix}}.dae"));
             sb.AppendLine("bpy.ops.wm.collada_import(filepath =");
             sb.AppendIndent();
             sb.AppendIndent();
@@ -391,7 +391,7 @@ bpy.ops.object.parent_set(type='ARMATURE_NAME')");
 
         public static void AppendIndent(this StringBuilder sb, string text, int indent = 1)
         {
-            foreach (string part in text.Trim().Split("\r\n"))
+            foreach (string part in text.Trim().Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'))
             {
                 for (int i = 0; i < indent; i++)
                 {

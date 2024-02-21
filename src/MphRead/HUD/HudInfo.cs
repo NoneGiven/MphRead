@@ -392,14 +392,14 @@ namespace MphRead.Hud
         public static (int, IReadOnlyList<ushort>) CharMapToTexture(string path, Scene scene,
             IReadOnlyList<ushort>? paletteOverride = null, int paletteId = -1)
         {
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(Paths.FileSystem, path)));
             return CharMapToTexture(bytes, startX: 0, startY: 0, tilesX: 0, tilesY: 0, scene, paletteOverride, paletteId);
         }
 
         public static (int, IReadOnlyList<ushort>) CharMapToTexture(string path, int startX, int startY,
             int tilesX, int tilesY, Scene scene, IReadOnlyList<ushort>? paletteOverride = null, int paletteId = -1)
         {
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(Paths.FileSystem, path)));
             return CharMapToTexture(bytes, startX, startY, tilesX, tilesY, scene, paletteOverride, paletteId);
         }
 
@@ -691,7 +691,7 @@ namespace MphRead.Hud
 
         public static HudObject GetHudObject(string file)
         {
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, file)));
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(Paths.FileSystem, file)));
             UiObjectHeader header = Read.ReadStruct<UiObjectHeader>(bytes);
             int offset = _objHeaderSize;
             Debug.Assert(header.ParamDataSize % _animParamSize == 0);
@@ -974,7 +974,7 @@ namespace MphRead.Hud
             }
             foreach (string file in files)
             {
-                var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, file)));
+                var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(Paths.FileSystem, file)));
                 UiObjectHeader header = Read.ReadStruct<UiObjectHeader>(bytes);
                 int offset = _objHeaderSize;
                 Debug.Assert(header.ParamDataSize % _animParamSize == 0);
@@ -1043,7 +1043,7 @@ namespace MphRead.Hud
                 //{
                 //    List<ColorRgba> character = characters[i];
                 //    string filename = $"{i.ToString().PadLeft(3, '0')}";
-                //    Export.Images.SaveTexture(Path.Combine(Paths.Export, "_ice"), filename, 8, 8, character);
+                //    Export.Images.SaveTexture(Paths.Combine(Paths.Export, "_ice"), filename, 8, 8, character);
                 //}
                 UiOamAttrs attrs = oamAttrs[0];
                 Debug.Assert(attrs.CharacterId == 0);
@@ -1094,7 +1094,7 @@ namespace MphRead.Hud
                             }
                         }
                         string dir = file.Replace("_archives/", "").Replace(".bin", "");
-                        dir = Path.Combine(Paths.Export, "_2D/Objects", dir, $"pal_{p.ToString().PadLeft(2, '0')}");
+                        dir = Paths.Combine(Paths.Export, "_2D/Objects", dir, $"pal_{p.ToString().PadLeft(2, '0')}");
                         //Directory.CreateDirectory(dir);
                         string name = i.ToString().PadLeft(3, '0');
                         //Export.Images.SaveTexture(dir, name, texWidth, texHeight, texture);
@@ -1185,7 +1185,7 @@ namespace MphRead.Hud
             };
             foreach (string file in files)
             {
-                var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, file)));
+                var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(Paths.FileSystem, file)));
                 UiPartHeader header = Read.ReadStruct<UiPartHeader>(bytes);
                 Debug.Assert(header.Magic == 0);
                 int offset = _layerHeaderSize;
@@ -1292,13 +1292,13 @@ namespace MphRead.Hud
                     }
                 }
                 string name = file.Replace("/", "--");
-                //Export.Images.SaveTexture(Path.Combine(Paths.Export, @"_2D\layertest"), name, width, height, texture);
+                //Export.Images.SaveTexture(Paths.Combine(Paths.Export, @"_2D\layertest"), name, width, height, texture);
 
                 for (int i = 0; i < characters.Count; i++)
                 {
                     List<ColorRgba> character = characters[i];
                     string filename = $"{i.ToString().PadLeft(3, '0')}";
-                    //Export.Images.SaveTexture(Path.Combine(Paths.Export, "_ice"), filename, 8, 8, character);
+                    //Export.Images.SaveTexture(Paths.Combine(Paths.Export, "_ice"), filename, 8, 8, character);
                 }
 
                 offset += info.ScrDataSize;

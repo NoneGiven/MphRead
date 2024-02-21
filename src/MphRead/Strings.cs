@@ -19,7 +19,7 @@ namespace MphRead.Text
                 return table;
             }
             var entries = new List<StringTableEntry>();
-            string path = Path.Combine(Paths.FileSystem, GetFolder(language), name);
+            string path = Paths.Combine(Paths.FileSystem, GetFolder(language), name);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint count = Read.SpanReadUint(bytes, 0);
             // ScanLog has an 8-byte header and 8 bytes between the last entry and first string,
@@ -217,7 +217,7 @@ namespace MphRead.Text
             }
             string prefix = downloadPlay ? "single_" : "";
             string name = $"{prefix}metroidhunters_text_{suffix}.bin";
-            string path = Path.Combine(Paths.FileSystem, "frontend", name);
+            string path = Paths.Combine(Paths.FileSystem, "frontend", name);
             if (suffix == "en-gb")
             {
                 path = path.Replace("amhe0", "amhp1");

@@ -42,7 +42,7 @@ namespace MphRead.Export
 
         public static void ExportModel(Model model, bool transformRoom = false)
         {
-            string exportPath = Path.Combine(Paths.Export, model.Name);
+            string exportPath = Paths.Combine(Paths.Export, model.Name);
             Directory.CreateDirectory(exportPath);
             var lists = new List<Dictionary<string, IReadOnlyList<Vertex>>>();
             for (int i = 0; i < model.Recolors.Count; i++)
@@ -69,7 +69,7 @@ namespace MphRead.Export
                     }
                 }
             }
-            File.WriteAllText(Path.Combine(exportPath, $"import_{model.Name}.py"), Scripting.GenerateScript(model, lists.First()));
+            File.WriteAllText(Paths.Combine(exportPath, $"import_{model.Name}.py"), Scripting.GenerateScript(model, lists.First()));
         }
 
         private static Dictionary<string, IReadOnlyList<Vertex>> ExportRecolor(Model model, bool transformRoom, int recolorIndex)
@@ -526,8 +526,8 @@ namespace MphRead.Export
             // end
             sb.Append("\n</COLLADA>");
 
-            string exportPath = Path.Combine(Paths.Export, model.Name);
-            File.WriteAllText(Path.Combine(exportPath, $"{model.Name}_{recolor.Name}.dae"), sb.ToString());
+            string exportPath = Paths.Combine(Paths.Export, model.Name);
+            File.WriteAllText(Paths.Combine(exportPath, $"{model.Name}_{recolor.Name}.dae"), sb.ToString());
             return results;
         }
 
