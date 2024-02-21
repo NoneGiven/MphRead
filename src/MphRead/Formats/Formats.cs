@@ -1514,6 +1514,43 @@ namespace MphRead
             }
             FhKey = "AMFE0";
         }
+
+        private static string Replace(string path)
+        {
+            if (Path.DirectorySeparatorChar == '\\')
+            {
+                return path.Replace('/', '\\');
+            }
+            if (Path.DirectorySeparatorChar == '/')
+            {
+                return path.Replace('\\', '/');
+            }
+            return path;
+        }
+
+        public static string Combine(string path1, string path2)
+        {
+            return Path.Combine(Replace(path1), Replace(path2));
+        }
+
+        public static string Combine(string path1, string path2, string path3)
+        {
+            return Path.Combine(Replace(path1), Replace(path2), Replace(path3));
+        }
+
+        public static string Combine(string path1, string path2, string path3, string path4)
+        {
+            return Path.Combine(Replace(path1), Replace(path2), Replace(path3), Replace(path4));
+        }
+
+        public static string Combine(params string[] paths)
+        {
+            for (int i = 0; i < paths.Length; i++)
+            {
+                paths[i] = Replace(paths[i]);
+            }
+            return Path.Combine(paths);
+        }
     }
 
     public static class CollectionExtensions

@@ -165,11 +165,11 @@ namespace MphRead.Utility
             }
             bool fhPad = animPath.EndsWith("testlevel_Anim.bin");
             byte[] bytes = PackAnim(node, mat, uv, tex, fhPad);
-            byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, animPath));
+            byte[] fileBytes = File.ReadAllBytes(Paths.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, animPath));
             CompareAnims(model.Name, bytes, fileBytes);
             if (writeFile)
             {
-                File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}_Anim.bin"), bytes);
+                File.WriteAllBytes(Paths.Combine(Paths.Export, "_pack", $"out_{model.Name}_Anim.bin"), bytes);
             }
             Nop();
         }
@@ -196,24 +196,24 @@ namespace MphRead.Utility
             Debug.Assert(model.Scale.X == (int)model.Scale.X);
             (byte[] bytes, byte[] tex) = PackModel((int)model.Scale.X, model.NodeMatrixIds, model.NodePosCounts, model.Materials,
                 textureInfo, paletteInfo, model.Nodes, model.Meshes, model.RenderInstructionLists, model.DisplayLists, options);
-            byte[] fileBytes = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, modelPath));
+            byte[] fileBytes = File.ReadAllBytes(Paths.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, modelPath));
             if (options.Compare)
             {
                 CompareModels(model.Name, bytes, fileBytes, options);
                 if (options.Texture == RepackTexture.Separate)
                 {
                     Debug.Assert(texPath != null);
-                    byte[] texFile = File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, texPath));
+                    byte[] texFile = File.ReadAllBytes(Paths.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, texPath));
                     Debug.Assert(tex.Length == texFile.Length);
                     Debug.Assert(Enumerable.SequenceEqual(tex, texFile));
                 }
             }
             if (options.WriteFile)
             {
-                File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}_{model.Recolors[recolor].Name}.bin"), bytes);
+                File.WriteAllBytes(Paths.Combine(Paths.Export, "_pack", $"out_{model.Name}_{model.Recolors[recolor].Name}.bin"), bytes);
                 if (options.Texture == RepackTexture.Separate)
                 {
-                    File.WriteAllBytes(Path.Combine(Paths.Export, "_pack", $"out_{model.Name}_Tex.bin"), tex);
+                    File.WriteAllBytes(Paths.Combine(Paths.Export, "_pack", $"out_{model.Name}_Tex.bin"), tex);
                 }
             }
             Nop();
@@ -223,8 +223,8 @@ namespace MphRead.Utility
         {
             ModelMetadata meta1 = Metadata.ModelMetadata[model1];
             ModelMetadata meta2 = Metadata.ModelMetadata[model2];
-            string path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.ModelPath);
-            string path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.ModelPath);
+            string path1 = Paths.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.ModelPath);
+            string path2 = Paths.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.ModelPath);
             CompareModels(model1, File.ReadAllBytes(path1), File.ReadAllBytes(path2), new RepackOptions()
             {
                 Texture = RepackTexture.Separate
@@ -238,8 +238,8 @@ namespace MphRead.Utility
             ModelMetadata meta2 = Metadata.ModelMetadata[model2];
             if (meta1.AnimationPath != null && meta2.AnimationPath != null)
             {
-                string path1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.AnimationPath);
-                string path2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.AnimationPath);
+                string path1 = Paths.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1, meta1.AnimationPath);
+                string path2 = Paths.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2, meta2.AnimationPath);
                 CompareAnims(model1, File.ReadAllBytes(path1), File.ReadAllBytes(path2));
             }
             Nop();

@@ -518,7 +518,7 @@ namespace MphRead.Formats
 
         public static CameraSequence Load(string name, Scene scene, int id = -1)
         {
-            string path = Path.Combine(Paths.FileSystem, "cameraEditor", name);
+            string path = Paths.Combine(Paths.FileSystem, "cameraEditor", name);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             CameraSequenceHeader header = Read.ReadStruct<CameraSequenceHeader>(bytes);
             Debug.Assert(header.Padding3 == 0);

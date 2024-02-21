@@ -25,8 +25,8 @@ namespace MphRead
         public static void TestModelFiles()
         {
             var paths = new List<string>();
-            paths.AddRange(Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, "models")).Where(f => f.EndsWith("odel.bin")));
-            paths.AddRange(Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, "_archives"), "", SearchOption.AllDirectories)
+            paths.AddRange(Directory.EnumerateFiles(Paths.Combine(Paths.FileSystem, "models")).Where(f => f.EndsWith("odel.bin")));
+            paths.AddRange(Directory.EnumerateFiles(Paths.Combine(Paths.FileSystem, "_archives"), "", SearchOption.AllDirectories)
                 .Where(f => f.EndsWith("odel.bin")));
             var headers = new Dictionary<string, Header>();
             foreach (string path in paths)
@@ -288,7 +288,7 @@ namespace MphRead
 
         private static void WriteAllModels()
         {
-            string modelPath = Path.Combine(Paths.FileSystem, "models");
+            string modelPath = Paths.Combine(Paths.FileSystem, "models");
             var modelFiles = new List<string>();
             var textureFiles = new List<string>();
             var animationFiles = new List<string>();

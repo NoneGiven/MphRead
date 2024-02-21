@@ -132,8 +132,8 @@ namespace MphRead.Utility
                 List<CollisionDataEditor> editors = GetEditors(collision);
                 byte[] bytes = RepackMphCollision(editors, collision.Info.Portals);
                 //byte[] bytes = RepackMphCollisionSimple(info);
-                //byte[] file = File.ReadAllBytes(Path.Combine(Paths.FileSystem, path));
-                string outPath = Path.Combine(Paths.Export, "_pack", $"out_{Path.GetFileName(path)}");
+                //byte[] file = File.ReadAllBytes(Paths.Combine(Paths.FileSystem, path));
+                string outPath = Paths.Combine(Paths.Export, "_pack", $"out_{Path.GetFileName(path)}");
                 File.WriteAllBytes(outPath, bytes);
                 //CompareCollision(info, bytes, file);
             }

@@ -9,8 +9,8 @@ namespace MphRead.Testing
     {
         public static void CompareGames(string game1, string game2)
         {
-            string root1 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1);
-            string root2 = Path.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2);
+            string root1 = Paths.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game1);
+            string root2 = Paths.Combine(Path.GetDirectoryName(Paths.FileSystem) ?? "", game2);
             var dirs1 = Directory.EnumerateDirectories(root1, "", SearchOption.AllDirectories)
                 .Select(d => d.Replace(root1, "")).ToList();
             var dirs2 = Directory.EnumerateDirectories(root2, "", SearchOption.AllDirectories)
@@ -20,7 +20,7 @@ namespace MphRead.Testing
             foreach (string dir in dirs1)
             {
                 files1.Add(dir, new List<string>());
-                foreach (string file in Directory.EnumerateFiles(Path.Combine(root1, dir)))
+                foreach (string file in Directory.EnumerateFiles(Paths.Combine(root1, dir)))
                 {
                     files1[dir].Add(Path.GetFileName(file));
                 }
@@ -28,7 +28,7 @@ namespace MphRead.Testing
             foreach (string dir in dirs2)
             {
                 files2.Add(dir, new List<string>());
-                foreach (string file in Directory.EnumerateFiles(Path.Combine(root2, dir)))
+                foreach (string file in Directory.EnumerateFiles(Paths.Combine(root2, dir)))
                 {
                     files2[dir].Add(Path.GetFileName(file));
                 }
@@ -87,8 +87,8 @@ namespace MphRead.Testing
                 var changes = new List<string>();
                 foreach (string file in files1[dir].Where(d => files2[dir].Contains(d)))
                 {
-                    byte[] bytes1 = File.ReadAllBytes(Path.Combine(root1, dir, file));
-                    byte[] bytes2 = File.ReadAllBytes(Path.Combine(root2, dir, file));
+                    byte[] bytes1 = File.ReadAllBytes(Paths.Combine(root1, dir, file));
+                    byte[] bytes2 = File.ReadAllBytes(Paths.Combine(root2, dir, file));
                     if (!Enumerable.SequenceEqual(bytes1, bytes2))
                     {
                         changes.Add(file);

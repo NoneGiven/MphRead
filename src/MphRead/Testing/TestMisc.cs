@@ -57,7 +57,7 @@ namespace MphRead.Testing
 
         public static void TestCameraSequenceFiles()
         {
-            foreach (string filePath in Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, "cameraEditor")))
+            foreach (string filePath in Directory.EnumerateFiles(Paths.Combine(Paths.FileSystem, "cameraEditor")))
             {
                 string name = Path.GetFileName(filePath);
                 if (name != "cameraEditBG.bin")
@@ -138,25 +138,25 @@ namespace MphRead.Testing
                 overMeta = Metadata.RoomMetadata[over];
             }
             Debug.Assert(meta.EntityPath != null && meta.NodePath != null);
-            string folder = Path.Combine(Paths.Export, "_pack");
+            string folder = Paths.Combine(Paths.Export, "_pack");
             string fileSystem = meta.FirstHunt ? Paths.FhFileSystem : Paths.FileSystem;
             Console.WriteLine("Converting model...");
             // model, texure
             (byte[] model, byte[] texture) = Repack.RepackRoomModel(room, separateTextures: true);
             string modelPath = Path.GetFileName(overMeta?.ModelPath ?? meta.ModelPath);
-            string modelDest = Path.Combine(folder, modelPath);
-            string texDest = Path.Combine(folder, modelPath.Replace("_Model.bin", "_Tex.bin").Replace("_model.bin", "_tex.bin"));
+            string modelDest = Paths.Combine(folder, modelPath);
+            string texDest = Paths.Combine(folder, modelPath.Replace("_Model.bin", "_Tex.bin").Replace("_model.bin", "_tex.bin"));
             File.WriteAllBytes(modelDest, model);
             File.WriteAllBytes(texDest, texture);
             Console.WriteLine("Converting collision...");
             // collision
             byte[] collision = RepackCollision.RepackMphRoom(room);
-            string colDest = Path.Combine(folder, Path.GetFileName(overMeta?.CollisionPath ?? meta.CollisionPath));
+            string colDest = Paths.Combine(folder, Path.GetFileName(overMeta?.CollisionPath ?? meta.CollisionPath));
             File.WriteAllBytes(colDest, collision);
             Console.WriteLine("Converting animation...");
             // animation
-            string animSrc = Path.Combine(fileSystem, meta.AnimationPath);
-            string animDest = Path.Combine(folder, Path.GetFileName(overMeta?.AnimationPath ?? meta.AnimationPath));
+            string animSrc = Paths.Combine(fileSystem, meta.AnimationPath);
+            string animDest = Paths.Combine(folder, Path.GetFileName(overMeta?.AnimationPath ?? meta.AnimationPath));
             File.Delete(animDest);
             File.Copy(animSrc, animDest);
             //entity, nodedata
@@ -164,15 +164,15 @@ namespace MphRead.Testing
             {
                 Console.WriteLine("Copying entities...");
                 Console.WriteLine("Copying nodedata...");
-                string entSrc = Path.Combine(fileSystem, meta.EntityPath);
-                string nodeSrc = Path.Combine(fileSystem, meta.NodePath);
-                string entDest = Path.Combine(folder, meta.EntityPath);
-                string nodeDest = Path.Combine(folder, meta.NodePath);
+                string entSrc = Paths.Combine(fileSystem, meta.EntityPath);
+                string nodeSrc = Paths.Combine(fileSystem, meta.NodePath);
+                string entDest = Paths.Combine(folder, meta.EntityPath);
+                string nodeDest = Paths.Combine(folder, meta.NodePath);
                 if (overMeta != null)
                 {
                     Debug.Assert(overMeta.EntityPath != null && overMeta.NodePath != null);
-                    entDest = Path.Combine(folder, overMeta.EntityPath);
-                    nodeDest = Path.Combine(folder, overMeta.NodePath);
+                    entDest = Paths.Combine(folder, overMeta.EntityPath);
+                    nodeDest = Paths.Combine(folder, overMeta.NodePath);
                 }
                 File.Delete(entDest);
                 File.Delete(nodeDest);
@@ -183,7 +183,7 @@ namespace MphRead.Testing
             {
                 Console.WriteLine("Converting entities...");
                 byte[] entity = Repack.RepackMphEntities(room);
-                string entDest = Path.Combine(folder, Path.GetFileName(overMeta?.EntityPath ?? meta.EntityPath));
+                string entDest = Paths.Combine(folder, Path.GetFileName(overMeta?.EntityPath ?? meta.EntityPath));
                 File.WriteAllBytes(entDest, entity);
                 // todo: nodedata
             }
@@ -195,7 +195,7 @@ namespace MphRead.Testing
                 colDest,
                 modelDest
             };
-            string outPath = Path.Combine(folder, "out.arc");
+            string outPath = Paths.Combine(folder, "out.arc");
             Archive.Archiver.Archive(outPath, files);
             string archiveName = overMeta?.Archive ?? meta.Archive;
             Console.WriteLine(" Compressing...");
@@ -214,7 +214,7 @@ namespace MphRead.Testing
                 overMeta = Metadata.RoomMetadata[over];
             }
             Debug.Assert(meta.EntityPath != null && meta.NodePath != null);
-            string folder = Path.Combine(Paths.Export, "_pack");
+            string folder = Paths.Combine(Paths.Export, "_pack");
             string fileSystem = meta.FirstHunt ? Paths.FhFileSystem : Paths.FileSystem;
             RepackFilter filter = RepackFilter.All;
             if (!meta.FirstHunt && !meta.Hybrid)
@@ -225,17 +225,17 @@ namespace MphRead.Testing
             // model, texure
             (byte[] model, _) = Repack.RepackRoomModel(room, separateTextures: false, filter);
             string modelPath = Path.GetFileName(overMeta?.ModelPath ?? meta.ModelPath);
-            string modelDest = Path.Combine(folder, modelPath);
+            string modelDest = Paths.Combine(folder, modelPath);
             File.WriteAllBytes(modelDest, model);
             Console.WriteLine("Converting collision...");
             // collision
             byte[] collision = RepackCollision.RepackFhRoom(room, filter);
-            string colDest = Path.Combine(folder, Path.GetFileName(overMeta?.CollisionPath ?? meta.CollisionPath));
+            string colDest = Paths.Combine(folder, Path.GetFileName(overMeta?.CollisionPath ?? meta.CollisionPath));
             File.WriteAllBytes(colDest, collision);
             Console.WriteLine("Converting animation...");
             // animation
-            string animSrc = Path.Combine(fileSystem, meta.AnimationPath);
-            string animDest = Path.Combine(folder, Path.GetFileName(overMeta?.AnimationPath ?? meta.AnimationPath));
+            string animSrc = Paths.Combine(fileSystem, meta.AnimationPath);
+            string animDest = Paths.Combine(folder, Path.GetFileName(overMeta?.AnimationPath ?? meta.AnimationPath));
             File.Delete(animDest);
             File.Copy(animSrc, animDest);
             //entity, nodedata
@@ -243,15 +243,15 @@ namespace MphRead.Testing
             {
                 Console.WriteLine("Copying entities...");
                 Console.WriteLine("Copying nodedata...");
-                string entSrc = Path.Combine(fileSystem, meta.EntityPath);
-                string nodeSrc = Path.Combine(fileSystem, meta.NodePath);
-                string entDest = Path.Combine(folder, meta.EntityPath);
-                string nodeDest = Path.Combine(folder, meta.NodePath);
+                string entSrc = Paths.Combine(fileSystem, meta.EntityPath);
+                string nodeSrc = Paths.Combine(fileSystem, meta.NodePath);
+                string entDest = Paths.Combine(folder, meta.EntityPath);
+                string nodeDest = Paths.Combine(folder, meta.NodePath);
                 if (overMeta != null)
                 {
                     Debug.Assert(overMeta.EntityPath != null && overMeta.NodePath != null);
-                    entDest = Path.Combine(folder, overMeta.EntityPath);
-                    nodeDest = Path.Combine(folder, overMeta.NodePath);
+                    entDest = Paths.Combine(folder, overMeta.EntityPath);
+                    nodeDest = Paths.Combine(folder, overMeta.NodePath);
                 }
                 File.Delete(entDest);
                 File.Delete(nodeDest);
@@ -262,7 +262,7 @@ namespace MphRead.Testing
             {
                 Console.WriteLine("Converting entities...");
                 byte[] entity = Repack.RepackFhEntities(room, filter);
-                string entDest = Path.Combine(folder, Path.GetFileName(overMeta?.EntityPath ?? meta.EntityPath));
+                string entDest = Paths.Combine(folder, Path.GetFileName(overMeta?.EntityPath ?? meta.EntityPath));
                 File.WriteAllBytes(entDest, entity);
                 // todo: nodedata
             }

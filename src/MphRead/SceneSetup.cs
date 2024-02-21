@@ -90,7 +90,7 @@ namespace MphRead
             NodeData? nodeData = null;
             if (metadata.NodePath != null)
             {
-                nodeData = ReadNodeData.ReadData(Path.Combine(@"", metadata.NodePath));
+                nodeData = ReadNodeData.ReadData(Paths.Combine(@"", metadata.NodePath));
             }
             room.Setup(metadata.Name, metadata, collision, nodeData, nodeLayerMask, metadata.Id);
             IReadOnlyList<EntityBase> entities = LoadEntities(metadata, entityLayerId, scene);

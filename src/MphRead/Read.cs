@@ -128,7 +128,7 @@ namespace MphRead
             IReadOnlyList<RecolorMetadata> recolorMeta, bool firstHunt)
         {
             string root = firstHunt ? Paths.FhFileSystem : Paths.FileSystem;
-            string path = Path.Combine(root, modelPath);
+            string path = Paths.Combine(root, modelPath);
             ReadOnlySpan<byte> initialBytes = ReadBytes(path, firstHunt);
             Header header = ReadStruct<Header>(initialBytes[0..Sizes.Header]);
             IReadOnlyList<RawNode> nodes = DoOffsets<RawNode>(initialBytes, header.NodeOffset, header.NodeCount);
@@ -145,7 +145,7 @@ namespace MphRead
             {
                 ReadOnlySpan<byte> modelBytes = initialBytes;
                 Header modelHeader = header;
-                if (Path.Combine(root, meta.ModelPath) != path)
+                if (Paths.Combine(root, meta.ModelPath) != path)
                 {
                     modelBytes = ReadBytes(meta.ModelPath, firstHunt);
                     modelHeader = ReadStruct<Header>(modelBytes[0..Sizes.Header]);
@@ -389,7 +389,7 @@ namespace MphRead
             {
                 return results;
             }
-            path = Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path);
+            path = Paths.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             AnimationHeader header = ReadStruct<AnimationHeader>(bytes);
             IReadOnlyList<uint> nodeGroupOffsets = DoOffsets<uint>(bytes, header.NodeGroupOffset, header.Count);
@@ -554,7 +554,7 @@ namespace MphRead
 
         private static ReadOnlySpan<byte> ReadBytes(string path, bool firstHunt)
         {
-            return new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path)));
+            return new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path)));
         }
 
         private static IReadOnlyList<TextureData> GetTextureData(Texture texture, ReadOnlySpan<byte> textureBytes)
@@ -651,13 +651,13 @@ namespace MphRead
 
         public static IReadOnlyList<Entity> GetEntities(string path, int layerId, bool firstHunt)
         {
-            path = Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path);
+            path = Paths.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path);
             return GetEntitiesFromPath(path, layerId, firstHunt);
         }
 
         public static IReadOnlyList<Entity> GetEntitiesFromPath(string path, int layerId, bool firstHunt)
         {
-            path = Path.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path);
+            path = Paths.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path);
             ReadOnlySpan<byte> bytes = ReadBytes(path, firstHunt);
             uint version = BitConverter.ToUInt32(bytes[0..4]);
             if (version == 1)
@@ -825,7 +825,7 @@ namespace MphRead
             {
                 return cached;
             }
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(Paths.FileSystem, path)));
             RawEffect effect = ReadStruct<RawEffect>(bytes);
             var funcs = new Dictionary<uint, FxFuncInfo>();
             foreach (uint offset in DoOffsets<uint>(bytes, effect.FuncOffset, effect.FuncCount))
@@ -1197,7 +1197,7 @@ namespace MphRead
         public static void ExtractArchive(string path)
         {
             string name = Path.GetFileNameWithoutExtension(path);
-            string output = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(path) ?? "", "..", "_archives", name));
+            string output = Path.GetFullPath(Paths.Combine(Path.GetDirectoryName(path) ?? "", "..", "_archives", name));
             try
             {
                 int filesWritten = 0;
@@ -1211,14 +1211,14 @@ namespace MphRead
                 }
                 else if (bytes[0] == LZ10.MagicByte)
                 {
-                    string temp = Path.Combine(Paths.Export, "__temp");
+                    string temp = Paths.Combine(Paths.Export, "__temp");
                     try
                     {
                         Directory.Delete(temp, recursive: true);
                     }
                     catch { }
                     Directory.CreateDirectory(temp);
-                    string destination = Path.Combine(temp, $"{name}.arc");
+                    string destination = Paths.Combine(temp, $"{name}.arc");
                     Console.Write(" Decompressing...");
                     LZ10.Decompress(path, destination);
                     Console.Write(" Extracting archive...");

@@ -12,11 +12,11 @@ namespace MphRead.Formats
     {
         public static void TestAll()
         {
-            foreach (string path in Directory.EnumerateFiles(Path.Combine(Paths.FileSystem, @"levels\nodeData")))
+            foreach (string path in Directory.EnumerateFiles(Paths.Combine(Paths.FileSystem, @"levels\nodeData")))
             {
                 if (!path.EndsWith(@"levels\nodeData\unit2_Land_Node.bin")) // todo: version 4
                 {
-                    ReadData(Path.Combine(@"levels\nodeData", Path.GetFileName(path)));
+                    ReadData(Paths.Combine(@"levels\nodeData", Path.GetFileName(path)));
                 }
             }
             Nop();
@@ -24,7 +24,7 @@ namespace MphRead.Formats
 
         public static NodeData ReadData(string path)
         {
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Path.Combine(Paths.FileSystem, path)));
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(Paths.FileSystem, path)));
             ushort version = Read.SpanReadUshort(bytes, 0);
             if (version == 0)
             {
