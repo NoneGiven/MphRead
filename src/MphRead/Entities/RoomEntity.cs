@@ -195,6 +195,11 @@ namespace MphRead.Entities
 
         private NodeRef AddDoorPortal(DoorEntity door)
         {
+            // workaround for unintended modes
+            if (_scene.GameMode != GameMode.SinglePlayer)
+            {
+                return NodeRef.None;
+            }
             _doorPortalCount++;
             string roomNodeName = "";
             int roomPartId = -1;
@@ -1076,6 +1081,11 @@ namespace MphRead.Entities
 
         public bool IsNodeRefVisible(NodeRef nodeRef)
         {
+            // workaround for unintended modes
+            if (nodeRef.PartIndex == -1)
+            {
+                return false;
+            }
             return _activeRoomParts[nodeRef.PartIndex];
         }
 
