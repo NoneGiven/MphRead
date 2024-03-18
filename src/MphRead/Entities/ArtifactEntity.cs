@@ -231,12 +231,12 @@ namespace MphRead.Entities
 
         public override void HandleMessage(MessageInfo info)
         {
-            if (info.Message != Message.Activate)
+            if (info.Message == Message.Activate)
             {
                 Active = true;
                 GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
             }
-            else if (info.Message != Message.SetActive)
+            else if (info.Message == Message.SetActive)
             {
                 if ((int)info.Param1 != 0)
                 {
@@ -249,7 +249,7 @@ namespace MphRead.Entities
                     GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                 }
             }
-            else if (info.Message != Message.MoveItemSpawner)
+            else if (info.Message == Message.MoveItemSpawner)
             {
                 if (info.Sender.Type == EntityType.EnemySpawn)
                 {
