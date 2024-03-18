@@ -580,7 +580,10 @@ namespace MphRead.Entities
                 Vector3 camVec = CameraInfo.Position - CameraInfo.Target;
                 camVec = camVec != Vector3.Zero ? camVec.Normalized() : _facingVector;
                 Vector3 posVec = Volume.SpherePosition + camVec * Fixed.ToFloat(Values.Field78);
-                posVec = Vector3.Clamp(posVec, _scene.Room.Meta.CameraMin, _scene.Room.Meta.CameraMax);
+                if (_scene.Room.Meta.HasLimits)
+                {
+                    posVec = Vector3.Clamp(posVec, _scene.Room.Meta.CameraMin, _scene.Room.Meta.CameraMax);
+                }
                 CameraInfo.Position = _field544 + (posVec - _field544) * pct;
             }
             else
@@ -677,7 +680,11 @@ namespace MphRead.Entities
                 float z = CameraInfo.Facing.Z;
                 CameraInfo.Facing.X = x * cosX + z * sinX;
                 CameraInfo.Facing.Z = x * -sinX + z * cosX;
-                var pos = Vector3.Clamp(CameraInfo.Position, _scene.Room.Meta.CameraMin, _scene.Room.Meta.CameraMax);
+                Vector3 pos = CameraInfo.Position;
+                if (_scene.Room.Meta.HasLimits)
+                {
+                    pos = Vector3.Clamp(pos, _scene.Room.Meta.CameraMin, _scene.Room.Meta.CameraMax);
+                }
                 CameraInfo.Position = pos;
                 CameraInfo.Target = CameraInfo.Position + CameraInfo.Facing;
             }

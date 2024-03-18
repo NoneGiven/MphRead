@@ -918,7 +918,7 @@ namespace MphRead.Entities
                 TakeDamage(1, flags, direction: null, source: null);
             }
             Debug.Assert(_scene.Room != null);
-            if (_scene.Multiplayer)
+            if (_scene.Multiplayer && _scene.Room.Meta.HasLimits)
             {
                 if (Position.Y < _scene.Room.Meta.PlayerMin.Y)
                 {
@@ -1023,6 +1023,7 @@ namespace MphRead.Entities
             _jumpPadAccel = vector;
             _lastJumpPad = jumpPad;
             Flags1 |= PlayerFlags1.UsedJumpPad;
+            lockTime *= 2; // todo: FPS stuff
             _jumpPadControlLock = lockTime;
             _jumpPadControlLockMin = Math.Max(lockTime, (ushort)(5 * 2)); // todo: FPS stuff
             _timeSinceJumpPad = 0;
