@@ -918,7 +918,7 @@ namespace MphRead.Entities
                 TakeDamage(1, flags, direction: null, source: null);
             }
             Debug.Assert(_scene.Room != null);
-            if (_scene.Multiplayer)
+            if (_scene.Multiplayer && _scene.Room.Meta.HasLimits)
             {
                 if (Position.Y < _scene.Room.Meta.PlayerMin.Y)
                 {

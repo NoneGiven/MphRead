@@ -75,6 +75,13 @@ namespace MphRead.Entities
         public void ShowDialog(DialogType type, int messageId, int param1 = 0,
             int param2 = 0, string? value1 = null, string? value2 = null)
         {
+            // the game doesn't have this check; we need it to prevent crashing on uninitialized members
+            // like _messageBoxInst when e.g. an automatic trigger entity tries to display a message
+            if (!LoadFlags.TestFlag(LoadFlags.Initial) || _scene.GameMode != GameMode.SinglePlayer)
+            {
+                return;
+            }
+
             DialogType = type;
             _silentVisorSwitch = false;
             _dialogValue1 = value1;
