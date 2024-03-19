@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
