@@ -300,9 +300,6 @@ namespace MphRead.Entities
         private Vector3 _field41C;
         private Vector3 _field428;
 
-        private float _buttonAimX = 0;
-        private float _buttonAimY = 0;
-
         private ushort _timeIdle = 0;
         private byte _crushBits = 0;
         private Vector3 _field4E8; // stores gun vec 2
@@ -748,8 +745,6 @@ namespace MphRead.Entities
             _accelerationTimer = 0;
             _aimY = 0;
             NodeRef = nodeRef;
-            _buttonAimX = 0;
-            _buttonAimY = 0;
             _gunViewBob = 0;
             _walkViewBob = 0;
             if (!_scene.Multiplayer && CameraSequence.Current != null)
