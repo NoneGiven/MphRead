@@ -77,7 +77,7 @@ namespace MphRead.Entities
         {
             // the game doesn't have this check; we need it to prevent crashing on uninitialized members
             // like _messageBoxInst when e.g. an automatic trigger entity tries to display a message
-            if (!LoadFlags.TestFlag(LoadFlags.Initial) || _scene.GameMode != GameMode.SinglePlayer)
+            if (!LoadFlags.TestFlag(LoadFlags.Initial) || _scene.GameMode != GameMode.SinglePlayer || !IsMainPlayer)
             {
                 return;
             }
@@ -384,10 +384,13 @@ namespace MphRead.Entities
 
         public void CloseDialogs()
         {
-            if (_scene.Multiplayer)
+            // the game doesn't have this check; we need it to prevent crashing on uninitialized members
+            // like _messageBoxInst when e.g. this is called on spawn
+            if (!LoadFlags.TestFlag(LoadFlags.Initial) || _scene.GameMode != GameMode.SinglePlayer || !IsMainPlayer)
             {
                 return;
             }
+
             DialogType = DialogType.None;
             _overlayTimer = 0;
             _dialogCharTimer = 0;
