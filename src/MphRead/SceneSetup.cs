@@ -11,7 +11,7 @@ namespace MphRead
     {
         // todo: artifact flags
         public static (RoomEntity, RoomMetadata, CollisionInstance, IReadOnlyList<EntityBase>)
-            LoadRoom(string name, Scene scene, int playerCount = 0, BossFlags bossFlags = BossFlags.None,
+            LoadRoom(string name, Scene scene, int playerCount = 0, BossFlags bossFlags = BossFlags.Unspecified,
             int nodeLayerMask = 0, int entityLayerId = -1)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
@@ -69,6 +69,10 @@ namespace MphRead
             {
                 if (mode == GameMode.SinglePlayer)
                 {
+                    if (bossFlags == BossFlags.Unspecified)
+                    {
+                        bossFlags = GameState.StorySave.BossFlags;
+                    }
                     entityLayerId = ((int)bossFlags >> 2 * scene.AreaId) & 3;
                 }
                 else

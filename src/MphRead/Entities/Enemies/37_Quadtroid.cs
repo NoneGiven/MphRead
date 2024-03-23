@@ -37,7 +37,7 @@ namespace MphRead.Entities.Enemies
             _spawner = spawner;
         }
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             Flags |= EnemyFlags.Visible; // bug?: doesn't set OnRadar
             _state1 = _state2 = 1;
@@ -58,7 +58,6 @@ namespace MphRead.Entities.Enemies
             ModelInstance inst = SetUpModel(Metadata.EnemyModelNames[37]);
             inst.SetAnimation(4, slot: 0, SetFlags.Texture | SetFlags.Material | SetFlags.Node);
             inst.SetAnimation(6, slot: 1, SetFlags.Texcoord);
-            return true;
         }
 
         protected override void EnemyProcess()

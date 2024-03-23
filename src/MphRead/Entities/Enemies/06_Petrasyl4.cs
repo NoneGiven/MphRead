@@ -35,7 +35,7 @@ namespace MphRead.Entities.Enemies
             };
         }
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             _health = _healthMax = 8;
             Flags |= EnemyFlags.Visible;
@@ -62,7 +62,6 @@ namespace MphRead.Entities.Enemies
             _field170 = 10 * 2; // todo: FPS stuff
             _field172 = 10 * 2; // todo: FPS stuff
             UpdateState();
-            return true;
         }
 
         private void UpdateState()

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace MphRead
@@ -13,9 +14,25 @@ namespace MphRead
             bool audioLoaded = Sound.Sfx.CheckAudioLoad();
             int prompt = 0;
             int selection = 10;
-            int roomId = 95;
-            string room = "Combat Hall";
-            string roomKey = "MP3 PROVING GROUND";
+            int roomId = -1;
+            string room = "";
+            string roomKey = "";
+            // set default room with either roomId or roomKey
+            roomKey = "MP3 PROVING GROUND";
+            if (roomId >= 0)
+            {
+                RoomMetadata? init = Metadata.GetRoomById(roomId);
+                Debug.Assert(init != null);
+                room = init.InGameName ?? init.Name;
+                roomKey = init.Name;
+            }
+            else if (roomKey != "")
+            {
+                (RoomMetadata? init, int id) = Metadata.GetRoomByName(roomKey);
+                Debug.Assert(init != null);
+                roomId = id;
+                room = init.InGameName ?? init.Name;
+            }
             bool fhRoom = false;
             var players = new List<(string Hunter, string Team, string Recolor)>()
             {

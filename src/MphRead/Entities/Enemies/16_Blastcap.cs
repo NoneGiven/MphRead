@@ -28,7 +28,7 @@ namespace MphRead.Entities.Enemies
             };
         }
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             EntityDataHeader header = _spawner.Data.Header;
             SetTransform(header.FacingVector.ToFloatVector(), Vector3.UnitY, header.Position.ToFloatVector());
@@ -40,7 +40,6 @@ namespace MphRead.Entities.Enemies
             _hurtVolumeInit = new CollisionVolume(_spawner.Data.Fields.S00.Volume0);
             SetUpModel(Metadata.EnemyModelNames[16], animIndex: 2);
             _cloudTimer = 150 * 2; // todo: FPS stuff
-            return true;
         }
 
         protected override void EnemyProcess()

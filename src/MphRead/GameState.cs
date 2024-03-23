@@ -1329,6 +1329,7 @@ namespace MphRead
         public ushort CurrentOctoliths { get; set; }
         public uint LostOctoliths { get; set; } = UInt32.MaxValue;
         public ushort Areas { get; set; } = 0xC; // Celestial Archives 1 & 2
+        public BossFlags BossFlags { get; set; } = BossFlags.None;
 
         public StorySave()
         {
@@ -1514,6 +1515,19 @@ namespace MphRead
             other.EquipmentCount = EquipmentCount;
             other.CheckpointEntityId = CheckpointEntityId;
             other.CheckpointRoomId = CheckpointRoomId;
+            other.Health = Health;
+            other.HealthMax = HealthMax;
+            Ammo.CopyTo(other.Ammo, index: 0);
+            AmmoMax.CopyTo(other.AmmoMax, index: 0);
+            WeaponSlots.CopyTo(other.WeaponSlots, index: 0);
+            other.Weapons = Weapons;
+            other.Artifacts = Artifacts;
+            other.Artifacts = Artifacts;
+            other.FoundOctoliths = FoundOctoliths;
+            other.CurrentOctoliths = CurrentOctoliths;
+            other.LostOctoliths = LostOctoliths;
+            other.Areas = Areas;
+            other.BossFlags = BossFlags;
         }
     }
 }

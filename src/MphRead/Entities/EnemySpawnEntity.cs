@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using MphRead.Entities.Enemies;
+using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
@@ -28,6 +29,9 @@ namespace MphRead.Entities
         private EntityBase? _entity1;
         private EntityBase? _entity2;
         private EntityBase? _entity3;
+        private EntityBase? _parent;
+        public EntityCollision? ParentEntCol { get; private set; } = null;
+        private Matrix4 _invTransform = Matrix4.Identity;
         private NodeRef _rangeNodeRef = NodeRef.None;
 
         public SpawnerFlags Flags { get; set; }
@@ -77,7 +81,18 @@ namespace MphRead.Entities
             {
                 _scene.TryGetEntity(_data.EntityId3, out _entity3);
             }
-            // todo: linked entity
+            if (_data.LinkedEntityId != -1)
+            {
+                _scene.TryGetEntity(_data.LinkedEntityId, out _parent);
+                if (_parent != null)
+                {
+                    ParentEntCol = _parent.EntityCollision[0];
+                    if (ParentEntCol != null)
+                    {
+                        _invTransform = _transform * ParentEntCol.Inverse2;
+                    }
+                }
+            }
             if (_data.SpawnerHealth > 0)
             {
                 EnemyInstanceEntity? enemy = SpawnEnemy(this, EnemyType.Spawner, NodeRef, _scene);
@@ -100,7 +115,10 @@ namespace MphRead.Entities
             {
                 return base.Process();
             }
-            // todo: linked ent
+            if (ParentEntCol != null)
+            {
+                Transform = _invTransform * ParentEntCol.Transform;
+            }
             if (_cooldownTimer > 0)
             {
                 _cooldownTimer--;
@@ -207,6 +225,16 @@ namespace MphRead.Entities
 
         private void DeactivateAndSendMessages()
         {
+            bool updateSave = false;
+
+            void UpdateBossFlags()
+            {
+                int flags = (int)GameState.StorySave.BossFlags;
+                flags |= 1 << (2 * _scene.AreaId);
+                GameState.StorySave.BossFlags = (BossFlags)flags;
+                updateSave = true;
+            }
+
             Flags &= ~SpawnerFlags.Active;
             GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
             if (_data.EnemyType != EnemyType.Hunter || _data.Fields.S09.EncounterType == 1)
@@ -216,16 +244,16 @@ namespace MphRead.Entities
             if (_data.EnemyType == EnemyType.Cretaphid)
             {
                 GameState.StorySave.Areas |= 3; // Alinos 1 & 2
-                // todo: update boss flags in story save
+                UpdateBossFlags();
             }
             else if (_data.EnemyType == EnemyType.Slench)
             {
                 GameState.StorySave.Areas |= 0xF0; // VDO 1 & 2, Arcterra 1 & 2
-                // todo: update boss flags in story save
+                UpdateBossFlags();
             }
             else if (_data.EnemyType == EnemyType.Gorea1A)
             {
-                // todo: update boss flags in story save
+                UpdateBossFlags();
             }
             if (_entity1 != null)
             {
@@ -238,6 +266,10 @@ namespace MphRead.Entities
             if (_entity3 != null)
             {
                 _scene.SendMessage(_data.Message3, this, _entity3, -1, 0);
+            }
+            if (updateSave)
+            {
+                GameState.UpdateCleanSave(force: false);
             }
         }
 
@@ -344,6 +376,18 @@ namespace MphRead.Entities
             if (type == EnemyType.AlimbicTurret)
             {
                 return new Enemy18Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.Cretaphid)
+            {
+                return new Enemy19Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.CretaphidEye)
+            {
+                return new Enemy20Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.CretaphidCrystal)
+            {
+                return new Enemy21Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
             }
             if (type == EnemyType.PsychoBit1)
             {

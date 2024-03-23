@@ -27,7 +27,7 @@ namespace MphRead.Entities.Enemies
             };
         }
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             _health = _healthMax = 12;
             Flags |= EnemyFlags.Visible;
@@ -40,7 +40,6 @@ namespace MphRead.Entities.Enemies
             _activeVolume = CollisionVolume.Move(_spawner.Data.Fields.S02.Volume2, position);
             _targetPos = position + _spawner.Data.Fields.S02.PathVector.ToFloatVector();
             SetUpModel(Metadata.EnemyModelNames[11], animIndex: 4);
-            return true;
         }
 
         private void Die()

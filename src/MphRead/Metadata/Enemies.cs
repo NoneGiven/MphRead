@@ -465,6 +465,491 @@ namespace MphRead
             }
         };
 
+        public static IReadOnlyList<EnemySubroutine<Enemy19Entity>> Enemy19Subroutines = new EnemySubroutine<Enemy19Entity>[27]
+        {
+            // state 0
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(1, Enemy19Entity.Behavior05)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(4, Enemy19Entity.Behavior02)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[2]
+            {
+                new EnemyBehavior<Enemy19Entity>(3, Enemy19Entity.Behavior07),
+                new EnemyBehavior<Enemy19Entity>(4, Enemy19Entity.Behavior02)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[2]
+            {
+                new EnemyBehavior<Enemy19Entity>(1, Enemy19Entity.Behavior08),
+                new EnemyBehavior<Enemy19Entity>(4, Enemy19Entity.Behavior02)
+            }),
+            // state 4
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(5, Enemy19Entity.Behavior04)
+            }),
+            // state 5
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[3]
+            {
+                new EnemyBehavior<Enemy19Entity>(7, Enemy19Entity.Behavior09),
+                new EnemyBehavior<Enemy19Entity>(9, Enemy19Entity.Behavior10),
+                new EnemyBehavior<Enemy19Entity>(6, Enemy19Entity.Behavior12)
+            }),
+            // state 6
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[3]
+            {
+                new EnemyBehavior<Enemy19Entity>(7, Enemy19Entity.Behavior09),
+                new EnemyBehavior<Enemy19Entity>(9, Enemy19Entity.Behavior10),
+                new EnemyBehavior<Enemy19Entity>(5, Enemy19Entity.Behavior11)
+            }),
+            // state 7
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(8, Enemy19Entity.Behavior03)
+            }),
+            // state 8
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(10, Enemy19Entity.Behavior00)
+            }),
+            // state 9
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(1, Enemy19Entity.Behavior06)
+            }),
+            // state 10
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(13, Enemy19Entity.Behavior02)
+            }),
+            // state 11
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(13, Enemy19Entity.Behavior02)
+            }),
+            // state 12
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(13, Enemy19Entity.Behavior02)
+            }),
+            // state 13
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(14, Enemy19Entity.Behavior04)
+            }),
+            // state 14
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[3]
+            {
+                new EnemyBehavior<Enemy19Entity>(16, Enemy19Entity.Behavior09),
+                new EnemyBehavior<Enemy19Entity>(18, Enemy19Entity.Behavior10),
+                new EnemyBehavior<Enemy19Entity>(15, Enemy19Entity.Behavior12)
+            }),
+            // state 15
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[3]
+            {
+                new EnemyBehavior<Enemy19Entity>(16, Enemy19Entity.Behavior09),
+                new EnemyBehavior<Enemy19Entity>(18, Enemy19Entity.Behavior10),
+                new EnemyBehavior<Enemy19Entity>(14, Enemy19Entity.Behavior12)
+            }),
+            // state 16
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(17, Enemy19Entity.Behavior03)
+            }),
+            // state 17
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(19, Enemy19Entity.Behavior00)
+            }),
+            // state 18
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(10, Enemy19Entity.Behavior06)
+            }),
+            // state 19
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(22, Enemy19Entity.Behavior02)
+            }),
+            // state 20
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(22, Enemy19Entity.Behavior02)
+            }),
+            // state 21
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(22, Enemy19Entity.Behavior02)
+            }),
+            // state 22
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(23, Enemy19Entity.Behavior04)
+            }),
+            // state 23
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[3]
+            {
+                new EnemyBehavior<Enemy19Entity>(23, Enemy19Entity.Behavior09),
+                new EnemyBehavior<Enemy19Entity>(25, Enemy19Entity.Behavior10),
+                new EnemyBehavior<Enemy19Entity>(24, Enemy19Entity.Behavior12)
+            }),
+            // state 24
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[3]
+            {
+                new EnemyBehavior<Enemy19Entity>(23, Enemy19Entity.Behavior09),
+                new EnemyBehavior<Enemy19Entity>(25, Enemy19Entity.Behavior10),
+                new EnemyBehavior<Enemy19Entity>(23, Enemy19Entity.Behavior12)
+            }),
+            // state 25
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(19, Enemy19Entity.Behavior06)
+            }),
+            // state 26
+            new EnemySubroutine<Enemy19Entity>(new EnemyBehavior<Enemy19Entity>[1]
+            {
+                new EnemyBehavior<Enemy19Entity>(23, Enemy19Entity.Behavior01)
+            })
+        };
+
+        public static IReadOnlyList<Enemy19Values> Enemy19Values = new Enemy19Values[4]
+        {
+            new Enemy19Values()
+            {
+                CrystalHealth = 490,
+                PhaseFlashTime = 60,
+                Phase0CrystalHealth = 360,
+                Phase1CrystalHealth = 200,
+                Phase2CrystalHealth = 0,
+                Phase0CrystalShotTime = 30,
+                Phase1CrystalShotTime = 20,
+                Phase2CrystalShotTime = 13,
+                Phase0CrystalShotDelay = 1,
+                Phase1CrystalShotDelay = 1,
+                Phase2CrystalShotDelay = 1,
+                Phase0CrystalUpTime = 150,
+                Phase1CrystalUpTime = 120,
+                Phase2CrystalUpTime = 90,
+                CrystalBeamDamage = new ushort[3] { 6, 6, 6 },
+                EyeBeamDamage = new ushort[3] { 3, 3, 3 },
+                EyeSplashDamage = new ushort[3] { 0, 0, 0 },
+                EyeContactDamage = new ushort[3] { 3, 3, 3 },
+                Unused34 = 3547,
+                Unused38 = 3547,
+                Unused3C = 3547,
+                Seg0AngleStep = 2457,
+                Seg1AngleStep = 2048,
+                Seg2AngleStep = 3686,
+                Seg0BeamStartAngle = 163840,
+                Seg1BeamStartAngle = 143360,
+                Seg2BeamStartAngle = 73728,
+                Seg0BeamAngleMin = 122880,
+                Seg1BeamAngleMin = 81920,
+                Seg2BeamAngleMin = -40960,
+                Seg0BeamAngleMax = 327680,
+                Seg1BeamAngleMax = 307200,
+                Seg2BeamAngleMax = 225280,
+                Seg0BeamAngleStep = 3481,
+                Seg1BeamAngleStep = 3072,
+                Seg2BeamAngleStep = 4096,
+                EyeHealth = 12,
+                ItemChanceHealth = 8,
+                ItemChanceMissile = 5,
+                ItemChanceUa = 0,
+                ItemChanceNone = 87,
+                Phase0EyeState = new byte[12] { 5, 5, 5, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+                Phase0BeamType = new byte[12] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+                Phase0BeamSpawnMin = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase0BeamSpawnMax = new byte[12] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+                Phase0BeamCooldown = new ushort[12] { 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
+                Phase0EyeStateTimer0 = new ushort[12] { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 },
+                Phase0EyeStateTimer1 = new ushort[12] { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 },
+                Phase0EyeStateTimer2 = new ushort[12] { 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200 },
+                Phase0EyeStateTimer3 = new ushort[12] { 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20 },
+                Phase1EyeState = new byte[12] { 2, 2, 2, 5, 5, 5, 5, 2, 2, 2, 2, 2 },
+                Phase1BeamType = new byte[12] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+                Phase1BeamSpawnMin = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase1BeamSpawnMax = new byte[12] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+                Phase1BeamCooldown = new ushort[12] { 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
+                Phase1EyeStateTimer0 = new ushort[12] { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 },
+                Phase1EyeStateTimer1 = new ushort[12] { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 },
+                Phase1EyeStateTimer2 = new ushort[12] { 280, 280, 280, 280, 280, 280, 280, 280, 280, 280, 280, 280 },
+                Phase1EyeStateTimer3 = new ushort[12] { 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20 },
+                Phase2EyeState = new byte[12] { 2, 2, 2, 2, 2, 2, 2, 5, 5, 5, 5, 5 },
+                Phase2BeamType = new byte[12] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+                Phase2BeamSpawnMin = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase2BeamSpawnMax = new byte[12] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
+                Phase2BeamCooldown = new ushort[12] { 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 },
+                Phase2EyeStateTimer0 = new ushort[12] { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 },
+                Phase2EyeStateTimer1 = new ushort[12] { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 },
+                Phase2EyeStateTimer2 = new ushort[12] { 360, 360, 360, 360, 360, 360, 360, 360, 360, 360, 360, 360 },
+                Phase2EyeStateTimer3 = new ushort[12] { 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20 },
+                ItemChanceA = 0,
+                ItemChanceB = 0,
+                ItemChanceC = 0,
+                ItemChanceD = 0,
+                Padding27E = 0,
+                CollisionRadius = 3276,
+                ScanId = 0,
+                CrystalScanId = 226,
+                CrystalEffectiveness = 0xAAAA,
+                EyeScanId = 0,
+                EyeEffectiveness = 0xAA9A
+            },
+            new Enemy19Values()
+            {
+                CrystalHealth = 540,
+                PhaseFlashTime = 60,
+                Phase0CrystalHealth = 400,
+                Phase1CrystalHealth = 230,
+                Phase2CrystalHealth = 0,
+                Phase0CrystalShotTime = 15,
+                Phase1CrystalShotTime = 12,
+                Phase2CrystalShotTime = 9,
+                Phase0CrystalShotDelay = 10,
+                Phase1CrystalShotDelay = 10,
+                Phase2CrystalShotDelay = 10,
+                Phase0CrystalUpTime = 150,
+                Phase1CrystalUpTime = 120,
+                Phase2CrystalUpTime = 90,
+                CrystalBeamDamage = new ushort[3] { 10, 10, 10 },
+                EyeBeamDamage = new ushort[3] { 5, 5, 5 },
+                EyeSplashDamage = new ushort[3] { 0, 0, 0 },
+                EyeContactDamage = new ushort[3] { 3, 3, 3 },
+                Unused34 = 3547,
+                Unused38 = 3547,
+                Unused3C = 3547,
+                Seg0AngleStep = 2457,
+                Seg1AngleStep = 2048,
+                Seg2AngleStep = 3686,
+                Seg0BeamStartAngle = 163840,
+                Seg1BeamStartAngle = 143360,
+                Seg2BeamStartAngle = 73728,
+                Seg0BeamAngleMin = 122880,
+                Seg1BeamAngleMin = 81920,
+                Seg2BeamAngleMin = 40960,
+                Seg0BeamAngleMax = 245760,
+                Seg1BeamAngleMax = 204800,
+                Seg2BeamAngleMax = 143360,
+                Seg0BeamAngleStep = 3072,
+                Seg1BeamAngleStep = 4096,
+                Seg2BeamAngleStep = 4096,
+                EyeHealth = 4,
+                ItemChanceHealth = 10,
+                ItemChanceMissile = 5,
+                ItemChanceUa = 5,
+                ItemChanceNone = 80,
+                Phase0EyeState = new byte[12] { 1, 1, 1, 0, 0, 0, 0, 4, 4, 4, 4, 4 },
+                Phase0BeamType = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase0BeamSpawnMin = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase0BeamSpawnMax = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase0BeamCooldown = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Phase0EyeStateTimer0 = new ushort[12] { 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130 },
+                Phase0EyeStateTimer1 = new ushort[12] { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 },
+                Phase0EyeStateTimer2 = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Phase0EyeStateTimer3 = new ushort[12] { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 },
+                Phase1EyeState = new byte[12] { 0, 0, 0, 4, 4, 4, 4, 1, 1, 1, 1, 1 },
+                Phase1BeamType = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase1BeamSpawnMin = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase1BeamSpawnMax = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase1BeamCooldown = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Phase1EyeStateTimer0 = new ushort[12] { 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130 },
+                Phase1EyeStateTimer1 = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45 },
+                Phase1EyeStateTimer2 = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Phase1EyeStateTimer3 = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45 },
+                Phase2EyeState = new byte[12] { 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1 },
+                Phase2BeamType = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase2BeamSpawnMin = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase2BeamSpawnMax = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase2BeamCooldown = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Phase2EyeStateTimer0 = new ushort[12] { 60, 90, 30, 60, 90, 120, 30, 60, 90, 120, 90, 30 },
+                Phase2EyeStateTimer1 = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45 },
+                Phase2EyeStateTimer2 = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Phase2EyeStateTimer3 = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45 },
+                ItemChanceA = 0,
+                ItemChanceB = 0,
+                ItemChanceC = 0,
+                ItemChanceD = 0,
+                Padding27E = 0,
+                CollisionRadius = 3276,
+                ScanId = 0,
+                CrystalScanId = 198,
+                CrystalEffectiveness = 0xD5EA,
+                EyeScanId = 0,
+                EyeEffectiveness = 0xAAAA
+            },
+            new Enemy19Values()
+            {
+                CrystalHealth = 570,
+                PhaseFlashTime = 60,
+                Phase0CrystalHealth = 420,
+                Phase1CrystalHealth = 230,
+                Phase2CrystalHealth = 0,
+                Phase0CrystalShotTime = 15,
+                Phase1CrystalShotTime = 12,
+                Phase2CrystalShotTime = 9,
+                Phase0CrystalShotDelay = 10,
+                Phase1CrystalShotDelay = 10,
+                Phase2CrystalShotDelay = 10,
+                Phase0CrystalUpTime = 150,
+                Phase1CrystalUpTime = 120,
+                Phase2CrystalUpTime = 90,
+                CrystalBeamDamage = new ushort[3] { 12, 12, 12 },
+                EyeBeamDamage = new ushort[3] { 4, 4, 4 },
+                EyeSplashDamage = new ushort[3] { 1, 1, 1 },
+                EyeContactDamage = new ushort[3] { 8, 8, 8 },
+                Unused34 = 3547,
+                Unused38 = 3547,
+                Unused3C = 3547,
+                Seg0AngleStep = 2457,
+                Seg1AngleStep = 2048,
+                Seg2AngleStep = 3686,
+                Seg0BeamStartAngle = 163840,
+                Seg1BeamStartAngle = 143360,
+                Seg2BeamStartAngle = 73728,
+                Seg0BeamAngleMin = 122880,
+                Seg1BeamAngleMin = 81920,
+                Seg2BeamAngleMin = -40960,
+                Seg0BeamAngleMax = 327680,
+                Seg1BeamAngleMax = 307200,
+                Seg2BeamAngleMax = 225280,
+                Seg0BeamAngleStep = 3481,
+                Seg1BeamAngleStep = 3072,
+                Seg2BeamAngleStep = 4096,
+                EyeHealth = 4,
+                ItemChanceHealth = 8,
+                ItemChanceMissile = 5,
+                ItemChanceUa = 5,
+                ItemChanceNone = 82,
+                Phase0EyeState = new byte[12] { 0, 0, 0, 1, 1, 1, 1, 4, 4, 4, 4, 4 },
+                Phase0BeamType = new byte[12] { 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase0BeamSpawnMin = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase0BeamSpawnMax = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase0BeamCooldown = new ushort[12] { 5, 5, 5, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Phase0EyeStateTimer0 = new ushort[12] { 30, 30, 30, 130, 130, 130, 130, 130, 130, 130, 130, 130 },
+                Phase0EyeStateTimer1 = new ushort[12] { 30, 30, 30, 50, 50, 50, 50, 50, 50, 50, 50, 50 },
+                Phase0EyeStateTimer2 = new ushort[12] { 180, 180, 180, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Phase0EyeStateTimer3 = new ushort[12] { 20, 20, 20, 50, 50, 50, 50, 50, 50, 50, 50, 50 },
+                Phase1EyeState = new byte[12] { 1, 1, 1, 0, 0, 0, 0, 4, 4, 4, 4, 4 },
+                Phase1BeamType = new byte[12] { 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1 },
+                Phase1BeamSpawnMin = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase1BeamSpawnMax = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase1BeamCooldown = new ushort[12] { 10, 10, 10, 5, 5, 5, 5, 10, 10, 10, 10, 10 },
+                Phase1EyeStateTimer0 = new ushort[12] { 130, 130, 130, 30, 30, 30, 30, 130, 130, 130, 130, 130 },
+                Phase1EyeStateTimer1 = new ushort[12] { 45, 45, 45, 30, 30, 30, 30, 45, 45, 45, 45, 45 },
+                Phase1EyeStateTimer2 = new ushort[12] { 10, 10, 10, 220, 220, 220, 220, 10, 10, 10, 10, 10 },
+                Phase1EyeStateTimer3 = new ushort[12] { 45, 45, 45, 20, 20, 20, 20, 45, 45, 45, 45, 45 },
+                Phase2EyeState = new byte[12] { 1, 1, 1, 4, 4, 4, 4, 0, 0, 0, 0, 0 },
+                Phase2BeamType = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2 },
+                Phase2BeamSpawnMin = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase2BeamSpawnMax = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase2BeamCooldown = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 5, 5, 5, 5, 5 },
+                Phase2EyeStateTimer0 = new ushort[12] { 40, 40, 40, 40, 40, 40, 40, 30, 30, 30, 30, 30 },
+                Phase2EyeStateTimer1 = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 30, 30, 30, 30, 30 },
+                Phase2EyeStateTimer2 = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 260, 260, 260, 260, 260 },
+                Phase2EyeStateTimer3 = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 20, 20, 20, 20, 20 },
+                ItemChanceA = 0,
+                ItemChanceB = 0,
+                ItemChanceC = 0,
+                ItemChanceD = 0,
+                Padding27E = 0,
+                CollisionRadius = 3276,
+                ScanId = 0,
+                CrystalScanId = 199,
+                CrystalEffectiveness = 0xD5EA,
+                EyeScanId = 0,
+                EyeEffectiveness = 0xAAAA
+            },
+            new Enemy19Values()
+            {
+                CrystalHealth = 550,
+                PhaseFlashTime = 60,
+                Phase0CrystalHealth = 385,
+                Phase1CrystalHealth = 220,
+                Phase2CrystalHealth = 0,
+                Phase0CrystalShotTime = 12,
+                Phase1CrystalShotTime = 10,
+                Phase2CrystalShotTime = 8,
+                Phase0CrystalShotDelay = 10,
+                Phase1CrystalShotDelay = 10,
+                Phase2CrystalShotDelay = 10,
+                Phase0CrystalUpTime = 150,
+                Phase1CrystalUpTime = 120,
+                Phase2CrystalUpTime = 90,
+                CrystalBeamDamage = new ushort[3] { 18, 18, 18 },
+                EyeBeamDamage = new ushort[3] { 4, 4, 4 },
+                EyeSplashDamage = new ushort[3] { 1, 1, 1 },
+                EyeContactDamage = new ushort[3] { 10, 10, 10 },
+                Unused34 = 3547,
+                Unused38 = 3547,
+                Unused3C = 3547,
+                Seg0AngleStep = 2457,
+                Seg1AngleStep = 2048,
+                Seg2AngleStep = 3686,
+                Seg0BeamStartAngle = 163840,
+                Seg1BeamStartAngle = 143360,
+                Seg2BeamStartAngle = 73728,
+                Seg0BeamAngleMin = 122880,
+                Seg1BeamAngleMin = 81920,
+                Seg2BeamAngleMin = -40960,
+                Seg0BeamAngleMax = 327680,
+                Seg1BeamAngleMax = 307200,
+                Seg2BeamAngleMax = 225280,
+                Seg0BeamAngleStep = 3481,
+                Seg1BeamAngleStep = 3072,
+                Seg2BeamAngleStep = 4096,
+                EyeHealth = 4,
+                ItemChanceHealth = 8,
+                ItemChanceMissile = 5,
+                ItemChanceUa = 5,
+                ItemChanceNone = 82,
+                Phase0EyeState = new byte[12] { 0, 0, 0, 1, 1, 1, 1, 4, 4, 4, 4, 4 },
+                Phase0BeamType = new byte[12] { 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                Phase0BeamSpawnMin = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase0BeamSpawnMax = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase0BeamCooldown = new ushort[12] { 5, 5, 5, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Phase0EyeStateTimer0 = new ushort[12] { 30, 30, 30, 130, 130, 130, 130, 130, 130, 130, 130, 130 },
+                Phase0EyeStateTimer1 = new ushort[12] { 30, 30, 30, 50, 50, 50, 50, 50, 50, 50, 50, 50 },
+                Phase0EyeStateTimer2 = new ushort[12] { 180, 180, 180, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                Phase0EyeStateTimer3 = new ushort[12] { 20, 20, 20, 50, 50, 50, 50, 50, 50, 50, 50, 50 },
+                Phase1EyeState = new byte[12] { 1, 1, 1, 0, 0, 0, 0, 4, 4, 4, 4, 4 },
+                Phase1BeamType = new byte[12] { 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0 },
+                Phase1BeamSpawnMin = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase1BeamSpawnMax = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase1BeamCooldown = new ushort[12] { 10, 10, 10, 5, 5, 5, 5, 10, 10, 10, 10, 10 },
+                Phase1EyeStateTimer0 = new ushort[12] { 130, 130, 130, 30, 30, 30, 30, 130, 130, 130, 130, 130 },
+                Phase1EyeStateTimer1 = new ushort[12] { 45, 45, 45, 30, 30, 30, 30, 45, 45, 45, 45, 45 },
+                Phase1EyeStateTimer2 = new ushort[12] { 10, 10, 10, 220, 220, 220, 220, 10, 10, 10, 10, 10 },
+                Phase1EyeStateTimer3 = new ushort[12] { 45, 45, 45, 20, 20, 20, 20, 45, 45, 45, 45, 45 },
+                Phase2EyeState = new byte[12] { 1, 1, 1, 4, 4, 4, 4, 0, 0, 0, 0, 0 },
+                Phase2BeamType = new byte[12] { 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2 },
+                Phase2BeamSpawnMin = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase2BeamSpawnMax = new byte[12] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                Phase2BeamCooldown = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 5, 5, 5, 5, 5 },
+                Phase2EyeStateTimer0 = new ushort[12] { 130, 130, 130, 130, 130, 130, 130, 30, 30, 30, 30, 30 },
+                Phase2EyeStateTimer1 = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 30, 30, 30, 30, 30 },
+                Phase2EyeStateTimer2 = new ushort[12] { 10, 10, 10, 10, 10, 10, 10, 260, 260, 260, 260, 260 },
+                Phase2EyeStateTimer3 = new ushort[12] { 45, 45, 45, 45, 45, 45, 45, 20, 20, 20, 20, 20 },
+                ItemChanceA = 0,
+                ItemChanceB = 0,
+                ItemChanceC = 0,
+                ItemChanceD = 0,
+                Padding27E = 0,
+                CollisionRadius = 3276,
+                ScanId = 0,
+                CrystalScanId = 200,
+                CrystalEffectiveness = 0xD5E6,
+                EyeScanId = 0,
+                EyeEffectiveness = 0xAAAA
+            }
+        };
+
         public static IReadOnlyList<EnemySubroutine<Enemy23Entity>> Enemy23Subroutines = new EnemySubroutine<Enemy23Entity>[11]
         {
             // state 0

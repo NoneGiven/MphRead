@@ -9,12 +9,11 @@ namespace MphRead.Entities.Enemies
         {
         }
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             EnemySpawnEntityData data = _spawner.Data;
             Setup(data.Header.Position.ToFloatVector(), data.Header.FacingVector.ToFloatVector(), effectiveness: 0,
                 data.Fields.S05.Volume0, data.Fields.S05.Volume1, data.Fields.S05.Volume2, data.Fields.S05.Volume3);
-            return true;
         }
 
         protected override void CallSubroutine()

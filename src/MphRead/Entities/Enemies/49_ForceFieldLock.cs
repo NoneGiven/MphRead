@@ -27,7 +27,7 @@ namespace MphRead.Entities.Enemies
             _forceField = spawner;
         }
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             Vector3 position = _forceField.Data.Header.Position.ToFloatVector();
             _fieldPosition = position;
@@ -77,7 +77,6 @@ namespace MphRead.Entities.Enemies
             _equipInfo = new EquipInfo(Weapons.Weapons1P[(int)_forceField.Data.Type], _beams);
             _equipInfo.GetAmmo = () => _ammo;
             _equipInfo.SetAmmo = (newAmmo) => _ammo = newAmmo;
-            return true;
         }
 
         private void ClearEffectiveness()

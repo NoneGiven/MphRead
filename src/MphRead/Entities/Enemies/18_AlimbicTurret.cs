@@ -51,7 +51,7 @@ namespace MphRead.Entities.Enemies
             0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0
         };
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             int version = (int)_spawner.Data.Fields.S06.EnemyVersion;
             Recolor = _recolors[version];
@@ -80,7 +80,6 @@ namespace MphRead.Entities.Enemies
             _equipInfo = new EquipInfo(weapon, _beams);
             _equipInfo.GetAmmo = () => _ammo;
             _equipInfo.SetAmmo = (newAmmo) => _ammo = newAmmo;
-            return true;
         }
 
         protected override void EnemyProcess()
@@ -174,7 +173,7 @@ namespace MphRead.Entities.Enemies
                 Vector3 targetPos = _target.Position.AddY(0.5f);
                 Vector3 spawnVec = (targetPos - _rotNodePos).Normalized();
                 Vector3 spawnPos = spawnVec * Fixed.ToFloat(_values.ShotOffset) + _rotNodePos;
-                // todo: play SFX
+                _soundSource.PlaySfx(SfxId.TURRET_ATTACK);
                 _equipInfo.Weapon.UnchargedDamage = _values.BeamDamage;
                 _equipInfo.Weapon.SplashDamage = _values.SplashDamage;
                 _equipInfo.Weapon.HeadshotDamage = _values.BeamDamage;
@@ -213,7 +212,7 @@ namespace MphRead.Entities.Enemies
                     float angle = MathHelper.RadiansToDegrees(MathF.Acos(Vector3.Dot(_aimVec, _targetVec)));
                     _aimAngleStep = angle / _aimSteps;
                     _crossVec = Vector3.Cross(_aimVec, _targetVec).Normalized();
-                    // todo: play SFX
+                    _soundSource.PlaySfx(SfxId.TURRET_LOCK_ON);
                     return true;
                 }
             }

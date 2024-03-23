@@ -61,7 +61,7 @@ namespace MphRead.Entities.Enemies
             0, 1, 0, 4, 0, 3, 2, 0, 0, 0, 0
         };
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             int version = (int)_spawner.Data.Fields.S06.EnemyVersion;
             Recolor = _recolors[version];
@@ -139,7 +139,6 @@ namespace MphRead.Entities.Enemies
             _shotCount = (ushort)(_values.MinShots + Rng.GetRandomInt2(_values.MaxShots + 1 - _values.MinShots));
             _aimVec = (PlayerEntity.Main.Position - Position).Normalized();
             _subId = _state1;
-            return true;
         }
 
         protected override void EnemyProcess()

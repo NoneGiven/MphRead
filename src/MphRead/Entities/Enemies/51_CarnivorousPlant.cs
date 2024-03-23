@@ -16,7 +16,7 @@ namespace MphRead.Entities.Enemies
             _spawner = spawner;
         }
 
-        protected override bool EnemyInitialize()
+        protected override void EnemyInitialize()
         {
             Transform = _data.Spawner.Transform;
             _prevPos = Position;
@@ -29,7 +29,6 @@ namespace MphRead.Entities.Enemies
             _hurtVolume = CollisionVolume.Transform(_hurtVolumeInit, Transform);
             ObjectMetadata meta = Metadata.GetObjectById(_spawner.Data.Fields.S07.EnemySubtype);
             SetUpModel(meta.Name);
-            return true;
         }
 
         protected override void EnemyProcess()

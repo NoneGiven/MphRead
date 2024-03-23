@@ -95,6 +95,11 @@ namespace MphRead.Sound
             Sfx.Instance.PlayEnvironmentSfx(id, this);
         }
 
+        public bool CheckEnvironmentSfx(int id)
+        {
+            return Sfx.Instance.CheckEnvironmentSfx(id);
+        }
+
         public void StopAllSfx(bool force = false)
         {
             Sfx.Instance.StopSoundFromSource(this, force);
@@ -221,7 +226,6 @@ namespace MphRead.Sound
             }
             catch (DllNotFoundException)
             {
-                // sktodo: load earlier and show warning on menu prompt
                 Instance = new SfxInstanceBase();
             }
             SfxMute = false;
@@ -291,35 +295,6 @@ namespace MphRead.Sound
                     }
                 }
                 return false;
-            }
-
-            public void UpdateLoop()
-            {
-                for (int i = 0; i < _maxPerInst; i++)
-                {
-                    if (!Loop[i])
-                    {
-                        continue;
-                    }
-                    SoundChannel? channel = Channels[i];
-                    if (channel == null)
-                    {
-                        continue;
-                    }
-                    SoundSample? sample = Samples[i];
-                    Debug.Assert(sample != null && sample.BufferId != 0);
-                    if (sample.BufferCount == 1)
-                    {
-                        continue;
-                    }
-                    AL.GetSource(channel.Id, ALGetSourcei.Buffer, out int buffer);
-                    if (buffer > sample.BufferId)
-                    {
-                        AL.SourceUnqueueBuffers(channel.Id, numEntries: 1);
-                        sample.BufferCount--;
-                        AL.Source(channel.Id, ALSourceb.Looping, true);
-                    }
-                }
             }
 
             public void UpdatePosition()
@@ -426,8 +401,7 @@ namespace MphRead.Sound
             {
                 AL.SourceStop(Id);
                 // buffer must be disassociated from sources in order to buffer new data
-                AL.SourceUnqueueBuffers(Id, numEntries: 1);
-                AL.SourceUnqueueBuffers(Id, numEntries: 1);
+                AL.Source(Id, ALSourcei.Buffer, 0);
                 InUse = false;
                 BufferId = 0;
             }
@@ -647,14 +621,7 @@ namespace MphRead.Sound
             if (channel.BufferId != sample.BufferId)
             {
                 int bufferId = sample.BufferId;
-                if (sample.BufferCount == 1)
-                {
-                    AL.SourceQueueBuffers(channel.Id, new int[1] { bufferId });
-                }
-                else
-                {
-                    AL.SourceQueueBuffers(channel.Id, new int[2] { bufferId, bufferId + 1 });
-                }
+                AL.Source(channel.Id, ALSourcei.Buffer, bufferId);
                 channel.BufferId = sample.BufferId;
             }
             return true;
@@ -946,19 +913,9 @@ namespace MphRead.Sound
                 }
                 dest.Sample = sample;
                 ALFormat format = sample.Format == WaveFormat.ADPCM ? ALFormat.Mono16 : ALFormat.Mono8;
-                ReadOnlySpan<byte> intro = sample.GetIntro();
-                ReadOnlySpan<byte> loop = sample.GetLoop();
-                if (intro.Length > 0)
-                {
-                    AL.BufferData(dest.Id, format, intro, sample.SampleRate);
-                    AL.BufferData(dest.Id + 1, format, loop, sample.SampleRate);
-                    sample.BufferCount = sample.MaxBuffers = 2;
-                }
-                else
-                {
-                    AL.BufferData(dest.Id, format, loop, sample.SampleRate);
-                    sample.BufferCount = sample.MaxBuffers = 1;
-                }
+                AL.BufferData(dest.Id, format, sample.WaveData.Value, sample.SampleRate);
+                AL.LoopPoints.Buffer(dest.Id, BufferLoopPoint.LoopPointsSOFT, sample.LoopStart, sample.LoopStart + sample.LoopLength);
+                sample.BufferCount = sample.MaxBuffers = 1;
                 sample.BufferId = dest.Id;
             }
 
@@ -1135,7 +1092,6 @@ namespace MphRead.Sound
                 SoundInstance inst = _instances[i];
                 if (inst.PlayTime >= 0)
                 {
-                    inst.UpdateLoop();
                     if (inst.ScriptFile != null)
                     {
                         if (inst.Source == null || !Sfx.SfxMute)
@@ -1223,16 +1179,16 @@ namespace MphRead.Sound
 
         private static readonly IReadOnlyList<EnvironmentItem> _environmentItems = new EnvironmentItem[10]
         {
-            new EnvironmentItem(SfxId.ELECTRO_WAVE2),
-            new EnvironmentItem(SfxId.ELECTRICITY),
-            new EnvironmentItem(SfxId.ELECTRIC_BARRIER),
-            new EnvironmentItem(SfxId.ENERGY_BALL),
-            new EnvironmentItem(SfxId.BLUE_FLAME),
-            new EnvironmentItem(SfxId.CYLINDER_BOSS_ATTACK),
-            new EnvironmentItem(SfxId.CYLINDER_BOSS_SPIN),
-            new EnvironmentItem(SfxId.BUBBLES),
-            new EnvironmentItem(SfxId.ELEVATOR2_START),
-            new EnvironmentItem(SfxId.GOREA_ATTACK3_LOOP)
+            /* 0 */ new EnvironmentItem(SfxId.ELECTRO_WAVE2),
+            /* 1 */ new EnvironmentItem(SfxId.ELECTRICITY),
+            /* 2 */ new EnvironmentItem(SfxId.ELECTRIC_BARRIER),
+            /* 3 */ new EnvironmentItem(SfxId.ENERGY_BALL),
+            /* 4 */ new EnvironmentItem(SfxId.BLUE_FLAME),
+            /* 5 */ new EnvironmentItem(SfxId.CYLINDER_BOSS_ATTACK),
+            /* 6 */ new EnvironmentItem(SfxId.CYLINDER_BOSS_SPIN),
+            /* 7 */ new EnvironmentItem(SfxId.BUBBLES),
+            /* 8 */ new EnvironmentItem(SfxId.ELEVATOR2_START),
+            /* 9 */ new EnvironmentItem(SfxId.GOREA_ATTACK3_LOOP)
         };
 
         public override void PlayEnvironmentSfx(int index, SoundSource source)
@@ -1257,6 +1213,12 @@ namespace MphRead.Sound
             item.Instances++;
         }
 
+        public override bool CheckEnvironmentSfx(int index)
+        {
+            Debug.Assert(index >= 0 && index < _environmentItems.Count);
+            return _environmentItems[index].Instances > 0;
+        }
+
         private void UpdateEnvironmentSfx()
         {
             for (int i = 0; i < _environmentItems.Count; i++)
@@ -1269,7 +1231,6 @@ namespace MphRead.Sound
                     if (inst != null)
                     {
                         item.Handle = inst.Handle;
-                        inst.UpdateLoop();
                     }
                 }
                 else if (item.Handle != -1)
@@ -1526,6 +1487,11 @@ namespace MphRead.Sound
 
         public virtual void PlayEnvironmentSfx(int index, SoundSource source)
         {
+        }
+
+        public virtual bool CheckEnvironmentSfx(int index)
+        {
+            return false;
         }
 
         public virtual void StopSoundFromSource(SoundSource source, bool force)
