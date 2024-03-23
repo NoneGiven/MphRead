@@ -5,13 +5,20 @@ using System.Linq;
 
 namespace MphRead
 {
+    public enum SoundCapability
+    {
+        None = 0,
+        Unsupported = 1,
+        Supported = 2
+    }
+
     public static class Menu
     {
         private static string _mode = "auto-select";
 
         public static void ShowMenuPrompts()
         {
-            bool audioLoaded = Sound.Sfx.CheckAudioLoad();
+            SoundCapability soundCapability = Sound.Sfx.CheckAudioLoad();
             int prompt = 0;
             int selection = 10;
             int roomId = -1;
@@ -160,12 +167,19 @@ namespace MphRead
                     s--;
                     if (prompt == 0)
                     {
-                        if (!audioLoaded)
+                        if (soundCapability == SoundCapability.None)
                         {
                             Console.WriteLine();
                             Console.WriteLine("WARNING: Audio system could not be loaded. " +
-                                "Sound effects and music will not be played.");
-                            Console.WriteLine("You may need to install OpenAL on your system.");
+                                "Sound effects will not be played.");
+                            Console.WriteLine("You may need to install OpenAL Soft on your system.");
+                        }
+                        else if (soundCapability == SoundCapability.Unsupported)
+                        {
+                            Console.WriteLine();
+                            Console.WriteLine("WARNING: Audio system was loaded, " +
+                                "but an unsupported version of OpenAL was found.");
+                            Console.WriteLine("You may need to install OpenAL Soft on your system for sounds to play correctly.");
                         }
                         ConsoleKeyInfo keyInfo = Console.ReadKey();
                         if (keyInfo.Key == ConsoleKey.Escape)

@@ -166,17 +166,24 @@ namespace MphRead.Sound
         public static int TimedSfxMute { get; set; }
         public static int LongSfxMute { get; set; }
 
-        public static bool CheckAudioLoad()
+        public static SoundCapability CheckAudioLoad()
         {
+            bool loopPointsSupported = false;
             try
             {
-                ALC.CloseDevice(ALC.OpenDevice(null));
+                ALDevice device = ALC.OpenDevice(null);
+                ALContext context = ALC.CreateContext(device, new ALContextAttributes());
+                ALC.MakeContextCurrent(context);
+                loopPointsSupported = AL.LoopPoints.IsExtensionPresent();
+                ALC.MakeContextCurrent(ALContext.Null);
+                ALC.DestroyContext(context);
+                ALC.CloseDevice(device);
             }
             catch (DllNotFoundException)
             {
-                return false;
+                return SoundCapability.None;
             }
-            return true;
+            return loopPointsSupported ? SoundCapability.Supported : SoundCapability.Unsupported;
         }
 
         public static float CalculatePitchDiv(float pitchFac)
