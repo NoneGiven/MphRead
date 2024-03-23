@@ -297,35 +297,6 @@ namespace MphRead.Sound
                 return false;
             }
 
-            public void UpdateLoop()
-            {
-                for (int i = 0; i < _maxPerInst; i++)
-                {
-                    if (!Loop[i])
-                    {
-                        continue;
-                    }
-                    SoundChannel? channel = Channels[i];
-                    if (channel == null)
-                    {
-                        continue;
-                    }
-                    SoundSample? sample = Samples[i];
-                    Debug.Assert(sample != null && sample.BufferId != 0);
-                    if (sample.BufferCount == 1)
-                    {
-                        continue;
-                    }
-                    AL.GetSource(channel.Id, ALGetSourcei.Buffer, out int buffer);
-                    if (buffer > sample.BufferId)
-                    {
-                        AL.SourceUnqueueBuffers(channel.Id, numEntries: 1);
-                        sample.BufferCount--;
-                        AL.Source(channel.Id, ALSourceb.Looping, true);
-                    }
-                }
-            }
-
             public void UpdatePosition()
             {
                 if (Source == null || Source.Self)
@@ -430,8 +401,7 @@ namespace MphRead.Sound
             {
                 AL.SourceStop(Id);
                 // buffer must be disassociated from sources in order to buffer new data
-                AL.SourceUnqueueBuffers(Id, numEntries: 1);
-                AL.SourceUnqueueBuffers(Id, numEntries: 1);
+                AL.Source(Id, ALSourcei.Buffer, 0);
                 InUse = false;
                 BufferId = 0;
             }
@@ -651,14 +621,7 @@ namespace MphRead.Sound
             if (channel.BufferId != sample.BufferId)
             {
                 int bufferId = sample.BufferId;
-                if (sample.BufferCount == 1)
-                {
-                    AL.SourceQueueBuffers(channel.Id, new int[1] { bufferId });
-                }
-                else
-                {
-                    AL.SourceQueueBuffers(channel.Id, new int[2] { bufferId, bufferId + 1 });
-                }
+                AL.Source(channel.Id, ALSourcei.Buffer, bufferId);
                 channel.BufferId = sample.BufferId;
             }
             return true;
@@ -950,19 +913,9 @@ namespace MphRead.Sound
                 }
                 dest.Sample = sample;
                 ALFormat format = sample.Format == WaveFormat.ADPCM ? ALFormat.Mono16 : ALFormat.Mono8;
-                ReadOnlySpan<byte> intro = sample.GetIntro();
-                ReadOnlySpan<byte> loop = sample.GetLoop();
-                if (intro.Length > 0)
-                {
-                    AL.BufferData(dest.Id, format, intro, sample.SampleRate);
-                    AL.BufferData(dest.Id + 1, format, loop, sample.SampleRate);
-                    sample.BufferCount = sample.MaxBuffers = 2;
-                }
-                else
-                {
-                    AL.BufferData(dest.Id, format, loop, sample.SampleRate);
-                    sample.BufferCount = sample.MaxBuffers = 1;
-                }
+                AL.BufferData(dest.Id, format, sample.WaveData.Value, sample.SampleRate);
+                AL.LoopPoints.Buffer(dest.Id, BufferLoopPoint.LoopPointsSOFT, sample.LoopStart, sample.LoopStart + sample.LoopLength);
+                sample.BufferCount = sample.MaxBuffers = 1;
                 sample.BufferId = dest.Id;
             }
 
@@ -1139,7 +1092,6 @@ namespace MphRead.Sound
                 SoundInstance inst = _instances[i];
                 if (inst.PlayTime >= 0)
                 {
-                    inst.UpdateLoop();
                     if (inst.ScriptFile != null)
                     {
                         if (inst.Source == null || !Sfx.SfxMute)
@@ -1279,7 +1231,6 @@ namespace MphRead.Sound
                     if (inst != null)
                     {
                         item.Handle = inst.Handle;
-                        inst.UpdateLoop();
                     }
                 }
                 else if (item.Handle != -1)
