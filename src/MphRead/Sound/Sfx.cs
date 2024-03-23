@@ -226,7 +226,6 @@ namespace MphRead.Sound
             }
             catch (DllNotFoundException)
             {
-                // sktodo: load earlier and show warning on menu prompt
                 Instance = new SfxInstanceBase();
             }
             SfxMute = false;
