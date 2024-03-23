@@ -427,6 +427,7 @@ namespace MphRead.Sound
 
         private ALDevice _device = ALDevice.Null;
         private ALContext _context = ALContext.Null;
+        private bool _loopPointSupport = false;
         private readonly SoundBuffer[] _buffers = new SoundBuffer[64];
         private readonly SoundChannel[] _channels = new SoundChannel[128];
         private readonly SoundInstance[] _instances = new SoundInstance[128];
@@ -921,7 +922,10 @@ namespace MphRead.Sound
                 dest.Sample = sample;
                 ALFormat format = sample.Format == WaveFormat.ADPCM ? ALFormat.Mono16 : ALFormat.Mono8;
                 AL.BufferData(dest.Id, format, sample.WaveData.Value, sample.SampleRate);
-                AL.LoopPoints.Buffer(dest.Id, BufferLoopPoint.LoopPointsSOFT, sample.LoopStart, sample.LoopStart + sample.LoopLength);
+                if (_loopPointSupport)
+                {
+                    AL.LoopPoints.Buffer(dest.Id, BufferLoopPoint.LoopPointsSOFT, sample.LoopStart, sample.LoopStart + sample.LoopLength);
+                }
                 sample.BufferCount = sample.MaxBuffers = 1;
                 sample.BufferId = dest.Id;
             }
@@ -1387,6 +1391,7 @@ namespace MphRead.Sound
             _device = ALC.OpenDevice(null);
             _context = ALC.CreateContext(_device, new ALContextAttributes());
             ALC.MakeContextCurrent(_context);
+            _loopPointSupport = AL.LoopPoints.IsExtensionPresent();
             int[] bufferIds = new int[_buffers.Length * 2];
             AL.GenBuffers(bufferIds);
             for (int i = 0; i < _buffers.Length; i++)

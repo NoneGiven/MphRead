@@ -178,7 +178,7 @@ namespace MphRead
                         {
                             Console.WriteLine();
                             Console.WriteLine("WARNING: Audio system was loaded, " +
-                                "but an unsupported version of OpenAL was found.");
+                                "but an unsupported version of OpenAL was used.");
                             Console.WriteLine("You may need to install OpenAL Soft on your system for sounds to play correctly.");
                         }
                         ConsoleKeyInfo keyInfo = Console.ReadKey();
