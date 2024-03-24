@@ -25,6 +25,7 @@ namespace MphRead.Entities.Enemies
         private float _field210 = 0;
         private Vector3 _field1F8;
         private float _shieldOffset = 0;
+        public float ShieldOffset => _shieldOffset;
         private Vector3 _startPos;
         private Vector3 _field1E0;
         private Vector3 _field1EC;
@@ -110,7 +111,7 @@ namespace MphRead.Entities.Enemies
             _hurtVolumeInit = new CollisionVolume(_spawner.Data.Fields.S00.Volume0);
             _boundingRadius = _hurtVolumeInit.SphereRadius;
             _hurtVolumeInit = new CollisionVolume(_hurtVolumeInit.SpherePosition, 2.9f); // 11878
-            _shieldOffset = _hurtVolumeInit.SphereRadius; // sktodo: since _hurtVolumeInit doesn't get updated, we could remove _shieldOffset
+            _shieldOffset = _hurtVolumeInit.SphereRadius;
             _model = SetUpModel("BigEyeBall", animIndex: 10, animFlags: AnimFlags.NoLoop);
             _field196 = 1000;
             // initializing to Slench Tear here, but it will get updated later
@@ -1173,6 +1174,11 @@ namespace MphRead.Entities.Enemies
             _field20C = fields.X;
             _field210 = fields.Z;
             return false;
+        }
+
+        public bool ShieldTakeDamage(EntityBase? source)
+        {
+            return EnemyTakeDamage(source);
         }
 
         protected override bool EnemyTakeDamage(EntityBase? source)
