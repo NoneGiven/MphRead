@@ -226,7 +226,7 @@ namespace MphRead.Entities.Enemies
             {
                 if (BeamType == 2)
                 {
-                    _cretaphid.SounceSource.PlayEnvironmentSfx(5); // CYLINDER_BOSS_ATTACK
+                    _cretaphid.SoundSource.PlayEnvironmentSfx(5); // CYLINDER_BOSS_ATTACK
                 }
                 else if (BeamType <= 1)
                 {
@@ -278,7 +278,7 @@ namespace MphRead.Entities.Enemies
                 if (_stateTimer > 0)
                 {
                     _stateTimer--;
-                    _cretaphid.SounceSource.PlayEnvironmentSfx(5); // CYLINDER_BOSS_ATTACK
+                    _cretaphid.SoundSource.PlayEnvironmentSfx(5); // CYLINDER_BOSS_ATTACK
                 }
                 else
                 {

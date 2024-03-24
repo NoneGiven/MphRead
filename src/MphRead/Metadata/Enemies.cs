@@ -620,6 +620,7 @@ namespace MphRead
 
         public static IReadOnlyList<Enemy19Values> Enemy19Values = new Enemy19Values[4]
         {
+            // Cretaphid v1 (UNIT2_B1)
             new Enemy19Values()
             {
                 CrystalHealth = 490,
@@ -702,6 +703,7 @@ namespace MphRead
                 EyeScanId = 0,
                 EyeEffectiveness = 0xAA9A
             },
+            // Cretaphid v2 (UNIT3_B1)
             new Enemy19Values()
             {
                 CrystalHealth = 540,
@@ -784,6 +786,7 @@ namespace MphRead
                 EyeScanId = 0,
                 EyeEffectiveness = 0xAAAA
             },
+            // Cretaphid v3 (UNIT1_B2)
             new Enemy19Values()
             {
                 CrystalHealth = 570,
@@ -866,6 +869,7 @@ namespace MphRead
                 EyeScanId = 0,
                 EyeEffectiveness = 0xAAAA
             },
+            // Cretaphid v4 (UNIT4_B2)
             new Enemy19Values()
             {
                 CrystalHealth = 550,
@@ -1499,6 +1503,434 @@ namespace MphRead
             }
         };
 
+        public static IReadOnlyList<Enemy41Values> Enemy41Values = new Enemy41Values[12] // 4 x 3
+        {
+            // Slench v1 (UNIT1_B1)
+            // Slench v1, phase 1
+            new Enemy41Values()
+            {
+                ScanId1 = 227,
+                ScanId2 = 201,
+                Field4 = 16384,
+                Health = 200,
+                FieldC = 4096,
+                Field10 = 60,
+                Field12 = 120,
+                Field14 = 30,
+                Field16 = 1,
+                Padding17 = 0,
+                Field18 = 4096,
+                Field1C = 1024,
+                Field20 = 614,
+                Field24 = 8192,
+                Field28 = 600,
+                Field2C = 410,
+                RollTime = 81920,
+                Field34 = 10240,
+                Field38 = 0,
+                Field3C = 12288,
+                Field40 = 0,
+                Field44 = 0,
+                Field48 = 0,
+                Field4C = 0,
+                Field50 = 0,
+                Field54 = 0,
+                Field56 = 2,
+                Field57 = 64,
+                Field58 = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v1, phase 2
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                Field4 = 16384,
+                Health = 0,
+                FieldC = 4096,
+                Field10 = 60,
+                Field12 = 120,
+                Field14 = 30,
+                Field16 = 2,
+                Padding17 = 0,
+                Field18 = 4096,
+                Field1C = 1024,
+                Field20 = 614,
+                Field24 = 16384,
+                Field28 = 450,
+                Field2C = 410,
+                RollTime = 81920,
+                Field34 = 18432,
+                Field38 = 0,
+                Field3C = 15565,
+                Field40 = 0,
+                Field44 = 0,
+                Field48 = 0,
+                Field4C = 0,
+                Field50 = 0,
+                Field54 = 0,
+                Field56 = 2,
+                Field57 = 64,
+                Field58 = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v1, phase 3
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                Field4 = 16384,
+                Health = 0,
+                FieldC = 4096,
+                Field10 = 60,
+                Field12 = 120,
+                Field14 = 20,
+                Field16 = 2,
+                Padding17 = 0,
+                Field18 = 4096,
+                Field1C = 1024,
+                Field20 = 614,
+                Field24 = 16384,
+                Field28 = 300,
+                Field2C = 410,
+                RollTime = 81920,
+                Field34 = 26624,
+                Field38 = 0,
+                Field3C = 13517,
+                Field40 = 0,
+                Field44 = 0,
+                Field48 = 0,
+                Field4C = 0,
+                Field50 = 0,
+                Field54 = 0,
+                Field56 = 2,
+                Field57 = 64,
+                Field58 = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v2 (UNIT4_B1)
+            // Slench v2, phase 1
+            new Enemy41Values()
+            {
+                ScanId1 = 202,
+                ScanId2 = 203,
+                Field4 = 16384,
+                Health = 1200,
+                FieldC = 4096,
+                Field10 = 60,
+                Field12 = 120,
+                Field14 = 25,
+                Field16 = 1,
+                Padding17 = 0,
+                Field18 = 4096,
+                Field1C = 1024,
+                Field20 = 614,
+                Field24 = 16384,
+                Field28 = 600,
+                Field2C = 410,
+                RollTime = 81920,
+                Field34 = 14336,
+                Field38 = 0,
+                Field3C = 14336,
+                Field40 = 0,
+                Field44 = 0,
+                Field48 = 0,
+                Field4C = 0,
+                Field50 = 0,
+                Field54 = 0,
+                Field56 = 2,
+                Field57 = 64,
+                Field58 = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v2, phase 2
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                Field4 = 16384,
+                Health = 0,
+                FieldC = 4096,
+                Field10 = 60,
+                Field12 = 120,
+                Field14 = 25,
+                Field16 = 2,
+                Padding17 = 0,
+                Field18 = 4096,
+                Field1C = 1024,
+                Field20 = 614,
+                Field24 = 16384,
+                Field28 = 540,
+                Field2C = 819,
+                RollTime = 81920,
+                Field34 = 18432,
+                Field38 = 0,
+                Field3C = 16384,
+                Field40 = 0,
+                Field44 = 0,
+                Field48 = 0,
+                Field4C = 0,
+                Field50 = 0,
+                Field54 = 0,
+                Field56 = 2,
+                Field57 = 64,
+                Field58 = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v2, phase 3
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                Field4 = 16384,
+                Health = 0,
+                FieldC = 4096,
+                Field10 = 60,
+                Field12 = 120,
+                Field14 = 25,
+                Field16 = 3,
+                Padding17 = 0,
+                Field18 = 4096,
+                Field1C = 1024,
+                Field20 = 614,
+                Field24 = 16384,
+                Field28 = 450,
+                Field2C = 1229,
+                RollTime = 81920,
+                Field34 = 24576,
+                Field38 = 0,
+                Field3C = 16384,
+                Field40 = 0,
+                Field44 = 0,
+                Field48 = 0,
+                Field4C = 0,
+                Field50 = 0,
+                Field54 = 0,
+                Field56 = 2,
+                Field57 = 64,
+                Field58 = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v3 (UNIT2_B2)
+            // Slench v3, phase 1
+            new Enemy41Values()
+            {
+                ScanId1 = 204,
+                ScanId2 = 205,
+                Field4 = 32768,
+                Health = 900,
+                FieldC = 4096,
+                Field10 = 60,
+                Field12 = 120,
+                Field14 = 25,
+                Field16 = 2,
+                Padding17 = 0,
+                Field18 = 4096,
+                Field1C = 1024,
+                Field20 = 614,
+                Field24 = 16384,
+                Field28 = 750,
+                Field2C = 819,
+                RollTime = 81920,
+                Field34 = 14336,
+                Field38 = 0,
+                Field3C = 14336,
+                Field40 = 0,
+                Field44 = 16384,
+                Field48 = 40960,
+                Field4C = 4096,
+                Field50 = 3277,
+                Field54 = 150,
+                Field56 = 10,
+                Field57 = 32,
+                Field58 = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v3, phase 2
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                Field4 = 32768,
+                Health = 0,
+                FieldC = 4096,
+                Field10 = 60,
+                Field12 = 120,
+                Field14 = 25,
+                Field16 = 3,
+                Padding17 = 0,
+                Field18 = 4096,
+                Field1C = 1024,
+                Field20 = 614,
+                Field24 = 16384,
+                Field28 = 660,
+                Field2C = 819,
+                RollTime = 81920,
+                Field34 = 18432,
+                Field38 = 0,
+                Field3C = 16384,
+                Field40 = 0,
+                Field44 = 32768,
+                Field48 = 40960,
+                Field4C = 4915,
+                Field50 = 3277,
+                Field54 = 120,
+                Field56 = 10,
+                Field57 = 48,
+                Field58 = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v3, phase 3
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                Field4 = 32768,
+                Health = 0,
+                FieldC = 4096,
+                Field10 = 60,
+                Field12 = 120,
+                Field14 = 20,
+                Field16 = 3,
+                Padding17 = 0,
+                Field18 = 4096,
+                Field1C = 1024,
+                Field20 = 614,
+                Field24 = 16384,
+                Field28 = 600,
+                Field2C = 819,
+                RollTime = 81920,
+                Field34 = 24576,
+                Field38 = 0,
+                Field3C = 16384,
+                Field40 = 0,
+                Field44 = 32768,
+                Field48 = 40960,
+                Field4C = 6144,
+                Field50 = 3277,
+                Field54 = 120,
+                Field56 = 12,
+                Field57 = 55,
+                Field58 = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v4 (UNIT3_B2)
+            // Slench v4, phase 1
+            new Enemy41Values()
+            {
+                ScanId1 = 206,
+                ScanId2 = 223,
+                Field4 = 32768,
+                Health = 800,
+                FieldC = 4096,
+                Field10 = 60,
+                Field12 = 120,
+                Field14 = 20,
+                Field16 = 2,
+                Padding17 = 0,
+                Field18 = 4096,
+                Field1C = 1024,
+                Field20 = 614,
+                Field24 = 16384,
+                Field28 = 1500,
+                Field2C = 819,
+                RollTime = 600,
+                Field34 = 14336,
+                Field38 = 12288,
+                Field3C = 14336,
+                Field40 = 22528,
+                Field44 = 32768,
+                Field48 = 40960,
+                Field4C = 4096,
+                Field50 = 3277,
+                Field54 = 150,
+                Field56 = 10,
+                Field57 = 50,
+                Field58 = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v4, phase 2
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                Field4 = 32768,
+                Health = 0,
+                FieldC = 4096,
+                Field10 = 60,
+                Field12 = 120,
+                Field14 = 20,
+                Field16 = 3,
+                Padding17 = 0,
+                Field18 = 4096,
+                Field1C = 1024,
+                Field20 = 614,
+                Field24 = 16384,
+                Field28 = 1500,
+                Field2C = 600,
+                RollTime = 819,
+                Field34 = 18432,
+                Field38 = 14336,
+                Field3C = 16384,
+                Field40 = 24576,
+                Field44 = 32768,
+                Field48 = 40960,
+                Field4C = 4915,
+                Field50 = 3277,
+                Field54 = 120,
+                Field56 = 10,
+                Field57 = 55,
+                Field58 = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v4, phase 3
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                Field4 = 32768,
+                Health = 0,
+                FieldC = 4096,
+                Field10 = 60,
+                Field12 = 120,
+                Field14 = 20,
+                Field16 = 4,
+                Padding17 = 0,
+                Field18 = 4096,
+                Field1C = 1024,
+                Field20 = 614,
+                Field24 = 16384,
+                Field28 = 1800,
+                Field2C = 900,
+                RollTime = 819,
+                Field34 = 26624,
+                Field38 = 16384,
+                Field3C = 16384,
+                Field40 = 24576,
+                Field44 = 32768,
+                Field48 = 49152,
+                Field4C = 6144,
+                Field50 = 3277,
+                Field54 = 120,
+                Field56 = 12,
+                Field57 = 65,
+                Field58 = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            }
+        };
+
         public static IReadOnlyList<EnemySubroutine<Enemy46Entity>> Enemy46Subroutines = new EnemySubroutine<Enemy46Entity>[20]
         {
             // state 0
@@ -1906,6 +2338,14 @@ namespace MphRead
         // Voldrum1I - 0xF2BA - zero Judicator/Omega Cannon, double Missile/Magmaul/Shock Coil
         // FireSpawn   - 0x8955 - zero Magmaul/Omega Cannon, normal Judicator/Shock Coil, half all else
         // ArcticSpawn - 0xB155 - zero Judicator/Omega Cannon, normal Shock Coil, double Magmaul, half all else
+        // Slench v1 - 0x2AAAA - default
+        // Slench v2 - 0x2AAAA - default
+        // Slench v3 - 0x155F5 - double Missile/Battlehammer, half all else
+        // Slench v4 - 0x16566 - normal Power Beam/Missile/Magmaul, half all else
+        // SlenchSynapse v1 - 0x2AAAA - default
+        // SlenchSynapse v2 - 0x00800 - normal Judicator, zero all else
+        // SlenchSynapse v3 - 0x00080 - normal Battlehammer, zero all else
+        // SlenchSynapse v4 - 0x02000 - normal Magmaul, zero all else
         // LesserIthrak  - 0x5555 - zero Omega Cannon, half all else
         // GreaterIthrak - 0x0000 - zero for all
         // ForceFieldLock - types 0-7 are normal from the corresponding beam and zero from all else; type 8 is zero from all (vulerable to bombs)
@@ -1953,10 +2393,10 @@ namespace MphRead
             /* 38 */ 0x2EAFA, // CrashPillar -- double from Missile/Battlehammer/Shock Coil
             /* 39 */ 0x24D55, // FireSpawn -- zero from Magmual, double from Judicator, half from all else except Omega Cannon (not used)
             /* 40 */ 0x2AAAA, // Spawner
-            /* 41 */ 0x2AA99, // Slench -- half from Power Beam/Missile
+            /* 41 */ 0x2AA99, // Slench -- half from Power Beam/Missile (not used)
             /* 42 */ 0x2AA99, // SlenchShield -- half from Power Beam/Missile
             /* 43 */ 0x2AA99, // SlenchNest -- half from Power Beam/Missile
-            /* 44 */ 0x2AA99, // SlenchSynapse -- half from Power Beam/Missile
+            /* 44 */ 0x2AA99, // SlenchSynapse -- half from Power Beam/Missile (not used)
             /* 45 */ 0x2AA99, // SlenchTurret -- half from Power Beam/Missile
             /* 46 */ 0x2AAAA, // LesserIthrak (not used)
             /* 47 */ 0x2AAAA, // GreaterIthrak (not used)
@@ -1964,6 +2404,16 @@ namespace MphRead
             /* 49 */ 0x2AAAA, // ForceFieldLock (not used)
             /* 50 */ 0x2AAAA, // HitZone (not used)
             /* 51 */ 0x2AAAA  // CarnivorousPlant
+        };
+
+        public static readonly IReadOnlyList<int> SlenchEffectiveness = new int[4]
+        {
+            0x2AAAA, 0x2AAAA, 0x155F5, 0x16566
+        };
+
+        public static readonly IReadOnlyList<int> SlenchSynapseEffectiveness = new int[4]
+        {
+            0x2AAAA, 0x800, 0x80, 0x2000
         };
     }
 }

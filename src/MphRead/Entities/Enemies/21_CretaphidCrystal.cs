@@ -42,9 +42,9 @@ namespace MphRead.Entities.Enemies
         {
             _cretaphid.UpdateTransforms(rootPosition: false);
             Position = _attachNode.Animation.Row3.Xyz + _cretaphid.Position;
-            if (_health > 0 && !_cretaphid.SounceSource.CheckEnvironmentSfx(5)) // CYLINDER_BOSS_ATTACK
+            if (_health > 0 && !_cretaphid.SoundSource.CheckEnvironmentSfx(5)) // CYLINDER_BOSS_ATTACK
             {
-                _cretaphid.SounceSource.PlayEnvironmentSfx(6); // CYLINDER_BOSS_SPIN
+                _cretaphid.SoundSource.PlayEnvironmentSfx(6); // CYLINDER_BOSS_SPIN
             }
         }
 

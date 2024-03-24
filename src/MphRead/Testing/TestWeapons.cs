@@ -141,24 +141,25 @@ namespace MphRead.Testing
         {
             Console.WriteLine($@"            new WeaponInfo(
                 description: """",
-                weapon: BeamType.{weapon.Beam},
-                weaponType: BeamType.{weapon.BeamKind},
+                beam: BeamType.{weapon.Beam},
+                beamKind: BeamType.{weapon.BeamKind},
                 drawFuncIds: new byte[] {{ {weapon.DrawFuncIds[0]}, {weapon.DrawFuncIds[1]} }},
                 colors: new ushort[] {{ {weapon.Colors[0]}, {weapon.Colors[1]} }},
+                priority: {weapon.Priority},
                 flags: {EnumToString(weapon.Flags)},
                 splashDamage: {weapon.SplashDamage},
                 minChargeSplashDamage: {weapon.MinChargeSplashDamage},
                 chargedSplashDamage: {weapon.ChargedSplashDamage},
                 splashDmgTypes: new byte[] {{ {weapon.SplashDmgTypes[0]}, {weapon.SplashDmgTypes[1]} }},
                 shotCooldown: {weapon.ShotCooldown},
-                shotCooldownRelated: {weapon.ShotCooldownRelated},
+                autofireCooldown: {weapon.ShotCooldownRelated},
                 ammoType: {weapon.AmmoType},
-                beamTypes: new byte[] {{ {weapon.BeamTypes[0]}, {weapon.BeamTypes[1]} }},
+                colEffects: new byte[] {{ {weapon.BeamTypes[0]}, {weapon.BeamTypes[1]} }},
                 muzzleEffects: new byte[] {{ {weapon.MuzzleEffects[0]}, {weapon.MuzzleEffects[1]} }},
                 dmgDirTypes: new byte[] {{ {weapon.DmgDirTypes[0]}, {weapon.DmgDirTypes[1]} }},
-                field1D: new byte[] {{ {weapon.Field1D[0]}, {weapon.Field1D[1]} }},
+                dmgInterp: new byte[] {{ {weapon.DamageInterpolations[0]}, {weapon.DamageInterpolations[1]} }},
                 afflictions: new Affliction[] {{ {EnumToString(weapon.Afflictions[0])}, {EnumToString(weapon.Afflictions[1])} }},
-                field21: {weapon.Field21},
+                padding21: {weapon.Padding21},
                 minCharge: {weapon.MinCharge},
                 fullCharge: {weapon.FullCharge},
                 ammoCost: {weapon.AmmoCost},
@@ -174,15 +175,15 @@ namespace MphRead.Testing
                 minChargeLifespan: {weapon.MinChargeLifespan},
                 chargedLifespan: {weapon.ChargedLifespan},
                 speedDecay: new ushort[] {{ {weapon.SpeedDecay[0]}, {weapon.SpeedDecay[1]} }},
-                field42: {weapon.Field42},
+                padding42: {weapon.Padding42},
                 speedInterp: new ushort[] {{ {weapon.SpeedInterp[0]}, {weapon.SpeedInterp[1]} }},
-                field48: {weapon.Field48},
-                field4C: {weapon.Field4C},
-                field50: {weapon.Field50},
-                field54: {weapon.Field54},
-                field58: {weapon.Field58},
-                field5C: {weapon.Field5C},
-                field60: {weapon.Field60},
+                unchargedDmgDirMag: {weapon.UnchargedDmgDirMag},
+                minChargeDmgDirMag: {weapon.MinChargeDmgDirMag},
+                chargedDmgDirMag: {weapon.ChargedDmgDirMag},
+                zoomFov: {weapon.ZoomFov},
+                unchargedCylRadius: {weapon.UnchargedCylRadius},
+                minChargeCylRadius: {weapon.MinChargeCylRadius},
+                chargedCylRadius: {weapon.ChargedCylRadius},
                 unchargedSpeed: {weapon.UnchargedSpeed},
                 minChargeSpeed: {weapon.MinChargeSpeed},
                 chargedSpeed: {weapon.ChargedSpeed},
@@ -197,21 +198,21 @@ namespace MphRead.Testing
                 chargedHoming: {weapon.ChargedHoming},
                 homingRange: {weapon.HomingRange},
                 homingTolerance: {weapon.HomingTolerance},
-                unchargedScale: {weapon.UnchargedScale},
-                minChargeScale: {weapon.MinChargeScale},
-                chargedScale: {weapon.ChargedScale},
+                unchargedSplashRadius: {weapon.UnchargedScale},
+                minChargeSplashRadius: {weapon.MinChargeScale},
+                chargedSplashRadius: {weapon.ChargedScale},
                 unchargedDistance: {weapon.UnchargedDistance},
                 minChargeDistance: {weapon.MinChargeDistance},
                 chargedDistance: {weapon.ChargedDistance},
                 unchargedSpread: {weapon.UnchargedSpread},
                 minChargeSpread: {weapon.MinChargeSpread},
                 chargedSpread: {weapon.ChargedSpread},
-                fieldC0: {weapon.FieldC0},
-                fieldC4: {weapon.FieldC4},
-                fieldC8: {weapon.FieldC8},
-                fieldCC: {weapon.FieldCC},
-                fieldD0: {weapon.FieldD0},
-                fieldD4: {weapon.FieldD4},
+                unRicoLossH: {weapon.UnchargedRicochetLossH},
+                minRicoLossH: {weapon.MinChargeRicochetLossH},
+                chRicoLossH: {weapon.ChargedRicochetLossH},
+                unRicoLossV: {weapon.UnchargedRicochetLossV},
+                minRicoLossV: {weapon.MinChargeRicochetLossV},
+                chRicoLossV: {weapon.ChargedRicochetLossV},
                 ricochetWeapon: new uint[] {{ 0x{weapon.RicochetWeaponPtr[0]:X1}, 0x{weapon.RicochetWeaponPtr[1]:X1} }},
                 projectileCount: {weapon.ProjectileCount},
                 minChargedProjectileCount: {weapon.MinChargedProjectileCount},
@@ -1098,7 +1099,7 @@ namespace MphRead.Testing
             public readonly byte[] DrawFuncIds;
             [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U2, SizeConst = 2)]
             public readonly ushort[] Colors;
-            public readonly WeaponFlags Flags;
+            public readonly uint FlagsAndPriority;
             public readonly ushort SplashDamage;
             public readonly ushort MinChargeSplashDamage;
             public readonly ushort ChargedSplashDamage;
@@ -1114,10 +1115,10 @@ namespace MphRead.Testing
             [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
             public readonly byte[] DmgDirTypes;
             [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
-            public readonly byte[] Field1D;
+            public readonly byte[] DamageInterpolations;
             [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U1, SizeConst = 2)]
             public readonly Affliction[] Afflictions; // bit 0 - freeze, bit 1 - disrupt, bit 3 - burn
-            public readonly byte Field21;
+            public readonly byte Padding21;
             public readonly ushort MinCharge;
             public readonly ushort FullCharge;
             public readonly ushort AmmoCost;
@@ -1134,16 +1135,16 @@ namespace MphRead.Testing
             public readonly ushort ChargedLifespan;
             [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U2, SizeConst = 2)]
             public readonly ushort[] SpeedDecay;
-            public readonly ushort Field42;
+            public readonly ushort Padding42;
             [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U2, SizeConst = 2)]
             public readonly ushort[] SpeedInterp;
-            public readonly int Field48; // uncharged
-            public readonly int Field4C; // min charge
-            public readonly int Field50; // full charge
-            public readonly int Field54;
-            public readonly int Field58; // uncharged
-            public readonly int Field5C; // min charge
-            public readonly int Field60; // full charge
+            public readonly int UnchargedDmgDirMag; // uncharged
+            public readonly int MinChargeDmgDirMag; // min charge
+            public readonly int ChargedDmgDirMag; // full charge
+            public readonly int ZoomFov;
+            public readonly int UnchargedCylRadius; // uncharged
+            public readonly int MinChargeCylRadius; // min charge
+            public readonly int ChargedCylRadius; // full charge
             public readonly int UnchargedSpeed; // uncharged
             public readonly int MinChargeSpeed; // min charge
             public readonly int ChargedSpeed; // full charge
@@ -1167,12 +1168,12 @@ namespace MphRead.Testing
             public readonly int UnchargedSpread; // uncharged
             public readonly int MinChargeSpread; // min charge
             public readonly int ChargedSpread; // full charge
-            public readonly int FieldC0; // uncharged
-            public readonly int FieldC4; // min charge
-            public readonly int FieldC8; // full charge
-            public readonly int FieldCC; // uncharged
-            public readonly int FieldD0; // min charge
-            public readonly int FieldD4; // full charge
+            public readonly int UnchargedRicochetLossH; // uncharged
+            public readonly int MinChargeRicochetLossH; // min charge
+            public readonly int ChargedRicochetLossH; // full charge
+            public readonly int UnchargedRicochetLossV; // uncharged
+            public readonly int MinChargeRicochetLossV; // min charge
+            public readonly int ChargedRicochetLossV; // full charge
             [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.U4, SizeConst = 2)]
             public readonly uint[] RicochetWeaponPtr; // WeaponInfo*
             public readonly ushort ProjectileCount;
@@ -1183,6 +1184,9 @@ namespace MphRead.Testing
             public readonly ushort SmokeDrain; // reduce level by this amount each frame (or bring it to 0)
             public readonly ushort SmokeShotAmount; // increase level by this amount when firing uncharged shot
             public readonly ushort SmokeChargeAmount; // increase level by this amount each frame while charging
+
+            public byte Priority => (byte)(FlagsAndPriority & 0xFF);
+            public WeaponFlags Flags => (WeaponFlags)(FlagsAndPriority & 0xFFFFFF00);
         }
 
         private static void Nop()

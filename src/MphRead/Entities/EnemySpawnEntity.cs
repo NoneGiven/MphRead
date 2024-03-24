@@ -389,6 +389,26 @@ namespace MphRead.Entities
             {
                 return new Enemy21Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
             }
+            if (type == EnemyType.Slench)
+            {
+                return new Enemy41Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.SlenchShield)
+            {
+                return new Enemy42Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.SlenchNest)
+            {
+                return new Enemy43Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.SlenchSynapse)
+            {
+                return new Enemy44Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.SlenchTurret)
+            {
+                return new Enemy45Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
             if (type == EnemyType.PsychoBit1)
             {
                 return new Enemy23Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);

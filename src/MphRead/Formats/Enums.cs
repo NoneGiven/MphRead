@@ -354,7 +354,7 @@ namespace MphRead
         PlatformWakeup = 44,
         PlatformSleep = 45,
         DripMoatPlatform = 46,
-        Unknown48 = 48, // 48-51 are messages sent by Slench synpases to Slench turrets
+        Unknown48 = 48, // 48-51 are messages sent by Slench synapses to Slench turrets
         Unknown49 = 49,
         Unknown50 = 50,
         Unknown51 = 51,
