@@ -67,13 +67,13 @@ namespace MphRead.Entities.Enemies
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Enemy41Values GetValues()
         {
-            return Metadata.Enemy41Values[_subtype * 4];
+            return Metadata.Enemy41Values[_subtype * 3];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Enemy41Values GetPhaseValues()
         {
-            return Metadata.Enemy41Values[_subtype * 4 + _phase];
+            return Metadata.Enemy41Values[_subtype * 3 + _phase];
         }
 
         protected override void EnemyInitialize()
