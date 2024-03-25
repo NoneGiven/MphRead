@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MphRead.Entities.Enemies;
 using MphRead.Formats;
 using MphRead.Hud;
 using MphRead.Text;
@@ -2433,19 +2434,21 @@ namespace MphRead.Entities
                 current = enemy.Health;
                 if (enemy.EnemyType == EnemyType.SlenchShield)
                 {
-                    // todo: get current and max from owner
+                    var shield = (Enemy42Entity)enemy;
+                    max = shield.Slench.HealthMax;
+                    current = shield.Slench.Health;
                 }
                 else if (enemy.EnemyType == EnemyType.GoreaArm)
                 {
-                    // todo: get current by subtracting damage from max
+                    // todo-gorea: get current by subtracting damage from max
                 }
                 else if (enemy.EnemyType == EnemyType.GoreaSealSphere1)
                 {
-                    // todo: get current by subtracting damage from max
+                    // todo-gorea: get current by subtracting damage from max
                 }
                 else if (enemy.EnemyType == EnemyType.GoreaSealSphere2)
                 {
-                    // todo: get current by subtracting damage from max
+                    // todo-gorea: get current by subtracting damage from max
                 }
                 lowHealth = max / 4;
             }

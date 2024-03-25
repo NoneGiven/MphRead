@@ -7,6 +7,7 @@ namespace MphRead.Entities.Enemies
     public class Enemy42Entity : EnemyInstanceEntity
     {
         private readonly Enemy41Entity _slench;
+        public Enemy41Entity Slench => _slench;
 
         public Enemy42Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
             : base(data, nodeRef, scene)
