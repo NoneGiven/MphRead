@@ -354,10 +354,10 @@ namespace MphRead
         PlatformWakeup = 44,
         PlatformSleep = 45,
         DripMoatPlatform = 46,
-        Unknown48 = 48, // 48-51 are messages sent by Slench synapses to Slench turrets
-        Unknown49 = 49,
-        Unknown50 = 50,
-        Unknown51 = 51,
+        ActivateTurret = 48,
+        DecreaseTurretLights = 49,
+        IncreaseTurretLights = 50,
+        DeactivateTurret = 51,
         SetBeamReflection = 52, // only checked by platforms, probably never sent, and not relevant either way
         SetPlatformIndex = 53, // param 1: new index + 1, param 2: update even if currently active
         PlaySfxScript = 54, // param 1: script 1, or -1 to stop/suppress SFX or something

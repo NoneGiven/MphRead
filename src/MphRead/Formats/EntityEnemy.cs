@@ -118,7 +118,7 @@ namespace MphRead
         public readonly uint EnemyVersion;
         public readonly RawCollisionVolume Volume0;
         public readonly RawCollisionVolume Volume1;
-        public readonly uint FieldB0;
+        public readonly int Index;
     }
 
     // size: 400 (32 + 92 * 4)
@@ -311,7 +311,7 @@ namespace MphRead.Editor
         public byte HunterChance { get; set; }
 
         // slench turret
-        public uint Unknown04 { get; set; }
+        public int Index { get; set; }
 
         // gorea 2
         public Vector3 Unknown05 { get; set; }
@@ -514,7 +514,7 @@ namespace MphRead.Editor
                 EnemyVersion = raw.Fields.S10.EnemyVersion;
                 Volume0 = new CollisionVolume(raw.Fields.S10.Volume0);
                 Volume1 = new CollisionVolume(raw.Fields.S10.Volume1);
-                Unknown04 = raw.Fields.S10.FieldB0;
+                Index = raw.Fields.S10.Index;
             }
             else if (spawnerType == 11)
             {
@@ -582,7 +582,7 @@ namespace MphRead.Editor
             PrintValue(Unknown03, other.Unknown03, nameof(Unknown03));
             PrintValue(HunterColor, other.HunterColor, nameof(HunterColor));
             PrintValue(HunterChance, other.HunterChance, nameof(HunterChance));
-            PrintValue(Unknown04, other.Unknown04, nameof(Unknown04));
+            PrintValue(Index, other.Index, nameof(Index));
             PrintValue(Unknown05, other.Unknown05, nameof(Unknown05));
             PrintValue(Unknown06, other.Unknown06, nameof(Unknown06));
             PrintValue(Unknown07, other.Unknown07, nameof(Unknown07));

@@ -16,6 +16,8 @@ namespace MphRead.Entities.Enemies
         private int _subtype = 0;
         private int _phase = 0;
         private byte _nextState = 0;
+        public int Subtype => _subtype;
+        public int Phase => _phase;
 
         private float _field190 = 0; // sktodo: field name for angle in degrees
         private ushort _field196 = 0;
@@ -78,7 +80,7 @@ namespace MphRead.Entities.Enemies
 
         protected override void EnemyInitialize()
         {
-            // default: if (scene.RoomId == 35) // UNIT1_B1
+            // default: if (_scene.RoomId == 35) // UNIT1_B1
             SlenchFlags = SlenchFlags.Bit2;
             if (_scene.RoomId == 82) // UNIT4_B1
             {
@@ -146,6 +148,7 @@ namespace MphRead.Entities.Enemies
             _shield = shield;
             for (int i = 0; i < _synapseCount; i++)
             {
+                SynapseIndex = i;
                 if (EnemySpawnEntity.SpawnEnemy(this, EnemyType.SlenchSynapse, NodeRef, _scene) is not Enemy44Entity synapse)
                 {
                     return;
@@ -867,7 +870,7 @@ namespace MphRead.Entities.Enemies
             {
                 if (Func2137044(_field1D4, Fixed.ToFloat(phaseValues.Field50))) // sktodo: review field values like this
                 {
-                    ChangeState(_state2);
+                    ChangeState(_nextState);
                 }
             }
             else if (_state1 == 14)
@@ -1013,6 +1016,24 @@ namespace MphRead.Entities.Enemies
         private bool Func21365A4()
         {
             return _state1 < 5;
+        }
+
+        // sktodo: function name
+        public bool Func2136550()
+        {
+            if (!Func21365A4())
+            {
+                return false;
+            }
+            for (int i = 0; i < _synapseCount; i++)
+            {
+                Enemy44Entity synapse = _synapses[i];
+                if (synapse.StateA < 4)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         // sktodo: function name
@@ -1313,6 +1334,6 @@ namespace MphRead.Entities.Enemies
         public byte Field57 { get; init; }
         public int Field58 { get; init; }
         public ushort Magic { get; init; } // 0xBEEF
-        public short Padding5E { get; init; }
+        public ushort Padding5E { get; init; }
     }
 }

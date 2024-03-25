@@ -465,6 +465,32 @@ namespace MphRead
             }
         };
 
+        public static IReadOnlyList<EnemySubroutine<Enemy45Entity>> Enemy45Subroutines = new EnemySubroutine<Enemy45Entity>[4]
+        {
+            // state 0
+            new EnemySubroutine<Enemy45Entity>(new EnemyBehavior<Enemy45Entity>[1]
+            {
+                new EnemyBehavior<Enemy45Entity>(1, Enemy45Entity.Behavior00)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy45Entity>(new EnemyBehavior<Enemy45Entity>[2]
+            {
+                new EnemyBehavior<Enemy45Entity>(2, Enemy45Entity.Behavior04),
+                new EnemyBehavior<Enemy45Entity>(0, Enemy45Entity.Behavior02)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy45Entity>(new EnemyBehavior<Enemy45Entity>[2]
+            {
+                new EnemyBehavior<Enemy45Entity>(0, Enemy45Entity.Behavior02),
+                new EnemyBehavior<Enemy45Entity>(1, Enemy45Entity.Behavior03)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy45Entity>(new EnemyBehavior<Enemy45Entity>[1]
+            {
+                new EnemyBehavior<Enemy45Entity>(0, Enemy45Entity.Behavior01)
+            })
+        };
+
         public static IReadOnlyList<EnemySubroutine<Enemy19Entity>> Enemy19Subroutines = new EnemySubroutine<Enemy19Entity>[27]
         {
             // state 0
@@ -1931,6 +1957,206 @@ namespace MphRead
             }
         };
 
+        public static IReadOnlyList<Enemy44Values> Enemy44Values = new Enemy44Values[12] // 4 x 3
+        {
+            // Slench v1 (UNIT1_B1)
+            // Slench v1, phase 1
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 36,
+                HealTimer = 120,
+                ReappearTimer = 360,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v1, phase 2
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 36,
+                HealTimer = 120,
+                ReappearTimer = 300,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v1, phase 3
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 36,
+                HealTimer = 120,
+                ReappearTimer = 240,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v2 (UNIT4_B1)
+            // Slench v2, phase 1
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 72,
+                HealTimer = 120,
+                ReappearTimer = 600,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v2, phase 2
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 72,
+                HealTimer = 120,
+                ReappearTimer = 480,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v2, phase 3
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 96,
+                HealTimer = 120,
+                ReappearTimer = 360,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v3 (UNIT2_B2)
+            // Slench v3, phase 1
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 48,
+                HealTimer = 120,
+                ReappearTimer = 420,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v3, phase 2
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 48,
+                HealTimer = 120,
+                ReappearTimer = 360,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v3, phase 3
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 48,
+                HealTimer = 120,
+                ReappearTimer = 300,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v4 (UNIT3_B2)
+            // Slench v4, phase 1
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 90,
+                HealTimer = 120,
+                ReappearTimer = 600,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v4, phase 2
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 90,
+                HealTimer = 120,
+                ReappearTimer = 540,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v4, phase 3
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 90,
+                HealTimer = 120,
+                ReappearTimer = 480,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            }
+        };
+
+        public static IReadOnlyList<Enemy45Values> Enemy45Values = new Enemy45Values[4]
+        {
+            // Slench v1 (UNIT1_B1)
+            new Enemy45Values()
+            {
+                Health = 30,
+                Damage = 2,
+                Unused4 = 0,
+                ContactDamage = 10,
+                ShotCooldown = 20,
+                SalvoCooldown = 90,
+                MinShots = 1,
+                MaxShots = 1,
+                ScanId = 190,
+                Effectiveness = 0xAAAA
+            },
+            // Slench v2 (UNIT4_B1)
+            new Enemy45Values()
+            {
+                Health = 30,
+                Damage = 2,
+                Unused4 = 1,
+                ContactDamage = 10,
+                ShotCooldown = 20,
+                SalvoCooldown = 90,
+                MinShots = 1,
+                MaxShots = 1,
+                ScanId = 190,
+                Effectiveness = 0xAAAA
+            },
+            // Slench v3 (UNIT2_B2)
+            new Enemy45Values()
+            {
+                Health = 30,
+                Damage = 2,
+                Unused4 = 1,
+                ContactDamage = 10,
+                ShotCooldown = 20,
+                SalvoCooldown = 250,
+                MinShots = 1,
+                MaxShots = 1,
+                ScanId = 190,
+                Effectiveness = 0xAAAA
+            },
+            // Slench v4 (UNIT3_B2)
+            new Enemy45Values()
+            {
+                Health = 30,
+                Damage = 2,
+                Unused4 = 1,
+                ContactDamage =  5,
+                ShotCooldown = 20,
+                SalvoCooldown = 250,
+                MinShots = 1,
+                MaxShots = 1,
+                ScanId = 190,
+                Effectiveness = 0xAAAA
+            }
+        };
+
         public static IReadOnlyList<EnemySubroutine<Enemy46Entity>> Enemy46Subroutines = new EnemySubroutine<Enemy46Entity>[20]
         {
             // state 0
@@ -2321,7 +2547,7 @@ namespace MphRead
         }
 
         // todo: document other replacements
-        // default = 0x2AAAA = 0101010101010101010 (2/normal effectiveness for everything)
+        // default = 0x2AAAA = 00101010101010101010 (2/normal effectiveness for everything)
         // replacements:
         // AlimbicTurretV10 - 0xEAAA - zero Omega Cannon, double Shock Coil
         // AlimbicTurretV14 - 0xEABA - zero Omega Cannon, double Missile/Shock Coil
@@ -2346,6 +2572,7 @@ namespace MphRead
         // SlenchSynapse v2 - 0x00800 - normal Judicator, zero all else
         // SlenchSynapse v3 - 0x00080 - normal Battlehammer, zero all else
         // SlenchSynapse v4 - 0x02000 - normal Magmaul, zero all else
+        // SlenchTurret - 0xAAAA - zero Omega Cannon, normal all else
         // LesserIthrak  - 0x5555 - zero Omega Cannon, half all else
         // GreaterIthrak - 0x0000 - zero for all
         // ForceFieldLock - types 0-7 are normal from the corresponding beam and zero from all else; type 8 is zero from all (vulerable to bombs)
@@ -2397,7 +2624,7 @@ namespace MphRead
             /* 42 */ 0x2AA99, // SlenchShield -- half from Power Beam/Missile
             /* 43 */ 0x2AA99, // SlenchNest -- half from Power Beam/Missile
             /* 44 */ 0x2AA99, // SlenchSynapse -- half from Power Beam/Missile (not used)
-            /* 45 */ 0x2AA99, // SlenchTurret -- half from Power Beam/Missile
+            /* 45 */ 0x2AA99, // SlenchTurret -- half from Power Beam/Missile (not used)
             /* 46 */ 0x2AAAA, // LesserIthrak (not used)
             /* 47 */ 0x2AAAA, // GreaterIthrak (not used)
             /* 48 */ 0x2AAAA, // Hunter

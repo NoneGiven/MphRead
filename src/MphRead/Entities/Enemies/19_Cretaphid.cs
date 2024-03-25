@@ -447,6 +447,7 @@ namespace MphRead.Entities.Enemies
             }
         }
 
+        // duplicated for 1 through 26
         private void State0()
         {
             CallSubroutine(Metadata.Enemy19Subroutines, this);
