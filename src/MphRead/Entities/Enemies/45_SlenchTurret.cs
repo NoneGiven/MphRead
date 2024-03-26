@@ -249,7 +249,7 @@ namespace MphRead.Entities.Enemies
             }
             else if (info.Message == Message.IncreaseTurretLights)
             {
-                int maxFrame = _model.AnimInfo.Frame[0] - 1;
+                int maxFrame = _model.AnimInfo.FrameCount[0] - 1;
                 if (_animFrameCount < maxFrame)
                 {
                     _animFrameCount += (int)info.Param1;
