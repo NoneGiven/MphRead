@@ -293,7 +293,7 @@ namespace MphRead.Entities.Enemies
                 _soundSource.PlaySfx(SfxId.BIGEYE_ATTACK3_SCR);
                 Func2136DCC();
                 _field19C_B = 0;
-                _nextState = _state1; // sktodo: state field names
+                _nextState = _state1;
                 break;
             case 14:
                 _field19E_B = 36;
@@ -562,22 +562,15 @@ namespace MphRead.Entities.Enemies
                         _soundSource.PlaySfx(SfxId.BIGEYE_DETACH);
                     }
                 }
-                else
+                else if (_subtype == 3
+                    || RotateToTarget(_field1EC, Fixed.ToFloat(phaseValues.Field4) / 2) // todo: FPS stuff
+                    && MoveToPosition(_field1E0, Fixed.ToFloat(phaseValues.Field1C) / 2)) // todo: FPS stuff
                 {
-                    bool result = _subtype == 3;
-                    if (!result)
-                    {
-                        result = RotateToTarget(_field1EC, Fixed.ToFloat(phaseValues.Field4) / 2); // todo: FPS stuff
-                        result &= Func2137044(_field1E0, Fixed.ToFloat(phaseValues.Field1C)); // sktodo: review field values like these
-                    }
-                    if (result)
-                    {
-                        _field218 = 0;
-                        SlenchFlags &= ~SlenchFlags.Bit1;
-                        SlenchFlags &= ~SlenchFlags.Bit3;
-                        SlenchFlags |= SlenchFlags.Bit2;
-                        ChangeState(8);
-                    }
+                    _field218 = 0;
+                    SlenchFlags &= ~SlenchFlags.Bit1;
+                    SlenchFlags &= ~SlenchFlags.Bit3;
+                    SlenchFlags |= SlenchFlags.Bit2;
+                    ChangeState(8);
                 }
             }
             else if (_state1 == 6)
@@ -592,13 +585,13 @@ namespace MphRead.Entities.Enemies
                 }
                 else if (RotateToTarget(_field1E0, Fixed.ToFloat(phaseValues.Field4) / 2)) // todo: FPS stuff
                 {
-                    Func2137044(_field1E0, Fixed.ToFloat(phaseValues.Field20)); // sktodo: review field values like this
+                    MoveToPosition(_field1E0, Fixed.ToFloat(phaseValues.Field20) / 2); // todo: FPS stuff
                 }
             }
             else if (_state1 == 7)
             {
                 if (RotateToTarget(_field1EC, Fixed.ToFloat(phaseValues.Field4) / 2) // todo: FPS stuff
-                    && Func2137044(_startPos, Fixed.ToFloat(phaseValues.Field20))) // sktodo: review field values like these
+                    && MoveToPosition(_startPos, Fixed.ToFloat(phaseValues.Field20) / 2)) // todo: FPS stuff
                 {
                     for (int i = 0; i < _synapseCount; i++)
                     {
@@ -621,7 +614,7 @@ namespace MphRead.Entities.Enemies
                 }
                 else if (RotateToTarget(pos, Fixed.ToFloat(phaseValues.Field24) / 2)) // todo: FPS stuff
                 {
-                    Func2137044(pos, Fixed.ToFloat(phaseValues.Field2C)); // sktodo: review field values like this
+                    MoveToPosition(pos, Fixed.ToFloat(phaseValues.Field2C) / 2); // todo: FPS stuff
                 }
             }
             else if (_state1 == 10)
@@ -862,14 +855,14 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state1 == 12)
             {
-                if (Func2137044(_field1BC, Fixed.ToFloat(phaseValues.Field4C))) // sktodo: review field values like this
+                if (MoveToPosition(_field1BC, Fixed.ToFloat(phaseValues.Field4C) / 2)) // todo: FPS stuff
                 {
                     ChangeState(13);
                 }
             }
             else if (_state1 == 13)
             {
-                if (Func2137044(_field1D4, Fixed.ToFloat(phaseValues.Field50))) // sktodo: review field values like this
+                if (MoveToPosition(_field1D4, Fixed.ToFloat(phaseValues.Field50) / 2)) // todo: FPS stuff
                 {
                     ChangeState(_nextState);
                 }
@@ -1075,18 +1068,16 @@ namespace MphRead.Entities.Enemies
             return pos == Position;
         }
 
-        // sktodo: function name
-        // sktodo: parameter names
-        private bool Func2137044(Vector3 a2, float a3)
+        private bool MoveToPosition(Vector3 position, float increment)
         {
-            Vector3 between = a2 - Position;
-            if (between.Length > a3)
+            Vector3 between = position - Position;
+            if (between.LengthSquared > increment * increment)
             {
                 between = between.Normalized();
-                Position += between * a3;
+                Position += between * increment;
                 return false;
             }
-            Position = a2;
+            Position = position;
             return true;
         }
 
