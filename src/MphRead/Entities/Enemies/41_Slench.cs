@@ -37,10 +37,14 @@ namespace MphRead.Entities.Enemies
         private Vector3 _field1D4;
         private float _field218 = 0;
 
-        private int _field19C = 0;
-        private int _field1A0 = 0;
+        private int _staticShotCounter = 0;
+        private int _field19C_B = 0; // note: these two fields are the same in-game
+        private int _staticShotCooldown = 0;
+        private int _field1A0_B = 0; // note: these two fields are the same in-game
         private bool _field1A3 = false;
         private int _rollTimer = 0;
+        private int _staticShotTimer = 0;
+        private int _field19E_B = 0; // note: these two fields are the same in-game
 
         private EquipInfo _equipInfo = null!;
         private int _ammo = 1000;
@@ -148,6 +152,7 @@ namespace MphRead.Entities.Enemies
             _shield = shield;
             for (int i = 0; i < _synapseCount; i++)
             {
+                // the game uses _field19E/_field19E_A/timer1 as a temp for this
                 SynapseIndex = i;
                 if (EnemySpawnEntity.SpawnEnemy(this, EnemyType.SlenchSynapse, NodeRef, _scene) is not Enemy44Entity synapse)
                 {
@@ -174,7 +179,6 @@ namespace MphRead.Entities.Enemies
         private void ChangeState(byte state)
         {
             _field1A3 = false;
-            // sktodo: review flags and don't bother clearing ones that never get set
             SlenchFlags &= ~SlenchFlags.Bit7;
             SlenchFlags &= ~SlenchFlags.Bit8;
             SlenchFlags &= ~SlenchFlags.Bit9;
@@ -197,15 +201,17 @@ namespace MphRead.Entities.Enemies
                 break;
             case 3:
                 Func2136DCC();
-                SynapseIndex = (int)(phaseValues.Field10 + Rng.GetRandomInt2(phaseValues.Field12 - phaseValues.Field10));
+                int min = phaseValues.MinStaticShotTimer * 2; // todo: FPS stuff
+                int max = phaseValues.MaxStaticShotTimer * 2; // todo: FPS stuff
+                _staticShotTimer = (int)(min + Rng.GetRandomInt2(max - min));
                 break;
             case 4:
                 _soundSource.PlaySfx(SfxId.BIGEYE_ATTACK1A_SCR);
                 Func2136ED8();
                 Func2136E48();
-                SynapseIndex = 0;
-                _field1A0 = 0;
-                _field19C = 0;
+                _staticShotTimer = 0;
+                _staticShotCooldown = 0;
+                _staticShotCounter = 0;
                 Vector3 up = FacingVector;
                 Vector3 facing;
                 if (up.Z <= -0.9f || up.Z >= 0.9f) // 3686
@@ -241,7 +247,7 @@ namespace MphRead.Entities.Enemies
                 Func2136EC4();
                 _field204 = 0;
                 _field18C = 0;
-                _field1A0 = phaseValues.Field28;
+                _field1A0_B = phaseValues.Field28;
                 _field198 = 0;
                 SlenchFlags &= ~SlenchFlags.Bit1;
                 SlenchFlags &= ~SlenchFlags.Bit2;
@@ -286,11 +292,11 @@ namespace MphRead.Entities.Enemies
             case 11:
                 _soundSource.PlaySfx(SfxId.BIGEYE_ATTACK3_SCR);
                 Func2136DCC();
-                _field19C = 0;
+                _field19C_B = 0;
                 _nextState = _state1; // sktodo: state field names
                 break;
             case 14:
-                SynapseIndex = 36; // sktodo: is this field name right?
+                _field19E_B = 36;
                 Func2136DCC();
                 _scene.SpawnEffect(206, FacingVector, UpVector, Position); // eyeFinalKill
                 break;
@@ -345,7 +351,7 @@ namespace MphRead.Entities.Enemies
             Enemy41Values phaseValues = GetPhaseValues();
             Vector3 facing = FacingVector;
             Vector3 up = UpVector;
-            Vector3 vec2 = PlayerEntity.Main.Volume.SpherePosition.AddY(0.5f); // sktodo: variable name
+            Vector3 playerTarget = PlayerEntity.Main.Volume.SpherePosition.AddY(0.5f);
             if (SlenchFlags.TestFlag(SlenchFlags.Bit9))
             {
                 _field208 += 20 / 2; // todo: FPS stuff
@@ -355,7 +361,7 @@ namespace MphRead.Entities.Enemies
                 }
                 Vector3 axis = facing;
                 var rotMtx = Matrix4.CreateFromAxisAngle(axis, MathHelper.DegreesToRadians(_field208));
-                vec2 += Matrix.Vec3MultMtx3(up, rotMtx).Normalized() * 2;
+                playerTarget += Matrix.Vec3MultMtx3(up, rotMtx).Normalized() * 2;
             }
             if (SlenchFlags.TestFlag(SlenchFlags.Bit7))
             {
@@ -442,7 +448,7 @@ namespace MphRead.Entities.Enemies
             }
             if (_state1 == 0)
             {
-                if ((vec2 - Position).LengthSquared <= 16 * 16)
+                if ((playerTarget - Position).LengthSquared <= 16 * 16)
                 {
                     ChangeState(1);
                 }
@@ -468,9 +474,9 @@ namespace MphRead.Entities.Enemies
             else if (_state1 == 3)
             {
                 // sktodo: possible FPS stuff?
-                if (SynapseIndex > 0 && --SynapseIndex > 0)
+                if (_staticShotTimer > 0 && --_staticShotTimer > 0)
                 {
-                    Func2137194(vec2, Fixed.ToFloat(phaseValues.FieldC)); // sktodo: review field values like this
+                    Func2137194(playerTarget, Fixed.ToFloat(phaseValues.FieldC) / 2); // todo: FPS stuff
                 }
                 else
                 {
@@ -479,17 +485,16 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state1 == 4)
             {
-                // sktodo: possible FPS stuff?
-                if (SynapseIndex < 36)
+                if (_staticShotTimer < 36 * 2) // todo: FPS stuff
                 {
-                    SynapseIndex++;
-                    if (SynapseIndex < 16)
+                    _staticShotTimer++;
+                    if (_staticShotTimer < 16 * 2) // todo: FPS stuff
                     {
-                        Func2137194(vec2, Fixed.ToFloat(phaseValues.Field18));
+                        Func2137194(playerTarget, Fixed.ToFloat(phaseValues.Field18) / 2); // todo: FPS stuff
                     }
                     else
                     {
-                        if (SynapseIndex == 16) // sktodo: assuming I'm right about d_feq
+                        if (_staticShotTimer == 16 * 2) // todo: FPS stuff // sktodo: confirm about f_eq
                         {
                             // the game has a bad macro expansion here where the angle is chosen and converted to fx32,
                             // and is likely supposed to be used from there as-is, but instead the fx32 value gets converted
@@ -509,20 +514,20 @@ namespace MphRead.Entities.Enemies
                             float randf = Rng.GetRandomInt2(0x2000) / 4096f + 2; // [2.0, 4.0)
                             _field1D4 = vecA * randf + vecB;
                         }
-                        Func2137194(_field1D4, Fixed.ToFloat(phaseValues.Field4)); // sktodo: review field values like this
+                        Func2137194(_field1D4, Fixed.ToFloat(phaseValues.Field4) / 2); // todo: FPS stuff
                     }
                 }
-                else if (_field1A0 != 0)
+                else if (_staticShotCooldown != 0)
                 {
-                    _field1A0++; // sktodo: FPS stuff
-                    Func2137194(vec2, Fixed.ToFloat(phaseValues.Field18)); // sktodo: review field values like this
+                    _staticShotCooldown--;
+                    Func2137194(playerTarget, Fixed.ToFloat(phaseValues.Field18) / 2); // todo: FPS stuff
                 }
-                else if (_field19C < phaseValues.Field16)
+                else if (_staticShotCounter < phaseValues.StaticShotCount)
                 {
-                    _field19C++; // sktodo: FPS stuff
-                    _field1A0 = phaseValues.Field14;
+                    _staticShotCounter++;
+                    _staticShotCooldown = phaseValues.StaticShotCooldown * 2; // todo: FPS stuff
                     _equipInfo.Weapon = Weapons.BossWeapons[3]; // tear
-                    if (_field19C > 1)
+                    if (_staticShotCounter > 1)
                     {
                         _soundSource.PlaySfx(SfxId.MISSILE);
                     }
@@ -542,7 +547,7 @@ namespace MphRead.Entities.Enemies
                         _shotEffect = null;
                     }
                 }
-                if (_shotEffect == null && _field19C == phaseValues.Field16) // sktodo: FPS stuff?
+                if (_shotEffect == null && _staticShotCounter == phaseValues.StaticShotCount) // sktodo: FPS stuff?
                 {
                     ChangeState(3);
                 }
@@ -565,7 +570,7 @@ namespace MphRead.Entities.Enemies
                     if (!result)
                     {
                         // sktodo: review field values like these
-                        result = Func2137194(_field1EC, Fixed.ToFloat(phaseValues.Field4));
+                        result = Func2137194(_field1EC, Fixed.ToFloat(phaseValues.Field4) / 2); // todo: FPS stuff
                         result &= Func2137044(_field1E0, Fixed.ToFloat(phaseValues.Field1C));
                     }
                     if (result)
@@ -589,7 +594,7 @@ namespace MphRead.Entities.Enemies
                 {
                     ChangeState(7);
                 }
-                else if (Func2137194(_field1E0, Fixed.ToFloat(phaseValues.Field4))) // sktodo: review field values like this
+                else if (Func2137194(_field1E0, Fixed.ToFloat(phaseValues.Field4) / 2)) // todo: FPS stuff
                 {
                     Func2137044(_field1E0, Fixed.ToFloat(phaseValues.Field20)); // sktodo: review field values like this
                 }
@@ -597,7 +602,7 @@ namespace MphRead.Entities.Enemies
             else if (_state1 == 7)
             {
                 // sktodo: review field values like these
-                if (Func2137194(_field1EC, Fixed.ToFloat(phaseValues.Field4))
+                if (Func2137194(_field1EC, Fixed.ToFloat(phaseValues.Field4) / 2) // todo: FPS stuff
                     && Func2137044(_startPos, Fixed.ToFloat(phaseValues.Field20)))
                 {
                     for (int i = 0; i < _synapseCount; i++)
@@ -619,7 +624,7 @@ namespace MphRead.Entities.Enemies
                 {
                     ChangeState(10);
                 }
-                else if (Func2137194(pos, Fixed.ToFloat(phaseValues.Field24))) // sktodo: review field values like this
+                else if (Func2137194(pos, Fixed.ToFloat(phaseValues.Field24) / 2)) // todo: FPS stuff
                 {
                     Func2137044(pos, Fixed.ToFloat(phaseValues.Field2C)); // sktodo: review field values like this
                 }
@@ -629,7 +634,7 @@ namespace MphRead.Entities.Enemies
                 int phaseHealth = _healthMax / 3 * (2 - _phase);
                 if (_health > phaseHealth)
                 {
-                    if (_field1A0 == 0 || --_field1A0 != 0)
+                    if (_field1A0_B == 0 || --_field1A0_B != 0)
                     {
                         // below 1/4th of phase health
                         if (_health <= phaseHealth + _healthMax / 12)
@@ -739,7 +744,7 @@ namespace MphRead.Entities.Enemies
                                 Vector3 vecB = Vector3.Cross(_field1F8, Vector3.UnitY).Normalized();
                                 var rotMtx = Matrix4.CreateFromAxisAngle(vecB, MathHelper.DegreesToRadians(angle));
                                 Position = Matrix.Vec3MultMtx3(_field1F8, rotMtx) * factor + vecA;
-                                if (Func2137194(vec2, Fixed.ToFloat(phaseValues.Field24))) // sktodo: review field values like this
+                                if (Func2137194(playerTarget, Fixed.ToFloat(phaseValues.Field24) / 2)) // todo: FPS stuff
                                 {
                                     SlenchFlags |= SlenchFlags.Bit7;
                                 }
@@ -747,12 +752,12 @@ namespace MphRead.Entities.Enemies
                                 {
                                     SlenchFlags &= ~SlenchFlags.Bit7;
                                 }
-                                Func21367EC(vec2, a3: true);
+                                Func21367EC(playerTarget, a3: true);
                             }
                         }
                         else // not subtype 3
                         {
-                            _field204 += Fixed.ToFloat(phaseValues.Field34); // sktodo: review field values like this
+                            _field204 += Fixed.ToFloat(phaseValues.Field34) / 2; // todo: FPS stuff
                             if (_field204 >= 360)
                             {
                                 SlenchFlags ^= SlenchFlags.Bit4;
@@ -763,7 +768,7 @@ namespace MphRead.Entities.Enemies
                             if (SlenchFlags.TestFlag(SlenchFlags.Bit4))
                             {
                                 vecA = Vector3.Cross(_field1F8, Vector3.UnitY).Normalized();
-                                angle = 180 - angle;
+                                angle = 180 - _field204;
                             }
                             else
                             {
@@ -786,10 +791,10 @@ namespace MphRead.Entities.Enemies
                                 Position += _field1F8 * _field18C;
                                 if (_subtype == 2)
                                 {
-                                    Func21367EC(vec2, a3: true);
+                                    Func21367EC(playerTarget, a3: true);
                                 }
                             }
-                            if (!Func2137194(vec2, Fixed.ToFloat(phaseValues.Field24))) // sktodo: review field values like this
+                            if (!Func2137194(playerTarget, Fixed.ToFloat(phaseValues.Field24) / 2)) // todo: FPS stuff
                             {
                                 SlenchFlags &= ~SlenchFlags.Bit7;
                             }
@@ -833,11 +838,11 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state1 == 11)
             {
-                _field1BC = vec2;
+                _field1BC = playerTarget;
                 Position = _field1D4;
-                Func2137194(_field1BC, Fixed.ToFloat(phaseValues.Field44)); // sktodo: review field values like this
+                Func2137194(_field1BC, Fixed.ToFloat(phaseValues.Field44) / 2); // todo: FPS stuff
                 int div = 360 / phaseValues.Field57 * phaseValues.Field56;
-                if (++_field19C >= div) // sktodo: FPS stuff
+                if (++_field19C_B >= div) // sktodo: FPS stuff
                 {
                     ChangeState(12);
                 }
@@ -850,7 +855,7 @@ namespace MphRead.Entities.Enemies
                     }
                     var rotMtx = Matrix4.CreateFromAxisAngle(facing, MathHelper.DegreesToRadians(_field208));
                     // sktodo: variable names (percentage stuff), convert to float math earlier?
-                    int value = phaseValues.Field58 - _field19C * phaseValues.Field57 / div * 2;
+                    int value = phaseValues.Field58 - _field19C_B * phaseValues.Field57 / div * 2;
                     if (value < 41)
                     {
                         value = 41;
@@ -875,11 +880,11 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state1 == 14)
             {
-                if (SynapseIndex != 0)
+                if (_field19E_B != 0)
                 {
-                    SynapseIndex--;
+                    _field19E_B--;
                 }
-                if (SynapseIndex == 0)
+                if (_field19E_B == 0)
                 {
                     _health = 0;
                     Flags &= ~EnemyFlags.Invincible;
@@ -1093,6 +1098,9 @@ namespace MphRead.Entities.Enemies
         // sktodo: variable names
         private bool Func2137194(Vector3 vec, float angle)
         {
+            // this function doesn't need floating point tolerance because in both cases
+            // (setting the angle here, and setting the two fields in the other function),
+            // it has a case to sets to exactly the target when it gets close enough
             float v10 = 0;
             if (Position.Y != vec.Y)
             {
@@ -1104,8 +1112,6 @@ namespace MphRead.Entities.Enemies
                 v10 = atan + (atan < 0 ? 360 : 0);
             }
             float field190 = _field190;
-            // sktodo: FPS stuff?
-            // sktodo: also tolerance for the case of not doing anything here if field190 == v10
             if (field190 < v10)
             {
                 float diff = v10 - field190;
@@ -1157,7 +1163,6 @@ namespace MphRead.Entities.Enemies
                 field190 -= 360;
             }
             _field190 = field190;
-            // sktodo: tolerance?
             return Func21372F0(vec, angle) && field190 == v10;
         }
 
@@ -1309,10 +1314,10 @@ namespace MphRead.Entities.Enemies
         public int Field4 { get; init; }
         public int Health { get; init; }
         public int FieldC { get; init; }
-        public ushort Field10 { get; init; }
-        public ushort Field12 { get; init; }
-        public short Field14 { get; init; }
-        public byte Field16 { get; init; }
+        public ushort MinStaticShotTimer { get; init; }
+        public ushort MaxStaticShotTimer { get; init; }
+        public short StaticShotCooldown { get; init; }
+        public byte StaticShotCount { get; init; }
         public byte Padding17 { get; init; }
         public int Field18 { get; init; }
         public int Field1C { get; init; }
