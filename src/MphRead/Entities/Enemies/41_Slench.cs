@@ -475,7 +475,7 @@ namespace MphRead.Entities.Enemies
             {
                 if (_staticShotTimer > 0 && --_staticShotTimer > 0)
                 {
-                    RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.FieldC) / 2); // todo: FPS stuff
+                    RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.AngleIncrement2) / 2); // todo: FPS stuff
                 }
                 else
                 {
@@ -489,7 +489,7 @@ namespace MphRead.Entities.Enemies
                     _staticShotTimer++;
                     if (_staticShotTimer < 16 * 2) // todo: FPS stuff
                     {
-                        RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.Field18) / 2); // todo: FPS stuff
+                        RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.AngleIncrement3) / 2); // todo: FPS stuff
                     }
                     else
                     {
@@ -512,13 +512,13 @@ namespace MphRead.Entities.Enemies
                             float randf = Rng.GetRandomInt2(0x2000) / 4096f + 2; // [2.0, 4.0)
                             _field1D4 = vecA * randf + vecB;
                         }
-                        RotateToTarget(_field1D4, Fixed.ToFloat(phaseValues.Field4) / 2); // todo: FPS stuff
+                        RotateToTarget(_field1D4, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2); // todo: FPS stuff
                     }
                 }
                 else if (_staticShotCooldown != 0)
                 {
                     _staticShotCooldown--;
-                    RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.Field18) / 2); // todo: FPS stuff
+                    RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.AngleIncrement3) / 2); // todo: FPS stuff
                 }
                 else if (_staticShotCounter < phaseValues.StaticShotCount)
                 {
@@ -563,8 +563,8 @@ namespace MphRead.Entities.Enemies
                     }
                 }
                 else if (_subtype == 3
-                    || RotateToTarget(_field1EC, Fixed.ToFloat(phaseValues.Field4) / 2) // todo: FPS stuff
-                    && MoveToPosition(_field1E0, Fixed.ToFloat(phaseValues.Field1C) / 2)) // todo: FPS stuff
+                    || RotateToTarget(_field1EC, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2) // todo: FPS stuff
+                    && MoveToPosition(_field1E0, Fixed.ToFloat(phaseValues.MoveIncrement1) / 2)) // todo: FPS stuff
                 {
                     _field218 = 0;
                     SlenchFlags &= ~SlenchFlags.Bit1;
@@ -583,15 +583,15 @@ namespace MphRead.Entities.Enemies
                 {
                     ChangeState(7);
                 }
-                else if (RotateToTarget(_field1E0, Fixed.ToFloat(phaseValues.Field4) / 2)) // todo: FPS stuff
+                else if (RotateToTarget(_field1E0, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2)) // todo: FPS stuff
                 {
-                    MoveToPosition(_field1E0, Fixed.ToFloat(phaseValues.Field20) / 2); // todo: FPS stuff
+                    MoveToPosition(_field1E0, Fixed.ToFloat(phaseValues.MoveIncrement2) / 2); // todo: FPS stuff
                 }
             }
             else if (_state1 == 7)
             {
-                if (RotateToTarget(_field1EC, Fixed.ToFloat(phaseValues.Field4) / 2) // todo: FPS stuff
-                    && MoveToPosition(_startPos, Fixed.ToFloat(phaseValues.Field20) / 2)) // todo: FPS stuff
+                if (RotateToTarget(_field1EC, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2) // todo: FPS stuff
+                    && MoveToPosition(_startPos, Fixed.ToFloat(phaseValues.MoveIncrement2) / 2)) // todo: FPS stuff
                 {
                     for (int i = 0; i < _synapseCount; i++)
                     {
@@ -612,9 +612,9 @@ namespace MphRead.Entities.Enemies
                 {
                     ChangeState(10);
                 }
-                else if (RotateToTarget(pos, Fixed.ToFloat(phaseValues.Field24) / 2)) // todo: FPS stuff
+                else if (RotateToTarget(pos, Fixed.ToFloat(phaseValues.AngleIncrement4) / 2)) // todo: FPS stuff
                 {
-                    MoveToPosition(pos, Fixed.ToFloat(phaseValues.Field2C) / 2); // todo: FPS stuff
+                    MoveToPosition(pos, Fixed.ToFloat(phaseValues.MoveIncrement3) / 2); // todo: FPS stuff
                 }
             }
             else if (_state1 == 10)
@@ -732,7 +732,7 @@ namespace MphRead.Entities.Enemies
                                 Vector3 vecB = Vector3.Cross(_field1F8, Vector3.UnitY).Normalized();
                                 var rotMtx = Matrix4.CreateFromAxisAngle(vecB, MathHelper.DegreesToRadians(angle));
                                 Position = Matrix.Vec3MultMtx3(_field1F8, rotMtx) * factor + vecA;
-                                if (RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.Field24) / 2)) // todo: FPS stuff
+                                if (RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.AngleIncrement4) / 2)) // todo: FPS stuff
                                 {
                                     SlenchFlags |= SlenchFlags.Bit7;
                                 }
@@ -770,7 +770,7 @@ namespace MphRead.Entities.Enemies
                             if (_subtype != 0)
                             {
                                 // sktodo: FPS stuff etc.
-                                float increment = Fixed.ToFloat(phaseValues.Field2C);
+                                float increment = Fixed.ToFloat(phaseValues.MoveIncrement3);
                                 _field18C += SlenchFlags.TestFlag(SlenchFlags.Bit5) ? -increment : increment;
                                 if (_field18C < 0 || _field18C >= Fixed.ToFloat(phaseValues.RollTime))
                                 {
@@ -782,7 +782,7 @@ namespace MphRead.Entities.Enemies
                                     Func21367EC(playerTarget, a3: true);
                                 }
                             }
-                            if (!RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.Field24) / 2)) // todo: FPS stuff
+                            if (!RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.AngleIncrement4) / 2)) // todo: FPS stuff
                             {
                                 SlenchFlags &= ~SlenchFlags.Bit7;
                             }
@@ -855,14 +855,14 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state1 == 12)
             {
-                if (MoveToPosition(_field1BC, Fixed.ToFloat(phaseValues.Field4C) / 2)) // todo: FPS stuff
+                if (MoveToPosition(_field1BC, Fixed.ToFloat(phaseValues.MoveIncrement4) / 2)) // todo: FPS stuff
                 {
                     ChangeState(13);
                 }
             }
             else if (_state1 == 13)
             {
-                if (MoveToPosition(_field1D4, Fixed.ToFloat(phaseValues.Field50) / 2)) // todo: FPS stuff
+                if (MoveToPosition(_field1D4, Fixed.ToFloat(phaseValues.MoveIncrement5) / 2)) // todo: FPS stuff
                 {
                     ChangeState(_nextState);
                 }
@@ -1294,20 +1294,20 @@ namespace MphRead.Entities.Enemies
     {
         public ushort ScanId1 { get; init; }
         public ushort ScanId2 { get; init; }
-        public int Field4 { get; init; }
+        public int AngleIncrement1 { get; init; }
         public int Health { get; init; }
-        public int FieldC { get; init; }
+        public int AngleIncrement2 { get; init; }
         public ushort MinStaticShotTimer { get; init; }
         public ushort MaxStaticShotTimer { get; init; }
         public short StaticShotCooldown { get; init; }
         public byte StaticShotCount { get; init; }
         public byte Padding17 { get; init; }
-        public int Field18 { get; init; }
-        public int Field1C { get; init; }
-        public int Field20 { get; init; }
-        public int Field24 { get; init; }
+        public int AngleIncrement3 { get; init; }
+        public int MoveIncrement1 { get; init; }
+        public int MoveIncrement2 { get; init; }
+        public int AngleIncrement4 { get; init; }
         public int Field28 { get; init; }
-        public int Field2C { get; init; }
+        public int MoveIncrement3 { get; init; }
         public int RollTime { get; init; }
         public int Field34 { get; init; }
         public int Field38 { get; init; }
@@ -1315,8 +1315,8 @@ namespace MphRead.Entities.Enemies
         public int Field40 { get; init; }
         public int Field44 { get; init; }
         public int Field48 { get; init; }
-        public int Field4C { get; init; }
-        public int Field50 { get; init; }
+        public int MoveIncrement4 { get; init; }
+        public int MoveIncrement5 { get; init; }
         public ushort Field54 { get; init; }
         public byte Field56 { get; init; }
         public byte Field57 { get; init; }
