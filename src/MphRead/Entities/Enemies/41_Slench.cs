@@ -19,12 +19,12 @@ namespace MphRead.Entities.Enemies
         public int Subtype => _subtype;
         public int Phase => _phase;
 
-        private float _field190 = 0; // sktodo: field name for angle in degrees
+        private float _targetAngle = 0;
+        private float _targetX = 0;
+        private float _targetZ = 0;
         private ushort _field196 = 0;
         private ushort _field198 = 0;
         private float _field208 = 0;
-        private float _field20C = 0;
-        private float _field210 = 0;
         private Vector3 _field1F8;
         private float _shieldOffset = 0;
         public float ShieldOffset => _shieldOffset;
@@ -128,18 +128,18 @@ namespace MphRead.Entities.Enemies
             if (facing.Y >= -0.5f)
             {
                 Vector3 normalized = facing.WithY(0).Normalized();
-                _field20C = normalized.X;
-                _field210 = normalized.Z;
+                _targetX = normalized.X;
+                _targetZ = normalized.Z;
             }
             else
             {
                 Vector3 normalized = up.WithY(0).Normalized();
-                _field20C = normalized.X;
-                _field210 = normalized.Z;
-                _field190 = 90;
+                _targetX = normalized.X;
+                _targetZ = normalized.Z;
+                _targetAngle = 90;
             }
             UpdateFacing();
-            _field1F8 = new Vector3(_field20C, 0, _field210);
+            _field1F8 = new Vector3(_targetX, 0, _targetZ);
             _startPos = position;
             _field1E0 = facing * 3 + position;
             _field1EC = _field1E0 + facing;
@@ -166,9 +166,9 @@ namespace MphRead.Entities.Enemies
 
         private void UpdateFacing()
         {
-            var facing = new Vector3(_field20C, 0, _field210);
-            var axis = new Vector3(_field210, 0, _field20C * -1);
-            var rotMtx = Matrix4.CreateFromAxisAngle(axis, MathHelper.DegreesToRadians(_field190));
+            var facing = new Vector3(_targetX, 0, _targetZ);
+            var axis = new Vector3(_targetZ, 0, _targetX * -1);
+            var rotMtx = Matrix4.CreateFromAxisAngle(axis, MathHelper.DegreesToRadians(_targetAngle));
             facing = Matrix.Vec3MultMtx3(facing, rotMtx).Normalized();
             Vector3 up = Vector3.Cross(facing, axis).Normalized();
             Matrix4 transform = GetTransformMatrix(facing, up);
@@ -473,10 +473,9 @@ namespace MphRead.Entities.Enemies
             }
             else if (_state1 == 3)
             {
-                // sktodo: possible FPS stuff?
                 if (_staticShotTimer > 0 && --_staticShotTimer > 0)
                 {
-                    Func2137194(playerTarget, Fixed.ToFloat(phaseValues.FieldC) / 2); // todo: FPS stuff
+                    RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.FieldC) / 2); // todo: FPS stuff
                 }
                 else
                 {
@@ -490,11 +489,11 @@ namespace MphRead.Entities.Enemies
                     _staticShotTimer++;
                     if (_staticShotTimer < 16 * 2) // todo: FPS stuff
                     {
-                        Func2137194(playerTarget, Fixed.ToFloat(phaseValues.Field18) / 2); // todo: FPS stuff
+                        RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.Field18) / 2); // todo: FPS stuff
                     }
                     else
                     {
-                        if (_staticShotTimer == 16 * 2) // todo: FPS stuff // sktodo: confirm about f_eq
+                        if (_staticShotTimer == 16 * 2) // todo: FPS stuff
                         {
                             // the game has a bad macro expansion here where the angle is chosen and converted to fx32,
                             // and is likely supposed to be used from there as-is, but instead the fx32 value gets converted
@@ -507,20 +506,19 @@ namespace MphRead.Entities.Enemies
                             // angle being 1 fx32 less (1/4096f). we don't do any of that, but we will still call RNG twice.
                             Rng.GetRandomInt2(360);
                             float angle = Rng.GetRandomInt2(360);
-                            // sktodo: probable FPS stuff
                             var rotMtx = Matrix4.CreateFromAxisAngle(facing, MathHelper.DegreesToRadians(angle));
                             Vector3 vecA = Matrix.Vec3MultMtx3(up, rotMtx);
                             Vector3 vecB = facing * 4 + Position;
                             float randf = Rng.GetRandomInt2(0x2000) / 4096f + 2; // [2.0, 4.0)
                             _field1D4 = vecA * randf + vecB;
                         }
-                        Func2137194(_field1D4, Fixed.ToFloat(phaseValues.Field4) / 2); // todo: FPS stuff
+                        RotateToTarget(_field1D4, Fixed.ToFloat(phaseValues.Field4) / 2); // todo: FPS stuff
                     }
                 }
                 else if (_staticShotCooldown != 0)
                 {
                     _staticShotCooldown--;
-                    Func2137194(playerTarget, Fixed.ToFloat(phaseValues.Field18) / 2); // todo: FPS stuff
+                    RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.Field18) / 2); // todo: FPS stuff
                 }
                 else if (_staticShotCounter < phaseValues.StaticShotCount)
                 {
@@ -547,7 +545,7 @@ namespace MphRead.Entities.Enemies
                         _shotEffect = null;
                     }
                 }
-                if (_shotEffect == null && _staticShotCounter == phaseValues.StaticShotCount) // sktodo: FPS stuff?
+                if (_shotEffect == null && _staticShotCounter == phaseValues.StaticShotCount)
                 {
                     ChangeState(3);
                 }
@@ -569,9 +567,8 @@ namespace MphRead.Entities.Enemies
                     bool result = _subtype == 3;
                     if (!result)
                     {
-                        // sktodo: review field values like these
-                        result = Func2137194(_field1EC, Fixed.ToFloat(phaseValues.Field4) / 2); // todo: FPS stuff
-                        result &= Func2137044(_field1E0, Fixed.ToFloat(phaseValues.Field1C));
+                        result = RotateToTarget(_field1EC, Fixed.ToFloat(phaseValues.Field4) / 2); // todo: FPS stuff
+                        result &= Func2137044(_field1E0, Fixed.ToFloat(phaseValues.Field1C)); // sktodo: review field values like these
                     }
                     if (result)
                     {
@@ -589,21 +586,19 @@ namespace MphRead.Entities.Enemies
                 {
                     _model.SetAnimation(0);
                 }
-                // sktodo: possible FPS stuff?
                 if (CheckPosAgainstCurrent(_field1E0))
                 {
                     ChangeState(7);
                 }
-                else if (Func2137194(_field1E0, Fixed.ToFloat(phaseValues.Field4) / 2)) // todo: FPS stuff
+                else if (RotateToTarget(_field1E0, Fixed.ToFloat(phaseValues.Field4) / 2)) // todo: FPS stuff
                 {
                     Func2137044(_field1E0, Fixed.ToFloat(phaseValues.Field20)); // sktodo: review field values like this
                 }
             }
             else if (_state1 == 7)
             {
-                // sktodo: review field values like these
-                if (Func2137194(_field1EC, Fixed.ToFloat(phaseValues.Field4) / 2) // todo: FPS stuff
-                    && Func2137044(_startPos, Fixed.ToFloat(phaseValues.Field20)))
+                if (RotateToTarget(_field1EC, Fixed.ToFloat(phaseValues.Field4) / 2) // todo: FPS stuff
+                    && Func2137044(_startPos, Fixed.ToFloat(phaseValues.Field20))) // sktodo: review field values like these
                 {
                     for (int i = 0; i < _synapseCount; i++)
                     {
@@ -624,7 +619,7 @@ namespace MphRead.Entities.Enemies
                 {
                     ChangeState(10);
                 }
-                else if (Func2137194(pos, Fixed.ToFloat(phaseValues.Field24) / 2)) // todo: FPS stuff
+                else if (RotateToTarget(pos, Fixed.ToFloat(phaseValues.Field24) / 2)) // todo: FPS stuff
                 {
                     Func2137044(pos, Fixed.ToFloat(phaseValues.Field2C)); // sktodo: review field values like this
                 }
@@ -684,21 +679,21 @@ namespace MphRead.Entities.Enemies
                                         );
                                         Vector3 newPos = _field1F8 * mtx * factor + vecB;
                                         Position = newPos.WithY(Position.Y);
-                                        _field190 += Fixed.ToFloat(phaseValues.Field38); // sktodo: FPS stuff
-                                        if (_field190 < 0)
+                                        _targetAngle += Fixed.ToFloat(phaseValues.Field38); // sktodo: FPS stuff
+                                        if (_targetAngle < 0)
                                         {
-                                            _field190 += 360;
+                                            _targetAngle += 360;
                                         }
                                         Vector3 vecC = (Position - vecB).WithY(0).Normalized();
                                         if (SlenchFlags.TestFlag(SlenchFlags.Bit4))
                                         {
-                                            _field210 = vecC.X;
-                                            _field20C = -vecC.Z;
+                                            _targetZ = vecC.X;
+                                            _targetX = -vecC.Z;
                                         }
                                         else
                                         {
-                                            _field210 = -vecC.X;
-                                            _field20C = vecC.Z;
+                                            _targetZ = -vecC.X;
+                                            _targetX = vecC.Z;
                                         }
                                     }
                                     else if (_field218 == 0)
@@ -744,7 +739,7 @@ namespace MphRead.Entities.Enemies
                                 Vector3 vecB = Vector3.Cross(_field1F8, Vector3.UnitY).Normalized();
                                 var rotMtx = Matrix4.CreateFromAxisAngle(vecB, MathHelper.DegreesToRadians(angle));
                                 Position = Matrix.Vec3MultMtx3(_field1F8, rotMtx) * factor + vecA;
-                                if (Func2137194(playerTarget, Fixed.ToFloat(phaseValues.Field24) / 2)) // todo: FPS stuff
+                                if (RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.Field24) / 2)) // todo: FPS stuff
                                 {
                                     SlenchFlags |= SlenchFlags.Bit7;
                                 }
@@ -794,7 +789,7 @@ namespace MphRead.Entities.Enemies
                                     Func21367EC(playerTarget, a3: true);
                                 }
                             }
-                            if (!Func2137194(playerTarget, Fixed.ToFloat(phaseValues.Field24) / 2)) // todo: FPS stuff
+                            if (!RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.Field24) / 2)) // todo: FPS stuff
                             {
                                 SlenchFlags &= ~SlenchFlags.Bit7;
                             }
@@ -840,7 +835,7 @@ namespace MphRead.Entities.Enemies
             {
                 _field1BC = playerTarget;
                 Position = _field1D4;
-                Func2137194(_field1BC, Fixed.ToFloat(phaseValues.Field44) / 2); // todo: FPS stuff
+                RotateToTarget(_field1BC, Fixed.ToFloat(phaseValues.Field44) / 2); // todo: FPS stuff
                 int div = 360 / phaseValues.Field57 * phaseValues.Field56;
                 if (++_field19C_B >= div) // sktodo: FPS stuff
                 {
@@ -848,6 +843,7 @@ namespace MphRead.Entities.Enemies
                 }
                 else
                 {
+                    // sktodo: FPS stuff
                     _field208 += phaseValues.Field57; // the game has to convert this to fx32 here
                     if (_field208 >= 360)
                     {
@@ -1048,7 +1044,7 @@ namespace MphRead.Entities.Enemies
             Enemy41Values phaseValues = GetPhaseValues();
             if (_field198 < phaseValues.Field58)
             {
-                // sktodo: probably FPS stuff? I'm guessing this is wait time before charging
+                // sktodo: probably FPS stuff? I'm guessing this is wait time before lunging
                 _field198++;
             }
             else if (a3)
@@ -1094,95 +1090,91 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        // sktodo: function name
-        // sktodo: variable names
-        private bool Func2137194(Vector3 vec, float angle)
+        private bool RotateToTarget(Vector3 target, float increment)
         {
             // this function doesn't need floating point tolerance because in both cases
             // (setting the angle here, and setting the two fields in the other function),
             // it has a case to sets to exactly the target when it gets close enough
-            float v10 = 0;
-            if (Position.Y != vec.Y)
+            float angle = 0;
+            if (Position.Y != target.Y)
             {
-                float x = vec.X - Position.X;
-                float z = vec.Z - Position.Z;
+                float x = target.X - Position.X;
+                float z = target.Z - Position.Z;
                 float sqrt = MathF.Sqrt(x * x + z * z);
-                float y = Position.Y - vec.Y;
+                float y = Position.Y - target.Y;
                 float atan = MathHelper.RadiansToDegrees(MathF.Atan2(y, sqrt));
-                v10 = atan + (atan < 0 ? 360 : 0);
+                angle = atan + (atan < 0 ? 360 : 0);
             }
-            float field190 = _field190;
-            if (field190 < v10)
+            float targetAngle = _targetAngle;
+            if (targetAngle < angle)
             {
-                float diff = v10 - field190;
-                if (v10 - field190 >= 180) // 737280
+                float diff = angle - targetAngle;
+                if (angle - targetAngle >= 180) // 737280
                 {
-                    if (360 - diff <= angle) // 1474560
+                    if (360 - diff <= increment) // 1474560
                     {
-                        field190 = v10;
+                        targetAngle = angle;
                     }
                     else
                     {
-                        field190 -= angle;
+                        targetAngle -= increment;
                     }
                 }
-                else if (diff <= angle)
+                else if (diff <= increment)
                 {
-                    field190 = v10;
+                    targetAngle = angle;
                 }
                 else
                 {
-                    field190 += angle;
+                    targetAngle += increment;
                 }
             }
-            else if (field190 > v10)
+            else if (targetAngle > angle)
             {
-                float diff = field190 - v10;
-                if (field190 - v10 >= 180) // 737280
+                float diff = targetAngle - angle;
+                if (targetAngle - angle >= 180) // 737280
                 {
-                    if (360 - diff <= angle) // 1474560
+                    if (360 - diff <= increment) // 1474560
                     {
-                        field190 = v10;
+                        targetAngle = angle;
                     }
                     else
                     {
-                        field190 += angle;
+                        targetAngle += increment;
                     }
                 }
-                else if (diff <= angle)
+                else if (diff <= increment)
                 {
-                    field190 = v10;
+                    targetAngle = angle;
                 }
                 else
                 {
-                    field190 -= angle;
+                    targetAngle -= increment;
                 }
             }
-            if (field190 >= 360) // 1474560
+            if (targetAngle >= 360) // 1474560
             {
-                field190 -= 360;
+                targetAngle -= 360;
             }
-            _field190 = field190;
-            return Func21372F0(vec, angle) && field190 == v10;
+            _targetAngle = targetAngle;
+            return RotateToTargetHorizontal(target, increment) && targetAngle == angle;
         }
 
-        // sktodo: function name
-        // sktodo: variable names
-        private bool Func21372F0(Vector3 vec, float angle)
+        private bool RotateToTargetHorizontal(Vector3 target, float increment)
         {
-            Vector3 between = vec - Position;
+            Vector3 between = target - Position;
             if (between.X == 0 && between.Z == 0)
             {
                 return true;
             }
             between = between.WithY(0).Normalized();
-            Vector3 fields = new Vector3(_field20C, 0, _field210).Normalized();
+            Vector3 fields = new Vector3(_targetX, 0, _targetZ).Normalized();
             Vector3 between2 = fields - between;
-            (float sin, float cos) = MathF.SinCos(MathHelper.DegreesToRadians(angle));
+            (float sin, float cos) = MathF.SinCos(MathHelper.DegreesToRadians(increment));
             if (between2.X * between2.X + between2.Z * between2.Z <= (1 - cos) * (1 - cos) + sin * sin)
             {
-                _field20C = between.X;
-                _field210 = between.Z;
+                _targetX = between.X;
+                _targetZ = between.Z;
                 return true;
             }
             var cross = Vector3.Cross(between, fields);
@@ -1197,8 +1189,8 @@ namespace MphRead.Entities.Enemies
             );
             fields *= mtx;
             fields = fields.Normalized();
-            _field20C = fields.X;
-            _field210 = fields.Z;
+            _targetX = fields.X;
+            _targetZ = fields.Z;
             return false;
         }
 
