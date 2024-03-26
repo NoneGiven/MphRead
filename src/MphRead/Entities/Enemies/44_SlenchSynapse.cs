@@ -261,7 +261,7 @@ namespace MphRead.Entities.Enemies
                 {
                     if (_health != 0)
                     {
-                        _soundSource.PlaySfx(SfxId.BIGEYE_OPEN);
+                        _soundSource.PlaySfx(SfxId.BIGEYE_SYNAPSE_DAMAGE);
                     }
                     else
                     {

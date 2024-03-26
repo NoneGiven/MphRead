@@ -212,7 +212,7 @@ namespace MphRead.Entities.Enemies
                 _staticShotTimer = 0;
                 _staticShotCooldown = 0;
                 _staticShotCounter = 0;
-                Vector3 up = FacingVector;
+                Vector3 up = FacingVector; // swap facing and up
                 Vector3 facing;
                 if (up.Z <= -0.9f || up.Z >= 0.9f) // 3686
                 {
@@ -373,7 +373,7 @@ namespace MphRead.Entities.Enemies
                 {
                     _equipInfo.Weapon = Weapons.BossWeapons[4 + _subtype];
                     Vector3 spawnPos = facing * _shieldOffset + Position;
-                    BeamResultFlags result = BeamProjectileEntity.Spawn(this, _equipInfo, Position, facing, BeamSpawnFlags.None, _scene);
+                    BeamResultFlags result = BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, facing, BeamSpawnFlags.None, _scene);
                     if (result != BeamResultFlags.NoSpawn)
                     {
                         Func2136788();
@@ -532,7 +532,7 @@ namespace MphRead.Entities.Enemies
                         _soundSource.PlaySfx(SfxId.MISSILE);
                     }
                     Vector3 spawnPos = facing * _shieldOffset + Position;
-                    BeamResultFlags result = BeamProjectileEntity.Spawn(this, _equipInfo, Position, facing, BeamSpawnFlags.None, _scene);
+                    BeamResultFlags result = BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, facing, BeamSpawnFlags.None, _scene);
                     if (result != BeamResultFlags.NoSpawn)
                     {
                         Func2136788();
@@ -540,7 +540,7 @@ namespace MphRead.Entities.Enemies
                 }
                 if (_shotEffect != null)
                 {
-                    _shotEffect.Transform(Position, Transform);
+                    _shotEffect.Transform(up, facing, Position); // swap facing and up
                     if (_shotEffect.IsFinished)
                     {
                         _scene.DetachEffectEntry(_shotEffect, setExpired: false);
