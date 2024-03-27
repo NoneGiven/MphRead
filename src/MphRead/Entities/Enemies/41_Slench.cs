@@ -41,11 +41,11 @@ namespace MphRead.Entities.Enemies
         private int _staticShotCounter = 0;
         private int _field19C_B = 0; // note: these two fields are the same in-game
         private int _staticShotCooldown = 0;
-        private int _field1A0_B = 0; // note: these two fields are the same in-game
+        private int _roamTimer = 0; // note: these two fields are the same in-game
         private bool _field1A3 = false;
         private int _rollTimer = 0;
         private int _staticShotTimer = 0;
-        private int _field19E_B = 0; // note: these two fields are the same in-game
+        private int _deathTimer = 0; // note: these two fields are the same in-game
 
         private EquipInfo _equipInfo = null!;
         private int _ammo = 1000;
@@ -248,7 +248,7 @@ namespace MphRead.Entities.Enemies
                 SlenchFlags |= SlenchFlags.Detached;
                 _field204 = 0;
                 _field18C = 0;
-                _field1A0_B = phaseValues.Field28; // sktodo: FPS stuff
+                _roamTimer = phaseValues.RoamTime * 2; // todo: FPS stuff
                 _field198 = 0;
                 SlenchFlags &= ~SlenchFlags.Rolling;
                 SlenchFlags &= ~SlenchFlags.Bit2;
@@ -297,7 +297,7 @@ namespace MphRead.Entities.Enemies
                 _stateAfterSlam = _state1;
                 break;
             case SlenchState.Dead:
-                _field19E_B = 36; // sktodo: FPS stuff
+                _deathTimer = 36 * 2; // todo: FPS stuff
                 CloseEye();
                 _scene.SpawnEffect(206, FacingVector, UpVector, Position); // eyeFinalKill
                 break;
@@ -611,7 +611,7 @@ namespace MphRead.Entities.Enemies
                 int phaseHealth = _healthMax / 3 * (2 - _phase);
                 if (_health > phaseHealth)
                 {
-                    if (_field1A0_B == 0 || --_field1A0_B != 0)
+                    if (_roamTimer == 0 || --_roamTimer != 0)
                     {
                         // below 1/4th of phase health
                         if (_health <= phaseHealth + _healthMax / 12)
@@ -858,11 +858,11 @@ namespace MphRead.Entities.Enemies
             }
             else if (State == SlenchState.Dead)
             {
-                if (_field19E_B != 0)
+                if (_deathTimer != 0)
                 {
-                    _field19E_B--;
+                    _deathTimer--;
                 }
-                if (_field19E_B == 0)
+                if (_deathTimer == 0)
                 {
                     _health = 0;
                     Flags &= ~EnemyFlags.Invincible;
@@ -1317,7 +1317,7 @@ namespace MphRead.Entities.Enemies
         public int MoveIncrement1 { get; init; }
         public int MoveIncrement2 { get; init; }
         public int AngleIncrement4 { get; init; }
-        public int Field28 { get; init; }
+        public int RoamTime { get; init; }
         public int MoveIncrement3 { get; init; }
         public int RollTime { get; init; }
         public int Field34 { get; init; }
