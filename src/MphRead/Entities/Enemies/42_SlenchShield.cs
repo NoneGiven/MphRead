@@ -35,7 +35,7 @@ namespace MphRead.Entities.Enemies
 
         protected override bool EnemyTakeDamage(EntityBase? source)
         {
-            if (!_slench.SlenchFlags.TestFlag(SlenchFlags.Bit0) && _slench.SlenchFlags.TestFlag(SlenchFlags.Bit8))
+            if (!_slench.SlenchFlags.TestFlag(SlenchFlags.EyeClosed) && _slench.SlenchFlags.TestFlag(SlenchFlags.Vulnerable))
             {
                 _slench.Flags &= ~EnemyFlags.Invincible;
                 _slench.TakeDamage((uint)(_healthMax - _health), source);

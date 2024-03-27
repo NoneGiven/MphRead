@@ -15,9 +15,10 @@ namespace MphRead.Entities.Enemies
         public SlenchFlags SlenchFlags { get; private set; }
         private int _subtype = 0;
         private int _phase = 0;
-        private byte _nextState = 0;
+        private byte _stateAfterSlam = 0; // sktodo: rename if this isn't right
         public int Subtype => _subtype;
         public int Phase => _phase;
+        private SlenchState State => (SlenchState)_state1;
 
         private float _targetAngle = 0;
         private float _targetX = 0;
@@ -97,7 +98,7 @@ namespace MphRead.Entities.Enemies
             else if (_scene.RoomId == 76) // UNIT3_B2
             {
                 _subtype = 3;
-                SlenchFlags = SlenchFlags.Bit1;
+                SlenchFlags = SlenchFlags.Rolling;
             }
             Vector3 position = _data.Spawner.Position;
             Vector3 facing = _data.Spawner.FacingVector;
@@ -143,7 +144,7 @@ namespace MphRead.Entities.Enemies
             _startPos = position;
             _field1E0 = facing * 3 + position;
             _field1EC = _field1E0 + facing;
-            ChangeState(0);
+            ChangeState(SlenchState.Initial);
             if (EnemySpawnEntity.SpawnEnemy(this, EnemyType.SlenchShield, NodeRef, _scene) is not Enemy42Entity shield)
             {
                 return;
@@ -176,39 +177,39 @@ namespace MphRead.Entities.Enemies
             Transform = transform;
         }
 
-        private void ChangeState(byte state)
+        private void ChangeState(SlenchState state)
         {
             _field1A3 = false;
             SlenchFlags &= ~SlenchFlags.Bit7;
-            SlenchFlags &= ~SlenchFlags.Bit8;
+            SlenchFlags &= ~SlenchFlags.Vulnerable;
             SlenchFlags &= ~SlenchFlags.Bit9;
             Enemy41Values phaseValues = GetPhaseValues();
             switch (state)
             {
-            case 0:
-            case 12:
-            case 13:
-                Func2136DCC();
+            case SlenchState.Initial:
+            case SlenchState.State12:
+            case SlenchState.State13:
+                CloseEye();
                 break;
-            case 1:
+            case SlenchState.Intro:
                 _soundSource.PlaySfx(SfxId.BIGEYE_INTRO_SCR);
-                Func2136ED8();
-                SlenchFlags |= SlenchFlags.Bit0;
+                SlenchFlags &= ~SlenchFlags.Detached;
+                SlenchFlags |= SlenchFlags.EyeClosed;
                 _model.SetAnimation(13, AnimFlags.NoLoop);
                 break;
-            case 2:
+            case SlenchState.ShieldRaise:
                 _shieldEffect2 = _scene.SpawnEffectGetEntry(69, Vector3.UnitX, Vector3.UnitY, Position); // eyeShieldCharge
                 break;
-            case 3:
-                Func2136DCC();
+            case SlenchState.Idle:
+                CloseEye();
                 int min = phaseValues.MinStaticShotTimer * 2; // todo: FPS stuff
                 int max = phaseValues.MaxStaticShotTimer * 2; // todo: FPS stuff
                 _staticShotTimer = (int)(min + Rng.GetRandomInt2(max - min));
                 break;
-            case 4:
+            case SlenchState.ShootTear:
                 _soundSource.PlaySfx(SfxId.BIGEYE_ATTACK1A_SCR);
-                Func2136ED8();
-                Func2136E48();
+                SlenchFlags &= ~SlenchFlags.Detached;
+                OpenEye();
                 _staticShotTimer = 0;
                 _staticShotCooldown = 0;
                 _staticShotCounter = 0;
@@ -225,16 +226,16 @@ namespace MphRead.Entities.Enemies
                 _shotEffect = _scene.SpawnEffectGetEntry(81, facing, up, Position); // tearChargeUp
                 _shotEffect?.SetElementExtension(false);
                 break;
-            case 5:
-                Func2136DCC();
+            case SlenchState.ShieldLower:
+                CloseEye();
                 _field198 = 0;
                 UpdateScanId(GetValues().ScanId2);
                 break;
-            case 6:
-                Func2136DCC();
-                Func2136ED8();
+            case SlenchState.Return:
+                CloseEye();
+                SlenchFlags &= ~SlenchFlags.Detached;
                 break;
-            case 7:
+            case SlenchState.Attach:
                 _soundSource.PlaySfx(SfxId.BIGEYE_ATTACH_SCR);
                 if (_damageEffect != null)
                 {
@@ -243,65 +244,65 @@ namespace MphRead.Entities.Enemies
                 }
                 UpdateScanId(GetValues().ScanId1);
                 break;
-            case 8:
-                Func2136EC4();
+            case SlenchState.Detach:
+                SlenchFlags |= SlenchFlags.Detached;
                 _field204 = 0;
                 _field18C = 0;
-                _field1A0_B = phaseValues.Field28;
+                _field1A0_B = phaseValues.Field28; // sktodo: FPS stuff
                 _field198 = 0;
-                SlenchFlags &= ~SlenchFlags.Bit1;
+                SlenchFlags &= ~SlenchFlags.Rolling;
                 SlenchFlags &= ~SlenchFlags.Bit2;
                 SlenchFlags &= ~SlenchFlags.Bit3;
                 SlenchFlags &= ~SlenchFlags.Bit4;
                 SlenchFlags &= ~SlenchFlags.Bit5;
                 if (_subtype == 3)
                 {
-                    Func2136DCC();
-                    SlenchFlags |= SlenchFlags.Bit1;
+                    CloseEye();
+                    SlenchFlags |= SlenchFlags.Rolling;
                     _rollTimer = phaseValues.RollTime;
                 }
                 else
                 {
-                    Func2136E48();
+                    OpenEye();
                     SlenchFlags |= SlenchFlags.Bit2;
                 }
                 break;
-            case 9:
-                Func2136DCC();
+            case SlenchState.State9:
+                CloseEye();
                 _field204 = 0;
-                SlenchFlags &= ~SlenchFlags.Bit1;
+                SlenchFlags &= ~SlenchFlags.Rolling;
                 SlenchFlags &= ~SlenchFlags.Bit2;
                 SlenchFlags &= ~SlenchFlags.Bit3;
                 SlenchFlags &= ~SlenchFlags.Bit4;
                 SlenchFlags &= ~SlenchFlags.Bit5;
                 SlenchFlags |= SlenchFlags.Bit2;
-                SlenchFlags |= SlenchFlags.Bit8;
+                SlenchFlags |= SlenchFlags.Vulnerable;
                 break;
-            case 10:
-                Func2136EC4();
-                if (_subtype == 3 && SlenchFlags.TestFlag(SlenchFlags.Bit1))
+            case SlenchState.Roam:
+                SlenchFlags |= SlenchFlags.Detached;
+                if (_subtype == 3 && SlenchFlags.TestFlag(SlenchFlags.Rolling))
                 {
-                    Func2136DCC();
+                    CloseEye();
                 }
                 else
                 {
-                    Func2136E48();
-                    SlenchFlags |= SlenchFlags.Bit8;
+                    OpenEye();
+                    SlenchFlags |= SlenchFlags.Vulnerable;
                 }
                 break;
-            case 11:
+            case SlenchState.State11:
                 _soundSource.PlaySfx(SfxId.BIGEYE_ATTACK3_SCR);
-                Func2136DCC();
+                CloseEye();
                 _field19C_B = 0;
-                _nextState = _state1;
+                _stateAfterSlam = _state1;
                 break;
-            case 14:
-                _field19E_B = 36;
-                Func2136DCC();
+            case SlenchState.Dead:
+                _field19E_B = 36; // sktodo: FPS stuff
+                CloseEye();
                 _scene.SpawnEffect(206, FacingVector, UpVector, Position); // eyeFinalKill
                 break;
             }
-            _state2 = state;
+            _state2 = (byte)state;
         }
 
         private void UpdateScanId(int scanId)
@@ -310,38 +311,24 @@ namespace MphRead.Entities.Enemies
             _shield?.UpdateScanId(scanId);
         }
 
-        // sktodo: function name
-        private void Func2136EC4()
+        private void OpenEye()
         {
-            SlenchFlags |= SlenchFlags.Bit6;
-        }
-
-        // sktodo: function name
-        private void Func2136ED8()
-        {
-            SlenchFlags &= ~SlenchFlags.Bit6;
-        }
-
-        // sktodo: function name
-        private void Func2136E48()
-        {
-            if (SlenchFlags.TestFlag(SlenchFlags.Bit0))
+            if (SlenchFlags.TestFlag(SlenchFlags.EyeClosed))
             {
-                SlenchFlags &= ~SlenchFlags.Bit0;
+                SlenchFlags &= ~SlenchFlags.EyeClosed;
                 _soundSource.PlaySfx(SfxId.BIGEYE_OPEN);
-                int animIndex = SlenchFlags.TestFlag(SlenchFlags.Bit6) ? 4 : 10;
+                int animIndex = SlenchFlags.TestFlag(SlenchFlags.Detached) ? 4 : 10;
                 _model.SetAnimation(animIndex, AnimFlags.NoLoop);
             }
         }
 
-        // sktodo: function name
-        private void Func2136DCC()
+        private void CloseEye()
         {
-            if (!SlenchFlags.TestFlag(SlenchFlags.Bit0))
+            if (!SlenchFlags.TestFlag(SlenchFlags.EyeClosed))
             {
-                SlenchFlags |= SlenchFlags.Bit0;
+                SlenchFlags |= SlenchFlags.EyeClosed;
                 _soundSource.PlaySfx(SfxId.BIGEYE_CLOSE);
-                int animIndex = SlenchFlags.TestFlag(SlenchFlags.Bit6) ? 2 : 8;
+                int animIndex = SlenchFlags.TestFlag(SlenchFlags.Detached) ? 2 : 8;
                 _model.SetAnimation(animIndex, AnimFlags.NoLoop);
             }
         }
@@ -386,7 +373,7 @@ namespace MphRead.Entities.Enemies
             {
                 PlayerEntity.Main.TakeDamage(35, DamageFlags.None, facing, this);
             }
-            if (_state1 == 10)
+            if (State == SlenchState.Roam)
             {
                 // sktodo: fields -- field1E0 is the "base" hovering position?
                 // oscillating y value is added to its y, then collision is checked between there and the shield radius for a bit of a buffer
@@ -411,28 +398,30 @@ namespace MphRead.Entities.Enemies
                 }
             }
             Func213669C();
-            if (Func21365A4() && Func2136520())
+            if (IsStaticState() && AreAllSynapsesDead())
             {
-                ChangeState(5);
+                ChangeState(SlenchState.ShieldLower);
             }
-            if (Func21365A4() && _state1 != 0 && _state1 != 1)
+            if (IsStaticState() && State != SlenchState.Initial && State != SlenchState.Intro)
             {
+                // finished intro or starting new phase, activate synpases
+                // todo?: technically FPS stuff here since it activates them on successive frames
                 for (int i = 0; i < _synapseCount; i++)
                 {
                     Enemy44Entity synapse = _synapses[i];
-                    if (synapse.StateA == 0)
+                    if (synapse.State == SynapseState.Initial)
                     {
-                        synapse.ChangeState(1);
+                        synapse.ChangeState(SynapseState.Appear);
                     }
                     // note that its state is not updated immediately by ChangeState
-                    if (synapse.StateA == 0 || synapse.StateA == 1)
+                    if (synapse.State == SynapseState.Initial || synapse.State == SynapseState.Appear)
                     {
                         break;
                     }
                 }
             }
             _damageEffect?.Transform(Position, Transform);
-            if (Func2136520())
+            if (AreAllSynapsesDead())
             {
                 if (_shieldEffect1 != null)
                 {
@@ -441,37 +430,37 @@ namespace MphRead.Entities.Enemies
                     _shieldEffect2 = _scene.SpawnEffectGetEntry(83, Vector3.UnitX, Vector3.UnitY, Position); // eyeShieldDefeat
                 }
             }
-            else if (_state1 >= 3 && _shieldEffect1 == null)
+            else if (_state1 >= 3 && _shieldEffect1 == null) // not Initial, Intro, or ShieldRaise
             {
                 _shieldEffect1 = _scene.SpawnEffectGetEntry(82, Vector3.UnitX, Vector3.UnitY, Position); // eyeShield
                 _shieldEffect1?.SetElementExtension(true);
             }
-            if (_state1 == 0)
+            if (State == SlenchState.Initial)
             {
                 if ((playerTarget - Position).LengthSquared <= 16 * 16)
                 {
-                    ChangeState(1);
+                    ChangeState(SlenchState.Intro);
                 }
             }
-            else if (_state1 == 1)
+            else if (State == SlenchState.Intro)
             {
                 if (_model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
                 {
-                    SlenchFlags &= ~SlenchFlags.Bit0;
-                    SlenchFlags &= ~SlenchFlags.Bit6;
-                    ChangeState(2);
+                    SlenchFlags &= ~SlenchFlags.EyeClosed;
+                    SlenchFlags &= ~SlenchFlags.Detached;
+                    ChangeState(SlenchState.ShieldRaise);
                 }
             }
-            else if (_state1 == 2)
+            else if (State == SlenchState.ShieldRaise)
             {
                 if (_shieldEffect2?.IsFinished == true)
                 {
                     _scene.DetachEffectEntry(_shieldEffect2, setExpired: false);
                     _shieldEffect2 = null;
-                    ChangeState(3);
+                    ChangeState(SlenchState.Idle);
                 }
             }
-            else if (_state1 == 3)
+            else if (State == SlenchState.Idle)
             {
                 if (_staticShotTimer > 0 && --_staticShotTimer > 0)
                 {
@@ -479,10 +468,10 @@ namespace MphRead.Entities.Enemies
                 }
                 else
                 {
-                    ChangeState(4);
+                    ChangeState(SlenchState.ShootTear);
                 }
             }
-            else if (_state1 == 4)
+            else if (State == SlenchState.ShootTear)
             {
                 if (_staticShotTimer < 36 * 2) // todo: FPS stuff
                 {
@@ -547,10 +536,10 @@ namespace MphRead.Entities.Enemies
                 }
                 if (_shotEffect == null && _staticShotCounter == phaseValues.StaticShotCount)
                 {
-                    ChangeState(3);
+                    ChangeState(SlenchState.Idle);
                 }
             }
-            else if (_state1 == 5)
+            else if (State == SlenchState.ShieldLower)
             {
                 if (_shieldEffect2 != null)
                 {
@@ -567,13 +556,13 @@ namespace MphRead.Entities.Enemies
                     && MoveToPosition(_field1E0, Fixed.ToFloat(phaseValues.MoveIncrement1) / 2)) // todo: FPS stuff
                 {
                     _field218 = 0;
-                    SlenchFlags &= ~SlenchFlags.Bit1;
+                    SlenchFlags &= ~SlenchFlags.Rolling;
                     SlenchFlags &= ~SlenchFlags.Bit3;
                     SlenchFlags |= SlenchFlags.Bit2;
-                    ChangeState(8);
+                    ChangeState(SlenchState.Detach);
                 }
             }
-            else if (_state1 == 6)
+            else if (State == SlenchState.Return)
             {
                 if (_damageEffect != null && _model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
                 {
@@ -581,14 +570,14 @@ namespace MphRead.Entities.Enemies
                 }
                 if (CheckPosAgainstCurrent(_field1E0))
                 {
-                    ChangeState(7);
+                    ChangeState(SlenchState.Attach);
                 }
                 else if (RotateToTarget(_field1E0, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2)) // todo: FPS stuff
                 {
                     MoveToPosition(_field1E0, Fixed.ToFloat(phaseValues.MoveIncrement2) / 2); // todo: FPS stuff
                 }
             }
-            else if (_state1 == 7)
+            else if (State == SlenchState.Attach)
             {
                 if (RotateToTarget(_field1EC, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2) // todo: FPS stuff
                     && MoveToPosition(_startPos, Fixed.ToFloat(phaseValues.MoveIncrement2) / 2)) // todo: FPS stuff
@@ -596,28 +585,28 @@ namespace MphRead.Entities.Enemies
                     for (int i = 0; i < _synapseCount; i++)
                     {
                         Enemy44Entity synapse = _synapses[i];
-                        synapse.ChangeState(0);
+                        synapse.ChangeState(SynapseState.Initial);
                     }
-                    ChangeState(2);
+                    ChangeState(SlenchState.ShieldRaise);
                 }
             }
-            else if (_state1 == 8)
+            else if (State == SlenchState.Detach)
             {
-                ChangeState(10);
+                ChangeState(SlenchState.Roam);
             }
-            else if (_state1 == 9)
+            else if (State == SlenchState.State9)
             {
                 Vector3 pos = _field1E0.WithY(_field18C);
                 if (CheckPosAgainstCurrent(pos))
                 {
-                    ChangeState(10);
+                    ChangeState(SlenchState.Roam);
                 }
                 else if (RotateToTarget(pos, Fixed.ToFloat(phaseValues.AngleIncrement4) / 2)) // todo: FPS stuff
                 {
                     MoveToPosition(pos, Fixed.ToFloat(phaseValues.MoveIncrement3) / 2); // todo: FPS stuff
                 }
             }
-            else if (_state1 == 10)
+            else if (State == SlenchState.Roam)
             {
                 int phaseHealth = _healthMax / 3 * (2 - _phase);
                 if (_health > phaseHealth)
@@ -631,7 +620,7 @@ namespace MphRead.Entities.Enemies
                         }
                         if (_subtype == 3)
                         {
-                            if (SlenchFlags.TestFlag(SlenchFlags.Bit1))
+                            if (SlenchFlags.TestFlag(SlenchFlags.Rolling))
                             {
                                 // sktodo: FPS stuff, underflow?
                                 if (_rollTimer == 0 || --_rollTimer != 0)
@@ -697,7 +686,7 @@ namespace MphRead.Entities.Enemies
                                 else // roll timer decremented to zero
                                 {
                                     _soundSource.StopSfx(SfxId.SPIRE_ROLL);
-                                    ChangeState(9);
+                                    ChangeState(SlenchState.State9);
                                 }
                             }
                             else // not rolling
@@ -802,7 +791,7 @@ namespace MphRead.Entities.Enemies
                     }
                     else // field1A0 decremented to zero
                     {
-                        ChangeState(6);
+                        ChangeState(SlenchState.Return);
                     }
                 }
                 else // below phase health
@@ -821,10 +810,10 @@ namespace MphRead.Entities.Enemies
                     _damageEffect?.SetElementExtension(true);
                     _phase++;
                     _soundSource.PlaySfx(SfxId.BIGEYE_DIE_SCR);
-                    ChangeState(6);
+                    ChangeState(SlenchState.Return);
                 }
             }
-            else if (_state1 == 11)
+            else if (State == SlenchState.State11)
             {
                 _field1BC = playerTarget;
                 Position = _field1D4;
@@ -832,7 +821,7 @@ namespace MphRead.Entities.Enemies
                 int div = 360 / phaseValues.Field57 * phaseValues.Field56;
                 if (++_field19C_B >= div) // sktodo: FPS stuff
                 {
-                    ChangeState(12);
+                    ChangeState(SlenchState.State12);
                 }
                 else
                 {
@@ -853,21 +842,21 @@ namespace MphRead.Entities.Enemies
                     Position = Matrix.Vec3MultMtx3(up, rotMtx) * factor + _field1D4;
                 }
             }
-            else if (_state1 == 12)
+            else if (State == SlenchState.State12)
             {
                 if (MoveToPosition(_field1BC, Fixed.ToFloat(phaseValues.MoveIncrement4) / 2)) // todo: FPS stuff
                 {
-                    ChangeState(13);
+                    ChangeState(SlenchState.State13);
                 }
             }
-            else if (_state1 == 13)
+            else if (State == SlenchState.State13)
             {
                 if (MoveToPosition(_field1D4, Fixed.ToFloat(phaseValues.MoveIncrement5) / 2)) // todo: FPS stuff
                 {
-                    ChangeState(_nextState);
+                    ChangeState((SlenchState)_stateAfterSlam);
                 }
             }
-            else if (_state1 == 14)
+            else if (State == SlenchState.Dead)
             {
                 if (_field19E_B != 0)
                 {
@@ -1006,23 +995,36 @@ namespace MphRead.Entities.Enemies
             _field196++;
         }
 
-        // sktodo: function name
-        private bool Func21365A4()
+        private bool IsStaticState()
         {
+            // true if Initial, Intro, ShieldRaise, Idle, or ShootTear
+            // false if ShieldLower or anything that comes after it
             return _state1 < 5;
         }
 
-        // sktodo: function name
-        public bool Func2136550()
+        private bool AreAllSynapsesDead()
         {
-            if (!Func21365A4())
+            // returns true if all synpases have state 5, false otherwise
+            for (int i = 0; i < _synapseCount; i++)
+            {
+                if (_synapses[i].State != SynapseState.Dead)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public bool CanSynapsesRespawn()
+        {
+            if (!IsStaticState())
             {
                 return false;
             }
             for (int i = 0; i < _synapseCount; i++)
             {
                 Enemy44Entity synapse = _synapses[i];
-                if (synapse.StateA < 4)
+                if (synapse.State != SynapseState.Dying && synapse.State != SynapseState.Dead)
                 {
                     return true;
                 }
@@ -1054,7 +1056,7 @@ namespace MphRead.Entities.Enemies
                         vec = vec.Normalized();
                         _field1BC = vec * (length - radius) + Position;
                         _field198 = 0;
-                        ChangeState(11);
+                        ChangeState(SlenchState.State11);
                         return true;
                     }
                 }
@@ -1192,7 +1194,7 @@ namespace MphRead.Entities.Enemies
 
         protected override bool EnemyTakeDamage(EntityBase? source)
         {
-            if (_subtype == 3 && SlenchFlags.TestFlag(SlenchFlags.Bit1) && source?.Type == EntityType.Bomb)
+            if (_subtype == 3 && SlenchFlags.TestFlag(SlenchFlags.Rolling) && source?.Type == EntityType.Bomb)
             {
                 // sktodo: test underflow issue or whatever
                 // --> depending on the situation, it might matter what data type we make this
@@ -1204,7 +1206,8 @@ namespace MphRead.Entities.Enemies
             }
             if (Flags.TestFlag(EnemyFlags.Invincible))
             {
-                if (!Func2136520() && _state1 != 0 && _state1 != 1 && _state1 != 2 && source?.Type == EntityType.BeamProjectile)
+                if (!AreAllSynapsesDead() && State != SlenchState.Initial && State != SlenchState.Intro
+                    && State != SlenchState.ShieldRaise && source?.Type == EntityType.BeamProjectile)
                 {
                     var beam = (BeamProjectileEntity)source;
                     Vector3 up = (beam.Position - Position).Normalized();
@@ -1225,11 +1228,11 @@ namespace MphRead.Entities.Enemies
             _timeSinceDamage = 0;
             _soundSource.PlaySfx(SfxId.BIGEYE_DAMAGE);
             int animIndex = 11;
-            if (SlenchFlags.TestFlag(SlenchFlags.Bit0))
+            if (SlenchFlags.TestFlag(SlenchFlags.EyeClosed))
             {
                 animIndex = 12;
             }
-            else if (SlenchFlags.TestFlag(SlenchFlags.Bit6))
+            else if (SlenchFlags.TestFlag(SlenchFlags.Detached))
             {
                 animIndex = 6;
             }
@@ -1237,9 +1240,9 @@ namespace MphRead.Entities.Enemies
             if (_health == 0)
             {
                 _health = 1;
-                if (_state1 != 14)
+                if (State != SlenchState.Dead)
                 {
-                    ChangeState(14);
+                    ChangeState(SlenchState.Dead);
                     _soundSource.PlaySfx(SfxId.BIGEYE_DIE_SCR, noUpdate: true, recency: Single.MaxValue, sourceOnly: true);
                 }
                 // todo: movie transition stuff
@@ -1253,41 +1256,49 @@ namespace MphRead.Entities.Enemies
             }
             return false;
         }
-
-        // sktodo: function name
-        private bool Func2136520()
-        {
-            for (int i = 0; i < _synapseCount; i++)
-            {
-                if (_synapses[i].StateA != 5)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
     }
 
+    // sktodo: flag names
     [Flags]
     public enum SlenchFlags : ushort
     {
         None = 0x0,
-        Bit0 = 0x1,
-        Bit1 = 0x2,
+        EyeClosed = 0x1,
+        Rolling = 0x2,
         Bit2 = 0x4,
         Bit3 = 0x8,
         Bit4 = 0x10,
         Bit5 = 0x20,
-        Bit6 = 0x40,
+        Detached = 0x40,
         Bit7 = 0x80,
-        Bit8 = 0x100,
+        Vulnerable = 0x100,
         Bit9 = 0x200,
-        Bit10 = 0x400,
-        Bit11 = 0x800,
-        Bit12 = 0x1000,
-        Bit13 = 0x2000,
-        Bit14 = 0x4000,
-        Bit15 = 0x8000
+        Unused10 = 0x400,
+        Unused11 = 0x800,
+        Unused12 = 0x1000,
+        Unused13 = 0x2000,
+        Unused14 = 0x4000,
+        Unused15 = 0x8000
+    }
+
+    // sktodo: state names
+    public enum SlenchState : byte
+    {
+        Initial = 0,
+        Intro = 1,
+        ShieldRaise = 2,
+        Idle = 3,
+        ShootTear = 4,
+        ShieldLower = 5,
+        Return = 6,
+        Attach = 7,
+        Detach = 8,
+        State9 = 9,
+        Roam = 10,
+        State11 = 11,
+        State12 = 12,
+        State13 = 13,
+        Dead = 14
     }
 
     public readonly struct Enemy41Values

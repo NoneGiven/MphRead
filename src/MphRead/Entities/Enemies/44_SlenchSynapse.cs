@@ -13,6 +13,7 @@ namespace MphRead.Entities.Enemies
         private int _index = 0;
         private ushort _healthForTurretUpdate = 0;
         private int _timer = 0;
+        public SynapseState State => (SynapseState)_state1;
 
         public Enemy44Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
             : base(data, nodeRef, scene)
@@ -81,7 +82,7 @@ namespace MphRead.Entities.Enemies
             Flags |= EnemyFlags.NoMaxDistance;
             HealthbarMessageId = 2;
             Metadata.LoadEffectiveness(Metadata.SlenchSynapseEffectiveness[_slench.Subtype], BeamEffectiveness);
-            ChangeState(0);
+            ChangeState(SynapseState.Initial);
             // default (though the game doesn't have one): if (_scene.RoomId == 35) // UNIT1_B1
             string model = "BigEyeSynapse_01";
             if (_scene.RoomId == 82) // UNIT4_B1
@@ -104,82 +105,58 @@ namespace MphRead.Entities.Enemies
             _hurtVolumeInit = new CollisionVolume(new Vector3(0, -5.5f, -3.25f), radius); // -22528, -13312
         }
 
-        public void ChangeState(byte state)
+        public void ChangeState(SynapseState state)
         {
             Enemy44Values values = GetPhaseValues();
             switch (state)
             {
-            case 0:
+            case SynapseState.Initial:
                 Flags &= ~EnemyFlags.Visible;
                 break;
-            case 1:
+            case SynapseState.Appear:
                 Flags |= EnemyFlags.Visible;
                 _health = _healthMax = values.Health;
                 UpdateCollisionVolume(Fixed.ToFloat(values.ColRadius));
                 _model.SetAnimation(0, AnimFlags.NoLoop);
                 _soundSource.PlaySfx(SfxId.BIGEYE_SYNAPSE_REGEN_SCR, recency: Single.MaxValue, sourceOnly: true);
                 break;
-            case 2:
+            case SynapseState.Idle:
                 Flags &= ~EnemyFlags.Invincible;
                 _timer = values.HealTimer * 2; // todo: FPS stuff
                 _model.SetAnimation(1);
                 break;
-            case 3:
+            case SynapseState.Damaged:
                 Flags |= EnemyFlags.Invincible;
                 _model.SetAnimation(2, AnimFlags.NoLoop);
                 break;
-            case 4:
+            case SynapseState.Dying:
                 Flags |= EnemyFlags.Invincible;
                 _model.SetAnimation(4, AnimFlags.NoLoop);
                 Vector3 spawnPos = Matrix.Vec3MultMtx4(_hurtVolumeInit.SpherePosition, Transform);
                 _scene.SpawnEffect(135, FacingVector, UpVector, spawnPos); // synapseKill
                 break;
-            case 5:
+            case SynapseState.Dead:
                 Flags &= ~EnemyFlags.Visible;
                 Flags |= EnemyFlags.Invincible;
                 SetTurretActive(false);
                 _timer = values.ReappearTimer * 2; // todo: FPS stuff
                 break;
             }
-            _state2 = state;
-        }
-
-        private void SetTurretActive(bool activate)
-        {
-            Enemy45Entity? turret = FindTurret();
-            if (turret != null)
-            {
-                Message message = activate ? Message.ActivateTurret : Message.DeactivateTurret;
-                _scene.SendMessage(message, this, turret, 0, 0);
-            }
-        }
-
-        private Enemy45Entity? FindTurret()
-        {
-            for (int i = 0; i < _scene.Entities.Count; i++)
-            {
-                EntityBase entity = _scene.Entities[i];
-                if (entity.Type == EntityType.EnemyInstance
-                    && entity is Enemy45Entity turret && turret.Index == _index)
-                {
-                    return turret;
-                }
-            }
-            return null;
+            _state2 = (byte)state;
         }
 
         protected override void EnemyProcess()
         {
             Enemy44Values values = GetPhaseValues();
-            if (_state1 == 1)
+            if (State == SynapseState.Appear)
             {
                 if (_model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
                 {
                     SetTurretActive(true);
-                    ChangeState(2);
+                    ChangeState(SynapseState.Idle);
                 }
             }
-            else if (_state1 == 2)
+            else if (State == SynapseState.Idle)
             {
                 if (_health < values.Health && _timer != 0)
                 {
@@ -189,26 +166,27 @@ namespace MphRead.Entities.Enemies
                     }
                 }
             }
-            else if (_state1 == 3)
+            else if (State == SynapseState.Damaged)
             {
                 if (_model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
                 {
                     // damaged animation done playing after hit (still alive)
-                    ChangeState(2);
+                    ChangeState(SynapseState.Idle);
                 }
             }
-            else if (_state1 == 4)
+            else if (State == SynapseState.Dying)
             {
                 if (_model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
                 {
-                    ChangeState(5);
+                    // damaged animation done playing after hit (dead)
+                    ChangeState(SynapseState.Dead);
                 }
             }
-            else if (_state1 == 5)
+            else if (State == SynapseState.Dead)
             {
-                if (_slench.Func2136550() && _timer != 0 && --_timer == 0)
+                if (_slench.CanSynapsesRespawn() && _timer != 0 && --_timer == 0)
                 {
-                    ChangeState(1);
+                    ChangeState(SynapseState.Appear);
                 }
             }
             if (_health != _healthForTurretUpdate)
@@ -216,7 +194,7 @@ namespace MphRead.Entities.Enemies
                 Enemy45Entity? turret = FindTurret();
                 if (turret != null)
                 {
-                    // todo: FPS stuff, eventually
+                    // todo: FPS stuff
                     int frameCount = turret.GetMaxFrameCount(); // original max frame count of the turret's animation
                     if (frameCount == 0)
                     {
@@ -247,9 +225,33 @@ namespace MphRead.Entities.Enemies
             }
         }
 
+        private void SetTurretActive(bool activate)
+        {
+            Enemy45Entity? turret = FindTurret();
+            if (turret != null)
+            {
+                Message message = activate ? Message.ActivateTurret : Message.DeactivateTurret;
+                _scene.SendMessage(message, this, turret, 0, 0);
+            }
+        }
+
+        private Enemy45Entity? FindTurret()
+        {
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type == EntityType.EnemyInstance
+                    && entity is Enemy45Entity turret && turret.Index == _index)
+                {
+                    return turret;
+                }
+            }
+            return null;
+        }
+
         protected override bool EnemyTakeDamage(EntityBase? source)
         {
-            if (_state1 == 2 || _state2 == 2)
+            if (State == SynapseState.Idle && _state2 == (byte)SynapseState.Idle)
             {
                 Effectiveness effectiveness = Effectiveness.Normal;
                 if (source?.Type == EntityType.BeamProjectile)
@@ -270,11 +272,11 @@ namespace MphRead.Entities.Enemies
                 }
                 if (_health != 0)
                 {
-                    ChangeState(3);
+                    ChangeState(SynapseState.Damaged);
                 }
                 else
                 {
-                    ChangeState(4);
+                    ChangeState(SynapseState.Dying);
                 }
             }
             if (_health == 0)
@@ -283,6 +285,16 @@ namespace MphRead.Entities.Enemies
             }
             return false;
         }
+    }
+
+    public enum SynapseState : byte
+    {
+        Initial = 0,
+        Appear = 1,
+        Idle = 2,
+        Damaged = 3,
+        Dying = 4,
+        Dead = 5,
     }
 
     public readonly struct Enemy44Values
