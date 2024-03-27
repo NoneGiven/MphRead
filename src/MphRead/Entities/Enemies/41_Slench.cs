@@ -1061,7 +1061,6 @@ namespace MphRead.Entities.Enemies
 
         private bool CheckPosAgainstCurrent(Vector3 pos)
         {
-            // sktodo: add tolerance? even in-game, the lack thereof might be why there's that stuck bug?
             return pos == Position;
         }
 
