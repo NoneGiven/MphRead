@@ -32,19 +32,18 @@ namespace MphRead.Entities.Enemies
         private EntityCollision? _parentEntCol = null;
         private Matrix4 _invTransform = Matrix4.Identity;
 
-        public Enemy19Values Values { get; private set; }
+        public Enemy19Values Values => Metadata.Enemy19Values[_subtype];
         public SegmentInfo[] Segments { get; } = new SegmentInfo[3];
         private readonly Enemy20Entity?[] _eyes = new Enemy20Entity?[_eyeCount];
         private Enemy21Entity? _crystal = null!;
         private ModelInstance _model = null!;
         public ModelInstance BeamModel { get; private set; } = null!;
         public ModelInstance BeamColModel { get; private set; } = null!;
-        public SoundSource SounceSource => _soundSource;
+        public SoundSource SoundSource => _soundSource;
 
         private const ushort _flashPeriod = 10 * 2; // todo: FPS stuff
         private const ushort _flashLength = 5 * 2; // todo: FPS stuff
         private const ushort _eyeCount = 12;
-
 
         public Enemy19Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
             : base(data, nodeRef, scene)
@@ -87,7 +86,6 @@ namespace MphRead.Entities.Enemies
             _boundingRadius = 1;
             _hurtVolumeInit = new CollisionVolume(_spawner.Data.Fields.S05.Volume0);
             _subtype = (int)_spawner.Data.Fields.S05.EnemySubtype;
-            Values = Metadata.Enemy19Values[_subtype];
             _scanId = Values.ScanId;
             _crystalDownTimer = Values.PhaseFlashTime * 2; // todo: FPS stuff
             _flashTimer = _flashPeriod;
@@ -337,6 +335,7 @@ namespace MphRead.Entities.Enemies
             }
         }
 
+        // sktodo: function names
         public void Sub2135F54()
         {
             if (PhaseIndex == 0)
@@ -437,7 +436,7 @@ namespace MphRead.Entities.Enemies
                     _soundSource.PlaySfx(SfxId.CYLINDER_BOSS_DIE); // empty
                     _soundSource.PlaySfx(SfxId.CYLINDER_BOSS_CRYSTAL_SCR); // empty
                 }
-                // sktodo: fix camera, avoid SFX like the door locking
+                // todo: movie transition stuff (fix camera(?), avoid SFX like the door locking)
                 if (PlayerEntity.Main.Health > 0)
                 {
                     GameState.StorySave.CheckpointRoomId = -1;
@@ -448,6 +447,7 @@ namespace MphRead.Entities.Enemies
             }
         }
 
+        // duplicated for 1 through 26
         private void State0()
         {
             CallSubroutine(Metadata.Enemy19Subroutines, this);

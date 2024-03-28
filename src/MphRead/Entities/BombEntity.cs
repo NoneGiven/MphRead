@@ -543,7 +543,6 @@ namespace MphRead.Entities
 
         public override void GetDrawInfo()
         {
-            // todo: is_visible
             if (BombType == BombType.Lockjaw)
             {
                 if (BombIndex == 1)

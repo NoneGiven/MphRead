@@ -2135,7 +2135,7 @@ namespace MphRead.Utility
                 writer.Write(entity.EnemyVersion);
                 writer.WriteVolume(entity.Volume0);
                 writer.WriteVolume(entity.Volume1);
-                writer.Write(entity.Unknown04);
+                writer.Write(entity.Index);
                 for (int i = 0; i < 65; i++)
                 {
                     writer.Write(padInt);

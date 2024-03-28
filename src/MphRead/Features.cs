@@ -7,6 +7,7 @@ namespace MphRead
         public static bool NoStrayRespawnText { get; set; } = false;
         public static bool CorrectBountySfx { get; set; } = true;
         public static bool NoDoubleEnemyDeath { get; set; } = true;
+        public static bool NoSlenchRollTimerUnderflow { get; set; } = true;
     }
 
     public static class Features

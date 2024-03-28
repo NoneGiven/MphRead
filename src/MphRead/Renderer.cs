@@ -1097,6 +1097,8 @@ namespace MphRead
             }
         }
 
+        public static bool BreakNextFrame { get; set; } // skdebug
+
         public void OnUpdateFrame()
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, _frameBuffer);
@@ -1104,6 +1106,11 @@ namespace MphRead
             LoadAndUnload();
             // todo: FPS stuff
             _frameTime = 1 / 60f;
+            if (BreakNextFrame)
+            {
+                _frameAdvanceOn = true;
+                BreakNextFrame = false;
+            }
             if (ProcessFrame)
             {
                 _globalElapsedTime += _frameTime;

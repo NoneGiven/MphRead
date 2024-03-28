@@ -465,6 +465,32 @@ namespace MphRead
             }
         };
 
+        public static IReadOnlyList<EnemySubroutine<Enemy45Entity>> Enemy45Subroutines = new EnemySubroutine<Enemy45Entity>[4]
+        {
+            // state 0
+            new EnemySubroutine<Enemy45Entity>(new EnemyBehavior<Enemy45Entity>[1]
+            {
+                new EnemyBehavior<Enemy45Entity>(1, Enemy45Entity.Behavior00)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy45Entity>(new EnemyBehavior<Enemy45Entity>[2]
+            {
+                new EnemyBehavior<Enemy45Entity>(2, Enemy45Entity.Behavior04),
+                new EnemyBehavior<Enemy45Entity>(0, Enemy45Entity.Behavior02)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy45Entity>(new EnemyBehavior<Enemy45Entity>[2]
+            {
+                new EnemyBehavior<Enemy45Entity>(0, Enemy45Entity.Behavior02),
+                new EnemyBehavior<Enemy45Entity>(1, Enemy45Entity.Behavior03)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy45Entity>(new EnemyBehavior<Enemy45Entity>[1]
+            {
+                new EnemyBehavior<Enemy45Entity>(0, Enemy45Entity.Behavior01)
+            })
+        };
+
         public static IReadOnlyList<EnemySubroutine<Enemy19Entity>> Enemy19Subroutines = new EnemySubroutine<Enemy19Entity>[27]
         {
             // state 0
@@ -620,6 +646,7 @@ namespace MphRead
 
         public static IReadOnlyList<Enemy19Values> Enemy19Values = new Enemy19Values[4]
         {
+            // Cretaphid v1 (UNIT2_B1)
             new Enemy19Values()
             {
                 CrystalHealth = 490,
@@ -702,6 +729,7 @@ namespace MphRead
                 EyeScanId = 0,
                 EyeEffectiveness = 0xAA9A
             },
+            // Cretaphid v2 (UNIT3_B1)
             new Enemy19Values()
             {
                 CrystalHealth = 540,
@@ -784,6 +812,7 @@ namespace MphRead
                 EyeScanId = 0,
                 EyeEffectiveness = 0xAAAA
             },
+            // Cretaphid v3 (UNIT1_B2)
             new Enemy19Values()
             {
                 CrystalHealth = 570,
@@ -866,6 +895,7 @@ namespace MphRead
                 EyeScanId = 0,
                 EyeEffectiveness = 0xAAAA
             },
+            // Cretaphid v4 (UNIT4_B2)
             new Enemy19Values()
             {
                 CrystalHealth = 550,
@@ -1499,6 +1529,634 @@ namespace MphRead
             }
         };
 
+        public static IReadOnlyList<Enemy41Values> Enemy41Values = new Enemy41Values[12] // 4 x 3
+        {
+            // Slench v1 (UNIT1_B1)
+            // Slench v1, phase 1
+            new Enemy41Values()
+            {
+                ScanId1 = 227,
+                ScanId2 = 201,
+                AngleIncrement1 = 16384,
+                Health = 200,
+                AngleIncrement2 = 4096,
+                MinStaticShotTimer = 60,
+                MaxStaticShotTimer = 120,
+                StaticShotCooldown = 30,
+                StaticShotCount = 1,
+                Padding17 = 0,
+                AngleIncrement3 = 4096,
+                MoveIncrement1 = 1024,
+                MoveIncrement2 = 614,
+                AngleIncrement4 = 8192,
+                RoamTime = 600,
+                MoveIncrement3 = 410,
+                RollTime = 81920,
+                FloatingAngleInc = 10240,
+                RollingAngleInc = 0,
+                FloatingSpeed = 12288,
+                RollingSpeed = 0,
+                AngleIncrement5 = 0,
+                SlamRange = 0,
+                MoveIncrement4 = 0,
+                MoveIncrement5 = 0,
+                SlamDelay = 0,
+                WobbleCycles = 2,
+                WobbleRotInc = 64,
+                MaxWobbleDist = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v1, phase 2
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                AngleIncrement1 = 16384,
+                Health = 0,
+                AngleIncrement2 = 4096,
+                MinStaticShotTimer = 60,
+                MaxStaticShotTimer = 120,
+                StaticShotCooldown = 30,
+                StaticShotCount = 2,
+                Padding17 = 0,
+                AngleIncrement3 = 4096,
+                MoveIncrement1 = 1024,
+                MoveIncrement2 = 614,
+                AngleIncrement4 = 16384,
+                RoamTime = 450,
+                MoveIncrement3 = 410,
+                RollTime = 81920,
+                FloatingAngleInc = 18432,
+                RollingAngleInc = 0,
+                FloatingSpeed = 15565,
+                RollingSpeed = 0,
+                AngleIncrement5 = 0,
+                SlamRange = 0,
+                MoveIncrement4 = 0,
+                MoveIncrement5 = 0,
+                SlamDelay = 0,
+                WobbleCycles = 2,
+                WobbleRotInc = 64,
+                MaxWobbleDist = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v1, phase 3
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                AngleIncrement1 = 16384,
+                Health = 0,
+                AngleIncrement2 = 4096,
+                MinStaticShotTimer = 60,
+                MaxStaticShotTimer = 120,
+                StaticShotCooldown = 20,
+                StaticShotCount = 2,
+                Padding17 = 0,
+                AngleIncrement3 = 4096,
+                MoveIncrement1 = 1024,
+                MoveIncrement2 = 614,
+                AngleIncrement4 = 16384,
+                RoamTime = 300,
+                MoveIncrement3 = 410,
+                RollTime = 81920,
+                FloatingAngleInc = 26624,
+                RollingAngleInc = 0,
+                FloatingSpeed = 13517,
+                RollingSpeed = 0,
+                AngleIncrement5 = 0,
+                SlamRange = 0,
+                MoveIncrement4 = 0,
+                MoveIncrement5 = 0,
+                SlamDelay = 0,
+                WobbleCycles = 2,
+                WobbleRotInc = 64,
+                MaxWobbleDist = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v2 (UNIT4_B1)
+            // Slench v2, phase 1
+            new Enemy41Values()
+            {
+                ScanId1 = 202,
+                ScanId2 = 203,
+                AngleIncrement1 = 16384,
+                Health = 1200,
+                AngleIncrement2 = 4096,
+                MinStaticShotTimer = 60,
+                MaxStaticShotTimer = 120,
+                StaticShotCooldown = 25,
+                StaticShotCount = 1,
+                Padding17 = 0,
+                AngleIncrement3 = 4096,
+                MoveIncrement1 = 1024,
+                MoveIncrement2 = 614,
+                AngleIncrement4 = 16384,
+                RoamTime = 600,
+                MoveIncrement3 = 410,
+                RollTime = 81920,
+                FloatingAngleInc = 14336,
+                RollingAngleInc = 0,
+                FloatingSpeed = 14336,
+                RollingSpeed = 0,
+                AngleIncrement5 = 0,
+                SlamRange = 0,
+                MoveIncrement4 = 0,
+                MoveIncrement5 = 0,
+                SlamDelay = 0,
+                WobbleCycles = 2,
+                WobbleRotInc = 64,
+                MaxWobbleDist = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v2, phase 2
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                AngleIncrement1 = 16384,
+                Health = 0,
+                AngleIncrement2 = 4096,
+                MinStaticShotTimer = 60,
+                MaxStaticShotTimer = 120,
+                StaticShotCooldown = 25,
+                StaticShotCount = 2,
+                Padding17 = 0,
+                AngleIncrement3 = 4096,
+                MoveIncrement1 = 1024,
+                MoveIncrement2 = 614,
+                AngleIncrement4 = 16384,
+                RoamTime = 540,
+                MoveIncrement3 = 819,
+                RollTime = 81920,
+                FloatingAngleInc = 18432,
+                RollingAngleInc = 0,
+                FloatingSpeed = 16384,
+                RollingSpeed = 0,
+                AngleIncrement5 = 0,
+                SlamRange = 0,
+                MoveIncrement4 = 0,
+                MoveIncrement5 = 0,
+                SlamDelay = 0,
+                WobbleCycles = 2,
+                WobbleRotInc = 64,
+                MaxWobbleDist = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v2, phase 3
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                AngleIncrement1 = 16384,
+                Health = 0,
+                AngleIncrement2 = 4096,
+                MinStaticShotTimer = 60,
+                MaxStaticShotTimer = 120,
+                StaticShotCooldown = 25,
+                StaticShotCount = 3,
+                Padding17 = 0,
+                AngleIncrement3 = 4096,
+                MoveIncrement1 = 1024,
+                MoveIncrement2 = 614,
+                AngleIncrement4 = 16384,
+                RoamTime = 450,
+                MoveIncrement3 = 1229,
+                RollTime = 81920,
+                FloatingAngleInc = 24576,
+                RollingAngleInc = 0,
+                FloatingSpeed = 16384,
+                RollingSpeed = 0,
+                AngleIncrement5 = 0,
+                SlamRange = 0,
+                MoveIncrement4 = 0,
+                MoveIncrement5 = 0,
+                SlamDelay = 0,
+                WobbleCycles = 2,
+                WobbleRotInc = 64,
+                MaxWobbleDist = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v3 (UNIT2_B2)
+            // Slench v3, phase 1
+            new Enemy41Values()
+            {
+                ScanId1 = 204,
+                ScanId2 = 205,
+                AngleIncrement1 = 32768,
+                Health = 900,
+                AngleIncrement2 = 4096,
+                MinStaticShotTimer = 60,
+                MaxStaticShotTimer = 120,
+                StaticShotCooldown = 25,
+                StaticShotCount = 2,
+                Padding17 = 0,
+                AngleIncrement3 = 4096,
+                MoveIncrement1 = 1024,
+                MoveIncrement2 = 614,
+                AngleIncrement4 = 16384,
+                RoamTime = 750,
+                MoveIncrement3 = 819,
+                RollTime = 81920,
+                FloatingAngleInc = 14336,
+                RollingAngleInc = 0,
+                FloatingSpeed = 14336,
+                RollingSpeed = 0,
+                AngleIncrement5 = 16384,
+                SlamRange = 40960,
+                MoveIncrement4 = 4096,
+                MoveIncrement5 = 3277,
+                SlamDelay = 150,
+                WobbleCycles = 10,
+                WobbleRotInc = 32,
+                MaxWobbleDist = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v3, phase 2
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                AngleIncrement1 = 32768,
+                Health = 0,
+                AngleIncrement2 = 4096,
+                MinStaticShotTimer = 60,
+                MaxStaticShotTimer = 120,
+                StaticShotCooldown = 25,
+                StaticShotCount = 3,
+                Padding17 = 0,
+                AngleIncrement3 = 4096,
+                MoveIncrement1 = 1024,
+                MoveIncrement2 = 614,
+                AngleIncrement4 = 16384,
+                RoamTime = 660,
+                MoveIncrement3 = 819,
+                RollTime = 81920,
+                FloatingAngleInc = 18432,
+                RollingAngleInc = 0,
+                FloatingSpeed = 16384,
+                RollingSpeed = 0,
+                AngleIncrement5 = 32768,
+                SlamRange = 40960,
+                MoveIncrement4 = 4915,
+                MoveIncrement5 = 3277,
+                SlamDelay = 120,
+                WobbleCycles = 10,
+                WobbleRotInc = 48,
+                MaxWobbleDist = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v3, phase 3
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                AngleIncrement1 = 32768,
+                Health = 0,
+                AngleIncrement2 = 4096,
+                MinStaticShotTimer = 60,
+                MaxStaticShotTimer = 120,
+                StaticShotCooldown = 20,
+                StaticShotCount = 3,
+                Padding17 = 0,
+                AngleIncrement3 = 4096,
+                MoveIncrement1 = 1024,
+                MoveIncrement2 = 614,
+                AngleIncrement4 = 16384,
+                RoamTime = 600,
+                MoveIncrement3 = 819,
+                RollTime = 81920,
+                FloatingAngleInc = 24576,
+                RollingAngleInc = 0,
+                FloatingSpeed = 16384,
+                RollingSpeed = 0,
+                AngleIncrement5 = 32768,
+                SlamRange = 40960,
+                MoveIncrement4 = 6144,
+                MoveIncrement5 = 3277,
+                SlamDelay = 120,
+                WobbleCycles = 12,
+                WobbleRotInc = 55,
+                MaxWobbleDist = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v4 (UNIT3_B2)
+            // Slench v4, phase 1
+            new Enemy41Values()
+            {
+                ScanId1 = 206,
+                ScanId2 = 223,
+                AngleIncrement1 = 32768,
+                Health = 800,
+                AngleIncrement2 = 4096,
+                MinStaticShotTimer = 60,
+                MaxStaticShotTimer = 120,
+                StaticShotCooldown = 20,
+                StaticShotCount = 2,
+                Padding17 = 0,
+                AngleIncrement3 = 4096,
+                MoveIncrement1 = 1024,
+                MoveIncrement2 = 614,
+                AngleIncrement4 = 16384,
+                RoamTime = 1500,
+                MoveIncrement3 = 819,
+                RollTime = 600,
+                FloatingAngleInc = 14336,
+                RollingAngleInc = 12288,
+                FloatingSpeed = 14336,
+                RollingSpeed = 22528,
+                AngleIncrement5 = 32768,
+                SlamRange = 40960,
+                MoveIncrement4 = 4096,
+                MoveIncrement5 = 3277,
+                SlamDelay = 150,
+                WobbleCycles = 10,
+                WobbleRotInc = 50,
+                MaxWobbleDist = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v4, phase 2
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                AngleIncrement1 = 32768,
+                Health = 0,
+                AngleIncrement2 = 4096,
+                MinStaticShotTimer = 60,
+                MaxStaticShotTimer = 120,
+                StaticShotCooldown = 20,
+                StaticShotCount = 3,
+                Padding17 = 0,
+                AngleIncrement3 = 4096,
+                MoveIncrement1 = 1024,
+                MoveIncrement2 = 614,
+                AngleIncrement4 = 16384,
+                RoamTime = 1500,
+                MoveIncrement3 = 600,
+                RollTime = 819,
+                FloatingAngleInc = 18432,
+                RollingAngleInc = 14336,
+                FloatingSpeed = 16384,
+                RollingSpeed = 24576,
+                AngleIncrement5 = 32768,
+                SlamRange = 40960,
+                MoveIncrement4 = 4915,
+                MoveIncrement5 = 3277,
+                SlamDelay = 120,
+                WobbleCycles = 10,
+                WobbleRotInc = 55,
+                MaxWobbleDist = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            },
+            // Slench v4, phase 3
+            new Enemy41Values()
+            {
+                ScanId1 = 0,
+                ScanId2 = 0,
+                AngleIncrement1 = 32768,
+                Health = 0,
+                AngleIncrement2 = 4096,
+                MinStaticShotTimer = 60,
+                MaxStaticShotTimer = 120,
+                StaticShotCooldown = 20,
+                StaticShotCount = 4,
+                Padding17 = 0,
+                AngleIncrement3 = 4096,
+                MoveIncrement1 = 1024,
+                MoveIncrement2 = 614,
+                AngleIncrement4 = 16384,
+                RoamTime = 1800,
+                MoveIncrement3 = 900,
+                RollTime = 819,
+                FloatingAngleInc = 26624,
+                RollingAngleInc = 16384,
+                FloatingSpeed = 16384,
+                RollingSpeed = 24576,
+                AngleIncrement5 = 32768,
+                SlamRange = 49152,
+                MoveIncrement4 = 6144,
+                MoveIncrement5 = 3277,
+                SlamDelay = 120,
+                WobbleCycles = 12,
+                WobbleRotInc = 65,
+                MaxWobbleDist = 2048,
+                Magic = 0xBEEF,
+                Padding5E = 0
+            }
+        };
+
+        public static IReadOnlyList<Enemy44Values> Enemy44Values = new Enemy44Values[12] // 4 x 3
+        {
+            // Slench v1 (UNIT1_B1)
+            // Slench v1, phase 1
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 36,
+                HealTimer = 120,
+                ReappearTimer = 360,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v1, phase 2
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 36,
+                HealTimer = 120,
+                ReappearTimer = 300,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v1, phase 3
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 36,
+                HealTimer = 120,
+                ReappearTimer = 240,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v2 (UNIT4_B1)
+            // Slench v2, phase 1
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 72,
+                HealTimer = 120,
+                ReappearTimer = 600,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v2, phase 2
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 72,
+                HealTimer = 120,
+                ReappearTimer = 480,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v2, phase 3
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 96,
+                HealTimer = 120,
+                ReappearTimer = 360,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v3 (UNIT2_B2)
+            // Slench v3, phase 1
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 48,
+                HealTimer = 120,
+                ReappearTimer = 420,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v3, phase 2
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 48,
+                HealTimer = 120,
+                ReappearTimer = 360,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v3, phase 3
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 48,
+                HealTimer = 120,
+                ReappearTimer = 300,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v4 (UNIT3_B2)
+            // Slench v4, phase 1
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 90,
+                HealTimer = 120,
+                ReappearTimer = 600,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v4, phase 2
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 90,
+                HealTimer = 120,
+                ReappearTimer = 540,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            },
+            // Slench v4, phase 3
+            new Enemy44Values()
+            {
+                ScanId = 0,
+                Health = 90,
+                HealTimer = 120,
+                ReappearTimer = 480,
+                ColRadius = 6144,
+                Magic = 0xBEEF,
+                PaddingE = 0
+            }
+        };
+
+        public static IReadOnlyList<Enemy45Values> Enemy45Values = new Enemy45Values[4]
+        {
+            // Slench v1 (UNIT1_B1)
+            new Enemy45Values()
+            {
+                Health = 30,
+                Damage = 2,
+                Unused4 = 0,
+                ContactDamage = 10,
+                ShotCooldown = 20,
+                SalvoCooldown = 90,
+                MinShots = 1,
+                MaxShots = 1,
+                ScanId = 190,
+                Effectiveness = 0xAAAA
+            },
+            // Slench v2 (UNIT4_B1)
+            new Enemy45Values()
+            {
+                Health = 30,
+                Damage = 2,
+                Unused4 = 1,
+                ContactDamage = 10,
+                ShotCooldown = 20,
+                SalvoCooldown = 90,
+                MinShots = 1,
+                MaxShots = 1,
+                ScanId = 190,
+                Effectiveness = 0xAAAA
+            },
+            // Slench v3 (UNIT2_B2)
+            new Enemy45Values()
+            {
+                Health = 30,
+                Damage = 2,
+                Unused4 = 1,
+                ContactDamage = 10,
+                ShotCooldown = 20,
+                SalvoCooldown = 250,
+                MinShots = 1,
+                MaxShots = 1,
+                ScanId = 190,
+                Effectiveness = 0xAAAA
+            },
+            // Slench v4 (UNIT3_B2)
+            new Enemy45Values()
+            {
+                Health = 30,
+                Damage = 2,
+                Unused4 = 1,
+                ContactDamage =  5,
+                ShotCooldown = 20,
+                SalvoCooldown = 250,
+                MinShots = 1,
+                MaxShots = 1,
+                ScanId = 190,
+                Effectiveness = 0xAAAA
+            }
+        };
+
         public static IReadOnlyList<EnemySubroutine<Enemy46Entity>> Enemy46Subroutines = new EnemySubroutine<Enemy46Entity>[20]
         {
             // state 0
@@ -1889,7 +2547,7 @@ namespace MphRead
         }
 
         // todo: document other replacements
-        // default = 0x2AAAA = 0101010101010101010 (2/normal effectiveness for everything)
+        // default = 0x2AAAA = 00101010101010101010 (2/normal effectiveness for everything)
         // replacements:
         // AlimbicTurretV10 - 0xEAAA - zero Omega Cannon, double Shock Coil
         // AlimbicTurretV14 - 0xEABA - zero Omega Cannon, double Missile/Shock Coil
@@ -1906,6 +2564,15 @@ namespace MphRead
         // Voldrum1I - 0xF2BA - zero Judicator/Omega Cannon, double Missile/Magmaul/Shock Coil
         // FireSpawn   - 0x8955 - zero Magmaul/Omega Cannon, normal Judicator/Shock Coil, half all else
         // ArcticSpawn - 0xB155 - zero Judicator/Omega Cannon, normal Shock Coil, double Magmaul, half all else
+        // Slench v1 - 0x2AAAA - default
+        // Slench v2 - 0x2AAAA - default
+        // Slench v3 - 0x155F5 - double Missile/Battlehammer, half all else
+        // Slench v4 - 0x16566 - normal Power Beam/Missile/Magmaul, half all else
+        // SlenchSynapse v1 - 0x2AAAA - default
+        // SlenchSynapse v2 - 0x00800 - normal Judicator, zero all else
+        // SlenchSynapse v3 - 0x00080 - normal Battlehammer, zero all else
+        // SlenchSynapse v4 - 0x02000 - normal Magmaul, zero all else
+        // SlenchTurret - 0xAAAA - zero Omega Cannon, normal all else
         // LesserIthrak  - 0x5555 - zero Omega Cannon, half all else
         // GreaterIthrak - 0x0000 - zero for all
         // ForceFieldLock - types 0-7 are normal from the corresponding beam and zero from all else; type 8 is zero from all (vulerable to bombs)
@@ -1953,17 +2620,27 @@ namespace MphRead
             /* 38 */ 0x2EAFA, // CrashPillar -- double from Missile/Battlehammer/Shock Coil
             /* 39 */ 0x24D55, // FireSpawn -- zero from Magmual, double from Judicator, half from all else except Omega Cannon (not used)
             /* 40 */ 0x2AAAA, // Spawner
-            /* 41 */ 0x2AA99, // Slench -- half from Power Beam/Missile
+            /* 41 */ 0x2AA99, // Slench -- half from Power Beam/Missile (not used)
             /* 42 */ 0x2AA99, // SlenchShield -- half from Power Beam/Missile
             /* 43 */ 0x2AA99, // SlenchNest -- half from Power Beam/Missile
-            /* 44 */ 0x2AA99, // SlenchSynapse -- half from Power Beam/Missile
-            /* 45 */ 0x2AA99, // SlenchTurret -- half from Power Beam/Missile
+            /* 44 */ 0x2AA99, // SlenchSynapse -- half from Power Beam/Missile (not used)
+            /* 45 */ 0x2AA99, // SlenchTurret -- half from Power Beam/Missile (not used)
             /* 46 */ 0x2AAAA, // LesserIthrak (not used)
             /* 47 */ 0x2AAAA, // GreaterIthrak (not used)
             /* 48 */ 0x2AAAA, // Hunter
             /* 49 */ 0x2AAAA, // ForceFieldLock (not used)
             /* 50 */ 0x2AAAA, // HitZone (not used)
             /* 51 */ 0x2AAAA  // CarnivorousPlant
+        };
+
+        public static readonly IReadOnlyList<int> SlenchEffectiveness = new int[4]
+        {
+            0x2AAAA, 0x2AAAA, 0x155F5, 0x16566
+        };
+
+        public static readonly IReadOnlyList<int> SlenchSynapseEffectiveness = new int[4]
+        {
+            0x2AAAA, 0x800, 0x80, 0x2000
         };
     }
 }

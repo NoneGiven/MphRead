@@ -239,7 +239,7 @@ namespace MphRead.Entities
             GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
             if (_data.EnemyType != EnemyType.Hunter || _data.Fields.S09.EncounterType == 1)
             {
-                // todo: update comopleted encounters in story save
+                // todo: update completed encounters in story save
             }
             if (_data.EnemyType == EnemyType.Cretaphid)
             {
@@ -323,7 +323,7 @@ namespace MphRead.Entities
             }
             else if (info.Message == Message.Unknown36)
             {
-                // todo: pass to Gorea2
+                // todo-gorea: pass to Gorea2
             }
         }
 
@@ -388,6 +388,26 @@ namespace MphRead.Entities
             if (type == EnemyType.CretaphidCrystal)
             {
                 return new Enemy21Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.Slench)
+            {
+                return new Enemy41Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.SlenchShield)
+            {
+                return new Enemy42Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.SlenchNest)
+            {
+                return new Enemy43Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.SlenchSynapse)
+            {
+                return new Enemy44Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.SlenchTurret)
+            {
+                return new Enemy45Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
             }
             if (type == EnemyType.PsychoBit1)
             {
