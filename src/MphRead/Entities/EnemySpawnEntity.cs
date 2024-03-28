@@ -323,7 +323,7 @@ namespace MphRead.Entities
             }
             else if (info.Message == Message.Unknown36)
             {
-                // todo: pass to Gorea2
+                // todo-gorea: pass to Gorea2
             }
         }
 

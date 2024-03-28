@@ -2022,7 +2022,7 @@ namespace MphRead.Entities
                         var enemy = (EnemyInstanceEntity)entity;
                         if (enemy.EnemyType == EnemyType.GoreaSealSphere2)
                         {
-                            // todo: draw healthbar if damaged and some flag
+                            // todo-gorea: draw healthbar if damaged and some flag
                             break;
                         }
                     }

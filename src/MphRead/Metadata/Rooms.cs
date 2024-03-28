@@ -2432,7 +2432,7 @@ namespace MphRead
                 collisionPath: "Gorea_Land_collision.bin",
                 texturePath: "Gorea_Land_tex.bin",
                 entityPath: "Gorea_Land_Ent.bin",
-                nodePath: null,// metadata has Gorea_Land_Node.bin, but there's no such file
+                nodePath: null, // metadata has Gorea_Land_Node.bin, but there's no such file
                 roomNodeName: null,
                 battleTimeLimit: TimeLimit(40, 0, 0),
                 timeLimit: TimeLimit(4, 0, 0),
