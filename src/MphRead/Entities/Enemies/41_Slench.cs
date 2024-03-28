@@ -30,22 +30,22 @@ namespace MphRead.Entities.Enemies
         private float _shieldOffset = 0;
         public float ShieldOffset => _shieldOffset;
         private Vector3 _startPos;
-        private Vector3 _field1E0;
-        private Vector3 _field1EC;
+        private Vector3 _detachedPosition;
+        private Vector3 _detachedFacing;
         private float _field18C;
-        private float _field204;
-        private Vector3 _field1BC;
-        private Vector3 _field1D4;
-        private float _field218 = 0;
+        private float _patternAngle;
+        private Vector3 _targetVec1;
+        private Vector3 _targetVec2;
+        private float _dropSpeed = 0;
 
         private int _staticShotCounter = 0;
-        private int _field19C_B = 0; // note: these two fields are the same in-game
+        private int _wobbleTimer = 0; // note: these two fields are timer_1 in-game
         private int _staticShotCooldown = 0;
-        private int _roamTimer = 0; // note: these two fields are the same in-game
-        private bool _field1A3 = false;
-        private int _rollTimer = 0;
+        private int _roamTimer = 0; // note: these two fields are timer_2 in-game
         private int _staticShotTimer = 0;
-        private int _deathTimer = 0; // note: these two fields are the same in-game
+        private int _deathTimer = 0; // note: these two fields are timer_3 in-game
+        private int _rollTimer = 0;
+        private bool _field1A3 = false;
 
         private EquipInfo _equipInfo = null!;
         private int _ammo = 1000;
@@ -86,7 +86,7 @@ namespace MphRead.Entities.Enemies
         protected override void EnemyInitialize()
         {
             // default: if (_scene.RoomId == 35) // UNIT1_B1
-            SlenchFlags = SlenchFlags.Bit2;
+            SlenchFlags = SlenchFlags.Floating;
             if (_scene.RoomId == 82) // UNIT4_B1
             {
                 _subtype = 1;
@@ -142,8 +142,8 @@ namespace MphRead.Entities.Enemies
             UpdateFacing();
             _field1F8 = new Vector3(_targetX, 0, _targetZ);
             _startPos = position;
-            _field1E0 = facing * 3 + position;
-            _field1EC = _field1E0 + facing;
+            _detachedPosition = facing * 3 + position;
+            _detachedFacing = _detachedPosition + facing;
             ChangeState(SlenchState.Initial);
             if (EnemySpawnEntity.SpawnEnemy(this, EnemyType.SlenchShield, NodeRef, _scene) is not Enemy42Entity shield)
             {
@@ -153,7 +153,7 @@ namespace MphRead.Entities.Enemies
             _shield = shield;
             for (int i = 0; i < _synapseCount; i++)
             {
-                // the game uses _field19E/_field19E_A/timer1 as a temp for this
+                // the game uses timer_3 as a temp for this
                 SynapseIndex = i;
                 if (EnemySpawnEntity.SpawnEnemy(this, EnemyType.SlenchSynapse, NodeRef, _scene) is not Enemy44Entity synapse)
                 {
@@ -246,15 +246,15 @@ namespace MphRead.Entities.Enemies
                 break;
             case SlenchState.Detach:
                 SlenchFlags |= SlenchFlags.Detached;
-                _field204 = 0;
+                _patternAngle = 0;
                 _field18C = 0;
                 _roamTimer = phaseValues.RoamTime * 2; // todo: FPS stuff
                 _slamTimer = 0;
                 SlenchFlags &= ~SlenchFlags.Rolling;
-                SlenchFlags &= ~SlenchFlags.Bit2;
-                SlenchFlags &= ~SlenchFlags.Bit3;
-                SlenchFlags &= ~SlenchFlags.Bit4;
-                SlenchFlags &= ~SlenchFlags.Bit5;
+                SlenchFlags &= ~SlenchFlags.Floating;
+                SlenchFlags &= ~SlenchFlags.Bouncy;
+                SlenchFlags &= ~SlenchFlags.PatternFlip1;
+                SlenchFlags &= ~SlenchFlags.PatternFlip2;
                 if (_subtype == 3)
                 {
                     CloseEye();
@@ -264,17 +264,17 @@ namespace MphRead.Entities.Enemies
                 else
                 {
                     OpenEye();
-                    SlenchFlags |= SlenchFlags.Bit2;
+                    SlenchFlags |= SlenchFlags.Floating;
                 }
                 break;
             case SlenchState.RollingDone:
                 CloseEye();
-                _field204 = 0;
+                _patternAngle = 0;
                 SlenchFlags &= ~SlenchFlags.Rolling;
-                SlenchFlags &= ~SlenchFlags.Bit3;
-                SlenchFlags &= ~SlenchFlags.Bit4;
-                SlenchFlags &= ~SlenchFlags.Bit5;
-                SlenchFlags |= SlenchFlags.Bit2;
+                SlenchFlags &= ~SlenchFlags.Bouncy;
+                SlenchFlags &= ~SlenchFlags.PatternFlip1;
+                SlenchFlags &= ~SlenchFlags.PatternFlip2;
+                SlenchFlags |= SlenchFlags.Floating;
                 SlenchFlags |= SlenchFlags.Vulnerable;
                 break;
             case SlenchState.Roam:
@@ -292,7 +292,7 @@ namespace MphRead.Entities.Enemies
             case SlenchState.SlamReady:
                 _soundSource.PlaySfx(SfxId.BIGEYE_ATTACK3_SCR);
                 CloseEye();
-                _field19C_B = 0;
+                _wobbleTimer = 0;
                 _stateAfterSlam = _state1;
                 break;
             case SlenchState.Dead:
@@ -374,15 +374,12 @@ namespace MphRead.Entities.Enemies
             }
             if (State == SlenchState.Roam)
             {
-                // sktodo: fields -- field1E0 is the "base" hovering position?
-                // oscillating y value is added to its y, then collision is checked between there and the shield radius for a bit of a buffer
-                // not sure when/if x and z are updated or used atm
-                if (SlenchFlags.TestFlag(SlenchFlags.Bit2))
+                if (SlenchFlags.TestFlag(SlenchFlags.Floating))
                 {
                     // cosine result in 0, 0.4, 0, -0.4, 0 over a period of 16f at 30 fps (0.5333 seconds)
                     // angle is between 0 and 360 over that time, which is 675 degrees per second
                     float increment = MathF.Cos(MathHelper.DegreesToRadians(_scene.GlobalElapsedTime / 675f)) * 0.4f;
-                    float y = _field1E0.Y + increment;
+                    float y = _detachedPosition.Y + increment;
                     Vector3 position = Position.WithY(y);
                     Vector3 target = Position.WithY(y + _shieldOffset * (increment >= 0 ? 1 : -1));
                     CollisionResult discard = default;
@@ -393,7 +390,9 @@ namespace MphRead.Entities.Enemies
                 }
                 else
                 {
-                    Func21365B8(0.1f); // 410
+                    // 410 -- we're inverting the sign to get the right direction,
+                    // but not adjusting for FPS here because constant accel is used
+                    DropToFloor(-0.1f); // 410
                 }
             }
             Func213669C();
@@ -498,9 +497,9 @@ namespace MphRead.Entities.Enemies
                             Vector3 vecA = Matrix.Vec3MultMtx3(up, rotMtx);
                             Vector3 vecB = facing * 4 + Position;
                             float randf = Rng.GetRandomInt2(0x2000) / 4096f + 2; // [2.0, 4.0)
-                            _field1D4 = vecA * randf + vecB;
+                            _targetVec2 = vecA * randf + vecB;
                         }
-                        RotateToTarget(_field1D4, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2); // todo: FPS stuff
+                        RotateToTarget(_targetVec2, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2); // todo: FPS stuff
                     }
                 }
                 else if (_staticShotCooldown != 0)
@@ -551,13 +550,13 @@ namespace MphRead.Entities.Enemies
                     }
                 }
                 else if (_subtype == 3
-                    || RotateToTarget(_field1EC, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2) // todo: FPS stuff
-                    && MoveToPosition(_field1E0, Fixed.ToFloat(phaseValues.MoveIncrement1) / 2)) // todo: FPS stuff
+                    || RotateToTarget(_detachedFacing, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2) // todo: FPS stuff
+                    && MoveToPosition(_detachedPosition, Fixed.ToFloat(phaseValues.MoveIncrement1) / 2)) // todo: FPS stuff
                 {
-                    _field218 = 0;
+                    _dropSpeed = 0;
                     SlenchFlags &= ~SlenchFlags.Rolling;
-                    SlenchFlags &= ~SlenchFlags.Bit3;
-                    SlenchFlags |= SlenchFlags.Bit2;
+                    SlenchFlags &= ~SlenchFlags.Bouncy;
+                    SlenchFlags |= SlenchFlags.Floating;
                     ChangeState(SlenchState.Detach);
                 }
             }
@@ -567,18 +566,18 @@ namespace MphRead.Entities.Enemies
                 {
                     _model.SetAnimation(0);
                 }
-                if (CheckPosAgainstCurrent(_field1E0))
+                if (CheckPosAgainstCurrent(_detachedPosition))
                 {
                     ChangeState(SlenchState.Attach);
                 }
-                else if (RotateToTarget(_field1E0, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2)) // todo: FPS stuff
+                else if (RotateToTarget(_detachedPosition, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2)) // todo: FPS stuff
                 {
-                    MoveToPosition(_field1E0, Fixed.ToFloat(phaseValues.MoveIncrement2) / 2); // todo: FPS stuff
+                    MoveToPosition(_detachedPosition, Fixed.ToFloat(phaseValues.MoveIncrement2) / 2); // todo: FPS stuff
                 }
             }
             else if (State == SlenchState.Attach)
             {
-                if (RotateToTarget(_field1EC, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2) // todo: FPS stuff
+                if (RotateToTarget(_detachedFacing, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2) // todo: FPS stuff
                     && MoveToPosition(_startPos, Fixed.ToFloat(phaseValues.MoveIncrement2) / 2)) // todo: FPS stuff
                 {
                     for (int i = 0; i < _synapseCount; i++)
@@ -595,7 +594,7 @@ namespace MphRead.Entities.Enemies
             }
             else if (State == SlenchState.RollingDone)
             {
-                Vector3 pos = _field1E0.WithY(_field18C);
+                Vector3 pos = _detachedPosition.WithY(_field18C);
                 if (CheckPosAgainstCurrent(pos))
                 {
                     ChangeState(SlenchState.Roam);
@@ -628,29 +627,28 @@ namespace MphRead.Entities.Enemies
                                         _soundSource.PlaySfx(SfxId.SPIRE_ROLL, loop: true);
                                         if (_field18C == 0)
                                         {
-                                            _field18C = (_field1E0.Y - Position.Y) / 2;
+                                            _field18C = (_detachedPosition.Y + Position.Y) / 2;
                                         }
-                                        // sktodo: FPS stuff
-                                        _field204 += Fixed.ToFloat(phaseValues.Field38);
-                                        if (_field204 >= 360)
+                                        _patternAngle += Fixed.ToFloat(phaseValues.RollingAngleInc) / 2; // todo: FPS stuff
+                                        if (_patternAngle >= 360)
                                         {
-                                            SlenchFlags ^= SlenchFlags.Bit4;
-                                            _field204 -= 360;
+                                            SlenchFlags ^= SlenchFlags.PatternFlip1;
+                                            _patternAngle -= 360;
                                         }
                                         Vector3 vecA;
                                         float angle;
-                                        if (SlenchFlags.TestFlag(SlenchFlags.Bit4))
+                                        if (SlenchFlags.TestFlag(SlenchFlags.PatternFlip1))
                                         {
                                             vecA = _field1F8 * -1;
-                                            angle = 360 - _field204;
+                                            angle = 360 - _patternAngle;
                                         }
                                         else
                                         {
                                             vecA = _field1F8;
-                                            angle = _field204 + 180;
+                                            angle = _patternAngle + 180;
                                         }
-                                        float factor = Fixed.ToFloat(phaseValues.Field40);
-                                        Vector3 vecB = vecA * factor + _field1E0;
+                                        float factor = Fixed.ToFloat(phaseValues.RollingSpeed);
+                                        Vector3 vecB = vecA * factor + _detachedPosition;
                                         (float sin, float cos) = MathF.SinCos(MathHelper.DegreesToRadians(angle));
                                         var mtx = new Matrix3(
                                             cos, 0, -sin,
@@ -659,13 +657,13 @@ namespace MphRead.Entities.Enemies
                                         );
                                         Vector3 newPos = _field1F8 * mtx * factor + vecB;
                                         Position = newPos.WithY(Position.Y);
-                                        _targetAngle += Fixed.ToFloat(phaseValues.Field38); // sktodo: FPS stuff
+                                        _targetAngle += Fixed.ToFloat(phaseValues.RollingAngleInc) / 2; // todo: FPS stuff
                                         if (_targetAngle < 0)
                                         {
                                             _targetAngle += 360;
                                         }
                                         Vector3 vecC = (Position - vecB).WithY(0).Normalized();
-                                        if (SlenchFlags.TestFlag(SlenchFlags.Bit4))
+                                        if (SlenchFlags.TestFlag(SlenchFlags.PatternFlip1))
                                         {
                                             _targetZ = vecC.X;
                                             _targetX = -vecC.Z;
@@ -676,7 +674,7 @@ namespace MphRead.Entities.Enemies
                                             _targetX = vecC.Z;
                                         }
                                     }
-                                    else if (_field218 == 0)
+                                    else if (_dropSpeed == 0)
                                     {
                                         _field1A3 = true;
                                     }
@@ -689,31 +687,31 @@ namespace MphRead.Entities.Enemies
                             }
                             else // not rolling
                             {
-                                _field204 += Fixed.ToFloat(phaseValues.Field34); // sktodo: FPS stuff
-                                if (_field204 >= 360)
+                                _patternAngle += Fixed.ToFloat(phaseValues.FloatingAngleInc) / 2; // todo: FPS stuff
+                                if (_patternAngle >= 360)
                                 {
-                                    SlenchFlags ^= SlenchFlags.Bit4;
-                                    _field204 -= 360;
+                                    SlenchFlags ^= SlenchFlags.PatternFlip1;
+                                    _patternAngle -= 360;
                                 }
-                                float factor = Fixed.ToFloat(phaseValues.Field3C);
+                                float factor = Fixed.ToFloat(phaseValues.FloatingSpeed);
                                 float angle;
                                 Vector3 vecA;
-                                if (SlenchFlags.TestFlag(SlenchFlags.Bit4))
+                                if (SlenchFlags.TestFlag(SlenchFlags.PatternFlip1))
                                 {
-                                    angle = 540 - _field204;
+                                    angle = 540 - _patternAngle;
                                     vecA = new Vector3(
-                                        _field1E0.X - _field1F8.X * factor,
+                                        _detachedPosition.X + _field1F8.X * factor,
                                         _field18C,
-                                        _field1E0.Z - _field1F8.Z * factor
+                                        _detachedPosition.Z + _field1F8.Z * factor
                                     );
                                 }
                                 else
                                 {
-                                    angle = _field204;
+                                    angle = _patternAngle;
                                     vecA = new Vector3(
-                                        _field1E0.X + _field1F8.X * factor,
+                                        _detachedPosition.X - _field1F8.X * factor,
                                         _field18C,
-                                        _field1E0.Z + _field1F8.Z * factor
+                                        _detachedPosition.Z - _field1F8.Z * factor
                                     );
                                 }
                                 Vector3 vecB = Vector3.Cross(_field1F8, Vector3.UnitY).Normalized();
@@ -732,36 +730,35 @@ namespace MphRead.Entities.Enemies
                         }
                         else // not subtype 3
                         {
-                            _field204 += Fixed.ToFloat(phaseValues.Field34) / 2; // todo: FPS stuff
-                            if (_field204 >= 360)
+                            _patternAngle += Fixed.ToFloat(phaseValues.FloatingAngleInc) / 2; // todo: FPS stuff
+                            if (_patternAngle >= 360)
                             {
-                                SlenchFlags ^= SlenchFlags.Bit4;
-                                _field204 -= 360;
+                                SlenchFlags ^= SlenchFlags.PatternFlip1;
+                                _patternAngle -= 360;
                             }
                             Vector3 vecA;
-                            float angle = _field204 + 180;
-                            if (SlenchFlags.TestFlag(SlenchFlags.Bit4))
+                            float angle = _patternAngle + 180;
+                            if (SlenchFlags.TestFlag(SlenchFlags.PatternFlip1))
                             {
                                 vecA = Vector3.Cross(_field1F8, Vector3.UnitY).Normalized();
-                                angle = 180 - _field204;
+                                angle = 180 - _patternAngle;
                             }
                             else
                             {
                                 vecA = Vector3.Cross(Vector3.UnitY, _field1F8).Normalized();
                             }
-                            vecA *= Fixed.ToFloat(phaseValues.Field3C);
-                            Vector3 vecB = vecA + _field1E0;
+                            vecA *= Fixed.ToFloat(phaseValues.FloatingSpeed);
+                            Vector3 vecB = vecA + _detachedPosition;
                             var rotMtx = Matrix4.CreateFromAxisAngle(_field1F8, MathHelper.DegreesToRadians(angle));
                             vecA = Matrix.Vec3MultMtx3(vecA, rotMtx);
                             Position = vecA + vecB;
                             if (_subtype != 0)
                             {
-                                // sktodo: FPS stuff etc.
-                                float increment = Fixed.ToFloat(phaseValues.MoveIncrement3);
-                                _field18C += SlenchFlags.TestFlag(SlenchFlags.Bit5) ? -increment : increment;
+                                float increment = Fixed.ToFloat(phaseValues.MoveIncrement3) / 2; // todo: FPS stuff
+                                _field18C += SlenchFlags.TestFlag(SlenchFlags.PatternFlip2) ? -increment : increment;
                                 if (_field18C < 0 || _field18C >= Fixed.ToFloat(phaseValues.RollTime))
                                 {
-                                    SlenchFlags ^= SlenchFlags.Bit5;
+                                    SlenchFlags ^= SlenchFlags.PatternFlip2;
                                 }
                                 Position += _field1F8 * _field18C;
                                 if (_subtype == 2)
@@ -813,43 +810,43 @@ namespace MphRead.Entities.Enemies
             }
             else if (State == SlenchState.SlamReady)
             {
-                _field1BC = playerTarget;
-                Position = _field1D4;
-                RotateToTarget(_field1BC, Fixed.ToFloat(phaseValues.Field44) / 2); // todo: FPS stuff
-                int div = 360 / phaseValues.Field57 * phaseValues.Field56;
-                if (++_field19C_B >= div) // sktodo: FPS stuff
+                _targetVec1 = playerTarget;
+                Position = _targetVec2; // holds position value before any wobbling
+                RotateToTarget(_targetVec1, Fixed.ToFloat(phaseValues.AngleIncrement5) / 2); // todo: FPS stuff
+                int time = 360 / phaseValues.WobbleRotInc * phaseValues.WobbleCycles;
+                if (++_wobbleTimer >= time * 2) // todo: FPS stuff
                 {
                     ChangeState(SlenchState.Slam);
                 }
                 else
                 {
-                    // sktodo: FPS stuff
-                    _wobbleAngle += phaseValues.Field57; // the game has to convert this to fx32 here
+                    // the game has to convert this to fx32 here
+                    _wobbleAngle += phaseValues.WobbleRotInc / 2f; // todo: FPS stuff
                     if (_wobbleAngle >= 360)
                     {
                         _wobbleAngle -= 360;
                     }
-                    var rotMtx = Matrix4.CreateFromAxisAngle(facing, MathHelper.DegreesToRadians(_wobbleAngle));
-                    // sktodo: variable names (percentage stuff), convert to float math earlier?
-                    int value = phaseValues.Field58 - _field19C_B * phaseValues.Field57 / div * 2;
-                    if (value < 41)
+                    // max wobble/shake distance decreases as the timer runs out, at 1/2 the proportion
+                    float maxDist = Fixed.ToFloat(phaseValues.MaxWobbleDist);
+                    float factor = maxDist - _wobbleTimer * maxDist / (time * 2 * 2); // todo: FPS stuff
+                    if (factor < 0.01f) // 41
                     {
-                        value = 41;
+                        factor = 0.01f;
                     }
-                    float factor = Fixed.ToFloat(value);
-                    Position = Matrix.Vec3MultMtx3(up, rotMtx) * factor + _field1D4;
+                    var rotMtx = Matrix4.CreateFromAxisAngle(facing, MathHelper.DegreesToRadians(_wobbleAngle));
+                    Position = Matrix.Vec3MultMtx3(up, rotMtx) * factor + _targetVec2;
                 }
             }
             else if (State == SlenchState.Slam)
             {
-                if (MoveToPosition(_field1BC, Fixed.ToFloat(phaseValues.MoveIncrement4) / 2)) // todo: FPS stuff
+                if (MoveToPosition(_targetVec1, Fixed.ToFloat(phaseValues.MoveIncrement4) / 2)) // todo: FPS stuff
                 {
                     ChangeState(SlenchState.SlamReturn);
                 }
             }
             else if (State == SlenchState.SlamReturn)
             {
-                if (MoveToPosition(_field1D4, Fixed.ToFloat(phaseValues.MoveIncrement5) / 2)) // todo: FPS stuff
+                if (MoveToPosition(_targetVec2, Fixed.ToFloat(phaseValues.MoveIncrement5) / 2)) // todo: FPS stuff
                 {
                     ChangeState((SlenchState)_stateAfterSlam);
                 }
@@ -873,56 +870,52 @@ namespace MphRead.Entities.Enemies
         private void Func2136788()
         {
             _field196 = 0;
-            _field1D4 = Position;
-            _field1BC = (FacingVector * -1).Normalized();
+            _targetVec2 = Position;
+            _targetVec1 = (FacingVector * -1).Normalized();
         }
 
-        // sktodo: function name (also, this could be inlined in EnemyProcess)
-        private void Func21365B8(float value)
+        private void DropToFloor(float increment)
         {
-            _field218 -= value; // sktodo: FPS stuff?
-            _field218 = Math.Clamp(_field218, -1.1f, 1.1f); // -4506, 4506
-            if (Func21374C4(Vector3.UnitY, _field218))
+            float step = increment / 30;
+            (_dropSpeed, _) = ConstantAcceleration(step, _dropSpeed, minVelocity: -1.1f, maxVelocity: 1.1f); // -4506, 4506
+            if (!CheckCollision(Vector3.UnitY, _dropSpeed))
             {
-                Position = Position.AddY(_field218);
+                Position = Position.AddY(_dropSpeed);
             }
             else
             {
-                _field218 = -_field218 / (SlenchFlags.TestFlag(SlenchFlags.Bit3) ? 1 : 2);
-                if (_field218 > -0.05f && _field218 < 0.05f) // -205, 205
+                _dropSpeed = -_dropSpeed / (SlenchFlags.TestFlag(SlenchFlags.Bouncy) ? 1 : 2);
+                if (_dropSpeed > -0.05f && _dropSpeed < 0.05f) // -205, 205
                 {
-                    _field218 = 0;
+                    _dropSpeed = 0;
                 }
             }
         }
 
-        // sktodo: function name (also, this could be inlined in Func21365B8)
-        // sktodo: parameter/variable names (could just remove the parameters and use UnitY and _field218)
-        private bool Func21374C4(Vector3 vec, float a3)
+        private bool CheckCollision(Vector3 vec, float dist)
         {
             CollisionResult res = default;
             Vector3 position = Position;
-            float v3 = a3 + _shieldOffset * (a3 >= 0 ? 1 : -1);
+            float factor = dist + _shieldOffset * (dist >= 0 ? 1 : -1);
             if (vec != Vector3.Zero)
             {
-                Vector3 dest = vec * v3 + position;
+                Vector3 dest = vec * factor + position;
                 if (CollisionDetection.CheckBetweenPoints(position, dest, TestFlags.None, _scene, ref res))
                 {
-                    return false;
+                    return true;
                 }
             }
             if (vec.X != 0 || vec.Z != 0)
             {
-                // todo: unnecessary? not sure what this will catch that the next one wouldn't
-                Vector3 dest = vec * v3 + position.AddY(_shieldOffset / -2);
+                Vector3 dest = vec * factor + position.AddY(_shieldOffset / -2);
                 if (CollisionDetection.CheckBetweenPoints(position, dest, TestFlags.None, _scene, ref res))
                 {
-                    return false;
+                    return true;
                 }
-                dest = vec * v3 + position.AddY(_shieldOffset * -1);
+                dest = vec * factor + position.AddY(_shieldOffset * -1);
                 if (CollisionDetection.CheckBetweenPoints(position, dest, TestFlags.None, _scene, ref res))
                 {
-                    return false;
+                    return true;
                 }
                 for (int i = 0; i < _scene.Entities.Count; i++)
                 {
@@ -947,18 +940,18 @@ namespace MphRead.Entities.Enemies
                     plane.W = (plane.X * 0.4f + door.LockPosition.X) * plane.X
                         + (plane.Y * 0.4f + door.LockPosition.Y) * plane.Y
                         + (plane.Z * 0.4f + door.LockPosition.Z) * plane.Z;
-                    Vector3 cylTop = position + vec * a3;
+                    Vector3 cylTop = position + vec * dist;
                     if (CollisionDetection.CheckCylinderIntersectPlane(position, cylTop, plane, ref res) && res.Distance < 2)
                     {
                         between = res.Position - door.LockPosition;
                         if (between.LengthSquared < door.RadiusSquared)
                         {
-                            return false;
+                            return true;
                         }
                     }
                 }
             }
-            return true;
+            return false;
         }
 
         // sktodo: field name (and move to metadata?)
@@ -989,7 +982,7 @@ namespace MphRead.Entities.Enemies
                 float diff = 9 - field196;
                 factor = diff * (1 / 5f);
             }
-            Position = _field1BC * factor + _field1D4;
+            Position = _targetVec1 * factor + _targetVec2;
             _field196++;
         }
 
@@ -1032,6 +1025,7 @@ namespace MphRead.Entities.Enemies
 
         private bool SetUpSlam(Vector3 target)
         {
+            // todo: maybe make a bugfix for the jumping/snapping before slamming?
             Enemy41Values phaseValues = GetPhaseValues();
             if (_slamTimer < phaseValues.SlamDelay * 2) // todo: FPS stuff
             {
@@ -1040,16 +1034,16 @@ namespace MphRead.Entities.Enemies
             else
             {
                 Vector3 between = target - Position;
-                if (between.Length <= phaseValues.Field48)
+                if (between.Length <= Fixed.ToFloat(phaseValues.SlamRange))
                 {
                     float radius = _shieldOffset * 0.75f; // 3072
                     target -= Position;
                     float length = target.Length;
                     if (length > radius)
                     {
-                        _field1D4 = Position;
+                        _targetVec2 = Position;
                         target = target.Normalized();
-                        _field1BC = target * (length - radius) + Position;
+                        _targetVec1 = target * (length - radius) + Position;
                         _slamTimer = 0;
                         ChangeState(SlenchState.SlamReady);
                         return true;
@@ -1252,17 +1246,16 @@ namespace MphRead.Entities.Enemies
         }
     }
 
-    // sktodo: flag names
     [Flags]
     public enum SlenchFlags : ushort
     {
         None = 0x0,
         EyeClosed = 0x1,
         Rolling = 0x2,
-        Bit2 = 0x4,
-        Bit3 = 0x8, // never set
-        Bit4 = 0x10,
-        Bit5 = 0x20,
+        Floating = 0x4,
+        Bouncy = 0x8, // never set
+        PatternFlip1 = 0x10,
+        PatternFlip2 = 0x20,
         Detached = 0x40,
         TargetingPlayer = 0x80,
         Vulnerable = 0x100,
@@ -1275,7 +1268,6 @@ namespace MphRead.Entities.Enemies
         Unused15 = 0x8000
     }
 
-    // sktodo: state names
     public enum SlenchState : byte
     {
         Initial = 0,
@@ -1313,19 +1305,19 @@ namespace MphRead.Entities.Enemies
         public int AngleIncrement4 { get; init; }
         public int RoamTime { get; init; }
         public int MoveIncrement3 { get; init; }
-        public int RollTime { get; init; }
-        public int Field34 { get; init; }
-        public int Field38 { get; init; }
-        public int Field3C { get; init; }
-        public int Field40 { get; init; }
-        public int Field44 { get; init; }
-        public int Field48 { get; init; }
+        public int RollTime { get; init; } // also used for the post-V1 floating pattern
+        public int FloatingAngleInc { get; init; }
+        public int RollingAngleInc { get; init; }
+        public int FloatingSpeed { get; init; }
+        public int RollingSpeed { get; init; }
+        public int AngleIncrement5 { get; init; }
+        public int SlamRange { get; init; }
         public int MoveIncrement4 { get; init; }
         public int MoveIncrement5 { get; init; }
         public ushort SlamDelay { get; init; }
-        public byte Field56 { get; init; }
-        public byte Field57 { get; init; }
-        public int Field58 { get; init; }
+        public byte WobbleCycles { get; init; } // number of complete rotation of wobble vector
+        public byte WobbleRotInc { get; init; } // angle step to rotate wobble vector
+        public int MaxWobbleDist { get; init; } // max wobble/shake distance
         public ushort Magic { get; init; } // 0xBEEF
         public ushort Padding5E { get; init; }
     }
