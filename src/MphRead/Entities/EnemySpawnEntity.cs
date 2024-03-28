@@ -239,7 +239,7 @@ namespace MphRead.Entities
             GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
             if (_data.EnemyType != EnemyType.Hunter || _data.Fields.S09.EncounterType == 1)
             {
-                // todo: update comopleted encounters in story save
+                // todo: update completed encounters in story save
             }
             if (_data.EnemyType == EnemyType.Cretaphid)
             {
