@@ -23,20 +23,22 @@ namespace MphRead.Entities.Enemies
         private float _targetAngle = 0;
         private float _targetX = 0;
         private float _targetZ = 0;
-        private ushort _field196 = 0;
+        private Vector3 _targetHorizontal; // contains previous two fields and Y = 0
+        private ushort _recoilTimer = 0;
         private ushort _slamTimer = 0;
         private float _wobbleAngle = 0;
-        private Vector3 _field1F8;
         private float _shieldOffset = 0;
         public float ShieldOffset => _shieldOffset;
         private Vector3 _startPos;
         private Vector3 _detachedPosition;
         private Vector3 _detachedFacing;
-        private float _field18C;
+        private float _floatBaseY;
         private float _patternAngle;
-        private Vector3 _targetVec1;
-        private Vector3 _targetVec2;
         private float _dropSpeed = 0;
+        // these two vecs are used for various purposes, such as retaining an original position
+        // while the current position shakes around. sometimes positions, sometimes vectors.
+        private Vector3 _destVec1;
+        private Vector3 _destVec2;
 
         private int _staticShotCounter = 0;
         private int _wobbleTimer = 0; // note: these two fields are timer_1 in-game
@@ -45,7 +47,7 @@ namespace MphRead.Entities.Enemies
         private int _staticShotTimer = 0;
         private int _deathTimer = 0; // note: these two fields are timer_3 in-game
         private int _rollTimer = 0;
-        private bool _field1A3 = false;
+        private bool _hitFloor = false;
 
         private EquipInfo _equipInfo = null!;
         private int _ammo = 1000;
@@ -120,7 +122,7 @@ namespace MphRead.Entities.Enemies
             _hurtVolumeInit = new CollisionVolume(_hurtVolumeInit.SpherePosition, 2.9f); // 11878
             _shieldOffset = _hurtVolumeInit.SphereRadius;
             _model = SetUpModel("BigEyeBall", animIndex: 10, animFlags: AnimFlags.NoLoop);
-            _field196 = 1000;
+            _recoilTimer = 1000;
             // initializing to Slench Tear here, but it will get updated later
             WeaponInfo slenchTear = Weapons.BossWeapons[3];
             _equipInfo = new EquipInfo(slenchTear, _beams);
@@ -140,7 +142,7 @@ namespace MphRead.Entities.Enemies
                 _targetAngle = 90;
             }
             UpdateFacing();
-            _field1F8 = new Vector3(_targetX, 0, _targetZ);
+            _targetHorizontal = new Vector3(_targetX, 0, _targetZ);
             _startPos = position;
             _detachedPosition = facing * 3 + position;
             _detachedFacing = _detachedPosition + facing;
@@ -179,7 +181,7 @@ namespace MphRead.Entities.Enemies
 
         private void ChangeState(SlenchState state)
         {
-            _field1A3 = false;
+            _hitFloor = false;
             SlenchFlags &= ~SlenchFlags.TargetingPlayer;
             SlenchFlags &= ~SlenchFlags.Vulnerable;
             SlenchFlags &= ~SlenchFlags.Wobbling;
@@ -247,7 +249,7 @@ namespace MphRead.Entities.Enemies
             case SlenchState.Detach:
                 SlenchFlags |= SlenchFlags.Detached;
                 _patternAngle = 0;
-                _field18C = 0;
+                _floatBaseY = 0;
                 _roamTimer = phaseValues.RoamTime * 2; // todo: FPS stuff
                 _slamTimer = 0;
                 SlenchFlags &= ~SlenchFlags.Rolling;
@@ -362,7 +364,7 @@ namespace MphRead.Entities.Enemies
                     BeamResultFlags result = BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, facing, BeamSpawnFlags.None, _scene);
                     if (result != BeamResultFlags.NoSpawn)
                     {
-                        Func2136788();
+                        SetRecoilTargetVecs();
                         _soundSource.PlaySfx(SfxId.BIGEYE_ATTACK2);
                         _shotCooldown = _equipInfo.Weapon.ShotCooldown * 2; // todo: FPS stuff
                     }
@@ -392,10 +394,10 @@ namespace MphRead.Entities.Enemies
                 {
                     // 410 -- we're inverting the sign to get the right direction,
                     // but not adjusting for FPS here because constant accel is used
-                    DropToFloor(-0.1f); // 410
+                    DropToFloor(-0.1f);
                 }
             }
-            Func213669C();
+            ProcessRecoil();
             if (IsStaticState() && AreAllSynapsesDead())
             {
                 ChangeState(SlenchState.ShieldLower);
@@ -497,9 +499,9 @@ namespace MphRead.Entities.Enemies
                             Vector3 vecA = Matrix.Vec3MultMtx3(up, rotMtx);
                             Vector3 vecB = facing * 4 + Position;
                             float randf = Rng.GetRandomInt2(0x2000) / 4096f + 2; // [2.0, 4.0)
-                            _targetVec2 = vecA * randf + vecB;
+                            _destVec2 = vecA * randf + vecB;
                         }
-                        RotateToTarget(_targetVec2, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2); // todo: FPS stuff
+                        RotateToTarget(_destVec2, Fixed.ToFloat(phaseValues.AngleIncrement1) / 2); // todo: FPS stuff
                     }
                 }
                 else if (_staticShotCooldown != 0)
@@ -520,7 +522,7 @@ namespace MphRead.Entities.Enemies
                     BeamResultFlags result = BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, facing, BeamSpawnFlags.None, _scene);
                     if (result != BeamResultFlags.NoSpawn)
                     {
-                        Func2136788();
+                        SetRecoilTargetVecs();
                     }
                 }
                 if (_shotEffect != null)
@@ -594,7 +596,7 @@ namespace MphRead.Entities.Enemies
             }
             else if (State == SlenchState.RollingDone)
             {
-                Vector3 pos = _detachedPosition.WithY(_field18C);
+                Vector3 pos = _detachedPosition.WithY(_floatBaseY);
                 if (CheckPosAgainstCurrent(pos))
                 {
                     ChangeState(SlenchState.Roam);
@@ -622,12 +624,12 @@ namespace MphRead.Entities.Enemies
                             {
                                 if (_rollTimer == 0 || --_rollTimer != 0)
                                 {
-                                    if (_field1A3)
+                                    if (_hitFloor)
                                     {
                                         _soundSource.PlaySfx(SfxId.SPIRE_ROLL, loop: true);
-                                        if (_field18C == 0)
+                                        if (_floatBaseY == 0)
                                         {
-                                            _field18C = (_detachedPosition.Y + Position.Y) / 2;
+                                            _floatBaseY = (_detachedPosition.Y + Position.Y) / 2;
                                         }
                                         _patternAngle += Fixed.ToFloat(phaseValues.RollingAngleInc) / 2; // todo: FPS stuff
                                         if (_patternAngle >= 360)
@@ -639,12 +641,12 @@ namespace MphRead.Entities.Enemies
                                         float angle;
                                         if (SlenchFlags.TestFlag(SlenchFlags.PatternFlip1))
                                         {
-                                            vecA = _field1F8 * -1;
+                                            vecA = _targetHorizontal * -1;
                                             angle = 360 - _patternAngle;
                                         }
                                         else
                                         {
-                                            vecA = _field1F8;
+                                            vecA = _targetHorizontal;
                                             angle = _patternAngle + 180;
                                         }
                                         float factor = Fixed.ToFloat(phaseValues.RollingSpeed);
@@ -655,7 +657,7 @@ namespace MphRead.Entities.Enemies
                                             0, 1, 0,
                                             sin, 0, cos
                                         );
-                                        Vector3 newPos = _field1F8 * mtx * factor + vecB;
+                                        Vector3 newPos = _targetHorizontal * mtx * factor + vecB;
                                         Position = newPos.WithY(Position.Y);
                                         _targetAngle += Fixed.ToFloat(phaseValues.RollingAngleInc) / 2; // todo: FPS stuff
                                         if (_targetAngle < 0)
@@ -676,7 +678,7 @@ namespace MphRead.Entities.Enemies
                                     }
                                     else if (_dropSpeed == 0)
                                     {
-                                        _field1A3 = true;
+                                        _hitFloor = true;
                                     }
                                 }
                                 else // roll timer decremented to zero
@@ -700,23 +702,23 @@ namespace MphRead.Entities.Enemies
                                 {
                                     angle = 540 - _patternAngle;
                                     vecA = new Vector3(
-                                        _detachedPosition.X + _field1F8.X * factor,
-                                        _field18C,
-                                        _detachedPosition.Z + _field1F8.Z * factor
+                                        _detachedPosition.X + _targetHorizontal.X * factor,
+                                        _floatBaseY,
+                                        _detachedPosition.Z + _targetHorizontal.Z * factor
                                     );
                                 }
                                 else
                                 {
                                     angle = _patternAngle;
                                     vecA = new Vector3(
-                                        _detachedPosition.X - _field1F8.X * factor,
-                                        _field18C,
-                                        _detachedPosition.Z - _field1F8.Z * factor
+                                        _detachedPosition.X - _targetHorizontal.X * factor,
+                                        _floatBaseY,
+                                        _detachedPosition.Z - _targetHorizontal.Z * factor
                                     );
                                 }
-                                Vector3 vecB = Vector3.Cross(_field1F8, Vector3.UnitY).Normalized();
+                                Vector3 vecB = Vector3.Cross(_targetHorizontal, Vector3.UnitY).Normalized();
                                 var rotMtx = Matrix4.CreateFromAxisAngle(vecB, MathHelper.DegreesToRadians(angle));
-                                Position = Matrix.Vec3MultMtx3(_field1F8, rotMtx) * factor + vecA;
+                                Position = Matrix.Vec3MultMtx3(_targetHorizontal, rotMtx) * factor + vecA;
                                 if (RotateToTarget(playerTarget, Fixed.ToFloat(phaseValues.AngleIncrement4) / 2)) // todo: FPS stuff
                                 {
                                     SlenchFlags |= SlenchFlags.TargetingPlayer;
@@ -740,27 +742,27 @@ namespace MphRead.Entities.Enemies
                             float angle = _patternAngle + 180;
                             if (SlenchFlags.TestFlag(SlenchFlags.PatternFlip1))
                             {
-                                vecA = Vector3.Cross(_field1F8, Vector3.UnitY).Normalized();
+                                vecA = Vector3.Cross(_targetHorizontal, Vector3.UnitY).Normalized();
                                 angle = 180 - _patternAngle;
                             }
                             else
                             {
-                                vecA = Vector3.Cross(Vector3.UnitY, _field1F8).Normalized();
+                                vecA = Vector3.Cross(Vector3.UnitY, _targetHorizontal).Normalized();
                             }
                             vecA *= Fixed.ToFloat(phaseValues.FloatingSpeed);
                             Vector3 vecB = vecA + _detachedPosition;
-                            var rotMtx = Matrix4.CreateFromAxisAngle(_field1F8, MathHelper.DegreesToRadians(angle));
+                            var rotMtx = Matrix4.CreateFromAxisAngle(_targetHorizontal, MathHelper.DegreesToRadians(angle));
                             vecA = Matrix.Vec3MultMtx3(vecA, rotMtx);
                             Position = vecA + vecB;
                             if (_subtype != 0)
                             {
                                 float increment = Fixed.ToFloat(phaseValues.MoveIncrement3) / 2; // todo: FPS stuff
-                                _field18C += SlenchFlags.TestFlag(SlenchFlags.PatternFlip2) ? -increment : increment;
-                                if (_field18C < 0 || _field18C >= Fixed.ToFloat(phaseValues.RollTime))
+                                _floatBaseY += SlenchFlags.TestFlag(SlenchFlags.PatternFlip2) ? -increment : increment;
+                                if (_floatBaseY < 0 || _floatBaseY >= Fixed.ToFloat(phaseValues.RollTime))
                                 {
                                     SlenchFlags ^= SlenchFlags.PatternFlip2;
                                 }
-                                Position += _field1F8 * _field18C;
+                                Position += _targetHorizontal * _floatBaseY;
                                 if (_subtype == 2)
                                 {
                                     SetUpSlam(playerTarget);
@@ -810,9 +812,9 @@ namespace MphRead.Entities.Enemies
             }
             else if (State == SlenchState.SlamReady)
             {
-                _targetVec1 = playerTarget;
-                Position = _targetVec2; // holds position value before any wobbling
-                RotateToTarget(_targetVec1, Fixed.ToFloat(phaseValues.AngleIncrement5) / 2); // todo: FPS stuff
+                _destVec1 = playerTarget;
+                Position = _destVec2; // holds position value before any wobbling
+                RotateToTarget(_destVec1, Fixed.ToFloat(phaseValues.AngleIncrement5) / 2); // todo: FPS stuff
                 int time = 360 / phaseValues.WobbleRotInc * phaseValues.WobbleCycles;
                 if (++_wobbleTimer >= time * 2) // todo: FPS stuff
                 {
@@ -834,19 +836,19 @@ namespace MphRead.Entities.Enemies
                         factor = 0.01f;
                     }
                     var rotMtx = Matrix4.CreateFromAxisAngle(facing, MathHelper.DegreesToRadians(_wobbleAngle));
-                    Position = Matrix.Vec3MultMtx3(up, rotMtx) * factor + _targetVec2;
+                    Position = Matrix.Vec3MultMtx3(up, rotMtx) * factor + _destVec2;
                 }
             }
             else if (State == SlenchState.Slam)
             {
-                if (MoveToPosition(_targetVec1, Fixed.ToFloat(phaseValues.MoveIncrement4) / 2)) // todo: FPS stuff
+                if (MoveToPosition(_destVec1, Fixed.ToFloat(phaseValues.MoveIncrement4) / 2)) // todo: FPS stuff
                 {
                     ChangeState(SlenchState.SlamReturn);
                 }
             }
             else if (State == SlenchState.SlamReturn)
             {
-                if (MoveToPosition(_targetVec2, Fixed.ToFloat(phaseValues.MoveIncrement5) / 2)) // todo: FPS stuff
+                if (MoveToPosition(_destVec2, Fixed.ToFloat(phaseValues.MoveIncrement5) / 2)) // todo: FPS stuff
                 {
                     ChangeState((SlenchState)_stateAfterSlam);
                 }
@@ -866,26 +868,18 @@ namespace MphRead.Entities.Enemies
             UpdateFacing();
         }
 
-        // sktodo: function name
-        private void Func2136788()
+        private void DropToFloor(float step)
         {
-            _field196 = 0;
-            _targetVec2 = Position;
-            _targetVec1 = (FacingVector * -1).Normalized();
-        }
-
-        private void DropToFloor(float increment)
-        {
-            float step = increment / 30;
-            (_dropSpeed, _) = ConstantAcceleration(step, _dropSpeed, minVelocity: -1.1f, maxVelocity: 1.1f); // -4506, 4506
-            if (!CheckCollision(Vector3.UnitY, _dropSpeed))
+            float max = 1.1f * 30;
+            (_dropSpeed, float displacement) = ConstantAcceleration(step, _dropSpeed, -max, max); // -4506, 4506
+            if (!CheckCollision(Vector3.UnitY, displacement))
             {
-                Position = Position.AddY(_dropSpeed);
+                Position = Position.AddY(displacement);
             }
             else
             {
                 _dropSpeed = -_dropSpeed / (SlenchFlags.TestFlag(SlenchFlags.Bouncy) ? 1 : 2);
-                if (_dropSpeed > -0.05f && _dropSpeed < 0.05f) // -205, 205
+                if (_dropSpeed > -0.05f * 30 && _dropSpeed < 0.05f * 30) // -205, 205
                 {
                     _dropSpeed = 0;
                 }
@@ -954,37 +948,42 @@ namespace MphRead.Entities.Enemies
             return false;
         }
 
-        // sktodo: field name (and move to metadata?)
-        private static readonly IReadOnlyList<float> _field2138398 = new float[5]
+        private void SetRecoilTargetVecs()
         {
-            // 0x666, 0xB33, 0xD9A, 0xE66, 0x1000
-            0.4f, 0.7f, 0.85f, 0.9f, 1.0f
-            // + 0.3 +0.15 +0.05 + 0.1
-        };
+            _recoilTimer = 0;
+            _destVec2 = Position;
+            _destVec1 = (FacingVector * -1).Normalized();
+        }
 
-        // sktodo: function name
-        private void Func213669C()
+        private void ProcessRecoil()
         {
-            int field196 = _field196 / 2; // sktodo: FPS stuff -- always calculate instead of LUT?
-            if (field196 >= 10)
+            if (_recoilTimer >= 10 * 2) // todo: FPS stuff
             {
                 return;
             }
             float factor = 1;
-            if (field196 <= 4) // 0 - 4
+            if (_recoilTimer <= 4 * 2 + 1) // todo: FPS stuff
             {
-                factor = _field2138398[field196];
+                factor = _recoilLut[_recoilTimer];
             }
-            else if (field196 <= 9) // 5 - 9
+            else // 5 - 9
             {
                 // the game has a bad macro expansion or something here with a conversion to float,
                 // but the end result is just getting diff as fx32 to do the following factor calc
-                float diff = 9 - field196;
-                factor = diff * (1 / 5f);
+                float diff = 9 * 2 + 1 - _recoilTimer; // todo: FPS stuff
+                factor = diff / (5 * 2); // todo: FPS stuff
             }
-            Position = _targetVec1 * factor + _targetVec2;
-            _field196++;
+            Position = _destVec1 * factor + _destVec2;
+            _recoilTimer++;
         }
+
+        private static readonly IReadOnlyList<float> _recoilLut = new float[10]
+        {
+            // 0x666, 0xB33, 0xD9A, 0xE66, 0x1000
+            // todo: FPS stuff; plausible intermediate values added
+            // original: 0.4f, 0.7f, 0.85f, 0.9f, 1.0f
+            0.2f, 0.4f, 0.55f, 0.7f, 0.775f, 0.85f, 0.875f, 0.9f, 0.95f, 1.0f
+        };
 
         private bool IsStaticState()
         {
@@ -1041,9 +1040,9 @@ namespace MphRead.Entities.Enemies
                     float length = target.Length;
                     if (length > radius)
                     {
-                        _targetVec2 = Position;
+                        _destVec2 = Position;
                         target = target.Normalized();
-                        _targetVec1 = target * (length - radius) + Position;
+                        _destVec1 = target * (length - radius) + Position;
                         _slamTimer = 0;
                         ChangeState(SlenchState.SlamReady);
                         return true;
