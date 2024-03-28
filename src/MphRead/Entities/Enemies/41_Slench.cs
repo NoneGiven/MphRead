@@ -1183,12 +1183,22 @@ namespace MphRead.Entities.Enemies
         {
             if (_subtype == 3 && SlenchFlags.TestFlag(SlenchFlags.Rolling) && source?.Type == EntityType.Bomb)
             {
-                // sktodo: test underflow issue or whatever
-                // --> depending on the situation, it might matter what data type we make this
                 _rollTimer -= 30 * 2; // todo: FPS stuff
                 if (_rollTimer == 0)
                 {
-                    _rollTimer = 1; // todo: FPS stuff?
+                    _rollTimer = 1;
+                }
+                else if (_rollTimer < 0)
+                {
+                    if (Bugfixes.NoSlenchRollTimerUnderflow)
+                    {
+                        _rollTimer = 1;
+                    }
+                    else
+                    {
+                        // simulate overflow
+                        _rollTimer += (UInt16.MaxValue + 1) * 2; // todo: FPS stuff
+                    }
                 }
             }
             if (Flags.TestFlag(EnemyFlags.Invincible))
