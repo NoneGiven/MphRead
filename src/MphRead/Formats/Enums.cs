@@ -337,7 +337,7 @@ namespace MphRead
         Unused22 = 22, // note: area volumes are set to never dispatch this as an inside event
         ShipHatch = 23,
         Unused24 = 24, // sent by some alt fom movement button press, but never checked
-        Unused25 = 25, // only one one area volume in the test level
+        Unused25 = 25, // only on one area volume in the test level
         ShowPrompt = 26,
         ShowWarning = 27,
         ShowOverlay = 28,
