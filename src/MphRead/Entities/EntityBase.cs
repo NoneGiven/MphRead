@@ -559,7 +559,7 @@ namespace MphRead.Entities
             //Rotation = rotation;
             //Position = position;
             transform.Row3.Xyz = position;
-            Transform = transform;
+            Transform = Matrix4.CreateScale(_scale) * transform;
         }
 
         public static Matrix4 GetTransformMatrix(Vector3 facing, Vector3 up)
