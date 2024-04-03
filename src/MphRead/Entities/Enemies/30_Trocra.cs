@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using MphRead.Formats;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace MphRead.Entities.Enemies
 {
     public class Enemy30Entity : GoreaEnemyEntityBase
     {
+        private readonly EnemySpawnEntity _spawner = null!;
         private int _index = 0;
         private int _field184 = 0;
         private int _field186 = 0;
@@ -16,13 +17,16 @@ namespace MphRead.Entities.Enemies
         public Enemy30Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
             : base(data, nodeRef, scene)
         {
+            var spawner = data.Spawner as EnemySpawnEntity;
+            Debug.Assert(spawner != null);
+            _spawner = spawner;
         }
 
         protected override void EnemyInitialize()
         {
-            SetUp();
+            InitializeCommon(_spawner);
             Flags |= EnemyFlags.OnRadar;
-            HealthbarMessageId = 3;
+            Flags &= ~EnemyFlags.NoHomingCo;
             _health = 15;
             _hurtVolumeInit = new CollisionVolume(Vector3.Zero, 1);
             SetUpModel("PowerBomb");
@@ -41,7 +45,7 @@ namespace MphRead.Entities.Enemies
                 {
                     CollisionResult discard = default;
                     Vector3 travel = _prevPos - Position;
-                    if (travel.LengthSquared > Fixed.ToFloat(32)
+                    if (travel.LengthSquared > 1 / 128f
                         && CollisionDetection.CheckBetweenPoints(_prevPos, Position, TestFlags.Beams, _scene, ref discard))
                     {
                         DieAndSpawnEffect(164); // goreaCrystalHit
@@ -72,7 +76,7 @@ namespace MphRead.Entities.Enemies
                         damage -= (int)MathF.Round(damage - 15 * factor);
                         force -= factor;
                     }
-                    if (distance > Fixed.ToFloat(32))
+                    if (distance > 1 / 128f)
                     {
                         between = between.Normalized() * force;
                     }

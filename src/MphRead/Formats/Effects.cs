@@ -706,6 +706,18 @@ namespace MphRead.Effects
                 }
             }
         }
+
+        public void ResetElements(float elapsedTime)
+        {
+            for (int i = 0; i < Elements.Count; i++)
+            {
+                EffectElementEntry element = Elements[i];
+                element.Expired = false;
+                element.Func39Called = false;
+                element.CreationTime = elapsedTime;
+                element.ExpirationTime = element.CreationTime - element.Lifespan;
+            }
+        }
     }
 
     public class EffectElementEntry : EffectFuncBase

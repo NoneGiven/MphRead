@@ -836,6 +836,19 @@ namespace MphRead
             return -1;
         }
 
+        public Material? GetMaterialByName(string name)
+        {
+            for (int i = 0; i < Materials.Count; i++)
+            {
+                Material material = Materials[i];
+                if (material.Name == name)
+                {
+                    return material;
+                }
+            }
+            return null;
+        }
+
         public IReadOnlyList<ColorRgba> GetPixels(int textureId, int paletteId, int recolorId)
         {
             Recolor recolor = Recolors[recolorId];

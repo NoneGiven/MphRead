@@ -173,7 +173,7 @@ namespace MphRead
         public byte Lighting { get; set; }
         public byte InitLighting { get; }
         public CullingMode Culling { get; }
-        public byte Alpha { get; }
+        public byte Alpha { get; set; } // todo: yep
         public float CurrentAlpha { get; set; }
         public byte Wireframe { get; }
         public int TextureId { get; }

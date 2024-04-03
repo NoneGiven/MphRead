@@ -2440,7 +2440,8 @@ namespace MphRead.Entities
                 }
                 else if (enemy.EnemyType == EnemyType.GoreaArm)
                 {
-                    // todo-gorea: get current by subtracting damage from max
+                    var arm = (Enemy26Entity)enemy;
+                    current = max - arm.Damage;
                 }
                 else if (enemy.EnemyType == EnemyType.GoreaSealSphere1)
                 {
