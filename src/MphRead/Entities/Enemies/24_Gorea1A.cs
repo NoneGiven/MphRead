@@ -317,7 +317,7 @@ namespace MphRead.Entities.Enemies
             }
             if (_gorea1B != null)
             {
-                //Metadata.LoadEffectiveness(effectiveness, _gorea1B.SealSphere.BeamEffectiveness); // sktodo: uncomment
+                Metadata.LoadEffectiveness(effectiveness, _gorea1B.SealSphere.BeamEffectiveness);
             }
         }
 
