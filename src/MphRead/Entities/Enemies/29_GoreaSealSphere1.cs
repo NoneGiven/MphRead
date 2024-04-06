@@ -87,7 +87,7 @@ namespace MphRead.Entities.Enemies
         {
             if (_gorea1B.Flags.TestFlag(EnemyFlags.Visible))
             {
-                Matrix4 transform = GetNodeTransform(_attachNode, _gorea1B, _gorea1B.Scale);
+                Matrix4 transform = GetNodeTransform(_gorea1B, _attachNode);
                 Position = transform.Row3.Xyz;
             }
             if (_field236 > 0)

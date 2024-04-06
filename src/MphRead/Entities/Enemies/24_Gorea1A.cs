@@ -17,6 +17,24 @@ namespace MphRead.Entities.Enemies
         {
         }
 
+        private bool _write = true;
+
+        protected void Write(string message)
+        {
+            if (_write)
+            {
+                Debug.Write(message);
+            }
+        }
+
+        protected void WriteLine(string message)
+        {
+            if (_write)
+            {
+                Debug.WriteLine(message);
+            }
+        }
+
         public void InitializeCommon(EnemySpawnEntity spawner)
         {
             Flags |= EnemyFlags.Visible;
@@ -50,17 +68,26 @@ namespace MphRead.Entities.Enemies
             return effect;
         }
 
-        protected Matrix4 GetNodeTransform(Node node, EnemyInstanceEntity owner, Vector3 scale)
-        {
-            return GetNodeTransform(node, owner.Position, owner.UpVector, owner.FacingVector, scale);
-        }
+        protected ulong? _lastNodeTransformUpdate = null;
 
-        protected Matrix4 GetNodeTransform(Node node, Vector3 position, Vector3 up, Vector3 facing, Vector3 scale)
+        // the game returns a kind of awkward in-between value where it uses the node transform that was animated as of the previous frame,
+        // but multiplies in the parent transform that has (likely) already been updated on the current frame. this would annoying for
+        // us to replicate, so instead we just do an early model update here and grab everything as of its current/final values for the frame.
+        // in theory, this might not reflect the actual final position of things, but in practice it is since Gorea1A/1B/2 will have finished
+        // processing before the head/arm/leg/sphere is calling this to update itself. a counter is used to prevent redundant updates on one frame,
+        // which does assume that everything is already final on the parent as of the time when this function is first called.
+        protected Matrix4 GetNodeTransform(GoreaEnemyEntityBase entity, Node node)
         {
-            Matrix4 transform = GetTransformMatrix(facing, up, position);
-            // sktodo: confirm this is NOT suppoed to move with the animation.
-            // if it is, this needs to be changed to use Animation but also update something else so it works properly.
-            return node.Transform * Matrix4.CreateScale(scale) * transform;
+            if (entity._lastNodeTransformUpdate != _scene.FrameCount)
+            {
+                entity._lastNodeTransformUpdate = _scene.FrameCount;
+                ModelInstance? model = entity.GetModels().FirstOrDefault();
+                Debug.Assert(model != null && model.Model.Nodes.Contains(node));
+                model.Model.ComputeNodeMatrices(index: 0);
+                Matrix4 transform = entity.GetModelTransform(model, index: 0);
+                model.Model.AnimateNodes(index: 0, UseNodeTransform || _scene.TransformRoomNodes, transform, model.Model.Scale, model.AnimInfo);
+            }
+            return node.Animation;
         }
 
         protected void TransformHurtVolumeToNode(Node node, Vector3 offset)
@@ -79,7 +106,7 @@ namespace MphRead.Entities.Enemies
             if (MathF.Abs(cos - dot) > Fixed.ToFloat(7))
             {
                 var cross = Vector3.Cross(target, facing);
-                var rotY = Matrix4.CreateRotationY(angle * cross.Y > 0 ? -1 : 1);
+                var rotY = Matrix4.CreateRotationY(angle * (cross.Y > 0 ? -1 : 1));
                 facing = Matrix.Vec3MultMtx4(facing, rotY).Normalized();
                 SetTransform(facing, UpVector, Position);
                 return false;
@@ -340,6 +367,8 @@ namespace MphRead.Entities.Enemies
 
         protected override void EnemyProcess()
         {
+            WriteLine("---------------------------------");
+            WriteLine($"frame {_scene.FrameCount}");
             if (!Flags.TestFlag(EnemyFlags.Visible))
             {
                 return;
@@ -425,6 +454,7 @@ namespace MphRead.Entities.Enemies
 
         private void State00()
         {
+            WriteLine("state 0");
             if (_goreaFlags.TestFlag(Gorea1AFlags.Bit2))
             {
                 for (int i = 0; i < 2; i++)
@@ -440,10 +470,10 @@ namespace MphRead.Entities.Enemies
                 _goreaFlags &= ~Gorea1AFlags.Bit0;
                 SpawnEffect(175, Position); // goreaReveal
             }
-            if (_model.AnimInfo.Frame[0] == 0)
+            if (_model.AnimInfo.Index[0] == 0)
             {
                 UpdateArmMaterialAlpha();
-                if (Behavior03())
+                if (Behavior03(false))
                 {
                     if (_gorea1B != null && _gorea1B.PhasesLeft != 3)
                     {
@@ -491,6 +521,7 @@ namespace MphRead.Entities.Enemies
 
         private void State01()
         {
+            WriteLine("state 1");
             if (_targetFacing != Vector3.Zero)
             {
                 EnsureAnimation(24, 0, _animSetNoMat);
@@ -520,17 +551,19 @@ namespace MphRead.Entities.Enemies
 
         private void State02()
         {
+            WriteLine("state 2");
             if (UpdateTargetFacing())
             {
                 SeekTargetFacing(_targetFacing, 3);
             }
             _speed = FacingVector.WithY(0) * _speedFactor / 2; // todo: FPS stuff
-            _model.SetAnimation(25, 0, _animSetNoMat);
+            EnsureAnimation(25, 0, _animSetNoMat);
             CallSubroutine(Metadata.Enemy24Subroutines, this);
         }
 
         private void State03()
         {
+            WriteLine("state 3");
             _targetFacing = SeekTargetSetAnim(_targetFacing, _model.AnimInfo.Index[0], slot: 0, _animSetNoMat);
             _speed = FacingVector * (_speed * 2) * 5 / 2; // 20480 // todo: FPS stuff
             CallSubroutine(Metadata.Enemy24Subroutines, this);
@@ -538,6 +571,7 @@ namespace MphRead.Entities.Enemies
 
         private void State04()
         {
+            WriteLine("state 4");
             _targetFacing = SeekTargetSetAnim(_targetFacing, index: 16, slot: 0, _animSetNoMat);
             CallSubroutine(Metadata.Enemy24Subroutines, this);
         }
@@ -561,6 +595,7 @@ namespace MphRead.Entities.Enemies
 
         private void State05()
         {
+            WriteLine("state 5");
             for (int i = 0; i < 2; i++)
             {
                 Enemy26Entity arm = _arms[i];
@@ -693,6 +728,7 @@ namespace MphRead.Entities.Enemies
 
         private void State06()
         {
+            WriteLine("state 6");
             _targetFacing = SeekTargetSetAnim(_targetFacing, _model.AnimInfo.Index[0], slot: 0, _animSetNoMat);
             CallSubroutine(Metadata.Enemy24Subroutines, this);
         }
@@ -704,6 +740,7 @@ namespace MphRead.Entities.Enemies
 
         private void State07()
         {
+            WriteLine("state 7");
             int anim = _model.AnimInfo.Index[0];
             if (!_weaponAnimIds.Contains(anim) && anim != 8 && anim != 9 && anim != 10 && anim != 13)
             {
@@ -720,6 +757,7 @@ namespace MphRead.Entities.Enemies
         // sktodo: (document) slam attack
         private void State08()
         {
+            WriteLine("state 8");
             // sktodo: if we get here, it seems like it's inevitable that state will get set to 15
             // when the animation finishes? and that will crash us, or would possibly result in calling
             // the first enemy 28 state proc in-game?
@@ -758,23 +796,27 @@ namespace MphRead.Entities.Enemies
 
         private void State09()
         {
+            WriteLine("state 9");
             CallSubroutine(Metadata.Enemy24Subroutines, this);
         }
 
         private void State10()
         {
+            WriteLine("state 10");
             UpdateArmMaterialAlpha();
             CallSubroutine(Metadata.Enemy24Subroutines, this);
         }
 
         private void State11()
         {
+            WriteLine("state 11");
             CallSubroutine(Metadata.Enemy24Subroutines, this);
         }
 
         // sktodo: (document) swipe attack?
         private void State12()
         {
+            WriteLine("state 12");
             if (_model.AnimInfo.Frame[0] == 24 && _scene.FrameCount != 0 && _scene.FrameCount % 2 == 0) // todo: FPS stuff
             {
                 if (GetHorizontalToPlayer(37.5f, out Vector3 between, out float distance)) // 153600
@@ -791,9 +833,10 @@ namespace MphRead.Entities.Enemies
             CallSubroutine(Metadata.Enemy24Subroutines, this);
         }
 
-        // sktood: (document) switching to Gorea1B
+        // sktodo: (document) switching to Gorea1B
         private void State13()
         {
+            WriteLine("state 13");
             if (Flags.TestFlag(EnemyFlags.Visible))
             {
                 _scanId = 0;
@@ -838,6 +881,7 @@ namespace MphRead.Entities.Enemies
 
         private void State14()
         {
+            WriteLine("state 14");
             // in-game, Behavior02 (the only one under State14) sets the next ID directly on the
             // metadata struct. we have to wait for CallSubroutine to finish first, then set it here.
             CallSubroutine(Metadata.Enemy24Subroutines, this);
@@ -846,8 +890,9 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior00()
         {
-            if (!Behavior03())
+            if (!Behavior03(false))
             {
+                WriteLine("behavior 00 false");
                 return false;
             }
             _model.SetAnimation(17, 0, _animSetNoMat);
@@ -855,22 +900,33 @@ namespace MphRead.Entities.Enemies
             {
                 _targetFacing = Vector3.Zero;
             }
+            WriteLine("behavior 00 true");
             return true;
         }
 
         private bool Behavior01()
         {
+            WriteLine("behavior 01 true");
             return true;
         }
 
         private bool Behavior02()
         {
             // see explanation in State14
+            WriteLine("behavior 02 true");
             return true;
         }
 
-        private bool Behavior03()
+        private bool Behavior03(bool standalone = true)
         {
+            if (standalone)
+            {
+                WriteLine($"behavior 03 {(_model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended) ? "true" : "false")}");
+            }
+            else
+            {
+                WriteLine($"anim ended {(_model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended) ? "true" : "false")}");
+            }
             return _model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended);
         }
 
@@ -882,6 +938,7 @@ namespace MphRead.Entities.Enemies
             {
                 if (++index >= 2)
                 {
+                    WriteLine("behavior 04 false");
                     return false;
                 }
             }
@@ -908,6 +965,7 @@ namespace MphRead.Entities.Enemies
                 var item = new ItemInstanceEntity(new ItemInstanceEntityData(spawnPos, itemType, despawnTime), NodeRef, _scene);
                 _scene.AddEntity(item);
             }
+            WriteLine("behavior 04 true");
             return true;
         }
 
@@ -930,9 +988,11 @@ namespace MphRead.Entities.Enemies
                     arm.ArmFlags |= GoreaArmFlags.Bit1;
                 }
                 _model.SetAnimation(_weaponAnimIds[WeaponIndex], 0, _animSetNoMat);
+                WriteLine("behavior 05 true");
                 return true;
             }
-            return true;
+            WriteLine("behavior 05 false");
+            return false;
         }
 
         private bool Behavior06()
@@ -949,8 +1009,10 @@ namespace MphRead.Entities.Enemies
                 model.AnimInfo.Frame[0] = 5;
                 // todo: update music tracks
                 _soundSource.PlaySfx(SfxId.GOREA_TRANSFORM1_SCR);
+                WriteLine("behavior 06 true");
                 return true;
             }
+            WriteLine("behavior 05 false");
             return false;
         }
 
@@ -978,8 +1040,10 @@ namespace MphRead.Entities.Enemies
                     _model.SetAnimation(17, 0, _animSetNoMat);
                     Func2137A34();
                 }
+                WriteLine("behavior 07 true");
                 return true;
             }
+            WriteLine("behavior 07 false");
             return false;
         }
 
@@ -998,7 +1062,7 @@ namespace MphRead.Entities.Enemies
             armR.EquipInfo.ChargeLevel = 0;
             WeaponInfo weapon = Weapons.GoreaWeapons[WeaponIndex];
             armL.Cooldown = weapon.ShotCooldown * 2; // todo: FPS stuff
-            armR.Cooldown = weapon.ShotCooldown * 2; // todo: FPS stuff
+            armR.Cooldown = weapon.AutofireCooldown * 2; // todo: FPS stuff
             _head?.RespawnFlashEffect();
             _field23C = 60 * 2; // todo: FPS stuff
         }
@@ -1118,8 +1182,10 @@ namespace MphRead.Entities.Enemies
                     _model.SetAnimation(17, 0, _animSetNoMat);
                     Func2137A34();
                 }
+                WriteLine("behavior 08 true");
                 return true;
             }
+            WriteLine("behavior 08 false");
             return false;
         }
 
@@ -1133,8 +1199,10 @@ namespace MphRead.Entities.Enemies
                 StopBeamChargeSfx(_beamTypes[WeaponIndex]);
                 _soundSource.PlaySfx(SfxId.GOREA_ROAR_SCR);
                 _model.SetAnimation(13, 0, _animSetNoMat, AnimFlags.NoLoop);
+                WriteLine("behavior 09 true");
                 return true;
             }
+            WriteLine("behavior 09 false");
             return false;
         }
 
@@ -1147,8 +1215,10 @@ namespace MphRead.Entities.Enemies
                 SetSwingAnimation(between, distance);
                 StopBeamChargeSfx(_beamTypes[WeaponIndex]);
                 _soundSource.PlaySfx(SfxId.GOREA_ARM_SWING_ATTACK_SCR);
+                WriteLine("behavior 10 true");
                 return true;
             }
+            WriteLine("behavior 10 false");
             return false;
         }
 
@@ -1192,9 +1262,11 @@ namespace MphRead.Entities.Enemies
                 }
                 if (_field244 == 0 && Func21369FC())
                 {
+                    WriteLine("behavior 11 true");
                     return true;
                 }
             }
+            WriteLine("behavior 11 false");
             return false;
         }
 
@@ -1224,27 +1296,33 @@ namespace MphRead.Entities.Enemies
             {
                 StartShots();
                 _field23C = (int)(Rng.GetRandomInt2(60) + 90) * 2; // todo: FPS stuff
+                WriteLine("behavior 12 true");
                 return true;
             }
+            WriteLine("behavior 12 false");
             return false;
         }
 
         private bool Behavior13()
         {
-            if (Behavior03() && _goreaFlags.TestFlag(Gorea1AFlags.Bit4) && Func21369FC())
+            if (Behavior03(false) && _goreaFlags.TestFlag(Gorea1AFlags.Bit4) && Func21369FC())
             {
                 StopBeamChargeSfx(_beamTypes[WeaponIndex]);
+                WriteLine("behavior 13 true");
                 return true;
             }
+            WriteLine("behavior 13 false");
             return false;
         }
 
         private bool Behavior14()
         {
-            if (Behavior03())
+            if (Behavior03(false))
             {
+                Write("behavior 14: ");
                 return Behavior09();
             }
+            WriteLine("behavior 14 false");
             return false;
         }
 
@@ -1256,12 +1334,14 @@ namespace MphRead.Entities.Enemies
             }
             if (_field23C > 0 || !IsAtEndFrame())
             {
+                WriteLine("behavior 15 false");
                 return false;
             }
             _model.SetAnimation(17, 0, _animSetNoMat);
             StopShots(index: 0, detach: true);
             StopShots(index: 1, detach: true);
             _field23C = 210 * 2; // todo: FPS stuff
+            WriteLine("behavior 15 true");
             return true;
         }
 
@@ -1270,8 +1350,10 @@ namespace MphRead.Entities.Enemies
             if (IsAtEndFrame())
             {
                 StartShots();
+                WriteLine("behavior 16 true");
                 return true;
             }
+            WriteLine("behavior 16 false");
             return false;
         }
 
@@ -1283,8 +1365,10 @@ namespace MphRead.Entities.Enemies
                 _nextState = _state1;
                 StopBeamChargeSfx(_beamTypes[WeaponIndex]);
                 _model.SetAnimation(19, 0, _animSetNoMat, AnimFlags.NoLoop);
+                WriteLine("behavior 17 true");
                 return true;
             }
+            WriteLine("behavior 17 false");
             return false;
         }
 
@@ -1292,21 +1376,27 @@ namespace MphRead.Entities.Enemies
         {
             if (_targetFacing != Vector3.Zero || !CheckFacingAngle(-1, PlayerEntity.Main.Position))
             {
+                WriteLine("behavior 18 false");
                 return false;
             }
             _field23C = 60 * 2; // todo: FPS stuff
+            WriteLine("behavior 18 true");
             return true;
         }
 
+        // sktodo: (document) at least one use is timer for giving up on turning to face the player in state 1
+        // sktodo: also timer for stopping when initially walking toward player in state 2 (called via Behavior22)
         private bool Behavior19()
         {
             if (--_field23C > 0)
             {
+                WriteLine("behavior 19 false");
                 return false;
             }
             _speed = Vector3.Zero;
             _model.SetAnimation(17, 0, _animSetNoMat);
             Func2137A34();
+            WriteLine("behavior 19 true");
             return true;
         }
 
@@ -1314,15 +1404,18 @@ namespace MphRead.Entities.Enemies
         {
             if (_field23E >= 0)
             {
+                WriteLine("behavior 20 false");
                 return false;
             }
             _field23E = 510 * 2; // todo: FPS stuff
             if (!_arms[0].ArmFlags.TestFlag(GoreaArmFlags.Bit0) && !_arms[1].ArmFlags.TestFlag(GoreaArmFlags.Bit0))
             {
+                WriteLine("behavior 20 false");
                 return false;
             }
             _soundSource.PlaySfx(SfxId.GOREA_REGEN_ARM_SCR);
             Func21364DC();
+            WriteLine("behavior 20 true");
             return true;
         }
 
@@ -1360,13 +1453,16 @@ namespace MphRead.Entities.Enemies
             if (_field240 < 0)
             {
                 _field240 = (int)(Rng.GetRandomInt2(90) + 150) * 2; // todo: FPS stuff
+                WriteLine("behavior 21 true");
                 return true;
             }
+            WriteLine("behavior 21 false");
             return false;
         }
 
         private bool Behavior22()
         {
+            Write("behavior 22: ");
             return Behavior19();
         }
 

@@ -65,7 +65,7 @@ namespace MphRead.Entities.Enemies
 
         public void GetNodeVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
         {
-            Matrix4 transform = GetNodeTransform(_elbowNode, _gorea1A, _gorea1A.Scale);
+            Matrix4 transform = GetNodeTransform(_gorea1A, _elbowNode);
             position = transform.Row3.Xyz;
             up = Index == 0 ? transform.Row0.Xyz : transform.Row2.Xyz;
             facing = transform.Row1.Xyz;
@@ -77,7 +77,7 @@ namespace MphRead.Entities.Enemies
             {
                 return;
             }
-            Matrix4 transform = GetNodeTransform(_shoulderNode, _gorea1A, _gorea1A.Scale);
+            Matrix4 transform = GetNodeTransform(_gorea1A, _shoulderNode);
             Position = transform.Row3.Xyz;
             if (_damageEffect != null)
             {

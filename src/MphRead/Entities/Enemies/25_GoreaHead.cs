@@ -36,7 +36,7 @@ namespace MphRead.Entities.Enemies
 
         protected override void EnemyProcess()
         {
-            Matrix4 transform = GetNodeTransform(_attachNode, _gorea1A, _gorea1A.Scale);
+            Matrix4 transform = GetNodeTransform(_gorea1A, _attachNode);
             Position = transform.Row3.Xyz;
             if (_flashEffect != null)
             {
@@ -65,8 +65,8 @@ namespace MphRead.Entities.Enemies
         public void RespawnFlashEffect()
         {
             RemoveFlashEffect();
-            Vector3 spawnPos = Position + FacingVector * Fixed.ToFloat(2949);
-            spawnPos += UpVector * Fixed.ToFloat(-939);
+            Vector3 spawnPos = Position + _gorea1A.FacingVector * Fixed.ToFloat(2949);
+            spawnPos += _gorea1A.UpVector * Fixed.ToFloat(-939);
             _flashEffect = SpawnEffectGetEntry(104, spawnPos, extensionFlag: false); // goreaEyeFlash
         }
 

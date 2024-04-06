@@ -50,13 +50,13 @@ namespace MphRead.Entities.Enemies
             }
             ModelInstance ownerModel = parent.GetModels()[0];
             _kneeNode = ownerModel.Model.GetNodeByName(nodeName)!;
-            Matrix4 transform = GetNodeTransform(_kneeNode, _gorea1A, _gorea1A.Scale);
+            Matrix4 transform = GetNodeTransform(_gorea1A, _kneeNode);
             Position = transform.Row3.Xyz;
         }
 
         protected override void EnemyProcess()
         {
-            Matrix4 transform = GetNodeTransform(_kneeNode, _gorea1A, _gorea1A.Scale);
+            Matrix4 transform = GetNodeTransform(_gorea1A, _kneeNode);
             Position = transform.Row3.Xyz;
             Vector3 cylinderVec = transform.Row0.Xyz.Normalized();
             if (Index != 1)

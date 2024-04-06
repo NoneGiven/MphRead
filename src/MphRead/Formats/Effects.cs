@@ -715,7 +715,7 @@ namespace MphRead.Effects
                 element.Expired = false;
                 element.Func39Called = false;
                 element.CreationTime = elapsedTime;
-                element.ExpirationTime = element.CreationTime - element.Lifespan;
+                element.ExpirationTime = element.CreationTime + element.Lifespan;
             }
         }
     }
