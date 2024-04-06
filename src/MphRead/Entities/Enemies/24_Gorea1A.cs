@@ -76,6 +76,7 @@ namespace MphRead.Entities.Enemies
         // in theory, this might not reflect the actual final position of things, but in practice it is since Gorea1A/1B/2 will have finished
         // processing before the head/arm/leg/sphere is calling this to update itself. a counter is used to prevent redundant updates on one frame,
         // which does assume that everything is already final on the parent as of the time when this function is first called.
+        // there will be one more (likely redundant) update to the animation during the normal draw info call.
         protected Matrix4 GetNodeTransform(GoreaEnemyEntityBase entity, Node node)
         {
             if (entity._lastNodeTransformUpdate != _scene.FrameCount)
@@ -89,6 +90,8 @@ namespace MphRead.Entities.Enemies
             return node.Animation;
         }
 
+        // this also requires calling the animation early, but with some non-final values. this will be called once
+        // within the enemy in question, and then possibly overwritten later when subsequent entities call the above function.
         protected void TransformHurtVolumeToNode(Node node, Vector3 offset)
         {
             Debug.Assert(_model != null && _model.Model.Nodes.Contains(node));
@@ -769,9 +772,6 @@ namespace MphRead.Entities.Enemies
         private void State08()
         {
             WriteLine("state 8");
-            // sktodo: if we get here, it seems like it's inevitable that state will get set to 15
-            // when the animation finishes? and that will crash us, or would possibly result in calling
-            // the first enemy 28 state proc in-game?
             if (_model.AnimInfo.Frame[0] == 60 && _scene.FrameCount != 0 && _scene.FrameCount % 2 == 0) // todo: FPS stuff
             {
                 if (GetHorizontalToPlayer(25, out Vector3 between, out float distance)) // 102400

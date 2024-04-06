@@ -1254,8 +1254,8 @@ namespace MphRead
             // state 3
             new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[4]
             {
-                new EnemyBehavior<Enemy24Entity>(15, Enemy24Entity.Behavior07),
-                new EnemyBehavior<Enemy24Entity>(15, Enemy24Entity.Behavior08),
+                new EnemyBehavior<Enemy24Entity>(14, Enemy24Entity.Behavior07),
+                new EnemyBehavior<Enemy24Entity>(14, Enemy24Entity.Behavior08),
                 new EnemyBehavior<Enemy24Entity>(8, Enemy24Entity.Behavior09),
                 new EnemyBehavior<Enemy24Entity>(12, Enemy24Entity.Behavior10)
             }),
@@ -1266,7 +1266,7 @@ namespace MphRead
                 new EnemyBehavior<Enemy24Entity>(3, Enemy24Entity.Behavior11),
                 new EnemyBehavior<Enemy24Entity>(8, Enemy24Entity.Behavior09),
                 new EnemyBehavior<Enemy24Entity>(12, Enemy24Entity.Behavior10),
-                new EnemyBehavior<Enemy24Entity>(15, Enemy24Entity.Behavior12)
+                new EnemyBehavior<Enemy24Entity>(14, Enemy24Entity.Behavior12)
             }),
             // state 5
             new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[7]
@@ -1276,7 +1276,7 @@ namespace MphRead
                 new EnemyBehavior<Enemy24Entity>(8, Enemy24Entity.Behavior14),
                 new EnemyBehavior<Enemy24Entity>(12, Enemy24Entity.Behavior10),
                 new EnemyBehavior<Enemy24Entity>(1, Enemy24Entity.Behavior15),
-                new EnemyBehavior<Enemy24Entity>(15, Enemy24Entity.Behavior16),
+                new EnemyBehavior<Enemy24Entity>(14, Enemy24Entity.Behavior16),
                 new EnemyBehavior<Enemy24Entity>(11, Enemy24Entity.Behavior17)
             }),
             // state 6
@@ -1294,7 +1294,7 @@ namespace MphRead
             // state 8
             new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[1]
             {
-                new EnemyBehavior<Enemy24Entity>(15, Enemy24Entity.Behavior03)
+                new EnemyBehavior<Enemy24Entity>(14, Enemy24Entity.Behavior03)
             }),
             // state 9
             new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[3]
@@ -1312,7 +1312,7 @@ namespace MphRead
             // state 11
             new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[1]
             {
-                new EnemyBehavior<Enemy24Entity>(15, Enemy24Entity.Behavior03)
+                new EnemyBehavior<Enemy24Entity>(14, Enemy24Entity.Behavior03)
             }),
             // state 12
             new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[1]
@@ -1327,7 +1327,7 @@ namespace MphRead
             // state 14
             new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[1]
             {
-                new EnemyBehavior<Enemy24Entity>(15, Enemy24Entity.Behavior02)
+                new EnemyBehavior<Enemy24Entity>(14, Enemy24Entity.Behavior02)
             })
         };
 
