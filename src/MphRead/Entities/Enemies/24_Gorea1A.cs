@@ -83,17 +83,18 @@ namespace MphRead.Entities.Enemies
                 entity._lastNodeTransformUpdate = _scene.FrameCount;
                 ModelInstance? model = entity.GetModels().FirstOrDefault();
                 Debug.Assert(model != null && model.Model.Nodes.Contains(node));
-                model.Model.ComputeNodeMatrices(index: 0);
                 Matrix4 transform = entity.GetModelTransform(model, index: 0);
-                model.Model.AnimateNodes(index: 0, UseNodeTransform || _scene.TransformRoomNodes, transform, model.Model.Scale, model.AnimInfo);
+                model.Model.AnimateNodes(index: 0, false, transform, model.Model.Scale, model.AnimInfo);
             }
             return node.Animation;
         }
 
         protected void TransformHurtVolumeToNode(Node node, Vector3 offset)
         {
+            Debug.Assert(_model != null && _model.Model.Nodes.Contains(node));
+            _model.Model.AnimateNodes(index: 0, false, Matrix4.Identity, _model.Model.Scale, _model.AnimInfo);
             Matrix4 transform = GetTransformMatrix(FacingVector, UpVector);
-            Vector3 position = Matrix.Vec3MultMtx4(offset, node.Transform * Matrix4.CreateScale(Scale) * transform);
+            Vector3 position = Matrix.Vec3MultMtx4(offset, node.Animation * Matrix4.CreateScale(Scale) * transform);
             _hurtVolumeInit = new CollisionVolume(position, _hurtVolumeInit.SphereRadius);
         }
 
@@ -385,8 +386,18 @@ namespace MphRead.Entities.Enemies
             IncrementAllMaterialColors();
             CheckPlayerCollision();
             CallStateProcess();
+            if (Active)
+            {
+                UpdateAnimFrames(_model);
+            }
             // sktodo: this seems much better aligned with the offset in X instead of Z. confirm if it's actually off-center in-game
             TransformHurtVolumeToNode(_spineNode, new Vector3(0, Fixed.ToFloat(970), Fixed.ToFloat(622)));
+        }
+
+        protected override bool BaseProcess()
+        {
+            // animation frames are updated before moving the volume
+            return true;
         }
 
         private void IncrementAllMaterialColors()
