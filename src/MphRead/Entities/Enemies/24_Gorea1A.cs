@@ -1093,6 +1093,7 @@ namespace MphRead.Entities.Enemies
                 // todo: is it a bug that only one arm's charge level is set?
                 WeaponInfo weapon = Weapons.GoreaWeapons[WeaponIndex];
                 armL.EquipInfo.ChargeLevel = weapon.FullCharge;
+                // todo: is it a bug that ShotCooldown is used for the right arm instead of AutofireCooldown?
                 armL.Cooldown = weapon.ShotCooldown * 2; // todo: FPS stuff
                 armR.Cooldown = weapon.ShotCooldown * 2; // todo: FPS stuff
                 _field242 = (int)Rng.GetRandomInt2(30) + 60; // todo: FPS stuff (not multiplying by 2 due to anim frame stuff)
