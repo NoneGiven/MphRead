@@ -558,8 +558,9 @@ namespace MphRead.Entities
             //transform.ExtractRotation().ToEulerAngles(out Vector3 rotation);
             //Rotation = rotation;
             //Position = position;
+            transform = Matrix4.CreateScale(_scale) * transform;
             transform.Row3.Xyz = position;
-            Transform = Matrix4.CreateScale(_scale) * transform;
+            Transform = transform;
         }
 
         public static Matrix4 GetTransformMatrix(Vector3 facing, Vector3 up)
