@@ -665,6 +665,8 @@ namespace MphRead.Entities
                 }
             }
             // todo: determine whether to play movie (that is, spawn boss), update bot AI, lock doors for encounter
+            // todo: always fade out and do room loading logic as if the movie had just played
+            // (whether or not it has played, depending on whether the movie files were converted via script/ffmpeg)
             GameState.StorySave.SetVisitedRoom(RoomId);
             if (_unloadModel != null)
             {
