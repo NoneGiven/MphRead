@@ -405,8 +405,9 @@ namespace MphRead.Entities.Enemies
 
         private void IncrementAllMaterialColors()
         {
-            int frame = _model.AnimInfo.Frame[0];
-            int frameCount = _model.AnimInfo.FrameCount[0];
+            // todo: FPS stuff
+            int frame = _model.AnimInfo.Frame[0] * 2 + (int)(_scene.FrameCount % 2);
+            int frameCount = _model.AnimInfo.FrameCount[0] * 2;
             for (int i = 0; i < 2; i++)
             {
                 for (int j = 2; j < 5; j++)
@@ -430,24 +431,24 @@ namespace MphRead.Entities.Enemies
         private void IncrementMaterialColors(Material material, ColorRgb ambient, ColorRgb diffuse, int frame, int frameCount)
         {
             material.Ambient = new ColorRgb(
-                (byte)(material.Ambient.Red + InterpolateColor(frame, frameCount, (byte)(ambient.Red - material.Ambient.Red))),
-                (byte)(material.Ambient.Green + InterpolateColor(frame, frameCount, (byte)(ambient.Green - material.Ambient.Green))),
-                (byte)(material.Ambient.Blue + InterpolateColor(frame, frameCount, (byte)(ambient.Blue - material.Ambient.Blue))));
+                (byte)(material.Ambient.Red + InterpolateColor(frame, frameCount, ambient.Red - material.Ambient.Red)),
+                (byte)(material.Ambient.Green + InterpolateColor(frame, frameCount, ambient.Green - material.Ambient.Green)),
+                (byte)(material.Ambient.Blue + InterpolateColor(frame, frameCount, ambient.Blue - material.Ambient.Blue)));
             material.Diffuse = new ColorRgb(
-                (byte)(material.Diffuse.Red + InterpolateColor(frame, frameCount, (byte)(diffuse.Red - material.Diffuse.Red))),
-                (byte)(material.Diffuse.Green + InterpolateColor(frame, frameCount, (byte)(diffuse.Green - material.Diffuse.Green))),
-                (byte)(material.Diffuse.Blue + InterpolateColor(frame, frameCount, (byte)(diffuse.Blue - material.Diffuse.Blue))));
+                (byte)(material.Diffuse.Red + InterpolateColor(frame, frameCount, diffuse.Red - material.Diffuse.Red)),
+                (byte)(material.Diffuse.Green + InterpolateColor(frame, frameCount, diffuse.Green - material.Diffuse.Green)),
+                (byte)(material.Diffuse.Blue + InterpolateColor(frame, frameCount, diffuse.Blue - material.Diffuse.Blue)));
         }
 
         // todo: once material colors (and alpha) are all using floats early, update this math to use floats
-        private byte InterpolateColor(int frame, int frameCount, byte color)
+        private byte InterpolateColor(int frame, int frameCount, int color)
         {
             int diff = frameCount - frame;
             if (frame >= 0 && frame <= frameCount && diff != 0)
             {
                 return (byte)MathF.Round(color / (float)diff);
             }
-            return color;
+            return (byte)color;
         }
 
         // sktodo: this is the same as the leg with the values baked in -- share code?
