@@ -18,6 +18,7 @@ namespace MphRead.Entities.Enemies
         private float _field21E = 0;
         private bool _field228 = false;
         private int _damage = 0;
+        public int Damage => _damage;
         private int _field234 = 0;
         private int _field236 = 0;
         public ColorRgb Ambient { get; set; }

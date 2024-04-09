@@ -78,8 +78,7 @@ namespace MphRead.Entities.Enemies
             between = between.LengthSquared > 1 / 128f
                 ? between.Normalized()
                 : FacingVector;
-            between *= factor;
-            PlayerEntity.Main.Speed += between / 2; // todo: FPS stuff
+            PlayerEntity.Main.Speed += between * factor;
             PlayerEntity.Main.TakeDamage(damage, DamageFlags.None, null, this);
         }
 

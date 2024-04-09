@@ -103,7 +103,7 @@ namespace MphRead.Entities.Enemies
 
         protected bool SeekTargetFacing(Vector3 target, float angle)
         {
-            angle = MathHelper.DegreesToRadians(angle);
+            angle = MathHelper.DegreesToRadians(angle / 2f); // todo: FPS stuff
             (float sin, float cos) = MathF.SinCos(angle);
             Vector3 facing = FacingVector;
             float dot = Vector3.Dot(target, facing);
@@ -462,8 +462,7 @@ namespace MphRead.Entities.Enemies
             between = between.LengthSquared > 1 / 128f
                 ? between.Normalized()
                 : FacingVector;
-            between *= 0.25f;
-            PlayerEntity.Main.Speed += between / 2; // todo: FPS stuff
+            PlayerEntity.Main.Speed += between / 4;
             PlayerEntity.Main.TakeDamage(10, DamageFlags.None, null, this);
         }
 
@@ -564,6 +563,7 @@ namespace MphRead.Entities.Enemies
             return false;
         }
 
+        // sktodo (document): walking
         private void State02()
         {
             WriteLine("state 2");
@@ -576,11 +576,12 @@ namespace MphRead.Entities.Enemies
             CallSubroutine(Metadata.Enemy24Subroutines, this);
         }
 
+        // sktodo (document): sprinting
         private void State03()
         {
             WriteLine("state 3");
             _targetFacing = SeekTargetSetAnim(_targetFacing, _model.AnimInfo.Index[0], slot: 0, _animSetNoMat);
-            _speed = FacingVector * (_speed * 2) * 5 / 2; // 20480 // todo: FPS stuff
+            _speed = FacingVector * _speedFactor * 5 / 2; // 20480 // todo: FPS stuff
             CallSubroutine(Metadata.Enemy24Subroutines, this);
         }
 
@@ -685,8 +686,10 @@ namespace MphRead.Entities.Enemies
         private void GetArmAim(Enemy26Entity arm, out Vector3 position, out Vector3 direction)
         {
             arm.GetNodeVectors(out position, out direction, out _);
+            //direction = direction.Normalized();
             position += direction * Fixed.ToFloat(8343);
-            if (!HalfturretEntity.UpdateAim(position, PlayerEntity.Main.Position, arm.EquipInfo, out direction))
+            Vector3 playerPosition = PlayerEntity.Main.Position.AddY(0.5f);
+            if (!HalfturretEntity.UpdateAim(position, playerPosition, arm.EquipInfo, out direction))
             {
                 _goreaFlags |= Gorea1AFlags.Bit4;
             }
@@ -732,7 +735,10 @@ namespace MphRead.Entities.Enemies
                 sfx = BeamSfx.Shot;
             }
             int id = Metadata.BeamSfx[(int)beam, (int)sfx];
-            if (id != -1)
+            // todo: this is a hack so the Shock Coil SFX doesn't play every frame. I'm not sure what
+            // the game is doing, since other beam SFX do overlap, but Shock Coil's shot SFX
+            // (using Power Beam sounds) only plays again after the previous one has finished.
+            if (id != -1 && (_weaponIndex != 5 || _soundSource.CountSourcePlayingSfx(id) == 0))
             {
                 _soundSource.PlaySfx(id);
             }
@@ -993,7 +999,7 @@ namespace MphRead.Entities.Enemies
                 for (int i = 0; i < 2; i++)
                 {
                     Enemy26Entity arm = _arms[i];
-                    arm.EquipInfo.ChargeLevel = charge;
+                    arm.EquipInfo.ChargeLevel = (ushort)(charge * 2);// todo: FPS stuff
                     arm.ArmFlags |= GoreaArmFlags.Bit1;
                 }
                 _model.SetAnimation(_weaponAnimIds[WeaponIndex], 0, _animSetNoMat);
@@ -1088,9 +1094,11 @@ namespace MphRead.Entities.Enemies
             Enemy26Entity armR = _arms[1];
             if (charge)
             {
-                // todo: is it a bug that only one arm's charge level is set?
+                armL.ArmFlags |= GoreaArmFlags.Bit2;
+                armR.ArmFlags |= GoreaArmFlags.Bit2;
                 WeaponInfo weapon = Weapons.GoreaWeapons[WeaponIndex];
-                armL.EquipInfo.ChargeLevel = weapon.FullCharge;
+                // probably no point in setting this; it gets set on both arms before shooting
+                armL.EquipInfo.ChargeLevel = (ushort)(weapon.FullCharge * 2); // todo: FPS stuff
                 // todo: is it a bug that ShotCooldown is used for the right arm instead of AutofireCooldown?
                 armL.Cooldown = weapon.ShotCooldown * 2; // todo: FPS stuff
                 armR.Cooldown = weapon.ShotCooldown * 2; // todo: FPS stuff
@@ -1270,7 +1278,7 @@ namespace MphRead.Entities.Enemies
                     // sktodo: is this timer ever set?
                     _field244--;
                 }
-                if (_field244 == 0 && Func21369FC())
+                if (_field244 == 0 && TrySprintingRoomInVolume())
                 {
                     WriteLine("behavior 11 true");
                     return true;
@@ -1280,9 +1288,9 @@ namespace MphRead.Entities.Enemies
             return false;
         }
 
-        // sktodo: member name
-        private bool Func21369FC()
+        private bool TrySprintingRoomInVolume()
         {
+            // check distance moved at sprinting speed in one second
             float factor = _speedFactor * 5 * 30;
             Vector3 offset = FacingVector * factor;
             if (!CheckOffsetOutsideVolume(offset) && UpdateTargetFacing())
@@ -1294,6 +1302,11 @@ namespace MphRead.Entities.Enemies
                 return true;
             }
             return false;
+        }
+
+        public override void GetDisplayVolumes()
+        {
+            AddVolumeItem(_volume, Vector3.UnitX);
         }
 
         private bool Behavior12()
@@ -1315,7 +1328,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior13()
         {
-            if (Behavior03(false) && _goreaFlags.TestFlag(Gorea1AFlags.Bit4) && Func21369FC())
+            if (Behavior03(false) && _goreaFlags.TestFlag(Gorea1AFlags.Bit4) && TrySprintingRoomInVolume())
             {
                 StopBeamChargeSfx(_beamTypes[WeaponIndex]);
                 WriteLine("behavior 13 true");

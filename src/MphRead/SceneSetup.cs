@@ -546,7 +546,7 @@ namespace MphRead
 
         public static void LoadEnemyResources(Scene scene)
         {
-            // todo: other things done in load_enemy_data: enemy beams, boss stuff, pre-allocation(?)
+            // todo?: pre-allocation(?)
             foreach (EntityBase entity in scene.Entities)
             {
                 if (entity is EnemySpawnEntity spawner)

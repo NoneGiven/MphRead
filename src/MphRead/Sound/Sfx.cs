@@ -150,6 +150,16 @@ namespace MphRead.Sound
             return Sfx.Instance.CountPlayingSfx(id);
         }
 
+        public int CountSourcePlayingSfx(SfxId id)
+        {
+            return Sfx.Instance.CountSourcePlayingSfx((int)id, this);
+        }
+
+        public int CountSourcePlayingSfx(int id)
+        {
+            return Sfx.Instance.CountSourcePlayingSfx(id, this);
+        }
+
         public void QueueStream(VoiceId id, float delay = 0, float expiration = 0)
         {
             Sfx.QueueStream(id, delay, expiration);
@@ -1150,11 +1160,21 @@ namespace MphRead.Sound
 
         public override int CountPlayingSfx(int id)
         {
+            return CountPlayingSfx(id, source: null);
+        }
+
+        public override int CountSourcePlayingSfx(int id, SoundSource source)
+        {
+            return CountPlayingSfx(id, source);
+        }
+
+        private int CountPlayingSfx(int id, SoundSource? source)
+        {
             int count = 0;
             for (int i = 0; i < _instances.Length; i++)
             {
                 SoundInstance inst = _instances[i];
-                if (inst.Handle != -1 && inst.SfxId == id)
+                if (inst.Handle != -1 && inst.SfxId == id && (source == null || inst.Source == source))
                 {
                     count++;
                 }
@@ -1536,6 +1556,11 @@ namespace MphRead.Sound
         }
 
         public virtual int CountPlayingSfx(int id)
+        {
+            return 0;
+        }
+
+        public virtual int CountSourcePlayingSfx(int id, SoundSource source)
         {
             return 0;
         }

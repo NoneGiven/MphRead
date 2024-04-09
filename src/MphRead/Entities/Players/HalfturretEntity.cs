@@ -276,13 +276,15 @@ namespace MphRead.Entities
         {
             WeaponInfo weapon = equipInfo.Weapon;
             float chargePct = 0;
-            if (weapon.Flags.TestFlag(WeaponFlags.CanCharge) && equipInfo.ChargeLevel >= weapon.MinCharge)
+            // todo: FPS stuff
+            if (weapon.Flags.TestFlag(WeaponFlags.CanCharge) && equipInfo.ChargeLevel >= weapon.MinCharge * 2)
             {
-                chargePct = (equipInfo.ChargeLevel - weapon.MinCharge) / (weapon.FullCharge - weapon.MinCharge);
+                chargePct = (equipInfo.ChargeLevel - weapon.MinCharge * 2) / (weapon.FullCharge * 2 - weapon.MinCharge * 2);
             }
             aimVector = targetPos - muzzlePos;
             float hMagSqr = aimVector.X * aimVector.X + aimVector.Z * aimVector.Z;
             float hMag = MathF.Sqrt(hMagSqr);
+            // todo?: seems okay without FPS stuff here, but we need to confirm
             float uncSpeed = Fixed.ToFloat(weapon.UnchargedSpeed);
             float speed = (Fixed.ToFloat(weapon.MinChargeSpeed) - uncSpeed) * chargePct;
             float uncGravity = Fixed.ToFloat(weapon.UnchargedGravity);
