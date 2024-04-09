@@ -630,7 +630,7 @@ namespace MphRead.Entities.Enemies
 
         private bool CheckTargeting(Enemy26Entity arm)
         {
-            int frame = _model.AnimInfo.Frame[0];
+            int frame = _model.AnimInfo.Frame[0] * 2 + (int)(_scene.FrameCount % 2); // todo: FPS stuff
             if (WeaponIndex == 0 || WeaponIndex == 5)
             {
                 if (arm.ArmFlags.TestFlag(GoreaArmFlags.Bit0))
@@ -640,28 +640,25 @@ namespace MphRead.Entities.Enemies
                 bool shoot = false;
                 if (arm.ArmFlags.TestFlag(GoreaArmFlags.Bit2))
                 {
-                    if (_scene.FrameCount != 0 && _scene.FrameCount % 2 == 0) // todo: FPS stuff
+                    // todo: FPS stuff
+                    int shotCooldown = arm.EquipInfo.Weapon.ShotCooldown * 2;
+                    int autoCooldown = arm.EquipInfo.Weapon.AutofireCooldown * 2;
+                    if (shotCooldown <= frame && frame <= autoCooldown
+                        && (WeaponIndex == 5 || (frame % 8) == 7)) // the game does every 4, we do every 8
                     {
-                        int shotCooldown = arm.EquipInfo.Weapon.ShotCooldown;
-                        int autoCooldown = arm.EquipInfo.Weapon.AutofireCooldown;
-                        if (shotCooldown <= frame && frame <= autoCooldown
-                            && (WeaponIndex == 5 || (frame & 3) == 3))
+                        shoot = true;
+                    }
+                    if (_field242 > 0)
+                    {
+                        if (frame == autoCooldown
+                            && _field242 > _model.AnimInfo.FrameCount[0] * 2 - (shotCooldown + autoCooldown))
                         {
-                            shoot = true;
+                            _model.AnimInfo.Frame[0] = shotCooldown / 2;
                         }
-                        if (_field242 > 0)
-                        {
-                            // todo: FPS stuff
-                            if (_model.AnimInfo.Frame[0] == autoCooldown
-                                && _field242 > _model.AnimInfo.FrameCount[0] - (shotCooldown + autoCooldown))
-                            {
-                                _model.AnimInfo.Frame[0] = shotCooldown;
-                            }
-                            _field242--;
-                        }
+                        _field242--;
                     }
                 }
-                else if (arm.ArmFlags.TestFlag(GoreaArmFlags.Bit1) && arm.Cooldown == frame * 2) // todo: FPS stuff
+                else if (arm.ArmFlags.TestFlag(GoreaArmFlags.Bit1) && arm.Cooldown == frame)
                 {
                     shoot = true;
                 }
@@ -669,7 +666,7 @@ namespace MphRead.Entities.Enemies
             }
             if (!arm.ArmFlags.TestFlag(GoreaArmFlags.Bit0)
                 && arm.ArmFlags.TestAny(GoreaArmFlags.Bit1 | GoreaArmFlags.Bit2)
-                && arm.Cooldown == frame * 2) // todo: FPS stuff
+                && frame == arm.Cooldown)
             {
                 return true;
             }
@@ -1097,7 +1094,7 @@ namespace MphRead.Entities.Enemies
                 // todo: is it a bug that ShotCooldown is used for the right arm instead of AutofireCooldown?
                 armL.Cooldown = weapon.ShotCooldown * 2; // todo: FPS stuff
                 armR.Cooldown = weapon.ShotCooldown * 2; // todo: FPS stuff
-                _field242 = (int)Rng.GetRandomInt2(30) + 60; // todo: FPS stuff (not multiplying by 2 due to anim frame stuff)
+                _field242 = (int)(Rng.GetRandomInt2(30) + 60) * 2; // todo: FPS stuff
                 _model.SetAnimation(15, 0, _animSetNoMat);
                 if (!armL.ArmFlags.TestFlag(GoreaArmFlags.Bit0))
                 {
