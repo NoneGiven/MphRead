@@ -216,7 +216,7 @@ namespace MphRead.Entities.Enemies
         private ModelInstance _regenModel = null!;
         private ModelInstance _gorea1BModel = null!;
         private Node _spineNode = null!;
-        private CollisionVolume _volume;
+        private CollisionVolume _volume; // arena center platform
         private Enemy28Entity? _gorea1B = null;
         private Enemy25Entity? _head = null;
         private int _armBits = 0;
@@ -1302,11 +1302,6 @@ namespace MphRead.Entities.Enemies
                 return true;
             }
             return false;
-        }
-
-        public override void GetDisplayVolumes()
-        {
-            AddVolumeItem(_volume, Vector3.UnitX);
         }
 
         private bool Behavior12()
