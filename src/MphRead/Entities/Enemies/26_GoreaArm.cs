@@ -22,6 +22,7 @@ namespace MphRead.Entities.Enemies
         public int Cooldown { get; set; }
         public int RegenTimer { get; set; }
         private int _colorTimer = 0;
+        public int ColorTimer => _colorTimer;
 
         private EffectEntry? _shotEffect = null;
         private EffectEntry? _damageEffect = null;
@@ -63,9 +64,14 @@ namespace MphRead.Entities.Enemies
             Cooldown = (Index == 0 ? weapon.ShotCooldown : weapon.AutofireCooldown) * 2; // todo: FPS stuff
         }
 
-        public void GetNodeVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
+        public void GetElbowNodeVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
         {
-            Matrix4 transform = GetNodeTransform(_gorea1A, _elbowNode);
+            GetNodeVectors(_elbowNode, out position, out up, out facing);
+        }
+
+        private void GetNodeVectors(Node node, out Vector3 position, out Vector3 up, out Vector3 facing)
+        {
+            Matrix4 transform = GetNodeTransform(_gorea1A, node);
             position = transform.Row3.Xyz;
             up = Index == 0 ? transform.Row0.Xyz : transform.Row2.Xyz;
             facing = transform.Row1.Xyz;
@@ -85,7 +91,7 @@ namespace MphRead.Entities.Enemies
             }
             if (_shotEffect != null)
             {
-                GetNodeVectors(out Vector3 position, out Vector3 up, out Vector3 facing);
+                GetElbowNodeVectors(out Vector3 position, out Vector3 up, out Vector3 facing);
                 up = up.Normalized();
                 facing = facing.Normalized();
                 position += up * Fixed.ToFloat(8343);
@@ -184,6 +190,48 @@ namespace MphRead.Entities.Enemies
                 }
                 _shotEffect = null;
             }
+        }
+
+        public void DrawRegen(ModelInstance regenModel)
+        {
+            GetElbowNodeVectors(out Vector3 position, out Vector3 up, out Vector3 facing);
+            DrawRegen(regenModel, position, up, facing, Fixed.ToFloat(8343));
+            if (Index == 0)
+            {
+                GetNodeVectors(_upperArmNode, out position, out up, out facing);
+            }
+            else
+            {
+                // sktodo: does this code ever run? depends on if regen only happens after 1B phase,
+                // since if that's the case, then the second arm will never be the one this is called on
+                GetElbowNodeVectors(out Vector3 elbowPos, out _, out _);
+                GetNodeVectors(_upperArmNode, out Vector3 upperArmPos, out _, out Vector3 upperArmFacing);
+                position = upperArmPos;
+                Vector3 between = elbowPos - upperArmPos;
+                up = between;
+                facing = Vector3.UnitZ; // game uses a temp (zero?) here, should always get updated beloww
+                if (between.LengthSquared > 1 / 128f && upperArmFacing.LengthSquared > 1 / 128f)
+                {
+                    between = between.Normalized();
+                    upperArmFacing = upperArmFacing.Normalized();
+                    var cross = Vector3.Cross(between, upperArmFacing);
+                    facing = Vector3.Cross(cross, between);
+                }
+            }
+            DrawRegen(regenModel, position, up, facing, Fixed.ToFloat(6702));
+        }
+
+        private void DrawRegen(ModelInstance regenModel, Vector3 position, Vector3 up, Vector3 facing, float factor)
+        {
+            up = up.Normalized();
+            facing = facing.Normalized();
+            Matrix4 transform = GetTransformMatrix(facing, up, position);
+            transform.Row2.X *= factor;
+            transform.Row2.Y *= factor;
+            transform.Row2.Z *= factor;
+            regenModel.Model.AnimateNodes(index: 0, false, transform, Vector3.One, regenModel.AnimInfo);
+            regenModel.Model.UpdateMatrixStack();
+            GetDrawItems(regenModel, 0);
         }
     }
 

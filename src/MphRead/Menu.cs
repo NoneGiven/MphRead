@@ -25,7 +25,7 @@ namespace MphRead
             string room = "";
             string roomKey = "";
             // set default room with either roomId or roomKey
-            roomKey = "MP3 PROVING GROUND";
+            roomKey = "Gorea_b1";
             if (roomId >= 0)
             {
                 RoomMetadata? init = Metadata.GetRoomById(roomId);

@@ -220,8 +220,8 @@ namespace MphRead.Entities.Enemies
         private Enemy28Entity? _gorea1B = null;
         private Enemy25Entity? _head = null;
         private int _armBits = 0;
-        private Enemy26Entity[] _arms = new Enemy26Entity[2];
-        private Enemy27Entity[] _legs = new Enemy27Entity[3];
+        private readonly Enemy26Entity[] _arms = new Enemy26Entity[2];
+        private readonly Enemy27Entity[] _legs = new Enemy27Entity[3];
 
         private IReadOnlyList<ColorRgb> _colors = null!;
         public IReadOnlyList<ColorRgb> Colors => _colors;
@@ -271,7 +271,7 @@ namespace MphRead.Entities.Enemies
             _volume = CollisionVolume.Move(new CollisionVolume(
                 _spawner.Data.Fields.S11.Sphere1Position.ToFloatVector(),
                 _spawner.Data.Fields.S11.Sphere1Radius.FloatValue), Position);
-            Func2134858();
+            UpdateSpeed();
             _field23C = 210 * 2; // todo: FPS stuff
             _field23E = 510 * 2; // todo: FPS stuff
             _field240 = (int)(Rng.GetRandomInt2(90) + 150) * 2; // todo: FPS stuff
@@ -400,6 +400,12 @@ namespace MphRead.Entities.Enemies
         protected override bool BaseProcess()
         {
             // animation frames are updated before moving the volume
+            return true;
+        }
+
+        protected override bool EnemyTakeDamage(EntityBase? source)
+        {
+            _health = UInt16.MaxValue;
             return true;
         }
 
@@ -676,7 +682,7 @@ namespace MphRead.Entities.Enemies
 
         private void CreateShotEffectLoose(Enemy26Entity arm, int effectId)
         {
-            arm.GetNodeVectors(out Vector3 spawnPos, out Vector3 spawnFacing, out Vector3 spawnUp); // swap up and facing
+            arm.GetElbowNodeVectors(out Vector3 spawnPos, out Vector3 spawnFacing, out Vector3 spawnUp); // swap up and facing
             spawnFacing = spawnFacing.Normalized();
             spawnUp = spawnUp.Normalized();
             spawnPos += spawnFacing * Fixed.ToFloat(8343);
@@ -685,7 +691,7 @@ namespace MphRead.Entities.Enemies
 
         private void GetArmAim(Enemy26Entity arm, out Vector3 position, out Vector3 direction)
         {
-            arm.GetNodeVectors(out position, out direction, out _);
+            arm.GetElbowNodeVectors(out position, out direction, out _);
             //direction = direction.Normalized();
             position += direction * Fixed.ToFloat(8343);
             Vector3 playerPosition = PlayerEntity.Main.Position.AddY(0.5f);
@@ -1053,7 +1059,7 @@ namespace MphRead.Entities.Enemies
                 if (update)
                 {
                     _model.SetAnimation(17, 0, _animSetNoMat);
-                    Func2137A34();
+                    StopAndSetUp();
                 }
                 WriteLine("behavior 07 true");
                 return true;
@@ -1067,8 +1073,7 @@ namespace MphRead.Entities.Enemies
             return !_volume.TestPoint(Position + offset);
         }
 
-        // sktodo: member name
-        private void Func2137A34()
+        private void StopAndSetUp()
         {
             _goreaFlags &= ~Gorea1AFlags.Bit4;
             Enemy26Entity armL = _arms[0];
@@ -1198,7 +1203,7 @@ namespace MphRead.Entities.Enemies
                         _nextState = 4;
                     }
                     _model.SetAnimation(17, 0, _animSetNoMat);
-                    Func2137A34();
+                    StopAndSetUp();
                 }
                 WriteLine("behavior 08 true");
                 return true;
@@ -1413,7 +1418,7 @@ namespace MphRead.Entities.Enemies
             }
             _speed = Vector3.Zero;
             _model.SetAnimation(17, 0, _animSetNoMat);
-            Func2137A34();
+            StopAndSetUp();
             WriteLine("behavior 19 true");
             return true;
         }
@@ -1432,13 +1437,12 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             _soundSource.PlaySfx(SfxId.GOREA_REGEN_ARM_SCR);
-            Func21364DC();
+            RegenerateArms();
             WriteLine("behavior 20 true");
             return true;
         }
 
-        // sktodo: member name
-        private void Func21364DC()
+        private void RegenerateArms()
         {
             for (int i = 0; i < 2; i++)
             {
@@ -1484,19 +1488,18 @@ namespace MphRead.Entities.Enemies
             return Behavior19();
         }
 
-        // sktodo: member name
-        private void Func2134858()
+        private void UpdateSpeed()
         {
-            int index = 0;
+            int phase = 0;
             if (_gorea1B != null)
             {
-                index = 3 - _gorea1B.PhasesLeft;
-                if (index > 2)
+                phase = 3 - _gorea1B.PhasesLeft;
+                if (phase > 2)
                 {
-                    index = 2;
+                    phase = 2;
                 }
             }
-            _speedFactor = _speedFactors[index];
+            _speedFactor = _speedFactors[phase];
         }
 
         private static readonly IReadOnlyList<float> _speedFactors = new float[3]
@@ -1531,14 +1534,50 @@ namespace MphRead.Entities.Enemies
             return base.GetLightInfo();
         }
 
+        // sktodo: this has yet to be tested
         private void DrawArmRegen()
         {
-            // sktodo
+            for (int i = 0; i < 2; i++)
+            {
+                Enemy26Entity arm = _arms[i];
+                if (arm.RegenTimer != 0)
+                {
+                    arm.DrawRegen(_regenModel);
+                    // caled from draw
+                    if (_scene.ProcessFrame && _scene.FrameCount != 0 && _scene.FrameCount % 2 == 0) // todo: FPS stuff
+                    {
+                        _regenModel.UpdateAnimFrames();
+                    }
+                    break;
+                }
+            }
         }
 
         private void UpdateArmMaterials()
         {
-            // sktodo
+            // caled from draw
+            if (!_scene.ProcessFrame)
+            {
+                return;
+            }
+            var white = new ColorRgb(31, 31, 31);
+            for (int i = 0; i < 2; i++)
+            {
+                Enemy26Entity arm = _arms[i];
+                string matName = i == 0 ? "L_ShoulderTarget" : "R_ShoulderTarget";
+                Material material = _model.Model.GetMaterialByName(matName)!;
+                int maxFrame = 10 * 2; // todo: FPS stuff
+                int frame = maxFrame - arm.ColorTimer;
+                IncrementMaterialColors(material, white, white, frame, maxFrame);
+                if (frame == maxFrame)
+                {
+                    material.AnimationFlags &= ~MatAnimFlags.DisableColor;
+                }
+                else
+                {
+                    material.AnimationFlags |= MatAnimFlags.DisableColor;
+                }
+            }
         }
 
         private void ResetMaterialColors()
