@@ -1,6 +1,3 @@
-using System.Security.AccessControl;
-using System;
-using MphRead.Effects;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
@@ -10,30 +7,12 @@ namespace MphRead.Entities.Enemies
     {
         private Enemy28Entity _gorea1B = null!;
         private Node _attachNode = null!;
-        private ModelInstance _trickModel = null!;
-        private ModelInstance _grappleModel = null!;
-        private EffectEntry? _grappleEffect = null;
 
-        private float _field21C = 0;
-        private float _field21E = 0;
-        private bool _field228 = false;
         private int _damage = 0;
         public int Damage => _damage;
-        private int _field234 = 0;
-        private int _field236 = 0;
+        private int _damageTimer = 0;
         public ColorRgb Ambient { get; set; }
         public ColorRgb Diffuse { get; set; }
-
-        // sktodo: field names, documentation, whatever
-        private readonly Vector3[] _vecs = new Vector3[24];
-        private Matrix4 _mtx = Matrix4.Identity;
-        private float _int = 0;
-        private Vector3 _field10;
-        private float _field24 = 0;
-        private float _field28 = 0;
-        private float _field30 = 0;
-        private float _field34 = 0;
-        private float _field38 = 0;
 
         public Enemy29Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
             : base(data, nodeRef, scene)
@@ -63,13 +42,6 @@ namespace MphRead.Entities.Enemies
                 _hurtVolumeInit = new CollisionVolume(Vector3.Zero, _owner.Scale.X);
                 _health = 65535;
                 _healthMax = 3000;
-                _trickModel = Read.GetModelInstance("goreaMindTrick");
-                _grappleModel = Read.GetModelInstance("goreaGrappleBeam");
-                _field21E = 120 * 2; // todo: FPS stuff
-                _field24 = 0.65f; // 2662
-                _field28 = 1 / 3f; // 1365
-                _field30 = 1; // 4096
-                _field34 = 0.25f; // 1024
             }
         }
 
@@ -91,9 +63,9 @@ namespace MphRead.Entities.Enemies
                 Matrix4 transform = GetNodeTransform(_gorea1B, _attachNode);
                 Position = transform.Row3.Xyz;
             }
-            if (_field236 > 0)
+            if (_damageTimer > 0)
             {
-                _field236--;
+                _damageTimer--;
             }
         }
 
@@ -126,7 +98,7 @@ namespace MphRead.Entities.Enemies
                         SpawnEffect(44, Position); // goreaShoulderHits
                     }
                 }
-                _field236 = 10 * 2; // todo: FPS stuff
+                _damageTimer = 10 * 2; // todo: FPS stuff
                 Material material = _gorea1B.GetModels()[0].Model.GetMaterialByName("ChestCore")!;
                 material.Ambient = Ambient;
                 material.Diffuse = new ColorRgb(31, 0, 0);

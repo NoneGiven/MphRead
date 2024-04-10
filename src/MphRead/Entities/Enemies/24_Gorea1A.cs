@@ -12,6 +12,8 @@ namespace MphRead.Entities.Enemies
     {
         protected ModelInstance _model = null!;
 
+        protected const SetFlags _animSetNoMat = SetFlags.Texture | SetFlags.Texcoord | SetFlags.Unused | SetFlags.Node;
+
         public GoreaEnemyEntityBase(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
             : base(data, nodeRef, scene)
         {
@@ -45,6 +47,11 @@ namespace MphRead.Entities.Enemies
             SetTransform(spawner.FacingVector, Vector3.UnitY, spawner.Position);
             _boundingRadius = 1;
             _healthMax = _health = UInt16.MaxValue;
+        }
+
+        protected bool AnimationEnded()
+        {
+            return _model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended);
         }
 
         protected void SpawnEffect(int effectId, Vector3 position)
@@ -230,7 +237,7 @@ namespace MphRead.Entities.Enemies
         public int WeaponIndex => _weaponIndex;
         private float _speedFactor = 0;
         private Vector3 _targetFacing;
-        private int _field23C = 0;
+        private int _field23C = 0; // sktodo: field names
         private int _field23E = 0;
         private int _field240 = 0;
         private int _field244 = 0;
@@ -250,8 +257,6 @@ namespace MphRead.Entities.Enemies
                 State10, State11, State12, State13, State14
             };
         }
-
-        private const SetFlags _animSetNoMat = SetFlags.Texture | SetFlags.Texcoord | SetFlags.Unused | SetFlags.Node;
 
         protected override void EnemyInitialize()
         {
@@ -493,7 +498,7 @@ namespace MphRead.Entities.Enemies
             if (_model.AnimInfo.Index[0] == 0)
             {
                 UpdateArmMaterialAlpha();
-                if (Behavior03(false))
+                if (AnimationEnded())
                 {
                     if (_gorea1B != null && _gorea1B.PhasesLeft != 3)
                     {
@@ -911,7 +916,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior00()
         {
-            if (!Behavior03(false))
+            if (!AnimationEnded())
             {
                 WriteLine("behavior 00 false");
                 return false;
@@ -938,17 +943,10 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        private bool Behavior03(bool standalone = true)
+        private bool Behavior03()
         {
-            if (standalone)
-            {
-                WriteLine($"behavior 03 {(_model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended) ? "true" : "false")}");
-            }
-            else
-            {
-                WriteLine($"anim ended {(_model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended) ? "true" : "false")}");
-            }
-            return _model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended);
+            WriteLine($"behavior 03 {(_model.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended) ? "true" : "false")}");
+            return AnimationEnded();
         }
 
         private bool Behavior04()
@@ -1328,7 +1326,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior13()
         {
-            if (Behavior03(false) && _goreaFlags.TestFlag(Gorea1AFlags.Bit4) && TrySprintingRoomInVolume())
+            if (AnimationEnded() && _goreaFlags.TestFlag(Gorea1AFlags.Bit4) && TrySprintingRoomInVolume())
             {
                 StopBeamChargeSfx(_beamTypes[WeaponIndex]);
                 WriteLine("behavior 13 true");
@@ -1340,7 +1338,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior14()
         {
-            if (Behavior03(false))
+            if (AnimationEnded())
             {
                 Write("behavior 14: ");
                 return Behavior09();

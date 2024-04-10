@@ -297,7 +297,8 @@ namespace MphRead
         Unused = 0x4, // presumably
         Material = 0x8,
         Texcoord = 0x10,
-        Texture = 0x20
+        Texture = 0x20,
+        All = Node | Unused | Material | Texcoord | Texture
     }
 
     public class AnimationInfo

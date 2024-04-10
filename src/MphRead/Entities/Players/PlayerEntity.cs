@@ -1045,6 +1045,18 @@ namespace MphRead.Entities
             Flags2 |= PlayerFlags2.NoFormSwitch;
         }
 
+        public void SetBipedStuck(bool stuck)
+        {
+            if (stuck)
+            {
+                Flags2 |= PlayerFlags2.BipedStuck;
+            }
+            else
+            {
+                Flags2 &= ~PlayerFlags2.BipedStuck;
+            }
+        }
+
         // todo: visualize
         public bool CheckHitByBomb(BombEntity bomb, bool halfturret)
         {

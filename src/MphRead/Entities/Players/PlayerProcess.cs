@@ -1688,7 +1688,7 @@ namespace MphRead.Entities
             PlayHunterSfx(HunterSfx.Morph);
         }
 
-        private void ExitAltForm()
+        public void ExitAltForm()
         {
             if (Flags2.TestFlag(PlayerFlags2.Halfturret))
             {
