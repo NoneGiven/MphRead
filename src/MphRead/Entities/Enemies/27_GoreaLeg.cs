@@ -33,7 +33,7 @@ namespace MphRead.Entities.Enemies
             }
         }
 
-        public void SetKneeNode(EnemyInstanceEntity parent)
+        public void SetKneeNode(GoreaEnemyEntityBase parent)
         {
             string nodeName;
             if (Index == 2)
@@ -50,7 +50,7 @@ namespace MphRead.Entities.Enemies
             }
             ModelInstance ownerModel = parent.GetModels()[0];
             _kneeNode = ownerModel.Model.GetNodeByName(nodeName)!;
-            Matrix4 transform = GetNodeTransform(_gorea1A, _kneeNode);
+            Matrix4 transform = GetNodeTransform(parent, _kneeNode);
             Position = transform.Row3.Xyz;
         }
 

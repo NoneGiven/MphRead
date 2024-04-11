@@ -1336,7 +1336,7 @@ namespace MphRead
             // state 0
             new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[1]
             {
-                new EnemyBehavior<Enemy28Entity>(1, Enemy28Entity.Behavior03)
+                new EnemyBehavior<Enemy28Entity>(1, Enemy28Entity.BehaviorXX)
             }),
             // state 1
             new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[1]
@@ -1423,10 +1423,10 @@ namespace MphRead
             {
                 new EnemyBehavior<Enemy28Entity>(0, Enemy28Entity.Behavior00)
             }),
-            // state 13 (not called)
+            // state 13
             new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[1]
             {
-                new EnemyBehavior<Enemy28Entity>(2, Enemy28Entity.Behavior00)
+                new EnemyBehavior<Enemy28Entity>(2, Enemy28Entity.Behavior00) // behavior is not called
             })
         };
 

@@ -213,6 +213,40 @@ namespace MphRead.Entities.Enemies
             return _scene.FrameCount > 0 && _scene.FrameCount % 2 == 0 // todo: FPS stuff
                 && _model.AnimInfo.Frame[0] >= _model.AnimInfo.FrameCount[0] - 1;
         }
+
+        protected void IncrementMaterialColors(Material material, ColorRgb ambient, ColorRgb diffuse, int frame, int frameCount)
+        {
+            material.Ambient = new ColorRgb(
+                (byte)(material.Ambient.Red + InterpolateColor(frame, frameCount, ambient.Red - material.Ambient.Red)),
+                (byte)(material.Ambient.Green + InterpolateColor(frame, frameCount, ambient.Green - material.Ambient.Green)),
+                (byte)(material.Ambient.Blue + InterpolateColor(frame, frameCount, ambient.Blue - material.Ambient.Blue)));
+            material.Diffuse = new ColorRgb(
+                (byte)(material.Diffuse.Red + InterpolateColor(frame, frameCount, diffuse.Red - material.Diffuse.Red)),
+                (byte)(material.Diffuse.Green + InterpolateColor(frame, frameCount, diffuse.Green - material.Diffuse.Green)),
+                (byte)(material.Diffuse.Blue + InterpolateColor(frame, frameCount, diffuse.Blue - material.Diffuse.Blue)));
+        }
+
+        // todo: once material colors (and alpha) are all using floats early, update this math to use floats
+        protected byte InterpolateColor(int frame, int frameCount, int color)
+        {
+            int diff = frameCount - frame;
+            if (frame >= 0 && frame <= frameCount && diff != 0)
+            {
+                return (byte)MathF.Round(color / (float)diff);
+            }
+            return (byte)color;
+        }
+
+        protected bool _lightOverride = false;
+
+        protected override LightInfo GetLightInfo()
+        {
+            if (_lightOverride)
+            {
+                return new LightInfo(_scene.Light1Vector, _scene.Light1Color, _scene.Light2Vector, Vector3.One);
+            }
+            return base.GetLightInfo();
+        }
     }
 
     public class Enemy24Entity : GoreaEnemyEntityBase
@@ -470,29 +504,6 @@ namespace MphRead.Entities.Enemies
                 Material material = _model.Model.GetMaterialByName(_bodyMatNames2[i])!;
                 IncrementMaterialColors(material, _colors[0], _colors[1], frame, frameCount);
             }
-        }
-
-        private void IncrementMaterialColors(Material material, ColorRgb ambient, ColorRgb diffuse, int frame, int frameCount)
-        {
-            material.Ambient = new ColorRgb(
-                (byte)(material.Ambient.Red + InterpolateColor(frame, frameCount, ambient.Red - material.Ambient.Red)),
-                (byte)(material.Ambient.Green + InterpolateColor(frame, frameCount, ambient.Green - material.Ambient.Green)),
-                (byte)(material.Ambient.Blue + InterpolateColor(frame, frameCount, ambient.Blue - material.Ambient.Blue)));
-            material.Diffuse = new ColorRgb(
-                (byte)(material.Diffuse.Red + InterpolateColor(frame, frameCount, diffuse.Red - material.Diffuse.Red)),
-                (byte)(material.Diffuse.Green + InterpolateColor(frame, frameCount, diffuse.Green - material.Diffuse.Green)),
-                (byte)(material.Diffuse.Blue + InterpolateColor(frame, frameCount, diffuse.Blue - material.Diffuse.Blue)));
-        }
-
-        // todo: once material colors (and alpha) are all using floats early, update this math to use floats
-        private byte InterpolateColor(int frame, int frameCount, int color)
-        {
-            int diff = frameCount - frame;
-            if (frame >= 0 && frame <= frameCount && diff != 0)
-            {
-                return (byte)MathF.Round(color / (float)diff);
-            }
-            return (byte)color;
         }
 
         // sktodo: this is the same as the leg with the values baked in -- share code?
@@ -1514,10 +1525,14 @@ namespace MphRead.Entities.Enemies
 
         private void UpdateSpeed()
         {
-            int phase = 3 - _gorea1B.PhasesLeft;
-            if (phase > 2)
+            int phase = 0;
+            if (_gorea1B != null)
             {
-                phase = 2;
+                phase = 3 - _gorea1B.PhasesLeft;
+                if (phase > 2)
+                {
+                    phase = 2;
+                }
             }
             _speedFactor = _speedFactors[phase];
         }
@@ -1533,7 +1548,8 @@ namespace MphRead.Entities.Enemies
             UpdateArmMaterials();
             _lightOverride = true;
             DrawGeneric();
-            if (_gorea1B.Flags.TestFlag(EnemyFlags.Visible) == true)
+            // sktodo: does this happen?
+            if (_gorea1B.Flags.TestFlag(EnemyFlags.Visible))
             {
                 _gorea1B.DrawSelf();
                 _gorea1B.Flags &= ~EnemyFlags.Visible;
@@ -1541,17 +1557,6 @@ namespace MphRead.Entities.Enemies
             }
             _lightOverride = false;
             return true;
-        }
-
-        private bool _lightOverride = false;
-
-        protected override LightInfo GetLightInfo()
-        {
-            if (_lightOverride)
-            {
-                return new LightInfo(_scene.Light1Vector, _scene.Light1Color, _scene.Light2Vector, Vector3.One);
-            }
-            return base.GetLightInfo();
         }
 
         // sktodo: this has yet to be tested

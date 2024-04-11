@@ -94,11 +94,12 @@ namespace MphRead.Entities.Enemies
                 }
                 _trickModel = Read.GetModelInstance("goreaMindTrick");
                 _grappleModel = Read.GetModelInstance("goreaGrappleBeam");
+                // sktodo: field names (stretching speed and/or things those lines)
                 _field21E = 120 * 2; // todo: FPS stuff
                 _field24 = 0.65f; // 2662
                 _field28 = 1 / 3f; // 1365
                 _field30 = 1; // 4096
-                _field34 = 0.25f; // 1024
+                _field34 = 0.25f; // 1024 // todo: FPS stuff
             }
         }
 
@@ -340,6 +341,7 @@ namespace MphRead.Entities.Enemies
         // sktodo: member name
         private void Func213B4F8()
         {
+            // todo: implement "count_1" to support multiple grapple beams?
             Vector3 between = _grappleVecs[^1] - _grappleVecs[0];
             if (between.LengthSquared > 1 / 128f)
             {
@@ -362,9 +364,9 @@ namespace MphRead.Entities.Enemies
         {
             if ((int)_field38 < _grappleVecs.Length - 1)
             {
-                _field38 += _field34;
+                _field38 += _field34 / 2; // todo: FPS stuff
             }
-            _grappleInt += _field28;
+            _grappleInt += _field28 / 2; // todo: FPS stuff
             if ((int)Math.Round(_grappleInt) > _grappleVecs.Length)
             {
                 _grappleInt -= _grappleInt % 1;
@@ -434,13 +436,14 @@ namespace MphRead.Entities.Enemies
 
         // sktodo: member name
         // sktodo: (document) interpolating vector based on "index and percentage to next index" from e.g. field38
-        private Vector3 Func213C458(float value)
+        // (and then later from us iterating from 0 -> field38 in the draw loop)
+        private Vector3 Func213C458(float index)
         {
-            Vector3 result = _grappleVecs[(int)value];
-            float fractional = value % 1;
+            Vector3 result = _grappleVecs[(int)index];
+            float fractional = index % 1;
             if (fractional != 0)
             {
-                Vector3 between = _grappleVecs[(int)value + 1] - result;
+                Vector3 between = _grappleVecs[(int)index + 1] - result;
                 result += between * fractional;
             }
             return result;
@@ -704,7 +707,6 @@ namespace MphRead.Entities.Enemies
                     Vector3 prev = _grappleVecs[index - 1];
                     for (int i = index - 2; i >= 0; i--)
                     {
-                        Vector3 unitVec = Vector3.UnitY;
                         Vector3 cur = _grappleVecs[i];
                         if (i % 2 == 1)
                         {
@@ -712,6 +714,7 @@ namespace MphRead.Entities.Enemies
                             if (between.LengthSquared > 1 / 128f)
                             {
                                 between = between.Normalized();
+                                Vector3 unitVec = Vector3.UnitY;
                                 float dot = MathF.Abs(Vector3.Dot(unitVec, between));
                                 if (dot > Fixed.ToFloat(4065))
                                 {
@@ -737,6 +740,7 @@ namespace MphRead.Entities.Enemies
                 _speed = Vector3.Zero;
             }
             CallSubroutine(Metadata.Enemy28Subroutines, this);
+            // sktodo: make sure this ends? it should end as soon as it's not being called
             _soundSource.PlayEnvironmentSfx(9); // GOREA_ATTACK3_LOOP
         }
 
@@ -974,6 +978,11 @@ namespace MphRead.Entities.Enemies
             {
                 EnsureAnimation(3, 0, SetFlags.All, AnimFlags.NoLoop);
             }
+        }
+
+        public bool BehaviorXX()
+        {
+            return AnimationEnded();
         }
 
         public bool Behavior00()
@@ -1292,11 +1301,146 @@ namespace MphRead.Entities.Enemies
 
         protected override bool EnemyGetDrawInfo()
         {
-            // sktodo: draw mind trick/grapple
+            if (_scene.ProcessFrame)
+            {
+                Material material = _model.Model.GetMaterialByName("ChestCore")!;
+                int maxFrame = 10 * 2; // todo: FPS stuff
+                int frame = maxFrame - _sealSphere.DamageTimer;
+                IncrementMaterialColors(material, _sealSphere.Ambient, _sealSphere.Diffuse, frame, maxFrame);
+            }
+            _lightOverride = true;
+            DrawGeneric();
+            _lightOverride = false;
+            if (_goreaFlags.TestFlag(Gorea1BFlags.Bit1))
+            {
+                TransformGrappleEffect();
+            }
+            DrawMindTricks();
+            if (_grappling)
+            {
+                DrawGrappleBeam();
+                if (_scene.ProcessFrame && _scene.FrameCount != 0 && _scene.FrameCount % 2 == 0) // todo: FPS stuff
+                {
+                    _grappleModel.UpdateAnimFrames();
+                }
+            }
             return true;
         }
 
+        private void TransformGrappleEffect()
+        {
+            // caled from draw
+            if (_grappleEffect != null && _scene.ProcessFrame)
+            {
+                Vector3 last = _grappleVecs[^1] * 0.5f;
+                Vector3 prev = _grappleVecs[^2] * 0.5f;
+                _grappleEffect.Transform(UpVector, FacingVector, prev + last); // swap facing and up
+            }
+        }
+
+        private void DrawMindTricks()
+        {
+            // caled from draw
+            if (_scene.ProcessFrame && _scene.FrameCount != 0 && _scene.FrameCount % 2 == 0) // todo: FPS stuff
+            {
+                _trickModel.UpdateAnimFrames();
+            }
+            for (int i = 0; i < _trocra.Length; i++)
+            {
+                Enemy30Entity? trocra = _trocra[i];
+                if (trocra != null)
+                {
+                    Vector3 between = trocra.Position - _sealSphere.Position;
+                    float distance = between.Length;
+                    if (distance > 1 / 128f)
+                    {
+                        between = between.Normalized();
+                        Vector3 unitVec = Vector3.UnitY;
+                        float dot = MathF.Abs(Vector3.Dot(unitVec, between));
+                        if (dot > Fixed.ToFloat(4065))
+                        {
+                            unitVec = Vector3.UnitZ;
+                        }
+                        Matrix4 transform = GetTransformMatrix(between, unitVec, _sealSphere.Position);
+                        transform.Row2.X *= distance;
+                        transform.Row2.Y *= distance;
+                        transform.Row2.Z *= distance;
+                        _trickModel.Model.AnimateNodes(index: 0, false, transform, Vector3.One, _trickModel.AnimInfo);
+                        _trickModel.Model.UpdateMatrixStack();
+                        GetDrawItems(_trickModel, 0);
+                    }
+                }
+            }
+        }
+
+        private void DrawGrappleBeam()
+        {
+            Vector3 vec = Func213BF7C();
+            Vector3 between = vec - _grappleVecs[0];
+            if (between.LengthSquared > 1 / 128f)
+            {
+                var cross1 = Vector3.Cross(Vector3.UnitY, between);
+                if (cross1.LengthSquared > 1 / 128f)
+                {
+                    cross1 = cross1.Normalized();
+                    var cross2 = Vector3.Cross(between, cross1);
+                    cross2 = cross2.Normalized();
+                    cross1 = Matrix.Vec3MultMtx4(cross1, _grappleMtx);
+                    cross2 = Matrix.Vec3MultMtx4(cross2, _grappleMtx);
+                    Vector3 v12 = default;
+                    Func213C238(0, ref v12);
+                    for (float index = 1; index < _field38; index += 1)
+                    {
+                        DrawGrappleSegment(ref v12, index, cross2, cross1);
+                    }
+                    DrawGrappleSegment(ref v12, _field38, cross2, cross1);
+                }
+            }
+        }
+
+        // sktodo: member name
+        // sktodo: (document) coming up with successive vectors based on the fractional index
+        private void Func213C238(float index, ref Vector3 v12)
+        {
+            Vector3 first = _grappleVecs[0];
+            Vector3 last = _grappleVecs[^1];
+            var axis = new Vector3(first.Z - last.Z, 0, last.X - first.X);
+            if (axis.LengthSquared <= 1 / 128f)
+            {
+                return;
+            }
+            axis = axis.Normalized();
+            float angle = (index + _grappleInt) * (65535 / 24f) / 16 * (360 / 4096f);
+            float factor = MathF.Sin(MathHelper.DegreesToRadians(angle)) * _field24;
+            axis *= factor;
+            axis = Matrix.Vec3MultMtx4(axis, _grappleMtx);
+            Vector3 vec = Func213C458(index);
+            v12 = vec + axis;
+        }
+
+        // sktodo: parameter and variable names
+        private void DrawGrappleSegment(ref Vector3 v12, float index, Vector3 a5, Vector3 a6)
+        {
+            Vector3 vec = default;
+            Func213C238(index, ref vec);
+            var transform = new Matrix4(
+                new Vector4(a6, 0),
+                new Vector4(a5, 0),
+                new Vector4(vec - v12, 0),
+                new Vector4(v12, 1)
+            );
+            _grappleModel.Model.AnimateNodes(index: 0, false, transform, Vector3.One, _grappleModel.AnimInfo);
+            _grappleModel.Model.UpdateMatrixStack();
+            GetDrawItems(_grappleModel, 0);
+            v12 = vec;
+        }
+
         #region Boilerplate
+
+        public static bool BehaviorXX(Enemy28Entity enemy)
+        {
+            return enemy.BehaviorXX();
+        }
 
         public static bool Behavior00(Enemy28Entity enemy)
         {

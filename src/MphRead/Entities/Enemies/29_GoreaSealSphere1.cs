@@ -11,6 +11,7 @@ namespace MphRead.Entities.Enemies
         private int _damage = 0;
         public int Damage => _damage;
         private int _damageTimer = 0;
+        public int DamageTimer => _damageTimer;
         public ColorRgb Ambient { get; set; }
         public ColorRgb Diffuse { get; set; }
 
