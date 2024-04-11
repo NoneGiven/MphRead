@@ -10,9 +10,11 @@ namespace MphRead.Entities.Enemies
     public class Enemy30Entity : GoreaEnemyEntityBase
     {
         private readonly EnemySpawnEntity _spawner = null!;
-        private int _index = 0;
-        private int _field184 = 0;
-        private int _field186 = 0;
+        public Enemy28Entity? Gorea1B { get; set; }
+        public int Index { get; set; }
+        public Vector3 Field174 { get; set; }
+        public int Field184 { get; set; }
+        public int State { get; set; }
 
         public Enemy30Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
             : base(data, nodeRef, scene)
@@ -30,7 +32,7 @@ namespace MphRead.Entities.Enemies
             _health = 15;
             _hurtVolumeInit = new CollisionVolume(Vector3.Zero, 1);
             SetUpModel("PowerBomb");
-            _owner = null;
+            Gorea1B = null;
         }
 
         protected override void EnemyProcess()
@@ -102,9 +104,9 @@ namespace MphRead.Entities.Enemies
         {
             if (_health == 0)
             {
-                if (_owner != null)
+                if (Gorea1B != null)
                 {
-                    _scene.SendMessage(Message.Destroyed, this, _owner, 0, 0);
+                    _scene.SendMessage(Message.Destroyed, this, Gorea1B, 0, 0);
                 }
                 bool spawn = false;
                 ItemType itemType = ItemType.None;
@@ -132,6 +134,11 @@ namespace MphRead.Entities.Enemies
         public void Explode()
         {
             DieAndSpawnEffect(75); // goreaCrystalExplode
+        }
+
+        public void SetSpeed(Vector3 speed)
+        {
+            _speed = speed;
         }
     }
 }

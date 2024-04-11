@@ -56,6 +56,17 @@ namespace MphRead.Entities.Enemies
             Flags &= ~EnemyFlags.NoHomingCo;
         }
 
+        public void Deactivate()
+        {
+            _scanId = 0;
+            Flags &= ~EnemyFlags.Visible;
+            Flags &= ~EnemyFlags.CollidePlayer;
+            Flags &= ~EnemyFlags.CollideBeam;
+            Flags |= EnemyFlags.Invincible;
+            Flags |= EnemyFlags.NoHomingNc;
+            Flags |= EnemyFlags.NoHomingCo;
+        }
+
         protected override void EnemyProcess()
         {
             if (_gorea1B.Flags.TestFlag(EnemyFlags.Visible))

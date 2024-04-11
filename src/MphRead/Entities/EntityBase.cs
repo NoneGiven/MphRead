@@ -709,6 +709,11 @@ namespace MphRead.Entities
             Active = active;
         }
 
+        public virtual void SetScanId(int scanId)
+        {
+            _scanId = scanId;
+        }
+
         // todo: item and enemy spawners
         public virtual EntityBase? GetParent()
         {

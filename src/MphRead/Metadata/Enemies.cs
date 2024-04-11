@@ -1423,7 +1423,7 @@ namespace MphRead
             {
                 new EnemyBehavior<Enemy28Entity>(0, Enemy28Entity.Behavior00)
             }),
-            // state 13
+            // state 13 (not called)
             new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[1]
             {
                 new EnemyBehavior<Enemy28Entity>(2, Enemy28Entity.Behavior00)

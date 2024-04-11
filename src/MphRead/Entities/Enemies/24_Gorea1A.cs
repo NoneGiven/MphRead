@@ -224,8 +224,8 @@ namespace MphRead.Entities.Enemies
         private ModelInstance _gorea1BModel = null!;
         private Node _spineNode = null!;
         private CollisionVolume _volume; // arena center platform
-        private Enemy28Entity? _gorea1B = null;
-        private Enemy25Entity? _head = null;
+        private Enemy28Entity _gorea1B = null!;
+        private Enemy25Entity _head = null!;
         private int _armBits = 0;
         private readonly Enemy26Entity[] _arms = new Enemy26Entity[2];
         private readonly Enemy27Entity[] _legs = new Enemy27Entity[3];
@@ -335,6 +335,42 @@ namespace MphRead.Entities.Enemies
             }
         }
 
+        public void Activate()
+        {
+            _scanId = Metadata.EnemyScanIds[(int)EnemyType];
+            Flags |= EnemyFlags.Visible;
+            Flags |= EnemyFlags.CollidePlayer;
+            Flags |= EnemyFlags.CollideBeam;
+            Flags |= EnemyFlags.NoHomingNc;
+            Flags |= EnemyFlags.NoHomingCo;
+            Flags |= EnemyFlags.OnRadar;
+            _targetFacing = Vector3.Zero;
+            _head.Flags |= EnemyFlags.CollidePlayer;
+            _head.Flags |= EnemyFlags.CollideBeam;
+            _head.Flags |= EnemyFlags.NoHomingNc;
+            _head.Flags |= EnemyFlags.NoHomingCo;
+            for (int i = 0; i < 2; i++)
+            {
+                _armBits |= 1 << i;
+                _arms[i].Activate();
+            }
+            _speed = Vector3.Zero;
+            _model.SetAnimation(0, 0, _animSetNoMat, AnimFlags.NoLoop);
+            _soundSource.PlaySfx(SfxId.GOREA_REGEN_ARM_SCR);
+            for (int i = 0; i < 3; i++)
+            {
+                Enemy27Entity leg = _legs[i];
+                leg.Flags |= EnemyFlags.CollidePlayer;
+                leg.Flags |= EnemyFlags.CollideBeam;
+                leg.Flags |= EnemyFlags.NoHomingNc;
+                leg.Flags |= EnemyFlags.NoHomingCo;
+                leg.SetKneeNode(this);
+            }
+            _goreaFlags |= Gorea1AFlags.Bit2;
+            UpdateSpeed();
+            SetTransform(_gorea1B.FacingVector, UpVector, _gorea1B.Position);
+        }
+
         private void ChangeWeapon()
         {
             if (++_weaponIndex >= 6)
@@ -351,10 +387,7 @@ namespace MphRead.Entities.Enemies
                 arm.UpdateWeapon(weapon);
                 Metadata.LoadEffectiveness(effectiveness, arm.BeamEffectiveness);
             }
-            if (_gorea1B != null)
-            {
-                Metadata.LoadEffectiveness(effectiveness, _gorea1B.SealSphere.BeamEffectiveness);
-            }
+            Metadata.LoadEffectiveness(effectiveness, _gorea1B.SealSphere.BeamEffectiveness);
         }
 
         private readonly IReadOnlyList<string> _armMatNames = new string[6 * 2]
@@ -488,7 +521,7 @@ namespace MphRead.Entities.Enemies
                 }
                 _goreaFlags &= ~Gorea1AFlags.Bit2;
                 _model.SetAnimation(0, 0, _animSetNoMat, AnimFlags.NoLoop);
-                _head?.RespawnFlashEffect();
+                _head.RespawnFlashEffect();
             }
             if (_goreaFlags.TestFlag(Gorea1AFlags.Bit0))
             {
@@ -500,7 +533,7 @@ namespace MphRead.Entities.Enemies
                 UpdateArmMaterialAlpha();
                 if (AnimationEnded())
                 {
-                    if (_gorea1B != null && _gorea1B.PhasesLeft != 3)
+                    if (_gorea1B.PhasesLeft != 3)
                     {
                         ChangeWeapon();
                         // todo: update music tracks
@@ -875,14 +908,11 @@ namespace MphRead.Entities.Enemies
                 _field23C = 210 * 2; // todo: FPS stuff
                 _field23E = 510 * 2; // todo: FPS stuff
                 _field240 = (int)(Rng.GetRandomInt2(90) + 150) * 2; // todo: FPS stuff
-                if (_head != null)
-                {
-                    _head.Flags &= ~EnemyFlags.Visible;
-                    _head.Flags &= ~EnemyFlags.CollidePlayer;
-                    _head.Flags &= ~EnemyFlags.CollideBeam;
-                    _head.Flags |= EnemyFlags.NoHomingNc;
-                    _head.Flags |= EnemyFlags.NoHomingCo;
-                }
+                _head.Flags &= ~EnemyFlags.Visible;
+                _head.Flags &= ~EnemyFlags.CollidePlayer;
+                _head.Flags &= ~EnemyFlags.CollideBeam;
+                _head.Flags |= EnemyFlags.NoHomingNc;
+                _head.Flags |= EnemyFlags.NoHomingCo;
                 for (int i = 0; i < 2; i++)
                 {
                     Enemy26Entity arm = _arms[i];
@@ -893,13 +923,10 @@ namespace MphRead.Entities.Enemies
                     arm.Flags |= EnemyFlags.NoHomingCo;
                     arm.Flags |= EnemyFlags.Invincible;
                 }
-                if (_gorea1B != null)
+                _gorea1B.Activate();
+                for (int i = 0; i < 3; i++)
                 {
-                    _gorea1B.Activate();
-                    for (int i = 0; i < 3; i++)
-                    {
-                        _legs[i].SetKneeNode(_gorea1B);
-                    }
+                    _legs[i].SetKneeNode(_gorea1B);
                 }
             }
             CallSubroutine(Metadata.Enemy24Subroutines, this);
@@ -1019,7 +1046,6 @@ namespace MphRead.Entities.Enemies
             if (_armBits == 0 && _model.AnimInfo.Frame[0] == 5
                 && _scene.FrameCount > 0 && _scene.FrameCount % 2 == 0) // todo: FPS stuff
             {
-                Debug.Assert(_gorea1B != null);
                 int anim = _goreaFlags.TestFlag(Gorea1AFlags.Bit3) ? 5 : 6;
                 SetFlags setFlags = SetFlags.Texture | SetFlags.Texcoord | SetFlags.Unused | SetFlags.Node | SetFlags.Material;
                 ModelInstance model = _gorea1B.GetModels()[0];
@@ -1081,7 +1107,7 @@ namespace MphRead.Entities.Enemies
             WeaponInfo weapon = Weapons.GoreaWeapons[WeaponIndex];
             armL.Cooldown = weapon.ShotCooldown * 2; // todo: FPS stuff
             armR.Cooldown = weapon.AutofireCooldown * 2; // todo: FPS stuff
-            _head?.RespawnFlashEffect();
+            _head.RespawnFlashEffect();
             _field23C = 60 * 2; // todo: FPS stuff
         }
 
@@ -1380,7 +1406,7 @@ namespace MphRead.Entities.Enemies
 
         private bool Behavior17()
         {
-            if (_head?.Damage >= 1000)
+            if (_head.Damage >= 1000)
             {
                 _head.Damage = 0;
                 _nextState = _state1;
@@ -1488,14 +1514,10 @@ namespace MphRead.Entities.Enemies
 
         private void UpdateSpeed()
         {
-            int phase = 0;
-            if (_gorea1B != null)
+            int phase = 3 - _gorea1B.PhasesLeft;
+            if (phase > 2)
             {
-                phase = 3 - _gorea1B.PhasesLeft;
-                if (phase > 2)
-                {
-                    phase = 2;
-                }
+                phase = 2;
             }
             _speedFactor = _speedFactors[phase];
         }
@@ -1511,7 +1533,7 @@ namespace MphRead.Entities.Enemies
             UpdateArmMaterials();
             _lightOverride = true;
             DrawGeneric();
-            if (_gorea1B?.Flags.TestFlag(EnemyFlags.Visible) == true)
+            if (_gorea1B.Flags.TestFlag(EnemyFlags.Visible) == true)
             {
                 _gorea1B.DrawSelf();
                 _gorea1B.Flags &= ~EnemyFlags.Visible;

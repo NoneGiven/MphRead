@@ -49,13 +49,27 @@ namespace MphRead.Entities.Enemies
                 _prevPos = Position;
                 SetTransform(owner.FacingVector, owner.UpVector, Position);
                 _hurtVolumeInit = new CollisionVolume(Vector3.Zero, Fixed.ToFloat(1732));
-                _health = 65535;
+                _health = UInt16.MaxValue;
                 _healthMax = 120;
                 _equipInfo = new EquipInfo(Weapons.GoreaWeapons[0], _beams);
                 _equipInfo.GetAmmo = () => Ammo;
                 _equipInfo.SetAmmo = (newAmmo) => Ammo = newAmmo;
                 ArmFlags |= GoreaArmFlags.Bit1;
             }
+        }
+
+        public void Activate()
+        {
+            _scanId = Metadata.EnemyScanIds[(int)EnemyType.GoreaArm];
+            _health = UInt16.MaxValue;
+            _healthMax = 120;
+            Flags |= EnemyFlags.CollidePlayer;
+            Flags |= EnemyFlags.CollideBeam;
+            Flags &= ~EnemyFlags.Invincible;
+            Flags |= EnemyFlags.NoHomingNc;
+            Flags &= ~EnemyFlags.NoHomingCo;
+            Damage = 0;
+            ArmFlags &= ~GoreaArmFlags.Bit0;
         }
 
         public void UpdateWeapon(WeaponInfo weapon)
@@ -160,7 +174,7 @@ namespace MphRead.Entities.Enemies
                     _damageEffect = null;
                 }
             }
-            _health = 65535;
+            _health = UInt16.MaxValue;
             if (!Flags.TestFlag(EnemyFlags.Invincible))
             {
                 _colorTimer = 10 * 2; // todo: FPS stuff

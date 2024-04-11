@@ -13,7 +13,7 @@ namespace MphRead.Entities.Enemies
         private Enemy29Entity _sealSphere = null!;
         public Enemy29Entity SealSphere => _sealSphere;
         private Node _spineNode = null!;
-        private readonly Enemy30Entity[] _trocra = new Enemy30Entity[30];
+        private readonly Enemy30Entity?[] _trocra = new Enemy30Entity?[30];
         private CollisionVolume _volume;
         private Gorea1BFlags _goreaFlags;
 
@@ -22,6 +22,7 @@ namespace MphRead.Entities.Enemies
         private Vector3 _targetFacing;
         private int _field1C8 = 0;
         private int _field1CA = 0;
+        private int _field1CC = 0;
 
         // sktodo: field names, documentation, whatever (grapple segments)
         private readonly Vector3[] _grappleVecs = new Vector3[24];
@@ -289,7 +290,6 @@ namespace MphRead.Entities.Enemies
 
         private void State04()
         {
-            // sktodo
             if (!_grappling)
             {
                 _speed = Vector3.Zero;
@@ -596,140 +596,665 @@ namespace MphRead.Entities.Enemies
 
         private void State07()
         {
-            // sktodo
+            Func213B678();
+            Func213B4A0();
+            Vector3 between;
+            if (_goreaFlags.TestFlag(Gorea1BFlags.Bit3))
+            {
+                between = _grappleVecs[0] - _grappleVecs[1];
+            }
+            else
+            {
+                between = _grappleVecs[1] - _grappleVecs[0];
+            }
+            between = between.WithY(0).WithZ(-between.Z);
+            if (between.LengthSquared > 1 / 128f)
+            {
+                _field10 = between.Normalized();
+            }
+            // sktodo: I'm not changing the multiplication by 0.04 since I think the above will usually cause _field10 to get a fresh value every frame?
+            // need to double check how/when field10 is actually used, might have to change this and the speed part too idk yet
+            _field10 *= 0.04f; // 163
+            _field10 += _speed;
+            Func213B7E0();
+            TickGrappleDamage();
+            if (_field1CC > 0)
+            {
+                _field1CC--;
+            }
+            if (_field1CC == 0)
+            {
+                _field1CC = 60 * 2; // todo: FPS stuff
+                _goreaFlags ^= Gorea1BFlags.Bit3;
+                _soundSource.PlaySfx(SfxId.GOREA_ATTACK2B_SCR);
+            }
+            if (_speed != Vector3.Zero && CheckMovementOutsideVolume())
+            {
+                _speed = Vector3.Zero;
+            }
             CallSubroutine(Metadata.Enemy28Subroutines, this);
+        }
+
+        private bool CheckMovementOutsideVolume()
+        {
+            return !_volume.TestPoint(Position + _speed);
         }
 
         private void State08()
         {
-            // sktodo
+            Func213B4A0();
+            _field10 = new Vector3(0, 1 / 15f, 0); // 273
+            Func213B678();
+            Func213B7E0();
+            TickGrappleDamage();
             CallSubroutine(Metadata.Enemy28Subroutines, this);
         }
 
         private void State09()
         {
-            // sktodo
+            Func213B4A0();
+            Func213C4DC();
+            TickGrappleDamage();
+            Func213C624(Fixed.ToFloat(2986));
+            _field10 = new Vector3(0, -1 / 1.5f, 0); // -2730
+            Vector3 between = (_grappleVecs[0] - _grappleVecs[1]).Normalized();
+            if (Vector3.Dot(between, _field10.Normalized()) < Fixed.ToFloat(-3956))
+            {
+                Vector3 vec = (_volume.SpherePosition - Position).WithY(0);
+                if (vec.LengthSquared >= 1 / 128f)
+                {
+                    vec = vec.Normalized();
+                }
+                else
+                {
+                    vec = FacingVector;
+                }
+                _field10 = vec * (-1 / 1.5f); // -2730
+            }
+            PlayerEntity.Main.Position = _grappleVecs[^1].AddY(-0.05f); // 204
+            PlayerEntity.Main.CameraInfo.SetShake(1 / 128f); // 32
             CallSubroutine(Metadata.Enemy28Subroutines, this);
         }
 
         private void State10()
         {
-            // sktodo
-            CallSubroutine(Metadata.Enemy28Subroutines, this);
+            if (CallSubroutine(Metadata.Enemy28Subroutines, this))
+            {
+                Func2139050();
+            }
+        }
+
+        // sktodo: member name
+        private void Func2139050()
+        {
+            _goreaFlags &= ~Gorea1BFlags.Bit1;
+            if (_grappleEffect != null)
+            {
+                _scene.UnlinkEffectEntry(_grappleEffect);
+                _grappleEffect = null;
+            }
+            PlayerEntity.Main.SetBipedStuck(false);
+            if (_grappling)
+            {
+                _grappling = false;
+                _soundSource.PlaySfx(SfxId.GOREA_TENTACLE_DIE_SCR);
+                int index = (int)_field38;
+                if (index >= 2)
+                {
+                    Vector3 prev = _grappleVecs[index - 1];
+                    for (int i = index - 2; i >= 0; i--)
+                    {
+                        Vector3 unitVec = Vector3.UnitY;
+                        Vector3 cur = _grappleVecs[i];
+                        if (i % 2 == 1)
+                        {
+                            Vector3 between = prev - cur;
+                            if (between.LengthSquared > 1 / 128f)
+                            {
+                                between = between.Normalized();
+                                float dot = MathF.Abs(Vector3.Dot(unitVec, between));
+                                if (dot > Fixed.ToFloat(4065))
+                                {
+                                    unitVec = Vector3.UnitZ;
+                                }
+                                SpawnEffect(180, cur, between, unitVec); // goreaGrappleDie
+                            }
+                        }
+                        prev = cur;
+                    }
+                }
+            }
         }
 
         private void State11()
         {
-            // sktodo
+            Func213B2B4();
+            Func213AF2C();
+            Func2139F54();
+            _speed = FacingVector.WithY(0) * Fixed.ToFloat(54) / 2; // todo: FPS stuff
+            if (_speed != Vector3.Zero && CheckMovementOutsideVolume())
+            {
+                _speed = Vector3.Zero;
+            }
             CallSubroutine(Metadata.Enemy28Subroutines, this);
+            _soundSource.PlayEnvironmentSfx(9); // GOREA_ATTACK3_LOOP
+        }
+
+        // sktodo: member name
+        private void Func213B2B4()
+        {
+            if (_field1CC <= 0)
+            {
+                return;
+            }
+            bool trocrasAlive = false;
+            for (int i = 0; i < _trocra.Length; i++)
+            {
+                if (_trocra[i] != null)
+                {
+                    trocrasAlive = true;
+                    break;
+                }
+            }
+            if (!trocrasAlive)
+            {
+                _field1CA = 0;
+            }
+            else if (_field1CA > 0)
+            {
+                _field1CA--;
+            }
+            if (_field1CA == 0)
+            {
+                _field1CA = 30 * 2; // todo: FPS stuff
+                Func213B348();
+            }
+        }
+
+        // sktodo: member name
+        private void Func213B348()
+        {
+            int firstDeadIndex = -1;
+            for (int i = 0; i < _trocra.Length; i++)
+            {
+                if (_trocra[i] == null)
+                {
+                    firstDeadIndex = i;
+                    break;
+                }
+            }
+            // we want to get one with Field186 == 0 and within a certain anglea range,
+            // but will settle for anything with Field186 == 0 if the second condition can't be satisfied
+            if (firstDeadIndex >= 0)
+            {
+                int i;
+                for (i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type == EntityType.EnemyInstance && entity is Enemy30Entity enemy && enemy.State != 0)
+                    {
+                        _trocra[firstDeadIndex] = enemy;
+                        break;
+                    }
+                }
+                if (_trocra[firstDeadIndex] != null) // only true if just set above
+                {
+                    // pick up where we left off in the list
+                    for (i = i + 1; i < _scene.Entities.Count; i++)
+                    {
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type == EntityType.EnemyInstance && entity is Enemy30Entity enemy && enemy.State == 0)
+                        {
+                            Vector3 between = enemy.Position - Position;
+                            if (between.LengthSquared > 1 / 128f && Vector3.Dot(between.Normalized(), FacingVector) < 0)
+                            {
+                                _trocra[firstDeadIndex] = enemy;
+                                break;
+                            }
+                        }
+                    }
+                    Enemy30Entity trocra = _trocra[firstDeadIndex]!;
+                    trocra.Gorea1B = this;
+                    trocra.Index = firstDeadIndex;
+                    trocra.State = 1;
+                }
+            }
+        }
+
+        // sktodo: member name
+        private void Func213AF2C()
+        {
+            for (int i = 0; i < _trocra.Length; i++)
+            {
+                Enemy30Entity? trocra = _trocra[i];
+                if (trocra != null)
+                {
+                    if (trocra.State == 1 && !Func213B188(trocra))
+                    {
+                        trocra.Field184 = 45 * 2; // todo: FPS stuff
+                        trocra.State = 2;
+                        trocra.Field174 = trocra.Position;
+                    }
+                    else if (trocra.State == 2)
+                    {
+                        trocra.Field174 += _speed; // sktodo: FPS stuff?
+                        if (trocra.Field184 > 0)
+                        {
+                            trocra.Field184--;
+                            trocra.Position = new Vector3(
+                                trocra.Field174.X + Fixed.ToFloat(Rng.GetRandomInt2(4096) - 2048),
+                                trocra.Field174.Y + Fixed.ToFloat(Rng.GetRandomInt2(4096) - 2048),
+                                trocra.Field174.Z + Fixed.ToFloat(Rng.GetRandomInt2(4096) - 2048)
+                            );
+                        }
+                        // sktodo (document): throwing after timer
+                        if (trocra.Field184 == 0)
+                        {
+                            Vector3 speed = PlayerEntity.Main.Position - trocra.Position;
+                            if (speed.LengthSquared >= 1 / 128f)
+                            {
+                                speed = speed.Normalized() * 0.7f; // 2867
+                            }
+                            trocra.SetSpeed(speed / 2); // todo: FPS stuff
+                            trocra.State = 3;
+                            _soundSource.PlaySfx(SfxId.GOREA_ATTACK3A);
+                            _trocra[i] = null;
+                        }
+                    }
+                }
+            }
+        }
+
+        // sktodo: member name
+        private bool Func213B188(Enemy30Entity trocra)
+        {
+            Vector3 between = (trocra.Position - Position).WithY(0);
+            if (between.LengthSquared > 1 / 128f)
+            {
+                Vector3 position = (_volume.SpherePosition + between.Normalized() * 5).AddY(10);
+                Vector3 direction = position - trocra.Position;
+                if (direction.LengthSquared > 1 / 128f)
+                {
+                    direction = direction.Normalized();
+                    trocra.Position += (direction * (1 / 7f)) / 2; // todo: FPS stuff
+                    return true;
+                }
+            }
+            return false;
         }
 
         private void State12()
         {
-            // sktodo
-            CallSubroutine(Metadata.Enemy28Subroutines, this);
+            if (!Flags.TestFlag(EnemyFlags.Visible))
+            {
+                return;
+            }
+            int anim = _model.AnimInfo.Index[0];
+            if (AnimationEnded())
+            {
+                if (anim == 4)
+                {
+                    _model.SetAnimation(2, 0, SetFlags.All, AnimFlags.NoLoop);
+                }
+                else if (anim == 2)
+                {
+                    Material material = _model.Model.GetMaterialByName("HeadFullLit")!;
+                    _sealSphere.Ambient = material.Ambient;
+                    _sealSphere.Diffuse = material.Diffuse;
+                    _model.SetAnimation(8, 0, SetFlags.All, AnimFlags.NoLoop);
+                }
+                else if (anim == 8)
+                {
+                    // only gets called once, since the only sub in this state always returns true
+                    Deactivate();
+                    CallSubroutine(Metadata.Enemy28Subroutines, this);
+                }
+            }
+            else if (anim == 8 && _model.AnimInfo.Frame[0] == 46
+                && _scene.FrameCount != 0 && _scene.FrameCount % 2 == 0) // todo: FPS stuff
+            {
+                PlayerEntity.Main.CameraInfo.SetShake(0.75f); // 3072
+            }
+        }
+
+        private void Deactivate()
+        {
+            _scanId = 0;
+            Flags &= ~EnemyFlags.Visible;
+            Flags &= ~EnemyFlags.CollidePlayer;
+            Flags &= ~EnemyFlags.CollideBeam;
+            Flags |= EnemyFlags.NoHomingNc;
+            Flags |= EnemyFlags.NoHomingCo;
+            Flags &= ~EnemyFlags.OnRadar;
+            for (int i = 0; i < _trocra.Length; i++)
+            {
+                _trocra[i]?.Explode();
+                _trocra[i] = null;
+            }
+            _field1CA = 30 * 2; // todo: FPS stuff
+            _goreaFlags &= ~Gorea1BFlags.Bit0;
+            _sealSphere.Deactivate();
+            _field234 = 0;
+            _gorea1A.Activate();
         }
 
         private void State13()
         {
-            // sktodo
-            CallSubroutine(Metadata.Enemy28Subroutines, this);
+            if (!_goreaFlags.TestFlag(Gorea1BFlags.Bit5))
+            {
+                _goreaFlags |= Gorea1BFlags.Bit5;
+                PlayerEntity.Main.SetBipedStuck(false);
+                _scanId = 0;
+                Flags &= ~EnemyFlags.CollidePlayer;
+                Flags &= ~EnemyFlags.CollideBeam;
+                Flags |= EnemyFlags.Invincible;
+                Flags |= EnemyFlags.NoHomingNc;
+                Flags |= EnemyFlags.NoHomingCo;
+                Flags &= ~EnemyFlags.OnRadar;
+                _phasesLeft = 0;
+                _goreaFlags |= Gorea1BFlags.Bit0;
+                _sealSphere.SetScanId(0);
+                _sealSphere.Flags &= ~EnemyFlags.Visible;
+                _sealSphere.Flags &= ~EnemyFlags.CollidePlayer;
+                _sealSphere.Flags &= ~EnemyFlags.CollideBeam;
+                _sealSphere.Flags |= EnemyFlags.Invincible;
+                _sealSphere.Flags |= EnemyFlags.NoHomingNc;
+                _sealSphere.Flags |= EnemyFlags.NoHomingCo;
+                _field234 = 0;
+                _gorea1A.Position = Position;
+                _gorea1A.Flags &= ~EnemyFlags.Visible;
+                _gorea1A.Flags &= ~EnemyFlags.CollidePlayer;
+                _gorea1A.Flags &= ~EnemyFlags.CollideBeam;
+                _gorea1A.Flags |= EnemyFlags.Invincible;
+                _gorea1A.Flags |= EnemyFlags.NoHomingNc;
+                _gorea1A.Flags |= EnemyFlags.NoHomingCo;
+                _gorea1A.Flags &= ~EnemyFlags.OnRadar;
+            }
+            if (IsAtEndFrame())
+            {
+                EnsureAnimation(3, 0, SetFlags.All, AnimFlags.NoLoop);
+            }
         }
 
         public bool Behavior00()
         {
-            // sktodo
-            return false;
+            _field1CC = (int)(Rng.GetRandomInt2(150) + 150) * 2; // todo: FPS stuff
+            return true;
         }
 
         public bool Behavior01()
         {
-            // sktodo
-            return false;
+            return _volume.TestPoint(Position);
         }
 
         public bool Behavior02()
         {
-            // sktodo
+            if (_phasesLeft <= 0)
+            {
+                SpawnEffect(72, _sealSphere.Position); // goreaBallExplode2
+                _model.SetAnimation(4, 0, SetFlags.All, AnimFlags.NoLoop);
+                Func2139050();
+                DeactivateAllTrocraSpawns();
+                DestroyAllTrocras();
+                // todo: movie and/or credits stuff
+                GameState.StorySave.CheckpointRoomId = -1;
+                GameState.StorySave.CheckpointEntityId = -1;
+                if ((GameState.StorySave.TriggerState[1] & 0x10) != 0 || Cheats.AlwaysFightGorea2)
+                {
+                    GameState.TransitionRoomId = 92; // Gorea_b2
+                }
+                else
+                {
+                    GameState.TransitionRoomId = _scene.RoomId;
+                }
+                _scene.SetFade(FadeType.FadeOutWhite, length: 45 / 30f, overwrite: true, AfterFade.AfterMovie);
+                return true;
+            }
             return false;
+        }
+
+        private void DeactivateAllTrocraSpawns()
+        {
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type == EntityType.EnemySpawn && entity is EnemySpawnEntity spawner
+                    && spawner.Data.EnemyType == EnemyType.Trocra)
+                {
+                    _scene.SendMessage(Message.SetActive, this, spawner, 0, 0);
+                }
+            }
+        }
+
+        private void DestroyAllTrocras()
+        {
+            for (int i = 0; i < _scene.Entities.Count; i++)
+            {
+                EntityBase entity = _scene.Entities[i];
+                if (entity.Type == EntityType.EnemyInstance && entity is Enemy30Entity trocra)
+                {
+                    trocra.Explode();
+                }
+            }
         }
 
         public bool Behavior03()
         {
-            // sktodo
-            return false;
+            if (_sealSphere.Damage < 1000 * (4 - _phasesLeft))
+            {
+                return false;
+            }
+            Func2139050();
+            if (--_phasesLeft <= 0)
+            {
+                _soundSource.PlaySfx(SfxId.GOREA_1B_DIE2_SCR);
+                return false;
+            }
+            _model.SetAnimation(4, 0, SetFlags.All, AnimFlags.NoLoop);
+            _sealSphere.Flags |= EnemyFlags.Invincible;
+            SpawnEffect(42, _sealSphere.Position); // goreaBallExplode
+            for (int i = 0; i < _trocra.Length; i++)
+            {
+                _trocra[i]?.Explode();
+                _trocra[i] = null;
+            }
+            _field1CA = 30 * 2; // todo: FPS stuff
+            _soundSource.PlaySfx(SfxId.GOREA_1B_DIE_SCR);
+            _soundSource.PlaySfx(SfxId.GOREA_TRANSFORM2_SCR);
+            return true;
         }
 
         public bool Behavior04()
         {
-            // sktodo
+            _field21E--;
+            if (_field21E <= 0)
+            {
+                _field21E = 120 * 2; // todo: FPS stuff
+                _soundSource.PlaySfx(SfxId.GOREA_ATTACK2);
+                return true;
+            }
             return false;
         }
 
         public bool Behavior05()
         {
-            // sktodo
+            if (_field1CC > 0)
+            {
+                _field1CC--;
+            }
+            if (_field1CC == 0)
+            {
+                for (int i = 0; i < _trocra.Length; i++)
+                {
+                    if (_trocra[i] != null)
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
             return false;
         }
 
         public bool Behavior06()
         {
-            // sktodo
+            _field21E--;
+            if (_field21E <= 0)
+            {
+                Func2139050();
+                _field1CC = (int)(Rng.GetRandomInt2(150) + 150) * 2; // todo: FPS stuff
+                return true;
+            }
             return false;
         }
 
         public bool Behavior07()
         {
-            // sktodo
+            if (_goreaFlags.TestFlag(Gorea1BFlags.Bit1))
+            {
+                _soundSource.PlaySfx(SfxId.GOREA_ATTACK2A);
+                return true;
+            }
             return false;
         }
 
         public bool Behavior08()
         {
-            // sktodo
-            return false;
+            return _sealSphere.Damage - _field234 >= 35;
         }
 
         public bool Behavior09()
         {
-            // sktodo
-            return false;
+            if (PlayerEntity.Main.Position.Y - Position.Y < 10)
+            {
+                return false;
+            }
+            _field30 = 0.9f; // 3686
+            _field1CA = 150 * 2; // todo: FPS stuff
+            _field1CC = 30 * 2; // todo: FPS stuff
+            _goreaFlags ^= Gorea1BFlags.Bit3;
+            Vector3 toCenter = (PlayerEntity.Main.Position - _volume.SpherePosition).WithY(0);
+            if (toCenter.LengthSquared > 1 / 128f)
+            {
+                _speed = toCenter.Normalized() * Fixed.ToFloat(68) / 2; // todo: FPS stuff
+                if (CheckMovementOutsideVolume())
+                {
+                    _speed = Vector3.Zero;
+                }
+            }
+            _soundSource.PlaySfx(SfxId.GOREA_ATTACK2B_SCR);
+            return true;
         }
 
         public bool Behavior10()
         {
-            // sktodo
+            if (_field1CA > 0)
+            {
+                _field1CA--;
+            }
+            if (_field1CA == 0)
+            {
+                _field30 = Fixed.ToFloat(3973);
+                _speed = Vector3.Zero;
+                return true;
+            }
             return false;
         }
 
         public bool Behavior11()
         {
-            // sktodo
-            return false;
+            if (PlayerEntity.Main.Position.Y - Position.Y < 22.5f)
+            {
+                return false;
+            }
+            _field30 = Fixed.ToFloat(4046);
+            _speed = Vector3.Zero;
+            return true;
         }
 
         public bool Behavior12()
         {
-            // sktodo
-            return false;
+            bool collided = false;
+            CollisionResult result = default;
+            if (CollisionDetection.CheckBetweenPoints(PlayerEntity.Main.PrevPosition, PlayerEntity.Main.Position,
+                TestFlags.None, _scene, ref result))
+            {
+                PlayerEntity.Main.Position = result.Position;
+                PlayerEntity.Main.HandleCollision(result);
+                collided = true;
+            }
+            else
+            {
+                float spawnerY = _gorea1A.Spawner.Data.Header.Position.ToFloatVector().Y;
+                float yDiff = PlayerEntity.Main.Position.Y - spawnerY;
+                if (yDiff < 0)
+                {
+                    // player is clipping below the spawner (ground) height, process collision at the ground
+                    result = default;
+                    result.Field0 = 0;
+                    result.Plane = new Vector4(0, 1, 0, spawnerY);
+                    result.Field14 = -yDiff;
+                    result.Position = PlayerEntity.Main.Position.WithY(spawnerY);
+                    PlayerEntity.Main.HandleCollision(result);
+                    collided = true;
+                }
+            }
+            if (collided)
+            {
+                Func2139050();
+                _soundSource.PlaySfx(SfxId.GOREA_ATTACK2C_SCR);
+                PlayerEntity.Main.TakeDamage(30, DamageFlags.NoDmgInvuln, null, this);
+                PlayerEntity.Main.CameraInfo.SetShake(0.75f); // 3072
+                _field1CC = (int)(Rng.GetRandomInt2(150) + 150) * 2; // todo: FPS stuff
+            }
+            return collided;
         }
 
         public bool Behavior13()
         {
-            // sktodo
+            if (PlayerEntity.Main.Health != 0 && !_goreaFlags.TestFlag(Gorea1BFlags.Bit2)
+                && CheckFacingAngle(-1, PlayerEntity.Main.Position))
+            {
+                return true;
+            }
             return false;
         }
 
         public bool Behavior14()
         {
-            // sktodo
+            if (Vector3.Distance(_sealSphere.Position, PlayerEntity.Main.Position) < 20
+                && CheckFacingAngle(-1, PlayerEntity.Main.Position))
+            {
+                _field21E = 120 * 2; // todo: FPS stuff
+                return true;
+            }
             return false;
         }
 
         public bool Behavior15()
         {
-            // sktodo
+            if (CheckMovementOutsideVolume())
+            {
+                _speed = Vector3.Zero;
+                _field21E = 120 * 2; // todo: FPS stuff
+                return true;
+            }
             return false;
+        }
+
+        protected override bool EnemyTakeDamage(EntityBase? source)
+        {
+            _health = UInt16.MaxValue;
+            return false;
+        }
+
+        public override void HandleMessage(MessageInfo info)
+        {
+            if (info.Message == Message.Destroyed && info.Sender.Type == EntityType.EnemyInstance
+                && info.Sender is Enemy30Entity trocra)
+            {
+                _trocra[trocra.Index] = null;
+            }
         }
 
         private readonly IReadOnlyList<string> _bodyMatNames1 = new string[6]
@@ -865,8 +1390,8 @@ namespace MphRead.Entities.Enemies
         Bit2 = 0x4,
         Bit3 = 0x8,
         Bit4 = 0x10,
-        Bit05 = 0x20,
-        Bit06 = 0x40,
-        Bit07 = 0x80
+        Bit5 = 0x20,
+        Bit6 = 0x40,
+        Bit7 = 0x80
     }
 }
