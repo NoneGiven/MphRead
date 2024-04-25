@@ -259,6 +259,483 @@ namespace MphRead.Memory
         }
     }
 
+    public class CEnemyBase : CEntity
+    {
+        private const int _off1 = 0x1C;
+        public ushort Flags { get => ReadUInt16(_off1); set => WriteUInt16(_off1, value); }
+
+        private const int _off2 = 0x1E;
+        public EnemyType Type { get => (EnemyType)ReadByte(_off2); set => WriteByte(_off2, (byte)value); }
+
+        private const int _off3 = 0x1F;
+        public byte State { get => ReadByte(_off3); set => WriteByte(_off3, value); }
+
+        private const int _off4 = 0x20;
+        public byte NextSubId { get => ReadByte(_off4); set => WriteByte(_off4, value); }
+
+        private const int _off5 = 0x21;
+        public byte HealthbarMsgId { get => ReadByte(_off5); set => WriteByte(_off5, value); }
+
+        private const int _off6 = 0x22;
+        public byte TimeSinceDmg { get => ReadByte(_off6); set => WriteByte(_off6, value); }
+
+        private const int _off7 = 0x23;
+        public byte HitPlayerBits { get => ReadByte(_off7); set => WriteByte(_off7, value); }
+
+        private const int _off8 = 0x24;
+        public uint Effectiveness { get => ReadUInt32(_off8); set => WriteUInt32(_off8, value); }
+
+        private const int _off9 = 0x28; // CEntity*
+        public IntPtr Owner { get => ReadPointer(_off9); set => WritePointer(_off9, value); }
+
+        private const int _off10 = 0x2C;
+        public Vector3 LinkInvPos { get => ReadVec3(_off10); set => WriteVec3(_off10, value); }
+
+        private const int _off11 = 0x38;
+        public Vector3 LinkInvVec2 { get => ReadVec3(_off11); set => WriteVec3(_off11, value); }
+
+        private const int _off12 = 0x44;
+        public Vector3 LinkInvVec1 { get => ReadVec3(_off12); set => WriteVec3(_off12, value); }
+
+        private const int _off13 = 0x50;
+        public Vector3 Pos { get => ReadVec3(_off13); set => WriteVec3(_off13, value); }
+
+        private const int _off14 = 0x5C;
+        public Vector3 PrevPos { get => ReadVec3(_off14); set => WriteVec3(_off14, value); }
+
+        private const int _off15 = 0x68;
+        public Vector3 Speed { get => ReadVec3(_off15); set => WriteVec3(_off15, value); }
+
+        private const int _off16 = 0x74;
+        public Vector3 Vec2 { get => ReadVec3(_off16); set => WriteVec3(_off16, value); }
+
+        private const int _off17 = 0x80;
+        public Vector3 Vec1 { get => ReadVec3(_off17); set => WriteVec3(_off17, value); }
+
+        private const int _off18 = 0x8C;
+        public int BoundingRadius { get => ReadInt32(_off18); set => WriteInt32(_off18, value); }
+
+        private const int _off19 = 0x90;
+        public CollisionVolume HurtVolUnxf { get; }
+
+        private const int _off20 = 0xD0;
+        public CollisionVolume HurtVol { get; }
+
+        private const int _off21 = 0x110;
+        public int Scale { get => ReadInt32(_off21); set => WriteInt32(_off21, value); }
+
+        private const int _off22 = 0x114;
+        public ushort Health { get => ReadUInt16(_off22); set => WriteUInt16(_off22, value); }
+
+        private const int _off23 = 0x116;
+        public ushort HealthMax { get => ReadUInt16(_off23); set => WriteUInt16(_off23, value); }
+
+        private const int _off24 = 0x118; // NodeRef*
+        public IntPtr NodeRef { get => ReadPointer(_off24); set => WritePointer(_off24, value); }
+
+        private const int _off25 = 0x11C;
+        public CModel Model { get; }
+
+        private const int _off26 = 0x164;
+        public SfxParameters SfxParameters { get; }
+
+        private const int _off27 = 0x168; // EnemySubroutinePtr*
+        public IntPtr Subroutine { get => ReadPointer(_off27); set => WritePointer(_off27, value); }
+
+        private const int _off28 = 0x16C;
+        public ushort Unused168 { get => ReadUInt16(_off28); set => WriteUInt16(_off28, value); }
+
+        private const int _off29 = 0x16E;
+        public ushort Padding16A { get => ReadUInt16(_off29); set => WriteUInt16(_off29, value); }
+
+        private const int _off30 = 0x170;
+        public int Unused16C { get => ReadInt32(_off30); set => WriteInt32(_off30, value); }
+
+        public CEnemyBase(Memory memory, int address) : base(memory, address)
+        {
+            HurtVolUnxf = new CollisionVolume(memory, address + _off19);
+            HurtVol = new CollisionVolume(memory, address + _off20);
+            Model = new CModel(memory, address + _off25);
+            SfxParameters = new SfxParameters(memory, address + _off26);
+        }
+
+        public CEnemyBase(Memory memory, IntPtr address) : base(memory, address)
+        {
+            HurtVolUnxf = new CollisionVolume(memory, address + _off19);
+            HurtVol = new CollisionVolume(memory, address + _off20);
+            Model = new CModel(memory, address + _off25);
+            SfxParameters = new SfxParameters(memory, address + _off26);
+        }
+    }
+
+    public class CEnemy24 : CEnemyBase
+    {
+        private const int _off0 = 0x170; // Model*
+        public IntPtr RegenMdl { get => ReadPointer(_off0); set => WritePointer(_off0, value); }
+
+        private const int _off1 = 0x174; // Animation*
+        public IntPtr RegenAnim { get => ReadPointer(_off1); set => WritePointer(_off1, value); }
+
+        private const int _off2 = 0x178;
+        public CModel Regen { get; }
+
+        private const int _off3 = 0x1C0; // Color3**
+        public IntPtr Colors { get => ReadPointer(_off3); set => WritePointer(_off3, value); }
+
+        private const int _off4 = 0x1C4; // CEnemy25*
+        public IntPtr Head { get => ReadPointer(_off4); set => WritePointer(_off4, value); }
+
+        private const int _off5 = 0x1C8; // CEnemy26*[2]
+        public IntPtrArray Arms { get; }
+
+        private const int _off6 = 0x1D0; // CEnemy27*[3]
+        public IntPtrArray Legs { get; }
+
+        private const int _off7 = 0x1DC; // CEnemy28*
+        public IntPtr GoreaB { get => ReadPointer(_off7); set => WritePointer(_off7, value); }
+
+        private const int _off8 = 0x1E0; // Node*
+        public IntPtr SpineNode { get => ReadPointer(_off8); set => WritePointer(_off8, value); }
+
+        private const int _off9 = 0x1E4;
+        public int Field1E4 { get => ReadInt32(_off9); set => WriteInt32(_off9, value); }
+
+        private const int _off10 = 0x1E8;
+        public CollisionVolume Volume { get; }
+
+        private const int _off11 = 0x228;
+        public int SpeedFactor { get => ReadInt32(_off11); set => WriteInt32(_off11, value); }
+
+        private const int _off12 = 0x22C;
+        public byte ArmBits { get => ReadByte(_off12); set => WriteByte(_off12, value); }
+
+        private const int _off13 = 0x22D;
+        public byte WeaponId { get => ReadByte(_off13); set => WriteByte(_off13, value); }
+
+        private const int _off14 = 0x22E;
+        public ushort Unused22E { get => ReadUInt16(_off14); set => WriteUInt16(_off14, value); }
+
+        private const int _off15 = 0x230;
+        public Vector3 TargetFacing { get => ReadVec3(_off15); set => WriteVec3(_off15, value); }
+
+        private const int _off16 = 0x23C;
+        public ushort Field23C { get => ReadUInt16(_off16); set => WriteUInt16(_off16, value); }
+
+        private const int _off17 = 0x23E;
+        public ushort Field23E { get => ReadUInt16(_off17); set => WriteUInt16(_off17, value); }
+
+        private const int _off18 = 0x240;
+        public ushort Field240 { get => ReadUInt16(_off18); set => WriteUInt16(_off18, value); }
+
+        private const int _off19 = 0x242;
+        public ushort Field242 { get => ReadUInt16(_off19); set => WriteUInt16(_off19, value); }
+
+        private const int _off20 = 0x244;
+        public ushort Field244 { get => ReadUInt16(_off20); set => WriteUInt16(_off20, value); }
+
+        private const int _off21 = 0x246;
+        public ushort Field246 { get => ReadUInt16(_off21); set => WriteUInt16(_off21, value); }
+
+        private const int _off22 = 0x248;
+        public int GoreaFlags { get => ReadInt32(_off22); set => WriteInt32(_off22, value); }
+
+        private const int _off23 = 0x24C;
+        public byte NextState { get => ReadByte(_off23); set => WriteByte(_off23, value); }
+
+        private const int _off24 = 0x24D;
+        public byte Padding24D { get => ReadByte(_off24); set => WriteByte(_off24, value); }
+
+        private const int _off25 = 0x24E;
+        public ushort Padding24E { get => ReadUInt16(_off25); set => WriteUInt16(_off25, value); }
+
+        public CEnemy24(Memory memory, int address) : base(memory, address)
+        {
+            Regen = new CModel(memory, address + _off2);
+            Arms = new IntPtrArray(memory, address + _off5, 2);
+            Legs = new IntPtrArray(memory, address + _off6, 3);
+            Volume = new CollisionVolume(memory, address + _off10);
+        }
+
+        public CEnemy24(Memory memory, IntPtr address) : base(memory, address)
+        {
+            Regen = new CModel(memory, address + _off2);
+            Arms = new IntPtrArray(memory, address + _off5, 2);
+            Legs = new IntPtrArray(memory, address + _off6, 3);
+            Volume = new CollisionVolume(memory, address + _off10);
+        }
+    }
+
+    public class CEnemy25 : CEnemyBase
+    {
+        private const int _off0 = 0x170; // Node*
+        public IntPtr AttachNode { get => ReadPointer(_off0); set => WritePointer(_off0, value); }
+
+        private const int _off1 = 0x174; // CEnemy24*
+        public IntPtr GoreaOwner { get => ReadPointer(_off1); set => WritePointer(_off1, value); }
+
+        private const int _off2 = 0x178; // EffectEntry*
+        public IntPtr FlashEffect { get => ReadPointer(_off2); set => WritePointer(_off2, value); }
+
+        private const int _off3 = 0x17C;
+        public ushort Damage { get => ReadUInt16(_off3); set => WriteUInt16(_off3, value); }
+
+        private const int _off4 = 0x17E;
+        public ushort Padding17E { get => ReadUInt16(_off4); set => WriteUInt16(_off4, value); }
+
+        public CEnemy25(Memory memory, int address) : base(memory, address)
+        {
+        }
+
+        public CEnemy25(Memory memory, IntPtr address) : base(memory, address)
+        {
+        }
+    }
+
+    public class CEnemy26 : CEnemyBase
+    {
+        private const int _off0 = 0x170; // Node*
+        public IntPtr ShoulderNode { get => ReadPointer(_off0); set => WritePointer(_off0, value); }
+
+        private const int _off1 = 0x174; // Node*
+        public IntPtr UpperArmNode { get => ReadPointer(_off1); set => WritePointer(_off1, value); }
+
+        private const int _off2 = 0x178; // Node*
+        public IntPtr ElbowNode { get => ReadPointer(_off2); set => WritePointer(_off2, value); }
+
+        private const int _off3 = 0x17C; // CEnemy24*
+        public IntPtr GoreaOwner { get => ReadPointer(_off3); set => WritePointer(_off3, value); }
+
+        private const int _off4 = 0x180; // EffectEntry*
+        public IntPtr ShotEffect { get => ReadPointer(_off4); set => WritePointer(_off4, value); }
+
+        private const int _off5 = 0x184; // EffectEntry*
+        public IntPtr DmgEffect { get => ReadPointer(_off5); set => WritePointer(_off5, value); }
+
+        private const int _off6 = 0x188;
+        public EquipInfo EquipInfo { get; }
+
+        private const int _off7 = 0x19C;
+        public ushort RegenTimer { get => ReadUInt16(_off7); set => WriteUInt16(_off7, value); }
+
+        private const int _off8 = 0x19E;
+        public ushort ColorInc { get => ReadUInt16(_off8); set => WriteUInt16(_off8, value); }
+
+        private const int _off9 = 0x1A0;
+        public ushort Ammo { get => ReadUInt16(_off9); set => WriteUInt16(_off9, value); }
+
+        private const int _off10 = 0x1A2;
+        public ushort Cooldown { get => ReadUInt16(_off10); set => WriteUInt16(_off10, value); }
+
+        private const int _off11 = 0x1A4;
+        public ushort DamageTo { get => ReadUInt16(_off11); set => WriteUInt16(_off11, value); }
+
+        private const int _off12 = 0x1A6;
+        public byte Index { get => ReadByte(_off12); set => WriteByte(_off12, value); }
+
+        private const int _off13 = 0x1A7;
+        public byte ArmFlags { get => ReadByte(_off13); set => WriteByte(_off13, value); }
+
+        public CEnemy26(Memory memory, int address) : base(memory, address)
+        {
+            EquipInfo = new EquipInfo(memory, address + _off6);
+        }
+
+        public CEnemy26(Memory memory, IntPtr address) : base(memory, address)
+        {
+            EquipInfo = new EquipInfo(memory, address + _off6);
+        }
+    }
+
+    public class CEnemy27 : CEnemyBase
+    {
+        private const int _off0 = 0x170; // Node*
+        public IntPtr KneeNode { get => ReadPointer(_off0); set => WritePointer(_off0, value); }
+
+        private const int _off1 = 0x174; // CEnemyBase*
+        public IntPtr GoreaOwner { get => ReadPointer(_off1); set => WritePointer(_off1, value); }
+
+        private const int _off2 = 0x178;
+        public ushort Unused178 { get => ReadUInt16(_off2); set => WriteUInt16(_off2, value); }
+
+        private const int _off3 = 0x17A;
+        public byte Index { get => ReadByte(_off3); set => WriteByte(_off3, value); }
+
+        private const int _off4 = 0x17B;
+        public byte Padding17B { get => ReadByte(_off4); set => WriteByte(_off4, value); }
+
+        public CEnemy27(Memory memory, int address) : base(memory, address)
+        {
+        }
+
+        public CEnemy27(Memory memory, IntPtr address) : base(memory, address)
+        {
+        }
+    }
+
+    public class CEnemy28 : CEnemyBase
+    {
+        private const int _off0 = 0x170; // Node*
+        public IntPtr SpineNode { get => ReadPointer(_off0); set => WritePointer(_off0, value); }
+
+        private const int _off1 = 0x174; // CEnemy29*
+        public IntPtr SealSphere { get => ReadPointer(_off1); set => WritePointer(_off1, value); }
+
+        private const int _off2 = 0x178; // CEnemy24*
+        public IntPtr GoreaOwner { get => ReadPointer(_off2); set => WritePointer(_off2, value); }
+
+        private const int _off3 = 0x17C;
+        public CollisionVolume Volume { get; }
+
+        private const int _off4 = 0x1BC;
+        public Vector3 TargetFacing { get => ReadVec3(_off4); set => WriteVec3(_off4, value); }
+
+        private const int _off5 = 0x1C8;
+        public ushort Field1C8 { get => ReadUInt16(_off5); set => WriteUInt16(_off5, value); }
+
+        private const int _off6 = 0x1CA;
+        public ushort Field1CA { get => ReadUInt16(_off6); set => WriteUInt16(_off6, value); }
+
+        private const int _off7 = 0x1CC;
+        public ushort Field1CC { get => ReadUInt16(_off7); set => WriteUInt16(_off7, value); }
+
+        private const int _off8 = 0x1CE;
+        public byte PhasesLeft { get => ReadByte(_off8); set => WriteByte(_off8, value); }
+
+        private const int _off9 = 0x1CF;
+        public byte GoreaFlags { get => ReadByte(_off9); set => WriteByte(_off9, value); }
+
+        private const int _off10 = 0x1D0; // CEnemy30*[9]
+        public IntPtrArray Trocras { get; }
+
+        public CEnemy28(Memory memory, int address) : base(memory, address)
+        {
+            Volume = new CollisionVolume(memory, address + _off3);
+            Trocras = new IntPtrArray(memory, address + _off10, 9);
+        }
+
+        public CEnemy28(Memory memory, IntPtr address) : base(memory, address)
+        {
+            Volume = new CollisionVolume(memory, address + _off3);
+            Trocras = new IntPtrArray(memory, address + _off10, 9);
+        }
+    }
+
+    public class CEnemy29 : CEnemyBase
+    {
+        private const int _off0 = 0x170; // Model*
+        public IntPtr MindTrickMdl { get => ReadPointer(_off0); set => WritePointer(_off0, value); }
+
+        private const int _off1 = 0x174; // Animation*
+        public IntPtr MindTrickAnim { get => ReadPointer(_off1); set => WritePointer(_off1, value); }
+
+        private const int _off2 = 0x178;
+        public CModel MindTrick { get; }
+
+        private const int _off3 = 0x1C0; // Model*
+        public IntPtr GrappleMdl { get => ReadPointer(_off3); set => WritePointer(_off3, value); }
+
+        private const int _off4 = 0x1C4; // Animation*
+        public IntPtr GrappleAnim { get => ReadPointer(_off4); set => WritePointer(_off4, value); }
+
+        private const int _off5 = 0x1C8;
+        public CModel Grapple { get; }
+
+        private const int _off6 = 0x210; // Node*
+        public IntPtr AttachNode { get => ReadPointer(_off6); set => WritePointer(_off6, value); }
+
+        private const int _off7 = 0x214; // CEnemy28*
+        public IntPtr GoreaOwner { get => ReadPointer(_off7); set => WritePointer(_off7, value); }
+
+        private const int _off8 = 0x218; // Enemy29Fields*
+        public IntPtr Fields { get => ReadPointer(_off8); set => WritePointer(_off8, value); }
+
+        private const int _off9 = 0x21C;
+        public ushort Field21C { get => ReadUInt16(_off9); set => WriteUInt16(_off9, value); }
+
+        private const int _off10 = 0x21E;
+        public ushort Field21E { get => ReadUInt16(_off10); set => WriteUInt16(_off10, value); }
+
+        private const int _off11 = 0x220;
+        public int Unused220 { get => ReadInt32(_off11); set => WriteInt32(_off11, value); }
+
+        private const int _off12 = 0x224;
+        public int Field224 { get => ReadInt32(_off12); set => WriteInt32(_off12, value); }
+
+        private const int _off13 = 0x228;
+        public byte Grappling { get => ReadByte(_off13); set => WriteByte(_off13, value); }
+
+        private const int _off14 = 0x229;
+        public byte Padding229 { get => ReadByte(_off14); set => WriteByte(_off14, value); }
+
+        private const int _off15 = 0x22A;
+        public ushort Padding22A { get => ReadUInt16(_off15); set => WriteUInt16(_off15, value); }
+
+        private const int _off16 = 0x22C;
+        public ColorRgb Ambient { get => ReadColor3(_off16); set => WriteColor3(_off16, value); }
+
+        private const int _off17 = 0x22F;
+        public ColorRgb Diffuse { get => ReadColor3(_off17); set => WriteColor3(_off17, value); }
+
+        private const int _off18 = 0x232;
+        public ushort DamageTo { get => ReadUInt16(_off18); set => WriteUInt16(_off18, value); }
+
+        private const int _off19 = 0x234;
+        public ushort Field234 { get => ReadUInt16(_off19); set => WriteUInt16(_off19, value); }
+
+        private const int _off20 = 0x236;
+        public ushort DmgTimer { get => ReadUInt16(_off20); set => WriteUInt16(_off20, value); }
+
+        private const int _off21 = 0x238;
+        public byte Unused238 { get => ReadByte(_off21); set => WriteByte(_off21, value); }
+
+        private const int _off22 = 0x239;
+        public byte Padding239 { get => ReadByte(_off22); set => WriteByte(_off22, value); }
+
+        private const int _off23 = 0x23A;
+        public ushort Padding23A { get => ReadUInt16(_off23); set => WriteUInt16(_off23, value); }
+
+        private const int _off24 = 0x23C; // EffectEntry*
+        public IntPtr GrappleEffect { get => ReadPointer(_off24); set => WritePointer(_off24, value); }
+
+        public CEnemy29(Memory memory, int address) : base(memory, address)
+        {
+            MindTrick = new CModel(memory, address + _off2);
+            Grapple = new CModel(memory, address + _off5);
+        }
+
+        public CEnemy29(Memory memory, IntPtr address) : base(memory, address)
+        {
+            MindTrick = new CModel(memory, address + _off2);
+            Grapple = new CModel(memory, address + _off5);
+        }
+    }
+
+    public class CEnemy30 : CEnemyBase
+    {
+        private const int _off0 = 0x170; // CEnemy28*
+        public IntPtr GoreaOwner { get => ReadPointer(_off0); set => WritePointer(_off0, value); }
+
+        private const int _off1 = 0x174;
+        public Vector3 Field174 { get => ReadVec3(_off1); set => WriteVec3(_off1, value); }
+
+        private const int _off2 = 0x180;
+        public int Index { get => ReadInt32(_off2); set => WriteInt32(_off2, value); }
+
+        private const int _off3 = 0x184;
+        public ushort Field184 { get => ReadUInt16(_off3); set => WriteUInt16(_off3, value); }
+
+        private const int _off4 = 0x186;
+        public ushort TrocraState { get => ReadUInt16(_off4); set => WriteUInt16(_off4, value); }
+
+        public CEnemy30(Memory memory, int address) : base(memory, address)
+        {
+        }
+
+        public CEnemy30(Memory memory, IntPtr address) : base(memory, address)
+        {
+        }
+    }
+
     public class CPlatform : CEntity
     {
         private const int _off0 = 0x18;
@@ -562,7 +1039,7 @@ namespace MphRead.Memory
         public Int32Array LifetimeEventParam2s { get; }
 
         private const int _off103 = 0x334;
-        public SmallSfxStruct SmallSfx { get; }
+        public SfxParameters SfxParameters { get; }
 
         public CPlatform(Memory memory, int address) : base(memory, address)
         {
@@ -576,7 +1053,7 @@ namespace MphRead.Memory
             LifetimeEventIds = new U32EnumArray<Message>(memory, address + _off100, 4);
             LifetimeEventParam1s = new Int32Array(memory, address + _off101, 4);
             LifetimeEventParam2s = new Int32Array(memory, address + _off102, 4);
-            SmallSfx = new SmallSfxStruct(memory, address + _off103);
+            SfxParameters = new SfxParameters(memory, address + _off103);
         }
 
         public CPlatform(Memory memory, IntPtr address) : base(memory, address)
@@ -591,7 +1068,7 @@ namespace MphRead.Memory
             LifetimeEventIds = new U32EnumArray<Message>(memory, address + _off100, 4);
             LifetimeEventParam1s = new Int32Array(memory, address + _off101, 4);
             LifetimeEventParam2s = new Int32Array(memory, address + _off102, 4);
-            SmallSfx = new SmallSfxStruct(memory, address + _off103);
+            SfxParameters = new SfxParameters(memory, address + _off103);
         }
     }
 
@@ -688,7 +1165,7 @@ namespace MphRead.Memory
         public ushort EffectIntervalIndex { get => ReadUInt16(_off29); set => WriteUInt16(_off29, value); }
 
         private const int _off30 = 0x298;
-        public SmallSfxStruct Sfx { get; }
+        public SfxParameters Sfx { get; }
 
         public CObject(Memory memory, int address) : base(memory, address)
         {
@@ -696,7 +1173,7 @@ namespace MphRead.Memory
             MtxObjs = new IntPtrArray(memory, address + _off19, 2);
             Model = new CModel(memory, address + _off20);
             Volume = new CollisionVolume(memory, address + _off26);
-            Sfx = new SmallSfxStruct(memory, address + _off30);
+            Sfx = new SfxParameters(memory, address + _off30);
         }
 
         public CObject(Memory memory, IntPtr address) : base(memory, address)
@@ -705,7 +1182,7 @@ namespace MphRead.Memory
             MtxObjs = new IntPtrArray(memory, address + _off19, 2);
             Model = new CModel(memory, address + _off20);
             Volume = new CollisionVolume(memory, address + _off26);
-            Sfx = new SmallSfxStruct(memory, address + _off30);
+            Sfx = new SfxParameters(memory, address + _off30);
         }
     }
 
@@ -813,7 +1290,7 @@ namespace MphRead.Memory
         public IntPtr DoorNodeRef { get => ReadPointer(_off19); set => WritePointer(_off19, value); }
 
         private const int _off20 = 0x100;
-        public SmallSfxStruct SmallSfx { get; }
+        public SfxParameters SfxParameters { get; }
 
         private const int _off21 = 0x104; // EntityData*
         public IntPtr Data { get => ReadPointer(_off21); set => WritePointer(_off21, value); }
@@ -822,14 +1299,14 @@ namespace MphRead.Memory
         {
             DoorModel = new CModel(memory, address + _off13);
             LockModel = new CModel(memory, address + _off14);
-            SmallSfx = new SmallSfxStruct(memory, address + _off20);
+            SfxParameters = new SfxParameters(memory, address + _off20);
         }
 
         public CDoor(Memory memory, IntPtr address) : base(memory, address)
         {
             DoorModel = new CModel(memory, address + _off13);
             LockModel = new CModel(memory, address + _off14);
-            SmallSfx = new SmallSfxStruct(memory, address + _off20);
+            SfxParameters = new SfxParameters(memory, address + _off20);
         }
     }
 
@@ -972,7 +1449,7 @@ namespace MphRead.Memory
         public CModel Model { get; }
 
         private const int _off16 = 0xA0;
-        public SmallSfxStruct SmallSfx { get; }
+        public SfxParameters SfxParameters { get; }
 
         private const int _off17 = 0xA4; // NodeRef*
         public IntPtr NodeRef { get => ReadPointer(_off17); set => WritePointer(_off17, value); }
@@ -986,13 +1463,13 @@ namespace MphRead.Memory
         public CItemInstance(Memory memory, int address) : base(memory, address)
         {
             Model = new CModel(memory, address + _off15);
-            SmallSfx = new SmallSfxStruct(memory, address + _off16);
+            SfxParameters = new SfxParameters(memory, address + _off16);
         }
 
         public CItemInstance(Memory memory, IntPtr address) : base(memory, address)
         {
             Model = new CModel(memory, address + _off15);
-            SmallSfx = new SmallSfxStruct(memory, address + _off16);
+            SfxParameters = new SfxParameters(memory, address + _off16);
         }
     }
 
@@ -1547,20 +2024,20 @@ namespace MphRead.Memory
         public CModel ArtifactModel { get; }
 
         private const int _off16 = 0xEC;
-        public SmallSfxStruct SmallSfx { get; }
+        public SfxParameters SfxParameters { get; }
 
         public CTeleporter(Memory memory, int address) : base(memory, address)
         {
             TeleModel = new CModel(memory, address + _off14);
             ArtifactModel = new CModel(memory, address + _off15);
-            SmallSfx = new SmallSfxStruct(memory, address + _off16);
+            SfxParameters = new SfxParameters(memory, address + _off16);
         }
 
         public CTeleporter(Memory memory, IntPtr address) : base(memory, address)
         {
             TeleModel = new CModel(memory, address + _off14);
             ArtifactModel = new CModel(memory, address + _off15);
-            SmallSfx = new SmallSfxStruct(memory, address + _off16);
+            SfxParameters = new SfxParameters(memory, address + _off16);
         }
     }
 
@@ -1615,7 +2092,7 @@ namespace MphRead.Memory
         public IntPtr SomePlayer { get => ReadPointer(_off15); set => WritePointer(_off15, value); }
 
         private const int _off16 = 0x98;
-        public SmallSfxStruct SmallSfx { get; }
+        public SfxParameters SfxParameters { get; }
 
         private const int _off17 = 0x9C;
         public CModel RingModel { get; }
@@ -1629,7 +2106,7 @@ namespace MphRead.Memory
         public CNodeDefense(Memory memory, int address) : base(memory, address)
         {
             Volume = new CollisionVolume(memory, address + _off5);
-            SmallSfx = new SmallSfxStruct(memory, address + _off16);
+            SfxParameters = new SfxParameters(memory, address + _off16);
             RingModel = new CModel(memory, address + _off17);
             NodeModel = new CModel(memory, address + _off18);
         }
@@ -1637,7 +2114,7 @@ namespace MphRead.Memory
         public CNodeDefense(Memory memory, IntPtr address) : base(memory, address)
         {
             Volume = new CollisionVolume(memory, address + _off5);
-            SmallSfx = new SmallSfxStruct(memory, address + _off16);
+            SfxParameters = new SfxParameters(memory, address + _off16);
             RingModel = new CModel(memory, address + _off17);
             NodeModel = new CModel(memory, address + _off18);
         }
@@ -1740,7 +2217,7 @@ namespace MphRead.Memory
         public IntPtr NodeRef { get => ReadPointer(_off24); set => WritePointer(_off24, value); }
 
         private const int _off25 = 0x110;
-        public SmallSfxStruct SmallSfx { get; }
+        public SfxParameters SfxParameters { get; }
 
         private const int _off26 = 0x114;
         public int Field114 { get => ReadInt32(_off26); set => WriteInt32(_off26, value); }
@@ -1761,14 +2238,14 @@ namespace MphRead.Memory
         {
             ArtifactModel = new CModel(memory, address + _off22);
             BaseModel = new CModel(memory, address + _off23);
-            SmallSfx = new SmallSfxStruct(memory, address + _off25);
+            SfxParameters = new SfxParameters(memory, address + _off25);
         }
 
         public CArtifact(Memory memory, IntPtr address) : base(memory, address)
         {
             ArtifactModel = new CModel(memory, address + _off22);
             BaseModel = new CModel(memory, address + _off23);
-            SmallSfx = new SmallSfxStruct(memory, address + _off25);
+            SfxParameters = new SfxParameters(memory, address + _off25);
         }
     }
 
@@ -1983,18 +2460,18 @@ namespace MphRead.Memory
         public IntPtr RoomNodeRef { get => ReadPointer(_off18); set => WritePointer(_off18, value); }
 
         private const int _off19 = 0xB4;
-        public SmallSfxStruct SmallSfx { get; }
+        public SfxParameters SfxParameters { get; }
 
         public CBomb(Memory memory, int address) : base(memory, address)
         {
             Model = new CModel(memory, address + _off17);
-            SmallSfx = new SmallSfxStruct(memory, address + _off19);
+            SfxParameters = new SfxParameters(memory, address + _off19);
         }
 
         public CBomb(Memory memory, IntPtr address) : base(memory, address)
         {
             Model = new CModel(memory, address + _off17);
-            SmallSfx = new SmallSfxStruct(memory, address + _off19);
+            SfxParameters = new SfxParameters(memory, address + _off19);
         }
     }
 
@@ -4007,7 +4484,7 @@ namespace MphRead.Memory
         public IntPtr Halfturret { get => ReadPointer(_off637); set => WritePointer(_off637, value); }
 
         private const int _off638 = 0xF28;
-        public SmallSfxStruct SmallSfx { get; }
+        public SfxParameters SfxParameters { get; }
 
         private const int _off639 = 0xF2C;
         public int WeaponSfxHandle { get => ReadInt32(_off639); set => WriteInt32(_off639, value); }
@@ -4030,7 +4507,7 @@ namespace MphRead.Memory
             LightInfo = new LightInfo(memory, address + _off190);
             EquipInfo = new EquipInfoPtr(memory, address + _off289);
             BeamHead = new CBeamProjectile(memory, address + _off290);
-            SmallSfx = new SmallSfxStruct(memory, address + _off638);
+            SfxParameters = new SfxParameters(memory, address + _off638);
         }
 
         public CPlayer(Memory memory, IntPtr address) : base(memory, address)
@@ -4051,7 +4528,7 @@ namespace MphRead.Memory
             LightInfo = new LightInfo(memory, address + _off190);
             EquipInfo = new EquipInfoPtr(memory, address + _off289);
             BeamHead = new CBeamProjectile(memory, address + _off290);
-            SmallSfx = new SmallSfxStruct(memory, address + _off638);
+            SfxParameters = new SfxParameters(memory, address + _off638);
         }
     }
 
@@ -4202,18 +4679,18 @@ namespace MphRead.Memory
         public IntPtr NodeRef { get => ReadPointer(_off47); set => WritePointer(_off47, value); }
 
         private const int _off48 = 0x154;
-        public SmallSfxStruct SmallSfx { get; }
+        public SfxParameters SfxParameters { get; }
 
         public CBeamProjectile(Memory memory, int address) : base(memory, address)
         {
             Model = new CModel(memory, address + _off46);
-            SmallSfx = new SmallSfxStruct(memory, address + _off48);
+            SfxParameters = new SfxParameters(memory, address + _off48);
         }
 
         public CBeamProjectile(Memory memory, IntPtr address) : base(memory, address)
         {
             Model = new CModel(memory, address + _off46);
-            SmallSfx = new SmallSfxStruct(memory, address + _off48);
+            SfxParameters = new SfxParameters(memory, address + _off48);
         }
     }
 
@@ -4398,22 +4875,22 @@ namespace MphRead.Memory
         }
     }
 
-    public class SmallSfxStruct : MemoryClass
+    public class SfxParameters : MemoryClass
     {
         private const int _off0 = 0x0;
         public sbyte Volume { get => ReadSByte(_off0); set => WriteSByte(_off0, value); }
 
         private const int _off1 = 0x1;
-        public byte Field1 { get => ReadByte(_off1); set => WriteByte(_off1, value); }
+        public byte PanX { get => ReadByte(_off1); set => WriteByte(_off1, value); }
 
         private const int _off2 = 0x2;
-        public ushort Field2 { get => ReadUInt16(_off2); set => WriteUInt16(_off2, value); }
+        public ushort PanZ { get => ReadUInt16(_off2); set => WriteUInt16(_off2, value); }
 
-        public SmallSfxStruct(Memory memory, int address) : base(memory, address)
+        public SfxParameters(Memory memory, int address) : base(memory, address)
         {
         }
 
-        public SmallSfxStruct(Memory memory, IntPtr address) : base(memory, address)
+        public SfxParameters(Memory memory, IntPtr address) : base(memory, address)
         {
         }
     }
@@ -6519,6 +6996,41 @@ namespace MphRead.Memory
         }
 
         public RoomDescription(Memory memory, IntPtr address) : base(memory, address)
+        {
+        }
+    }
+
+    public class EquipInfo : MemoryClass
+    {
+        private const int _off0 = 0x0;
+        public byte Flags { get => ReadByte(_off0); set => WriteByte(_off0, value); }
+
+        private const int _off1 = 0x1;
+        public byte Count { get => ReadByte(_off1); set => WriteByte(_off1, value); }
+
+        private const int _off2 = 0x2;
+        public ushort Padding2 { get => ReadUInt16(_off2); set => WriteUInt16(_off2, value); }
+
+        private const int _off3 = 0x4; // CBeamProjectile*
+        public IntPtr Beams { get => ReadPointer(_off3); set => WritePointer(_off3, value); }
+
+        private const int _off4 = 0x8; // WeaponInfo*
+        public IntPtr WeaponInfo { get => ReadPointer(_off4); set => WritePointer(_off4, value); }
+
+        private const int _off5 = 0xC; // unsigned__int16*
+        public IntPtr AmmoPtr { get => ReadPointer(_off5); set => WritePointer(_off5, value); }
+
+        private const int _off6 = 0x10;
+        public ushort ChargeLevel { get => ReadUInt16(_off6); set => WriteUInt16(_off6, value); }
+
+        private const int _off7 = 0x12;
+        public ushort SmokeLevel { get => ReadUInt16(_off7); set => WriteUInt16(_off7, value); }
+
+        public EquipInfo(Memory memory, int address) : base(memory, address)
+        {
+        }
+
+        public EquipInfo(Memory memory, IntPtr address) : base(memory, address)
         {
         }
     }
