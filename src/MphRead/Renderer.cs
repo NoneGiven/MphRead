@@ -215,6 +215,7 @@ namespace MphRead
             _setTitle = setTitle;
             _close = close;
             Read.ClearCache();
+            Text.Strings.ClearCache();
             GameState.Reset();
             PlayerEntity.Construct(this);
         }

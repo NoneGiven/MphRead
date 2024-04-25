@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace MphRead.Text
 {
@@ -11,6 +12,11 @@ namespace MphRead.Text
         // todo: language support
         private static readonly Dictionary<string, IReadOnlyList<StringTableEntry>> _cache
             = new Dictionary<string, IReadOnlyList<StringTableEntry>>();
+
+        public static void ClearCache()
+        {
+            _cache.Clear();
+        }
 
         public static IReadOnlyList<StringTableEntry> ReadStringTable(string name, Language language = Language.English)
         {
@@ -31,7 +37,7 @@ namespace MphRead.Text
                 // todo?: are those not supposed to be parsed? (e.g. boost)
                 if (entry.Offset < bytes.Length)
                 {
-                    string value = Read.ReadString(bytes, entry.Offset, entry.Length);
+                    string value = Read.ReadStringTable(bytes, entry.Offset, entry.Length);
                     value = value.Replace("$", "");
                     char prefix = '\0';
                     if (name == StringTables.GameMessages)
@@ -180,7 +186,7 @@ namespace MphRead.Text
             {
                 folder += "_it";
             }
-            else if (language == Language.Japanese)
+            else if (language == Language.Japanese || Paths.MphKey == "AMHK0")
             {
                 folder += "_jp";
             }
@@ -249,6 +255,51 @@ namespace MphRead.Text
                 strings.Add(text);
             }
             return strings;
+        }
+
+        private static readonly IReadOnlyList<string> _nonAscii = new string[]
+        {
+            "€", " ", "‚", "ƒ", "„", "…", "†", "‡", "ˆ", "‰", "Š", "‹", "Œ", " ", "Ž", " ", " ", "‘", "’", "“", "”", "•", "–", "—", "˜", "™",
+            "š", "›", "œ", " ", "ž", "Ÿ", " ", "¡", "¢", "£", "¤", "¥", "¦", "§", "¨", "©", "ª", "«", "¬", "–", "®", "¯", "°", "±", "²", "³",
+            "´", "µ", "¶", "·", "¸", "¹", "º", "»", "¼", "½", "¾", "¿", "À", "Á", "Â", "Ã", "Ä", "Å", "Æ", "Ç", "È", "É", "Ê", "Ë", "Ì", "Í",
+            "Î", "Ï", "Ð", "Ñ", "Ò", "Ó", "Ô", "Õ", "Ö", "×", "Ø", "Ù", "Ú", "Û", "Ü", "Ý", "Þ", "ß", "à", "á", "â", "ã", "ä", "å", "æ", "ç",
+            "è", "é", "ê", "ë", "ì", "í", "î", "ï", "ð", "ñ", "ò", "ó", "ô", "õ", "ö", "÷", "ø", "ù", "ú", "û", "ü", "ý", "þ", "ÿ", " ",
+            "ぁ", "あ", "ぃ", "い", "ぅ", "う", "ぇ", "え", "ぉ", "お", "か", "が", "き", "ぎ", "く", "ぐ", "け", "げ", "こ", "ご", "さ", "ざ",
+            "し", "じ", "す", "ず", "せ", "ぜ", "そ", "ぞ", "た", "だ", "ち", "ぢ", "っ", "つ", "づ", "て", "で", "と", "ど", "な", "に", "ぬ",
+            "ね", "の", "は", "ば", "ぱ", "ひ", "び", "ぴ", "ふ", "ぶ", "ぷ", "へ", "べ", "ぺ", "ほ", "ぼ", "ぽ", "ま", "み", "む", "め", "も",
+            "ゃ", "や", "ゅ", "ゆ", "ょ", "よ", "ら", "り", "る", "れ", "ろ", "ゎ", "わ", "ゐ", "ゑ", "を", "ん", "ァ", "ア", "ィ", "イ", "ゥ",
+            "ウ", "ェ", "エ", "ォ", "オ", "カ", "ガ", "キ", "ギ", "ク", "グ", "ケ", "ゲ", "コ", "ゴ", "サ", "ザ", "シ", "ジ", "ス", "ズ", "セ",
+            "ゼ", "ソ", "ゾ", "タ", "ダ", "チ", "ヂ", "ッ", "ツ", "ヅ", "テ", "デ", "ト", "ド", "ナ", "ニ", "ヌ", "ネ", "ノ", "ハ", "バ", "パ",
+            "ヒ", "ビ", "ピ", "フ", "ブ", "プ", "ヘ", "ベ", "ペ", "ホ", "ボ", "ポ", "マ", "ミ", "ム", "メ", "モ", "ャ", "ヤ", "ュ", "ユ", "ョ",
+            "ヨ", "ラ", "リ", "ル", "レ", "ロ", "ヮ", "ワ", "ヰ", "ヱ", "ヲ", "ン", "ヴ", "ヵ", "ㇰ", " ", " ", " ", " ", " ", " ", " ",
+            "、", "。", "'", "・", "・", ":", ";", "?", "!", "゛", "゜", "´", "`", "¨", "^", "‾", "_", " ", " ", "ゝ", "ゞ", " ", " ",
+            "々", " ", " ", "–", "—", "−", "／", "＼", "˜", " ", "|", "…", " ", "'", "'", "\"", "\"", "(", ")", "(", ")", "[", "]", "{", "}",
+            "<", ">", " ", " ", "「", "」", " ", " ", " ", " ", "+", "-", "±", "×", "÷", "=", " ", " ", " ", " ", " ", "∞", "∴", " ", " ",
+            "°", "ᐟ", "ᐥ ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ",
+            " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "
+        };
+
+        public static string ReplaceNonAscii(string value)
+        {
+            var sb = new StringBuilder();
+            for (int i = 0; i < value.Length; i++)
+            {
+                char c = value[i];
+                if ((c & 0xA0) == 0xA0)
+                {
+                    return "<kanji>";
+                }
+                if ((c & 0x80) == 0)
+                {
+                    sb.Append(c);
+                }
+                else
+                {
+                    int index = value[++i] & 0x3F | ((c & 0x1F) << 6);
+                    sb.Append(_nonAscii[index - 128]);
+                }
+            }
+            return sb.ToString();
         }
     }
 

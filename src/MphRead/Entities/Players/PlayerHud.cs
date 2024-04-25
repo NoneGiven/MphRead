@@ -2615,8 +2615,11 @@ namespace MphRead.Entities
                 float startX = x;
                 for (int i = 0; i < length; i++)
                 {
-                    char ch = text[i];
-                    Debug.Assert(ch < 128);
+                    int ch = text[i];
+                    if (ch >= 128)
+                    {
+                        ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
+                    }
                     if (ch == '\n')
                     {
                         x = startX;

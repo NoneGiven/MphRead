@@ -124,6 +124,33 @@ namespace MphRead
             }
         }
 
+        public static void ReadKanjiFont()
+        {
+            string path = @"C:\Users\auser\Home\MPH\_FS\amhj1\stringTables_jp\ingame_1bit.bin";
+            ReadOnlySpan<byte> bytes = ReadBytes(path, firstHunt: false);
+            uint count = SpanReadUint(bytes, 0); // 934
+            ushort width = SpanReadUshort(bytes, 4); // 16
+            Debug.Assert(width == 16);
+            ushort height = SpanReadUshort(bytes, 6); // 11
+            byte[,] output = new byte[count, 16 * 16];
+            // widths are hard coded as 10, offsets are hard coded as 0
+            int ch = 0;
+            for (int c = 8; c < 2 * height * count; c += 2 * height)
+            {
+                ReadOnlySpan<byte> data = bytes[c..];
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < 16; x++)
+                    {
+                        byte value = data[y * 2 + x / 8];
+                        int offset = (height == 16 ? y : y + 3) * 16 + x;
+                        output[ch, offset] = (byte)((value & (1 << (x % 8))) != 0 ? 3 : 0);
+                    }
+                }
+                ch++;
+            }
+        }
+
         private static Model ReadModel(string name, string modelPath, string? animationPath, string? animationShare,
             IReadOnlyList<RecolorMetadata> recolorMeta, bool firstHunt)
         {
@@ -1152,6 +1179,34 @@ namespace MphRead
                 return "";
             }
             return Encoding.ASCII.GetString(bytes[offset..end]);
+        }
+
+        public static string ReadStringTable(ReadOnlySpan<byte> bytes, uint offset, int length = Int32.MaxValue)
+        {
+            return ReadStringTable(bytes, (int)offset, length);
+        }
+
+        public static string ReadStringTable(ReadOnlySpan<byte> bytes, int offset, int length = Int32.MaxValue)
+        {
+            int end = offset;
+            for (int i = 0; i < length; i++)
+            {
+                if (bytes[offset + i] == 0)
+                {
+                    break;
+                }
+                end++;
+            }
+            if (end == offset)
+            {
+                return "";
+            }
+            var sb = new StringBuilder();
+            for (int i = offset; i < end; i++)
+            {
+                sb.Append((char)bytes[i]);
+            }
+            return sb.ToString();
         }
 
         public static IReadOnlyList<string> ReadStrings(ReadOnlySpan<byte> bytes, long offset, int count)

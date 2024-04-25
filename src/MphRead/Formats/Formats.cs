@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using MphRead.Effects;
 using MphRead.Entities;
 using MphRead.Formats.Culling;
+using MphRead.Text;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -514,6 +515,9 @@ namespace MphRead
         public byte Speed { get; }
         public char Category { get; }
 
+        public string String1 { get; }
+        public string String2 { get; }
+
         public StringTableEntry(RawStringTableEntry raw, char prefix, string value1, string value2)
         {
             Id = raw.Id.Reverse().ToArray().MarshalString();
@@ -522,6 +526,8 @@ namespace MphRead
             Prefix = prefix;
             Value1 = value1;
             Value2 = value2;
+            String1 = Strings.ReplaceNonAscii(value1);
+            String2 = Strings.ReplaceNonAscii(value2);
         }
 
         public StringTableEntry(string id, char prefix, string value1, string value2, byte speed, char category)
@@ -532,6 +538,8 @@ namespace MphRead
             Value2 = value2;
             Speed = speed;
             Category = category;
+            String1 = Strings.ReplaceNonAscii(value1);
+            String2 = Strings.ReplaceNonAscii(value2);
         }
     }
 
