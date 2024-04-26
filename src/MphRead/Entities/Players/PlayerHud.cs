@@ -2552,6 +2552,7 @@ namespace MphRead.Entities
         {
             string? header = _rulesLines[0];
             Debug.Assert(header != null);
+            // langtodo: JP uses UI palette (pass null), not sure about KR
             DrawText2D(128, 10, Align.Center, 0, header, new ColorRgba(0x7FDE));
             int totalCharacters = (int)(_scene.ElapsedTime / (1 / 30f));
             float posY = 28;
@@ -2567,6 +2568,7 @@ namespace MphRead.Entities
                 string? line = _rulesLines[i];
                 Debug.Assert(line != null);
                 float posX = _rulesInfo.Offsets[i] + 12;
+                // langtodo: JP uses UI palette (pass null), not sure about KR
                 DrawText2D(posX, posY, Align.Left, 0, line, new ColorRgba(0x7F5A), maxLength: characters);
                 posY += 13 + _rulesLengths[i].Newlines * 8;
             }
@@ -2639,11 +2641,12 @@ namespace MphRead.Entities
                 for (int i = 0; i < length; i++)
                 {
                     int ch = text[i];
+                    int orig = ch;
                     if ((ch & 0x80) != 0)
                     {
                         ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
                     }
-                    if (ch == '\n')
+                    if (orig == '\n')
                     {
                         x = startX;
                         y += spacingY;
@@ -2652,7 +2655,7 @@ namespace MphRead.Entities
                     {
                         int index = ch - font.MinCharacter;
                         float offset = font.Offsets[index] + y;
-                        if (ch != ' ')
+                        if (orig != ' ')
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
@@ -2690,6 +2693,7 @@ namespace MphRead.Entities
                     for (int i = end - 1; i >= start; i--)
                     {
                         int ch = text[i];
+                        int orig = ch;
                         if ((ch & 0x80) != 0)
                         {
                             ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
@@ -2697,7 +2701,7 @@ namespace MphRead.Entities
                         int index = ch - font.MinCharacter;
                         x -= font.Widths[index];
                         float offset = font.Offsets[index] + y;
-                        if (ch != ' ')
+                        if (orig != ' ')
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
@@ -2757,13 +2761,14 @@ namespace MphRead.Entities
                     for (int i = start; i < end; i++)
                     {
                         int ch = text[i];
+                        int orig = ch;
                         if ((ch & 0x80) != 0)
                         {
                             ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
                         }
                         int index = ch - font.MinCharacter;
                         float offset = font.Offsets[index] + y;
-                        if (ch != ' ')
+                        if (orig != ' ')
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
