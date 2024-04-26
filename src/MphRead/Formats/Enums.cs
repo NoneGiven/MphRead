@@ -468,11 +468,11 @@ namespace MphRead
     public enum Language
     {
         English,
-        French,
-        German,
-        Italian,
         Japanese,
-        Spanish
+        French,
+        Spanish,
+        German,
+        Italian
     }
 
     public enum WaveFormat

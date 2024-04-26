@@ -9,23 +9,30 @@ namespace MphRead.Text
 {
     public static class Strings
     {
-        // todo: language support
-        private static readonly Dictionary<string, IReadOnlyList<StringTableEntry>> _cache
-            = new Dictionary<string, IReadOnlyList<StringTableEntry>>();
+        private static readonly Dictionary<Language, Dictionary<string, IReadOnlyList<StringTableEntry>>> _cache
+            = new Dictionary<Language, Dictionary<string, IReadOnlyList<StringTableEntry>>>();
 
         public static void ClearCache()
         {
             _cache.Clear();
         }
 
-        public static IReadOnlyList<StringTableEntry> ReadStringTable(string name, Language language = Language.English)
+        public static IReadOnlyList<StringTableEntry> ReadStringTable(string name)
         {
-            if (_cache.TryGetValue(name, out IReadOnlyList<StringTableEntry>? table))
+            if (_cache.TryGetValue(Scene.Language, out Dictionary<string, IReadOnlyList<StringTableEntry>>? dict))
             {
-                return table;
+                if (dict.TryGetValue(name, out IReadOnlyList<StringTableEntry>? table))
+                {
+                    return table;
+                }
+            }
+            else
+            {
+                dict = new Dictionary<string, IReadOnlyList<StringTableEntry>>();
+                _cache.Add(Scene.Language, dict);
             }
             var entries = new List<StringTableEntry>();
-            string path = Paths.Combine(Paths.FileSystem, GetFolder(language), name);
+            string path = Paths.Combine(Paths.FileSystem, GetFolder(), name);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint count = Read.SpanReadUint(bytes, 0);
             // ScanLog has an 8-byte header and 8 bytes between the last entry and first string,
@@ -57,56 +64,56 @@ namespace MphRead.Text
                     entries.Add(new StringTableEntry(entry, prefix, value1, value2));
                 }
             }
-            _cache.Add(name, entries);
+            dict.Add(name, entries);
             return entries;
         }
 
-        public static string GetHudMessage(int id, Language language = Language.English)
+        public static string GetHudMessage(int id)
         {
-            return GetHudMessage((uint)id, language);
+            return GetHudMessage((uint)id);
         }
 
-        public static string GetHudMessage(uint id, Language language = Language.English)
+        public static string GetHudMessage(uint id)
         {
             if (id >= 1 && id <= 11)
             {
-                return GetMessage('H', id, StringTables.HudMsgsCommon, language);
+                return GetMessage('H', id, StringTables.HudMsgsCommon);
             }
             if (id >= 101 && id <= 122)
             {
-                return GetMessage('H', id, StringTables.HudMessagesSP, language);
+                return GetMessage('H', id, StringTables.HudMessagesSP);
             }
             if (id >= 201 && id <= 257)
             {
-                return GetMessage('H', id, StringTables.HudMessagesMP, language);
+                return GetMessage('H', id, StringTables.HudMessagesMP);
             }
             if (id >= 301 && id <= 305)
             {
-                return GetMessage('W', id - 300, StringTables.HudMessagesMP, language);
+                return GetMessage('W', id - 300, StringTables.HudMessagesMP);
             }
             return " ";
         }
 
-        public static string GetMessage(char type, int id, string table, Language language = Language.English)
+        public static string GetMessage(char type, int id, string table)
         {
-            return GetMessage(type, (uint)id, table, language);
+            return GetMessage(type, (uint)id, table);
         }
 
-        public static string GetMessage(char type, uint id, string table, Language language = Language.English)
+        public static string GetMessage(char type, uint id, string table)
         {
-            StringTableEntry? entry = GetEntry(type, id, table, language);
+            StringTableEntry? entry = GetEntry(type, id, table);
             return entry?.Value1 ?? " ";
         }
 
-        public static StringTableEntry? GetEntry(char type, int id, string table, Language language = Language.English)
+        public static StringTableEntry? GetEntry(char type, int id, string table)
         {
-            return GetEntry(type, (uint)id, table, language);
+            return GetEntry(type, (uint)id, table);
         }
 
-        public static StringTableEntry? GetEntry(char type, uint id, string table, Language language = Language.English)
+        public static StringTableEntry? GetEntry(char type, uint id, string table)
         {
             string fullId = $"{type}{id:000}";
-            IReadOnlyList<StringTableEntry> list = ReadStringTable(table, language);
+            IReadOnlyList<StringTableEntry> list = ReadStringTable(table);
             for (int i = 0; i < list.Count; i++)
             {
                 StringTableEntry entry = list[i];
@@ -148,7 +155,6 @@ namespace MphRead.Text
 
         public static int GetScanEntryCategory(int scanId)
         {
-            // todo: languagel
             StringTableEntry? entry = GetEntry('L', (uint)scanId, StringTables.ScanLog);
             if (entry == null)
             {
@@ -171,53 +177,52 @@ namespace MphRead.Text
             return 10 * (entry.Speed & 7) / 30f;
         }
 
-        private static string GetFolder(Language language)
+        private static string GetFolder()
         {
             string folder = "stringTables";
-            if (language == Language.French)
+            if (Scene.Language == Language.French)
             {
                 folder += "_fr";
             }
-            else if (language == Language.German)
+            else if (Scene.Language == Language.German)
             {
                 folder += "_gr";
             }
-            else if (language == Language.Italian)
+            else if (Scene.Language == Language.Italian)
             {
                 folder += "_it";
             }
-            else if (language == Language.Japanese || Paths.MphKey == "AMHK0")
+            else if (Scene.Language == Language.Japanese)
             {
                 folder += "_jp";
             }
-            else if (language == Language.Spanish)
+            else if (Scene.Language == Language.Spanish)
             {
                 folder += "_sp";
             }
             return folder;
         }
 
-        public static IReadOnlyList<string> ReadTextFile(Language language = Language.English,
-            bool useEnGb = false, bool downloadPlay = false)
+        public static IReadOnlyList<string> ReadTextFile(bool downloadPlay = false)
         {
-            string suffix = useEnGb && !downloadPlay ? "en-gb" : "en";
-            if (language == Language.French)
+            string suffix = Paths.IsMphEurope ? "en-gb" : "en";
+            if (Scene.Language == Language.French)
             {
                 suffix = "fr";
             }
-            else if (language == Language.German)
+            else if (Scene.Language == Language.German)
             {
                 suffix = "de";
             }
-            else if (language == Language.Italian)
+            else if (Scene.Language == Language.Italian)
             {
                 suffix = "it";
             }
-            else if (language == Language.Japanese)
+            else if (Scene.Language == Language.Japanese)
             {
                 suffix = "jp";
             }
-            else if (language == Language.Spanish)
+            else if (Scene.Language == Language.Spanish)
             {
                 suffix = "es";
             }
@@ -296,7 +301,14 @@ namespace MphRead.Text
                 else
                 {
                     int index = value[++i] & 0x3F | ((c & 0x1F) << 6);
-                    sb.Append(_nonAscii[index - 128]);
+                    if (index >= 128)
+                    {
+                        sb.Append(_nonAscii[index - 128]);
+                    }
+                    else
+                    {
+                        sb.Append((char)index);
+                    }
                 }
             }
             return sb.ToString();

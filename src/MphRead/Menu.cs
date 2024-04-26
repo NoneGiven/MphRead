@@ -15,12 +15,13 @@ namespace MphRead
     public static class Menu
     {
         private static string _mode = "auto-select";
+        private static Language _language = Language.English;
 
         public static void ShowMenuPrompts()
         {
             SoundCapability soundCapability = Sound.Sfx.CheckAudioLoad();
             int prompt = 0;
-            int selection = 10;
+            int selection = 11;
             int roomId = -1;
             string room = "";
             string roomKey = "";
@@ -79,23 +80,24 @@ namespace MphRead
                 "Battle Teams", "Survival Teams", "Capture", "Bounty Teams", "Nodes Teams", "Defender Teams"
             };
             var models = new List<(string Name, string Recolor)>();
-            var mphVersions = new List<string>() { "A76E0", "AMHE0", "AMHE1", "AMHP0", "AMHP1", "AMHJ0", "AMHJ1", "AMHK0" };
-            var fhVersions = new List<string>() { "AMFE0", "AMFP0" };
+            var mphVersions = new List<string>() { Ver.A76E0, Ver.AMHE0, Ver.AMHE1,
+                Ver.AMHP0, Ver.AMHP1, Ver.AMHJ0, Ver.AMHJ1, Ver.AMHK0 };
+            var fhVersions = new List<string>() { Ver.AMFE0, Ver.AMFP0 };
             var mphInfo = new Dictionary<string, string>()
             {
-                { "A76E0", "Kiosk demo" },
-                { "AMHE0", "USA rev 0" },
-                { "AMHE1", "USA rev 1" },
-                { "AMHP0", "EUR rev 0" },
-                { "AMHP1", "EUR rev 1" },
-                { "AMHJ0", "JPN rev 0" },
-                { "AMHJ1", "JPN rev 1" },
-                { "AMHK0", "KOR rev 0" }
+                { Ver.A76E0, "Kiosk demo" },
+                { Ver.AMHE0, "USA rev 0" },
+                { Ver.AMHE1, "USA rev 1" },
+                { Ver.AMHP0, "EUR rev 0" },
+                { Ver.AMHP1, "EUR rev 1" },
+                { Ver.AMHJ0, "JPN rev 0" },
+                { Ver.AMHJ1, "JPN rev 1" },
+                { Ver.AMHK0, "KOR rev 0" }
             };
             var fhInfo = new Dictionary<string, string>()
             {
-                { "AMFE0", "USA rev 0" },
-                { "AMFP0", "EUR rev 0" }
+                { Ver.AMFE0, "USA rev 0" },
+                { Ver.AMFP0, "EUR rev 0" }
             };
             UpdateSettings();
 
@@ -122,6 +124,11 @@ namespace MphRead
                 return String.Join(", ", models.Select(c => $"{c.Name} {c.Recolor}"));
             }
 
+            void SetDefaultLanguage()
+            {
+                _language = Paths.IsMphJapan || Paths.IsMphKorea ? Language.Japanese : Language.English;
+            }
+
             string X(int index)
             {
                 return $"[{(selection == index ? "x" : " ")}]";
@@ -146,6 +153,7 @@ namespace MphRead
                     string roomString = roomKey == "AD1 TRANSFER LOCK BT" ? "Transfer Lock (Expanded)" : room;
                     roomString = $"{roomString} [{roomKey}] - {roomId}";
                     string modeString = _mode == "auto-select" ? "auto-select (Adventure or Battle)" : _mode;
+                    string languageString = Paths.MphKey == Ver.AMHK0 ? "Korean" : _language.ToString();
                     Console.Clear();
                     Console.WriteLine($"MphRead Version {Program.Version}");
                     Console.WriteLine();
@@ -162,6 +170,7 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (M) Models: {PrintModels()}");
                     Console.WriteLine($"{X(s++)} (V) MPH Version: {mphKey} ({mphInfo[mphKey]})");
                     Console.WriteLine($"{X(s++)} (F) FH Version: {fhKey} ({fhInfo[fhKey]})");
+                    Console.WriteLine($"{X(s++)} (I) Language: {languageString}");
                     Console.WriteLine($"{X(s++)} (S) Match Settings...");
                     Console.WriteLine($"{X(s++)} (L) Launch");
                     s--;
@@ -242,9 +251,13 @@ namespace MphRead
                         {
                             selection = 8;
                         }
-                        else if (keyInfo.Key == ConsoleKey.S)
+                        else if (keyInfo.Key == ConsoleKey.I)
                         {
                             selection = 9;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.S)
+                        {
+                            selection = 10;
                             prompt = -1;
                             continue;
                         }
@@ -293,6 +306,10 @@ namespace MphRead
                             else if (selection == 8)
                             {
                                 Paths.ChooseFhPath();
+                            }
+                            else if (selection == 9)
+                            {
+                                SetDefaultLanguage();
                             }
                         }
                         else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
@@ -384,6 +401,7 @@ namespace MphRead
                                 }
                                 while (current != next);
                                 Paths.MphKey = current;
+                                SetDefaultLanguage();
                             }
                             else if (selection == 8)
                             {
@@ -405,6 +423,16 @@ namespace MphRead
                                 }
                                 while (current != next);
                                 Paths.FhKey = current;
+                                SetDefaultLanguage();
+                            }
+                            else if (selection == 9)
+                            {
+                                int language = (int)_language + 1;
+                                if (language > 5)
+                                {
+                                    language = 0;
+                                }
+                                _language = (Language)language;
                             }
                         }
                         else if (keyInfo.Key == ConsoleKey.Subtract || keyInfo.Key == ConsoleKey.OemMinus
@@ -499,6 +527,7 @@ namespace MphRead
                                 }
                                 while (current != next);
                                 Paths.MphKey = current;
+                                SetDefaultLanguage();
                             }
                             else if (selection == 8)
                             {
@@ -520,6 +549,16 @@ namespace MphRead
                                 }
                                 while (current != next);
                                 Paths.FhKey = current;
+                                SetDefaultLanguage();
+                            }
+                            else if (selection == 9)
+                            {
+                                int language = (int)_language - 1;
+                                if (language < 0)
+                                {
+                                    language = 5;
+                                }
+                                _language = (Language)language;
                             }
                         }
                     }
@@ -680,6 +719,7 @@ namespace MphRead
                                 if (mphVersions.Contains(input) && Paths.AllPaths[input] != "")
                                 {
                                     Paths.MphKey = input;
+                                    SetDefaultLanguage();
                                 }
                             }
                         }
@@ -694,6 +734,7 @@ namespace MphRead
                                 if (fhVersions.Contains(input) && Paths.AllPaths[input] != "")
                                 {
                                     Paths.FhKey = input;
+                                    SetDefaultLanguage();
                                 }
                             }
                         }
@@ -724,6 +765,8 @@ namespace MphRead
                             }
                         }
                     }
+                    // langtodo: not sure that Japanese works properly in AMHE/AMHP, may need to validate against that
+                    Scene.Language = Paths.MphKey == "AMHK0" ? Language.Japanese : _language;
                     GameMode gameMode = GameMode.None;
                     if (_mode == "Adventure")
                     {

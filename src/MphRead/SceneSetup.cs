@@ -301,15 +301,9 @@ namespace MphRead
             }
             PlayerEntity.LoadWeaponNames();
             PlayerEntity.GeneratePlayerVolumes();
-            // todo: use game mode, region, etc.
-            Language language = Language.English;
-            if (Paths.MphKey == "AMHK0")
-            {
-                language = Language.Japanese;
-            }
-            Strings.ReadStringTable(StringTables.HudMsgsCommon, language);
-            Strings.ReadStringTable(StringTables.HudMessagesSP, language);
-            Strings.ReadStringTable(StringTables.HudMessagesMP, language);
+            Strings.ReadStringTable(StringTables.HudMsgsCommon);
+            Strings.ReadStringTable(StringTables.HudMessagesSP);
+            Strings.ReadStringTable(StringTables.HudMessagesMP);
             if (!scene.Multiplayer)
             {
                 Strings.ReadStringTable(StringTables.ScanLog);

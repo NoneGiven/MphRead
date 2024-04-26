@@ -2666,8 +2666,12 @@ namespace MphRead.Entities
                     x = startX;
                     for (int i = end - 1; i >= start; i--)
                     {
-                        char ch = text[i];
-                        Debug.Assert(ch < 128);
+                        int ch = text[i];
+                        // langtodo
+                        if (ch >= 128)
+                        {
+                            ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
+                        }
                         int index = ch - 32; // todo: starting character
                         x -= Font.Widths[index];
                         float offset = Font.Offsets[index] + y;
@@ -2719,16 +2723,24 @@ namespace MphRead.Entities
                     float width = 0;
                     for (int i = start; i < end; i++)
                     {
-                        char ch = text[i];
-                        Debug.Assert(ch < 128);
+                        int ch = text[i];
+                        // langtodo
+                        if (ch >= 128)
+                        {
+                            ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
+                        }
                         int index = ch - 32; // todo: starting character
                         width += Font.Widths[index];
                     }
                     x = startX - width / 2;
                     for (int i = start; i < end; i++)
                     {
-                        char ch = text[i];
-                        Debug.Assert(ch < 128);
+                        int ch = text[i];
+                        // langtodo
+                        if (ch >= 128)
+                        {
+                            ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
+                        }
                         int index = ch - 32; // todo: starting character
                         float offset = Font.Offsets[index] + y;
                         if (ch != ' ')
@@ -2847,7 +2859,7 @@ namespace MphRead.Entities
             for (int i = 0; i < text.Length; i++)
             {
                 char ch = text[i];
-                // todo: upper bit check/alt font stuff will be important for symbols (i.e. nicknames)
+                // langtodo
                 Debug.Assert(ch < 128);
                 dest[c] = ch;
                 if (ch == '\n')

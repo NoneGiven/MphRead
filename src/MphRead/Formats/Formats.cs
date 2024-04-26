@@ -1395,14 +1395,35 @@ namespace MphRead
         }
     }
 
+    public static class Ver
+    {
+        public const string A76E0 = "A76E0";
+        public const string AMHE0 = "AMHE0";
+        public const string AMHE1 = "AMHE1";
+        public const string AMHP0 = "AMHP0";
+        public const string AMHP1 = "AMHP1";
+        public const string AMHJ0 = "AMHJ0";
+        public const string AMHJ1 = "AMHJ1";
+        public const string AMHK0 = "AMHK0";
+        public const string NTRJ0 = "NTRJ0";
+
+        public const string AMFE0 = "AMFE0";
+        public const string AMFP0 = "AMFP0";
+    }
+
     public static class Paths
     {
-        public static string MphKey { get; set; } = "AMHE0";
-        public static string FhKey { get; set; } = "AMFE0";
+        public static string MphKey { get; set; } = Ver.AMHE0;
+        public static string FhKey { get; set; } = Ver.AMFE0;
 
         public static string FileSystem => AllPaths[MphKey];
         public static string FhFileSystem => AllPaths[FhKey];
         public static string Export => AllPaths["Export"];
+
+        public static bool IsMphAmericas => MphKey == Ver.AMHE0 || MphKey == Ver.AMHE1;
+        public static bool IsMphEurope => MphKey == Ver.AMHP0 || MphKey == Ver.AMHP1;
+        public static bool IsMphJapan => MphKey == Ver.AMHJ0 || MphKey == Ver.AMHJ1;
+        public static bool IsMphKorea => MphKey == Ver.AMHK0;
 
         private static readonly Dictionary<string, string> _allPaths = new Dictionary<string, string>();
         public static IReadOnlyDictionary<string, string> AllPaths
@@ -1429,16 +1450,16 @@ namespace MphRead
         public static void UpdatePaths()
         {
             _allPaths.Clear();
-            _allPaths.Add("AMFE0", "");
-            _allPaths.Add("AMFP0", "");
-            _allPaths.Add("A76E0", "");
-            _allPaths.Add("AMHE0", "");
-            _allPaths.Add("AMHE1", "");
-            _allPaths.Add("AMHJ0", "");
-            _allPaths.Add("AMHJ1", "");
-            _allPaths.Add("AMHP0", "");
-            _allPaths.Add("AMHP1", "");
-            _allPaths.Add("AMHK0", "");
+            _allPaths.Add(Ver.AMFE0, "");
+            _allPaths.Add(Ver.AMFP0, "");
+            _allPaths.Add(Ver.A76E0, "");
+            _allPaths.Add(Ver.AMHE0, "");
+            _allPaths.Add(Ver.AMHE1, "");
+            _allPaths.Add(Ver.AMHJ0, "");
+            _allPaths.Add(Ver.AMHJ1, "");
+            _allPaths.Add(Ver.AMHP0, "");
+            _allPaths.Add(Ver.AMHP1, "");
+            _allPaths.Add(Ver.AMHK0, "");
             _allPaths.Add("Export", "");
             if (File.Exists("paths.txt"))
             {
@@ -1466,39 +1487,39 @@ namespace MphRead
                 }
                 return false;
             }
-            if (ChooseMphPath("AMHE1"))
+            if (ChooseMphPath(Ver.AMHE1))
             {
                 return;
             }
-            if (ChooseMphPath("AMHP1"))
+            if (ChooseMphPath(Ver.AMHP1))
             {
                 return;
             }
-            if (ChooseMphPath("AMHJ1"))
+            if (ChooseMphPath(Ver.AMHJ1))
             {
                 return;
             }
-            if (ChooseMphPath("AMHK0"))
+            if (ChooseMphPath(Ver.AMHK0))
             {
                 return;
             }
-            if (ChooseMphPath("AMHE0"))
+            if (ChooseMphPath(Ver.AMHE0))
             {
                 return;
             }
-            if (ChooseMphPath("AMHP0"))
+            if (ChooseMphPath(Ver.AMHP0))
             {
                 return;
             }
-            if (ChooseMphPath("AMHJ0"))
+            if (ChooseMphPath(Ver.AMHJ0))
             {
                 return;
             }
-            if (ChooseMphPath("A76E0"))
+            if (ChooseMphPath(Ver.A76E0))
             {
                 return;
             }
-            MphKey = "AMHE0";
+            MphKey = Ver.AMHE0;
         }
 
         public static void ChooseFhPath()
@@ -1512,15 +1533,15 @@ namespace MphRead
                 }
                 return false;
             }
-            if (ChooseFhPath("AMFE0"))
+            if (ChooseFhPath(Ver.AMFE0))
             {
                 return;
             }
-            if (ChooseFhPath("AMFP0"))
+            if (ChooseFhPath(Ver.AMFP0))
             {
                 return;
             }
-            FhKey = "AMFE0";
+            FhKey = Ver.AMFE0;
         }
 
         private static string Replace(string path)

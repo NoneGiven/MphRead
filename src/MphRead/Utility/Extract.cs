@@ -75,16 +75,16 @@ namespace MphRead
             Paths.SetPath(rootName, newPath);
             var lines = new List<string>();
             lines.Add(Program.Version.ToString());
-            lines.Add($"AMFE0={Paths.AllPaths["AMFE0"]}");
-            lines.Add($"AMFP0={Paths.AllPaths["AMFP0"]}");
-            lines.Add($"A76E0={Paths.AllPaths["A76E0"]}");
-            lines.Add($"AMHE0={Paths.AllPaths["AMHE0"]}");
-            lines.Add($"AMHE1={Paths.AllPaths["AMHE1"]}");
-            lines.Add($"AMHP0={Paths.AllPaths["AMHP0"]}");
-            lines.Add($"AMHP1={Paths.AllPaths["AMHP1"]}");
-            lines.Add($"AMHJ0={Paths.AllPaths["AMHJ0"]}");
-            lines.Add($"AMHJ1={Paths.AllPaths["AMHJ1"]}");
-            lines.Add($"AMHK0={Paths.AllPaths["AMHK0"]}");
+            lines.Add($"{Ver.AMFE0}={Paths.AllPaths[Ver.AMFE0]}");
+            lines.Add($"{Ver.AMFP0}={Paths.AllPaths[Ver.AMFP0]}");
+            lines.Add($"{Ver.A76E0}={Paths.AllPaths[Ver.A76E0]}");
+            lines.Add($"{Ver.AMHE0}={Paths.AllPaths[Ver.AMHE0]}");
+            lines.Add($"{Ver.AMHE1}={Paths.AllPaths[Ver.AMHE1]}");
+            lines.Add($"{Ver.AMHP0}={Paths.AllPaths[Ver.AMHP0]}");
+            lines.Add($"{Ver.AMHP1}={Paths.AllPaths[Ver.AMHP1]}");
+            lines.Add($"{Ver.AMHJ0}={Paths.AllPaths[Ver.AMHJ0]}");
+            lines.Add($"{Ver.AMHJ1}={Paths.AllPaths[Ver.AMHJ1]}");
+            lines.Add($"{Ver.AMHK0}={Paths.AllPaths[Ver.AMHK0]}");
             lines.Add($"Export={Paths.AllPaths["Export"]}");
             File.WriteAllText("paths.txt", String.Join(Environment.NewLine, lines));
             Nop();
@@ -361,7 +361,7 @@ namespace MphRead
         private static readonly IReadOnlyDictionary<string, RomData> _romData = new Dictionary<string, RomData>()
         {
             {
-                "A76E0",
+                Ver.A76E0,
                 new RomData()
                 {
                     FontModel = new RomDataValues("arm9.bin", 0x9D528, 0x8284),
@@ -377,7 +377,7 @@ namespace MphRead
                 }
             },
             {
-                "AMHE0",
+                Ver.AMHE0,
                 new RomData()
                 {
                     FontModel = new RomDataValues("arm9.bin", 0xC76D4, 0x8284),
@@ -393,7 +393,7 @@ namespace MphRead
                 }
             },
             {
-                "AMHE1",
+                Ver.AMHE1,
                 new RomData()
                 {
                     FontModel = new RomDataValues("arm9.bin", 0xC7F5C, 0x8284),
@@ -409,7 +409,7 @@ namespace MphRead
                 }
             },
             {
-                "AMHJ0",
+                Ver.AMHJ0,
                 new RomData()
                 {
                     FontModel = new RomDataValues("arm9.bin", 0xC9510, 0x8284),
@@ -425,7 +425,7 @@ namespace MphRead
                 }
             },
             {
-                "AMHJ1",
+                Ver.AMHJ1,
                 new RomData()
                 {
                     FontModel = new RomDataValues("arm9.bin", 0xC94D0, 0x8284),
@@ -441,7 +441,7 @@ namespace MphRead
                 }
             },
             {
-                "AMHP0",
+                Ver.AMHP0,
                 new RomData()
                 {
                     FontModel = new RomDataValues("arm9.bin", 0xC7F7C, 0x8284),
@@ -457,7 +457,7 @@ namespace MphRead
                 }
             },
             {
-                "AMHP1",
+                Ver.AMHP1,
                 new RomData()
                 {
                     FontModel = new RomDataValues("arm9.bin", 0xC7FFC, 0x8284),
@@ -473,7 +473,7 @@ namespace MphRead
                 }
             },
             {
-                "AMHK0",
+                Ver.AMHK0,
                 new RomData()
                 {
                     FontModel = new RomDataValues("arm9.bin", 0xC0D40, 0x8284),
@@ -489,7 +489,7 @@ namespace MphRead
                 }
             },
             {
-                "NTRJ0",
+                Ver.NTRJ0,
                 new RomData()
                 {
                     // todo: values

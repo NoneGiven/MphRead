@@ -2250,7 +2250,6 @@ namespace MphRead.Entities
 
         public static void LoadWeaponNames()
         {
-            // todo: use language
             for (int i = 0; i < 9; ++i)
             {
                 _weaponNames[i] = Strings.GetMessage('W', i + 1, StringTables.WeaponNames);
