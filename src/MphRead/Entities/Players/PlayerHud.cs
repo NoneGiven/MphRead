@@ -2860,7 +2860,6 @@ namespace MphRead.Entities
             {
                 char ch = text[i];
                 // langtodo
-                Debug.Assert(ch < 128);
                 dest[c] = ch;
                 if (ch == '\n')
                 {
@@ -2874,16 +2873,33 @@ namespace MphRead.Entities
                     {
                         breakPos = c;
                     }
+                    char? next = null;
                     if (ch >= ' ')
                     {
-                        int index = ch - 32; // todo: starting character
+                        int index = ch;
+                        if (ch >= 128)
+                        {
+                            next = text[++i];
+                            dest[++c] = next.Value;
+                            index = next.Value & 0x3F | ((ch & 0x1F) << 6);
+                        }
+                        index -= 32; // todo: starting character
                         lineWidth += Font.Widths[index];
                     }
                     if (lineWidth > maxWidth)
                     {
                         if (breakPos == 0 && maxWidth >= 8)
                         {
-                            dest[c + 1] = ch;
+                            if (next.HasValue)
+                            {
+                                dest[c] = ch;
+                                dest[c + 1] = next.Value;
+                                c--;
+                            }
+                            else
+                            {
+                                dest[c + 1] = ch;
+                            }
                             breakPos = c;
                             c++;
                         }
@@ -2892,9 +2908,13 @@ namespace MphRead.Entities
                             dest[breakPos] = '\n';
                             lineWidth = 0;
                             int prevIndex = breakPos + 1;
-                            char prev = dest[prevIndex];
+                            int prev = dest[prevIndex];
                             while (prev != '\0' && prevIndex < dest.Length)
                             {
+                                if (prev >= 128)
+                                {
+                                    prev = text[++prevIndex] & 0x3F | ((prev & 0x1F) << 6);
+                                }
                                 int index = prev - 32; // todo: starting character
                                 lineWidth += Font.Widths[index];
                                 prev = dest[++prevIndex];
