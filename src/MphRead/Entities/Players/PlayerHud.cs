@@ -2627,7 +2627,7 @@ namespace MphRead.Entities
                     }
                     else
                     {
-                        int index = ch - 32; // todo: starting character
+                        int index = ch - 32; // langtodo: starting character
                         float offset = Font.Offsets[index] + y;
                         if (ch != ' ')
                         {
@@ -2672,7 +2672,7 @@ namespace MphRead.Entities
                         {
                             ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
                         }
-                        int index = ch - 32; // todo: starting character
+                        int index = ch - 32; // langtodo: starting character
                         x -= Font.Widths[index];
                         float offset = Font.Offsets[index] + y;
                         if (ch != ' ')
@@ -2729,7 +2729,7 @@ namespace MphRead.Entities
                         {
                             ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
                         }
-                        int index = ch - 32; // todo: starting character
+                        int index = ch - 32; // langtodo: starting character
                         width += Font.Widths[index];
                     }
                     x = startX - width / 2;
@@ -2741,7 +2741,7 @@ namespace MphRead.Entities
                         {
                             ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
                         }
-                        int index = ch - 32; // todo: starting character
+                        int index = ch - 32; // langtodo: starting character
                         float offset = Font.Offsets[index] + y;
                         if (ch != ' ')
                         {
@@ -2883,7 +2883,7 @@ namespace MphRead.Entities
                             dest[++c] = next.Value;
                             index = next.Value & 0x3F | ((ch & 0x1F) << 6);
                         }
-                        index -= 32; // todo: starting character
+                        index -= 32; // langtodo: starting character
                         lineWidth += Font.Widths[index];
                     }
                     if (lineWidth > maxWidth)
@@ -2915,7 +2915,7 @@ namespace MphRead.Entities
                                 {
                                     prev = text[++prevIndex] & 0x3F | ((prev & 0x1F) << 6);
                                 }
-                                int index = prev - 32; // todo: starting character
+                                int index = prev - 32; // langtodo: starting character
                                 lineWidth += Font.Widths[index];
                                 prev = dest[++prevIndex];
                             }
