@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Entities;
@@ -260,6 +261,14 @@ namespace MphRead
             // todo: add an assert if any loading occurs after room init (besides manual model/entity loading)
             if (scene != null)
             {
+                if (Paths.IsMphJapan || Paths.IsMphKorea)
+                {
+                    (int count, byte[] charData) = Read.ReadKanjiFont(scene.GameMode == GameMode.SinglePlayer);
+                    byte[] widths = new byte[count];
+                    Array.Fill(widths, (byte)10);
+                    byte[] offsets = new byte[count];
+                    Font.Kanji.SetData(widths, offsets, charData, minChar: 0);
+                }
                 LoadBombResources(scene);
                 LoadBeamEffectResources(scene);
                 LoadBeamProjectileResources(scene);

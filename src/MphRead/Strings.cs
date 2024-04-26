@@ -301,7 +301,7 @@ namespace MphRead.Text
                 else
                 {
                     int index = value[++i] & 0x3F | ((c & 0x1F) << 6);
-                    if (index >= 128)
+                    if (index >= 128 && index - 128 <= _nonAscii.Count)
                     {
                         sb.Append(_nonAscii[index - 128]);
                     }
@@ -335,15 +335,17 @@ namespace MphRead.Text
         };
     }
 
-    public static class Font
+    public class Font
     {
-        public static IReadOnlyList<int> Widths { get; private set; } = null!;
+        public static Font Normal { get; } = new Font();
+        public static Font Kanji { get; } = new Font();
 
-        public static IReadOnlyList<int> Offsets { get; private set; } = null!;
+        public IReadOnlyList<int> Widths { get; private set; } = null!;
+        public IReadOnlyList<int> Offsets { get; private set; } = null!;
+        public IReadOnlyList<byte> CharacterData { get; private set; } = null!;
+        public int MinCharacter { get; private set; }
 
-        public static IReadOnlyList<byte> CharacterData { get; private set; } = null!;
-
-        public static void SetData(byte[] widths, byte[] offsets, byte[] chars)
+        public void SetData(byte[] widths, byte[] offsets, byte[] chars, int minChar, bool packed = true)
         {
             int[] widthData = new int[widths.Length];
             for (int i = 0; i < widths.Length; i++)
@@ -357,15 +359,26 @@ namespace MphRead.Text
                 offsetData[i] = (sbyte)offsets[i];
             }
             Offsets = offsetData;
-            Debug.Assert(chars.Length > 0 && chars.Length % 2 == 0);
-            byte[] charData = new byte[chars.Length * 2];
-            for (int i = 0; i < chars.Length; i++)
+            if (packed)
             {
-                byte data = chars[i];
-                charData[i * 2] = (byte)(data & 0xF);
-                charData[i * 2 + 1] = (byte)(data >> 4);
+                Debug.Assert(chars.Length > 0 && chars.Length % 2 == 0);
+                byte[] charData = new byte[chars.Length * 2];
+                for (int i = 0; i < chars.Length; i++)
+                {
+                    byte data = chars[i];
+                    charData[i * 2] = (byte)(data & 0xF);
+                    charData[i * 2 + 1] = (byte)(data >> 4);
+                }
+                CharacterData = charData;
             }
-            CharacterData = charData;
+            else
+            {
+                // this code path is hypothetically for the "1D" version of character data,
+                // which is more easily parsed out of the 1bit kanji font files, but which
+                // would require some tweaking to DoTexture() in the HUD object which expects "2D"
+                CharacterData = chars;
+            }
+            MinCharacter = minChar;
         }
     }
 }

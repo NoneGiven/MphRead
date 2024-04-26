@@ -341,7 +341,7 @@ namespace MphRead
             byte[] chars = bytes[data.FontCharData.Offset..(data.FontCharData.Offset + data.FontCharData.Size)];
             byte[] enemyDamageSfx = bytes[data.EnemyDamageSfx.Offset..(data.EnemyDamageSfx.Offset + data.EnemyDamageSfx.Size)];
             byte[] enemyDeathSfx = bytes[data.EnemyDeathSfx.Offset..(data.EnemyDeathSfx.Offset + data.EnemyDeathSfx.Size)];
-            Text.Font.SetData(widths, offsets, chars);
+            Text.Font.Normal.SetData(widths, offsets, chars, minChar: 32);
             // overlay9_2
             bytes = File.ReadAllBytes(Paths.Combine(Paths.FileSystem, "_bin", data.BeamSfx.File));
             byte[] terrainSfx = bytes[data.TerrianSfx.Offset..(data.TerrianSfx.Offset + data.TerrianSfx.Size)];

@@ -124,15 +124,109 @@ namespace MphRead
             }
         }
 
-        public static void ReadKanjiFont()
+        public static (int, byte[]) ReadKanjiFont(bool singlePlayer)
         {
-            string path = @"C:\Users\auser\Home\MPH\_FS\amhj1\stringTables_jp\ingame_1bit.bin";
+            string path = Paths.Combine(Paths.FileSystem, "stringTables_jp", singlePlayer ? "ingame_1bit.bin" : "inmulti_1bit.bin");
             ReadOnlySpan<byte> bytes = ReadBytes(path, firstHunt: false);
-            uint count = SpanReadUint(bytes, 0); // 934
+            int count = SpanReadInt(bytes, 0); // 934
             ushort width = SpanReadUshort(bytes, 4); // 16
             Debug.Assert(width == 16);
             ushort height = SpanReadUshort(bytes, 6); // 11
-            byte[,] output = new byte[count, 16 * 16];
+            int[] output = new int[count * 128 / 4];
+            int[] table = new int[8] { 128, 64, 32, 16, 8, 4, 2, 1 };
+            // widths are hard coded as 10, offsets are hard coded as 0
+            int ch = 0;
+            for (int c = 8; c < 2 * height * count + 8; c += 2 * height)
+            {
+                ReadOnlySpan<byte> data = bytes[c..];
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < 16; x++)
+                    {
+                        int inc;
+                        if (height == 16)
+                        {
+                            inc = y;
+                        }
+                        else
+                        {
+                            inc = y + 3;
+                        }
+                        int offset = (inc & 7) + 16 * (inc / 8) + 8 * (x / 8);
+                        int shift = 4 * (x & 7);
+                        int mask = table[x & 7];
+                        int value;
+                        if ((data[y * 2 + x / 8] & mask) != 0)
+                        {
+                            value = 3 << shift;
+                        }
+                        else
+                        {
+                            value = 0;
+                        }
+                        output[ch * 128 / 4 + offset] |= value;
+                    }
+                }
+                ch++;
+            }
+            byte[] result = new byte[output.Length * 4];
+            for (int i = 0; i < output.Length * 4; i += 4)
+            {
+                int value = output[i / 4];
+                result[i] = (byte)(value & 0xFF);
+                result[i + 1] = (byte)((value & 0xFF00) >> 8);
+                result[i + 2] = (byte)((value & 0xFF0000) >> 16);
+                result[i + 3] = (byte)((value & 0xFF000000) >> 24);
+            }
+            byte[] charData = new byte[result.Length * 2];
+            for (int i = 0; i < result.Length; i++)
+            {
+                byte data = result[i];
+                charData[i * 2] = (byte)(data & 0xF);
+                charData[i * 2 + 1] = (byte)(data >> 4);
+            }
+            int print = 36;
+            for (int y = 0; y < 16; y++)
+            {
+                for (int x = 0; x < 16; x++)
+                {
+                    int offset = 0;
+                    int xx = x;
+                    int yy = y;
+                    if (x >= 8 && y >= 8)
+                    {
+                        offset = 64 * 3;
+                        xx %= 8;
+                        yy %= 8;
+                    }
+                    else if (x >= 8)
+                    {
+                        offset = 64;
+                        xx %= 8;
+                    }
+                    else if (y >= 8)
+                    {
+                        offset = 64 * 2;
+                        yy %= 8;
+                    }
+                    bool data = charData[print * 256 + offset + yy * 8 + xx] != 0;
+                    Console.Write(data ? '█' : ' ');
+                    Console.Write(data ? '█' : ' ');
+                }
+                Console.WriteLine('|');
+            }
+            return (count, result);
+        }
+
+        public static (int, byte[]) ReadKanjiFont2(bool singlePlayer)
+        {
+            string path = Paths.Combine(Paths.FileSystem, "stringTables_jp", singlePlayer ? "ingame_1bit.bin" : "inmulti_1bit.bin");
+            ReadOnlySpan<byte> bytes = ReadBytes(path, firstHunt: false);
+            int count = SpanReadInt(bytes, 0); // 934
+            ushort width = SpanReadUshort(bytes, 4); // 16
+            Debug.Assert(width == 16);
+            ushort height = SpanReadUshort(bytes, 6); // 11
+            byte[] output = new byte[count * 16 * 16];
             // widths are hard coded as 10, offsets are hard coded as 0
             int ch = 0;
             for (int c = 8; c < 2 * height * count; c += 2 * height)
@@ -143,12 +237,28 @@ namespace MphRead
                     for (int x = 0; x < 16; x++)
                     {
                         byte value = data[y * 2 + x / 8];
-                        int offset = (height == 16 ? y : y + 3) * 16 + x;
-                        output[ch, offset] = (byte)((value & (1 << (x % 8))) != 0 ? 3 : 0);
+                        int offset = (height == 16 ? y : (y + 3)) * 16 + x;
+                        output[ch * 16 * 16 + offset] = (byte)((value & (1 << (7 - (x % 8)))) != 0 ? 3 : 0);
                     }
                 }
                 ch++;
             }
+            int print = 1;
+            int h = 16;
+            int w = 16;
+            ReadOnlySpan<byte> view = output.AsSpan()[(print * 256)..(print * 256 + 256)];
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    int pixel = output[print * 256 + y * w + x];
+                    Console.Write(pixel != 0 ? '█' : ' ');
+                    Console.Write(pixel != 0 ? '█' : ' ');
+                }
+                Console.WriteLine('|');
+            }
+            int p = 5;
+            return (count, output);
         }
 
         private static Model ReadModel(string name, string modelPath, string? animationPath, string? animationShare,

@@ -282,8 +282,8 @@ namespace MphRead.Entities
             _nodeProgressMeter.BarInst.SetCharacterData(systemLoad.CharacterData, _scene);
             _nodeProgressMeter.BarInst.SetPaletteData(systemLoad.PaletteData, _scene);
             _nodeProgressMeter.BarInst.Enabled = true;
-            _textInst = new HudObjectInstance(width: 8, height: 8); // todo: max is 16x16
-            _textInst.SetCharacterData(Font.CharacterData, _scene);
+            _textInst = new HudObjectInstance(width: 8, height: 8, maxWidth: 16, maxHeight: 16);
+            _textInst.SetCharacterData(Font.Normal.CharacterData, _scene);
             _textInst.SetPaletteData(ammoBar.PaletteData, _scene);
             _textInst.Enabled = true;
             for (int i = 0; i < _hudMessageQueue.Count; i++)
@@ -2580,6 +2580,28 @@ namespace MphRead.Entities
             _textSpacingY = 0;
         }
 
+        private bool _usingKanjiFont = false;
+
+        private Font SetUpFont(char firstChar, bool set)
+        {
+            Font font = Font.Normal;
+            if (Scene.Language == Language.Japanese && (Paths.IsMphJapan || Paths.IsMphKorea) && (firstChar & 0xA0) == 0xA0)
+            {
+                font = Font.Kanji;
+                if (set && !_usingKanjiFont)
+                {
+                    _textInst.SetCharacterData(Font.Kanji.CharacterData, width: 16, height: 16, _scene);
+                    _usingKanjiFont = true;
+                }
+            }
+            else if (set && _usingKanjiFont)
+            {
+                _textInst.SetCharacterData(Font.Normal.CharacterData, width: 8, height: 8, _scene);
+                _usingKanjiFont = false;
+            }
+            return font;
+        }
+
         private float _textSpacingY = 0;
 
         // todo: size/shape (seemingly only used by the bottom screen rank, which is 16x16/square instead of 8x8/square)
@@ -2608,6 +2630,7 @@ namespace MphRead.Entities
             {
                 return new Vector2(x, y);
             }
+            Font font = SetUpFont(text[0], set: true);
             _textInst.Alpha = alpha;
             float spacingY = _textSpacingY == 0 ? (fontSpacing == -1 ? 12 : fontSpacing) : _textSpacingY;
             if (type == Align.Left)
@@ -2616,7 +2639,7 @@ namespace MphRead.Entities
                 for (int i = 0; i < length; i++)
                 {
                     int ch = text[i];
-                    if (ch >= 128)
+                    if ((ch & 0x80) != 0)
                     {
                         ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
                     }
@@ -2627,8 +2650,8 @@ namespace MphRead.Entities
                     }
                     else
                     {
-                        int index = ch - 32; // langtodo: starting character
-                        float offset = Font.Offsets[index] + y;
+                        int index = ch - font.MinCharacter;
+                        float offset = font.Offsets[index] + y;
                         if (ch != ' ')
                         {
                             _textInst.PositionX = x / 256f;
@@ -2643,7 +2666,7 @@ namespace MphRead.Entities
                             }
                             _scene.DrawHudObject(_textInst, mode: 2);
                         }
-                        x += Font.Widths[index];
+                        x += font.Widths[index];
                     }
                 }
             }
@@ -2667,14 +2690,13 @@ namespace MphRead.Entities
                     for (int i = end - 1; i >= start; i--)
                     {
                         int ch = text[i];
-                        // langtodo
-                        if (ch >= 128)
+                        if ((ch & 0x80) != 0)
                         {
                             ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
                         }
-                        int index = ch - 32; // langtodo: starting character
-                        x -= Font.Widths[index];
-                        float offset = Font.Offsets[index] + y;
+                        int index = ch - font.MinCharacter;
+                        x -= font.Widths[index];
+                        float offset = font.Offsets[index] + y;
                         if (ch != ' ')
                         {
                             _textInst.PositionX = x / 256f;
@@ -2724,44 +2746,41 @@ namespace MphRead.Entities
                     for (int i = start; i < end; i++)
                     {
                         int ch = text[i];
-                        // langtodo
-                        if (ch >= 128)
+                        if ((ch & 0x80) != 0)
                         {
                             ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
                         }
-                        int index = ch - 32; // langtodo: starting character
-                        width += Font.Widths[index];
+                        int index = ch - font.MinCharacter;
+                        width += font.Widths[index];
                     }
                     x = startX - width / 2;
                     for (int i = start; i < end; i++)
                     {
                         int ch = text[i];
-                        // langtodo
-                        if (ch >= 128)
+                        if ((ch & 0x80) != 0)
                         {
                             ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
                         }
-                        int index = ch - 32; // langtodo: starting character
-                        float offset = Font.Offsets[index] + y;
+                        int index = ch - font.MinCharacter;
+                        float offset = font.Offsets[index] + y;
                         if (ch != ' ')
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
-                            if (type == Align.PadCenter && i >= padAfter)
+                            if (type != Align.PadCenter || i < padAfter)
                             {
-                                _textInst.SetData(charFrame: 0, _textInst.PaletteIndex, _scene);
+                                if (color.HasValue)
+                                {
+                                    _textInst.SetData(index, color.Value, _scene);
+                                }
+                                else
+                                {
+                                    _textInst.SetData(index, palette, _scene);
+                                }
+                                _scene.DrawHudObject(_textInst);
                             }
-                            else if (color.HasValue)
-                            {
-                                _textInst.SetData(index, color.Value, _scene);
-                            }
-                            else
-                            {
-                                _textInst.SetData(index, palette, _scene);
-                            }
-                            _scene.DrawHudObject(_textInst);
                         }
-                        x += Font.Widths[index];
+                        x += font.Widths[index];
                     }
                     if (end != length)
                     {
@@ -2856,10 +2875,14 @@ namespace MphRead.Entities
             int lineWidth = 0;
             int breakPos = 0;
             int c = 0;
+            if (text.Length == 0)
+            {
+                return 1;
+            }
+            Font font = SetUpFont(text[0], set: false);
             for (int i = 0; i < text.Length; i++)
             {
                 char ch = text[i];
-                // langtodo
                 dest[c] = ch;
                 if (ch == '\n')
                 {
@@ -2877,14 +2900,14 @@ namespace MphRead.Entities
                     if (ch >= ' ')
                     {
                         int index = ch;
-                        if (ch >= 128)
+                        if ((ch & 0x80) != 0)
                         {
                             next = text[++i];
                             dest[++c] = next.Value;
                             index = next.Value & 0x3F | ((ch & 0x1F) << 6);
                         }
-                        index -= 32; // langtodo: starting character
-                        lineWidth += Font.Widths[index];
+                        index -= font.MinCharacter;
+                        lineWidth += font.Widths[index];
                     }
                     if (lineWidth > maxWidth)
                     {
@@ -2894,13 +2917,13 @@ namespace MphRead.Entities
                             {
                                 dest[c] = ch;
                                 dest[c + 1] = next.Value;
-                                c--;
+                                breakPos = c - 1;
                             }
                             else
                             {
                                 dest[c + 1] = ch;
+                                breakPos = c;
                             }
-                            breakPos = c;
                             c++;
                         }
                         if (breakPos > 0)
@@ -2911,12 +2934,12 @@ namespace MphRead.Entities
                             int prev = dest[prevIndex];
                             while (prev != '\0' && prevIndex < dest.Length)
                             {
-                                if (prev >= 128)
+                                if ((prev & 0x80) != 0)
                                 {
                                     prev = text[++prevIndex] & 0x3F | ((prev & 0x1F) << 6);
                                 }
-                                int index = prev - 32; // langtodo: starting character
-                                lineWidth += Font.Widths[index];
+                                int index = prev - font.MinCharacter;
+                                lineWidth += font.Widths[index];
                                 prev = dest[++prevIndex];
                             }
                             breakPos = 0;
