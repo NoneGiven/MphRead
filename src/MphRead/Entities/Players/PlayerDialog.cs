@@ -598,7 +598,9 @@ namespace MphRead.Entities
                     _textSpacingY = 10;
                     _textInst.SetPaletteData(_dialogPaletteData, _scene);
                     int characters = (int)(_dialogCharTimer / (1 / 30f));
-                    DrawText2D(128, baseY + 34 - _overlayTextOffsetY, Align.PadCenter, _dialogPalette,
+                    // ver-offset
+                    int offset = 17 + (Paths.IsMphJapan || Paths.IsMphKorea ? 8 : 17); // langtodo: confirm in AMHK
+                    DrawText2D(128, baseY + offset - _overlayTextOffsetY, Align.PadCenter, _dialogPalette,
                         _overlayBuffer1, maxLength: characters);
                     _textInst.SetPaletteData(_textPaletteData, _scene);
                     _textSpacingY = 0;
@@ -637,10 +639,10 @@ namespace MphRead.Entities
             }
             int layerIndex = 4;
             int scanYOffset = 0;
-            // langtodo: check all the places text 2d/3d are called from for other offsets
             // langtodo: will also need to do this for AMHK, which is different
-            if (DialogType == DialogType.Scan && (Paths.IsMphJapan || Paths.IsMphKorea))
+            if (Paths.IsMphJapan || Paths.IsMphKorea)
             {
+                // ver-offset
                 scanYOffset = -4;
             }
             if (DialogType == DialogType.Scan)
