@@ -2878,6 +2878,10 @@ namespace MphRead.Entities
                 return lines;
             }
             int lineWidth = 0;
+            // if the line is broken at a previous space, how much width the now-next line already
+            // has written to it. zeroed out if we break without a previous space to break at, since in
+            // that case we break after the most recent character and the new line will start empty.
+            int widthAfterBreak = 0;
             int breakPos = 0;
             int c = 0;
             if (text.Length == 0)
@@ -2893,6 +2897,7 @@ namespace MphRead.Entities
                 {
                     lineWidth = 0;
                     breakPos = 0;
+                    widthAfterBreak = 0;
                     lines++;
                 }
                 else
@@ -2900,53 +2905,37 @@ namespace MphRead.Entities
                     if (ch == ' ')
                     {
                         breakPos = c;
+                        widthAfterBreak = 0;
                     }
-                    char? next = null;
                     if (ch >= ' ')
                     {
                         int index = ch;
                         if ((ch & 0x80) != 0)
                         {
-                            next = text[++i];
-                            dest[++c] = next.Value;
-                            index = next.Value & 0x3F | ((ch & 0x1F) << 6);
+                            char next = text[++i];
+                            dest[++c] = next;
+                            index = next & 0x3F | ((ch & 0x1F) << 6);
                         }
                         index -= font.MinCharacter;
-                        lineWidth += font.Widths[index];
+                        int width = font.Widths[index];
+                        lineWidth += width;
+                        if (ch != ' ')
+                        {
+                            widthAfterBreak += width;
+                        }
                     }
-                    if (lineWidth > maxWidth)
+                    if (i + 1 < text.Length && lineWidth > maxWidth)
                     {
                         if (breakPos == 0 && maxWidth >= 8)
                         {
-                            if (next.HasValue)
-                            {
-                                dest[c] = ch;
-                                dest[c + 1] = next.Value;
-                                breakPos = c - 1;
-                            }
-                            else
-                            {
-                                dest[c + 1] = ch;
-                                breakPos = c;
-                            }
-                            c++;
+                            breakPos = c++ + 1;
+                            widthAfterBreak = 0;
                         }
                         if (breakPos > 0)
                         {
                             dest[breakPos] = '\n';
-                            lineWidth = 0;
-                            int prevIndex = breakPos + 1;
-                            int prev = dest[prevIndex];
-                            while (prev != '\0' && prevIndex < dest.Length)
-                            {
-                                if ((prev & 0x80) != 0)
-                                {
-                                    prev = text[++prevIndex] & 0x3F | ((prev & 0x1F) << 6);
-                                }
-                                int index = prev - font.MinCharacter;
-                                lineWidth += font.Widths[index];
-                                prev = dest[++prevIndex];
-                            }
+                            lineWidth = widthAfterBreak;
+                            widthAfterBreak = 0;
                             breakPos = 0;
                             lines++;
                         }

@@ -140,7 +140,12 @@ namespace MphRead.Entities
         private void BufferDialogPages()
         {
             Debug.Assert(_overlayMessage2 != null && _overlayMessage2.Length > 0);
-            WrapText(_overlayMessage2, 200, _overlayBuffer2);
+            int maxWidth = 200;
+            if (Paths.IsMphJapan || Paths.IsMphKorea)
+            {
+                maxWidth = 160;
+            }
+            WrapText(_overlayMessage2, maxWidth, _overlayBuffer2);
             int index = 0;
             int line = 1;
             int page = 0;

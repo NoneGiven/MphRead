@@ -265,7 +265,16 @@ namespace MphRead
                 {
                     (int count, byte[] charData) = Read.ReadKanjiFont(scene.GameMode == GameMode.SinglePlayer);
                     byte[] widths = new byte[count];
-                    Array.Fill(widths, (byte)10);
+                    if (Paths.IsMphJapan)
+                    {
+                        Array.Fill(widths, (byte)10);
+                    }
+                    else
+                    {
+                        Array.Fill(widths, (byte)11);
+                        widths[1] = 2; // KR period
+                        widths[32] = 6; // ASCII space
+                    }
                     byte[] offsets = new byte[count];
                     Font.Kanji.SetData(widths, offsets, charData, minChar: 0);
                 }
