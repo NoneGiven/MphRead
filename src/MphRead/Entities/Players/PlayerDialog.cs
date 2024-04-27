@@ -145,7 +145,7 @@ namespace MphRead.Entities
             {
                 maxWidth = 160;
             }
-            WrapText(_overlayMessage2, maxWidth, _overlayBuffer2);
+            WrapText(_overlayMessage2, maxWidth, _overlayBuffer2, maxTiles: 90);
             int index = 0;
             int line = 1;
             int page = 0;

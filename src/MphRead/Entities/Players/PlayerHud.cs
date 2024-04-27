@@ -2870,7 +2870,7 @@ namespace MphRead.Entities
             message.Lifetime = duration;
         }
 
-        private int WrapText(string text, int maxWidth, char[] dest)
+        private int WrapText(string text, int maxWidth, char[] dest, int maxTiles = 0)
         {
             int lines = 1;
             if (maxWidth <= 0)
@@ -2924,6 +2924,13 @@ namespace MphRead.Entities
                             widthAfterBreak += width;
                         }
                     }
+                    // langtodo:
+                    // - keep count of non-space characters/tiles, reset every 3 lines
+                    // - if we hit 90, count 90 chars (incl. spaces) from the start of the page and break there, starting a new page
+                    // - (this uses the break rule of breaking at the previous space, or after the current character if no spaces)
+                    // - this potentially pushes some already written text onto a new page, so we may need to undo/reinitialize wrapping on it?
+                    // - (main thing is determining if this is necessary; if it is, we may need to track "real" newline characters vs. added breaks?)
+                    // - also need to start counting 90 non-space characters again from the the start of that page
                     if (i + 1 < text.Length && lineWidth > maxWidth)
                     {
                         if (breakPos == 0 && maxWidth >= 8)
