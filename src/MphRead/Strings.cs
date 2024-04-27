@@ -32,7 +32,8 @@ namespace MphRead.Text
                 _cache.Add(Scene.Language, dict);
             }
             var entries = new List<StringTableEntry>();
-            string path = Paths.Combine(Paths.FileSystem, GetFolder(), name);
+            string filename = name == StringTables.ScanLog && Paths.MphKey == Ver.AMHK0 ? StringTables.ScanLogSorted : name;
+            string path = Paths.Combine(Paths.FileSystem, GetFolder(), filename);
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(path));
             uint count = Read.SpanReadUint(bytes, 0);
             // ScanLog has an 8-byte header and 8 bytes between the last entry and first string,
@@ -324,6 +325,7 @@ namespace MphRead.Text
         public static readonly string LocationNames = "LocationNames.bin";
         public static readonly string MBBanner = "MBBanner.bin";
         public static readonly string ScanLog = "ScanLog.bin";
+        public static readonly string ScanLogSorted = "ScanLogSorted.bin";
         public static readonly string ShipInSpace = "ShipInSpace.bin";
         public static readonly string ShipOnGround = "ShipOnGround.bin";
         public static readonly string WeaponNames = "WeaponNames.bin";

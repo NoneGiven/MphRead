@@ -639,16 +639,20 @@ namespace MphRead.Entities
             }
             int layerIndex = 4;
             int scanYOffset = 0;
-            // langtodo: will also need to do this for AMHK, which is different
-            if (Paths.IsMphJapan || Paths.IsMphKorea)
+            if (Paths.IsMphJapan)
             {
                 // ver-offset
                 scanYOffset = -4;
             }
+            else if (Paths.IsMphKorea)
+            {
+                // ver-offset
+                scanYOffset = -6;
+            }
             if (DialogType == DialogType.Scan)
             {
                 Debug.Assert(_overlayMessage1 != null);
-                // todo?: JP/KR have an empty message here; add a bugfix?
+                // todo?: JP has an empty message here; add a bugfix?
                 string text = Strings.GetHudMessage(102); // SCAN COMPLETE
                 // the game doesn't apply the X shift, only Y
                 DrawText2D(128 + _objShiftX, 58 + _objShiftY, Align.Center, palette: 0, text);
