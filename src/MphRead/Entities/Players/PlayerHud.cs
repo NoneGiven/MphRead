@@ -2552,7 +2552,7 @@ namespace MphRead.Entities
         {
             string? header = _rulesLines[0];
             Debug.Assert(header != null);
-            ColorRgba? color = Paths.IsMphJapan || Paths.IsMphKorea ? null: new ColorRgba(0x7FDE);
+            ColorRgba? color = Paths.IsMphJapan || Paths.IsMphKorea ? null : new ColorRgba(0x7FDE);
             DrawText2D(128, 10, Align.Center, 0, header, color);
             int totalCharacters = (int)(_scene.ElapsedTime / (1 / 30f));
             float posY = 28;
