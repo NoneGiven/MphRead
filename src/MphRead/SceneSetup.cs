@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using MphRead.Entities;
@@ -260,6 +261,23 @@ namespace MphRead
             // todo: add an assert if any loading occurs after room init (besides manual model/entity loading)
             if (scene != null)
             {
+                if (Paths.IsMphJapan || Paths.IsMphKorea)
+                {
+                    (int count, byte[] charData) = Read.ReadKanjiFont(scene.GameMode == GameMode.SinglePlayer);
+                    byte[] widths = new byte[count];
+                    if (Paths.IsMphJapan)
+                    {
+                        Array.Fill(widths, (byte)10);
+                    }
+                    else
+                    {
+                        Array.Fill(widths, (byte)11);
+                        widths[1] = 2; // KR period
+                        widths[32] = 6; // ASCII space
+                    }
+                    byte[] offsets = new byte[count];
+                    Font.Kanji.SetData(widths, offsets, charData, minChar: 0);
+                }
                 LoadBombResources(scene);
                 LoadBeamEffectResources(scene);
                 LoadBeamProjectileResources(scene);
@@ -301,15 +319,9 @@ namespace MphRead
             }
             PlayerEntity.LoadWeaponNames();
             PlayerEntity.GeneratePlayerVolumes();
-            // todo: use game mode, region, etc.
-            Language language = Language.English;
-            if (Paths.MphKey == "AMHK0")
-            {
-                language = Language.Japanese;
-            }
-            Strings.ReadStringTable(StringTables.HudMsgsCommon, language);
-            Strings.ReadStringTable(StringTables.HudMessagesSP, language);
-            Strings.ReadStringTable(StringTables.HudMessagesMP, language);
+            Strings.ReadStringTable(StringTables.HudMsgsCommon);
+            Strings.ReadStringTable(StringTables.HudMessagesSP);
+            Strings.ReadStringTable(StringTables.HudMessagesMP);
             if (!scene.Multiplayer)
             {
                 Strings.ReadStringTable(StringTables.ScanLog);
