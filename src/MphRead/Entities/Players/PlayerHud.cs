@@ -2552,8 +2552,8 @@ namespace MphRead.Entities
         {
             string? header = _rulesLines[0];
             Debug.Assert(header != null);
-            // langtodo: JP uses UI palette (pass null), not sure about KR
-            DrawText2D(128, 10, Align.Center, 0, header, new ColorRgba(0x7FDE));
+            ColorRgba? color = Paths.IsMphJapan || Paths.IsMphKorea ? null: new ColorRgba(0x7FDE);
+            DrawText2D(128, 10, Align.Center, 0, header, color);
             int totalCharacters = (int)(_scene.ElapsedTime / (1 / 30f));
             float posY = 28;
             _textSpacingY = 8;
@@ -2568,8 +2568,8 @@ namespace MphRead.Entities
                 string? line = _rulesLines[i];
                 Debug.Assert(line != null);
                 float posX = _rulesInfo.Offsets[i] + 12;
-                // langtodo: JP uses UI palette (pass null), not sure about KR
-                DrawText2D(posX, posY, Align.Left, 0, line, new ColorRgba(0x7F5A), maxLength: characters);
+                color = Paths.IsMphJapan || Paths.IsMphKorea ? null : new ColorRgba(0x7F5A);
+                DrawText2D(posX, posY, Align.Left, 0, line, color, maxLength: characters);
                 posY += 13 + _rulesLengths[i].Newlines * 8;
             }
             // todo?: ideally this should be in a process method, not draw

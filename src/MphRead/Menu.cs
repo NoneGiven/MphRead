@@ -765,7 +765,6 @@ namespace MphRead
                             }
                         }
                     }
-                    // langtodo: not sure that Japanese works properly in AMHE/AMHP, may need to validate against that
                     Scene.Language = Paths.MphKey == "AMHK0" ? Language.Japanese : _language;
                     GameMode gameMode = GameMode.None;
                     if (_mode == "Adventure")

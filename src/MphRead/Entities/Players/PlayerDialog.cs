@@ -604,7 +604,7 @@ namespace MphRead.Entities
                     _textInst.SetPaletteData(_dialogPaletteData, _scene);
                     int characters = (int)(_dialogCharTimer / (1 / 30f));
                     // ver-offset
-                    int offset = 17 + (Paths.IsMphJapan || Paths.IsMphKorea ? 8 : 17); // langtodo: confirm in AMHK
+                    int offset = 17 + (Paths.IsMphJapan || Paths.IsMphKorea ? 8 : 17);
                     DrawText2D(128, baseY + offset - _overlayTextOffsetY, Align.PadCenter, _dialogPalette,
                         _overlayBuffer1, maxLength: characters);
                     _textInst.SetPaletteData(_textPaletteData, _scene);
