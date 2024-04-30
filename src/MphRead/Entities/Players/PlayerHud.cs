@@ -2932,6 +2932,7 @@ namespace MphRead.Entities
                     // - this potentially pushes some already written text onto a new page, so we may need to undo/reinitialize wrapping on it?
                     // - (main thing is determining if this is necessary; if it is, we may need to track "real" newline characters vs. added breaks?)
                     // - (since we need to undo the breaks we inserted and start fresh, but don't want to erase newlines from the original text)
+                    // - (easiest way to do this might be to just set our position back to the start of the new page in both source and dest?)
                     // - also need to start counting 90 non-space characters again from the the start of that page
                     if (i + 1 < text.Length && lineWidth > maxWidth)
                     {
