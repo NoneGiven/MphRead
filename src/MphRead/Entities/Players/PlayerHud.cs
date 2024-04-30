@@ -2924,9 +2924,16 @@ namespace MphRead.Entities
                             widthAfterBreak += width;
                         }
                     }
-                    // langtodo:
+                    // todo?:
+                    // the game has a stupid, possibly bugged behavior with scan and other bottom screen messages. the gist is that they're
+                    // limited to 90 characters, presumably because of OAM limitations. because spaces are skipped instead of being actually drawn,
+                    // they don't count toward the OAM limit, but they do get counted by the game anyway, sort of. basically the game counts
+                    // 90 non-space characters, and if it finds that many on one page, it then counts 90 of *any* character, and breaks the
+                    // dialog page there. this results in unnecessary breaks with text unexpectedly being pushed to the next page (such as the first
+                    // lore scan having "divine" pushed to the second page) even when it could have fit. the initial count also counts newlines
+                    // as non-space characters, which is dumb, since they also aren't drawn. to implement this we would have done some/all of:
                     // - keep count of non-space characters/tiles, reset every 3 lines
-                    // - (we should count newline characters, since the game does, even though that's stupid)
+                    // - (counting newline characters, since the game does, even though that's stupid)
                     // - if we hit 90, count 90 chars (incl. spaces) from the start of the page and break there, starting a new page
                     // - (this uses the break rule of breaking at the previous space, or after the current character if no spaces)
                     // - this potentially pushes some already written text onto a new page, so we may need to undo/reinitialize wrapping on it?
