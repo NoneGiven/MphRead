@@ -170,6 +170,23 @@ namespace MphRead
         public int RoomId { get; set; } = -1;
         public int AreaId { get; set; } = -1;
 
+        private static Language _language = Language.English;
+        public static Language Language
+        {
+            get
+            {
+                if (Paths.IsMphKorea)
+                {
+                    return Language.Japanese;
+                }
+                return _language;
+            }
+            set
+            {
+                _language = value;
+            }
+        }
+
         public Matrix4 ViewMatrix => _viewMatrix;
         public Matrix4 ViewInvRotMatrix => _viewInvRotMatrix;
         public Matrix4 ViewInvRotYMatrix => _viewInvRotYMatrix;
@@ -215,6 +232,7 @@ namespace MphRead
             _setTitle = setTitle;
             _close = close;
             Read.ClearCache();
+            Text.Strings.ClearCache();
             GameState.Reset();
             PlayerEntity.Construct(this);
         }

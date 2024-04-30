@@ -282,8 +282,8 @@ namespace MphRead.Entities
             _nodeProgressMeter.BarInst.SetCharacterData(systemLoad.CharacterData, _scene);
             _nodeProgressMeter.BarInst.SetPaletteData(systemLoad.PaletteData, _scene);
             _nodeProgressMeter.BarInst.Enabled = true;
-            _textInst = new HudObjectInstance(width: 8, height: 8); // todo: max is 16x16
-            _textInst.SetCharacterData(Font.CharacterData, _scene);
+            _textInst = new HudObjectInstance(width: 8, height: 8, maxWidth: 16, maxHeight: 16);
+            _textInst.SetCharacterData(Font.Normal.CharacterData, _scene);
             _textInst.SetPaletteData(ammoBar.PaletteData, _scene);
             _textInst.Enabled = true;
             for (int i = 0; i < _hudMessageQueue.Count; i++)
@@ -2554,7 +2554,8 @@ namespace MphRead.Entities
         {
             string? header = _rulesLines[0];
             Debug.Assert(header != null);
-            DrawText2D(128, 10, Align.Center, 0, header, new ColorRgba(0x7FDE));
+            ColorRgba? color = Paths.IsMphJapan || Paths.IsMphKorea ? null : new ColorRgba(0x7FDE);
+            DrawText2D(128, 10, Align.Center, 0, header, color);
             int totalCharacters = (int)(_scene.ElapsedTime / (1 / 30f));
             float posY = 28;
             _textSpacingY = 8;
@@ -2569,7 +2570,8 @@ namespace MphRead.Entities
                 string? line = _rulesLines[i];
                 Debug.Assert(line != null);
                 float posX = _rulesInfo.Offsets[i] + 12;
-                DrawText2D(posX, posY, Align.Left, 0, line, new ColorRgba(0x7F5A), maxLength: characters);
+                color = Paths.IsMphJapan || Paths.IsMphKorea ? null : new ColorRgba(0x7F5A);
+                DrawText2D(posX, posY, Align.Left, 0, line, color, maxLength: characters);
                 posY += 13 + _rulesLengths[i].Newlines * 8;
             }
             // todo?: ideally this should be in a process method, not draw
@@ -2580,6 +2582,28 @@ namespace MphRead.Entities
                 _prevIntroChars = totalCharacters;
             }
             _textSpacingY = 0;
+        }
+
+        private bool _usingKanjiFont = false;
+
+        private Font SetUpFont(char firstChar, bool set)
+        {
+            Font font = Font.Normal;
+            if (Scene.Language == Language.Japanese && (Paths.IsMphJapan || Paths.IsMphKorea) && (firstChar & 0xA0) == 0xA0)
+            {
+                font = Font.Kanji;
+                if (set && !_usingKanjiFont)
+                {
+                    _textInst.SetCharacterData(Font.Kanji.CharacterData, width: 16, height: 16, _scene);
+                    _usingKanjiFont = true;
+                }
+            }
+            else if (set && _usingKanjiFont)
+            {
+                _textInst.SetCharacterData(Font.Normal.CharacterData, width: 8, height: 8, _scene);
+                _usingKanjiFont = false;
+            }
+            return font;
         }
 
         private float _textSpacingY = 0;
@@ -2610,6 +2634,7 @@ namespace MphRead.Entities
             {
                 return new Vector2(x, y);
             }
+            Font font = SetUpFont(text[0], set: true);
             _textInst.Alpha = alpha;
             float spacingY = _textSpacingY == 0 ? (fontSpacing == -1 ? 12 : fontSpacing) : _textSpacingY;
             if (type == Align.Left)
@@ -2617,18 +2642,22 @@ namespace MphRead.Entities
                 float startX = x;
                 for (int i = 0; i < length; i++)
                 {
-                    char ch = text[i];
-                    Debug.Assert(ch < 128);
-                    if (ch == '\n')
+                    int ch = text[i];
+                    int orig = ch;
+                    if ((ch & 0x80) != 0)
+                    {
+                        ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
+                    }
+                    if (orig == '\n')
                     {
                         x = startX;
                         y += spacingY;
                     }
                     else
                     {
-                        int index = ch - 32; // todo: starting character
-                        float offset = Font.Offsets[index] + y;
-                        if (ch != ' ')
+                        int index = ch - font.MinCharacter;
+                        float offset = font.Offsets[index] + y;
+                        if (orig != ' ')
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
@@ -2642,7 +2671,7 @@ namespace MphRead.Entities
                             }
                             _scene.DrawHudObject(_textInst, mode: 2);
                         }
-                        x += Font.Widths[index];
+                        x += font.Widths[index];
                     }
                 }
             }
@@ -2665,12 +2694,16 @@ namespace MphRead.Entities
                     x = startX;
                     for (int i = end - 1; i >= start; i--)
                     {
-                        char ch = text[i];
-                        Debug.Assert(ch < 128);
-                        int index = ch - 32; // todo: starting character
-                        x -= Font.Widths[index];
-                        float offset = Font.Offsets[index] + y;
-                        if (ch != ' ')
+                        int ch = text[i];
+                        int orig = ch;
+                        if ((ch & 0x80) != 0)
+                        {
+                            ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
+                        }
+                        int index = ch - font.MinCharacter;
+                        x -= font.Widths[index];
+                        float offset = font.Offsets[index] + y;
+                        if (orig != ' ')
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
@@ -2718,37 +2751,43 @@ namespace MphRead.Entities
                     float width = 0;
                     for (int i = start; i < end; i++)
                     {
-                        char ch = text[i];
-                        Debug.Assert(ch < 128);
-                        int index = ch - 32; // todo: starting character
-                        width += Font.Widths[index];
+                        int ch = text[i];
+                        if ((ch & 0x80) != 0)
+                        {
+                            ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
+                        }
+                        int index = ch - font.MinCharacter;
+                        width += font.Widths[index];
                     }
                     x = startX - width / 2;
                     for (int i = start; i < end; i++)
                     {
-                        char ch = text[i];
-                        Debug.Assert(ch < 128);
-                        int index = ch - 32; // todo: starting character
-                        float offset = Font.Offsets[index] + y;
-                        if (ch != ' ')
+                        int ch = text[i];
+                        int orig = ch;
+                        if ((ch & 0x80) != 0)
+                        {
+                            ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
+                        }
+                        int index = ch - font.MinCharacter;
+                        float offset = font.Offsets[index] + y;
+                        if (orig != ' ')
                         {
                             _textInst.PositionX = x / 256f;
                             _textInst.PositionY = offset / 192f;
-                            if (type == Align.PadCenter && i >= padAfter)
+                            if (type != Align.PadCenter || i < padAfter)
                             {
-                                _textInst.SetData(charFrame: 0, _textInst.PaletteIndex, _scene);
+                                if (color.HasValue)
+                                {
+                                    _textInst.SetData(index, color.Value, _scene);
+                                }
+                                else
+                                {
+                                    _textInst.SetData(index, palette, _scene);
+                                }
+                                _scene.DrawHudObject(_textInst);
                             }
-                            else if (color.HasValue)
-                            {
-                                _textInst.SetData(index, color.Value, _scene);
-                            }
-                            else
-                            {
-                                _textInst.SetData(index, palette, _scene);
-                            }
-                            _scene.DrawHudObject(_textInst);
                         }
-                        x += Font.Widths[index];
+                        x += font.Widths[index];
                     }
                     if (end != length)
                     {
@@ -2833,7 +2872,7 @@ namespace MphRead.Entities
             message.Lifetime = duration;
         }
 
-        private int WrapText(string text, int maxWidth, char[] dest)
+        private int WrapText(string text, int maxWidth, char[] dest, int maxTiles = 0)
         {
             int lines = 1;
             if (maxWidth <= 0)
@@ -2841,18 +2880,26 @@ namespace MphRead.Entities
                 return lines;
             }
             int lineWidth = 0;
+            // if the line is broken at a previous space, how much width the now-next line already
+            // has written to it. zeroed out if we break without a previous space to break at, since in
+            // that case we break after the most recent character and the new line will start empty.
+            int widthAfterBreak = 0;
             int breakPos = 0;
             int c = 0;
+            if (text.Length == 0)
+            {
+                return 1;
+            }
+            Font font = SetUpFont(text[0], set: false);
             for (int i = 0; i < text.Length; i++)
             {
                 char ch = text[i];
-                // todo: upper bit check/alt font stuff will be important for symbols (i.e. nicknames)
-                Debug.Assert(ch < 128);
                 dest[c] = ch;
                 if (ch == '\n')
                 {
                     lineWidth = 0;
                     breakPos = 0;
+                    widthAfterBreak = 0;
                     lines++;
                 }
                 else
@@ -2860,32 +2907,54 @@ namespace MphRead.Entities
                     if (ch == ' ')
                     {
                         breakPos = c;
+                        widthAfterBreak = 0;
                     }
                     if (ch >= ' ')
                     {
-                        int index = ch - 32; // todo: starting character
-                        lineWidth += Font.Widths[index];
+                        int index = ch;
+                        if ((ch & 0x80) != 0)
+                        {
+                            char next = text[++i];
+                            dest[++c] = next;
+                            index = next & 0x3F | ((ch & 0x1F) << 6);
+                        }
+                        index -= font.MinCharacter;
+                        int width = font.Widths[index];
+                        lineWidth += width;
+                        if (ch != ' ')
+                        {
+                            widthAfterBreak += width;
+                        }
                     }
-                    if (lineWidth > maxWidth)
+                    // todo?:
+                    // the game has a stupid, possibly bugged behavior with scan and other bottom screen messages. the gist is that they're
+                    // limited to 90 characters, presumably because of OAM limitations. because spaces are skipped instead of being actually drawn,
+                    // they don't count toward the OAM limit, but they do get counted by the game anyway, sort of. basically the game counts
+                    // 90 non-space characters, and if it finds that many on one page, it then counts 90 of *any* character, and breaks the
+                    // dialog page there. this results in unnecessary breaks with text unexpectedly being pushed to the next page (such as the first
+                    // lore scan having "divine" pushed to the second page) even when it could have fit. the initial count also counts newlines
+                    // as non-space characters, which is dumb, since they also aren't drawn. to implement this we would have done some/all of:
+                    // - keep count of non-space characters/tiles, reset every 3 lines
+                    // - (counting newline characters, since the game does, even though that's stupid)
+                    // - if we hit 90, count 90 chars (incl. spaces) from the start of the page and break there, starting a new page
+                    // - (this uses the break rule of breaking at the previous space, or after the current character if no spaces)
+                    // - this potentially pushes some already written text onto a new page, so we may need to undo/reinitialize wrapping on it?
+                    // - (main thing is determining if this is necessary; if it is, we may need to track "real" newline characters vs. added breaks?)
+                    // - (since we need to undo the breaks we inserted and start fresh, but don't want to erase newlines from the original text)
+                    // - (easiest way to do this might be to just set our position back to the start of the new page in both source and dest?)
+                    // - also need to start counting 90 non-space characters again from the the start of that page
+                    if (i + 1 < text.Length && lineWidth > maxWidth)
                     {
                         if (breakPos == 0 && maxWidth >= 8)
                         {
-                            dest[c + 1] = ch;
-                            breakPos = c;
-                            c++;
+                            breakPos = c++ + 1;
+                            widthAfterBreak = 0;
                         }
                         if (breakPos > 0)
                         {
                             dest[breakPos] = '\n';
-                            lineWidth = 0;
-                            int prevIndex = breakPos + 1;
-                            char prev = dest[prevIndex];
-                            while (prev != '\0' && prevIndex < dest.Length)
-                            {
-                                int index = prev - 32; // todo: starting character
-                                lineWidth += Font.Widths[index];
-                                prev = dest[++prevIndex];
-                            }
+                            lineWidth = widthAfterBreak;
+                            widthAfterBreak = 0;
                             breakPos = 0;
                             lines++;
                         }

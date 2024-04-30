@@ -140,7 +140,12 @@ namespace MphRead.Entities
         private void BufferDialogPages()
         {
             Debug.Assert(_overlayMessage2 != null && _overlayMessage2.Length > 0);
-            WrapText(_overlayMessage2, 200, _overlayBuffer2);
+            int maxWidth = 200;
+            if (Paths.IsMphJapan || Paths.IsMphKorea)
+            {
+                maxWidth = 160;
+            }
+            WrapText(_overlayMessage2, maxWidth, _overlayBuffer2, maxTiles: 90);
             int index = 0;
             int line = 1;
             int page = 0;
@@ -598,7 +603,9 @@ namespace MphRead.Entities
                     _textSpacingY = 10;
                     _textInst.SetPaletteData(_dialogPaletteData, _scene);
                     int characters = (int)(_dialogCharTimer / (1 / 30f));
-                    DrawText2D(128, baseY + 34 - _overlayTextOffsetY, Align.PadCenter, _dialogPalette,
+                    // ver-offset
+                    int offset = 17 + (Paths.IsMphJapan || Paths.IsMphKorea ? 8 : 17);
+                    DrawText2D(128, baseY + offset - _overlayTextOffsetY, Align.PadCenter, _dialogPalette,
                         _overlayBuffer1, maxLength: characters);
                     _textInst.SetPaletteData(_textPaletteData, _scene);
                     _textSpacingY = 0;
@@ -636,11 +643,23 @@ namespace MphRead.Entities
                 }
             }
             int layerIndex = 4;
+            int scanYOffset = 0;
+            if (Paths.IsMphJapan)
+            {
+                // ver-offset
+                scanYOffset = -4;
+            }
+            else if (Paths.IsMphKorea)
+            {
+                // ver-offset
+                scanYOffset = -6;
+            }
             if (DialogType == DialogType.Scan)
             {
                 Debug.Assert(_overlayMessage1 != null);
-                // the game doesn't apply the X shift, only Y
+                // todo?: JP has an empty message here; add a bugfix?
                 string text = Strings.GetHudMessage(102); // SCAN COMPLETE
+                // the game doesn't apply the X shift, only Y
                 DrawText2D(128 + _objShiftX, 58 + _objShiftY, Align.Center, palette: 0, text);
                 HudObjectInstance iconInst = _scanIconInsts[_scanCategoryIndex * 2];
                 iconInst.PositionX = 20 / 256f;
@@ -651,7 +670,7 @@ namespace MphRead.Entities
                 _scene.DrawHudObject(iconInst);
                 Debug.Assert(iconInst.PaletteData != null);
                 _textInst.SetPaletteData(iconInst.PaletteData, _scene);
-                DrawText2D(58, 116, Align.Left, palette: 0, _overlayMessage1);
+                DrawText2D(58, 116 + scanYOffset, Align.Left, palette: 0, _overlayMessage1);
                 _textInst.SetPaletteData(_textPaletteData, _scene);
                 layerIndex = _scanCategoryLayers[_scanCategoryIndex];
             }
@@ -666,7 +685,7 @@ namespace MphRead.Entities
                 start += _dialogPageIndex; // account for trailing newline on each previous page
                 var text = new ReadOnlySpan<char>(_overlayBuffer2, start, _dialogPageLengths[_dialogPageIndex]);
                 _textInst.SetPaletteData(_dialogPaletteData, _scene);
-                DrawText2D(128, 134, Align.Center, palette: 0, text);
+                DrawText2D(128, 134 + scanYOffset, Align.Center, palette: 0, text);
                 _textInst.SetPaletteData(_textPaletteData, _scene);
                 _scene.Layer5Info.BindingId = _dialogBindingIds[layerIndex];
                 _scene.Layer5Info.Alpha = 1;

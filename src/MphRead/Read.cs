@@ -124,6 +124,63 @@ namespace MphRead
             }
         }
 
+        public static (int, byte[]) ReadKanjiFont(bool singlePlayer)
+        {
+            string path = Paths.Combine(Paths.FileSystem, "stringTables_jp", singlePlayer ? "ingame_1bit.bin" : "inmulti_1bit.bin");
+            ReadOnlySpan<byte> bytes = ReadBytes(path, firstHunt: false);
+            int count = SpanReadInt(bytes, 0); // 934
+            ushort width = SpanReadUshort(bytes, 4); // 16
+            Debug.Assert(width == 16);
+            ushort height = SpanReadUshort(bytes, 6); // 11
+            int[] output = new int[count * 128 / 4];
+            int[] table = new int[8] { 128, 64, 32, 16, 8, 4, 2, 1 };
+            // widths are hard coded as 10, offsets are hard coded as 0
+            int ch = 0;
+            for (int c = 8; c < 2 * height * count + 8; c += 2 * height)
+            {
+                ReadOnlySpan<byte> data = bytes[c..];
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < 16; x++)
+                    {
+                        int inc;
+                        if (height == 16)
+                        {
+                            inc = y;
+                        }
+                        else
+                        {
+                            inc = y + 3;
+                        }
+                        int offset = (inc & 7) + 16 * (inc / 8) + 8 * (x / 8);
+                        int shift = 4 * (x & 7);
+                        int mask = table[x & 7];
+                        int value;
+                        if ((data[y * 2 + x / 8] & mask) != 0)
+                        {
+                            value = 3 << shift;
+                        }
+                        else
+                        {
+                            value = 0;
+                        }
+                        output[ch * 128 / 4 + offset] |= value;
+                    }
+                }
+                ch++;
+            }
+            byte[] result = new byte[output.Length * 4];
+            for (int i = 0; i < output.Length * 4; i += 4)
+            {
+                int value = output[i / 4];
+                result[i] = (byte)(value & 0xFF);
+                result[i + 1] = (byte)((value & 0xFF00) >> 8);
+                result[i + 2] = (byte)((value & 0xFF0000) >> 16);
+                result[i + 3] = (byte)((value & 0xFF000000) >> 24);
+            }
+            return (count, result);
+        }
+
         private static Model ReadModel(string name, string modelPath, string? animationPath, string? animationShare,
             IReadOnlyList<RecolorMetadata> recolorMeta, bool firstHunt)
         {
@@ -1152,6 +1209,34 @@ namespace MphRead
                 return "";
             }
             return Encoding.ASCII.GetString(bytes[offset..end]);
+        }
+
+        public static string ReadStringTable(ReadOnlySpan<byte> bytes, uint offset, int length = Int32.MaxValue)
+        {
+            return ReadStringTable(bytes, (int)offset, length);
+        }
+
+        public static string ReadStringTable(ReadOnlySpan<byte> bytes, int offset, int length = Int32.MaxValue)
+        {
+            int end = offset;
+            for (int i = 0; i < length; i++)
+            {
+                if (bytes[offset + i] == 0)
+                {
+                    break;
+                }
+                end++;
+            }
+            if (end == offset)
+            {
+                return "";
+            }
+            var sb = new StringBuilder();
+            for (int i = offset; i < end; i++)
+            {
+                sb.Append((char)bytes[i]);
+            }
+            return sb.ToString();
         }
 
         public static IReadOnlyList<string> ReadStrings(ReadOnlySpan<byte> bytes, long offset, int count)
