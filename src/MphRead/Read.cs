@@ -178,43 +178,6 @@ namespace MphRead
                 result[i + 2] = (byte)((value & 0xFF0000) >> 16);
                 result[i + 3] = (byte)((value & 0xFF000000) >> 24);
             }
-            byte[] charData = new byte[result.Length * 2];
-            for (int i = 0; i < result.Length; i++)
-            {
-                byte data = result[i];
-                charData[i * 2] = (byte)(data & 0xF);
-                charData[i * 2 + 1] = (byte)(data >> 4);
-            }
-            int print = 36;
-            for (int y = 0; y < 16; y++)
-            {
-                for (int x = 0; x < 16; x++)
-                {
-                    int offset = 0;
-                    int xx = x;
-                    int yy = y;
-                    if (x >= 8 && y >= 8)
-                    {
-                        offset = 64 * 3;
-                        xx %= 8;
-                        yy %= 8;
-                    }
-                    else if (x >= 8)
-                    {
-                        offset = 64;
-                        xx %= 8;
-                    }
-                    else if (y >= 8)
-                    {
-                        offset = 64 * 2;
-                        yy %= 8;
-                    }
-                    bool data = charData[print * 256 + offset + yy * 8 + xx] != 0;
-                    Console.Write(data ? '█' : ' ');
-                    Console.Write(data ? '█' : ' ');
-                }
-                Console.WriteLine('|');
-            }
             return (count, result);
         }
 
