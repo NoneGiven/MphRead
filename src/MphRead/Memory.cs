@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,6 +11,22 @@ namespace MphRead.Memory
 {
     public class Memory
     {
+        private void DoProcess()
+        {
+            CEnemy24? gorea1A = null;
+            GetEntities();
+            foreach (CEntity entity in _entities)
+            {
+                if (entity.EntityType == EntityType.EnemyInstance && entity is CEnemy24 enemy)
+                {
+                    gorea1A = enemy;
+                    break;
+                }
+            }
+            Debug.Assert(gorea1A != null);
+            _sb.AppendLine($"state {gorea1A.State}");
+        }
+
         private class AddressInfo
         {
             public int EntityListHead { get; }
@@ -91,6 +109,44 @@ namespace MphRead.Memory
             )
         };
 
+        public struct SystemInfo
+        {
+            public ushort ProcessorArchitecture;
+            public ushort Reserved;
+            public uint PageSize;
+            public IntPtr MinimumApplicationAddress;
+            public IntPtr MaximumApplicationAddress;
+            public IntPtr ActiveProcessorMask;
+            public uint NumberOfProcessors;
+            public uint ProcessorType;
+            public uint AllocationGranularity;
+            public ushort ProcessorLevel;
+            public ushort ProcessorRevision;
+        }
+
+        public struct MemoryInfo64
+        {
+            public long BaseAddress;
+            public long AllocationBase;
+            public int AllocationProtect;
+            public int Padding1;
+            public long RegionSize;
+            public int State;
+            public int Protect;
+            public int lType;
+            public int Padding2;
+        }
+
+        [DllImport("kernel32.dll")]
+        private static extern void GetSystemInfo(out SystemInfo lpSystemInfo);
+
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern int VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress,
+            out MemoryInfo64 lpBuffer, uint dwLength);
+
         [DllImport("kernel32.dll")]
         private static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress,
             [Out] byte[] lpBuffer, int nSize, out IntPtr lpNumberOfBytesRead);
@@ -98,6 +154,9 @@ namespace MphRead.Memory
         [DllImport("kernel32.dll")]
         private static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress,
             [Out] byte[] lpBuffer, int nSize, out IntPtr lpNumberOfBytesRead);
+
+        [DllImport("kernel32.dll")]
+        private static extern uint GetLastError();
 
         private readonly Process _process;
         private readonly byte[] _buffer;
@@ -117,26 +176,96 @@ namespace MphRead.Memory
         public static void Start()
         {
             // FF DE FF E7 FF DE FF E7 FF DE FF E7 @ 0x2004000
-            new Memory(Process.GetProcessById(53320)).Run();
-            /*var procs = Process.GetProcessesByName("NO$GBA").ToList();
+            //new Memory(Process.GetProcessById(17608)).Run();
+            Process? foundProcess = null;
+            DateTime startTime = DateTime.MinValue;
+            Process[] procs = Process.GetProcessesByName("NO$GBA");
             foreach (Process process in procs)
             {
-                if (!process.MainWindowTitle.Contains("Debugger"))
+                if (process.StartTime > startTime)
                 {
-                    new Memory(process).Run();
-                    return;
+                    foundProcess = process;
+                    startTime = process.StartTime;
                 }
             }
-            throw new ProgramException("Could not find process.");*/
+            if (foundProcess == null)
+            {
+                throw new ProgramException("Could not find process.");
+            }
+            new Memory(foundProcess).Run();
         }
 
         private readonly List<CEntity> _entities = new List<CEntity>();
         private readonly Dictionary<IntPtr, CEntity> _temp = new Dictionary<IntPtr, CEntity>();
 
+        private void SetBaseAddress()
+        {
+            if (!File.Exists("memory.txt"))
+            {
+                File.WriteAllText("memory.txt", "");
+            }
+            long startTime = new DateTimeOffset(_process.StartTime).ToUnixTimeMilliseconds();
+            string[] lines = File.ReadAllLines("memory.txt");
+            if (lines.Length >= 2 && Int64.TryParse(lines[0], out long timestamp)
+                && startTime == timestamp
+                && Int64.TryParse(lines[1].Replace("0x", ""), System.Globalization.NumberStyles.HexNumber, null, out long saved))
+            {
+                _baseAddress = new IntPtr(saved);
+                return;
+            }
+            Console.WriteLine("Scanning memory...");
+            // todo: no idea if this works for non-AMHP1
+            byte[] search = new byte[] { 0xFF, 0xDE, 0xFF, 0xE7, 0xFF, 0xDE, 0xFF, 0xE7, 0xFF, 0xDE, 0xFF, 0xE7 };
+            GetSystemInfo(out SystemInfo systemInfo);
+            IntPtr minAddr = systemInfo.MinimumApplicationAddress;
+            IntPtr maxAddr = systemInfo.MaximumApplicationAddress;
+            IntPtr processHandle = OpenProcess(0x10 | 0x400, false, _process.Id);
+            var memoryInfo = new MemoryInfo64();
+            while (minAddr.ToInt64() < maxAddr.ToInt64())
+            {
+                VirtualQueryEx(processHandle, minAddr, out memoryInfo, 48);
+                if (memoryInfo.Protect == 4 && memoryInfo.State == 0x1000)
+                {
+                    byte[] buffer = new byte[memoryInfo.RegionSize];
+                    var baseAddr = new IntPtr(memoryInfo.BaseAddress);
+                    bool result = ReadProcessMemory(processHandle, baseAddr, buffer, (int)memoryInfo.RegionSize, out IntPtr count);
+                    Debug.Assert(result);
+                    Debug.Assert(count.ToInt64() == memoryInfo.RegionSize);
+                    for (int i = 0; i <= buffer.Length - search.Length; i++)
+                    {
+                        // the search sequence appears twice at an offset of 0x4000. at the start of the one
+                        // we don't want is "MP HUNTERS", and at the start of the one we do want are zeroes.
+                        if (buffer.Skip(i).Take(search.Length).SequenceEqual(search)
+                            && buffer[i - 0x4000] == 0 && buffer[i - 0x4000 + 1] == 0)
+                        {
+                            _baseAddress = new IntPtr(memoryInfo.BaseAddress + i - 0x4000);
+                            File.WriteAllLines("memory.txt", new string[2]
+                            {
+                                startTime.ToString(),
+                                $"0x{_baseAddress:X2}"
+                            });
+                            return;
+                        }
+                    }
+                }
+                if (memoryInfo.RegionSize == 0)
+                {
+                    throw new ProgramException("Failed to scan memory.");
+                }
+                minAddr = new IntPtr(minAddr.ToInt64() + memoryInfo.RegionSize);
+            }
+            throw new ProgramException("Failed to find search sequence.");
+        }
+
+        private readonly CPlayer[] _players = new CPlayer[4];
+        private readonly StringBuilder _sb = new StringBuilder();
+
         private void Run()
         {
+            // todo: we should just detect the version automatically
             Addresses = AllAddresses["amhp1"];
-            _baseAddress = new IntPtr(0x995E100);
+            _baseAddress = new IntPtr(0x19E9A100);
+            SetBaseAddress();
             Task.Run(async () =>
             {
                 // 0x137A9C Cretaphid 1 crystal
@@ -147,37 +276,17 @@ namespace MphRead.Memory
                 //var results = new List<(int, int)>();
                 //string last = "";
                 string output = "";
-                var sb = new StringBuilder();
                 RefreshMemory();
-                var players = new CPlayer[]
-                {
-                    new CPlayer(this, Addresses.Players),
-                    new CPlayer(this, Addresses.Players + 0xF30),
-                    new CPlayer(this, Addresses.Players + 0xF30 * 2),
-                    new CPlayer(this, Addresses.Players + 0xF30 * 3)
-                };
-                CEnemy24? gorea1A = null;
+                _players[0] = new CPlayer(this, Addresses.Players);
+                _players[1] = new CPlayer(this, Addresses.Players + 0xF30);
+                _players[2] = new CPlayer(this, Addresses.Players + 0xF30 * 2);
+                _players[3] = new CPlayer(this, Addresses.Players + 0xF30 * 3);
                 while (true)
                 {
-                    sb.Clear();
+                    _sb.Clear();
                     RefreshMemory();
-                    // begin updates
-                    if (gorea1A == null)
-                    {
-                        GetEntities();
-                        foreach (CEntity entity in _entities)
-                        {
-                            if (entity.EntityType == EntityType.EnemyInstance && entity is CEnemy24 enemy)
-                            {
-                                gorea1A = enemy;
-                                break;
-                            }
-                        }
-                    }
-                    Debug.Assert(gorea1A != null);
-                    sb.AppendLine($"state {gorea1A.State}");
-                    // end updates
-                    string newOutput = sb.ToString();
+                    DoProcess();
+                    string newOutput = _sb.ToString();
                     if (newOutput != output)
                     {
                         output = newOutput;
@@ -193,7 +302,7 @@ namespace MphRead.Memory
         {
             bool result = ReadProcessMemory(_process.Handle, _baseAddress, _buffer, _size, out IntPtr count);
             Debug.Assert(result);
-            Debug.Assert(count.ToInt32() == _size);
+            Debug.Assert(count.ToInt64() == _size);
         }
 
         private void GetEntities()
@@ -342,7 +451,18 @@ namespace MphRead.Memory
             }
             if (type == EntityType.EnemyInstance)
             {
-                // nxtodo: enemy instance
+                var enemy = new CEnemyBase(this, address);
+                return enemy.Type switch
+                {
+                    EnemyType.Gorea1A => new CEnemy24(this, address),
+                    EnemyType.GoreaHead => new CEnemy25(this, address),
+                    EnemyType.GoreaArm => new CEnemy26(this, address),
+                    EnemyType.GoreaLeg => new CEnemy27(this, address),
+                    EnemyType.Gorea1B => new CEnemy28(this, address),
+                    EnemyType.GoreaSealSphere1 => new CEnemy29(this, address),
+                    EnemyType.Trocra => new CEnemy30(this, address),
+                    _ => enemy
+                };
             }
             if (type == EntityType.Halfturret)
             {

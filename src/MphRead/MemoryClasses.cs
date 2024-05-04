@@ -261,94 +261,94 @@ namespace MphRead.Memory
 
     public class CEnemyBase : CEntity
     {
-        private const int _off1 = 0x1C;
+        private const int _off1 = 0x18;
         public ushort Flags { get => ReadUInt16(_off1); set => WriteUInt16(_off1, value); }
 
-        private const int _off2 = 0x1E;
+        private const int _off2 = 0x1A;
         public EnemyType Type { get => (EnemyType)ReadByte(_off2); set => WriteByte(_off2, (byte)value); }
 
-        private const int _off3 = 0x1F;
+        private const int _off3 = 0x1B;
         public byte State { get => ReadByte(_off3); set => WriteByte(_off3, value); }
 
-        private const int _off4 = 0x20;
+        private const int _off4 = 0x1C;
         public byte NextSubId { get => ReadByte(_off4); set => WriteByte(_off4, value); }
 
-        private const int _off5 = 0x21;
+        private const int _off5 = 0x1D;
         public byte HealthbarMsgId { get => ReadByte(_off5); set => WriteByte(_off5, value); }
 
-        private const int _off6 = 0x22;
+        private const int _off6 = 0x1E;
         public byte TimeSinceDmg { get => ReadByte(_off6); set => WriteByte(_off6, value); }
 
-        private const int _off7 = 0x23;
+        private const int _off7 = 0x1F;
         public byte HitPlayerBits { get => ReadByte(_off7); set => WriteByte(_off7, value); }
 
-        private const int _off8 = 0x24;
+        private const int _off8 = 0x20;
         public uint Effectiveness { get => ReadUInt32(_off8); set => WriteUInt32(_off8, value); }
 
-        private const int _off9 = 0x28; // CEntity*
+        private const int _off9 = 0x24; // CEntity*
         public IntPtr Owner { get => ReadPointer(_off9); set => WritePointer(_off9, value); }
 
-        private const int _off10 = 0x2C;
+        private const int _off10 = 0x28;
         public Vector3 LinkInvPos { get => ReadVec3(_off10); set => WriteVec3(_off10, value); }
 
-        private const int _off11 = 0x38;
+        private const int _off11 = 0x34;
         public Vector3 LinkInvVec2 { get => ReadVec3(_off11); set => WriteVec3(_off11, value); }
 
-        private const int _off12 = 0x44;
+        private const int _off12 = 0x40;
         public Vector3 LinkInvVec1 { get => ReadVec3(_off12); set => WriteVec3(_off12, value); }
 
-        private const int _off13 = 0x50;
+        private const int _off13 = 0x4C;
         public Vector3 Pos { get => ReadVec3(_off13); set => WriteVec3(_off13, value); }
 
-        private const int _off14 = 0x5C;
+        private const int _off14 = 0x58;
         public Vector3 PrevPos { get => ReadVec3(_off14); set => WriteVec3(_off14, value); }
 
-        private const int _off15 = 0x68;
+        private const int _off15 = 0x64;
         public Vector3 Speed { get => ReadVec3(_off15); set => WriteVec3(_off15, value); }
 
-        private const int _off16 = 0x74;
+        private const int _off16 = 0x77;
         public Vector3 Vec2 { get => ReadVec3(_off16); set => WriteVec3(_off16, value); }
 
-        private const int _off17 = 0x80;
+        private const int _off17 = 0x7C;
         public Vector3 Vec1 { get => ReadVec3(_off17); set => WriteVec3(_off17, value); }
 
-        private const int _off18 = 0x8C;
+        private const int _off18 = 0x88;
         public int BoundingRadius { get => ReadInt32(_off18); set => WriteInt32(_off18, value); }
 
-        private const int _off19 = 0x90;
+        private const int _off19 = 0x8C;
         public CollisionVolume HurtVolUnxf { get; }
 
-        private const int _off20 = 0xD0;
+        private const int _off20 = 0xCC;
         public CollisionVolume HurtVol { get; }
 
-        private const int _off21 = 0x110;
+        private const int _off21 = 0x10C;
         public int Scale { get => ReadInt32(_off21); set => WriteInt32(_off21, value); }
 
-        private const int _off22 = 0x114;
+        private const int _off22 = 0x110;
         public ushort Health { get => ReadUInt16(_off22); set => WriteUInt16(_off22, value); }
 
-        private const int _off23 = 0x116;
+        private const int _off23 = 0x112;
         public ushort HealthMax { get => ReadUInt16(_off23); set => WriteUInt16(_off23, value); }
 
-        private const int _off24 = 0x118; // NodeRef*
+        private const int _off24 = 0x114; // NodeRef*
         public IntPtr NodeRef { get => ReadPointer(_off24); set => WritePointer(_off24, value); }
 
-        private const int _off25 = 0x11C;
+        private const int _off25 = 0x118;
         public CModel Model { get; }
 
-        private const int _off26 = 0x164;
+        private const int _off26 = 0x160;
         public SfxParameters SfxParameters { get; }
 
-        private const int _off27 = 0x168; // EnemySubroutinePtr*
+        private const int _off27 = 0x164; // EnemySubroutinePtr*
         public IntPtr Subroutine { get => ReadPointer(_off27); set => WritePointer(_off27, value); }
 
-        private const int _off28 = 0x16C;
+        private const int _off28 = 0x168;
         public ushort Unused168 { get => ReadUInt16(_off28); set => WriteUInt16(_off28, value); }
 
-        private const int _off29 = 0x16E;
+        private const int _off29 = 0x16A;
         public ushort Padding16A { get => ReadUInt16(_off29); set => WriteUInt16(_off29, value); }
 
-        private const int _off30 = 0x170;
+        private const int _off30 = 0x16C;
         public int Unused16C { get => ReadInt32(_off30); set => WriteInt32(_off30, value); }
 
         public CEnemyBase(Memory memory, int address) : base(memory, address)
