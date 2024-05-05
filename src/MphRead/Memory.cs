@@ -13,18 +13,18 @@ namespace MphRead.Memory
     {
         private void DoProcess()
         {
-            CEnemy24? gorea1A = null;
+            CEnemy29? sealSphere = null;
             GetEntities();
             foreach (CEntity entity in _entities)
             {
-                if (entity.EntityType == EntityType.EnemyInstance && entity is CEnemy24 enemy)
+                if (entity.EntityType == EntityType.EnemyInstance && entity is CEnemy29 enemy)
                 {
-                    gorea1A = enemy;
+                    sealSphere = enemy;
                     break;
                 }
             }
-            Debug.Assert(gorea1A != null);
-            _sb.AppendLine($"state {gorea1A.State}");
+            Debug.Assert(sealSphere != null);
+            _sb.AppendLine($"state {sealSphere.State}");
         }
 
         private class AddressInfo
@@ -173,7 +173,7 @@ namespace MphRead.Memory
             _buffer = new byte[_size];
         }
 
-        public static void Start()
+        public static Memory Start(bool blocking = true)
         {
             // FF DE FF E7 FF DE FF E7 FF DE FF E7 @ 0x2004000
             //new Memory(Process.GetProcessById(17608)).Run();
@@ -192,7 +192,9 @@ namespace MphRead.Memory
             {
                 throw new ProgramException("Could not find process.");
             }
-            new Memory(foundProcess).Run();
+            var memory = new Memory(foundProcess);
+            memory.Run(blocking);
+            return memory;
         }
 
         private readonly List<CEntity> _entities = new List<CEntity>();
@@ -260,13 +262,15 @@ namespace MphRead.Memory
         private readonly CPlayer[] _players = new CPlayer[4];
         private readonly StringBuilder _sb = new StringBuilder();
 
-        private void Run()
+        public Task Task { get; private set; } = null!;
+
+        private void Run(bool blocking)
         {
             // todo: we should just detect the version automatically
             Addresses = AllAddresses["amhp1"];
             _baseAddress = new IntPtr(0x19E9A100);
             SetBaseAddress();
-            Task.Run(async () =>
+            Task = Task.Run(async () =>
             {
                 // 0x137A9C Cretaphid 1 crystal
                 // 0x137B8C Cretaphid 1 laser
@@ -295,7 +299,11 @@ namespace MphRead.Memory
                     }
                     await Task.Delay(15);
                 }
-            }).GetAwaiter().GetResult();
+            });
+            if (blocking)
+            {
+                Task.GetAwaiter().GetResult();
+            }
         }
 
         private void RefreshMemory()

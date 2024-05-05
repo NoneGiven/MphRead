@@ -620,6 +620,95 @@ namespace MphRead.Memory
         }
     }
 
+    public class Enemy29Fields : MemoryClass
+    {
+        private const int _off0 = 0x0; // VecFx32*
+        public IntPtr VecsReference { get => ReadPointer(_off0); set => WritePointer(_off0, value); }
+        public StructArray<VecFx32> Vecs { get; init; }
+
+        private const int _off1 = 0x4; // MtxFx43*
+        public IntPtr MtxsReference { get => ReadPointer(_off1); set => WritePointer(_off1, value); }
+        public StructArray<MtxFx43> Mtxs { get; init; }
+
+        private const int _off2 = 0x8; // int*
+        public IntPtr IntsReference { get => ReadPointer(_off2); set => WritePointer(_off2, value); }
+        public Int32Array Ints { get; init; }
+
+        private const int _off3 = 0xC; // __int16*
+        public IntPtr ShortsReference { get => ReadPointer(_off3); set => WritePointer(_off3, value); }
+        public Int16Array Shorts { get; init; }
+
+        private const int _off4 = 0x10;
+        public Vector3 Field10 { get => ReadVec3(_off4); set => WriteVec3(_off4, value); }
+
+        private const int _off5 = 0x1C;
+        public int Count1 { get => ReadInt32(_off5); set => WriteInt32(_off5, value); }
+
+        private const int _off6 = 0x20;
+        public int Count2 { get => ReadInt32(_off6); set => WriteInt32(_off6, value); }
+
+        private const int _off7 = 0x24;
+        public int Field24 { get => ReadInt32(_off7); set => WriteInt32(_off7, value); }
+
+        private const int _off8 = 0x28;
+        public int Field28 { get => ReadInt32(_off8); set => WriteInt32(_off8, value); }
+
+        private const int _off9 = 0x2C;
+        public int Unused2C { get => ReadInt32(_off9); set => WriteInt32(_off9, value); }
+
+        private const int _off10 = 0x30;
+        public int Field30 { get => ReadInt32(_off10); set => WriteInt32(_off10, value); }
+
+        private const int _off11 = 0x34;
+        public int Field34 { get => ReadInt32(_off11); set => WriteInt32(_off11, value); }
+
+        private const int _off12 = 0x38;
+        public int Field38 { get => ReadInt32(_off12); set => WriteInt32(_off12, value); }
+
+        private const int _off13 = 0x3C;
+        public int Unused3C { get => ReadInt32(_off13); set => WriteInt32(_off13, value); }
+
+        private const int _off14 = 0x40;
+        public int Unused40 { get => ReadInt32(_off14); set => WriteInt32(_off14, value); }
+
+        private const int _off15 = 0x44;
+        public int Unused44 { get => ReadInt32(_off15); set => WriteInt32(_off15, value); }
+
+        private const int _off16 = 0x48;
+        public int Unused48 { get => ReadInt32(_off16); set => WriteInt32(_off16, value); }
+
+        private const int _off17 = 0x4C;
+        public int Unused4C { get => ReadInt32(_off17); set => WriteInt32(_off17, value); }
+
+        private const int _off18 = 0x50;
+        public int Unused50 { get => ReadInt32(_off18); set => WriteInt32(_off18, value); }
+
+        private const int _off19 = 0x54;
+        public int Unused54 { get => ReadInt32(_off19); set => WriteInt32(_off19, value); }
+
+        private const int _off20 = 0x58;
+        public int Unused58 { get => ReadInt32(_off20); set => WriteInt32(_off20, value); }
+
+        private const int _off21 = 0x5C;
+        public int Unused5C { get => ReadInt32(_off21); set => WriteInt32(_off21, value); }
+
+        public Enemy29Fields(Memory memory, int address) : base(memory, address)
+        {
+            Vecs = new StructArray<VecFx32>(memory, VecsReference, Count2, 12, (Memory m, int a) => new VecFx32(m, a));
+            Mtxs = new StructArray<MtxFx43>(memory, MtxsReference, Count1, 48, (Memory m, int a) => new MtxFx43(m, a));
+            Ints = new Int32Array(memory, IntsReference, Count1);
+            Shorts = new Int16Array(memory, ShortsReference, Count1);
+        }
+
+        public Enemy29Fields(Memory memory, IntPtr address) : base(memory, address)
+        {
+            Vecs = new StructArray<VecFx32>(memory, VecsReference, Count2, 12, (Memory m, int a) => new VecFx32(m, a));
+            Mtxs = new StructArray<MtxFx43>(memory, MtxsReference, Count1, 48, (Memory m, int a) => new MtxFx43(m, a));
+            Ints = new Int32Array(memory, IntsReference, Count1);
+            Shorts = new Int16Array(memory, ShortsReference, Count1);
+        }
+    }
+
     public class CEnemy29 : CEnemyBase
     {
         private const int _off0 = 0x170; // Model*
@@ -647,7 +736,8 @@ namespace MphRead.Memory
         public IntPtr GoreaOwner { get => ReadPointer(_off7); set => WritePointer(_off7, value); }
 
         private const int _off8 = 0x218; // Enemy29Fields*
-        public IntPtr Fields { get => ReadPointer(_off8); set => WritePointer(_off8, value); }
+        public IntPtr FieldsReference { get => ReadPointer(_off8); set => WritePointer(_off8, value); }
+        public Enemy29Fields Fields { get; init; }
 
         private const int _off9 = 0x21C;
         public ushort Field21C { get => ReadUInt16(_off9); set => WriteUInt16(_off9, value); }
@@ -701,12 +791,14 @@ namespace MphRead.Memory
         {
             MindTrick = new CModel(memory, address + _off2);
             Grapple = new CModel(memory, address + _off5);
+            Fields = new Enemy29Fields(memory, FieldsReference);
         }
 
         public CEnemy29(Memory memory, IntPtr address) : base(memory, address)
         {
             MindTrick = new CModel(memory, address + _off2);
             Grapple = new CModel(memory, address + _off5);
+            Fields = new Enemy29Fields(memory, FieldsReference);
         }
     }
 
@@ -7032,6 +7124,60 @@ namespace MphRead.Memory
 
         public EquipInfo(Memory memory, IntPtr address) : base(memory, address)
         {
+        }
+    }
+
+    public class VecFx32 : MemoryClass
+    {
+        private const int _off0 = 0x0;
+        public int X { get => ReadInt32(_off0); set => WriteInt32(_off0, value); }
+
+        private const int _off1 = 0x4;
+        public int Y { get => ReadInt32(_off1); set => WriteInt32(_off1, value); }
+
+        private const int _off2 = 0x8;
+        public int Z { get => ReadInt32(_off2); set => WriteInt32(_off2, value); }
+
+        public VecFx32(Memory memory, int address) : base(memory, address)
+        {
+        }
+
+        public VecFx32(Memory memory, IntPtr address) : base(memory, address)
+        {
+        }
+    }
+
+    public class MtxFx43 : MemoryClass
+    {
+        private const int _off0 = 0x0;
+        public Int32Array M { get; init; }
+        public VecFx32 Row0 { get; init; }
+
+        private const int _off1 = 0x4;
+        public VecFx32 Row1 { get; init; }
+
+        private const int _off2 = 0x8;
+        public VecFx32 Row2 { get; init; }
+
+        private const int _off3 = 0xC;
+        public VecFx32 Row3 { get; init; }
+
+        public MtxFx43(Memory memory, int address) : base(memory, address)
+        {
+            M = new Int32Array(memory, address + _off0, 12);
+            Row0 = new VecFx32(memory, address + _off0);
+            Row1 = new VecFx32(memory, address + _off1);
+            Row2 = new VecFx32(memory, address + _off2);
+            Row3 = new VecFx32(memory, address + _off3);
+        }
+
+        public MtxFx43(Memory memory, IntPtr address) : base(memory, address)
+        {
+            M = new Int32Array(memory, address + _off0, 12);
+            Row0 = new VecFx32(memory, address + _off0);
+            Row1 = new VecFx32(memory, address + _off1);
+            Row2 = new VecFx32(memory, address + _off2);
+            Row3 = new VecFx32(memory, address + _off3);
         }
     }
 }
