@@ -528,7 +528,7 @@ namespace MphRead.Entities.Enemies
                     Vector3 remaining = scaled - between;
                     for (int j = i; j < _grappleVecs.Length; j++)
                     {
-                        _grappleVecs[j] += remaining / 2; // sktodo: FPS stuff?
+                        _grappleVecs[j] += remaining / 2; // todo: FPS stuff
                     }
                 }
             }
@@ -790,7 +790,7 @@ namespace MphRead.Entities.Enemies
                     break;
                 }
             }
-            // we want to get one with Field186 == 0 and within a certain anglea range,
+            // we want to get one with Field186 == 0 and within a certain angle range,
             // but will settle for anything with Field186 == 0 if the second condition can't be satisfied
             if (firstDeadIndex >= 0)
             {
@@ -798,7 +798,7 @@ namespace MphRead.Entities.Enemies
                 for (i = 0; i < _scene.Entities.Count; i++)
                 {
                     EntityBase entity = _scene.Entities[i];
-                    if (entity.Type == EntityType.EnemyInstance && entity is Enemy30Entity enemy && enemy.State != 0)
+                    if (entity.Type == EntityType.EnemyInstance && entity is Enemy30Entity enemy && enemy.State == 0)
                     {
                         _trocra[firstDeadIndex] = enemy;
                         break;
