@@ -243,8 +243,7 @@ namespace MphRead.Entities.Enemies
             transform.Row2.X *= factor;
             transform.Row2.Y *= factor;
             transform.Row2.Z *= factor;
-            regenModel.Model.AnimateNodes(index: 0, false, transform, Vector3.One, regenModel.AnimInfo);
-            regenModel.Model.UpdateMatrixStack();
+            UpdateTransforms(regenModel, transform, recolor: 0);
             GetDrawItems(regenModel, 0);
         }
     }
