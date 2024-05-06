@@ -6,6 +6,8 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using MphRead.Entities;
+using MphRead.Entities.Enemies;
 
 namespace MphRead.Memory
 {
@@ -25,6 +27,11 @@ namespace MphRead.Memory
             }
             Debug.Assert(sealSphere != null);
             _sb.AppendLine($"state {sealSphere.State}");
+            if (_scene != null && _scene.TryGetEntity(EnemyType.Gorea1B, out EnemyInstanceEntity? inst)
+                && inst is Enemy28Entity gorea1b)
+            {
+                //gorea1b.DrawMemory(sealSphere);
+            }
         }
 
         private class AddressInfo
@@ -158,6 +165,7 @@ namespace MphRead.Memory
         [DllImport("kernel32.dll")]
         private static extern uint GetLastError();
 
+        private readonly Scene? _scene;
         private readonly Process _process;
         private readonly byte[] _buffer;
         private IntPtr _baseAddress;
@@ -167,13 +175,14 @@ namespace MphRead.Memory
         private const int _size = 0x400000;
         public const int Offset = 0x2000000;
 
-        private Memory(Process process)
+        private Memory(Process process, Scene? scene)
         {
             _process = process;
             _buffer = new byte[_size];
+            _scene = scene;
         }
 
-        public static Memory Start(bool blocking = true)
+        public static Memory Start(Scene? scene = null, bool blocking = true)
         {
             // FF DE FF E7 FF DE FF E7 FF DE FF E7 @ 0x2004000
             //new Memory(Process.GetProcessById(17608)).Run();
@@ -192,7 +201,7 @@ namespace MphRead.Memory
             {
                 throw new ProgramException("Could not find process.");
             }
-            var memory = new Memory(foundProcess);
+            var memory = new Memory(foundProcess, scene);
             memory.Run(blocking);
             return memory;
         }
@@ -268,7 +277,6 @@ namespace MphRead.Memory
         {
             // todo: we should just detect the version automatically
             Addresses = AllAddresses["amhp1"];
-            _baseAddress = new IntPtr(0x19E9A100);
             SetBaseAddress();
             Task = Task.Run(async () =>
             {
@@ -285,7 +293,7 @@ namespace MphRead.Memory
                 _players[1] = new CPlayer(this, Addresses.Players + 0xF30);
                 _players[2] = new CPlayer(this, Addresses.Players + 0xF30 * 2);
                 _players[3] = new CPlayer(this, Addresses.Players + 0xF30 * 3);
-                while (true)
+                while (_scene == null || !_scene.Exiting)
                 {
                     _sb.Clear();
                     RefreshMemory();

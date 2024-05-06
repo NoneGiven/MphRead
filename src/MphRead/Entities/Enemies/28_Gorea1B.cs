@@ -92,14 +92,17 @@ namespace MphRead.Entities.Enemies
                     _scene.AddEntity(sealSphere);
                     _sealSphere = sealSphere;
                 }
-                _trickModel = Read.GetModelInstance("goreaMindTrick");
-                _grappleModel = Read.GetModelInstance("goreaGrappleBeam");
+                _trickModel = SetUpModel("goreaMindTrick");
+                _grappleModel = SetUpModel("goreaGrappleBeam");
+                _trickModel.Active = false;
+                _grappleModel.Active = false;
                 // sktodo: field names (stretching speed and/or things those lines)
                 _field21E = 120 * 2; // todo: FPS stuff
                 _field24 = 0.65f; // 2662
                 _field28 = 1 / 3f; // 1365
                 _field30 = 1; // 4096
                 _field34 = 0.25f; // 1024 // todo: FPS stuff
+                ResetMaterialColors();
             }
         }
 
@@ -525,7 +528,7 @@ namespace MphRead.Entities.Enemies
                     Vector3 remaining = scaled - between;
                     for (int j = i; j < _grappleVecs.Length; j++)
                     {
-                        _grappleVecs[j] += remaining;
+                        _grappleVecs[j] += remaining / 2; // sktodo: FPS stuff?
                     }
                 }
             }
@@ -1276,6 +1279,18 @@ namespace MphRead.Entities.Enemies
             "ChestCore", "HeadFullLit"
         };
 
+        private void ResetMaterialColors()
+        {
+            for (int i = 0; i < _model.Model.Materials.Count; i++)
+            {
+                Material material = _model.Model.Materials[i];
+                if (material.Name != "L_ShoulderTarget" && material.Name != "R_ShoulderTarget" && material.Name != "BackTarget")
+                {
+                    material.AnimationFlags |= MatAnimFlags.DisableColor;
+                }
+            }
+        }
+
         private void UpdateMaterials()
         {
             for (int i = 0; i < 6; i++)
@@ -1365,8 +1380,7 @@ namespace MphRead.Entities.Enemies
                         transform.Row2.X *= distance;
                         transform.Row2.Y *= distance;
                         transform.Row2.Z *= distance;
-                        _trickModel.Model.AnimateNodes(index: 0, false, transform, Vector3.One, _trickModel.AnimInfo);
-                        _trickModel.Model.UpdateMatrixStack();
+                        UpdateTransforms(_trickModel, transform, recolor: 0);
                         GetDrawItems(_trickModel, 0);
                     }
                 }
@@ -1387,20 +1401,20 @@ namespace MphRead.Entities.Enemies
                     cross2 = cross2.Normalized();
                     cross1 = Matrix.Vec3MultMtx4(cross1, _grappleMtx);
                     cross2 = Matrix.Vec3MultMtx4(cross2, _grappleMtx);
-                    Vector3 v12 = default;
-                    Func213C238(0, ref v12);
+                    Vector3 pos = default;
+                    Func213C238(0, ref pos);
                     for (float index = 1; index < _field38; index += 1)
                     {
-                        DrawGrappleSegment(ref v12, index, cross2, cross1);
+                        DrawGrappleSegment(ref pos, index, cross2, cross1);
                     }
-                    DrawGrappleSegment(ref v12, _field38, cross2, cross1);
+                    DrawGrappleSegment(ref pos, _field38, cross2, cross1);
                 }
             }
         }
 
         // sktodo: member name
         // sktodo: (document) coming up with successive vectors based on the fractional index
-        private void Func213C238(float index, ref Vector3 v12)
+        private void Func213C238(float index, ref Vector3 pos)
         {
             Vector3 first = _grappleVecs[0];
             Vector3 last = _grappleVecs[^1];
@@ -1415,24 +1429,23 @@ namespace MphRead.Entities.Enemies
             axis *= factor;
             axis = Matrix.Vec3MultMtx4(axis, _grappleMtx);
             Vector3 vec = Func213C458(index);
-            v12 = vec + axis;
+            pos = vec + axis;
         }
 
         // sktodo: parameter and variable names
-        private void DrawGrappleSegment(ref Vector3 v12, float index, Vector3 a5, Vector3 a6)
+        private void DrawGrappleSegment(ref Vector3 pos, float index, Vector3 a5, Vector3 a6)
         {
             Vector3 vec = default;
             Func213C238(index, ref vec);
             var transform = new Matrix4(
                 new Vector4(a6, 0),
                 new Vector4(a5, 0),
-                new Vector4(vec - v12, 0),
-                new Vector4(v12, 1)
+                new Vector4(vec - pos, 0),
+                new Vector4(pos, 1)
             );
-            _grappleModel.Model.AnimateNodes(index: 0, false, transform, Vector3.One, _grappleModel.AnimInfo);
-            _grappleModel.Model.UpdateMatrixStack();
+            UpdateTransforms(_grappleModel, transform, recolor: 0);
             GetDrawItems(_grappleModel, 0);
-            v12 = vec;
+            pos = vec;
         }
 
         #region Boilerplate

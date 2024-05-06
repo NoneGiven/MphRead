@@ -19,8 +19,10 @@ namespace MphRead.Entities.Enemies
         {
         }
 
+        // skdebug
         private bool _write = true;
 
+        // skdebug
         protected void Write(string message)
         {
             if (_write)
@@ -29,6 +31,7 @@ namespace MphRead.Entities.Enemies
             }
         }
 
+        // skdebug
         protected void WriteLine(string message)
         {
             if (_write)
@@ -255,7 +258,6 @@ namespace MphRead.Entities.Enemies
         public EnemySpawnEntity Spawner => _spawner;
         private Gorea1AFlags _goreaFlags;
         private ModelInstance _regenModel = null!;
-        private ModelInstance _gorea1BModel = null!;
         private Node _spineNode = null!;
         private CollisionVolume _volume; // arena center platform
         private Enemy28Entity _gorea1B = null!;
@@ -304,8 +306,8 @@ namespace MphRead.Entities.Enemies
             _model.Model.ComputeNodeMatrices(index: 0);
             _model.SetAnimation(17, 0, _animSetNoMat);
             _model.SetAnimation(26, 1, SetFlags.Material);
-            _regenModel = Read.GetModelInstance("goreaArmRegen");
-            _gorea1BModel = Read.GetModelInstance("Gorea1B_lod0");
+            _regenModel = SetUpModel("goreaArmRegen");
+            _regenModel.Active = false;
             _spineNode = _model.Model.GetNodeByName("Spine_02")!;
             _volume = CollisionVolume.Move(new CollisionVolume(
                 _spawner.Data.Fields.S11.Sphere1Position.ToFloatVector(),
@@ -1619,14 +1621,6 @@ namespace MphRead.Entities.Enemies
                     material.AnimationFlags |= MatAnimFlags.DisableColor;
                     material.Ambient = new ColorRgb(0, 0, 0);
                     material.Diffuse = new ColorRgb(0, 0, 0);
-                }
-            }
-            for (int i = 0; i < _gorea1BModel.Model.Materials.Count; i++)
-            {
-                Material material = _model.Model.Materials[i];
-                if (material.Name != "L_ShoulderTarget" && material.Name != "R_ShoulderTarget" && material.Name != "BackTarget")
-                {
-                    material.AnimationFlags |= MatAnimFlags.DisableColor;
                 }
             }
         }

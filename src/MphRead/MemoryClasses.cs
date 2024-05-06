@@ -7153,13 +7153,13 @@ namespace MphRead.Memory
         public Int32Array M { get; init; }
         public VecFx32 Row0 { get; init; }
 
-        private const int _off1 = 0x4;
+        private const int _off1 = 0xC;
         public VecFx32 Row1 { get; init; }
 
-        private const int _off2 = 0x8;
+        private const int _off2 = 0x18;
         public VecFx32 Row2 { get; init; }
 
-        private const int _off3 = 0xC;
+        private const int _off3 = 0x24;
         public VecFx32 Row3 { get; init; }
 
         public MtxFx43(Memory memory, int address) : base(memory, address)

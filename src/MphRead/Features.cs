@@ -29,6 +29,7 @@ namespace MphRead
         public static bool FreeWeaponSelect { get; set; } = true;
         public static bool UnlimitedJumps { get; set; } = false;
         public static bool UnlockAllDoors { get; set; } = false;
-        public static bool AlwaysFightGorea2 { get; set; } = true;
+        public static bool AlwaysFightGorea2 { get; set; } = false;
+        public static bool QuadrupleDamage { get; set; } = false;
     }
 }

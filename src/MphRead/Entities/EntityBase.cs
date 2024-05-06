@@ -700,6 +700,20 @@ namespace MphRead.Entities
             );
         }
 
+        protected void AddVectorItem(Vector3 point, Vector3 vector, Vector3 color)
+        {
+            CollisionVolume volume;
+            if (vector == Vector3.Zero)
+            {
+                volume = new CollisionVolume(point, 0.15f);
+            }
+            else
+            {
+                volume = new CollisionVolume(vector.Normalized(), point, 0.25f, vector.Length);
+            }
+            AddVolumeItem(volume, color);
+        }
+
         public virtual void GetDisplayVolumes()
         {
         }

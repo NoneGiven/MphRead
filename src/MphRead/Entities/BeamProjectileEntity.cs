@@ -1561,6 +1561,12 @@ namespace MphRead.Entities
                     damage = 0;
                 }
             }
+            if (Cheats.QuadrupleDamage)
+            {
+                damage *= 4;
+                hsDamage *= 4;
+                splashDmg *= 4;
+            }
             ushort damageInterpolation = weapon.DamageInterpolations[charged ? 1 : 0];
             float maxDist = GetAmount(weapon.UnchargedDistance, weapon.MinChargeDistance, weapon.ChargedDistance) / 4096f;
             Affliction afflictions = weapon.Afflictions[charged ? 1 : 0];
