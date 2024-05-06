@@ -686,12 +686,11 @@ namespace MphRead.Entities.Enemies
         {
             if (CallSubroutine(Metadata.Enemy28Subroutines, this))
             {
-                Func2139050();
+                StopGrappling();
             }
         }
 
-        // sktodo: member name
-        private void Func2139050()
+        private void StopGrappling()
         {
             _goreaFlags &= ~Gorea1BFlags.Bit1;
             if (_grappleEffect != null)
@@ -1005,7 +1004,7 @@ namespace MphRead.Entities.Enemies
             {
                 SpawnEffect(72, _sealSphere.Position); // goreaBallExplode2
                 _model.SetAnimation(4, 0, SetFlags.All, AnimFlags.NoLoop);
-                Func2139050();
+                StopGrappling();
                 DeactivateAllTrocraSpawns();
                 DestroyAllTrocras();
                 // todo: movie and/or credits stuff
@@ -1056,7 +1055,7 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
-            Func2139050();
+            StopGrappling();
             if (--_phasesLeft <= 0)
             {
                 _soundSource.PlaySfx(SfxId.GOREA_1B_DIE2_SCR);
@@ -1113,7 +1112,7 @@ namespace MphRead.Entities.Enemies
             _field21E--;
             if (_field21E <= 0)
             {
-                Func2139050();
+                StopGrappling();
                 _field1CC = (int)(Rng.GetRandomInt2(150) + 150) * 2; // todo: FPS stuff
                 return true;
             }
@@ -1213,7 +1212,7 @@ namespace MphRead.Entities.Enemies
             }
             if (collided)
             {
-                Func2139050();
+                StopGrappling();
                 _soundSource.PlaySfx(SfxId.GOREA_ATTACK2C_SCR);
                 PlayerEntity.Main.TakeDamage(30, DamageFlags.NoDmgInvuln, null, this);
                 PlayerEntity.Main.CameraInfo.SetShake(0.75f); // 3072
