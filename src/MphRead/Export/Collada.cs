@@ -101,11 +101,11 @@ namespace MphRead.Export
                     sb.Append("\n\t\t\t<init_from>");
                     if (id <= 0)
                     {
-                        sb.Append($@"{recolor.Name}\{textureId}-{paletteId}.png");
+                        sb.Append($"{recolor.Name}/{textureId}-{paletteId}.png");
                     }
                     else
                     {
-                        sb.Append($@"{recolor.Name}\anim__{id.ToString().PadLeft(3, '0')}.png");
+                        sb.Append($"{recolor.Name}/anim__{id.ToString().PadLeft(3, '0')}.png");
                     }
                     sb.Append("</init_from>\n\t\t</image>");
                 }
