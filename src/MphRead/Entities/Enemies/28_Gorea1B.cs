@@ -48,6 +48,11 @@ namespace MphRead.Entities.Enemies
         public Enemy28Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
             : base(data, nodeRef, scene)
         {
+            // state 5: seeking with grapple beam
+            // state 6: grabbing player with grapple beam
+            // state 7: swinging player with grapple beam
+            // state 8: raising player up with grapple beam
+            // state 9: slamming player down with grapple beam
             _stateProcesses = new Action[14]
             {
                 State00, State01, State02, State03, State04,
@@ -321,7 +326,7 @@ namespace MphRead.Entities.Enemies
         private void State05()
         {
             Func2139F54();
-            Func213B4A0();
+            UpdateGrappleDrawValues();
             Func213B90C();
             if (AnimationEnded())
             {
@@ -330,19 +335,17 @@ namespace MphRead.Entities.Enemies
             CallSubroutine(Metadata.Enemy28Subroutines, this);
         }
 
-        // sktodo: member name
-        private void Func213B4A0()
+        private void UpdateGrappleDrawValues()
         {
             if (_grappling)
             {
                 _grappleVecs[0] = _sealSphere.Position;
-                Func213B4F8();
-                Func213C814();
+                UpdateGrappleDrawMatrix();
+                UpdateGrappleDrawInt();
             }
         }
 
-        // sktodo: member name
-        private void Func213B4F8()
+        private void UpdateGrappleDrawMatrix()
         {
             // todo: implement "count_1" to support multiple grapple beams?
             Vector3 between = _grappleVecs[^1] - _grappleVecs[0];
@@ -363,7 +366,7 @@ namespace MphRead.Entities.Enemies
         }
 
         // sktodo: member name
-        private void Func213C814()
+        private void UpdateGrappleDrawInt()
         {
             if ((int)_field38 < _grappleVecs.Length - 1)
             {
@@ -472,7 +475,7 @@ namespace MphRead.Entities.Enemies
 
         private void State06()
         {
-            Func213B4A0();
+            UpdateGrappleDrawValues();
             _field10 = new Vector3(0, 1 / 30f, 0); // 136
             Func213B678();
             Func213B7E0();
@@ -603,7 +606,7 @@ namespace MphRead.Entities.Enemies
         private void State07()
         {
             Func213B678();
-            Func213B4A0();
+            UpdateGrappleDrawValues();
             Vector3 between;
             if (_goreaFlags.TestFlag(Gorea1BFlags.Bit3))
             {
@@ -648,7 +651,7 @@ namespace MphRead.Entities.Enemies
 
         private void State08()
         {
-            Func213B4A0();
+            UpdateGrappleDrawValues();
             _field10 = new Vector3(0, 1 / 15f, 0); // 273
             Func213B678();
             Func213B7E0();
@@ -658,7 +661,7 @@ namespace MphRead.Entities.Enemies
 
         private void State09()
         {
-            Func213B4A0();
+            UpdateGrappleDrawValues();
             Func213C4DC();
             TickGrappleDamage();
             Func213C624(Fixed.ToFloat(2986));

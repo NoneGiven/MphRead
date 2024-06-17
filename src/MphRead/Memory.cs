@@ -6,32 +6,44 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using MphRead.Entities;
-using MphRead.Entities.Enemies;
 
 namespace MphRead.Memory
 {
     public class Memory
     {
+        // sktodo: set up a frame readout to capture all relevant values (state, grapple fields, field10, field38, etc.)
+        // used in states 6/7/8/9 as well as the player position results and so on. record data based on the
+        // the in-game frame counter changing; if we just use Task Delay 1 or something it should be good.
+        // we need to make sure we aren't reading anything while the emulator is running the frame, but
+        // I also don't want to have to tab back and forth...
+        // - set breakpoint on process_frame or something else that only happens once per actual frame
+        // - tab back and forth, I guess -- should only have to do this once
+        // --> the goal is to track each change so we can confirm the math, and then also confirm FPS stuff
+        // --> if the per-frame math isn't working out, then we'll need to trace some individual frames
         private void DoProcess()
         {
+            CEnemy28? gorea1b = null;
             CEnemy29? sealSphere = null;
             GetEntities();
             foreach (CEntity entity in _entities)
             {
-                if (entity.EntityType == EntityType.EnemyInstance && entity is CEnemy29 enemy)
+                if (entity.EntityType == EntityType.EnemyInstance && entity is CEnemy28 gorea)
+                {
+                    gorea1b = gorea;
+                }
+                else if (entity.EntityType == EntityType.EnemyInstance && entity is CEnemy29 enemy)
                 {
                     sealSphere = enemy;
-                    break;
                 }
             }
             Debug.Assert(sealSphere != null);
-            _sb.AppendLine($"state {sealSphere.State}");
-            if (_scene != null && _scene.TryGetEntity(EnemyType.Gorea1B, out EnemyInstanceEntity? inst)
-                && inst is Enemy28Entity gorea1b)
-            {
-                //gorea1b.DrawMemory(sealSphere);
-            }
+            Debug.Assert(gorea1b != null);
+            _sb.AppendLine($"state {gorea1b.State}");
+            //if (_scene != null && _scene.TryGetEntity(EnemyType.Gorea1B, out EnemyInstanceEntity? inst)
+            //    && inst is Enemy28Entity gorea1b)
+            //{
+            //    gorea1b.DrawMemory(sealSphere);
+            //}
         }
 
         private class AddressInfo
