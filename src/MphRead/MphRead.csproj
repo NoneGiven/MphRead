@@ -10,9 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Export\modules2\__pycache__\**" />
-    <EmbeddedResource Remove="Export\modules2\__pycache__\**" />
-    <None Remove="Export\modules2\__pycache__\**" />
+    <Compile Remove="Export\modules\__pycache__\**" />
+    <EmbeddedResource Remove="Export\modules\__pycache__\**" />
+    <None Remove="Export\modules\__pycache__\**" />
   </ItemGroup>
 
   <ItemGroup>
