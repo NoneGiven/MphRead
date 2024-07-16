@@ -179,7 +179,10 @@ namespace MphRead.Export
             sb.AppendLine("bpy.ops.wm.collada_import(filepath =");
             sb.AppendIndent();
             sb.AppendIndent();
-            sb.AppendLine($"fr'{daePath}')");
+            // this will break if the path contains three consecutive apostrophes, but that's probably not going to happen.
+            // the correct way to do it would be to use a non-raw string with escaped backslashes and apostrophes, but that
+            // would mean that paths (esp. windows paths) couldn't be easily pasted in to manually update the script.
+            sb.AppendLine($"fr'''{daePath}''')");
             sb.AppendIndent();
             sb.AppendLine("set_common()");
             var invertMeshIds = new HashSet<int>();
