@@ -179,7 +179,7 @@ namespace MphRead.Export
             sb.AppendLine("bpy.ops.wm.collada_import(filepath =");
             sb.AppendIndent();
             sb.AppendIndent();
-            sb.AppendLine($"fr'{daePath}')");
+            sb.AppendLine($"fr\"{daePath}\")");
             sb.AppendIndent();
             sb.AppendLine("set_common()");
             var invertMeshIds = new HashSet<int>();
