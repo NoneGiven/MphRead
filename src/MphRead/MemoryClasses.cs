@@ -85,12 +85,12 @@ namespace MphRead.Memory
 
         protected void WriteSByte(int offset, sbyte value)
         {
-            _memory.WriteMemory(Address + offset, BitConverter.GetBytes(value), sizeof(sbyte));
+            _memory.WriteMemory(Address + offset, new byte[] { (byte)value }, sizeof(sbyte));
         }
 
         protected void WriteByte(int offset, byte value)
         {
-            _memory.WriteMemory(Address + offset, BitConverter.GetBytes(value), sizeof(byte));
+            _memory.WriteMemory(Address + offset, new byte[] { value }, sizeof(byte));
         }
 
         protected void WriteInt16(int offset, short value)

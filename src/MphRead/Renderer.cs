@@ -1372,7 +1372,7 @@ namespace MphRead
             GL.DepthMask(true);
             GL.Disable(EnableCap.AlphaTest);
             GL.Disable(EnableCap.StencilTest);
-            GL.PolygonMode(MaterialFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
+            GL.PolygonMode(TriangleFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
 
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
             {
@@ -1487,7 +1487,7 @@ namespace MphRead
             if (_faceCulling)
             {
                 GL.Enable(EnableCap.CullFace);
-                GL.CullFace(CullFaceMode.Back);
+                GL.CullFace(TriangleFace.Back);
             }
             return true;
         }
@@ -2934,14 +2934,14 @@ namespace MphRead
                 }
                 else if (item.CullingMode == CullingMode.Back)
                 {
-                    GL.CullFace(CullFaceMode.Back);
+                    GL.CullFace(TriangleFace.Back);
                 }
                 else if (item.CullingMode == CullingMode.Front)
                 {
-                    GL.CullFace(CullFaceMode.Front);
+                    GL.CullFace(TriangleFace.Front);
                 }
             }
-            GL.PolygonMode(MaterialFace.FrontAndBack,
+            GL.PolygonMode(TriangleFace.FrontAndBack,
                 _wireframe || item.Wireframe
                 ? OpenTK.Graphics.OpenGL.PolygonMode.Line
                 : OpenTK.Graphics.OpenGL.PolygonMode.Fill);
@@ -3284,7 +3284,7 @@ namespace MphRead
             if (_faceCulling)
             {
                 GL.Enable(EnableCap.CullFace);
-                GL.CullFace(CullFaceMode.Back);
+                GL.CullFace(TriangleFace.Back);
             }
             GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref identity);
             var orthoMatrix = Matrix4.CreateOrthographic(Size.X, Size.Y, 0.5f, 1.5f);

@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using MphRead.Export;
 
 namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 26, 2, 0);
+        public static Version Version { get; } = new Version(0, 27, 0, 0);
         private static readonly Version _minExtractVersion = new Version(0, 19, 0, 0);
 
         private static void Main(string[] args)
@@ -36,8 +37,19 @@ namespace MphRead
             }
             else if (TryGetString(arguments, "export", "e", out string? exportValue))
             {
-                bool firstHunt = arguments.Any(a => a.Name == "fh");
-                Read.ReadAndExport(exportValue, firstHunt);
+                if (exportValue.ToLower() == "layer2d")
+                {
+                    Images.ExportHudLayers();
+                }
+                else if (exportValue.ToLower() == "object2d")
+                {
+                    Images.ExportHudObjects();
+                }
+                else
+                {
+                    bool firstHunt = arguments.Any(a => a.Name == "fh");
+                    Read.ReadAndExport(exportValue, firstHunt);
+                }
             }
             else if (TryGetString(arguments, "extract", "x", out string? extractValue))
             {
@@ -223,7 +235,7 @@ namespace MphRead
                 for (int i = 0; i < args.Length; i++)
                 {
                     string arg = args[i];
-                    if (arg.StartsWith("-") && arg.Length > 1)
+                    if (arg.StartsWith('-') && arg.Length > 1)
                     {
                         arg = arg[1..];
                         if (i == args.Length - 1)
@@ -233,14 +245,14 @@ namespace MphRead
                         else
                         {
                             string valueOne = args[i + 1];
-                            if (valueOne.StartsWith("-"))
+                            if (valueOne.StartsWith('-'))
                             {
                                 arguments.Add(new Argument(arg, null));
                             }
                             else
                             {
                                 string? valueTwo = null;
-                                if (i < args.Length - 2 && !args[i + 2].StartsWith("-"))
+                                if (i < args.Length - 2 && !args[i + 2].StartsWith('-'))
                                 {
                                     valueTwo = args[i + 2];
                                     i++;
@@ -258,6 +270,7 @@ namespace MphRead
         [DoesNotReturn]
         private static void Exit()
         {
+            Nop();
             Console.WriteLine("MphRead usage:");
             Console.WriteLine("    -room <room_name -or- room_id>");
             Console.WriteLine("    -model <model_name> [recolor_index]");
