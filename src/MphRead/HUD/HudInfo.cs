@@ -794,12 +794,15 @@ namespace MphRead.Hud
             Nop();
         }
 
-        public static void TestObjects(string? filename, int pInitial, int pStart, int pTimer, int pTarget)
+        public static void TestObjects(string? filename, int pInitial, int pStart, int pTimer, int pTarget,
+            bool export = false)
         {
+            // for ease of palette sharing, hud_msgBox needs to come before message_spacer,
+            // and each hud_targetcircle needs to come before each hud_snipercircle
             var files = new List<string>()
             {
-                "_archives/spSamus/message_spacer.bin",
                 "_archives/spSamus/hud_msgBox.bin",
+                "_archives/spSamus/message_spacer.bin",
                 "_archives/spSamus/message_pickupframe.bin",
                 "_archives/spSamus/message_pickups.bin",
                 "_archives/spSamus/message_crystalpickup.bin",
@@ -967,13 +970,25 @@ namespace MphRead.Hud
                 "_archives/localWeavel/rad_lights.bin",
                 "_archives/localWeavel/rad_ammobar.bin"
             };
+            IReadOnlyDictionary<string, IReadOnlyList<int>> exportPalettes = new Dictionary<string, IReadOnlyList<int>>() {
+                { "hud_etank", new List<int>() { 0, 1, 2 } },
+                { "hud_ammobar", new List<int>() { 0, 1, 2 } },
+                { "hud_energybar", new List<int>() { 0, 1, 2 } },
+                { "hud_energybar2", new List<int>() { 0, 1, 2 } },
+                { "hud_msgBox", new List<int>() { 0, 2, 3 } },
+                { "message_spacer", new List<int>() { 0, 2, 3 } },
+                { "rad_wepsel", new List<int>() { 0, 1 } }
+            };
             if (filename != null)
             {
                 files.Clear();
                 files.Add(filename);
             }
+            IReadOnlyList<ushort>? targetCirclePalColors = null;
+            IReadOnlyList<ushort>? messageBoxPalColors = null;
             foreach (string file in files)
             {
+                string name = file.Split('/').Last().Split('.')[0];
                 var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(Paths.FileSystem, file)));
                 UiObjectHeader header = Read.ReadStruct<UiObjectHeader>(bytes);
                 int offset = _objHeaderSize;
@@ -993,6 +1008,25 @@ namespace MphRead.Hud
                 IReadOnlyList<ushort> paletteData = Read.DoOffsets<ushort>(bytes, offset, header.PalDataSize / 2);
                 offset += header.PalDataSize;
                 Debug.Assert(offset == bytes.Length);
+
+                if (name == "hud_targetcircle")
+                {
+                    targetCirclePalColors = paletteData;
+                }
+                else if (name == "hud_snipercircle")
+                {
+                    Debug.Assert(targetCirclePalColors != null);
+                    paletteData = targetCirclePalColors;
+                }
+                else if (name == "hud_msgBox")
+                {
+                    messageBoxPalColors = paletteData;
+                }
+                else if (name == "message_spacer")
+                {
+                    Debug.Assert(messageBoxPalColors != null);
+                    paletteData = messageBoxPalColors;
+                }
 
                 if (filename != null)
                 {
@@ -1039,17 +1073,12 @@ namespace MphRead.Hud
                     }
                     characters.Add(palChars);
                 }
-                //for (int i = 0; i < characters.Count; i++)
-                //{
-                //    List<ColorRgba> character = characters[i];
-                //    string filename = $"{i.ToString().PadLeft(3, '0')}";
-                //    Export.Images.SaveTexture(Paths.Combine(Paths.Export, "_ice"), filename, 8, 8, character);
-                //}
                 UiOamAttrs attrs = oamAttrs[0];
                 Debug.Assert(attrs.CharacterId == 0);
                 if (attrs.PaletteId != 0)
                 {
-                    Console.WriteLine(file);
+                    // 1 for rad_wepsel in localSamus, localKanden, and localWeavel
+                    //Console.WriteLine(file);
                 }
                 Debug.Assert(!attrs.FlipHorizontal);
                 Debug.Assert(!attrs.FlipVertical);
@@ -1093,11 +1122,23 @@ namespace MphRead.Hud
                                 }
                             }
                         }
-                        string dir = file.Replace("_archives/", "").Replace(".bin", "");
-                        dir = Paths.Combine(Paths.Export, "_2D/Objects", dir, $"pal_{p.ToString().PadLeft(2, '0')}");
-                        //Directory.CreateDirectory(dir);
-                        string name = i.ToString().PadLeft(3, '0');
-                        //Export.Images.SaveTexture(dir, name, texWidth, texHeight, texture);
+                        if (export)
+                        {
+                            bool skip = p != 0;
+                            if (exportPalettes.TryGetValue(name, out IReadOnlyList<int>? exportPalette))
+                            {
+                                skip = !exportPalette.Contains(p);
+                            }
+                            if (!skip)
+                            {
+                                string dir = file.Replace("_archives/", "").Replace(".bin", "");
+                                dir = Paths.Combine(Paths.Export, "_2D/Objects", dir, $"pal_{p.ToString().PadLeft(2, '0')}");
+                                Directory.CreateDirectory(dir);
+                                string number = i.ToString().PadLeft(3, '0');
+                                Export.Images.SaveTexture(dir, number, texWidth, texHeight, texture);
+                            }
+                        }
+
                     }
                 }
                 Nop();
@@ -1105,7 +1146,7 @@ namespace MphRead.Hud
             Nop();
         }
 
-        public static void TestLayers()
+        public static void TestLayers(bool exportScreens = false, bool exportChars = false)
         {
             var files = new List<string>()
             {
@@ -1292,15 +1333,26 @@ namespace MphRead.Hud
                     }
                 }
                 string name = file.Replace("/", "--");
-                //Export.Images.SaveTexture(Paths.Combine(Paths.Export, @"_2D\layertest"), name, width, height, texture);
-
-                for (int i = 0; i < characters.Count; i++)
+                if (exportChars)
                 {
-                    List<ColorRgba> character = characters[i];
-                    string filename = $"{i.ToString().PadLeft(3, '0')}";
-                    //Export.Images.SaveTexture(Paths.Combine(Paths.Export, "_ice"), filename, 8, 8, character);
+                    string directory = Paths.Combine(Paths.Export, @"_2D\Layers", name);
+                    Directory.CreateDirectory(directory);
+                    Export.Images.SaveTexture(directory, name, width, height, texture);
+                    directory = Paths.Combine(directory, "Characters");
+                    Directory.CreateDirectory(directory);
+                    for (int i = 0; i < characters.Count; i++)
+                    {
+                        List<ColorRgba> character = characters[i];
+                        string filename = $"{i.ToString().PadLeft(3, '0')}";
+                        Export.Images.SaveTexture(directory, filename, 8, 8, character);
+                    }
                 }
-
+                else if (exportScreens)
+                {
+                    string directory = Paths.Combine(Paths.Export, @"_2D\Layers");
+                    Directory.CreateDirectory(directory);
+                    Export.Images.SaveTexture(directory, name, width, height, texture);
+                }
                 offset += info.ScrDataSize;
                 Debug.Assert(Read.DoOffsets<byte>(bytes, offset, bytes.Length - offset).All(x => x == 0));
                 Nop();

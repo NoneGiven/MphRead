@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using MphRead.Hud;
 using OpenTK.Graphics.OpenGL;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
@@ -175,6 +176,16 @@ namespace MphRead.Export
                 image[p % width, p / width] = new Rgba32(pixel.Red, pixel.Green, pixel.Blue, pixel.Alpha);
             }
             image.SaveAsPng(imagePath);
+        }
+
+        public static void ExportHudLayers()
+        {
+            HudInfo.TestLayers(exportScreens: true);
+        }
+
+        public static void ExportHudObjects()
+        {
+            HudInfo.TestObjects(null, 0, 0, 0, 0, export: true);
         }
     }
 }

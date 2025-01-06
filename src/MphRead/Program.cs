@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using MphRead.Export;
 
 namespace MphRead
 {
@@ -36,8 +37,19 @@ namespace MphRead
             }
             else if (TryGetString(arguments, "export", "e", out string? exportValue))
             {
-                bool firstHunt = arguments.Any(a => a.Name == "fh");
-                Read.ReadAndExport(exportValue, firstHunt);
+                if (exportValue.ToLower() == "layer2d")
+                {
+                    Images.ExportHudLayers();
+                }
+                else if (exportValue.ToLower() == "object2d")
+                {
+                    Images.ExportHudObjects();
+                }
+                else
+                {
+                    bool firstHunt = arguments.Any(a => a.Name == "fh");
+                    Read.ReadAndExport(exportValue, firstHunt);
+                }
             }
             else if (TryGetString(arguments, "extract", "x", out string? extractValue))
             {
