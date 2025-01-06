@@ -75,13 +75,13 @@ namespace MphRead
             }
 
             byte[] sizeBytes = new byte[3];
-            instream.Read(sizeBytes, 0, 3);
+            instream.ReadExactly(sizeBytes, 0, 3);
             int decompressedSize = ToNDSu24(sizeBytes, 0);
             readBytes += 4;
             if (decompressedSize == 0)
             {
                 sizeBytes = new byte[4];
-                instream.Read(sizeBytes, 0, 4);
+                instream.ReadExactly(sizeBytes, 0, 4);
                 decompressedSize = ToNDSs32(sizeBytes, 0);
                 readBytes += 4;
             }
@@ -370,7 +370,7 @@ namespace MphRead
             byte[] buffer = new byte[4];
             try
             {
-                instream.Read(buffer, 0, 4);
+                instream.ReadExactly(buffer, 0, 4);
             }
             catch (EndOfStreamException)
             {
@@ -392,7 +392,7 @@ namespace MphRead
                 instream.Position -= inLength;
                 // no buffering -> slow
                 buffer = new byte[inLength - 4];
-                instream.Read(buffer, 0, (int)(inLength - 4));
+                instream.ReadExactly(buffer, 0, (int)(inLength - 4));
                 outstream.Write(buffer, 0, (int)(inLength - 4));
 
                 // make sure the input is positioned at the end of the file
@@ -410,7 +410,7 @@ namespace MphRead
 
                 // then the compressed data size.
                 instream.Position -= 4;
-                instream.Read(buffer, 0, 3);
+                instream.ReadExactly(buffer, 0, 3);
                 int compressedSize = buffer[0] | (buffer[1] << 8) | (buffer[2] << 16);
 
                 // the compressed size sometimes is the file size.
@@ -424,7 +424,7 @@ namespace MphRead
                 // copy the non-compressed data first.
                 buffer = new byte[inLength - headerSize - compressedSize];
                 instream.Position -= (inLength - 5);
-                instream.Read(buffer, 0, buffer.Length);
+                instream.ReadExactly(buffer, 0, buffer.Length);
                 outstream.Write(buffer, 0, buffer.Length);
 
                 #endregion
@@ -432,7 +432,7 @@ namespace MphRead
                 // buffer the compressed data, such that we don't need to keep
                 // moving the input stream position back and forth
                 buffer = new byte[compressedSize];
-                instream.Read(buffer, 0, compressedSize);
+                instream.ReadExactly(buffer, 0, compressedSize);
 
                 // we're filling the output from end to start, so we can't directly write the data.
                 // buffer it instead (also use this data as buffer instead of a ring-buffer for
@@ -575,7 +575,7 @@ namespace MphRead
 
             // read the input and reverse it
             byte[] indata = new byte[inLength];
-            instream.Read(indata, 0, (int)inLength);
+            instream.ReadExactly(indata, 0, (int)inLength);
             Array.Reverse(indata);
 
             var inMemStream = new MemoryStream(indata);
