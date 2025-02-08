@@ -17,16 +17,16 @@ namespace MphRead.Formats.Sound
 
         public static void ExportWfsSamples(bool adpcmRoundingError = false)
         {
-            ExportSamples(ReadWfsSoundSamples(), adpcmRoundingError);
+            ExportSamples(ReadWfsSoundSamples(), adpcmRoundingError, suffix: "_wfs");
         }
 
-        private static void ExportSamples(IReadOnlyList<SoundSample> samples, bool adpcmRoundingError)
+        private static void ExportSamples(IReadOnlyList<SoundSample> samples, bool adpcmRoundingError, string? suffix = null)
         {
             foreach (SoundSample sample in samples)
             {
                 try
                 {
-                    ExportSample(sample, adpcmRoundingError);
+                    ExportSample(sample, adpcmRoundingError, suffix);
                 }
                 catch (WaveExportException ex)
                 {
@@ -141,7 +141,8 @@ namespace MphRead.Formats.Sound
             }
             else
             {
-                Debug.Assert(format == WaveFormat.PCM8);
+                Debug.Assert(format == WaveFormat.PCM8
+                    || format == WaveFormat.None && sampleCount == 0 && data.Length == 0);
                 for (int i = 0; i < sampleCount; i++)
                 {
                     writer.Write((byte)(data[i] ^ 0x80));
@@ -168,15 +169,15 @@ namespace MphRead.Formats.Sound
         }
 
         // MPH uses ADPCM, FH uses ADPCM and PCM8
-        private static void ExportSample(SoundSample sample, bool adpcmRoundingError = false)
+        private static void ExportSample(SoundSample sample, bool adpcmRoundingError = false, string? suffix = null)
         {
             string id = sample.Id.ToString().PadLeft(3, '0');
             byte[] waveData = GetWaveData(sample, adpcmRoundingError);
-            ExportAudio(waveData, GetSampleCount(sample), sample.SampleRate, sample.Format, id);
+            ExportAudio(waveData, GetSampleCount(sample), sample.SampleRate, sample.Format, id, suffix);
         }
 
         private static void ExportAudio(ReadOnlySpan<byte> waveData, uint sampleCount, ushort sampleRate,
-            WaveFormat format, string name)
+            WaveFormat format, string name, string? suffix = null)
         {
             if (waveData.Length == 0)
             {
@@ -192,7 +193,7 @@ namespace MphRead.Formats.Sound
             uint decodedSize = sampleCount * (bps / 8);
             string path = Paths.Combine(Paths.Export, "_SFX");
             Directory.CreateDirectory(path);
-            path = Paths.Combine(path, $"{name}.wav");
+            path = Paths.Combine(path, $"{name + suffix}.wav");
             using FileStream file = File.OpenWrite(path);
             using var writer = new BinaryWriter(file);
             writer.WriteC("RIFF");
@@ -613,6 +614,15 @@ namespace MphRead.Formats.Sound
             }
             Debug.Assert(filesRead == fileHeader.Count);
             return new SoundData(streams);
+        }
+
+        public static void ExportStreams()
+        {
+            SoundData soundData = ReadSdat();
+            foreach (SoundStream stream in soundData.Streams)
+            {
+                ExportStream(stream);
+            }
         }
 
         public static void ExportStream(SoundStream stream)
