@@ -10,7 +10,7 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 28, 0, 0);
+        public static Version Version { get; } = new Version(0, 28, 1, 0);
         private static readonly Version _minExtractVersion = new Version(0, 19, 0, 0);
 
         private static void Main(string[] args)
@@ -57,6 +57,10 @@ namespace MphRead
                 else if (exportValue.ToLower() == "strm")
                 {
                     SoundRead.ExportStreams();
+                }
+                else if (exportValue.ToLower() == "fhsfx")
+                {
+                    SoundRead.ExportAllFh ();
                 }
                 else
                 {
