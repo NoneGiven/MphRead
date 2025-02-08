@@ -108,7 +108,8 @@ def cleanup():
 def set_common():
     for material in get_materials():
         material.get_bsdf_input('Specular IOR Level', 'Specular').default_value = 0
-        material.shadow_method = 'NONE'
+        if hasattr(material, 'shadow_method'):
+            material.shadow_method = 'NONE'
         set_vertex_colors(material)
         
 def set_vertex_colors(material):
