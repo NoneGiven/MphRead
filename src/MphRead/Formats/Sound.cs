@@ -12,21 +12,21 @@ namespace MphRead.Formats.Sound
     {
         public static void ExportSamples(bool adpcmRoundingError = false)
         {
-            ExportSamples(ReadSoundSamples(), adpcmRoundingError);
+            ExportSamples(ReadSoundSamples(), adpcmRoundingError, prefix: "mph_");
         }
 
         public static void ExportWfsSamples(bool adpcmRoundingError = false)
         {
-            ExportSamples(ReadWfsSoundSamples(), adpcmRoundingError, suffix: "_wfs");
+            ExportSamples(ReadWfsSoundSamples(), adpcmRoundingError, prefix: "mph_wfs_");
         }
 
-        private static void ExportSamples(IReadOnlyList<SoundSample> samples, bool adpcmRoundingError, string? suffix = null)
+        private static void ExportSamples(IReadOnlyList<SoundSample> samples, bool adpcmRoundingError, string? prefix = null)
         {
             foreach (SoundSample sample in samples)
             {
                 try
                 {
-                    ExportSample(sample, adpcmRoundingError, suffix);
+                    ExportSample(sample, adpcmRoundingError, prefix);
                 }
                 catch (WaveExportException ex)
                 {
@@ -169,15 +169,15 @@ namespace MphRead.Formats.Sound
         }
 
         // MPH uses ADPCM, FH uses ADPCM and PCM8
-        private static void ExportSample(SoundSample sample, bool adpcmRoundingError = false, string? suffix = null)
+        private static void ExportSample(SoundSample sample, bool adpcmRoundingError = false, string? prefix = null)
         {
             string id = sample.Id.ToString().PadLeft(3, '0');
             byte[] waveData = GetWaveData(sample, adpcmRoundingError);
-            ExportAudio(waveData, GetSampleCount(sample), sample.SampleRate, sample.Format, id, suffix);
+            ExportAudio(waveData, GetSampleCount(sample), sample.SampleRate, sample.Format, id, prefix);
         }
 
         private static void ExportAudio(ReadOnlySpan<byte> waveData, uint sampleCount, ushort sampleRate,
-            WaveFormat format, string name, string? suffix = null)
+            WaveFormat format, string name, string? prefix = null)
         {
             if (waveData.Length == 0)
             {
@@ -193,7 +193,7 @@ namespace MphRead.Formats.Sound
             uint decodedSize = sampleCount * (bps / 8);
             string path = Paths.Combine(Paths.Export, "_SFX");
             Directory.CreateDirectory(path);
-            path = Paths.Combine(path, $"{name + suffix}.wav");
+            path = Paths.Combine(path, $"{prefix + name}.wav");
             using FileStream file = File.OpenWrite(path);
             using var writer = new BinaryWriter(file);
             writer.WriteC("RIFF");
