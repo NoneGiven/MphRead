@@ -7,24 +7,32 @@ namespace MphRead.Formats.Sound
 {
     public static partial class SoundRead
     {
+        public static void ExportAllFh(bool adpcmRoundingError = false)
+        {
+            ExportFhBgm(adpcmRoundingError);
+            ExportFhGlobalSfx(adpcmRoundingError);
+            ExportFhMenuSfx(adpcmRoundingError);
+            ExportFhSfx(adpcmRoundingError);
+        }
+
         public static void ExportFhSfx(bool adpcmRoundingError = false)
         {
-            ExportSamples(ReadFhSfx(), adpcmRoundingError);
+            ExportSamples(ReadFhSfx(), adpcmRoundingError, prefix: "fh_");
         }
 
         public static void ExportFhBgm(bool adpcmRoundingError = false)
         {
-            ExportSamples(ReadFhBgm(), adpcmRoundingError);
+            ExportSamples(ReadFhBgm(), adpcmRoundingError, prefix: "fh_bgm_");
         }
 
         public static void ExportFhMenuSfx(bool adpcmRoundingError = false)
         {
-            ExportSamples(ReadFhMenuSfx(), adpcmRoundingError);
+            ExportSamples(ReadFhMenuSfx(), adpcmRoundingError, prefix: "fh_menu_");
         }
 
         public static void ExportFhGlobalSfx(bool adpcmRoundingError = false)
         {
-            ExportSamples(ReadFhGlobalSfx(), adpcmRoundingError);
+            ExportSamples(ReadFhGlobalSfx(), adpcmRoundingError, prefix: "fh_lid_");
         }
 
         public static IReadOnlyList<SoundSample> ReadFhSfx()

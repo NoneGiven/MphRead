@@ -4,12 +4,13 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using MphRead.Export;
+using MphRead.Formats.Sound;
 
 namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 27, 1, 0);
+        public static Version Version { get; } = new Version(0, 28, 2, 0);
         private static readonly Version _minExtractVersion = new Version(0, 19, 0, 0);
 
         private static void Main(string[] args)
@@ -44,6 +45,22 @@ namespace MphRead
                 else if (exportValue.ToLower() == "object2d")
                 {
                     Images.ExportHudObjects();
+                }
+                else if (exportValue.ToLower() == "sfx")
+                {
+                    SoundRead.ExportSamples();
+                }
+                else if (exportValue.ToLower() == "wfs")
+                {
+                    SoundRead.ExportWfsSamples();
+                }
+                else if (exportValue.ToLower() == "strm")
+                {
+                    SoundRead.ExportStreams();
+                }
+                else if (exportValue.ToLower() == "fhsfx")
+                {
+                    SoundRead.ExportAllFh ();
                 }
                 else
                 {
