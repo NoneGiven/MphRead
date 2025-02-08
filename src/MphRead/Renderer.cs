@@ -4759,7 +4759,7 @@ namespace MphRead
             {
                 Close();
             });
-            Memory.Memory.Start(Scene, blocking: false);
+            Memory.Memory.Start(Scene, blocking: false); // sktodo
         }
 
         protected override void OnClosing(CancelEventArgs e)
