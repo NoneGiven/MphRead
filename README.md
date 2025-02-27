@@ -32,7 +32,7 @@ With a recent version of [Visual Studio 2022](https://visualstudio.microsoft.com
 
 ### Without Visual Studio
 
-- Install the [.NET 6.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/6.0).
+- Install the .NET SDK. The [latest stable version](https://dotnet.microsoft.com/en-us/download/dotnet/latest) is recommended, while the minimum required version is [.NET 7.0](https://dotnet.microsoft.com/en-us/download/dotnet/7.0).
 - Run `dotnet build` in the `src/MphRead` directory.
 
 ## Acknowledgements
