@@ -1193,7 +1193,7 @@ namespace MphRead.Entities
                         if (IsMainPlayer)
                         {
                             // ENERGY TANK FOUND the POWER SUIT can now store 100 more UNITS of energy.
-                            ShowDialog(DialogType.Event, messageId: 46, param1: (int)EventType.EnergyTank);
+                            ShowDialog(DialogType.Event, messageId: 4, param1: (int)EventType.EnergyTank);
                         }
                     }
                     break;

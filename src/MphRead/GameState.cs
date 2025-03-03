@@ -1334,15 +1334,22 @@ namespace MphRead
         public StorySave()
         {
             PlayerValues values = Metadata.PlayerValues[0];
-            // skdebug
-            Health = HealthMax = 799; // values.EnergyTank - 1;
-            Ammo[0] = AmmoMax[0] = 4000; // 400
-            Ammo[1] = 950; // 0
-            AmmoMax[1] = 950; // 50
+            Health = HealthMax = values.EnergyTank - 1;
+            Ammo[0] = AmmoMax[0] = 400;
+            Ammo[1] = 0;
+            AmmoMax[1] = 50;
+            Weapons = (ushort)(WeaponUnlockBits.PowerBeam | WeaponUnlockBits.Missile);
+            if (Cheats.StartWithAllUpgrades)
+            {
+                Health = HealthMax = 799;
+                Ammo[0] = AmmoMax[0] = 4000;
+                Ammo[1] = 950;
+                AmmoMax[1] = 950;
+                Weapons = 0xFF;
+            }
             WeaponSlots[0] = (int)BeamType.PowerBeam;
             WeaponSlots[1] = (int)BeamType.Missile;
             WeaponSlots[2] = (int)BeamType.None;
-            Weapons = 0xFF; // (int)BeamType.PowerBeam | (int)BeamType.Missile
             // todo: initialize more fields
             UpdateLogbook(1); // SCAN VISOR
             UpdateLogbook(2); // THERMAL POSITIONER
