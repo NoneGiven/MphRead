@@ -12,6 +12,29 @@ namespace MphRead
         Supported = 2
     }
 
+    public class MenuSettings()
+    {
+        public string RoomKey { get; set; } = "MP3 PROVING GROUND";
+        public string Mode { get; set; } = "auto-select";
+        public string Player1 { get; set; } = "Samus 0";
+        public string Player2 { get; set; } = "none 0";
+        public string Player3 { get; set; } = "none 0";
+        public string Player4 { get; set; } = "none 0";
+        public string Models { get; set; } = "none";
+        public string MphVersion { get; set; } = "AMHE1";
+        public string FhVersion { get; set; } = "AMFE0";
+        public string Language { get; set; } = "English";
+        public string PointGoal { get; set; } = "7";
+        public string TimeLimit { get; set; } = "7:00";
+        public string TimeGoal { get; set; } = "1:30";
+        public string AutoReset { get; set; } = "on";
+        public string TeamPlay { get; set; } = "off";
+        public string HunterRadar { get; set; } = "off";
+        public string DamageLevel { get; set; } = "medium";
+        public string FriendlyFire { get; set; } = "off";
+        public string AffinityWeapons { get; set; } = "off";
+    }
+
     public static class Menu
     {
         private static string _mode = "auto-select";
@@ -21,11 +44,12 @@ namespace MphRead
         {
             SoundCapability soundCapability = Sound.Sfx.CheckAudioLoad();
             int prompt = 0;
-            int selection = 11;
+            int selection = 12;
             int roomId = -1;
             string room = "";
             string roomKey = "";
             // set default room with either roomId or roomKey
+            // (although this will all get overwritten by the persisted/default settings now)
             roomKey = "MP3 PROVING GROUND";
             if (roomId >= 0)
             {
@@ -99,7 +123,239 @@ namespace MphRead
                 { Ver.AMFE0, "USA rev 0" },
                 { Ver.AMFP0, "EUR rev 0" }
             };
+            MenuSettings menuSettings = GameState.LoadSettings();
+            LoadSettings(menuSettings);
             UpdateSettings();
+
+            void LoadSettings(MenuSettings settings)
+            {
+                ReadRoom(settings.RoomKey);
+                ReadMode(settings.Mode);
+                ReadPlayer(settings.Player1, 0);
+                ReadPlayer(settings.Player2, 1);
+                ReadPlayer(settings.Player3, 2);
+                ReadPlayer(settings.Player4, 3);
+                ReadModels(settings.Models);
+                ReadMphVersion(settings.MphVersion);
+                ReadFhVersion(settings.MphVersion);
+                ReadTimeLimit(settings.TimeLimit);
+                ReadTimeGoal(settings.TimeGoal);
+                if (Enum.TryParse(settings.Language, out Language result))
+                {
+                    _language = result;
+                }
+                if (Int32.TryParse(settings.PointGoal, out int pointGoal))
+                {
+                    _pointGoal = pointGoal;
+                }
+                _octolithReset = settings.PointGoal != "off";
+                _teams = settings.TeamPlay != "off";
+                _radarPlayers = settings.HunterRadar != "off";
+                _damageLevel = settings.DamageLevel switch
+                {
+                    "low" => 0,
+                    "medium" => 1,
+                    "high" => 2,
+                    _ => _damageLevel
+                };
+                _friendlyFire = settings.FriendlyFire != "off";
+                _affinityWeapons = settings.AffinityWeapons != "off";
+            }
+
+            void ReadRoom(string? input)
+            {
+                if (!String.IsNullOrWhiteSpace(input))
+                {
+                    input = input.Trim().ToLower();
+                    if (Int32.TryParse(input, out int id))
+                    {
+                        RoomMetadata? meta = Metadata.GetRoomById(id);
+                        if (meta != null)
+                        {
+                            roomId = id;
+                            room = meta.InGameName ?? meta.Name;
+                            roomKey = meta.Name;
+                            fhRoom = meta.FirstHunt;
+                        }
+                    }
+                    else
+                    {
+                        IReadOnlyList<RoomMetadata> rooms = Metadata.RoomList;
+                        RoomMetadata? meta = rooms.FirstOrDefault(r => r.Name.ToLower() == input);
+                        if (meta == null)
+                        {
+                            bool multi = _mode != "Adventure";
+                            meta = rooms.FirstOrDefault(r => r.InGameName?.ToLower() == input && r.Multiplayer == multi);
+                            if (meta == null)
+                            {
+                                meta = rooms.FirstOrDefault(r => r.InGameName?.ToLower() == input);
+                            }
+                        }
+                        if (meta != null)
+                        {
+                            roomId = meta.Id;
+                            room = meta.InGameName ?? meta.Name;
+                            roomKey = meta.Name;
+                            fhRoom = meta.FirstHunt;
+                        }
+                    }
+                }
+            }
+
+            void ReadMode(string? input)
+            {
+                if (!String.IsNullOrWhiteSpace(input))
+                {
+                    input = input.Trim().ToLower().Replace(" ", "");
+                    if (modeOpts.TryGetValue(input, out string? result))
+                    {
+                        _mode = result;
+                        modeId = modes.IndexOf(_mode);
+                    }
+                    else
+                    {
+                        _mode = "auto-select";
+                        modeId = 0;
+                    }
+                }
+            }
+
+            void ReadPlayer(string? input, int index)
+            {
+                if (!String.IsNullOrWhiteSpace(input))
+                {
+                    input = input.Trim().ToLower();
+                    string[] split = input.Split(' ');
+                    string player = "none";
+                    string name = split[0];
+                    if (name.Length > 0)
+                    {
+                        name = name[..1].ToUpper() + name[1..];
+                    }
+                    if (Enum.TryParse(name, out Hunter hunter)
+                        && Enum.IsDefined(hunter) && hunter != Hunter.Random)
+                    {
+                        player = hunter.ToString();
+                    }
+                    string team = players[index].Team;
+                    string recolor = players[index].Recolor;
+                    if (split.Length > 1)
+                    {
+                        if (_teams)
+                        {
+                            string value = split[1].ToLower();
+                            if (value == "orange" || value == "red")
+                            {
+                                team = "orange";
+                            }
+                            else if (value == "green")
+                            {
+                                team = "green";
+                            }
+                            else if (Int32.TryParse(split[1], out int result))
+                            {
+                                team = Math.Clamp(result, 0, 1) == 0 ? "orange" : "green";
+                            }
+                        }
+                        else if (Int32.TryParse(split[1], out int result))
+                        {
+                            recolor = Math.Clamp(result, 0, 5).ToString();
+                        }
+                    }
+                    players[index] = (player, team, recolor);
+                    playerIds[index] = player == "none" ? -1 : hunters.IndexOf(player);
+                }
+            }
+
+            void ReadModels(string? input)
+            {
+                if (!String.IsNullOrWhiteSpace(input))
+                {
+                    models.Clear();
+                    string[] split = input.Split(',');
+                    for (int i = 0; i < split.Length; i++)
+                    {
+                        string[] pair = split[i].Trim().Split(' ');
+                        if (Metadata.ModelMetadata.TryGetValue(pair[0], out ModelMetadata? meta))
+                        {
+                            string recolor = "0";
+                            if (pair.Length > 1 && Int32.TryParse(pair[1], out int result))
+                            {
+                                recolor = Math.Clamp(result, 0, meta.Recolors.Count - 1).ToString();
+                            }
+                            models.Add((meta.Name, recolor));
+                        }
+                    }
+                }
+            }
+
+            void ReadMphVersion(string? input)
+            {
+                if (!String.IsNullOrWhiteSpace(input))
+                {
+                    input = input.Trim().ToUpper();
+                    if (mphVersions.Contains(input) && Paths.AllPaths[input] != "")
+                    {
+                        Paths.MphKey = input;
+                        SetDefaultLanguage();
+                    }
+                }
+            }
+
+            void ReadFhVersion(string? input)
+            {
+                if (!String.IsNullOrWhiteSpace(input))
+                {
+                    input = input.Trim().ToUpper();
+                    if (fhVersions.Contains(input) && Paths.AllPaths[input] != "")
+                    {
+                        Paths.FhKey = input;
+                        SetDefaultLanguage();
+                    }
+                }
+            }
+
+            void CommitSettings()
+            {
+                string FormatHunter(int index)
+                {
+                    int id = playerIds[index];
+                    if (id < 0)
+                    {
+                        return "none";
+                    }
+                    return $"{hunters[id]} {(_teams ? players[index].Team : players[index].Recolor)}";
+                }
+
+                GameState.CommitSettings(new MenuSettings()
+                {
+                    RoomKey = room,
+                    Mode = _mode,
+                    Player1 = FormatHunter(0),
+                    Player2 = FormatHunter(1),
+                    Player3 = FormatHunter(2),
+                    Player4 = FormatHunter(3),
+                    Models = String.Join(", ", models.Select(m => $"{m.Name} {m.Recolor}")),
+                    MphVersion = Paths.MphKey,
+                    FhVersion = Paths.FhKey,
+                    Language = _language.ToString(),
+                    PointGoal = _pointGoal.ToString(),
+                    TimeLimit = FormatTime(_timeLimit),
+                    TimeGoal = FormatTime(_timeGoal),
+                    AutoReset = _octolithReset ? "on" : "off",
+                    TeamPlay = _teams ? "on" : "off",
+                    HunterRadar = _radarPlayers ? "on" : "off",
+                    DamageLevel = _damageLevel switch
+                    {
+                        0 => "low",
+                        1 => "medium",
+                        2 => "high",
+                        _ => "medium",
+                    },
+                    FriendlyFire = _friendlyFire ? "on" : "off",
+                    AffinityWeapons = _affinityWeapons ? "on" : "off"
+                });
+            }
 
             string PrintPlayer(int index)
             {
@@ -147,6 +403,7 @@ namespace MphRead
                         }
                         prompt = 0;
                     }
+                    CommitSettings();
                     string lastMode = _mode;
                     string mphKey = Paths.MphKey;
                     string fhKey = Paths.FhKey;
@@ -172,6 +429,7 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (F) FH Version: {fhKey} ({fhInfo[fhKey]})");
                     Console.WriteLine($"{X(s++)} (I) Language: {languageString}");
                     Console.WriteLine($"{X(s++)} (S) Match Settings...");
+                    Console.WriteLine($"{X(s++)} (X) Reset All");
                     Console.WriteLine($"{X(s++)} (L) Launch");
                     s--;
                     if (prompt == 0)
@@ -206,9 +464,17 @@ namespace MphRead
                         }
                         if (keyInfo.Key == ConsoleKey.Spacebar)
                         {
+                            if (selection == s - 2)
+                            {
+                                // match settings
+                                prompt = -1;
+                                continue;
+                            }
                             if (selection == s - 1)
                             {
-                                prompt = -1;
+                                // reset
+                                LoadSettings(new MenuSettings());
+                                UpdateSettings();
                                 continue;
                             }
                             prompt = selection + 1;
@@ -260,6 +526,10 @@ namespace MphRead
                             selection = 10;
                             prompt = -1;
                             continue;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.X)
+                        {
+                            selection = 11;
                         }
                         else if (keyInfo.Key == ConsoleKey.UpArrow || keyInfo.Key == ConsoleKey.W)
                         {
@@ -569,63 +839,13 @@ namespace MphRead
                         {
                             Console.WriteLine("Enter room ID, internal name, or in-game name.");
                             Console.WriteLine("Examples: 95, MP3 PROVING GROUND, Combat Hall");
-                            string? input = Console.ReadLine();
-                            if (!String.IsNullOrWhiteSpace(input))
-                            {
-                                input = input.Trim().ToLower();
-                                if (Int32.TryParse(input, out int id))
-                                {
-                                    RoomMetadata? meta = Metadata.GetRoomById(id);
-                                    if (meta != null)
-                                    {
-                                        roomId = id;
-                                        room = meta.InGameName ?? meta.Name;
-                                        roomKey = meta.Name;
-                                        fhRoom = meta.FirstHunt;
-                                    }
-                                }
-                                else
-                                {
-                                    IReadOnlyList<RoomMetadata> rooms = Metadata.RoomList;
-                                    RoomMetadata? meta = rooms.FirstOrDefault(r => r.Name.ToLower() == input);
-                                    if (meta == null)
-                                    {
-                                        bool multi = _mode != "Adventure";
-                                        meta = rooms.FirstOrDefault(r => r.InGameName?.ToLower() == input && r.Multiplayer == multi);
-                                        if (meta == null)
-                                        {
-                                            meta = rooms.FirstOrDefault(r => r.InGameName?.ToLower() == input);
-                                        }
-                                    }
-                                    if (meta != null)
-                                    {
-                                        roomId = meta.Id;
-                                        room = meta.InGameName ?? meta.Name;
-                                        roomKey = meta.Name;
-                                        fhRoom = meta.FirstHunt;
-                                    }
-                                }
-                            }
+                            ReadRoom(Console.ReadLine());
                         }
                         else if (prompt == 2)
                         {
                             Console.WriteLine("Enter game mode.");
                             Console.WriteLine("Examples: Adventure, Battle, Survival Teams");
-                            string? input = Console.ReadLine();
-                            if (!String.IsNullOrWhiteSpace(input))
-                            {
-                                input = input.Trim().ToLower().Replace(" ", "");
-                                if (modeOpts.TryGetValue(input, out string? result))
-                                {
-                                    _mode = result;
-                                    modeId = modes.IndexOf(_mode);
-                                }
-                                else
-                                {
-                                    _mode = "auto-select";
-                                    modeId = 0;
-                                }
-                            }
+                            ReadMode(Console.ReadLine());
                         }
                         else if (prompt >= 3 && prompt <= 6)
                         {
@@ -639,104 +859,25 @@ namespace MphRead
                                 Console.WriteLine("Enter hunter and (optionally) recolor.");
                                 Console.WriteLine("Examples: Samus, Trace 2, Sylux 5, Guardian");
                             }
-                            string? input = Console.ReadLine();
-                            if (!String.IsNullOrWhiteSpace(input))
-                            {
-                                input = input.Trim().ToLower();
-                                int index = prompt - 3;
-                                string[] split = input.Split(' ');
-                                string player = "none";
-                                string name = split[0];
-                                if (name.Length > 0)
-                                {
-                                    name = name[..1].ToUpper() + name[1..];
-                                }
-                                if (Enum.TryParse(name, out Hunter hunter)
-                                    && Enum.IsDefined(hunter) && hunter != Hunter.Random)
-                                {
-                                    player = hunter.ToString();
-                                }
-                                string team = players[index].Team;
-                                string recolor = players[index].Recolor;
-                                if (split.Length > 1)
-                                {
-                                    if (_teams)
-                                    {
-                                        string value = split[1].ToLower();
-                                        if (value == "orange" || value == "red")
-                                        {
-                                            team = "orange";
-                                        }
-                                        else if (value == "green")
-                                        {
-                                            team = "green";
-                                        }
-                                        else if (Int32.TryParse(split[1], out int result))
-                                        {
-                                            team = Math.Clamp(result, 0, 1) == 0 ? "orange" : "green";
-                                        }
-                                    }
-                                    else if (Int32.TryParse(split[1], out int result))
-                                    {
-                                        recolor = Math.Clamp(result, 0, 5).ToString();
-                                    }
-                                }
-                                players[index] = (player, team, recolor);
-                            }
+                            ReadPlayer(Console.ReadLine(), prompt - 3);
                         }
                         else if (prompt == 7)
                         {
                             Console.WriteLine("Enter comma-separated list of models and (optionally) recolors.");
                             Console.WriteLine("Examples: Crate01, blastcap, LavaDemon 1, KandenGun 4");
-                            string? input = Console.ReadLine();
-                            if (!String.IsNullOrWhiteSpace(input))
-                            {
-                                models.Clear();
-                                string[] split = input.Split(',');
-                                for (int i = 0; i < split.Length; i++)
-                                {
-                                    string[] pair = split[i].Trim().Split(' ');
-                                    if (Metadata.ModelMetadata.TryGetValue(pair[0], out ModelMetadata? meta))
-                                    {
-                                        string recolor = "0";
-                                        if (pair.Length > 1 && Int32.TryParse(pair[1], out int result))
-                                        {
-                                            recolor = Math.Clamp(result, 0, meta.Recolors.Count - 1).ToString();
-                                        }
-                                        models.Add((meta.Name, recolor));
-                                    }
-                                }
-                            }
+                            ReadModels(Console.ReadLine());
                         }
                         else if (prompt == 8)
                         {
                             Console.WriteLine("Enter MPH version.");
                             Console.WriteLine("Examples: AMHE0, AMHP1, A76E0");
-                            string? input = Console.ReadLine();
-                            if (!String.IsNullOrWhiteSpace(input))
-                            {
-                                input = input.Trim().ToUpper();
-                                if (mphVersions.Contains(input) && Paths.AllPaths[input] != "")
-                                {
-                                    Paths.MphKey = input;
-                                    SetDefaultLanguage();
-                                }
-                            }
+                            ReadMphVersion(Console.ReadLine());
                         }
                         else if (prompt == 9)
                         {
                             Console.WriteLine("Enter FH version.");
                             Console.WriteLine("Examples: AMFE0, AMFP0");
-                            string? input = Console.ReadLine();
-                            if (!String.IsNullOrWhiteSpace(input))
-                            {
-                                input = input.Trim().ToUpper();
-                                if (fhVersions.Contains(input) && Paths.AllPaths[input] != "")
-                                {
-                                    Paths.FhKey = input;
-                                    SetDefaultLanguage();
-                                }
-                            }
+                            ReadFhVersion(Console.ReadLine());
                         }
                         prompt = 0;
                     }
@@ -800,6 +941,84 @@ namespace MphRead
 
         private static string _goalType = "";
 
+        private static void ReadTimeGoal(string? input)
+        {
+            if (!String.IsNullOrWhiteSpace(input))
+            {
+                input = input.Trim().ToUpper();
+                if (_goalType == "Time Goal")
+                {
+                    if (GetTime(input, out decimal result))
+                    {
+                        _timeGoal = result;
+                    }
+                }
+                else if (Decimal.TryParse(input, out decimal result))
+                {
+                    _pointGoal = Math.Clamp((int)result, _goalType == "Extra Lives" ? 0 : 1, 99999);
+                }
+            }
+        }
+
+        private static void ReadTimeLimit(string? input)
+        {
+            if (!String.IsNullOrWhiteSpace(input))
+            {
+                if (GetTime(input.Trim().ToUpper(), out decimal result))
+                {
+                    _timeLimit = result;
+                }
+            }
+        }
+
+        private static bool GetTime(string input, out decimal result)
+        {
+            result = 0;
+            string[] split = input.Split(':');
+            if (split.Length == 1)
+            {
+                if (Int32.TryParse(split[0], out int minutes))
+                {
+                    result = minutes * 60;
+                    return true;
+                }
+            }
+            else if (split.Length == 2)
+            {
+                if (Int32.TryParse(split[0], out int minutes)
+                    && Int32.TryParse(split[1], out int seconds))
+                {
+                    result = minutes * 60 + seconds;
+                    return true;
+                }
+            }
+            else if (split.Length == 3)
+            {
+                if (Int32.TryParse(split[0], out int hours)
+                    && Int32.TryParse(split[1], out int minutes)
+                    && Int32.TryParse(split[2], out int seconds))
+                {
+                    result = hours * 60 * 60 + minutes * 60 + seconds;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static string FormatTime(decimal value)
+        {
+            var time = TimeSpan.FromSeconds((float)value);
+            if (time.Hours > 0)
+            {
+                return $"{time:h\\:mm\\:ss}";
+            }
+            if (time.Minutes > 0)
+            {
+                return $"{time:m\\:ss}";
+            }
+            return $"0:{time:ss}";
+        }
+
         private static bool ShowSettingsPrompts()
         {
             int prompt = 0;
@@ -812,20 +1031,6 @@ namespace MphRead
             string X(int index)
             {
                 return $"[{(selection == index ? "x" : " ")}]";
-            }
-
-            static string FormatTime(decimal value)
-            {
-                var time = TimeSpan.FromSeconds((float)value);
-                if (time.Hours > 0)
-                {
-                    return $"{time:h\\:mm\\:ss}";
-                }
-                if (time.Minutes > 0)
-                {
-                    return $"{time:m\\:ss}";
-                }
-                return $"0:{time:ss}";
             }
 
             static string OnOff(bool value)
@@ -907,7 +1112,8 @@ namespace MphRead
                 Console.WriteLine($"{X(s++)} (D) Damage Level: {damageLevels[_damageLevel]}");
                 Console.WriteLine($"{X(s++)} (F) Friendly Fire: {OnOff(_friendlyFire)}");
                 Console.WriteLine($"{X(s++)} (W) Available Weapons: {weaponsString}");
-                Console.WriteLine($"{X(s++)} (R) Return");
+                Console.WriteLine($"{X(s++)} (X) Reset Match Settings");
+                Console.WriteLine($"{X(s++)} (B) Go Back");
                 s--;
                 if (prompt == 0)
                 {
@@ -916,13 +1122,22 @@ namespace MphRead
                     {
                         return false;
                     }
-                    if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.R
+                    if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.B
                         || keyInfo.Key == ConsoleKey.Spacebar && selection == s)
                     {
                         break;
                     }
                     if (keyInfo.Key == ConsoleKey.Spacebar)
                     {
+                        if (selection == s - 1)
+                        {
+                            _radarPlayers = false;
+                            _damageLevel = 1;
+                            _friendlyFire = false;
+                            _affinityWeapons = false;
+                            UpdateSettings();
+                            continue;
+                        }
                         prompt = selection + 1;
                     }
                     else if (keyInfo.Key == ConsoleKey.P)
@@ -956,6 +1171,10 @@ namespace MphRead
                     else if (keyInfo.Key == ConsoleKey.W)
                     {
                         selection = 7;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.X)
+                    {
+                        selection = 8;
                     }
                     else if (keyInfo.Key == ConsoleKey.UpArrow || keyInfo.Key == ConsoleKey.W)
                     {
@@ -1100,40 +1319,6 @@ namespace MphRead
                 }
                 else
                 {
-                    static bool GetTime(string input, out decimal result)
-                    {
-                        result = 0;
-                        string[] split = input.Split(':');
-                        if (split.Length == 1)
-                        {
-                            if (Int32.TryParse(split[0], out int minutes))
-                            {
-                                result = minutes * 60;
-                                return true;
-                            }
-                        }
-                        else if (split.Length == 2)
-                        {
-                            if (Int32.TryParse(split[0], out int minutes)
-                                && Int32.TryParse(split[1], out int seconds))
-                            {
-                                result = minutes * 60 + seconds;
-                                return true;
-                            }
-                        }
-                        else if (split.Length == 3)
-                        {
-                            if (Int32.TryParse(split[0], out int hours)
-                                && Int32.TryParse(split[1], out int minutes)
-                                && Int32.TryParse(split[2], out int seconds))
-                            {
-                                result = hours * 60 * 60 + minutes * 60 + seconds;
-                                return true;
-                            }
-                        }
-                        return false;
-                    }
-
                     if (prompt == 1)
                     {
                         Console.WriteLine($"Enter {_goalType.ToLower()}.");
@@ -1145,35 +1330,13 @@ namespace MphRead
                         {
                             Console.WriteLine("Examples: 5, 66, 100");
                         }
-                        string? input = Console.ReadLine();
-                        if (!String.IsNullOrWhiteSpace(input))
-                        {
-                            input = input.Trim().ToUpper();
-                            if (_goalType == "Time Goal")
-                            {
-                                if (GetTime(input, out decimal result))
-                                {
-                                    _timeGoal = result;
-                                }
-                            }
-                            else if (Decimal.TryParse(input, out decimal result))
-                            {
-                                _pointGoal = Math.Clamp((int)result, _goalType == "Extra Lives" ? 0 : 1, 99999);
-                            }
-                        }
+                        ReadTimeGoal(Console.ReadLine());
                     }
                     else if (prompt == 2)
                     {
                         Console.WriteLine("Enter time limit.");
                         Console.WriteLine("Examples: 7, 2:30, 0:45");
-                        string? input = Console.ReadLine();
-                        if (!String.IsNullOrWhiteSpace(input))
-                        {
-                            if (GetTime(input.Trim().ToUpper(), out decimal result))
-                            {
-                                _timeLimit = result;
-                            }
-                        }
+                        ReadTimeLimit(Console.ReadLine());
                     }
                     prompt = 0;
                 }

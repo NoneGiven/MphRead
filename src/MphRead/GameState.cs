@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Sound;
@@ -1241,11 +1244,143 @@ namespace MphRead
             }
         }
 
+        private static byte _currentSaveSlot = 0;
+        private const string _saveFolder = "Savedata";
+        private static readonly JsonSerializerOptions _jsonOpt = new JsonSerializerOptions(JsonSerializerDefaults.General)
+        {
+            WriteIndented = true,
+            Converters = { new ByteArrayConverter() }
+        };
+
+        private static string GetSavePath(byte slot)
+        {
+            return Paths.Combine(_saveFolder, $"save{slot:000}.json");
+        }
+
+        private static string GetSettingsPath()
+        {
+            return Paths.Combine(_saveFolder, $"settings.json");
+        }
+
+        public static void LoadSave(byte slot)
+        {
+            _currentSaveSlot = slot;
+            StorySave = new StorySave();
+            if (slot != Byte.MaxValue)
+            {
+                string path = GetSavePath(slot);
+                if (File.Exists(path))
+                {
+                    StorySave? save = JsonSerializer.Deserialize<StorySave>(File.ReadAllText(path), _jsonOpt);
+                    if (save != null)
+                    {
+                        StorySave = save;
+                    }
+                }
+            }
+        }
+
+        public static void CommitSave()
+        {
+            if (_currentSaveSlot == Byte.MaxValue)
+            {
+                return;
+            }
+            if (!Directory.Exists(_saveFolder))
+            {
+                Directory.CreateDirectory(_saveFolder);
+            }
+            File.WriteAllText(GetSavePath(_currentSaveSlot), JsonSerializer.Serialize(StorySave, _jsonOpt));
+        }
+
+        internal sealed class ByteArrayConverter : JsonConverter<byte[]>
+        {
+            public override byte[]? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                short[]? sByteArray = JsonSerializer.Deserialize<short[]>(ref reader, options);
+                if (sByteArray == null)
+                {
+                    return null;
+                }
+                byte[] value = new byte[sByteArray.Length];
+                for (int i = 0; i < sByteArray.Length; i++)
+                {
+                    value[i] = (byte)sByteArray[i];
+                }
+                return value;
+            }
+
+            public override void Write(Utf8JsonWriter writer, byte[] value, JsonSerializerOptions options)
+            {
+                writer.WriteStartArray();
+                foreach (byte val in value)
+                {
+                    writer.WriteNumberValue(val);
+                }
+                writer.WriteEndArray();
+            }
+        }
+
+        private class SerializedSettings
+        {
+            public IReadOnlyDictionary<string, string>? Bugfixes { get; set; }
+            public IReadOnlyDictionary<string, string>? Features { get; set; }
+            public IReadOnlyDictionary<string, string>? Cheats { get; set; }
+            public MenuSettings? MenuSettings { get; set; }
+        }
+
+        public static MenuSettings LoadSettings()
+        {
+            string path = GetSettingsPath();
+            if (File.Exists(path))
+            {
+                SerializedSettings? settings = JsonSerializer.Deserialize<SerializedSettings>(File.ReadAllText(path), _jsonOpt);
+                if (settings != null)
+                {
+                    if (settings.Bugfixes != null)
+                    {
+                        Bugfixes.Load(settings.Bugfixes);
+                    }
+                    if (settings.Features != null)
+                    {
+                        Features.Load(settings.Features);
+                    }
+                    if (settings.Cheats != null)
+                    {
+                        Cheats.Load(settings.Cheats);
+                    }
+                    if (settings.MenuSettings != null)
+                    {
+                        return settings.MenuSettings;
+                    }
+                }
+            }
+            return new MenuSettings();
+        }
+
+        public static void CommitSettings(MenuSettings menuSettings)
+        {
+            // sktodo: commit menu options, including save slot
+            if (!Directory.Exists(_saveFolder))
+            {
+                Directory.CreateDirectory(_saveFolder);
+            }
+            var settings = new SerializedSettings
+            {
+                Bugfixes = Bugfixes.Commit(),
+                Features = Features.Commit(),
+                Cheats = Cheats.Commit(),
+                MenuSettings = menuSettings
+            };
+            File.WriteAllText(GetSettingsPath(), JsonSerializer.Serialize(settings, _jsonOpt));
+        }
+
         public static void Reset()
         {
-            // todo: persist story saves
             _cleanStorySave = new StorySave();
-            StorySave = new StorySave();
+            LoadSave(_currentSaveSlot);
+            CommitSave();
+            UpdateCleanSave(force: true);
             MatchState = MatchState.InProgress;
             TransitionState = TransitionState.None;
             TransitionRoomId = -1;
@@ -1310,7 +1445,7 @@ namespace MphRead
 
     public class StorySave
     {
-        public byte[,] RoomState { get; } = new byte[66, 60];
+        public byte[][] RoomState { get; }
         public byte[] VisitedRooms { get; } = new byte[9];
         public byte[] TriggerState { get; } = new byte[4];
         public byte[] Logbook { get; } = new byte[68];
@@ -1333,6 +1468,8 @@ namespace MphRead
 
         public StorySave()
         {
+            RoomState = new byte[60][];
+            Array.Fill(RoomState, new byte[66]);
             PlayerValues values = Metadata.PlayerValues[0];
             Health = HealthMax = values.EnergyTank - 1;
             Ammo[0] = AmmoMax[0] = 400;
@@ -1383,10 +1520,10 @@ namespace MphRead
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
             int pairMask = 3 << pairIndex;
-            if ((RoomState[roomId, byteIndex] & pairMask) == 0)
+            if ((RoomState[roomId][byteIndex] & pairMask) == 0)
             {
-                RoomState[roomId, byteIndex] &= (byte)~pairMask;
-                RoomState[roomId, byteIndex] |= (byte)((active ? activeState : inactiveState) << pairIndex);
+                RoomState[roomId][byteIndex] &= (byte)~pairMask;
+                RoomState[roomId][byteIndex] |= (byte)((active ? activeState : inactiveState) << pairIndex);
             }
             return GetRoomState(roomId + 27, entityId);
         }
@@ -1400,7 +1537,7 @@ namespace MphRead
             roomId -= 27;
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
-            return ((RoomState[roomId, byteIndex] >> pairIndex) & 3) - 1;
+            return ((RoomState[roomId][byteIndex] >> pairIndex) & 3) - 1;
         }
 
         public void SetRoomState(int roomId, int entityId, int state)
@@ -1414,8 +1551,8 @@ namespace MphRead
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
             int pairMask = 3 << pairIndex;
-            RoomState[roomId, byteIndex] &= (byte)~pairMask;
-            RoomState[roomId, byteIndex] |= (byte)(state << pairIndex);
+            RoomState[roomId][byteIndex] &= (byte)~pairMask;
+            RoomState[roomId][byteIndex] |= (byte)(state << pairIndex);
             return;
         }
 
