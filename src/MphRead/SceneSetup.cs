@@ -74,7 +74,7 @@ namespace MphRead
                     {
                         bossFlags = GameState.StorySave.BossFlags;
                     }
-                    entityLayerId = ((int)bossFlags >> 2 * scene.AreaId) & 3;
+                    entityLayerId = ((int)bossFlags >> (2 * scene.AreaId)) & 3;
                 }
                 else
                 {
