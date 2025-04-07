@@ -513,7 +513,10 @@ namespace MphRead.Entities
             int entityLayer = -1;
             if (LoaderDoor != null)
             {
-                entityLayer = LoaderDoor.Data.TargetLayerId;
+                // after the game creates a connector door, it overwrites the pointer to its init data struct
+                // so that it points to the original door's. when door.data.targetLayerId is accessed here, it points
+                // to the original door's value. we use a separate field instead, and so do not access the struct.
+                entityLayer = LoaderDoor.TargetLayerId;
             }
             else
             {
