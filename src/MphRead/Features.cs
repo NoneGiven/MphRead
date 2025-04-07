@@ -26,8 +26,12 @@ namespace MphRead
 
     public static class Cheats
     {
+        // sktodo: cheats and/or settings file (could also remember menu choices?)
         public static bool FreeWeaponSelect { get; set; } = true;
         public static bool UnlimitedJumps { get; set; } = false;
         public static bool UnlockAllDoors { get; set; } = false;
+        public static bool StartWithAllUpgrades { get; set; } = false;
+        public static bool StartWithAllOctoliths { get; set; } = false;
+        public static bool WalkThroughWalls { get; set; } = false;
     }
 }

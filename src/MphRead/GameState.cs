@@ -1360,6 +1360,10 @@ namespace MphRead
             UpdateLogbook(7); // MORPH BALL BOMB
             UpdateLogbook(27); // JUMP BOOTS
             UpdateLogbook(29); // CHARGE SHOT
+            if (Cheats.StartWithAllOctoliths)
+            {
+                FoundOctoliths = CurrentOctoliths = 0xFF;
+            }
         }
 
         public int InitRoomState(int roomId, int entityId, bool active,
