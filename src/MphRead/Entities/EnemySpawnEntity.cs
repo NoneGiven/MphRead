@@ -229,8 +229,9 @@ namespace MphRead.Entities
 
             void UpdateBossFlags()
             {
-                int flags = (int)GameState.StorySave.BossFlags;
-                flags |= 1 << (2 * _scene.AreaId);
+                uint flags = (uint)GameState.StorySave.BossFlags;
+                flags &= (uint)~(3 << (2 * _scene.AreaId));
+                flags |= (uint)(1 << (2 * _scene.AreaId));
                 GameState.StorySave.BossFlags = (BossFlags)flags;
                 updateSave = true;
             }
