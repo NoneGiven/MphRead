@@ -1499,6 +1499,7 @@ namespace MphRead
                         if (selection == s - 1)
                         {
                             Array.Fill(_planets, 0);
+                            _planets[0] = 1;
                             _alinos1State = 0;
                             _alinos2State = 0;
                             _ca1State = 0;
@@ -1609,7 +1610,12 @@ namespace MphRead
                     }
                     else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
                     {
-                        if (selection == 10)
+                        if (selection == 1)
+                        {
+                            Array.Fill(_planets, 0);
+                            _planets[0] = 1;
+                        }
+                        else if (selection == 10)
                         {
                             _checkpointId = -1;
                         }
