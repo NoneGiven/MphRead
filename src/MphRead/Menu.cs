@@ -44,7 +44,7 @@ namespace MphRead
         {
             SoundCapability soundCapability = Sound.Sfx.CheckAudioLoad();
             int prompt = 0;
-            int selection = 12;
+            int selection = 13;
             int roomId = -1;
             string room = "";
             string roomKey = "";
@@ -403,6 +403,14 @@ namespace MphRead
                         }
                         prompt = 0;
                     }
+                    else if (prompt == -2)
+                    {
+                        if (!ShowStoryModePrompts())
+                        {
+                            return;
+                        }
+                        prompt = 0;
+                    }
                     CommitSettings();
                     string lastMode = _mode;
                     string mphKey = Paths.MphKey;
@@ -428,6 +436,7 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (V) MPH Version: {mphKey} ({mphInfo[mphKey]})");
                     Console.WriteLine($"{X(s++)} (F) FH Version: {fhKey} ({fhInfo[fhKey]})");
                     Console.WriteLine($"{X(s++)} (I) Language: {languageString}");
+                    Console.WriteLine($"{X(s++)} (A) Story Settings...");
                     Console.WriteLine($"{X(s++)} (S) Match Settings...");
                     Console.WriteLine($"{X(s++)} (X) Reset All");
                     Console.WriteLine($"{X(s++)} (L) Launch");
@@ -464,6 +473,12 @@ namespace MphRead
                         }
                         if (keyInfo.Key == ConsoleKey.Spacebar)
                         {
+                            if (selection == s - 3)
+                            {
+                                // story settings
+                                prompt = -2;
+                                continue;
+                            }
                             if (selection == s - 2)
                             {
                                 // match settings
@@ -521,15 +536,21 @@ namespace MphRead
                         {
                             selection = 9;
                         }
-                        else if (keyInfo.Key == ConsoleKey.S)
+                        else if (keyInfo.Key == ConsoleKey.A)
                         {
                             selection = 10;
+                            prompt = -2;
+                            continue;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.S)
+                        {
+                            selection = 11;
                             prompt = -1;
                             continue;
                         }
                         else if (keyInfo.Key == ConsoleKey.X)
                         {
-                            selection = 11;
+                            selection = 12;
                         }
                         else if (keyInfo.Key == ConsoleKey.UpArrow || keyInfo.Key == ConsoleKey.W)
                         {
@@ -1338,6 +1359,359 @@ namespace MphRead
                         Console.WriteLine("Examples: 7, 2:30, 0:45");
                         ReadTimeLimit(Console.ReadLine());
                     }
+                    prompt = 0;
+                }
+            }
+            return true;
+        }
+
+        private static byte _saveSlot = 255;
+        private static readonly int[] _planets = [1, 0, 0, 0, 0];
+        private static int _alinos1State = 0;
+        private static int _alinos2State = 0;
+        private static int _ca1State = 0;
+        private static int _ca2State = 0;
+        private static int _vdo1State = 0;
+        private static int _vdo2State = 0;
+        private static int _arcterra1State = 0;
+        private static int _arcterra2State = 0;
+        private static int _checkpointId = -1;
+        private static int _healthMax = 99;
+        private static int _missileMax = 50;
+        private static int _uaMax = 400;
+        private static readonly int[] _octoliths = new int[8];
+
+        // sktodo: on/off for all the overrides
+        // sktodo: commit overrides
+        // sktodo: apply overrides
+        // --> a save editor would also be nice, but for now you can set the overrides then "save"
+        // --> speaking of which, implement "saving" when entering the ship, in some fashion?
+        // sktodo: cheats/features/bugfixes menu
+        // sktodo: commit settings when changed inside match/story/cheat menus
+        private static bool ShowStoryModePrompts()
+        {
+            int prompt = 0;
+            int selection = 0;
+            int planet = 0;
+            int octolith = 0;
+
+            string X(int index)
+            {
+                return $"[{(selection == index ? "x" : " ")}]";
+            }
+
+            static string LayerName(int value)
+            {
+                return value switch
+                {
+                    0 => "Before Boss",
+                    1 => "Leaving Boss",
+                    2 => "After Boss",
+                    _ => "?"
+                };
+            }
+
+            static int Advance(int current, int direction, int maxValue)
+            {
+                current += direction;
+                if (current < 0)
+                {
+                    current = maxValue;
+                }
+                else if (current > maxValue)
+                {
+                    current = 0;
+                }
+                return current;
+            }
+
+            string Planet(int index)
+            {
+                if (selection == 1 && planet == index)
+                {
+                    return $"*{_planets[index]}*";
+                }
+                return $" {_planets[index]} ";
+            }
+
+            string Octolith(int index)
+            {
+                if (selection == 14 && octolith == index)
+                {
+                    return $"*{_octoliths[index]}*";
+                }
+                return $" {_octoliths[index]} ";
+            }
+
+            while (true)
+            {
+                string planets = $"CA:{Planet(0)}," +
+                    $" Alinos:{Planet(1)}," +
+                    $" VDO:{Planet(2)}," +
+                    $" Arcterra:{Planet(3)}," +
+                    $" Oubliette:{Planet(4)}";
+                string octoliths = $"CA:{Octolith(0)}{Octolith(1)}," +
+                    $" Alinos:{Octolith(2)}{Octolith(3)}," +
+                    $" VDO:{Octolith(4)}{Octolith(5)}," +
+                    $" Arcterra:{Octolith(6)}{Octolith(7)}";
+                int s = 0;
+                Console.Clear();
+                Console.WriteLine($"MphRead Version {Program.Version}");
+                Console.WriteLine();
+                Console.WriteLine("Choose a setting using up/down or with the key indicated.");
+                Console.WriteLine("Press Space to specify, Backspace to clear, or left/right to advance the setting.");
+                Console.WriteLine("When finished, press Enter or use the last option to return. Press Escape to exit.");
+                Console.WriteLine();
+                Console.WriteLine("Adventure Mode Settings");
+                Console.WriteLine();
+                Console.WriteLine($"{X(s++)} (S) Save Slot: {_saveSlot}");
+                Console.WriteLine($"{X(s++)} (A) Areas: {planets}");
+                Console.WriteLine($"{X(s++)} (1) CA 1 State: {LayerName(_ca1State)}");
+                Console.WriteLine($"{X(s++)} (2) CA 2 State: {LayerName(_ca2State)}");
+                Console.WriteLine($"{X(s++)} (3) Alinos 1 State: {LayerName(_alinos1State)}");
+                Console.WriteLine($"{X(s++)} (4) Alinos 2 State: {LayerName(_alinos2State)}");
+                Console.WriteLine($"{X(s++)} (5) VDO 1 State: {LayerName(_vdo1State)}");
+                Console.WriteLine($"{X(s++)} (6) VDO 2 State: {LayerName(_vdo2State)}");
+                Console.WriteLine($"{X(s++)} (7) Arcterra 1 State: {LayerName(_arcterra1State)}");
+                Console.WriteLine($"{X(s++)} (8) Arcterra 2 State: {LayerName(_arcterra2State)}");
+                Console.WriteLine($"{X(s++)} (C) Checkpoint ID: {_checkpointId}");
+                Console.WriteLine($"{X(s++)} (H) Health Max: {_healthMax}");
+                Console.WriteLine($"{X(s++)} (M) Missile Max: {_missileMax}");
+                Console.WriteLine($"{X(s++)} (U) UA Max: {_uaMax}");
+                Console.WriteLine($"{X(s++)} (O) Octoliths: {octoliths}");
+                Console.WriteLine($"{X(s++)} (X) Reset Adventure Settings");
+                Console.WriteLine($"{X(s++)} (B) Go Back");
+                s--;
+                if (prompt == 0)
+                {
+                    ConsoleKeyInfo keyInfo = Console.ReadKey();
+                    if (keyInfo.Key == ConsoleKey.Escape)
+                    {
+                        return false;
+                    }
+                    if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.B
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == s)
+                    {
+                        break;
+                    }
+                    if (keyInfo.Key == ConsoleKey.Spacebar)
+                    {
+                        if (selection == s - 1)
+                        {
+                            Array.Fill(_planets, 0);
+                            _alinos1State = 0;
+                            _alinos2State = 0;
+                            _ca1State = 0;
+                            _ca2State = 0;
+                            _vdo1State = 0;
+                            _vdo2State = 0;
+                            _arcterra1State = 0;
+                            _arcterra2State = 0;
+                            _checkpointId = -1;
+                            _healthMax = 99;
+                            _missileMax = 50;
+                            _uaMax = 400;
+                            Array.Fill(_octoliths, 0);
+                            UpdateSettings();
+                        }
+                        else if (selection == 1)
+                        {
+                            _planets[planet] = (_planets[planet] + 1) % 2;
+                        }
+                        else if (selection == 14)
+                        {
+                            _octoliths[octolith] = (_octoliths[octolith] + 1) % 2;
+                        }
+                        else
+                        {
+                            prompt = selection + 1;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.S)
+                    {
+                        selection = 0;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.A)
+                    {
+                        selection = 1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D1 || keyInfo.Key == ConsoleKey.NumPad1)
+                    {
+                        selection = 2;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D2 || keyInfo.Key == ConsoleKey.NumPad2)
+                    {
+                        selection = 3;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D3 || keyInfo.Key == ConsoleKey.NumPad3)
+                    {
+                        selection = 4;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D4 || keyInfo.Key == ConsoleKey.NumPad4)
+                    {
+                        selection = 5;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D5 || keyInfo.Key == ConsoleKey.NumPad5)
+                    {
+                        selection = 6;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D6 || keyInfo.Key == ConsoleKey.NumPad6)
+                    {
+                        selection = 7;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D7 || keyInfo.Key == ConsoleKey.NumPad7)
+                    {
+                        selection = 8;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D8 || keyInfo.Key == ConsoleKey.NumPad8)
+                    {
+                        selection = 9;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.C)
+                    {
+                        selection = 10;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.H)
+                    {
+                        selection = 11;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.M)
+                    {
+                        selection = 12;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.U)
+                    {
+                        selection = 13;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.O)
+                    {
+                        selection = 14;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.X)
+                    {
+                        selection = 15;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.UpArrow)
+                    {
+                        selection--;
+                        if (selection < 0)
+                        {
+                            selection = s;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.DownArrow)
+                    {
+                        selection++;
+                        if (selection > s)
+                        {
+                            selection = 0;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
+                    {
+                        if (selection == 10)
+                        {
+                            _checkpointId = -1;
+                        }
+                        else if (selection == 11)
+                        {
+                            _healthMax = 99;
+                        }
+                        else if (selection == 12)
+                        {
+                            _missileMax = 50;
+                        }
+                        else if (selection == 13)
+                        {
+                            _uaMax = 400;
+                        }
+                        else if (selection == 14)
+                        {
+                            Array.Fill(_octoliths, 0);
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
+                        || keyInfo.Key == ConsoleKey.RightArrow || keyInfo.Key == ConsoleKey.Subtract
+                        || keyInfo.Key == ConsoleKey.OemMinus || keyInfo.Key == ConsoleKey.LeftArrow)
+                    {
+                        int direction = keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
+                            || keyInfo.Key == ConsoleKey.RightArrow ? 1 : -1;
+                        if (selection == 0)
+                        {
+                            _saveSlot = (byte)Advance(_saveSlot, direction, 255);
+                        }
+                        else if (selection == 1)
+                        {
+                            planet = Advance(planet, direction, 4);
+                        }
+                        else if (selection == 2)
+                        {
+                            _ca1State = Advance(_ca1State, direction, 2);
+                        }
+                        else if (selection == 3)
+                        {
+                            _ca2State = Advance(_ca2State, direction, 2);
+                        }
+                        else if (selection == 4)
+                        {
+                            _alinos1State = Advance(_alinos1State, direction, 2);
+                        }
+                        else if (selection == 5)
+                        {
+                            _alinos2State = Advance(_alinos2State, direction, 2);
+                        }
+                        else if (selection == 6)
+                        {
+                            _vdo1State = Advance(_vdo1State, direction, 2);
+                        }
+                        else if (selection == 7)
+                        {
+                            _vdo2State = Advance(_vdo2State, direction, 2);
+                        }
+                        else if (selection == 8)
+                        {
+                            _arcterra1State = Advance(_arcterra1State, direction, 2);
+                        }
+                        else if (selection == 9)
+                        {
+                            _arcterra2State = Advance(_arcterra2State, direction, 2);
+                        }
+                        else if (selection == 10)
+                        {
+                            if (_checkpointId >= 0 || direction == 1)
+                            {
+                                _checkpointId += direction;
+                            }
+                        }
+                        else if (selection == 11)
+                        {
+                            if (direction == -1 && _healthMax > 99 || direction == 1 && _healthMax < 799)
+                            {
+                                _healthMax += direction * 100;
+                            }
+                        }
+                        else if (selection == 12)
+                        {
+                            if (direction == -1 && _missileMax > 50 || direction == 1 && _missileMax < 950)
+                            {
+                                _missileMax += direction * 100;
+                            }
+                        }
+                        else if (selection == 13)
+                        {
+                            if (direction == -1 && _uaMax > 400 || direction == 1 && _uaMax < 4000)
+                            {
+                                _uaMax += direction * 300;
+                            }
+                        }
+                        else if (selection == 14)
+                        {
+                            octolith = Advance(octolith, direction, 7);
+                        }
+                    }
+                }
+                else
+                {
                     prompt = 0;
                 }
             }

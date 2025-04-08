@@ -1266,7 +1266,7 @@ namespace MphRead
         {
             _currentSaveSlot = slot;
             StorySave = new StorySave();
-            if (slot != Byte.MaxValue)
+            if (slot != 255)
             {
                 string path = GetSavePath(slot);
                 if (File.Exists(path))
@@ -1282,7 +1282,7 @@ namespace MphRead
 
         public static void CommitSave()
         {
-            if (_currentSaveSlot == Byte.MaxValue)
+            if (_currentSaveSlot == 255)
             {
                 return;
             }
