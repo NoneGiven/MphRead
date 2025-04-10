@@ -1442,7 +1442,7 @@ namespace MphRead
 
     public class StorySave
     {
-        public byte[][] RoomState { get; }
+        public byte[][] RoomState { get; init; }
         public byte[] VisitedRooms { get; } = new byte[9];
         public byte[] TriggerState { get; } = new byte[4];
         public byte[] Logbook { get; } = new byte[68];
@@ -1466,7 +1466,10 @@ namespace MphRead
         public StorySave()
         {
             RoomState = new byte[60][];
-            Array.Fill(RoomState, new byte[66]);
+            for (int i = 0; i < RoomState.Length; i++)
+            {
+                RoomState[i] = new byte[66];
+            }
             PlayerValues values = Metadata.PlayerValues[0];
             Health = HealthMax = values.EnergyTank - 1;
             Ammo[0] = AmmoMax[0] = 400;
@@ -1652,7 +1655,11 @@ namespace MphRead
 
         public void CopyTo(StorySave other)
         {
-            Array.Copy(RoomState, other.RoomState, length: RoomState.Length);
+            for (int i = 0; i < RoomState.Length; i++)
+            {
+                byte[] source = RoomState[i];
+                Array.Copy(source, other.RoomState[i], source.Length);
+            }
             VisitedRooms.CopyTo(other.VisitedRooms, index: 0);
             TriggerState.CopyTo(other.TriggerState, index: 0);
             Logbook.CopyTo(other.Logbook, index: 0);
