@@ -275,7 +275,11 @@ namespace MphRead
             GameState.Setup(this);
             if (Multiplayer)
             {
-                Menu.ApplySettings();
+                Menu.ApplyMultiplayerSettings();
+            }
+            else
+            {
+                Menu.ApplyAdventureSettings();
             }
             SetRoomValues(meta);
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;

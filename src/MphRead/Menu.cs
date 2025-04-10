@@ -33,6 +33,22 @@ namespace MphRead
         public string DamageLevel { get; set; } = "medium";
         public string FriendlyFire { get; set; } = "off";
         public string AffinityWeapons { get; set; } = "off";
+        public string SaveSlot { get; set; } = "none";
+        public string Planets { get; set; } = "CA";
+        public string Alinos1State { get; set; } = "none";
+        public string Alinos2State { get; set; } = "none";
+        public string Ca1State { get; set; } = "none";
+        public string Ca2State { get; set; } = "none";
+        public string Vdo1State { get; set; } = "none";
+        public string Vdo2State { get; set; } = "none";
+        public string Arcterra1State { get; set; } = "none";
+        public string Arcterra2State { get; set; } = "none";
+        public string CheckpointId { get; set; } = "none";
+        public string HealthMax { get; set; } = "99";
+        public string MissileMax { get; set; } = "50";
+        public string UaMax { get; set; } = "400";
+        public string Weapons { get; set; } = "PB, MS";
+        public string Octoliths { get; set; } = "none";
     }
 
     public static class Menu
@@ -129,6 +145,16 @@ namespace MphRead
 
             void LoadSettings(MenuSettings settings)
             {
+                static int GetState(string state)
+                {
+                    return state switch
+                    {
+                        "escape" => 1,
+                        "done" => 2,
+                        _ => 0
+                    };
+                }
+
                 ReadRoom(settings.RoomKey);
                 ReadMode(settings.Mode);
                 ReadPlayer(settings.Player1, 0);
@@ -160,6 +186,76 @@ namespace MphRead
                 };
                 _friendlyFire = settings.FriendlyFire != "off";
                 _affinityWeapons = settings.AffinityWeapons != "off";
+                if (settings.SaveSlot == "none")
+                {
+                    SaveSlot = 0;
+                }
+                else if (Byte.TryParse(settings.SaveSlot, out byte saveSlot))
+                {
+                    SaveSlot = saveSlot;
+                }
+                string[] planets = settings.Planets.ToUpper().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                if (planets.Length > 0)
+                {
+                    _planets[0] = planets.Contains("CA") ? 1 : 0;
+                    _planets[1] = planets.Contains("Alinos") ? 1 : 0;
+                    _planets[2] = planets.Contains("VDO") ? 1 : 0;
+                    _planets[3] = planets.Contains("Arcterra") ? 1 : 0;
+                    _planets[4] = planets.Contains("Oubliette") ? 1 : 0;
+                }
+                _ca1State = GetState(settings.Ca1State);
+                _ca1State = GetState(settings.Ca2State);
+                _alinos1State = GetState(settings.Alinos1State);
+                _alinos2State = GetState(settings.Alinos2State);
+                _vdo1State = GetState(settings.Vdo1State);
+                _vdo2State = GetState(settings.Vdo2State);
+                _arcterra1State = GetState(settings.Arcterra1State);
+                _arcterra2State = GetState(settings.Arcterra2State);
+                if (settings.CheckpointId == "none")
+                {
+                    _checkpointId = -1;
+                }
+                else if (Int32.TryParse(settings.CheckpointId, out int checkpointId) && checkpointId >= 0)
+                {
+                    _checkpointId = checkpointId;
+                }
+                if (Int32.TryParse(settings.HealthMax, out int healthMax))
+                {
+                    _healthMax = Math.Max(healthMax, 1);
+                }
+                if (Int32.TryParse(settings.MissileMax, out int missileMax))
+                {
+                    _missileMax = Math.Max(missileMax, 0);
+                }
+                if (Int32.TryParse(settings.UaMax, out int uaMax))
+                {
+                    _uaMax = Math.Max(uaMax, 0);
+                }
+                string[] weapons = settings.Weapons.ToLower().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                if (weapons.Length > 0)
+                {
+                    _weapons[0] = weapons.Contains("power beam") ? 1 : 0;
+                    _weapons[2] = weapons.Contains("missiles") ? 1 : 0;
+                    _weapons[1] = weapons.Contains("volt driver") ? 1 : 0;
+                    _weapons[3] = weapons.Contains("battlehammer") ? 1 : 0;
+                    _weapons[4] = weapons.Contains("imperialist") ? 1 : 0;
+                    _weapons[5] = weapons.Contains("judicator") ? 1 : 0;
+                    _weapons[6] = weapons.Contains("magmaul") ? 1 : 0;
+                    _weapons[7] = weapons.Contains("shock coil") ? 1 : 0;
+                    _weapons[8] = weapons.Contains("omega cannon") ? 1 : 0;
+                }
+                string[] octoliths = settings.Octoliths.ToUpper().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                if (octoliths.Length > 0)
+                {
+                    _ca1State = octoliths.Contains("CA1") ? 1 : 0;
+                    _ca2State = octoliths.Contains("CA2") ? 1 : 0;
+                    _alinos1State = octoliths.Contains("Alinos1") ? 1 : 0;
+                    _alinos2State = octoliths.Contains("Alinos2") ? 1 : 0;
+                    _vdo1State = octoliths.Contains("VDO1") ? 1 : 0;
+                    _vdo2State = octoliths.Contains("VDO2") ? 1 : 0;
+                    _arcterra1State = octoliths.Contains("Arcterra1") ? 1 : 0;
+                    _arcterra2State = octoliths.Contains("Arcterra2") ? 1 : 0;
+                }
             }
 
             void ReadRoom(string? input)
@@ -327,6 +423,47 @@ namespace MphRead
                     return $"{hunters[id]} {(_teams ? players[index].Team : players[index].Recolor)}";
                 }
 
+                string FormatState(int state)
+                {
+                    return state switch
+                    {
+                        1 => "escape",
+                        2 => "done",
+                        _ => "none"
+                    };
+                }
+
+                var planets = new List<string>()
+                {
+                    _planets[0] != 0 ? "CA" : "",
+                    _planets[1] != 0 ? "Alinos" : "",
+                    _planets[2] != 0 ? "VDO" : "",
+                    _planets[3] != 0 ? "Arcterra" : "",
+                    _planets[4] != 0 ? "Oubliette" : ""
+                };
+                var weapons = new List<string>()
+                {
+                    _weapons[0] != 0 ? "Power Beam" : "",
+                    _weapons[2] != 0 ? "Missiles" : "",
+                    _weapons[1] != 0 ? "Volt Driver" : "",
+                    _weapons[3] != 0 ? "Battlehammer" : "",
+                    _weapons[4] != 0 ? "Imperialist" : "",
+                    _weapons[5] != 0 ? "Judicator" : "",
+                    _weapons[6] != 0 ? "Magmaul" : "",
+                    _weapons[7] != 0 ? "Shock Coil" : "",
+                    _weapons[8] != 0 ? "Omega Cannon" : ""
+                };
+                var octoliths = new List<string>()
+                {
+                    _ca1State != 0 ? "CA1" : "",
+                    _ca2State != 0 ? "CA2" : "",
+                    _alinos1State != 0 ? "Alinos1" : "",
+                    _alinos2State != 0 ? "Alinos2" : "",
+                    _vdo1State != 0 ? "VDO1" : "",
+                    _vdo2State != 0 ? "VDO2" : "",
+                    _arcterra1State != 0 ? "Arcterra1" : "",
+                    _arcterra2State != 0 ? "Arcterra2" : ""
+                };
                 GameState.CommitSettings(new MenuSettings()
                 {
                     RoomKey = room,
@@ -353,7 +490,23 @@ namespace MphRead
                         _ => "medium",
                     },
                     FriendlyFire = _friendlyFire ? "on" : "off",
-                    AffinityWeapons = _affinityWeapons ? "on" : "off"
+                    AffinityWeapons = _affinityWeapons ? "on" : "off",
+                    SaveSlot = SaveSlot == 0 ? "none" : SaveSlot.ToString(),
+                    Planets = String.Join(',', planets.Where(p => p != "")),
+                    Alinos1State = FormatState(_ca1State),
+                    Alinos2State = FormatState(_ca2State),
+                    Ca1State = FormatState(_alinos1State),
+                    Ca2State = FormatState(_alinos2State),
+                    Vdo1State = FormatState(_vdo1State),
+                    Vdo2State = FormatState(_vdo2State),
+                    Arcterra1State = FormatState(_arcterra1State),
+                    Arcterra2State = FormatState(_arcterra2State),
+                    CheckpointId = _checkpointId == -1 ? "none" : _checkpointId.ToString(),
+                    HealthMax = _healthMax.ToString(),
+                    MissileMax = _missileMax.ToString(),
+                    UaMax = _uaMax.ToString(),
+                    Weapons = String.Join(',', weapons.Where(p => p != "")),
+                    Octoliths = String.Join(',', octoliths.Where(p => p != ""))
                 });
             }
 
@@ -411,7 +564,6 @@ namespace MphRead
                         }
                         prompt = 0;
                     }
-                    CommitSettings();
                     string lastMode = _mode;
                     string mphKey = Paths.MphKey;
                     string fhKey = Paths.FhKey;
@@ -436,7 +588,7 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (V) MPH Version: {mphKey} ({mphInfo[mphKey]})");
                     Console.WriteLine($"{X(s++)} (F) FH Version: {fhKey} ({fhInfo[fhKey]})");
                     Console.WriteLine($"{X(s++)} (I) Language: {languageString}");
-                    Console.WriteLine($"{X(s++)} (A) Story Settings...");
+                    Console.WriteLine($"{X(s++)} (A) Adventure Mode Settings...");
                     Console.WriteLine($"{X(s++)} (S) Match Settings...");
                     Console.WriteLine($"{X(s++)} (X) Reset All");
                     Console.WriteLine($"{X(s++)} (L) Launch");
@@ -469,6 +621,7 @@ namespace MphRead
                             Console.WriteLine($"MphRead Version {Program.Version}");
                             Console.WriteLine();
                             Console.WriteLine("Loading...");
+                            CommitSettings();
                             break;
                         }
                         if (keyInfo.Key == ConsoleKey.Spacebar)
@@ -1365,7 +1518,7 @@ namespace MphRead
             return true;
         }
 
-        private static byte _saveSlot = 255;
+        public static byte SaveSlot { get; set; } = 0;
         private static readonly int[] _planets = [1, 0, 0, 0, 0];
         private static int _alinos1State = 0;
         private static int _alinos2State = 0;
@@ -1379,20 +1532,17 @@ namespace MphRead
         private static int _healthMax = 99;
         private static int _missileMax = 50;
         private static int _uaMax = 400;
+        private static readonly int[] _weapons = [1, 0, 1, 0, 0, 0, 0, 0, 0];
         private static readonly int[] _octoliths = new int[8];
 
-        // sktodo: on/off for all the overrides
-        // sktodo: commit overrides
-        // sktodo: apply overrides
-        // --> a save editor would also be nice, but for now you can set the overrides then "save"
-        // --> speaking of which, implement "saving" when entering the ship, in some fashion?
         // sktodo: cheats/features/bugfixes menu
-        // sktodo: commit settings when changed inside match/story/cheat menus
+        // sktodo implement "saving" when entering the ship, in some fashion
         private static bool ShowStoryModePrompts()
         {
             int prompt = 0;
             int selection = 0;
             int planet = 0;
+            int weapon = 0;
             int octolith = 0;
 
             string X(int index)
@@ -1434,9 +1584,27 @@ namespace MphRead
                 return $" {_planets[index]} ";
             }
 
+            string Weapon(int index)
+            {
+                int highlight = index;
+                if (highlight == 1)
+                {
+                    highlight = 2;
+                }
+                else if (highlight == 2)
+                {
+                    highlight = 1;
+                }
+                if (selection == 14 && weapon == highlight)
+                {
+                    return $"*{_weapons[index]}*";
+                }
+                return $" {_weapons[index]} ";
+            }
+
             string Octolith(int index)
             {
-                if (selection == 14 && octolith == index)
+                if (selection == 15 && octolith == index)
                 {
                     return $"*{_octoliths[index]}*";
                 }
@@ -1445,11 +1613,14 @@ namespace MphRead
 
             while (true)
             {
+                string saveSlot = SaveSlot == 0 ? "none" : SaveSlot.ToString();
                 string planets = $"CA:{Planet(0)}," +
                     $" Alinos:{Planet(1)}," +
                     $" VDO:{Planet(2)}," +
                     $" Arcterra:{Planet(3)}," +
                     $" Oubliette:{Planet(4)}";
+                string weapons = $"PB:{Weapon(0)}, MI:{Weapon(2)}, VD:{Weapon(1)}, BH:{Weapon(3)}," +
+                    $" IM:{Weapon(4)}, JD:{Weapon(5)}, MG:{Weapon(6)}, SC:{Weapon(7)}, OC:{Weapon(8)}";
                 string octoliths = $"CA:{Octolith(0)}{Octolith(1)}," +
                     $" Alinos:{Octolith(2)}{Octolith(3)}," +
                     $" VDO:{Octolith(4)}{Octolith(5)}," +
@@ -1464,22 +1635,26 @@ namespace MphRead
                 Console.WriteLine();
                 Console.WriteLine("Adventure Mode Settings");
                 Console.WriteLine();
-                Console.WriteLine($"{X(s++)} (S) Save Slot: {_saveSlot}");
-                Console.WriteLine($"{X(s++)} (A) Areas: {planets}");
-                Console.WriteLine($"{X(s++)} (1) CA 1 State: {LayerName(_ca1State)}");
-                Console.WriteLine($"{X(s++)} (2) CA 2 State: {LayerName(_ca2State)}");
-                Console.WriteLine($"{X(s++)} (3) Alinos 1 State: {LayerName(_alinos1State)}");
-                Console.WriteLine($"{X(s++)} (4) Alinos 2 State: {LayerName(_alinos2State)}");
-                Console.WriteLine($"{X(s++)} (5) VDO 1 State: {LayerName(_vdo1State)}");
-                Console.WriteLine($"{X(s++)} (6) VDO 2 State: {LayerName(_vdo2State)}");
-                Console.WriteLine($"{X(s++)} (7) Arcterra 1 State: {LayerName(_arcterra1State)}");
-                Console.WriteLine($"{X(s++)} (8) Arcterra 2 State: {LayerName(_arcterra2State)}");
-                Console.WriteLine($"{X(s++)} (C) Checkpoint ID: {_checkpointId}");
-                Console.WriteLine($"{X(s++)} (H) Health Max: {_healthMax}");
-                Console.WriteLine($"{X(s++)} (M) Missile Max: {_missileMax}");
-                Console.WriteLine($"{X(s++)} (U) UA Max: {_uaMax}");
-                Console.WriteLine($"{X(s++)} (O) Octoliths: {octoliths}");
-                Console.WriteLine($"{X(s++)} (X) Reset Adventure Settings");
+                Console.WriteLine($"{X(s++)} (S) Save Slot: {saveSlot}");
+                if (SaveSlot == 0)
+                {
+                    Console.WriteLine($"{X(s++)} (A) Areas: {planets}");
+                    Console.WriteLine($"{X(s++)} (1) CA 1 State: {LayerName(_ca1State)}");
+                    Console.WriteLine($"{X(s++)} (2) CA 2 State: {LayerName(_ca2State)}");
+                    Console.WriteLine($"{X(s++)} (3) Alinos 1 State: {LayerName(_alinos1State)}");
+                    Console.WriteLine($"{X(s++)} (4) Alinos 2 State: {LayerName(_alinos2State)}");
+                    Console.WriteLine($"{X(s++)} (5) VDO 1 State: {LayerName(_vdo1State)}");
+                    Console.WriteLine($"{X(s++)} (6) VDO 2 State: {LayerName(_vdo2State)}");
+                    Console.WriteLine($"{X(s++)} (7) Arcterra 1 State: {LayerName(_arcterra1State)}");
+                    Console.WriteLine($"{X(s++)} (8) Arcterra 2 State: {LayerName(_arcterra2State)}");
+                    Console.WriteLine($"{X(s++)} (C) Checkpoint ID: {_checkpointId}");
+                    Console.WriteLine($"{X(s++)} (H) Health Max: {_healthMax}");
+                    Console.WriteLine($"{X(s++)} (M) Missile Max: {_missileMax}");
+                    Console.WriteLine($"{X(s++)} (U) UA Max: {_uaMax}");
+                    Console.WriteLine($"{X(s++)} (W) Weapons: {weapons}");
+                    Console.WriteLine($"{X(s++)} (O) Octoliths: {octoliths}");
+                    Console.WriteLine($"{X(s++)} (X) Reset Adventure Settings");
+                }
                 Console.WriteLine($"{X(s++)} (B) Go Back");
                 s--;
                 if (prompt == 0)
@@ -1494,103 +1669,9 @@ namespace MphRead
                     {
                         break;
                     }
-                    if (keyInfo.Key == ConsoleKey.Spacebar)
-                    {
-                        if (selection == s - 1)
-                        {
-                            Array.Fill(_planets, 0);
-                            _planets[0] = 1;
-                            _alinos1State = 0;
-                            _alinos2State = 0;
-                            _ca1State = 0;
-                            _ca2State = 0;
-                            _vdo1State = 0;
-                            _vdo2State = 0;
-                            _arcterra1State = 0;
-                            _arcterra2State = 0;
-                            _checkpointId = -1;
-                            _healthMax = 99;
-                            _missileMax = 50;
-                            _uaMax = 400;
-                            Array.Fill(_octoliths, 0);
-                            UpdateSettings();
-                        }
-                        else if (selection == 1)
-                        {
-                            _planets[planet] = (_planets[planet] + 1) % 2;
-                        }
-                        else if (selection == 14)
-                        {
-                            _octoliths[octolith] = (_octoliths[octolith] + 1) % 2;
-                        }
-                        else
-                        {
-                            prompt = selection + 1;
-                        }
-                    }
-                    else if (keyInfo.Key == ConsoleKey.S)
+                    if (keyInfo.Key == ConsoleKey.S)
                     {
                         selection = 0;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.A)
-                    {
-                        selection = 1;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.D1 || keyInfo.Key == ConsoleKey.NumPad1)
-                    {
-                        selection = 2;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.D2 || keyInfo.Key == ConsoleKey.NumPad2)
-                    {
-                        selection = 3;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.D3 || keyInfo.Key == ConsoleKey.NumPad3)
-                    {
-                        selection = 4;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.D4 || keyInfo.Key == ConsoleKey.NumPad4)
-                    {
-                        selection = 5;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.D5 || keyInfo.Key == ConsoleKey.NumPad5)
-                    {
-                        selection = 6;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.D6 || keyInfo.Key == ConsoleKey.NumPad6)
-                    {
-                        selection = 7;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.D7 || keyInfo.Key == ConsoleKey.NumPad7)
-                    {
-                        selection = 8;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.D8 || keyInfo.Key == ConsoleKey.NumPad8)
-                    {
-                        selection = 9;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.C)
-                    {
-                        selection = 10;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.H)
-                    {
-                        selection = 11;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.M)
-                    {
-                        selection = 12;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.U)
-                    {
-                        selection = 13;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.O)
-                    {
-                        selection = 14;
-                    }
-                    else if (keyInfo.Key == ConsoleKey.X)
-                    {
-                        selection = 15;
                     }
                     else if (keyInfo.Key == ConsoleKey.UpArrow)
                     {
@@ -1610,6 +1691,14 @@ namespace MphRead
                     }
                     else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
                     {
+                        if (selection == 0)
+                        {
+                            SaveSlot = 0;
+                        }
+                        if (SaveSlot != 0)
+                        {
+                            continue;
+                        }
                         if (selection == 1)
                         {
                             Array.Fill(_planets, 0);
@@ -1633,6 +1722,12 @@ namespace MphRead
                         }
                         else if (selection == 14)
                         {
+                            Array.Fill(_weapons, 0);
+                            _weapons[(int)BeamType.PowerBeam] = 1;
+                            _weapons[(int)BeamType.Missile] = 1;
+                        }
+                        else if (selection == 15)
+                        {
                             Array.Fill(_octoliths, 0);
                         }
                     }
@@ -1644,9 +1739,13 @@ namespace MphRead
                             || keyInfo.Key == ConsoleKey.RightArrow ? 1 : -1;
                         if (selection == 0)
                         {
-                            _saveSlot = (byte)Advance(_saveSlot, direction, 255);
+                            SaveSlot = (byte)Advance(SaveSlot, direction, 255);
                         }
-                        else if (selection == 1)
+                        if (SaveSlot != 0)
+                        {
+                            continue;
+                        }
+                        if (selection == 1)
                         {
                             planet = Advance(planet, direction, 4);
                         }
@@ -1712,8 +1811,131 @@ namespace MphRead
                         }
                         else if (selection == 14)
                         {
+                            weapon = Advance(weapon, direction, 8);
+                        }
+                        else if (selection == 15)
+                        {
                             octolith = Advance(octolith, direction, 7);
                         }
+                    }
+                    if (SaveSlot != 0)
+                    {
+                        continue;
+                    }
+                    if (keyInfo.Key == ConsoleKey.Spacebar)
+                    {
+                        if (selection == s - 1)
+                        {
+                            // skhere
+                            Array.Fill(_planets, 0);
+                            _planets[0] = 1;
+                            _alinos1State = 0;
+                            _alinos2State = 0;
+                            _ca1State = 0;
+                            _ca2State = 0;
+                            _vdo1State = 0;
+                            _vdo2State = 0;
+                            _arcterra1State = 0;
+                            _arcterra2State = 0;
+                            _checkpointId = -1;
+                            _healthMax = 99;
+                            _missileMax = 50;
+                            _uaMax = 400;
+                            Array.Fill(_weapons, 0);
+                            _weapons[(int)BeamType.PowerBeam] = 1;
+                            _weapons[(int)BeamType.Missile] = 1;
+                            Array.Fill(_octoliths, 0);
+                            UpdateSettings();
+                        }
+                        else if (selection == 1)
+                        {
+                            _planets[planet] = (_planets[planet] + 1) % 2;
+                        }
+                        else if (selection == 14)
+                        {
+                            int highlight = weapon;
+                            if (highlight == 1)
+                            {
+                                highlight = 2;
+                            }
+                            else if (highlight == 2)
+                            {
+                                highlight = 1;
+                            }
+                            _weapons[highlight] = (_weapons[highlight] + 1) % 2;
+                        }
+                        else if (selection == 15)
+                        {
+                            _octoliths[octolith] = (_octoliths[octolith] + 1) % 2;
+                        }
+                        else
+                        {
+                            prompt = selection + 1;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.A)
+                    {
+                        selection = 1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D1 || keyInfo.Key == ConsoleKey.NumPad1)
+                    {
+                        selection = 2;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D2 || keyInfo.Key == ConsoleKey.NumPad2)
+                    {
+                        selection = 3;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D3 || keyInfo.Key == ConsoleKey.NumPad3)
+                    {
+                        selection = 4;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D4 || keyInfo.Key == ConsoleKey.NumPad4)
+                    {
+                        selection = 5;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D5 || keyInfo.Key == ConsoleKey.NumPad5)
+                    {
+                        selection = 6;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D6 || keyInfo.Key == ConsoleKey.NumPad6)
+                    {
+                        selection = 7;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D7 || keyInfo.Key == ConsoleKey.NumPad7)
+                    {
+                        selection = 8;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D8 || keyInfo.Key == ConsoleKey.NumPad8)
+                    {
+                        selection = 9;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.C)
+                    {
+                        selection = 10;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.H)
+                    {
+                        selection = 11;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.M)
+                    {
+                        selection = 12;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.U)
+                    {
+                        selection = 13;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.W)
+                    {
+                        selection = 14;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.O)
+                    {
+                        selection = 15;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.X)
+                    {
+                        selection = 16;
                     }
                 }
                 else
@@ -1827,7 +2049,7 @@ namespace MphRead
             }
         }
 
-        public static void ApplySettings()
+        public static void ApplyMultiplayerSettings()
         {
             if (_applySettings)
             {
@@ -1840,6 +2062,64 @@ namespace MphRead
                 GameState.DamageLevel = _damageLevel;
                 GameState.FriendlyFire = _friendlyFire;
                 GameState.AffinityWeapons = _affinityWeapons;
+            }
+        }
+
+        public static void ApplyAdventureSettings()
+        {
+            if (_applySettings && SaveSlot == 0)
+            {
+                int areas = (_planets[0] == 0 ? 0 : 0xC)
+                    | (_planets[1] == 0 ? 0 : 0x3)
+                    | (_planets[2] == 0 ? 0 : 0x30)
+                    | (_planets[3] == 0 ? 0 : 0xC0)
+                    | (_planets[4] == 0 ? 0 : 0x100);
+                GameState.StorySave.Areas = (ushort)areas;
+                BossFlags[] flags;
+                BossFlags bossFlags = BossFlags.None;
+                flags = [BossFlags.None, BossFlags.Unit2B1Kill, BossFlags.Unit2B1Done];
+                bossFlags |= flags[_ca1State];
+                flags = [BossFlags.None, BossFlags.Unit2B2Kill, BossFlags.Unit2B2Done];
+                bossFlags |= flags[_ca2State];
+                flags = [BossFlags.None, BossFlags.Unit1B1Kill, BossFlags.Unit1B1Done];
+                bossFlags |= flags[_alinos1State];
+                flags = [BossFlags.None, BossFlags.Unit1B2Kill, BossFlags.Unit1B2Done];
+                bossFlags |= flags[_alinos2State];
+                flags = [BossFlags.None, BossFlags.Unit3B1Kill, BossFlags.Unit3B1Done];
+                bossFlags |= flags[_vdo1State];
+                flags = [BossFlags.None, BossFlags.Unit3B2Kill, BossFlags.Unit3B2Done];
+                bossFlags |= flags[_vdo2State];
+                flags = [BossFlags.None, BossFlags.Unit4B1Kill, BossFlags.Unit4B1Done];
+                bossFlags |= flags[_arcterra1State];
+                flags = [BossFlags.None, BossFlags.Unit4B2Kill, BossFlags.Unit4B2Done];
+                bossFlags |= flags[_arcterra2State];
+                GameState.StorySave.BossFlags = bossFlags;
+                GameState.StorySave.CheckpointEntityId = _checkpointId;
+                GameState.StorySave.HealthMax = _healthMax;
+                GameState.StorySave.Health = _healthMax;
+                GameState.StorySave.AmmoMax[1] = _missileMax;
+                GameState.StorySave.Ammo[1] = _missileMax;
+                GameState.StorySave.AmmoMax[0] = _uaMax;
+                GameState.StorySave.Ammo[0] = _uaMax;
+                int weapons = 0;
+                for (int i = 0; i < _weapons.Length; i++)
+                {
+                    if (_weapons[i] != 0)
+                    {
+                        weapons |= 1 << i;
+                    }
+                }
+                GameState.StorySave.Weapons = (ushort)weapons;
+                int octoliths = 0;
+                int[] bits = [2, 3, 0, 1, 4, 5, 6, 7];
+                for (int i = 0; i < _octoliths.Length; i++)
+                {
+                    if (_octoliths[i] != 0)
+                    {
+                        octoliths |= 1 << bits[i];
+                    }
+                }
+                GameState.StorySave.CurrentOctoliths = GameState.StorySave.FoundOctoliths = (ushort)octoliths;
             }
         }
     }

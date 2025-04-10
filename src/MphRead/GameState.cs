@@ -1244,7 +1244,6 @@ namespace MphRead
             }
         }
 
-        private static byte _currentSaveSlot = 0;
         private const string _saveFolder = "Savedata";
         private static readonly JsonSerializerOptions _jsonOpt = new JsonSerializerOptions(JsonSerializerDefaults.General)
         {
@@ -1262,13 +1261,12 @@ namespace MphRead
             return Paths.Combine(_saveFolder, $"settings.json");
         }
 
-        public static void LoadSave(byte slot)
+        public static void LoadSave()
         {
-            _currentSaveSlot = slot;
             StorySave = new StorySave();
-            if (slot != 255)
+            if (Menu.SaveSlot != 0)
             {
-                string path = GetSavePath(slot);
+                string path = GetSavePath(Menu.SaveSlot);
                 if (File.Exists(path))
                 {
                     StorySave? save = JsonSerializer.Deserialize<StorySave>(File.ReadAllText(path), _jsonOpt);
@@ -1282,7 +1280,7 @@ namespace MphRead
 
         public static void CommitSave()
         {
-            if (_currentSaveSlot == 255)
+            if (Menu.SaveSlot == 0)
             {
                 return;
             }
@@ -1290,7 +1288,7 @@ namespace MphRead
             {
                 Directory.CreateDirectory(_saveFolder);
             }
-            File.WriteAllText(GetSavePath(_currentSaveSlot), JsonSerializer.Serialize(StorySave, _jsonOpt));
+            File.WriteAllText(GetSavePath(Menu.SaveSlot), JsonSerializer.Serialize(StorySave, _jsonOpt));
         }
 
         internal sealed class ByteArrayConverter : JsonConverter<byte[]>
@@ -1378,7 +1376,7 @@ namespace MphRead
         public static void Reset()
         {
             _cleanStorySave = new StorySave();
-            LoadSave(_currentSaveSlot);
+            LoadSave();
             CommitSave();
             UpdateCleanSave(force: true);
             MatchState = MatchState.InProgress;
