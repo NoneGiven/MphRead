@@ -512,4 +512,11 @@ namespace MphRead
         Red,
         RedDim
     }
+
+    public enum SaveWhen
+    {
+        Never,
+        Always,
+        Prompt
+    }
 }

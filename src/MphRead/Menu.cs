@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MphRead
 {
@@ -34,6 +36,8 @@ namespace MphRead
         public string FriendlyFire { get; set; } = "off";
         public string AffinityWeapons { get; set; } = "off";
         public string SaveSlot { get; set; } = "none";
+        public string SaveFromExit { get; set; } = "never";
+        public string SaveFromShip { get; set; } = "prompt";
         public string Planets { get; set; } = "CA";
         public string Alinos1State { get; set; } = "none";
         public string Alinos2State { get; set; } = "none";
@@ -155,6 +159,19 @@ namespace MphRead
                     };
                 }
 
+                static SaveWhen ParseSaveWhen(string value, SaveWhen fallback)
+                {
+                    if (value.Length >= 2)
+                    {
+                        value = value[0].ToString().ToUpper() + value[1..].ToLower();
+                        if (Enum.TryParse(value, out SaveWhen result))
+                        {
+                            return result;
+                        }
+                    }
+                    return fallback;
+                }
+
                 ReadRoom(settings.RoomKey);
                 ReadMode(settings.Mode);
                 ReadPlayer(settings.Player1, 0);
@@ -194,6 +211,8 @@ namespace MphRead
                 {
                     SaveSlot = saveSlot;
                 }
+                SaveFromExit = ParseSaveWhen(settings.SaveFromExit, SaveWhen.Never);
+                SaveFromShip = ParseSaveWhen(settings.SaveFromShip, SaveWhen.Prompt);
                 string[] planets = settings.Planets.ToUpper().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
                 if (planets.Length > 0)
                 {
@@ -466,7 +485,7 @@ namespace MphRead
                 };
                 GameState.CommitSettings(new MenuSettings()
                 {
-                    RoomKey = room,
+                    RoomKey = roomKey,
                     Mode = _mode,
                     Player1 = FormatHunter(0),
                     Player2 = FormatHunter(1),
@@ -492,6 +511,8 @@ namespace MphRead
                     FriendlyFire = _friendlyFire ? "on" : "off",
                     AffinityWeapons = _affinityWeapons ? "on" : "off",
                     SaveSlot = SaveSlot == 0 ? "none" : SaveSlot.ToString(),
+                    SaveFromExit = SaveFromExit.ToString().ToLower(),
+                    SaveFromShip = SaveFromShip.ToString().ToLower(),
                     Planets = String.Join(',', planets.Where(p => p != "")),
                     Alinos1State = FormatState(_ca1State),
                     Alinos2State = FormatState(_ca2State),
@@ -545,6 +566,31 @@ namespace MphRead
 
             while (true)
             {
+                // todo: handle saving for multiplayer
+                if (NeededSave != SaveWhen.Never && SaveSlot != 0)
+                {
+                    if (NeededSave == SaveWhen.Always)
+                    {
+                        GameState.CommitSave();
+                    }
+                    else if (NeededSave == SaveWhen.Prompt)
+                    {
+                        Console.Clear();
+                        Console.WriteLine($"MphRead Version {Program.Version}");
+                        Console.WriteLine();
+                        Console.WriteLine($"Save game to slot {SaveSlot}? (y/n)");
+                        ConsoleKey input = ConsoleKey.None;
+                        while (input != ConsoleKey.Y && input != ConsoleKey.N && input != ConsoleKey.Escape)
+                        {
+                            input = Console.ReadKey().Key;
+                            if (input == ConsoleKey.Y)
+                            {
+                                GameState.CommitSave();
+                            }
+                        }
+                    }
+                }
+                NeededSave = SaveWhen.Never;
                 while (true)
                 {
                     int s = 0;
@@ -1102,6 +1148,7 @@ namespace MphRead
         }
 
         private static bool _applySettings = false;
+
         private static bool _teams = false;
         // point goal is a decimal just to share code for advancing the value
         private static decimal _pointGoal = 0;
@@ -1519,6 +1566,10 @@ namespace MphRead
         }
 
         public static byte SaveSlot { get; set; } = 0;
+        public static SaveWhen SaveFromExit { get; set; } = SaveWhen.Never;
+        public static SaveWhen SaveFromShip { get; set; } = SaveWhen.Prompt;
+        public static SaveWhen NeededSave { get; set; } = SaveWhen.Never;
+
         private static readonly int[] _planets = [1, 0, 0, 0, 0];
         private static int _alinos1State = 0;
         private static int _alinos2State = 0;
@@ -1535,8 +1586,8 @@ namespace MphRead
         private static readonly int[] _weapons = [1, 0, 1, 0, 0, 0, 0, 0, 0];
         private static readonly int[] _octoliths = new int[8];
 
+        // sktodo: save type: never, always, prompt -- separate settings for hard exit vs. ship exit
         // sktodo: cheats/features/bugfixes menu
-        // sktodo implement "saving" when entering the ship, in some fashion
         private static bool ShowStoryModePrompts()
         {
             int prompt = 0;
@@ -1577,7 +1628,7 @@ namespace MphRead
 
             string Planet(int index)
             {
-                if (selection == 1 && planet == index)
+                if (selection == 3 && planet == index)
                 {
                     return $"*{_planets[index]}*";
                 }
@@ -1595,7 +1646,7 @@ namespace MphRead
                 {
                     highlight = 1;
                 }
-                if (selection == 14 && weapon == highlight)
+                if (selection == 16 && weapon == highlight)
                 {
                     return $"*{_weapons[index]}*";
                 }
@@ -1604,7 +1655,7 @@ namespace MphRead
 
             string Octolith(int index)
             {
-                if (selection == 15 && octolith == index)
+                if (selection == 17 && octolith == index)
                 {
                     return $"*{_octoliths[index]}*";
                 }
@@ -1636,6 +1687,8 @@ namespace MphRead
                 Console.WriteLine("Adventure Mode Settings");
                 Console.WriteLine();
                 Console.WriteLine($"{X(s++)} (S) Save Slot: {saveSlot}");
+                Console.WriteLine($"{X(s++)} (E) Save From Exit: {SaveFromExit.ToString().ToLower()}");
+                Console.WriteLine($"{X(s++)} (G) Save From Ship: {SaveFromShip.ToString().ToLower()}");
                 if (SaveSlot == 0)
                 {
                     Console.WriteLine($"{X(s++)} (A) Areas: {planets}");
@@ -1673,6 +1726,14 @@ namespace MphRead
                     {
                         selection = 0;
                     }
+                    else if (keyInfo.Key == ConsoleKey.E)
+                    {
+                        selection = 1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.G)
+                    {
+                        selection = 2;
+                    }
                     else if (keyInfo.Key == ConsoleKey.UpArrow)
                     {
                         selection--;
@@ -1695,38 +1756,46 @@ namespace MphRead
                         {
                             SaveSlot = 0;
                         }
+                        else if (selection == 1)
+                        {
+                            SaveFromExit = SaveWhen.Never;
+                        }
+                        else if (selection == 2)
+                        {
+                            SaveFromShip = SaveWhen.Prompt;
+                        }
                         if (SaveSlot != 0)
                         {
                             continue;
                         }
-                        if (selection == 1)
+                        if (selection == 3)
                         {
                             Array.Fill(_planets, 0);
                             _planets[0] = 1;
                         }
-                        else if (selection == 10)
+                        else if (selection == 12)
                         {
                             _checkpointId = -1;
                         }
-                        else if (selection == 11)
+                        else if (selection == 13)
                         {
                             _healthMax = 99;
                         }
-                        else if (selection == 12)
+                        else if (selection == 14)
                         {
                             _missileMax = 50;
                         }
-                        else if (selection == 13)
+                        else if (selection == 15)
                         {
                             _uaMax = 400;
                         }
-                        else if (selection == 14)
+                        else if (selection == 16)
                         {
                             Array.Fill(_weapons, 0);
                             _weapons[(int)BeamType.PowerBeam] = 1;
                             _weapons[(int)BeamType.Missile] = 1;
                         }
-                        else if (selection == 15)
+                        else if (selection == 17)
                         {
                             Array.Fill(_octoliths, 0);
                         }
@@ -1741,79 +1810,87 @@ namespace MphRead
                         {
                             SaveSlot = (byte)Advance(SaveSlot, direction, 255);
                         }
+                        else if (selection == 1)
+                        {
+                            SaveFromExit = (SaveWhen)(((int)SaveFromExit + 1) % 3);
+                        }
+                        else if (selection == 2)
+                        {
+                            SaveFromShip = (SaveWhen)(((int)SaveFromShip + 1) % 3);
+                        }
                         if (SaveSlot != 0)
                         {
                             continue;
                         }
-                        if (selection == 1)
+                        if (selection == 3)
                         {
                             planet = Advance(planet, direction, 4);
                         }
-                        else if (selection == 2)
+                        else if (selection == 4)
                         {
                             _ca1State = Advance(_ca1State, direction, 2);
                         }
-                        else if (selection == 3)
+                        else if (selection == 5)
                         {
                             _ca2State = Advance(_ca2State, direction, 2);
                         }
-                        else if (selection == 4)
+                        else if (selection == 6)
                         {
                             _alinos1State = Advance(_alinos1State, direction, 2);
                         }
-                        else if (selection == 5)
+                        else if (selection == 7)
                         {
                             _alinos2State = Advance(_alinos2State, direction, 2);
                         }
-                        else if (selection == 6)
+                        else if (selection == 8)
                         {
                             _vdo1State = Advance(_vdo1State, direction, 2);
                         }
-                        else if (selection == 7)
+                        else if (selection == 9)
                         {
                             _vdo2State = Advance(_vdo2State, direction, 2);
                         }
-                        else if (selection == 8)
+                        else if (selection == 10)
                         {
                             _arcterra1State = Advance(_arcterra1State, direction, 2);
                         }
-                        else if (selection == 9)
+                        else if (selection == 11)
                         {
                             _arcterra2State = Advance(_arcterra2State, direction, 2);
                         }
-                        else if (selection == 10)
+                        else if (selection == 12)
                         {
                             if (_checkpointId >= 0 || direction == 1)
                             {
                                 _checkpointId += direction;
                             }
                         }
-                        else if (selection == 11)
+                        else if (selection == 13)
                         {
                             if (direction == -1 && _healthMax > 99 || direction == 1 && _healthMax < 799)
                             {
                                 _healthMax += direction * 100;
                             }
                         }
-                        else if (selection == 12)
+                        else if (selection == 14)
                         {
                             if (direction == -1 && _missileMax > 50 || direction == 1 && _missileMax < 950)
                             {
                                 _missileMax += direction * 100;
                             }
                         }
-                        else if (selection == 13)
+                        else if (selection == 15)
                         {
                             if (direction == -1 && _uaMax > 400 || direction == 1 && _uaMax < 4000)
                             {
                                 _uaMax += direction * 300;
                             }
                         }
-                        else if (selection == 14)
+                        else if (selection == 16)
                         {
                             weapon = Advance(weapon, direction, 8);
                         }
-                        else if (selection == 15)
+                        else if (selection == 17)
                         {
                             octolith = Advance(octolith, direction, 7);
                         }
@@ -1826,7 +1903,6 @@ namespace MphRead
                     {
                         if (selection == s - 1)
                         {
-                            // skhere
                             Array.Fill(_planets, 0);
                             _planets[0] = 1;
                             _alinos1State = 0;
@@ -1847,11 +1923,11 @@ namespace MphRead
                             Array.Fill(_octoliths, 0);
                             UpdateSettings();
                         }
-                        else if (selection == 1)
+                        else if (selection == 3)
                         {
                             _planets[planet] = (_planets[planet] + 1) % 2;
                         }
-                        else if (selection == 14)
+                        else if (selection == 16)
                         {
                             int highlight = weapon;
                             if (highlight == 1)
@@ -1864,7 +1940,7 @@ namespace MphRead
                             }
                             _weapons[highlight] = (_weapons[highlight] + 1) % 2;
                         }
-                        else if (selection == 15)
+                        else if (selection == 17)
                         {
                             _octoliths[octolith] = (_octoliths[octolith] + 1) % 2;
                         }
@@ -1875,67 +1951,67 @@ namespace MphRead
                     }
                     else if (keyInfo.Key == ConsoleKey.A)
                     {
-                        selection = 1;
+                        selection = 3;
                     }
                     else if (keyInfo.Key == ConsoleKey.D1 || keyInfo.Key == ConsoleKey.NumPad1)
                     {
-                        selection = 2;
+                        selection = 4;
                     }
                     else if (keyInfo.Key == ConsoleKey.D2 || keyInfo.Key == ConsoleKey.NumPad2)
                     {
-                        selection = 3;
+                        selection = 5;
                     }
                     else if (keyInfo.Key == ConsoleKey.D3 || keyInfo.Key == ConsoleKey.NumPad3)
                     {
-                        selection = 4;
+                        selection = 6;
                     }
                     else if (keyInfo.Key == ConsoleKey.D4 || keyInfo.Key == ConsoleKey.NumPad4)
                     {
-                        selection = 5;
+                        selection = 7;
                     }
                     else if (keyInfo.Key == ConsoleKey.D5 || keyInfo.Key == ConsoleKey.NumPad5)
                     {
-                        selection = 6;
+                        selection = 8;
                     }
                     else if (keyInfo.Key == ConsoleKey.D6 || keyInfo.Key == ConsoleKey.NumPad6)
                     {
-                        selection = 7;
+                        selection = 9;
                     }
                     else if (keyInfo.Key == ConsoleKey.D7 || keyInfo.Key == ConsoleKey.NumPad7)
                     {
-                        selection = 8;
+                        selection = 10;
                     }
                     else if (keyInfo.Key == ConsoleKey.D8 || keyInfo.Key == ConsoleKey.NumPad8)
                     {
-                        selection = 9;
+                        selection = 11;
                     }
                     else if (keyInfo.Key == ConsoleKey.C)
                     {
-                        selection = 10;
+                        selection = 12;
                     }
                     else if (keyInfo.Key == ConsoleKey.H)
                     {
-                        selection = 11;
+                        selection = 13;
                     }
                     else if (keyInfo.Key == ConsoleKey.M)
                     {
-                        selection = 12;
+                        selection = 14;
                     }
                     else if (keyInfo.Key == ConsoleKey.U)
                     {
-                        selection = 13;
+                        selection = 15;
                     }
                     else if (keyInfo.Key == ConsoleKey.W)
                     {
-                        selection = 14;
+                        selection = 16;
                     }
                     else if (keyInfo.Key == ConsoleKey.O)
                     {
-                        selection = 15;
+                        selection = 17;
                     }
                     else if (keyInfo.Key == ConsoleKey.X)
                     {
-                        selection = 16;
+                        selection = 18;
                     }
                 }
                 else

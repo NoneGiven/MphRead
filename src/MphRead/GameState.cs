@@ -615,8 +615,7 @@ namespace MphRead
                     if (prompt == PromptType.ShipHatch)
                     {
                         // yes to ship hatch (enter)
-                        // todo: update story save
-                        scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, AfterFade.Exit);
+                        scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, AfterFade.EnterShip);
                         // mustodo: stop music
                         // todo: fade SFX
                         Sfx.Instance.PlaySample((int)SfxId.RETURN_TO_SHIP_YES, source: null, loop: false,

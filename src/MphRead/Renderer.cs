@@ -75,7 +75,8 @@ namespace MphRead
         None,
         Exit,
         LoadRoom,
-        AfterMovie
+        AfterMovie,
+        EnterShip
     }
 
     public partial class Scene
@@ -2854,6 +2855,11 @@ namespace MphRead
         public void QuitGame()
         {
             DoCleanup();
+            // todo: if this has callers in the future, determine save type
+            if (!Multiplayer)
+            {
+                Menu.NeededSave = Menu.SaveFromExit;
+            }
             _close.Invoke();
         }
 
@@ -2870,10 +2876,14 @@ namespace MphRead
 
         private void EndFade()
         {
-            if (_afterFade == AfterFade.Exit)
+            if (_afterFade == AfterFade.Exit || _afterFade == AfterFade.EnterShip)
             {
                 _fadeType = FadeType.None;
                 DoCleanup();
+                if (!Multiplayer)
+                {
+                    Menu.NeededSave = _afterFade == AfterFade.EnterShip ? Menu.SaveFromShip : Menu.SaveFromExit;
+                }
                 _close.Invoke();
                 return;
             }
@@ -4826,6 +4836,10 @@ namespace MphRead
             if (e.Key == Keys.Escape)
             {
                 Scene.DoCleanup();
+                if (!Scene.Multiplayer)
+                {
+                    Menu.NeededSave = Menu.SaveFromExit;
+                }
                 Close();
             }
             else
