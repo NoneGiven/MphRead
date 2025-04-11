@@ -615,6 +615,7 @@ namespace MphRead
                     if (prompt == PromptType.ShipHatch)
                     {
                         // yes to ship hatch (enter)
+                        EnterShip(); // the game does this in the cockpit
                         scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, AfterFade.EnterShip);
                         // mustodo: stop music
                         // todo: fade SFX
@@ -779,6 +780,52 @@ namespace MphRead
                     //PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 117, param1: 90, param2: 1);
                     _shownOctolithDialog = true;
                 }
+            }
+        }
+
+        private static void EnterShip()
+        {
+            // update flags for the end of the escape sequence
+            StorySave.TriggerState[2] &= 0x7F;
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit1B1Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit1B1Kill;
+                StorySave.BossFlags |= ~BossFlags.Unit1B1Done;
+            }
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit1B2Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit1B2Kill;
+                StorySave.BossFlags |= ~BossFlags.Unit1B2Done;
+            }
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit2B1Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit2B1Kill;
+                StorySave.BossFlags |= ~BossFlags.Unit2B1Done;
+            }
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit2B2Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit2B2Kill;
+                StorySave.BossFlags |= ~BossFlags.Unit2B2Done;
+            }
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit3B1Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit3B1Kill;
+                StorySave.BossFlags |= ~BossFlags.Unit3B1Done;
+            }
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit3B2Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit3B2Kill;
+                StorySave.BossFlags |= ~BossFlags.Unit3B2Done;
+            }
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit4B1Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit4B1Kill;
+                StorySave.BossFlags |= ~BossFlags.Unit4B1Done;
+            }
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit4B2Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit4B2Kill;
+                StorySave.BossFlags |= ~BossFlags.Unit4B2Done;
             }
         }
 
