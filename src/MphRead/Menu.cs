@@ -62,7 +62,7 @@ namespace MphRead
         {
             SoundCapability soundCapability = Sound.Sfx.CheckAudioLoad();
             int prompt = 0;
-            int selection = 13;
+            int selection = 14;
             int roomId = -1;
             string room = "";
             string roomKey = "";
@@ -564,6 +564,7 @@ namespace MphRead
 
             while (true)
             {
+                // saving code placed here instead of afer Run() so that the game window will close
                 // todo: handle saving for multiplayer
                 if (NeededSave != SaveWhen.Never && SaveSlot != 0)
                 {
@@ -608,6 +609,14 @@ namespace MphRead
                         }
                         prompt = 0;
                     }
+                    else if (prompt == -3)
+                    {
+                        if (!ShowFeaturePrompts())
+                        {
+                            return;
+                        }
+                        prompt = 0;
+                    }
                     string lastMode = _mode;
                     string mphKey = Paths.MphKey;
                     string fhKey = Paths.FhKey;
@@ -634,6 +643,7 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (I) Language: {languageString}");
                     Console.WriteLine($"{X(s++)} (A) Adventure Mode Settings...");
                     Console.WriteLine($"{X(s++)} (S) Match Settings...");
+                    Console.WriteLine($"{X(s++)} (C) Features...");
                     Console.WriteLine($"{X(s++)} (X) Reset All");
                     Console.WriteLine($"{X(s++)} (L) Launch");
                     s--;
@@ -670,21 +680,28 @@ namespace MphRead
                         }
                         if (keyInfo.Key == ConsoleKey.Spacebar)
                         {
-                            if (selection == s - 3)
+                            if (selection == s - 4)
                             {
                                 // story settings
                                 prompt = -2;
                                 continue;
                             }
-                            if (selection == s - 2)
+                            if (selection == s - 3)
                             {
                                 // match settings
                                 prompt = -1;
                                 continue;
                             }
+                            if (selection == s - 2)
+                            {
+                                // feature settings
+                                prompt = -3;
+                                continue;
+                            }
                             if (selection == s - 1)
                             {
                                 // reset
+                                ResetFeatures();
                                 LoadSettings(new MenuSettings());
                                 UpdateSettings();
                                 continue;
@@ -745,9 +762,15 @@ namespace MphRead
                             prompt = -1;
                             continue;
                         }
-                        else if (keyInfo.Key == ConsoleKey.X)
+                        else if (keyInfo.Key == ConsoleKey.C)
                         {
                             selection = 12;
+                            prompt = -3;
+                            continue;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.X)
+                        {
+                            selection = 13;
                         }
                         else if (keyInfo.Key == ConsoleKey.UpArrow || keyInfo.Key == ConsoleKey.W)
                         {
@@ -1584,8 +1607,553 @@ namespace MphRead
         private static readonly int[] _weapons = [1, 0, 1, 0, 0, 0, 0, 0, 0];
         private static readonly int[] _octoliths = new int[8];
 
-        // sktodo: save type: never, always, prompt -- separate settings for hard exit vs. ship exit
-        // sktodo: cheats/features/bugfixes menu
+        private static bool ShowFeaturePrompts()
+        {
+            int screen = 0;
+            int selection = 0;
+
+            string X(int index)
+            {
+                return $"[{(selection == index ? "x" : " ")}]";
+            }
+
+            static string OnOff(bool value)
+            {
+                return value ? "On" : "Off";
+            }
+
+            static string PrintOpacity(float value)
+            {
+                return value switch
+                {
+                    0 => "zero",
+                    >= 1 => "full",
+                    _ => "partial"
+                };
+            }
+
+            while (true)
+            {
+                int s = 0;
+                Console.Clear();
+                Console.WriteLine($"MphRead Version {Program.Version}");
+                Console.WriteLine();
+                Console.WriteLine("Choose a setting using up/down or with the key indicated.");
+                Console.WriteLine("Press Space to specify, Backspace to clear, or left/right to advance the setting.");
+                Console.WriteLine("When finished, press Enter or use the last option to return. Press Escape to exit.");
+                Console.WriteLine();
+                if (screen == 0)
+                {
+                    Console.WriteLine("Features, Cheats, and Bugfixes");
+                    Console.WriteLine();
+                    Console.WriteLine($"{X(s++)} (F) Features...");
+                    Console.WriteLine($"{X(s++)} (C) Cheats...");
+                    Console.WriteLine($"{X(s++)} (G) Bugfixes...");
+                    Console.WriteLine($"{X(s++)} (X) Reset Features, Cheats, and Bugfixes");
+                }
+                else if (screen == 1)
+                {
+                    Console.WriteLine("Features");
+                    Console.WriteLine();
+                    Console.WriteLine($"{X(s++)} (T) Allow Invalid Teams: {OnOff(Features.AllowInvalidTeams)}");
+                    Console.WriteLine($"{X(s++)} (I) Target Info On Top Screen: {OnOff(Features.TopScreenTargetInfo)}");
+                    Console.WriteLine($"{X(s++)} (H) Helmet Opacity: {PrintOpacity(Features.HelmetOpacity)}");
+                    Console.WriteLine($"{X(s++)} (V) Visor Opacity: {PrintOpacity(Features.VisorOpacity)}");
+                    Console.WriteLine($"{X(s++)} (S) HUD Sway: {OnOff(Features.HudSway)}");
+                    Console.WriteLine($"{X(s++)} (F) Target Info Sway: {OnOff(Features.TargetInfoSway)}");
+                    Console.WriteLine($"{X(s++)} (R) Maximum Room Detail: {OnOff(Features.MaxRoomDetail)}");
+                    Console.WriteLine($"{X(s++)} (P) Maximum Player Detail: {OnOff(Features.MaxPlayerDetail)}");
+                    Console.WriteLine($"{X(s++)} (L) Logarithmic Spatial Audio: {OnOff(Features.LogSpatialAudio)}");
+                    Console.WriteLine($"{X(s++)} (A) Consistent Alarm Interval: {OnOff(Features.HalfSecondAlarm)}");
+                }
+                else if (screen == 2)
+                {
+                    Console.WriteLine("Cheats");
+                    Console.WriteLine();
+                    Console.WriteLine($"{X(s++)} (W) Free Weapon Selection: {OnOff(Cheats.FreeWeaponSelect)}");
+                    Console.WriteLine($"{X(s++)} (J) Unlimited Jumps: {OnOff(Cheats.UnlimitedJumps)}");
+                    Console.WriteLine($"{X(s++)} (D) All Doors Unlocked: {OnOff(Cheats.UnlockAllDoors)}");
+                    Console.WriteLine($"{X(s++)} (U) Start With All Upgrades: {OnOff(Cheats.StartWithAllUpgrades)}");
+                    Console.WriteLine($"{X(s++)} (O) Start With All Octoliths: {OnOff(Cheats.StartWithAllOctoliths)}");
+                    Console.WriteLine($"{X(s++)} (G) Walk Through Walls: {OnOff(Cheats.WalkThroughWalls)}");
+                }
+                else if (screen == 3)
+                {
+                    Console.WriteLine("Bugfixes");
+                    Console.WriteLine();
+                    Console.WriteLine($"{X(s++)} (C) Smooth Camera Sequence Handoff: {OnOff(Bugfixes.SmoothCamSeqHandoff)}");
+                    Console.WriteLine($"{X(s++)} (N) Better Camera Sequence Node Refs: {OnOff(Bugfixes.BetterCamSeqNodeRef)}");
+                    Console.WriteLine($"{X(s++)} (R) No Stray Respawn Text: {OnOff(Bugfixes.NoStrayRespawnText)}");
+                    Console.WriteLine($"{X(s++)} (S) Correct Bounty SFX: {OnOff(Bugfixes.CorrectBountySfx)}");
+                    Console.WriteLine($"{X(s++)} (E) Fix Double Enemy Death: {OnOff(Bugfixes.NoDoubleEnemyDeath)}");
+                    Console.WriteLine($"{X(s++)} (T) Fix Slench Roll Timer Underflow: {OnOff(Bugfixes.NoSlenchRollTimerUnderflow)}");
+                }
+                Console.WriteLine($"{X(s++)} (B) Go Back");
+                s--;
+                ConsoleKeyInfo keyInfo = Console.ReadKey();
+                if (keyInfo.Key == ConsoleKey.UpArrow)
+                {
+                    selection--;
+                    if (selection < 0)
+                    {
+                        selection = s;
+                    }
+                }
+                else if (keyInfo.Key == ConsoleKey.DownArrow)
+                {
+                    selection++;
+                    if (selection > s)
+                    {
+                        selection = 0;
+                    }
+                }
+                else if (keyInfo.Key == ConsoleKey.Escape)
+                {
+                    return false;
+                }
+                else if (screen == 0)
+                {
+                    if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.B
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == s)
+                    {
+                        break;
+                    }
+                    if (keyInfo.Key == ConsoleKey.F
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == 0)
+                    {
+                        screen = 1;
+                        selection = 0;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.C
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == 1)
+                    {
+                        screen = 2;
+                        selection = 0;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.G
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == 2)
+                    {
+                        screen = 3;
+                        selection = 0;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.X)
+                    {
+                        selection = 3;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Spacebar && selection == 3)
+                    {
+                        ResetFeatures();
+                    }
+                }
+                else if (screen == 1)
+                {
+                    if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.B
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == s)
+                    {
+                        screen = 0;
+                        selection = 0;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.T)
+                    {
+                        selection = 0;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.I)
+                    {
+                        selection = 1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.H)
+                    {
+                        selection = 2;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.V)
+                    {
+                        selection = 3;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.S)
+                    {
+                        selection = 4;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.F)
+                    {
+                        selection = 5;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.R)
+                    {
+                        selection = 6;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.P)
+                    {
+                        selection = 7;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.L)
+                    {
+                        selection = 8;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.A)
+                    {
+                        selection = 9;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
+                    {
+                        if (selection == 0)
+                        {
+                            Features.AllowInvalidTeams = true;
+                        }
+                        else if (selection == 1)
+                        {
+                            Features.TopScreenTargetInfo = true;
+                        }
+                        else if (selection == 2)
+                        {
+                            Features.HelmetOpacity = 1;
+                        }
+                        else if (selection == 3)
+                        {
+                            Features.VisorOpacity = 0.5f;
+                        }
+                        else if (selection == 4)
+                        {
+                            Features.HudSway = true;
+                        }
+                        else if (selection == 5)
+                        {
+                            Features.TargetInfoSway = false;
+                        }
+                        else if (selection == 6)
+                        {
+                            Features.MaxRoomDetail = false;
+                        }
+                        else if (selection == 7)
+                        {
+                            Features.MaxPlayerDetail = true;
+                        }
+                        else if (selection == 8)
+                        {
+                            Features.LogSpatialAudio = false;
+                        }
+                        else if (selection == 9)
+                        {
+                            Features.HalfSecondAlarm = false;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
+                        || keyInfo.Key == ConsoleKey.RightArrow || keyInfo.Key == ConsoleKey.Subtract
+                        || keyInfo.Key == ConsoleKey.OemMinus || keyInfo.Key == ConsoleKey.LeftArrow)
+                    {
+                        int direction = keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
+                            || keyInfo.Key == ConsoleKey.RightArrow ? 1 : -1;
+                        if (selection == 0)
+                        {
+                            Features.AllowInvalidTeams = !Features.AllowInvalidTeams;
+                        }
+                        else if (selection == 1)
+                        {
+                            Features.TopScreenTargetInfo = !Features.TopScreenTargetInfo;
+                        }
+                        else if (selection == 2)
+                        {
+                            if (direction == 1)
+                            {
+                                if (Features.HelmetOpacity <= 0)
+                                {
+                                    Features.HelmetOpacity = 0.5f;
+                                }
+                                else if (Features.HelmetOpacity >= 1)
+                                {
+                                    Features.HelmetOpacity = 0;
+                                }
+                                else
+                                {
+                                    Features.HelmetOpacity = 1;
+                                }
+                            }
+                            else
+                            {
+                                if (Features.HelmetOpacity <= 0)
+                                {
+                                    Features.HelmetOpacity = 1;
+                                }
+                                else if (Features.HelmetOpacity >= 1)
+                                {
+                                    Features.HelmetOpacity = 0.5f;
+                                }
+                                else
+                                {
+                                    Features.HelmetOpacity = 0;
+                                }
+                            }
+                        }
+                        else if (selection == 3)
+                        {
+                            if (direction == 1)
+                            {
+                                if (Features.VisorOpacity <= 0)
+                                {
+                                    Features.VisorOpacity = 0.5f;
+                                }
+                                else if (Features.VisorOpacity >= 1)
+                                {
+                                    Features.VisorOpacity = 0;
+                                }
+                                else
+                                {
+                                    Features.VisorOpacity = 1;
+                                }
+                            }
+                            else
+                            {
+                                if (Features.VisorOpacity <= 0)
+                                {
+                                    Features.VisorOpacity = 1;
+                                }
+                                else if (Features.VisorOpacity >= 1)
+                                {
+                                    Features.VisorOpacity = 0.5f;
+                                }
+                                else
+                                {
+                                    Features.VisorOpacity = 0;
+                                }
+                            }
+                        }
+                        else if (selection == 4)
+                        {
+                            Features.HudSway = !Features.HudSway;
+                        }
+                        else if (selection == 5)
+                        {
+                            Features.TargetInfoSway = !Features.TargetInfoSway;
+                        }
+                        else if (selection == 6)
+                        {
+                            Features.MaxRoomDetail = !Features.MaxRoomDetail;
+                        }
+                        else if (selection == 7)
+                        {
+                            Features.MaxPlayerDetail = !Features.MaxPlayerDetail;
+                        }
+                        else if (selection == 8)
+                        {
+                            Features.LogSpatialAudio = !Features.LogSpatialAudio;
+                        }
+                        else if (selection == 9)
+                        {
+                            Features.HalfSecondAlarm = !Features.HalfSecondAlarm;
+                        }
+                    }
+                }
+                else if (screen == 2)
+                {
+                    if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.B
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == s)
+                    {
+                        screen = 0;
+                        selection = 1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.W)
+                    {
+                        selection = 0;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.J)
+                    {
+                        selection = 1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D)
+                    {
+                        selection = 2;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.U)
+                    {
+                        selection = 3;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.O)
+                    {
+                        selection = 4;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.G)
+                    {
+                        selection = 5;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
+                    {
+                        if (selection == 0)
+                        {
+                            Cheats.FreeWeaponSelect = false;
+                        }
+                        else if (selection == 1)
+                        {
+                            Cheats.UnlimitedJumps = false;
+                        }
+                        else if (selection == 2)
+                        {
+                            Cheats.UnlockAllDoors = false;
+                        }
+                        else if (selection == 3)
+                        {
+                            Cheats.StartWithAllUpgrades = false;
+                        }
+                        else if (selection == 4)
+                        {
+                            Cheats.StartWithAllOctoliths = false;
+                        }
+                        else if (selection == 5)
+                        {
+                            Cheats.WalkThroughWalls = false;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
+                        || keyInfo.Key == ConsoleKey.RightArrow || keyInfo.Key == ConsoleKey.Subtract
+                        || keyInfo.Key == ConsoleKey.OemMinus || keyInfo.Key == ConsoleKey.LeftArrow)
+                    {
+                        int direction = keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
+                            || keyInfo.Key == ConsoleKey.RightArrow ? 1 : -1;
+                        if (selection == 0)
+                        {
+                            Cheats.FreeWeaponSelect = !Cheats.FreeWeaponSelect;
+                        }
+                        else if (selection == 1)
+                        {
+                            Cheats.UnlimitedJumps = !Cheats.UnlimitedJumps;
+                        }
+                        else if (selection == 2)
+                        {
+                            Cheats.UnlockAllDoors = !Cheats.UnlockAllDoors;
+                        }
+                        else if (selection == 3)
+                        {
+                            Cheats.StartWithAllUpgrades = !Cheats.StartWithAllUpgrades;
+                        }
+                        else if (selection == 4)
+                        {
+                            Cheats.StartWithAllOctoliths = !Cheats.StartWithAllOctoliths;
+                        }
+                        else if (selection == 5)
+                        {
+                            Cheats.WalkThroughWalls = !Cheats.WalkThroughWalls;
+                        }
+                    }
+                }
+                else if (screen == 3)
+                {
+                    if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.B
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == s)
+                    {
+                        screen = 0;
+                        selection = 2;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.C)
+                    {
+                        selection = 0;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.N)
+                    {
+                        selection = 1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.R)
+                    {
+                        selection = 2;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.S)
+                    {
+                        selection = 3;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.E)
+                    {
+                        selection = 4;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.T)
+                    {
+                        selection = 5;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
+                    {
+                        if (selection == 0)
+                        {
+                            Bugfixes.SmoothCamSeqHandoff = false;
+                        }
+                        else if (selection == 1)
+                        {
+                            Bugfixes.BetterCamSeqNodeRef = true;
+                        }
+                        else if (selection == 2)
+                        {
+                            Bugfixes.NoStrayRespawnText = false;
+                        }
+                        else if (selection == 3)
+                        {
+                            Bugfixes.CorrectBountySfx = true;
+                        }
+                        else if (selection == 4)
+                        {
+                            Bugfixes.NoDoubleEnemyDeath = true;
+                        }
+                        else if (selection == 5)
+                        {
+                            Bugfixes.NoSlenchRollTimerUnderflow = true;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
+                        || keyInfo.Key == ConsoleKey.RightArrow || keyInfo.Key == ConsoleKey.Subtract
+                        || keyInfo.Key == ConsoleKey.OemMinus || keyInfo.Key == ConsoleKey.LeftArrow)
+                    {
+                        int direction = keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
+                            || keyInfo.Key == ConsoleKey.RightArrow ? 1 : -1;
+                        if (selection == 0)
+                        {
+                            Bugfixes.SmoothCamSeqHandoff = !Bugfixes.SmoothCamSeqHandoff;
+                        }
+                        else if (selection == 1)
+                        {
+                            Bugfixes.BetterCamSeqNodeRef = !Bugfixes.BetterCamSeqNodeRef;
+                        }
+                        else if (selection == 2)
+                        {
+                            Bugfixes.NoStrayRespawnText = !Bugfixes.NoStrayRespawnText;
+                        }
+                        else if (selection == 3)
+                        {
+                            Bugfixes.CorrectBountySfx = !Bugfixes.CorrectBountySfx;
+                        }
+                        else if (selection == 4)
+                        {
+                            Bugfixes.NoDoubleEnemyDeath = !Bugfixes.NoDoubleEnemyDeath;
+                        }
+                        else if (selection == 5)
+                        {
+                            Bugfixes.NoSlenchRollTimerUnderflow = !Bugfixes.NoSlenchRollTimerUnderflow;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        private static void ResetFeatures()
+        {
+            Features.AllowInvalidTeams = true;
+            Features.TopScreenTargetInfo = true;
+            Features.HelmetOpacity = 1;
+            Features.VisorOpacity = 0.5f;
+            Features.HudSway = true;
+            Features.TargetInfoSway = false;
+            Features.MaxRoomDetail = false;
+            Features.MaxPlayerDetail = true;
+            Features.LogSpatialAudio = false;
+            Features.HalfSecondAlarm = false;
+            Cheats.FreeWeaponSelect = false;
+            Cheats.UnlimitedJumps = false;
+            Cheats.UnlockAllDoors = false;
+            Cheats.StartWithAllUpgrades = false;
+            Cheats.StartWithAllOctoliths = false;
+            Cheats.WalkThroughWalls = false;
+            Bugfixes.SmoothCamSeqHandoff = false;
+            Bugfixes.BetterCamSeqNodeRef = true;
+            Bugfixes.NoStrayRespawnText = false;
+            Bugfixes.CorrectBountySfx = true;
+            Bugfixes.NoDoubleEnemyDeath = true;
+            Bugfixes.NoSlenchRollTimerUnderflow = true;
+        }
+
         private static bool ShowStoryModePrompts()
         {
             int prompt = 0;
