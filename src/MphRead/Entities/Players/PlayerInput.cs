@@ -294,7 +294,7 @@ namespace MphRead.Entities
             if (EquipInfo.Zoomed)
             {
                 float fovFactor = CameraInfo.Fov - Fixed.ToFloat(Values.NormalFov) * 2;
-                if (fovFactor != 0)
+                if (fovFactor != 0) // zero will occur when the camera info is overridden to normal FOV due to cam seq
                 {
                     sensitivity /= -Fixed.ToFloat(Values.Field70) * fovFactor;
                 }
@@ -337,7 +337,7 @@ namespace MphRead.Entities
             if (EquipInfo.Zoomed)
             {
                 float fovFactor = CameraInfo.Fov - Fixed.ToFloat(Values.NormalFov) * 2;
-                if (fovFactor != 0)
+                if (fovFactor != 0) // zero will occur when the camera info is overridden to normal FOV due to cam seq
                 {
                     sensitivity /= -Fixed.ToFloat(Values.Field70) * fovFactor;
                 }
