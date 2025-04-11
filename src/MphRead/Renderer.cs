@@ -278,10 +278,6 @@ namespace MphRead
             {
                 Menu.ApplyMultiplayerSettings();
             }
-            else
-            {
-                Menu.ApplyAdventureSettings();
-            }
             SetRoomValues(meta);
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
             _inputMode = _cameraMode == CameraMode.Player ? InputMode.All : InputMode.CameraOnly;
@@ -1026,6 +1022,11 @@ namespace MphRead
                         }
                     }
                 }
+            }
+            if (combos.Count == 0 && model.Recolors.Count > 0
+                && model.Recolors[0].Textures.Count > 0 && model.Recolors[0].Palettes.Count > 0)
+            {
+                combos.Add((0, 0, 0));
             }
             if (combos.Count > 0)
             {

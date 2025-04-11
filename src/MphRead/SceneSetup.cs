@@ -36,6 +36,10 @@ namespace MphRead
                 Weapons.Current = scene.Multiplayer ? Weapons.WeaponsMP : Weapons.Weapons1P;
             }
             scene.GameMode = mode;
+            if (mode == GameMode.SinglePlayer)
+            {
+                Menu.ApplyAdventureSettings();
+            }
             Extract.LoadRuntimeData();
             LoadResources(scene);
             CamSeqEntity.ClearData();
@@ -54,12 +58,12 @@ namespace MphRead
             var room = new RoomEntity(scene);
             (CollisionInstance collision, IReadOnlyList<EntityBase> entities) = SetUpRoom(mode, playerCount,
                 bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene);
-            InitHunterSpawns(scene, entities);
+            InitHunterSpawns(scene, entities, initialize: false); // see: "probably revisit this"
             GameState.StorySave.CheckpointRoomId = room.RoomId;
             return (room, metadata, collision, entities);
         }
 
-        public static void InitHunterSpawns(Scene scene, IReadOnlyList<EntityBase> entities)
+        public static void InitHunterSpawns(Scene scene, IReadOnlyList<EntityBase> entities, bool initialize)
         {
             for (int i = 1; i < PlayerEntity.MaxPlayers; i++)
             {
@@ -107,6 +111,10 @@ namespace MphRead
                         hunter = (Hunter)spawner.Data.Fields.S09.HunterId;
                     }
                     PlayerEntity.Create(hunter, spawner.Data.Fields.S09.HunterColor);
+                    if (initialize)
+                    {
+                        scene.AddEntity(player);
+                    }
                     // todo: encounter state and bot level
                     PlayerEntity.PlayerCount++;
                 }
@@ -337,20 +345,15 @@ namespace MphRead
                 LoadBeamEffectResources(scene);
                 LoadBeamProjectileResources(scene);
                 LoadRoomResources(scene);
-                bool anyActive = false;
-                for (int i = 0; i < 4; i++)
-                {
-                    PlayerEntity player = PlayerEntity.Players[i];
-                    if (player.LoadFlags.TestFlag(LoadFlags.SlotActive))
-                    {
-                        anyActive = true;
-                        LoadHunterResources(player.Hunter, scene);
-                    }
-                }
-                if (anyActive)
-                {
-                    LoadCommonHunterResources(scene);
-                }
+                LoadHunterResources(Hunter.Samus, scene);
+                LoadHunterResources(Hunter.Kanden, scene);
+                LoadHunterResources(Hunter.Trace, scene);
+                LoadHunterResources(Hunter.Sylux, scene);
+                LoadHunterResources(Hunter.Noxus, scene);
+                LoadHunterResources(Hunter.Spire, scene);
+                LoadHunterResources(Hunter.Weavel, scene);
+                LoadHunterResources(Hunter.Guardian, scene);
+                LoadCommonHunterResources(scene);
             }
         }
 
