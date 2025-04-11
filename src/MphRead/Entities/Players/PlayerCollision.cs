@@ -665,7 +665,7 @@ namespace MphRead.Entities
             {
                 if (result.Plane.Y < 0.1f && result.Plane.Y > -0.1f)
                 {
-                    if (Cheats.WalkThroughWalls)
+                    if (Cheats.WalkThroughWalls && !IsAltForm)
                     {
                         return;
                     }
