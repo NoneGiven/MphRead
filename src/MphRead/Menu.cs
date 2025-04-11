@@ -1675,6 +1675,7 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (W) Free Weapon Selection: {OnOff(Cheats.FreeWeaponSelect)}");
                     Console.WriteLine($"{X(s++)} (J) Unlimited Jumps: {OnOff(Cheats.UnlimitedJumps)}");
                     Console.WriteLine($"{X(s++)} (D) All Doors Unlocked: {OnOff(Cheats.UnlockAllDoors)}");
+                    Console.WriteLine($"{X(s++)} (R) Retry From Current Room: {OnOff(Cheats.ContinueFromCurrentRoom)}");
                     Console.WriteLine($"{X(s++)} (U) Start With All Upgrades: {OnOff(Cheats.StartWithAllUpgrades)}");
                     Console.WriteLine($"{X(s++)} (O) Start With All Octoliths: {OnOff(Cheats.StartWithAllOctoliths)}");
                     Console.WriteLine($"{X(s++)} (G) Walk Through Walls: {OnOff(Cheats.WalkThroughWalls)}");
@@ -1966,17 +1967,21 @@ namespace MphRead
                     {
                         selection = 2;
                     }
-                    else if (keyInfo.Key == ConsoleKey.U)
+                    else if (keyInfo.Key == ConsoleKey.R)
                     {
                         selection = 3;
                     }
-                    else if (keyInfo.Key == ConsoleKey.O)
+                    else if (keyInfo.Key == ConsoleKey.U)
                     {
                         selection = 4;
                     }
-                    else if (keyInfo.Key == ConsoleKey.G)
+                    else if (keyInfo.Key == ConsoleKey.O)
                     {
                         selection = 5;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.G)
+                    {
+                        selection = 6;
                     }
                     else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
                     {
@@ -1994,13 +1999,17 @@ namespace MphRead
                         }
                         else if (selection == 3)
                         {
-                            Cheats.StartWithAllUpgrades = false;
+                            Cheats.ContinueFromCurrentRoom = false;
                         }
                         else if (selection == 4)
                         {
-                            Cheats.StartWithAllOctoliths = false;
+                            Cheats.StartWithAllUpgrades = false;
                         }
                         else if (selection == 5)
+                        {
+                            Cheats.StartWithAllOctoliths = false;
+                        }
+                        else if (selection == 6)
                         {
                             Cheats.WalkThroughWalls = false;
                         }
@@ -2025,13 +2034,17 @@ namespace MphRead
                         }
                         else if (selection == 3)
                         {
-                            Cheats.StartWithAllUpgrades = !Cheats.StartWithAllUpgrades;
+                            Cheats.ContinueFromCurrentRoom = !Cheats.ContinueFromCurrentRoom;
                         }
                         else if (selection == 4)
                         {
-                            Cheats.StartWithAllOctoliths = !Cheats.StartWithAllOctoliths;
+                            Cheats.StartWithAllUpgrades = !Cheats.StartWithAllUpgrades;
                         }
                         else if (selection == 5)
+                        {
+                            Cheats.StartWithAllOctoliths = !Cheats.StartWithAllOctoliths;
+                        }
+                        else if (selection == 6)
                         {
                             Cheats.WalkThroughWalls = !Cheats.WalkThroughWalls;
                         }
@@ -2149,6 +2162,7 @@ namespace MphRead
             Cheats.FreeWeaponSelect = false;
             Cheats.UnlimitedJumps = false;
             Cheats.UnlockAllDoors = false;
+            Cheats.ContinueFromCurrentRoom = false;
             Cheats.StartWithAllUpgrades = false;
             Cheats.StartWithAllOctoliths = false;
             Cheats.WalkThroughWalls = false;

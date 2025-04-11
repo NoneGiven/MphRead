@@ -147,6 +147,7 @@ namespace MphRead
         public static bool FreeWeaponSelect { get; set; } = true;
         public static bool UnlimitedJumps { get; set; } = false;
         public static bool UnlockAllDoors { get; set; } = false;
+        public static bool ContinueFromCurrentRoom { get; set; } = false;
         public static bool StartWithAllUpgrades { get; set; } = false;
         public static bool StartWithAllOctoliths { get; set; } = false;
         public static bool WalkThroughWalls { get; set; } = false;
@@ -164,6 +165,10 @@ namespace MphRead
             if (values.TryGetValue(nameof(UnlockAllDoors), out value) && Boolean.TryParse(value, out boolean))
             {
                 UnlockAllDoors = boolean;
+            }
+            if (values.TryGetValue(nameof(ContinueFromCurrentRoom), out value) && Boolean.TryParse(value, out boolean))
+            {
+                ContinueFromCurrentRoom = boolean;
             }
             if (values.TryGetValue(nameof(StartWithAllUpgrades), out value) && Boolean.TryParse(value, out boolean))
             {
@@ -186,6 +191,7 @@ namespace MphRead
                 { nameof(FreeWeaponSelect), FreeWeaponSelect.ToString().ToLower() },
                 { nameof(UnlimitedJumps), UnlimitedJumps.ToString().ToLower() },
                 { nameof(UnlockAllDoors), UnlockAllDoors.ToString() },
+                { nameof(ContinueFromCurrentRoom), ContinueFromCurrentRoom.ToString() },
                 { nameof(StartWithAllUpgrades), StartWithAllUpgrades.ToString() },
                 { nameof(StartWithAllOctoliths), StartWithAllOctoliths.ToString().ToLower() },
                 { nameof(WalkThroughWalls), WalkThroughWalls.ToString().ToLower() }

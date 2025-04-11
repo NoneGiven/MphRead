@@ -607,6 +607,15 @@ namespace MphRead
         {
             PromptType prompt = PlayerEntity.Main.DialogPromptType;
             ConfirmState confirm = PlayerEntity.Main.DialogConfirmState;
+
+            void Quit()
+            {
+                scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, AfterFade.Exit);
+                // mustodo: stop music
+                Sfx.Instance.PlaySample((int)SfxId.QUIT_GAME, source: null, loop: false,
+                    noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+            }
+
             if (prompt != PromptType.Any && confirm != ConfirmState.Okay)
             {
                 Sfx.Instance.StopFreeSfxScripts();
@@ -627,9 +636,41 @@ namespace MphRead
                         // yes to game over (continue)
                         RestoreCleanSave();
                         Debug.Assert(scene.Room != null);
-                        if (StorySave.CheckpointRoomId == -1) // skdebug
+                        if (Cheats.ContinueFromCurrentRoom)
                         {
+                            if (StorySave.CheckpointRoomId != scene.Room.RoomId)
+                            {
+                                StorySave.CheckpointEntityId = -1;
+                            }
                             StorySave.CheckpointRoomId = scene.Room.RoomId;
+                        }
+                        else if (StorySave.CheckpointRoomId == -1)
+                        {
+                            StorySave.CheckpointEntityId = -1;
+                            if (scene.AreaId == 0 || scene.AreaId == 1) // Alinos 1/2
+                            {
+                                StorySave.CheckpointRoomId = 27; // UNIT1_LAND
+                            }
+                            else if (scene.AreaId == 2 || scene.AreaId == 3) // CA 1/2
+                            {
+                                StorySave.CheckpointRoomId = 45; // UNIT2_LAND
+                            }
+                            else if (scene.AreaId == 4 || scene.AreaId == 5) // VDO 1/2
+                            {
+                                StorySave.CheckpointRoomId = 65; // UNIT3_LAND
+                            }
+                            else if (scene.AreaId == 6 || scene.AreaId == 7) // Arcterra 1/2
+                            {
+                                StorySave.CheckpointRoomId = 77; // UNIT4_LAND
+                            }
+                            else if (scene.AreaId == 8) // Oubliette
+                            {
+                                StorySave.CheckpointRoomId = 89; // Gorea_Land
+                            }
+                        }
+                        if (StorySave.CheckpointRoomId == -1)
+                        {
+                            Quit();
                         }
                         // if CheckpointEntityId isn't set, we'll still spawn, just using the respawn point code path
                         TransitionRoomId = StorySave.CheckpointRoomId;
@@ -643,10 +684,7 @@ namespace MphRead
                 else if (prompt == PromptType.GameOver)
                 {
                     // no to game over (quit)
-                    scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, AfterFade.Exit);
-                    // mustodo: stop music
-                    Sfx.Instance.PlaySample((int)SfxId.QUIT_GAME, source: null, loop: false,
-                        noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                    Quit();
                 }
                 else
                 {
