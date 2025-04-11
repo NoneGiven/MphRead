@@ -908,7 +908,7 @@ namespace MphRead.Entities
             EnemySpawnFields09 data = EnemySpawner.Data.Fields.S09;
             _healthMax = data.HunterHealthMax;
             _health = data.HunterHealth;
-            // todo: set bot AI field
+            AiData.HealthThreshold = data.HunterHealthThreshold;
             if (Hunter == Hunter.Guardian)
             {
                 // mustodo: start music
@@ -1579,7 +1579,10 @@ namespace MphRead.Entities
             {
                 return;
             }
-            // todo: if IsBot and some flag, return
+            if (IsBot && AiData.Flags2.TestFlag(AiFlags2.Bit13))
+            {
+                return;
+            }
             if (!flags.TestAny(DamageFlags.Death | DamageFlags.IgnoreInvuln | DamageFlags.NoDmgInvuln))
             {
                 if (_damageInvulnTimer > 0)
@@ -1691,25 +1694,35 @@ namespace MphRead.Entities
                     _halfturret.Health -= (int)turretDamage;
                 }
                 damage -= turretDamage;
-                // todo: if 1P bot with some AI flag, update damage value
-                // else...
-                if (_health <= damage)
+                if (IsBot && !_scene.Multiplayer && AiData.Flags1.TestFlag(AiFlags1.Bit0))
+                {
+                    if (_health > AiData.HealthThreshold && (_health - damage) <= AiData.HealthThreshold)
+                    {
+                        damage = (uint)(_health - AiData.HealthThreshold - 1);
+                    }
+                }
+                else if (_health <= damage)
                 {
                     damage = (uint)(_health - 1);
                 }
                 _halfturret.TimeSinceDamage = 0;
-                // todo: update bot AI field
+                if (IsBot)
+                {
+                    AiData.Field110 = turretDamage;
+                }
             }
             if (IsBot)
             {
-                // todo: bot stuff
+                // todo-ai: bot AI stuff
             }
-            bool dead = false;
             // todo?: something for wifi
             // else...
-            // todo: if bot and some AI flags, set dead
-            // else...
-            if (_health <= damage || flags.TestFlag(DamageFlags.Death))
+            bool dead = false;
+            if (IsBot && !_scene.Multiplayer && AiData.Flags1.TestFlag(AiFlags1.Bit0) && _health <= AiData.HealthThreshold)
+            {
+                dead = true;
+            }
+            else if (_health <= damage || flags.TestFlag(DamageFlags.Death))
             {
                 dead = true;
             }
@@ -1846,9 +1859,15 @@ namespace MphRead.Entities
                     }
                     StopBeamChargeSfx(CurrentWeapon);
                 }
-                // todo: if bot and some AI flags, set health
-                // else...
-                _health = 0;
+                if (IsBot && AiData.Flags1.TestFlag(AiFlags1.Bit0))
+                {
+                    _health = AiData.HealthThreshold + 1;
+                    AiData.Flags2 |= AiFlags2.Bit13;
+                }
+                else
+                {
+                    _health = 0;
+                }
                 UpdateZoom(false);
                 // the game stops the boost charge SFX here, but that SFX is empty
                 _boostCharge = 0;
@@ -2208,8 +2227,11 @@ namespace MphRead.Entities
                         }
                         else // todo?: if wifi, only do this if main player
                         {
-                            // todo: if the attacker is a bot with some encounter state, use 75 * 2 frames
                             ushort time = 150 * 2; // todo: FPS stuff
+                            if (attacker?.IsBot == true && !_scene.Multiplayer) // skhere: check encounter state
+                            {
+                                time = 75 * 2; // todo: FPS stuff
+                            }
                             _burnedBy = beam.Owner;
                             _burnTimer = time;
                             CreateBurnEffect();

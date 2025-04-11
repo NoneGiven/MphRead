@@ -966,10 +966,13 @@ namespace MphRead.Entities
                 pbAuto = (int)(pbAuto * 15 / 90f);
                 _autofireCooldown = (ushort)((pbAuto + EquipWeapon.AutofireCooldown) * 2); // todo: FPS stuff
             }
-            // todo: autofire cooldown case can be bypassed if a certain bot AI flag is set
-            if (_timeSinceShot < EquipWeapon.ShotCooldown * 2 // todo: FPS stuff
-                || !pressed && _timeSinceShot < _autofireCooldown
-                || GunAnimation == GunAnimation.UpDown)
+            if ((_timeSinceShot < EquipWeapon.ShotCooldown * 2 // todo: FPS stuff
+                || !pressed && _timeSinceShot < _autofireCooldown)
+                && (!IsBot || !AiData.Flags2.TestFlag(AiFlags2.Bit20)))
+            {
+                return false;
+            }
+            if (GunAnimation == GunAnimation.UpDown)
             {
                 return false;
             }

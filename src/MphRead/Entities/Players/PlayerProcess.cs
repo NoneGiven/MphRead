@@ -2010,7 +2010,10 @@ namespace MphRead.Entities
             }
             else if (info.Message == Message.SetCamSeqAi)
             {
-                // todo: update bot AI flag
+                if (IsBot)
+                {
+                    AiData.Flags2 |= AiFlags2.Bit14;
+                }
             }
             else if (info.Message == Message.Impact)
             {

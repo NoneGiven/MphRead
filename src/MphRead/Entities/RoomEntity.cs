@@ -324,7 +324,8 @@ namespace MphRead.Entities
                     break;
                 }
             }
-            var newDoor = new DoorEntity(data, nodeName, _scene, door.TargetRoomId);
+            int layerId = door.Data.TargetLayerId == 255 ? -1 : door.Data.TargetLayerId;
+            var newDoor = new DoorEntity(data, nodeName, _scene, door.TargetRoomId, layerId);
             _scene.AddEntity(newDoor);
             newDoor.ConnectorInactive = true;
             door.LoaderDoor = newDoor;
