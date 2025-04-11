@@ -1443,18 +1443,18 @@ namespace MphRead
     public class StorySave
     {
         public byte[][] RoomState { get; init; }
-        public byte[] VisitedRooms { get; } = new byte[9];
-        public byte[] TriggerState { get; } = new byte[4];
-        public byte[] Logbook { get; } = new byte[68];
+        public byte[] VisitedRooms { get; init; } = new byte[9];
+        public byte[] TriggerState { get; init; } = new byte[4];
+        public byte[] Logbook { get; init; } = new byte[68];
         public int ScanCount { get; set; }
         public int EquipmentCount { get; set; }
         public int CheckpointEntityId { get; set; } = -1;
         public int CheckpointRoomId { get; set; } = -1;
         public int Health { get; set; }
         public int HealthMax { get; set; }
-        public int[] Ammo { get; } = new int[2];
-        public int[] AmmoMax { get; } = new int[2];
-        public int[] WeaponSlots { get; } = new int[3];
+        public int[] Ammo { get; init; } = new int[2];
+        public int[] AmmoMax { get; init; } = new int[2];
+        public int[] WeaponSlots { get; init; } = new int[3];
         public ushort Weapons { get; set; } // sktodo: don't persist Omega Cannon
         public ushort Artifacts { get; set; }
         public ushort FoundOctoliths { get; set; }
