@@ -294,7 +294,10 @@ namespace MphRead.Entities
             if (EquipInfo.Zoomed)
             {
                 float fovFactor = CameraInfo.Fov - Fixed.ToFloat(Values.NormalFov) * 2;
-                sensitivity /= -Fixed.ToFloat(Values.Field70) * fovFactor;
+                if (fovFactor != 0)
+                {
+                    sensitivity /= -Fixed.ToFloat(Values.Field70) * fovFactor;
+                }
             }
             amount *= sensitivity;
             // unimpl-controls: these calculations are different when exact aim is not set
@@ -334,7 +337,10 @@ namespace MphRead.Entities
             if (EquipInfo.Zoomed)
             {
                 float fovFactor = CameraInfo.Fov - Fixed.ToFloat(Values.NormalFov) * 2;
-                sensitivity /= -Fixed.ToFloat(Values.Field70) * fovFactor;
+                if (fovFactor != 0)
+                {
+                    sensitivity /= -Fixed.ToFloat(Values.Field70) * fovFactor;
+                }
             }
             amount *= sensitivity;
             // unimpl-controls: these calculations are different when exact aim is not set
