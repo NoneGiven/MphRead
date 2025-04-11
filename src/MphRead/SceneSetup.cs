@@ -125,6 +125,7 @@ namespace MphRead
                 player.LoadFlags &= ~LoadFlags.Active;
                 player.LoadFlags &= ~LoadFlags.SlotActive;
                 player.IsBot = false;
+                player.Initialized = false;
             }
             PlayerEntity.PlayerCount = 1;
             if (GameState.GetAreaState(scene.AreaId) != AreaState.Clear
@@ -203,6 +204,7 @@ namespace MphRead
                     PlayerEntity.Create(hunter, spawner.Data.Fields.S09.HunterColor);
                     if (initialize)
                     {
+                        player.LoadFlags |= LoadFlags.SlotActive;
                         scene.AddEntity(player);
                     }
                     // todo: encounter state and bot level
