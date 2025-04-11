@@ -441,7 +441,7 @@ namespace MphRead.Formats
             Vector3 upVector = Vector3.UnitY;
             if (MathF.Abs(finalRoll) >= 1 / 4096f)
             {
-                finalRoll = MathHelper.DegreesToRadians(finalRoll);
+                finalRoll = MathHelper.DegreesToRadians(finalRoll + 90);
                 CamInfoRef.Facing = CamInfoRef.Target - CamInfoRef.Position;
                 Vector3 cross = Vector3.Cross(upVector, CamInfoRef.Facing).Normalized();
                 upVector = Vector3.Cross(CamInfoRef.Facing, cross).Normalized();
