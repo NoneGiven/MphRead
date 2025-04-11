@@ -1869,7 +1869,61 @@ namespace MphRead.Entities
                     }
                     if (IsBot && GameState.GetAreaState(_scene.AreaId) == AreaState.Clear)
                     {
-                        // skhere: determine whether to unlock doors
+                        bool unlockDoors = true;
+                        for (int i = 0; i < _scene.Entities.Count; i++)
+                        {
+                            EntityBase entity = _scene.Entities[i];
+                            if (entity.Type != EntityType.EnemySpawn)
+                            {
+                                continue;
+                            }
+                            var spawner = (EnemySpawnEntity)entity;
+                            if (spawner.Data.EnemyType != EnemyType.Hunter)
+                            {
+                                continue;
+                            }
+                            if (spawner.Flags.TestFlag(SpawnerFlags.Active)
+                                && (spawner.Data.SpawnLimit == 0 || spawner.ActiveCount < spawner.Data.SpawnLimit
+                                || spawner.SpawnedCount != 0))
+                            {
+                                for (int j = 1; j < MaxPlayers; j++)
+                                {
+                                    if (Players[j].EnemySpawner == spawner)
+                                    {
+                                        unlockDoors = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!unlockDoors)
+                            {
+                                break;
+                            }
+                        }
+                        if (unlockDoors)
+                        {
+                            for (int i = 0; i < _scene.Entities.Count; i++)
+                            {
+                                EntityBase entity = _scene.Entities[i];
+                                if (entity.Type != EntityType.Door)
+                                {
+                                    continue;
+                                }
+                                var door = (DoorEntity)entity;
+                                if (door.Data.ConnectorId == 255 && door.Id != -1)
+                                {
+                                    continue;
+                                }
+                                if (door.Data.PaletteId != 9)
+                                {
+                                    door.Flags &= ~DoorFlags.ShowLock;
+                                }
+                                if (door.Id == -1 || GameState.StorySave.GetRoomState(_scene.RoomId, door.Id) == 1)
+                                {
+                                    door.Unlock(updateState: false, noLockAnimSfx: false);
+                                }
+                            }
+                        }
                     }
                     if (IsMainPlayer)
                     {

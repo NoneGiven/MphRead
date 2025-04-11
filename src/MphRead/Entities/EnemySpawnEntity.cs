@@ -24,7 +24,9 @@ namespace MphRead.Entities
     {
         private readonly EnemySpawnEntityData _data;
         private int _activeCount = 0; // todo: names are backwards?
+        public int ActiveCount => _activeCount;
         private int _spawnedCount = 0;
+        public int SpawnedCount => _spawnedCount;
         private int _cooldownTimer = 0;
         private EntityBase? _entity1;
         private EntityBase? _entity2;
