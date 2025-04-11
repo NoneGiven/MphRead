@@ -61,6 +61,8 @@ namespace MphRead
         public static bool TopScreenTargetInfo { get; set; } = true;  // "true"
         public static float HelmetOpacity { get; set; } = 1; // 1
         public static float VisorOpacity { get; set; } = 0.5f; // 0.5
+        public static float HudOpacity { get; set; } = 1; // 1
+        public static float ReticleOpacity { get; set; } = 1; // 1
         public static bool HudSway { get; set; } = true; // true
         public static bool TargetInfoSway { get; set; } = false; // "false"
         public static bool MaxRoomDetail { get; set; } = false; // false
@@ -85,6 +87,14 @@ namespace MphRead
             if (values.TryGetValue(nameof(VisorOpacity), out value) && Single.TryParse(value, CultureInfo.InvariantCulture, out single))
             {
                 VisorOpacity = single;
+            }
+            if (values.TryGetValue(nameof(HudOpacity), out value) && Single.TryParse(value, CultureInfo.InvariantCulture, out single))
+            {
+                HudOpacity = single;
+            }
+            if (values.TryGetValue(nameof(ReticleOpacity), out value) && Single.TryParse(value, CultureInfo.InvariantCulture, out single))
+            {
+                ReticleOpacity = single;
             }
             if (values.TryGetValue(nameof(HudSway), out value) && Boolean.TryParse(value, out boolean))
             {
@@ -120,6 +130,8 @@ namespace MphRead
                 { nameof(TopScreenTargetInfo), TopScreenTargetInfo.ToString().ToLower() },
                 { nameof(HelmetOpacity), HelmetOpacity.ToString(CultureInfo.InvariantCulture) },
                 { nameof(VisorOpacity), VisorOpacity.ToString(CultureInfo.InvariantCulture) },
+                { nameof(HudOpacity), HudOpacity.ToString(CultureInfo.InvariantCulture) },
+                { nameof(ReticleOpacity), ReticleOpacity.ToString(CultureInfo.InvariantCulture) },
                 { nameof(HudSway), HudSway.ToString().ToLower() },
                 { nameof(TargetInfoSway), TargetInfoSway.ToString().ToLower() },
                 { nameof(MaxRoomDetail), MaxRoomDetail.ToString().ToLower() },
