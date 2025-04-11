@@ -1713,7 +1713,24 @@ namespace MphRead.Entities
             }
             if (IsBot)
             {
-                // todo-ai: bot AI stuff
+                // todo-ai: bot AI take damage function
+                // skdebug: allow story progression by unlocking the force field in Echo Hall
+                if (!_scene.Multiplayer && Hunter == Hunter.Weavel && _scene.RoomId == 28 && (_health - damage) / (float)_healthMax <= 0.72f)
+                {
+                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    {
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type == EntityType.ForceField && entity.Id == 19)
+                        {
+                            var forceField = (ForceFieldEntity)entity;
+                            if (forceField.Active)
+                            {
+                                _scene.SendMessage(Message.Unlock, this, entity, 0, 0);
+                            }
+                            break;
+                        }
+                    }
+                }
             }
             // todo?: something for wifi
             // else...
@@ -2228,7 +2245,7 @@ namespace MphRead.Entities
                         else // todo?: if wifi, only do this if main player
                         {
                             ushort time = 150 * 2; // todo: FPS stuff
-                            if (attacker?.IsBot == true && !_scene.Multiplayer) // skhere: check encounter state
+                            if (attacker?.IsBot == true && !_scene.Multiplayer) // todo: check encounter state
                             {
                                 time = 75 * 2; // todo: FPS stuff
                             }
