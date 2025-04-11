@@ -2,6 +2,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -509,7 +510,6 @@ namespace MphRead.Entities
             Debug.Assert(GameState.TransitionRoomId != -1);
             RoomMetadata? roomMeta = Metadata.GetRoomById(GameState.TransitionRoomId);
             Debug.Assert(roomMeta != null);
-            // todo: pass boss flags
             int entityLayer = -1;
             if (LoaderDoor != null)
             {
@@ -524,6 +524,12 @@ namespace MphRead.Entities
             }
             (_, IReadOnlyList<EntityBase> entities) = SceneSetup.SetUpRoom(_scene.GameMode, playerCount: 0,
                 BossFlags.Unspecified, nodeLayerMask: 0, entityLayer, roomMeta, room: this, _scene);
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+            SceneSetup.InitHunterSpawns(_scene, _scene.Entities);
+            // todo: load Octolith resources if any hunters (besides Guardian) were spawned?
             if (token.IsCancellationRequested)
             {
                 return;

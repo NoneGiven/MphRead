@@ -1340,6 +1340,13 @@ namespace MphRead
         All = 0x55555
     }
 
+    public enum AreaState
+    {
+        None,
+        Escape,
+        Clear
+    }
+
     public enum InstructionCode : uint
     {
         NOP = 0x400,

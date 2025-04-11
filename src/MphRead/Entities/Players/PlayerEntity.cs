@@ -225,6 +225,7 @@ namespace MphRead.Entities
         public int HealthMax => _healthMax;
         private readonly BeamType[] _weaponSlots = new BeamType[3];
         private readonly AvailableArray _availableWeapons = new AvailableArray();
+        public AvailableArray AvailableWeapons => _availableWeapons;
         private readonly AvailableArray _availableCharges = new AvailableArray();
         private AbilityFlags _abilities;
         private readonly BeamProjectileEntity[] _beams;
@@ -320,13 +321,12 @@ namespace MphRead.Entities
 
         private HalfturretEntity _halfturret = null!;
         public HalfturretEntity Halfturret => _halfturret;
-        public EnemySpawnEntity? EnemySpawner => _enemySpawner;
+        public EnemySpawnEntity? EnemySpawner { get; set; }
         public EnemyInstanceEntity? AttachedEnemy { get; set; } = null;
         private EntityBase? _field35C = null;
         public MorphCameraEntity? MorphCamera { get; set; }
         public OctolithFlagEntity? OctolithFlag { get; set; }
         private JumpPadEntity? _lastJumpPad = null;
-        private EnemySpawnEntity? _enemySpawner = null;
         private EntityBase? _burnedBy = null;
         public EntityBase? BurnedBy => _burnedBy;
         private EntityBase? _lastTarget = null;
@@ -874,9 +874,9 @@ namespace MphRead.Entities
             Controls.ClearPressed();
             if (IsBot)
             {
-                // todo: bot stuff
+                // todo: set bot AI
             }
-            _enemySpawner = null;
+            // the player clears the enemy spawner reference here, using a global array to track them
             _lastTarget = null;
             UpdateScanIds();
             if (respawn && (IsMainPlayer || _scene.Multiplayer))
@@ -899,6 +899,56 @@ namespace MphRead.Entities
                     _boostBombsYOffset = 208;
                 }
             }
+        }
+
+        public void InitEnemyHunter()
+        {
+            Debug.Assert(EnemySpawner != null);
+            Debug.Assert(_scene.GameMode == GameMode.SinglePlayer);
+            EnemySpawnFields09 data = EnemySpawner.Data.Fields.S09;
+            _healthMax = data.HunterHealthMax;
+            _health = data.HunterHealth;
+            // todo: set bot AI field
+            if (Hunter == Hunter.Guardian)
+            {
+                // mustodo: start music
+            }
+            // todo: update story save for multiplayer unlock
+            if (data.HunterWeapon != 255)
+            {
+                var weapon = (BeamType)data.HunterWeapon;
+                _availableWeapons[weapon] = true;
+                _availableCharges[weapon] = true;
+                _weaponSlots[0] = BeamType.None;
+                _weaponSlots[1] = BeamType.None;
+                _weaponSlots[2] = weapon;
+                _ammo[0] = 0;
+                _ammo[1] = 0;
+                WeaponInfo weaponInfo = Weapons.Current[(int)weapon];
+                _ammo[weaponInfo.AmmoType] = -1;
+                EquipInfo.ChargeLevel = 0;
+                EquipInfo.SmokeLevel = 0;
+                _doubleDmgTimer = 0;
+                PreviousWeapon = weapon;
+                TryEquipWeapon(weapon, silent: true);
+                if (Hunter == Hunter.Guardian)
+                {
+                    // todo: move to metadata
+                    if (weapon == BeamType.VoltDriver)
+                    {
+                        Metadata.LoadEffectiveness(0x255A1, BeamEffectiveness);
+                    }
+                    else if (weapon == BeamType.Magmaul)
+                    {
+                        Metadata.LoadEffectiveness(0x24D55, BeamEffectiveness);
+                    }
+                    else if (weapon == BeamType.Judicator)
+                    {
+                        Metadata.LoadEffectiveness(0x27155, BeamEffectiveness);
+                    }
+                }
+            }
+            LoadFlags |= LoadFlags.Active;
         }
 
         public void SaveStatus()
@@ -931,7 +981,7 @@ namespace MphRead.Entities
             MorphCamera = null;
             _lastJumpPad = null;
             OctolithFlag = null;
-            _enemySpawner = null;
+            EnemySpawner = null;
             _lastTarget = null;
         }
 
@@ -1817,9 +1867,9 @@ namespace MphRead.Entities
                         int effectId = IsMainPlayer ? 10 : 216; // ballDeath or deathAlt
                         _scene.SpawnEffect(effectId, Vector3.UnitX, Vector3.UnitY, Position);
                     }
-                    if (IsBot) // todo: and the planet's story save boss state is 2
+                    if (IsBot && GameState.GetAreaState(_scene.AreaId) == AreaState.Clear)
                     {
-                        // todo: determine whether to unlock doors
+                        // skhere: determine whether to unlock doors
                     }
                     if (IsMainPlayer)
                     {
@@ -1828,6 +1878,10 @@ namespace MphRead.Entities
                         _respawnTimer = UInt16.MaxValue;
                         CameraInfo.SetShake(0.25f);
                         // todo: update story save, lost octolith, etc.
+                    }
+                    else if (attacker?.IsMainPlayer == true)
+                    {
+                        // todo: update story save, recover octolith, etc.
                     }
                 }
                 else // multiplayer

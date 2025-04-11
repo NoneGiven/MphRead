@@ -421,6 +421,15 @@ namespace MphRead
             }
         }
 
+        public static AreaState GetAreaState(int areaId)
+        {
+            if (StorySave == null)
+            {
+                return AreaState.None;
+            }
+            return (AreaState)(((int)StorySave.BossFlags >> (2 * areaId)) & 3);
+        }
+
         public static void ModeStateAdventure(Scene scene)
         {
             PlayerEntity.Main.SaveStatus();

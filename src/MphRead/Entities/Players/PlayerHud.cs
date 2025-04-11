@@ -1520,7 +1520,6 @@ namespace MphRead.Entities
             }
         }
 
-        // skhere
         private void DrawMeter(float x, float y, int baseAmount, int curAmount, int palette,
             HudMeter meter, bool drawText, bool drawTanks, float alpha = 1)
         {

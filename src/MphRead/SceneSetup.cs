@@ -54,8 +54,63 @@ namespace MphRead
             var room = new RoomEntity(scene);
             (CollisionInstance collision, IReadOnlyList<EntityBase> entities) = SetUpRoom(mode, playerCount,
                 bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene);
+            InitHunterSpawns(scene, entities);
             GameState.StorySave.CheckpointRoomId = room.RoomId;
             return (room, metadata, collision, entities);
+        }
+
+        public static void InitHunterSpawns(Scene scene, IReadOnlyList<EntityBase> entities)
+        {
+            for (int i = 1; i < PlayerEntity.MaxPlayers; i++)
+            {
+                PlayerEntity player = PlayerEntity.Players[i];
+                player.LoadFlags &= ~LoadFlags.Active;
+                player.LoadFlags &= ~LoadFlags.SlotActive;
+                player.IsBot = false;
+            }
+            PlayerEntity.PlayerCount = 1;
+            if (GameState.GetAreaState(scene.AreaId) != AreaState.Clear
+                || scene.RoomId != 50 // Data Shrine 02 (UNIT2_RM2)
+                || PlayerEntity.Main.AvailableWeapons[BeamType.Battlehammer])
+            {
+                for (int i = 0; i < entities.Count; i++)
+                {
+                    if (PlayerEntity.PlayerCount >= PlayerEntity.MaxPlayers)
+                    {
+                        break;
+                    }
+                    EntityBase entity = entities[i];
+                    if (entity.Type != EntityType.EnemySpawn)
+                    {
+                        continue;
+                    }
+                    var spawner = (EnemySpawnEntity)entity;
+                    if (spawner.Data.EnemyType != EnemyType.Hunter)
+                    {
+                        continue;
+                    }
+                    if (Rng.GetRandomInt2(100) >= spawner.Data.Fields.S09.HunterChance)
+                    {
+                        continue;
+                    }
+                    PlayerEntity player = PlayerEntity.Players[PlayerEntity.PlayerCount];
+                    player.IsBot = true;
+                    player.EnemySpawner = spawner;
+                    Hunter hunter;
+                    if (spawner.Data.Fields.S09.HunterId == 8)
+                    {
+                        // skhere: determine random hunter
+                        hunter = Hunter.Guardian;
+                    }
+                    else
+                    {
+                        hunter = (Hunter)spawner.Data.Fields.S09.HunterId;
+                    }
+                    PlayerEntity.Create(hunter, spawner.Data.Fields.S09.HunterColor);
+                    // todo: encounter state and bot level
+                    PlayerEntity.PlayerCount++;
+                }
+            }
         }
 
         public static (CollisionInstance, IReadOnlyList<EntityBase>) SetUpRoom(GameMode mode,

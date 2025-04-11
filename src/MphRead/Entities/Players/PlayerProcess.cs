@@ -79,7 +79,7 @@ namespace MphRead.Entities
             }
             if (_health == 0)
             {
-                if (_respawnTimer == 0) // todo: and this slot was not spawned by an enemy spawner
+                if (_respawnTimer == 0 && EnemySpawner == null)
                 {
                     if (_scene.Room?.LoadEntityId >= 0)
                     {
