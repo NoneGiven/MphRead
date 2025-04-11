@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MphRead.Entities;
@@ -1314,6 +1315,7 @@ namespace MphRead
             ushort prevFoundOctos = StorySave.FoundOctoliths;
             ushort prevCurOctos = StorySave.CurrentOctoliths;
             uint prevLostOctos = StorySave.LostOctoliths;
+            byte[] prevAreaHunters = StorySave.AreaHunters.ToArray();
             _cleanStorySave.CopyTo(StorySave);
             int curCurCount = 0;
             int prevCurCount = 0;
@@ -1335,6 +1337,7 @@ namespace MphRead
                 StorySave.CurrentOctoliths = prevCurOctos;
                 StorySave.LostOctoliths = prevLostOctos;
             }
+            prevAreaHunters.CopyTo(StorySave.AreaHunters, index: 0);
         }
 
         private const string _saveFolder = "Savedata";
@@ -1549,13 +1552,15 @@ namespace MphRead
         public int[] Ammo { get; init; } = new int[2];
         public int[] AmmoMax { get; init; } = new int[2];
         public int[] WeaponSlots { get; init; } = new int[3];
-        public ushort Weapons { get; set; } // sktodo: don't persist Omega Cannon
+        public ushort Weapons { get; set; }
         public ushort Artifacts { get; set; }
         public ushort FoundOctoliths { get; set; }
         public ushort CurrentOctoliths { get; set; }
         public uint LostOctoliths { get; set; } = UInt32.MaxValue;
         public ushort Areas { get; set; } = 0xC; // Celestial Archives 1 & 2
         public BossFlags BossFlags { get; set; } = BossFlags.None;
+        public byte[] AreaHunters { get; init; } = new byte[4];
+        public byte DefeatedHunters { get; set; }
 
         public StorySave()
         {
@@ -1774,6 +1779,8 @@ namespace MphRead
             other.LostOctoliths = LostOctoliths;
             other.Areas = Areas;
             other.BossFlags = BossFlags;
+            AreaHunters.CopyTo(other.AreaHunters, index: 0);
+            other.DefeatedHunters = DefeatedHunters;
         }
     }
 }

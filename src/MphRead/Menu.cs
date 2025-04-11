@@ -221,7 +221,7 @@ namespace MphRead
                     _planets[4] = planets.Contains("Oubliette") ? 1 : 0;
                 }
                 _ca1State = GetState(settings.Ca1State);
-                _ca1State = GetState(settings.Ca2State);
+                _ca2State = GetState(settings.Ca2State);
                 _alinos1State = GetState(settings.Alinos1State);
                 _alinos2State = GetState(settings.Alinos2State);
                 _vdo1State = GetState(settings.Vdo1State);
@@ -261,17 +261,17 @@ namespace MphRead
                     _weapons[7] = weapons.Contains("shock coil") ? 1 : 0;
                     _weapons[8] = weapons.Contains("omega cannon") ? 1 : 0;
                 }
-                string[] octoliths = settings.Octoliths.ToUpper().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                string[] octoliths = settings.Octoliths.ToLower().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
                 if (octoliths.Length > 0)
                 {
-                    _ca1State = octoliths.Contains("CA1") ? 1 : 0;
-                    _ca2State = octoliths.Contains("CA2") ? 1 : 0;
-                    _alinos1State = octoliths.Contains("Alinos1") ? 1 : 0;
-                    _alinos2State = octoliths.Contains("Alinos2") ? 1 : 0;
-                    _vdo1State = octoliths.Contains("VDO1") ? 1 : 0;
-                    _vdo2State = octoliths.Contains("VDO2") ? 1 : 0;
-                    _arcterra1State = octoliths.Contains("Arcterra1") ? 1 : 0;
-                    _arcterra2State = octoliths.Contains("Arcterra2") ? 1 : 0;
+                    _octoliths[0] = octoliths.Contains("ca1") ? 1 : 0;
+                    _octoliths[1] = octoliths.Contains("ca2") ? 1 : 0;
+                    _octoliths[2] = octoliths.Contains("alinos1") ? 1 : 0;
+                    _octoliths[3] = octoliths.Contains("alinos2") ? 1 : 0;
+                    _octoliths[4] = octoliths.Contains("vdo1") ? 1 : 0;
+                    _octoliths[5] = octoliths.Contains("vdo2") ? 1 : 0;
+                    _octoliths[6] = octoliths.Contains("arcterra1") ? 1 : 0;
+                    _octoliths[7] = octoliths.Contains("arcterra2") ? 1 : 0;
                 }
             }
 
@@ -472,14 +472,14 @@ namespace MphRead
                 };
                 var octoliths = new List<string>()
                 {
-                    _ca1State != 0 ? "CA1" : "",
-                    _ca2State != 0 ? "CA2" : "",
-                    _alinos1State != 0 ? "Alinos1" : "",
-                    _alinos2State != 0 ? "Alinos2" : "",
-                    _vdo1State != 0 ? "VDO1" : "",
-                    _vdo2State != 0 ? "VDO2" : "",
-                    _arcterra1State != 0 ? "Arcterra1" : "",
-                    _arcterra2State != 0 ? "Arcterra2" : ""
+                    _octoliths[0] != 0 ? "CA1" : "",
+                    _octoliths[1] != 0 ? "CA2" : "",
+                    _octoliths[2] != 0 ? "Alinos1" : "",
+                    _octoliths[3] != 0 ? "Alinos2" : "",
+                    _octoliths[4] != 0 ? "VDO1" : "",
+                    _octoliths[5] != 0 ? "VDO2" : "",
+                    _octoliths[6] != 0 ? "Arcterra1" : "",
+                    _octoliths[7] != 0 ? "Arcterra2" : ""
                 };
                 GameState.CommitSettings(new MenuSettings()
                 {
@@ -512,10 +512,10 @@ namespace MphRead
                     SaveFromExit = SaveFromExit.ToString().ToLower(),
                     SaveFromShip = SaveFromShip.ToString().ToLower(),
                     Planets = String.Join(',', planets.Where(p => p != "")),
-                    Alinos1State = FormatState(_ca1State),
-                    Alinos2State = FormatState(_ca2State),
-                    Ca1State = FormatState(_alinos1State),
-                    Ca2State = FormatState(_alinos2State),
+                    Alinos1State = FormatState(_alinos1State),
+                    Alinos2State = FormatState(_alinos2State),
+                    Ca1State = FormatState(_ca1State),
+                    Ca2State = FormatState(_ca2State),
                     Vdo1State = FormatState(_vdo1State),
                     Vdo2State = FormatState(_vdo2State),
                     Arcterra1State = FormatState(_arcterra1State),

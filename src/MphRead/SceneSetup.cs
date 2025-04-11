@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Numerics;
 using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
@@ -58,9 +59,62 @@ namespace MphRead
             var room = new RoomEntity(scene);
             (CollisionInstance collision, IReadOnlyList<EntityBase> entities) = SetUpRoom(mode, playerCount,
                 bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene);
+            UpdateAreaHunters();
             InitHunterSpawns(scene, entities, initialize: false); // see: "probably revisit this"
             GameState.StorySave.CheckpointRoomId = room.RoomId;
             return (room, metadata, collision, entities);
+        }
+
+        private static void UpdateAreaHunters()
+        {
+            // todo?: the game does this in the cockpit
+            Array.Fill(GameState.StorySave.AreaHunters, (byte)0);
+            byte chance = 0;
+            byte[] chances = new byte[4];
+            byte[] counts = new byte[4];
+            for (int i = 0; i < 4; i++)
+            {
+                int area2 = i * 2 + 1;
+                if (GameState.GetAreaState(area2) == AreaState.Clear)
+                {
+                    uint lostOctoliths = GameState.StorySave.LostOctoliths;
+                    if (((lostOctoliths >> (8 * i)) & 15) == 15 || ((lostOctoliths >> (4 * (2 * i + 1))) & 15) == 15)
+                    {
+                        // increased chance if you haven't lost either of the planet's octoliths
+                        chance += 2;
+                    }
+                    else
+                    {
+                        chance++;
+                    }
+                    chances[i] = chance;
+                }
+            }
+            for (int i = 0; i < 8; i++)
+            {
+                if ((GameState.StorySave.DefeatedHunters & (1 << i)) == 0)
+                {
+                    continue;
+                }
+                uint rand = Rng.GetRandomInt2(chance);
+                for (int j = 0; j < 4; j++)
+                {
+                    if (rand < chances[j])
+                    {
+                        GameState.StorySave.AreaHunters[j] |= (byte)(1 << i);
+                        if (++counts[j] >= 3)
+                        {
+                            for (int k = 3; k > j; k--)
+                            {
+                                chances[k] = chances[k - 1];
+                            }
+                            chances[j] = 0;
+                            chance = chances[3];
+                        }
+                        break;
+                    }
+                }
+            }
         }
 
         public static void InitHunterSpawns(Scene scene, IReadOnlyList<EntityBase> entities, bool initialize)
@@ -77,6 +131,9 @@ namespace MphRead
                 || scene.RoomId != 50 // Data Shrine 02 (UNIT2_RM2)
                 || PlayerEntity.Main.AvailableWeapons[BeamType.Battlehammer])
             {
+                int randomHunters = GameState.StorySave.AreaHunters[scene.AreaId / 2] & 0x7E; // ignore Samus and Guardian
+                int randomHunterCount = BitOperations.PopCount((uint)randomHunters);
+                int extraCount = 0; // extra index to roll Guardian if at least one hunter has already been rolled
                 for (int i = 0; i < entities.Count; i++)
                 {
                     if (PlayerEntity.PlayerCount >= PlayerEntity.MaxPlayers)
@@ -103,12 +160,45 @@ namespace MphRead
                     Hunter hunter;
                     if (spawner.Data.Fields.S09.HunterId == 8)
                     {
-                        // skhere: determine random hunter
-                        hunter = Hunter.Guardian;
+                        uint rand = Rng.GetRandomInt2(randomHunters + extraCount);
+                        if (rand < randomHunterCount)
+                        {
+                            // todo?: determine bot level based on octoliths (unused)
+                            int index = 0;
+                            int j;
+                            for (j = 0; j < 8; j++)
+                            {
+                                if ((randomHunters & (1 << j)) != 0)
+                                {
+                                    if (index++ == rand)
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                            if (j > 0 && j < 7)
+                            {
+                                // mustodo: play hunter music
+                            }
+                            hunter = (Hunter)j;
+                        }
+                        else
+                        {
+                            hunter = Hunter.Guardian;
+                        }
                     }
                     else
                     {
                         hunter = (Hunter)spawner.Data.Fields.S09.HunterId;
+                    }
+                    if (hunter != Hunter.Guardian)
+                    {
+                        extraCount = 1;
+                    }
+                    if ((randomHunters & (1 << (int)hunter)) != 0)
+                    {
+                        randomHunters &= ~(1 << (int)hunter);
+                        randomHunterCount--;
                     }
                     PlayerEntity.Create(hunter, spawner.Data.Fields.S09.HunterColor);
                     if (initialize)

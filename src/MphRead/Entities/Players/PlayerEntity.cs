@@ -1881,6 +1881,8 @@ namespace MphRead.Entities
                     }
                     else if (attacker?.IsMainPlayer == true)
                     {
+                        GameState.StorySave.DefeatedHunters |= (byte)(1 << (int)Hunter);
+                        GameState.StorySave.AreaHunters[_scene.AreaId / 2] &= (byte)~(1 << (int)Hunter);
                         // todo: update story save, recover octolith, etc.
                     }
                 }
