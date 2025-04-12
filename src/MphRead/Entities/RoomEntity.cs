@@ -610,6 +610,7 @@ namespace MphRead.Entities
             }
             Vector3 offset = Vector3.Zero;
             DoorEntity? prevConnector = null;
+            DoorEntity? newLoader = null;
             NodeRef nodeRef = NodeRef.None;
             for (int i = 0; i < _scene.Entities.Count; i++)
             {
@@ -638,7 +639,7 @@ namespace MphRead.Entities
                         offset = door.Position - LoaderDoor.Position;
                         nodeRef = door.Portal.NodeRef2;
                         Debug.Assert(door.LoaderDoor != null);
-                        DoorEntity newLoader = door.LoaderDoor;
+                        newLoader = door.LoaderDoor;
                         prevConnector ??= LoaderDoor.ConnectorDoor;
                         Debug.Assert(prevConnector != null);
                         // new loader replacing the connector
@@ -674,7 +675,28 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // todo: determine whether to play movie (that is, spawn boss), update bot AI, lock doors for encounter
+            // todo: determine whether to play movie (that is, spawn boss), update bot AI
+            if (GameState.GetAreaState(_scene.AreaId) == AreaState.Clear && PlayerEntity.PlayerCount > 1)
+            {
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Door)
+                    {
+                        continue;
+                    }
+                    var door = (DoorEntity)entity;
+                    if (door.Id != -1 && door.Data.ConnectorId != 255)
+                    {
+                        if (door.LoaderDoor != null && door.LoaderDoor == newLoader)
+                        {
+                            door = door.LoaderDoor;
+                        }
+                        door.Lock(updateState: false);
+                        door.Flags |= DoorFlags.ShowLock;
+                    }
+                }
+            }
             GameState.StorySave.SetVisitedRoom(RoomId);
             if (_unloadModel != null)
             {
