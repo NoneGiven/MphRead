@@ -524,7 +524,7 @@ namespace MphRead.Entities
                 Rng.SetRng2(0);
             }
             (_, IReadOnlyList<EntityBase> entities) = SceneSetup.SetUpRoom(_scene.GameMode, playerCount: 0,
-                BossFlags.Unspecified, nodeLayerMask: 0, entityLayer, roomMeta, room: this, _scene);
+                BossFlags.Unspecified, nodeLayerMask: 0, entityLayer, roomMeta, room: this, _scene, isRoomTransition: true);
             if (token.IsCancellationRequested)
             {
                 return;
@@ -607,6 +607,10 @@ namespace MphRead.Entities
                 {
                     conInst.NodeAnimIgnoreRoot = true;
                 }
+            }
+            if (_roomCollision.Count > 0)
+            {
+                _roomCollision[0].Active = true;
             }
             Vector3 offset = Vector3.Zero;
             DoorEntity? prevConnector = null;

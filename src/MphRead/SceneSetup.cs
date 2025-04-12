@@ -58,7 +58,7 @@ namespace MphRead
             Sound.Sfx.Load(scene);
             var room = new RoomEntity(scene);
             (CollisionInstance collision, IReadOnlyList<EntityBase> entities) = SetUpRoom(mode, playerCount,
-                bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene);
+                bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene, isRoomTransition: false);
             UpdateAreaHunters();
             InitHunterSpawns(scene, entities, initialize: false); // see: "probably revisit this"
             GameState.StorySave.CheckpointRoomId = room.RoomId;
@@ -216,7 +216,7 @@ namespace MphRead
 
         public static (CollisionInstance, IReadOnlyList<EntityBase>) SetUpRoom(GameMode mode,
             int playerCount, BossFlags bossFlags, int nodeLayerMask, int entityLayerId,
-            RoomMetadata metadata, RoomEntity room, Scene scene)
+            RoomMetadata metadata, RoomEntity room, Scene scene, bool isRoomTransition)
         {
             if (playerCount == 0)
             {
@@ -247,6 +247,10 @@ namespace MphRead
             if (metadata.NodePath != null)
             {
                 nodeData = ReadNodeData.ReadData(Paths.Combine(@"", metadata.NodePath));
+            }
+            if (isRoomTransition)
+            {
+                collision.Active = false;
             }
             room.Setup(metadata.Name, metadata, collision, nodeData, nodeLayerMask, metadata.Id);
             IReadOnlyList<EntityBase> entities = LoadEntities(metadata, entityLayerId, scene);
