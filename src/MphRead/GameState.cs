@@ -1553,7 +1553,7 @@ namespace MphRead
         public int[] AmmoMax { get; init; } = new int[2];
         public int[] WeaponSlots { get; init; } = new int[3];
         public ushort Weapons { get; set; }
-        public ushort Artifacts { get; set; }
+        public uint Artifacts { get; set; }
         public ushort FoundOctoliths { get; set; }
         public ushort CurrentOctoliths { get; set; }
         public uint LostOctoliths { get; set; } = UInt32.MaxValue;
@@ -1721,7 +1721,7 @@ namespace MphRead
 
         public void UpdateFoundArtifact(int artifactId, int modelId)
         {
-            Artifacts |= (ushort)(1 << (artifactId + 3 * modelId));
+            Artifacts |= (uint)(1 << (artifactId + 3 * modelId));
         }
 
         public void UpdateLogbook(int scanId)
