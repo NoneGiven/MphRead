@@ -838,42 +838,42 @@ namespace MphRead
             if (StorySave.BossFlags.TestAny(BossFlags.Unit1B1Kill))
             {
                 StorySave.BossFlags &= ~BossFlags.Unit1B1Kill;
-                StorySave.BossFlags |= ~BossFlags.Unit1B1Done;
+                StorySave.BossFlags |= BossFlags.Unit1B1Done;
             }
             if (StorySave.BossFlags.TestAny(BossFlags.Unit1B2Kill))
             {
                 StorySave.BossFlags &= ~BossFlags.Unit1B2Kill;
-                StorySave.BossFlags |= ~BossFlags.Unit1B2Done;
+                StorySave.BossFlags |= BossFlags.Unit1B2Done;
             }
             if (StorySave.BossFlags.TestAny(BossFlags.Unit2B1Kill))
             {
                 StorySave.BossFlags &= ~BossFlags.Unit2B1Kill;
-                StorySave.BossFlags |= ~BossFlags.Unit2B1Done;
+                StorySave.BossFlags |= BossFlags.Unit2B1Done;
             }
             if (StorySave.BossFlags.TestAny(BossFlags.Unit2B2Kill))
             {
                 StorySave.BossFlags &= ~BossFlags.Unit2B2Kill;
-                StorySave.BossFlags |= ~BossFlags.Unit2B2Done;
+                StorySave.BossFlags |= BossFlags.Unit2B2Done;
             }
             if (StorySave.BossFlags.TestAny(BossFlags.Unit3B1Kill))
             {
                 StorySave.BossFlags &= ~BossFlags.Unit3B1Kill;
-                StorySave.BossFlags |= ~BossFlags.Unit3B1Done;
+                StorySave.BossFlags |= BossFlags.Unit3B1Done;
             }
             if (StorySave.BossFlags.TestAny(BossFlags.Unit3B2Kill))
             {
                 StorySave.BossFlags &= ~BossFlags.Unit3B2Kill;
-                StorySave.BossFlags |= ~BossFlags.Unit3B2Done;
+                StorySave.BossFlags |= BossFlags.Unit3B2Done;
             }
             if (StorySave.BossFlags.TestAny(BossFlags.Unit4B1Kill))
             {
                 StorySave.BossFlags &= ~BossFlags.Unit4B1Kill;
-                StorySave.BossFlags |= ~BossFlags.Unit4B1Done;
+                StorySave.BossFlags |= BossFlags.Unit4B1Done;
             }
             if (StorySave.BossFlags.TestAny(BossFlags.Unit4B2Kill))
             {
                 StorySave.BossFlags &= ~BossFlags.Unit4B2Kill;
-                StorySave.BossFlags |= ~BossFlags.Unit4B2Done;
+                StorySave.BossFlags |= BossFlags.Unit4B2Done;
             }
         }
 
