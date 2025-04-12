@@ -1956,7 +1956,7 @@ namespace MphRead.Entities
                                 {
                                     door.Flags &= ~DoorFlags.ShowLock;
                                 }
-                                if (door.Id == -1 || GameState.StorySave.GetRoomState(_scene.RoomId, door.Id) == 1)
+                                if (door.Id == -1 || GameState.StorySave.GetRoomState(_scene.RoomId, door.Id) == 0)
                                 {
                                     door.Unlock(updateState: false, noLockAnimSfx: false);
                                 }
