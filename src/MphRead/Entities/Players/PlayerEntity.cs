@@ -481,10 +481,12 @@ namespace MphRead.Entities
 
         public void CreateHalfturret()
         {
-            Debug.Assert(_halfturret == null);
-            _halfturret = new HalfturretEntity(this, _scene);
-            _halfturret.Create();
-            _scene.InitEntity(_halfturret);
+            if (_halfturret == null)
+            {
+                _halfturret = new HalfturretEntity(this, _scene);
+                _halfturret.Create();
+                _scene.InitEntity(_halfturret);
+            }
         }
 
         public override void Initialize()
