@@ -2884,6 +2884,12 @@ namespace MphRead
                 if (!Multiplayer)
                 {
                     Menu.NeededSave = _afterFade == AfterFade.EnterShip ? Menu.SaveFromShip : Menu.SaveFromExit;
+                    if (_afterFade == AfterFade.EnterShip)
+                    {
+                        GameState.StorySave.Health = GameState.StorySave.HealthMax;
+                        GameState.StorySave.Ammo[0] = GameState.StorySave.AmmoMax[0];
+                        GameState.StorySave.Ammo[1] = GameState.StorySave.AmmoMax[1];
+                    }
                 }
                 _close.Invoke();
                 return;
