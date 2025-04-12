@@ -211,14 +211,14 @@ namespace MphRead
                 }
                 SaveFromExit = ParseSaveWhen(settings.SaveFromExit, SaveWhen.Never);
                 SaveFromShip = ParseSaveWhen(settings.SaveFromShip, SaveWhen.Prompt);
-                string[] planets = settings.Planets.ToUpper().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                string[] planets = settings.Planets.ToLower().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
                 if (planets.Length > 0)
                 {
-                    _planets[0] = planets.Contains("CA") ? 1 : 0;
-                    _planets[1] = planets.Contains("Alinos") ? 1 : 0;
-                    _planets[2] = planets.Contains("VDO") ? 1 : 0;
-                    _planets[3] = planets.Contains("Arcterra") ? 1 : 0;
-                    _planets[4] = planets.Contains("Oubliette") ? 1 : 0;
+                    _planets[0] = planets.Contains("ca") ? 1 : 0;
+                    _planets[1] = planets.Contains("alinos") ? 1 : 0;
+                    _planets[2] = planets.Contains("vdo") ? 1 : 0;
+                    _planets[3] = planets.Contains("arcterra") ? 1 : 0;
+                    _planets[4] = planets.Contains("oubliette") ? 1 : 0;
                 }
                 _ca1State = GetState(settings.Ca1State);
                 _ca2State = GetState(settings.Ca2State);
