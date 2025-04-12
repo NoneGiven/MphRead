@@ -74,8 +74,8 @@ namespace MphRead
             byte[] counts = new byte[4];
             for (int i = 0; i < 4; i++)
             {
-                int area2 = i * 2 + 1;
-                if (GameState.GetAreaState(area2) == AreaState.Clear)
+                int area1 = i * 2;
+                if (GameState.GetAreaState(area1) == AreaState.Clear)
                 {
                     uint lostOctoliths = GameState.StorySave.LostOctoliths;
                     if (((lostOctoliths >> (8 * i)) & 15) == 15 || ((lostOctoliths >> (4 * (2 * i + 1))) & 15) == 15)
