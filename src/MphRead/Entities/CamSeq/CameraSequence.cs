@@ -236,8 +236,9 @@ namespace MphRead.Formats
             CameraSequenceKeyframe firstFrame = Keyframes[0];
             CamInfoRef.NodeRef = firstFrame.NodeRef;
             CalculateFrameValues();
-            // this has the potential for "tearing" of node refs e.g. in Cortex CPU, and the update is never needed
-            if (!Bugfixes.BetterCamSeqNodeRef && firstFrame.PositionEntity != null)
+            // the bugfix avoids "tearing" of node refs e.g. in Cortex CPU, but causes issues in Compression Chamber
+            if (firstFrame.PositionEntity != null &&
+                (!Bugfixes.BetterCamSeqNodeRef || SequenceId == 98))
             {
                 NodeRef nodeRef = firstFrame.PositionEntity.NodeRef;
                 if (nodeRef != NodeRef.None)
