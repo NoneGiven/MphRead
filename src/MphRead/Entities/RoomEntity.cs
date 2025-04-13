@@ -640,6 +640,7 @@ namespace MphRead.Entities
                         door.Flags |= DoorFlags.ShotOpen;
                         door.Flags &= ~DoorFlags.Locked;
                         door.SetAnimationFrame(LoaderDoor.GetAnimationFrame());
+                        ActivateConnector(door);
                         offset = door.Position - LoaderDoor.Position;
                         nodeRef = door.Portal.NodeRef2;
                         Debug.Assert(door.LoaderDoor != null);
