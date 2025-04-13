@@ -2332,7 +2332,11 @@ namespace MphRead
                     {
                         break;
                     }
-                    if (keyInfo.Key == ConsoleKey.S)
+                    if (keyInfo.Key == ConsoleKey.Spacebar && selection == 0)
+                    {
+                        prompt = 1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.S)
                     {
                         selection = 0;
                     }
@@ -2626,6 +2630,15 @@ namespace MphRead
                 }
                 else
                 {
+                    Console.WriteLine();
+                    if (prompt == 1)
+                    {
+                        Console.WriteLine("Enter save slot from 1 to 255.");
+                        if (Int32.TryParse(Console.ReadLine(), out int slot) && slot >= 0 && slot <= 255)
+                        {
+                            SaveSlot = (byte)slot;
+                        }
+                    }
                     prompt = 0;
                 }
             }
