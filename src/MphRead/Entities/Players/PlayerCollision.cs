@@ -290,9 +290,10 @@ namespace MphRead.Entities
                     MathF.Max(MathF.Max(Single.MinValue, point1.Z), point2.Z) + margin
                 );
             }
+            bool includeEntities = GameState.TransitionState == TransitionState.None; // handled differently in-game
             // point1/point2/margin aren't used, but point1 has to be passed in order to include entities
             IReadOnlyList<CollisionCandidate> candidates
-                = CollisionDetection.GetCandidatesForLimits(point1, point2, margin, limitMin, limitMax, includeEntities: true, _scene);
+                = CollisionDetection.GetCandidatesForLimits(point1, point2, margin, limitMin, limitMax, includeEntities, _scene);
             if (IsAltForm)
             {
                 float radius = altVolume.SphereRadius + (Hunter == Hunter.Spire || Hunter == Hunter.Sylux ? 0.5f : 0.35f);
