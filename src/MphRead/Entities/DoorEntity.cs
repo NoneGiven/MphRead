@@ -246,6 +246,7 @@ namespace MphRead.Entities
             _soundSource.Update(Position, rangeIndex: 6);
             if (Flags.TestFlag(DoorFlags.ShouldOpen))
             {
+                Flags &= ~DoorFlags.Closed;
                 if (AnimInfo.Index[0] != 0)
                 {
                     _models[0].SetAnimation(0, 0, SetFlags.Texture | SetFlags.Texcoord | SetFlags.Node, AnimFlags.NoLoop);
