@@ -140,6 +140,10 @@ namespace MphRead
             }
             PlayerEntity.PlayerCount = 1;
             PlayerEntity.PlayersCreated = 1;
+            if (scene.AreaId >= 8) // handled differently in-game
+            {
+                return;
+            }
             if (GameState.GetAreaState(scene.AreaId) != AreaState.Clear
                 || scene.RoomId != 50 // Data Shrine 02 (UNIT2_RM2)
                 || PlayerEntity.Main.AvailableWeapons[BeamType.Battlehammer])
