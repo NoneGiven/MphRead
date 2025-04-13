@@ -57,6 +57,7 @@ namespace MphRead
 
     public static class Features
     {
+        public static bool NoRepeatEncounters { get; set; } = false; // false
         public static bool AllowInvalidTeams { get; set; } = true; // false
         public static bool TopScreenTargetInfo { get; set; } = true;  // "true"
         public static float HelmetOpacity { get; set; } = 1; // 1
@@ -72,7 +73,11 @@ namespace MphRead
 
         public static void Load(IReadOnlyDictionary<string, string> values)
         {
-            if (values.TryGetValue(nameof(AllowInvalidTeams), out string? value) && Boolean.TryParse(value, out bool boolean))
+            if (values.TryGetValue(nameof(NoRepeatEncounters), out string? value) && Boolean.TryParse(value, out bool boolean))
+            {
+                NoRepeatEncounters = boolean;
+            }
+            if (values.TryGetValue(nameof(AllowInvalidTeams), out value) && Boolean.TryParse(value, out boolean))
             {
                 AllowInvalidTeams = boolean;
             }
@@ -126,6 +131,7 @@ namespace MphRead
         {
             return new Dictionary<string, string>()
             {
+                { nameof(NoRepeatEncounters), NoRepeatEncounters.ToString().ToLower() },
                 { nameof(AllowInvalidTeams), AllowInvalidTeams.ToString().ToLower() },
                 { nameof(TopScreenTargetInfo), TopScreenTargetInfo.ToString().ToLower() },
                 { nameof(HelmetOpacity), HelmetOpacity.ToString(CultureInfo.InvariantCulture) },
@@ -146,6 +152,7 @@ namespace MphRead
     {
         public static bool FreeWeaponSelect { get; set; } = true;
         public static bool UnlimitedJumps { get; set; } = false;
+        public static bool NoRandomEncounters { get; set; } = false;
         public static bool UnlockAllDoors { get; set; } = false;
         public static bool ContinueFromCurrentRoom { get; set; } = false;
         public static bool StartWithAllUpgrades { get; set; } = false;
@@ -161,6 +168,10 @@ namespace MphRead
             if (values.TryGetValue(nameof(UnlimitedJumps), out value) && Boolean.TryParse(value, out boolean))
             {
                 UnlimitedJumps = boolean;
+            }
+            if (values.TryGetValue(nameof(NoRandomEncounters), out value) && Boolean.TryParse(value, out boolean))
+            {
+                NoRandomEncounters = boolean;
             }
             if (values.TryGetValue(nameof(UnlockAllDoors), out value) && Boolean.TryParse(value, out boolean))
             {
@@ -190,6 +201,7 @@ namespace MphRead
             {
                 { nameof(FreeWeaponSelect), FreeWeaponSelect.ToString().ToLower() },
                 { nameof(UnlimitedJumps), UnlimitedJumps.ToString().ToLower() },
+                { nameof(NoRandomEncounters), NoRandomEncounters.ToString() },
                 { nameof(UnlockAllDoors), UnlockAllDoors.ToString() },
                 { nameof(ContinueFromCurrentRoom), ContinueFromCurrentRoom.ToString() },
                 { nameof(StartWithAllUpgrades), StartWithAllUpgrades.ToString() },

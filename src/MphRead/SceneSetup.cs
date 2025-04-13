@@ -65,8 +65,11 @@ namespace MphRead
             return (room, metadata, collision, entities);
         }
 
+        private static readonly bool[] _completedRandomEncounterRooms = new bool[66];
+
         private static void UpdateAreaHunters()
         {
+            Array.Fill(_completedRandomEncounterRooms, false);
             // todo?: the game does this in the cockpit
             Array.Fill(GameState.StorySave.AreaHunters, (byte)0);
             byte chance = 0;
@@ -117,6 +120,14 @@ namespace MphRead
             }
         }
 
+        public static void CompleteEncounter(int roomId)
+        {
+            if (roomId >= 27 && roomId <= 92)
+            {
+                _completedRandomEncounterRooms[roomId - 27] = true;
+            }
+        }
+
         public static void InitHunterSpawns(Scene scene, IReadOnlyList<EntityBase> entities, bool initialize)
         {
             for (int i = 1; i < PlayerEntity.MaxPlayers; i++)
@@ -128,6 +139,11 @@ namespace MphRead
             }
             PlayerEntity.PlayerCount = 1;
             PlayerEntity.PlayersCreated = 1;
+            if (Cheats.NoRandomEncounters || Features.NoRepeatEncounters
+                && scene.RoomId >= 27 && scene.RoomId <= 92 && _completedRandomEncounterRooms[scene.RoomId - 27])
+            {
+                return;
+            }
             if (GameState.GetAreaState(scene.AreaId) != AreaState.Clear
                 || scene.RoomId != 50 // Data Shrine 02 (UNIT2_RM2)
                 || PlayerEntity.Main.AvailableWeapons[BeamType.Battlehammer])

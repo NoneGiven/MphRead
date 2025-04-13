@@ -1940,6 +1940,7 @@ namespace MphRead.Entities
                         }
                         if (unlockDoors)
                         {
+                            SceneSetup.CompleteEncounter(_scene.RoomId);
                             for (int i = 0; i < _scene.Entities.Count; i++)
                             {
                                 EntityBase entity = _scene.Entities[i];

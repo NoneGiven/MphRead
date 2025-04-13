@@ -1655,6 +1655,7 @@ namespace MphRead
                 {
                     Console.WriteLine("Features");
                     Console.WriteLine();
+                    Console.WriteLine($"{X(s++)} (E) No Repeat Encounters: {OnOff(Features.NoRepeatEncounters)}");
                     Console.WriteLine($"{X(s++)} (T) Allow Invalid Teams: {OnOff(Features.AllowInvalidTeams)}");
                     Console.WriteLine($"{X(s++)} (I) Target Info On Top Screen: {OnOff(Features.TopScreenTargetInfo)}");
                     Console.WriteLine($"{X(s++)} (H) Helmet Opacity: {PrintOpacity(Features.HelmetOpacity)}");
@@ -1674,6 +1675,7 @@ namespace MphRead
                     Console.WriteLine();
                     Console.WriteLine($"{X(s++)} (W) Free Weapon Selection: {OnOff(Cheats.FreeWeaponSelect)}");
                     Console.WriteLine($"{X(s++)} (J) Unlimited Jumps: {OnOff(Cheats.UnlimitedJumps)}");
+                    Console.WriteLine($"{X(s++)} (E) No Random Encounters: {OnOff(Cheats.NoRandomEncounters)}");
                     Console.WriteLine($"{X(s++)} (D) All Doors Unlocked: {OnOff(Cheats.UnlockAllDoors)}");
                     Console.WriteLine($"{X(s++)} (R) Retry From Current Room: {OnOff(Cheats.ContinueFromCurrentRoom)}");
                     Console.WriteLine($"{X(s++)} (U) Start With All Upgrades: {OnOff(Cheats.StartWithAllUpgrades)}");
@@ -1756,101 +1758,109 @@ namespace MphRead
                         screen = 0;
                         selection = 0;
                     }
-                    else if (keyInfo.Key == ConsoleKey.T)
+                    else if (keyInfo.Key == ConsoleKey.E)
                     {
                         selection = 0;
                     }
-                    else if (keyInfo.Key == ConsoleKey.I)
+                    else if (keyInfo.Key == ConsoleKey.T)
                     {
                         selection = 1;
                     }
-                    else if (keyInfo.Key == ConsoleKey.H)
+                    else if (keyInfo.Key == ConsoleKey.I)
                     {
                         selection = 2;
                     }
-                    else if (keyInfo.Key == ConsoleKey.V)
+                    else if (keyInfo.Key == ConsoleKey.H)
                     {
                         selection = 3;
                     }
-                    else if (keyInfo.Key == ConsoleKey.D)
+                    else if (keyInfo.Key == ConsoleKey.V)
                     {
                         selection = 4;
                     }
-                    else if (keyInfo.Key == ConsoleKey.C)
+                    else if (keyInfo.Key == ConsoleKey.D)
                     {
                         selection = 5;
                     }
-                    else if (keyInfo.Key == ConsoleKey.S)
+                    else if (keyInfo.Key == ConsoleKey.C)
                     {
                         selection = 6;
                     }
-                    else if (keyInfo.Key == ConsoleKey.F)
+                    else if (keyInfo.Key == ConsoleKey.S)
                     {
                         selection = 7;
                     }
-                    else if (keyInfo.Key == ConsoleKey.R)
+                    else if (keyInfo.Key == ConsoleKey.F)
                     {
                         selection = 8;
                     }
-                    else if (keyInfo.Key == ConsoleKey.P)
+                    else if (keyInfo.Key == ConsoleKey.R)
                     {
                         selection = 9;
                     }
-                    else if (keyInfo.Key == ConsoleKey.L)
+                    else if (keyInfo.Key == ConsoleKey.P)
                     {
                         selection = 10;
                     }
-                    else if (keyInfo.Key == ConsoleKey.A)
+                    else if (keyInfo.Key == ConsoleKey.L)
                     {
                         selection = 11;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.A)
+                    {
+                        selection = 12;
                     }
                     else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
                     {
                         if (selection == 0)
                         {
-                            Features.AllowInvalidTeams = true;
+                            Features.NoRepeatEncounters = true;
                         }
                         else if (selection == 1)
                         {
-                            Features.TopScreenTargetInfo = true;
+                            Features.AllowInvalidTeams = true;
                         }
                         else if (selection == 2)
                         {
-                            Features.HelmetOpacity = 1;
+                            Features.TopScreenTargetInfo = true;
                         }
                         else if (selection == 3)
                         {
-                            Features.VisorOpacity = 0.5f;
+                            Features.HelmetOpacity = 1;
                         }
                         else if (selection == 4)
                         {
-                            Features.HudOpacity = 1;
+                            Features.VisorOpacity = 0.5f;
                         }
                         else if (selection == 5)
                         {
-                            Features.ReticleOpacity = 1;
+                            Features.HudOpacity = 1;
                         }
                         else if (selection == 6)
                         {
-                            Features.HudSway = true;
+                            Features.ReticleOpacity = 1;
                         }
                         else if (selection == 7)
                         {
-                            Features.TargetInfoSway = false;
+                            Features.HudSway = true;
                         }
                         else if (selection == 8)
                         {
-                            Features.MaxRoomDetail = false;
+                            Features.TargetInfoSway = false;
                         }
                         else if (selection == 9)
                         {
-                            Features.MaxPlayerDetail = true;
+                            Features.MaxRoomDetail = false;
                         }
                         else if (selection == 10)
                         {
-                            Features.LogSpatialAudio = false;
+                            Features.MaxPlayerDetail = true;
                         }
                         else if (selection == 11)
+                        {
+                            Features.LogSpatialAudio = false;
+                        }
+                        else if (selection == 12)
                         {
                             Features.HalfSecondAlarm = false;
                         }
@@ -1899,49 +1909,53 @@ namespace MphRead
 
                         if (selection == 0)
                         {
-                            Features.AllowInvalidTeams = !Features.AllowInvalidTeams;
+                            Features.NoRepeatEncounters = !Features.NoRepeatEncounters;
                         }
                         else if (selection == 1)
                         {
-                            Features.TopScreenTargetInfo = !Features.TopScreenTargetInfo;
+                            Features.AllowInvalidTeams = !Features.AllowInvalidTeams;
                         }
                         else if (selection == 2)
                         {
-                            Features.HelmetOpacity = UpdateOpacity(Features.HelmetOpacity);
+                            Features.TopScreenTargetInfo = !Features.TopScreenTargetInfo;
                         }
                         else if (selection == 3)
                         {
-                            Features.VisorOpacity = UpdateOpacity(Features.VisorOpacity);
+                            Features.HelmetOpacity = UpdateOpacity(Features.HelmetOpacity);
                         }
                         else if (selection == 4)
                         {
-                            Features.HudOpacity = UpdateOpacity(Features.HudOpacity);
+                            Features.VisorOpacity = UpdateOpacity(Features.VisorOpacity);
                         }
                         else if (selection == 5)
                         {
-                            Features.ReticleOpacity = UpdateOpacity(Features.ReticleOpacity);
+                            Features.HudOpacity = UpdateOpacity(Features.HudOpacity);
                         }
                         else if (selection == 6)
                         {
-                            Features.HudSway = !Features.HudSway;
+                            Features.ReticleOpacity = UpdateOpacity(Features.ReticleOpacity);
                         }
                         else if (selection == 7)
                         {
-                            Features.TargetInfoSway = !Features.TargetInfoSway;
+                            Features.HudSway = !Features.HudSway;
                         }
                         else if (selection == 8)
                         {
-                            Features.MaxRoomDetail = !Features.MaxRoomDetail;
+                            Features.TargetInfoSway = !Features.TargetInfoSway;
                         }
                         else if (selection == 9)
                         {
-                            Features.MaxPlayerDetail = !Features.MaxPlayerDetail;
+                            Features.MaxRoomDetail = !Features.MaxRoomDetail;
                         }
                         else if (selection == 10)
                         {
-                            Features.LogSpatialAudio = !Features.LogSpatialAudio;
+                            Features.MaxPlayerDetail = !Features.MaxPlayerDetail;
                         }
                         else if (selection == 11)
+                        {
+                            Features.LogSpatialAudio = !Features.LogSpatialAudio;
+                        }
+                        else if (selection == 12)
                         {
                             Features.HalfSecondAlarm = !Features.HalfSecondAlarm;
                         }
@@ -1995,21 +2009,25 @@ namespace MphRead
                         }
                         else if (selection == 2)
                         {
-                            Cheats.UnlockAllDoors = false;
+                            Cheats.NoRandomEncounters = false;
                         }
                         else if (selection == 3)
                         {
-                            Cheats.ContinueFromCurrentRoom = false;
+                            Cheats.UnlockAllDoors = false;
                         }
                         else if (selection == 4)
                         {
-                            Cheats.StartWithAllUpgrades = false;
+                            Cheats.ContinueFromCurrentRoom = false;
                         }
                         else if (selection == 5)
                         {
-                            Cheats.StartWithAllOctoliths = false;
+                            Cheats.StartWithAllUpgrades = false;
                         }
                         else if (selection == 6)
+                        {
+                            Cheats.StartWithAllOctoliths = false;
+                        }
+                        else if (selection == 7)
                         {
                             Cheats.WalkThroughWalls = false;
                         }
@@ -2030,21 +2048,25 @@ namespace MphRead
                         }
                         else if (selection == 2)
                         {
-                            Cheats.UnlockAllDoors = !Cheats.UnlockAllDoors;
+                            Cheats.NoRandomEncounters = !Cheats.NoRandomEncounters;
                         }
                         else if (selection == 3)
                         {
-                            Cheats.ContinueFromCurrentRoom = !Cheats.ContinueFromCurrentRoom;
+                            Cheats.UnlockAllDoors = !Cheats.UnlockAllDoors;
                         }
                         else if (selection == 4)
                         {
-                            Cheats.StartWithAllUpgrades = !Cheats.StartWithAllUpgrades;
+                            Cheats.ContinueFromCurrentRoom = !Cheats.ContinueFromCurrentRoom;
                         }
                         else if (selection == 5)
                         {
-                            Cheats.StartWithAllOctoliths = !Cheats.StartWithAllOctoliths;
+                            Cheats.StartWithAllUpgrades = !Cheats.StartWithAllUpgrades;
                         }
                         else if (selection == 6)
+                        {
+                            Cheats.StartWithAllOctoliths = !Cheats.StartWithAllOctoliths;
+                        }
+                        else if (selection == 7)
                         {
                             Cheats.WalkThroughWalls = !Cheats.WalkThroughWalls;
                         }
@@ -2147,6 +2169,7 @@ namespace MphRead
 
         private static void ResetFeatures()
         {
+            Features.NoRepeatEncounters = false;
             Features.AllowInvalidTeams = true;
             Features.TopScreenTargetInfo = true;
             Features.HelmetOpacity = 1;
@@ -2161,6 +2184,7 @@ namespace MphRead
             Features.HalfSecondAlarm = false;
             Cheats.FreeWeaponSelect = false;
             Cheats.UnlimitedJumps = false;
+            Cheats.NoRandomEncounters = false;
             Cheats.UnlockAllDoors = false;
             Cheats.ContinueFromCurrentRoom = false;
             Cheats.StartWithAllUpgrades = false;
