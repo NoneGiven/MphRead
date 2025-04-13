@@ -1052,6 +1052,8 @@ namespace MphRead.Entities
             }
             else
             {
+                // hiding during dialog pause due to overlap with "bottom screen" elements
+                // (which causes one frame of flicker when the escape starts)
                 if (!_scene.Multiplayer && !GameState.DialogPause)
                 {
                     DrawEscapeTime();
