@@ -481,6 +481,7 @@ namespace MphRead.Entities
                     i--;
                 }
             }
+            CameraSequence.Current = null;
             _scene.ClearMessageQueue();
             // todo?: unload more stuff
             if (GameState.EscapeTimer != -1 && GameState.EscapeState != EscapeState.Escape)
