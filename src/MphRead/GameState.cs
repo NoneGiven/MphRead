@@ -480,6 +480,16 @@ namespace MphRead
                         break;
                     }
                 }
+                for (int i = 0; i < scene.MessageQueue.Count; i++)
+                {
+                    MessageInfo message = scene.MessageQueue[i];
+                    if (message.Message == Message.LoadOubliette && message.ExecuteFrame == scene.FrameCount)
+                    {
+                        TransitionRoomId = 91; // Gorea_b1
+                        scene.SetFade(FadeType.FadeOutWhite, length: 10 / 30f, overwrite: true, AfterFade.LoadRoom);
+                        break;
+                    }
+                }
             }
             // todo: game timer/boss record stuff
         }
