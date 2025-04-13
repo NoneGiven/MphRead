@@ -65,7 +65,16 @@ namespace MphRead
             return (room, metadata, collision, entities);
         }
 
+        // this is only for the no repeat encounters feature
         private static readonly bool[] _completedRandomEncounterRooms = new bool[66];
+
+        public static void CompleteEncounter(int roomId)
+        {
+            if (roomId >= 27 && roomId <= 92)
+            {
+                _completedRandomEncounterRooms[roomId - 27] = true;
+            }
+        }
 
         private static void UpdateAreaHunters()
         {
@@ -117,14 +126,6 @@ namespace MphRead
                         break;
                     }
                 }
-            }
-        }
-
-        public static void CompleteEncounter(int roomId)
-        {
-            if (roomId >= 27 && roomId <= 92)
-            {
-                _completedRandomEncounterRooms[roomId - 27] = true;
             }
         }
 
