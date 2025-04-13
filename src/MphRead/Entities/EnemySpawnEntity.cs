@@ -24,7 +24,9 @@ namespace MphRead.Entities
     {
         private readonly EnemySpawnEntityData _data;
         private int _activeCount = 0; // todo: names are backwards?
+        public int ActiveCount => _activeCount;
         private int _spawnedCount = 0;
+        public int SpawnedCount => _spawnedCount;
         private int _cooldownTimer = 0;
         private EntityBase? _entity1;
         private EntityBase? _entity2;
@@ -196,7 +198,10 @@ namespace MphRead.Entities
                     {
                         break;
                     }
-                    _scene.AddEntity(spawned);
+                    if (_data.EnemyType != EnemyType.Hunter)
+                    {
+                        _scene.AddEntity(spawned);
+                    }
                     if (Flags.TestFlag(SpawnerFlags.HasModel))
                     {
                         Flags |= SpawnerFlags.PlayAnimation;
@@ -219,8 +224,18 @@ namespace MphRead.Entities
 
         private PlayerEntity? SpawnHunter()
         {
-            // todo: spawn enemy hunter
-            return null;
+            PlayerEntity? player = null;
+            for (int i = 0; i < 4; i++)
+            {
+                player = PlayerEntity.Players[i];
+                if (player.Health == 0 && player.EnemySpawner == this)
+                {
+                    player.Spawn(Position, FacingVector, UpVector, NodeRef, respawn: true);
+                    player.InitEnemyHunter();
+                    break;
+                }
+            }
+            return player;
         }
 
         private void DeactivateAndSendMessages()
@@ -229,8 +244,9 @@ namespace MphRead.Entities
 
             void UpdateBossFlags()
             {
-                int flags = (int)GameState.StorySave.BossFlags;
-                flags |= 1 << (2 * _scene.AreaId);
+                uint flags = (uint)GameState.StorySave.BossFlags;
+                flags &= (uint)~(3 << (2 * _scene.AreaId));
+                flags |= (uint)(1 << (2 * _scene.AreaId));
                 GameState.StorySave.BossFlags = (BossFlags)flags;
                 updateSave = true;
             }
@@ -239,7 +255,7 @@ namespace MphRead.Entities
             GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
             if (_data.EnemyType != EnemyType.Hunter || _data.Fields.S09.EncounterType == 1)
             {
-                // todo: update completed encounters in story save
+                // todo: update completed encounters in story save (unused?)
             }
             if (_data.EnemyType == EnemyType.Cretaphid)
             {

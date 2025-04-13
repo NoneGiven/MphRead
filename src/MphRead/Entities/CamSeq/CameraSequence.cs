@@ -236,8 +236,9 @@ namespace MphRead.Formats
             CameraSequenceKeyframe firstFrame = Keyframes[0];
             CamInfoRef.NodeRef = firstFrame.NodeRef;
             CalculateFrameValues();
-            // this has the potential for "tearing" of node refs e.g. in Cortex CPU, and the update is never needed
-            if (!Bugfixes.BetterCamSeqNodeRef && firstFrame.PositionEntity != null)
+            // the bugfix avoids "tearing" of node refs e.g. in Cortex CPU, but causes issues in Compression Chamber
+            if (firstFrame.PositionEntity != null &&
+                (!Bugfixes.BetterCamSeqNodeRef || SequenceId == 98))
             {
                 NodeRef nodeRef = firstFrame.PositionEntity.NodeRef;
                 if (nodeRef != NodeRef.None)
@@ -441,7 +442,7 @@ namespace MphRead.Formats
             Vector3 upVector = Vector3.UnitY;
             if (MathF.Abs(finalRoll) >= 1 / 4096f)
             {
-                finalRoll = MathHelper.DegreesToRadians(finalRoll);
+                finalRoll = MathHelper.DegreesToRadians(finalRoll + 90);
                 CamInfoRef.Facing = CamInfoRef.Target - CamInfoRef.Position;
                 Vector3 cross = Vector3.Cross(upVector, CamInfoRef.Facing).Normalized();
                 upVector = Vector3.Cross(CamInfoRef.Facing, cross).Normalized();

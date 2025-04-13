@@ -1052,6 +1052,8 @@ namespace MphRead.Entities
             }
             else
             {
+                // hiding during dialog pause due to overlap with "bottom screen" elements
+                // (which causes one frame of flicker when the escape starts)
                 if (!_scene.Multiplayer && !GameState.DialogPause)
                 {
                     DrawEscapeTime();
@@ -1069,7 +1071,9 @@ namespace MphRead.Entities
                             DrawAmmoBar();
                             _weaponIconInst.PositionX = (_hudObjects.WeaponIconPosX + _objShiftX) / 256f;
                             _weaponIconInst.PositionY = (_hudObjects.WeaponIconPosY + _objShiftY) / 192f;
+                            _weaponIconInst.Alpha = Features.HudOpacity;
                             _scene.DrawHudObject(_weaponIconInst);
+                            _targetCircleInst.Alpha = Features.ReticleOpacity;
                             _scene.DrawHudObject(_targetCircleInst);
                         }
                         DrawModeHud();
@@ -1449,7 +1453,7 @@ namespace MphRead.Entities
             _healthbarMainMeter.TankCount = _healthMax / Values.EnergyTank;
             DrawMeter(_hudObjects.HealthMainPosX + _objShiftX, _hudObjects.HealthMainPosY + _healthbarYOffset + _objShiftY,
                 Values.EnergyTank - 1, _health, _healthbarPalette, _healthbarMainMeter,
-                drawText: true, drawTanks: !_scene.Multiplayer);
+                drawText: true, drawTanks: !_scene.Multiplayer, Features.HudOpacity);
             if (_scene.Multiplayer)
             {
                 int amount = 0;
@@ -1461,7 +1465,7 @@ namespace MphRead.Entities
                 _healthbarSubMeter.TankCount = _healthMax / Values.EnergyTank;
                 DrawMeter(_hudObjects.HealthSubPosX + _objShiftX, _hudObjects.HealthSubPosY + _healthbarYOffset + _objShiftY,
                     Values.EnergyTank - 1, amount, _healthbarPalette, _healthbarSubMeter,
-                    drawText: false, drawTanks: false);
+                    drawText: false, drawTanks: false, Features.HudOpacity);
             }
         }
 
@@ -1476,11 +1480,11 @@ namespace MphRead.Entities
             _ammoBarMeter.TankCount = 0;
             int amount = _ammo[info.AmmoType];
             DrawMeter(_hudObjects.AmmoBarPosX + _objShiftX, _hudObjects.AmmoBarPosY + _objShiftY, amount, amount,
-                _ammoBarPalette, _ammoBarMeter, drawText: false, drawTanks: false);
+                _ammoBarPalette, _ammoBarMeter, drawText: false, drawTanks: false, Features.HudOpacity);
             amount /= info.AmmoCost;
             DrawText2D(_hudObjects.AmmoBarPosX + _ammoBarMeter.BarOffsetX + _objShiftX,
                 _hudObjects.AmmoBarPosY + _ammoBarMeter.BarOffsetY + _objShiftY,
-                _ammoBarMeter.Align, _ammoBarPalette, $"{amount:00}");
+                _ammoBarMeter.Align, _ammoBarPalette, $"{amount:00}", alpha: Features.HudOpacity);
         }
 
         private void DrawBoostBombs()
@@ -1519,7 +1523,7 @@ namespace MphRead.Entities
         }
 
         private void DrawMeter(float x, float y, int baseAmount, int curAmount, int palette,
-            HudMeter meter, bool drawText, bool drawTanks)
+            HudMeter meter, bool drawText, bool drawTanks, float alpha = 1)
         {
             int filledTanks = 0;
             int remaining = curAmount;
@@ -1553,11 +1557,11 @@ namespace MphRead.Entities
             if (drawText)
             {
                 int amount = _scene.Multiplayer ? curAmount : barAmount;
-                DrawText2D(x + meter.BarOffsetX, y + meter.BarOffsetY, meter.Align, _healthbarPalette, $"{amount:00}");
+                DrawText2D(x + meter.BarOffsetX, y + meter.BarOffsetY, meter.Align, _healthbarPalette, $"{amount:00}", alpha: alpha);
                 if (meter.MessageId > 0)
                 {
                     string message = Strings.GetHudMessage(meter.MessageId);
-                    DrawText2D(x + meter.TextOffsetX, y + meter.TextOffsetY, Align.Left, _healthbarPalette, message);
+                    DrawText2D(x + meter.TextOffsetX, y + meter.TextOffsetY, Align.Left, _healthbarPalette, message, alpha: alpha);
                 }
                 if (drawTanks && meter.TankCount > 0)
                 {
@@ -1569,6 +1573,7 @@ namespace MphRead.Entities
                         meter.TankInst.PositionX = tankX / 256f;
                         meter.TankInst.PositionY = tankY / 192f;
                         meter.TankInst.SetData(charFrame: i < filledTanks ? 0 : 1, palette, _scene);
+                        meter.TankInst.Alpha = alpha;
                         _scene.DrawHudObject(meter.TankInst);
                         if (meter.Horizontal)
                         {
@@ -1587,6 +1592,7 @@ namespace MphRead.Entities
                 meter.BarInst.PositionX = x / 256f;
                 meter.BarInst.PositionY = y / 192f;
                 meter.BarInst.SetData(charFrame, palette, _scene);
+                meter.BarInst.Alpha = alpha;
                 _scene.DrawHudObject(meter.BarInst, mode: 2);
                 if (meter.Horizontal)
                 {

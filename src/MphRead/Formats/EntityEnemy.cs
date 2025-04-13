@@ -106,7 +106,7 @@ namespace MphRead
         public readonly uint HunterWeapon;
         public readonly ushort HunterHealth;
         public readonly ushort HunterHealthMax;
-        public readonly ushort Field38; // set in AI data
+        public readonly ushort HunterHealthThreshold;
         public readonly byte HunterColor;
         public readonly byte HunterChance;
     }
@@ -306,7 +306,7 @@ namespace MphRead.Editor
         public uint HunterWeapon { get; set; }
         public ushort HunterHealth { get; set; }
         public ushort HunterHealthMax { get; set; }
-        public ushort Unknown03 { get; set; }
+        public ushort HunterHealthThreshold { get; set; }
         public byte HunterColor { get; set; }
         public byte HunterChance { get; set; }
 
@@ -504,7 +504,7 @@ namespace MphRead.Editor
                 HunterWeapon = raw.Fields.S09.HunterWeapon;
                 HunterHealth = raw.Fields.S09.HunterHealth;
                 HunterHealthMax = raw.Fields.S09.HunterHealthMax;
-                Unknown03 = raw.Fields.S09.Field38; // set in AI data
+                HunterHealthThreshold = raw.Fields.S09.HunterHealthThreshold;
                 HunterColor = raw.Fields.S09.HunterColor;
                 HunterChance = raw.Fields.S09.HunterChance;
             }
@@ -579,7 +579,7 @@ namespace MphRead.Editor
             PrintValue(HunterWeapon, other.HunterWeapon, nameof(HunterWeapon));
             PrintValue(HunterHealth, other.HunterHealth, nameof(HunterHealth));
             PrintValue(HunterHealthMax, other.HunterHealthMax, nameof(HunterHealthMax));
-            PrintValue(Unknown03, other.Unknown03, nameof(Unknown03));
+            PrintValue(HunterHealthThreshold, other.HunterHealthThreshold, nameof(HunterHealthThreshold));
             PrintValue(HunterColor, other.HunterColor, nameof(HunterColor));
             PrintValue(HunterChance, other.HunterChance, nameof(HunterChance));
             PrintValue(Index, other.Index, nameof(Index));

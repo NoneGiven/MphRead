@@ -18,6 +18,7 @@ namespace MphRead.Entities
         {
             _data = data;
             Id = data.Header.EntityId;
+            AddPlaceholderModel();
         }
 
         public override void Initialize()
@@ -32,7 +33,6 @@ namespace MphRead.Entities
             {
                 _active = _data.Active != 0;
             }
-            AddPlaceholderModel();
         }
 
         public override bool Process()

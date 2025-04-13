@@ -79,7 +79,7 @@ namespace MphRead.Entities
             }
             if (_health == 0)
             {
-                if (_respawnTimer == 0) // todo: and this slot was not spawned by an enemy spawner
+                if (_respawnTimer == 0 && EnemySpawner == null)
                 {
                     if (_scene.Room?.LoadEntityId >= 0)
                     {
@@ -90,9 +90,9 @@ namespace MphRead.Entities
                             if (entity.Type == EntityType.Teleporter)
                             {
                                 var teleporter = (TeleporterEntity)entity;
-                                targetTeleporter = teleporter;
                                 if (teleporter.Data.LoadIndex == _scene.Room.LoadEntityId)
                                 {
+                                    targetTeleporter = teleporter;
                                     break;
                                 }
                             }
@@ -119,9 +119,9 @@ namespace MphRead.Entities
                                 if (entity.Type == EntityType.Door)
                                 {
                                     var door = (DoorEntity)entity;
-                                    targetDoor = door;
                                     if (door.Data.OutConnectorId == _scene.Room.LoadEntityId)
                                     {
+                                        targetDoor = door;
                                         break;
                                     }
                                 }
@@ -1193,7 +1193,7 @@ namespace MphRead.Entities
                         if (IsMainPlayer)
                         {
                             // ENERGY TANK FOUND the POWER SUIT can now store 100 more UNITS of energy.
-                            ShowDialog(DialogType.Event, messageId: 46, param1: (int)EventType.EnergyTank);
+                            ShowDialog(DialogType.Event, messageId: 4, param1: (int)EventType.EnergyTank);
                         }
                     }
                     break;
@@ -2010,7 +2010,10 @@ namespace MphRead.Entities
             }
             else if (info.Message == Message.SetCamSeqAi)
             {
-                // todo: update bot AI flag
+                if (IsBot)
+                {
+                    AiData.Flags2 |= AiFlags2.Bit14;
+                }
             }
             else if (info.Message == Message.Impact)
             {

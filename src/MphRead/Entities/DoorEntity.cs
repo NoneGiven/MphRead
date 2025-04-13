@@ -17,6 +17,7 @@ namespace MphRead.Entities
         public float RadiusSquared { get; }
         public DoorFlags Flags { get; set; } = DoorFlags.None;
         public int TargetRoomId { get; } = -1;
+        public int TargetLayerId { get; } = -1; // see note at usage
         public DoorEntity? LoaderDoor { get; set; }
         public DoorEntity? ConnectorDoor { get; set; }
         public Portal? Portal { get; private set; }
@@ -34,8 +35,8 @@ namespace MphRead.Entities
             0, 255, 264, 252, 256, 253, 254, 249, 266, 265
         };
 
-        public DoorEntity(DoorEntityData data, string nodeName, Scene scene, int targetRoomId = -1)
-            : base(EntityType.Door, nodeName, scene)
+        public DoorEntity(DoorEntityData data, string nodeName, Scene scene,
+            int targetRoomId = -1, int targetLayerId = -1) : base(EntityType.Door, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
@@ -98,6 +99,7 @@ namespace MphRead.Entities
             {
                 throw new ProgramException("Loader door failed to find target room.");
             }
+            TargetLayerId = targetLayerId;
         }
 
         private bool Compare(ReadOnlySpan<char> data, ReadOnlySpan<char> room)
@@ -244,6 +246,7 @@ namespace MphRead.Entities
             _soundSource.Update(Position, rangeIndex: 6);
             if (Flags.TestFlag(DoorFlags.ShouldOpen))
             {
+                Flags &= ~DoorFlags.Closed;
                 if (AnimInfo.Index[0] != 0)
                 {
                     _models[0].SetAnimation(0, 0, SetFlags.Texture | SetFlags.Texcoord | SetFlags.Node, AnimFlags.NoLoop);
