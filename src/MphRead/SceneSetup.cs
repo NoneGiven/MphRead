@@ -140,11 +140,6 @@ namespace MphRead
             }
             PlayerEntity.PlayerCount = 1;
             PlayerEntity.PlayersCreated = 1;
-            if (Cheats.NoRandomEncounters || Features.NoRepeatEncounters
-                && scene.RoomId >= 27 && scene.RoomId <= 92 && _completedRandomEncounterRooms[scene.RoomId - 27])
-            {
-                return;
-            }
             if (GameState.GetAreaState(scene.AreaId) != AreaState.Clear
                 || scene.RoomId != 50 // Data Shrine 02 (UNIT2_RM2)
                 || PlayerEntity.Main.AvailableWeapons[BeamType.Battlehammer])
@@ -168,6 +163,11 @@ namespace MphRead
                     {
                         continue;
                     }
+                    if (spawner.Data.Fields.S09.HunterId == 8 && (Cheats.NoRandomEncounters || Features.NoRepeatEncounters
+                        && scene.RoomId >= 27 && scene.RoomId <= 92 && _completedRandomEncounterRooms[scene.RoomId - 27]))
+                    {
+                        return;
+                    }
                     if (Rng.GetRandomInt2(100) >= spawner.Data.Fields.S09.HunterChance)
                     {
                         continue;
@@ -176,7 +176,7 @@ namespace MphRead
                     player.IsBot = true;
                     player.EnemySpawner = spawner;
                     Hunter hunter;
-                    if (spawner.Data.Fields.S09.HunterId == 8)
+                    if (spawner.Data.Fields.S09.HunterId == 8) // random
                     {
                         uint rand = Rng.GetRandomInt2(randomHunters + extraCount);
                         if (rand < randomHunterCount)
