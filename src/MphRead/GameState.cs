@@ -1565,10 +1565,10 @@ namespace MphRead
 
         public StorySave()
         {
-            RoomState = new byte[60][];
+            RoomState = new byte[66][];
             for (int i = 0; i < RoomState.Length; i++)
             {
-                RoomState[i] = new byte[66];
+                RoomState[i] = new byte[60];
             }
             PlayerValues values = Metadata.PlayerValues[0];
             Health = HealthMax = values.EnergyTank - 1;
