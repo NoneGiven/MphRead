@@ -481,6 +481,7 @@ namespace MphRead.Entities
                     i--;
                 }
             }
+            CamSeqEntity.Current = null;
             CameraSequence.Current = null;
             _scene.ClearMessageQueue();
             // todo?: unload more stuff

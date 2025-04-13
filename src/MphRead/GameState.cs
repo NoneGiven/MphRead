@@ -1524,6 +1524,7 @@ namespace MphRead
             AffinityWeapons = false;
             MatchTime = -1;
             PlayerEntity.Reset();
+            CamSeqEntity.Current = null;
             CameraSequence.Current = null;
             MenuPause = false;
             DialogPause = false;
