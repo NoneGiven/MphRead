@@ -90,9 +90,9 @@ namespace MphRead.Entities
                             if (entity.Type == EntityType.Teleporter)
                             {
                                 var teleporter = (TeleporterEntity)entity;
-                                targetTeleporter = teleporter;
                                 if (teleporter.Data.LoadIndex == _scene.Room.LoadEntityId)
                                 {
+                                    targetTeleporter = teleporter;
                                     break;
                                 }
                             }
@@ -119,9 +119,9 @@ namespace MphRead.Entities
                                 if (entity.Type == EntityType.Door)
                                 {
                                     var door = (DoorEntity)entity;
-                                    targetDoor = door;
                                     if (door.Data.OutConnectorId == _scene.Room.LoadEntityId)
                                     {
+                                        targetDoor = door;
                                         break;
                                     }
                                 }
