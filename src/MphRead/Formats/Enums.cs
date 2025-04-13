@@ -137,6 +137,20 @@ namespace MphRead
         Enemy = 10
     }
 
+    [Flags]
+    public enum WeaponUnlockBits : ushort
+    {
+        PowerBeam = 1 << BeamType.PowerBeam,
+        VoltDriver = 1 << BeamType.VoltDriver,
+        Missile = 1 << BeamType.Missile,
+        Battlehammer = 1 << BeamType.Battlehammer,
+        Imperialist = 1 << BeamType.Imperialist,
+        Judicator = 1 << BeamType.Judicator,
+        Magmaul = 1 << BeamType.Magmaul,
+        ShockCoil = 1 << BeamType.ShockCoil,
+        OmegaCannon = 1 << BeamType.OmegaCannon
+    }
+
     public enum BombType : byte
     {
         MorphBall = 0,
@@ -497,5 +511,12 @@ namespace MphRead
         EquipmentDim,
         Red,
         RedDim
+    }
+
+    public enum SaveWhen
+    {
+        Never,
+        Always,
+        Prompt
     }
 }

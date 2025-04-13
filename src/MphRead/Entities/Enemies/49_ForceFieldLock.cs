@@ -71,7 +71,7 @@ namespace MphRead.Entities.Enemies
             case 8:
                 Flags &= ~EnemyFlags.NoBombDamage;
                 break;
-            };
+            }
             SetUpModel("ForceFieldLock");
             Recolor = _forceField.Recolor;
             _equipInfo = new EquipInfo(Weapons.Weapons1P[(int)_forceField.Data.Type], _beams);

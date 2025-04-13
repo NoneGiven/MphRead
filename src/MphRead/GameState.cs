@@ -1,6 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Sound;
@@ -418,6 +422,15 @@ namespace MphRead
             }
         }
 
+        public static AreaState GetAreaState(int areaId)
+        {
+            if (StorySave == null)
+            {
+                return AreaState.None;
+            }
+            return (AreaState)(((int)StorySave.BossFlags >> (2 * areaId)) & 3);
+        }
+
         public static void ModeStateAdventure(Scene scene)
         {
             PlayerEntity.Main.SaveStatus();
@@ -464,6 +477,16 @@ namespace MphRead
                         StorySave.CheckpointEntityId = message.Sender.Id;
                         StorySave.CheckpointRoomId = scene.Room.RoomId;
                         UpdateCleanSave(force: false);
+                        break;
+                    }
+                }
+                for (int i = 0; i < scene.MessageQueue.Count; i++)
+                {
+                    MessageInfo message = scene.MessageQueue[i];
+                    if (message.Message == Message.LoadOubliette && message.ExecuteFrame == scene.FrameCount)
+                    {
+                        TransitionRoomId = 91; // Gorea_b1
+                        scene.SetFade(FadeType.FadeOutWhite, length: 10 / 30f, overwrite: true, AfterFade.LoadRoom);
                         break;
                     }
                 }
@@ -604,6 +627,15 @@ namespace MphRead
         {
             PromptType prompt = PlayerEntity.Main.DialogPromptType;
             ConfirmState confirm = PlayerEntity.Main.DialogConfirmState;
+
+            void Quit()
+            {
+                scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, AfterFade.Exit);
+                // mustodo: stop music
+                Sfx.Instance.PlaySample((int)SfxId.QUIT_GAME, source: null, loop: false,
+                    noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+            }
+
             if (prompt != PromptType.Any && confirm != ConfirmState.Okay)
             {
                 Sfx.Instance.StopFreeSfxScripts();
@@ -612,8 +644,8 @@ namespace MphRead
                     if (prompt == PromptType.ShipHatch)
                     {
                         // yes to ship hatch (enter)
-                        // todo: update story save
-                        scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, AfterFade.Exit);
+                        EnterShip(); // the game does this in the cockpit
+                        scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, AfterFade.EnterShip);
                         // mustodo: stop music
                         // todo: fade SFX
                         Sfx.Instance.PlaySample((int)SfxId.RETURN_TO_SHIP_YES, source: null, loop: false,
@@ -624,9 +656,41 @@ namespace MphRead
                         // yes to game over (continue)
                         RestoreCleanSave();
                         Debug.Assert(scene.Room != null);
-                        if (StorySave.CheckpointRoomId == -1) // skdebug
+                        if (Cheats.ContinueFromCurrentRoom)
                         {
+                            if (StorySave.CheckpointRoomId != scene.Room.RoomId)
+                            {
+                                StorySave.CheckpointEntityId = -1;
+                            }
                             StorySave.CheckpointRoomId = scene.Room.RoomId;
+                        }
+                        else if (StorySave.CheckpointRoomId == -1)
+                        {
+                            StorySave.CheckpointEntityId = -1;
+                            if (scene.AreaId == 0 || scene.AreaId == 1) // Alinos 1/2
+                            {
+                                StorySave.CheckpointRoomId = 27; // UNIT1_LAND
+                            }
+                            else if (scene.AreaId == 2 || scene.AreaId == 3) // CA 1/2
+                            {
+                                StorySave.CheckpointRoomId = 45; // UNIT2_LAND
+                            }
+                            else if (scene.AreaId == 4 || scene.AreaId == 5) // VDO 1/2
+                            {
+                                StorySave.CheckpointRoomId = 65; // UNIT3_LAND
+                            }
+                            else if (scene.AreaId == 6 || scene.AreaId == 7) // Arcterra 1/2
+                            {
+                                StorySave.CheckpointRoomId = 77; // UNIT4_LAND
+                            }
+                            else if (scene.AreaId == 8) // Oubliette
+                            {
+                                StorySave.CheckpointRoomId = 89; // Gorea_Land
+                            }
+                        }
+                        if (StorySave.CheckpointRoomId == -1)
+                        {
+                            Quit();
                         }
                         // if CheckpointEntityId isn't set, we'll still spawn, just using the respawn point code path
                         TransitionRoomId = StorySave.CheckpointRoomId;
@@ -640,10 +704,7 @@ namespace MphRead
                 else if (prompt == PromptType.GameOver)
                 {
                     // no to game over (quit)
-                    scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, AfterFade.Exit);
-                    // mustodo: stop music
-                    Sfx.Instance.PlaySample((int)SfxId.QUIT_GAME, source: null, loop: false,
-                        noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
+                    Quit();
                 }
                 else
                 {
@@ -777,6 +838,52 @@ namespace MphRead
                     //PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 117, param1: 90, param2: 1);
                     _shownOctolithDialog = true;
                 }
+            }
+        }
+
+        private static void EnterShip()
+        {
+            // update flags for the end of the escape sequence
+            StorySave.TriggerState[2] &= 0x7F;
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit1B1Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit1B1Kill;
+                StorySave.BossFlags |= BossFlags.Unit1B1Done;
+            }
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit1B2Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit1B2Kill;
+                StorySave.BossFlags |= BossFlags.Unit1B2Done;
+            }
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit2B1Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit2B1Kill;
+                StorySave.BossFlags |= BossFlags.Unit2B1Done;
+            }
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit2B2Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit2B2Kill;
+                StorySave.BossFlags |= BossFlags.Unit2B2Done;
+            }
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit3B1Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit3B1Kill;
+                StorySave.BossFlags |= BossFlags.Unit3B1Done;
+            }
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit3B2Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit3B2Kill;
+                StorySave.BossFlags |= BossFlags.Unit3B2Done;
+            }
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit4B1Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit4B1Kill;
+                StorySave.BossFlags |= BossFlags.Unit4B1Done;
+            }
+            if (StorySave.BossFlags.TestAny(BossFlags.Unit4B2Kill))
+            {
+                StorySave.BossFlags &= ~BossFlags.Unit4B2Kill;
+                StorySave.BossFlags |= BossFlags.Unit4B2Done;
             }
         }
 
@@ -1218,6 +1325,7 @@ namespace MphRead
             ushort prevFoundOctos = StorySave.FoundOctoliths;
             ushort prevCurOctos = StorySave.CurrentOctoliths;
             uint prevLostOctos = StorySave.LostOctoliths;
+            byte[] prevAreaHunters = StorySave.AreaHunters.ToArray();
             _cleanStorySave.CopyTo(StorySave);
             int curCurCount = 0;
             int prevCurCount = 0;
@@ -1239,13 +1347,144 @@ namespace MphRead
                 StorySave.CurrentOctoliths = prevCurOctos;
                 StorySave.LostOctoliths = prevLostOctos;
             }
+            prevAreaHunters.CopyTo(StorySave.AreaHunters, index: 0);
+        }
+
+        private const string _saveFolder = "Savedata";
+        private static readonly JsonSerializerOptions _jsonOpt = new JsonSerializerOptions(JsonSerializerDefaults.General)
+        {
+            WriteIndented = true,
+            Converters = { new ByteArrayConverter() }
+        };
+
+        private static string GetSavePath(byte slot)
+        {
+            return Paths.Combine(_saveFolder, $"save{slot:000}.json");
+        }
+
+        private static string GetSettingsPath()
+        {
+            return Paths.Combine(_saveFolder, $"settings.json");
+        }
+
+        public static void LoadSave()
+        {
+            StorySave = new StorySave();
+            if (Menu.SaveSlot != 0)
+            {
+                string path = GetSavePath(Menu.SaveSlot);
+                if (File.Exists(path))
+                {
+                    StorySave? save = JsonSerializer.Deserialize<StorySave>(File.ReadAllText(path), _jsonOpt);
+                    if (save != null)
+                    {
+                        StorySave = save;
+                    }
+                }
+            }
+        }
+
+        public static void CommitSave()
+        {
+            if (Menu.SaveSlot == 0)
+            {
+                return;
+            }
+            if (!Directory.Exists(_saveFolder))
+            {
+                Directory.CreateDirectory(_saveFolder);
+            }
+            File.WriteAllText(GetSavePath(Menu.SaveSlot), JsonSerializer.Serialize(StorySave, _jsonOpt));
+        }
+
+        internal sealed class ByteArrayConverter : JsonConverter<byte[]>
+        {
+            public override byte[]? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                short[]? sByteArray = JsonSerializer.Deserialize<short[]>(ref reader, options);
+                if (sByteArray == null)
+                {
+                    return null;
+                }
+                byte[] value = new byte[sByteArray.Length];
+                for (int i = 0; i < sByteArray.Length; i++)
+                {
+                    value[i] = (byte)sByteArray[i];
+                }
+                return value;
+            }
+
+            public override void Write(Utf8JsonWriter writer, byte[] value, JsonSerializerOptions options)
+            {
+                writer.WriteStartArray();
+                foreach (byte val in value)
+                {
+                    writer.WriteNumberValue(val);
+                }
+                writer.WriteEndArray();
+            }
+        }
+
+        private class SerializedSettings
+        {
+            public IReadOnlyDictionary<string, string>? Bugfixes { get; set; }
+            public IReadOnlyDictionary<string, string>? Features { get; set; }
+            public IReadOnlyDictionary<string, string>? Cheats { get; set; }
+            public MenuSettings? MenuSettings { get; set; }
+        }
+
+        public static MenuSettings LoadSettings()
+        {
+            string path = GetSettingsPath();
+            if (File.Exists(path))
+            {
+                SerializedSettings? settings = JsonSerializer.Deserialize<SerializedSettings>(File.ReadAllText(path), _jsonOpt);
+                if (settings != null)
+                {
+                    if (settings.Bugfixes != null)
+                    {
+                        Bugfixes.Load(settings.Bugfixes);
+                    }
+                    if (settings.Features != null)
+                    {
+                        Features.Load(settings.Features);
+                    }
+                    if (settings.Cheats != null)
+                    {
+                        Cheats.Load(settings.Cheats);
+                    }
+                    if (settings.MenuSettings != null)
+                    {
+                        return settings.MenuSettings;
+                    }
+                }
+            }
+            return new MenuSettings();
+        }
+
+        public static void CommitSettings(MenuSettings menuSettings)
+        {
+            // sktodo: commit menu options, including save slot
+            if (!Directory.Exists(_saveFolder))
+            {
+                Directory.CreateDirectory(_saveFolder);
+            }
+            var settings = new SerializedSettings
+            {
+                Bugfixes = Bugfixes.Commit(),
+                Features = Features.Commit(),
+                Cheats = Cheats.Commit(),
+                MenuSettings = menuSettings
+            };
+            File.WriteAllText(GetSettingsPath(), JsonSerializer.Serialize(settings, _jsonOpt));
         }
 
         public static void Reset()
         {
-            // todo: persist story saves
             _cleanStorySave = new StorySave();
-            StorySave = new StorySave();
+            LoadSave();
+            CommitSave();
+            UpdateCleanSave(force: true);
             MatchState = MatchState.InProgress;
             TransitionState = TransitionState.None;
             TransitionRoomId = -1;
@@ -1295,6 +1534,7 @@ namespace MphRead
             AffinityWeapons = false;
             MatchTime = -1;
             PlayerEntity.Reset();
+            CamSeqEntity.Current = null;
             CameraSequence.Current = null;
             MenuPause = false;
             DialogPause = false;
@@ -1310,39 +1550,53 @@ namespace MphRead
 
     public class StorySave
     {
-        public byte[,] RoomState { get; } = new byte[66, 60];
-        public byte[] VisitedRooms { get; } = new byte[9];
-        public byte[] TriggerState { get; } = new byte[4];
-        public byte[] Logbook { get; } = new byte[68];
+        public byte[][] RoomState { get; init; }
+        public byte[] VisitedRooms { get; init; } = new byte[9];
+        public byte[] TriggerState { get; init; } = new byte[4];
+        public byte[] Logbook { get; init; } = new byte[68];
         public int ScanCount { get; set; }
         public int EquipmentCount { get; set; }
         public int CheckpointEntityId { get; set; } = -1;
         public int CheckpointRoomId { get; set; } = -1;
         public int Health { get; set; }
         public int HealthMax { get; set; }
-        public int[] Ammo { get; } = new int[2];
-        public int[] AmmoMax { get; } = new int[2];
-        public int[] WeaponSlots { get; } = new int[3];
-        public ushort Weapons { get; set; } // sktodo: don't persist Omega Cannon
-        public ushort Artifacts { get; set; }
+        public int[] Ammo { get; init; } = new int[2];
+        public int[] AmmoMax { get; init; } = new int[2];
+        public int[] WeaponSlots { get; init; } = new int[3];
+        public ushort Weapons { get; set; }
+        public uint Artifacts { get; set; }
         public ushort FoundOctoliths { get; set; }
         public ushort CurrentOctoliths { get; set; }
         public uint LostOctoliths { get; set; } = UInt32.MaxValue;
         public ushort Areas { get; set; } = 0xC; // Celestial Archives 1 & 2
         public BossFlags BossFlags { get; set; } = BossFlags.None;
+        public byte[] AreaHunters { get; init; } = new byte[4];
+        public byte DefeatedHunters { get; set; }
 
         public StorySave()
         {
+            RoomState = new byte[66][];
+            for (int i = 0; i < RoomState.Length; i++)
+            {
+                RoomState[i] = new byte[60];
+            }
             PlayerValues values = Metadata.PlayerValues[0];
-            // skdebug
-            Health = HealthMax = 799; // values.EnergyTank - 1;
-            Ammo[0] = AmmoMax[0] = 4000; // 400
-            Ammo[1] = 950; // 0
-            AmmoMax[1] = 950; // 50
+            Health = HealthMax = values.EnergyTank - 1;
+            Ammo[0] = AmmoMax[0] = 400;
+            Ammo[1] = 0;
+            AmmoMax[1] = 50;
+            Weapons = (ushort)(WeaponUnlockBits.PowerBeam | WeaponUnlockBits.Missile);
+            if (Cheats.StartWithAllUpgrades)
+            {
+                Health = HealthMax = 799;
+                Ammo[0] = AmmoMax[0] = 4000;
+                Ammo[1] = 950;
+                AmmoMax[1] = 950;
+                Weapons = 0xFF;
+            }
             WeaponSlots[0] = (int)BeamType.PowerBeam;
             WeaponSlots[1] = (int)BeamType.Missile;
             WeaponSlots[2] = (int)BeamType.None;
-            Weapons = 0xFF; // (int)BeamType.PowerBeam | (int)BeamType.Missile
             // todo: initialize more fields
             UpdateLogbook(1); // SCAN VISOR
             UpdateLogbook(2); // THERMAL POSITIONER
@@ -1353,6 +1607,10 @@ namespace MphRead
             UpdateLogbook(7); // MORPH BALL BOMB
             UpdateLogbook(27); // JUMP BOOTS
             UpdateLogbook(29); // CHARGE SHOT
+            if (Cheats.StartWithAllOctoliths)
+            {
+                FoundOctoliths = CurrentOctoliths = 0xFF;
+            }
         }
 
         public int InitRoomState(int roomId, int entityId, bool active,
@@ -1372,10 +1630,10 @@ namespace MphRead
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
             int pairMask = 3 << pairIndex;
-            if ((RoomState[roomId, byteIndex] & pairMask) == 0)
+            if ((RoomState[roomId][byteIndex] & pairMask) == 0)
             {
-                RoomState[roomId, byteIndex] &= (byte)~pairMask;
-                RoomState[roomId, byteIndex] |= (byte)((active ? activeState : inactiveState) << pairIndex);
+                RoomState[roomId][byteIndex] &= (byte)~pairMask;
+                RoomState[roomId][byteIndex] |= (byte)((active ? activeState : inactiveState) << pairIndex);
             }
             return GetRoomState(roomId + 27, entityId);
         }
@@ -1389,7 +1647,7 @@ namespace MphRead
             roomId -= 27;
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
-            return ((RoomState[roomId, byteIndex] >> pairIndex) & 3) - 1;
+            return ((RoomState[roomId][byteIndex] >> pairIndex) & 3) - 1;
         }
 
         public void SetRoomState(int roomId, int entityId, int state)
@@ -1403,8 +1661,8 @@ namespace MphRead
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
             int pairMask = 3 << pairIndex;
-            RoomState[roomId, byteIndex] &= (byte)~pairMask;
-            RoomState[roomId, byteIndex] |= (byte)(state << pairIndex);
+            RoomState[roomId][byteIndex] &= (byte)~pairMask;
+            RoomState[roomId][byteIndex] |= (byte)(state << pairIndex);
             return;
         }
 
@@ -1474,7 +1732,7 @@ namespace MphRead
 
         public void UpdateFoundArtifact(int artifactId, int modelId)
         {
-            Artifacts |= (ushort)(1 << (artifactId + 3 * modelId));
+            Artifacts |= (uint)(1 << (artifactId + 3 * modelId));
         }
 
         public void UpdateLogbook(int scanId)
@@ -1507,7 +1765,11 @@ namespace MphRead
 
         public void CopyTo(StorySave other)
         {
-            Array.Copy(RoomState, other.RoomState, length: RoomState.Length);
+            for (int i = 0; i < RoomState.Length; i++)
+            {
+                byte[] source = RoomState[i];
+                Array.Copy(source, other.RoomState[i], source.Length);
+            }
             VisitedRooms.CopyTo(other.VisitedRooms, index: 0);
             TriggerState.CopyTo(other.TriggerState, index: 0);
             Logbook.CopyTo(other.Logbook, index: 0);
@@ -1528,6 +1790,8 @@ namespace MphRead
             other.LostOctoliths = LostOctoliths;
             other.Areas = Areas;
             other.BossFlags = BossFlags;
+            AreaHunters.CopyTo(other.AreaHunters, index: 0);
+            other.DefeatedHunters = DefeatedHunters;
         }
     }
 }

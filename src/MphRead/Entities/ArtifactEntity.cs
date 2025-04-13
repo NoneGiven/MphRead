@@ -250,19 +250,24 @@ namespace MphRead.Entities
                     GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                 }
             }
-            else if (info.Message == Message.MoveItemSpawner)
+            else if (info.Message == Message.MoveItemSpawner && info.Sender != null)
             {
-                if (info.Sender.Type == EntityType.EnemySpawn)
+                if (info.Sender.Type == EntityType.EnemySpawn && ((EnemySpawnEntity)info.Sender).Data.EnemyType == EnemyType.Hunter)
                 {
-                    var spawner = (EnemySpawnEntity)info.Sender;
-                    if (spawner.Data.EnemyType == EnemyType.Hunter)
+                    for (int i = 0; i < _scene.Entities.Count; i++)
                     {
-                        // todo: check bot spawner slots and find player to move to
-                    }
-                    else
-                    {
-                        info.Sender.GetPosition(out Vector3 position);
-                        Position = position;
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type != EntityType.Player)
+                        {
+                            continue;
+                        }
+                        var player = (PlayerEntity)entity;
+                        if (player.EnemySpawner == info.Sender)
+                        {
+                            player.GetPosition(out Vector3 position);
+                            Position = position;
+                            break;
+                        }
                     }
                 }
                 else

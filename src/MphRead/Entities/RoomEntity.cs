@@ -323,7 +323,8 @@ namespace MphRead.Entities
                     break;
                 }
             }
-            var newDoor = new DoorEntity(data, nodeName, _scene, door.TargetRoomId);
+            int layerId = door.Data.TargetLayerId == 255 ? -1 : door.Data.TargetLayerId;
+            var newDoor = new DoorEntity(data, nodeName, _scene, door.TargetRoomId, layerId);
             _scene.AddEntity(newDoor);
             newDoor.ConnectorInactive = true;
             door.LoaderDoor = newDoor;
@@ -479,6 +480,8 @@ namespace MphRead.Entities
                     i--;
                 }
             }
+            CamSeqEntity.Current = null;
+            CameraSequence.Current = null;
             _scene.ClearMessageQueue();
             // todo?: unload more stuff
             if (GameState.EscapeTimer != -1 && GameState.EscapeState != EscapeState.Escape)
@@ -509,18 +512,26 @@ namespace MphRead.Entities
             Debug.Assert(GameState.TransitionRoomId != -1);
             RoomMetadata? roomMeta = Metadata.GetRoomById(GameState.TransitionRoomId);
             Debug.Assert(roomMeta != null);
-            // todo: pass boss flags
             int entityLayer = -1;
             if (LoaderDoor != null)
             {
-                entityLayer = LoaderDoor.Data.TargetLayerId;
+                // after the game creates a connector door, it overwrites the pointer to its init data struct
+                // so that it points to the original door's. when door.data.targetLayerId is accessed here, it points
+                // to the original door's value. we use a separate field instead, and so do not access the struct.
+                entityLayer = LoaderDoor.TargetLayerId;
             }
             else
             {
                 Rng.SetRng2(0);
             }
             (_, IReadOnlyList<EntityBase> entities) = SceneSetup.SetUpRoom(_scene.GameMode, playerCount: 0,
-                BossFlags.Unspecified, nodeLayerMask: 0, entityLayer, roomMeta, room: this, _scene);
+                BossFlags.Unspecified, nodeLayerMask: 0, entityLayer, roomMeta, room: this, _scene, isRoomTransition: true);
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+            SceneSetup.InitHunterSpawns(_scene, entities, initialize: true); // see: "probably revisit this"
+            // todo: load Octolith resources if any hunters (besides Guardian) were spawned?
             if (token.IsCancellationRequested)
             {
                 return;
@@ -598,8 +609,13 @@ namespace MphRead.Entities
                     conInst.NodeAnimIgnoreRoot = true;
                 }
             }
+            if (_roomCollision.Count > 0)
+            {
+                _roomCollision[0].Active = true;
+            }
             Vector3 offset = Vector3.Zero;
             DoorEntity? prevConnector = null;
+            DoorEntity? newLoader = null;
             NodeRef nodeRef = NodeRef.None;
             for (int i = 0; i < _scene.Entities.Count; i++)
             {
@@ -625,10 +641,11 @@ namespace MphRead.Entities
                         door.Flags |= DoorFlags.ShotOpen;
                         door.Flags &= ~DoorFlags.Locked;
                         door.SetAnimationFrame(LoaderDoor.GetAnimationFrame());
+                        ActivateConnector(door);
                         offset = door.Position - LoaderDoor.Position;
                         nodeRef = door.Portal.NodeRef2;
                         Debug.Assert(door.LoaderDoor != null);
-                        DoorEntity newLoader = door.LoaderDoor;
+                        newLoader = door.LoaderDoor;
                         prevConnector ??= LoaderDoor.ConnectorDoor;
                         Debug.Assert(prevConnector != null);
                         // new loader replacing the connector
@@ -664,7 +681,28 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // todo: determine whether to play movie (that is, spawn boss), update bot AI, lock doors for encounter
+            // todo: determine whether to play movie (that is, spawn boss), update bot AI
+            if (GameState.GetAreaState(_scene.AreaId) == AreaState.Clear && PlayerEntity.PlayerCount > 1)
+            {
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Door)
+                    {
+                        continue;
+                    }
+                    var door = (DoorEntity)entity;
+                    if (door.Id != -1 && door.Data.ConnectorId != 255)
+                    {
+                        if (door.LoaderDoor != null && door.LoaderDoor == newLoader)
+                        {
+                            door = door.LoaderDoor;
+                        }
+                        door.Lock(updateState: false);
+                        door.Flags |= DoorFlags.ShowLock;
+                    }
+                }
+            }
             GameState.StorySave.SetVisitedRoom(RoomId);
             if (_unloadModel != null)
             {

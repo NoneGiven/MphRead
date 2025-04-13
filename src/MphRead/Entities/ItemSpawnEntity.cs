@@ -157,7 +157,7 @@ namespace MphRead.Entities
                             continue;
                         }
                         var player = (PlayerEntity)entity;
-                        if (player.EnemySpawner == info.Sender) // todo: confirm this works
+                        if (player.EnemySpawner == info.Sender)
                         {
                             player.GetPosition(out Vector3 position);
                             Position = position;

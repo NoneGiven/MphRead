@@ -2121,7 +2121,7 @@ namespace MphRead.Utility
                 writer.Write(entity.HunterWeapon);
                 writer.Write(entity.HunterHealth);
                 writer.Write(entity.HunterHealthMax);
-                writer.Write(entity.Unknown03);
+                writer.Write(entity.HunterHealthThreshold);
                 writer.Write(entity.HunterColor);
                 writer.Write(entity.HunterChance);
                 for (int i = 0; i < 95; i++)

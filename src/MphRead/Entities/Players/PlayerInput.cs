@@ -294,7 +294,10 @@ namespace MphRead.Entities
             if (EquipInfo.Zoomed)
             {
                 float fovFactor = CameraInfo.Fov - Fixed.ToFloat(Values.NormalFov) * 2;
-                sensitivity /= -Fixed.ToFloat(Values.Field70) * fovFactor;
+                if (fovFactor != 0) // zero will occur when the camera info is overridden to normal FOV due to cam seq
+                {
+                    sensitivity /= -Fixed.ToFloat(Values.Field70) * fovFactor;
+                }
             }
             amount *= sensitivity;
             // unimpl-controls: these calculations are different when exact aim is not set
@@ -334,7 +337,10 @@ namespace MphRead.Entities
             if (EquipInfo.Zoomed)
             {
                 float fovFactor = CameraInfo.Fov - Fixed.ToFloat(Values.NormalFov) * 2;
-                sensitivity /= -Fixed.ToFloat(Values.Field70) * fovFactor;
+                if (fovFactor != 0) // zero will occur when the camera info is overridden to normal FOV due to cam seq
+                {
+                    sensitivity /= -Fixed.ToFloat(Values.Field70) * fovFactor;
+                }
             }
             amount *= sensitivity;
             // unimpl-controls: these calculations are different when exact aim is not set
@@ -960,10 +966,13 @@ namespace MphRead.Entities
                 pbAuto = (int)(pbAuto * 15 / 90f);
                 _autofireCooldown = (ushort)((pbAuto + EquipWeapon.AutofireCooldown) * 2); // todo: FPS stuff
             }
-            // todo: autofire cooldown case can be bypassed if a certain bot AI flag is set
-            if (_timeSinceShot < EquipWeapon.ShotCooldown * 2 // todo: FPS stuff
-                || !pressed && _timeSinceShot < _autofireCooldown
-                || GunAnimation == GunAnimation.UpDown)
+            if ((_timeSinceShot < EquipWeapon.ShotCooldown * 2 // todo: FPS stuff
+                || !pressed && _timeSinceShot < _autofireCooldown)
+                && (!IsBot || !AiData.Flags2.TestFlag(AiFlags2.Bit20)))
+            {
+                return false;
+            }
+            if (GunAnimation == GunAnimation.UpDown)
             {
                 return false;
             }

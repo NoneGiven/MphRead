@@ -75,7 +75,8 @@ namespace MphRead
         None,
         Exit,
         LoadRoom,
-        AfterMovie
+        AfterMovie,
+        EnterShip
     }
 
     public partial class Scene
@@ -275,7 +276,7 @@ namespace MphRead
             GameState.Setup(this);
             if (Multiplayer)
             {
-                Menu.ApplySettings();
+                Menu.ApplyMultiplayerSettings();
             }
             SetRoomValues(meta);
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
@@ -1021,6 +1022,11 @@ namespace MphRead
                         }
                     }
                 }
+            }
+            if (combos.Count == 0 && model.Recolors.Count > 0
+                && model.Recolors[0].Textures.Count > 0 && model.Recolors[0].Palettes.Count > 0)
+            {
+                combos.Add((0, 0, 0));
             }
             if (combos.Count > 0)
             {
@@ -2850,6 +2856,11 @@ namespace MphRead
         public void QuitGame()
         {
             DoCleanup();
+            // todo: if this has callers in the future, determine save type
+            if (!Multiplayer)
+            {
+                Menu.NeededSave = Menu.SaveFromExit;
+            }
             _close.Invoke();
         }
 
@@ -2866,10 +2877,20 @@ namespace MphRead
 
         private void EndFade()
         {
-            if (_afterFade == AfterFade.Exit)
+            if (_afterFade == AfterFade.Exit || _afterFade == AfterFade.EnterShip)
             {
                 _fadeType = FadeType.None;
                 DoCleanup();
+                if (!Multiplayer)
+                {
+                    Menu.NeededSave = _afterFade == AfterFade.EnterShip ? Menu.SaveFromShip : Menu.SaveFromExit;
+                    if (_afterFade == AfterFade.EnterShip)
+                    {
+                        GameState.StorySave.Health = GameState.StorySave.HealthMax;
+                        GameState.StorySave.Ammo[0] = GameState.StorySave.AmmoMax[0];
+                        GameState.StorySave.Ammo[1] = GameState.StorySave.AmmoMax[1];
+                    }
+                }
                 _close.Invoke();
                 return;
             }
@@ -4822,6 +4843,10 @@ namespace MphRead
             if (e.Key == Keys.Escape)
             {
                 Scene.DoCleanup();
+                if (!Scene.Multiplayer)
+                {
+                    Menu.NeededSave = Menu.SaveFromExit;
+                }
                 Close();
             }
             else

@@ -498,7 +498,7 @@ namespace MphRead.Entities
             _scanProgressMeter.TankCount = 0;
             _scanProgressMeter.Length = 40;
             DrawMeter(108 + _objShiftX, posY, _scanProgressMeter.TankAmount, (int)(_scanningTimer * 120),
-                _healthbarPalette, _scanProgressMeter, drawText: false, drawTanks: false);
+                palette: 0, _scanProgressMeter, drawText: false, drawTanks: false);
             _scanProgressMeter.Length = length;
         }
 

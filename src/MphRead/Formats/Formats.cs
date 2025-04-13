@@ -1320,16 +1320,31 @@ namespace MphRead
     {
         Unspecified = -1,
         None = 0x0,
-        Unit1B1 = 0x1,
-        Unit1B2 = 0x4,
-        Unit2B1 = 0x10,
-        Unit2B2 = 0x40,
-        Unit3B1 = 0x100,
-        Unit3B2 = 0x400,
-        Unit4B1 = 0x1000,
-        Unit4B2 = 0x4000,
-        Gorea1 = 0x10000,
+        Unit1B1Kill = 0x1,
+        Unit1B1Done = 0x2,
+        Unit1B2Kill = 0x4,
+        Unit1B2Done = 0x8,
+        Unit2B1Kill = 0x10,
+        Unit2B1Done = 0x20,
+        Unit2B2Kill = 0x40,
+        Unit2B2Done = 0x80,
+        Unit3B1Kill = 0x100,
+        Unit3B1Done = 0x200,
+        Unit3B2Kill = 0x400,
+        Unit3B2Done = 0x800,
+        Unit4B1Kill = 0x1000,
+        Unit4B1Done = 0x2000,
+        Unit4B2Kill = 0x4000,
+        Unit4B2Done = 0x8000,
+        Gorea1Kill = 0x10000,
         All = 0x55555
+    }
+
+    public enum AreaState
+    {
+        None,
+        Escape,
+        Clear
     }
 
     public enum InstructionCode : uint
