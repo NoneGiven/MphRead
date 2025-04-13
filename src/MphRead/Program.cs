@@ -60,7 +60,7 @@ namespace MphRead
                 }
                 else if (exportValue.ToLower() == "fhsfx")
                 {
-                    SoundRead.ExportAllFh ();
+                    SoundRead.ExportAllFh();
                 }
                 else
                 {
