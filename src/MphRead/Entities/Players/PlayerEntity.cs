@@ -1056,6 +1056,16 @@ namespace MphRead.Entities
         public void Teleport(Vector3 position, Vector3 facing, NodeRef nodeRef)
         {
             _soundSource.PlaySfx(SfxId.TELEPORT_OUT, noUpdate: true);
+            Reposition(position, facing, nodeRef);
+            if (IsAltForm || IsMorphing || IsUnmorphing)
+            {
+                ResumeOwnCamera();
+                CameraInfo.Update();
+            }
+        }
+
+        public void Reposition(Vector3 position, Vector3 facing, NodeRef nodeRef)
+        {
             _gunVec1 = facing;
             _facingVector = facing;
             SetTransform(facing, _upVector, position);
@@ -1063,11 +1073,6 @@ namespace MphRead.Entities
             {
                 NodeRef = nodeRef;
                 CameraInfo.NodeRef = nodeRef;
-            }
-            if (IsAltForm || IsMorphing || IsUnmorphing)
-            {
-                ResumeOwnCamera();
-                CameraInfo.Update();
             }
         }
 

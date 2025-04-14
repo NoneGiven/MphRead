@@ -694,7 +694,34 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // todo: determine whether to play movie (that is, spawn boss), update bot AI
+            // todo: update bot AI
+            if (newLoader?.ConnectorDoor != null)
+            {
+                DoorEntity targetDoor = newLoader.ConnectorDoor;
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.EnemySpawn)
+                    {
+                        continue;
+                    }
+                    var spawner = (EnemySpawnEntity)entity;
+                    if (spawner.Data.EnemyType != EnemyType.Cretaphid && spawner.Data.EnemyType != EnemyType.Slench)
+                    {
+                        continue;
+                    }
+                    if (GameState.StorySave.GetRoomState(_scene.RoomId, spawner.Id) != 0)
+                    {
+                        // todo: play movie and defer repositioning
+                        _scene.SetFade(FadeType.FadeInBlack, 5 / 30f, overwrite: true);
+                        Vector3 newPosition = (targetDoor.Position + targetDoor.FacingVector * 0.75f)
+                            .AddY(Fixed.ToFloat(-PlayerEntity.Main.Values.MinPickupHeight));
+                        NodeRef newNodeRef = GetNodeRefByName("rmMain");
+                        PlayerEntity.Main.Reposition(newPosition, targetDoor.FacingVector, newNodeRef);
+                    }
+                    break;
+                }
+            }
             if (GameState.GetAreaState(_scene.AreaId) == AreaState.Clear && PlayerEntity.PlayerCount > 1)
             {
                 for (int i = 0; i < _scene.Entities.Count; i++)
