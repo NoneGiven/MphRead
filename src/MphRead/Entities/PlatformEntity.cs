@@ -815,7 +815,10 @@ namespace MphRead.Entities
             if (!soundUpdated)
             {
                 _soundSource.Update(_visiblePosition, _sfxRangeIndex);
-                // sfxtodo: if not Platform_Unit4_C1 (5) and node ref is not active, set sound volume override to 0
+                if (_data.ModelId != 5 && !IsAudible(NodeRef)) // Platform_Unit4_C1
+                {
+                    _soundSource.Volume = 0;
+                }
             }
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects
             Model model = _models[0].Model;

@@ -100,7 +100,10 @@ namespace MphRead.Entities
                     if (_data.ItemType != ItemType.ArtifactKey)
                     {
                         _soundSource.Update(Position, rangeIndex: 7);
-                        // sfxtodo: if node ref is not active, set sound volume override to 0
+                        if (!IsAudible(NodeRef))
+                        {
+                            _soundSource.Volume = 0;
+                        }
                         _soundSource.PlaySfx(SfxId.ITEM_SPAWN1);
                     }
                     else if (_playKeySfx)

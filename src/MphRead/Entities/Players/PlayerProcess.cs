@@ -187,7 +187,10 @@ namespace MphRead.Entities
             {
                 UpdateHealthSfx(_health);
             }
-            // sfxtodo: else, if node ref is not active, set sound volume override to 0
+            else if (!IsAudible(NodeRef))
+            {
+                _soundSource.Volume = 0;
+            }
             if (_damageInvulnTimer > 0)
             {
                 _damageInvulnTimer--;

@@ -21,7 +21,7 @@ namespace MphRead.Entities
         public float Alpha { get; set; } = 1.0f;
 
         protected Scene _scene;
-        private readonly string? _nodeName;
+        protected readonly string? _nodeName;
         public NodeRef NodeRef { get; set; } = NodeRef.None;
         protected int _scanId = 0;
 
@@ -288,6 +288,12 @@ namespace MphRead.Entities
         {
         }
 
+        public bool PreProcess()
+        {
+            _soundSource.Volume = 1;
+            return true;
+        }
+
         public virtual bool Process()
         {
             if (Active)
@@ -418,9 +424,17 @@ namespace MphRead.Entities
             }
         }
 
+        protected bool IsAudible(NodeRef nodeRef)
+        {
+            if (nodeRef == NodeRef.None || _scene.CameraMode != CameraMode.Player)
+            {
+                return true;
+            }
+            return _scene.IsNodeRefAudible(nodeRef);
+        }
+
         protected bool IsVisible(NodeRef nodeRef)
         {
-            // todo?: use position, cull radius, and frustum info and support second node ref
             if (nodeRef == NodeRef.None
                 || _scene.CameraMode != CameraMode.Player || _scene.ShowInvisibleEntities) // skdebug
             {

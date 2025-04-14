@@ -193,6 +193,19 @@ namespace MphRead.Entities
             _scene.RoomId = roomId;
         }
 
+        public Portal? GetPortalByName(string name)
+        {
+            for (int i = 0; i < _portals.Count; i++)
+            {
+                Portal portal = _portals[i];
+                if (portal.Name == name)
+                {
+                    return portal;
+                }
+            }
+            return null;
+        }
+
         private NodeRef AddDoorPortal(DoorEntity door)
         {
             // workaround for unintended modes
@@ -727,10 +740,11 @@ namespace MphRead.Entities
 
         private const int _roomPartMax = 32;
 
-        // todo: need to maintain an array of audible room parts as well
         private readonly bool[] _activeRoomParts = new bool[_roomPartMax];
+        private readonly bool[] _audibleRoomParts = new bool[_roomPartMax];
 
         private int _visNodeRefRecursionDepth = 0;
+        private int _audNodeRefRecursionDepth = 0;
 
         private RoomPartVisInfo? _partVisInfoHead = null;
         private readonly RoomPartVisInfo[] _partVisInfo = new RoomPartVisInfo[_roomPartMax];
@@ -767,8 +781,10 @@ namespace MphRead.Entities
             {
                 _activeRoomParts[i] = false;
                 _roomFrustumLinks[i] = null;
+                _audibleRoomParts[i] = false;
             }
             _visNodeRefRecursionDepth = 0;
+            _audNodeRefRecursionDepth = 0;
             _roomFrustumIndex = 0;
             _partVisInfoHead = null;
         }
@@ -800,6 +816,7 @@ namespace MphRead.Entities
             curRoomFrustum.Next = link;
             _roomFrustumLinks[curNodeRef.PartIndex] = curRoomFrustum;
             FindVisibleRoomParts(curRoomFrustum, curNodeRef);
+            FindAudibleRoomParts(curNodeRef, curNodeRef);
         }
 
         private static readonly Vector3[] _startPointList = new Vector3[14];
@@ -1043,6 +1060,51 @@ namespace MphRead.Entities
             return dist;
         }
 
+        private void FindAudibleRoomParts(NodeRef nodeRef, NodeRef mainNodeRef)
+        {
+            _audibleRoomParts[nodeRef.PartIndex] = true;
+            bool otherSide = false;
+            for (int i = 0; i < _portals.Count; i++)
+            {
+                Portal portal = _portals[i];
+                if (!portal.Active)
+                {
+                    continue;
+                }
+                if (portal.NodeRef1 == nodeRef)
+                {
+                    otherSide = false;
+                }
+                else if (portal.NodeRef2 == nodeRef)
+                {
+                    otherSide = true;
+                }
+                else
+                {
+                    continue;
+                }
+                if (portal.IsForceField && GetPortalAlpha(portal.Position, _scene.CameraPosition) == 1)
+                {
+                    continue;
+                }
+                Debug.Assert(portal.NodeRef1 != NodeRef.None);
+                Debug.Assert(portal.NodeRef2 != NodeRef.None);
+                Debug.Assert(portal.NodeRef1 != portal.NodeRef2);
+                float dist = GetDistanceToPortal(_scene.CameraPosition, portal.Plane, otherSide);
+                if (dist > Fixed.ToFloat(100000) || dist < Fixed.ToFloat(-100000))
+                {
+                    continue;
+                }
+                NodeRef nextNodeRef = otherSide ? portal.NodeRef1 : portal.NodeRef2;
+                if (nextNodeRef.PartIndex == mainNodeRef.PartIndex || _audNodeRefRecursionDepth < 2)
+                {
+                    _audNodeRefRecursionDepth++;
+                    FindAudibleRoomParts(nextNodeRef, mainNodeRef);
+                    _audNodeRefRecursionDepth--;
+                }
+            }
+        }
+
         public NodeRef GetNodeRefByName(string nodeName)
         {
             Model model = _models[0].Model;
@@ -1117,6 +1179,15 @@ namespace MphRead.Entities
             return current;
         }
 
+        public bool IsNodeRefAudible(NodeRef nodeRef)
+        {
+            if (nodeRef.PartIndex == -1)
+            {
+                return true;
+            }
+            return _audibleRoomParts[nodeRef.PartIndex];
+        }
+
         public bool IsNodeRefVisible(NodeRef nodeRef)
         {
             // workaround for unintended modes
@@ -1169,6 +1240,11 @@ namespace MphRead.Entities
                         DrawRoomParts(inst);
                     }
                 }
+            }
+            else if (_scene.ProcessFrame) // skdebug
+            {
+                ClearRoomPartState();
+                UpdateRoomParts();
             }
             if (_scene.ShowCollision && (_scene.ColEntDisplay == EntityType.All || _scene.ColEntDisplay == Type))
             {

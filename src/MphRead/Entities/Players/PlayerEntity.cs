@@ -837,7 +837,10 @@ namespace MphRead.Entities
                     rangeIndex = 21;
                 }
                 _soundSource.Update(Position, rangeIndex);
-                // sfxtodo: if node ref is not active, set sound volume override to 0
+                if (!IsAudible(NodeRef))
+                {
+                    _soundSource.Volume = 0;
+                }
             }
             if (respawn)
             {

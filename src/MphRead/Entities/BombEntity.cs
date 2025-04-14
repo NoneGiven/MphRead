@@ -101,7 +101,10 @@ namespace MphRead.Entities
         {
             EntityBase? hitEntity = null;
             _soundSource.Update(Position, rangeIndex: 5);
-            // sfxtodo: if node ref is not active, set sound volume override to 0
+            if (!IsAudible(NodeRef))
+            {
+                _soundSource.Volume = 0;
+            }
             if (Countdown > 0)
             {
                 Countdown--;
@@ -631,7 +634,10 @@ namespace MphRead.Entities
         public void PlaySpawnSfx()
         {
             _soundSource.Update(Position, rangeIndex: 5);
-            // sfxtodo: if node ref is not active, set sound volume override to 0
+            if (!IsAudible(NodeRef))
+            {
+                _soundSource.Volume = 0;
+            }
             SfxId sfx = BombType == BombType.Stinglarva ? SfxId.KANDEN_ALT_ATTACK : SfxId.MORPH_BALL_BOMB_PLACE;
             _soundSource.PlaySfx(sfx);
         }

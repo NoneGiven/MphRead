@@ -50,7 +50,6 @@ namespace MphRead.Entities
             {
                 ItemType = ItemType.AffinityWeapon;
             }
-            // todo: node ref
             SetUpModel(Metadata.Items[(int)ItemType]);
             if (data.DespawnTimer > 0)
             {
@@ -100,7 +99,10 @@ namespace MphRead.Entities
                 Position = Matrix.Vec3MultMtx4(_invPos, _parent.CollisionTransform);
             }
             _soundSource.Update(Position, rangeIndex: 7);
-            // sfxtodo: if node ref is not active, set sound volume override to 0
+            if (!IsAudible(NodeRef))
+            {
+                _soundSource.Volume = 0;
+            }
             if (_effectEntry != null)
             {
                 Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY, Position);

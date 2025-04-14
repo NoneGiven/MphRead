@@ -172,7 +172,10 @@ namespace MphRead.Entities
                 }
             }
             _soundSource.Update(Position, rangeIndex: Beam == BeamType.Missile ? 3 : 2);
-            // sfxtodo: if node ref is not active, set sound volume override to 0
+            if (!IsAudible(NodeRef))
+            {
+                _soundSource.Volume = 0;
+            }
             if (Target != null)
             {
                 for (int i = 0; i < _scene.MessageQueue.Count; i++)
