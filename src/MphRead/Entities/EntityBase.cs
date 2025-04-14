@@ -754,6 +754,14 @@ namespace MphRead.Entities
             return (newVelocity, displacement);
         }
 
+        protected (float, float) Drag(float step, float velocity)
+        {
+            float decay = MathF.Pow(step, 30);
+            float newVelocity = velocity * MathF.Pow(decay, _scene.FrameTime);
+            float displacement = (newVelocity - velocity) / MathF.Log(decay);
+            return (newVelocity, displacement);
+        }
+
         protected float ExponentialDecay(float step, float value)
         {
             float decay = MathF.Pow(step, 30);

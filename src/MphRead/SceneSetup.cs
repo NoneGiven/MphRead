@@ -481,6 +481,7 @@ namespace MphRead
             scene.LoadModel("alt_ice");
             scene.LoadModel("gunSmoke");
             scene.LoadModel("trail");
+            scene.LoadModel("octolith_simple");
             // todo?: same as above
             scene.LoadEffect(10); // ballDeath
             scene.LoadEffect(216); // deathAlt

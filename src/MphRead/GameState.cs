@@ -619,7 +619,6 @@ namespace MphRead
             }
         }
 
-        private static bool _shownOctolithDialog = false;
         private static bool _whiteoutStarted = false;
         private static bool _gameOverShown = false;
 
@@ -803,7 +802,6 @@ namespace MphRead
             {
                 if (countdown >= 145 / 30f)
                 {
-                    _shownOctolithDialog = false;
                     _whiteoutStarted = false;
                     _gameOverShown = false;
                     if (EscapeState == EscapeState.Escape)
@@ -830,13 +828,6 @@ namespace MphRead
                 {
                     PlayerEntity.Main.BeginWhiteout();
                     _whiteoutStarted = true;
-                }
-                else if (countdown <= 90 / 30f && !_shownOctolithDialog)
-                {
-                    // todo: lost octolith
-                    // HUNTER HAS TAKEN AN OCTOLITH
-                    //PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 117, param1: 90, param2: 1);
-                    _shownOctolithDialog = true;
                 }
             }
         }

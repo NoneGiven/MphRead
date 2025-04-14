@@ -22,7 +22,6 @@ namespace MphRead.Entities
         public ArtifactEntity(ArtifactEntityData data, string nodeName, Scene scene)
             : base(EntityType.Artifact, nodeName, scene)
         {
-            // todo: load resources for simple octolith/dropped octolith when needed
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);

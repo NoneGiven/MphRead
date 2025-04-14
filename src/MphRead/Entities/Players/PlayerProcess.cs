@@ -821,16 +821,46 @@ namespace MphRead.Entities
                     _deathCountdown -= _scene.FrameTime;
                     float pct = (150 / 30f - _deathCountdown) / (150 / 30f);
                     CameraInfo.SetShake(0.15f * pct);
+                    if (_lostOctolithEnemyIndex != -1 && _deathCountdown <= 119 / 30f)
+                    {
+                        if (!_deathLostOctolithSfxPlayed)
+                        {
+                            // the game does this in the draw function with 119 ticks left
+                            _soundSource.PlayFreeSfx(SfxId.DIE_LOSE_CRYSTAL);
+                            _deathLostOctolithSfxPlayed = true;
+                        }
+                        if (_deathCountdown <= 90 / 30f)
+                        {
+                            // the game does this in the process frame function with 90 ticks left
+                            if (!_deathLostOctolithDialogShown)
+                            {
+                                // HUNTER HAS TAKEN AN OCTOLITH
+                                ShowDialog(DialogType.Hud, messageId: 117, param1: 90, param2: 1);
+                                _deathLostOctolithDialogShown = true;
+                            }
+                        }
+                        else if (_deathCountdown >= 117 / 30f)
+                        {
+                            // this is done between 119 and 117, so we don't need a boolean to simulate calling on a specific frame
+                            CameraInfo.SetShake(0.4f);
+                        }
+                        (_lostOctolithSpeed, float displacement) = Drag(0.88f, _lostOctolithSpeed);
+                        if (!IsAltForm)
+                        {
+                            _lostOctolithDrawPos = _lostOctolithDrawPos
+                                .AddX(_field70 * displacement).AddZ(_field74 * displacement);
+                        }
+                        else
+                        {
+                            _lostOctolithDrawPos = _lostOctolithDrawPos
+                                .AddX(-_field80 * displacement).AddZ(-_field84 * displacement);
+                        }
+                    }
                     if (!IsAltForm)
                     {
-                        // todo: lost octolith
                         _facingVector.Y = ExponentialDecay(0.9f, _facingVector.Y);
                         _facingVector = _facingVector.Normalized();
                         _gunVec1 = _facingVector;
-                    }
-                    else
-                    {
-                        // todo: lost octolith
                     }
                     if (_deathCountdown <= 1 / 30f && !_deathProcessed)
                     {
@@ -840,7 +870,28 @@ namespace MphRead.Entities
                         Flags1 &= ~PlayerFlags1.AltForm;
                         Flags1 &= ~PlayerFlags1.Morphing;
                         Flags1 &= ~PlayerFlags1.Unmorphing;
-                        // todo: story save, etc.
+                        if (_lostOctolithEnemyIndex != -1)
+                        {
+                            int octolithCount = System.Numerics.BitOperations.PopCount(GameState.StorySave.CurrentOctoliths);
+                            uint lostNum = Rng.GetRandomInt2(octolithCount);
+                            uint curNum = 0;
+                            for (int i = 0; i < 8; i++)
+                            {
+                                if ((GameState.StorySave.CurrentOctoliths & (1 << i)) != 0)
+                                {
+                                    if (curNum == lostNum)
+                                    {
+                                        int hunter = (int)_players[_lostOctolithEnemyIndex].Hunter;
+                                        GameState.StorySave.CurrentOctoliths &= (ushort)~(1 << i);
+                                        GameState.StorySave.LostOctoliths = GameState.StorySave.LostOctoliths
+                                            & (uint)(~(15 << (4 * i)) | (hunter << (4 * i)));
+                                        GameState.StorySave.AreaHunters[_scene.AreaId / 2] &= (byte)~(1 << hunter);
+                                        break;
+                                    }
+                                    curNum++;
+                                }
+                            }
+                        }
                     }
                 }
                 else if (_respawnTimer <= 1)
