@@ -1999,6 +1999,14 @@ namespace MphRead
                     {
                         selection = 6;
                     }
+                    else if (keyInfo.Key == ConsoleKey.D2 || keyInfo.Key == ConsoleKey.NumPad2)
+                    {
+                        selection = 8;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Q)
+                    {
+                        selection = 9;
+                    }
                     else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
                     {
                         if (selection == 0)
