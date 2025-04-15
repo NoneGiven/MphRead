@@ -1726,6 +1726,18 @@ namespace MphRead
             Artifacts |= (uint)(1 << (artifactId + 3 * modelId));
         }
 
+        public int GetEnemyOctolithDrop(int hunter)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+              if (((LostOctoliths >> (4 * i)) & 15) == hunter)
+              {
+                return i;
+              }
+            }
+            return 8;
+        }
+
         public void UpdateLogbook(int scanId)
         {
             Debug.Assert(scanId >= 0 && scanId < 68 * 8);

@@ -2021,7 +2021,45 @@ namespace MphRead.Entities
                         GameState.StorySave.DefeatedHunters |= (byte)(1 << (int)Hunter);
                         GameState.StorySave.AreaHunters[_scene.AreaId / 2] &= (byte)~(1 << (int)Hunter);
                         // todo: update stats
-                        // skhere: octo drop
+
+                        static void RestoreOctolith(int dropId)
+                        {
+                            GameState.StorySave.LostOctoliths
+                                = GameState.StorySave.LostOctoliths & (uint)(~(15 << (4 * dropId)) | (8 << (4 * dropId)));
+                            GameState.StorySave.CurrentOctoliths |= (ushort)(1 << dropId);
+                        }
+
+                        int dropId = GameState.StorySave.GetEnemyOctolithDrop((int)Hunter);
+                        if (dropId < 8)
+                        {
+                            RestoreOctolith(dropId);
+                            for (int i = 0; i < _scene.Entities.Count; i++)
+                            {
+                                EntityBase entity = _scene.Entities[i];
+                                if (entity.Type != EntityType.Artifact || entity.Id != -1) // the game doesn't check the ID
+                                {
+                                    continue;
+                                }
+                                var artifact = (ArtifactEntity)entity;
+                                if (artifact.ModelId >= 8 && artifact.ArtifactId == dropId)
+                                {
+                                    artifact.Position = Position.AddY(1.5f);
+                                    artifact.NodeRef = NodeRef;
+                                    artifact.Active = true;
+                                    break;
+                                }
+                            }
+                        }
+                        // recover any additional Octoliths
+                        while (true)
+                        {
+                            dropId = GameState.StorySave.GetEnemyOctolithDrop((int)Hunter);
+                            if (dropId >= 8)
+                            {
+                                break;
+                            }
+                            RestoreOctolith(dropId);
+                        }
                     }
                 }
                 else // multiplayer

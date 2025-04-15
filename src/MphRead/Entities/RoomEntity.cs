@@ -544,7 +544,6 @@ namespace MphRead.Entities
                 return;
             }
             SceneSetup.InitHunterSpawns(_scene, entities, initialize: true); // see: "probably revisit this"
-            // todo: load Octolith resources if any hunters (besides Guardian) were spawned?
             if (token.IsCancellationRequested)
             {
                 return;

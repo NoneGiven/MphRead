@@ -18,6 +18,8 @@ namespace MphRead.Entities
         private EntityBase? _msgTarget3 = null;
 
         public new bool Active { get; set; }
+        public byte ModelId => _data.ModelId;
+        public byte ArtifactId => _data.ArtifactId;
 
         public ArtifactEntity(ArtifactEntityData data, string nodeName, Scene scene)
             : base(EntityType.Artifact, nodeName, scene)
@@ -27,7 +29,12 @@ namespace MphRead.Entities
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             string name = data.ModelId >= 8 ? "Octolith" : $"Artifact0{data.ModelId + 1}";
             ModelInstance inst = SetUpModel(name);
-            _heightOffset = data.ModelId >= 8 ? 1.75f : inst.Model.Nodes[0].BoundingRadius;
+            if (Id != -1)
+            {
+                // the positions used by the game to make dropped Octoliths seek the player
+                // don't account for the height offset we use here, so we don't set it for those
+                _heightOffset = data.ModelId >= 8 ? 1.75f : inst.Model.Nodes[0].BoundingRadius;
+            }
             if (data.HasBase != 0)
             {
                 SetUpModel("ArtifactBase");
@@ -118,8 +125,12 @@ namespace MphRead.Entities
                 {
                     return base.Process();
                 }
-                // todo: move dropped octolith toward player
                 PlayerEntity player = PlayerEntity.Main;
+                if (_data.ModelId >= 8 && Id == -1)
+                {
+                    Vector3 direction = (player.Position - Position).AddY(0.5f);
+                    Position += direction * 0.1f / 2; // todo: FPS stuff
+                }
                 if (player.Health == 0)
                 {
                     return base.Process();

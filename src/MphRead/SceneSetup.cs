@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Numerics;
 using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
 using MphRead.Text;
+using OpenTK.Mathematics;
 
 namespace MphRead
 {
@@ -149,7 +149,7 @@ namespace MphRead
                 || PlayerEntity.Main.AvailableWeapons[BeamType.Battlehammer])
             {
                 int randomHunters = GameState.StorySave.AreaHunters[scene.AreaId / 2] & 0x7E; // ignore Samus and Guardian
-                int randomHunterCount = BitOperations.PopCount((uint)randomHunters);
+                int randomHunterCount = System.Numerics.BitOperations.PopCount((uint)randomHunters);
                 int extraCount = 0; // extra index to roll Guardian if at least one hunter has already been rolled
                 for (int i = 0; i < entities.Count; i++)
                 {
@@ -231,6 +231,24 @@ namespace MphRead
                     }
                     // todo: encounter state and bot level
                     PlayerEntity.PlayerCount++;
+                }
+            }
+            for (int i = 1; i < PlayerEntity.MaxPlayers; i++)
+            {
+                PlayerEntity player = PlayerEntity.Players[i];
+                if (player.IsBot)
+                {
+                    int dropId = GameState.StorySave.GetEnemyOctolithDrop((int)player.Hunter);
+                    if (dropId < 8)
+                    {
+                        var header = new EntityDataHeader((ushort)EntityType.Artifact, entityId: -1,
+                            position: Vector3.Zero, upVector: Vector3.UnitY, facingVector: Vector3.UnitX);
+                        var data = new ArtifactEntityData(header, modelId: 8, artifactId: (byte)dropId, active: 0,
+                            hasBase: 0, message1Target: 0, message1: Message.None, message2Target: 0, message2: Message.None,
+                            message3Target: 0, message3: Message.None, linkedEntityId: -1);
+                        var artifact = new ArtifactEntity(data, nodeName: "", scene);
+                        scene.AddEntity(artifact);
+                    }
                 }
             }
         }
@@ -482,6 +500,7 @@ namespace MphRead
             scene.LoadModel("gunSmoke");
             scene.LoadModel("trail");
             scene.LoadModel("octolith_simple");
+            scene.LoadModel("Octolith");
             // todo?: same as above
             scene.LoadEffect(10); // ballDeath
             scene.LoadEffect(216); // deathAlt
