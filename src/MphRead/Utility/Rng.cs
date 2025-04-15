@@ -4,12 +4,11 @@ namespace MphRead
 {
     public class Rng
     {
-        public const int HW_CPU_CLOCK_ARM7 = 33513982;
-        public const int HW_CPU_CLOCK_ARM9 = 67027964;
-        public const int SND_TIMER_CLOCK = HW_CPU_CLOCK_ARM7 / 2;
+        public const uint Rng1StartValue = 0x3DE9179BU;
+        public const uint Rng2StartValue = 0x3DE9179BU;
 
-        public static uint Rng1 { get; private set; } = UInt32.Parse("3DE9179B", System.Globalization.NumberStyles.HexNumber);
-        public static uint Rng2 { get; private set; }
+        public static uint Rng1 { get; private set; } = Rng1StartValue;
+        public static uint Rng2 { get; private set; } = Rng2StartValue;
 
         public static uint CallRng(ref uint rng, uint value)
         {

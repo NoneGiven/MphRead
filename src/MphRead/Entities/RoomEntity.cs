@@ -535,7 +535,7 @@ namespace MphRead.Entities
             }
             else
             {
-                Rng.SetRng2(0);
+                Rng.SetRng2(Rng.Rng2StartValue);
             }
             (_, IReadOnlyList<EntityBase> entities) = SceneSetup.SetUpRoom(_scene.GameMode, playerCount: 0,
                 BossFlags.Unspecified, nodeLayerMask: 0, entityLayer, roomMeta, room: this, _scene, isRoomTransition: true);

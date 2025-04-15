@@ -1587,6 +1587,7 @@ namespace MphRead
         }
 
         public static byte SaveSlot { get; set; } = 0;
+        public static byte PreviousSaveSlot { get; set; } = -1;
         public static SaveWhen SaveFromExit { get; set; } = SaveWhen.Never;
         public static SaveWhen SaveFromShip { get; set; } = SaveWhen.Prompt;
         public static SaveWhen NeededSave { get; set; } = SaveWhen.Never;

@@ -13,7 +13,7 @@ namespace MphRead
     {
         // todo: artifact flags
         public static (RoomEntity, RoomMetadata, CollisionInstance, IReadOnlyList<EntityBase>)
-            LoadRoom(string name, Scene scene, int playerCount = 0, BossFlags bossFlags = BossFlags.Unspecified,
+            LoadGame(string name, Scene scene, int playerCount = 0, BossFlags bossFlags = BossFlags.Unspecified,
             int nodeLayerMask = 0, int entityLayerId = -1)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
@@ -43,6 +43,14 @@ namespace MphRead
             }
             Extract.LoadRuntimeData();
             LoadResources(scene);
+            // currently no differentiation between loading a file and choosing a planet,
+            // so reset the RNG when loading a different save slot from the previous
+            if (Menu.SaveSlot != Menu.PreviousSaveSlot)
+            {
+                Rng.SetRng1(Rng.Rng1StartValue);
+                Rng.SetRng2(Rng.Rng2StartValue);
+                Menu.PreviousSaveSlot = Menu.SaveSlot;
+            }
             CamSeqEntity.ClearData();
             CamSeqEntity.Current = null;
             CameraSequence.Current = null;
