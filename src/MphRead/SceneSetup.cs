@@ -84,20 +84,25 @@ namespace MphRead
             }
         }
 
-        private static void UpdateAreaHunters()
+        public static void UpdateAreaHunters(StorySave? save = null)
         {
-            Array.Fill(_completedRandomEncounterRooms, false);
+            // temporary parameter(?) so the menu can call this in advance on a not-yet-loaded save
+            if (save == null)
+            {
+                save = GameState.StorySave;
+                Array.Fill(_completedRandomEncounterRooms, false);
+            }
             // todo?: the game does this in the cockpit
-            Array.Fill(GameState.StorySave.AreaHunters, (byte)0);
+            Array.Fill(save.AreaHunters, (byte)0);
             byte chance = 0;
             byte[] chances = new byte[4];
             byte[] counts = new byte[4];
             for (int i = 0; i < 4; i++)
             {
                 int area1 = i * 2;
-                if (GameState.GetAreaState(area1) == AreaState.Clear)
+                if (GameState.GetAreaState(area1, save) == AreaState.Clear)
                 {
-                    uint lostOctoliths = GameState.StorySave.LostOctoliths;
+                    uint lostOctoliths = save.LostOctoliths;
                     if (((lostOctoliths >> (8 * i)) & 15) == 15 || ((lostOctoliths >> (4 * (2 * i + 1))) & 15) == 15)
                     {
                         // increased chance if you haven't lost either of the planet's octoliths
@@ -112,7 +117,7 @@ namespace MphRead
             }
             for (int i = 0; i < 8; i++)
             {
-                if ((GameState.StorySave.DefeatedHunters & (1 << i)) == 0)
+                if ((save.DefeatedHunters & (1 << i)) == 0)
                 {
                     continue;
                 }
@@ -121,7 +126,7 @@ namespace MphRead
                 {
                     if (rand < chances[j])
                     {
-                        GameState.StorySave.AreaHunters[j] |= (byte)(1 << i);
+                        save.AreaHunters[j] |= (byte)(1 << i);
                         if (++counts[j] >= 3)
                         {
                             for (int k = 3; k > j; k--)
@@ -190,7 +195,7 @@ namespace MphRead
                     Hunter hunter;
                     if (spawner.Data.Fields.S09.HunterId == 8) // random
                     {
-                        uint rand = Rng.GetRandomInt2(randomHunters + extraCount);
+                        uint rand = Rng.GetRandomInt2(randomHunterCount + extraCount);
                         if (rand < randomHunterCount)
                         {
                             // todo?: determine bot level based on octoliths (unused)

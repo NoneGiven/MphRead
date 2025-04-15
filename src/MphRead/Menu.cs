@@ -209,6 +209,7 @@ namespace MphRead
                 {
                     SaveSlot = saveSlot;
                 }
+                UpdateEnemyHunterInfo();
                 SaveFromExit = ParseSaveWhen(settings.SaveFromExit, SaveWhen.Never);
                 SaveFromShip = ParseSaveWhen(settings.SaveFromShip, SaveWhen.Prompt);
                 string[] planets = settings.Planets.ToLower().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
@@ -589,6 +590,7 @@ namespace MphRead
                         }
                     }
                 }
+                UpdateEnemyHunterInfo();
                 NeededSave = SaveWhen.Never;
                 while (true)
                 {
@@ -2213,6 +2215,55 @@ namespace MphRead
             Bugfixes.NoSlenchRollTimerUnderflow = true;
         }
 
+        private static string[] _enemyHunterInfo = new string[4] {
+            "Alinos  : none",
+            "CA      : none",
+            "VDO     : none",
+            "Arcterra: none"
+        };
+
+        private static void UpdateEnemyHunterInfo()
+        {
+            _enemyHunterInfo[0] = "Alinos  : ";
+            _enemyHunterInfo[1] = "CA      : ";
+            _enemyHunterInfo[2] = "VDO     : ";
+            _enemyHunterInfo[3] = "Arcterra: ";
+            StorySave save = GameState.ReadSave();
+            uint rng2 = Rng.Rng2;
+            SceneSetup.UpdateAreaHunters(save);
+            Rng.SetRng2(rng2);
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 1; j < 7; j++)
+                {
+                    if ((save.AreaHunters[i] & (1 << j)) != 0)
+                    {
+                        if (!_enemyHunterInfo[i].EndsWith(' '))
+                        {
+                            _enemyHunterInfo[i] += ", ";
+                        }
+                        _enemyHunterInfo[i] += ((Hunter)j).ToString();
+                        int octoliths = 0;
+                        for (int k = 0; k < 8; k++)
+                        {
+                            if (((save.LostOctoliths >> (4 * k)) & 15) == j)
+                            {
+                                octoliths++;
+                            }
+                        }
+                        if (octoliths > 0)
+                        {
+                            _enemyHunterInfo[i] += $" (x{octoliths})";
+                        }
+                    }
+                }
+                if (_enemyHunterInfo[i].EndsWith(' '))
+                {
+                    _enemyHunterInfo[i] += "none";
+                }
+            }
+        }
+
         private static bool ShowStoryModePrompts()
         {
             int prompt = 0;
@@ -2334,6 +2385,15 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (X) Reset Adventure Settings");
                 }
                 Console.WriteLine($"{X(s++)} (B) Go Back");
+                if (SaveSlot != 0)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Enemy Hunter Info");
+                    Console.WriteLine(_enemyHunterInfo[1]);
+                    Console.WriteLine(_enemyHunterInfo[0]);
+                    Console.WriteLine(_enemyHunterInfo[2]);
+                    Console.WriteLine(_enemyHunterInfo[3]);
+                }
                 s--;
                 if (prompt == 0)
                 {
@@ -2384,6 +2444,7 @@ namespace MphRead
                         if (selection == 0)
                         {
                             SaveSlot = 0;
+                            UpdateEnemyHunterInfo();
                         }
                         else if (selection == 1)
                         {
@@ -2438,6 +2499,7 @@ namespace MphRead
                         if (selection == 0)
                         {
                             SaveSlot = (byte)Advance(SaveSlot, direction, 255);
+                            UpdateEnemyHunterInfo();
                         }
                         else if (selection == 1)
                         {
@@ -2652,6 +2714,7 @@ namespace MphRead
                         if (Int32.TryParse(Console.ReadLine(), out int slot) && slot >= 0 && slot <= 255)
                         {
                             SaveSlot = (byte)slot;
+                            UpdateEnemyHunterInfo();
                         }
                     }
                     prompt = 0;

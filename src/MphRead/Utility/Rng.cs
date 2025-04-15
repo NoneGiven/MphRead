@@ -5,7 +5,7 @@ namespace MphRead
     public class Rng
     {
         public const uint Rng1StartValue = 0x3DE9179BU;
-        public const uint Rng2StartValue = 0x3DE9179BU;
+        public const uint Rng2StartValue = 0;
 
         public static uint Rng1 { get; private set; } = Rng1StartValue;
         public static uint Rng2 { get; private set; } = Rng2StartValue;

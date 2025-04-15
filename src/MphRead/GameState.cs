@@ -422,13 +422,17 @@ namespace MphRead
             }
         }
 
-        public static AreaState GetAreaState(int areaId)
+        public static AreaState GetAreaState(int areaId, StorySave? save = null)
         {
-            if (StorySave == null)
+            if (save == null)
+            {
+                save = StorySave;
+            }
+            if (save == null)
             {
                 return AreaState.None;
             }
-            return (AreaState)(((int)StorySave.BossFlags >> (2 * areaId)) & 3);
+            return (AreaState)(((int)save.BossFlags >> (2 * areaId)) & 3);
         }
 
         public static void ModeStateAdventure(Scene scene)
@@ -1360,19 +1364,21 @@ namespace MphRead
 
         public static void LoadSave()
         {
-            StorySave = new StorySave();
+            StorySave = ReadSave();
+        }
+
+        public static StorySave ReadSave()
+        {
+            StorySave? save = null;
             if (Menu.SaveSlot != 0)
             {
                 string path = GetSavePath(Menu.SaveSlot);
                 if (File.Exists(path))
                 {
-                    StorySave? save = JsonSerializer.Deserialize<StorySave>(File.ReadAllText(path), _jsonOpt);
-                    if (save != null)
-                    {
-                        StorySave = save;
-                    }
+                    save = JsonSerializer.Deserialize<StorySave>(File.ReadAllText(path), _jsonOpt);
                 }
             }
+            return save ?? new StorySave();
         }
 
         public static void CommitSave()
@@ -1730,10 +1736,10 @@ namespace MphRead
         {
             for (int i = 0; i < 8; i++)
             {
-              if (((LostOctoliths >> (4 * i)) & 15) == hunter)
-              {
-                return i;
-              }
+                if (((LostOctoliths >> (4 * i)) & 15) == hunter)
+                {
+                    return i;
+                }
             }
             return 8;
         }
