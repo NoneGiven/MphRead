@@ -224,7 +224,7 @@ namespace MphRead.Entities
                     {
                         NodeRef = _scene.UpdateNodeRef(NodeRef, _prevPos, Position);
                     }
-                    return base.Process();
+                    return BaseProcess();
                 }
                 _scene.SendMessage(Message.Destroyed, this, _owner, 0, 0);
                 if (_owner?.Type == EntityType.EnemySpawn)
