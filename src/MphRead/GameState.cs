@@ -422,13 +422,17 @@ namespace MphRead
             }
         }
 
-        public static AreaState GetAreaState(int areaId)
+        public static AreaState GetAreaState(int areaId, StorySave? save = null)
         {
-            if (StorySave == null)
+            if (save == null)
+            {
+                save = StorySave;
+            }
+            if (save == null)
             {
                 return AreaState.None;
             }
-            return (AreaState)(((int)StorySave.BossFlags >> (2 * areaId)) & 3);
+            return (AreaState)(((int)save.BossFlags >> (2 * areaId)) & 3);
         }
 
         public static void ModeStateAdventure(Scene scene)
@@ -619,7 +623,6 @@ namespace MphRead
             }
         }
 
-        private static bool _shownOctolithDialog = false;
         private static bool _whiteoutStarted = false;
         private static bool _gameOverShown = false;
 
@@ -803,7 +806,6 @@ namespace MphRead
             {
                 if (countdown >= 145 / 30f)
                 {
-                    _shownOctolithDialog = false;
                     _whiteoutStarted = false;
                     _gameOverShown = false;
                     if (EscapeState == EscapeState.Escape)
@@ -830,13 +832,6 @@ namespace MphRead
                 {
                     PlayerEntity.Main.BeginWhiteout();
                     _whiteoutStarted = true;
-                }
-                else if (countdown <= 90 / 30f && !_shownOctolithDialog)
-                {
-                    // todo: lost octolith
-                    // HUNTER HAS TAKEN AN OCTOLITH
-                    //PlayerEntity.Main.ShowDialog(DialogType.Hud, messageId: 117, param1: 90, param2: 1);
-                    _shownOctolithDialog = true;
                 }
             }
         }
@@ -1369,19 +1364,21 @@ namespace MphRead
 
         public static void LoadSave()
         {
-            StorySave = new StorySave();
+            StorySave = ReadSave();
+        }
+
+        public static StorySave ReadSave()
+        {
+            StorySave? save = null;
             if (Menu.SaveSlot != 0)
             {
                 string path = GetSavePath(Menu.SaveSlot);
                 if (File.Exists(path))
                 {
-                    StorySave? save = JsonSerializer.Deserialize<StorySave>(File.ReadAllText(path), _jsonOpt);
-                    if (save != null)
-                    {
-                        StorySave = save;
-                    }
+                    save = JsonSerializer.Deserialize<StorySave>(File.ReadAllText(path), _jsonOpt);
                 }
             }
+            return save ?? new StorySave();
         }
 
         public static void CommitSave()
@@ -1733,6 +1730,18 @@ namespace MphRead
         public void UpdateFoundArtifact(int artifactId, int modelId)
         {
             Artifacts |= (uint)(1 << (artifactId + 3 * modelId));
+        }
+
+        public int GetEnemyOctolithDrop(int hunter)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                if (((LostOctoliths >> (4 * i)) & 15) == hunter)
+                {
+                    return i;
+                }
+            }
+            return 8;
         }
 
         public void UpdateLogbook(int scanId)

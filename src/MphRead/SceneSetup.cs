@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Numerics;
 using MphRead.Entities;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
 using MphRead.Text;
+using OpenTK.Mathematics;
 
 namespace MphRead
 {
@@ -13,7 +13,7 @@ namespace MphRead
     {
         // todo: artifact flags
         public static (RoomEntity, RoomMetadata, CollisionInstance, IReadOnlyList<EntityBase>)
-            LoadRoom(string name, Scene scene, int playerCount = 0, BossFlags bossFlags = BossFlags.Unspecified,
+            LoadGame(string name, Scene scene, int playerCount = 0, BossFlags bossFlags = BossFlags.Unspecified,
             int nodeLayerMask = 0, int entityLayerId = -1)
         {
             (RoomMetadata? metadata, int roomId) = Metadata.GetRoomByName(name);
@@ -43,6 +43,14 @@ namespace MphRead
             }
             Extract.LoadRuntimeData();
             LoadResources(scene);
+            // currently no differentiation between loading a file and choosing a planet,
+            // so reset the RNG when loading a different save slot from the previous
+            if (Menu.SaveSlot != Menu.PreviousSaveSlot)
+            {
+                Rng.SetRng1(Rng.Rng1StartValue);
+                Rng.SetRng2(Rng.Rng2StartValue);
+                Menu.PreviousSaveSlot = Menu.SaveSlot;
+            }
             CamSeqEntity.ClearData();
             CamSeqEntity.Current = null;
             CameraSequence.Current = null;
@@ -76,20 +84,25 @@ namespace MphRead
             }
         }
 
-        private static void UpdateAreaHunters()
+        public static void UpdateAreaHunters(StorySave? save = null)
         {
-            Array.Fill(_completedRandomEncounterRooms, false);
+            // temporary parameter(?) so the menu can call this in advance on a not-yet-loaded save
+            if (save == null)
+            {
+                save = GameState.StorySave;
+                Array.Fill(_completedRandomEncounterRooms, false);
+            }
             // todo?: the game does this in the cockpit
-            Array.Fill(GameState.StorySave.AreaHunters, (byte)0);
+            Array.Fill(save.AreaHunters, (byte)0);
             byte chance = 0;
             byte[] chances = new byte[4];
             byte[] counts = new byte[4];
             for (int i = 0; i < 4; i++)
             {
                 int area1 = i * 2;
-                if (GameState.GetAreaState(area1) == AreaState.Clear)
+                if (GameState.GetAreaState(area1, save) == AreaState.Clear)
                 {
-                    uint lostOctoliths = GameState.StorySave.LostOctoliths;
+                    uint lostOctoliths = save.LostOctoliths;
                     if (((lostOctoliths >> (8 * i)) & 15) == 15 || ((lostOctoliths >> (4 * (2 * i + 1))) & 15) == 15)
                     {
                         // increased chance if you haven't lost either of the planet's octoliths
@@ -104,7 +117,7 @@ namespace MphRead
             }
             for (int i = 0; i < 8; i++)
             {
-                if ((GameState.StorySave.DefeatedHunters & (1 << i)) == 0)
+                if ((save.DefeatedHunters & (1 << i)) == 0)
                 {
                     continue;
                 }
@@ -113,7 +126,7 @@ namespace MphRead
                 {
                     if (rand < chances[j])
                     {
-                        GameState.StorySave.AreaHunters[j] |= (byte)(1 << i);
+                        save.AreaHunters[j] |= (byte)(1 << i);
                         if (++counts[j] >= 3)
                         {
                             for (int k = 3; k > j; k--)
@@ -149,7 +162,7 @@ namespace MphRead
                 || PlayerEntity.Main.AvailableWeapons[BeamType.Battlehammer])
             {
                 int randomHunters = GameState.StorySave.AreaHunters[scene.AreaId / 2] & 0x7E; // ignore Samus and Guardian
-                int randomHunterCount = BitOperations.PopCount((uint)randomHunters);
+                int randomHunterCount = System.Numerics.BitOperations.PopCount((uint)randomHunters);
                 int extraCount = 0; // extra index to roll Guardian if at least one hunter has already been rolled
                 for (int i = 0; i < entities.Count; i++)
                 {
@@ -182,7 +195,7 @@ namespace MphRead
                     Hunter hunter;
                     if (spawner.Data.Fields.S09.HunterId == 8) // random
                     {
-                        uint rand = Rng.GetRandomInt2(randomHunters + extraCount);
+                        uint rand = Rng.GetRandomInt2(randomHunterCount + extraCount);
                         if (rand < randomHunterCount)
                         {
                             // todo?: determine bot level based on octoliths (unused)
@@ -231,6 +244,24 @@ namespace MphRead
                     }
                     // todo: encounter state and bot level
                     PlayerEntity.PlayerCount++;
+                }
+            }
+            for (int i = 1; i < PlayerEntity.MaxPlayers; i++)
+            {
+                PlayerEntity player = PlayerEntity.Players[i];
+                if (player.IsBot)
+                {
+                    int dropId = GameState.StorySave.GetEnemyOctolithDrop((int)player.Hunter);
+                    if (dropId < 8)
+                    {
+                        var header = new EntityDataHeader((ushort)EntityType.Artifact, entityId: -1,
+                            position: Vector3.Zero, upVector: Vector3.UnitY, facingVector: Vector3.UnitX);
+                        var data = new ArtifactEntityData(header, modelId: 8, artifactId: (byte)dropId, active: 0,
+                            hasBase: 0, message1Target: 0, message1: Message.None, message2Target: 0, message2: Message.None,
+                            message3Target: 0, message3: Message.None, linkedEntityId: -1);
+                        var artifact = new ArtifactEntity(data, nodeName: "", scene);
+                        scene.AddEntity(artifact);
+                    }
                 }
             }
         }
@@ -481,6 +512,8 @@ namespace MphRead
             scene.LoadModel("alt_ice");
             scene.LoadModel("gunSmoke");
             scene.LoadModel("trail");
+            scene.LoadModel("octolith_simple");
+            scene.LoadModel("Octolith");
             // todo?: same as above
             scene.LoadEffect(10); // ballDeath
             scene.LoadEffect(216); // deathAlt

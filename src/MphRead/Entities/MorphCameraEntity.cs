@@ -39,7 +39,7 @@ namespace MphRead.Entities
                         if (CollisionDetection.CheckVolumesOverlap(_volume, player.Volume, ref discard))
                         {
                             player.MorphCamera = this;
-                            // todo: cam info node ref
+                            player.CameraInfo.NodeRef = NodeRef;
                             player.RefreshExternalCamera();
                         }
                     }

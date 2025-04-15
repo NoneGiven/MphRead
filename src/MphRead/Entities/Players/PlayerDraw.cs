@@ -192,7 +192,14 @@ namespace MphRead.Entities
                     _muzzleEffect.SetDrawEnabled(false);
                 }
             }
-            // todo: draw lost octolith
+            if (!_scene.Multiplayer && IsMainPlayer && _deathCountdown > 0 && _deathCountdown <= 119 / 30f
+                && System.Numerics.BitOperations.PopCount(GameState.StorySave.CurrentOctoliths) > 0)
+            {
+                Matrix4 transform = Matrix4.Identity;
+                transform.Row3.Xyz = _lostOctolithDrawPos;
+                UpdateTransforms(_octolithSimpleModel, transform, recolor: 0);
+                GetDrawItems(_octolithSimpleModel, _octolithSimpleModel.Model.Nodes[0], alpha: 1, recolor: 0);
+            }
         }
 
         private void DrawKandenAlt()

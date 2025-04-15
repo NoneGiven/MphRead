@@ -251,7 +251,7 @@ namespace MphRead
             _roomLoaded = true;
             GameMode = mode;
             (RoomEntity room, RoomMetadata meta, CollisionInstance collision, IReadOnlyList<EntityBase> entities)
-                = SceneSetup.LoadRoom(name, this, playerCount, bossFlags, nodeLayerMask, entityLayerId);
+                = SceneSetup.LoadGame(name, this, playerCount, bossFlags, nodeLayerMask, entityLayerId);
             GameState.StorySave.SetVisitedRoom(RoomId);
             if (GameMode == GameMode.None)
             {
@@ -459,6 +459,11 @@ namespace MphRead
         public bool IsNodeRefVisible(NodeRef nodeRef)
         {
             return Room?.IsNodeRefVisible(nodeRef) ?? false;
+        }
+
+        public bool IsNodeRefAudible(NodeRef nodeRef)
+        {
+            return Room?.IsNodeRefAudible(nodeRef) ?? false;
         }
 
         public void OnLoad()
@@ -2669,7 +2674,7 @@ namespace MphRead
                 for (int i = 0; i < _entities.Count; i++)
                 {
                     EntityBase entity = _entities[i];
-                    if (entity.Initialized && !entity.Process())
+                    if (entity.Initialized && entity.PreProcess() && !entity.Process())
                     {
                         SendMessage(Message.Destroyed, entity, null, 0, 0, delay: 1);
                         // todo: need to handle destroying vs. unloading etc.

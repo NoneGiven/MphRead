@@ -1404,6 +1404,10 @@ namespace MphRead.Entities
                         {
                             if (_boostCharge > Values.BoostChargeMin * 2) // todo: FPS stuff
                             {
+                                if (Features.FullBoostCharge)
+                                {
+                                    _boostCharge = (ushort)(Values.BoostChargeMax * 2);
+                                }
                                 if (_boostCharge > 0)
                                 {
                                     int sfx = Metadata.HunterSfx[(int)Hunter, (int)HunterSfx.Boost];

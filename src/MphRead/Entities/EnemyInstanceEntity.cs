@@ -192,7 +192,10 @@ namespace MphRead.Entities
                     }
                     int rangeIndex = Metadata.EnemyAudioRangeIndices[(int)EnemyType];
                     _soundSource.Update(Position, rangeIndex);
-                    // sfxtodo: if node ref is not active, set sound volume override to 0
+                    if (!IsAudible(NodeRef))
+                    {
+                        _soundSource.Volume = 0;
+                    }
                     ClearHitPlayers();
                     for (int i = 0; i < _scene.Entities.Count; i++)
                     {
@@ -217,8 +220,11 @@ namespace MphRead.Entities
                     {
                         UpdateHurtVolume();
                     }
-                    // todo: node ref
-                    return BaseProcess();
+                    if (NodeRef != NodeRef.None)
+                    {
+                        NodeRef = _scene.UpdateNodeRef(NodeRef, _prevPos, Position);
+                    }
+                    return base.Process();
                 }
                 _scene.SendMessage(Message.Destroyed, this, _owner, 0, 0);
                 if (_owner?.Type == EntityType.EnemySpawn)
