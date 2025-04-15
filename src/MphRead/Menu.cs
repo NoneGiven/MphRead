@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MphRead.Sound;
 
 namespace MphRead
 {
@@ -24,6 +25,7 @@ namespace MphRead
         public string MphVersion { get; set; } = "AMHE1";
         public string FhVersion { get; set; } = "AMFE0";
         public string Language { get; set; } = "English";
+        public string SfxVolume { get; set; } = "0.35";
         public string PointGoal { get; set; } = "7";
         public string TimeLimit { get; set; } = "7:00";
         public string TimeGoal { get; set; } = "1:30";
@@ -57,12 +59,13 @@ namespace MphRead
     {
         private static string _mode = "auto-select";
         private static Language _language = Language.English;
+        private static decimal _sfxVolume = 0.35m;
 
         public static void ShowMenuPrompts()
         {
-            SoundCapability soundCapability = Sound.Sfx.CheckAudioLoad();
+            SoundCapability soundCapability = Sfx.CheckAudioLoad();
             int prompt = 0;
-            int selection = 14;
+            int selection = 15;
             int roomId = -1;
             string room = "";
             string roomKey = "";
@@ -184,6 +187,11 @@ namespace MphRead
                 if (Enum.TryParse(settings.Language, out Language result))
                 {
                     _language = result;
+                }
+                if (Decimal.TryParse(settings.SfxVolume, out decimal sfxVolume))
+                {
+                    _sfxVolume = sfxVolume;
+                    Sfx.Volume = (float)_sfxVolume;
                 }
                 if (Int32.TryParse(settings.PointGoal, out int pointGoal))
                 {
@@ -494,6 +502,7 @@ namespace MphRead
                     MphVersion = Paths.MphKey,
                     FhVersion = Paths.FhKey,
                     Language = _language.ToString(),
+                    SfxVolume = _sfxVolume.ToString(),
                     PointGoal = _pointGoal.ToString(),
                     TimeLimit = FormatTime(_timeLimit),
                     TimeGoal = FormatTime(_timeGoal),
@@ -640,9 +649,10 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (3) Player 3: {PrintPlayer(2)}");
                     Console.WriteLine($"{X(s++)} (4) Player 4: {PrintPlayer(3)}");
                     Console.WriteLine($"{X(s++)} (M) Models: {PrintModels()}");
-                    Console.WriteLine($"{X(s++)} (V) MPH Version: {mphKey} ({mphInfo[mphKey]})");
+                    Console.WriteLine($"{X(s++)} (P) MPH Version: {mphKey} ({mphInfo[mphKey]})");
                     Console.WriteLine($"{X(s++)} (F) FH Version: {fhKey} ({fhInfo[fhKey]})");
                     Console.WriteLine($"{X(s++)} (I) Language: {languageString}");
+                    Console.WriteLine($"{X(s++)} (V) Volume: {_sfxVolume:0.00}");
                     Console.WriteLine($"{X(s++)} (A) Adventure Mode Settings...");
                     Console.WriteLine($"{X(s++)} (S) Match Settings...");
                     Console.WriteLine($"{X(s++)} (C) Features...");
@@ -718,8 +728,7 @@ namespace MphRead
                         {
                             selection = 1;
                         }
-                        else if (keyInfo.Key == ConsoleKey.P
-                            || keyInfo.Key == ConsoleKey.D1 || keyInfo.Key == ConsoleKey.NumPad1)
+                        else if (keyInfo.Key == ConsoleKey.D1 || keyInfo.Key == ConsoleKey.NumPad1)
                         {
                             selection = 2;
                         }
@@ -740,7 +749,7 @@ namespace MphRead
                             selection = 6;
                             prompt = selection + 1;
                         }
-                        else if (keyInfo.Key == ConsoleKey.V)
+                        else if (keyInfo.Key == ConsoleKey.P)
                         {
                             selection = 7;
                         }
@@ -752,27 +761,31 @@ namespace MphRead
                         {
                             selection = 9;
                         }
-                        else if (keyInfo.Key == ConsoleKey.A)
+                        else if (keyInfo.Key == ConsoleKey.V)
                         {
                             selection = 10;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.A)
+                        {
+                            selection = 11;
                             prompt = -2;
                             continue;
                         }
                         else if (keyInfo.Key == ConsoleKey.S)
                         {
-                            selection = 11;
+                            selection = 12;
                             prompt = -1;
                             continue;
                         }
                         else if (keyInfo.Key == ConsoleKey.C)
                         {
-                            selection = 12;
+                            selection = 13;
                             prompt = -3;
                             continue;
                         }
                         else if (keyInfo.Key == ConsoleKey.X)
                         {
-                            selection = 13;
+                            selection = 14;
                         }
                         else if (keyInfo.Key == ConsoleKey.UpArrow || keyInfo.Key == ConsoleKey.W)
                         {
@@ -823,6 +836,11 @@ namespace MphRead
                             else if (selection == 9)
                             {
                                 SetDefaultLanguage();
+                            }
+                            else if (selection == 10)
+                            {
+                                _sfxVolume = 0.35m;
+                                Sfx.Volume = (float)_sfxVolume;
                             }
                         }
                         else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
@@ -946,6 +964,11 @@ namespace MphRead
                                     language = 0;
                                 }
                                 _language = (Language)language;
+                            }
+                            else if (selection == 10)
+                            {
+                                _sfxVolume = Math.Min(_sfxVolume + 0.05m, 1.5m);
+                                Sfx.Volume = (float)_sfxVolume;
                             }
                         }
                         else if (keyInfo.Key == ConsoleKey.Subtract || keyInfo.Key == ConsoleKey.OemMinus
@@ -1072,6 +1095,11 @@ namespace MphRead
                                     language = 5;
                                 }
                                 _language = (Language)language;
+                            }
+                            else if (selection == 10)
+                            {
+                                _sfxVolume = Math.Max(_sfxVolume - 0.05m, 0);
+                                Sfx.Volume = (float)_sfxVolume;
                             }
                         }
                     }
