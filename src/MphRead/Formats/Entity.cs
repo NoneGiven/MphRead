@@ -541,6 +541,24 @@ namespace MphRead
         public readonly ushort Padding3A;
         public readonly Message Message3;
         public readonly short LinkedEntityId; // always -1
+
+        public ArtifactEntityData(EntityDataHeader header, byte modelId, byte artifactId, byte active,
+            byte hasBase, short message1Target, Message message1, short message2Target, Message message2,
+            short message3Target, Message message3, short linkedEntityId)
+        {
+            Header = header;
+            ModelId = modelId;
+            ArtifactId = artifactId;
+            Active = active;
+            HasBase = hasBase;
+            Message1Target = message1Target;
+            Message1 = message1;
+            Message2Target = message2Target;
+            Message2 = message2;
+            Message3Target = message3Target;
+            Message3 = message3;
+            LinkedEntityId = linkedEntityId;
+        }
     }
 
     // size: 64

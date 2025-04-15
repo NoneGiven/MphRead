@@ -175,7 +175,10 @@ namespace MphRead.Entities
                 return true;
             }
             _soundSource.Update(Position, rangeIndex: 23);
-            // sfxtodo: if node ref is not active, set sound volume override to 0
+            if (!IsAudible(NodeRef))
+            {
+                _soundSource.Volume = 0;
+            }
             _soundSource.PlaySfx(SfxId.TELEPORTER_LOOP, loop: true);
             bool activated = false;
             Vector3 testPos = Position.AddY(1);

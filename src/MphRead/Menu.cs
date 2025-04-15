@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MphRead.Sound;
 
 namespace MphRead
 {
@@ -24,6 +25,7 @@ namespace MphRead
         public string MphVersion { get; set; } = "AMHE1";
         public string FhVersion { get; set; } = "AMFE0";
         public string Language { get; set; } = "English";
+        public string SfxVolume { get; set; } = "0.35";
         public string PointGoal { get; set; } = "7";
         public string TimeLimit { get; set; } = "7:00";
         public string TimeGoal { get; set; } = "1:30";
@@ -57,12 +59,13 @@ namespace MphRead
     {
         private static string _mode = "auto-select";
         private static Language _language = Language.English;
+        private static decimal _sfxVolume = 0.35m;
 
         public static void ShowMenuPrompts()
         {
-            SoundCapability soundCapability = Sound.Sfx.CheckAudioLoad();
+            SoundCapability soundCapability = Sfx.CheckAudioLoad();
             int prompt = 0;
-            int selection = 14;
+            int selection = 15;
             int roomId = -1;
             string room = "";
             string roomKey = "";
@@ -185,6 +188,11 @@ namespace MphRead
                 {
                     _language = result;
                 }
+                if (Decimal.TryParse(settings.SfxVolume, out decimal sfxVolume))
+                {
+                    _sfxVolume = sfxVolume;
+                    Sfx.Volume = (float)_sfxVolume;
+                }
                 if (Int32.TryParse(settings.PointGoal, out int pointGoal))
                 {
                     _pointGoal = pointGoal;
@@ -209,6 +217,7 @@ namespace MphRead
                 {
                     SaveSlot = saveSlot;
                 }
+                UpdateEnemyHunterInfo();
                 SaveFromExit = ParseSaveWhen(settings.SaveFromExit, SaveWhen.Never);
                 SaveFromShip = ParseSaveWhen(settings.SaveFromShip, SaveWhen.Prompt);
                 string[] planets = settings.Planets.ToLower().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
@@ -493,6 +502,7 @@ namespace MphRead
                     MphVersion = Paths.MphKey,
                     FhVersion = Paths.FhKey,
                     Language = _language.ToString(),
+                    SfxVolume = _sfxVolume.ToString(),
                     PointGoal = _pointGoal.ToString(),
                     TimeLimit = FormatTime(_timeLimit),
                     TimeGoal = FormatTime(_timeGoal),
@@ -589,6 +599,7 @@ namespace MphRead
                         }
                     }
                 }
+                UpdateEnemyHunterInfo();
                 NeededSave = SaveWhen.Never;
                 while (true)
                 {
@@ -638,9 +649,10 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (3) Player 3: {PrintPlayer(2)}");
                     Console.WriteLine($"{X(s++)} (4) Player 4: {PrintPlayer(3)}");
                     Console.WriteLine($"{X(s++)} (M) Models: {PrintModels()}");
-                    Console.WriteLine($"{X(s++)} (V) MPH Version: {mphKey} ({mphInfo[mphKey]})");
+                    Console.WriteLine($"{X(s++)} (P) MPH Version: {mphKey} ({mphInfo[mphKey]})");
                     Console.WriteLine($"{X(s++)} (F) FH Version: {fhKey} ({fhInfo[fhKey]})");
                     Console.WriteLine($"{X(s++)} (I) Language: {languageString}");
+                    Console.WriteLine($"{X(s++)} (V) Volume: {_sfxVolume:0.00}");
                     Console.WriteLine($"{X(s++)} (A) Adventure Mode Settings...");
                     Console.WriteLine($"{X(s++)} (S) Match Settings...");
                     Console.WriteLine($"{X(s++)} (C) Features...");
@@ -716,8 +728,7 @@ namespace MphRead
                         {
                             selection = 1;
                         }
-                        else if (keyInfo.Key == ConsoleKey.P
-                            || keyInfo.Key == ConsoleKey.D1 || keyInfo.Key == ConsoleKey.NumPad1)
+                        else if (keyInfo.Key == ConsoleKey.D1 || keyInfo.Key == ConsoleKey.NumPad1)
                         {
                             selection = 2;
                         }
@@ -738,7 +749,7 @@ namespace MphRead
                             selection = 6;
                             prompt = selection + 1;
                         }
-                        else if (keyInfo.Key == ConsoleKey.V)
+                        else if (keyInfo.Key == ConsoleKey.P)
                         {
                             selection = 7;
                         }
@@ -750,27 +761,31 @@ namespace MphRead
                         {
                             selection = 9;
                         }
-                        else if (keyInfo.Key == ConsoleKey.A)
+                        else if (keyInfo.Key == ConsoleKey.V)
                         {
                             selection = 10;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.A)
+                        {
+                            selection = 11;
                             prompt = -2;
                             continue;
                         }
                         else if (keyInfo.Key == ConsoleKey.S)
                         {
-                            selection = 11;
+                            selection = 12;
                             prompt = -1;
                             continue;
                         }
                         else if (keyInfo.Key == ConsoleKey.C)
                         {
-                            selection = 12;
+                            selection = 13;
                             prompt = -3;
                             continue;
                         }
                         else if (keyInfo.Key == ConsoleKey.X)
                         {
-                            selection = 13;
+                            selection = 14;
                         }
                         else if (keyInfo.Key == ConsoleKey.UpArrow || keyInfo.Key == ConsoleKey.W)
                         {
@@ -821,6 +836,11 @@ namespace MphRead
                             else if (selection == 9)
                             {
                                 SetDefaultLanguage();
+                            }
+                            else if (selection == 10)
+                            {
+                                _sfxVolume = 0.35m;
+                                Sfx.Volume = (float)_sfxVolume;
                             }
                         }
                         else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
@@ -944,6 +964,11 @@ namespace MphRead
                                     language = 0;
                                 }
                                 _language = (Language)language;
+                            }
+                            else if (selection == 10)
+                            {
+                                _sfxVolume = Math.Min(_sfxVolume + 0.05m, 1.5m);
+                                Sfx.Volume = (float)_sfxVolume;
                             }
                         }
                         else if (keyInfo.Key == ConsoleKey.Subtract || keyInfo.Key == ConsoleKey.OemMinus
@@ -1070,6 +1095,11 @@ namespace MphRead
                                     language = 5;
                                 }
                                 _language = (Language)language;
+                            }
+                            else if (selection == 10)
+                            {
+                                _sfxVolume = Math.Max(_sfxVolume - 0.05m, 0);
+                                Sfx.Volume = (float)_sfxVolume;
                             }
                         }
                     }
@@ -1587,6 +1617,7 @@ namespace MphRead
         }
 
         public static byte SaveSlot { get; set; } = 0;
+        public static int PreviousSaveSlot { get; set; } = -1;
         public static SaveWhen SaveFromExit { get; set; } = SaveWhen.Never;
         public static SaveWhen SaveFromShip { get; set; } = SaveWhen.Prompt;
         public static SaveWhen NeededSave { get; set; } = SaveWhen.Never;
@@ -1668,6 +1699,7 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (P) Maximum Player Detail: {OnOff(Features.MaxPlayerDetail)}");
                     Console.WriteLine($"{X(s++)} (L) Logarithmic Spatial Audio: {OnOff(Features.LogSpatialAudio)}");
                     Console.WriteLine($"{X(s++)} (A) Consistent Alarm Interval: {OnOff(Features.HalfSecondAlarm)}");
+                    Console.WriteLine($"{X(s++)} (B) Full Boost Charge: {OnOff(Features.FullBoostCharge)}");
                 }
                 else if (screen == 2)
                 {
@@ -1810,6 +1842,10 @@ namespace MphRead
                     {
                         selection = 12;
                     }
+                    else if (keyInfo.Key == ConsoleKey.B)
+                    {
+                        selection = 13;
+                    }
                     else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
                     {
                         if (selection == 0)
@@ -1863,6 +1899,10 @@ namespace MphRead
                         else if (selection == 12)
                         {
                             Features.HalfSecondAlarm = false;
+                        }
+                        else if (selection == 13)
+                        {
+                            Features.FullBoostCharge = false;
                         }
                     }
                     else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
@@ -1958,6 +1998,10 @@ namespace MphRead
                         else if (selection == 12)
                         {
                             Features.HalfSecondAlarm = !Features.HalfSecondAlarm;
+                        }
+                        else if (selection == 13)
+                        {
+                            Features.FullBoostCharge = !Features.FullBoostCharge;
                         }
                     }
                 }
@@ -2182,6 +2226,7 @@ namespace MphRead
             Features.MaxPlayerDetail = true;
             Features.LogSpatialAudio = false;
             Features.HalfSecondAlarm = false;
+            Features.FullBoostCharge = false;
             Cheats.FreeWeaponSelect = false;
             Cheats.UnlimitedJumps = false;
             Cheats.NoRandomEncounters = false;
@@ -2196,6 +2241,55 @@ namespace MphRead
             Bugfixes.CorrectBountySfx = true;
             Bugfixes.NoDoubleEnemyDeath = true;
             Bugfixes.NoSlenchRollTimerUnderflow = true;
+        }
+
+        private static string[] _enemyHunterInfo = new string[4] {
+            "Alinos  : none",
+            "CA      : none",
+            "VDO     : none",
+            "Arcterra: none"
+        };
+
+        private static void UpdateEnemyHunterInfo()
+        {
+            _enemyHunterInfo[0] = "Alinos  : ";
+            _enemyHunterInfo[1] = "CA      : ";
+            _enemyHunterInfo[2] = "VDO     : ";
+            _enemyHunterInfo[3] = "Arcterra: ";
+            StorySave save = GameState.ReadSave();
+            uint rng2 = Rng.Rng2;
+            SceneSetup.UpdateAreaHunters(save);
+            Rng.SetRng2(rng2);
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 1; j < 7; j++)
+                {
+                    if ((save.AreaHunters[i] & (1 << j)) != 0)
+                    {
+                        if (!_enemyHunterInfo[i].EndsWith(' '))
+                        {
+                            _enemyHunterInfo[i] += ", ";
+                        }
+                        _enemyHunterInfo[i] += ((Hunter)j).ToString();
+                        int octoliths = 0;
+                        for (int k = 0; k < 8; k++)
+                        {
+                            if (((save.LostOctoliths >> (4 * k)) & 15) == j)
+                            {
+                                octoliths++;
+                            }
+                        }
+                        if (octoliths > 0)
+                        {
+                            _enemyHunterInfo[i] += $" (x{octoliths})";
+                        }
+                    }
+                }
+                if (_enemyHunterInfo[i].EndsWith(' '))
+                {
+                    _enemyHunterInfo[i] += "none";
+                }
+            }
         }
 
         private static bool ShowStoryModePrompts()
@@ -2319,6 +2413,15 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (X) Reset Adventure Settings");
                 }
                 Console.WriteLine($"{X(s++)} (B) Go Back");
+                if (SaveSlot != 0)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Enemy Hunter Info");
+                    Console.WriteLine(_enemyHunterInfo[1]);
+                    Console.WriteLine(_enemyHunterInfo[0]);
+                    Console.WriteLine(_enemyHunterInfo[2]);
+                    Console.WriteLine(_enemyHunterInfo[3]);
+                }
                 s--;
                 if (prompt == 0)
                 {
@@ -2369,6 +2472,7 @@ namespace MphRead
                         if (selection == 0)
                         {
                             SaveSlot = 0;
+                            UpdateEnemyHunterInfo();
                         }
                         else if (selection == 1)
                         {
@@ -2423,6 +2527,7 @@ namespace MphRead
                         if (selection == 0)
                         {
                             SaveSlot = (byte)Advance(SaveSlot, direction, 255);
+                            UpdateEnemyHunterInfo();
                         }
                         else if (selection == 1)
                         {
@@ -2637,6 +2742,7 @@ namespace MphRead
                         if (Int32.TryParse(Console.ReadLine(), out int slot) && slot >= 0 && slot <= 255)
                         {
                             SaveSlot = (byte)slot;
+                            UpdateEnemyHunterInfo();
                         }
                     }
                     prompt = 0;

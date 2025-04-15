@@ -115,6 +115,16 @@ namespace MphRead.Entities
             {
                 _scene.Room.AddConnector(this);
             }
+            else
+            {
+                string portalName = $"{_data.NodeName.MarshalString()}_{_nodeName}";
+                Portal? portal = _scene.Room?.GetPortalByName(portalName);
+                if (portal != null)
+                {
+                    portal.Active = false;
+                    Portal = portal;
+                }
+            }
         }
 
         private const float _portWidth = 2.1f;
@@ -125,6 +135,7 @@ namespace MphRead.Entities
 
         public Portal SetUpPort(string roomNodeName, string conNodeName)
         {
+            Debug.Assert(Portal == null);
             float height = _portHeights[(int)Data.DoorType];
             Vector3 facing = FacingVector;
             Vector3 pos = Position;
@@ -516,7 +527,7 @@ namespace MphRead.Entities
             {
                 return;
             }
-            if (!IsVisible(NodeRef) && (Portal == null || !IsVisible(Portal.NodeRef2)))
+            if (!IsVisible(NodeRef) && (Portal == null || !IsVisible(Portal.NodeRef1) && !IsVisible(Portal.NodeRef2)))
             {
                 return;
             }

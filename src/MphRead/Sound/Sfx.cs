@@ -15,6 +15,7 @@ namespace MphRead.Sound
         public float ReferenceDistance { get; set; } = 1;
         public float MaxDistance { get; set; } = Single.MaxValue;
         public float RolloffFactor { get; set; } = 1;
+        public float Volume { get; set; } = 1;
         public bool Self { get; set; }
 
         public void Update(Vector3 position, int rangeIndex)
@@ -353,7 +354,8 @@ namespace MphRead.Sound
                     }
                     int channelId = channel.Id;
                     float mute = Sfx.SfxMute && Source != null ? 0 : 1;
-                    AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume[i] * Samples[i].Volume * mute);
+                    float sourceMute = Source?.Volume ?? 1;
+                    AL.Source(channelId, ALSourcef.Gain, Sfx.Volume * Volume[i] * Samples[i].Volume * mute * sourceMute);
                     AL.Source(channelId, ALSourcef.Pitch, Pitch[i]);
                     AL.Source(channelId, ALSourceb.SourceRelative, false);
                     AL.Source(channelId, ALSourcef.RolloffFactor, 1);

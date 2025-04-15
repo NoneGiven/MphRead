@@ -178,6 +178,7 @@ namespace MphRead.Entities
         private ModelInstance _altIceModel = null!;
         private ModelInstance _bipedIceModel = null!;
         private ModelInstance _trailModel = null!;
+        private ModelInstance _octolithSimpleModel = null!;
         private readonly Node?[] _spineNodes = new Node?[2];
         private readonly Node?[] _shootNodes = new Node?[2];
         private int _trailBindingId1 = 0;
@@ -387,7 +388,12 @@ namespace MphRead.Entities
         public ushort RespawnTimer { get => _respawnTimer; set => _respawnTimer = value; }
         private float _deathCountdown = 0;
         private bool _deathProcessed = false;
+        private bool _deathLostOctolithSfxPlayed = false;
+        private bool _deathLostOctolithDialogShown = false;
         public float DeathCountdown => _deathCountdown;
+        private int _lostOctolithEnemyIndex = -1;
+        private Vector3 _lostOctolithDrawPos;
+        private float _lostOctolithSpeed;
         private ushort _damageInvulnTimer = 0;
         private ushort _spawnInvulnTimer = 0;
         private ushort _camSwitchTimer = 0;
@@ -502,6 +508,7 @@ namespace MphRead.Entities
             _bipedIceModel = Read.GetModelInstance(Hunter == Hunter.Noxus || Hunter == Hunter.Trace ? "nox_ice" : "samus_ice");
             _altIceModel = Read.GetModelInstance("alt_ice");
             _doubleDmgModel = Read.GetModelInstance("doubleDamage_img");
+            _octolithSimpleModel = Read.GetModelInstance("octolith_simple");
             _models.Add(_bipedModel1);
             _models.Add(_bipedModel2);
             _models.Add(_altModel);
@@ -510,6 +517,7 @@ namespace MphRead.Entities
             _models.Add(_bipedIceModel);
             _models.Add(_altIceModel);
             _models.Add(_doubleDmgModel);
+            _models.Add(_octolithSimpleModel);
             _trailModel = Read.GetModelInstance("trail");
             Material material = _trailModel.Model.Materials[0];
             _trailBindingId1 = _scene.BindGetTexture(_trailModel.Model, material.TextureId, material.PaletteId, 0);
@@ -837,7 +845,10 @@ namespace MphRead.Entities
                     rangeIndex = 21;
                 }
                 _soundSource.Update(Position, rangeIndex);
-                // sfxtodo: if node ref is not active, set sound volume override to 0
+                if (!IsAudible(NodeRef))
+                {
+                    _soundSource.Volume = 0;
+                }
             }
             if (respawn)
             {
@@ -1053,6 +1064,16 @@ namespace MphRead.Entities
         public void Teleport(Vector3 position, Vector3 facing, NodeRef nodeRef)
         {
             _soundSource.PlaySfx(SfxId.TELEPORT_OUT, noUpdate: true);
+            Reposition(position, facing, nodeRef);
+            if (IsAltForm || IsMorphing || IsUnmorphing)
+            {
+                ResumeOwnCamera();
+                CameraInfo.Update();
+            }
+        }
+
+        public void Reposition(Vector3 position, Vector3 facing, NodeRef nodeRef)
+        {
             _gunVec1 = facing;
             _facingVector = facing;
             SetTransform(facing, _upVector, position);
@@ -1060,11 +1081,6 @@ namespace MphRead.Entities
             {
                 NodeRef = nodeRef;
                 CameraInfo.NodeRef = nodeRef;
-            }
-            if (IsAltForm || IsMorphing || IsUnmorphing)
-            {
-                ResumeOwnCamera();
-                CameraInfo.Update();
             }
         }
 
@@ -1966,17 +1982,84 @@ namespace MphRead.Entities
                     }
                     if (IsMainPlayer)
                     {
+                        // todo: update stats
                         _deathCountdown = 150 / 30f;
                         _deathProcessed = false;
+                        _deathLostOctolithSfxPlayed = false;
+                        _deathLostOctolithDialogShown = false;
                         _respawnTimer = UInt16.MaxValue;
                         CameraInfo.SetShake(0.25f);
-                        // todo: update story save, lost octolith, etc.
+                        _lostOctolithEnemyIndex = -1;
+                        if (GameState.StorySave.CurrentOctoliths != 0 && PlayerCount > 1
+                            && (GameState.EscapeTimer == 0 || GameState.EscapeState != EscapeState.Escape))
+                        {
+                            float minDistance = 0;
+                            for (int i = 1; i < PlayerCount; i++)
+                            {
+                                PlayerEntity enemyHunter = _players[i];
+                                if (enemyHunter.Health == 0 || enemyHunter.Hunter == Hunter.Guardian)
+                                {
+                                    continue;
+                                }
+                                float distance = (enemyHunter.Position - Position).LengthSquared;
+                                if (_lostOctolithEnemyIndex == -1 || distance < minDistance)
+                                {
+                                    _lostOctolithEnemyIndex = i;
+                                    minDistance = distance;
+                                }
+                            }
+                            if (_lostOctolithEnemyIndex != -1)
+                            {
+                                _lostOctolithDrawPos = Position.AddY(0.6f);
+                                _lostOctolithSpeed = 0.2f * 30; // frame-independent drag
+                            }
+                            // mustodo: update music
+                        }
                     }
                     else if (attacker?.IsMainPlayer == true)
                     {
                         GameState.StorySave.DefeatedHunters |= (byte)(1 << (int)Hunter);
                         GameState.StorySave.AreaHunters[_scene.AreaId / 2] &= (byte)~(1 << (int)Hunter);
-                        // todo: update story save, recover octolith, etc.
+                        // todo: update stats
+
+                        static void RestoreOctolith(int dropId)
+                        {
+                            GameState.StorySave.LostOctoliths
+                                = GameState.StorySave.LostOctoliths & (uint)(~(15 << (4 * dropId)) | (8 << (4 * dropId)));
+                            GameState.StorySave.CurrentOctoliths |= (ushort)(1 << dropId);
+                        }
+
+                        int dropId = GameState.StorySave.GetEnemyOctolithDrop((int)Hunter);
+                        if (dropId < 8)
+                        {
+                            RestoreOctolith(dropId);
+                            for (int i = 0; i < _scene.Entities.Count; i++)
+                            {
+                                EntityBase entity = _scene.Entities[i];
+                                if (entity.Type != EntityType.Artifact || entity.Id != -1) // the game doesn't check the ID
+                                {
+                                    continue;
+                                }
+                                var artifact = (ArtifactEntity)entity;
+                                if (artifact.ModelId >= 8 && artifact.ArtifactId == dropId)
+                                {
+                                    artifact.Position = Position.AddY(1.5f);
+                                    artifact.NodeRef = NodeRef;
+                                    artifact.Active = true;
+                                    break;
+                                }
+                            }
+                        }
+                        // recover any additional Octoliths
+                        while (true)
+                        {
+                            dropId = GameState.StorySave.GetEnemyOctolithDrop((int)Hunter);
+                            if (dropId >= 8)
+                            {
+                                break;
+                            }
+                            RestoreOctolith(dropId);
+                        }
                     }
                 }
                 else // multiplayer
