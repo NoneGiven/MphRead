@@ -66,7 +66,8 @@ namespace MphRead.Entities.Enemies
             int version = (int)_spawner.Data.Fields.S06.EnemyVersion;
             Recolor = _recolors[version];
             Vector3 facing = _spawner.FacingVector;
-            SetTransform(facing, Vector3.UnitY, _spawner.Position);
+            Vector3 up = FixParallelVectors(facing, Vector3.UnitY);
+            SetTransform(facing, up, _spawner.Position);
             SetUpModel(Metadata.EnemyModelNames[23], animIndex: 3);
             Flags |= EnemyFlags.Visible;
             Flags |= EnemyFlags.OnRadar;
