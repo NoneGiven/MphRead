@@ -630,7 +630,7 @@ namespace MphRead.Entities
                     {
                         _field688 *= 0.9f; // sktodo: FPS stuff
                     }
-                    if (Cheats.UnlimitedJumps || true)
+                    if (Cheats.UnlimitedJumps)
                     {
                         Flags1 &= ~PlayerFlags1.UsedJump;
                     }
