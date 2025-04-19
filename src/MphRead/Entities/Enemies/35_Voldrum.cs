@@ -57,7 +57,8 @@ namespace MphRead.Entities.Enemies
         protected virtual void Setup()
         {
             Vector3 facing = _spawner.Data.Header.FacingVector.ToFloatVector().Normalized();
-            SetTransform(facing, Vector3.UnitY, _spawner.Data.Header.Position.ToFloatVector());
+            Vector3 up = FixParallelVectors(facing, Vector3.UnitY);
+            SetTransform(facing, up, _spawner.Data.Header.Position.ToFloatVector());
             Flags |= EnemyFlags.Visible;
             Flags |= EnemyFlags.OnRadar;
             _boundingRadius = 0.5f;
