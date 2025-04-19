@@ -1713,8 +1713,8 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (U) Start With All Upgrades: {OnOff(Cheats.StartWithAllUpgrades)}");
                     Console.WriteLine($"{X(s++)} (O) Start With All Octoliths: {OnOff(Cheats.StartWithAllOctoliths)}");
                     Console.WriteLine($"{X(s++)} (G) Walk Through Walls: {OnOff(Cheats.WalkThroughWalls)}");
-                    Console.WriteLine($"{X(s++)} (2) Walk Through Walls: {OnOff(Cheats.AlwaysFightGorea2)}");
-                    Console.WriteLine($"{X(s++)} (Q) Walk Through Walls: {OnOff(Cheats.QuadrupleDamage)}");
+                    Console.WriteLine($"{X(s++)} (2) Always Fight Gorea 2: {OnOff(Cheats.AlwaysFightGorea2)}");
+                    Console.WriteLine($"{X(s++)} (Q) Quadruple Damage: {OnOff(Cheats.QuadrupleDamage)}");
                 }
                 else if (screen == 3)
                 {
