@@ -172,10 +172,7 @@ namespace MphRead.Entities
                 }
             }
             _soundSource.Update(Position, rangeIndex: Beam == BeamType.Missile ? 3 : 2);
-            if (!IsAudible(NodeRef))
-            {
-                _soundSource.Volume = 0;
-            }
+            UpdateNodeRefVolume();
             if (Target != null)
             {
                 for (int i = 0; i < _scene.MessageQueue.Count; i++)
@@ -929,7 +926,7 @@ namespace MphRead.Entities
                     {
                         flags |= BeamSpawnFlags.Charged;
                     }
-                    Spawn(Owner, _ricochetEquip, colRes.Position, spawnDir, flags, _scene);
+                    Spawn(Owner, _ricochetEquip, colRes.Position, spawnDir, flags, NodeRef, _scene);
                 }
             }
             if (!Flags.TestFlag(BeamFlags.Continuous))
@@ -1381,7 +1378,7 @@ namespace MphRead.Entities
         }
 
         public static BeamResultFlags Spawn(EntityBase owner, EquipInfo equip, Vector3 position, Vector3 direction,
-            BeamSpawnFlags spawnFlags, Scene scene)
+            BeamSpawnFlags spawnFlags, NodeRef nodeRef, Scene scene)
         {
             BeamResultFlags result = BeamResultFlags.Spawned;
             WeaponInfo weapon = equip.Weapon;
@@ -1631,6 +1628,7 @@ namespace MphRead.Entities
                 beam.Beam = weapon.Beam;
                 beam.BeamKind = weapon.BeamKind;
                 beam.Flags = flags;
+                beam.NodeRef = nodeRef;
                 beam.Age = 0;
                 beam.InitialSpeed = beam.Speed = speed;
                 beam.FinalSpeed = finalSpeed;

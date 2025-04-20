@@ -187,9 +187,9 @@ namespace MphRead.Entities
             {
                 UpdateHealthSfx(_health);
             }
-            else if (!IsAudible(NodeRef))
+            else
             {
-                _soundSource.Volume = 0;
+                UpdateNodeRefVolume();
             }
             if (_damageInvulnTimer > 0)
             {

@@ -199,7 +199,7 @@ namespace MphRead.Entities.Enemies
                 _equipInfo.Weapon.SplashDamage = _values.SplashDamage;
                 _equipInfo.Weapon.HeadshotDamage = _values.BeamDamage;
                 Vector3 spawnPos = Position.AddY(-0.5f);
-                BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, _aimVector, BeamSpawnFlags.None, _scene);
+                BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, _aimVector, BeamSpawnFlags.None, NodeRef, _scene);
                 _shotCount--;
                 PlayBeamShotSfx();
             }

@@ -216,10 +216,7 @@ namespace MphRead.Entities
                     }
                     int rangeIndex = Metadata.EnemyAudioRangeIndices[(int)EnemyType];
                     _soundSource.Update(Position, rangeIndex);
-                    if (!IsAudible(NodeRef))
-                    {
-                        _soundSource.Volume = 0;
-                    }
+                    UpdateNodeRefVolume();
                     ClearHitPlayers();
                     for (int i = 0; i < _scene.Entities.Count; i++)
                     {

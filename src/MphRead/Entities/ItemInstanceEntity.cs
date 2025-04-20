@@ -99,10 +99,7 @@ namespace MphRead.Entities
                 Position = Matrix.Vec3MultMtx4(_invPos, _parent.CollisionTransform);
             }
             _soundSource.Update(Position, rangeIndex: 7);
-            if (!IsAudible(NodeRef))
-            {
-                _soundSource.Volume = 0;
-            }
+            UpdateNodeRefVolume();
             if (_effectEntry != null)
             {
                 Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY, Position);

@@ -54,7 +54,7 @@ namespace MphRead.Entities.Enemies
             _equipInfo.Weapon.SplashDamage = damage;
             _equipInfo.Weapon.HeadshotDamage = damage;
             Vector3 spawnDir = (PlayerEntity.Main.Position.AddY(0.5f) - Position).Normalized();
-            BeamProjectileEntity.Spawn(this, _equipInfo, Position, spawnDir, BeamSpawnFlags.None, _scene);
+            BeamProjectileEntity.Spawn(this, _equipInfo, Position, spawnDir, BeamSpawnFlags.None, _cretaphid.NodeRef, _scene);
         }
 
         protected override bool EnemyTakeDamage(EntityBase? source)

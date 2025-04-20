@@ -215,7 +215,7 @@ namespace MphRead.Entities
                     {
                         // todo: if 1P bot and encounter state, change some weapon values
                         BeamSpawnFlags flags = Owner.DoubleDamage ? BeamSpawnFlags.DoubleDamage : BeamSpawnFlags.None;
-                        BeamResultFlags result = BeamProjectileEntity.Spawn(this, EquipInfo, muzzlePos, _aimVector, flags, _scene);
+                        BeamResultFlags result = BeamProjectileEntity.Spawn(this, EquipInfo, muzzlePos, _aimVector, flags, NodeRef, _scene);
                         if (result != BeamResultFlags.NoSpawn)
                         {
                             _models[0].SetAnimation(0, AnimFlags.NoLoop);

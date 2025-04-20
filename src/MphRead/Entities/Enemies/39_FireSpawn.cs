@@ -214,7 +214,7 @@ namespace MphRead.Entities.Enemies
                     equipInfo.Weapon.UnchargedDamage = Values.BeamDamage;
                     equipInfo.Weapon.SplashDamage = Values.SplashDamage;
                     equipInfo.Weapon.HeadshotDamage = Values.BeamDamage;
-                    BeamProjectileEntity.Spawn(this, equipInfo, _wristPos[_wristId], dir, BeamSpawnFlags.None, _scene);
+                    BeamProjectileEntity.Spawn(this, equipInfo, _wristPos[_wristId], dir, BeamSpawnFlags.None, NodeRef, _scene);
                     if (_effectEntry != null)
                     {
                         _scene.DetachEffectEntry(_effectEntry, setExpired: true);

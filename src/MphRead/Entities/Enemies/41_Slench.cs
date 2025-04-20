@@ -361,7 +361,8 @@ namespace MphRead.Entities.Enemies
                 {
                     _equipInfo.Weapon = Weapons.BossWeapons[4 + _subtype];
                     Vector3 spawnPos = facing * _shieldOffset + Position;
-                    BeamResultFlags result = BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, facing, BeamSpawnFlags.None, _scene);
+                    BeamResultFlags result = BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, facing,
+                        BeamSpawnFlags.None, NodeRef.None, _scene);
                     if (result != BeamResultFlags.NoSpawn)
                     {
                         SetRecoilTargetVecs();
@@ -519,7 +520,8 @@ namespace MphRead.Entities.Enemies
                         _soundSource.PlaySfx(SfxId.MISSILE);
                     }
                     Vector3 spawnPos = facing * _shieldOffset + Position;
-                    BeamResultFlags result = BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, facing, BeamSpawnFlags.None, _scene);
+                    BeamResultFlags result = BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, facing,
+                        BeamSpawnFlags.None, NodeRef.None, _scene);
                     if (result != BeamResultFlags.NoSpawn)
                     {
                         SetRecoilTargetVecs();
