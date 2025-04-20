@@ -676,7 +676,7 @@ namespace MphRead.Entities.Enemies
                 {
                     GetArmAim(arm, out Vector3 spawnPos, out Vector3 spawnDir);
                     arm.Ammo = 65535;
-                    BeamProjectileEntity.Spawn(arm, arm.EquipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, _scene);
+                    BeamProjectileEntity.Spawn(arm, arm.EquipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, arm.NodeRef, _scene);
                     CreateShotEffectLoose(arm, _shotEffects[WeaponIndex]);
                     StopBeamChargeSfx(_beamTypes[WeaponIndex]);
                     PlayBeamShotSfx(_beamTypes[WeaponIndex], charged: arm.ArmFlags.TestFlag(GoreaArmFlags.Bit2));
