@@ -584,13 +584,13 @@ namespace MphRead
                     }
                     else if (NeededSave == SaveWhen.Prompt)
                     {
-                        Console.Clear();
-                        Console.WriteLine($"MphRead Version {Program.Version}");
-                        Console.WriteLine();
-                        Console.WriteLine($"Save game to slot {SaveSlot}? (y/n)");
                         ConsoleKey input = ConsoleKey.None;
                         while (input != ConsoleKey.Y && input != ConsoleKey.N && input != ConsoleKey.Escape)
                         {
+                            Console.Clear();
+                            Console.WriteLine($"MphRead Version {Program.Version}");
+                            Console.WriteLine();
+                            Console.WriteLine($"Save game to slot {SaveSlot}? (y/n)");
                             input = Console.ReadKey().Key;
                             if (input == ConsoleKey.Y)
                             {
