@@ -240,7 +240,8 @@ namespace MphRead.Entities
             if (Owner == PlayerEntity.Main)
             {
                 string message = Text.Strings.GetHudMessage(233); // turret energy: %d
-                Owner.QueueHudMessage(128, 150, 1 / 1000f, 0, message.Replace("%d", _health.ToString()));
+                // hide during dialog pause to prevent overlap -- the game doesn't do this, and also can't play as Weavel in 1P anyway
+                Owner.QueueHudMessage(128, 150, 1 / 1000f, 0, message.Replace("%d", _health.ToString()), dialogHide: true);
             }
             if (!_grounded)
             {

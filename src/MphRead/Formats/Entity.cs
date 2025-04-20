@@ -405,6 +405,22 @@ namespace MphRead
         public readonly uint ModelId;
         public readonly uint BeamType; // always 0, has no imapct
         public readonly TriggerFlags TriggerFlags;
+
+        public JumpPadEntityData(EntityDataHeader header, int parentId, RawCollisionVolume volume, Vector3Fx beamVector,
+            Fixed speed, ushort controlLockTime, ushort cooldownTime, byte active, uint modelId, uint beamType, TriggerFlags triggerFlags)
+        {
+            Header = header;
+            ParentId = parentId;
+            Volume = volume;
+            BeamVector = beamVector;
+            Speed = speed;
+            ControlLockTime = controlLockTime;
+            CooldownTime = cooldownTime;
+            Active = active;
+            ModelId = modelId;
+            BeamType = beamType;
+            TriggerFlags = triggerFlags;
+        }
     }
 
     // size: 272

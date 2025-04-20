@@ -428,6 +428,35 @@ namespace MphRead
         public readonly Vector3Fx SpherePosition;
         [FieldOffset(16)]
         public readonly Fixed SphereRadius;
+
+        public RawCollisionVolume(Vector3Fx boxVector1, Vector3Fx boxVector2, Vector3Fx boxVector3,
+            Vector3Fx boxPosition, Fixed boxDot1, Fixed boxDot2, Fixed boxDot3)
+        {
+            Type = VolumeType.Box;
+            BoxVector1 = boxVector1;
+            BoxVector2 = boxVector2;
+            BoxVector3 = boxVector3;
+            BoxPosition = boxPosition;
+            BoxDot1 = boxDot1;
+            BoxDot2 = boxDot2;
+            BoxDot3 = boxDot3;
+        }
+
+        public RawCollisionVolume(Vector3Fx cylinderVector, Vector3Fx cylinderPosition, Fixed cylinderRadius, Fixed cylinderDot)
+        {
+            Type = VolumeType.Cylinder;
+            CylinderVector = cylinderVector;
+            CylinderPosition = cylinderPosition;
+            CylinderRadius = cylinderRadius;
+            CylinderDot = cylinderDot;
+        }
+
+        public RawCollisionVolume(Vector3Fx spherePosition, Fixed sphereRadius)
+        {
+            Type = VolumeType.Sphere;
+            SpherePosition = spherePosition;
+            SphereRadius = sphereRadius;
+        }
     }
 
     // size: 64

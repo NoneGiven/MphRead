@@ -2477,7 +2477,7 @@ namespace MphRead.Entities
             int palette = current > lowHealth ? 0 : 2;
             _enemyHealthMeter.TankAmount = max;
             _enemyHealthMeter.TankCount = 0;
-            _enemyHealthMeter.Length = _healthbarSubMeter.Length;
+            _enemyHealthMeter.Length = HudElements.SubHealthbars[0].Length; // should not vary with hunter values
             DrawMeter(_hudObjects.EnemyHealthPosX + _objShiftX, _hudObjects.EnemyHealthPosY + _objShiftY, max, current,
                 palette, _enemyHealthMeter, drawText: false, drawTanks: false);
             int scanId = target.GetScanId();
@@ -2809,30 +2809,34 @@ namespace MphRead.Entities
             return new Vector2(x, y);
         }
 
-        public void QueueHudMessage(float x, float y, float duration, byte category, int messageId)
+        public void QueueHudMessage(float x, float y, float duration,
+            byte category, int messageId, bool dialogHide = false)
         {
             string text = Strings.GetHudMessage(messageId);
-            QueueHudMessage(x, y, Align.Center, 256, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
+            QueueHudMessage(x, y, Align.Center, 256, 8, new ColorRgba(0x3FEF), 1, duration, category, text, dialogHide);
         }
 
-        public void QueueHudMessage(float x, float y, int maxWidth, float duration, byte category, int messageId)
+        public void QueueHudMessage(float x, float y, int maxWidth, float duration,
+            byte category, int messageId, bool dialogHide = false)
         {
             string text = Strings.GetHudMessage(messageId);
-            QueueHudMessage(x, y, Align.Center, maxWidth, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
+            QueueHudMessage(x, y, Align.Center, maxWidth, 8, new ColorRgba(0x3FEF), 1, duration, category, text, dialogHide);
         }
 
-        public void QueueHudMessage(float x, float y, float duration, byte category, string text)
+        public void QueueHudMessage(float x, float y, float duration,
+            byte category, string text, bool dialogHide = false)
         {
-            QueueHudMessage(x, y, Align.Center, 256, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
+            QueueHudMessage(x, y, Align.Center, 256, 8, new ColorRgba(0x3FEF), 1, duration, category, text, dialogHide);
         }
 
-        public void QueueHudMessage(float x, float y, int maxWidth, float duration, byte category, string text)
+        public void QueueHudMessage(float x, float y, int maxWidth, float duration,
+            byte category, string text, bool dialogHide = false)
         {
-            QueueHudMessage(x, y, Align.Center, maxWidth, 8, new ColorRgba(0x3FEF), 1, duration, category, text);
+            QueueHudMessage(x, y, Align.Center, maxWidth, 8, new ColorRgba(0x3FEF), 1, duration, category, text, dialogHide);
         }
 
         public void QueueHudMessage(float x, float y, Align align, int maxWidth, float fontSize,
-            ColorRgba color, float alpha, float duration, byte category, string text)
+            ColorRgba color, float alpha, float duration, byte category, string text, bool dialogHide = false)
         {
             Debug.Assert(text.Length < 256);
             char[] buffer = new char[512];
@@ -2874,6 +2878,7 @@ namespace MphRead.Entities
             message.Align = align;
             message.Category = category;
             message.Lifetime = duration;
+            message.DialogHide = dialogHide;
         }
 
         private int WrapText(string text, int maxWidth, char[] dest, int maxTiles = 0)
@@ -3017,7 +3022,8 @@ namespace MphRead.Entities
             {
                 HudMessage message = _hudMessageQueue[i];
                 if (message.Lifetime > 0
-                    && ((message.Category & 1) == 0 || (_scene.FrameCount & (7 * 2)) <= 3 * 2)) // todo: FPS stuff
+                    && ((message.Category & 1) == 0 || (_scene.FrameCount & (7 * 2)) <= 3 * 2) // todo: FPS stuff
+                    && (!GameState.DialogPause || !message.DialogHide))
                 {
                     // todo: support font size
                     DrawText2D(message.Position.X, message.Position.Y, message.Align, palette: 0,
@@ -3037,6 +3043,7 @@ namespace MphRead.Entities
             public int MaxWidth { get; set; }
             public Align Align { get; set; }
             public char[] Text { get; } = new char[256];
+            public bool DialogHide { get; set; }
         }
 
         private static readonly IReadOnlyList<HudMessage> _hudMessageQueue = new HudMessage[20]

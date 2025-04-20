@@ -447,7 +447,8 @@ namespace MphRead.Entities
             for (int i = 0; i < _scene.Entities.Count; i++)
             {
                 EntityBase entity = _scene.Entities[i];
-                if (entity.Type == EntityType.Room || entity.Type == EntityType.Player && resume)
+                if (entity.Type == EntityType.Room || entity.Type == EntityType.Model
+                    || entity.Type == EntityType.Player && resume)
                 {
                     continue;
                 }

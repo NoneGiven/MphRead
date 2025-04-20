@@ -1617,9 +1617,9 @@ namespace MphRead
             {
                 return 0;
             }
-            if (roomId > 92) // skdebug
+            if (roomId > 92 || entityId > 239) // skdebug
             {
-                return 2;
+                return 1;
             }
             roomId -= 27;
             activeState &= 3;
@@ -1641,6 +1641,10 @@ namespace MphRead
             {
                 return 0;
             }
+            if (entityId > 239) // skdebug
+            {
+                return 1;
+            }
             roomId -= 27;
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
@@ -1649,7 +1653,7 @@ namespace MphRead
 
         public void SetRoomState(int roomId, int entityId, int state)
         {
-            if (entityId == -1 || roomId < 27 || roomId > 92)
+            if (entityId == -1 || roomId < 27 || roomId > 92 || entityId > 239)
             {
                 return;
             }

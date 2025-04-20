@@ -244,6 +244,36 @@ namespace MphRead.Entities
             attacker.EndAltAttack();
         }
 
+        // note: the game does not have this functionality
+        private void AltAttackHitDoor(DoorEntity door)
+        {
+            if ((Hunter == Hunter.Spire || Hunter == Hunter.Trace || Hunter == Hunter.Weavel) && Flags2.TestFlag(PlayerFlags2.AltAttack)
+                || Hunter == Hunter.Noxus && _altAttackTime >= Values.AltAttackStartup * 2) // todo: FPS stuff
+            {
+                if (door.Flags.TestFlag(DoorFlags.Locked) && door.Data.PaletteId == 8)
+                {
+                    door.Unlock(updateState: true, noLockAnimSfx: true);
+                }
+                door.Flags |= DoorFlags.ShotOpen;
+                if (Hunter == Hunter.Spire)
+                {
+                    _soundSource.PlaySfx(SfxId.SPIRE_ALT_ATTACK_HIT, recency: Single.MaxValue);
+                }
+                else if (Hunter == Hunter.Trace || Hunter == Hunter.Weavel)
+                {
+                    SfxId sfx = Hunter == Hunter.Weavel ? SfxId.WEAVEL_ALT_ATTACK_HIT : SfxId.TRACE_ALT_ATTACK_HIT;
+                    _soundSource.PlaySfx(sfx);
+                    EndAltAttack();
+                }
+                else if (Hunter == Hunter.Noxus)
+                {
+                    _soundSource.PlaySfx(SfxId.NOX_ALT_ATTACK_HIT);
+                    _scene.SpawnEffect(235, Vector3.UnitX, Vector3.UnitY, door.Position); // noxHit
+                    EndAltAttack();
+                }
+            }
+        }
+
         private void CheckCollision()
         {
             _standingEntCol = null;
@@ -401,6 +431,7 @@ namespace MphRead.Entities
                             + doorResult.Plane.Y * (lockPos.Y + 0.4f * doorResult.Plane.Y)
                             + doorResult.Plane.Z * (lockPos.Z + 0.4f * doorResult.Plane.Z);
                         HandleCollision(doorResult);
+                        AltAttackHitDoor(door);
                     }
                 }
             }
