@@ -108,10 +108,7 @@ namespace MphRead.Entities
             if (Active)
             {
                 _soundSource.Update(Position, rangeIndex: 7);
-                if (!IsAudible(NodeRef))
-                {
-                    _soundSource.Volume = 0;
-                }
+                UpdateNodeRefVolume();
                 _soundSource.PlaySfx(SfxId.ARTIFACT_LOOP, loop: true);
                 if (_data.ModelId >= 8)
                 {

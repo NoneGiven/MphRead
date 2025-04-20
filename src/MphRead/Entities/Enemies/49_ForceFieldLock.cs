@@ -119,7 +119,7 @@ namespace MphRead.Entities.Enemies
                     Debug.Assert(_equipInfo != null);
                     Vector3 spawnDir = (_targetPosition - Position).Normalized();
                     Vector3 spawnPos = Position + spawnDir * 0.1f;
-                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, _scene);
+                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, BeamSpawnFlags.None, NodeRef, _scene);
                 }
                 if (_shotFrames == 0)
                 {

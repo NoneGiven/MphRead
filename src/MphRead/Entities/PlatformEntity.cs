@@ -782,7 +782,7 @@ namespace MphRead.Entities
                     {
                         spawnFlags = BeamSpawnFlags.DestroyMuzzle;
                     }
-                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, spawnFlags, _scene);
+                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, spawnFlags, NodeRef, _scene);
                     BeamSfxInfo sfxInfo = _beamSfx[_data.BeamId];
                     if (sfxInfo.Data.Id != -1)
                     {
@@ -815,9 +815,9 @@ namespace MphRead.Entities
             if (!soundUpdated)
             {
                 _soundSource.Update(_visiblePosition, _sfxRangeIndex);
-                if (_data.ModelId != 5 && !IsAudible(NodeRef)) // Platform_Unit4_C1
+                if (_data.ModelId != 5) // Platform_Unit4_C1
                 {
-                    _soundSource.Volume = 0;
+                    UpdateNodeRefVolume();
                 }
             }
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects

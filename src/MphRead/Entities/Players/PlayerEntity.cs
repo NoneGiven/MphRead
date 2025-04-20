@@ -845,10 +845,7 @@ namespace MphRead.Entities
                     rangeIndex = 21;
                 }
                 _soundSource.Update(Position, rangeIndex);
-                if (!IsAudible(NodeRef))
-                {
-                    _soundSource.Volume = 0;
-                }
+                UpdateNodeRefVolume();
             }
             if (respawn)
             {

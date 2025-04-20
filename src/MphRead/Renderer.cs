@@ -2641,7 +2641,7 @@ namespace MphRead
                 for (int i = 0; i < _entities.Count; i++)
                 {
                     EntityBase entity = _entities[i];
-                    if (entity.Initialized && entity.PreProcess() && !entity.Process())
+                    if (entity.Initialized && !entity.Process())
                     {
                         SendMessage(Message.Destroyed, entity, null, 0, 0, delay: 1);
                         // todo: need to handle destroying vs. unloading etc.

@@ -100,10 +100,7 @@ namespace MphRead.Entities
                     if (_data.ItemType != ItemType.ArtifactKey)
                     {
                         _soundSource.Update(Position, rangeIndex: 7);
-                        if (!IsAudible(NodeRef))
-                        {
-                            _soundSource.Volume = 0;
-                        }
+                        UpdateNodeRefVolume();
                         _soundSource.PlaySfx(SfxId.ITEM_SPAWN1);
                     }
                     else if (_playKeySfx)

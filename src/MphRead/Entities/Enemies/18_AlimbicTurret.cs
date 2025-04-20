@@ -177,7 +177,7 @@ namespace MphRead.Entities.Enemies
                 _equipInfo.Weapon.UnchargedDamage = _values.BeamDamage;
                 _equipInfo.Weapon.SplashDamage = _values.SplashDamage;
                 _equipInfo.Weapon.HeadshotDamage = _values.BeamDamage;
-                BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnVec, BeamSpawnFlags.None, _scene);
+                BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnVec, BeamSpawnFlags.None, NodeRef, _scene);
                 _shotCount--;
                 _shotTimer = (ushort)(_values.ShotCooldown * 2); // todo: FPS stuff
             }
