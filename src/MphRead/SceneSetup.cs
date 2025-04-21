@@ -235,7 +235,12 @@ namespace MphRead
                         randomHunters &= ~(1 << (int)hunter);
                         randomHunterCount--;
                     }
-                    PlayerEntity.Create(hunter, spawner.Data.Fields.S09.HunterColor);
+                    int suitColor = spawner.Data.Fields.S09.HunterColor;
+                    if (hunter == PlayerEntity.Main.Hunter && suitColor == PlayerEntity.Main.Recolor)
+                    {
+                        suitColor = PlayerEntity.Main.Recolor == 0 ? 1 : 0;
+                    }
+                    PlayerEntity.Create(hunter, suitColor);
                     if (initialize)
                     {
                         player.LoadFlags |= LoadFlags.SlotActive;
