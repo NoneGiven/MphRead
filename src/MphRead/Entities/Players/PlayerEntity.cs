@@ -1019,7 +1019,7 @@ namespace MphRead.Entities
 
         public override bool ScanVisible()
         {
-            if (Health == 0)
+            if (Health == 0 || IsMainPlayer)
             {
                 return false;
             }

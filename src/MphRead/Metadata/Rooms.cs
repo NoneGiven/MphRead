@@ -796,7 +796,9 @@ namespace MphRead
                 light2Color: new ColorRgb(13, 12, 7),
                 light2Vector: new Vector3Fx(0, 4095, -409).ToFloatVector(),
                 farClip: 1638400,
-                killHeight: -122880,
+                // in-game the kill height is -30 (-122880), but that can kill alternate hunters
+                // at the bottom even though they're in-bounds, so it has been decreased to -31
+                killHeight: -126976,
                 size: RoomSize.SinglePlayer),
             new RoomMetadata(
                 id: 31,

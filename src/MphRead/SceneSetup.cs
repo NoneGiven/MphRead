@@ -1061,16 +1061,17 @@ namespace MphRead
             }
 
             short nextId = 30000;
-            JumpPadEntity CreateJumpPad(string nodeName, Vector3 position, float speed,
-                float radius = 1, float height = 1, TriggerFlags flags = TriggerFlags.PlayerAlt)
+            JumpPadEntity CreateJumpPad(string nodeName, Vector3 position, float speed, float radius = 1,
+                float height = 1, float offset = 0, ushort frames = 20, TriggerFlags flags = TriggerFlags.PlayerAlt)
             {
                 var radiusFx = new Fixed(Fixed.ToInt(radius));
                 var heightFx = new Fixed(Fixed.ToInt(height));
                 var header = new EntityDataHeader((ushort)EntityType.JumpPad, nextId++, position, Vector3.UnitY, Vector3.UnitZ);
-                var volume = new RawCollisionVolume(Vector3.UnitY.ToVector3Fx(), new Vector3Fx(), radiusFx, heightFx);
+                var cylPos = new Vector3Fx(0, Fixed.ToInt(offset), 0);
+                var volume = new RawCollisionVolume(Vector3.UnitY.ToVector3Fx(), cylPos, radiusFx, heightFx);
                 var data = new JumpPadEntityData(header, parentId: -1, volume, beamVector: Vector3.UnitY.ToVector3Fx(),
-                    speed: new Fixed(Fixed.ToInt(speed)), controlLockTime: 0, cooldownTime: 20, active: 1, modelId: 0,
-                    beamType: 0, triggerFlags: flags);
+                    speed: new Fixed(Fixed.ToInt(speed)), controlLockTime: 0, cooldownTime: frames, active: 1,
+                    modelId: 0, beamType: 0, triggerFlags: flags);
                 return new JumpPadEntity(data, nodeName, scene);
             }
 
@@ -1088,6 +1089,36 @@ namespace MphRead
             {
                 list.Add(CreateJumpPad("rmMain", new Vector3(8.7f, -2, 12.4f), 0.3f, 0.5f));
                 list.Add(CreateJumpPad("rmMain", new Vector3(8.7f, 3.4f, 0), 0.5f, 0.5f));
+            }
+            else if (roomId == 79 && hunter == Hunter.Noxus) // Sic Transit
+            {
+                EntityBase energyTankSpawn = GetEntity(EntityType.ItemSpawn, 29);
+                energyTankSpawn.Position = energyTankSpawn.Position.AddY(-1.5f);
+            }
+            else if (roomId == 78 && hunter == Hunter.Noxus) // Ice Hive
+            {
+                list.Add(CreateJumpPad("rmChamberE", new Vector3(18.5f, 33.5f, -38.6f), 0.3f, 0.4f, frames: 35));
+                list.Add(CreateJumpPad("rmChamberE", new Vector3(16.4f, 35.5f, -38.6f), 0.3f, 0.4f, frames: 35));
+                list.Add(CreateJumpPad("rmChamberE", new Vector3(19.1f, 40.5f, -38.6f), 0.3f, 0.4f, frames: 35));
+            }
+            else if (roomId == 80 && hunter == Hunter.Noxus) // Frost Labyrinth
+            {
+                list.Add(CreateJumpPad("rmC0b", new Vector3(8, 0, 12.1f), 0.5f, 0.3f, frames: 60));
+            }
+            else if (roomId == 30 && hunter == Hunter.Noxus) // Magma Drop
+            {
+                list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, -26.5f, 4.8f), 0.15f, 0.5f, offset: 2.1f));
+                list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, -21.6f, -6.8f), 0.5f, 0.5f));
+                list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, 3.2f, -14.6f), 0.6f, 0.5f));
+                list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, 73.5f, -9.4f), 0.5f, 0.5f));
+                list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, 94.2f, -15.5f), 0.5f, 0.5f));
+            }
+            else if (roomId == 38 && hunter == Hunter.Noxus) // Piston Cave
+            {
+                list.Add(CreateJumpPad("rmMain", new Vector3(-1.4f, 0.3f, 29.1f), 0.3f, 0.4f));
+                list.Add(CreateJumpPad("rmend", new Vector3(-10.8f, 9.6f, -28.3f), 0.3f, 0.4f));
+                list.Add(CreateJumpPad("rmend", new Vector3(-19.6f, 12, -28.3f), 0.3f, 0.4f));
+                list.Add(CreateJumpPad("rmend", new Vector3(-39.9f, 17, -24.5f), 0.5f, 0.4f));
             }
             return list;
         }
