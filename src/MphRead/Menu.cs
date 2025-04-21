@@ -1700,6 +1700,7 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (L) Logarithmic Spatial Audio: {OnOff(Features.LogSpatialAudio)}");
                     Console.WriteLine($"{X(s++)} (A) Consistent Alarm Interval: {OnOff(Features.HalfSecondAlarm)}");
                     Console.WriteLine($"{X(s++)} (B) Full Boost Charge: {OnOff(Features.FullBoostCharge)}");
+                    Console.WriteLine($"{X(s++)} (1) Update Adventure Mode For Other Hunters: {OnOff(Features.AlternateHunters1P)}");
                 }
                 else if (screen == 2)
                 {
@@ -1846,6 +1847,10 @@ namespace MphRead
                     {
                         selection = 13;
                     }
+                    else if (keyInfo.Key == ConsoleKey.D1 || keyInfo.Key == ConsoleKey.NumPad1)
+                    {
+                        selection = 14;
+                    }
                     else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
                     {
                         if (selection == 0)
@@ -1903,6 +1908,10 @@ namespace MphRead
                         else if (selection == 13)
                         {
                             Features.FullBoostCharge = false;
+                        }
+                        else if (selection == 14)
+                        {
+                            Features.AlternateHunters1P = true;
                         }
                     }
                     else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
@@ -2002,6 +2011,10 @@ namespace MphRead
                         else if (selection == 13)
                         {
                             Features.FullBoostCharge = !Features.FullBoostCharge;
+                        }
+                        else if (selection == 14)
+                        {
+                            Features.AlternateHunters1P = !Features.AlternateHunters1P;
                         }
                     }
                 }
@@ -2227,6 +2240,7 @@ namespace MphRead
             Features.LogSpatialAudio = false;
             Features.HalfSecondAlarm = false;
             Features.FullBoostCharge = false;
+            Features.AlternateHunters1P = true;
             Cheats.FreeWeaponSelect = false;
             Cheats.UnlimitedJumps = false;
             Cheats.NoRandomEncounters = false;

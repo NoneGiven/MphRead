@@ -1040,9 +1040,9 @@ namespace MphRead
 
         private static IReadOnlyList<EntityBase> GetExtraEntities(int roomId, IReadOnlyList<EntityBase> entities, Scene scene)
         {
-            // todo: load entities into unused rooms to make them more playable
+            // todo: load entities into unused rooms to make them playable
             Hunter hunter = PlayerEntity.Main.Hunter;
-            if (scene.GameMode != GameMode.SinglePlayer || hunter == Hunter.Samus)
+            if (scene.GameMode != GameMode.SinglePlayer || hunter == Hunter.Samus || !Features.AlternateHunters1P)
             {
                 return entities;
             }
@@ -1061,6 +1061,19 @@ namespace MphRead
             }
 
             short nextId = 30000;
+            JumpPadEntity CreateJumpPad(string nodeName, Vector3 position, float speed,
+                float radius = 1, float height = 1, TriggerFlags flags = TriggerFlags.PlayerAlt)
+            {
+                var radiusFx = new Fixed(Fixed.ToInt(radius));
+                var heightFx = new Fixed(Fixed.ToInt(height));
+                var header = new EntityDataHeader((ushort)EntityType.JumpPad, nextId++, position, Vector3.UnitY, Vector3.UnitZ);
+                var volume = new RawCollisionVolume(Vector3.UnitY.ToVector3Fx(), new Vector3Fx(), radiusFx, heightFx);
+                var data = new JumpPadEntityData(header, parentId: -1, volume, beamVector: Vector3.UnitY.ToVector3Fx(),
+                    speed: new Fixed(Fixed.ToInt(speed)), controlLockTime: 0, cooldownTime: 20, active: 1, modelId: 0,
+                    beamType: 0, triggerFlags: flags);
+                return new JumpPadEntity(data, nodeName, scene);
+            }
+
             var list = new List<EntityBase>(entities);
             if (roomId == 27 && hunter == Hunter.Noxus) // Alinos Gateway
             {
@@ -1069,14 +1082,12 @@ namespace MphRead
             }
             else if (roomId == 28 && hunter == Hunter.Noxus) // Echo Hall
             {
-                var position = new Vector3(-14.3f, 0, -8.9f);
-                var header = new EntityDataHeader((ushort)EntityType.JumpPad, nextId++,
-                    position, Vector3.UnitY, Vector3.UnitZ);
-                var volume = new RawCollisionVolume(Vector3.UnitY.ToVector3Fx(), new Vector3Fx(), new Fixed(4096), new Fixed(4096));
-                var data = new JumpPadEntityData(header, parentId: -1, volume, beamVector: Vector3.UnitY.ToVector3Fx(),
-                    speed: new Fixed(Fixed.ToInt(0.25f)), controlLockTime: 0, cooldownTime: 15, active: 1, modelId: 0,
-                    beamType: 0, TriggerFlags.PlayerAlt);
-                list.Add(new JumpPadEntity(data, "rmC0B", scene));
+                list.Add(CreateJumpPad("rmC0B", new Vector3(-14.3f, 0, -8.9f), 0.25f, 0.75f));
+            }
+            else if (roomId == 67 && hunter == Hunter.Noxus) // Cortex CPU
+            {
+                list.Add(CreateJumpPad("rmMain", new Vector3(8.7f, -2, 12.4f), 0.3f, 0.5f));
+                list.Add(CreateJumpPad("rmMain", new Vector3(8.7f, 3.4f, 0), 0.5f, 0.5f));
             }
             return list;
         }
