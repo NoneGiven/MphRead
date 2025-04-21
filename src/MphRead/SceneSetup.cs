@@ -1107,9 +1107,17 @@ namespace MphRead
                 list.Add(CreateJumpPad("rmChamberE", new Vector3(16.4f, 35.5f, -38.6f), 0.3f, 0.4f, frames: 35));
                 list.Add(CreateJumpPad("rmChamberE", new Vector3(19.1f, 40.5f, -38.6f), 0.3f, 0.4f, frames: 35));
             }
-            else if (roomId == 80 && hunter == Hunter.Noxus) // Frost Labyrinth
+            else if (roomId == 80) // Frost Labyrinth
             {
-                list.Add(CreateJumpPad("rmC0b", new Vector3(8, 0, 12.1f), 0.5f, 0.3f, frames: 60));
+                if (hunter == Hunter.Noxus)
+                {
+                    list.Add(CreateJumpPad("rmC0b", new Vector3(8, 0, 12.1f), 0.5f, 0.3f, frames: 60));
+                }
+                else if (hunter == Hunter.Kanden)
+                {
+                    EntityBase keySpawn = GetEntity(EntityType.ItemSpawn, 31);
+                    keySpawn.Position = keySpawn.Position.AddY(-0.7f);
+                }
             }
             else if (roomId == 30 && hunter == Hunter.Noxus) // Magma Drop
             {
