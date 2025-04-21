@@ -236,7 +236,8 @@ namespace MphRead
                         randomHunterCount--;
                     }
                     int suitColor = spawner.Data.Fields.S09.HunterColor;
-                    if (hunter == PlayerEntity.Main.Hunter && suitColor == PlayerEntity.Main.Recolor)
+                    if (hunter == PlayerEntity.Main.Hunter && suitColor == PlayerEntity.Main.Recolor
+                        && Features.AlternateHunters1P)
                     {
                         suitColor = PlayerEntity.Main.Recolor == 0 ? 1 : 0;
                     }
