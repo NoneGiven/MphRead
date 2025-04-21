@@ -775,7 +775,20 @@ namespace MphRead.Entities
             }
             if (IsAltForm)
             {
-                if (Hunter == Hunter.Spire && result.Field0 == 0)
+                bool climbing = Hunter == Hunter.Spire && result.Field0 == 0;
+                if (climbing)
+                {
+                    if ((_scene.RoomId == 30 || _scene.RoomId == 67) // Magma Drop, Cortex CPU
+                        && result.Plane.Y == 0 && result.Plane.Z == 0)
+                    {
+                        climbing = false;
+                    }
+                    else if (_scene.RoomId == 80 && CameraSequence.Current != null) // Frost Labyrinth
+                    {
+                        climbing = false;
+                    }
+                }
+                if (climbing)
                 {
                     for (int i = 0; i < _spireAltVecs.Length; i++)
                     {

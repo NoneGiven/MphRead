@@ -1091,10 +1091,13 @@ namespace MphRead
             {
                 list.Add(CreateJumpPad("rmC0B", new Vector3(-14.3f, 0, -8.9f), 0.25f, 0.75f));
             }
-            else if (roomId == 67 && hunter == Hunter.Noxus) // Cortex CPU
+            else if (roomId == 67 && (hunter == Hunter.Noxus || hunter == Hunter.Spire)) // Cortex CPU
             {
                 list.Add(CreateJumpPad("rmMain", new Vector3(8.7f, -2, 12.4f), 0.3f, 0.5f));
-                list.Add(CreateJumpPad("rmMain", new Vector3(8.7f, 3.4f, 0), 0.5f, 0.5f));
+                if (hunter == Hunter.Noxus)
+                {
+                    list.Add(CreateJumpPad("rmMain", new Vector3(8.7f, 3.4f, 0), 0.5f, 0.5f));
+                }
             }
             else if (roomId == 79 && hunter == Hunter.Noxus) // Sic Transit
             {
@@ -1109,7 +1112,7 @@ namespace MphRead
             }
             else if (roomId == 80) // Frost Labyrinth
             {
-                if (hunter == Hunter.Noxus)
+                if (hunter == Hunter.Noxus || hunter == Hunter.Spire)
                 {
                     list.Add(CreateJumpPad("rmC0b", new Vector3(8, 0, 12.1f), 0.5f, 0.3f, frames: 60));
                 }
@@ -1119,13 +1122,28 @@ namespace MphRead
                     keySpawn.Position = keySpawn.Position.AddY(-0.7f);
                 }
             }
-            else if (roomId == 30 && hunter == Hunter.Noxus) // Magma Drop
+            else if (roomId == 30 && (hunter == Hunter.Noxus || hunter == Hunter.Spire)) // Magma Drop
             {
                 list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, -26.5f, 4.8f), 0.15f, 0.5f, offset: 2.1f));
-                list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, -21.6f, -6.8f), 0.5f, 0.5f));
                 list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, 3.2f, -14.6f), 0.6f, 0.5f));
-                list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, 73.5f, -9.4f), 0.5f, 0.5f));
-                list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, 94.2f, -15.5f), 0.5f, 0.5f));
+                if (hunter == Hunter.Noxus)
+                {
+                    list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, -21.6f, -6.8f), 0.5f, 0.5f));
+                    list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, 73.5f, -9.4f), 0.5f, 0.5f));
+                    list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, 94.2f, -15.5f), 0.5f, 0.5f));
+                }
+                else if (hunter == Hunter.Spire)
+                {
+                    ((AreaVolumeEntity)GetEntity(EntityType.AreaVolume, 4)).Active = false;
+                }
+            }
+            else if (roomId == 41 && hunter == Hunter.Spire) // Processor Core
+            {
+                ((AreaVolumeEntity)GetEntity(EntityType.AreaVolume, 3)).Active = false;
+                ((AreaVolumeEntity)GetEntity(EntityType.AreaVolume, 11)).Active = false;
+                ((AreaVolumeEntity)GetEntity(EntityType.AreaVolume, 12)).Active = false;
+                ((AreaVolumeEntity)GetEntity(EntityType.AreaVolume, 13)).Active = false;
+                ((AreaVolumeEntity)GetEntity(EntityType.AreaVolume, 16)).Active = false;
             }
             else if (roomId == 38 && hunter == Hunter.Noxus) // Piston Cave
             {
