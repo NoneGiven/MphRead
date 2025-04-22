@@ -3499,9 +3499,9 @@ namespace MphRead
                 name: "biodefense chamber 06",
                 inGameName: "Early Processor Core",
                 archive: "unit1_b2",
-                modelPath: "unit1_b2_Model.bin",
-                animationPath: "unit1_b2_Anim.bin",
-                collisionPath: "unit1_b2_Collision.bin",
+                modelPath: "unit1_b2_model.bin",
+                animationPath: "unit1_b2_anim.bin",
+                collisionPath: "unit1_b2_collision.bin",
                 texturePath: null,
                 entityPath: null, // Unit1_b2_Ent is used in Cretaphid boss room
                 nodePath: "unit1_b2_node.bin", // todo?
@@ -3532,9 +3532,9 @@ namespace MphRead
                 name: "biodefense chamber 05",
                 inGameName: "Early Stasis Bunker",
                 archive: "unit2_b2",
-                modelPath: "unit2_b2_Model.bin",
-                animationPath: "unit2_b2_Anim.bin",
-                collisionPath: "unit2_b2_Collision.bin",
+                modelPath: "unit2_b2_model.bin",
+                animationPath: "unit2_b2_anim.bin",
+                collisionPath: "unit2_b2_collision.bin",
                 texturePath: null,
                 entityPath: null, // Unit2_b2_Ent is used in Slench boss room
                 nodePath: null, // unit2_b2_node is used in Slench boss room
@@ -3565,9 +3565,9 @@ namespace MphRead
                 name: "biodefense chamber 03",
                 inGameName: "Early Head Shot",
                 archive: "unit3_b1",
-                modelPath: "unit3_b1_Model.bin",
-                animationPath: "unit3_b1_Anim.bin",
-                collisionPath: "unit3_b1_Collision.bin",
+                modelPath: "unit3_b1_model.bin",
+                animationPath: "unit3_b1_anim.bin",
+                collisionPath: "unit3_b1_collision.bin",
                 texturePath: null,
                 entityPath: null, // Unit3_b1_Ent is used in Cretaphid boss room
                 nodePath: "unit3_b1_node.bin", // todo?
@@ -3598,9 +3598,9 @@ namespace MphRead
                 name: "biodefense chamber 08",
                 inGameName: "Early Fuel Stack",
                 archive: "unit3_b2",
-                modelPath: "unit3_b2_Model.bin",
-                animationPath: "unit3_b2_Anim.bin",
-                collisionPath: "unit3_b2_Collision.bin",
+                modelPath: "unit3_b2_model.bin",
+                animationPath: "unit3_b2_anim.bin",
+                collisionPath: "unit3_b2_collision.bin",
                 texturePath: null,
                 entityPath: null, // Unit3_b2_Ent is used in Slench boss room
                 nodePath: "unit3_b2_node.bin", // todo?
@@ -3631,9 +3631,9 @@ namespace MphRead
                 name: "biodefense chamber 04",
                 inGameName: "Early Sanctorus",
                 archive: "unit4_b1",
-                modelPath: "unit4_b1_Model.bin",
-                animationPath: "unit4_b1_Anim.bin",
-                collisionPath: "unit4_b1_Collision.bin",
+                modelPath: "unit4_b1_model.bin",
+                animationPath: "unit4_b1_anim.bin",
+                collisionPath: "unit4_b1_collision.bin",
                 texturePath: null,
                 entityPath: null, // unit4_b1_Ent is used in Slench boss room
                 nodePath: "unit4_b1_Node.bin", // todo: ?
@@ -3664,9 +3664,9 @@ namespace MphRead
                 name: "biodefense chamber 07",
                 inGameName: "Early Sic Transit",
                 archive: "unit4_b2",
-                modelPath: "unit4_b2_Model.bin",
-                animationPath: "unit4_b2_Anim.bin",
-                collisionPath: "unit4_b2_Collision.bin",
+                modelPath: "unit4_b2_model.bin",
+                animationPath: "unit4_b2_anim.bin",
+                collisionPath: "unit4_b2_collision.bin",
                 texturePath: null,
                 entityPath: null, // unit4_b2_Ent is used in Cretaphid boss room
                 nodePath: "unit4_b2_Node.bin", // todo: ?

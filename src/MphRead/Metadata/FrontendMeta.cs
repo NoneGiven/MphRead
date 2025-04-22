@@ -14,52 +14,52 @@ namespace MphRead
                 // cockpit
                 {
                     "unit1_land_cockpit",
-                    new ModelMetadata("unit1_land_cockpit", dir: MetaDir.Hud)
+                    new ModelMetadata("unit1_land_cockpit", @"hud\unit1_land_cockpit_model.bin", null, null)
                 },
                 {
                     "unit2_land_cockpit",
-                    new ModelMetadata("unit2_land_cockpit", dir: MetaDir.Hud)
+                    new ModelMetadata("unit2_land_cockpit", @"hud\unit2_land_cockpit_model.bin", null, null)
                 },
                 {
                     "unit3_land_cockpit",
-                    new ModelMetadata("unit3_land_cockpit", dir: MetaDir.Hud)
+                    new ModelMetadata("unit3_land_cockpit", @"hud\unit3_land_cockpit_model.bin", null, null)
                 },
                 {
                     "unit4_land_cockpit",
-                    new ModelMetadata("unit4_land_cockpit", dir: MetaDir.Hud)
+                    new ModelMetadata("unit4_land_cockpit", @"hud\unit4_land_cockpit_model.bin", null, null)
                 },
                 {
                     "gorea_land_cockpit",
-                    new ModelMetadata("gorea_land_cockpit", dir: MetaDir.Hud)
+                    new ModelMetadata("gorea_land_cockpit", @"hud\gorea_land_cockpit_model.bin", null, null)
                 },
                 // nav rooms
                 {
-                    "unit1_1NAV",
-                    new ModelMetadata("unit1_1NAV", dir: MetaDir.Hud)
+                    "unit1_1nav",
+                    new ModelMetadata("unit1_1nav", @"hud\unit1_1nav_model.bin", null, null)
                 },
                 {
-                    "unit1_2NAV",
-                    new ModelMetadata("unit1_2NAV", dir: MetaDir.Hud)
+                    "unit1_2nav",
+                    new ModelMetadata("unit1_2nav", @"hud\unit1_2nav_model.bin", null, null)
                 },
                 {
-                    "unit2_1NAV",
-                    new ModelMetadata("unit2_1NAV", dir: MetaDir.Hud)
+                    "unit2_1nav",
+                    new ModelMetadata("unit2_1nav", @"hud\unit2_1NAV_Model.bin", null, null)
                 },
                 {
-                    "unit2_2NAV",
-                    new ModelMetadata("unit2_2NAV", dir: MetaDir.Hud)
+                    "unit2_2nav",
+                    new ModelMetadata("unit2_2nav", @"hud\unit2_2nav_model.bin", null, null)
                 },
                 {
-                    "unit3_1NAV",
-                    new ModelMetadata("unit3_1NAV", dir: MetaDir.Hud)
+                    "unit3_1nav",
+                    new ModelMetadata("unit3_1nav", @"hud\unit3_1nav_model.bin", null, null)
                 },
                 {
-                    "unit3_2NAV",
-                    new ModelMetadata("unit3_2NAV", dir: MetaDir.Hud)
+                    "unit3_2nav",
+                    new ModelMetadata("unit3_2nav", @"hud\unit3_2nav_model.bin", null, null)
                 },
                 {
-                    "unit4_1NAV",
-                    new ModelMetadata("unit4_1NAV", dir: MetaDir.Hud)
+                    "unit4_1nav",
+                    new ModelMetadata("unit4_1nav", @"hud\unit4_1nav_model.bin", null, null)
                 },
                 {
                     "Door_NAV",
