@@ -437,11 +437,11 @@ namespace MphRead
                 }
                 if (layerId == 1)
                 {
-                    return "BossDefeated";
+                    return "Escape";
                 }
                 if (layerId == 2)
                 {
-                    return "SpLayer2";
+                    return "Cleared";
                 }
                 if (layerId == 3)
                 {
@@ -494,11 +494,11 @@ namespace MphRead
             }
             if (masked == 1)
             {
-                return "BossDefeated";
+                return "Escape";
             }
             if (masked == 2)
             {
-                return "SpLayer2";
+                return "Cleared";
             }
             if (masked == 3)
             {
