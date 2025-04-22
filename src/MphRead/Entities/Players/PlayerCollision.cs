@@ -244,7 +244,67 @@ namespace MphRead.Entities
             attacker.EndAltAttack();
         }
 
-        // note: the game does not have this functionality
+        // note: the game does not have the functionality of alt attacks hitting enemies or doors
+        public bool CheckAltAttackHitEnemy1(EnemyInstanceEntity target)
+        {
+            // the game assumes the hunter is noxus based on the alt attack timer
+            if (Hunter == Hunter.Spire && Flags2.TestFlag(PlayerFlags2.AltAttack))
+            {
+                CollisionResult unused = default;
+                if (CollisionDetection.CheckSphereOverlapVolume(target.HurtVolume, _spireRockPosL, 0.5f, ref unused)
+                    || CollisionDetection.CheckSphereOverlapVolume(target.HurtVolume, _spireRockPosR, 0.5f, ref unused))
+                {
+                    target.TakeDamage(Values.AltAttackDamage, this);
+                    _soundSource.PlaySfx(SfxId.SPIRE_ALT_ATTACK_HIT);
+                    return true;
+                }
+            }
+            else if (Hunter == Hunter.Noxus && _altAttackTime >= Values.AltAttackStartup * 2) // todo: FPS stuff
+            {
+                Vector3 between = target.HurtVolume.SpherePosition - Volume.SpherePosition;
+                float radius = target.HurtVolume.SphereRadius;
+                if (between.Y > -radius && between.Y < radius)
+                {
+                    float hMagSqr = between.X * between.X + between.Z * between.Z;
+                    float radAddSqr = radius + 1.8f;
+                    radAddSqr *= radAddSqr;
+                    if (hMagSqr < radAddSqr)
+                    {
+                        target.TakeDamage(Values.AltAttackDamage, this);
+                        _soundSource.PlaySfx(SfxId.NOX_ALT_ATTACK_HIT);
+                        _scene.SpawnEffect(235, Vector3.UnitX, Vector3.UnitY, target.Position); // noxHit
+                        EndAltAttack();
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public bool CheckAltAttackHitEnemy2(EnemyInstanceEntity target)
+        {
+            if ((Hunter == Hunter.Trace || Hunter == Hunter.Weavel) && Flags2.TestFlag(PlayerFlags2.AltAttack))
+            {
+                Vector3 between = _volume.SpherePosition - target.HurtVolume.SpherePosition;
+                float distSqr = between.LengthFast;
+                if (distSqr == 0)
+                {
+                    between = Vector3.UnitX;
+                    distSqr = 1;
+                }
+                float radii = _volume.SphereRadius + target.HurtVolume.SphereRadius;
+                if (distSqr < radii * radii)
+                {
+                    target.TakeDamage(Values.AltAttackDamage, this);
+                    SfxId sfx = Hunter == Hunter.Weavel ? SfxId.WEAVEL_ALT_ATTACK_HIT : SfxId.TRACE_ALT_ATTACK_HIT;
+                    _soundSource.PlaySfx(sfx);
+                    EndAltAttack();
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private void AltAttackHitDoor(DoorEntity door)
         {
             if ((Hunter == Hunter.Spire || Hunter == Hunter.Trace || Hunter == Hunter.Weavel) && Flags2.TestFlag(PlayerFlags2.AltAttack)

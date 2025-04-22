@@ -234,9 +234,10 @@ namespace MphRead.Entities.Enemies
                 Position = _target.FacingVector * Fixed.ToFloat(819) + _target.Position;
                 Func214E708(Func214E82C);
             }
-            else if (_state1 == 13)
+            else if (_state1 == 13 && _target != null)
             {
-                Debug.Assert(_target != null);
+                // the game doesn't have these null check.
+                // we have them due to jank with alt hunters
                 Func214D9F8();
                 Func214D864(_target);
                 if (_target.IsUnmorphing)
@@ -586,7 +587,10 @@ namespace MphRead.Entities.Enemies
 
         private bool Func214D65C(PlayerEntity? player)
         {
-            Debug.Assert(player != null);
+            if (player == null)
+            {
+                return false;
+            }
             CollisionResult discard = default;
             return CollisionDetection.CheckSphereOverlapVolume(player.Volume, Position, 4, ref discard);
         }
@@ -658,7 +662,10 @@ namespace MphRead.Entities.Enemies
 
         private bool Func214DAF8()
         {
-            Debug.Assert(_target != null);
+            if (_target == null)
+            {
+                return false;
+            }
             Vector3 targetPos;
             if (_target.IsAltForm)
             {
@@ -917,11 +924,11 @@ namespace MphRead.Entities.Enemies
                         Func214E1C0(source);
                     }
                 }
-                else if (source.Type == EntityType.Bomb)
+                else if (source.Type == EntityType.Bomb || source.Type == EntityType.Player)
                 {
                     _hitByBomb = true;
                     Func214E1C0(PlayerEntity.Main);
-                    if (((BombEntity)source).Owner.Hunter != Hunter.Samus)
+                    if (source.Type == EntityType.Player || ((BombEntity)source).Owner.Hunter != Hunter.Samus)
                     {
                         hitByNonSamusBomb = true;
                     }
