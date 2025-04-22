@@ -5,6 +5,7 @@ using MphRead.Effects;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
+using MphRead.Sound;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -173,6 +174,10 @@ namespace MphRead.Entities
             _forwardSpeed = data.ForwardSpeed.FloatValue / 2f; // todo: FPS stuff
             _backwardSpeed = data.BackwardSpeed.FloatValue / 2f; // todo: FPS stuff
             UpdatePosition();
+            // the platform may activate and start playing SFX before it's initialized,
+            // which can cause loud/overlapped audio at a point when it shouldn't be audible.
+            // start at zero volume and let it get updated normally by the process function.
+            _soundSource.Volume = 0;
             _moveSfx = new MoveSfxInfo(
                 start1: new SfxData(Metadata.PlatformSfx[_data.ModelId, 0]),
                 start2: new SfxData(Metadata.PlatformSfx[_data.ModelId, 1]),
