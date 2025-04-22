@@ -273,6 +273,11 @@ namespace MphRead.Entities
             return true;
         }
 
+        public void ResetGroundedState()
+        {
+            _grounded = false;
+        }
+
         private bool UpdateAim(Vector3 muzzlePos)
         {
             Debug.Assert(_target != null);

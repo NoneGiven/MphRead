@@ -1081,34 +1081,61 @@ namespace MphRead
                 return new JumpPadEntity(data, nodeName, scene);
             }
 
+            TeleporterEntity CreateTeleporter(Vector3 position, Vector3 targetPos, Vector3 facing, string nodeName, string targetNode)
+            {
+                var header = new EntityDataHeader((ushort)EntityType.Teleporter, nextId++, position, Vector3.UnitY, facing);
+                var data = new TeleporterEntityData(header, 0, 0, 8, 1, 1, null, targetPos.ToVector3Fx(), targetNode);
+                return new TeleporterEntity(data, nodeName, scene, forceMultiplayer: true);
+            }
+
             var list = new List<EntityBase>(entities);
-            if (roomId == 27 && hunter == Hunter.Noxus) // Alinos Gateway
+            if (roomId == 27 && (hunter == Hunter.Noxus || hunter == Hunter.Trace)) // Alinos Gateway
             {
                 EntityBase missileSpawn = GetEntity(EntityType.ItemSpawn, 13);
                 missileSpawn.Position = new Vector3(-60, 6.5f, 33.6f);
             }
-            else if (roomId == 28 && hunter == Hunter.Noxus) // Echo Hall
+            else if (roomId == 28 && (hunter == Hunter.Noxus || hunter == Hunter.Trace)) // Echo Hall
             {
                 list.Add(CreateJumpPad("rmC0B", new Vector3(-14.3f, 0, -8.9f), 0.25f, 0.75f));
             }
-            else if (roomId == 67 && (hunter == Hunter.Noxus || hunter == Hunter.Spire)) // Cortex CPU
+            else if (roomId == 67  && (hunter == Hunter.Noxus || hunter == Hunter.Spire
+                || hunter == Hunter.Trace || hunter == Hunter.Weavel)) // Cortex CPU
             {
-                list.Add(CreateJumpPad("rmMain", new Vector3(8.7f, -2, 12.4f), 0.3f, 0.5f));
-                if (hunter == Hunter.Noxus)
+                if (hunter != Hunter.Weavel)
+                {
+                    list.Add(CreateJumpPad("rmMain", new Vector3(8.7f, -2, 12.4f), 0.3f, 0.5f));
+                }
+                if (hunter == Hunter.Noxus || hunter == Hunter.Trace || hunter == Hunter.Weavel)
                 {
                     list.Add(CreateJumpPad("rmMain", new Vector3(8.7f, 3.4f, 0), 0.5f, 0.5f));
                 }
             }
-            else if (roomId == 79 && hunter == Hunter.Noxus) // Sic Transit
+            else if (roomId == 79 && (hunter == Hunter.Noxus || hunter == Hunter.Trace)) // Sic Transit
             {
                 EntityBase energyTankSpawn = GetEntity(EntityType.ItemSpawn, 29);
                 energyTankSpawn.Position = energyTankSpawn.Position.AddY(-1.5f);
             }
             else if (roomId == 78 && hunter == Hunter.Noxus) // Ice Hive
             {
-                list.Add(CreateJumpPad("rmChamberE", new Vector3(18.5f, 33.5f, -38.6f), 0.3f, 0.4f, frames: 35));
+                list.Add(CreateJumpPad("rmChamberE", new Vector3(18.5f, 33.5f, -38.6f), 0.3f, 0.4f, frames: 35)); // same v
                 list.Add(CreateJumpPad("rmChamberE", new Vector3(16.4f, 35.5f, -38.6f), 0.3f, 0.4f, frames: 35));
                 list.Add(CreateJumpPad("rmChamberE", new Vector3(19.1f, 40.5f, -38.6f), 0.3f, 0.4f, frames: 35));
+            }
+            else if (roomId == 78 && hunter == Hunter.Weavel) // Ice Hive
+            {
+                list.Add(CreateJumpPad("rmChamberE", new Vector3(18.5f, 33.5f, -38.6f), 0.3f, 0.4f, frames: 35)); // same ^
+            }
+            else if (roomId == 78 && (hunter == Hunter.Trace || hunter == Hunter.Sylux)) // Ice Hive
+            {
+                var position = new Vector3(18.5f, 33, -38.6f);
+                var targetPos = new Vector3(16.8f, 35.5f, -38.6f);
+                list.Add(CreateTeleporter(position, targetPos, -Vector3.UnitZ, "rmChamberE", "rmChamberE"));
+                if (hunter == Hunter.Trace)
+                {
+                    position = new Vector3(19.1f, 40, -38.6f);
+                    targetPos = new Vector3(17.4f, 43.3f, -22.5f);
+                    list.Add(CreateTeleporter(position, targetPos, -Vector3.UnitZ, "rmChamberE", "rmChamberE"));
+                }
             }
             else if (roomId == 80) // Frost Labyrinth
             {
@@ -1121,20 +1148,42 @@ namespace MphRead
                     EntityBase keySpawn = GetEntity(EntityType.ItemSpawn, 31);
                     keySpawn.Position = keySpawn.Position.AddY(-0.7f);
                 }
-            }
-            else if (roomId == 30 && (hunter == Hunter.Noxus || hunter == Hunter.Spire)) // Magma Drop
-            {
-                list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, -26.5f, 4.8f), 0.15f, 0.5f, offset: 2.1f));
-                list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, 3.2f, -14.6f), 0.6f, 0.5f));
-                if (hunter == Hunter.Noxus)
+                else if (hunter == Hunter.Weavel)
                 {
-                    list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, -21.6f, -6.8f), 0.5f, 0.5f));
-                    list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, 73.5f, -9.4f), 0.5f, 0.5f));
-                    list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, 94.2f, -15.5f), 0.5f, 0.5f));
+                    EntityBase keySpawn = GetEntity(EntityType.ItemSpawn, 31);
+                    keySpawn.Position = keySpawn.Position.AddY(-2);
                 }
-                else if (hunter == Hunter.Spire)
+                else if (hunter == Hunter.Trace)
                 {
-                    ((AreaVolumeEntity)GetEntity(EntityType.AreaVolume, 4)).Active = false;
+                    EntityBase keySpawn = GetEntity(EntityType.ItemSpawn, 31);
+                    keySpawn.Position = keySpawn.Position.WithY(0);
+                }
+            }
+            else if (roomId == 30) // Magma Drop
+            {
+                if (hunter == Hunter.Noxus || hunter == Hunter.Spire || hunter == Hunter.Trace || hunter == Hunter.Weavel)
+                {
+                    list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, -26.5f, 4.8f), 0.15f, 0.5f, offset: 2.2f));
+                    list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, 3.2f, -14.6f), 0.6f, 0.5f));
+                    if (hunter != Hunter.Spire)
+                    {
+                        list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, -21.6f, -6.8f), 0.5f, 0.5f));
+                        list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, 73.5f, -9.4f), 0.5f, 0.5f));
+                        list.Add(CreateJumpPad("rmLava", new Vector3(0.6f, 94.2f, -15.5f), 0.5f, 0.5f));
+                    }
+                    else
+                    {
+                        ((AreaVolumeEntity)GetEntity(EntityType.AreaVolume, 4)).Active = false;
+                    }
+                }
+                if (hunter == Hunter.Trace || hunter == Hunter.Sylux)
+                {
+                    var position = new Vector3(0.59f, -27.63f, -11.91f);
+                    var targetPos = new Vector3(0.59f, -20.63f, -6.81f);
+                    list.Add(CreateTeleporter(position, -Vector3.UnitX, targetPos, "rmLava", "rmLava"));
+                    position = new Vector3(0.59f, -23.03f, -10.61f);
+                    targetPos = new Vector3(0.59f, -28.43f, -10.61f);
+                    list.Add(CreateTeleporter(position, -Vector3.UnitX, targetPos, "rmLava", "rmLava"));
                 }
             }
             else if (roomId == 41 && hunter == Hunter.Spire) // Processor Core
@@ -1145,12 +1194,18 @@ namespace MphRead
                 ((AreaVolumeEntity)GetEntity(EntityType.AreaVolume, 13)).Active = false;
                 ((AreaVolumeEntity)GetEntity(EntityType.AreaVolume, 16)).Active = false;
             }
-            else if (roomId == 38 && hunter == Hunter.Noxus) // Piston Cave
+            else if (roomId == 38 && (hunter == Hunter.Noxus || hunter == Hunter.Trace)) // Piston Cave
             {
                 list.Add(CreateJumpPad("rmMain", new Vector3(-1.4f, 0.3f, 29.1f), 0.3f, 0.4f));
-                list.Add(CreateJumpPad("rmend", new Vector3(-10.8f, 9.6f, -28.3f), 0.3f, 0.4f));
-                list.Add(CreateJumpPad("rmend", new Vector3(-19.6f, 12, -28.3f), 0.3f, 0.4f));
+                list.Add(CreateJumpPad("rmMain", new Vector3(29.1f, 0.3f, 1.4f), 0.3f, 0.4f));
+                list.Add(CreateJumpPad("rmend", new Vector3(-10.8f, 9.6f, -28.3f), 0.3f, 0.4f)); // same v
+                list.Add(CreateJumpPad("rmend", new Vector3(-19.6f, 12, -28.3f), 0.3f, 0.4f)); // same v
                 list.Add(CreateJumpPad("rmend", new Vector3(-39.9f, 17, -24.5f), 0.5f, 0.4f));
+            }
+            else if (roomId == 38 && hunter == Hunter.Weavel) // Piston Cave
+            {
+                list.Add(CreateJumpPad("rmend", new Vector3(-10.8f, 9.6f, -28.3f), 0.3f, 0.4f)); // same ^
+                list.Add(CreateJumpPad("rmend", new Vector3(-19.6f, 12, -28.3f), 0.3f, 0.4f)); // same ^
             }
             return list;
         }

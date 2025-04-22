@@ -2034,25 +2034,29 @@ namespace MphRead
                     {
                         selection = 1;
                     }
-                    else if (keyInfo.Key == ConsoleKey.D)
+                    else if (keyInfo.Key == ConsoleKey.E)
                     {
                         selection = 2;
                     }
-                    else if (keyInfo.Key == ConsoleKey.R)
+                    else if (keyInfo.Key == ConsoleKey.D)
                     {
                         selection = 3;
                     }
-                    else if (keyInfo.Key == ConsoleKey.U)
+                    else if (keyInfo.Key == ConsoleKey.R)
                     {
                         selection = 4;
                     }
-                    else if (keyInfo.Key == ConsoleKey.O)
+                    else if (keyInfo.Key == ConsoleKey.U)
                     {
                         selection = 5;
                     }
-                    else if (keyInfo.Key == ConsoleKey.G)
+                    else if (keyInfo.Key == ConsoleKey.O)
                     {
                         selection = 6;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.G)
+                    {
+                        selection = 7;
                     }
                     else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
                     {
