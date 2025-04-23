@@ -5,7 +5,6 @@ using MphRead.Effects;
 using MphRead.Formats;
 using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
-using MphRead.Sound;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
