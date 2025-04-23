@@ -405,6 +405,22 @@ namespace MphRead
         public readonly uint ModelId;
         public readonly uint BeamType; // always 0, has no imapct
         public readonly TriggerFlags TriggerFlags;
+
+        public JumpPadEntityData(EntityDataHeader header, int parentId, RawCollisionVolume volume, Vector3Fx beamVector,
+            Fixed speed, ushort controlLockTime, ushort cooldownTime, byte active, uint modelId, uint beamType, TriggerFlags triggerFlags)
+        {
+            Header = header;
+            ParentId = parentId;
+            Volume = volume;
+            BeamVector = beamVector;
+            Speed = speed;
+            ControlLockTime = controlLockTime;
+            CooldownTime = cooldownTime;
+            Active = active;
+            ModelId = modelId;
+            BeamType = beamType;
+            TriggerFlags = triggerFlags;
+        }
     }
 
     // size: 272
@@ -500,6 +516,35 @@ namespace MphRead
         public readonly Vector3Fx TargetPosition;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public readonly char[] NodeName;
+
+        public TeleporterEntityData(EntityDataHeader header, byte loadIndex, byte targetIndex, byte artifactId,
+            byte active, byte invisible, string? entityFilename, Vector3Fx targetPosition, string? nodeName)
+        {
+            Header = header;
+            LoadIndex = loadIndex;
+            TargetIndex = targetIndex;
+            ArtifactId = artifactId;
+            Active = active;
+            Invisible = invisible;
+            EntityFilename = new char[15];
+            if (entityFilename != null)
+            {
+                for (int i = 0; i < Math.Min(15, entityFilename.Length); i++)
+                {
+                    EntityFilename[i] = entityFilename[i];
+                }
+            }
+            Unused3A = UInt16.MaxValue;
+            TargetPosition = targetPosition;
+            NodeName = new char[16];
+            if (nodeName != null)
+            {
+                for (int i = 0; i < Math.Min(16, nodeName.Length); i++)
+                {
+                    NodeName[i] = nodeName[i];
+                }
+            }
+        }
     }
 
     // size: 104

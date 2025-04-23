@@ -584,13 +584,13 @@ namespace MphRead
                     }
                     else if (NeededSave == SaveWhen.Prompt)
                     {
-                        Console.Clear();
-                        Console.WriteLine($"MphRead Version {Program.Version}");
-                        Console.WriteLine();
-                        Console.WriteLine($"Save game to slot {SaveSlot}? (y/n)");
                         ConsoleKey input = ConsoleKey.None;
                         while (input != ConsoleKey.Y && input != ConsoleKey.N && input != ConsoleKey.Escape)
                         {
+                            Console.Clear();
+                            Console.WriteLine($"MphRead Version {Program.Version}");
+                            Console.WriteLine();
+                            Console.WriteLine($"Save game to slot {SaveSlot}? (y/n)");
                             input = Console.ReadKey().Key;
                             if (input == ConsoleKey.Y)
                             {
@@ -1700,6 +1700,7 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (L) Logarithmic Spatial Audio: {OnOff(Features.LogSpatialAudio)}");
                     Console.WriteLine($"{X(s++)} (A) Consistent Alarm Interval: {OnOff(Features.HalfSecondAlarm)}");
                     Console.WriteLine($"{X(s++)} (B) Full Boost Charge: {OnOff(Features.FullBoostCharge)}");
+                    Console.WriteLine($"{X(s++)} (1) Update Adventure Mode For Other Hunters: {OnOff(Features.AlternateHunters1P)}");
                 }
                 else if (screen == 2)
                 {
@@ -1848,6 +1849,10 @@ namespace MphRead
                     {
                         selection = 13;
                     }
+                    else if (keyInfo.Key == ConsoleKey.D1 || keyInfo.Key == ConsoleKey.NumPad1)
+                    {
+                        selection = 14;
+                    }
                     else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
                     {
                         if (selection == 0)
@@ -1905,6 +1910,10 @@ namespace MphRead
                         else if (selection == 13)
                         {
                             Features.FullBoostCharge = false;
+                        }
+                        else if (selection == 14)
+                        {
+                            Features.AlternateHunters1P = true;
                         }
                     }
                     else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
@@ -2005,6 +2014,10 @@ namespace MphRead
                         {
                             Features.FullBoostCharge = !Features.FullBoostCharge;
                         }
+                        else if (selection == 14)
+                        {
+                            Features.AlternateHunters1P = !Features.AlternateHunters1P;
+                        }
                     }
                 }
                 else if (screen == 2)
@@ -2023,25 +2036,29 @@ namespace MphRead
                     {
                         selection = 1;
                     }
-                    else if (keyInfo.Key == ConsoleKey.D)
+                    else if (keyInfo.Key == ConsoleKey.E)
                     {
                         selection = 2;
                     }
-                    else if (keyInfo.Key == ConsoleKey.R)
+                    else if (keyInfo.Key == ConsoleKey.D)
                     {
                         selection = 3;
                     }
-                    else if (keyInfo.Key == ConsoleKey.U)
+                    else if (keyInfo.Key == ConsoleKey.R)
                     {
                         selection = 4;
                     }
-                    else if (keyInfo.Key == ConsoleKey.O)
+                    else if (keyInfo.Key == ConsoleKey.U)
                     {
                         selection = 5;
                     }
-                    else if (keyInfo.Key == ConsoleKey.G)
+                    else if (keyInfo.Key == ConsoleKey.O)
                     {
                         selection = 6;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.G)
+                    {
+                        selection = 7;
                     }
                     else if (keyInfo.Key == ConsoleKey.D2 || keyInfo.Key == ConsoleKey.NumPad2)
                     {
@@ -2253,6 +2270,7 @@ namespace MphRead
             Features.LogSpatialAudio = false;
             Features.HalfSecondAlarm = false;
             Features.FullBoostCharge = false;
+            Features.AlternateHunters1P = true;
             Cheats.FreeWeaponSelect = false;
             Cheats.UnlimitedJumps = false;
             Cheats.NoRandomEncounters = false;

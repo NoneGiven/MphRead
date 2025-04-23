@@ -227,12 +227,21 @@ namespace MphRead.Entities
                         }
                         var player = (PlayerEntity)entity;
                         CollisionResult hitRes = default;
-                        if (player.Health > 0 && CollisionDetection.CheckVolumesOverlap(player.Volume, HurtVolume, ref hitRes))
+                        if (player.Health > 0)
                         {
-                            HitPlayers[player.SlotIndex] = true;
-                            if (Flags.TestFlag(EnemyFlags.CollidePlayer))
+                            // the game does not check fot alt attacks hitting enemies
+                            bool hit = player.CheckAltAttackHitEnemy1(this);
+                            if (!hit)
                             {
-                                player.HandleCollision(hitRes);
+                                hit = player.CheckAltAttackHitEnemy2(this);
+                            }
+                            if (!hit && CollisionDetection.CheckVolumesOverlap(player.Volume, HurtVolume, ref hitRes))
+                            {
+                                HitPlayers[player.SlotIndex] = true;
+                                if (Flags.TestFlag(EnemyFlags.CollidePlayer))
+                                {
+                                    player.HandleCollision(hitRes);
+                                }
                             }
                         }
                     }
