@@ -71,6 +71,7 @@ namespace MphRead
         public static bool LogSpatialAudio { get; set; } = false; // false
         public static bool HalfSecondAlarm { get; set; } = false; // false
         public static bool FullBoostCharge { get; set; } = false; // false
+        public static bool AlternateHunters1P { get; set; } = true; // false
 
         public static void Load(IReadOnlyDictionary<string, string> values)
         {
@@ -130,6 +131,10 @@ namespace MphRead
             {
                 FullBoostCharge = boolean;
             }
+            if (values.TryGetValue(nameof(AlternateHunters1P), out value) && Boolean.TryParse(value, out boolean))
+            {
+                AlternateHunters1P = boolean;
+            }
         }
 
         public static IReadOnlyDictionary<string, string> Commit()
@@ -149,7 +154,8 @@ namespace MphRead
                 { nameof(MaxPlayerDetail), MaxPlayerDetail.ToString().ToLower() },
                 { nameof(LogSpatialAudio), LogSpatialAudio.ToString().ToLower() },
                 { nameof(HalfSecondAlarm), HalfSecondAlarm.ToString().ToLower() },
-                { nameof(FullBoostCharge), FullBoostCharge.ToString().ToLower() }
+                { nameof(FullBoostCharge), FullBoostCharge.ToString().ToLower() },
+                { nameof(AlternateHunters1P), AlternateHunters1P.ToString().ToLower() }
             };
         }
     }

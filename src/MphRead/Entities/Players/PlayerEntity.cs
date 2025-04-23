@@ -845,10 +845,7 @@ namespace MphRead.Entities
                     rangeIndex = 21;
                 }
                 _soundSource.Update(Position, rangeIndex);
-                if (!IsAudible(NodeRef))
-                {
-                    _soundSource.Volume = 0;
-                }
+                UpdateNodeRefVolume();
             }
             if (respawn)
             {
@@ -1022,7 +1019,7 @@ namespace MphRead.Entities
 
         public override bool ScanVisible()
         {
-            if (Health == 0)
+            if (Health == 0 || IsMainPlayer)
             {
                 return false;
             }

@@ -215,6 +215,10 @@ namespace MphRead.Entities
             if (Unlocked && _lock.AnimInfo.Flags[0].TestFlag(AnimFlags.Ended))
             {
                 Flags &= ~DoorFlags.Locked;
+                // the game doesn't clear the unlocked flag, which results in the story save update happening
+                // every frame after a door is unlocked. in our case, that can cause room state issues during
+                // room transitions, so we clear it. shouldn't cause any differences in behavior.
+                Flags &= ~DoorFlags.Unlocked;
                 GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
             }
             UpdateScanId();

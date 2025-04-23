@@ -288,12 +288,6 @@ namespace MphRead.Entities
         {
         }
 
-        public bool PreProcess()
-        {
-            _soundSource.Volume = 1;
-            return true;
-        }
-
         public virtual bool Process()
         {
             if (Active)
@@ -422,6 +416,11 @@ namespace MphRead.Entities
                     GetItems(inst, index, model.Nodes[node.NextIndex], polygonId);
                 }
             }
+        }
+
+        protected void UpdateNodeRefVolume()
+        {
+            _soundSource.Volume = IsAudible(NodeRef) ? 1 : 0;
         }
 
         protected bool IsAudible(NodeRef nodeRef)

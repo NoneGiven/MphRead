@@ -40,9 +40,9 @@ namespace MphRead.Entities.Enemies
 
         protected override void EnemyInitialize()
         {
-            Matrix4 transform = GetTransformMatrix(_spawner.Data.Header.FacingVector.ToFloatVector(), Vector3.UnitY);
-            transform.Row3.Xyz = _spawner.Data.Header.Position.ToFloatVector();
-            Transform = transform;
+            Vector3 facing = _spawner.Data.Header.FacingVector.ToFloatVector();
+            Vector3 up = FixParallelVectors(facing, Vector3.UnitY);
+            SetTransform(facing, up, _spawner.Data.Header.Position.ToFloatVector());
             _movementType = _spawner.Data.Fields.S01.WarWasp.MovementType;
             _health = _healthMax = (ushort)(_movementType == 3 ? 8 : 40);
             Flags |= EnemyFlags.Visible;

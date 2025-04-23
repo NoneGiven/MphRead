@@ -53,7 +53,8 @@ namespace MphRead.Entities.Enemies
         {
             int version = (int)_spawner.Data.Fields.S08.EnemyVersion;
             Recolor = _recolors[version];
-            SetTransform(_spawner.FacingVector, Vector3.UnitY, _spawner.Position);
+            Vector3 up = FixParallelVectors(_spawner.FacingVector, Vector3.UnitY);
+            SetTransform(_spawner.FacingVector, up, _spawner.Position);
             _movementType = _spawner.Data.Fields.S08.WarWasp.MovementType;
             Flags |= EnemyFlags.Visible;
             Flags |= EnemyFlags.OnRadar;
@@ -198,7 +199,7 @@ namespace MphRead.Entities.Enemies
                 _equipInfo.Weapon.SplashDamage = _values.SplashDamage;
                 _equipInfo.Weapon.HeadshotDamage = _values.BeamDamage;
                 Vector3 spawnPos = Position.AddY(-0.5f);
-                BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, _aimVector, BeamSpawnFlags.None, _scene);
+                BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, _aimVector, BeamSpawnFlags.None, NodeRef, _scene);
                 _shotCount--;
                 PlayBeamShotSfx();
             }

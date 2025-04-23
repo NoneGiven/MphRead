@@ -170,7 +170,7 @@ namespace MphRead.Entities.Enemies
                 _equipInfo.Weapon.UnchargedDamage = _values.Damage;
                 _equipInfo.Weapon.HeadshotDamage = _values.Damage;
                 SetAnimationReverse();
-                BeamProjectileEntity.Spawn(this, _equipInfo, Position, spawnDir, BeamSpawnFlags.None, _scene);
+                BeamProjectileEntity.Spawn(this, _equipInfo, Position, spawnDir, BeamSpawnFlags.None, NodeRef, _scene);
                 _shotsRemaining--;
                 _shotCooldown = _values.ShotCooldown * 2; // todo: FPS stuff
             }

@@ -173,6 +173,10 @@ namespace MphRead.Entities
             _forwardSpeed = data.ForwardSpeed.FloatValue / 2f; // todo: FPS stuff
             _backwardSpeed = data.BackwardSpeed.FloatValue / 2f; // todo: FPS stuff
             UpdatePosition();
+            // the platform may activate and start playing SFX before it's initialized,
+            // which can cause loud/overlapped audio at a point when it shouldn't be audible.
+            // start at zero volume and let it get updated normally by the process function.
+            _soundSource.Volume = 0;
             _moveSfx = new MoveSfxInfo(
                 start1: new SfxData(Metadata.PlatformSfx[_data.ModelId, 0]),
                 start2: new SfxData(Metadata.PlatformSfx[_data.ModelId, 1]),
@@ -782,7 +786,7 @@ namespace MphRead.Entities
                     {
                         spawnFlags = BeamSpawnFlags.DestroyMuzzle;
                     }
-                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, spawnFlags, _scene);
+                    BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnDir, spawnFlags, NodeRef, _scene);
                     BeamSfxInfo sfxInfo = _beamSfx[_data.BeamId];
                     if (sfxInfo.Data.Id != -1)
                     {
@@ -815,9 +819,9 @@ namespace MphRead.Entities
             if (!soundUpdated)
             {
                 _soundSource.Update(_visiblePosition, _sfxRangeIndex);
-                if (_data.ModelId != 5 && !IsAudible(NodeRef)) // Platform_Unit4_C1
+                if (_data.ModelId != 5) // Platform_Unit4_C1
                 {
-                    _soundSource.Volume = 0;
+                    UpdateNodeRefVolume();
                 }
             }
             // todo: if "is_visible" returns false (and other conditions), don't draw the effects

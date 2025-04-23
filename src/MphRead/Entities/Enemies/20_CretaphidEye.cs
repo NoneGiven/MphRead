@@ -319,7 +319,7 @@ namespace MphRead.Entities.Enemies
             {
                 spawnDir = facing;
             }
-            BeamProjectileEntity.Spawn(this, equipInfo, Position, spawnDir, BeamSpawnFlags.None, _scene);
+            BeamProjectileEntity.Spawn(this, equipInfo, Position, spawnDir, BeamSpawnFlags.None, NodeRef, _scene);
         }
 
         private void CheckBeamCollision()

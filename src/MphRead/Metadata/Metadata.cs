@@ -262,6 +262,20 @@ namespace MphRead
             };
             FirstHunt = firstHunt;
         }
+
+        // for models where nothing special is going on, but the paths need to be specified case-sensitively
+        public ModelMetadata(string name, string modelPath, string? animationPath, string? collisionPath, bool firstHunt = false)
+        {
+            Name = name;
+            ModelPath = modelPath;
+            AnimationPath = animationPath;
+            CollisionPath = collisionPath;
+            Recolors = new List<RecolorMetadata>()
+            {
+                new RecolorMetadata("default", modelPath, modelPath)
+            };
+            FirstHunt = firstHunt;
+        }
     }
 
     public class RecolorMetadata
@@ -437,11 +451,11 @@ namespace MphRead
                 }
                 if (layerId == 1)
                 {
-                    return "BossDefeated";
+                    return "Escape";
                 }
                 if (layerId == 2)
                 {
-                    return "SpLayer2";
+                    return "Cleared";
                 }
                 if (layerId == 3)
                 {
@@ -494,11 +508,11 @@ namespace MphRead
             }
             if (masked == 1)
             {
-                return "BossDefeated";
+                return "Escape";
             }
             if (masked == 2)
             {
-                return "SpLayer2";
+                return "Cleared";
             }
             if (masked == 3)
             {
@@ -1342,8 +1356,8 @@ namespace MphRead
             /*  73 */ ("cylCrystalKill2", null),
             /*  74 */ ("cylCrystalKill3", null),
             /*  75 */ ("goreaCrystalExplode", null),
-            /*  76 */ ("deathBio1", null),
-            /*  77 */ ("deathMech1", null),
+            /*  76 */ ("DeathBio1", null),
+            /*  77 */ ("DeathMech1", null),
             /*  78 */ ("iceWave", null),
             /*  79 */ ("goreaMeteor", null),
             /*  80 */ ("goreaTeleport", null),
@@ -1459,7 +1473,7 @@ namespace MphRead
             /* 190 */ ("missileCharged", "effects"),
             /* 191 */ ("mortarCharged", "effects"),
             /* 192 */ ("mortarChargedAffinity", "effects"),
-            /* 193 */ ("deathBio2", null),
+            /* 193 */ ("DeathBio2", null),
             /* 194 */ ("chargeLoopElc", null),
             /* 195 */ ("chargeLoopIce", null),
             /* 196 */ ("chargeLoopMrt", null),
@@ -1481,15 +1495,15 @@ namespace MphRead
             /* 212 */ ("fallingSnow", null),
             /* 213 */ ("fallingDust", null),
             /* 214 */ ("fallingRock", null),
-            /* 215 */ ("deathMech2", null),
+            /* 215 */ ("DeathMech2", null),
             /* 216 */ ("deathAlt", null),
             /* 217 */ ("iceDemonDeath", null),
             /* 218 */ ("lavaDemonDeath", null),
-            /* 219 */ ("deathBio3", null),
-            /* 220 */ ("deathBio4", null),
-            /* 221 */ ("deathBio5", null),
-            /* 222 */ ("deathStatue", null),
-            /* 223 */ ("deathTick", null),
+            /* 219 */ ("DeathBio3", null),
+            /* 220 */ ("DeathBio4", null),
+            /* 221 */ ("DeathBio5", null),
+            /* 222 */ ("DeathStatue", null),
+            /* 223 */ ("DeathTick", null),
             /* 224 */ ("goreaLaserCol", null),
             /* 225 */ ("goreaHurt", null),
             /* 226 */ ("explosionAbove", null),
@@ -2041,7 +2055,7 @@ namespace MphRead
                 },
                 {
                     "cylinderbase",
-                    new ModelMetadata("cylinderbase", animation: false, collision: true)
+                    new ModelMetadata("cylinderbase", @"models\cylinderbase_model.bin", null, @"models\cylinderbase_collision.bin")
                 },
                 {
                     "CylinderBossEye",
@@ -2227,7 +2241,7 @@ namespace MphRead
                 },
                 {
                     "geemer",
-                    new ModelMetadata("geemer")
+                    new ModelMetadata("geemer", @"models\geemer_Model.bin", @"models\Geemer_Anim.bin", null)
                 },
                 {
                     "Generic_Console",
@@ -2614,7 +2628,7 @@ namespace MphRead
                 },
                 {
                     "MoverTest",
-                    new ModelMetadata("MoverTest")
+                    new ModelMetadata("MoverTest", @"models\MoverTest_Model.bin", @"models\movertest_Anim.bin", null)
                 },
                 {
                     "Nox_lod0",
@@ -2814,7 +2828,7 @@ namespace MphRead
                 },
                 {
                     "piston_gorealand",
-                    new ModelMetadata("piston_gorealand", animation: false, collision: true)
+                    new ModelMetadata("piston_gorealand", @"models\piston_gorealand_model.bin", null, @"models\piston_gorealand_collision.bin")
                 },
                 {
                     "PlantCarnivarous_Branched",
@@ -3220,7 +3234,7 @@ namespace MphRead
                 },
                 {
                     "SyluxShip",
-                    new ModelMetadata("SyluxShip", collision: true)
+                    new ModelMetadata("SyluxShip", @"models\SyluxShip_Model.bin", @"models\Syluxship_Anim.bin", @"models\SyluxShip_Collision.bin")
                 },
                 {
                     "SyluxTurret",
@@ -3412,51 +3426,51 @@ namespace MphRead
                 },
                 {
                     "unit1_land_plat1",
-                    new ModelMetadata("unit1_land_plat1", animation: false, collision: true)
+                    new ModelMetadata("unit1_land_plat1", @"models\unit1_land_plat1_model.bin", null, @"models\unit1_land_plat1_collision.bin")
                 },
                 {
                     "unit1_land_plat2",
-                    new ModelMetadata("unit1_land_plat2", animation: false, collision: true)
+                    new ModelMetadata("unit1_land_plat2", @"models\unit1_land_plat2_model.bin", null, @"models\unit1_land_plat2_collision.bin")
                 },
                 {
                     "unit1_land_plat3",
-                    new ModelMetadata("unit1_land_plat3", animation: false, collision: true)
+                    new ModelMetadata("unit1_land_plat3", @"models\unit1_land_plat3_model.bin", null, @"models\unit1_land_plat3_collision.bin")
                 },
                 {
                     "unit1_land_plat4",
-                    new ModelMetadata("unit1_land_plat4", animation: false, collision: true)
+                    new ModelMetadata("unit1_land_plat4", @"models\unit1_land_plat4_model.bin", null, @"models\unit1_land_plat4_collision.bin")
                 },
                 {
                     "unit1_land_plat5",
-                    new ModelMetadata("unit1_land_plat5", animation: false, collision: true)
+                    new ModelMetadata("unit1_land_plat5", @"models\unit1_land_plat5_model.bin", null, @"models\unit1_land_plat5_collision.bin")
                 },
                 {
                     "unit1_mover1",
-                    new ModelMetadata("unit1_mover1", collision: true)
+                    new ModelMetadata("unit1_mover1", @"models\unit1_mover1_model.bin", @"models\unit1_mover1_anim.bin", @"models\unit1_mover1_collision.bin")
                 },
                 {
                     "unit1_mover2",
-                    new ModelMetadata("unit1_mover2", animation: false, collision: true)
+                    new ModelMetadata("unit1_mover2", @"models\unit1_mover2_model.bin", null, @"models\unit1_mover2_collision.bin")
                 },
                 {
                     "unit2_c1_mover",
-                    new ModelMetadata("unit2_c1_mover", animation: false, collision: true)
+                    new ModelMetadata("unit2_c1_mover", @"models\unit2_c1_mover_Model.bin", null, @"models\unit2_c1_mover_collision.bin")
                 },
                 {
                     "unit2_c4_plat",
-                    new ModelMetadata("unit2_c4_plat", animation: false, collision: true)
+                    new ModelMetadata("unit2_c4_plat", @"models\unit2_c4_plat_model.bin", null, @"models\unit2_c4_plat_collision.bin")
                 },
                 {
                     "unit2_land_elev",
-                    new ModelMetadata("unit2_land_elev", animation: false, collision: true)
+                    new ModelMetadata("unit2_land_elev", @"models\unit2_land_elev_model.bin", null, @"models\unit2_land_elev_collision.bin")
                 },
                 {
                     "unit2_mover1",
-                    new ModelMetadata("unit2_mover1", animation: false, collision: true)
+                    new ModelMetadata("unit2_mover1", @"models\unit2_mover1_model.bin", null, @"models\unit2_mover1_collision.bin")
                 },
                 {
                     "unit3_brain",
-                    new ModelMetadata("unit3_brain", collision: true)
+                    new ModelMetadata("unit3_brain", @"models\unit3_brain_Model.bin", @"models\Unit3_brain_Anim.bin", @"models\unit3_brain_Collision.bin")
                 },
                 {
                     "unit3_jar",
@@ -3464,11 +3478,11 @@ namespace MphRead
                 },
                 {
                     "unit3_jartop",
-                    new ModelMetadata("unit3_jartop")
+                    new ModelMetadata("unit3_jartop", @"models\unit3_jartop_model.bin", @"models\unit3_jartop_anim.bin", null)
                 },
                 {
                     "unit3_mover1",
-                    new ModelMetadata("unit3_mover1", animation: false, collision: true)
+                    new ModelMetadata("unit3_mover1", @"models\unit3_mover1_model.bin", null, @"models\unit3_mover1_collision.bin")
                 },
                 {
                     "unit3_mover2",
@@ -3484,7 +3498,7 @@ namespace MphRead
                 },
                 {
                     "Unit3_platform1",
-                    new ModelMetadata("Unit3_platform1", collision: true)
+                    new ModelMetadata("Unit3_platform1", @"models\Unit3_platform1_Model.bin", @"models\unit3_platform1_Anim.bin", @"models\unit3_platform1_Collision.bin")
                 },
                 {
                     "unit3_platform",
@@ -3492,7 +3506,7 @@ namespace MphRead
                 },
                 {
                     "unit3_platform2",
-                    new ModelMetadata("unit3_platform2", animation: false, collision: true)
+                    new ModelMetadata("unit3_platform2", @"models\unit3_platform2_model.bin", null, @"models\unit3_platform2_collision.bin")
                 },
                 {
                     "unit4_mover1",
@@ -3500,23 +3514,23 @@ namespace MphRead
                 },
                 {
                     "unit4_mover2",
-                    new ModelMetadata("unit4_mover2", collision: true)
+                    new ModelMetadata("unit4_mover2", @"models\unit4_mover2_model.bin", @"models\unit4_mover2_anim.bin", @"models\unit4_mover2_collision.bin")
                 },
                 {
                     "unit4_mover3",
-                    new ModelMetadata("unit4_mover3", animation: false, collision: true)
+                    new ModelMetadata("unit4_mover3", @"models\unit4_mover3_model.bin", null, @"models\unit4_mover3_collision.bin")
                 },
                 {
                     "unit4_mover4",
-                    new ModelMetadata("unit4_mover4", animation: false, collision: true)
+                    new ModelMetadata("unit4_mover4", @"models\unit4_mover4_model.bin", null, @"models\unit4_mover4_collision.bin")
                 },
                 {
                     "unit4_platform1",
-                    new ModelMetadata("unit4_platform1", animation: false, collision: true)
+                    new ModelMetadata("unit4_platform1", @"models\unit4_platform1_model.bin", null, @"models\unit4_platform1_collision.bin")
                 },
                 {
                     "unit4_tp1_artifact_wo",
-                    new ModelMetadata("unit4_tp1_artifact_wo", animation: false, collision: true)
+                    new ModelMetadata("unit4_tp1_artifact_wo", @"models\unit4_tp1_artifact_wo_model.bin", null, @"models\unit4_tp1_artifact_wo_collision.bin")
                 },
                 {
                     "unit4_tp2_artifact_wo",
@@ -3528,7 +3542,7 @@ namespace MphRead
                 },
                 {
                     "warwasp_lod0",
-                    new ModelMetadata("warwasp_lod0", remove: "_lod0")
+                    new ModelMetadata("warwasp_lod0", @"models\warwasp_lod0_Model.bin", @"models\warWasp_Anim.bin", null)
                 },
                 {
                     "Weavel_lod0",
@@ -3714,8 +3728,8 @@ namespace MphRead
                     new ModelMetadata("fuzzball", animation: false, firstHunt: true)
                 },
                 {
-                    "genericmover",
-                    new ModelMetadata("genericmover", collision: true, firstHunt: true)
+                    "genericMover",
+                    new ModelMetadata("genericMover", @"models\genericMover_Model.bin", @"models\genericmover_Anim.bin", @"models\genericMover_Collision.bin")
                 },
                 {
                     "gun_idle",
@@ -3780,7 +3794,7 @@ namespace MphRead
                 },
                 {
                     "Metroid_Lo",
-                    new ModelMetadata("Metroid_Lo", remove: "_Lo", firstHunt: true)
+                    new ModelMetadata("Metroid_Lo", @"models\Metroid_Lo_Model.bin", @"models\metroid_Anim.bin", null)
                 },
                 {
                     "missileCollide",

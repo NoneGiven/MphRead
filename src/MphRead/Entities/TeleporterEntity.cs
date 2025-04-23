@@ -28,13 +28,13 @@ namespace MphRead.Entities
         // used for multiplayer teleporter destination
         private readonly Vector4 _overrideColor2 = new ColorRgb(0xAA, 0xAA, 0xAA).AsVector4();
 
-        public TeleporterEntity(TeleporterEntityData data, string nodeName, Scene scene)
+        public TeleporterEntity(TeleporterEntityData data, string nodeName, Scene scene, bool forceMultiplayer = false)
             : base(EntityType.Teleporter, nodeName, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
-            bool multiplayer = scene.Multiplayer;
+            bool multiplayer = scene.Multiplayer || forceMultiplayer;
             if (data.Invisible != 0)
             {
                 AddPlaceholderModel();
@@ -175,10 +175,7 @@ namespace MphRead.Entities
                 return true;
             }
             _soundSource.Update(Position, rangeIndex: 23);
-            if (!IsAudible(NodeRef))
-            {
-                _soundSource.Volume = 0;
-            }
+            UpdateNodeRefVolume();
             _soundSource.PlaySfx(SfxId.TELEPORTER_LOOP, loop: true);
             bool activated = false;
             Vector3 testPos = Position.AddY(1);

@@ -106,6 +106,11 @@ namespace MphRead.Entities
                             {
                                 TrySwitchForms(force: true);
                                 UpdateForm(altForm: true);
+                                // unstick Halfturret after teleporting (the game doesn't do this)
+                                if (Halfturret.Health > 0)
+                                {
+                                    Halfturret.ResetGroundedState();
+                                }
                                 ResumeOwnCamera();
                                 HudOnMorphStart();
                             }
@@ -187,9 +192,9 @@ namespace MphRead.Entities
             {
                 UpdateHealthSfx(_health);
             }
-            else if (!IsAudible(NodeRef))
+            else
             {
-                _soundSource.Volume = 0;
+                UpdateNodeRefVolume();
             }
             if (_damageInvulnTimer > 0)
             {

@@ -215,7 +215,7 @@ namespace MphRead.Entities
                     {
                         // todo: if 1P bot and encounter state, change some weapon values
                         BeamSpawnFlags flags = Owner.DoubleDamage ? BeamSpawnFlags.DoubleDamage : BeamSpawnFlags.None;
-                        BeamResultFlags result = BeamProjectileEntity.Spawn(this, EquipInfo, muzzlePos, _aimVector, flags, _scene);
+                        BeamResultFlags result = BeamProjectileEntity.Spawn(this, EquipInfo, muzzlePos, _aimVector, flags, NodeRef, _scene);
                         if (result != BeamResultFlags.NoSpawn)
                         {
                             _models[0].SetAnimation(0, AnimFlags.NoLoop);
@@ -240,7 +240,8 @@ namespace MphRead.Entities
             if (Owner == PlayerEntity.Main)
             {
                 string message = Text.Strings.GetHudMessage(233); // turret energy: %d
-                Owner.QueueHudMessage(128, 150, 1 / 1000f, 0, message.Replace("%d", _health.ToString()));
+                // hide during dialog pause to prevent overlap -- the game doesn't do this, and also can't play as Weavel in 1P anyway
+                Owner.QueueHudMessage(128, 150, 1 / 1000f, 0, message.Replace("%d", _health.ToString()), dialogHide: true);
             }
             if (!_grounded)
             {
@@ -270,6 +271,11 @@ namespace MphRead.Entities
                 Die();
             }
             return true;
+        }
+
+        public void ResetGroundedState()
+        {
+            _grounded = false;
         }
 
         private bool UpdateAim(Vector3 muzzlePos)

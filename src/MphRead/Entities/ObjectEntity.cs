@@ -446,10 +446,7 @@ namespace MphRead.Entities
                     if (sfxInfo != null)
                     {
                         _soundSource.Update(Position, rangeIndex: sfxInfo.Data & 0x3F);
-                        if (!IsAudible(NodeRef))
-                        {
-                            _soundSource.Volume = 0;
-                        }
+                        UpdateNodeRefVolume();
                     }
                     if (--_effectIntervalTimer > 0)
                     {

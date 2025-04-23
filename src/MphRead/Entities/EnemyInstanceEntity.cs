@@ -130,6 +130,30 @@ namespace MphRead.Entities
             HitPlayers[3] = false;
         }
 
+        protected Vector3 FixParallelVectors(Vector3 facing, Vector3 up)
+        {
+            // check for issue observed with visible enemy spawners (e.g. Psycho Bits in Weapons Complex)
+            // where the spawner's facing vector is unit Y (or close enough) -- in-game, such cases probably
+            // just don't use their transform in a way where that vector matter, prior to it getting overwritten
+            // by player-seeking code or the like. but we need to make sure we don't put NaNs in the transform mtx.
+            var right = Vector3.Cross(up, facing);
+            if (right != Vector3.Zero)
+            {
+                return up;
+            }
+            if (facing.Y != 0 || facing.Z != 0)
+            {
+                right = Vector3.Cross(facing, Vector3.UnitX);
+            }
+            else
+            {
+                right = Vector3.Cross(facing, Vector3.UnitY);
+            }
+            right = right.Normalized();
+            up = Vector3.Cross(facing, right);
+            return up;
+        }
+
         public override bool Process()
         {
             bool inRange = false;
@@ -192,10 +216,7 @@ namespace MphRead.Entities
                     }
                     int rangeIndex = Metadata.EnemyAudioRangeIndices[(int)EnemyType];
                     _soundSource.Update(Position, rangeIndex);
-                    if (!IsAudible(NodeRef))
-                    {
-                        _soundSource.Volume = 0;
-                    }
+                    UpdateNodeRefVolume();
                     ClearHitPlayers();
                     for (int i = 0; i < _scene.Entities.Count; i++)
                     {
@@ -206,12 +227,21 @@ namespace MphRead.Entities
                         }
                         var player = (PlayerEntity)entity;
                         CollisionResult hitRes = default;
-                        if (player.Health > 0 && CollisionDetection.CheckVolumesOverlap(player.Volume, HurtVolume, ref hitRes))
+                        if (player.Health > 0)
                         {
-                            HitPlayers[player.SlotIndex] = true;
-                            if (Flags.TestFlag(EnemyFlags.CollidePlayer))
+                            // the game does not check fot alt attacks hitting enemies
+                            bool hit = player.CheckAltAttackHitEnemy1(this);
+                            if (!hit)
                             {
-                                player.HandleCollision(hitRes);
+                                hit = player.CheckAltAttackHitEnemy2(this);
+                            }
+                            if (!hit && CollisionDetection.CheckVolumesOverlap(player.Volume, HurtVolume, ref hitRes))
+                            {
+                                HitPlayers[player.SlotIndex] = true;
+                                if (Flags.TestFlag(EnemyFlags.CollidePlayer))
+                                {
+                                    player.HandleCollision(hitRes);
+                                }
                             }
                         }
                     }
