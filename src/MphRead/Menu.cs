@@ -217,7 +217,7 @@ namespace MphRead
                 {
                     SaveSlot = saveSlot;
                 }
-                UpdateEnemyHunterInfo();
+                UpdateSaveInfo();
                 SaveFromExit = ParseSaveWhen(settings.SaveFromExit, SaveWhen.Never);
                 SaveFromShip = ParseSaveWhen(settings.SaveFromShip, SaveWhen.Prompt);
                 string[] planets = settings.Planets.ToLower().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
@@ -599,7 +599,7 @@ namespace MphRead
                         }
                     }
                 }
-                UpdateEnemyHunterInfo();
+                UpdateSaveInfo();
                 NeededSave = SaveWhen.Never;
                 while (true)
                 {
@@ -2261,20 +2261,72 @@ namespace MphRead
             Bugfixes.NoSlenchRollTimerUnderflow = true;
         }
 
-        private static string[] _enemyHunterInfo = new string[4] {
-            "Alinos  : none",
-            "CA      : none",
-            "VDO     : none",
-            "Arcterra: none"
-        };
+        private static readonly string[] _saveInfo = [
+            "Alinos   : locked  : ",
+            "CA       : locked  : ",
+            "VDO      : locked  : ",
+            "Arcterra : locked  : ",
+            "Oubliette: locked",
+            "Artifacts: ",
+            "Octoliths: ",
+            "Weapons  : ",
+            "Complete : "
+        ];
 
-        private static void UpdateEnemyHunterInfo()
+        // sktodo: show unlocked logbook entries
+        // sktodo: start implementing and show stats (enemy kills, etc.)
+        private static void UpdateSaveInfo()
         {
-            _enemyHunterInfo[0] = "Alinos  : ";
-            _enemyHunterInfo[1] = "CA      : ";
-            _enemyHunterInfo[2] = "VDO     : ";
-            _enemyHunterInfo[3] = "Arcterra: ";
             StorySave save = GameState.ReadSave();
+
+            string ArtifactDisplay(int area, int artifact)
+            {
+                return save.CheckFoundArtifact(artifact, area) ? "1" : "0";
+            }
+
+            string OctolithDisplay(int area)
+            {
+                return save.CheckFoundOctolith(area) ? "1" : "0";
+            }
+
+            string WeaponDisplay(BeamType weapon, string name)
+            {
+                if ((save.Weapons & (1 << (int)weapon)) == 0)
+                {
+                    return "";
+                }
+                return $"{(_saveInfo[7].EndsWith(' ') ? "" : ", ")}{name}";
+            }
+
+            _saveInfo[0] = $"Alinos   : {((save.Areas & 1) == 0 ? "locked  " : "unlocked")}: ";
+            _saveInfo[1] = $"CA       : {((save.Areas & 2) == 0 ? "locked  " : "unlocked")}: ";
+            _saveInfo[2] = $"VDO      : {((save.Areas & 4) == 0 ? "locked  " : "unlocked")}: ";
+            _saveInfo[3] = $"Arcterra : {((save.Areas & 8) == 0 ? "locked  " : "unlocked")}: ";
+            _saveInfo[4] = $"Oubliette: {((save.Areas & 0x10) == 0 ? "locked  " : "unlocked")}";
+            _saveInfo[5] = $"Artifacts:" +
+                $" CA {ArtifactDisplay(2, 0)}/{ArtifactDisplay(2, 1)}/{ArtifactDisplay(2, 2)}" +
+                $" {ArtifactDisplay(3, 0)}/{ArtifactDisplay(3, 1)}/{ArtifactDisplay(3, 2)}," +
+                $" Alinos {ArtifactDisplay(0, 0)}/{ArtifactDisplay(0, 1)}/{ArtifactDisplay(0, 2)}" +
+                $" {ArtifactDisplay(1, 0)}/{ArtifactDisplay(1, 1)}/{ArtifactDisplay(1, 2)}," +
+                $" VDO {ArtifactDisplay(4, 0)}/{ArtifactDisplay(4, 1)}/{ArtifactDisplay(4, 2)}" +
+                $" {ArtifactDisplay(5, 0)}/{ArtifactDisplay(5, 1)}/{ArtifactDisplay(5, 2)}," +
+                $" Arcterra {ArtifactDisplay(6, 0)}/{ArtifactDisplay(6, 1)}/{ArtifactDisplay(6, 2)}" +
+                $" {ArtifactDisplay(7, 0)}/{ArtifactDisplay(7, 1)}/{ArtifactDisplay(7, 2)}";
+            _saveInfo[6] = $"Octoliths:" +
+                $" CA {OctolithDisplay(2)}     {OctolithDisplay(3)}," +
+                $"     Alinos {OctolithDisplay(0)}     {OctolithDisplay(1)}," +
+                $"     VDO {OctolithDisplay(4)}     {OctolithDisplay(5)}," +
+                $"     Arcterra {OctolithDisplay(6)}     {OctolithDisplay(7)}";
+            _saveInfo[7] = "Weapons  : ";
+            _saveInfo[7] += WeaponDisplay(BeamType.Battlehammer, "Battlehammer");
+            _saveInfo[7] += WeaponDisplay(BeamType.Judicator, "Judicator");
+            _saveInfo[7] += WeaponDisplay(BeamType.VoltDriver, "Volt Driver");
+            _saveInfo[7] += WeaponDisplay(BeamType.Magmaul, "Magmaul");
+            _saveInfo[7] += WeaponDisplay(BeamType.ShockCoil, "Shock Coil");
+            _saveInfo[7] += WeaponDisplay(BeamType.Imperialist, "Imperialist");
+            _saveInfo[7] += WeaponDisplay(BeamType.OmegaCannon, "Omega Cannon");
+            int completionPct = save.GetCompletionPercentage();
+            _saveInfo[8] = $"Complete : {completionPct}%";
             uint rng2 = Rng.Rng2;
             SceneSetup.UpdateAreaHunters(save);
             Rng.SetRng2(rng2);
@@ -2284,11 +2336,11 @@ namespace MphRead
                 {
                     if ((save.AreaHunters[i] & (1 << j)) != 0)
                     {
-                        if (!_enemyHunterInfo[i].EndsWith(' '))
+                        if (!_saveInfo[i].EndsWith(' '))
                         {
-                            _enemyHunterInfo[i] += ", ";
+                            _saveInfo[i] += ", ";
                         }
-                        _enemyHunterInfo[i] += ((Hunter)j).ToString();
+                        _saveInfo[i] += ((Hunter)j).ToString();
                         int octoliths = 0;
                         for (int k = 0; k < 8; k++)
                         {
@@ -2299,13 +2351,9 @@ namespace MphRead
                         }
                         if (octoliths > 0)
                         {
-                            _enemyHunterInfo[i] += $" (x{octoliths})";
+                            _saveInfo[i] += $" (x{octoliths})";
                         }
                     }
-                }
-                if (_enemyHunterInfo[i].EndsWith(' '))
-                {
-                    _enemyHunterInfo[i] += "none";
                 }
             }
         }
@@ -2434,11 +2482,13 @@ namespace MphRead
                 if (SaveSlot != 0)
                 {
                     Console.WriteLine();
-                    Console.WriteLine("Enemy Hunter Info");
-                    Console.WriteLine(_enemyHunterInfo[1]);
-                    Console.WriteLine(_enemyHunterInfo[0]);
-                    Console.WriteLine(_enemyHunterInfo[2]);
-                    Console.WriteLine(_enemyHunterInfo[3]);
+                    Console.WriteLine("Save Info");
+                    Console.WriteLine(_saveInfo[1]);
+                    Console.WriteLine(_saveInfo[0]);
+                    for (int i = 2; i < _saveInfo.Length; i++)
+                    {
+                        Console.WriteLine(_saveInfo[i]);
+                    }
                 }
                 s--;
                 if (prompt == 0)
@@ -2490,7 +2540,7 @@ namespace MphRead
                         if (selection == 0)
                         {
                             SaveSlot = 0;
-                            UpdateEnemyHunterInfo();
+                            UpdateSaveInfo();
                         }
                         else if (selection == 1)
                         {
@@ -2545,7 +2595,7 @@ namespace MphRead
                         if (selection == 0)
                         {
                             SaveSlot = (byte)Advance(SaveSlot, direction, 255);
-                            UpdateEnemyHunterInfo();
+                            UpdateSaveInfo();
                         }
                         else if (selection == 1)
                         {
@@ -2760,7 +2810,7 @@ namespace MphRead
                         if (Int32.TryParse(Console.ReadLine(), out int slot) && slot >= 0 && slot <= 255)
                         {
                             SaveSlot = (byte)slot;
-                            UpdateEnemyHunterInfo();
+                            UpdateSaveInfo();
                         }
                     }
                     prompt = 0;

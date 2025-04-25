@@ -1759,10 +1759,12 @@ namespace MphRead
                 int category = Strings.GetScanEntryCategory(scanId);
                 if (category < 3)
                 {
+                    // lore, bioform, object
                     ScanCount++;
                 }
                 else if (category == 3)
                 {
+                    // equipment
                     EquipmentCount++;
                 }
             }
@@ -1774,6 +1776,67 @@ namespace MphRead
             int index = scanId / 8;
             byte bit = (byte)(1 << (scanId % 8));
             return (Logbook[index] & bit) != 0;
+        }
+
+        private int GetMaxScanCount()
+        {
+            IReadOnlyList<StringTableEntry> logbook = Strings.ReadStringTable(StringTables.ScanLog);
+            int result = 0;
+            for (int i = 0; i < logbook.Count; i++)
+            {
+                StringTableEntry entry = logbook[i];
+                // todo: checking the character here but the numeric value above, pick one
+                if (entry.Category == 'L' || entry.Category == 'B' || entry.Category == 'O')
+                {
+                    result++;
+                }
+            }
+            // 215 = 82 lore + 58 bioform + 75 object
+            return result;
+        }
+
+        public int GetCompletionPercentage()
+        {
+            int maxScans = GetMaxScanCount();
+            if (maxScans == 0)
+            {
+                return 0;
+            }
+            int count = ScanCount;
+            for (int i = 1; i < 8; i++)
+            {
+                if (i == 2)
+                {
+                    continue;
+                }
+                if ((Weapons & (1 << i)) != 0)
+                {
+                    count++;
+                }
+            }
+            for (int i = 0; i < 8; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    if ((Artifacts & (1 << (i * 3 + j))) != 0)
+                    {
+                        count++;
+                    }
+                }
+            }
+            for (int i = 0; i < 8; i++)
+            {
+                if ((FoundOctoliths & (1 << i)) != 0)
+                {
+                    count++;
+                }
+            }
+            int etankCount = HealthMax / Metadata.PlayerValues[0].EnergyTank;
+            int missileCount = (AmmoMax[1] - 50) / 100;
+            int uaCount = (AmmoMax[0] - 400) / 300;
+            count += etankCount + missileCount + uaCount;
+            // 66 = 7 etanks + 12 missiles + 9 UA + 6 weapons + 24 artifacts + 8 Octoliths
+            return 100 * count / (maxScans + 66);
         }
 
         public void CopyTo(StorySave other)
