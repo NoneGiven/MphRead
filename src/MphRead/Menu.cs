@@ -2269,6 +2269,7 @@ namespace MphRead
             "Oubliette: locked",
             "Artifacts: ",
             "Octoliths: ",
+            "Expansion: ",
             "Weapons  : ",
             "Complete : "
         ];
@@ -2295,14 +2296,14 @@ namespace MphRead
                 {
                     return "";
                 }
-                return $"{(_saveInfo[7].EndsWith(' ') ? "" : ", ")}{name}";
+                return $"{(_saveInfo[8].EndsWith(' ') ? "" : ", ")}{name}";
             }
 
             _saveInfo[0] = $"Alinos   : {((save.Areas & 1) == 0 ? "locked  " : "unlocked")}: ";
-            _saveInfo[1] = $"CA       : {((save.Areas & 2) == 0 ? "locked  " : "unlocked")}: ";
-            _saveInfo[2] = $"VDO      : {((save.Areas & 4) == 0 ? "locked  " : "unlocked")}: ";
-            _saveInfo[3] = $"Arcterra : {((save.Areas & 8) == 0 ? "locked  " : "unlocked")}: ";
-            _saveInfo[4] = $"Oubliette: {((save.Areas & 0x10) == 0 ? "locked  " : "unlocked")}";
+            _saveInfo[1] = $"CA       : {((save.Areas & 4) == 0 ? "locked  " : "unlocked")}: ";
+            _saveInfo[2] = $"VDO      : {((save.Areas & 0x10) == 0 ? "locked  " : "unlocked")}: ";
+            _saveInfo[3] = $"Arcterra : {((save.Areas & 0x40) == 0 ? "locked  " : "unlocked")}: ";
+            _saveInfo[4] = $"Oubliette: {((save.Areas & 0x100) == 0 ? "locked  " : "unlocked")}";
             _saveInfo[5] = $"Artifacts:" +
                 $" CA {ArtifactDisplay(2, 0)}/{ArtifactDisplay(2, 1)}/{ArtifactDisplay(2, 2)}" +
                 $" {ArtifactDisplay(3, 0)}/{ArtifactDisplay(3, 1)}/{ArtifactDisplay(3, 2)}," +
@@ -2317,16 +2318,17 @@ namespace MphRead
                 $"     Alinos {OctolithDisplay(0)}     {OctolithDisplay(1)}," +
                 $"     VDO {OctolithDisplay(4)}     {OctolithDisplay(5)}," +
                 $"     Arcterra {OctolithDisplay(6)}     {OctolithDisplay(7)}";
-            _saveInfo[7] = "Weapons  : ";
-            _saveInfo[7] += WeaponDisplay(BeamType.Battlehammer, "Battlehammer");
-            _saveInfo[7] += WeaponDisplay(BeamType.Judicator, "Judicator");
-            _saveInfo[7] += WeaponDisplay(BeamType.VoltDriver, "Volt Driver");
-            _saveInfo[7] += WeaponDisplay(BeamType.Magmaul, "Magmaul");
-            _saveInfo[7] += WeaponDisplay(BeamType.ShockCoil, "Shock Coil");
-            _saveInfo[7] += WeaponDisplay(BeamType.Imperialist, "Imperialist");
-            _saveInfo[7] += WeaponDisplay(BeamType.OmegaCannon, "Omega Cannon");
+            _saveInfo[7] = $"Expansion: Health {save.HealthMax}, Missiles {save.AmmoMax[1] / 10}, UA {save.AmmoMax[0] / 10}";
+            _saveInfo[8] = "Weapons  : ";
+            _saveInfo[8] += WeaponDisplay(BeamType.Battlehammer, "Battlehammer");
+            _saveInfo[8] += WeaponDisplay(BeamType.Judicator, "Judicator");
+            _saveInfo[8] += WeaponDisplay(BeamType.VoltDriver, "Volt Driver");
+            _saveInfo[8] += WeaponDisplay(BeamType.Magmaul, "Magmaul");
+            _saveInfo[8] += WeaponDisplay(BeamType.ShockCoil, "Shock Coil");
+            _saveInfo[8] += WeaponDisplay(BeamType.Imperialist, "Imperialist");
+            _saveInfo[8] += WeaponDisplay(BeamType.OmegaCannon, "Omega Cannon");
             int completionPct = save.GetCompletionPercentage();
-            _saveInfo[8] = $"Complete : {completionPct}%";
+            _saveInfo[9] = $"Complete : {completionPct}%";
             uint rng2 = Rng.Rng2;
             SceneSetup.UpdateAreaHunters(save);
             Rng.SetRng2(rng2);
