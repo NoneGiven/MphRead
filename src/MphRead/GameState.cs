@@ -1595,15 +1595,15 @@ namespace MphRead
             WeaponSlots[1] = (int)BeamType.Missile;
             WeaponSlots[2] = (int)BeamType.None;
             // todo: initialize more fields
-            UpdateLogbook(1); // SCAN VISOR
-            UpdateLogbook(2); // THERMAL POSITIONER
-            UpdateLogbook(3); // ARM CANNON
-            UpdateLogbook(4); // POWER BEAM
-            UpdateLogbook(5); // MISSILE LAUNCHER
-            UpdateLogbook(6); // MORPH BALL
-            UpdateLogbook(7); // MORPH BALL BOMB
-            UpdateLogbook(27); // JUMP BOOTS
-            UpdateLogbook(29); // CHARGE SHOT
+            UpdateLogbook(0); // SCAN VISOR
+            UpdateLogbook(1); // THERMAL POSITIONER
+            UpdateLogbook(2); // ARM CANNON
+            UpdateLogbook(3); // POWER BEAM
+            UpdateLogbook(4); // MISSILE LAUNCHER
+            UpdateLogbook(5); // MORPH BALL
+            UpdateLogbook(6); // MORPH BALL BOMB
+            UpdateLogbook(26); // JUMP BOOTS
+            UpdateLogbook(28); // CHARGE SHOT
             if (Cheats.StartWithAllOctoliths)
             {
                 FoundOctoliths = CurrentOctoliths = 0xFF;

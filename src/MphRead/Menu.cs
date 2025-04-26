@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using MphRead.Sound;
+using MphRead.Text;
 
 namespace MphRead
 {
@@ -2357,6 +2358,32 @@ namespace MphRead
                         }
                     }
                 }
+            }
+            ShowLogbook(save);
+        }
+
+        private static void ShowLogbook(StorySave save)
+        {
+            Scene.Language = Paths.MphKey == "AMHK0" ? Language.Japanese : _language;
+            IReadOnlyList<StringTableEntry> entries = Strings.ReadStringTable(StringTables.ScanLog);
+            // sktodo: determine correct order and filtering, and implement scrolling
+            // sktodo (TCRF): unused scans, such as for the Shock Coil door and Imperialist force field
+            for (int i = 0; i < entries.Count; i++)
+            {
+                StringTableEntry entry = entries[i];
+                if (save.CheckLogbook(i))
+                {
+                    Debug.WriteLine($"[x] [{i,3}] [{entry.Category}] {entry.String1}");
+                    Debug.WriteLine(entry.String2);
+                }
+                else
+                {
+                    //Debug.WriteLine($"[{i,3}] [{entry.Category}] ???");
+                    //Debug.WriteLine("???");
+                    Debug.WriteLine($"[ ] [{i,3}] [{entry.Category}] {entry.String1}");
+                    Debug.WriteLine(entry.String2);
+                }
+                Debug.WriteLine("");
             }
         }
 
