@@ -452,7 +452,11 @@ namespace MphRead.Entities
                 }
                 if (dead)
                 {
-                    // todo: update records
+                    if (_data.Type != EnemyType.CarnivorousPlant && _data.Type != EnemyType.CretaphidEye
+                        && GameState.StorySave.Stats.EnemyKills != UInt32.MaxValue)
+                    {
+                        GameState.StorySave.Stats.EnemyKills++;
+                    }
                     if (_data.Type == EnemyType.Temroid) // condition is not strictly necessary
                     {
                         Detach();

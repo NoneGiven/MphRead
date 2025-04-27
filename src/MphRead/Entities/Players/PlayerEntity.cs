@@ -1980,6 +1980,16 @@ namespace MphRead.Entities
                     if (IsMainPlayer)
                     {
                         // todo: update stats
+                        // note: the game doesn't cap either of these
+                        if (GameState.StorySave.Stats.Deaths != UInt32.MaxValue)
+                        {
+                            GameState.StorySave.Stats.Deaths++;
+                        }
+                        if (attacker != null && !attacker.IsMainPlayer && attacker.Hunter != Hunter.Guardian
+                            && GameState.StorySave.Stats.EnemyHunterDeaths != UInt32.MaxValue)
+                        {
+                            GameState.StorySave.Stats.EnemyHunterDeaths++;
+                        }
                         _deathCountdown = 150 / 30f;
                         _deathProcessed = false;
                         _deathLostOctolithSfxPlayed = false;
@@ -2017,7 +2027,16 @@ namespace MphRead.Entities
                     {
                         GameState.StorySave.DefeatedHunters |= (byte)(1 << (int)Hunter);
                         GameState.StorySave.AreaHunters[_scene.AreaId / 2] &= (byte)~(1 << (int)Hunter);
-                        // todo: update stats
+                        // todo: unlock hunter for multiplayer
+                        // note: the game doesn't cap hunter kills
+                        if (GameState.StorySave.Stats.HunterKills != UInt32.MaxValue)
+                        {
+                            GameState.StorySave.Stats.HunterKills++;
+                        }
+                        if (Hunter == Hunter.Guardian && GameState.StorySave.Stats.EnemyKills != UInt32.MaxValue)
+                        {
+                            GameState.StorySave.Stats.EnemyKills++;
+                        }
 
                         static void RestoreOctolith(int dropId)
                         {

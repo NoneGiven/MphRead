@@ -2275,7 +2275,6 @@ namespace MphRead
             "Complete : "
         ];
 
-        // sktodo: start implementing and show stats (enemy kills, etc.)
         private static void UpdateSaveInfo()
         {
             StorySave save = GameState.ReadSave();

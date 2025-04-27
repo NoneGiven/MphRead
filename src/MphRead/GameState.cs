@@ -1569,6 +1569,7 @@ namespace MphRead
         public BossFlags BossFlags { get; set; } = BossFlags.None;
         public byte[] AreaHunters { get; init; } = new byte[4];
         public byte DefeatedHunters { get; set; }
+        public SaveStats Stats { get; init; } = new SaveStats();
 
         public StorySave()
         {
@@ -1872,6 +1873,15 @@ namespace MphRead
             other.BossFlags = BossFlags;
             AreaHunters.CopyTo(other.AreaHunters, index: 0);
             other.DefeatedHunters = DefeatedHunters;
+        }
+
+        public class SaveStats
+        {
+            public uint HunterKills { get; set; }
+            public uint Deaths { get; set; }
+            public uint EnemyHunterDeaths { get; set; }
+            // todo: this should probably be stored globally and not deleted along with the save slot
+            public uint EnemyKills { get; set; }
         }
     }
 }
