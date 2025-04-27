@@ -1778,21 +1778,25 @@ namespace MphRead
             return (Logbook[index] & bit) != 0;
         }
 
-        private int GetMaxScanCount()
+        public int GetLogbookCount(bool unlockedOnly, params char[] categories)
         {
             IReadOnlyList<StringTableEntry> logbook = Strings.ReadStringTable(StringTables.ScanLog);
             int result = 0;
             for (int i = 0; i < logbook.Count; i++)
             {
                 StringTableEntry entry = logbook[i];
-                // todo: checking the character here but the numeric value above, pick one
-                if (entry.Category == 'L' || entry.Category == 'B' || entry.Category == 'O')
+                if (categories.Any(c => c == entry.Category) && (!unlockedOnly || CheckLogbook(i)))
                 {
                     result++;
                 }
             }
-            // 215 = 82 lore + 58 bioform + 75 object
             return result;
+        }
+
+        public int GetMaxScanCount()
+        {
+            // 215 = 82 lore + 58 bioform + 75 object
+            return GetLogbookCount(unlockedOnly: false, 'L', 'B', 'O');
         }
 
         public int GetCompletionPercentage()

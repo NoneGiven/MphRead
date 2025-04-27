@@ -2275,7 +2275,6 @@ namespace MphRead
             "Complete : "
         ];
 
-        // sktodo: show unlocked logbook entries
         // sktodo: start implementing and show stats (enemy kills, etc.)
         private static void UpdateSaveInfo()
         {
@@ -2359,32 +2358,272 @@ namespace MphRead
                     }
                 }
             }
-            ShowLogbook(save);
         }
 
-        private static void ShowLogbook(StorySave save)
+        private static bool ShowLogbook(StorySave save)
         {
+            int category = -1;
+            int viewId = -1;
+            int selection = 0;
+            int listPos = -1;
             Scene.Language = Paths.MphKey == "AMHK0" ? Language.Japanese : _language;
             IReadOnlyList<StringTableEntry> entries = Strings.ReadStringTable(StringTables.ScanLog);
-            // sktodo: determine correct order and filtering, and implement scrolling
-            // sktodo (TCRF): unused scans, such as for the Shock Coil door and Imperialist force field
+            int loreMax = save.GetLogbookCount(false, 'L');
+            int bioformMax = save.GetLogbookCount(false, 'B');
+            int objectMax = save.GetLogbookCount(false, 'O');
+            int equipMax = save.GetLogbookCount(false, 'E');
+            int scanPct = (int)(save.ScanCount / (float)save.GetMaxScanCount() * 100);
+            int lorePct = (int)(save.GetLogbookCount(true, 'L') / (float)loreMax * 100);
+            int bioformPct = (int)(save.GetLogbookCount(true, 'B') / (float)bioformMax * 100);
+            int objectPct = (int)(save.GetLogbookCount(true, 'O') / (float)objectMax * 100);
+            int equipPct = (int)(save.EquipmentCount / (float)equipMax * 100);
+            var loreList = new (string, string)[loreMax];
+            var bioformList = new (string, string)[bioformMax];
+            var objectList = new (string, string)[objectMax];
+            var equipList = new (string, string)[equipMax];
+            int loreIndex = 0;
+            int bioformIndex = 0;
+            int objectIndex = 0;
+            int equipmentIndex = 0;
             for (int i = 0; i < entries.Count; i++)
             {
                 StringTableEntry entry = entries[i];
-                if (save.CheckLogbook(i))
+
+                void WriteEntry((string, string)[] list, int index)
                 {
-                    Debug.WriteLine($"[x] [{i,3}] [{entry.Category}] {entry.String1}");
-                    Debug.WriteLine(entry.String2);
+                    if (save.CheckLogbook(i))
+                    {
+                        list[index] = (entry.String1, entry.String2);
+                    }
+                    else
+                    {
+                        list[index] = ("-", "-");
+                    }
+                }
+
+                if (entry.Category == 'L')
+                {
+                    WriteEntry(loreList, loreIndex++);
+                }
+                else if (entry.Category == 'B')
+                {
+                    WriteEntry(bioformList, bioformIndex++);
+                }
+                else if (entry.Category == 'O')
+                {
+                    WriteEntry(objectList, objectIndex++);
+                }
+                else if (entry.Category == 'E')
+                {
+                    WriteEntry(equipList, equipmentIndex++);
+                }
+            }
+            (string Title, string Log)[] list = loreList;
+            while (true)
+            {
+                int s = 0;
+                string X(int index)
+                {
+                    bool check = selection == index || (category != -1 && category + 1 == s);
+                    return $"[{(check ? "x" : " ")}]";
+                }
+
+                string Y(int index)
+                {
+                    return $"[{(index == listPos ? "x" : " ")}]";
+                }
+
+                Console.Clear();
+                Console.WriteLine($"MphRead Version {Program.Version}");
+                Console.WriteLine();
+                if (category == -1)
+                {
+                    Console.WriteLine("Select a category");
+                }
+                else if (category == 0)
+                {
+                    Console.WriteLine($"Lore: {lorePct}%");
+                }
+                else if (category == 1)
+                {
+                    Console.WriteLine($"Bioform: {bioformPct}%");
+                }
+                else if (category == 2)
+                {
+                    Console.WriteLine($"Object: {objectPct}%");
+                }
+                else if (category == 3)
+                {
+                    Console.WriteLine($"Equipment: {equipPct}%");
+                }
+                Console.WriteLine($"{X(s++)} (L) Lore      \\");
+                Console.WriteLine($"{X(s++)} (F) Bioform   }} {scanPct,3}%");
+                Console.WriteLine($"{X(s++)} (O) Object    /");
+                Console.WriteLine($"{X(s++)} (E) Equipment }} {equipPct,3}%");
+                Console.WriteLine($"{X(s++)} (B) Go Back");
+                bool emptyList = false;
+                if (category != -1)
+                {
+                    Console.WriteLine();
+                    if (viewId == -1)
+                    {
+                        if (!list.Any(l => l.Title != "-"))
+                        {
+                            Console.WriteLine("No entries found");
+                            emptyList = true;
+                        }
+                        else
+                        {
+                            int startPos = Math.Max(listPos - 5, 0);
+                            int endPos = Math.Min(Math.Max(listPos + 5, startPos + 10), list.Length - 1);
+                            startPos = Math.Max(Math.Min(listPos - 5, endPos - 10), 0);
+                            for (int i = startPos; i <= endPos; i++)
+                            {
+                                Console.WriteLine($"{Y(i)} {i.ToString().PadLeft(3, '0')}: {list[i].Title}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        (string title, string log) = list[viewId];
+                        Console.WriteLine(viewId.ToString().PadLeft(3, '0'));
+                        Console.WriteLine(title);
+                        Console.WriteLine();
+                        Console.WriteLine(log);
+                    }
+                }
+                s--;
+                ConsoleKeyInfo keyInfo = Console.ReadKey();
+                if (keyInfo.Key == ConsoleKey.Escape)
+                {
+                    return false;
+                }
+                if (category == -1)
+                {
+                    if (keyInfo.Key == ConsoleKey.B
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == s)
+                    {
+                        break;
+                    }
+                    if (keyInfo.Key == ConsoleKey.L
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == 0)
+                    {
+                        category = selection = 0;
+                        listPos = 0;
+                        list = loreList;
+                        viewId = -1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.F
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == 1)
+                    {
+                        category = selection = 1;
+                        listPos = 0;
+                        list = bioformList;
+                        viewId = -1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.O
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == 2)
+                    {
+                        category = selection = 2;
+                        listPos = 0;
+                        list = objectList;
+                        viewId = -1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.E
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == 3)
+                    {
+                        category = selection = 3;
+                        listPos = 0;
+                        list = equipList;
+                        viewId = -1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.UpArrow)
+                    {
+                        selection--;
+                        if (selection < 0)
+                        {
+                            selection = s;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.DownArrow)
+                    {
+                        selection++;
+                        if (selection > s)
+                        {
+                            selection = 0;
+                        }
+                    }
                 }
                 else
                 {
-                    //Debug.WriteLine($"[{i,3}] [{entry.Category}] ???");
-                    //Debug.WriteLine("???");
-                    Debug.WriteLine($"[ ] [{i,3}] [{entry.Category}] {entry.String1}");
-                    Debug.WriteLine(entry.String2);
+                    if (keyInfo.Key == ConsoleKey.B
+                        || keyInfo.Key == ConsoleKey.Backspace
+                        || keyInfo.Key == ConsoleKey.Enter)
+                    {
+                        if (viewId == -1)
+                        {
+                            category = -1;
+                            listPos = -1;
+                        }
+                        else
+                        {
+                            viewId = -1;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Spacebar && viewId == -1)
+                    {
+                        if (list[listPos].Title != "-")
+                        {
+                            viewId = listPos;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.UpArrow
+                        || keyInfo.Key == ConsoleKey.PageUp && viewId != -1)
+                    {
+                        do
+                        {
+                            listPos--;
+                            if (listPos < 0)
+                            {
+                                listPos = list.Length - 1;
+                            }
+                        }
+                        while ((keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control) || viewId != -1)
+                            && !emptyList && list[listPos].Title == "-");
+                        if (viewId != -1)
+                        {
+                            viewId = listPos;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.DownArrow
+                        || keyInfo.Key == ConsoleKey.PageDown && viewId != -1)
+                    {
+                        do
+                        {
+                            listPos++;
+                            if (listPos > list.Length - 1)
+                            {
+                                listPos = 0;
+                            }
+                        }
+                        while ((keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control) || viewId != -1)
+                            && !emptyList && list[listPos].Title == "-");
+                        if (viewId != -1)
+                        {
+                            viewId = listPos;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.PageUp && viewId == -1)
+                    {
+                        listPos = (listPos - 11) % list.Length;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.PageDown && viewId == -1)
+                    {
+                        listPos = (listPos + 11) % list.Length;
+                    }
                 }
-                Debug.WriteLine("");
             }
+            return true;
         }
 
         private static bool ShowStoryModePrompts()
@@ -2507,6 +2746,10 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (O) Octoliths: {octoliths}");
                     Console.WriteLine($"{X(s++)} (X) Reset Adventure Settings");
                 }
+                else
+                {
+                    Console.WriteLine($"{X(s++)} (L) View Logbook");
+                }
                 Console.WriteLine($"{X(s++)} (B) Go Back");
                 if (SaveSlot != 0)
                 {
@@ -2536,6 +2779,10 @@ namespace MphRead
                     {
                         prompt = 1;
                     }
+                    else if (keyInfo.Key == ConsoleKey.Spacebar && selection == s - 1 && SaveSlot != 0)
+                    {
+                        prompt = 2;
+                    }
                     else if (keyInfo.Key == ConsoleKey.S)
                     {
                         selection = 0;
@@ -2547,6 +2794,11 @@ namespace MphRead
                     else if (keyInfo.Key == ConsoleKey.G)
                     {
                         selection = 2;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.L && SaveSlot != 0)
+                    {
+                        selection = s - 1;
+                        prompt = 2;
                     }
                     else if (keyInfo.Key == ConsoleKey.UpArrow)
                     {
@@ -2830,7 +3082,7 @@ namespace MphRead
                         selection = 18;
                     }
                 }
-                else
+                else if (prompt == 1)
                 {
                     Console.WriteLine();
                     if (prompt == 1)
@@ -2841,6 +3093,15 @@ namespace MphRead
                             SaveSlot = (byte)slot;
                             UpdateSaveInfo();
                         }
+                    }
+                    prompt = 0;
+                }
+                else if (prompt == 2)
+                {
+                    StorySave save = GameState.ReadSave();
+                    if (!ShowLogbook(save))
+                    {
+                        return false;
                     }
                     prompt = 0;
                 }
