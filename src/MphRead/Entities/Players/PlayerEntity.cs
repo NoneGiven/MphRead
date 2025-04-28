@@ -1514,7 +1514,8 @@ namespace MphRead.Entities
             }
             if (EquipInfo.ChargeLevel >= EquipInfo.Weapon.MinCharge * 2) // todo: FPS stuff
             {
-                if (GunAnimation == GunAnimation.Charging || GunAnimation == GunAnimation.ChargingMissile)
+                if ((GunAnimation == GunAnimation.Charging || GunAnimation == GunAnimation.ChargingMissile)
+                    && _scene.FrameCount != 0 && _scene.FrameCount % 2 == 0) // todo: FPS stuff
                 {
                     int frame = (_gunModel.AnimInfo.FrameCount[0] - 1) * (EquipInfo.ChargeLevel / 2 - EquipInfo.Weapon.MinCharge)
                         / (EquipInfo.Weapon.FullCharge - EquipInfo.Weapon.MinCharge); // todo: FPS stuff
