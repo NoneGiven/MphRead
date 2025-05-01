@@ -1,4 +1,3 @@
-using System;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 

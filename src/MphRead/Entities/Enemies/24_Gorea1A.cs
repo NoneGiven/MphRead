@@ -444,7 +444,7 @@ namespace MphRead.Entities.Enemies
             {
                 UpdateAnimFrames(_model);
             }
-            // sktodo: this seems much better aligned with the offset in X instead of Z. confirm if it's actually off-center in-game
+            // skhere: this seems much better aligned with the offset in X instead of Z. confirm if it's actually off-center in-game
             TransformHurtVolumeToNode(_spineNode, new Vector3(0, Fixed.ToFloat(970), Fixed.ToFloat(622)));
         }
 
@@ -546,7 +546,7 @@ namespace MphRead.Entities.Enemies
             for (int i = 0; i < 2; i++)
             {
                 Material? material = _model.Model.GetMaterialByName(i == 0 ? "L_Bisep" : "R_Bisep")!;
-                if (material.CurrentAlpha < 1) // sktodo: make sure checking this works
+                if (material.CurrentAlpha < 1) // skhere: make sure checking this works
                 {
                     int frame = _model.AnimInfo.Frame[0] - 10;
                     if (frame >= 0)
@@ -1480,7 +1480,6 @@ namespace MphRead.Entities.Enemies
             return true;
         }
 
-        // sktodo: this has yet to be tested
         private void DrawArmRegen()
         {
             for (int i = 0; i < 2; i++)
@@ -1489,7 +1488,7 @@ namespace MphRead.Entities.Enemies
                 if (arm.RegenTimer != 0)
                 {
                     arm.DrawRegen(_regenModel);
-                    // caled from draw
+                    // called from draw
                     if (_scene.ProcessFrame && _scene.FrameCount != 0 && _scene.FrameCount % 2 == 0) // todo: FPS stuff
                     {
                         _regenModel.UpdateAnimFrames();

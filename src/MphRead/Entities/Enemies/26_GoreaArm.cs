@@ -216,8 +216,6 @@ namespace MphRead.Entities.Enemies
             }
             else
             {
-                // sktodo: does this code ever run? depends on if regen only happens after 1B phase,
-                // since if that's the case, then the second arm will never be the one this is called on
                 GetElbowNodeVectors(out Vector3 elbowPos, out _, out _);
                 GetNodeVectors(_upperArmNode, out Vector3 upperArmPos, out _, out Vector3 upperArmFacing);
                 position = upperArmPos;

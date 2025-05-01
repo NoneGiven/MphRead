@@ -748,7 +748,7 @@ namespace MphRead.Entities.Enemies
                 _speed = Vector3.Zero;
             }
             CallSubroutine(Metadata.Enemy28Subroutines, this);
-            // sktodo: make sure this ends? it should end as soon as it's not being called
+            // skhere: make sure this ends? it should end as soon as it's not being called
             _soundSource.PlayEnvironmentSfx(9); // GOREA_ATTACK3_LOOP
         }
 
