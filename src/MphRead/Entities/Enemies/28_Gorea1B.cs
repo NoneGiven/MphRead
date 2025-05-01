@@ -20,8 +20,8 @@ namespace MphRead.Entities.Enemies
         private int _phasesLeft = 0;
         public int PhasesLeft => _phasesLeft;
         private Vector3 _targetFacing;
-        private int _field1C8 = 0;
-        private int _field1CA = 0;
+        private int _damageTimer = 0;
+        private int _swingTimer = 0;
         private int _field1CC = 0;
 
         // sktodo: field names, documentation, whatever (grapple segments)
@@ -85,8 +85,8 @@ namespace MphRead.Entities.Enemies
                 _volume = CollisionVolume.Move(new CollisionVolume(
                     owner.Spawner.Data.Fields.S11.Sphere2Position.ToFloatVector(),
                     owner.Spawner.Data.Fields.S11.Sphere2Radius.FloatValue), Position);
-                _field1C8 = (int)(Rng.GetRandomInt2(13) + 7) * 2; // todo: FPS stuff
-                _field1CA = 30 * 2; // todo: FPS stuff
+                _damageTimer = (int)(Rng.GetRandomInt2(13) + 7) * 2; // todo: FPS stuff
+                _swingTimer = 30 * 2; // sktodo: FPS stuff
                 _phasesLeft = 3;
                 if (Rng.GetRandomInt2(255) % 2 != 0)
                 {
@@ -496,6 +496,9 @@ namespace MphRead.Entities.Enemies
             {
                 // sktodo: variable names
                 float v6 = (10 - (PlayerEntity.Main.Position.Y - Position.Y)) * 30;
+                // todo?: consider fx32 math in some places? discrepancies accumulate over time,
+                // but this particular line is a single place with a pretty big difference from the game
+                //float v6 = FxDiv(Fixed.ToInt(10 - (PlayerEntity.Main.Position.Y - Position.Y)), 136) / 4096f;
                 if (v6 > 0)
                 {
                     float v7 = Func213B784();
@@ -531,7 +534,7 @@ namespace MphRead.Entities.Enemies
                     Vector3 remaining = scaled - between;
                     for (int j = i; j < _grappleVecs.Length; j++)
                     {
-                        _grappleVecs[j] += remaining / 2; // todo: FPS stuff
+                        _grappleVecs[j] += remaining; // / 2; // sktodo: FPS stuff
                     }
                 }
             }
@@ -558,7 +561,7 @@ namespace MphRead.Entities.Enemies
         private void Func213C4DC()
         {
             float dist = Vector3.Distance(_grappleVecs[0], _grappleVecs[1]);
-            _grappleVecs[1] += _field10 / 2; // todo: FPS stuff
+            _grappleVecs[1] += _field10 / 2; // sktodo: FPS stuff
             if (dist > 1 / 128f)
             {
                 Vector3 start = _grappleVecs[1] - _grappleVecs[0];
@@ -569,7 +572,7 @@ namespace MphRead.Entities.Enemies
                     {
                         Vector3 result = Func204D57C(between, start);
                         Vector3 update = _grappleVecs[i];
-                        update += (result - between) * _field30 / 2; // todo: FPS stuff // sktodo: confirm
+                        update += (result - between) * _field30; // / 2; // sktodo: FPS stuff // sktodo: confirm
                         _grappleVecs[i] = update;
                         start = update - _grappleVecs[i - 1];
                     }
@@ -591,13 +594,13 @@ namespace MphRead.Entities.Enemies
 
         private void TickGrappleDamage()
         {
-            if (_field1C8 > 0)
+            if (_damageTimer > 0)
             {
-                _field1C8--;
+                _damageTimer--;
             }
-            if (_field1C8 == 0)
+            if (_damageTimer == 0)
             {
-                _field1C8 = (int)(Rng.GetRandomInt2(13) + 7) * 2; // todo: FPS stuff
+                _damageTimer = (int)(Rng.GetRandomInt2(13) + 7) * 2; // todo: FPS stuff
                 PlayerEntity.Main.TakeDamage(2, DamageFlags.NoDmgInvuln, null, this);
                 SpawnEffect(179, PlayerEntity.Main.Position); // goreaGrappleDamage
             }
@@ -624,7 +627,7 @@ namespace MphRead.Entities.Enemies
             // sktodo: I'm not changing the multiplication by 0.04 since I think the above will usually cause _field10 to get a fresh value every frame?
             // need to double check how/when field10 is actually used, might have to change this and the speed part too idk yet
             _field10 *= 0.04f; // 163
-            _field10 += _speed;
+            _field10 += _speed; // sktodo: FPS stuff
             Func213B7E0();
             TickGrappleDamage();
             if (_field1CC > 0)
@@ -633,7 +636,7 @@ namespace MphRead.Entities.Enemies
             }
             if (_field1CC == 0)
             {
-                _field1CC = 60 * 2; // todo: FPS stuff
+                _field1CC = 60 * 2; // sktodo: FPS stuff
                 _goreaFlags ^= Gorea1BFlags.Bit3;
                 _soundSource.PlaySfx(SfxId.GOREA_ATTACK2B_SCR);
             }
@@ -767,15 +770,15 @@ namespace MphRead.Entities.Enemies
             }
             if (!trocrasAlive)
             {
-                _field1CA = 0;
+                _swingTimer = 0;
             }
-            else if (_field1CA > 0)
+            else if (_swingTimer > 0)
             {
-                _field1CA--;
+                _swingTimer--;
             }
-            if (_field1CA == 0)
+            if (_swingTimer == 0)
             {
-                _field1CA = 30 * 2; // todo: FPS stuff
+                _swingTimer = 30 * 2; // sktodo: FPS stuff
                 Func213B348();
             }
         }
@@ -940,7 +943,7 @@ namespace MphRead.Entities.Enemies
                 _trocra[i]?.Explode();
                 _trocra[i] = null;
             }
-            _field1CA = 30 * 2; // todo: FPS stuff
+            _swingTimer = 30 * 2; // sktodo: FPS stuff
             _goreaFlags &= ~Gorea1BFlags.Bit0;
             _sealSphere.Deactivate();
             _field234 = 0;
@@ -992,7 +995,7 @@ namespace MphRead.Entities.Enemies
 
         public bool Behavior00()
         {
-            _field1CC = (int)(Rng.GetRandomInt2(150) + 150) * 2; // todo: FPS stuff
+            _field1CC = (int)(Rng.GetRandomInt2(150) + 150) * 2; // sktodo: FPS stuff
             return true;
         }
 
@@ -1072,7 +1075,7 @@ namespace MphRead.Entities.Enemies
                 _trocra[i]?.Explode();
                 _trocra[i] = null;
             }
-            _field1CA = 30 * 2; // todo: FPS stuff
+            _swingTimer = 30 * 2; // sktodo: FPS stuff
             _soundSource.PlaySfx(SfxId.GOREA_1B_DIE_SCR);
             _soundSource.PlaySfx(SfxId.GOREA_TRANSFORM2_SCR);
             return true;
@@ -1116,7 +1119,7 @@ namespace MphRead.Entities.Enemies
             if (_field21E <= 0)
             {
                 StopGrappling();
-                _field1CC = (int)(Rng.GetRandomInt2(150) + 150) * 2; // todo: FPS stuff
+                _field1CC = (int)(Rng.GetRandomInt2(150) + 150) * 2; // sktodo: FPS stuff
                 return true;
             }
             return false;
@@ -1144,13 +1147,13 @@ namespace MphRead.Entities.Enemies
                 return false;
             }
             _field30 = 0.9f; // 3686
-            _field1CA = 150 * 2; // todo: FPS stuff
-            _field1CC = 30 * 2; // todo: FPS stuff
+            _swingTimer = 150 * 2; // sktodo: FPS stuff
+            _field1CC = 30 * 2; // sktodo: FPS stuff
             _goreaFlags ^= Gorea1BFlags.Bit3;
             Vector3 toCenter = (PlayerEntity.Main.Position - _volume.SpherePosition).WithY(0);
             if (toCenter.LengthSquared > 1 / 128f)
             {
-                _speed = toCenter.Normalized() * Fixed.ToFloat(68) / 2; // todo: FPS stuff
+                _speed = toCenter.Normalized() * Fixed.ToFloat(68) / 2; // sktodo: FPS stuff
                 if (CheckMovementOutsideVolume())
                 {
                     _speed = Vector3.Zero;
@@ -1162,11 +1165,11 @@ namespace MphRead.Entities.Enemies
 
         public bool Behavior10()
         {
-            if (_field1CA > 0)
+            if (_swingTimer > 0)
             {
-                _field1CA--;
+                _swingTimer--;
             }
-            if (_field1CA == 0)
+            if (_swingTimer == 0)
             {
                 _field30 = Fixed.ToFloat(3973);
                 _speed = Vector3.Zero;
@@ -1219,7 +1222,7 @@ namespace MphRead.Entities.Enemies
                 _soundSource.PlaySfx(SfxId.GOREA_ATTACK2C_SCR);
                 PlayerEntity.Main.TakeDamage(30, DamageFlags.NoDmgInvuln, null, this);
                 PlayerEntity.Main.CameraInfo.SetShake(0.75f); // 3072
-                _field1CC = (int)(Rng.GetRandomInt2(150) + 150) * 2; // todo: FPS stuff
+                _field1CC = (int)(Rng.GetRandomInt2(150) + 150) * 2; // sktodo: FPS stuff
             }
             return collided;
         }

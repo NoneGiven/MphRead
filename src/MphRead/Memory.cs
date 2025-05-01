@@ -11,39 +11,9 @@ namespace MphRead.Memory
 {
     public class Memory
     {
-        // sktodo: set up a frame readout to capture all relevant values (state, grapple fields, field10, field38, etc.)
-        // used in states 6/7/8/9 as well as the player position results and so on. record data based on the
-        // the in-game frame counter changing; if we just use Task Delay 1 or something it should be good.
-        // we need to make sure we aren't reading anything while the emulator is running the frame, but
-        // I also don't want to have to tab back and forth...
-        // - set breakpoint on process_frame or something else that only happens once per actual frame
-        // - tab back and forth, I guess -- should only have to do this once
-        // --> the goal is to track each change so we can confirm the math, and then also confirm FPS stuff
-        // --> if the per-frame math isn't working out, then we'll need to trace some individual frames
         private void DoProcess()
         {
-            CEnemy28? gorea1b = null;
-            CEnemy29? sealSphere = null;
-            GetEntities();
-            foreach (CEntity entity in _entities)
-            {
-                if (entity.EntityType == EntityType.EnemyInstance && entity is CEnemy28 gorea)
-                {
-                    gorea1b = gorea;
-                }
-                else if (entity.EntityType == EntityType.EnemyInstance && entity is CEnemy29 enemy)
-                {
-                    sealSphere = enemy;
-                }
-            }
-            Debug.Assert(sealSphere != null);
-            Debug.Assert(gorea1b != null);
-            _sb.AppendLine($"state {gorea1b.State}");
-            //if (_scene != null && _scene.TryGetEntity(EnemyType.Gorea1B, out EnemyInstanceEntity? inst)
-            //    && inst is Enemy28Entity gorea1b)
-            //{
-            //    gorea1b.DrawMemory(sealSphere);
-            //}
+            _sb.AppendLine("processed");
         }
 
         private class AddressInfo
@@ -55,6 +25,7 @@ namespace MphRead.Memory
             public int CamSeqData { get; }
             public int GameState { get; }
             public int RoomDesc { get; }
+            public int Rng2 { get; }
 
             public SaveAddressInfo Save { get; }
 
@@ -77,7 +48,7 @@ namespace MphRead.Memory
             }
 
             public AddressInfo(int gameState, int entityListHead, int frameCount, int players,
-                int playerUa, int camSeqData, int roomDesc, SaveAddressInfo save)
+                int playerUa, int camSeqData, int roomDesc, int rng2, SaveAddressInfo save)
             {
                 GameState = gameState;
                 EntityListHead = entityListHead;
@@ -86,6 +57,7 @@ namespace MphRead.Memory
                 PlayerUA = playerUa;
                 CamSeqData = camSeqData;
                 RoomDesc = roomDesc;
+                Rng2 = rng2;
                 Save = save;
             }
         }
@@ -102,6 +74,7 @@ namespace MphRead.Memory
                 playerUa: 0x20B00D4,
                 camSeqData: 0x2103760,
                 roomDesc: 0x20B84C4, // todo
+                rng2: 0x20E228C, // todo
                 new AddressInfo.SaveAddressInfo(
                     story: 0x20BD798,
                     type3: 0x20D958C, // todo
@@ -118,6 +91,7 @@ namespace MphRead.Memory
                 playerUa: 0x20DB180,
                 camSeqData: 0x21335E0,
                 roomDesc: 0x20B84C4,
+                rng2: 0x20E228C,
                 new AddressInfo.SaveAddressInfo(
                     story: 0x20E97B0,
                     type3: 0x20D958C,

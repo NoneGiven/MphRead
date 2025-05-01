@@ -83,11 +83,8 @@ namespace MphRead.Entities.Enemies
 
         protected override bool EnemyTakeDamage(EntityBase? source)
         {
+            // note: the game does some conversion on Shock Coil damage but doesn't actually change the value
             int change = 65535 - _health;
-            if (source is BeamProjectileEntity beam && beam.BeamKind == BeamType.ShockCoil)
-            {
-                // sktodo
-            }
             _damage += change;
             if (_damage > _healthMax)
             {
