@@ -32,7 +32,6 @@ namespace MphRead.Entities.Enemies
                 Flags &= ~EnemyFlags.CollidePlayer;
                 Flags &= ~EnemyFlags.CollideBeam;
                 Flags |= EnemyFlags.NoMaxDistance;
-                _scanId = 0;
                 _state1 = _state2 = 255;
                 HealthbarMessageId = 7;
                 _attachNode = owner.GetModels()[0].Model.GetNodeByName("ChestBall1")!;
