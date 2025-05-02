@@ -1019,12 +1019,12 @@ namespace MphRead.Entities.Enemies
                 if ((GameState.StorySave.TriggerState[1] & 0x10) != 0 || Cheats.AlwaysFightGorea2)
                 {
                     GameState.TransitionRoomId = 92; // Gorea_b2
+                    _scene.SetFade(FadeType.FadeOutWhite, length: 45 / 30f, overwrite: true, AfterFade.AfterMovie);
                 }
                 else
                 {
-                    GameState.TransitionRoomId = _scene.RoomId;
+                    _scene.SetFade(FadeType.FadeOutWhite, length: 45 / 30f, overwrite: true, AfterFade.EnterShip);
                 }
-                _scene.SetFade(FadeType.FadeOutWhite, length: 45 / 30f, overwrite: true, AfterFade.AfterMovie);
                 return true;
             }
             return false;
