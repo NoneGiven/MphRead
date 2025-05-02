@@ -1,9 +1,16 @@
+using System;
 using MphRead.Formats.Culling;
 
 namespace MphRead.Entities.Enemies
 {
     public class Enemy31Entity : GoreaEnemyEntityBase
     {
+        public Gorea2Flags GoreaFlags { get; set; }
+        private Enemy32Entity _sealSphere = null!;
+
+        private byte _field244;
+        public byte Field244 => _field244;
+
         public Enemy31Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
             : base(data, nodeRef, scene)
         {
@@ -11,6 +18,29 @@ namespace MphRead.Entities.Enemies
 
         protected override void EnemyInitialize()
         {
+        }
+
+        // skhere: member name, variable name
+        public bool Func214080C()
+        {
+            int value = (int)(GoreaFlags & (Gorea2Flags.Bit4 | Gorea2Flags.Bit5)) >> 4;
+            return value == 1 || value == 2;
+        }
+
+        public void UpdatePhase()
+        {
+            if (_sealSphere.Damage <= 210)
+            {
+                GoreaFlags &= ~(Gorea2Flags.Bit14 | Gorea2Flags.Bit15);
+            }
+            else if (_sealSphere.Damage <= 503)
+            {
+                GoreaFlags &= ~(Gorea2Flags.Bit14 | Gorea2Flags.Bit15) | Gorea2Flags.Bit14;
+            }
+            else
+            {
+                GoreaFlags &= ~(Gorea2Flags.Bit14 | Gorea2Flags.Bit15) | Gorea2Flags.Bit15;
+            }
         }
 
         private bool BehaviorXX()
@@ -216,5 +246,43 @@ namespace MphRead.Entities.Enemies
         }
 
         #endregion
+    }
+
+    [Flags]
+    public enum Gorea2Flags : uint
+    {
+        None = 0,
+        Bit0 = 1,
+        Bit1 = 2,
+        Bit2 = 4,
+        Bit3 = 8,
+        Bit4 = 0x10,
+        Bit5 = 0x20,
+        Bit6 = 0x40,
+        Bit7 = 0x80,
+        Bit8 = 0x100,
+        Bit9 = 0x200,
+        Bit10 = 0x400,
+        Bit11 = 0x800,
+        Bit12 = 0x1000,
+        Bit13 = 0x2000,
+        Bit14 = 0x4000,
+        Bit15 = 0x8000,
+        Bit16 = 0x10000,
+        Bit17 = 0x20000,
+        Bit18 = 0x40000,
+        Bit19 = 0x80000,
+        Bit20 = 0x100000,
+        Bit21 = 0x200000,
+        Bit22 = 0x400000,
+        Bit23 = 0x800000,
+        Bit24 = 0x1000000,
+        Bit25 = 0x2000000,
+        Bit26 = 0x4000000,
+        Bit27 = 0x8000000,
+        Bit28 = 0x10000000,
+        Bit29 = 0x20000000,
+        Bit30 = 0x40000000,
+        Bit31 = 0x80000000
     }
 }

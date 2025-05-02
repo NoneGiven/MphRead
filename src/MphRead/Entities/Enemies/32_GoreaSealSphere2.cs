@@ -10,7 +10,7 @@ namespace MphRead.Entities.Enemies
 
         private int _damage = 0;
         public int Damage => _damage;
-        private int _field17C = 0; // skhere: field name (timer)
+        private int _damageTimer = 0;
         private bool _visible = false;
         private bool _targetable = false;
         public bool Targetable => _targetable;
@@ -53,9 +53,9 @@ namespace MphRead.Entities.Enemies
                 Matrix4 transform = GetNodeTransform(_gorea2, _attachNode);
                 Position = transform.Row3.Xyz;
             }
-            if (_field17C > 0)
+            if (_damageTimer > 0)
             {
-                _field17C--;
+                _damageTimer--;
             }
             // note: the game updates the effectiveness here when damage taken is 720 or greater,
             // but the value doesn't seem to change (might have been intended to halve Omega Cannon?)
@@ -64,8 +64,79 @@ namespace MphRead.Entities.Enemies
 
         protected override bool EnemyTakeDamage(EntityBase? source)
         {
-            // skhere
-            return false;
+            bool ignoreDamage = false;
+            bool isOmegaCannon = false;
+            if (source?.Type == EntityType.BeamProjectile)
+            {
+                var beamSource = (BeamProjectileEntity)source;
+                isOmegaCannon = beamSource.BeamKind == BeamType.OmegaCannon;
+            }
+            int damage = 65535 - _health;
+            if (_damage >= 720 && (!isOmegaCannon || !_gorea2.GoreaFlags.TestFlag(Gorea2Flags.Bit9))
+                || source?.Type == EntityType.Bomb)
+            {
+                damage = 0;
+                ignoreDamage = true;
+            }
+            if (isOmegaCannon)
+            {
+                _gorea2.GoreaFlags |= Gorea2Flags.Bit9;
+            }
+            if (Flags.TestFlag(EnemyFlags.Invincible) || _gorea2.Func214080C())
+            {
+                damage = 0;
+                ignoreDamage = true;
+            }
+            else
+            {
+                _damage += damage;
+                _gorea2.UpdatePhase();
+            }
+            _health = 65535;
+            _gorea2.GoreaFlags &= ~Gorea2Flags.Bit1;
+            _soundSource.StopSfx(SfxId.GOREA2_ATTACK1B);
+            if (_damage >= 840)
+            {
+                _gorea2.GoreaFlags |= Gorea2Flags.Bit11;
+            }
+            else if (damage != 0 && !Flags.TestFlag(EnemyFlags.Invincible))
+            {
+                bool spawnEffect = false;
+                if (damage >= 120)
+                {
+                    spawnEffect = true;
+                }
+                else
+                {
+                    // this returns 32, instead of 8, for 0 (which the game might also do?), but we clamp to 6 anyway
+                    int index = System.Numerics.BitOperations.TrailingZeroCount(_gorea2.Field244);
+                    if (index > 6)
+                    {
+                        index = 6;
+                    }
+                    int diff = _damage - 120 * index;
+                    for (int i = 1; i < 3; i++)
+                    {
+                        if (diff - damage < i * 40 && i * 40 <= diff)
+                        {
+                            spawnEffect = true;
+                            break;
+                        }
+                    }
+                }
+                if (spawnEffect)
+                {
+                    _gorea2.GoreaFlags |= Gorea2Flags.Bit16;
+                    SpawnEffect(44, Position); // goreaShoulderHits
+                    _gorea2.GoreaFlags |= Gorea2Flags.Bit13;
+                    Flags |= EnemyFlags.Invincible;
+                }
+                _soundSource.PlaySfx(SfxId.GOREA2_DAMAGE1);
+                _damageTimer = 10 * 2; // todo: FPS stuff
+                Material material = _gorea2.GetModels()[0].Model.GetMaterialByName("ChestCore")!;
+                material.Diffuse = new ColorRgb(31, 0, 0);
+            }
+            return ignoreDamage;
         }
     }
 }
