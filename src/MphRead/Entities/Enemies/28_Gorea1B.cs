@@ -22,7 +22,8 @@ namespace MphRead.Entities.Enemies
         private Vector3 _targetFacing;
         private int _damageTimer = 0;
         private int _swingTimer = 0;
-        private int _field1CC = 0;
+        // timer used for changing swing direction during grapple and for ending mind trick when Trocras are gone
+        private int _holdTimer = 0;
 
         // sktodo: field names, documentation, whatever (grapple segments)
         private readonly Vector3[] _grappleVecs = new Vector3[24];
@@ -630,13 +631,13 @@ namespace MphRead.Entities.Enemies
             _field10 += _speed; // sktodo: FPS stuff
             Func213B7E0();
             TickGrappleDamage();
-            if (_field1CC > 0)
+            if (_holdTimer > 0)
             {
-                _field1CC--;
+                _holdTimer--;
             }
-            if (_field1CC == 0)
+            if (_holdTimer == 0)
             {
-                _field1CC = 60 * 2; // sktodo: FPS stuff
+                _holdTimer = 60 * 2; // sktodo: FPS stuff
                 _goreaFlags ^= Gorea1BFlags.Bit3;
                 _soundSource.PlaySfx(SfxId.GOREA_ATTACK2B_SCR);
             }
@@ -748,14 +749,13 @@ namespace MphRead.Entities.Enemies
                 _speed = Vector3.Zero;
             }
             CallSubroutine(Metadata.Enemy28Subroutines, this);
-            // skhere: make sure this ends? it should end as soon as it's not being called
             _soundSource.PlayEnvironmentSfx(9); // GOREA_ATTACK3_LOOP
         }
 
         // sktodo: member name
         private void Func213B2B4()
         {
-            if (_field1CC <= 0)
+            if (_holdTimer <= 0)
             {
                 return;
             }
@@ -995,7 +995,7 @@ namespace MphRead.Entities.Enemies
 
         public bool Behavior00()
         {
-            _field1CC = (int)(Rng.GetRandomInt2(150) + 150) * 2; // sktodo: FPS stuff
+            _holdTimer = (int)(Rng.GetRandomInt2(150) + 150) * 2; // sktodo: FPS stuff
             return true;
         }
 
@@ -1095,11 +1095,11 @@ namespace MphRead.Entities.Enemies
 
         public bool Behavior05()
         {
-            if (_field1CC > 0)
+            if (_holdTimer > 0)
             {
-                _field1CC--;
+                _holdTimer--;
             }
-            if (_field1CC == 0)
+            if (_holdTimer == 0)
             {
                 for (int i = 0; i < _trocra.Length; i++)
                 {
@@ -1119,7 +1119,7 @@ namespace MphRead.Entities.Enemies
             if (_field21E <= 0)
             {
                 StopGrappling();
-                _field1CC = (int)(Rng.GetRandomInt2(150) + 150) * 2; // sktodo: FPS stuff
+                _holdTimer = (int)(Rng.GetRandomInt2(150) + 150) * 2; // sktodo: FPS stuff
                 return true;
             }
             return false;
@@ -1148,7 +1148,7 @@ namespace MphRead.Entities.Enemies
             }
             _field30 = 0.9f; // 3686
             _swingTimer = 150 * 2; // sktodo: FPS stuff
-            _field1CC = 30 * 2; // sktodo: FPS stuff
+            _holdTimer = 30 * 2; // sktodo: FPS stuff
             _goreaFlags ^= Gorea1BFlags.Bit3;
             Vector3 toCenter = (PlayerEntity.Main.Position - _volume.SpherePosition).WithY(0);
             if (toCenter.LengthSquared > 1 / 128f)
@@ -1222,7 +1222,7 @@ namespace MphRead.Entities.Enemies
                 _soundSource.PlaySfx(SfxId.GOREA_ATTACK2C_SCR);
                 PlayerEntity.Main.TakeDamage(30, DamageFlags.NoDmgInvuln, null, this);
                 PlayerEntity.Main.CameraInfo.SetShake(0.75f); // 3072
-                _field1CC = (int)(Rng.GetRandomInt2(150) + 150) * 2; // sktodo: FPS stuff
+                _holdTimer = (int)(Rng.GetRandomInt2(150) + 150) * 2; // sktodo: FPS stuff
             }
             return collided;
         }

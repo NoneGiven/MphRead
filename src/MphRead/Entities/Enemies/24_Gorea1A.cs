@@ -444,7 +444,7 @@ namespace MphRead.Entities.Enemies
             {
                 UpdateAnimFrames(_model);
             }
-            // skhere: this seems much better aligned with the offset in X instead of Z. confirm if it's actually off-center in-game
+            // todo?: this seems much better aligned with the offset in X instead of Z. add a bugifx?
             TransformHurtVolumeToNode(_spineNode, new Vector3(0, Fixed.ToFloat(970), Fixed.ToFloat(622)));
         }
 
@@ -546,7 +546,7 @@ namespace MphRead.Entities.Enemies
             for (int i = 0; i < 2; i++)
             {
                 Material? material = _model.Model.GetMaterialByName(i == 0 ? "L_Bisep" : "R_Bisep")!;
-                if (material.CurrentAlpha < 1) // skhere: make sure checking this works
+                if (material.CurrentAlpha < 1)
                 {
                     int frame = _model.AnimInfo.Frame[0] - 10;
                     if (frame >= 0)
