@@ -59,12 +59,7 @@ namespace MphRead.Entities.Enemies
             }
             // note: the game updates the effectiveness here when damage taken is 720 or greater,
             // but the value doesn't seem to change (might have been intended to halve Omega Cannon?)
-            bool flagUpdate = _visible;
-            if (flagUpdate)
-            {
-                flagUpdate = IsVisible(NodeRef);
-            }
-            _targetable = flagUpdate;
+            _targetable = _visible && IsVisible(NodeRef);
         }
 
         protected override bool EnemyTakeDamage(EntityBase? source)
