@@ -386,8 +386,7 @@ namespace MphRead.Entities.Enemies
                 }
                 if (itemType != ItemType.None)
                 {
-                    ItemSpawnEntity.SpawnItem(itemType, Position, NodeRef,
-                        despawnTime: 300 * 2, _scene); // todo: FPS stuff
+                    ItemSpawnEntity.SpawnItem(itemType, Position, NodeRef, despawnTime: 300 * 2, _scene); // todo: FPS stuff
                 }
             }
             return false;

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace MphRead.Memory
 {
-    public abstract class MemoryArray<T> : MemoryClass, IEnumerable, IEnumerator
+    public abstract class MemoryArray<T> : MemoryClass, IEnumerable
     {
         public int Length { get; }
 
@@ -41,24 +41,34 @@ namespace MphRead.Memory
         protected abstract T Get(int index);
         protected abstract void Set(int index, T value);
 
-        private int _currentIndex = -1;
-
         public IEnumerator GetEnumerator()
         {
-            return this;
+            return new MemoryArrayEnumerator(this);
         }
 
-        object? IEnumerator.Current => Get(_currentIndex);
-
-        bool IEnumerator.MoveNext()
+        public class MemoryArrayEnumerator : IEnumerator
         {
-            _currentIndex++;
-            return _currentIndex < Length;
-        }
+            private readonly MemoryArray<T> _memoryArray;
 
-        void IEnumerator.Reset()
-        {
-            _currentIndex = 0;
+            public MemoryArrayEnumerator(MemoryArray<T> memoryArray)
+            {
+                _memoryArray = memoryArray;
+            }
+
+            private int _currentIndex = -1;
+
+            object? IEnumerator.Current => _memoryArray.Get(_currentIndex);
+
+            bool IEnumerator.MoveNext()
+            {
+                _currentIndex++;
+                return _currentIndex < _memoryArray.Length;
+            }
+
+            void IEnumerator.Reset()
+            {
+                _currentIndex = 0;
+            }
         }
     }
 

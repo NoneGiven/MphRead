@@ -2157,8 +2157,8 @@ namespace MphRead.Utility
             else if (entity.SpawnerType == 12)
             {
                 writer.WriteVector3(entity.Unknown05);
-                writer.Write(entity.Unknown06);
-                writer.Write(entity.Unknown07);
+                writer.WriteFloat(entity.Unknown06);
+                writer.WriteFloat(entity.Unknown07);
                 for (int i = 0; i < 95; i++)
                 {
                     writer.Write(padInt);

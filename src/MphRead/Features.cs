@@ -170,6 +170,8 @@ namespace MphRead
         public static bool StartWithAllUpgrades { get; set; } = false;
         public static bool StartWithAllOctoliths { get; set; } = false;
         public static bool WalkThroughWalls { get; set; } = false;
+        public static bool AlwaysFightGorea2 { get; set; } = false;
+        public static bool QuadrupleDamage { get; set; } = false;
 
         public static void Load(IReadOnlyDictionary<string, string> values)
         {
@@ -205,6 +207,14 @@ namespace MphRead
             {
                 WalkThroughWalls = boolean;
             }
+            if (values.TryGetValue(nameof(AlwaysFightGorea2), out value) && Boolean.TryParse(value, out boolean))
+            {
+                AlwaysFightGorea2 = boolean;
+            }
+            if (values.TryGetValue(nameof(QuadrupleDamage), out value) && Boolean.TryParse(value, out boolean))
+            {
+                QuadrupleDamage = boolean;
+            }
         }
 
         public static IReadOnlyDictionary<string, string> Commit()
@@ -218,7 +228,9 @@ namespace MphRead
                 { nameof(ContinueFromCurrentRoom), ContinueFromCurrentRoom.ToString() },
                 { nameof(StartWithAllUpgrades), StartWithAllUpgrades.ToString() },
                 { nameof(StartWithAllOctoliths), StartWithAllOctoliths.ToString().ToLower() },
-                { nameof(WalkThroughWalls), WalkThroughWalls.ToString().ToLower() }
+                { nameof(WalkThroughWalls), WalkThroughWalls.ToString().ToLower() },
+                { nameof(AlwaysFightGorea2), AlwaysFightGorea2.ToString().ToLower() },
+                { nameof(QuadrupleDamage), QuadrupleDamage.ToString().ToLower() }
             };
         }
     }

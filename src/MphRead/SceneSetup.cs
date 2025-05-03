@@ -774,7 +774,7 @@ namespace MphRead
 
         public static void LoadEnemyResources(Scene scene)
         {
-            // todo: other things done in load_enemy_data: enemy beams, boss stuff, pre-allocation(?)
+            // todo?: pre-allocation(?)
             foreach (EntityBase entity in scene.Entities)
             {
                 if (entity is EnemySpawnEntity spawner)
@@ -967,6 +967,19 @@ namespace MphRead
                 if (model != null)
                 {
                     scene.LoadModel(model);
+                }
+                if (enemy == EnemyType.Gorea1A)
+                {
+                    scene.LoadModel("Gorea1B_lod0");
+                    scene.LoadModel("goreaArmRegen");
+                    scene.LoadModel("goreaMindTrick");
+                    scene.LoadModel("goreaMindTrick");
+                }
+                else if (enemy == EnemyType.Gorea2)
+                {
+                    scene.LoadModel("goreaMeteor");
+                    scene.LoadModel("goreaLaser");
+                    scene.LoadModel("goreaLaserColl");
                 }
             }
             int effectId = Metadata.GetEnemyDeathEffect(enemy);

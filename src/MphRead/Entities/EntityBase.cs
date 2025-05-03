@@ -302,7 +302,7 @@ namespace MphRead.Entities
 
         protected void UpdateAnimFrames(ModelInstance inst)
         {
-            if (_scene.FrameCount != 0 && _scene.FrameCount % 2 == 0)
+            if (_scene.FrameCount != 0 && _scene.FrameCount % 2 == 0) // todo: FPS stuff
             {
                 inst.UpdateAnimFrames();
             }
@@ -571,6 +571,7 @@ namespace MphRead.Entities
             //transform.ExtractRotation().ToEulerAngles(out Vector3 rotation);
             //Rotation = rotation;
             //Position = position;
+            transform = Matrix4.CreateScale(_scale) * transform;
             transform.Row3.Xyz = position;
             Transform = transform;
         }
@@ -712,6 +713,20 @@ namespace MphRead.Entities
             );
         }
 
+        protected void AddVectorItem(Vector3 point, Vector3 vector, Vector3 color)
+        {
+            CollisionVolume volume;
+            if (vector == Vector3.Zero)
+            {
+                volume = new CollisionVolume(point, 0.15f);
+            }
+            else
+            {
+                volume = new CollisionVolume(vector.Normalized(), point, 0.25f, vector.Length);
+            }
+            AddVolumeItem(volume, color);
+        }
+
         public virtual void GetDisplayVolumes()
         {
         }
@@ -719,6 +734,11 @@ namespace MphRead.Entities
         public virtual void SetActive(bool active)
         {
             Active = active;
+        }
+
+        public virtual void SetScanId(int scanId)
+        {
+            _scanId = scanId;
         }
 
         // todo: item and enemy spawners

@@ -2,6 +2,7 @@ using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -164,6 +165,7 @@ namespace MphRead
         private int _framesRecorded = 0;
         public bool ProcessFrame => (_frameCount == 0 || !_frameAdvanceOn || _advanceOneFrame) && !_exiting;
         private bool _exiting = false;
+        public bool Exiting => _exiting;
         private bool _roomLoaded = false;
         private RoomEntity? _room = null;
         public GameMode GameMode { get; set; } = GameMode.SinglePlayer;
@@ -395,6 +397,37 @@ namespace MphRead
         public bool TryGetEntity(int id, [NotNullWhen(true)] out EntityBase? entity)
         {
             return _entityMap.TryGetValue(id, out entity);
+        }
+
+        public bool TryGetEntity(EntityType entityType, [NotNullWhen(true)] out EntityBase? entity)
+        {
+            for (int i = 0; i < _entities.Count; i++)
+            {
+                EntityBase item = _entities[i];
+                if (item.Type == entityType)
+                {
+                    entity = item;
+                    return true;
+                }
+            }
+            entity = null;
+            return false;
+        }
+
+        public bool TryGetEntity(EnemyType enemyType, [NotNullWhen(true)] out EnemyInstanceEntity? entity)
+        {
+            for (int i = 0; i < _entities.Count; i++)
+            {
+                EntityBase item = _entities[i];
+                if (item.Type == EntityType.EnemyInstance && item is EnemyInstanceEntity enemy
+                    && enemy.EnemyType == enemyType)
+                {
+                    entity = enemy;
+                    return true;
+                }
+            }
+            entity = null;
+            return false;
         }
 
         public void RemoveEntity(EntityBase entity)
@@ -2871,13 +2904,16 @@ namespace MphRead
 
         public void DoCleanup()
         {
-            _exiting = true;
-            _room?.CancelTransition();
-            PlatformEntity.DestroyBeams();
-            EnemyInstanceEntity.DestroyBeams();
-            Sound.Sfx.ShutDown();
-            OutputStop();
-            Selection.Clear();
+            if (!_exiting)
+            {
+                _exiting = true;
+                _room?.CancelTransition();
+                PlatformEntity.DestroyBeams();
+                EnemyInstanceEntity.DestroyBeams();
+                Sound.Sfx.ShutDown();
+                OutputStop();
+                Selection.Clear();
+            }
         }
 
         private void EndFade()
@@ -4749,6 +4785,12 @@ namespace MphRead
             {
                 Close();
             });
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            Scene.DoCleanup();
+            base.OnClosing(e);
         }
 
         public void AddRoom(int id, GameMode mode = GameMode.None, int playerCount = 0,

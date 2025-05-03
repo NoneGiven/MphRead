@@ -254,8 +254,7 @@ namespace MphRead.Entities
                     {
                         NodeRef = _scene.UpdateNodeRef(NodeRef, _prevPos, Position);
                     }
-                    base.Process();
-                    return true;
+                    return BaseProcess();
                 }
                 _scene.SendMessage(Message.Destroyed, this, _owner, 0, 0);
                 if (_owner?.Type == EntityType.EnemySpawn)
@@ -284,6 +283,11 @@ namespace MphRead.Entities
                 PlayerEntity.Main.Speed = PlayerEntity.Main.Speed.AddX(between.X / factor).AddZ(between.Z / factor);
             }
             return true;
+        }
+
+        protected virtual bool BaseProcess()
+        {
+            return base.Process();
         }
 
         private void DoMovement()

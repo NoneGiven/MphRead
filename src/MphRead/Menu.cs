@@ -1715,6 +1715,8 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (U) Start With All Upgrades: {OnOff(Cheats.StartWithAllUpgrades)}");
                     Console.WriteLine($"{X(s++)} (O) Start With All Octoliths: {OnOff(Cheats.StartWithAllOctoliths)}");
                     Console.WriteLine($"{X(s++)} (G) Walk Through Walls: {OnOff(Cheats.WalkThroughWalls)}");
+                    Console.WriteLine($"{X(s++)} (2) Always Fight Gorea 2: {OnOff(Cheats.AlwaysFightGorea2)}");
+                    Console.WriteLine($"{X(s++)} (Q) Quadruple Damage: {OnOff(Cheats.QuadrupleDamage)}");
                 }
                 else if (screen == 3)
                 {
@@ -2059,6 +2061,14 @@ namespace MphRead
                     {
                         selection = 7;
                     }
+                    else if (keyInfo.Key == ConsoleKey.D2 || keyInfo.Key == ConsoleKey.NumPad2)
+                    {
+                        selection = 8;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Q)
+                    {
+                        selection = 9;
+                    }
                     else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
                     {
                         if (selection == 0)
@@ -2092,6 +2102,14 @@ namespace MphRead
                         else if (selection == 7)
                         {
                             Cheats.WalkThroughWalls = false;
+                        }
+                        else if (selection == 8)
+                        {
+                            Cheats.AlwaysFightGorea2 = false;
+                        }
+                        else if (selection == 9)
+                        {
+                            Cheats.QuadrupleDamage = false;
                         }
                     }
                     else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
@@ -2131,6 +2149,14 @@ namespace MphRead
                         else if (selection == 7)
                         {
                             Cheats.WalkThroughWalls = !Cheats.WalkThroughWalls;
+                        }
+                        else if (selection == 8)
+                        {
+                            Cheats.AlwaysFightGorea2 = !Cheats.AlwaysFightGorea2;
+                        }
+                        else if (selection == 9)
+                        {
+                            Cheats.QuadrupleDamage = !Cheats.QuadrupleDamage;
                         }
                     }
                 }
@@ -2254,6 +2280,8 @@ namespace MphRead
             Cheats.StartWithAllUpgrades = false;
             Cheats.StartWithAllOctoliths = false;
             Cheats.WalkThroughWalls = false;
+            Cheats.AlwaysFightGorea2 = false;
+            Cheats.QuadrupleDamage = false;
             Bugfixes.SmoothCamSeqHandoff = false;
             Bugfixes.BetterCamSeqNodeRef = true;
             Bugfixes.NoStrayRespawnText = false;

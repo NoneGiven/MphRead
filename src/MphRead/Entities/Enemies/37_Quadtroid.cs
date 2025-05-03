@@ -480,13 +480,13 @@ namespace MphRead.Entities.Enemies
         {
             Vector3 facing = FacingVector;
             Vector3 between = Position - player.Position;
-            if (between.LengthSquared > Fixed.ToFloat(32))
+            if (between.LengthSquared > 1 / 128f)
             {
                 Vector3 vec = Func204D518(between, UpVector);
-                if (vec.LengthSquared > Fixed.ToFloat(32) && Vector3.Dot(facing, vec.Normalized()) > -1)
+                if (vec.LengthSquared > 1 / 128f && Vector3.Dot(facing, vec.Normalized()) > -1)
                 {
                     vec = Func204D518(between, _rightVector);
-                    if (vec.LengthSquared > Fixed.ToFloat(32) && Vector3.Dot(facing, vec.Normalized()) > -1)
+                    if (vec.LengthSquared > 1 / 128f && Vector3.Dot(facing, vec.Normalized()) > -1)
                     {
                         return true;
                     }
@@ -576,7 +576,7 @@ namespace MphRead.Entities.Enemies
                 Vector3 up = UpVector;
                 Vector3 between = player.Position - Position;
                 between = Func204D518(between, up);
-                if (between.LengthSquared > Fixed.ToFloat(32))
+                if (between.LengthSquared > 1 / 128f)
                 {
                     Vector3 facing = between.Normalized();
                     _rightVector = Vector3.Cross(facing, up).Normalized();
@@ -817,8 +817,8 @@ namespace MphRead.Entities.Enemies
             _field224 = Position;
             if (_target != null)
             {
-                Vector3 between = _target.Position - Position;
-                if (between.X * between.X + between.Z * between.Z > Fixed.ToFloat(32))
+                Vector3 between = (_target.Position - Position).WithY(0);
+                if (between.LengthSquared > 1 / 128f)
                 {
                     Func214E314(between.Normalized());
                 }
@@ -837,7 +837,7 @@ namespace MphRead.Entities.Enemies
             Vector3 facing = FacingVector;
             _field1E8 = vec;
             _field1B8 = Vector3.Cross(_field1E8, facing);
-            if (_field1B8.LengthSquared > Fixed.ToFloat(32))
+            if (_field1B8.LengthSquared > 1 / 128f)
             {
                 _field1B8 = _field1B8.Normalized();
                 if (facing.Y > 0)
@@ -896,7 +896,7 @@ namespace MphRead.Entities.Enemies
         {
             Vector3 toSpawn = (_spawner.Data.Header.Position.ToFloatVector() - Position).Normalized();
             Vector3 vec = Func204D518(toSpawn, UpVector);
-            if (vec.LengthSquared > Fixed.ToFloat(32))
+            if (vec.LengthSquared > 1 / 128f)
             {
                 Func214E444(vec.Normalized(), state: 2, animId: 12, AnimFlags.None);
             }
@@ -1004,10 +1004,10 @@ namespace MphRead.Entities.Enemies
                 var beam = (BeamProjectileEntity)entity;
                 vec = -beam.Direction;
             }
-            if (vec.LengthSquared > Fixed.ToFloat(32))
+            if (vec.LengthSquared > 1 / 128f)
             {
                 vec = Func204D518(vec, UpVector);
-                if (vec.LengthSquared > Fixed.ToFloat(32))
+                if (vec.LengthSquared > 1 / 128f)
                 {
                     vec = vec.Normalized();
                     if (Vector3.Dot(FacingVector, vec) < Fixed.ToFloat(4034))
@@ -1051,7 +1051,7 @@ namespace MphRead.Entities.Enemies
         private bool Func214D500(Vector3 vec1, Vector3 vec2, Vector3 vec3)
         {
             var cross = Vector3.Cross(vec2, vec1);
-            if (cross.LengthSquared > Fixed.ToFloat(32) && Vector3.Dot(cross.Normalized(), vec3) > 0)
+            if (cross.LengthSquared > 1 / 128f && Vector3.Dot(cross.Normalized(), vec3) > 0)
             {
                 return true;
             }

@@ -2028,7 +2028,11 @@ namespace MphRead.Entities
                         var enemy = (EnemyInstanceEntity)entity;
                         if (enemy.EnemyType == EnemyType.GoreaSealSphere2)
                         {
-                            // todo-gorea: draw healthbar if damaged and some flag
+                            var sphere = (Enemy32Entity)enemy;
+                            if (sphere.Damage < sphere.HealthMax && sphere.Targetable)
+                            {
+                                DrawTargetHealthbar(sphere);
+                            }
                             break;
                         }
                     }
@@ -2446,15 +2450,18 @@ namespace MphRead.Entities
                 }
                 else if (enemy.EnemyType == EnemyType.GoreaArm)
                 {
-                    // todo-gorea: get current by subtracting damage from max
+                    var arm = (Enemy26Entity)enemy;
+                    current = max - arm.Damage;
                 }
                 else if (enemy.EnemyType == EnemyType.GoreaSealSphere1)
                 {
-                    // todo-gorea: get current by subtracting damage from max
+                    var sphere = (Enemy29Entity)enemy;
+                    current = max - sphere.Damage;
                 }
                 else if (enemy.EnemyType == EnemyType.GoreaSealSphere2)
                 {
-                    // todo-gorea: get current by subtracting damage from max
+                    var sphere = (Enemy32Entity)enemy;
+                    current = max - sphere.Damage;
                 }
                 lowHealth = max / 4;
             }

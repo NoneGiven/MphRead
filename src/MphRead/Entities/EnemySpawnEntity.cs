@@ -337,9 +337,22 @@ namespace MphRead.Entities
                     GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                 }
             }
-            else if (info.Message == Message.Unknown36)
+            else if (info.Message == Message.Gorea2Trigger)
             {
-                // todo-gorea: pass to Gorea2
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.EnemyInstance)
+                    {
+                        continue;
+                    }
+                    var enemy = (EnemyInstanceEntity)entity;
+                    if (enemy.EnemyType == EnemyType.Gorea2)
+                    {
+                        ((Enemy31Entity)enemy).HandleMessage(info);
+                        return;
+                    }
+                }
             }
         }
 
@@ -405,29 +418,49 @@ namespace MphRead.Entities
             {
                 return new Enemy21Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
             }
-            if (type == EnemyType.Slench)
-            {
-                return new Enemy41Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
-            }
-            if (type == EnemyType.SlenchShield)
-            {
-                return new Enemy42Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
-            }
-            if (type == EnemyType.SlenchNest)
-            {
-                return new Enemy43Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
-            }
-            if (type == EnemyType.SlenchSynapse)
-            {
-                return new Enemy44Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
-            }
-            if (type == EnemyType.SlenchTurret)
-            {
-                return new Enemy45Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
-            }
             if (type == EnemyType.PsychoBit1)
             {
                 return new Enemy23Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.Gorea1A)
+            {
+                return new Enemy24Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.GoreaHead)
+            {
+                return new Enemy25Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.GoreaArm)
+            {
+                return new Enemy26Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.GoreaLeg)
+            {
+                return new Enemy27Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.Gorea1B)
+            {
+                return new Enemy28Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.GoreaSealSphere1)
+            {
+                return new Enemy29Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.Trocra)
+            {
+                return new Enemy30Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.Gorea2)
+            {
+                return new Enemy31Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.GoreaSealSphere2)
+            {
+                return new Enemy32Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.GoreaMeteor)
+            {
+                return new Enemy33Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
             }
             if (type == EnemyType.Voldrum2)
             {
@@ -452,6 +485,26 @@ namespace MphRead.Entities
             if (type == EnemyType.Spawner)
             {
                 return new Enemy40Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.Slench)
+            {
+                return new Enemy41Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.SlenchShield)
+            {
+                return new Enemy42Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.SlenchNest)
+            {
+                return new Enemy43Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.SlenchSynapse)
+            {
+                return new Enemy44Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
+            }
+            if (type == EnemyType.SlenchTurret)
+            {
+                return new Enemy45Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
             }
             if (type == EnemyType.LesserIthrak)
             {

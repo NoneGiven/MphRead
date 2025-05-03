@@ -204,7 +204,7 @@ namespace MphRead.Entities
                     Vector3 muzzlePos = Position.AddY(0.4f);
                     // todo: if 1P bot and encounter state, update _cooldownTimer differently
                     // else...
-                    UpdateAim(muzzlePos);
+                    UpdateAim(muzzlePos, _target.Position, EquipInfo, out _aimVector);
                     _cooldownTimer = 1;
                     float cooldown = EquipInfo.Weapon.ShotCooldown * _cooldownFactor;
                     if (cooldown < 7.5f)
@@ -278,18 +278,19 @@ namespace MphRead.Entities
             _grounded = false;
         }
 
-        private bool UpdateAim(Vector3 muzzlePos)
+        public static bool UpdateAim(Vector3 muzzlePos, Vector3 targetPos, EquipInfo equipInfo, out Vector3 aimVector)
         {
-            Debug.Assert(_target != null);
-            WeaponInfo weapon = EquipInfo.Weapon;
+            WeaponInfo weapon = equipInfo.Weapon;
             float chargePct = 0;
-            if (weapon.Flags.TestFlag(WeaponFlags.CanCharge) && EquipInfo.ChargeLevel >= weapon.MinCharge)
+            // todo: FPS stuff
+            if (weapon.Flags.TestFlag(WeaponFlags.CanCharge) && equipInfo.ChargeLevel >= weapon.MinCharge * 2)
             {
-                chargePct = (EquipInfo.ChargeLevel - weapon.MinCharge) / (weapon.FullCharge - weapon.MinCharge);
+                chargePct = (equipInfo.ChargeLevel - weapon.MinCharge * 2) / (weapon.FullCharge * 2 - weapon.MinCharge * 2);
             }
-            Vector3 aimVector = _target.Position - muzzlePos;
+            aimVector = targetPos - muzzlePos;
             float hMagSqr = aimVector.X * aimVector.X + aimVector.Z * aimVector.Z;
             float hMag = MathF.Sqrt(hMagSqr);
+            // todo?: seems okay without FPS stuff here, but we need to confirm
             float uncSpeed = Fixed.ToFloat(weapon.UnchargedSpeed);
             float speed = (Fixed.ToFloat(weapon.MinChargeSpeed) - uncSpeed) * chargePct;
             float uncGravity = Fixed.ToFloat(weapon.UnchargedGravity);
@@ -320,11 +321,11 @@ namespace MphRead.Entities
             }
             if (aimVector != Vector3.Zero)
             {
-                _aimVector = aimVector.Normalized();
+                aimVector = aimVector.Normalized();
             }
             else
             {
-                _aimVector = Vector3.UnitX;
+                aimVector = Vector3.UnitX;
             }
             return result;
         }

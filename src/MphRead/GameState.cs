@@ -1391,6 +1391,13 @@ namespace MphRead
             {
                 Directory.CreateDirectory(_saveFolder);
             }
+            StorySave.Weapons &= 0xFF;
+            if (StorySave.WeaponSlots[2] == (int)BeamType.OmegaCannon)
+            {
+                StorySave.WeaponSlots[2] = (int)BeamType.None;
+            }
+            StorySave.RoomState[91 - 27] = new byte[60];
+            StorySave.RoomState[92 - 27] = new byte[60];
             File.WriteAllText(GetSavePath(Menu.SaveSlot), JsonSerializer.Serialize(StorySave, _jsonOpt));
         }
 
