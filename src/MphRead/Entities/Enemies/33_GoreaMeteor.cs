@@ -53,6 +53,7 @@ namespace MphRead.Entities.Enemies
                 Flags |= EnemyFlags.CollideBeam;
                 Flags |= EnemyFlags.NoMaxDistance;
                 Flags |= EnemyFlags.OnRadar;
+                _model = SetUpModel("goreaMeteor");
                 SetTransform(owner.FacingVector, owner.UpVector, owner.Position);
                 _basePos = _prevPos = Position;
                 _boundingRadius = 1;

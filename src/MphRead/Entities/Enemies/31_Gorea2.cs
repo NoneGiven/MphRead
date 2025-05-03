@@ -359,7 +359,7 @@ namespace MphRead.Entities.Enemies
         // (which will enable actual interpolation and remove the need to check the frame count parity)
         private void UpdateMaterialColors()
         {
-            if (_scene.FrameCount == 0 || _scene.FrameCount % 2 != 0)
+            if (_scene.FrameCount == 0 || _scene.FrameCount % 2 != 0) // todo: FPS stuff
             {
                 return;
             }
@@ -714,7 +714,7 @@ namespace MphRead.Entities.Enemies
 
         private void State06()
         {
-            if (_model.AnimInfo.Frame[0] == 27)
+            if (_model.AnimInfo.Frame[0] == 27 && _scene.FrameCount % 2 == 0) // todo: FPS stuff
             {
                 ShootMeteor();
             }
@@ -1145,11 +1145,13 @@ namespace MphRead.Entities.Enemies
             }
             else if (_sealSphere.Damage <= 503)
             {
-                GoreaFlags &= ~(Gorea2Flags.Bit14 | Gorea2Flags.Bit15) | Gorea2Flags.Bit14;
+                GoreaFlags &= ~(Gorea2Flags.Bit14 | Gorea2Flags.Bit15);
+                GoreaFlags |= Gorea2Flags.Bit14;
             }
             else
             {
-                GoreaFlags &= ~(Gorea2Flags.Bit14 | Gorea2Flags.Bit15) | Gorea2Flags.Bit15;
+                GoreaFlags &= ~(Gorea2Flags.Bit14 | Gorea2Flags.Bit15);
+                GoreaFlags |= Gorea2Flags.Bit15;
             }
         }
 
