@@ -362,7 +362,7 @@ namespace MphRead
         UnlockConnectors = 33, // 33/34 are used in in High Ground and Elder Passage to unlock/lock non-ID doors
         LockConnectors = 34,
         PreventFormSwitch = 35,
-        Unknown36 = 36, // if an enemy spawn receives this, it passes it along to Gorea2
+        Gorea2Trigger = 36, // if an enemy spawn receives this, it passes it along to Gorea2
         SetTriggerState = 42, // global state bits for ship teleporters
         ClearTriggerState = 43, // functional, but unused
         PlatformWakeup = 44,

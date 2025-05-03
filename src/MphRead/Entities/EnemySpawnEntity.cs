@@ -337,9 +337,22 @@ namespace MphRead.Entities
                     GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                 }
             }
-            else if (info.Message == Message.Unknown36)
+            else if (info.Message == Message.Gorea2Trigger)
             {
-                // todo-gorea: pass to Gorea2 // skhere
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.EnemyInstance)
+                    {
+                        continue;
+                    }
+                    var enemy = (EnemyInstanceEntity)entity;
+                    if (enemy.EnemyType == EnemyType.Gorea2)
+                    {
+                        ((Enemy31Entity)enemy).HandleMessage(info);
+                        return;
+                    }
+                }
             }
         }
 

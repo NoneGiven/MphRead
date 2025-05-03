@@ -225,7 +225,7 @@ namespace MphRead.Entities.Enemies
                     _field242--;
                 }
             }
-            else if (info.Message == Message.Unknown36)
+            else if (info.Message == Message.Gorea2Trigger)
             {
                 if (info.Sender != null && info.Sender.Type == EntityType.TriggerVolume)
                 {
@@ -806,7 +806,8 @@ namespace MphRead.Entities.Enemies
                     continue;
                 }
                 var trigger = (TriggerVolumeEntity)entity;
-                if (trigger.Data.ParentMessage != Message.Unknown36 && trigger.Data.ChildMessage != Message.Unknown36)
+                if (trigger.Data.ParentMessage != Message.Gorea2Trigger
+                    && trigger.Data.ChildMessage != Message.Gorea2Trigger)
                 {
                     continue;
                 }
@@ -981,9 +982,8 @@ namespace MphRead.Entities.Enemies
                     if (entity.Type == EntityType.TriggerVolume)
                     {
                         var trigger = (TriggerVolumeEntity)entity;
-                        // skhere: message name
-                        if ((trigger.Data.ParentMessage == Message.Unknown36
-                            || trigger.Data.ChildMessage == Message.Unknown36)
+                        if ((trigger.Data.ParentMessage == Message.Gorea2Trigger
+                            || trigger.Data.ChildMessage == Message.Gorea2Trigger)
                             && trigger.Volume.TestPoint(Position))
                         {
                             found = trigger;
