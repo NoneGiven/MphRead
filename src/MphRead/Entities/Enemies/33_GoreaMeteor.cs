@@ -53,7 +53,10 @@ namespace MphRead.Entities.Enemies
                 Flags |= EnemyFlags.CollideBeam;
                 Flags |= EnemyFlags.NoMaxDistance;
                 Flags |= EnemyFlags.OnRadar;
-                _model = SetUpModel("goreaMeteor");
+                // do not initialize animations with SetUpModel() -- the spinning animation is not needed
+                // (rotation is updated in process) and the scale animation makes it appear tiny
+                _model = Read.GetModelInstance("goreaMeteor");
+                _models.Add(_model);
                 SetTransform(owner.FacingVector, owner.UpVector, owner.Position);
                 _basePos = _prevPos = Position;
                 _boundingRadius = 1;
@@ -75,7 +78,6 @@ namespace MphRead.Entities.Enemies
                 _itemChance3 = 0;
                 _itemChance4 = 60;
                 _field1C4 = 5 * 2; // todo: FPS stuff
-                _flag = true;
                 _target = PlayerEntity.Main;
             }
         }
@@ -297,6 +299,9 @@ namespace MphRead.Entities.Enemies
 
         protected override bool EnemyGetDrawInfo()
         {
+            // todo: when shot once with the Power Beam, the meteor stays red, add bugfix?
+            // I think it's supposed to start blinking after being out for a while,
+            // but the logic is just generally not correct for that or for being shot
             if (_scene.ProcessFrame && _flag)
             {
                 _timeSinceDamage = 4 * 2; // todo: FPS stuff
