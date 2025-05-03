@@ -300,8 +300,6 @@ namespace MphRead.Entities.Enemies
         protected override bool EnemyGetDrawInfo()
         {
             // todo: when shot once with the Power Beam, the meteor stays red, add bugfix?
-            // I think it's supposed to start blinking after being out for a while,
-            // but the logic is just generally not correct for that or for being shot
             if (_scene.ProcessFrame && _flag)
             {
                 _timeSinceDamage = 4 * 2; // todo: FPS stuff
