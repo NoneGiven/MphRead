@@ -37,7 +37,7 @@ namespace MphRead.Entities.Enemies
                 Flags |= EnemyFlags.CollideBeam;
                 Flags |= EnemyFlags.NoMaxDistance;
                 _state1 = _state2 = 255;
-                HealthbarMessageId = 7;
+                HealthbarMessageId = 3;
                 _attachNode = owner.GetModels()[0].Model.GetNodeByName("ChestBall1")!;
                 SetTransform(owner.FacingVector, owner.UpVector, owner.Position);
                 Position += _attachNode.Position;

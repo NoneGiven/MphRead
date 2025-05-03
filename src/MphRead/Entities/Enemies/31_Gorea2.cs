@@ -150,7 +150,7 @@ namespace MphRead.Entities.Enemies
             Vector3 spawnPos = _sealSphere.Position;
             if (useNode)
             {
-                Matrix4 transform = GetNodeTransform(_sealSphere, _sealSphere.AttachNode);
+                Matrix4 transform = GetNodeTransform(this, _sealSphere.AttachNode);
                 spawnPos = transform.Row3.Xyz + _teleportDestination;
             }
             SpawnEffect(80, spawnPos); // goreaTeleport
@@ -601,8 +601,6 @@ namespace MphRead.Entities.Enemies
             }
         }
 
-        // todo: State02, State05, and State18 are the same
-        // (although we have a hack in State18)
         private void State02()
         {
             if (CallSubroutine(Metadata.Enemy31Subroutines, this))
@@ -686,7 +684,7 @@ namespace MphRead.Entities.Enemies
         }
 
         // todo: member name
-        private Vector3 Func21418EC(Vector3 vec1, Vector3 vec2)
+        public static Vector3 Func21418EC(Vector3 vec1, Vector3 vec2)
         {
             var cross = Vector3.Cross(vec1, vec2);
             if (cross.LengthSquared <= 1 / 128f)
@@ -711,10 +709,7 @@ namespace MphRead.Entities.Enemies
 
         private void State05()
         {
-            if (CallSubroutine(Metadata.Enemy31Subroutines, this))
-            {
-                GoreaFlags |= Gorea2Flags.Bit17;
-            }
+            State02();
         }
 
         private void State06()
@@ -740,7 +735,7 @@ namespace MphRead.Entities.Enemies
                 Node node = _model.Model.GetNodeByName(nodeName)!;
                 Matrix4 transform = GetNodeTransform(this, node);
                 Vector3 position = transform.Row3.Xyz;
-                meteor.UpdatePosition(position);
+                meteor.InitializePosition(position);
                 SpawnEffect(174, position); // goreaMeteorLaunch
             }
         }
@@ -925,7 +920,6 @@ namespace MphRead.Entities.Enemies
             }
         }
 
-        // todo: State15 and State16 are the same
         private void State15()
         {
             if (CallSubroutine(Metadata.Enemy31Subroutines, this))
@@ -937,11 +931,7 @@ namespace MphRead.Entities.Enemies
 
         private void State16()
         {
-            if (CallSubroutine(Metadata.Enemy31Subroutines, this))
-            {
-                GoreaFlags |= Gorea2Flags.Bit17;
-                _model.SetAnimation(7);
-            }
+            State15();
         }
 
         private void State17()
@@ -969,10 +959,7 @@ namespace MphRead.Entities.Enemies
 
         private void State18()
         {
-            if (CallSubroutine(Metadata.Enemy31Subroutines, this))
-            {
-                GoreaFlags |= Gorea2Flags.Bit17;
-            }
+            State02();
             // in-game, Behavior01 (the only one under State18) sets the next ID directly on the
             // metadata struct. we have to wait for CallSubroutine to finish first, then set it here.
             _state2 = _field243;
