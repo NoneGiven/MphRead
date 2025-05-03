@@ -714,7 +714,7 @@ namespace MphRead.Entities.Enemies
 
         private void State06()
         {
-            if (_model.AnimInfo.Index[0] == 27)
+            if (_model.AnimInfo.Frame[0] == 27)
             {
                 ShootMeteor();
             }
