@@ -539,12 +539,12 @@ namespace MphRead.Entities.Enemies
         // todo: member name
         private void Func213D5D0()
         {
-            Func213D628();
+            UpdateHoverPosition();
             _field20C += _speed; // todo: FPS stuff?
         }
 
-        // todo: member name
-        private void Func213D628()
+        // todo: this is pretty jerky
+        private void UpdateHoverPosition()
         {
             _field23E += 4;
             if (_field23E >= 360)
@@ -563,13 +563,11 @@ namespace MphRead.Entities.Enemies
             {
                 _field240 -= 360;
             }
-            // skhere: current issue: if the random int is less than 113, then this underflows to a huge number
-            // --> need to check what's happening in-game
-            float rand1 = (Rng.GetRandomInt2(227) - 113) / 4096f;
+            float rand1 = ((int)Rng.GetRandomInt2(227) - 113) / 4096f;
             var mtx = Matrix4.CreateFromAxisAngle(FacingVector, MathHelper.DegreesToRadians(_field240));
             Vector3 vec = Matrix.Vec3MultMtx3(Vector3.Cross(UpVector, FacingVector), mtx);
             Position = _field20C + vec * (v6 - 1.5f - rand1);
-            float rand2 = (Rng.GetRandomInt2(227) - 113) / 4096f;
+            float rand2 = ((int)Rng.GetRandomInt2(227) - 113) / 4096f;
             vec = Matrix.Vec3MultMtx3(UpVector, mtx);
             Position += vec * (v5 - rand2);
         }
