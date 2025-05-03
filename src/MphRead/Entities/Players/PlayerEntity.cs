@@ -314,7 +314,8 @@ namespace MphRead.Entities
         private byte _field553 = 0;
         private float _field684 = 0;
         private float _field688 = 0;
-        private bool _field6D0 = false;
+        private bool _field6D0 = false; //  todo: unused?
+        public bool Field6D0 => _field6D0; //  todo: unused?
         private float _altRollFbX = 0; // set from other fields when entering alt form
         private float _altRollFbZ = 0;
         private float _altRollLrX = 0;

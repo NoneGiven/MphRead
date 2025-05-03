@@ -12,6 +12,7 @@ namespace MphRead.Entities
         private EntityBase? _child = null;
 
         private readonly CollisionVolume _volume;
+        public CollisionVolume Volume => _volume;
         private readonly Vector3 _parentEventColor;
         private readonly Vector3 _childEventColor;
 

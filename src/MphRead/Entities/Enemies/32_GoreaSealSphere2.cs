@@ -1,3 +1,4 @@
+using MphRead.Formats;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
@@ -7,12 +8,15 @@ namespace MphRead.Entities.Enemies
     {
         private Enemy31Entity _gorea2 = null!;
         private Node _attachNode = null!;
+        public Node AttachNode => _attachNode;
 
         private int _damage = 0;
-        public int Damage => _damage;
+        public int Damage { get => _damage; set => _damage = value; }
         private int _damageTimer = 0;
+        public int DamageTimer => _damageTimer;
         private bool _visible = false;
         private bool _targetable = false;
+        public bool Visible => _visible;
         public bool Targetable => _targetable;
 
         public Enemy32Entity(EnemyInstanceEntityData data, NodeRef nodeRef, Scene scene)
@@ -62,6 +66,12 @@ namespace MphRead.Entities.Enemies
             _targetable = _visible && IsVisible(NodeRef);
         }
 
+        public void UpdateVisibility()
+        {
+            CollisionResult discard = default;
+            _visible = !CollisionDetection.CheckBetweenPoints(Position, PlayerEntity.Main.CameraInfo.Position, TestFlags.None, _scene, ref discard);
+        }
+
         protected override bool EnemyTakeDamage(EntityBase? source)
         {
             bool ignoreDamage = false;
@@ -93,7 +103,7 @@ namespace MphRead.Entities.Enemies
                 _gorea2.UpdatePhase();
             }
             _health = 65535;
-            _gorea2.GoreaFlags &= ~Gorea2Flags.Bit1;
+            _gorea2.GoreaFlags &= ~Gorea2Flags.LaserActive;
             _soundSource.StopSfx(SfxId.GOREA2_ATTACK1B);
             if (_damage >= 840)
             {
@@ -137,6 +147,16 @@ namespace MphRead.Entities.Enemies
                 material.Diffuse = new ColorRgb(31, 0, 0);
             }
             return ignoreDamage;
+        }
+
+        public void SetDead()
+        {
+            _scanId = 0;
+            Flags &= ~EnemyFlags.CollidePlayer;
+            Flags &= ~EnemyFlags.CollideBeam;
+            Flags |= EnemyFlags.Invincible;
+            Flags |= EnemyFlags.NoHomingNc;
+            Flags |= EnemyFlags.NoHomingCo;
         }
     }
 }

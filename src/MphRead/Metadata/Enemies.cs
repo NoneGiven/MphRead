@@ -1515,7 +1515,7 @@ namespace MphRead
             {
                 new EnemyBehavior<Enemy31Entity>(8, Enemy31Entity.BehaviorXX)
             }),
-            // state 10
+            // state 10 (unused, just calls State02)
             new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[6]
             {
                 new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),
@@ -1525,7 +1525,7 @@ namespace MphRead
                 new EnemyBehavior<Enemy31Entity>(11, Enemy31Entity.Behavior11),
                 new EnemyBehavior<Enemy31Entity>(8, Enemy31Entity.Behavior08)
             }),
-            // state 11
+            // state 11 (unused, just calls State03)
             new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[6]
             {
                 new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),
@@ -1535,7 +1535,7 @@ namespace MphRead
                 new EnemyBehavior<Enemy31Entity>(12, Enemy31Entity.Behavior07),
                 new EnemyBehavior<Enemy31Entity>(8, Enemy31Entity.Behavior08)
             }),
-            // state 12
+            // state 12 (unused, just calls State04)
             new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[6]
             {
                 new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),

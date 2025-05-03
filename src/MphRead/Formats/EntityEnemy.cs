@@ -134,8 +134,8 @@ namespace MphRead
     public readonly struct EnemySpawnFields12
     {
         public readonly Vector3Fx Field28;
-        public readonly uint Field34;
-        public readonly uint Field38;
+        public readonly Fixed Field34;
+        public readonly Fixed Field38;
     }
 
     // size: 400
@@ -315,8 +315,8 @@ namespace MphRead.Editor
 
         // gorea 2
         public Vector3 Unknown05 { get; set; }
-        public uint Unknown06 { get; set; }
-        public uint Unknown07 { get; set; }
+        public float Unknown06 { get; set; }
+        public float Unknown07 { get; set; }
 
         public int SpawnerType => GetSpawnerType(EnemyType);
 
@@ -524,8 +524,8 @@ namespace MphRead.Editor
             else if (spawnerType == 12)
             {
                 Unknown05 = raw.Fields.S12.Field28.ToFloatVector();
-                Unknown06 = raw.Fields.S12.Field34;
-                Unknown07 = raw.Fields.S12.Field38;
+                Unknown06 = raw.Fields.S12.Field34.FloatValue;
+                Unknown07 = raw.Fields.S12.Field38.FloatValue;
             }
         }
 

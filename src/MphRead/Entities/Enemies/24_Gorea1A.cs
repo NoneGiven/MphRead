@@ -27,6 +27,7 @@ namespace MphRead.Entities.Enemies
             Flags |= EnemyFlags.NoMaxDistance;
             HealthbarMessageId = 3;
             SetTransform(spawner.FacingVector, Vector3.UnitY, spawner.Position);
+            _prevPos = Position;
             _boundingRadius = 1;
             _healthMax = _health = UInt16.MaxValue;
         }
@@ -48,7 +49,12 @@ namespace MphRead.Entities.Enemies
 
         protected EffectEntry? SpawnEffectGetEntry(int effectId, Vector3 position, bool extensionFlag)
         {
-            EffectEntry? effect = _scene.SpawnEffectGetEntry(effectId, Vector3.UnitX, Vector3.UnitY, position);
+            return SpawnEffectGetEntry(effectId, position, Vector3.UnitX, Vector3.UnitY, extensionFlag);
+        }
+
+        protected EffectEntry? SpawnEffectGetEntry(int effectId, Vector3 position, Vector3 facing, Vector3 up, bool extensionFlag)
+        {
+            EffectEntry? effect = _scene.SpawnEffectGetEntry(effectId, facing, up, position);
             if (effect != null)
             {
                 effect.ResetElements(_scene.ElapsedTime);
