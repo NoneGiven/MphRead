@@ -136,6 +136,10 @@ namespace MphRead.Entities.Enemies
 
         private void CheckPlayerCollision()
         {
+            if (!HitPlayers[PlayerEntity.Main.SlotIndex])
+            {
+                return;
+            }
             Vector3 between = PlayerEntity.Main.Position - Position;
             PlayerEntity.Main.Speed += between / 4 / 2; // todo: FPS stuff
             PlayerEntity.Main.TakeDamage(10, DamageFlags.None, direction: null, source: this);
@@ -346,10 +350,10 @@ namespace MphRead.Entities.Enemies
         }
 
         private static readonly IReadOnlyList<string> _lightMaterialNames
-            = ["light1, Light2, Light3, Light4, Light5, Light6"];
+            = ["light1", "Light2", "Light3", "Light4", "Light5", "Light6"];
 
         private static readonly IReadOnlyList<string> _allMaterialNames
-            = ["BackTarget", "Eye", "Head1", "HeadFullLit", "Torso", "ChestCore", "light1, Light2, Light3, Light4, Light5, Light6"];
+            = ["BackTarget", "Eye", "Head1", "HeadFullLit", "Torso", "ChestCore", "light1", "Light2", "Light3", "Light4", "Light5", "Light6"];
 
         // todo: once material colors (and alpha) are all using floats early, update these functions to use floats
         // (which will enable actual interpolation and remove the need to check the frame count parity)
@@ -559,6 +563,8 @@ namespace MphRead.Entities.Enemies
             {
                 _field240 -= 360;
             }
+            // skhere: current issue: if the random int is less than 113, then this underflows to a huge number
+            // --> need to check what's happening in-game
             float rand1 = (Rng.GetRandomInt2(227) - 113) / 4096f;
             var mtx = Matrix4.CreateFromAxisAngle(FacingVector, MathHelper.DegreesToRadians(_field240));
             Vector3 vec = Matrix.Vec3MultMtx3(Vector3.Cross(UpVector, FacingVector), mtx);
