@@ -516,7 +516,7 @@ namespace MphRead.Entities.Enemies
             {
                 _field22C--;
             }
-            SeekTargetSetAnim(_field1E8, _models[0].AnimInfo.Index[0]);
+            _field1E8 = SeekTargetSetAnim(_field1E8, _models[0].AnimInfo.Index[0]);
             if (GoreaFlags.TestFlag(Gorea2Flags.Bit13))
             {
                 GoreaFlags &= ~Gorea2Flags.Bit13;
@@ -1084,11 +1084,11 @@ namespace MphRead.Entities.Enemies
             {
                 toPlayer = -toPlayer;
             }
-            Vector3 vec = Func204D518(UpVector, toPlayer);
+            Vector3 vec = Func204D518(toPlayer, UpVector);
             if (vec.LengthSquared > 0)
             {
-                _field1E8 = toPlayer.Normalized();
-                SeekTargetSetAnim(_field1E8, _models[0].AnimInfo.Index[0]);
+                _field1E8 = vec.Normalized();
+                _field1E8 = SeekTargetSetAnim(_field1E8, _models[0].AnimInfo.Index[0]);
             }
         }
 
