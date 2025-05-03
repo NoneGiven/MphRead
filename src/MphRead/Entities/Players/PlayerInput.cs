@@ -766,7 +766,7 @@ namespace MphRead.Entities
                                     int chargeCost = EquipWeapon.ChargeCost * 2; // todo: FPS stuff
                                     int minCost = EquipWeapon.MinChargeCost * 2; // todo: FPS stuff
                                     int cost = minCost + (chargeCost - minCost) * (EquipInfo.ChargeLevel - minCharge) / (fullCharge - minCharge);
-                                    if (EquipInfo.GetAmmo() < cost)
+                                    if (EquipInfo.GetAmmo() < cost / 2) // todo: FPS stuff
                                     {
                                         EquipInfo.ChargeLevel--;
                                     }

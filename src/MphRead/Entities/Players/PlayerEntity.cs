@@ -314,7 +314,8 @@ namespace MphRead.Entities
         private byte _field553 = 0;
         private float _field684 = 0;
         private float _field688 = 0;
-        private bool _field6D0 = false;
+        private bool _field6D0 = false; //  todo: unused?
+        public bool Field6D0 => _field6D0; //  todo: unused?
         private float _altRollFbX = 0; // set from other fields when entering alt form
         private float _altRollFbZ = 0;
         private float _altRollLrX = 0;
@@ -1110,6 +1111,18 @@ namespace MphRead.Entities
             Flags2 |= PlayerFlags2.NoFormSwitch;
         }
 
+        public void SetBipedStuck(bool stuck)
+        {
+            if (stuck)
+            {
+                Flags2 |= PlayerFlags2.BipedStuck;
+            }
+            else
+            {
+                Flags2 &= ~PlayerFlags2.BipedStuck;
+            }
+        }
+
         // todo: visualize
         public bool CheckHitByBomb(BombEntity bomb, bool halfturret)
         {
@@ -1514,7 +1527,8 @@ namespace MphRead.Entities
             }
             if (EquipInfo.ChargeLevel >= EquipInfo.Weapon.MinCharge * 2) // todo: FPS stuff
             {
-                if (GunAnimation == GunAnimation.Charging || GunAnimation == GunAnimation.ChargingMissile)
+                if ((GunAnimation == GunAnimation.Charging || GunAnimation == GunAnimation.ChargingMissile)
+                    && _scene.FrameCount != 0 && _scene.FrameCount % 2 == 0) // todo: FPS stuff
                 {
                     int frame = (_gunModel.AnimInfo.FrameCount[0] - 1) * (EquipInfo.ChargeLevel / 2 - EquipInfo.Weapon.MinCharge)
                         / (EquipInfo.Weapon.FullCharge - EquipInfo.Weapon.MinCharge); // todo: FPS stuff
@@ -1980,6 +1994,16 @@ namespace MphRead.Entities
                     if (IsMainPlayer)
                     {
                         // todo: update stats
+                        // note: the game doesn't cap either of these
+                        if (GameState.StorySave.Stats.Deaths != UInt32.MaxValue)
+                        {
+                            GameState.StorySave.Stats.Deaths++;
+                        }
+                        if (attacker != null && !attacker.IsMainPlayer && attacker.Hunter != Hunter.Guardian
+                            && GameState.StorySave.Stats.EnemyHunterDeaths != UInt32.MaxValue)
+                        {
+                            GameState.StorySave.Stats.EnemyHunterDeaths++;
+                        }
                         _deathCountdown = 150 / 30f;
                         _deathProcessed = false;
                         _deathLostOctolithSfxPlayed = false;
@@ -2017,7 +2041,16 @@ namespace MphRead.Entities
                     {
                         GameState.StorySave.DefeatedHunters |= (byte)(1 << (int)Hunter);
                         GameState.StorySave.AreaHunters[_scene.AreaId / 2] &= (byte)~(1 << (int)Hunter);
-                        // todo: update stats
+                        // todo: unlock hunter for multiplayer
+                        // note: the game doesn't cap hunter kills
+                        if (GameState.StorySave.Stats.HunterKills != UInt32.MaxValue)
+                        {
+                            GameState.StorySave.Stats.HunterKills++;
+                        }
+                        if (Hunter == Hunter.Guardian && GameState.StorySave.Stats.EnemyKills != UInt32.MaxValue)
+                        {
+                            GameState.StorySave.Stats.EnemyKills++;
+                        }
 
                         static void RestoreOctolith(int dropId)
                         {

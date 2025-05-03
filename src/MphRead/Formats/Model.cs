@@ -297,7 +297,8 @@ namespace MphRead
         Unused = 0x4, // presumably
         Material = 0x8,
         Texcoord = 0x10,
-        Texture = 0x20
+        Texture = 0x20,
+        All = Node | Unused | Material | Texcoord | Texture
     }
 
     public class AnimationInfo
@@ -834,6 +835,19 @@ namespace MphRead
                 }
             }
             return -1;
+        }
+
+        public Material? GetMaterialByName(string name)
+        {
+            for (int i = 0; i < Materials.Count; i++)
+            {
+                Material material = Materials[i];
+                if (material.Name == name)
+                {
+                    return material;
+                }
+            }
+            return null;
         }
 
         public IReadOnlyList<ColorRgba> GetPixels(int textureId, int paletteId, int recolorId)

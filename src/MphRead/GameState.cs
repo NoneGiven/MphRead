@@ -1391,6 +1391,13 @@ namespace MphRead
             {
                 Directory.CreateDirectory(_saveFolder);
             }
+            StorySave.Weapons &= 0xFF;
+            if (StorySave.WeaponSlots[2] == (int)BeamType.OmegaCannon)
+            {
+                StorySave.WeaponSlots[2] = (int)BeamType.None;
+            }
+            StorySave.RoomState[91 - 27] = new byte[60];
+            StorySave.RoomState[92 - 27] = new byte[60];
             File.WriteAllText(GetSavePath(Menu.SaveSlot), JsonSerializer.Serialize(StorySave, _jsonOpt));
         }
 
@@ -1569,6 +1576,7 @@ namespace MphRead
         public BossFlags BossFlags { get; set; } = BossFlags.None;
         public byte[] AreaHunters { get; init; } = new byte[4];
         public byte DefeatedHunters { get; set; }
+        public SaveStats Stats { get; init; } = new SaveStats();
 
         public StorySave()
         {
@@ -1595,15 +1603,15 @@ namespace MphRead
             WeaponSlots[1] = (int)BeamType.Missile;
             WeaponSlots[2] = (int)BeamType.None;
             // todo: initialize more fields
-            UpdateLogbook(1); // SCAN VISOR
-            UpdateLogbook(2); // THERMAL POSITIONER
-            UpdateLogbook(3); // ARM CANNON
-            UpdateLogbook(4); // POWER BEAM
-            UpdateLogbook(5); // MISSILE LAUNCHER
-            UpdateLogbook(6); // MORPH BALL
-            UpdateLogbook(7); // MORPH BALL BOMB
-            UpdateLogbook(27); // JUMP BOOTS
-            UpdateLogbook(29); // CHARGE SHOT
+            UpdateLogbook(0); // SCAN VISOR
+            UpdateLogbook(1); // THERMAL POSITIONER
+            UpdateLogbook(2); // ARM CANNON
+            UpdateLogbook(3); // POWER BEAM
+            UpdateLogbook(4); // MISSILE LAUNCHER
+            UpdateLogbook(5); // MORPH BALL
+            UpdateLogbook(6); // MORPH BALL BOMB
+            UpdateLogbook(26); // JUMP BOOTS
+            UpdateLogbook(28); // CHARGE SHOT
             if (Cheats.StartWithAllOctoliths)
             {
                 FoundOctoliths = CurrentOctoliths = 0xFF;
@@ -1759,10 +1767,12 @@ namespace MphRead
                 int category = Strings.GetScanEntryCategory(scanId);
                 if (category < 3)
                 {
+                    // lore, bioform, object
                     ScanCount++;
                 }
                 else if (category == 3)
                 {
+                    // equipment
                     EquipmentCount++;
                 }
             }
@@ -1774,6 +1784,71 @@ namespace MphRead
             int index = scanId / 8;
             byte bit = (byte)(1 << (scanId % 8));
             return (Logbook[index] & bit) != 0;
+        }
+
+        public int GetLogbookCount(bool unlockedOnly, params char[] categories)
+        {
+            IReadOnlyList<StringTableEntry> logbook = Strings.ReadStringTable(StringTables.ScanLog);
+            int result = 0;
+            for (int i = 0; i < logbook.Count; i++)
+            {
+                StringTableEntry entry = logbook[i];
+                if (categories.Any(c => c == entry.Category) && (!unlockedOnly || CheckLogbook(i)))
+                {
+                    result++;
+                }
+            }
+            return result;
+        }
+
+        public int GetMaxScanCount()
+        {
+            // 215 = 82 lore + 58 bioform + 75 object
+            return GetLogbookCount(unlockedOnly: false, 'L', 'B', 'O');
+        }
+
+        public int GetCompletionPercentage()
+        {
+            int maxScans = GetMaxScanCount();
+            if (maxScans == 0)
+            {
+                return 0;
+            }
+            int count = ScanCount;
+            for (int i = 1; i < 8; i++)
+            {
+                if (i == 2)
+                {
+                    continue;
+                }
+                if ((Weapons & (1 << i)) != 0)
+                {
+                    count++;
+                }
+            }
+            for (int i = 0; i < 8; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    if ((Artifacts & (1 << (i * 3 + j))) != 0)
+                    {
+                        count++;
+                    }
+                }
+            }
+            for (int i = 0; i < 8; i++)
+            {
+                if ((FoundOctoliths & (1 << i)) != 0)
+                {
+                    count++;
+                }
+            }
+            int etankCount = HealthMax / Metadata.PlayerValues[0].EnergyTank;
+            int missileCount = (AmmoMax[1] - 50) / 100;
+            int uaCount = (AmmoMax[0] - 400) / 300;
+            count += etankCount + missileCount + uaCount;
+            // 66 = 7 etanks + 12 missiles + 9 UA + 6 weapons + 24 artifacts + 8 Octoliths
+            return 100 * count / (maxScans + 66);
         }
 
         public void CopyTo(StorySave other)
@@ -1805,6 +1880,15 @@ namespace MphRead
             other.BossFlags = BossFlags;
             AreaHunters.CopyTo(other.AreaHunters, index: 0);
             other.DefeatedHunters = DefeatedHunters;
+        }
+
+        public class SaveStats
+        {
+            public uint HunterKills { get; set; }
+            public uint Deaths { get; set; }
+            public uint EnemyHunterDeaths { get; set; }
+            // todo: this should probably be stored globally and not deleted along with the save slot
+            public uint EnemyKills { get; set; }
         }
     }
 }

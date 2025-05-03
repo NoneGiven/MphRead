@@ -1174,6 +1174,436 @@ namespace MphRead
             }
         };
 
+        public static IReadOnlyList<IReadOnlyList<ColorRgb>> Enemy24Colors = new IReadOnlyList<ColorRgb>[6] // 6 x 4
+        {
+            new ColorRgb[4]
+            {
+                new ColorRgb(31, 31, 31), // ambient A
+                new ColorRgb(0, 31, 0), // diffuse A
+                new ColorRgb(9, 7, 0), // ambient B
+                new ColorRgb(31, 31, 31) // diffuse B
+            },
+            new ColorRgb[4]
+            {
+                new ColorRgb(31, 31, 31),
+                new ColorRgb(31, 24, 0),
+                new ColorRgb(0, 5, 0),
+                new ColorRgb(31, 31, 31)
+            },
+            new ColorRgb[4]
+            {
+                new ColorRgb(31, 31, 31),
+                new ColorRgb(31, 15, 0),
+                new ColorRgb(3, 2, 4),
+                new ColorRgb(31, 31, 31)
+            },
+            new ColorRgb[4]
+            {
+                new ColorRgb(31, 31, 31),
+                new ColorRgb(20, 10, 31),
+                new ColorRgb(9, 3, 0),
+                new ColorRgb(31, 31, 31)
+            },
+            new ColorRgb[4]
+            {
+                new ColorRgb(31, 31, 31),
+                new ColorRgb(31, 0, 0),
+                new ColorRgb(0, 2, 4),
+                new ColorRgb(31, 31, 31)
+            },
+            new ColorRgb[4]
+            {
+                new ColorRgb(31, 31, 31),
+                new ColorRgb(0, 13, 31),
+                new ColorRgb(9, 0, 0),
+                new ColorRgb(31, 31, 31)
+            }
+        };
+
+        public static IReadOnlyList<EnemySubroutine<Enemy24Entity>> Enemy24Subroutines = new EnemySubroutine<Enemy24Entity>[15]
+        {
+            // state 0
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[1]
+            {
+                new EnemyBehavior<Enemy24Entity>(1, Enemy24Entity.Behavior00)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[8]
+            {
+                new EnemyBehavior<Enemy24Entity>(3, Enemy24Entity.Behavior11),
+                new EnemyBehavior<Enemy24Entity>(2, Enemy24Entity.Behavior18),
+                new EnemyBehavior<Enemy24Entity>(9, Enemy24Entity.Behavior04),
+                new EnemyBehavior<Enemy24Entity>(8, Enemy24Entity.Behavior09),
+                new EnemyBehavior<Enemy24Entity>(12, Enemy24Entity.Behavior10),
+                new EnemyBehavior<Enemy24Entity>(4, Enemy24Entity.Behavior19),
+                new EnemyBehavior<Enemy24Entity>(10, Enemy24Entity.Behavior20),
+                new EnemyBehavior<Enemy24Entity>(7, Enemy24Entity.Behavior21)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[8]
+            {
+                new EnemyBehavior<Enemy24Entity>(9, Enemy24Entity.Behavior04),
+                new EnemyBehavior<Enemy24Entity>(3, Enemy24Entity.Behavior11),
+                new EnemyBehavior<Enemy24Entity>(8, Enemy24Entity.Behavior09),
+                new EnemyBehavior<Enemy24Entity>(12, Enemy24Entity.Behavior10),
+                new EnemyBehavior<Enemy24Entity>(4, Enemy24Entity.Behavior22),
+                new EnemyBehavior<Enemy24Entity>(10, Enemy24Entity.Behavior20),
+                new EnemyBehavior<Enemy24Entity>(7, Enemy24Entity.Behavior21),
+                new EnemyBehavior<Enemy24Entity>(4, Enemy24Entity.Behavior07)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[4]
+            {
+                new EnemyBehavior<Enemy24Entity>(14, Enemy24Entity.Behavior07),
+                new EnemyBehavior<Enemy24Entity>(14, Enemy24Entity.Behavior08),
+                new EnemyBehavior<Enemy24Entity>(8, Enemy24Entity.Behavior09),
+                new EnemyBehavior<Enemy24Entity>(12, Enemy24Entity.Behavior10)
+            }),
+            // state 4
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[5]
+            {
+                new EnemyBehavior<Enemy24Entity>(9, Enemy24Entity.Behavior04),
+                new EnemyBehavior<Enemy24Entity>(3, Enemy24Entity.Behavior11),
+                new EnemyBehavior<Enemy24Entity>(8, Enemy24Entity.Behavior09),
+                new EnemyBehavior<Enemy24Entity>(12, Enemy24Entity.Behavior10),
+                new EnemyBehavior<Enemy24Entity>(14, Enemy24Entity.Behavior12)
+            }),
+            // state 5
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[7]
+            {
+                new EnemyBehavior<Enemy24Entity>(9, Enemy24Entity.Behavior04),
+                new EnemyBehavior<Enemy24Entity>(3, Enemy24Entity.Behavior13),
+                new EnemyBehavior<Enemy24Entity>(8, Enemy24Entity.Behavior14),
+                new EnemyBehavior<Enemy24Entity>(12, Enemy24Entity.Behavior10),
+                new EnemyBehavior<Enemy24Entity>(1, Enemy24Entity.Behavior15),
+                new EnemyBehavior<Enemy24Entity>(14, Enemy24Entity.Behavior16),
+                new EnemyBehavior<Enemy24Entity>(11, Enemy24Entity.Behavior17)
+            }),
+            // state 6
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[2]
+            {
+                new EnemyBehavior<Enemy24Entity>(9, Enemy24Entity.Behavior04),
+                new EnemyBehavior<Enemy24Entity>(5, Enemy24Entity.Behavior05)
+            }),
+            // state 7
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[2]
+            {
+                new EnemyBehavior<Enemy24Entity>(9, Enemy24Entity.Behavior04),
+                new EnemyBehavior<Enemy24Entity>(1, Enemy24Entity.Behavior00)
+            }),
+            // state 8
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[1]
+            {
+                new EnemyBehavior<Enemy24Entity>(14, Enemy24Entity.Behavior03)
+            }),
+            // state 9
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[3]
+            {
+                new EnemyBehavior<Enemy24Entity>(13, Enemy24Entity.Behavior06),
+                new EnemyBehavior<Enemy24Entity>(9, Enemy24Entity.Behavior04),
+                new EnemyBehavior<Enemy24Entity>(1, Enemy24Entity.Behavior00)
+            }),
+            // state 10
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[2]
+            {
+                new EnemyBehavior<Enemy24Entity>(9, Enemy24Entity.Behavior04),
+                new EnemyBehavior<Enemy24Entity>(1, Enemy24Entity.Behavior00)
+            }),
+            // state 11
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[1]
+            {
+                new EnemyBehavior<Enemy24Entity>(14, Enemy24Entity.Behavior03)
+            }),
+            // state 12
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[1]
+            {
+                new EnemyBehavior<Enemy24Entity>(2, Enemy24Entity.Behavior00)
+            }),
+            // state 13
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[1]
+            {
+                new EnemyBehavior<Enemy24Entity>(0, Enemy24Entity.Behavior01)
+            }),
+            // state 14
+            new EnemySubroutine<Enemy24Entity>(new EnemyBehavior<Enemy24Entity>[1]
+            {
+                new EnemyBehavior<Enemy24Entity>(14, Enemy24Entity.Behavior02)
+            })
+        };
+
+        public static IReadOnlyList<EnemySubroutine<Enemy28Entity>> Enemy28Subroutines = new EnemySubroutine<Enemy28Entity>[14]
+        {
+            // state 0
+            new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[1]
+            {
+                new EnemyBehavior<Enemy28Entity>(1, Enemy28Entity.BehaviorXX)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[1]
+            {
+                new EnemyBehavior<Enemy28Entity>(2, Enemy28Entity.Behavior01)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[4]
+            {
+                new EnemyBehavior<Enemy28Entity>(13, Enemy28Entity.Behavior02),
+                new EnemyBehavior<Enemy28Entity>(12, Enemy28Entity.Behavior03),
+                new EnemyBehavior<Enemy28Entity>(3, Enemy28Entity.Behavior13),
+                new EnemyBehavior<Enemy28Entity>(4, Enemy28Entity.Behavior14)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[4]
+            {
+                new EnemyBehavior<Enemy28Entity>(13, Enemy28Entity.Behavior02),
+                new EnemyBehavior<Enemy28Entity>(12, Enemy28Entity.Behavior03),
+                new EnemyBehavior<Enemy28Entity>(4, Enemy28Entity.Behavior14),
+                new EnemyBehavior<Enemy28Entity>(2, Enemy28Entity.Behavior15)
+            }),
+            // state 4
+            new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[3]
+            {
+                new EnemyBehavior<Enemy28Entity>(13, Enemy28Entity.Behavior02),
+                new EnemyBehavior<Enemy28Entity>(12, Enemy28Entity.Behavior03),
+                new EnemyBehavior<Enemy28Entity>(5, Enemy28Entity.Behavior04)
+            }),
+            // state 5
+            new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[4]
+            {
+                new EnemyBehavior<Enemy28Entity>(13, Enemy28Entity.Behavior02),
+                new EnemyBehavior<Enemy28Entity>(12, Enemy28Entity.Behavior03),
+                new EnemyBehavior<Enemy28Entity>(11, Enemy28Entity.Behavior06),
+                new EnemyBehavior<Enemy28Entity>(6, Enemy28Entity.Behavior07)
+            }),
+            // state 6
+            new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[4]
+            {
+                new EnemyBehavior<Enemy28Entity>(13, Enemy28Entity.Behavior02),
+                new EnemyBehavior<Enemy28Entity>(12, Enemy28Entity.Behavior03),
+                new EnemyBehavior<Enemy28Entity>(10, Enemy28Entity.Behavior08),
+                new EnemyBehavior<Enemy28Entity>(7, Enemy28Entity.Behavior09)
+            }),
+            // state 7
+            new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[4]
+            {
+                new EnemyBehavior<Enemy28Entity>(13, Enemy28Entity.Behavior02),
+                new EnemyBehavior<Enemy28Entity>(12, Enemy28Entity.Behavior03),
+                new EnemyBehavior<Enemy28Entity>(10, Enemy28Entity.Behavior08),
+                new EnemyBehavior<Enemy28Entity>(8, Enemy28Entity.Behavior10)
+            }),
+            // state 8
+            new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[4]
+            {
+                new EnemyBehavior<Enemy28Entity>(13, Enemy28Entity.Behavior02),
+                new EnemyBehavior<Enemy28Entity>(12, Enemy28Entity.Behavior03),
+                new EnemyBehavior<Enemy28Entity>(10, Enemy28Entity.Behavior08),
+                new EnemyBehavior<Enemy28Entity>(9, Enemy28Entity.Behavior11)
+            }),
+            // state 9
+            new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[4]
+            {
+                new EnemyBehavior<Enemy28Entity>(13, Enemy28Entity.Behavior02),
+                new EnemyBehavior<Enemy28Entity>(12, Enemy28Entity.Behavior03),
+                new EnemyBehavior<Enemy28Entity>(10, Enemy28Entity.Behavior08),
+                new EnemyBehavior<Enemy28Entity>(11, Enemy28Entity.Behavior12)
+            }),
+            // state 10
+            new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[1]
+            {
+                new EnemyBehavior<Enemy28Entity>(11, Enemy28Entity.Behavior00)
+            }),
+            // state 11
+            new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[3]
+            {
+                new EnemyBehavior<Enemy28Entity>(12, Enemy28Entity.Behavior02),
+                new EnemyBehavior<Enemy28Entity>(12, Enemy28Entity.Behavior03),
+                new EnemyBehavior<Enemy28Entity>(2, Enemy28Entity.Behavior05)
+            }),
+            // state 12
+            new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[1]
+            {
+                new EnemyBehavior<Enemy28Entity>(0, Enemy28Entity.Behavior00)
+            }),
+            // state 13
+            new EnemySubroutine<Enemy28Entity>(new EnemyBehavior<Enemy28Entity>[1]
+            {
+                new EnemyBehavior<Enemy28Entity>(2, Enemy28Entity.Behavior00) // behavior is not called
+            })
+        };
+
+        public static IReadOnlyList<EnemySubroutine<Enemy31Entity>> Enemy31Subroutines = new EnemySubroutine<Enemy31Entity>[19]
+        {
+            // state 0
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[1]
+            {
+                new EnemyBehavior<Enemy31Entity>(1, Enemy31Entity.BehaviorXX)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[7]
+            {
+                new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),
+                new EnemyBehavior<Enemy31Entity>(14, Enemy31Entity.Behavior04),
+                new EnemyBehavior<Enemy31Entity>(15, Enemy31Entity.Behavior05),
+                new EnemyBehavior<Enemy31Entity>(16, Enemy31Entity.Behavior06),
+                new EnemyBehavior<Enemy31Entity>(2, Enemy31Entity.Behavior12),
+                new EnemyBehavior<Enemy31Entity>(9, Enemy31Entity.Behavior13),
+                new EnemyBehavior<Enemy31Entity>(6, Enemy31Entity.Behavior14)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[8]
+            {
+                new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),
+                new EnemyBehavior<Enemy31Entity>(14, Enemy31Entity.Behavior04),
+                new EnemyBehavior<Enemy31Entity>(15, Enemy31Entity.Behavior05),
+                new EnemyBehavior<Enemy31Entity>(16, Enemy31Entity.Behavior06),
+                new EnemyBehavior<Enemy31Entity>(3, Enemy31Entity.Behavior11),
+                new EnemyBehavior<Enemy31Entity>(9, Enemy31Entity.Behavior13),
+                new EnemyBehavior<Enemy31Entity>(6, Enemy31Entity.Behavior14),
+                new EnemyBehavior<Enemy31Entity>(7, Enemy31Entity.Behavior17)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[7]
+            {
+                new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),
+                new EnemyBehavior<Enemy31Entity>(14, Enemy31Entity.Behavior04),
+                new EnemyBehavior<Enemy31Entity>(15, Enemy31Entity.Behavior05),
+                new EnemyBehavior<Enemy31Entity>(16, Enemy31Entity.Behavior06),
+                new EnemyBehavior<Enemy31Entity>(9, Enemy31Entity.Behavior13),
+                new EnemyBehavior<Enemy31Entity>(6, Enemy31Entity.Behavior14),
+                new EnemyBehavior<Enemy31Entity>(4, Enemy31Entity.Behavior07)
+            }),
+            // state 4
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[7]
+            {
+                new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),
+                new EnemyBehavior<Enemy31Entity>(14, Enemy31Entity.Behavior04),
+                new EnemyBehavior<Enemy31Entity>(15, Enemy31Entity.Behavior05),
+                new EnemyBehavior<Enemy31Entity>(16, Enemy31Entity.Behavior06),
+                new EnemyBehavior<Enemy31Entity>(9, Enemy31Entity.Behavior13),
+                new EnemyBehavior<Enemy31Entity>(7, Enemy31Entity.Behavior09),
+                new EnemyBehavior<Enemy31Entity>(5, Enemy31Entity.Behavior10)
+            }),
+            // state 5
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[1]
+            {
+                new EnemyBehavior<Enemy31Entity>(1, Enemy31Entity.Behavior00)
+            }),
+            // state 6
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[2]
+            {
+                new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),
+                new EnemyBehavior<Enemy31Entity>(18, Enemy31Entity.BehaviorXX),
+            }),
+            // state 7
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[2]
+            {
+                new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),
+                new EnemyBehavior<Enemy31Entity>(18, Enemy31Entity.Behavior03)
+            }),
+            // state 8
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[7]
+            {
+                new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),
+                new EnemyBehavior<Enemy31Entity>(14, Enemy31Entity.Behavior04),
+                new EnemyBehavior<Enemy31Entity>(15, Enemy31Entity.Behavior05),
+                new EnemyBehavior<Enemy31Entity>(16, Enemy31Entity.Behavior06),
+                new EnemyBehavior<Enemy31Entity>(11, Enemy31Entity.Behavior15),
+                new EnemyBehavior<Enemy31Entity>(6, Enemy31Entity.Behavior14),
+                new EnemyBehavior<Enemy31Entity>(1, Enemy31Entity.Behavior16)
+            }),
+            // state 9
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[1]
+            {
+                new EnemyBehavior<Enemy31Entity>(8, Enemy31Entity.BehaviorXX)
+            }),
+            // state 10 (unused, just calls State02)
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[6]
+            {
+                new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),
+                new EnemyBehavior<Enemy31Entity>(14, Enemy31Entity.Behavior04),
+                new EnemyBehavior<Enemy31Entity>(15, Enemy31Entity.Behavior05),
+                new EnemyBehavior<Enemy31Entity>(16, Enemy31Entity.Behavior06),
+                new EnemyBehavior<Enemy31Entity>(11, Enemy31Entity.Behavior11),
+                new EnemyBehavior<Enemy31Entity>(8, Enemy31Entity.Behavior08)
+            }),
+            // state 11 (unused, just calls State03)
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[6]
+            {
+                new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),
+                new EnemyBehavior<Enemy31Entity>(14, Enemy31Entity.Behavior04),
+                new EnemyBehavior<Enemy31Entity>(15, Enemy31Entity.Behavior05),
+                new EnemyBehavior<Enemy31Entity>(16, Enemy31Entity.Behavior06),
+                new EnemyBehavior<Enemy31Entity>(12, Enemy31Entity.Behavior07),
+                new EnemyBehavior<Enemy31Entity>(8, Enemy31Entity.Behavior08)
+            }),
+            // state 12 (unused, just calls State04)
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[6]
+            {
+                new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),
+                new EnemyBehavior<Enemy31Entity>(14, Enemy31Entity.Behavior04),
+                new EnemyBehavior<Enemy31Entity>(15, Enemy31Entity.Behavior05),
+                new EnemyBehavior<Enemy31Entity>(16, Enemy31Entity.Behavior06),
+                new EnemyBehavior<Enemy31Entity>(7, Enemy31Entity.Behavior09),
+                new EnemyBehavior<Enemy31Entity>(13, Enemy31Entity.Behavior10)
+            }),
+            // state 13
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[1]
+            {
+                new EnemyBehavior<Enemy31Entity>(8, Enemy31Entity.Behavior00)
+            }),
+            // state 14
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[2]
+            {
+                new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),
+                new EnemyBehavior<Enemy31Entity>(18, Enemy31Entity.BehaviorXX)
+            }),
+            // state 15
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[2]
+            {
+                new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior02),
+                new EnemyBehavior<Enemy31Entity>(18, Enemy31Entity.Behavior00)
+            }),
+            // state 16
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[1]
+            {
+                new EnemyBehavior<Enemy31Entity>(18, Enemy31Entity.BehaviorXX)
+            }),
+            // state 17
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[1]
+            {
+                new EnemyBehavior<Enemy31Entity>(17, Enemy31Entity.Behavior00)
+            }),
+            // state 18
+            new EnemySubroutine<Enemy31Entity>(new EnemyBehavior<Enemy31Entity>[1]
+            {
+                new EnemyBehavior<Enemy31Entity>(18, Enemy31Entity.Behavior01)
+            })
+        };
+
+        public static IReadOnlyList<EnemySubroutine<Enemy33Entity>> Enemy33Subroutines = new EnemySubroutine<Enemy33Entity>[4]
+        {
+            // state 0
+            new EnemySubroutine<Enemy33Entity>(new EnemyBehavior<Enemy33Entity>[2]
+            {
+                new EnemyBehavior<Enemy33Entity>(3, Enemy33Entity.Behavior02),
+                new EnemyBehavior<Enemy33Entity>(2, Enemy33Entity.Behavior03)
+            }),
+            // state 1
+            new EnemySubroutine<Enemy33Entity>(new EnemyBehavior<Enemy33Entity>[1]
+            {
+                new EnemyBehavior<Enemy33Entity>(0, Enemy33Entity.Behavior01)
+            }),
+            // state 2
+            new EnemySubroutine<Enemy33Entity>(new EnemyBehavior<Enemy33Entity>[1]
+            {
+                new EnemyBehavior<Enemy33Entity>(3, Enemy33Entity.Behavior00)
+            }),
+            // state 3
+            new EnemySubroutine<Enemy33Entity>(new EnemyBehavior<Enemy33Entity>[1]
+            {
+                new EnemyBehavior<Enemy33Entity>(0, Enemy33Entity.Behavior01)
+            })
+        };
+
         public static IReadOnlyList<EnemySubroutine<Enemy35Entity>> Enemy35Subroutines = new EnemySubroutine<Enemy35Entity>[7]
         {
             // state 0
@@ -2557,6 +2987,12 @@ namespace MphRead
         // PsychoBitV20 - 0xEAF2 - zero Volt Driver/Omega Cannon, double Missile/Battlehammer/Shock Coil
         // PsychoBitV30 - 0xCEF9 - zero Magmaul/Omega Cannon, double Missile/Battlehammer/Judicator/Shock Coil, half Power Beam
         // PsychoBitV40 - 0xF2F9 - zero Judicator/Omega Cannon, double Missile/Battlehammer/Magmaul/Shock Coil, half Power Beam
+        // GoreaArm/GoreaSealSphere1 w0 - 0x0005 - half Power Beam/Volt Driver, zero all else
+        // GoreaArm/GoreaSealSphere1 w1 - 0x0081 - half Power Beam, normal Battlehammer, zero all else
+        // GoreaArm/GoreaSealSphere1 w2 - 0x0401 - half Power Beam/Judicator, zero all else
+        // GoreaArm/GoreaSealSphere1 w3 - 0x2001 - half Power Beam, normal Magmaul, zero all else
+        // GoreaArm/GoreaSealSphere1 w4 - 0x4001 - half Power Beam/Shock Coil, zero all else
+        // GoreaArm/GoreaSealSphere1 w5 - 0x0301 - half Power Beam, double Imperialist, zero all else
         // Voldrum1N - 0xEABA - zero Omega Cannon, double Missile/Shock Coil
         // Voldrum1H - 0xEABA - zero Omega Cannon, double Missile/Shock Coil
         // Voldrum1E - 0xEAB2 - zero Volt Driver/Omega Cannon, double Missile/Shock Coil
@@ -2605,10 +3041,10 @@ namespace MphRead
             /* 23 */ 0x2AAAA, // PsychoBit1
             /* 24 */ 0x2AAAA, // Gorea1A
             /* 25 */ 0x2AAAA, // GoreaHead
-            /* 26 */ 0x2AAAA, // GoreaArm
+            /* 26 */ 0x2AAAA, // GoreaArm (not used)
             /* 27 */ 0x2AAAA, // GoreaLeg
             /* 28 */ 0x2AAAA, // Gorea1B
-            /* 29 */ 0x2AAAA, // GoreaSealSphere1
+            /* 29 */ 0x2AAAA, // GoreaSealSphere1 (not used)
             /* 30 */ 0x2AAAA, // Trocra
             /* 31 */ 0x2AAAA, // Gorea2
             /* 32 */ 0x20000, // GoreaSealSphere2 -- zero from all except Omega Cannon
@@ -2641,6 +3077,11 @@ namespace MphRead
         public static readonly IReadOnlyList<int> SlenchSynapseEffectiveness = new int[4]
         {
             0x2AAAA, 0x800, 0x80, 0x2000
+        };
+
+        public static readonly IReadOnlyList<int> GoreaEffectiveness = new int[6]
+        {
+            5, 0x81, 0x401, 0x2001, 0x4001, 0x301
         };
     }
 }

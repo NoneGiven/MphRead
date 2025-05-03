@@ -120,14 +120,22 @@ namespace MphRead.Testing
             Nop();
         }
 
-        public static void ParseStruct(string className, bool entity, string data)
+        public static void ParseStruct(string className, string? baseClass, string data)
         {
             if (String.IsNullOrWhiteSpace(data))
             {
                 return;
             }
             int index = 0;
-            int offset = entity ? 0x18 : 0;
+            int offset = 0;
+            if (baseClass == "CEntity")
+            {
+                offset = 0x18;
+            }
+            else if (baseClass == "CEnemyBase")
+            {
+                offset = 0x170;
+            }
             var byteEnums = new Dictionary<string, string>()
             {
                 { "ENEMY_TYPE", "EnemyType" },
@@ -144,9 +152,9 @@ namespace MphRead.Testing
                 { "DOOR_TYPE", "DoorType" },
                 { "COLLISION_VOLUME_TYPE", "VolumeType" }
             };
-            if (entity)
+            if (baseClass != null)
             {
-                Console.WriteLine($"public class {className} : CEntity");
+                Console.WriteLine($"public class {className} : {baseClass}");
             }
             else
             {
@@ -297,9 +305,9 @@ namespace MphRead.Testing
                     size = 0xB4;
                     embed = true;
                 }
-                else if (split[0] == "SmallSfxStruct")
+                else if (split[0] == "SFXParameters")
                 {
-                    type = "SmallSfxStruct";
+                    type = "SfxParameters";
                     getter = "";
                     setter = "";
                     size = 4;
@@ -337,7 +345,7 @@ namespace MphRead.Testing
                     size = 0x11C;
                     embed = true;
                 }
-                else if (split[0] == "PlayerControlsMaybe")
+                else if (split[0] == "PlayerControls")
                 {
                     type = "PlayerControls";
                     getter = "";
@@ -353,7 +361,7 @@ namespace MphRead.Testing
                     size = 4;
                     embed = true;
                 }
-                else if (split[0] == "PlayerInputProbably")
+                else if (split[0] == "PlayerInput")
                 {
                     type = "PlayerInput";
                     getter = "";
@@ -367,6 +375,14 @@ namespace MphRead.Testing
                     getter = "";
                     setter = "";
                     size = 0x158;
+                    embed = true;
+                }
+                else if (split[0] == "EquipInfo")
+                {
+                    type = "EquipInfo";
+                    getter = "";
+                    setter = "";
+                    size = 0x14;
                     embed = true;
                 }
                 else if (byteEnums.TryGetValue(split[0], out string? value))

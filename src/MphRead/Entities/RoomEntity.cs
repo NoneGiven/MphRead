@@ -51,6 +51,7 @@ namespace MphRead.Entities
         public void Setup(string name, RoomMetadata meta, CollisionInstance collision, NodeData? nodeData,
             int layerMask, int roomId)
         {
+            // todo: unlock the corresponding multiplayer arena when visiting a new planet
             _portals.Clear();
             _portalSides.Clear();
             _forceFields.Clear();

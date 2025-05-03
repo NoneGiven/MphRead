@@ -247,6 +247,10 @@ namespace MphRead.Entities
         // note: the game does not have the functionality of alt attacks hitting enemies or doors
         public bool CheckAltAttackHitEnemy1(EnemyInstanceEntity target)
         {
+            if (target.Flags.TestAny(EnemyFlags.Invincible | EnemyFlags.NoBombDamage))
+            {
+                return false;
+            }
             // the game assumes the hunter is noxus based on the alt attack timer
             if (Hunter == Hunter.Spire && Flags2.TestFlag(PlayerFlags2.AltAttack))
             {
@@ -283,6 +287,10 @@ namespace MphRead.Entities
 
         public bool CheckAltAttackHitEnemy2(EnemyInstanceEntity target)
         {
+            if (target.Flags.TestAny(EnemyFlags.Invincible | EnemyFlags.NoBombDamage))
+            {
+                return false;
+            }
             if ((Hunter == Hunter.Trace || Hunter == Hunter.Weavel) && Flags2.TestFlag(PlayerFlags2.AltAttack))
             {
                 Vector3 between = _volume.SpherePosition - target.HurtVolume.SpherePosition;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using MphRead.Sound;
+using MphRead.Text;
 
 namespace MphRead
 {
@@ -217,7 +218,7 @@ namespace MphRead
                 {
                     SaveSlot = saveSlot;
                 }
-                UpdateEnemyHunterInfo();
+                UpdateSaveInfo();
                 SaveFromExit = ParseSaveWhen(settings.SaveFromExit, SaveWhen.Never);
                 SaveFromShip = ParseSaveWhen(settings.SaveFromShip, SaveWhen.Prompt);
                 string[] planets = settings.Planets.ToLower().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
@@ -599,7 +600,7 @@ namespace MphRead
                         }
                     }
                 }
-                UpdateEnemyHunterInfo();
+                UpdateSaveInfo();
                 NeededSave = SaveWhen.Never;
                 while (true)
                 {
@@ -1714,6 +1715,8 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (U) Start With All Upgrades: {OnOff(Cheats.StartWithAllUpgrades)}");
                     Console.WriteLine($"{X(s++)} (O) Start With All Octoliths: {OnOff(Cheats.StartWithAllOctoliths)}");
                     Console.WriteLine($"{X(s++)} (G) Walk Through Walls: {OnOff(Cheats.WalkThroughWalls)}");
+                    Console.WriteLine($"{X(s++)} (2) Always Fight Gorea 2: {OnOff(Cheats.AlwaysFightGorea2)}");
+                    Console.WriteLine($"{X(s++)} (Q) Quadruple Damage: {OnOff(Cheats.QuadrupleDamage)}");
                 }
                 else if (screen == 3)
                 {
@@ -2058,6 +2061,14 @@ namespace MphRead
                     {
                         selection = 7;
                     }
+                    else if (keyInfo.Key == ConsoleKey.D2 || keyInfo.Key == ConsoleKey.NumPad2)
+                    {
+                        selection = 8;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Q)
+                    {
+                        selection = 9;
+                    }
                     else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
                     {
                         if (selection == 0)
@@ -2091,6 +2102,14 @@ namespace MphRead
                         else if (selection == 7)
                         {
                             Cheats.WalkThroughWalls = false;
+                        }
+                        else if (selection == 8)
+                        {
+                            Cheats.AlwaysFightGorea2 = false;
+                        }
+                        else if (selection == 9)
+                        {
+                            Cheats.QuadrupleDamage = false;
                         }
                     }
                     else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
@@ -2130,6 +2149,14 @@ namespace MphRead
                         else if (selection == 7)
                         {
                             Cheats.WalkThroughWalls = !Cheats.WalkThroughWalls;
+                        }
+                        else if (selection == 8)
+                        {
+                            Cheats.AlwaysFightGorea2 = !Cheats.AlwaysFightGorea2;
+                        }
+                        else if (selection == 9)
+                        {
+                            Cheats.QuadrupleDamage = !Cheats.QuadrupleDamage;
                         }
                     }
                 }
@@ -2253,6 +2280,8 @@ namespace MphRead
             Cheats.StartWithAllUpgrades = false;
             Cheats.StartWithAllOctoliths = false;
             Cheats.WalkThroughWalls = false;
+            Cheats.AlwaysFightGorea2 = false;
+            Cheats.QuadrupleDamage = false;
             Bugfixes.SmoothCamSeqHandoff = false;
             Bugfixes.BetterCamSeqNodeRef = true;
             Bugfixes.NoStrayRespawnText = false;
@@ -2261,20 +2290,72 @@ namespace MphRead
             Bugfixes.NoSlenchRollTimerUnderflow = true;
         }
 
-        private static string[] _enemyHunterInfo = new string[4] {
-            "Alinos  : none",
-            "CA      : none",
-            "VDO     : none",
-            "Arcterra: none"
-        };
+        private static readonly string[] _saveInfo = [
+            "Alinos   : locked  : ",
+            "CA       : locked  : ",
+            "VDO      : locked  : ",
+            "Arcterra : locked  : ",
+            "Oubliette: locked",
+            "Artifacts: ",
+            "Octoliths: ",
+            "Expansion: ",
+            "Weapons  : ",
+            "Complete : "
+        ];
 
-        private static void UpdateEnemyHunterInfo()
+        private static void UpdateSaveInfo()
         {
-            _enemyHunterInfo[0] = "Alinos  : ";
-            _enemyHunterInfo[1] = "CA      : ";
-            _enemyHunterInfo[2] = "VDO     : ";
-            _enemyHunterInfo[3] = "Arcterra: ";
             StorySave save = GameState.ReadSave();
+
+            string ArtifactDisplay(int area, int artifact)
+            {
+                return save.CheckFoundArtifact(artifact, area) ? "1" : "0";
+            }
+
+            string OctolithDisplay(int area)
+            {
+                return save.CheckFoundOctolith(area) ? "1" : "0";
+            }
+
+            string WeaponDisplay(BeamType weapon, string name)
+            {
+                if ((save.Weapons & (1 << (int)weapon)) == 0)
+                {
+                    return "";
+                }
+                return $"{(_saveInfo[8].EndsWith(' ') ? "" : ", ")}{name}";
+            }
+
+            _saveInfo[0] = $"Alinos   : {((save.Areas & 1) == 0 ? "locked  " : "unlocked")}: ";
+            _saveInfo[1] = $"CA       : {((save.Areas & 4) == 0 ? "locked  " : "unlocked")}: ";
+            _saveInfo[2] = $"VDO      : {((save.Areas & 0x10) == 0 ? "locked  " : "unlocked")}: ";
+            _saveInfo[3] = $"Arcterra : {((save.Areas & 0x40) == 0 ? "locked  " : "unlocked")}: ";
+            _saveInfo[4] = $"Oubliette: {((save.Areas & 0x100) == 0 ? "locked  " : "unlocked")}";
+            _saveInfo[5] = $"Artifacts:" +
+                $" CA {ArtifactDisplay(2, 0)}/{ArtifactDisplay(2, 1)}/{ArtifactDisplay(2, 2)}" +
+                $" {ArtifactDisplay(3, 0)}/{ArtifactDisplay(3, 1)}/{ArtifactDisplay(3, 2)}," +
+                $" Alinos {ArtifactDisplay(0, 0)}/{ArtifactDisplay(0, 1)}/{ArtifactDisplay(0, 2)}" +
+                $" {ArtifactDisplay(1, 0)}/{ArtifactDisplay(1, 1)}/{ArtifactDisplay(1, 2)}," +
+                $" VDO {ArtifactDisplay(4, 0)}/{ArtifactDisplay(4, 1)}/{ArtifactDisplay(4, 2)}" +
+                $" {ArtifactDisplay(5, 0)}/{ArtifactDisplay(5, 1)}/{ArtifactDisplay(5, 2)}," +
+                $" Arcterra {ArtifactDisplay(6, 0)}/{ArtifactDisplay(6, 1)}/{ArtifactDisplay(6, 2)}" +
+                $" {ArtifactDisplay(7, 0)}/{ArtifactDisplay(7, 1)}/{ArtifactDisplay(7, 2)}";
+            _saveInfo[6] = $"Octoliths:" +
+                $" CA {OctolithDisplay(2)}     {OctolithDisplay(3)}," +
+                $"     Alinos {OctolithDisplay(0)}     {OctolithDisplay(1)}," +
+                $"     VDO {OctolithDisplay(4)}     {OctolithDisplay(5)}," +
+                $"     Arcterra {OctolithDisplay(6)}     {OctolithDisplay(7)}";
+            _saveInfo[7] = $"Expansion: Health {save.HealthMax}, Missiles {save.AmmoMax[1] / 10}, UA {save.AmmoMax[0] / 10}";
+            _saveInfo[8] = "Weapons  : ";
+            _saveInfo[8] += WeaponDisplay(BeamType.Battlehammer, "Battlehammer");
+            _saveInfo[8] += WeaponDisplay(BeamType.Judicator, "Judicator");
+            _saveInfo[8] += WeaponDisplay(BeamType.VoltDriver, "Volt Driver");
+            _saveInfo[8] += WeaponDisplay(BeamType.Magmaul, "Magmaul");
+            _saveInfo[8] += WeaponDisplay(BeamType.ShockCoil, "Shock Coil");
+            _saveInfo[8] += WeaponDisplay(BeamType.Imperialist, "Imperialist");
+            _saveInfo[8] += WeaponDisplay(BeamType.OmegaCannon, "Omega Cannon");
+            int completionPct = save.GetCompletionPercentage();
+            _saveInfo[9] = $"Complete : {completionPct}%";
             uint rng2 = Rng.Rng2;
             SceneSetup.UpdateAreaHunters(save);
             Rng.SetRng2(rng2);
@@ -2284,11 +2365,11 @@ namespace MphRead
                 {
                     if ((save.AreaHunters[i] & (1 << j)) != 0)
                     {
-                        if (!_enemyHunterInfo[i].EndsWith(' '))
+                        if (!_saveInfo[i].EndsWith(' '))
                         {
-                            _enemyHunterInfo[i] += ", ";
+                            _saveInfo[i] += ", ";
                         }
-                        _enemyHunterInfo[i] += ((Hunter)j).ToString();
+                        _saveInfo[i] += ((Hunter)j).ToString();
                         int octoliths = 0;
                         for (int k = 0; k < 8; k++)
                         {
@@ -2299,15 +2380,277 @@ namespace MphRead
                         }
                         if (octoliths > 0)
                         {
-                            _enemyHunterInfo[i] += $" (x{octoliths})";
+                            _saveInfo[i] += $" (x{octoliths})";
                         }
                     }
                 }
-                if (_enemyHunterInfo[i].EndsWith(' '))
+            }
+        }
+
+        private static bool ShowLogbook(StorySave save)
+        {
+            int category = -1;
+            int viewId = -1;
+            int selection = 0;
+            int listPos = -1;
+            Scene.Language = Paths.MphKey == "AMHK0" ? Language.Japanese : _language;
+            IReadOnlyList<StringTableEntry> entries = Strings.ReadStringTable(StringTables.ScanLog);
+            int loreMax = save.GetLogbookCount(false, 'L');
+            int bioformMax = save.GetLogbookCount(false, 'B');
+            int objectMax = save.GetLogbookCount(false, 'O');
+            int equipMax = save.GetLogbookCount(false, 'E');
+            int scanPct = (int)(save.ScanCount / (float)save.GetMaxScanCount() * 100);
+            int lorePct = (int)(save.GetLogbookCount(true, 'L') / (float)loreMax * 100);
+            int bioformPct = (int)(save.GetLogbookCount(true, 'B') / (float)bioformMax * 100);
+            int objectPct = (int)(save.GetLogbookCount(true, 'O') / (float)objectMax * 100);
+            int equipPct = (int)(save.EquipmentCount / (float)equipMax * 100);
+            var loreList = new (string, string)[loreMax];
+            var bioformList = new (string, string)[bioformMax];
+            var objectList = new (string, string)[objectMax];
+            var equipList = new (string, string)[equipMax];
+            int loreIndex = 0;
+            int bioformIndex = 0;
+            int objectIndex = 0;
+            int equipmentIndex = 0;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                StringTableEntry entry = entries[i];
+
+                void WriteEntry((string, string)[] list, int index)
                 {
-                    _enemyHunterInfo[i] += "none";
+                    if (save.CheckLogbook(i))
+                    {
+                        list[index] = (entry.String1, entry.String2);
+                    }
+                    else
+                    {
+                        list[index] = ("-", "-");
+                    }
+                }
+
+                if (entry.Category == 'L')
+                {
+                    WriteEntry(loreList, loreIndex++);
+                }
+                else if (entry.Category == 'B')
+                {
+                    WriteEntry(bioformList, bioformIndex++);
+                }
+                else if (entry.Category == 'O')
+                {
+                    WriteEntry(objectList, objectIndex++);
+                }
+                else if (entry.Category == 'E')
+                {
+                    WriteEntry(equipList, equipmentIndex++);
                 }
             }
+            (string Title, string Log)[] list = loreList;
+            while (true)
+            {
+                int s = 0;
+                string X(int index)
+                {
+                    bool check = selection == index || (category != -1 && category + 1 == s);
+                    return $"[{(check ? "x" : " ")}]";
+                }
+
+                string Y(int index)
+                {
+                    return $"[{(index == listPos ? "x" : " ")}]";
+                }
+
+                Console.Clear();
+                Console.WriteLine($"MphRead Version {Program.Version}");
+                Console.WriteLine();
+                if (category == -1)
+                {
+                    Console.WriteLine("Select a category");
+                }
+                else if (category == 0)
+                {
+                    Console.WriteLine($"Lore: {lorePct}%");
+                }
+                else if (category == 1)
+                {
+                    Console.WriteLine($"Bioform: {bioformPct}%");
+                }
+                else if (category == 2)
+                {
+                    Console.WriteLine($"Object: {objectPct}%");
+                }
+                else if (category == 3)
+                {
+                    Console.WriteLine($"Equipment: {equipPct}%");
+                }
+                Console.WriteLine($"{X(s++)} (L) Lore      \\");
+                Console.WriteLine($"{X(s++)} (F) Bioform   }} {scanPct,3}%");
+                Console.WriteLine($"{X(s++)} (O) Object    /");
+                Console.WriteLine($"{X(s++)} (E) Equipment }} {equipPct,3}%");
+                Console.WriteLine($"{X(s++)} (B) Go Back");
+                bool emptyList = false;
+                if (category != -1)
+                {
+                    Console.WriteLine();
+                    if (viewId == -1)
+                    {
+                        if (!list.Any(l => l.Title != "-"))
+                        {
+                            Console.WriteLine("No entries found");
+                            emptyList = true;
+                        }
+                        else
+                        {
+                            int startPos = Math.Max(listPos - 5, 0);
+                            int endPos = Math.Min(Math.Max(listPos + 5, startPos + 10), list.Length - 1);
+                            startPos = Math.Max(Math.Min(listPos - 5, endPos - 10), 0);
+                            for (int i = startPos; i <= endPos; i++)
+                            {
+                                Console.WriteLine($"{Y(i)} {i.ToString().PadLeft(3, '0')}: {list[i].Title}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        (string title, string log) = list[viewId];
+                        Console.WriteLine(viewId.ToString().PadLeft(3, '0'));
+                        Console.WriteLine(title);
+                        Console.WriteLine();
+                        Console.WriteLine(log);
+                    }
+                }
+                s--;
+                ConsoleKeyInfo keyInfo = Console.ReadKey();
+                if (keyInfo.Key == ConsoleKey.Escape)
+                {
+                    return false;
+                }
+                if (category == -1)
+                {
+                    if (keyInfo.Key == ConsoleKey.B
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == s)
+                    {
+                        break;
+                    }
+                    if (keyInfo.Key == ConsoleKey.L
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == 0)
+                    {
+                        category = selection = 0;
+                        listPos = 0;
+                        list = loreList;
+                        viewId = -1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.F
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == 1)
+                    {
+                        category = selection = 1;
+                        listPos = 0;
+                        list = bioformList;
+                        viewId = -1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.O
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == 2)
+                    {
+                        category = selection = 2;
+                        listPos = 0;
+                        list = objectList;
+                        viewId = -1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.E
+                        || keyInfo.Key == ConsoleKey.Spacebar && selection == 3)
+                    {
+                        category = selection = 3;
+                        listPos = 0;
+                        list = equipList;
+                        viewId = -1;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.UpArrow)
+                    {
+                        selection--;
+                        if (selection < 0)
+                        {
+                            selection = s;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.DownArrow)
+                    {
+                        selection++;
+                        if (selection > s)
+                        {
+                            selection = 0;
+                        }
+                    }
+                }
+                else
+                {
+                    if (keyInfo.Key == ConsoleKey.B
+                        || keyInfo.Key == ConsoleKey.Backspace
+                        || keyInfo.Key == ConsoleKey.Enter)
+                    {
+                        if (viewId == -1)
+                        {
+                            category = -1;
+                            listPos = -1;
+                        }
+                        else
+                        {
+                            viewId = -1;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Spacebar && viewId == -1)
+                    {
+                        if (list[listPos].Title != "-")
+                        {
+                            viewId = listPos;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.UpArrow
+                        || keyInfo.Key == ConsoleKey.PageUp && viewId != -1)
+                    {
+                        do
+                        {
+                            listPos--;
+                            if (listPos < 0)
+                            {
+                                listPos = list.Length - 1;
+                            }
+                        }
+                        while ((keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control) || viewId != -1)
+                            && !emptyList && list[listPos].Title == "-");
+                        if (viewId != -1)
+                        {
+                            viewId = listPos;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.DownArrow
+                        || keyInfo.Key == ConsoleKey.PageDown && viewId != -1)
+                    {
+                        do
+                        {
+                            listPos++;
+                            if (listPos > list.Length - 1)
+                            {
+                                listPos = 0;
+                            }
+                        }
+                        while ((keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control) || viewId != -1)
+                            && !emptyList && list[listPos].Title == "-");
+                        if (viewId != -1)
+                        {
+                            viewId = listPos;
+                        }
+                    }
+                    else if (keyInfo.Key == ConsoleKey.PageUp && viewId == -1)
+                    {
+                        listPos = (listPos - 11) % list.Length;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.PageDown && viewId == -1)
+                    {
+                        listPos = (listPos + 11) % list.Length;
+                    }
+                }
+            }
+            return true;
         }
 
         private static bool ShowStoryModePrompts()
@@ -2430,15 +2773,21 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (O) Octoliths: {octoliths}");
                     Console.WriteLine($"{X(s++)} (X) Reset Adventure Settings");
                 }
+                else
+                {
+                    Console.WriteLine($"{X(s++)} (L) View Logbook");
+                }
                 Console.WriteLine($"{X(s++)} (B) Go Back");
                 if (SaveSlot != 0)
                 {
                     Console.WriteLine();
-                    Console.WriteLine("Enemy Hunter Info");
-                    Console.WriteLine(_enemyHunterInfo[1]);
-                    Console.WriteLine(_enemyHunterInfo[0]);
-                    Console.WriteLine(_enemyHunterInfo[2]);
-                    Console.WriteLine(_enemyHunterInfo[3]);
+                    Console.WriteLine("Save Info");
+                    Console.WriteLine(_saveInfo[1]);
+                    Console.WriteLine(_saveInfo[0]);
+                    for (int i = 2; i < _saveInfo.Length; i++)
+                    {
+                        Console.WriteLine(_saveInfo[i]);
+                    }
                 }
                 s--;
                 if (prompt == 0)
@@ -2457,6 +2806,10 @@ namespace MphRead
                     {
                         prompt = 1;
                     }
+                    else if (keyInfo.Key == ConsoleKey.Spacebar && selection == s - 1 && SaveSlot != 0)
+                    {
+                        prompt = 2;
+                    }
                     else if (keyInfo.Key == ConsoleKey.S)
                     {
                         selection = 0;
@@ -2468,6 +2821,11 @@ namespace MphRead
                     else if (keyInfo.Key == ConsoleKey.G)
                     {
                         selection = 2;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.L && SaveSlot != 0)
+                    {
+                        selection = s - 1;
+                        prompt = 2;
                     }
                     else if (keyInfo.Key == ConsoleKey.UpArrow)
                     {
@@ -2490,7 +2848,7 @@ namespace MphRead
                         if (selection == 0)
                         {
                             SaveSlot = 0;
-                            UpdateEnemyHunterInfo();
+                            UpdateSaveInfo();
                         }
                         else if (selection == 1)
                         {
@@ -2545,7 +2903,7 @@ namespace MphRead
                         if (selection == 0)
                         {
                             SaveSlot = (byte)Advance(SaveSlot, direction, 255);
-                            UpdateEnemyHunterInfo();
+                            UpdateSaveInfo();
                         }
                         else if (selection == 1)
                         {
@@ -2751,7 +3109,7 @@ namespace MphRead
                         selection = 18;
                     }
                 }
-                else
+                else if (prompt == 1)
                 {
                     Console.WriteLine();
                     if (prompt == 1)
@@ -2760,8 +3118,17 @@ namespace MphRead
                         if (Int32.TryParse(Console.ReadLine(), out int slot) && slot >= 0 && slot <= 255)
                         {
                             SaveSlot = (byte)slot;
-                            UpdateEnemyHunterInfo();
+                            UpdateSaveInfo();
                         }
+                    }
+                    prompt = 0;
+                }
+                else if (prompt == 2)
+                {
+                    StorySave save = GameState.ReadSave();
+                    if (!ShowLogbook(save))
+                    {
+                        return false;
                     }
                     prompt = 0;
                 }

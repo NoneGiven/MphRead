@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,6 +11,11 @@ namespace MphRead.Memory
 {
     public class Memory
     {
+        private void DoProcess()
+        {
+            _sb.AppendLine("processed");
+        }
+
         private class AddressInfo
         {
             public int EntityListHead { get; }
@@ -18,6 +25,7 @@ namespace MphRead.Memory
             public int CamSeqData { get; }
             public int GameState { get; }
             public int RoomDesc { get; }
+            public int Rng2 { get; }
 
             public SaveAddressInfo Save { get; }
 
@@ -40,7 +48,7 @@ namespace MphRead.Memory
             }
 
             public AddressInfo(int gameState, int entityListHead, int frameCount, int players,
-                int playerUa, int camSeqData, int roomDesc, SaveAddressInfo save)
+                int playerUa, int camSeqData, int roomDesc, int rng2, SaveAddressInfo save)
             {
                 GameState = gameState;
                 EntityListHead = entityListHead;
@@ -49,6 +57,7 @@ namespace MphRead.Memory
                 PlayerUA = playerUa;
                 CamSeqData = camSeqData;
                 RoomDesc = roomDesc;
+                Rng2 = rng2;
                 Save = save;
             }
         }
@@ -65,6 +74,7 @@ namespace MphRead.Memory
                 playerUa: 0x20B00D4,
                 camSeqData: 0x2103760,
                 roomDesc: 0x20B84C4, // todo
+                rng2: 0x20E228C, // todo
                 new AddressInfo.SaveAddressInfo(
                     story: 0x20BD798,
                     type3: 0x20D958C, // todo
@@ -81,6 +91,7 @@ namespace MphRead.Memory
                 playerUa: 0x20DB180,
                 camSeqData: 0x21335E0,
                 roomDesc: 0x20B84C4,
+                rng2: 0x20E228C,
                 new AddressInfo.SaveAddressInfo(
                     story: 0x20E97B0,
                     type3: 0x20D958C,
@@ -91,6 +102,44 @@ namespace MphRead.Memory
             )
         };
 
+        public struct SystemInfo
+        {
+            public ushort ProcessorArchitecture;
+            public ushort Reserved;
+            public uint PageSize;
+            public IntPtr MinimumApplicationAddress;
+            public IntPtr MaximumApplicationAddress;
+            public IntPtr ActiveProcessorMask;
+            public uint NumberOfProcessors;
+            public uint ProcessorType;
+            public uint AllocationGranularity;
+            public ushort ProcessorLevel;
+            public ushort ProcessorRevision;
+        }
+
+        public struct MemoryInfo64
+        {
+            public long BaseAddress;
+            public long AllocationBase;
+            public int AllocationProtect;
+            public int Padding1;
+            public long RegionSize;
+            public int State;
+            public int Protect;
+            public int lType;
+            public int Padding2;
+        }
+
+        [DllImport("kernel32.dll")]
+        private static extern void GetSystemInfo(out SystemInfo lpSystemInfo);
+
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern int VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress,
+            out MemoryInfo64 lpBuffer, uint dwLength);
+
         [DllImport("kernel32.dll")]
         private static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress,
             [Out] byte[] lpBuffer, int nSize, out IntPtr lpNumberOfBytesRead);
@@ -99,6 +148,10 @@ namespace MphRead.Memory
         private static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress,
             [Out] byte[] lpBuffer, int nSize, out IntPtr lpNumberOfBytesRead);
 
+        [DllImport("kernel32.dll")]
+        private static extern uint GetLastError();
+
+        private readonly Scene? _scene;
         private readonly Process _process;
         private readonly byte[] _buffer;
         private IntPtr _baseAddress;
@@ -108,36 +161,110 @@ namespace MphRead.Memory
         private const int _size = 0x400000;
         public const int Offset = 0x2000000;
 
-        private Memory(Process process)
+        private Memory(Process process, Scene? scene)
         {
             _process = process;
             _buffer = new byte[_size];
+            _scene = scene;
         }
 
-        public static void Start()
+        public static Memory Start(Scene? scene = null, bool blocking = true)
         {
             // FF DE FF E7 FF DE FF E7 FF DE FF E7 @ 0x2004000
-            new Memory(Process.GetProcessById(53320)).Run();
-            /*var procs = Process.GetProcessesByName("NO$GBA").ToList();
+            //new Memory(Process.GetProcessById(17608)).Run();
+            Process? foundProcess = null;
+            DateTime startTime = DateTime.MinValue;
+            Process[] procs = Process.GetProcessesByName("NO$GBA");
             foreach (Process process in procs)
             {
-                if (!process.MainWindowTitle.Contains("Debugger"))
+                if (process.StartTime > startTime)
                 {
-                    new Memory(process).Run();
-                    return;
+                    foundProcess = process;
+                    startTime = process.StartTime;
                 }
             }
-            throw new ProgramException("Could not find process.");*/
+            if (foundProcess == null)
+            {
+                throw new ProgramException("Could not find process.");
+            }
+            var memory = new Memory(foundProcess, scene);
+            memory.Run(blocking);
+            return memory;
         }
 
         private readonly List<CEntity> _entities = new List<CEntity>();
         private readonly Dictionary<IntPtr, CEntity> _temp = new Dictionary<IntPtr, CEntity>();
 
-        private void Run()
+        private void SetBaseAddress()
         {
+            if (!File.Exists("memory.txt"))
+            {
+                File.WriteAllText("memory.txt", "");
+            }
+            long startTime = new DateTimeOffset(_process.StartTime).ToUnixTimeMilliseconds();
+            string[] lines = File.ReadAllLines("memory.txt");
+            if (lines.Length >= 2 && Int64.TryParse(lines[0], out long timestamp)
+                && startTime == timestamp
+                && Int64.TryParse(lines[1].Replace("0x", ""), System.Globalization.NumberStyles.HexNumber, null, out long saved))
+            {
+                _baseAddress = new IntPtr(saved);
+                return;
+            }
+            Console.WriteLine("Scanning memory...");
+            // todo: no idea if this works for non-AMHP1
+            byte[] search = new byte[] { 0xFF, 0xDE, 0xFF, 0xE7, 0xFF, 0xDE, 0xFF, 0xE7, 0xFF, 0xDE, 0xFF, 0xE7 };
+            GetSystemInfo(out SystemInfo systemInfo);
+            IntPtr minAddr = systemInfo.MinimumApplicationAddress;
+            IntPtr maxAddr = systemInfo.MaximumApplicationAddress;
+            IntPtr processHandle = OpenProcess(0x10 | 0x400, false, _process.Id);
+            var memoryInfo = new MemoryInfo64();
+            while (minAddr.ToInt64() < maxAddr.ToInt64())
+            {
+                VirtualQueryEx(processHandle, minAddr, out memoryInfo, 48);
+                if (memoryInfo.Protect == 4 && memoryInfo.State == 0x1000)
+                {
+                    byte[] buffer = new byte[memoryInfo.RegionSize];
+                    var baseAddr = new IntPtr(memoryInfo.BaseAddress);
+                    bool result = ReadProcessMemory(processHandle, baseAddr, buffer, (int)memoryInfo.RegionSize, out IntPtr count);
+                    Debug.Assert(result);
+                    Debug.Assert(count.ToInt64() == memoryInfo.RegionSize);
+                    for (int i = 0; i <= buffer.Length - search.Length; i++)
+                    {
+                        // the search sequence appears twice at an offset of 0x4000. at the start of the one
+                        // we don't want is "MP HUNTERS", and at the start of the one we do want are zeroes.
+                        if (buffer.Skip(i).Take(search.Length).SequenceEqual(search)
+                            && buffer[i - 0x4000] == 0 && buffer[i - 0x4000 + 1] == 0)
+                        {
+                            _baseAddress = new IntPtr(memoryInfo.BaseAddress + i - 0x4000);
+                            File.WriteAllLines("memory.txt", new string[2]
+                            {
+                                startTime.ToString(),
+                                $"0x{_baseAddress:X2}"
+                            });
+                            return;
+                        }
+                    }
+                }
+                if (memoryInfo.RegionSize == 0)
+                {
+                    throw new ProgramException("Failed to scan memory.");
+                }
+                minAddr = new IntPtr(minAddr.ToInt64() + memoryInfo.RegionSize);
+            }
+            throw new ProgramException("Failed to find search sequence.");
+        }
+
+        private readonly CPlayer[] _players = new CPlayer[4];
+        private readonly StringBuilder _sb = new StringBuilder();
+
+        public Task Task { get; private set; } = null!;
+
+        private void Run(bool blocking)
+        {
+            // todo: we should just detect the version automatically
             Addresses = AllAddresses["amhp1"];
-            _baseAddress = new IntPtr(0x995E100);
-            Task.Run(async () =>
+            SetBaseAddress();
+            Task = Task.Run(async () =>
             {
                 // 0x137A9C Cretaphid 1 crystal
                 // 0x137B8C Cretaphid 1 laser
@@ -147,134 +274,17 @@ namespace MphRead.Memory
                 //var results = new List<(int, int)>();
                 //string last = "";
                 string output = "";
-                var sb = new StringBuilder();
                 RefreshMemory();
-                var players = new CPlayer[]
+                _players[0] = new CPlayer(this, Addresses.Players);
+                _players[1] = new CPlayer(this, Addresses.Players + 0xF30);
+                _players[2] = new CPlayer(this, Addresses.Players + 0xF30 * 2);
+                _players[3] = new CPlayer(this, Addresses.Players + 0xF30 * 3);
+                while (_scene == null || !_scene.Exiting)
                 {
-                    new CPlayer(this, Addresses.Players),
-                    new CPlayer(this, Addresses.Players + 0xF30),
-                    new CPlayer(this, Addresses.Players + 0xF30 * 2),
-                    new CPlayer(this, Addresses.Players + 0xF30 * 3)
-                };
-                //var states = new List<uint>();
-                //var gameState = new GameState(this, Addresses.GameState);
-                string[] levels = new string[] { "*", "**", "***", "****" };
-                string[] dmgs = new string[] { "Low", "Med", "High", "ERROR" };
-                while (true)
-                {
-                    sb.Clear();
+                    _sb.Clear();
                     RefreshMemory();
-                    //for (int i = 0; i < 4; i++)
-                    //{
-                    //    byte flags = players[i].LoadFlags;
-                    //    sb.AppendLine(" 7   6   5   4   3   2   1   0");
-                    //    //             [ ] [ ] [ ] [ ] [ ] [ ] [ ] [ ]
-                    //    for (int b = 7; b >= 0; b--)
-                    //    {
-                    //        sb.Append($"[{((flags & (1 << b)) != 0 ? "*" : " ")}] ");
-                    //    }
-                    //    sb.AppendLine();
-                    //    sb.AppendLine();
-                    //}
-                    uint state1 = _buffer[0xCBEA0]
-                        | ((uint)_buffer[0xCBEA1] << 8)
-                        | ((uint)_buffer[0xCBEA2] << 16)
-                        | ((uint)_buffer[0xCBEA3] << 24);
-                    uint state2 = _buffer[0xCBEA4]
-                        | ((uint)_buffer[0xCBEA5] << 8)
-                        | ((uint)_buffer[0xCBEA6] << 16)
-                        | ((uint)_buffer[0xCBEA7] << 24);
-                    uint state3 = _buffer[0xCBEA8]
-                        | ((uint)_buffer[0xCBEA9] << 8)
-                        | ((uint)_buffer[0xCBEAA] << 16)
-                        | ((uint)_buffer[0xCBEAB] << 24);
-
-                    //sb.AppendLine($"     1P Mode: {((state1 & 1) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine($"    Affinity: {((state1 & 2) != 0 ? "On" : "Off")}");
-                    //sb.AppendLine($"  Auto reset: {((state1 & 4) != 0 ? "On" : "Off")}");
-                    //uint botLevels = (state1 & 0x1F8) >> 3;
-                    //sb.AppendLine($" Bot 2 level: {levels[botLevels & 3]}");
-                    //sb.AppendLine($" Bot 3 level: {levels[(botLevels & 0xC) >> 2]}");
-                    //sb.AppendLine($" Bot 4 level: {levels[(botLevels & 0x30) >> 4]}");
-                    //sb.AppendLine($"Damage level: {dmgs[(state1 & 0x600) >> 9]}");
-                    //sb.AppendLine($" Team damage: {((state1 & 0x800) != 0 ? "On" : "Off")}");
-                    //sb.AppendLine($"    MP Match: {((state1 & 0x1000) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine($"Player radar: {((state1 & 0x2000) != 0 ? "On" : "Off")}");
-                    //sb.AppendLine($"  Room index: {(state1 & 0x7C000) >> 14}");
-                    //sb.AppendLine($"  Room count: {(state1 & 0xF80000) >> 19}");
-                    //sb.AppendLine($"Player count: {(state1 & 0x7000000) >> 24}");
-                    //sb.AppendLine($"  Bot 1 flag: {((state1 & 0x8000000) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine($"  Bot 2 flag: {((state1 & 0x10000000) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine($"  Bot 3 flag: {((state1 & 0x20000000) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine($"  Bot 4 flag: {((state1 & 0x40000000) != 0 ? "Yes" : "No")}");
-
-                    sb.AppendLine($"       Bit 0: {((state2 & 1) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"       Bit 1: {((state2 & 2) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"       Bit 2: {((state2 & 4) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine();
-                    sb.AppendLine($"    Bits 0-2: {state2 & 7}");
-                    sb.AppendLine();
-                    sb.AppendLine($"       Bit 3: {((state2 & 8) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"       Bit 4: {((state2 & 0x10) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"       Bit 5: {((state2 & 0x20) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($" Main player: {(state2 & 0xC0) >> 6}");
-                    sb.AppendLine($"       Bit 8: {((state2 & 0x100) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"       Bit 9: {((state2 & 0x200) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"      Bit 10: {((state2 & 0x400) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"      Bit 11: {((state2 & 0x800) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"      Bit 12: {((state2 & 0x1000) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"      Bit 13: {((state2 & 0x2000) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"      Bit 14: {((state2 & 0x4000) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"      Bit 15: {((state2 & 0x8000) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"      Bit 16: {((state2 & 0x10000) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"      Bit 17: {((state2 & 0x20000) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"      Bit 18: {((state2 & 0x40000) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"      Bit 19: {((state2 & 0x80000) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"  Story file: {(state2 & 0x300000) >> 20}");
-                    sb.AppendLine($"  Point goal: {(state2 & 0x3C00000) >> 22}");
-                    sb.AppendLine($"Random arena: {((state2 & 0x4000000) != 0 ? "Yes" : "No")}");
-                    sb.AppendLine($"      Bit 27: {((state2 & 0x8000000) != 0 ? "Set" : "Cleared")}");
-                    sb.AppendLine($"      Bit 28: {((state2 & 0x10000000) != 0 ? "Set" : "Cleared")}");
-
-                    //sb.AppendLine($" Slot 1 team: {((state3 & 1) != 0 ? "1" : "0")}");
-                    //sb.AppendLine($" Slot 2 team: {((state3 & 2) != 0 ? "1" : "0")}");
-                    //sb.AppendLine($" Slot 3 team: {((state3 & 4) != 0 ? "1" : "0")}");
-                    //sb.AppendLine($" Slot 4 team: {((state3 & 8) != 0 ? "1" : "0")}");
-                    //sb.AppendLine($"       Teams: {((state3 & 0x10) != 0 ? "On" : "Off")}");
-                    //sb.AppendLine($"   Time goal: {(state3 & 0x1E0) >> 5}");
-                    //sb.AppendLine($"  Time limit: {(state3 & 0x1E00) >> 9}");
-                    //sb.AppendLine($"  Wi-Fi mode: {((state3 & 0x2000) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine($"   Worldwide: {((state3 & 0x4000) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine($"  Match rank: {((state3 & 0x8000) != 0 ? "Yes" : "No")}");
-
-                    //ushort flags = gameState.SomeFlags;
-                    //sb.AppendLine($"Team dmg: {((flags & 1) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine($"   Teams: {((flags & 2) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine($"Affinity: {((flags & 4) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine($"   Radar: {((flags & 8) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine();
-                    //sb.AppendLine($"   Bit 4: {((flags & 0x10) != 0 ? "Set" : "Cleared")}");
-                    //sb.AppendLine($"   Bit 5: {((flags & 0x20) != 0 ? "Set" : "Cleared")}");
-                    //sb.AppendLine($"  Bit 12: {((flags & 0x1000) != 0 ? "Set" : "Cleared")}");
-                    //sb.AppendLine($"  Bit 15: {((flags & 0x8000) != 0 ? "Set" : "Cleared")}");
-                    //sb.AppendLine();
-                    //uint state = ((uint)flags << 24) >> 30;
-                    //sb.AppendLine($"Bits 6/7: {state}");
-                    //sb.AppendLine();
-                    //sb.AppendLine($"Bits 8/9: {((uint)flags << 22) >> 30}");
-                    //sb.AppendLine();
-                    //sb.AppendLine($"Tele alt: {((flags & 0x400) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine($"Clean st: {((flags & 0x800) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine($"Portal S: {((flags & 0x2000) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine($"Portal D: {((flags & 0x4000) != 0 ? "Yes" : "No")}");
-                    //sb.AppendLine();
-                    //if (states.Count == 0 || states[^1] != state)
-                    //{
-                    //    states.Add(state);
-                    //}
-                    //sb.AppendLine(String.Join(", ", states));
-                    //sb.AppendLine();
-                    string newOutput = sb.ToString();
+                    DoProcess();
+                    string newOutput = _sb.ToString();
                     if (newOutput != output)
                     {
                         output = newOutput;
@@ -283,14 +293,18 @@ namespace MphRead.Memory
                     }
                     await Task.Delay(15);
                 }
-            }).GetAwaiter().GetResult();
+            });
+            if (blocking)
+            {
+                Task.GetAwaiter().GetResult();
+            }
         }
 
         private void RefreshMemory()
         {
             bool result = ReadProcessMemory(_process.Handle, _baseAddress, _buffer, _size, out IntPtr count);
             Debug.Assert(result);
-            Debug.Assert(count.ToInt32() == _size);
+            Debug.Assert(count.ToInt64() == _size);
         }
 
         private void GetEntities()
@@ -439,7 +453,18 @@ namespace MphRead.Memory
             }
             if (type == EntityType.EnemyInstance)
             {
-                // nxtodo: enemy instance
+                var enemy = new CEnemyBase(this, address);
+                return enemy.Type switch
+                {
+                    EnemyType.Gorea1A => new CEnemy24(this, address),
+                    EnemyType.GoreaHead => new CEnemy25(this, address),
+                    EnemyType.GoreaArm => new CEnemy26(this, address),
+                    EnemyType.GoreaLeg => new CEnemy27(this, address),
+                    EnemyType.Gorea1B => new CEnemy28(this, address),
+                    EnemyType.GoreaSealSphere1 => new CEnemy29(this, address),
+                    EnemyType.Trocra => new CEnemy30(this, address),
+                    _ => enemy
+                };
             }
             if (type == EntityType.Halfturret)
             {

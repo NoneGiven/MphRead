@@ -1219,7 +1219,7 @@ namespace MphRead
             {
                 return new Vector3(0.784f, 0.984f, 0.988f);
             }
-            if (eventId == Message.Unknown36) // light red
+            if (eventId == Message.Gorea2Trigger) // light red
             {
                 return new Vector3(1f, 0.325f, 0.294f);
             }
