@@ -69,19 +69,41 @@ namespace MphRead
                 bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene, isRoomTransition: false);
             UpdateAreaHunters();
             InitHunterSpawns(scene, entities, initialize: false); // see: "probably revisit this"
+            room.SetNodeData(LoadNodeData(metadata.NodePath, room.RoomId, mode));
             GameState.StorySave.CheckpointRoomId = room.RoomId;
             return (room, metadata, collision, entities);
         }
 
-        // this is only for the no repeat encounters feature
-        private static readonly bool[] _completedRandomEncounterRooms = new bool[66];
-
-        public static void CompleteEncounter(int roomId)
+        public static NodeData? LoadNodeData(string? nodePath, int roomId, GameMode mode)
         {
-            if (roomId >= 27 && roomId <= 92)
+            NodeData? nodeData = null;
+            if (mode == GameMode.SinglePlayer)
             {
-                _completedRandomEncounterRooms[roomId - 27] = true;
+                for (int i = 0; i < PlayerEntity.Players.Count; i++)
+                {
+                    PlayerEntity player = PlayerEntity.Players[i];
+                    if (player.IsBot && GameState.EncounterState[i] >= 1 && GameState.EncounterState[i] <= 3)
+                    {
+                        if (Metadata.EncounterNodeDataOverrides.TryGetValue(roomId, out string? nodeOverride))
+                        {
+                            nodePath = nodeOverride;
+                        }
+                        break;
+                    }
+                }
             }
+            else if (mode == GameMode.Capture)
+            {
+                if (Metadata.CtfNodeDataOverrides.TryGetValue(roomId, out string? nodeOverride))
+                {
+                    nodePath = nodeOverride;
+                }
+            }
+            if (nodePath != null)
+            {
+                nodeData = ReadNodeData.ReadData(Paths.Combine(@"", nodePath));
+            }
+            return nodeData;
         }
 
         public static void UpdateAreaHunters(StorySave? save = null)
@@ -90,7 +112,7 @@ namespace MphRead
             if (save == null)
             {
                 save = GameState.StorySave;
-                Array.Fill(_completedRandomEncounterRooms, false);
+                Array.Fill(GameState.CompletedRandomEncounterRooms, false);
             }
             // todo?: the game does this in the cockpit
             Array.Fill(save.AreaHunters, (byte)0);
@@ -181,7 +203,7 @@ namespace MphRead
                         continue;
                     }
                     if (spawner.Data.Fields.S09.HunterId == 8 && (Cheats.NoRandomEncounters || Features.NoRepeatEncounters
-                        && scene.RoomId >= 27 && scene.RoomId <= 92 && _completedRandomEncounterRooms[scene.RoomId - 27]))
+                        && scene.RoomId >= 27 && scene.RoomId <= 92 && GameState.CompletedRandomEncounterRooms[scene.RoomId - 27]))
                     {
                         return;
                     }
@@ -301,16 +323,11 @@ namespace MphRead
                 nodeLayerMask = GetNodeLayer(mode, metadata.NodeLayer, nodePlayerCount);
             }
             CollisionInstance collision = Collision.GetCollision(metadata, nodeLayerMask);
-            NodeData? nodeData = null;
-            if (metadata.NodePath != null)
-            {
-                nodeData = ReadNodeData.ReadData(Paths.Combine(@"", metadata.NodePath));
-            }
             if (isRoomTransition)
             {
                 collision.Active = false;
             }
-            room.Setup(metadata.Name, metadata, collision, nodeData, nodeLayerMask, metadata.Id);
+            room.Setup(metadata.Name, metadata, collision, nodeLayerMask, metadata.Id);
             IReadOnlyList<EntityBase> entities = LoadEntities(metadata, entityLayerId, scene);
             entities = GetExtraEntities(room.RoomId, entities, scene);
             return (collision, entities);

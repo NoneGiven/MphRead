@@ -263,6 +263,7 @@ namespace MphRead
         // unit3_rm5_Ent.bin
         // unit2_CX_Ent.bin, unit2_CZ_Ent.bin, unit3_CX_Ent.bin, unit3_CZ_Ent.bin
         // bigeyeroom_Ent.bin, cylinderroom_Ent.bin, Cylinder_C1_Ent.bin
+        // nodedata: ctf1_dm1.bin, unit3_Land_dm1_CTF_node.bin, others?
         // FH leftovers: morphBall_Ent.bin, regulator_Ent.bin, survivor_Ent.bin
         public static readonly IReadOnlyList<RoomMetadata> RoomList = new List<RoomMetadata>()
         {
@@ -4080,5 +4081,29 @@ namespace MphRead
         };
 
         public static readonly IReadOnlyDictionary<string, RoomMetadata> RoomMetadata = RoomList.ToDictionary(d => d.Name);
+
+        public static readonly IReadOnlyDictionary<int, string> EncounterNodeDataOverrides = new Dictionary<int, string>()
+        {
+            { 28, "unit1_C0_Boss_Node.bin" },   // 28 - UNIT1_C0 (Echo Hall)
+            { 29, "unit1_RM1_Boss_Node.bin" },  // 29 - UNIT1_RM1 (High Ground)
+            { 31, "unit1_RM6_Boss_Node.bin" },  // 31 - UNIT1_RM6 (Elder Passage)
+            { 50, "unit2_RM2_Boss_Node.bin" },  // 50 - UNIT2_RM2 (Data Shrine 02)
+            { 52, "unit2_RM3_Boss_Node.bin" },  // 52 - UNIT2_RM3 (Data Shrine 03)
+            { 65, "unit3_Land_Boss_Node.bin" }, // 65 - UNIT3_LAND (VDO Gateway)
+            { 68, "unit3_RM1_Boss_Node.bin" },  // 68 - UNIT3_RM1 (Weapons Complex)
+            { 79, "unit4_RM3_Boss_Node.bin" }   // 79 - UNIT4_RM3 (Sic Transit)
+        };
+
+        public static readonly IReadOnlyDictionary<int, string> CtfNodeDataOverrides = new Dictionary<int, string>()
+        {
+            {  93,  "mp1_CTF_node.bin" },    // MP1 SANCTORUS (Data Shrine)
+            {  99,  "mp6_CTF_node.bin" },    // MP6 HEADSHOT (Head Shot)
+            { 101,  "mp8_CTF_node.bin" },    // MP8 FIRE CONTROL (Weapons Complex)
+            { 102,  "mp9_CTF_node.bin" },    // MP9 CRYOCHASM (Ice Hive)
+            { 105,  "mp12_CTF_node.bin" },   // MP12 SIC TRANSIT (Sic Transit)
+            { 107,  "mp14_CTF_node.bin" },   // MP14 OUTER REACH (Outer Reach)
+            { 108,  "ctf1_CTF_node.bin" },   // CTF1 FAULT LINE - EXPANDED (Fault Line)
+            { 119,  "e3Level_CTF_Node.bin" } // E3 FIRST HUNT (Stasis Bunker)
+        };
     }
 }

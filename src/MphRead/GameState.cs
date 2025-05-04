@@ -45,6 +45,8 @@ namespace MphRead
         public static EscapeState EscapeState { get; set; } = EscapeState.None;
         public static float EscapeTimer { get; set; } = -1;
         public static bool EscapePaused { get; set; }
+        public static int[] EncounterState { get; } = new int[4];
+        public static bool[] CompletedRandomEncounterRooms { get; } = new bool[66]; // only for the no repeat encounters feature
         public static int TransitionRoomId { get; set; } = -1;
         public static bool TransitionAltForm { get; set; }
         public static int ActivePlayers { get; set; } = 0;
@@ -1300,6 +1302,14 @@ namespace MphRead
                 return 1;
             }
             return 0;
+        }
+
+        public static void CompleteRandomEncounter(int roomId)
+        {
+            if (roomId >= 27 && roomId <= 92)
+            {
+                CompletedRandomEncounterRooms[roomId - 27] = true;
+            }
         }
 
         private static StorySave _cleanStorySave = null!;

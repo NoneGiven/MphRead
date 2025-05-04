@@ -48,8 +48,7 @@ namespace MphRead.Entities
             }
         }
 
-        public void Setup(string name, RoomMetadata meta, CollisionInstance collision, NodeData? nodeData,
-            int layerMask, int roomId)
+        public void Setup(string name, RoomMetadata meta, CollisionInstance collision, int layerMask, int roomId)
         {
             // todo: unlock the corresponding multiplayer arena when visiting a new planet
             _portals.Clear();
@@ -97,12 +96,6 @@ namespace MphRead.Entities
                 _morphCameraExcludeNodes.Add(Nodes[16]);
             }
             _meta = meta;
-            _nodeData = nodeData;
-            if (nodeData != null && _models.Count < 2)
-            {
-                // using cached instance messes with placeholders since the room entity doesn't update its instances normally
-                _models.Add(Read.GetModelInstance("pick_wpn_missile", noCache: true));
-            }
             Model model = inst.Model;
             // portals are already filtered by layer mask
             _portals.AddRange(collision.Info.Portals);
@@ -192,6 +185,16 @@ namespace MphRead.Entities
             }
             RoomId = roomId;
             _scene.RoomId = roomId;
+        }
+
+        public void SetNodeData(NodeData? nodeData)
+        {
+            _nodeData = nodeData;
+            if (nodeData != null && _models.Count < 2)
+            {
+                // using cached instance messes with placeholders since the room entity doesn't update its instances normally
+                _models.Add(Read.GetModelInstance("pick_wpn_missile", noCache: true));
+            }
         }
 
         public Portal? GetPortalByName(string name)
@@ -546,6 +549,7 @@ namespace MphRead.Entities
                 return;
             }
             SceneSetup.InitHunterSpawns(_scene, entities, initialize: true); // see: "probably revisit this"
+            SetNodeData(SceneSetup.LoadNodeData(roomMeta.NodePath, roomMeta.Id, _scene.GameMode));
             if (token.IsCancellationRequested)
             {
                 return;
