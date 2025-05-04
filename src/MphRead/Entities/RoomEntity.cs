@@ -549,6 +549,7 @@ namespace MphRead.Entities
                 return;
             }
             SceneSetup.InitHunterSpawns(_scene, entities, initialize: true); // see: "probably revisit this"
+            ReadBotAi.LoadAll(_scene.GameMode);
             SetNodeData(SceneSetup.LoadNodeData(roomMeta.NodePath, roomMeta.Id, _scene.GameMode, entities));
             if (token.IsCancellationRequested)
             {

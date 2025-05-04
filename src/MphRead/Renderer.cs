@@ -2682,6 +2682,19 @@ namespace MphRead
                         _destroyedEntities.Add(entity);
                     }
                 }
+                // todo-ai: update player visibility // skhere: sub_214B51C()
+                for (int i = 0; i < PlayerEntity.Players.Count; i++)
+                {
+                    PlayerEntity.Players[i].FieldF20 = null;
+                }
+                for (int i = 0; i < PlayerEntity.Players.Count; i++)
+                {
+                    PlayerEntity player = PlayerEntity.Players[i];
+                    if (player.IsBot && player.Health != 0)
+                    {
+                        player.ProcessAi();
+                    }
+                }
                 if (playerActive)
                 {
                     PlayerEntity.Main.ProcessModeHud();

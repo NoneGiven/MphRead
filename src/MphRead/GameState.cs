@@ -46,6 +46,7 @@ namespace MphRead
         public static float EscapeTimer { get; set; } = -1;
         public static bool EscapePaused { get; set; }
         public static int[] EncounterState { get; } = new int[4];
+        public static byte[] EnemyEncounters { get; } = new byte[8];
         public static bool[] CompletedRandomEncounterRooms { get; } = new bool[66]; // only for the no repeat encounters feature
         public static int TransitionRoomId { get; set; } = -1;
         public static bool TransitionAltForm { get; set; }

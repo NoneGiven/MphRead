@@ -69,6 +69,7 @@ namespace MphRead
                 bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene, isRoomTransition: false);
             UpdateAreaHunters();
             InitHunterSpawns(scene, entities, initialize: false); // see: "probably revisit this"
+            ReadBotAi.LoadAll(mode);
             room.SetNodeData(LoadNodeData(metadata.NodePath, room.RoomId, mode, entities));
             GameState.StorySave.CheckpointRoomId = room.RoomId;
             return (room, metadata, collision, entities);
@@ -82,7 +83,8 @@ namespace MphRead
                 for (int i = 0; i < PlayerEntity.Players.Count; i++)
                 {
                     PlayerEntity player = PlayerEntity.Players[i];
-                    if (player.IsBot && GameState.EncounterState[i] >= 1 && GameState.EncounterState[i] <= 3)
+                    int encounterState = GameState.EncounterState[i];
+                    if (player.IsBot && encounterState >= 1 && encounterState <= 4)
                     {
                         if (Metadata.EncounterNodeDataOverrides.TryGetValue(roomId, out string? nodeOverride))
                         {
@@ -98,6 +100,11 @@ namespace MphRead
                 {
                     nodePath = nodeOverride;
                 }
+            }
+            else if ((mode == GameMode.Nodes || mode == GameMode.NodesTeams // MP14 OUTER REACH (Outer Reach)
+                || mode == GameMode.Defender || mode == GameMode.DefenderTeams) && roomId == 107)
+            {
+                nodePath = "mp14_KOTH_node.bin";
             }
             if (nodePath != null)
             {
@@ -200,9 +207,11 @@ namespace MphRead
                 player.LoadFlags &= ~LoadFlags.Active;
                 player.LoadFlags &= ~LoadFlags.SlotActive;
                 player.IsBot = false;
+                player.BotLevel = 0;
             }
             PlayerEntity.PlayerCount = 1;
             PlayerEntity.PlayersCreated = 1;
+            Array.Fill(GameState.EncounterState, 0);
             if (scene.AreaId >= 8) // handled differently in-game
             {
                 return;
@@ -298,7 +307,8 @@ namespace MphRead
                         player.Initialized = false;
                         scene.AddEntity(player);
                     }
-                    // todo: encounter state and bot level
+                    GameState.EncounterState[PlayerEntity.PlayerCount] = (int)spawner.Data.Fields.S09.EncounterType;
+                    player.BotLevel = 1;
                     PlayerEntity.PlayerCount++;
                 }
             }

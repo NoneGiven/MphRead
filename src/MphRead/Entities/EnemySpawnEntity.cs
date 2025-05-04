@@ -3,6 +3,7 @@ using System.Diagnostics;
 using MphRead.Entities.Enemies;
 using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
+using MphRead.Memory;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -255,7 +256,9 @@ namespace MphRead.Entities
             GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
             if (_data.EnemyType != EnemyType.Hunter || _data.Fields.S09.EncounterType == 1)
             {
-                // todo-ai: update completed encounters in story save (unused?)
+                // this has some effect on music setting events
+                int type = (int)_data.EnemyType;
+                GameState.EnemyEncounters[8 * _scene.AreaId + (type >> 3)] |= (byte)(1 << (type & 7));
             }
             if (_data.EnemyType == EnemyType.Cretaphid)
             {

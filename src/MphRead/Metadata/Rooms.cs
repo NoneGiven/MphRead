@@ -4096,14 +4096,14 @@ namespace MphRead
 
         public static readonly IReadOnlyDictionary<int, string> CtfNodeDataOverrides = new Dictionary<int, string>()
         {
-            {  93,  "mp1_CTF_node.bin" },    // MP1 SANCTORUS (Data Shrine)
-            {  99,  "mp6_CTF_node.bin" },    // MP6 HEADSHOT (Head Shot)
-            { 101,  "mp8_CTF_node.bin" },    // MP8 FIRE CONTROL (Weapons Complex)
-            { 102,  "mp9_CTF_node.bin" },    // MP9 CRYOCHASM (Ice Hive)
-            { 105,  "mp12_CTF_node.bin" },   // MP12 SIC TRANSIT (Sic Transit)
-            { 107,  "mp14_CTF_node.bin" },   // MP14 OUTER REACH (Outer Reach)
-            { 108,  "ctf1_CTF_node.bin" },   // CTF1 FAULT LINE - EXPANDED (Fault Line)
-            { 119,  "e3Level_CTF_Node.bin" } // E3 FIRST HUNT (Stasis Bunker)
+            {  93, "mp1_CTF_node.bin" },    // MP1 SANCTORUS (Data Shrine)
+            {  99, "mp6_CTF_node.bin" },    // MP6 HEADSHOT (Head Shot)
+            { 101, "mp8_CTF_node.bin" },    // MP8 FIRE CONTROL (Weapons Complex)
+            { 102, "mp9_CTF_node.bin" },    // MP9 CRYOCHASM (Ice Hive)
+            { 105, "mp12_CTF_node.bin" },   // MP12 SIC TRANSIT (Sic Transit)
+            { 107, "mp14_CTF_node.bin" },   // MP14 OUTER REACH (Outer Reach)
+            { 108, "ctf1_CTF_node.bin" },   // CTF1 FAULT LINE - EXPANDED (Fault Line)
+            { 119, "e3Level_CTF_Node.bin" } // E3 FIRST HUNT (Stasis Bunker)
         };
     }
 }
