@@ -21,6 +21,9 @@ namespace MphRead.Entities
         private float _resetTimer = 0;
         private float _gravity = 0;
 
+        public NodeData3? EntNodeData { get; set; } = null;
+        public NodeData3? BaseEntNodeData { get; set; } = null;
+
         public OctolithFlagEntity(OctolithFlagEntityData data, Scene scene) : base(EntityType.OctolithFlag, scene)
         {
             _data = data;
@@ -51,7 +54,7 @@ namespace MphRead.Entities
                 _carrier = null;
             }
             _lastCarrier = null;
-            // todo: nodedata
+            EntNodeData = BaseEntNodeData;
         }
 
         public override void GetVectors(out Vector3 position, out Vector3 up, out Vector3 facing)
@@ -114,7 +117,7 @@ namespace MphRead.Entities
                 _atBase = false;
                 _grounded = true;
                 _resetTimer = 0;
-                // todo: nodedata
+                EntNodeData = _carrier.FieldF20;
                 Position = new Vector3(
                     _carrier.Position.X + -0.35f * _carrier.Field70,
                     _carrier.Position.Y + 1.05f,
@@ -168,6 +171,7 @@ namespace MphRead.Entities
                 (float gravity, float displacement) = ConstantAcceleration(-0.02f, _gravity);
                 Position = Position.AddY(displacement);
                 _gravity = gravity;
+                EntNodeData = null;
                 var results = new CollisionResult[16];
                 int count = CollisionDetection.CheckSphereBetweenPoints(prevPos, Position, radius: 1.25f,
                     limit: 16, includeOffset: false, TestFlags.None, _scene, results);

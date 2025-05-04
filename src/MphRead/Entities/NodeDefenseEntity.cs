@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MphRead.Formats;
 using MphRead.Hud;
 using OpenTK.Mathematics;
 
@@ -33,6 +34,8 @@ namespace MphRead.Entities
 
         private readonly Material _terminalMat = null!;
         private readonly Material _ringMat = null!;
+
+        public NodeData3? EntNodeData { get; set; } = null;
 
         public NodeDefenseEntity(NodeDefenseEntityData data, Scene scene) : base(EntityType.NodeDefense, scene)
         {

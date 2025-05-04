@@ -1,4 +1,5 @@
 using System;
+using MphRead.Formats;
 
 namespace MphRead.Entities
 {
@@ -14,6 +15,7 @@ namespace MphRead.Entities
     public partial class PlayerEntity
     {
         public AiData AiData { get; init; } = new AiData();
+        public NodeData3? FieldF20 { get; set; } = null;
     }
 
     [Flags]

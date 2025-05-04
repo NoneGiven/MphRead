@@ -69,12 +69,12 @@ namespace MphRead
                 bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene, isRoomTransition: false);
             UpdateAreaHunters();
             InitHunterSpawns(scene, entities, initialize: false); // see: "probably revisit this"
-            room.SetNodeData(LoadNodeData(metadata.NodePath, room.RoomId, mode));
+            room.SetNodeData(LoadNodeData(metadata.NodePath, room.RoomId, mode, entities));
             GameState.StorySave.CheckpointRoomId = room.RoomId;
             return (room, metadata, collision, entities);
         }
 
-        public static NodeData? LoadNodeData(string? nodePath, int roomId, GameMode mode)
+        public static NodeData? LoadNodeData(string? nodePath, int roomId, GameMode mode, IReadOnlyList<EntityBase> entities)
         {
             NodeData? nodeData = null;
             if (mode == GameMode.SinglePlayer)
@@ -102,6 +102,34 @@ namespace MphRead
             if (nodePath != null)
             {
                 nodeData = ReadNodeData.ReadData(Paths.Combine(@"", nodePath));
+                if (nodeData.Data.Count == 1 && nodeData.Data[0].Count == 1)
+                {
+                    for (int i = 0; i < entities.Count; i++)
+                    {
+                        EntityBase entity = entities[i];
+                        if (entity.Type == EntityType.JumpPad)
+                        {
+                            var jumpPad = (JumpPadEntity)entity;
+                            jumpPad.EntNodeData = ReadNodeData.FindClosestNode(nodeData, jumpPad.Position, true);
+                        }
+                        else if (entity.Type == EntityType.OctolithFlag)
+                        {
+                            var octoFlag = (OctolithFlagEntity)entity;
+                            octoFlag.EntNodeData = ReadNodeData.FindClosestNode(nodeData, octoFlag.Position);
+                            octoFlag.BaseEntNodeData = ReadNodeData.FindClosestNode(nodeData, octoFlag.BasePosition);
+                        }
+                        else if (entity.Type == EntityType.FlagBase)
+                        {
+                            var flagBase = (FlagBaseEntity)entity;
+                            flagBase.EntNodeData = ReadNodeData.FindClosestNode(nodeData, flagBase.Position);
+                        }
+                        else if (entity.Type == EntityType.NodeDefense)
+                        {
+                            var nodeDefense = (NodeDefenseEntity)entity;
+                            nodeDefense.EntNodeData = ReadNodeData.FindClosestNode(nodeData, nodeDefense.Position);
+                        }
+                    }
+                }
             }
             return nodeData;
         }

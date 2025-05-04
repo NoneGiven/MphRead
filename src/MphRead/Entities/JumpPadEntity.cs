@@ -1,3 +1,4 @@
+using MphRead.Formats;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -15,6 +16,8 @@ namespace MphRead.Entities
         private Vector3 _invPos;
 
         private ushort _cooldownTimer = 0;
+
+        public NodeData3? EntNodeData { get; set; } = null;
 
         public JumpPadEntity(JumpPadEntityData data, string nodeName, Scene scene)
             : base(EntityType.JumpPad, nodeName, scene)

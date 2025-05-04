@@ -98,6 +98,29 @@ namespace MphRead.Formats
             }
         }
 
+        public static NodeData3? FindClosestNode(NodeData nodeData, Vector3 position, bool useMaxDist = false)
+        {
+            Debug.Assert(nodeData.Data.Count > 0 && nodeData.Data[0].Count > 0);
+            IReadOnlyList<NodeData3> list = nodeData.Data[0][0];
+            NodeData3? result = null;
+            float minDist = Single.MaxValue;
+            for (int i = 0; i < list.Count; i++)
+            {
+                NodeData3 data = list[i];
+                float dist = Vector3.DistanceSquared(position, data.Position);
+                if (dist < minDist)
+                {
+                    result = data;
+                    minDist = dist;
+                }
+            }
+            if (result != null && useMaxDist && minDist > result.MaxDistance * result.MaxDistance)
+            {
+                result = null;
+            }
+            return result;
+        }
+
         private static void Nop()
         {
         }
@@ -126,7 +149,7 @@ namespace MphRead.Formats
         public ushort Field2 { get; }
         public uint Field4 { get; }
         public Vector3 Position { get; }
-        public uint Field14 { get; }
+        public float MaxDistance { get; }
         public int Index1 { get; }
         public int Index2 { get; }
 
@@ -149,7 +172,7 @@ namespace MphRead.Formats
             Field2 = raw.Field2;
             Field4 = raw.Field4;
             Position = raw.Position.ToFloatVector();
-            Field14 = raw.Field14;
+            MaxDistance = Fixed.ToFloat(raw.Field14);
             Index1 = index1;
             Index2 = index2;
             Transform = Matrix4.CreateTranslation(Position);
@@ -173,7 +196,7 @@ namespace MphRead.Formats
     {
         public readonly uint Offset2;
         public readonly ushort Count;
-        public readonly ushort Field6; // always 0x5C
+        public readonly ushort Padding6; // always 0x5C
     }
 
     // size: 8
@@ -181,7 +204,7 @@ namespace MphRead.Formats
     {
         public readonly uint Offset3;
         public readonly ushort Count;
-        public readonly ushort Field6;  // always 0x5C
+        public readonly ushort Padding6;  // always 0x5C
     }
 
     // size: 36
@@ -191,7 +214,7 @@ namespace MphRead.Formats
         public readonly ushort Field2;
         public readonly uint Field4;
         public readonly Vector3Fx Position;
-        public readonly uint Field14;
+        public readonly int Field14;
         public readonly uint Offset1;
         public readonly uint Offset2;
         public readonly uint Offset3; // always 0

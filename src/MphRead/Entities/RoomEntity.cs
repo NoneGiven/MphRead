@@ -549,7 +549,7 @@ namespace MphRead.Entities
                 return;
             }
             SceneSetup.InitHunterSpawns(_scene, entities, initialize: true); // see: "probably revisit this"
-            SetNodeData(SceneSetup.LoadNodeData(roomMeta.NodePath, roomMeta.Id, _scene.GameMode));
+            SetNodeData(SceneSetup.LoadNodeData(roomMeta.NodePath, roomMeta.Id, _scene.GameMode, entities));
             if (token.IsCancellationRequested)
             {
                 return;
@@ -1297,6 +1297,12 @@ namespace MphRead.Entities
                         {
                             NodeData3 str3 = str2[k];
                             GetNodeDataItem(inst, str3.Transform, str3.Color, polygonId);
+                            // todo: add a new type
+                            if (_scene.ShowVolumes == VolumeDisplay.KillPlane)
+                            {
+                                var sphere = new CollisionVolume(str3.Position, str3.MaxDistance);
+                                AddVolumeItem(sphere, Vector3.UnitX);
+                            }
                         }
                     }
                 }
