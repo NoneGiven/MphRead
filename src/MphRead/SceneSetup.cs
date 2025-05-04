@@ -110,7 +110,7 @@ namespace MphRead
                         if (entity.Type == EntityType.JumpPad)
                         {
                             var jumpPad = (JumpPadEntity)entity;
-                            jumpPad.EntNodeData = ReadNodeData.FindClosestNode(nodeData, jumpPad.Position, true);
+                            jumpPad.EntNodeData = ReadNodeData.FindClosestNode(nodeData, jumpPad.Position, useMaxDist: true);
                         }
                         else if (entity.Type == EntityType.OctolithFlag)
                         {
