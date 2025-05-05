@@ -3,7 +3,6 @@ using System.Diagnostics;
 using MphRead.Entities.Enemies;
 using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
-using MphRead.Memory;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -258,7 +257,10 @@ namespace MphRead.Entities
             {
                 // this has some effect on music setting events
                 int type = (int)_data.EnemyType;
-                GameState.EnemyEncounters[8 * _scene.AreaId + (type >> 3)] |= (byte)(1 << (type & 7));
+                if (type >= 0 && (type >> 3) < 8)
+                {
+                    GameState.StorySave.EnemyEncounters[_scene.AreaId][type >> 3] |= (byte)(1 << (type & 7));
+                }
             }
             if (_data.EnemyType == EnemyType.Cretaphid)
             {

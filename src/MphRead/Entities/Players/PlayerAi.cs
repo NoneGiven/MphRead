@@ -114,11 +114,11 @@ namespace MphRead.Entities
     {
         private static readonly IReadOnlyList<IReadOnlyList<int>> _encounterAiOffsets =
         [
-            // Sam   Kan    Tra    Syl    Nox    Spi    Wea    Gua
-            [ 33232, 33152, 33696, 33836, 33556, 33372, 33976, 32932 ],
-            [ 33232, 33196, 37576, 41948, 35428, 33416, 41492, 32932 ],
-            [ 33232, 33152, 39420, 42772, 33556, 40312, 33976, 32932 ],
-            [ 33232, 33152, 33696, 45176, 33556, 40556, 33976, 32932 ]
+            //                   Sam    Kan    Tra    Syl    Nox    Spi    Wea    Gua
+            /* encounter 0 */ [ 33232, 33152, 33696, 33836, 33556, 33372, 33976, 32932 ],
+            /* encounter 1 */ [ 33232, 33196, 37576, 41948, 35428, 33416, 41492, 32932 ],
+            /* encounter 3 */ [ 33232, 33152, 39420, 42772, 33556, 40312, 33976, 32932 ],
+            /* encounter 4 */ [ 33232, 33152, 33696, 45176, 33556, 40556, 33976, 32932 ]
         ];
 
         private static byte[]? _aiPersonalityData = null;
@@ -197,6 +197,12 @@ namespace MphRead.Entities
         {
             var bytes = new ReadOnlySpan<byte>(_aiPersonalityData);
             // skhere
+        }
+
+        // skdebug
+        public static void TestRead()
+        {
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(Paths.FileSystem, @"aiPersonalityData\aiPersonalityData.bin")));
         }
     }
 }

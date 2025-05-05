@@ -46,7 +46,6 @@ namespace MphRead
         public static float EscapeTimer { get; set; } = -1;
         public static bool EscapePaused { get; set; }
         public static int[] EncounterState { get; } = new int[4];
-        public static byte[] EnemyEncounters { get; } = new byte[8];
         public static bool[] CompletedRandomEncounterRooms { get; } = new bool[66]; // only for the no repeat encounters feature
         public static int TransitionRoomId { get; set; } = -1;
         public static bool TransitionAltForm { get; set; }
@@ -1569,6 +1568,7 @@ namespace MphRead
         public byte[] VisitedRooms { get; init; } = new byte[9];
         public byte[] TriggerState { get; init; } = new byte[4];
         public byte[] Logbook { get; init; } = new byte[68];
+        public byte[][] EnemyEncounters { get; init; }
         public int ScanCount { get; set; }
         public int EquipmentCount { get; set; }
         public int CheckpointEntityId { get; set; } = -1;
@@ -1595,6 +1595,11 @@ namespace MphRead
             for (int i = 0; i < RoomState.Length; i++)
             {
                 RoomState[i] = new byte[60];
+            }
+            EnemyEncounters = new byte[8][];
+            for (int i = 0; i < EnemyEncounters.Length; i++)
+            {
+                EnemyEncounters[i] = new byte[8];
             }
             PlayerValues values = Metadata.PlayerValues[0];
             Health = HealthMax = values.EnergyTank - 1;
@@ -1868,6 +1873,11 @@ namespace MphRead
             {
                 byte[] source = RoomState[i];
                 Array.Copy(source, other.RoomState[i], source.Length);
+            }
+            for (int i = 0; i < EnemyEncounters.Length; i++)
+            {
+                byte[] source = EnemyEncounters[i];
+                Array.Copy(source, other.EnemyEncounters[i], source.Length);
             }
             VisitedRooms.CopyTo(other.VisitedRooms, index: 0);
             TriggerState.CopyTo(other.TriggerState, index: 0);

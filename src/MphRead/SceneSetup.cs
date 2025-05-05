@@ -104,7 +104,7 @@ namespace MphRead
             else if ((mode == GameMode.Nodes || mode == GameMode.NodesTeams // MP14 OUTER REACH (Outer Reach)
                 || mode == GameMode.Defender || mode == GameMode.DefenderTeams) && roomId == 107)
             {
-                nodePath = "mp14_KOTH_node.bin";
+                nodePath = @"levels\nodeData\mp14_KOTH_node.bin";
             }
             if (nodePath != null)
             {
