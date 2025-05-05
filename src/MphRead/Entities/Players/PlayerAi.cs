@@ -112,13 +112,14 @@ namespace MphRead.Entities
 
     public static class ReadBotAi
     {
+        // copied Kanden 0 for Samus and Guardian 0 for Guardian, but they're unused anyway
         private static readonly IReadOnlyList<IReadOnlyList<int>> _encounterAiOffsets =
         [
-            //                   Sam    Kan    Tra    Syl    Nox    Spi    Wea    Gua
-            /* encounter 0 */ [ 33232, 33152, 33696, 33836, 33556, 33372, 33976, 32932 ],
-            /* encounter 1 */ [ 33232, 33196, 37576, 41948, 35428, 33416, 41492, 32932 ],
-            /* encounter 3 */ [ 33232, 33152, 39420, 42772, 33556, 40312, 33976, 32932 ],
-            /* encounter 4 */ [ 33232, 33152, 33696, 45176, 33556, 40556, 33976, 32932 ]
+            //                  Sam    Kan    Tra    Syl    Nox    Spi    Wea    Gua
+            /* encounter 0 */ [ 33152, 33152, 33696, 33836, 33556, 33372, 33976, 13480 ],
+            /* encounter 1 */ [ 33152, 33196, 37576, 41948, 35428, 33416, 41492, 13480 ],
+            /* encounter 3 */ [ 33152, 33152, 39420, 42772, 33556, 40312, 33976, 13480 ],
+            /* encounter 4 */ [ 33152, 33152, 33696, 45176, 33556, 40556, 33976, 13480 ]
         ];
 
         private static byte[]? _aiPersonalityData = null;
