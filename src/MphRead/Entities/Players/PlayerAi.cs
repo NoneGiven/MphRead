@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using MphRead.Formats;
 
 namespace MphRead.Entities
@@ -181,29 +183,140 @@ namespace MphRead.Entities
                 {
                     aiOffset = 45220;
                 }
-                LoadData(player, aiOffset);
+                LoadData(aiOffset); // sktodo: player.AiPersonality = LoadData(aiOffset);
             }
         }
 
-        private static void LoadData(PlayerEntity player, int offset)
+        // size: 36
+        public readonly struct AiData1
+        {
+            public readonly int Field0;
+            public readonly int Data1Count;
+            public readonly int Data1Offset;
+            public readonly int Data2Count;
+            public readonly int Data2Offset;
+            public readonly int Data3aCount;
+            public readonly int Data3aOffset;
+            public readonly int Data3bCount;
+            public readonly int Data3bOffset;
+        }
+
+        // size: 24
+        public readonly struct AiData2
+        {
+            public readonly int Data5Type;
+            public readonly int Data4Count;
+            public readonly int Data4Offset;
+            public readonly int FieldC;
+            public readonly int Field10;
+            public readonly int Data5OFfset;
+        }
+
+        private static void LoadData(int offset)
         {
             if (_aiPersonalityData == null)
             {
                 _aiPersonalityData = File.ReadAllBytes(Paths.Combine(Paths.FileSystem, @"aiPersonalityData\aiPersonalityData.bin"));
             }
-            ParseData1(player, offset, 1);
+            ParseData1(offset, count: 1);
         }
 
-        private static void ParseData1(PlayerEntity player, int offset, int a4)
+        private static void ParseData1(int offset, int count)
         {
             var bytes = new ReadOnlySpan<byte>(_aiPersonalityData);
             // skhere
+            // sktodo: use offset cache for the larger objects
+            IReadOnlyList<AiData1> data1s = Read.DoOffsets<AiData1>(bytes, offset, count);
+            for (int i = 0; i < data1s.Count; i++)
+            {
+                AiData1 data1 = data1s[i];
+                if (data1.Field0 != 0)
+                {
+                    //Debugger.Break();
+                }
+                if (data1.Data1Count >= 20)
+                {
+                    Debugger.Break();
+                }
+                if (data1.Data1Count > 0)
+                {
+                    ParseData1(data1.Data1Offset, data1.Data1Count);
+                }
+                if (data1.Data2Count > 0)
+                {
+                    ParseData2(data1.Data2Offset, data1.Data2Count);
+                }
+                if (data1.Data3aCount > 0)
+                {
+                    //ParseData3(data1.Data3aOffset, data1.Data3aCount);
+                }
+                if (data1.Data3bCount > 0)
+                {
+                    //ParseData3(data1.Data3bOffset, data1.Data3bCount);
+                }
+            }
+            _ = 5;
+            _ = 5;
         }
+
+        private static readonly HashSet<int> _seenOffsets = [];
+        private static readonly HashSet<(int, int)> _seenPairs = [];
+        private static readonly Dictionary<int, (int Total, int Reset)> _results = [];
+
+        private static void ParseData2(int offset, int count)
+        {
+            if (_seenPairs.Contains((offset, count)))
+            {
+                return;
+            }
+            if (_seenOffsets.Contains(offset))
+            {
+                Debugger.Break();
+            }
+            _seenPairs.Add((offset, count));
+            _seenOffsets.Add(offset);
+            var bytes = new ReadOnlySpan<byte>(_aiPersonalityData);
+            IReadOnlyList<AiData2> data2s = Read.DoOffsets<AiData2>(bytes, offset, count);
+            for (int i = 0; i < data2s.Count; i++)
+            {
+                AiData2 data2 = data2s[i];
+                bool isReset = data2.FieldC >= 20;
+                if (!_results.TryGetValue(data2.Field10, out (int Total, int Reset) tuple))
+                {
+                    tuple = (0, 0);
+                }
+                _results[data2.Field10] = (tuple.Total + 1, tuple.Reset + (isReset ? 1 : 0));
+                if (data2.Data4Count > 0)
+                {
+                    // sktodo
+                }
+                if (data2.Data5OFfset != 0)
+                {
+                    // sktodo
+                }
+            }
+            _ = 5;
+            _ = 5;
+        }
+
+        // sktodo: &data3a->field_0 is used as func_idxs list, so those are just ints
 
         // skdebug
         public static void TestRead()
         {
             var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(Paths.FileSystem, @"aiPersonalityData\aiPersonalityData.bin")));
+            var offsets = new List<int>()
+            {
+                13480, 32896, 32932, 32968, 33012, 33152, 33196, 33232, 33372, 33416, 33556, 33696, 33836,
+                33976, 35428, 37576, 39420, 40312, 40556, 41492, 41948, 42772, 45176, 45220, 45696
+            };
+            foreach (int offset in offsets)
+            {
+                LoadData(offset);
+            }
+            var results = _results.OrderBy(r => r.Key);
+            _ = 5;
+            _ = 5;
         }
     }
 }

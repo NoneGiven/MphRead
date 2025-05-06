@@ -59,7 +59,7 @@ namespace MphRead.Formats
                     foreach (NodeDataStruct3 str3 in str3s)
                     {
                         min = Math.Min(min, str3.Offset1);
-                        types.Add(str3.Field0);
+                        types.Add(str3.NodeType);
                     }
                     sub.Add(str3s);
                 }
@@ -145,7 +145,7 @@ namespace MphRead.Formats
 
     public class NodeData3
     {
-        public ushort Field0 { get; }
+        public ushort NodeType { get; }
         public ushort Field2 { get; }
         public uint Field4 { get; }
         public Vector3 Position { get; }
@@ -158,17 +158,17 @@ namespace MphRead.Formats
 
         private static readonly IReadOnlyList<Vector4> _nodeDataColors = new List<Vector4>()
         {
-            new Vector4(1, 0, 0, 1), // 0 - red
-            new Vector4(0, 1, 0, 1), // 1 - green
-            new Vector4(0, 0, 1, 1), // 2 - blue
-            new Vector4(0, 1, 1, 1), // 3 - cyan
-            new Vector4(1, 0, 1, 1), // 4 - magenta
-            new Vector4(1, 1, 0, 1), // 5 - yellow
+            new Vector4(1, 0, 0, 1), // 0 - red     (navigation)
+            new Vector4(0, 1, 0, 1), // 1 - green   (?)
+            new Vector4(0, 0, 1, 1), // 2 - blue    (aerial movement)
+            new Vector4(0, 1, 1, 1), // 3 - cyan    (vantage point)
+            new Vector4(1, 0, 1, 1), // 4 - magenta (alt form)
+            new Vector4(1, 1, 0, 1), // 5 - yellow  (hazard)
         };
 
         public NodeData3(NodeDataStruct3 raw, int index1, int index2)
         {
-            Field0 = raw.Field0;
+            NodeType = raw.NodeType;
             Field2 = raw.Field2;
             Field4 = raw.Field4;
             Position = raw.Position.ToFloatVector();
@@ -176,7 +176,7 @@ namespace MphRead.Formats
             Index1 = index1;
             Index2 = index2;
             Transform = Matrix4.CreateTranslation(Position);
-            Color = _nodeDataColors[Field0];
+            Color = _nodeDataColors[NodeType];
         }
     }
 
@@ -210,7 +210,7 @@ namespace MphRead.Formats
     // size: 36
     public readonly struct NodeDataStruct3
     {
-        public readonly ushort Field0;
+        public readonly ushort NodeType;
         public readonly ushort Field2;
         public readonly uint Field4;
         public readonly Vector3Fx Position;
