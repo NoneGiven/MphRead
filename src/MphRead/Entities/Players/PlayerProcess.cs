@@ -42,7 +42,66 @@ namespace MphRead.Entities
             }
             if (IsBot)
             {
-                // sktodo-ai: bot stuff
+                if (AiData.Flags3.TestFlag(AiFlags3.Bit5))
+                {
+                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    {
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type != EntityType.Player)
+                        {
+                            continue;
+                        }
+                        var other = (PlayerEntity)entity;
+                        if (!other.IsBot || other == this)
+                        {
+                            continue;
+                        }
+                        _scene.SendMessage(Message.Destroyed, this, null, 0, 0, delay: 1);
+                        if (other.EnemySpawner != null)
+                        {
+                            _scene.SendMessage(Message.Destroyed, this, other.EnemySpawner, 0, 0);
+                        }
+                        other.AiData.Flags2 |= AiFlags2.Bit13;
+                    }
+                    AiData.Flags3 &= ~AiFlags3.Bit5;
+                }
+                if (AiData.Flags3.TestFlag(AiFlags3.Bit4))
+                {
+                    _spawnInvulnTimer = 2 * 2; // todo: FPS stuff
+                    AiData.Flags3 &= ~AiFlags3.Bit4;
+                }
+                if (AiData.Flags3.TestFlag(AiFlags3.Bit1))
+                {
+                    // spawnEffectMP or spawnEffect
+                    int effectId = _scene.Multiplayer && PlayerCount > 2 && !Features.MaxPlayerDetail ? 33 : 31;
+                    _scene.SpawnEffect(effectId, Vector3.UnitX, Vector3.UnitY, Position);
+                    PlayHunterSfx(HunterSfx.Spawn);
+                    AiData.Flags3 &= ~AiFlags3.Bit1;
+                    AiData.Flags3 |= AiFlags3.Bit2;
+                }
+                else if (AiData.Flags3.TestFlag(AiFlags3.Bit2) && _curAlpha <= 1 / 31f)
+                {
+                    _health = 0;
+                    Flags2 |= PlayerFlags2.HideModel;
+                    AiData.Flags3 &= ~AiFlags3.Bit2;
+                    AiData.Flags1 = false;
+                    _soundSource.StopAllSfx(force: true);
+                }
+                // skhere
+                if (AiData.Flags3.TestFlag(AiFlags3.Bit3))
+                {
+                    _scene.SendMessage(Message.Destroyed, this, null, 0, 0, delay: 1);
+                    if (EnemySpawner != null)
+                    {
+                        _scene.SendMessage(Message.Destroyed, this, EnemySpawner, 0, 0);
+                    }
+                    _health = 0;
+                    Flags2 |= PlayerFlags2.HideModel;
+                    AiData.Flags3 &= ~AiFlags3.Bit3;
+                    AiData.Flags1 = false;
+                    _soundSource.StopAllSfx(force: true);
+                }
+                Debug.Assert(LoadFlags.TestFlag(LoadFlags.Active));
             }
             // display swap update happens here for main player
             if (IsMainPlayer && CameraSequence.Current?.BlockInput == true)
@@ -747,7 +806,7 @@ namespace MphRead.Entities
             {
                 _timeSinceInput++;
             }
-            // skhere: fix this
+            // skhere: fix this -- 0x20110F0
             if (_aimY < 60 && _aimY > -60 && !EquipInfo.Zoomed && _health > 0)
             {
                 if (_timeSinceInput == Values.SwayStartTime * 2) // todo: FPS stuff

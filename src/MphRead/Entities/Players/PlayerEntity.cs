@@ -893,7 +893,7 @@ namespace MphRead.Entities
             if (respawn && (IsMainPlayer || _scene.Multiplayer))
             {
                 // spawnEffectMP or spawnEffect
-                int effectId = _scene.Multiplayer && PlayerCount > 2 ? 33 : 31;
+                int effectId = _scene.Multiplayer && PlayerCount > 2 && !Features.MaxPlayerDetail ? 33 : 31;
                 _scene.SpawnEffect(effectId, Vector3.UnitX, Vector3.UnitY, Position);
             }
             if (IsMainPlayer)
