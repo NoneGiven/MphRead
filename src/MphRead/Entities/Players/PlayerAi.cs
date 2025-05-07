@@ -1,26 +1,28 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using MphRead.Formats;
 
 namespace MphRead.Entities
 {
     public class AiData
     {
-        // todo: all field names (and also implementations)
-        public AiFlags1 Flags1 { get; set; } // todo?: not currently convinced these need to be bitfields
+        public AiPersonalityData1 Personality { get; set; } = null!;
+        public bool Flags1 { get; set; }
         public AiFlags2 Flags2 { get; set; }
+        public AiFlags3 Flags3 { get; set; }
         public ushort HealthThreshold { get; set; }
         public uint Field110 { get; set; }
+        public int Field118 { get; set; }
 
         public void Initialize()
         {
-            Flags1 = AiFlags1.None;
+            Flags1 = false;
             Flags2 = AiFlags2.None;
+            Flags3 = AiFlags3.None;
             HealthThreshold = 0;
             Field110 = 0;
+            Field118 = 0;
         }
     }
 
@@ -32,46 +34,8 @@ namespace MphRead.Entities
 
         public void ProcessAi()
         {
-            // skhere: ProcessAi()
+            // sktodo-ai: ProcessAi()
         }
-    }
-
-    [Flags]
-    public enum AiFlags1 : uint
-    {
-        None = 0,
-        Bit0 = 1,
-        Bit1 = 2,
-        Bit2 = 4,
-        Bit3 = 8,
-        Bit4 = 0x10,
-        Bit5 = 0x20,
-        Bit6 = 0x40,
-        Bit7 = 0x80,
-        Bit8 = 0x100,
-        Bit9 = 0x200,
-        Bit10 = 0x400,
-        Bit11 = 0x800,
-        Bit12 = 0x1000,
-        Bit13 = 0x2000,
-        Bit14 = 0x4000,
-        Bit15 = 0x8000,
-        Bit16 = 0x10000,
-        Bit17 = 0x20000,
-        Bit18 = 0x40000,
-        Bit19 = 0x80000,
-        Bit20 = 0x100000,
-        Bit21 = 0x200000,
-        Bit22 = 0x400000,
-        Bit23 = 0x800000,
-        Bit24 = 0x1000000,
-        Bit25 = 0x2000000,
-        Bit26 = 0x4000000,
-        Bit27 = 0x8000000,
-        Bit28 = 0x10000000,
-        Bit29 = 0x20000000,
-        Bit30 = 0x40000000,
-        Bit31 = 0x80000000
     }
 
     [Flags]
@@ -100,16 +64,28 @@ namespace MphRead.Entities
         Bit19 = 0x80000,
         Bit20 = 0x100000,
         Bit21 = 0x200000,
-        Bit22 = 0x400000,
-        Bit23 = 0x800000,
-        Bit24 = 0x1000000,
-        Bit25 = 0x2000000,
-        Bit26 = 0x4000000,
-        Bit27 = 0x8000000,
-        Bit28 = 0x10000000,
-        Bit29 = 0x20000000,
-        Bit30 = 0x40000000,
-        Bit31 = 0x80000000
+        Unused22 = 0x400000,
+        Unused23 = 0x800000,
+        Unused24 = 0x1000000,
+        Unused25 = 0x2000000,
+        Unused26 = 0x4000000,
+        Unused27 = 0x8000000,
+        Unused28 = 0x10000000,
+        Unused29 = 0x20000000,
+        Unused30 = 0x40000000,
+        Unused31 = 0x80000000
+    }
+
+    [Flags]
+    public enum AiFlags3 : uint
+    {
+        None = 0,
+        NoInput = 1,
+        Bit1 = 2,
+        Bit2 = 4,
+        Bit3 = 8,
+        Bit4 = 0x10,
+        Bit5 = 0x20
     }
 
     public static class ReadBotAi
@@ -123,8 +99,6 @@ namespace MphRead.Entities
             /* encounter 3 */ [ 33152, 33152, 39420, 42772, 33556, 40312, 33976, 13480 ],
             /* encounter 4 */ [ 33152, 33152, 33696, 45176, 33556, 40556, 33976, 13480 ]
         ];
-
-        private static byte[]? _aiPersonalityData = null;
 
         public static void LoadAll(GameMode mode)
         {
@@ -162,7 +136,7 @@ namespace MphRead.Entities
                             // todo?: if replacing enemy hunters, consider loading the offset belonging to the one replaced
                             aiOffset = _encounterAiOffsets[index][(int)player.Hunter];
                         }
-                        player.AiData.Flags1 |= AiFlags1.Bit0;
+                        player.AiData.Flags1 = true;
                     }
                 }
                 else if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
@@ -183,8 +157,172 @@ namespace MphRead.Entities
                 {
                     aiOffset = 45220;
                 }
-                LoadData(aiOffset); // sktodo: player.AiPersonality = LoadData(aiOffset);
+                player.AiData.Personality = LoadData(aiOffset);
             }
+        }
+
+        private static string _cachedVersion = "";
+        private static byte[]? _aiPersonalityData = null;
+
+        private static AiPersonalityData1 LoadData(int offset)
+        {
+            if (Paths.MphKey != _cachedVersion)
+            {
+                _aiPersonalityData = null;
+                _data1Cache.Clear();
+                _data2Cache.Clear();
+                _cachedVersion = Paths.MphKey;
+            }
+            if (_aiPersonalityData == null)
+            {
+                _aiPersonalityData = File.ReadAllBytes(Paths.Combine(Paths.FileSystem, @"aiPersonalityData\aiPersonalityData.bin"));
+            }
+            return ParseData1(offset, count: 1)[0];
+        }
+
+        private static readonly Dictionary<int, IReadOnlyList<AiPersonalityData1>> _data1Cache = [];
+        private static readonly Dictionary<int, IReadOnlyList<int>> _data3Cache = [];
+
+        private static IReadOnlyList<AiPersonalityData1> ParseData1(int offset, int count)
+        {
+            if (_data1Cache.TryGetValue(offset, out IReadOnlyList<AiPersonalityData1>? cached))
+            {
+                return cached;
+            }
+            var bytes = new ReadOnlySpan<byte>(_aiPersonalityData);
+            var results = new List<AiPersonalityData1>(count);
+            IReadOnlyList<AiData1> data1s = Read.DoOffsets<AiData1>(bytes, offset, count);
+            for (int i = 0; i < data1s.Count; i++)
+            {
+                AiData1 data1 = data1s[i];
+                IReadOnlyList<AiPersonalityData1> data1Children = [];
+                if (data1.Data1Count > 0 && data1.Data1Offset != offset)
+                {
+                    data1Children = ParseData1(data1.Data1Offset, data1.Data1Count);
+                }
+                IReadOnlyList<AiPersonalityData2> data2 = [];
+                if (data1.Data2Count > 0)
+                {
+                    data2 = ParseData2(data1.Data2Offset, data1.Data2Count);
+                }
+                IReadOnlyList<int> data3a = [];
+                if (data1.Data3aCount > 0)
+                {
+                    if (_data3Cache.TryGetValue(data1.Data3aOffset, out IReadOnlyList<int>? cached3a))
+                    {
+                        data3a = cached3a;
+                    }
+                    else
+                    {
+                        data3a = Read.DoOffsets<int>(bytes, data1.Data3aOffset, data1.Data3aCount);
+                        _data3Cache.Add(data1.Data3aOffset, data3a);
+                    }
+                }
+                IReadOnlyList<int> data3b = [];
+                if (data1.Data3bCount > 0)
+                {
+                    if (_data3Cache.TryGetValue(data1.Data3bOffset, out IReadOnlyList<int>? cached3b))
+                    {
+                        data3b = cached3b;
+                    }
+                    else
+                    {
+                        data3b = Read.DoOffsets<int>(bytes, data1.Data3bOffset, data1.Data3bCount);
+                        _data3Cache.Add(data1.Data3bOffset, data3b);
+                    }
+                }
+                results.Add(new AiPersonalityData1(data1.Field0, data1Children, data2, data3a, data3b));
+            }
+            _data1Cache.Add(offset, results);
+            return results;
+        }
+
+        private static readonly Dictionary<int, IReadOnlyList<AiPersonalityData2>> _data2Cache = [];
+
+        private static IReadOnlyList<AiPersonalityData2> ParseData2(int offset, int count)
+        {
+            if (_data2Cache.TryGetValue(offset, out IReadOnlyList<AiPersonalityData2>? cached))
+            {
+                return cached;
+            }
+            var bytes = new ReadOnlySpan<byte>(_aiPersonalityData);
+            var results = new List<AiPersonalityData2>(count);
+            IReadOnlyList<AiData2> data2s = Read.DoOffsets<AiData2>(bytes, offset, count);
+            for (int i = 0; i < data2s.Count; i++)
+            {
+                AiData2 data2 = data2s[i];
+                IReadOnlyList<AiPersonalityData4> data4 = [];
+                if (data2.Data4Count > 0)
+                {
+                    data4 = ParseData4(data2.Data4Offset, data2.Data4Count);
+                }
+                AiPersonalityData5 data5 = _emptyParams;
+                if (data2.Data5Offset != 0)
+                {
+                    data5 = ParseData5(data2.Data5Type, data2.Data5Offset);
+                }
+                results.Add(new AiPersonalityData2(data2.FieldC, data2.Field10, data4, data2.Data5Type, data5));
+            }
+            _data2Cache.Add(offset, results);
+            return results;
+        }
+
+        private static readonly Dictionary<int, IReadOnlyList<AiPersonalityData4>> _data4Cache = [];
+
+        private static IReadOnlyList<AiPersonalityData4> ParseData4(int offset, int count)
+        {
+            if (_data4Cache.TryGetValue(offset, out IReadOnlyList<AiPersonalityData4>? cached))
+            {
+                return cached;
+            }
+            var bytes = new ReadOnlySpan<byte>(_aiPersonalityData);
+            var results = new List<AiPersonalityData4>(count);
+            IReadOnlyList<AiData4> data4s = Read.DoOffsets<AiData4>(bytes, offset, count);
+            for (int i = 0; i < data4s.Count; i++)
+            {
+                AiData4 data4 = data4s[i];
+                AiPersonalityData5 data5 = _emptyParams;
+                if (data4.Data5Offset != 0)
+                {
+                    data5 = ParseData5(data4.Data5Type, data4.Data5Offset);
+                }
+                results.Add(new AiPersonalityData4(data4.Data5Type, data5));
+            }
+            _data4Cache.Add(offset, results);
+            return results;
+        }
+
+        private static readonly AiPersonalityData5 _emptyParams = new AiPersonalityData5();
+        private static readonly Dictionary<int, AiPersonalityData5> _data5Cache = [];
+
+        private static AiPersonalityData5 ParseData5(int type, int offset)
+        {
+            if (_data5Cache.TryGetValue(offset, out AiPersonalityData5? cached))
+            {
+                return cached;
+            }
+            var bytes = new ReadOnlySpan<byte>(_aiPersonalityData);
+            uint param1 = Read.SpanReadUint(bytes, offset);
+            uint param2 = type == 210 ? Read.SpanReadUint(bytes, offset + 4) : 0;
+            return new AiPersonalityData5(param1, param2);
+        }
+
+        // skdebug
+        public static void TestRead()
+        {
+            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(Paths.FileSystem, @"aiPersonalityData\aiPersonalityData.bin")));
+            var offsets = new List<int>()
+            {
+                13480, 32896, 32932, 32968, 33012, 33152, 33196, 33232, 33372, 33416, 33556, 33696, 33836,
+                33976, 35428, 37576, 39420, 40312, 40556, 41492, 41948, 42772, 45176, 45220, 45696
+            };
+            var results = new List<AiPersonalityData1>();
+            foreach (int offset in offsets)
+            {
+                results.Add(LoadData(offset));
+            }
+            _ = 5;
+            _ = 5;
         }
 
         // size: 36
@@ -209,114 +347,83 @@ namespace MphRead.Entities
             public readonly int Data4Offset;
             public readonly int FieldC;
             public readonly int Field10;
-            public readonly int Data5OFfset;
+            public readonly int Data5Offset;
         }
 
-        private static void LoadData(int offset)
+        // size: 8
+        public readonly struct AiData4
         {
-            if (_aiPersonalityData == null)
-            {
-                _aiPersonalityData = File.ReadAllBytes(Paths.Combine(Paths.FileSystem, @"aiPersonalityData\aiPersonalityData.bin"));
-            }
-            ParseData1(offset, count: 1);
+            public readonly int Data5Type;
+            public readonly int Data5Offset;
+        }
+    }
+
+    public class AiPersonalityData1
+    {
+        public int Field0 { get; init; }
+        public IReadOnlyList<AiPersonalityData1> Data1 { get; init; }
+        public IReadOnlyList<AiPersonalityData2> Data2 { get; init; }
+        public IReadOnlyList<int> Data3a { get; init; }
+        public IReadOnlyList<int> Data3b { get; init; }
+
+        public AiPersonalityData1(int field0, IReadOnlyList<AiPersonalityData1> data1,
+            IReadOnlyList<AiPersonalityData2> data2, IReadOnlyList<int> data3a, IReadOnlyList<int> data3b)
+        {
+            Field0 = field0;
+            Data1 = data1;
+            Data2 = data2;
+            Data3a = data3a;
+            Data3b = data3b;
+        }
+    }
+
+    public class AiPersonalityData2
+    {
+        public int FieldC { get; init; }
+        public int Field10 { get; init; }
+        public IReadOnlyList<AiPersonalityData4> Data4 { get; init; }
+        public int Data5Type { get; init; }
+        public AiPersonalityData5 Data5 { get; init; }
+
+        public AiPersonalityData2(int fieldC, int field10, IReadOnlyList<AiPersonalityData4> data4,
+            int data5Type, AiPersonalityData5 data5)
+        {
+            FieldC = fieldC;
+            Field10 = field10;
+            Data4 = data4;
+            Data5Type = data5Type;
+            Data5 = data5;
+        }
+    }
+
+    public class AiPersonalityData4
+    {
+        public int Data5Type { get; init; }
+        public AiPersonalityData5 Data5 { get; init; }
+
+        public AiPersonalityData4(int data5Type, AiPersonalityData5 data5)
+        {
+            Data5Type = data5Type;
+            Data5 = data5;
+        }
+    }
+
+    public class AiPersonalityData5
+    {
+        public uint Param1 { get; init; }
+        public uint Param2 { get; init; }
+        // skdebug: see if an empty one ever gets used for parameters, since it would be a null ref in-game
+        public bool IsEmpty { get; init; }
+
+        public AiPersonalityData5()
+        {
+            IsEmpty = true;
         }
 
-        private static void ParseData1(int offset, int count)
+        public AiPersonalityData5(uint param1, uint param2)
         {
-            var bytes = new ReadOnlySpan<byte>(_aiPersonalityData);
-            // skhere
-            // sktodo: use offset cache for the larger objects
-            IReadOnlyList<AiData1> data1s = Read.DoOffsets<AiData1>(bytes, offset, count);
-            for (int i = 0; i < data1s.Count; i++)
-            {
-                AiData1 data1 = data1s[i];
-                if (data1.Field0 != 0)
-                {
-                    //Debugger.Break();
-                }
-                if (data1.Data1Count >= 20)
-                {
-                    Debugger.Break();
-                }
-                if (data1.Data1Count > 0)
-                {
-                    ParseData1(data1.Data1Offset, data1.Data1Count);
-                }
-                if (data1.Data2Count > 0)
-                {
-                    ParseData2(data1.Data2Offset, data1.Data2Count);
-                }
-                if (data1.Data3aCount > 0)
-                {
-                    //ParseData3(data1.Data3aOffset, data1.Data3aCount);
-                }
-                if (data1.Data3bCount > 0)
-                {
-                    //ParseData3(data1.Data3bOffset, data1.Data3bCount);
-                }
-            }
-            _ = 5;
-            _ = 5;
-        }
-
-        private static readonly HashSet<int> _seenOffsets = [];
-        private static readonly HashSet<(int, int)> _seenPairs = [];
-        private static readonly Dictionary<int, (int Total, int Reset)> _results = [];
-
-        private static void ParseData2(int offset, int count)
-        {
-            if (_seenPairs.Contains((offset, count)))
-            {
-                return;
-            }
-            if (_seenOffsets.Contains(offset))
-            {
-                Debugger.Break();
-            }
-            _seenPairs.Add((offset, count));
-            _seenOffsets.Add(offset);
-            var bytes = new ReadOnlySpan<byte>(_aiPersonalityData);
-            IReadOnlyList<AiData2> data2s = Read.DoOffsets<AiData2>(bytes, offset, count);
-            for (int i = 0; i < data2s.Count; i++)
-            {
-                AiData2 data2 = data2s[i];
-                bool isReset = data2.FieldC >= 20;
-                if (!_results.TryGetValue(data2.Field10, out (int Total, int Reset) tuple))
-                {
-                    tuple = (0, 0);
-                }
-                _results[data2.Field10] = (tuple.Total + 1, tuple.Reset + (isReset ? 1 : 0));
-                if (data2.Data4Count > 0)
-                {
-                    // sktodo
-                }
-                if (data2.Data5OFfset != 0)
-                {
-                    // sktodo
-                }
-            }
-            _ = 5;
-            _ = 5;
-        }
-
-        // sktodo: &data3a->field_0 is used as func_idxs list, so those are just ints
-
-        // skdebug
-        public static void TestRead()
-        {
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(Paths.FileSystem, @"aiPersonalityData\aiPersonalityData.bin")));
-            var offsets = new List<int>()
-            {
-                13480, 32896, 32932, 32968, 33012, 33152, 33196, 33232, 33372, 33416, 33556, 33696, 33836,
-                33976, 35428, 37576, 39420, 40312, 40556, 41492, 41948, 42772, 45176, 45220, 45696
-            };
-            foreach (int offset in offsets)
-            {
-                LoadData(offset);
-            }
-            var results = _results.OrderBy(r => r.Key);
-            _ = 5;
-            _ = 5;
+            Param1 = param1;
+            Param2 = param2;
         }
     }
 }

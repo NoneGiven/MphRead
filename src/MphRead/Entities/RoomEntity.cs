@@ -549,8 +549,17 @@ namespace MphRead.Entities
                 return;
             }
             SceneSetup.InitHunterSpawns(_scene, entities, initialize: true); // see: "probably revisit this"
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
             ReadBotAi.LoadAll(_scene.GameMode);
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
             SetNodeData(SceneSetup.LoadNodeData(roomMeta.NodePath, roomMeta.Id, _scene.GameMode, entities));
+            // sktodo-ai: call ai_init_sub_214B538 here and in Scene.AddRoom(), if needed -- clears various global values
             if (token.IsCancellationRequested)
             {
                 return;

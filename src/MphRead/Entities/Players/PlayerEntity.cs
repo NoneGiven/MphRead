@@ -1723,7 +1723,7 @@ namespace MphRead.Entities
                     _halfturret.Health -= (int)turretDamage;
                 }
                 damage -= turretDamage;
-                if (IsBot && !_scene.Multiplayer && AiData.Flags1.TestFlag(AiFlags1.Bit0))
+                if (IsBot && !_scene.Multiplayer && AiData.Flags1)
                 {
                     if (_health > AiData.HealthThreshold && (_health - damage) <= AiData.HealthThreshold)
                     {
@@ -1764,7 +1764,7 @@ namespace MphRead.Entities
             // todo?: something for wifi
             // else...
             bool dead = false;
-            if (IsBot && !_scene.Multiplayer && AiData.Flags1.TestFlag(AiFlags1.Bit0) && _health <= AiData.HealthThreshold)
+            if (IsBot && !_scene.Multiplayer && AiData.Flags1 && _health <= AiData.HealthThreshold)
             {
                 dead = true;
             }
@@ -1905,7 +1905,7 @@ namespace MphRead.Entities
                     }
                     StopBeamChargeSfx(CurrentWeapon);
                 }
-                if (IsBot && AiData.Flags1.TestFlag(AiFlags1.Bit0))
+                if (IsBot && AiData.Flags1)
                 {
                     _health = AiData.HealthThreshold + 1;
                     AiData.Flags2 |= AiFlags2.Bit13;

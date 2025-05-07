@@ -480,6 +480,10 @@ namespace MphRead.Entities
                     {
                         aimX = aimY = 0;
                     }
+                    if (aimX != 0 || aimY != 0)
+                    {
+                        Input.HasInput = true;
+                    }
                     UpdateHudShiftY(aimY);
                     UpdateHudShiftX(aimX);
                     UpdateAimY(aimY);
@@ -1099,6 +1103,10 @@ namespace MphRead.Entities
                             || _scene.FrameAdvance || _scene.FrameAdvanceLastFrame) // skdebug
                         {
                             aimX = aimY = 0;
+                        }
+                        if (aimX != 0 || aimY != 0)
+                        {
+                            Input.HasInput = true;
                         }
                         UpdateHudShiftY(aimY);
                         UpdateHudShiftX(aimX);
@@ -1939,6 +1947,7 @@ namespace MphRead.Entities
             for (int i = 0; i < 1; i++) // skdebug
             {
                 PlayerEntity player = Players[i];
+                player.Input.HasInput = false;
                 KeyboardState? prevKeyboardSnap = player.Input.KeyboardState;
                 MouseState? prevMouseSnap = player.Input.MouseState;
                 player.Input.PrevKeyboardState = prevKeyboardSnap;
@@ -1958,6 +1967,10 @@ namespace MphRead.Entities
                                 control.IsDown = keyboardSnap.IsKeyDown(control.Key);
                                 control.IsPressed = control.IsDown && !prevDown;
                                 control.IsReleased = !control.IsDown && prevDown;
+                                if (control.IsDown || control.IsPressed || control.IsReleased)
+                                {
+                                    player.Input.HasInput = true;
+                                }
                             }
                         }
                         else if (control.Type == ButtonType.Mouse)
@@ -1984,6 +1997,10 @@ namespace MphRead.Entities
                                 control.IsDown = down;
                                 control.IsPressed = control.IsDown && !prevDown;
                                 control.IsReleased = !control.IsDown && prevDown;
+                                if (control.IsDown || control.IsPressed || control.IsReleased)
+                                {
+                                    player.Input.HasInput = true;
+                                }
                             }
                         }
                         else
@@ -1995,6 +2012,10 @@ namespace MphRead.Entities
                                 || control.Type == ButtonType.ScrollDown && curScrollY < prevScrollY;
                             control.IsPressed = control.IsDown;
                             control.IsReleased = false;
+                            if (control.IsDown)
+                            {
+                                player.Input.HasInput = true;
+                            }
                         }
                     }
                 }
@@ -2003,6 +2024,7 @@ namespace MphRead.Entities
                 {
                     player.Input.ClickX = mouseSnap.X;
                     player.Input.ClickY = mouseSnap.Y;
+                    player.Input.HasInput = true;
                 }
                 else
                 {
@@ -2026,6 +2048,8 @@ namespace MphRead.Entities
             public float MouseDeltaY => (MouseState?.Y - PrevMouseState?.Y) ?? 0;
             public float ClickX { get; set; } = -1;
             public float ClickY { get; set; } = -1;
+
+            public bool HasInput { get; set; }
         }
     }
 

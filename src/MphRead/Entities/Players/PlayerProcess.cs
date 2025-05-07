@@ -42,7 +42,7 @@ namespace MphRead.Entities
             }
             if (IsBot)
             {
-                // todo: bot stuff
+                // sktodo-ai: bot stuff
             }
             // display swap update happens here for main player
             if (IsMainPlayer && CameraSequence.Current?.BlockInput == true)
@@ -411,7 +411,10 @@ namespace MphRead.Entities
                     _cloakTimer = 0;
                 }
             }
-            // todo: if bot stuff, set _targetAlpha to 0
+            if (IsBot && AiData.Flags3.TestFlag(AiFlags3.Bit2))
+            {
+                _targetAlpha = 0;
+            }
             if (_health > 0)
             {
                 if (Flags2.TestFlag(PlayerFlags2.Cloaking) || !Flags2.TestFlag(PlayerFlags2.AltAttack))
@@ -736,8 +739,15 @@ namespace MphRead.Entities
             {
                 _field449++;
             }
-            // todo: check input
-            _timeSinceInput = 0;
+            if (Input.HasInput || IsBot && !AiData.Flags3.TestFlag(AiFlags3.NoInput))
+            {
+                _timeSinceInput = 0;
+            }
+            else
+            {
+                _timeSinceInput++;
+            }
+            // skhere: fix this
             if (_aimY < 60 && _aimY > -60 && !EquipInfo.Zoomed && _health > 0)
             {
                 if (_timeSinceInput == Values.SwayStartTime * 2) // todo: FPS stuff

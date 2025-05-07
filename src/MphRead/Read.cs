@@ -15,8 +15,8 @@ namespace MphRead
     {
         public static bool ApplyFixes { get; set; } = true;
 
-        private static readonly Dictionary<string, Model> _modelCache = new Dictionary<string, Model>();
-        private static readonly Dictionary<string, Model> _fhModelCache = new Dictionary<string, Model>();
+        private static readonly Dictionary<string, Model> _modelCache = [];
+        private static readonly Dictionary<string, Model> _fhModelCache = [];
 
         public static void ClearCache()
         {
@@ -191,13 +191,13 @@ namespace MphRead
             IReadOnlyList<RawNode> nodes = DoOffsets<RawNode>(initialBytes, header.NodeOffset, header.NodeCount);
             IReadOnlyList<RawMesh> meshes = DoOffsets<RawMesh>(initialBytes, header.MeshOffset, header.MeshCount);
             IReadOnlyList<DisplayList> dlists = DoOffsets<DisplayList>(initialBytes, header.DlistOffset, header.MeshCount);
-            var instructions = new List<IReadOnlyList<RenderInstruction>>();
+            var instructions = new List<IReadOnlyList<RenderInstruction>>(dlists.Count);
             foreach (DisplayList dlist in dlists)
             {
                 instructions.Add(DoRenderInstructions(initialBytes, dlist));
             }
             IReadOnlyList<RawMaterial> materials = DoOffsets<RawMaterial>(initialBytes, header.MaterialOffset, header.MaterialCount);
-            var recolors = new List<Recolor>();
+            var recolors = new List<Recolor>(recolorMeta.Count);
             foreach (RecolorMetadata meta in recolorMeta)
             {
                 ReadOnlySpan<byte> modelBytes = initialBytes;
@@ -295,8 +295,8 @@ namespace MphRead
                     Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
                     palettes = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);
                 }
-                var textureData = new List<IReadOnlyList<TextureData>>();
-                var paletteData = new List<IReadOnlyList<PaletteData>>();
+                var textureData = new List<IReadOnlyList<TextureData>>(textures.Count);
+                var paletteData = new List<IReadOnlyList<PaletteData>>(palettes.Count);
                 foreach (Texture texture in textures)
                 {
                     textureData.Add(GetTextureData(texture, textureBytes));
@@ -347,11 +347,11 @@ namespace MphRead
                     var extraTex = new List<Texture>();
                     extraTex.AddRange(textures);
                     extraTex.Add(new Texture(TextureFormat.Palette8Bit, 1, 1));
-                    textureData.Add(new List<TextureData>() { new TextureData(0, 255) });
+                    textureData.Add([new TextureData(0, 255)]);
                     var extraPal = new List<Palette>();
                     extraPal.AddRange(palettes);
                     extraPal.Add(new Palette());
-                    paletteData.Add(new List<PaletteData>() { new PaletteData(0x7FFF) });
+                    paletteData.Add([new PaletteData(0x7FFF)]);
                     textures = extraTex;
                     palettes = extraPal;
                 }
@@ -362,7 +362,7 @@ namespace MphRead
                     Header paletteHeader = ReadStruct<Header>(paletteBytes[0..Sizes.Header]);
                     IReadOnlyList<Palette> replacePalettes
                         = DoOffsets<Palette>(paletteBytes, paletteHeader.PaletteOffset, paletteHeader.PaletteCount);
-                    var replacePaletteData = new List<IReadOnlyList<PaletteData>>();
+                    var replacePaletteData = new List<IReadOnlyList<PaletteData>>(replacePalettes.Count);
                     foreach (Palette palette in replacePalettes)
                     {
                         replacePaletteData.Add(GetPaletteData(palette, paletteBytes));
@@ -383,7 +383,7 @@ namespace MphRead
             }
             // note: in RAM, model texture matrices are 4x4, but only the leftmost 4x2 or 4x3 is set,
             // and the rest is garbage data, and ultimately only the upper-left 3x2 is actually used
-            var textureMatrices = new List<Matrix4>();
+            var textureMatrices = new List<Matrix4>(name == "AlimbicCapsule" ? 1 : 0);
             if (name == "AlimbicCapsule")
             {
                 Debug.Assert(header.TextureMatrixCount == 1);
@@ -469,8 +469,7 @@ namespace MphRead
                 {
                     Debug.Assert(offset == rawGroup.ScaleLutOffset && offset == rawGroup.RotateLutOffset
                         && offset == rawGroup.TranslateLutOffset && offset == rawGroup.AnimationOffset);
-                    results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, new List<float>(),
-                        new List<float>(), new List<float>(), new Dictionary<string, NodeAnimation>()));
+                    results.NodeAnimationGroups.Add(new NodeAnimationGroup(rawGroup, [], [], [], new Dictionary<string, NodeAnimation>()));
                     continue;
                 }
                 Debug.Assert(offset > rawGroup.AnimationOffset);
@@ -494,7 +493,7 @@ namespace MphRead
                 int rotCount = (int)(rawGroup.TranslateLutOffset - rawGroup.RotateLutOffset) / 2; // might include padding
                 int transCount = (int)(rawGroup.AnimationOffset - rawGroup.TranslateLutOffset) / 4;
                 var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, scaleCount).Select(f => f.FloatValue).ToList();
-                var rotations = new List<float>();
+                var rotations = new List<float>(rotCount);
                 foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, rotCount))
                 {
                     rotations.Add(value / 65536.0f * 2.0f * MathF.PI);
@@ -513,8 +512,7 @@ namespace MphRead
                 if (rawGroup.AnimationCount == 0)
                 {
                     Debug.Assert(offset == rawGroup.ColorLutOffset && offset == rawGroup.AnimationOffset);
-                    results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup,
-                        new List<float>(), new Dictionary<string, MaterialAnimation>()));
+                    results.MaterialAnimationGroups.Add(new MaterialAnimationGroup(rawGroup, [], new Dictionary<string, MaterialAnimation>()));
                     continue;
                 }
                 Debug.Assert(rawGroup.AnimationOffset > rawGroup.ColorLutOffset);
@@ -542,8 +540,8 @@ namespace MphRead
                 {
                     Debug.Assert(offset == rawGroup.ScaleLutOffset && offset == rawGroup.RotateLutOffset
                         && offset == rawGroup.TranslateLutOffset && offset == rawGroup.AnimationOffset);
-                    results.TexcoordAnimationGroups.Add(new TexcoordAnimationGroup(rawGroup, new List<float>(),
-                        new List<float>(), new List<float>(), new Dictionary<string, TexcoordAnimation>()));
+                    results.TexcoordAnimationGroups.Add(new TexcoordAnimationGroup(rawGroup, [], [], [],
+                        new Dictionary<string, TexcoordAnimation>()));
                     continue;
                 }
                 Debug.Assert(rawGroup.RotateLutOffset > rawGroup.ScaleLutOffset);
@@ -563,7 +561,7 @@ namespace MphRead
                 int rotCount = (int)(rawGroup.TranslateLutOffset - rawGroup.RotateLutOffset) / 2; // might include padding
                 int transCount = (int)(rawGroup.AnimationOffset - rawGroup.TranslateLutOffset) / 4;
                 var scales = DoOffsets<Fixed>(bytes, rawGroup.ScaleLutOffset, scaleCount).Select(f => f.FloatValue).ToList();
-                var rotations = new List<float>();
+                var rotations = new List<float>(rotCount);
                 foreach (ushort value in DoOffsets<ushort>(bytes, rawGroup.RotateLutOffset, rotCount))
                 {
                     rotations.Add(value / 65536.0f * 2.0f * MathF.PI);
@@ -590,8 +588,8 @@ namespace MphRead
                     Debug.Assert(offset == rawGroup.FrameIndexOffset && offset == rawGroup.TextureIdOffset
                         && offset == rawGroup.PaletteIdOffset && offset == rawGroup.AnimationOffset);
                     Debug.Assert(rawGroup.FrameIndexCount == 0 && rawGroup.TextureIdCount == 0 && rawGroup.PaletteIdCount == 0);
-                    results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, new List<ushort>(),
-                        new List<ushort>(), new List<ushort>(), new Dictionary<string, TextureAnimation>()));
+                    results.TextureAnimationGroups.Add(new TextureAnimationGroup(rawGroup, [], [], [],
+                        new Dictionary<string, TextureAnimation>()));
                     continue;
                 }
                 IReadOnlyList<TextureAnimation> rawAnimations
@@ -690,7 +688,7 @@ namespace MphRead
             {
                 throw new ProgramException($"Palette size {palette.Size} is not divisible by 2.");
             }
-            var data = new List<PaletteData>();
+            var data = new List<PaletteData>((int)palette.Size / 2);
             for (int i = 0; i < palette.Size / 2; i++)
             {
                 ushort entry = SpanReadUshort(paletteBytes, (int)(palette.Offset + i * 2));
@@ -832,8 +830,8 @@ namespace MphRead
             return new Entity<T>(entry, (EntityType)(header.Type + 100), header.EntityId, ReadStruct<T>(bytes[start..end]), header);
         }
 
-        private static readonly Dictionary<int, Effect> _effects = new Dictionary<int, Effect>();
-        private static readonly Dictionary<(string, string), Particle> _particleDefs = new Dictionary<(string, string), Particle>();
+        private static readonly Dictionary<int, Effect> _effects = [];
+        private static readonly Dictionary<(string, string), Particle> _particleDefs = [];
 
         public static Effect? GetEffect(int id)
         {
@@ -897,11 +895,11 @@ namespace MphRead
             // these are also offsets into the func/param arrays, but don't seem to be used
             IReadOnlyList<uint> list2 = DoOffsets<uint>(bytes, effect.Offset2, effect.Count2);
             IReadOnlyList<uint> elementOffsets = DoOffsets<uint>(bytes, effect.ElementOffset, effect.ElementCount);
-            var elements = new List<EffectElement>();
+            var elements = new List<EffectElement>(elementOffsets.Count);
             foreach (uint offset in elementOffsets)
             {
                 RawEffectElement element = DoOffset<RawEffectElement>(bytes, offset);
-                var particles = new List<Particle>();
+                var particles = new List<Particle>((int)element.ParticleCount);
                 foreach (uint nameOffset in DoOffsets<uint>(bytes, element.ParticleOffset, element.ParticleCount))
                 {
                     // todo: move the model reference to the element instead of the particle definitions
@@ -1026,7 +1024,7 @@ namespace MphRead
                 {
                     var instruction = (InstructionCode)(((packedInstructions & 0xFF) << 2) + 0x400);
                     int arity = RenderInstruction.GetArity(instruction);
-                    var arguments = new List<uint>();
+                    var arguments = new List<uint>(arity);
                     for (int j = 0; j < arity; j++)
                     {
                         arguments.Add(SpanReadUint(bytes, ref pointer));
@@ -1134,10 +1132,10 @@ namespace MphRead
         public static IReadOnlyList<T> DoOffsets<T>(ReadOnlySpan<byte> bytes, uint offset, int count) where T : struct
         {
             int ioffset = (int)offset;
-            var results = new List<T>();
+            var results = new List<T>(count);
             if (offset != 0)
             {
-                int size = Marshal.SizeOf(typeof(T));
+                int size = Marshal.SizeOf<T>();
                 for (uint i = 0; i < count; i++, ioffset += size)
                 {
                     results.Add(ReadStruct<T>(bytes[ioffset..(ioffset + size)]));
@@ -1169,7 +1167,7 @@ namespace MphRead
         public static T ReadStruct<T>(ReadOnlySpan<byte> bytes) where T : struct
         {
             var handle = GCHandle.Alloc(bytes.ToArray(), GCHandleType.Pinned);
-            object? result = Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(T));
+            object? result = Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
             handle.Free();
             if (result == null)
             {
@@ -1180,7 +1178,7 @@ namespace MphRead
 
         public static T ReadStruct<T>(IntPtr pointer) where T : struct
         {
-            object? result = Marshal.PtrToStructure(pointer, typeof(T));
+            object? result = Marshal.PtrToStructure<T>(pointer);
             if (result == null)
             {
                 throw new ProgramException($"Failed to read {typeof(T)} struct.");
@@ -1256,8 +1254,7 @@ namespace MphRead
 
         public static IReadOnlyList<string> ReadStrings(ReadOnlySpan<byte> bytes, int offset, int count)
         {
-            var strings = new List<string>();
-
+            var strings = new List<string>(count);
             while (strings.Count < count)
             {
                 int end = offset;
@@ -1361,13 +1358,13 @@ namespace MphRead
 
     public class AnimationResults
     {
-        public List<NodeAnimationGroup> NodeAnimationGroups { get; } = new List<NodeAnimationGroup>();
-        public List<MaterialAnimationGroup> MaterialAnimationGroups { get; } = new List<MaterialAnimationGroup>();
-        public List<TexcoordAnimationGroup> TexcoordAnimationGroups { get; } = new List<TexcoordAnimationGroup>();
-        public List<TextureAnimationGroup> TextureAnimationGroups { get; } = new List<TextureAnimationGroup>();
-        public List<uint> NodeGroupOffsets { get; } = new List<uint>();
-        public List<uint> MaterialGroupOffsets { get; } = new List<uint>();
-        public List<uint> TexcoordGroupOffsets { get; } = new List<uint>();
-        public List<uint> TextureGroupOffsets { get; } = new List<uint>();
+        public List<NodeAnimationGroup> NodeAnimationGroups { get; } = [];
+        public List<MaterialAnimationGroup> MaterialAnimationGroups { get; } = [];
+        public List<TexcoordAnimationGroup> TexcoordAnimationGroups { get; } = [];
+        public List<TextureAnimationGroup> TextureAnimationGroups { get; } = [];
+        public List<uint> NodeGroupOffsets { get; } = [];
+        public List<uint> MaterialGroupOffsets { get; } = [];
+        public List<uint> TexcoordGroupOffsets { get; } = [];
+        public List<uint> TextureGroupOffsets { get; } = [];
     }
 }

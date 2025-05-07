@@ -223,7 +223,10 @@ namespace MphRead.Entities
                                     _scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, AfterFade.LoadRoom);
                                 }
                                 player.Speed = new Vector3(0, player.Speed.Y, 0);
-                                // todo: update bot AI flag
+                                if (player.IsBot)
+                                {
+                                    player.AiData.Field118 = 148 * 2; // todo-ai: FPS stuff
+                                }
                                 _triggeredSlots[player.SlotIndex] = true;
                             }
                         }

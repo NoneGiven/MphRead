@@ -276,6 +276,7 @@ namespace MphRead
             SceneSetup.LoadPlatformResources(this);
             SceneSetup.LoadEnemyResources(this);
             GameState.Setup(this);
+            // sktodo-ai: call ai_init_sub_214B538 here and in RoomEntity.ProcessTransition(), if needed -- clears various global values
             if (Multiplayer)
             {
                 Menu.ApplyMultiplayerSettings();
@@ -2682,7 +2683,7 @@ namespace MphRead
                         _destroyedEntities.Add(entity);
                     }
                 }
-                // todo-ai: update player visibility // skhere: sub_214B51C()
+                // sktodo-ai: update player visibility -- ai_sub_214B51C()
                 for (int i = 0; i < PlayerEntity.Players.Count; i++)
                 {
                     PlayerEntity.Players[i].FieldF20 = null;
