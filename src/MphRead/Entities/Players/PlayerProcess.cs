@@ -87,7 +87,6 @@ namespace MphRead.Entities
                     AiData.Flags1 = false;
                     _soundSource.StopAllSfx(force: true);
                 }
-                // skhere
                 if (AiData.Flags3.TestFlag(AiFlags3.Bit3))
                 {
                     _scene.SendMessage(Message.Destroyed, this, null, 0, 0, delay: 1);
@@ -806,10 +805,14 @@ namespace MphRead.Entities
             {
                 _timeSinceInput++;
             }
-            // skhere: fix this -- 0x20110F0
-            if (_aimY < 60 && _aimY > -60 && !EquipInfo.Zoomed && _health > 0)
+            if (_aimY < 60 && _aimY > -60 && !EquipInfo.Zoomed && _health > 0 && !Features.NoIdleSway)
             {
-                if (_timeSinceInput == Values.SwayStartTime * 2) // todo: FPS stuff
+                int swayStart = Values.SwayStartTime * 2; // todo: FPS stuff
+                if (Features.DelayedIdleSway)
+                {
+                    swayStart *= 4;
+                }
+                if (_timeSinceInput == swayStart)
                 {
                     _field40C = 0;
                     float factor1 = (Rng.GetRandomInt2(Values.SwayLimit) - Values.SwayLimit / 2) / 4096f;
@@ -819,9 +822,9 @@ namespace MphRead.Entities
                     _field428 = _field410;
                     _field41C += _gunVec2 * factor1 + _upVector * factor2;
                 }
-                else if (_timeSinceInput > Values.SwayStartTime * 2) // todo: FPS stuff
+                else if (_timeSinceInput > swayStart)
                 {
-                    _field40C += 1 / (Values.SwayIncrement / 4096f) / 2; // todo: FPS stuff
+                    _field40C += 1f / Values.SwayIncrement / 2; // todo: FPS stuff
                     if (_field40C >= 1)
                     {
                         _field40C = 0;

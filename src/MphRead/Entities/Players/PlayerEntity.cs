@@ -1474,7 +1474,7 @@ namespace MphRead.Entities
                     _gunModel.AnimInfo.Flags[0] &= ~AnimFlags.Ended;
                 }
             }
-            else if (_timeSinceInput >= (ulong)Values.GunIdleTime * 2) // todo: FPS stuff
+            else if (!Features.NoIdleSway && _timeSinceInput >= (ulong)Values.GunIdleTime * 2) // todo: FPS stuff
             {
                 if (GunAnimation != GunAnimation.UpDown)
                 {

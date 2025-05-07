@@ -1696,11 +1696,13 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (C) Reticle Opacity: {PrintOpacity(Features.ReticleOpacity)}");
                     Console.WriteLine($"{X(s++)} (S) HUD Sway: {OnOff(Features.HudSway)}");
                     Console.WriteLine($"{X(s++)} (F) Target Info Sway: {OnOff(Features.TargetInfoSway)}");
+                    Console.WriteLine($"{X(s++)} (W) Delayed Idle Sway: {OnOff(Features.DelayedIdleSway)}");
+                    Console.WriteLine($"{X(s++)} (N) No Idle Sway: {OnOff(Features.NoIdleSway)}");
                     Console.WriteLine($"{X(s++)} (R) Maximum Room Detail: {OnOff(Features.MaxRoomDetail)}");
                     Console.WriteLine($"{X(s++)} (P) Maximum Player Detail: {OnOff(Features.MaxPlayerDetail)}");
                     Console.WriteLine($"{X(s++)} (L) Logarithmic Spatial Audio: {OnOff(Features.LogSpatialAudio)}");
                     Console.WriteLine($"{X(s++)} (A) Consistent Alarm Interval: {OnOff(Features.HalfSecondAlarm)}");
-                    Console.WriteLine($"{X(s++)} (B) Full Boost Charge: {OnOff(Features.FullBoostCharge)}");
+                    Console.WriteLine($"{X(s++)} (G) Full Boost Charge: {OnOff(Features.FullBoostCharge)}");
                     Console.WriteLine($"{X(s++)} (1) Update Adventure Mode For Other Hunters: {OnOff(Features.AlternateHunters1P)}");
                 }
                 else if (screen == 2)
@@ -1830,29 +1832,37 @@ namespace MphRead
                     {
                         selection = 8;
                     }
-                    else if (keyInfo.Key == ConsoleKey.R)
+                    else if (keyInfo.Key == ConsoleKey.W)
                     {
                         selection = 9;
                     }
-                    else if (keyInfo.Key == ConsoleKey.P)
+                    else if (keyInfo.Key == ConsoleKey.N)
                     {
                         selection = 10;
                     }
-                    else if (keyInfo.Key == ConsoleKey.L)
+                    else if (keyInfo.Key == ConsoleKey.R)
                     {
                         selection = 11;
                     }
-                    else if (keyInfo.Key == ConsoleKey.A)
+                    else if (keyInfo.Key == ConsoleKey.P)
                     {
                         selection = 12;
                     }
-                    else if (keyInfo.Key == ConsoleKey.B)
+                    else if (keyInfo.Key == ConsoleKey.L)
                     {
                         selection = 13;
                     }
-                    else if (keyInfo.Key == ConsoleKey.D1 || keyInfo.Key == ConsoleKey.NumPad1)
+                    else if (keyInfo.Key == ConsoleKey.A)
                     {
                         selection = 14;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.G)
+                    {
+                        selection = 15;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.D1 || keyInfo.Key == ConsoleKey.NumPad1)
+                    {
+                        selection = 16;
                     }
                     else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
                     {
@@ -1894,25 +1904,33 @@ namespace MphRead
                         }
                         else if (selection == 9)
                         {
-                            Features.MaxRoomDetail = false;
+                            Features.DelayedIdleSway = true;
                         }
                         else if (selection == 10)
                         {
-                            Features.MaxPlayerDetail = true;
+                            Features.NoIdleSway = false;
                         }
                         else if (selection == 11)
                         {
-                            Features.LogSpatialAudio = false;
+                            Features.MaxRoomDetail = false;
                         }
                         else if (selection == 12)
                         {
-                            Features.HalfSecondAlarm = false;
+                            Features.MaxPlayerDetail = true;
                         }
                         else if (selection == 13)
                         {
-                            Features.FullBoostCharge = false;
+                            Features.LogSpatialAudio = false;
                         }
                         else if (selection == 14)
+                        {
+                            Features.HalfSecondAlarm = false;
+                        }
+                        else if (selection == 15)
+                        {
+                            Features.FullBoostCharge = false;
+                        }
+                        else if (selection == 16)
                         {
                             Features.AlternateHunters1P = true;
                         }
@@ -1997,25 +2015,33 @@ namespace MphRead
                         }
                         else if (selection == 9)
                         {
-                            Features.MaxRoomDetail = !Features.MaxRoomDetail;
+                            Features.DelayedIdleSway = !Features.DelayedIdleSway;
                         }
                         else if (selection == 10)
                         {
-                            Features.MaxPlayerDetail = !Features.MaxPlayerDetail;
+                            Features.NoIdleSway = !Features.NoIdleSway;
                         }
                         else if (selection == 11)
                         {
-                            Features.LogSpatialAudio = !Features.LogSpatialAudio;
+                            Features.MaxRoomDetail = !Features.MaxRoomDetail;
                         }
                         else if (selection == 12)
                         {
-                            Features.HalfSecondAlarm = !Features.HalfSecondAlarm;
+                            Features.MaxPlayerDetail = !Features.MaxPlayerDetail;
                         }
                         else if (selection == 13)
                         {
-                            Features.FullBoostCharge = !Features.FullBoostCharge;
+                            Features.LogSpatialAudio = !Features.LogSpatialAudio;
                         }
                         else if (selection == 14)
+                        {
+                            Features.HalfSecondAlarm = !Features.HalfSecondAlarm;
+                        }
+                        else if (selection == 15)
+                        {
+                            Features.FullBoostCharge = !Features.FullBoostCharge;
+                        }
+                        else if (selection == 16)
                         {
                             Features.AlternateHunters1P = !Features.AlternateHunters1P;
                         }
@@ -2266,6 +2292,8 @@ namespace MphRead
             Features.ReticleOpacity = 1;
             Features.HudSway = true;
             Features.TargetInfoSway = false;
+            Features.DelayedIdleSway = true;
+            Features.NoIdleSway = false;
             Features.MaxRoomDetail = false;
             Features.MaxPlayerDetail = true;
             Features.LogSpatialAudio = false;

@@ -66,6 +66,8 @@ namespace MphRead
         public static float ReticleOpacity { get; set; } = 1; // 1
         public static bool HudSway { get; set; } = true; // true
         public static bool TargetInfoSway { get; set; } = false; // "false"
+        public static bool DelayedIdleSway { get; set; } = true; // false
+        public static bool NoIdleSway { get; set; } = false; // false
         public static bool MaxRoomDetail { get; set; } = false; // false
         public static bool MaxPlayerDetail { get; set; } = true; // false
         public static bool LogSpatialAudio { get; set; } = false; // false
@@ -111,6 +113,14 @@ namespace MphRead
             {
                 TargetInfoSway = boolean;
             }
+            if (values.TryGetValue(nameof(DelayedIdleSway), out value) && Boolean.TryParse(value, out boolean))
+            {
+                DelayedIdleSway = boolean;
+            }
+            if (values.TryGetValue(nameof(NoIdleSway), out value) && Boolean.TryParse(value, out boolean))
+            {
+                NoIdleSway = boolean;
+            }
             if (values.TryGetValue(nameof(MaxRoomDetail), out value) && Boolean.TryParse(value, out boolean))
             {
                 MaxRoomDetail = boolean;
@@ -150,6 +160,8 @@ namespace MphRead
                 { nameof(ReticleOpacity), ReticleOpacity.ToString(CultureInfo.InvariantCulture) },
                 { nameof(HudSway), HudSway.ToString().ToLower() },
                 { nameof(TargetInfoSway), TargetInfoSway.ToString().ToLower() },
+                { nameof(DelayedIdleSway), DelayedIdleSway.ToString().ToLower() },
+                { nameof(NoIdleSway), NoIdleSway.ToString().ToLower() },
                 { nameof(MaxRoomDetail), MaxRoomDetail.ToString().ToLower() },
                 { nameof(MaxPlayerDetail), MaxPlayerDetail.ToString().ToLower() },
                 { nameof(LogSpatialAudio), LogSpatialAudio.ToString().ToLower() },

@@ -576,7 +576,7 @@ namespace MphRead.Entities
                         _scene.Layer3Info.ShiftX = -_hudShiftX / 4 / 256f;
                         _scene.Layer3Info.ShiftY = -_hudShiftY / 4 / 192f;
                     }
-                    if (_timeSinceInput < (ulong)Values.GunIdleTime * 2) // todo: FPS stuff
+                    if (Features.NoIdleSway || _timeSinceInput < (ulong)Values.GunIdleTime * 2) // todo: FPS stuff
                     {
                         UpdateReticle();
                     }
