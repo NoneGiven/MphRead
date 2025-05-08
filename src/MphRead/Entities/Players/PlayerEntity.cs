@@ -444,6 +444,7 @@ namespace MphRead.Entities
         {
             SlotIndex = slotIndex;
             _beams = SceneSetup.CreateBeamList(16, scene); // in-game: 5
+            AiData = new PlayerAiData(this);
         }
 
         public static void Construct(Scene scene)
@@ -885,7 +886,7 @@ namespace MphRead.Entities
             Controls.ClearPressed();
             if (IsBot)
             {
-                // todo: set bot AI
+                AiData.InitializeAtSpawn();
             }
             // the player clears the enemy spawner reference here, using a global array to track them
             _lastTarget = null;
@@ -1737,7 +1738,7 @@ namespace MphRead.Entities
                 _halfturret.TimeSinceDamage = 0;
                 if (IsBot)
                 {
-                    AiData.Field110 = turretDamage;
+                    AiData.DamageFromHalfturret = turretDamage;
                 }
             }
             if (IsBot)

@@ -24,6 +24,7 @@ namespace MphRead.Entities
         private int _doorPortalCount = 0;
         private RoomMetadata _meta = null!;
         private NodeData? _nodeData;
+        public NodeData? NodeData => _nodeData;
         private readonly List<ModelInstance> _connectorModels = new List<ModelInstance>();
         private readonly float[] _emptyMatrixStack = Array.Empty<float>();
 
@@ -559,7 +560,7 @@ namespace MphRead.Entities
                 return;
             }
             SetNodeData(SceneSetup.LoadNodeData(roomMeta.NodePath, roomMeta.Id, _scene.GameMode, entities));
-            // sktodo-ai: call ai_init_sub_214B538 here and in Scene.AddRoom(), if needed -- clears various global values
+            PlayerEntity.PlayerAiData.InitializeGlobals();
             if (token.IsCancellationRequested)
             {
                 return;
@@ -709,7 +710,14 @@ namespace MphRead.Entities
                     }
                 }
             }
-            // todo: update bot AI
+            for (int i = 0; i < PlayerEntity.Players.Count; i++)
+            {
+                PlayerEntity player = PlayerEntity.Players[i];
+                if (player.IsBot)
+                {
+                    player.AiData.InitializeAtLoad();
+                }
+            }
             if (newLoader?.ConnectorDoor != null)
             {
                 DoorEntity targetDoor = newLoader.ConnectorDoor;

@@ -6,6 +6,7 @@ namespace MphRead.Entities
     public class FlagBaseEntity : EntityBase
     {
         private readonly FlagBaseEntityData _data;
+        public FlagBaseEntityData Data => _data;
         private readonly CollisionVolume _volume;
         private readonly bool _capture = false;
 

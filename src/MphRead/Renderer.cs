@@ -276,12 +276,20 @@ namespace MphRead
             SceneSetup.LoadPlatformResources(this);
             SceneSetup.LoadEnemyResources(this);
             GameState.Setup(this);
-            // sktodo-ai: call ai_init_sub_214B538 here and in RoomEntity.ProcessTransition(), if needed -- clears various global values
+            PlayerEntity.PlayerAiData.InitializeGlobals();
             if (Multiplayer)
             {
                 Menu.ApplyMultiplayerSettings();
             }
             SetRoomValues(meta);
+            for (int i = 0; i < PlayerEntity.Players.Count; i++)
+            {
+                PlayerEntity player = PlayerEntity.Players[i];
+                if (player.IsBot)
+                {
+                    player.AiData.InitializeAtLoad();
+                }
+            }
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
             _inputMode = _cameraMode == CameraMode.Player ? InputMode.All : InputMode.CameraOnly;
         }
@@ -2693,7 +2701,7 @@ namespace MphRead
                     PlayerEntity player = PlayerEntity.Players[i];
                     if (player.IsBot && player.Health != 0)
                     {
-                        player.ProcessAi();
+                        player.AiData.Process();
                     }
                 }
                 if (playerActive)
