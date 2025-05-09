@@ -2051,9 +2051,18 @@ namespace MphRead.Entities
         {
             KeyboardState keyboardSnap = keyboardState.GetSnapshot();
             MouseState mouseSnap = mouseState.GetSnapshot();
-            for (int i = 0; i < 1; i++) // skdebug
+            for (int i = 0; i < Players.Count; i++)
             {
                 PlayerEntity player = Players[i];
+                if (player.IsBot && player.LoadFlags.TestFlag(LoadFlags.Active))
+                {
+                    player.AiData.ProcessInput();
+                    continue;
+                }
+                if (i != 0)
+                {
+                    break; // todo: multiple input?
+                }
                 player.Input.HasInput = false;
                 KeyboardState? prevKeyboardSnap = player.Input.KeyboardState;
                 MouseState? prevMouseSnap = player.Input.MouseState;

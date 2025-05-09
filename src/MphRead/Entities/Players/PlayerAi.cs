@@ -47,7 +47,9 @@ namespace MphRead.Entities
             private OctolithFlagEntity? _octolithFlagDC = null;
             private FlagBaseEntity? _flagBaseE0 = null;
 
-            private int _field22 = 0;
+            private int _nodeDataSetIndex = 0;
+            private byte _nodeDataSelOff = 0;
+            private byte _nodeDataSelOn = 0;
             private IReadOnlyList<NodeData3> _nodeList = null!;
             private readonly int[] _nodeTypeIndex = new int[6];
 
@@ -74,7 +76,7 @@ namespace MphRead.Entities
                 _itemC8 = null;
                 _octolithFlagCC = _octolithFlagD4 = _octolithFlagDC = null;
                 _flagBaseD0 = _flagBaseD8 = _flagBaseE0 = null;
-                _field22 = 0;
+                _nodeDataSetIndex = 0;
                 _nodeList = null!;
                 Array.Fill(_nodeTypeIndex, 0);
                 _field102C = 0;
@@ -323,6 +325,16 @@ namespace MphRead.Entities
                 public AiButton R { get; } = new AiButton();
                 public AiButton Start { get; } = new AiButton();
                 public AiButton Select { get; } = new AiButton();
+
+                public IReadOnlyList<AiButton> AllButtons { get; }
+
+                public AiButtons()
+                {
+                    AllButtons =
+                    [
+                        Up, Down, Left, Right, A, B, X, Y, L, R, Start, Select
+                    ];
+                }
             }
 
             private class AiTouchButtons
@@ -338,6 +350,17 @@ namespace MphRead.Entities
                 public AiButton Magmaul { get; } = new AiButton();
                 public AiButton ShockCoil { get; } = new AiButton();
                 public AiButton OmegaCannon { get; } = new AiButton();
+
+                public IReadOnlyList<AiButton> AllButtons { get; }
+
+                public AiTouchButtons()
+                {
+                    AllButtons =
+                    [
+                        Morph, Unmorph, PowerBeam, Missile, VoltDriver, Battlehammer,
+                        Imperialist, Judicator, Magmaul, ShockCoil, OmegaCannon
+                    ];
+                }
             }
 
             private readonly AiButtons _buttons = new AiButtons();
@@ -349,9 +372,6 @@ namespace MphRead.Entities
             private ushort _framesWithoutTouch = 0;
             private float _buttonAimX = 0;
             private float _buttonAimY = 0;
-            // todo: member names
-            private byte _field2F4 = 0;
-            private byte _field2F5 = 0;
 
             private void ClearInput()
             {
@@ -385,8 +405,8 @@ namespace MphRead.Entities
                 _touchButtons.Magmaul.Clear();
                 _touchButtons.ShockCoil.Clear();
                 _touchButtons.OmegaCannon.Clear();
-                _field2F4 = 0;
-                _field2F5 = 0;
+                _nodeDataSelOff = 0;
+                _nodeDataSelOn = 0;
             }
 
             // duplicated the last value for Guardian
@@ -413,6 +433,203 @@ namespace MphRead.Entities
                     _field102C = _botLevelRandomValues1[index][(int)_player.Hunter];
                     _field1030 = _botLevelRandomValues2[index];
                 }
+            }
+
+            public void ProcessInput()
+            {
+                Flags3 |= AiFlags3.NoInput;
+                for (int i = 0; i < _buttons.AllButtons.Count; i++)
+                {
+                    AiButton button = _buttons.AllButtons[i];
+                    Keybind control;
+                    if (button == _buttons.Up)
+                    {
+                        control = _player.Controls.MoveUp;
+                    }
+                    else if (button == _buttons.Down)
+                    {
+                        control = _player.Controls.MoveDown;
+                    }
+                    else if (button == _buttons.Left)
+                    {
+                        control = _player.Controls.MoveLeft;
+                    }
+                    else if (button == _buttons.Right)
+                    {
+                        control = _player.Controls.MoveRight;
+                    }
+                    else if (button == _buttons.A)
+                    {
+                        // sktodo-ai: probably going to need to implement button aim?
+                        control = _player.Controls.AimRight;
+                    }
+                    else if (button == _buttons.B)
+                    {
+                        control = _player.Controls.AimDown;
+                    }
+                    else if (button == _buttons.X)
+                    {
+                        control = _player.Controls.AimUp;
+                    }
+                    else if (button == _buttons.Y)
+                    {
+                        control = _player.Controls.AimLeft;
+                    }
+                    else if (button == _buttons.L)
+                    {
+                        control = _player.Flags1.TestFlag(PlayerFlags1.AltForm)
+                            ? _player.Controls.AltAttack
+                            : _player.Controls.Shoot;
+                    }
+                    else if (button == _buttons.R)
+                    {
+                        control = _player.Flags1.TestFlag(PlayerFlags1.AltForm)
+                            ? _player.Controls.Boost
+                            : _player.Controls.Jump;
+                    }
+                    else if (button == _buttons.Start)
+                    {
+                        control = _player.Controls.Pause;
+                    }
+                    else if (button == _buttons.Select)
+                    {
+                        control = _player.Controls.Zoom;
+                    }
+                    else
+                    {
+                        throw new ProgramException("Unreachable AI button.");
+                    }
+                    bool prevDown = control.IsDown;
+                    if (button.IsDown)
+                    {
+                        Flags3 &= ~AiFlags3.NoInput;
+                        button.FramesUp = 0;
+                        if (button.FramesDown < 6000)
+                        {
+                            button.FramesDown++;
+                        }
+                        button.IsDown = false;
+                        control.IsDown = true;
+                        control.IsPressed = !prevDown;
+                        control.IsReleased = false;
+                    }
+                    else
+                    {
+                        button.FramesDown = 0;
+                        if (button.FramesUp < 6000)
+                        {
+                            button.FramesUp++;
+                        }
+                        control.IsDown = false;
+                        control.IsPressed = false;
+                        control.IsReleased = prevDown;
+                    }
+                }
+                if (_hasTouch)
+                {
+                    // sktodo-ai: this would set mouse aim values, but it's only used for Morph Ball,
+                    // which we haven't implemented touch controls for (see ai_sub_2141A0C)
+                    Flags3 &= ~AiFlags3.NoInput;
+                    _framesWithoutTouch = 0;
+                    if (_framesWithTouch < 6000)
+                    {
+                        _framesWithTouch++;
+                    }
+                    _hasTouch = false;
+                }
+                else
+                {
+                    _framesWithTouch = 0;
+                    if (_framesWithoutTouch < 6000)
+                    {
+                        _framesWithoutTouch++;
+                    }
+                }
+                for (int i = 0; i < _touchButtons.AllButtons.Count; i++)
+                {
+                    AiButton button = _touchButtons.AllButtons[i];
+                    if (button.IsDown)
+                    {
+                        Flags3 &= ~AiFlags3.NoInput;
+                        if (button == _touchButtons.Morph || button == _touchButtons.Unmorph)
+                        {
+                            _player.TrySwitchForms();
+                        }
+                        else if (button == _touchButtons.PowerBeam)
+                        {
+                            _player.TryEquipWeapon(BeamType.PowerBeam);
+                        }
+                        else if (button == _touchButtons.Missile)
+                        {
+                            _player.TryEquipWeapon(BeamType.Missile);
+                        }
+                        else if (button == _touchButtons.VoltDriver)
+                        {
+                            _player.UpdateAffinityWeaponSlot(BeamType.VoltDriver);
+                            _player.TryEquipWeapon(BeamType.VoltDriver);
+                        }
+                        else if (button == _touchButtons.Battlehammer)
+                        {
+                            _player.UpdateAffinityWeaponSlot(BeamType.Battlehammer);
+                            _player.TryEquipWeapon(BeamType.Battlehammer);
+                        }
+                        else if (button == _touchButtons.Imperialist)
+                        {
+                            _player.UpdateAffinityWeaponSlot(BeamType.Imperialist);
+                            _player.TryEquipWeapon(BeamType.Imperialist);
+                        }
+                        else if (button == _touchButtons.Judicator)
+                        {
+                            _player.UpdateAffinityWeaponSlot(BeamType.Judicator);
+                            _player.TryEquipWeapon(BeamType.Judicator);
+                        }
+                        else if (button == _touchButtons.Magmaul)
+                        {
+                            _player.UpdateAffinityWeaponSlot(BeamType.Magmaul);
+                            _player.TryEquipWeapon(BeamType.Magmaul);
+                        }
+                        else if (button == _touchButtons.ShockCoil)
+                        {
+                            _player.UpdateAffinityWeaponSlot(BeamType.ShockCoil);
+                            _player.TryEquipWeapon(BeamType.ShockCoil);
+                        }
+                        else if (button == _touchButtons.OmegaCannon)
+                        {
+                            _player.UpdateAffinityWeaponSlot(BeamType.OmegaCannon);
+                            _player.TryEquipWeapon(BeamType.OmegaCannon);
+                        }
+                        button.FramesUp = 0;
+                        if (button.FramesDown < 6000)
+                        {
+                            button.FramesDown++;
+                        }
+                        button.IsDown = false;
+                    }
+                    else
+                    {
+                        button.FramesDown = 0;
+                        if (button.FramesUp < 6000)
+                        {
+                            button.FramesUp++;
+                        }
+                    }
+                }
+                // sktodo-ai: clear player's button aim
+                if (_buttonAimX != 0)
+                {
+                    Flags3 &= ~AiFlags3.NoInput;
+                    // sktodo-ai: set player's button aim X
+                }
+                if (_buttonAimY != 0)
+                {
+                    Flags3 &= ~AiFlags3.NoInput;
+                    // sktodo-ai: set player's button aim Y
+                }
+                _buttonAimX = 0;
+                _buttonAimY = 0;
+                UpdateNodeDataSetSelection();
+                _nodeDataSelOff = 0;
+                _nodeDataSelOn = 0;
             }
 
             public void Process()
@@ -3421,10 +3638,45 @@ namespace MphRead.Entities
 
             #endregion
 
+            private void UpdateNodeDataSetSelection()
+            {
+                // todo?: simplify the bit shifting addition nonsense?
+                for (int i = 0; i < _nodeData.SetIndices.Count; i++)
+                {
+                    if (_nodeData.SetSelector[i] && (_nodeDataSelOff & (1 << i)) != 0)
+                    {
+                        _nodeData.SetSelector[i] = false;
+                    }
+                    else if (!_nodeData.SetSelector[i] && (_nodeDataSelOn & (1 << i)) != 0)
+                    {
+                        _nodeData.SetSelector[i] = true;
+                    }
+                }
+                int newIndex = 0;
+                for (int i = 0; i < _nodeData.SetIndices.Count; i++)
+                {
+                    newIndex += (_nodeData.SetSelector[i] ? 1 : 0) << i;
+                }
+                // todo?: it's kind of jank how this is called for each bot, but updates all bots
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type == EntityType.Player)
+                    {
+                        var player = (PlayerEntity)entity;
+                        if (player.IsBot && player.AiData._nodeDataSetIndex != newIndex)
+                        {
+                            player.AiData._nodeDataSetIndex = newIndex;
+                            player.AiData.SetClosestNodeList(player.Position);
+                        }
+                    }
+                }
+            }
+
             private void SetClosestNodeList(Vector3 position)
             {
                 Flags2 &= ~AiFlags2.Bit7;
-                IReadOnlyList<IReadOnlyList<NodeData3>> data1 = _nodeData.Data[_field22];
+                IReadOnlyList<IReadOnlyList<NodeData3>> data1 = _nodeData.Data[_nodeDataSetIndex];
                 _nodeList = data1[0];
                 if (data1.Count > 1)
                 {

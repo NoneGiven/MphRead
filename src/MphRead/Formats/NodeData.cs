@@ -38,17 +38,16 @@ namespace MphRead.Formats
                 throw new ProgramException($"Unexpected node data version {version}.");
             }
             NodeDataHeader header = Read.ReadStruct<NodeDataHeader>(bytes);
-            int shortCount = header.SomeCount;
-            if (shortCount == 0)
-            {
-                Debug.Assert(header.Offset1 == header.Offset0 + 2);
-                shortCount = 1;
-            }
+            int setIndexCount = header.IndexCount;
+            // todo: when there are multiple sets and when the sets contain multiple lists,
+            // we should allow toggling which one is displayed in the room (sub-volume display)
+            Debug.Assert(setIndexCount == 0 || setIndexCount == 1);
+            Debug.Assert(header.DataOffset == header.IndexOffset + 2);
             var types = new HashSet<uint>();
             uint min = UInt32.MaxValue;
-            IReadOnlyList<ushort> shorts = Read.DoOffsets<ushort>(bytes, header.Offset0, shortCount);
+            IReadOnlyList<ushort> setIndices = Read.DoOffsets<ushort>(bytes, header.IndexOffset, setIndexCount);
             var data = new List<IReadOnlyList<IReadOnlyList<NodeDataStruct3>>>();
-            IReadOnlyList<NodeDataStruct1> str1s = Read.DoOffsets<NodeDataStruct1>(bytes, header.Offset1, header.Count);
+            IReadOnlyList<NodeDataStruct1> str1s = Read.DoOffsets<NodeDataStruct1>(bytes, header.DataOffset, header.DataCount);
             foreach (NodeDataStruct1 str1 in str1s)
             {
                 var sub = new List<IReadOnlyList<NodeDataStruct3>>();
@@ -84,7 +83,7 @@ namespace MphRead.Formats
                 }
                 cast.Add(newSub);
             }
-            var nodeData = new NodeData(header, shorts, indices, cast);
+            var nodeData = new NodeData(header, setIndices, indices, cast);
             return nodeData;
         }
 
@@ -129,16 +128,20 @@ namespace MphRead.Formats
     public class NodeData
     {
         public NodeDataHeader Header { get; }
-        public IReadOnlyList<ushort> Shorts { get; }
-        public IReadOnlyList<ushort> Indices { get; }
+        public IReadOnlyList<ushort> SetIndices { get; }
+        public IReadOnlyList<ushort> DataIndices { get; }
         public IReadOnlyList<IReadOnlyList<IReadOnlyList<NodeData3>>> Data { get; }
 
-        public NodeData(NodeDataHeader header, IReadOnlyList<ushort> shorts, IReadOnlyList<ushort> indices,
-            IReadOnlyList<IReadOnlyList<IReadOnlyList<NodeData3>>> data)
+        public bool Simple => Data.Count == 1 && Data[0].Count == 1;
+
+        public bool[] SetSelector { get; } = new bool[16];
+
+        public NodeData(NodeDataHeader header, IReadOnlyList<ushort> setIndices,
+            IReadOnlyList<ushort> dataIndices, IReadOnlyList<IReadOnlyList<IReadOnlyList<NodeData3>>> data)
         {
             Header = header;
-            Shorts = shorts;
-            Indices = indices;
+            SetIndices = setIndices;
+            DataIndices = dataIndices;
             Data = data;
         }
     }
@@ -185,10 +188,10 @@ namespace MphRead.Formats
     public readonly struct NodeDataHeader
     {
         public readonly ushort Version;
-        public readonly ushort Count;
-        public readonly uint Offset0;
-        public readonly uint Offset1;
-        public readonly ushort SomeCount;
+        public readonly ushort DataCount;
+        public readonly uint IndexOffset;
+        public readonly uint DataOffset;
+        public readonly ushort IndexCount;
     }
 
     // size: 8
