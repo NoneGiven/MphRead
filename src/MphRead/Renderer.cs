@@ -168,8 +168,6 @@ namespace MphRead
         public bool Exiting => _exiting;
         private bool _roomLoaded = false;
         private RoomEntity? _room = null;
-        public GameMode GameMode { get; set; } = GameMode.SinglePlayer;
-        public bool Multiplayer => GameMode != GameMode.SinglePlayer;
         public int RoomId { get; set; } = -1;
         public int AreaId { get; set; } = -1;
 
@@ -249,13 +247,13 @@ namespace MphRead
                 throw new ProgramException("Cannot load more than one room in a scene.");
             }
             _roomLoaded = true;
-            GameMode = mode;
+            GameState.Mode = mode;
             (RoomEntity room, RoomMetadata meta, CollisionInstance collision, IReadOnlyList<EntityBase> entities)
                 = SceneSetup.LoadGame(name, this, playerCount, bossFlags, nodeLayerMask, entityLayerId);
             GameState.StorySave.SetVisitedRoom(RoomId);
-            if (GameMode == GameMode.None)
+            if (GameState.Mode == GameMode.None)
             {
-                GameMode = meta.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;
+                GameState.Mode = meta.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;
             }
             _entities.Add(room);
             InitEntity(room);
@@ -277,7 +275,7 @@ namespace MphRead
             SceneSetup.LoadEnemyResources(this);
             GameState.Setup(this);
             PlayerEntity.PlayerAiData.InitializeGlobals();
-            if (Multiplayer)
+            if (GameState.Multiplayer)
             {
                 Menu.ApplyMultiplayerSettings();
             }
@@ -2716,9 +2714,9 @@ namespace MphRead
                     PlayerEntity.Main.ProcessModeHud();
                 }
                 GameState.UpdateFrame(this);
-                GameState.UpdateState(this);
+                GameState.UpdateState();
             }
-            else if (!Multiplayer)
+            else if (GameState.SinglePlayer)
             {
                 if (playerActive)
                 {
@@ -2924,7 +2922,7 @@ namespace MphRead
         {
             DoCleanup();
             // todo: if this has callers in the future, determine save type
-            if (!Multiplayer)
+            if (GameState.SinglePlayer)
             {
                 Menu.NeededSave = Menu.SaveFromExit;
             }
@@ -2951,7 +2949,7 @@ namespace MphRead
             {
                 _fadeType = FadeType.None;
                 DoCleanup();
-                if (!Multiplayer)
+                if (GameState.SinglePlayer)
                 {
                     Menu.NeededSave = _afterFade == AfterFade.EnterShip ? Menu.SaveFromShip : Menu.SaveFromExit;
                     if (_afterFade == AfterFade.EnterShip)
@@ -4919,7 +4917,7 @@ namespace MphRead
             if (e.Key == Keys.Escape)
             {
                 Scene.DoCleanup();
-                if (!Scene.Multiplayer)
+                if (GameState.SinglePlayer)
                 {
                     Menu.NeededSave = Menu.SaveFromExit;
                 }

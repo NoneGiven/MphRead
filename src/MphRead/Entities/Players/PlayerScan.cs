@@ -30,7 +30,7 @@ namespace MphRead.Entities
 
         public void SetCombatVisor()
         {
-            if (!_scene.Multiplayer && ScanVisor)
+            if (GameState.SinglePlayer && ScanVisor)
             {
                 SwitchVisors(reset: false);
             }
@@ -38,7 +38,7 @@ namespace MphRead.Entities
 
         public void ResetCombatVisor()
         {
-            if (!_scene.Multiplayer && ScanVisor)
+            if (GameState.SinglePlayer && ScanVisor)
             {
                 SwitchVisors(reset: true);
             }

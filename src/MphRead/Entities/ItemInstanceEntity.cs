@@ -44,7 +44,7 @@ namespace MphRead.Entities
             Position = data.Position;
             ItemType = data.ItemType;
             _scanId = _scanIds[(int)data.ItemType];
-            if (scene.Multiplayer && GameState.AffinityWeapons && (ItemType == ItemType.VoltDriver
+            if (GameState.Multiplayer && GameState.AffinityWeapons && (ItemType == ItemType.VoltDriver
                 || ItemType == ItemType.Battlehammer || ItemType == ItemType.Imperialist
                 || ItemType == ItemType.Judicator || ItemType == ItemType.Magmaul || ItemType == ItemType.ShockCoil))
             {
@@ -114,7 +114,7 @@ namespace MphRead.Entities
                 if (Owner != null)
                 {
                     Owner.Item = null;
-                    if (!_scene.Multiplayer)
+                    if (GameState.SinglePlayer)
                     {
                         GameState.StorySave.SetRoomState(_scene.RoomId, Owner.Id, state: 1);
                         if (!Owner.AlwaysActive)
@@ -135,7 +135,7 @@ namespace MphRead.Entities
             {
                 _soundSource.PlaySfx(sfx, loop: true);
             }
-            if (Owner == null && !_scene.Multiplayer && PlayerEntity.Main.EquipInfo.Weapon != null)
+            if (Owner == null && GameState.SinglePlayer && PlayerEntity.Main.EquipInfo.Weapon != null)
             {
                 EquipInfo equip = PlayerEntity.Main.EquipInfo;
                 if (equip.ChargeLevel >= equip.Weapon.MinCharge * 2) // todo: FPS stuff
@@ -160,7 +160,7 @@ namespace MphRead.Entities
         {
             DespawnTimer = 0;
             Owner?.OnItemPickedUp();
-            if (!_scene.Multiplayer)
+            if (GameState.SinglePlayer)
             {
                 int scanId = GetScanId();
                 GameState.StorySave.UpdateLogbook(scanId);

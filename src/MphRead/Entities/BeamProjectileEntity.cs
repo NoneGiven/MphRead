@@ -488,7 +488,7 @@ namespace MphRead.Entities
                     }
                 }
             }
-            if (!_scene.Multiplayer)
+            if (GameState.SinglePlayer)
             {
                 for (int i = 0; i < _scene.Entities.Count; i++)
                 {
@@ -545,7 +545,7 @@ namespace MphRead.Entities
                         DamageFlags damageFlags = DamageFlags.NoDmgInvuln;
                         if (player.BeamEffectiveness[(int)Beam] == Effectiveness.Zero)
                         {
-                            if (!_scene.Multiplayer && Owner == PlayerEntity.Main)
+                            if (GameState.SinglePlayer && Owner == PlayerEntity.Main)
                             {
                                 Matrix4 transform = GetTransformMatrix(Vector3.UnitX, Vector3.UnitY, player.Position);
                                 EffectEntry? effect = _scene.SpawnEffectGetEntry(115, transform); // ineffectivePsycho
@@ -684,7 +684,7 @@ namespace MphRead.Entities
                                     {
                                         door.Unlock(updateState: true, noLockAnimSfx: true);
                                     }
-                                    else if (!_scene.Multiplayer)
+                                    else if (GameState.SinglePlayer)
                                     {
                                         // todo: handle messages like this
                                         _scene.SendMessage(Message.ShowWarning, this, null, 40, 90 * 2, 5 * 2); // todo: FPS stuff
@@ -919,6 +919,30 @@ namespace MphRead.Entities
                         colRes.Plane.Y + factor.Y - colRes.Plane.Y * 2 * dot,
                         colRes.Plane.Z + factor.Z - colRes.Plane.Z * 2 * dot
                     ).Normalized();
+                    if (Owner.Type == EntityType.Player)
+                    {
+                        var player = (PlayerEntity)Owner;
+                        if (player.IsBot && GameState.SinglePlayer && player.Hunter == Hunter.Spire)
+                        {
+                            int encounter = GameState.EncounterState[player.SlotIndex];
+                            ushort damage = 3;
+                            if (encounter == 2 || encounter == 0 && player.BotLevel > 0)
+                            {
+                                damage = 4;
+                            }
+                            _ricochetEquip.UnchargedDamage = damage;
+                            _ricochetEquip.MinChargeDamage = damage;
+                            _ricochetEquip.ChargedDamage = damage;
+                            _ricochetEquip.HeadshotDamage = damage;
+                            _ricochetEquip.MinChargeHeadshotDamage = damage;
+                            _ricochetEquip.ChargedHeadshotDamage = damage;
+                            _ricochetEquip.SplashDamage = damage;
+                            _ricochetEquip.MinChargeSplashDamage = damage;
+                            _ricochetEquip.ChargedSplashDamage = damage;
+                            _ricochetEquip.DmgDirTypes[0] = 0;
+                            _ricochetEquip.DmgDirTypes[1] = 0;
+                        }
+                    }
                     _ricochetEquip.Beams = Equip.Beams;
                     _ricochetEquip.Weapon = RicochetWeapon;
                     BeamSpawnFlags flags = BeamSpawnFlags.None;
@@ -1745,7 +1769,7 @@ namespace MphRead.Entities
                     if (beam.Beam == BeamType.ShockCoil && owner.Type == EntityType.Player)
                     {
                         var ownerPlayer = (PlayerEntity)owner;
-                        if ((scene.Multiplayer || !ownerPlayer.IsBot) && ownerPlayer.ShockCoilTarget == beam.Target
+                        if ((GameState.Multiplayer || !ownerPlayer.IsBot) && ownerPlayer.ShockCoilTarget == beam.Target
                             && scene.FrameCount % 2 == 0) // todo: FPS stuff
                         {
                             // todo: FPS stuff
@@ -2057,7 +2081,7 @@ namespace MphRead.Entities
                 Matrix4 transform = GetTransformMatrix(facing, up);
                 transform.Row3.Xyz = spawnPos;
                 // the game uses BeamKind against "511" bits which accomplish the same thing as this terrain type check
-                if (_scene.GameMode != GameMode.SinglePlayer || colRes.Terrain <= Terrain.Lava)
+                if (!GameState.SinglePlayer || colRes.Terrain <= Terrain.Lava)
                 {
                     var ent = BeamEffectEntity.Create(
                         new BeamEffectEntityData(CollisionEffect, noSplat, transform, colRes.EntityCollision), _scene);
@@ -2072,7 +2096,7 @@ namespace MphRead.Entities
                 }
                 // there are actually effect IDs to cover platform/enemy beams in these arrays (although most are 255)
                 byte splatEffect = _terSplat1P[(int)BeamKind][(int)colRes.Terrain];
-                if (_scene.GameMode == GameMode.SinglePlayer && splatEffect != 255)
+                if (GameState.SinglePlayer && splatEffect != 255)
                 {
                     splatEffect += 3;
                     var ent = BeamEffectEntity.Create(
@@ -2107,7 +2131,7 @@ namespace MphRead.Entities
                 // 28 - sniperCol (unintended)
                 effectId = (int)Beam + 20;
             }
-            else if (!_scene.Multiplayer)
+            else if (GameState.SinglePlayer)
             {
                 // 12 - effectiveHitPB
                 // 13 - effectiveHitElectric

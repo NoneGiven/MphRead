@@ -192,7 +192,7 @@ namespace MphRead.Entities
                     _muzzleEffect.SetDrawEnabled(false);
                 }
             }
-            if (!_scene.Multiplayer && IsMainPlayer && _deathCountdown > 0 && _deathCountdown <= 119 / 30f
+            if (GameState.SinglePlayer && IsMainPlayer && _deathCountdown > 0 && _deathCountdown <= 119 / 30f
                 && System.Numerics.BitOperations.PopCount(GameState.StorySave.CurrentOctoliths) > 0)
             {
                 Matrix4 transform = Matrix4.Identity;

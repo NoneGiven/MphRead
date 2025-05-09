@@ -22,7 +22,7 @@ namespace MphRead
             {
                 throw new ProgramException("No room with this name is known.");
             }
-            GameMode mode = scene.GameMode;
+            GameMode mode = GameState.Mode;
             if (mode == GameMode.None)
             {
                 mode = metadata.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;
@@ -34,9 +34,9 @@ namespace MphRead
             }
             else
             {
-                Weapons.Current = scene.Multiplayer ? Weapons.WeaponsMP : Weapons.Weapons1P;
+                Weapons.Current = GameState.Multiplayer ? Weapons.WeaponsMP : Weapons.Weapons1P;
             }
-            scene.GameMode = mode;
+            GameState.Mode = mode;
             if (mode == GameMode.SinglePlayer)
             {
                 Menu.ApplyAdventureSettings();
@@ -55,7 +55,7 @@ namespace MphRead
             CamSeqEntity.Current = null;
             CameraSequence.Current = null;
             CameraSequence.Intro = null;
-            if (scene.Multiplayer && PlayerEntity.PlayerCount > 0)
+            if (GameState.Multiplayer && PlayerEntity.PlayerCount > 0)
             {
                 int seqId = roomId - 93 + 172;
                 if (seqId >= 172 && seqId < 199)
@@ -67,7 +67,7 @@ namespace MphRead
             var room = new RoomEntity(scene);
             (CollisionInstance collision, IReadOnlyList<EntityBase> entities) = SetUpRoom(mode, playerCount,
                 bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene, isRoomTransition: false);
-            if (!scene.Multiplayer)
+            if (GameState.SinglePlayer)
             {
                 UpdateAreaHunters();
                 InitHunterSpawns(scene, entities, initialize: false); // see: "probably revisit this"
@@ -541,7 +541,7 @@ namespace MphRead
             {
                 if (Paths.IsMphJapan || Paths.IsMphKorea)
                 {
-                    (int count, byte[] charData) = Read.ReadKanjiFont(scene.GameMode == GameMode.SinglePlayer);
+                    (int count, byte[] charData) = Read.ReadKanjiFont(GameState.SinglePlayer);
                     byte[] widths = new byte[count];
                     if (Paths.IsMphJapan)
                     {
@@ -597,7 +597,7 @@ namespace MphRead
             Strings.ReadStringTable(StringTables.HudMsgsCommon);
             Strings.ReadStringTable(StringTables.HudMessagesSP);
             Strings.ReadStringTable(StringTables.HudMessagesMP);
-            if (!scene.Multiplayer)
+            if (GameState.SinglePlayer)
             {
                 Strings.ReadStringTable(StringTables.ScanLog);
             }
@@ -742,7 +742,7 @@ namespace MphRead
             scene.LoadEffect(239); // enemyCol1
             scene.LoadModel(Read.GetSingleParticle(SingleType.Death).Model);
             scene.LoadModel(Read.GetSingleParticle(SingleType.Fuzzball).Model);
-            if (!scene.Multiplayer)
+            if (GameState.SinglePlayer)
             {
                 scene.LoadModel(Read.GetModelInstance("icons", dir: MetaDir.Hud).Model);
             }
@@ -1051,7 +1051,7 @@ namespace MphRead
         public static void LoadItemResources(Scene scene)
         {
             // todo: pre-allocate
-            if (scene.Multiplayer)
+            if (GameState.Multiplayer)
             {
                 LoadItem(ItemType.UASmall, scene);
                 LoadItem(ItemType.UABig, scene);
@@ -1120,7 +1120,7 @@ namespace MphRead
         {
             // todo: load entities into unused rooms to make them playable
             Hunter hunter = PlayerEntity.Main.Hunter;
-            if (scene.GameMode != GameMode.SinglePlayer || hunter == Hunter.Samus || !Features.AlternateHunters1P)
+            if (!GameState.SinglePlayer || hunter == Hunter.Samus || !Features.AlternateHunters1P)
             {
                 return entities;
             }

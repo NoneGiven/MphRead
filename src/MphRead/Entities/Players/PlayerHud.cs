@@ -175,7 +175,7 @@ namespace MphRead.Entities
             {
                 samusSubBar = HudInfo.GetHudObject(HudElements.HunterObjects[(int)Hunter.Samus].HealthBarB);
             }
-            if (_scene.Multiplayer)
+            if (GameState.Multiplayer)
             {
                 HudObject damageBar = HudInfo.GetHudObject(_hudObjects.DamageBar);
                 _enemyHealthMeter = new HudMeter() { Horizontal = true, };
@@ -192,7 +192,7 @@ namespace MphRead.Entities
                 _enemyHealthMeter.BarInst.SetPaletteData(healthbarSub.PaletteData, _scene);
                 _enemyHealthMeter.BarInst.Enabled = true;
             }
-            if (!_scene.Multiplayer && _hudObjects.EnergyTanks != null)
+            if (GameState.SinglePlayer && _hudObjects.EnergyTanks != null)
             {
                 HudObject healthbarTank = HudInfo.GetHudObject(_hudObjects.EnergyTanks);
                 _healthbarMainMeter.TankInst = new HudObjectInstance(healthbarTank.Width, healthbarTank.Height);
@@ -290,7 +290,7 @@ namespace MphRead.Entities
             {
                 _hudMessageQueue[i].Lifetime = 0;
             }
-            if (_scene.Multiplayer)
+            if (GameState.Multiplayer)
             {
                 LoadModeRules();
             }
@@ -400,7 +400,7 @@ namespace MphRead.Entities
                 _rulesLines[i] = null;
                 _rulesLengths[i] = (0, 0);
             }
-            GameMode mode = _scene.GameMode;
+            GameMode mode = GameState.Mode;
             if (mode == GameMode.Battle || mode == GameMode.BattleTeams)
             {
                 _rulesInfo = HudElements.RulesInfo[0];
@@ -470,7 +470,7 @@ namespace MphRead.Entities
         public void UpdateHud()
         {
             UpdateScanState();
-            if (!_scene.Multiplayer)
+            if (GameState.SinglePlayer)
             {
                 UpdateDialogs();
             }
@@ -1054,7 +1054,7 @@ namespace MphRead.Entities
             {
                 // hiding during dialog pause due to overlap with "bottom screen" elements
                 // (which causes one frame of flicker when the escape starts)
-                if (!_scene.Multiplayer && !GameState.DialogPause)
+                if (GameState.SinglePlayer && !GameState.DialogPause)
                 {
                     DrawEscapeTime();
                 }
@@ -1320,7 +1320,7 @@ namespace MphRead.Entities
 
         private void DrawScoreboard()
         {
-            GameMode mode = _scene.GameMode;
+            GameMode mode = GameState.Mode;
             float posY = 104 - GetScoreboardHeight() / 2;
             if (GameState.MatchState == MatchState.Ending)
             {
@@ -1453,8 +1453,8 @@ namespace MphRead.Entities
             _healthbarMainMeter.TankCount = _healthMax / Values.EnergyTank;
             DrawMeter(_hudObjects.HealthMainPosX + _objShiftX, _hudObjects.HealthMainPosY + _healthbarYOffset + _objShiftY,
                 Values.EnergyTank - 1, _health, _healthbarPalette, _healthbarMainMeter,
-                drawText: true, drawTanks: !_scene.Multiplayer, Features.HudOpacity);
-            if (_scene.Multiplayer)
+                drawText: true, drawTanks: GameState.SinglePlayer, Features.HudOpacity);
+            if (GameState.Multiplayer)
             {
                 int amount = 0;
                 if (_health >= Values.EnergyTank)
@@ -1540,7 +1540,7 @@ namespace MphRead.Entities
                 }
             }
             int barAmount;
-            if (!_scene.Multiplayer)
+            if (GameState.SinglePlayer)
             {
                 barAmount = curAmount - filledTanks * meter.TankAmount;
             }
@@ -1556,7 +1556,7 @@ namespace MphRead.Entities
             }
             if (drawText)
             {
-                int amount = _scene.Multiplayer ? curAmount : barAmount;
+                int amount = GameState.Multiplayer ? curAmount : barAmount;
                 DrawText2D(x + meter.BarOffsetX, y + meter.BarOffsetY, meter.Align, _healthbarPalette, $"{amount:00}", alpha: alpha);
                 if (meter.MessageId > 0)
                 {
@@ -1627,27 +1627,27 @@ namespace MphRead.Entities
         {
             _locatorInfo.Clear();
             ProcessOpponent();
-            if (_scene.GameMode == GameMode.Survival || _scene.GameMode == GameMode.SurvivalTeams)
+            if (GameState.Mode == GameMode.Survival || GameState.Mode == GameMode.SurvivalTeams)
             {
                 ProcessHudSurvival();
             }
-            else if (_scene.GameMode == GameMode.Bounty || _scene.GameMode == GameMode.BountyTeams)
+            else if (GameState.Mode == GameMode.Bounty || GameState.Mode == GameMode.BountyTeams)
             {
                 ProcessHudBounty();
             }
-            else if (_scene.GameMode == GameMode.Capture)
+            else if (GameState.Mode == GameMode.Capture)
             {
                 ProcessHudCapture();
             }
-            else if (_scene.GameMode == GameMode.Defender || _scene.GameMode == GameMode.DefenderTeams)
+            else if (GameState.Mode == GameMode.Defender || GameState.Mode == GameMode.DefenderTeams)
             {
                 ProcessHudDefender();
             }
-            else if (_scene.GameMode == GameMode.Nodes || _scene.GameMode == GameMode.NodesTeams)
+            else if (GameState.Mode == GameMode.Nodes || GameState.Mode == GameMode.NodesTeams)
             {
                 ProcessHudNodes();
             }
-            else if (_scene.GameMode == GameMode.PrimeHunter)
+            else if (GameState.Mode == GameMode.PrimeHunter)
             {
                 ProcessHudPrimeHunter();
             }
@@ -1964,7 +1964,7 @@ namespace MphRead.Entities
 
         private void DrawModeHud()
         {
-            GameMode mode = _scene.GameMode;
+            GameMode mode = GameState.Mode;
             if (mode == GameMode.SinglePlayer)
             {
                 DrawHudAdventure();
@@ -2050,7 +2050,7 @@ namespace MphRead.Entities
 
         private string FormatModeScore(int slot)
         {
-            GameMode mode = _scene.GameMode;
+            GameMode mode = GameState.Mode;
             if (mode == GameMode.Battle || mode == GameMode.BattleTeams || mode == GameMode.Capture || mode == GameMode.Nodes
                 || mode == GameMode.NodesTeams || mode == GameMode.Bounty || mode == GameMode.BountyTeams)
             {
@@ -2488,7 +2488,7 @@ namespace MphRead.Entities
             DrawMeter(_hudObjects.EnemyHealthPosX + _objShiftX, _hudObjects.EnemyHealthPosY + _objShiftY, max, current,
                 palette, _enemyHealthMeter, drawText: false, drawTanks: false);
             int scanId = target.GetScanId();
-            if (scanId != 0 && !_scene.Multiplayer && !GameState.StorySave.CheckLogbook(scanId))
+            if (scanId != 0 && GameState.SinglePlayer && !GameState.StorySave.CheckLogbook(scanId))
             {
                 text = Strings.GetMessage('E', 6, StringTables.HudMessagesSP); // enemy
             }
@@ -2505,7 +2505,7 @@ namespace MphRead.Entities
 
         private void UpdateOpponent(int slot)
         {
-            if (_scene.Multiplayer && slot != SlotIndex)
+            if (GameState.Multiplayer && slot != SlotIndex)
             {
                 _opponentHealthbarTimer = 60 / 30f;
                 _opponentIndex = slot;

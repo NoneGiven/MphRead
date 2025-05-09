@@ -184,7 +184,7 @@ namespace MphRead.Entities
                 destoryed: new SfxData(Metadata.PlatformSfx[_data.ModelId, 3])
             );
             _animFlags |= PlatAnimFlags.Draw;
-            Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+            Debug.Assert(GameState.Mode == GameMode.SinglePlayer);
             if (Flags.TestFlag(PlatformFlags.UseRoomState) && !Flags.TestFlag(PlatformFlags.PersistRoomState))
             {
                 int state = GameState.StorySave.GetRoomState(scene.RoomId, Id);

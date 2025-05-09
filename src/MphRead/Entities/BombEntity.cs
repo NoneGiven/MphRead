@@ -72,7 +72,7 @@ namespace MphRead.Entities
             else if (BombType == BombType.MorphBall)
             {
                 Countdown = 43 * 2;
-                effectId = _scene.Multiplayer && PlayerEntity.PlayerCount > 2 ? 119 : 9; // bombStartMP or bombStart
+                effectId = GameState.Multiplayer && PlayerEntity.PlayerCount > 2 ? 119 : 9; // bombStartMP or bombStart
             }
             if (effectId != 0)
             {
@@ -416,10 +416,25 @@ namespace MphRead.Entities
                     {
                         BombEntity? bomb = Owner.SyluxBombs[i];
                         Debug.Assert(bomb != null);
-                        // todo: if 1P bot and encounter state, use alternate damage value
-                        // else...
                         bomb.Damage = 60;
                         bomb.EnemyDamage = 60;
+                        if (Owner.IsBot && GameState.SinglePlayer)
+                        {
+                            int encounter = GameState.EncounterState[Owner.SlotIndex];
+                            if (encounter == 1 || encounter == 3 || encounter == 4
+                                || encounter == 0 && Owner.BotLevel == 0)
+                            {
+                                bomb.Damage = bomb.EnemyDamage = 4;
+                            }
+                            else if (encounter != 0 || Owner.BotLevel < 2) // in-game: level !=2
+                            {
+                                bomb.Damage = bomb.EnemyDamage = 7;
+                            }
+                            else
+                            {
+                                bomb.Damage = bomb.EnemyDamage = 10;
+                            }
+                        }
                     }
                 }
                 else if (player.Flags2.TestFlag(PlayerFlags2.Halfturret) && LockjawCheckSnare(player.Halfturret.Position))
@@ -440,9 +455,21 @@ namespace MphRead.Entities
             {
                 Debug.Assert(!lineHitHalfturret);
                 hitEntity = player;
-                // todo: if 1P bot and encounter state, use alternate damage value
-                // else...
-                player.TakeDamage(20, DamageFlags.NoDmgInvuln, null, this);
+                uint damage = 20;
+                if (Owner.IsBot && GameState.SinglePlayer)
+                {
+                    int encounter = GameState.EncounterState[Owner.SlotIndex];
+                    if (encounter == 1 || encounter == 3 || encounter == 4
+                        || encounter == 0 && Owner.BotLevel == 0)
+                    {
+                        damage = 1;
+                    }
+                    else
+                    {
+                        damage = 3;
+                    }
+                }
+                player.TakeDamage(damage, DamageFlags.NoDmgInvuln, null, this);
             }
             else if (lineHitHalfturret)
             {

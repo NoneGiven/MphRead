@@ -29,7 +29,7 @@ namespace MphRead.Entities
             _data = data;
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
-            GameMode mode = scene.GameMode;
+            GameMode mode = GameState.Mode;
             Recolor = mode == GameMode.Capture ? data.TeamId : 2;
             _bounty = mode != GameMode.Capture;
             if (mode == GameMode.Capture || mode == GameMode.Bounty || mode == GameMode.BountyTeams)

@@ -25,7 +25,7 @@ namespace MphRead.Entities
         {
             base.Initialize();
             SetTransform(_data.Header.FacingVector, _data.Header.UpVector, _data.Header.Position);
-            if (_scene.GameMode == GameMode.SinglePlayer)
+            if (GameState.Mode == GameMode.SinglePlayer)
             {
                 _active = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: _data.Active != 0) != 0;
             }
@@ -49,7 +49,7 @@ namespace MphRead.Entities
             if (info.Message == Message.Activate || (info.Message == Message.SetActive && (int)info.Param1 != 0))
             {
                 _active = true;
-                if (_scene.GameMode == GameMode.SinglePlayer)
+                if (GameState.Mode == GameMode.SinglePlayer)
                 {
                     GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
                 }
@@ -57,7 +57,7 @@ namespace MphRead.Entities
             else if (info.Message == Message.SetActive && (int)info.Param1 == 0)
             {
                 _active = false;
-                if (_scene.GameMode == GameMode.SinglePlayer)
+                if (GameState.Mode == GameMode.SinglePlayer)
                 {
                     GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                 }

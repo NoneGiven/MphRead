@@ -214,7 +214,7 @@ namespace MphRead.Entities
         private NodeRef AddDoorPortal(DoorEntity door)
         {
             // workaround for unintended modes
-            if (_scene.GameMode != GameMode.SinglePlayer)
+            if (!GameState.SinglePlayer)
             {
                 return NodeRef.None;
             }
@@ -543,7 +543,7 @@ namespace MphRead.Entities
             {
                 Rng.SetRng2(Rng.Rng2StartValue);
             }
-            (_, IReadOnlyList<EntityBase> entities) = SceneSetup.SetUpRoom(_scene.GameMode, playerCount: 0,
+            (_, IReadOnlyList<EntityBase> entities) = SceneSetup.SetUpRoom(GameState.Mode, playerCount: 0,
                 BossFlags.Unspecified, nodeLayerMask: 0, entityLayer, roomMeta, room: this, _scene, isRoomTransition: true);
             if (token.IsCancellationRequested)
             {
@@ -554,12 +554,12 @@ namespace MphRead.Entities
             {
                 return;
             }
-            ReadBotAi.LoadAll(_scene.GameMode);
+            ReadBotAi.LoadAll(GameState.Mode);
             if (token.IsCancellationRequested)
             {
                 return;
             }
-            SetNodeData(SceneSetup.LoadNodeData(roomMeta.NodePath, roomMeta.Id, _scene.GameMode, entities));
+            SetNodeData(SceneSetup.LoadNodeData(roomMeta.NodePath, roomMeta.Id, GameState.Mode, entities));
             PlayerEntity.PlayerAiData.InitializeGlobals();
             if (token.IsCancellationRequested)
             {

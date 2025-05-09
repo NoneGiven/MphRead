@@ -29,7 +29,7 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             Position = data.Header.Position.ToFloatVector(); // vecs from header are not used
             AlwaysActive = data.AlwaysActive != 0;
-            if (_scene.GameMode == GameMode.SinglePlayer)
+            if (GameState.Mode == GameMode.SinglePlayer)
             {
                 int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: data.Enabled != 0);
                 if (AlwaysActive)
@@ -127,7 +127,7 @@ namespace MphRead.Entities
             {
                 Active = true;
                 _playKeySfx = true;
-                if (_scene.GameMode == GameMode.SinglePlayer)
+                if (GameState.Mode == GameMode.SinglePlayer)
                 {
                     GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 3);
                 }
@@ -135,7 +135,7 @@ namespace MphRead.Entities
             else if (info.Message == Message.SetActive && (int)info.Param1 == 0)
             {
                 Active = false;
-                if (_scene.GameMode == GameMode.SinglePlayer)
+                if (GameState.Mode == GameMode.SinglePlayer)
                 {
                     GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
                 }

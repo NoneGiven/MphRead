@@ -25,8 +25,8 @@ namespace MphRead.Entities
                 if (!IsBot)
                 {
                     ProcessTouchInput();
-                    // todo: actual pause menu should required pressed
-                    if (_scene.Multiplayer && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && Controls.Pause.IsDown)
+                    // todo: actual pause menu should require pressed
+                    if (GameState.Multiplayer && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen) && Controls.Pause.IsDown)
                     {
                         _showScoreboard = true;
                     }
@@ -72,7 +72,7 @@ namespace MphRead.Entities
             }
             else
             {
-                _showScoreboard = _scene.Multiplayer && Controls.Pause.IsDown;
+                _showScoreboard = GameState.Multiplayer && Controls.Pause.IsDown;
             }
             if (IsAltForm || IsMorphing)
             {
@@ -100,7 +100,7 @@ namespace MphRead.Entities
         private void ProcessTouchInput()
         {
             // the game explicitly checks for Samus, and doesn't check if the weapon menu is open
-            if (!_scene.Multiplayer && Controls.ScanVisor.IsPressed && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen)
+            if (GameState.SinglePlayer && Controls.ScanVisor.IsPressed && !Flags1.TestFlag(PlayerFlags1.WeaponMenuOpen)
                 && !IsAltForm && !IsMorphing)
             {
                 if (ScanVisor)
@@ -114,7 +114,7 @@ namespace MphRead.Entities
                     UpdateZoom(zoom: false);
                 }
             }
-            if ((_scene.Multiplayer || _weaponSlots[2] != BeamType.OmegaCannon) && Controls.WeaponMenu.IsDown)
+            if ((GameState.Multiplayer || _weaponSlots[2] != BeamType.OmegaCannon) && Controls.WeaponMenu.IsDown)
             {
                 Flags1 |= PlayerFlags1.NoAimInput;
                 Flags1 |= PlayerFlags1.WeaponMenuOpen;
@@ -428,7 +428,7 @@ namespace MphRead.Entities
 
         private void ProcessBiped()
         {
-            if (IsMainPlayer && !_scene.Multiplayer && CameraSequence.Current != null)
+            if (IsMainPlayer && GameState.SinglePlayer && CameraSequence.Current != null)
             {
                 _timeIdle = 0;
             }
@@ -995,7 +995,7 @@ namespace MphRead.Entities
                 // todo?: make this more solid to avoid e.g. the battlehammer ammo cost thing
                 EquipInfo.Weapon = Weapons.Current[(int)CurrentWeapon + 9];
             }
-            if (IsBot && !_scene.Multiplayer)
+            if (IsBot && GameState.SinglePlayer)
             {
                 UpdateAdventureModeBotWeapon();
             }
@@ -1457,9 +1457,13 @@ namespace MphRead.Entities
                         else if (Controls.AltAttack.IsPressed)
                         {
                             Flags2 |= PlayerFlags2.AltAttack;
-                            // todo: if bot with encounter state, use alternate values
                             float attackHSpeed = Fixed.ToFloat(Values.LungeHSpeed);
                             float attackVSpeed = Fixed.ToFloat(Values.LungeVSpeed);
+                            if (IsBot && GameState.SinglePlayer && GameState.EncounterState[SlotIndex] == 1)
+                            {
+                                attackHSpeed = 0.3f;
+                                attackVSpeed = 0.45f;
+                            }
                             if (_field70 * Speed.X + _field74 * Speed.Z < attackHSpeed)
                             {
                                 Speed = Speed.WithX(_field70 * attackHSpeed).WithZ(_field74 * attackHSpeed);
@@ -1618,10 +1622,25 @@ namespace MphRead.Entities
                 bomb.NodeRef = NodeRef;
                 bomb.Radius = Fixed.ToFloat(Values.BombRadius);
                 bomb.SelfRadius = Fixed.ToFloat(Values.BombSelfRadius);
-                // todo: if bot and encounter state, set damage values
-                // else...
                 bomb.Damage = (ushort)Values.BombDamage;
                 bomb.EnemyDamage = (ushort)Values.BombEnemyDamage;
+                if (IsBot && GameState.SinglePlayer && (Hunter == Hunter.Kanden || Hunter == Hunter.Sylux))
+                {
+                    int encounter = GameState.EncounterState[SlotIndex];
+                    if (encounter == 1 || encounter == 3 || encounter == 4
+                        || encounter == 0 && BotLevel == 0)
+                    {
+                        bomb.Damage = bomb.EnemyDamage = (ushort)(Hunter == Hunter.Kanden ? 2 : 6);
+                    }
+                    else if (encounter != 0 || BotLevel < 2) // in-game: level !=2
+                    {
+                        bomb.Damage = bomb.EnemyDamage = (ushort)(Hunter == Hunter.Kanden ? 4 : 3);
+                    }
+                    else
+                    {
+                        bomb.Damage = bomb.EnemyDamage = (ushort)(Hunter == Hunter.Kanden ? 8 : 6);
+                    }
+                }
                 if (_doubleDmgTimer > 0)
                 {
                     bomb.Damage *= 2;
@@ -1660,8 +1679,14 @@ namespace MphRead.Entities
             {
                 if (Flags2.TestFlag(PlayerFlags2.AltAttack))
                 {
-                    // todo: if bot and encounter state, set a 10f cooldown
-                    _altAttackCooldown = (ushort)(Values.AltAttackCooldown * 2); // todo: FPS stuff
+                    if (IsBot && GameState.SinglePlayer && GameState.EncounterState[SlotIndex] == 1)
+                    {
+                        _altAttackCooldown = 10 * 2; // todo: FPS stuff
+                    }
+                    else
+                    {
+                        _altAttackCooldown = (ushort)(Values.AltAttackCooldown * 2); // todo: FPS stuff
+                    }
                 }
             }
             else if (Hunter == Hunter.Noxus)

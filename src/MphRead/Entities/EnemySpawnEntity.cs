@@ -48,7 +48,7 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             _rangeNodeRef = scene.GetNodeRefByName(data.NodeName.MarshalString());
             _cooldownTimer = _data.InitialCooldown * 2; // todo: FPS stuff
-            Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+            Debug.Assert(GameState.Mode == GameMode.SinglePlayer);
             bool active = false;
             int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: data.Active != 0);
             if (data.AlwaysActive != 0)

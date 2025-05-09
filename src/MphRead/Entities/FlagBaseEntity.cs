@@ -23,7 +23,7 @@ namespace MphRead.Entities
             _volume = CollisionVolume.Move(_data.Volume, Position);
             // note: an explicit mode check is necessary because e.g. Sic Transit has OctolithFlags/FlagBases
             // enabled in Defender mode according to their layer masks, but they don't appear in-game
-            GameMode mode = scene.GameMode;
+            GameMode mode = GameState.Mode;
             if (mode == GameMode.Capture)
             {
                 AddPlaceholderModel();

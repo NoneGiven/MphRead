@@ -21,14 +21,14 @@ namespace MphRead.Entities
 
         public bool ProcessPlayer()
         {
-            if (_scene.Multiplayer && !LoadFlags.TestFlag(LoadFlags.Connected) && LoadFlags.TestFlag(LoadFlags.WasConnected))
+            if (GameState.Multiplayer && !LoadFlags.TestFlag(LoadFlags.Connected) && LoadFlags.TestFlag(LoadFlags.WasConnected))
             {
                 LoadFlags |= LoadFlags.Disconnected;
                 LoadFlags &= ~LoadFlags.Active;
             }
             if (!LoadFlags.TestFlag(LoadFlags.Active))
             {
-                if (_scene.Multiplayer)
+                if (GameState.Multiplayer)
                 {
                     return false;
                 }
@@ -73,7 +73,7 @@ namespace MphRead.Entities
                 if (AiData.Flags3.TestFlag(AiFlags3.Bit1))
                 {
                     // spawnEffectMP or spawnEffect
-                    int effectId = _scene.Multiplayer && PlayerCount > 2 && !Features.MaxPlayerDetail ? 33 : 31;
+                    int effectId = GameState.Multiplayer && PlayerCount > 2 && !Features.MaxPlayerDetail ? 33 : 31;
                     _scene.SpawnEffect(effectId, Vector3.UnitX, Vector3.UnitY, Position);
                     PlayHunterSfx(HunterSfx.Spawn);
                     AiData.Flags3 &= ~AiFlags3.Bit1;
@@ -122,7 +122,7 @@ namespace MphRead.Entities
             if (_respawnTimer > 0)
             {
                 _respawnTimer--;
-                if ((_scene.GameMode == GameMode.Survival || _scene.GameMode == GameMode.SurvivalTeams)
+                if ((GameState.Mode == GameMode.Survival || GameState.Mode == GameMode.SurvivalTeams)
                     && GameState.TeamDeaths[SlotIndex] > GameState.PointGoal)
                 {
                     if (IsMainPlayer)
@@ -202,12 +202,12 @@ namespace MphRead.Entities
                     else
                     {
                         int time = GetTimeUntilRespawn();
-                        if (IsMainPlayer && _scene.Multiplayer) // todo: and some global is not set
+                        if (IsMainPlayer && GameState.Multiplayer) // todo: and some global is not set
                         {
                             // press FIRE to begin / press FIRE to respawn
                             int messageId = CameraSequence.Current?.IsIntro == true ? 245 : 244;
                             if (!Bugfixes.NoStrayRespawnText || time > 0
-                                || _scene.GameMode != GameMode.Survival && _scene.GameMode != GameMode.SurvivalTeams)
+                                || GameState.Mode != GameMode.Survival && GameState.Mode != GameMode.SurvivalTeams)
                             {
                                 QueueHudMessage(128, 162, 1 / 1000f, 0, messageId);
                                 if (time < 150 * 2) // todo: FPS stuff
@@ -218,7 +218,7 @@ namespace MphRead.Entities
                                 }
                             }
                         }
-                        if (!_scene.Multiplayer || Controls.Shoot.IsDown || time <= 0 || IsBot) // todo: or forced
+                        if (GameState.SinglePlayer || Controls.Shoot.IsDown || time <= 0 || IsBot) // todo: or forced
                         {
                             // todo?: something with wi-fi
                             // else...
@@ -240,7 +240,7 @@ namespace MphRead.Entities
             else
             {
                 int rangeIndex = 1;
-                if (!_scene.Multiplayer && Hunter == Hunter.Guardian) // todo: MP1P
+                if (GameState.SinglePlayer && Hunter == Hunter.Guardian) // todo: MP1P
                 {
                     rangeIndex = 21;
                 }
@@ -266,7 +266,7 @@ namespace MphRead.Entities
             {
                 _disruptedTimer--;
             }
-            if (_scene.GameMode == GameMode.Survival || _scene.GameMode == GameMode.SurvivalTeams)
+            if (GameState.Mode == GameMode.Survival || GameState.Mode == GameMode.SurvivalTeams)
             {
                 if (Flags2.TestFlag(PlayerFlags2.RadarReveal))
                 {
@@ -893,7 +893,7 @@ namespace MphRead.Entities
                 {
                     _timeSinceDead++;
                 }
-                if (!_scene.Multiplayer && IsMainPlayer && _deathCountdown > 0)
+                if (GameState.SinglePlayer && IsMainPlayer && _deathCountdown > 0)
                 {
                     _deathCountdown -= _scene.FrameTime;
                     float pct = (150 / 30f - _deathCountdown) / (150 / 30f);
@@ -1049,7 +1049,7 @@ namespace MphRead.Entities
                 TakeDamage(1, flags, direction: null, source: null);
             }
             Debug.Assert(_scene.Room != null);
-            if (_scene.Multiplayer && _scene.Room.Meta.HasLimits)
+            if (GameState.Multiplayer && _scene.Room.Meta.HasLimits)
             {
                 if (Position.Y < _scene.Room.Meta.PlayerMin.Y)
                 {
@@ -1176,7 +1176,7 @@ namespace MphRead.Entities
 
         private void PickUpItems()
         {
-            if (_health == 0 || (IsBot && !_scene.Multiplayer) || IgnoreItemPickups
+            if (_health == 0 || (IsBot && GameState.SinglePlayer) || IgnoreItemPickups
                 || IsMainPlayer && CameraSequence.Current?.BlockInput == true)
             {
                 return;
@@ -1252,12 +1252,12 @@ namespace MphRead.Entities
                     int amount;
                     if (item.ItemType == ItemType.UABig || item.ItemType == ItemType.MissileBig)
                     {
-                        amount = _scene.Multiplayer ? 100 : 250;
+                        amount = GameState.Multiplayer ? 100 : 250;
                         PlaySfx(SfxId.AMMO_POWER_UP2);
                     }
                     else
                     {
-                        amount = _scene.Multiplayer ? 50 : 100;
+                        amount = GameState.Multiplayer ? 50 : 100;
                         PlaySfx(SfxId.AMMO_POWER_UP1);
                     }
                     _ammo[slot] += amount;
@@ -1410,7 +1410,7 @@ namespace MphRead.Entities
             {
                 return;
             }
-            if (!_scene.Multiplayer && (GameState.StorySave.Weapons & (1 << (int)weapon)) == 0)
+            if (GameState.SinglePlayer && (GameState.StorySave.Weapons & (1 << (int)weapon)) == 0)
             {
                 GameState.StorySave.Weapons |= (ushort)(1 << (int)weapon);
                 int weaponId = (int)weapon;
@@ -2041,7 +2041,7 @@ namespace MphRead.Entities
                     limit++;
                     continue;
                 }
-                if (_scene.GameMode == GameMode.Capture && candidate.Data.TeamIndex != -1
+                if (GameState.Mode == GameMode.Capture && candidate.Data.TeamIndex != -1
                     && candidate.Data.TeamIndex != TeamIndex)
                 {
                     limit++;
@@ -2097,7 +2097,7 @@ namespace MphRead.Entities
         {
             // todo: FPS stuff
             int count = 0;
-            if (_scene.GameMode != GameMode.Survival && _scene.GameMode != GameMode.SurvivalTeams)
+            if (GameState.Mode != GameMode.Survival && GameState.Mode != GameMode.SurvivalTeams)
             {
                 if (PlayerCount > 3)
                 {

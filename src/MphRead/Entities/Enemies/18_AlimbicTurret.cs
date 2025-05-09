@@ -201,8 +201,8 @@ namespace MphRead.Entities.Enemies
                         continue;
                     }
                     var player = (PlayerEntity)entity;
-                    if (player.IsBot && !_scene.Multiplayer || player.Health == 0 || !_rangeVolume.TestPoint(player.Position)
-                        || _scene.GameMode == GameMode.BountyTeams && player.TeamIndex == 0)
+                    if (player.IsBot && GameState.SinglePlayer || player.Health == 0 || !_rangeVolume.TestPoint(player.Position)
+                        || GameState.Mode == GameMode.BountyTeams && player.TeamIndex == 0)
                     {
                         continue;
                     }
@@ -250,7 +250,7 @@ namespace MphRead.Entities.Enemies
                 var player = (PlayerEntity)entity;
                 // bug?: condition to ignore 1P bots is missing
                 if (player.Health == 0 || !_rangeVolume.TestPoint(player.Position)
-                    || _scene.GameMode == GameMode.BountyTeams && player.TeamIndex == 0)
+                    || GameState.Mode == GameMode.BountyTeams && player.TeamIndex == 0)
                 {
                     continue;
                 }

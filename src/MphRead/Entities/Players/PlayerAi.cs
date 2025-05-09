@@ -247,7 +247,7 @@ namespace MphRead.Entities
                 }
                 _nodeData = _scene.Room.NodeData;
                 SetClosestNodeList(_player.Position);
-                if (_scene.GameMode == GameMode.Capture)
+                if (GameState.Mode == GameMode.Capture)
                 {
                     for (int i = 0; i < _scene.Entities.Count; i++)
                     {
@@ -278,7 +278,7 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                else if (_scene.GameMode == GameMode.Bounty || _scene.GameMode == GameMode.BountyTeams)
+                else if (GameState.Mode == GameMode.Bounty || GameState.Mode == GameMode.BountyTeams)
                 {
                     for (int i = 0; i < _scene.Entities.Count; i++)
                     {
@@ -401,7 +401,7 @@ namespace MphRead.Entities
 
             private void InitializeSub()
             {
-                if (!_scene.Multiplayer && GameState.EncounterState[_player.SlotIndex] != 0)
+                if (GameState.SinglePlayer && GameState.EncounterState[_player.SlotIndex] != 0)
                 {
                     _field102C = 0;
                     _field1030 = 0;
@@ -446,7 +446,7 @@ namespace MphRead.Entities
             {
                 _entityRefs.Clear();
                 Func21384CC();
-                if (_scene.GameMode == GameMode.PrimeHunter && GameState.PrimeHunter == _player.SlotIndex
+                if (GameState.Mode == GameMode.PrimeHunter && GameState.PrimeHunter == _player.SlotIndex
                     && Flags2.TestFlag(AiFlags2.SeekItem) && _itemC8 != null && (_itemC8.ItemType == ItemType.HealthSmall
                     || _itemC8.ItemType == ItemType.HealthMedium || _itemC8.ItemType == ItemType.HealthBig))
                 {

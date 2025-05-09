@@ -43,7 +43,7 @@ namespace MphRead.Entities
             UpdateVisiblePosition();
             _flags = data.Flags;
             _state = (int)(data.Flags & ObjectFlags.State);
-            Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+            Debug.Assert(GameState.Mode == GameMode.SinglePlayer);
             if (GameState.StorySave.GetRoomState(scene.RoomId, Id) == -1)
             {
                 Debug.Assert(_state >= 0 && _state <= 2);

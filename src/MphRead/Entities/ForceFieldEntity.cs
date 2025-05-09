@@ -47,7 +47,7 @@ namespace MphRead.Entities
             _height = data.Height.FloatValue;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             Scale = new Vector3(_width, _height, 1.0f);
-            Debug.Assert(scene.GameMode == GameMode.SinglePlayer);
+            Debug.Assert(GameState.Mode == GameMode.SinglePlayer);
             int state = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: _data.Active != 0);
             _active = state != 0;
             if (_active)
@@ -112,7 +112,7 @@ namespace MphRead.Entities
                 {
                     _lock.SetHealth(0);
                 }
-                if (!_scene.Multiplayer)
+                if (GameState.SinglePlayer)
                 {
                     if (CameraSequence.Current == null)
                     {
@@ -129,7 +129,7 @@ namespace MphRead.Entities
             }
             else if (info.Message == Message.Lock)
             {
-                if (!_active && !_scene.Multiplayer && CameraSequence.Current != null
+                if (!_active && GameState.SinglePlayer && CameraSequence.Current != null
                     && _soundSource.CountPlayingSfx(SfxId.FORCEFIELD_APPEAR) == 0)
                 {
                     _soundSource.PlayFreeSfx(SfxId.FORCEFIELD_APPEAR);

@@ -12,7 +12,7 @@ namespace MphRead.Entities
             int id = Metadata.HunterSfx[(int)Hunter, (int)sfx];
             if (id == -1)
             {
-                if (!_scene.Multiplayer || Hunter != Hunter.Guardian || sfx != HunterSfx.Spawn) // todo: MP1P
+                if (!GameState.Multiplayer || Hunter != Hunter.Guardian || sfx != HunterSfx.Spawn) // todo: MP1P
                 {
                     return;
                 }

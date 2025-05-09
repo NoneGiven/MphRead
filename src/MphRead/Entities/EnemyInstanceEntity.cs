@@ -178,7 +178,7 @@ namespace MphRead.Entities
                     return between.LengthSquared < distSqr && between.Y > -15 && between.Y < 15;
                 }
 
-                if (_scene.Multiplayer)
+                if (GameState.Multiplayer)
                 {
                     for (int i = 0; i < _scene.Entities.Count; i++)
                     {

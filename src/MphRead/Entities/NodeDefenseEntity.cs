@@ -43,7 +43,7 @@ namespace MphRead.Entities
             Id = data.Header.EntityId;
             SetTransform(data.Header.FacingVector, data.Header.UpVector, data.Header.Position);
             _volume = CollisionVolume.Move(_data.Volume, Position);
-            GameMode mode = scene.GameMode;
+            GameMode mode = GameState.Mode;
             if (mode == GameMode.Defender || mode == GameMode.DefenderTeams
                 || mode == GameMode.Nodes || mode == GameMode.NodesTeams)
             {
