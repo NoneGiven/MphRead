@@ -1090,8 +1090,6 @@ namespace MphRead.Entities
 
         private void UpdateAdventureModeBotWeapon()
         {
-            // sktodo-ai: ensure these eqip info values are reset for slot reuse
-            // sktodo-ai: need to make sure the getter/setter update in TryEquipWeapon doesn't allow consuming ammo on that frame
             int encounter = GameState.EncounterState[SlotIndex];
             if (encounter == 1 || encounter == 3 || encounter == 4)
             {
