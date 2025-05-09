@@ -3757,6 +3757,55 @@ namespace MphRead.Entities
             }
 
             private readonly AiEntityRefs _entityRefs = new AiEntityRefs();
+
+            public void OnTakeDamage(int damage, EntityBase source, PlayerEntity? attacker)
+            {
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Player)
+                    {
+                        continue;
+                    }
+                    var player = (PlayerEntity)entity;
+                    if (!player.IsBot)
+                    {
+                        return;
+                    }
+                    player.AiData._slotHits[_player.SlotIndex]++;
+                    player.AiData._slotDamage[_player.SlotIndex] += damage;
+                    if (attacker != null)
+                    {
+                        if (player == _player)
+                        {
+                            if (source.Type == EntityType.BeamProjectile
+                                && attacker.Hunter == Hunter.Weavel && attacker.Flags1.TestFlag(PlayerFlags1.AltForm))
+                            {
+                                Func214864C(5, 2, 1, attacker, null, damage, damage, 2, 2);
+                            }
+                            else
+                            {
+                                Func214864C(4, 2, 1, attacker, null, damage, damage, 2, 2);
+                                if (source.Type == EntityType.BeamProjectile
+                                    && ((BeamProjectileEntity)entity).Beam == BeamType.ShockCoil
+                                    && attacker.ShockCoilTimer > 10 * 2) // todo: FPS stuff
+                                {
+                                    player.AiData.Flags2 |= AiFlags2.Bit21;
+                                }
+                            }
+                        }
+                        else if (source.Type == EntityType.BeamProjectile
+                            && attacker.Hunter == Hunter.Weavel && attacker.Flags1.TestFlag(PlayerFlags1.AltForm))
+                        {
+                            Func214864C(5, 2, 2, attacker, _player, damage, damage, 2, 2);
+                        }
+                        else
+                        {
+                            Func214864C(4, 2, 2, attacker, _player, damage, damage, 2, 2);
+                        }
+                    }
+                }
+            }
         }
     }
 

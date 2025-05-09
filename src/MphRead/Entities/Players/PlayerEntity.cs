@@ -1741,26 +1741,9 @@ namespace MphRead.Entities
                     AiData.DamageFromHalfturret = turretDamage;
                 }
             }
-            if (IsBot)
+            if (IsBot && source != null)
             {
-                // todo-ai: bot AI take damage function
-                // skdebug: allow story progression by unlocking the force field in Echo Hall
-                if (!_scene.Multiplayer && Hunter == Hunter.Weavel && _scene.RoomId == 28 && (_health - damage) / (float)_healthMax <= 0.72f)
-                {
-                    for (int i = 0; i < _scene.Entities.Count; i++)
-                    {
-                        EntityBase entity = _scene.Entities[i];
-                        if (entity.Type == EntityType.ForceField && entity.Id == 19)
-                        {
-                            var forceField = (ForceFieldEntity)entity;
-                            if (forceField.Active)
-                            {
-                                _scene.SendMessage(Message.Unlock, this, entity, 0, 0);
-                            }
-                            break;
-                        }
-                    }
-                }
+                AiData.OnTakeDamage((int)damage, source, attacker);
             }
             // todo?: something for wifi
             // else...
