@@ -1429,12 +1429,12 @@ namespace MphRead.Entities
                     cost = 0;
                 }
             }
-            int ammo = equip.GetAmmo?.Invoke() ?? -1;
+            int ammo = equip.Ammo;
             if (ammo >= 0 && cost > ammo)
             {
                 return BeamResultFlags.NoSpawn;
             }
-            equip.SetAmmo?.Invoke(ammo - cost);
+            equip.Ammo = ammo - cost;
             EffectEntry? muzzleEffect = null;
             if (!spawnFlags.TestFlag(BeamSpawnFlags.NoMuzzle))
             {
@@ -1508,18 +1508,26 @@ namespace MphRead.Entities
             {
                 flags |= BeamFlags.LifeDrain;
             }
-            byte drawFuncId = weapon.DrawFuncIds[charged ? 1 : 0];
+            byte drawFuncId = equip.DrawFuncIds[charged ? 1 : 0];
+            if (drawFuncId == 255)
+            {
+                drawFuncId = weapon.DrawFuncIds[charged ? 1 : 0];
+            }
             ushort colorValue = weapon.Colors[charged ? 1 : 0];
             float red = ((colorValue >> 0) & 0x1F) / 31f;
             float green = ((colorValue >> 5) & 0x1F) / 31f;
             float blue = ((colorValue >> 10) & 0x1F) / 31f;
             var color = new Vector3(red, green, blue);
             byte colEffect = weapon.CollisionEffects[charged ? 1 : 0];
-            byte dmgDirType = weapon.DmgDirTypes[charged ? 1 : 0];
+            byte dmgDirType = equip.DmgDirTypes[charged ? 1 : 0];
+            if (dmgDirType == 255)
+            {
+                dmgDirType = weapon.DmgDirTypes[charged ? 1 : 0];
+            }
             float dmgDirMag = GetAmount(weapon.UnchargedDmgDirMag, weapon.MinChargeDmgDirMag, weapon.ChargedDmgDirMag) / 4096f;
-            int damage = (int)GetAmount(weapon.UnchargedDamage, weapon.MinChargeDamage, weapon.ChargedDamage);
-            int hsDamage = (int)GetAmount(weapon.HeadshotDamage, weapon.MinChargeHeadshotDamage, weapon.ChargedHeadshotDamage);
-            int splashDmg = (int)GetAmount(weapon.SplashDamage, weapon.MinChargeSplashDamage, weapon.ChargedSplashDamage);
+            int damage = (int)GetAmount(equip.UnchargedDamage, equip.MinChargeDamage, equip.ChargedDamage);
+            int hsDamage = (int)GetAmount(equip.HeadshotDamage, equip.MinChargeHeadshotDamage, equip.ChargedHeadshotDamage);
+            int splashDmg = (int)GetAmount(equip.SplashDamage, equip.MinChargeSplashDamage, equip.ChargedSplashDamage);
             float splashRadius = GetAmount(weapon.UnchargedSplashRadius, weapon.MinChargeSplashRadius, weapon.ChargedSplashRadius) / 4096f;
             byte splashDmgType = weapon.SplashDamageTypes[charged ? 1 : 0];
             if (spawnFlags.TestFlag(BeamSpawnFlags.DoubleDamage))
@@ -1730,7 +1738,7 @@ namespace MphRead.Entities
                 Debug.Assert(beam.Target == null);
                 if (beam.Flags.TestFlag(BeamFlags.Homing))
                 {
-                    if (CheckHomingTargets(beam, weapon, scene))
+                    if (CheckHomingTargets(beam, equip, scene))
                     {
                         result |= BeamResultFlags.Homing;
                     }
@@ -1772,11 +1780,12 @@ namespace MphRead.Entities
             EntityType.Platform
         };
 
-        private static bool CheckHomingTargets(BeamProjectileEntity beam, WeaponInfo weapon, Scene scene)
+        private static bool CheckHomingTargets(BeamProjectileEntity beam, EquipInfo equip, Scene scene)
         {
             bool result = false;
+            WeaponInfo weapon = equip.Weapon;
             Debug.Assert(beam.Owner != null);
-            float tolerance = Fixed.ToFloat(weapon.HomingTolerance);
+            float tolerance = Fixed.ToFloat(equip.HomingTolerance);
             float curDiv = tolerance;
             for (int i = 0; i < _homingTargetTypes.Count; i++)
             {

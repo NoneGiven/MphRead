@@ -82,11 +82,11 @@ namespace MphRead.Entities.Enemies
             _nearVolume = new CollisionVolume(Vector3.Zero, 1); // gets moved in the process function
             _rangeVolume = CollisionVolume.Move(_spawner.Data.Fields.S06.Volume3, Position);
             WeaponInfo weapon = Weapons.EnemyWeapons[version];
-            weapon.UnchargedDamage = _values.BeamDamage;
-            weapon.SplashDamage = _values.SplashDamage;
             _equipInfo = new EquipInfo(weapon, _beams);
             _equipInfo.GetAmmo = () => _ammo;
             _equipInfo.SetAmmo = (newAmmo) => _ammo = newAmmo;
+            _equipInfo.UnchargedDamage = _values.BeamDamage;
+            _equipInfo.SplashDamage = _values.SplashDamage;
             _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff
             _shotTimer = (ushort)(_values.ShotTime * 2); // todo: FPS stuff
             _speedFactor = Fixed.ToFloat(_values.MinSpeedFactor1) / 2;
@@ -319,9 +319,9 @@ namespace MphRead.Entities.Enemies
                 Vector3 targetPos = PlayerEntity.Main.Position.AddY(0.5f);
                 _aimVec = (targetPos - Position).Normalized();
                 Vector3 spawnPos = Position + _aimVec / 2;
-                _equipInfo.Weapon.UnchargedDamage = _values.BeamDamage;
-                _equipInfo.Weapon.SplashDamage = _values.SplashDamage;
-                _equipInfo.Weapon.HeadshotDamage = _values.BeamDamage;
+                _equipInfo.UnchargedDamage = _values.BeamDamage;
+                _equipInfo.SplashDamage = _values.SplashDamage;
+                _equipInfo.HeadshotDamage = _values.BeamDamage;
                 BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, _aimVec, BeamSpawnFlags.None, NodeRef, _scene);
                 _shotCount--;
                 _delayTimer = (ushort)(_values.DelayTime * 2); // todo: FPS stuff

@@ -9,25 +9,117 @@ namespace MphRead
         public bool Zoomed { get; set; } // replaces Flags
         public WeaponInfo Weapon { get; set; }
         public BeamProjectileEntity[] Beams { get; set; }
-        public Func<int> GetAmmo { get; set; }
-        public Action<int> SetAmmo { get; set; }
         public ushort ChargeLevel { get; set; }
         public ushort SmokeLevel { get; set; }
+
+        public Func<int>? GetAmmo { get; set; }
+        public Action<int>? SetAmmo { get; set; }
+        public bool InfiniteAmmo { get; set; }
+        public int Ammo
+        {
+            get
+            {
+                if (!InfiniteAmmo && GetAmmo != null)
+                {
+                    return GetAmmo();
+                }
+                return Int32.MaxValue;
+            }
+            set
+            {
+                if (!InfiniteAmmo && SetAmmo != null)
+                {
+                    SetAmmo(value);
+                }
+            }
+        }
+
+        // todo?: now that we have these overrides, I don't think enemies and bots setting
+        // the values on every frame is necessary anymore, it can just be done once on init
+        public byte[] DrawFuncIds { get; } = [255, 255];
+        public byte[] DmgDirTypes { get; } = [255, 255];
+
+        private ushort _unchargedDamage = UInt16.MaxValue;
+        private ushort _minChargeDamage = UInt16.MaxValue;
+        private ushort _chargedDamage = UInt16.MaxValue;
+        private ushort _headshotDamage = UInt16.MaxValue;
+        private ushort _minChargeHeadshotDamage = UInt16.MaxValue;
+        private ushort _chargedHeadshotDamage = UInt16.MaxValue;
+        private ushort _splashDamage = UInt16.MaxValue;
+        private ushort _minChargeSplashDamage = UInt16.MaxValue;
+        private ushort _chargedSplashDamage = UInt16.MaxValue;
+        private int _homingTolerance = Int32.MaxValue;
+
+        public ushort UnchargedDamage
+        {
+            get => _unchargedDamage == UInt16.MaxValue ? Weapon.UnchargedDamage : _unchargedDamage;
+            set => _unchargedDamage = value;
+        }
+
+        public ushort MinChargeDamage
+        {
+            get => _minChargeDamage == UInt16.MaxValue ? Weapon.MinChargeDamage : _minChargeDamage;
+            set => _minChargeDamage = value;
+        }
+
+        public ushort ChargedDamage
+        {
+            get => _chargedDamage == UInt16.MaxValue ? Weapon.ChargedDamage : _chargedDamage;
+            set => _chargedDamage = value;
+        }
+
+        public ushort HeadshotDamage
+        {
+            get => _headshotDamage == UInt16.MaxValue ? Weapon.HeadshotDamage : _headshotDamage;
+            set => _headshotDamage = value;
+        }
+
+        public ushort MinChargeHeadshotDamage
+        {
+            get => _minChargeHeadshotDamage == UInt16.MaxValue ? Weapon.MinChargeHeadshotDamage : _minChargeHeadshotDamage;
+            set => _minChargeHeadshotDamage = value;
+        }
+
+        public ushort ChargedHeadshotDamage
+        {
+            get => _chargedHeadshotDamage == UInt16.MaxValue ? Weapon.ChargedHeadshotDamage : _chargedHeadshotDamage;
+            set => _chargedHeadshotDamage = value;
+        }
+
+        public ushort SplashDamage
+        {
+            get => _splashDamage == UInt16.MaxValue ? Weapon.SplashDamage : _splashDamage;
+            set => _splashDamage = value;
+        }
+
+        public ushort MinChargeSplashDamage
+        {
+            get => _minChargeSplashDamage == UInt16.MaxValue ? Weapon.MinChargeSplashDamage : _minChargeSplashDamage;
+            set => _minChargeSplashDamage = value;
+        }
+
+        public ushort ChargedSplashDamage
+        {
+            get => _chargedSplashDamage == UInt16.MaxValue ? Weapon.ChargedSplashDamage : _chargedSplashDamage;
+            set => _chargedSplashDamage = value;
+        }
+
+        public int HomingTolerance
+        {
+            get => _homingTolerance == Int32.MaxValue ? Weapon.HomingTolerance : _homingTolerance;
+            set => _homingTolerance = value;
+        }
 
         public EquipInfo()
         {
             Weapon = null!;
             Beams = null!;
-            GetAmmo = null!;
-            SetAmmo = null!;
         }
 
         public EquipInfo(WeaponInfo weapon, BeamProjectileEntity[] beams)
         {
             Weapon = weapon;
             Beams = beams;
-            GetAmmo = null!;
-            SetAmmo = null!;
         }
     }
 
@@ -46,7 +138,7 @@ namespace MphRead
         public IReadOnlyList<ushort> Colors { get; }
         public byte Priority { get; }
         public WeaponFlags Flags { get; }
-        public ushort SplashDamage { get; set; }
+        public ushort SplashDamage { get; }
         public ushort MinChargeSplashDamage { get; }
         public ushort ChargedSplashDamage { get; }
         public IReadOnlyList<byte> SplashDamageTypes { get; }
@@ -64,10 +156,10 @@ namespace MphRead
         public ushort AmmoCost { get; }
         public ushort MinChargeCost { get; }
         public ushort ChargeCost { get; }
-        public ushort UnchargedDamage { get; set; } // todo: yep
+        public ushort UnchargedDamage { get; }
         public ushort MinChargeDamage { get; }
         public ushort ChargedDamage { get; }
-        public ushort HeadshotDamage { get; set; }
+        public ushort HeadshotDamage { get; }
         public ushort MinChargeHeadshotDamage { get; }
         public ushort ChargedHeadshotDamage { get; }
         public ushort UnchargedLifespan { get; }
@@ -6263,5 +6355,352 @@ namespace MphRead
                 smokeChargeAmount: 0
             )
         };
+
+        public class BotWeaponValues
+        {
+            public ushort UnchargedDamage { get; set; }
+            public ushort ChargedDamage { get; set; }
+            public ushort SplashDamage { get; set; }
+            public ushort ChargedSplashDamage { get; set; }
+        }
+
+        public static readonly IReadOnlyList<IReadOnlyList<BotWeaponValues>> BotWeapons =
+        [
+            // index 0
+            [
+                // Power Beam
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 1,
+                    ChargedDamage = 5,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Volt Driver
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 4,
+                    ChargedDamage = 10,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Missile
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 7,
+                    ChargedDamage = 13,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Battlehammer
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 7,
+                    ChargedDamage = 0,
+                    SplashDamage = 7,
+                    ChargedSplashDamage = 0
+                },
+                // Imperialist
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 20,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Judicator
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 5,
+                    ChargedDamage = 10,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Magmaul
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 4,
+                    ChargedDamage = 10,
+                    SplashDamage = 4,
+                    ChargedSplashDamage = 10
+                },
+                //  Shock Coil
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 2,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                }
+            ],
+            // index 1
+            [
+                // Power Beam
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 0,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Volt Driver
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 3,
+                    ChargedDamage = 6,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Missile
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 0,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Battlehammer
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 4,
+                    ChargedDamage = 0,
+                    SplashDamage = 4,
+                    ChargedSplashDamage = 0
+                },
+                // Imperialist
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 10,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Judicator
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 7,
+                    ChargedDamage = 10,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Magmaul
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 4,
+                    ChargedDamage = 6,
+                    SplashDamage = 4,
+                    ChargedSplashDamage = 6
+                },
+                //  Shock Coil
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 4,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                }
+            ],
+            // index 2
+            [
+                // Power Beam
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 0,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Volt Driver
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 3,
+                    ChargedDamage = 6,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Missile
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 0,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Battlehammer
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 5,
+                    ChargedDamage = 0,
+                    SplashDamage = 5,
+                    ChargedSplashDamage = 0
+                },
+                // Imperialist
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 15,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Judicator
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 7,
+                    ChargedDamage = 10,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Magmaul
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 4,
+                    ChargedDamage = 6,
+                    SplashDamage = 4,
+                    ChargedSplashDamage = 6
+                },
+                //  Shock Coil
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 4,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                }
+            ],
+            // index 3
+            [
+                // Power Beam
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 0,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Volt Driver
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 6,
+                    ChargedDamage = 12,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Missile
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 0,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Battlehammer
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 8,
+                    ChargedDamage = 0,
+                    SplashDamage = 8,
+                    ChargedSplashDamage = 0
+                },
+                // Imperialist
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 20,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Judicator
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 10,
+                    ChargedDamage = 15,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Magmaul
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 8,
+                    ChargedDamage = 15,
+                    SplashDamage = 8,
+                    ChargedSplashDamage = 15
+                },
+                //  Shock Coil
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 7,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                }
+            ],
+            // index 4
+            [
+                // Power Beam
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 0,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Volt Driver
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 8,
+                    ChargedDamage = 18,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Missile
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 0,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Battlehammer
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 10,
+                    ChargedDamage = 0,
+                    SplashDamage = 10,
+                    ChargedSplashDamage = 0
+                },
+                // Imperialist
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 25,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Judicator
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 12,
+                    ChargedDamage = 18,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                },
+                // Magmaul
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 12,
+                    ChargedDamage = 18,
+                    SplashDamage = 12,
+                    ChargedSplashDamage = 18
+                },
+                //  Shock Coil
+                new BotWeaponValues()
+                {
+                    UnchargedDamage = 10,
+                    ChargedDamage = 0,
+                    SplashDamage = 0,
+                    ChargedSplashDamage = 0
+                }
+            ],
+        ];
     }
 }

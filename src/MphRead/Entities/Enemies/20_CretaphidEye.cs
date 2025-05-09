@@ -310,9 +310,9 @@ namespace MphRead.Entities.Enemies
             Debug.Assert(BeamType == 0 || BeamType == 1);
             ushort damage = _cretaphid.Values.EyeBeamDamage[SegmentIndex];
             EquipInfo equipInfo = _cretaphid.EquipInfo[BeamType];
-            equipInfo.Weapon.UnchargedDamage = damage;
-            equipInfo.Weapon.SplashDamage = damage;
-            equipInfo.Weapon.HeadshotDamage = damage;
+            equipInfo.UnchargedDamage = damage;
+            equipInfo.SplashDamage = damage;
+            equipInfo.HeadshotDamage = damage;
             Vector3 facing = FacingVector;
             Vector3 spawnDir = (PlayerEntity.Main.Position.AddY(0.5f) - Position).Normalized();
             if (Vector3.Dot(facing, spawnDir) < -1)

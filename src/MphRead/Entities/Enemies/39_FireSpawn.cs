@@ -69,14 +69,16 @@ namespace MphRead.Entities.Enemies
             Metadata.LoadEffectiveness(Values.Effectiveness, BeamEffectiveness);
             _scanId = Values.ScanId;
             WeaponInfo weapon = Weapons.EnemyWeapons[version];
-            weapon.UnchargedDamage = Values.BeamDamage;
-            weapon.SplashDamage = Values.SplashDamage;
             _equipInfo[0] = new EquipInfo(weapon, _beams);
             _equipInfo[1] = new EquipInfo(weapon, _beams);
             _equipInfo[0].GetAmmo = () => _ammo0;
             _equipInfo[0].SetAmmo = (newAmmo) => _ammo0 = newAmmo;
             _equipInfo[1].GetAmmo = () => _ammo1;
             _equipInfo[1].SetAmmo = (newAmmo) => _ammo1 = newAmmo;
+            _equipInfo[0].UnchargedDamage = Values.BeamDamage;
+            _equipInfo[0].SplashDamage = Values.SplashDamage;
+            _equipInfo[1].UnchargedDamage = Values.BeamDamage;
+            _equipInfo[1].SplashDamage = Values.SplashDamage;
             _attackDelay = Values.AttackDelay * 2; // todo: FPS stuff
             _attackCount = Values.AttackCountMin + Rng.GetRandomInt2((uint)(Values.AttackCountMax + 1 - Values.AttackCountMin));
             HealthbarMessageId = 4; // fire spawn
@@ -211,9 +213,9 @@ namespace MphRead.Entities.Enemies
                     Vector3 dir = PlayerEntity.Main.Position.AddY(0.5f) - _wristPos[_wristId];
                     dir = dir.Normalized();
                     EquipInfo equipInfo = _equipInfo[_wristId];
-                    equipInfo.Weapon.UnchargedDamage = Values.BeamDamage;
-                    equipInfo.Weapon.SplashDamage = Values.SplashDamage;
-                    equipInfo.Weapon.HeadshotDamage = Values.BeamDamage;
+                    equipInfo.UnchargedDamage = Values.BeamDamage;
+                    equipInfo.SplashDamage = Values.SplashDamage;
+                    equipInfo.HeadshotDamage = Values.BeamDamage;
                     BeamProjectileEntity.Spawn(this, equipInfo, _wristPos[_wristId], dir, BeamSpawnFlags.None, NodeRef, _scene);
                     if (_effectEntry != null)
                     {

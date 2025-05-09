@@ -50,9 +50,9 @@ namespace MphRead.Entities.Enemies
 
         public void SpawnBeam(ushort damage)
         {
-            _equipInfo.Weapon.UnchargedDamage = damage;
-            _equipInfo.Weapon.SplashDamage = damage;
-            _equipInfo.Weapon.HeadshotDamage = damage;
+            _equipInfo.UnchargedDamage = damage;
+            _equipInfo.SplashDamage = damage;
+            _equipInfo.HeadshotDamage = damage;
             Vector3 spawnDir = (PlayerEntity.Main.Position.AddY(0.5f) - Position).Normalized();
             BeamProjectileEntity.Spawn(this, _equipInfo, Position, spawnDir, BeamSpawnFlags.None, _cretaphid.NodeRef, _scene);
         }

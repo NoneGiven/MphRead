@@ -75,11 +75,11 @@ namespace MphRead.Entities.Enemies
             _initialFacing = facing;
             _aimVec = facing;
             WeaponInfo weapon = Weapons.EnemyWeapons[version];
-            weapon.UnchargedDamage = _values.BeamDamage;
-            weapon.SplashDamage = _values.SplashDamage;
             _equipInfo = new EquipInfo(weapon, _beams);
             _equipInfo.GetAmmo = () => _ammo;
             _equipInfo.SetAmmo = (newAmmo) => _ammo = newAmmo;
+            _equipInfo.UnchargedDamage = _values.BeamDamage;
+            _equipInfo.SplashDamage = _values.SplashDamage;
         }
 
         protected override void EnemyProcess()
@@ -174,9 +174,9 @@ namespace MphRead.Entities.Enemies
                 Vector3 spawnVec = (targetPos - _rotNodePos).Normalized();
                 Vector3 spawnPos = spawnVec * Fixed.ToFloat(_values.ShotOffset) + _rotNodePos;
                 _soundSource.PlaySfx(SfxId.TURRET_ATTACK);
-                _equipInfo.Weapon.UnchargedDamage = _values.BeamDamage;
-                _equipInfo.Weapon.SplashDamage = _values.SplashDamage;
-                _equipInfo.Weapon.HeadshotDamage = _values.BeamDamage;
+                _equipInfo.UnchargedDamage = _values.BeamDamage;
+                _equipInfo.SplashDamage = _values.SplashDamage;
+                _equipInfo.HeadshotDamage = _values.BeamDamage;
                 BeamProjectileEntity.Spawn(this, _equipInfo, spawnPos, spawnVec, BeamSpawnFlags.None, NodeRef, _scene);
                 _shotCount--;
                 _shotTimer = (ushort)(_values.ShotCooldown * 2); // todo: FPS stuff

@@ -734,7 +734,7 @@ namespace MphRead.Entities
                     else
                     {
                         bool releaseCharge = false;
-                        if (!Flags2.TestFlag(PlayerFlags2.Shooting) || EquipInfo.GetAmmo() < EquipWeapon.ChargeCost)
+                        if (!Flags2.TestFlag(PlayerFlags2.Shooting) || EquipInfo.Ammo < EquipWeapon.ChargeCost)
                         {
                             releaseCharge = true; // charge released/insufficient
                         }
@@ -770,7 +770,7 @@ namespace MphRead.Entities
                                     int chargeCost = EquipWeapon.ChargeCost * 2; // todo: FPS stuff
                                     int minCost = EquipWeapon.MinChargeCost * 2; // todo: FPS stuff
                                     int cost = minCost + (chargeCost - minCost) * (EquipInfo.ChargeLevel - minCharge) / (fullCharge - minCharge);
-                                    if (EquipInfo.GetAmmo() < cost / 2) // todo: FPS stuff
+                                    if (EquipInfo.Ammo < cost / 2) // todo: FPS stuff
                                     {
                                         EquipInfo.ChargeLevel--;
                                     }
@@ -997,7 +997,7 @@ namespace MphRead.Entities
             }
             if (IsBot && !_scene.Multiplayer)
             {
-                // todo: update bot 1P weapon
+                UpdateAdventureModeBotWeapon();
             }
             BeamSpawnFlags flags = BeamSpawnFlags.NoMuzzle;
             if (_doubleDmgTimer > 0)
@@ -1060,13 +1060,97 @@ namespace MphRead.Entities
             bool homing = result.TestFlag(BeamResultFlags.Homing);
             float amountA = 0x3FFF * _shockCoilTimer / (30f * 2); // todo: FPS stuff
             PlayBeamShotSfx(EquipInfo.Weapon.Beam, charged, continuous, homing, amountA);
-            if (EquipInfo.Weapon.Beam == BeamType.Imperialist && EquipInfo.GetAmmo() >= EquipInfo.Weapon.AmmoCost)
+            if (EquipInfo.Weapon.Beam == BeamType.Imperialist && EquipInfo.Ammo >= EquipInfo.Weapon.AmmoCost)
             {
                 _soundSource.PlaySfx(SfxId.SNIPER_RELOAD);
             }
             EquipInfo.Weapon = curWeapon;
             UnequipOmegaCannon(); // todo?: set the flag if wifi
             return true;
+        }
+
+        public void ResetAdventureModeBotWeapon()
+        {
+            EquipInfo.DrawFuncIds[0] = 255;
+            EquipInfo.DrawFuncIds[1] = 255;
+            EquipInfo.DmgDirTypes[0] = 255;
+            EquipInfo.DmgDirTypes[1] = 255;
+            EquipInfo.UnchargedDamage = UInt16.MaxValue;
+            EquipInfo.HeadshotDamage = UInt16.MaxValue;
+            EquipInfo.MinChargeDamage = UInt16.MaxValue;
+            EquipInfo.ChargedDamage = UInt16.MaxValue;
+            EquipInfo.MinChargeHeadshotDamage = UInt16.MaxValue;
+            EquipInfo.ChargedHeadshotDamage = UInt16.MaxValue;
+            EquipInfo.SplashDamage = UInt16.MaxValue;
+            EquipInfo.MinChargeSplashDamage = UInt16.MaxValue;
+            EquipInfo.ChargedSplashDamage = UInt16.MaxValue;
+            EquipInfo.HomingTolerance = Int32.MaxValue;
+            EquipInfo.InfiniteAmmo = false;
+        }
+
+        private void UpdateAdventureModeBotWeapon()
+        {
+            // sktodo-ai: ensure these eqip info values are reset for slot reuse
+            // sktodo-ai: need to make sure the getter/setter update in TryEquipWeapon doesn't allow consuming ammo on that frame
+            int encounter = GameState.EncounterState[SlotIndex];
+            if (encounter == 1 || encounter == 3 || encounter == 4)
+            {
+                if (Hunter == Hunter.Kanden)
+                {
+                    EquipInfo.HomingTolerance = 4006;
+                }
+                else if (Hunter == Hunter.Spire || Hunter == Hunter.Weavel)
+                {
+                    EquipInfo.DmgDirTypes[0] = 0;
+                    EquipInfo.DmgDirTypes[1] = 0;
+                }
+            }
+            int index;
+            if (Hunter == Hunter.Guardian)
+            {
+                index = 0;
+                if (EquipInfo.Weapon.Beam == BeamType.Magmaul)
+                {
+                    EquipInfo.DrawFuncIds[0] = 22;
+                    EquipInfo.DrawFuncIds[1] = 22;
+                }
+            }
+            else if (encounter == 1 || encounter == 3 || encounter == 4)
+            {
+                index = 1;
+            }
+            else if (BotLevel == 0)
+            {
+                index = 2;
+            }
+            else if (BotLevel == 1)
+            {
+                index = 3;
+            }
+            else // if (BotLevel == 2)
+            {
+                // note: the game uses index 3, not index 4, for out-of-range bot levels
+                index = 4;
+            }
+            if (encounter == 3 && Hunter == Hunter.Trace)
+            {
+                EquipInfo.UnchargedDamage = 50;
+                EquipInfo.HeadshotDamage = 50;
+            }
+            else if (EquipInfo.Weapon.Beam != BeamType.OmegaCannon) // the game doesn't have this check
+            {
+                Weapons.BotWeaponValues values = Weapons.BotWeapons[index][(int)EquipInfo.Weapon.Beam];
+                EquipInfo.UnchargedDamage = values.UnchargedDamage;
+                EquipInfo.HeadshotDamage = values.UnchargedDamage;
+                EquipInfo.MinChargeDamage = values.ChargedDamage;
+                EquipInfo.ChargedDamage = values.ChargedDamage;
+                EquipInfo.MinChargeHeadshotDamage = values.ChargedDamage;
+                EquipInfo.ChargedHeadshotDamage = values.ChargedDamage;
+                EquipInfo.SplashDamage = values.SplashDamage;
+                EquipInfo.MinChargeSplashDamage = values.ChargedSplashDamage;
+                EquipInfo.ChargedSplashDamage = values.ChargedSplashDamage;
+            }
+            EquipInfo.InfiniteAmmo = true;
         }
 
         private void ProcessAlt()

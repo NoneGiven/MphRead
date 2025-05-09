@@ -211,6 +211,7 @@ namespace MphRead
                 player.LoadFlags &= ~LoadFlags.SlotActive;
                 player.IsBot = false;
                 player.BotLevel = 0;
+                player.ResetAdventureModeBotWeapon();
             }
             PlayerEntity.PlayerCount = 1;
             PlayerEntity.PlayersCreated = 1;

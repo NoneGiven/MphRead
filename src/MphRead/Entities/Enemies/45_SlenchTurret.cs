@@ -58,10 +58,10 @@ namespace MphRead.Entities.Enemies
             _ammo = 1000;
             UpdateShotCount();
             WeaponInfo weapon = Weapons.EnemyWeapons[(int)_spawner.Data.Fields.S10.EnemyVersion];
-            weapon.UnchargedDamage = _values.Damage;
             _equipInfo = new EquipInfo(weapon, _beams);
             _equipInfo.GetAmmo = () => _ammo;
             _equipInfo.SetAmmo = (newAmmo) => _ammo = newAmmo;
+            _equipInfo.UnchargedDamage = _values.Damage;
             _index = _spawner.Data.Fields.S10.Index;
             _subId = _state1;
             _model = SetUpModel("BigEyeTurret", 0, AnimFlags.NoLoop | AnimFlags.Paused);
@@ -167,8 +167,8 @@ namespace MphRead.Entities.Enemies
                 Vector3 target = PlayerEntity.Main.Position.AddY(0.5f);
                 Vector3 spawnDir = (target - Position).Normalized();
                 _soundSource.PlaySfx(SfxId.TURRET_ATTACK);
-                _equipInfo.Weapon.UnchargedDamage = _values.Damage;
-                _equipInfo.Weapon.HeadshotDamage = _values.Damage;
+                _equipInfo.UnchargedDamage = _values.Damage;
+                _equipInfo.HeadshotDamage = _values.Damage;
                 SetAnimationReverse();
                 BeamProjectileEntity.Spawn(this, _equipInfo, Position, spawnDir, BeamSpawnFlags.None, NodeRef, _scene);
                 _shotsRemaining--;

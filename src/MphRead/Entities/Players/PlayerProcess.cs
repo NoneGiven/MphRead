@@ -509,7 +509,7 @@ namespace MphRead.Entities
                     _curAlpha = 0;
                 }
             }
-            int ammo = EquipInfo.GetAmmo?.Invoke() ?? -1;
+            int ammo = EquipInfo.Ammo;
             if (ammo >= 0 && ammo < EquipInfo.Weapon.AmmoCost)
             {
                 int slot = 0;
@@ -520,7 +520,7 @@ namespace MphRead.Entities
                     if (slotWeap != BeamType.None)
                     {
                         WeaponInfo slotInfo = Weapons.Current[(int)slotWeap];
-                        if (slotInfo.Priority > priority && ammo >= slotInfo.AmmoCost)
+                        if (slotInfo.Priority > priority && _ammo[slotInfo.AmmoType] >= slotInfo.AmmoCost)
                         {
                             priority = slotInfo.Priority;
                             slot = i;
