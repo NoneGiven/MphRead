@@ -15,6 +15,8 @@ namespace MphRead
 
         private static void Main(string[] args)
         {
+            //Entities.ReadBotAi.TestRead();
+            //Formats.ReadNodeData.TestAll();
             ConsoleSetup.Run();
             if (CheckSetup(args))
             {

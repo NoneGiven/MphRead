@@ -398,6 +398,7 @@ namespace MphRead
                         Debug.Assert(team == 0 || team == 1);
                         player.TeamIndex = team;
                     }
+                    player.IsBot = PlayerEntity.PlayerCount >= 1;
                     PlayerEntity.PlayerCount++;
                 }
             }
@@ -1250,11 +1251,16 @@ namespace MphRead
             _frameAdvanceLastFrame = _frameAdvanceOn;
         }
 
+        public Matrix4 GetPerspectiveMatrix(float fov)
+        {
+            float aspect = Size.X / (float)Size.Y;
+            return Matrix4.CreatePerspectiveFieldOfView(fov, aspect, _nearClip, _useClip ? _farClip : 10000f);
+        }
+
         private void UpdateProjection()
         {
             // todo: update this only when the viewport or camera values change
-            float aspect = Size.X / (float)Size.Y;
-            _perspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(_cameraFov, aspect, _nearClip, _useClip ? _farClip : 10000f);
+            _perspectiveMatrix = GetPerspectiveMatrix(_cameraFov);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref _perspectiveMatrix);
             // update frustum info
             Vector3 camPos = PlayerEntity.Main.CameraInfo.Position;
@@ -1273,6 +1279,7 @@ namespace MphRead
                 return new Vector4(normal, w);
             }
 
+            float aspect = Size.X / (float)Size.Y;
             float cosFov = MathF.Cos(_cameraFov / 2);
             float cosFovDiv = cosFov / aspect;
             float sinFov = MathF.Sin(_cameraFov / 2);
@@ -2691,10 +2698,10 @@ namespace MphRead
                         _destroyedEntities.Add(entity);
                     }
                 }
-                // sktodo-ai: update player visibility -- ai_sub_214B51C()
+                PlayerEntity.PlayerAiData.UpdateVisibilityAndGlobals(this);
                 for (int i = 0; i < PlayerEntity.Players.Count; i++)
                 {
-                    PlayerEntity.Players[i].FieldF20 = null;
+                    PlayerEntity.Players[i].ClosestNode = null;
                 }
                 for (int i = 0; i < PlayerEntity.Players.Count; i++)
                 {

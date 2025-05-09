@@ -117,7 +117,7 @@ namespace MphRead.Entities
                 _atBase = false;
                 _grounded = true;
                 _resetTimer = 0;
-                EntNodeData = _carrier.FieldF20;
+                EntNodeData = _carrier.ClosestNode;
                 Position = new Vector3(
                     _carrier.Position.X + -0.35f * _carrier.Field70,
                     _carrier.Position.Y + 1.05f,

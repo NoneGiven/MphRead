@@ -67,8 +67,11 @@ namespace MphRead
             var room = new RoomEntity(scene);
             (CollisionInstance collision, IReadOnlyList<EntityBase> entities) = SetUpRoom(mode, playerCount,
                 bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene, isRoomTransition: false);
-            UpdateAreaHunters();
-            InitHunterSpawns(scene, entities, initialize: false); // see: "probably revisit this"
+            if (!scene.Multiplayer)
+            {
+                UpdateAreaHunters();
+                InitHunterSpawns(scene, entities, initialize: false); // see: "probably revisit this"
+            }
             ReadBotAi.LoadAll(mode);
             room.SetNodeData(LoadNodeData(metadata.NodePath, room.RoomId, mode, entities));
             GameState.StorySave.CheckpointRoomId = room.RoomId;

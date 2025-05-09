@@ -10,7 +10,7 @@ namespace MphRead.Entities
     public partial class PlayerEntity
     {
         public PlayerAiData AiData { get; init; }
-        public NodeData3? FieldF20 { get; set; } = null;
+        public NodeData3? ClosestNode { get; set; } = null;
         public int BotLevel { get; set; } = 0;
 
         public class PlayerAiData
@@ -38,6 +38,7 @@ namespace MphRead.Entities
             private readonly int[] _slotHits = new int[4];
             private readonly int[] _slotDamage = new int[4];
 
+            private NodeData3? _node40 = null;
             private ItemInstanceEntity? _itemC8 = null;
             private OctolithFlagEntity? _octolithFlagCC = null;
             private FlagBaseEntity? _flagBaseD0 = null;
@@ -56,12 +57,10 @@ namespace MphRead.Entities
             private int _field116 = 0; // timer?
             private int _field1020 = 0; // timer?
             private NodeData3? _field44 = null;
+            private Vector3 _field1038 = Vector3.Zero;
 
             public void Reset()
             {
-                Debugger.Break();
-                _player = null!;
-                _scene = null!;
                 _nodeData = null!;
                 Flags1 = false;
                 Flags2 = AiFlags2.None;
@@ -71,6 +70,7 @@ namespace MphRead.Entities
                 Field118 = 0;
                 Array.Fill(_slotHits, 0);
                 Array.Fill(_slotDamage, 0);
+                _node40 = null;
                 _itemC8 = null;
                 _octolithFlagCC = _octolithFlagD4 = _octolithFlagDC = null;
                 _flagBaseD0 = _flagBaseD8 = _flagBaseE0 = null;
@@ -80,9 +80,24 @@ namespace MphRead.Entities
                 _field102C = 0;
                 _field1030 = 0;
                 _field116 = 0;
+                _field1020 = 0;
+                _field44 = null;
+                _field1038 = Vector3.Zero;
                 for (int i = 0; i < _executionTree.Length; i++)
                 {
-                    _executionTree[i].Clear();
+                    if (_executionTree[i] == null)
+                    {
+                        _executionTree[i] = new AiContext();
+                    }
+                    else
+                    {
+                        _executionTree[i].Clear();
+                    }
+                }
+                _playerAggroCount = 0;
+                for (int i = 0; i < _playerAggro.Length; i++)
+                {
+                    _playerAggro[i].Clear();
                 }
             }
 
@@ -101,23 +116,23 @@ namespace MphRead.Entities
                 UpdateExecutionPath(Personality, depth: 0);
             }
 
-            // todo: member names
+            // todo: member names -- and is the first set even used?
             private static int _globalField0 = 0;
             private static int _globalField2 = 0;
             private static readonly AiGlobals[] _globalObjs =
             [
                 new AiGlobals(), new AiGlobals(), new AiGlobals(), new AiGlobals()
             ];
-            private static readonly byte[,] _globalByteArray = new byte[4, 4];
-            private static byte _globaByteF4 = 0;
-            private static byte _globalByteF5 = 0;
-            private static int _globalIntF8 = 0;
+            private static readonly bool[,] _playerVisibility = new bool[4, 4];
+            private static byte _visIndex1 = 0;
+            private static byte _visIndex2 = 0;
 
             public class AiGlobals
             {
                 public PlayerEntity Player { get; set; } = null!;
                 public int Field4 { get; set; }
-                public NodeData3 NodeData { get; set; } = null!;
+                public int NodeDataIndex { get; set; }
+                public IReadOnlyList<NodeData3> NodeData { get; set; } = null!;
             }
 
             public static void InitializeGlobals()
@@ -129,18 +144,99 @@ namespace MphRead.Entities
                     AiGlobals globals = _globalObjs[i];
                     globals.Player = null!;
                     globals.Field4 = 0;
+                    globals.NodeDataIndex = 0;
                     globals.NodeData = null!;
                 }
                 for (int i = 0; i < 4; i++)
                 {
                     for (int j = 0; j < 4; j++)
                     {
-                        _globalByteArray[i, j] = 0;
+                        _playerVisibility[i, j] = false;
                     }
                 }
-                _globaByteF4 = 1;
-                _globalByteF5 = 0;
-                _globalIntF8 = 0;
+                _visIndex1 = 1;
+                _visIndex2 = 0;
+            }
+
+            public static void UpdateVisibilityAndGlobals(Scene scene)
+            {
+                UpdateVisibility(scene);
+                UpdateGlobals(scene);
+            }
+
+            private static void UpdateVisibility(Scene scene)
+            {
+                // sktodo-ai: presumably these are done one player per frame for efficiency,
+                // but we don't really need to worry about that, and we're not being 100% accurate
+                // to the game by doing this once per 60 fps frame anyway, so yeah.
+                // the game's unused counter that disables these updates for a certain number of frames
+                // was probaably also added to make them even less frequent, but was ultimately not needed.
+                _playerVisibility[_visIndex1, _visIndex2] = false;
+                _playerVisibility[_visIndex2, _visIndex1] = false;
+                PlayerEntity player1 = Players[_visIndex1];
+                PlayerEntity player2 = Players[_visIndex2];
+                if (player1.Health != 0 && player1.LoadFlags.TestFlag(LoadFlags.Active)
+                    && player2.Health != 0 && player2.LoadFlags.TestFlag(LoadFlags.Active)
+                    && (player1.IsBot || player2.IsBot))
+                {
+                    Vector3 pos1 = player1.CameraInfo.Position;
+                    Vector3 pos2 = player2.CameraInfo.Position;
+                    if (pos1 == pos2)
+                    {
+                        pos1 = player1.Position;
+                        pos2 = player2.Position;
+                    }
+                    CollisionResult discard = default;
+                    if (!CollisionDetection.CheckBetweenPoints(pos1, pos2, TestFlags.None, scene, ref discard))
+                    {
+                        _playerVisibility[_visIndex1, _visIndex2] = true;
+                        _playerVisibility[_visIndex2, _visIndex1] = true;
+                    }
+                }
+                if (++_visIndex1 >= 4)
+                {
+                    if (++_visIndex2 >= 3)
+                    {
+                        _visIndex2 = 0;
+                    }
+                    _visIndex1 = (byte)(_visIndex2 + 1);
+                }
+            }
+
+            private static void UpdateGlobals(Scene scene)
+            {
+                if (_globalField2 == 0)
+                {
+                    return;
+                }
+                if (_globalField0 >= _globalField2)
+                {
+                    _globalField0 = 0;
+                }
+                AiGlobals global = _globalObjs[_globalField0];
+                PlayerEntity player = global.Player;
+                NodeData3 node = global.NodeData[global.NodeDataIndex];
+                Vector3 pos1 = player.Position.AddY(player.Flags1.TestFlag(PlayerFlags1.AltForm) ? 0.5f : 1);
+                Vector3 pos2 = node.Position.AddY(0.5f);
+                CollisionResult discard = default;
+                if (CollisionDetection.CheckBetweenPoints(pos1, pos2, TestFlags.None, scene, ref discard))
+                {
+                    global.NodeDataIndex++;
+                    global.Field4--;
+                    if (global.Field4 == 0)
+                    {
+                        player.AiData.Flags2 &= ~AiFlags2.Bit10;
+                        RemovePlayerFromGlobals(player);
+                    }
+                }
+                else
+                {
+                    player.AiData._node40 = node;
+                    player.AiData._entityRefs.Field1 = node;
+                    player.AiData.Flags2 &= ~AiFlags2.Bit10;
+                    RemovePlayerFromGlobals(player);
+                }
+                _globalField0++;
             }
 
             private void InitializeMain()
@@ -348,13 +444,299 @@ namespace MphRead.Entities
             // todo: member name
             private void Func2134594()
             {
-                // skhere
+                _entityRefs.Clear();
+                Func21384CC();
+                if (_scene.GameMode == GameMode.PrimeHunter && GameState.PrimeHunter == _player.SlotIndex
+                    && Flags2.TestFlag(AiFlags2.SeekItem) && _itemC8 != null && (_itemC8.ItemType == ItemType.HealthSmall
+                    || _itemC8.ItemType == ItemType.HealthMedium || _itemC8.ItemType == ItemType.HealthBig))
+                {
+                    Flags2 &= ~AiFlags2.SeekItem;
+                }
+            }
+
+            // todo: member name
+            private void Func21384CC()
+            {
+                Matrix4 viewMatrix = _player.CameraInfo.ViewMatrix;
+                float fov = MathHelper.DegreesToRadians(_player.CameraInfo.Fov > 0 ? _player.CameraInfo.Fov : 78);
+                Matrix4 perspectiveMatrix = _scene.GetPerspectiveMatrix(fov);
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Player)
+                    {
+                        continue;
+                    }
+                    var other = (PlayerEntity)entity;
+                    if (other == _player || other.Health == 0 || !Func214BAF8(_player, other))
+                    {
+                        continue;
+                    }
+                    float w = Matrix.ProjectPosition(other.Position, viewMatrix, perspectiveMatrix, out Vector2 proj);
+                    if (w < 0)
+                    {
+                        // sktodo-ai: bug? should this be a continue? or is the byte array check only expected to pass for one player?
+                        // but then why do we continue if the screen coordinates are out of range?
+                        //Debugger.Break();
+                        return;
+                    }
+                    if (proj.X >= 1 || proj.Y >= 1)
+                    {
+                        continue;
+                    }
+                    if (other.CurAlpha >= 1 || other.Flags2.TestFlag(PlayerFlags2.RadarReveal) || GameState.RadarPlayers
+                        || other.OctolithFlag != null || GameState.PrimeHunter == other.SlotIndex)
+                    {
+                        Func214864C(6, 1, 2, null, other, 0, 30, 10, 3);
+                    }
+                    else
+                    {
+                        Vector3 between = other.Position - _player.CameraInfo.Position;
+                        between = between.AddY(other.Flags1.TestFlag(PlayerFlags1.AltForm) ? Fixed.ToFloat(other.Values.AltColYPos) : 0.5f);
+                        int rand = (int)(between.LengthSquared * 4096);
+                        int alpha = (int)(other.CurAlpha * 31);
+                        if (alpha > 2)
+                        {
+                            // dividing the fx32 by 1.87-200.13 and truncating to int
+                            rand /= alpha * alpha * 853;
+                        }
+                        else
+                        {
+                            // dividing the fx32 by 0.8333 (multiplying by 1.2) and truncating to int
+                            rand /= 2 * 2 * 853;
+                        }
+                        int div = 1;
+                        if (Func214857C(4, 2, 1, other, null))
+                        {
+                            div = 4;
+                        }
+                        if (Rng.GetRandomInt2((31 - alpha + rand) / div) != 0)
+                        {
+                            // sktodo-ai: same as above
+                            return;
+                        }
+                        alpha = alpha <= 2 ? 1 : (alpha - 2);
+                        Func214864C(6, 1, 2, null, other, 0, alpha, 10, 3);
+                    }
+                    Matrix4 otherView = other.CameraInfo.ViewMatrix;
+                    float otherFov = MathHelper.DegreesToRadians(other.CameraInfo.Fov > 0 ? other.CameraInfo.Fov : 78);
+                    Matrix4 otherPerspective = _scene.GetPerspectiveMatrix(otherFov);
+                    w = Matrix.ProjectPosition(_player.Position, otherView, otherPerspective, out proj);
+                    if (w < 0)
+                    {
+                        // sktodo-ai: same as above
+                        //Debugger.Break();
+                        return;
+                    }
+                    if (proj.X < 1 && proj.Y < 1)
+                    {
+                        Func214864C(6, 2, 1, other, null, 0, 30, 10, 3);
+                    }
+                }
+            }
+
+            // todo: member name
+            private bool Func214BAF8(PlayerEntity player, PlayerEntity other)
+            {
+                return _playerVisibility[other.SlotIndex, player.SlotIndex];
+            }
+
+            private class AiPlayerAggro
+            {
+                public byte Field0A { get; set; }
+                public byte Field0B { get; set; }
+                public byte Field0C { get; set; }
+                public byte Field0D { get; set; }
+                public byte Field2A { get; set; }
+                public ushort Field2B { get; set; }
+                public ushort Field4 { get; set; }
+                public ushort Field6 { get; set; }
+                public PlayerEntity? Player1 { get; set; }
+                public PlayerEntity? Player2 { get; set; }
+
+                public void Clear()
+                {
+                    Field0A = 0;
+                    Field0B = 0;
+                    Field0C = 0;
+                    Field0D = 0;
+                    Field2A = 0;
+                    Field2B = 0;
+                    Field4 = 0;
+                    Field6 = 0;
+                    Player1 = null;
+                    Player2 = null;
+                }
+            }
+
+            private int _playerAggroCount = 0;
+            private readonly AiPlayerAggro[] _playerAggro =
+            [
+                new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro(),
+                new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro(),
+                new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro(),
+                new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro(),
+                new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro(), new AiPlayerAggro()
+            ];
+
+            // todo: member name
+            private bool Func214857C(int a2, int a3, int a4, PlayerEntity? player1, PlayerEntity? player2)
+            {
+                // note: in-game, this function returns the list item if it finds one,
+                // but its usage is boolean (checking whether there is a return value)
+                for (int i = 0; i < _playerAggroCount; i++)
+                {
+                    AiPlayerAggro aggro = _playerAggro[i];
+                    if ((a2 == aggro.Field0A || a2 == 7)
+                        && (a3 == aggro.Field0C || a3 == 7)
+                        && (a4 == aggro.Field0D || a4 == 7)
+                        && (player1 == aggro.Player1 || a3 != 2)
+                        && (player2 == aggro.Player2 || a4 != 2))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // todo: member name
+            private void Func214864C(int a2, int a3, int a4, PlayerEntity? player1,
+                PlayerEntity? player2, int a7, int a8, int a9, int a10)
+            {
+                if (a10 == 2)
+                {
+                    AiPlayerAggro? aggro = Func21489B4(a2, a3, a4, player1, player2);
+                    if (aggro != null)
+                    {
+                        aggro.Field6 += (ushort)a8;
+                        if (aggro.Field6 > 54000)
+                        {
+                            aggro.Field6 = 54000;
+                        }
+                        if (a9 > aggro.Field0B)
+                        {
+                            aggro.Field0B = (byte)(a9 & 0xF);
+                        }
+                        aggro.Field2B += (ushort)a7;
+                        if (aggro.Field2B > 4000)
+                        {
+                            aggro.Field2B = 4000;
+                        }
+                        return;
+                    }
+                }
+                else if (a10 == 3)
+                {
+                    AiPlayerAggro? aggro = Func21489B4(a2, a3, a4, player1, player2);
+                    if (aggro != null)
+                    {
+                        aggro.Field0A = (byte)(a2 & 0xF);
+                        aggro.Field0B = (byte)(a9 & 0xF);
+                        aggro.Field0C = (byte)(a3 & 0xF);
+                        aggro.Field0D = (byte)(a4 & 0xF);
+                        aggro.Field2A = 3;
+                        aggro.Field2B = (byte)(a7 & 0xF);
+                        aggro.Field4 = 0;
+                        aggro.Field6 = (ushort)a8;
+                        aggro.Player1 = player1;
+                        aggro.Player2 = player2;
+                        return;
+                    }
+                }
+                int index = _playerAggroCount;
+                if (index >= _playerAggro.Length)
+                {
+                    int min = a9;
+                    for (int i = 0; i < _playerAggro.Length; i++)
+                    {
+                        AiPlayerAggro aggro = _playerAggro[i];
+                        if (aggro.Field0B < min)
+                        {
+                            index = i;
+                            min = aggro.Field0B;
+                        }
+                    }
+                }
+                else
+                {
+                    _playerAggroCount++;
+                }
+                if (index < _playerAggro.Length)
+                {
+                    AiPlayerAggro aggro = _playerAggro[index];
+                    aggro.Field0A = (byte)(a2 & 0xF);
+                    aggro.Field0B = (byte)(a9 & 0xF);
+                    aggro.Field0C = (byte)(a3 & 0xF);
+                    aggro.Field0D = (byte)(a4 & 0xF);
+                    aggro.Field2A = (byte)(a10 & 0xF);
+                    aggro.Field2B = (byte)(a7 & 0xF);
+                    aggro.Field4 = 0;
+                    aggro.Field6 = (ushort)a8;
+                    aggro.Player1 = player1;
+                    aggro.Player2 = player2;
+                }
+            }
+
+            // todo: member name
+            private AiPlayerAggro? Func21489B4(int a2, int a3, int a4, PlayerEntity? player1, PlayerEntity? player2)
+            {
+                for (int i = 0; i < _playerAggroCount; i++)
+                {
+                    AiPlayerAggro aggro = _playerAggro[i];
+                    if (aggro.Field2A == 1
+                        || a2 != aggro.Field0A && a2 != 7
+                        || a3 != aggro.Field0C && a3 != 7
+                        || a4 != aggro.Field0D && a4 != 7
+                        || player1 != aggro.Player1 && a3 == 2
+                        || player2 != aggro.Player2 && a4 == 2)
+                    {
+                        return aggro;
+                    }
+                }
+                return null;
             }
 
             // todo: member name
             private void Func2148ABC()
             {
-                // skhere
+                Func2148238();
+                Flags4 &= ~AiFlags4.Bit0;
+                if (Vector3.Dot(_field1038, _player.CameraInfo.Facing) >= 255 / 256f)
+                {
+                    Flags4 |= AiFlags4.Bit0;
+                }
+                if (_field1020 > 0)
+                {
+                    _field1020--;
+                }
+            }
+
+            // todo: member name
+            private void Func2148238()
+            {
+                int i = 0;
+                while (i < _playerAggroCount)
+                {
+                    AiPlayerAggro aggro = _playerAggro[i];
+                    aggro.Field4++;
+                    if (aggro.Field4 <= aggro.Field6 * 2) // sktodo-ai: FPS stuff? review Field6 changes
+                    {
+                        i++;
+                    }
+                    else
+                    {
+                        AiPlayerAggro last = _playerAggro[_playerAggroCount - 1];
+                        aggro.Field0A = last.Field0A;
+                        aggro.Field0B = last.Field0B;
+                        aggro.Field0C = last.Field0C;
+                        aggro.Field0D = last.Field0D;
+                        aggro.Field4 = last.Field4;
+                        aggro.Field6 = last.Field6;
+                        aggro.Player1 = last.Player1;
+                        aggro.Player2 = last.Player2;
+                        _playerAggroCount--;
+                    }
+                }
             }
 
             // INFO
@@ -450,7 +832,7 @@ namespace MphRead.Entities
             private const int _maxContextDepth = 20;
             private readonly AiContext[] _executionTree = new AiContext[_maxContextDepth];
             // IDs that map to something other than Func4_21462DC()
-            private static readonly HashSet<int> _func4Ids = [ 1, 2, 3 ];
+            private static readonly HashSet<int> _func4Ids = [1, 2, 3];
 
             private void UpdateExecutionPath(AiPersonalityData1 data1, int depth)
             {
@@ -3095,7 +3477,7 @@ namespace MphRead.Entities
                 }
             }
 
-            private void RemovePlayerFromGlobals(PlayerEntity player)
+            private static void RemovePlayerFromGlobals(PlayerEntity player)
             {
                 if (_globalField2 == 0)
                 {
@@ -3119,10 +3501,262 @@ namespace MphRead.Entities
                     AiGlobals next = _globalObjs[i + 1];
                     current.Player = next.Player;
                     current.Field4 = next.Field4;
+                    current.NodeDataIndex = next.NodeDataIndex;
                     current.NodeData = next.NodeData;
                 }
                 _globalField2--;
             }
+
+            // todo: member names
+            private class AiEntityRefs
+            {
+                public NodeData3? Field0 { get; set; }
+                public NodeData3? Field1 { get; set; }
+                public NodeData3? Field2 { get; set; }
+                public NodeData3? Field3 { get; set; }
+                public NodeData3? Field4 { get; set; }
+                public NodeData3? Field5 { get; set; }
+                public NodeData3? Field6 { get; set; }
+                public NodeData3? Field7 { get; set; }
+                public NodeData3? Field8 { get; set; }
+                public NodeData3? Field9 { get; set; }
+                public NodeData3? Field10 { get; set; }
+                public NodeData3? Field11 { get; set; }
+                public NodeData3? Field12 { get; set; }
+                public NodeData3? Field13 { get; set; }
+                public NodeData3? Field14 { get; set; }
+                public NodeData3? Field15 { get; set; }
+                public NodeData3? Field16 { get; set; }
+                public NodeData3? Field17 { get; set; }
+                public NodeData3? Field18 { get; set; }
+                public NodeData3? Field19 { get; set; }
+                public NodeData3? Field20 { get; set; }
+                public NodeData3? Field21 { get; set; }
+                public NodeData3? Field22 { get; set; }
+                public NodeData3? Field23 { get; set; }
+                public NodeData3? Field24 { get; set; }
+                public NodeData3? Field25 { get; set; }
+                public PlayerEntity? Field26 { get; set; }
+                public PlayerEntity? Field27 { get; set; }
+                public PlayerEntity? Field28 { get; set; }
+                public PlayerEntity? Field29 { get; set; }
+                public PlayerEntity? Field30 { get; set; }
+                public PlayerEntity? Field31 { get; set; }
+                public PlayerEntity? Field32 { get; set; }
+                public HalfturretEntity? Field33 { get; set; }
+                public ItemSpawnEntity? Field34 { get; set; }
+                public ItemSpawnEntity? Field35 { get; set; }
+                public ItemSpawnEntity? Field36 { get; set; }
+                public ItemSpawnEntity? Field37 { get; set; }
+                public ItemSpawnEntity? Field38 { get; set; }
+                public ItemSpawnEntity? Field39 { get; set; }
+                public ItemSpawnEntity? Field40 { get; set; }
+                public ItemSpawnEntity? Field41 { get; set; }
+                public ItemSpawnEntity? Field42 { get; set; }
+                public ItemSpawnEntity? Field43 { get; set; }
+                public ItemSpawnEntity? Field44 { get; set; }
+                public ItemSpawnEntity? Field45 { get; set; }
+                public ItemSpawnEntity? Field46 { get; set; }
+                public ItemSpawnEntity? Field47 { get; set; }
+                public ItemSpawnEntity? Field48 { get; set; }
+                public ItemSpawnEntity? Field49 { get; set; }
+                public ItemSpawnEntity? Field50 { get; set; }
+                // 51 is unused -- maybe pick_wpn_missile or pick_wpn_all
+                public ItemSpawnEntity? Field52 { get; set; }
+                public ItemSpawnEntity? Field53 { get; set; }
+                public ItemInstanceEntity? Field54 { get; set; }
+                public ItemInstanceEntity? Field55 { get; set; }
+                public ItemInstanceEntity? Field56 { get; set; }
+                public ItemInstanceEntity? Field57 { get; set; }
+                public ItemInstanceEntity? Field58 { get; set; }
+                public ItemInstanceEntity? Field59 { get; set; }
+                public ItemInstanceEntity? Field60 { get; set; }
+                public ItemInstanceEntity? Field61 { get; set; }
+                public ItemInstanceEntity? Field62 { get; set; }
+                public ItemInstanceEntity? Field63 { get; set; }
+                public ItemInstanceEntity? Field64 { get; set; }
+                public ItemInstanceEntity? Field65 { get; set; }
+                public ItemInstanceEntity? Field66 { get; set; }
+                public ItemInstanceEntity? Field67 { get; set; }
+                public ItemInstanceEntity? Field68 { get; set; }
+                public ItemInstanceEntity? Field69 { get; set; }
+                public ItemInstanceEntity? Field70 { get; set; }
+                public ItemInstanceEntity? Field71 { get; set; }
+                public ItemInstanceEntity? Field72 { get; set; }
+                public ItemInstanceEntity? Field73 { get; set; }
+                public NodeDefenseEntity? Field74 { get; set; }
+                public NodeDefenseEntity? Field75 { get; set; }
+                public NodeDefenseEntity? Field76 { get; set; }
+                public DoorEntity? Field77 { get; set; }
+
+                public bool IsPopulated(int index)
+                {
+                    return index switch
+                    {
+                        0 => Field0 != null,
+                        1 => Field1 != null,
+                        2 => Field2 != null,
+                        3 => Field3 != null,
+                        4 => Field4 != null,
+                        5 => Field5 != null,
+                        6 => Field6 != null,
+                        7 => Field7 != null,
+                        8 => Field8 != null,
+                        9 => Field9 != null,
+                        10 => Field10 != null,
+                        11 => Field11 != null,
+                        12 => Field12 != null,
+                        13 => Field13 != null,
+                        14 => Field14 != null,
+                        15 => Field15 != null,
+                        16 => Field16 != null,
+                        17 => Field17 != null,
+                        18 => Field18 != null,
+                        19 => Field19 != null,
+                        20 => Field20 != null,
+                        21 => Field21 != null,
+                        22 => Field22 != null,
+                        23 => Field23 != null,
+                        24 => Field24 != null,
+                        25 => Field25 != null,
+                        26 => Field26 != null,
+                        27 => Field27 != null,
+                        28 => Field28 != null,
+                        29 => Field29 != null,
+                        30 => Field30 != null,
+                        31 => Field31 != null,
+                        32 => Field32 != null,
+                        33 => Field33 != null,
+                        34 => Field34 != null,
+                        35 => Field35 != null,
+                        36 => Field36 != null,
+                        37 => Field37 != null,
+                        38 => Field38 != null,
+                        39 => Field39 != null,
+                        40 => Field40 != null,
+                        41 => Field41 != null,
+                        42 => Field42 != null,
+                        43 => Field43 != null,
+                        44 => Field44 != null,
+                        45 => Field45 != null,
+                        46 => Field46 != null,
+                        47 => Field47 != null,
+                        48 => Field48 != null,
+                        49 => Field49 != null,
+                        50 => Field50 != null,
+                        52 => Field52 != null,
+                        53 => Field53 != null,
+                        54 => Field54 != null,
+                        55 => Field55 != null,
+                        56 => Field56 != null,
+                        57 => Field57 != null,
+                        58 => Field58 != null,
+                        59 => Field59 != null,
+                        60 => Field60 != null,
+                        61 => Field61 != null,
+                        62 => Field62 != null,
+                        63 => Field63 != null,
+                        64 => Field64 != null,
+                        65 => Field65 != null,
+                        66 => Field66 != null,
+                        67 => Field67 != null,
+                        68 => Field68 != null,
+                        69 => Field69 != null,
+                        70 => Field70 != null,
+                        71 => Field71 != null,
+                        72 => Field72 != null,
+                        73 => Field73 != null,
+                        74 => Field74 != null,
+                        75 => Field75 != null,
+                        76 => Field76 != null,
+                        77 => Field77 != null,
+                        _ => throw new ProgramException("Invalid AI entity index.")
+                    };
+                }
+
+                public void Clear()
+                {
+                    Field0 = null;
+                    Field1 = null;
+                    Field2 = null;
+                    Field3 = null;
+                    Field4 = null;
+                    Field5 = null;
+                    Field6 = null;
+                    Field7 = null;
+                    Field8 = null;
+                    Field9 = null;
+                    Field10 = null;
+                    Field11 = null;
+                    Field12 = null;
+                    Field13 = null;
+                    Field14 = null;
+                    Field15 = null;
+                    Field16 = null;
+                    Field17 = null;
+                    Field18 = null;
+                    Field19 = null;
+                    Field20 = null;
+                    Field21 = null;
+                    Field22 = null;
+                    Field23 = null;
+                    Field24 = null;
+                    Field25 = null;
+                    Field26 = null;
+                    Field27 = null;
+                    Field28 = null;
+                    Field29 = null;
+                    Field30 = null;
+                    Field31 = null;
+                    Field32 = null;
+                    Field33 = null;
+                    Field34 = null;
+                    Field35 = null;
+                    Field36 = null;
+                    Field37 = null;
+                    Field38 = null;
+                    Field39 = null;
+                    Field40 = null;
+                    Field41 = null;
+                    Field42 = null;
+                    Field43 = null;
+                    Field44 = null;
+                    Field45 = null;
+                    Field46 = null;
+                    Field47 = null;
+                    Field48 = null;
+                    Field49 = null;
+                    Field50 = null;
+                    Field52 = null;
+                    Field53 = null;
+                    Field54 = null;
+                    Field55 = null;
+                    Field56 = null;
+                    Field57 = null;
+                    Field58 = null;
+                    Field59 = null;
+                    Field60 = null;
+                    Field61 = null;
+                    Field62 = null;
+                    Field63 = null;
+                    Field64 = null;
+                    Field65 = null;
+                    Field66 = null;
+                    Field67 = null;
+                    Field68 = null;
+                    Field69 = null;
+                    Field70 = null;
+                    Field71 = null;
+                    Field72 = null;
+                    Field73 = null;
+                    Field74 = null;
+                    Field75 = null;
+                    Field76 = null;
+                    Field77 = null;
+                }
+            }
+
+            private readonly AiEntityRefs _entityRefs = new AiEntityRefs();
         }
     }
 
