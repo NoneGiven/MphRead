@@ -104,7 +104,8 @@ namespace MphRead.Entities.Enemies
         {
             _moveTarget = _movePositions[_moveIndex];
             StartMovingToward(_moveTarget, step: _movementType == 3 ? 0.25f : 0.2f);
-            SetTransform(_speed.Normalized(), Vector3.UnitY, Position);
+            Vector3 facing = _speed == Vector3.Zero ? FacingVector : _speed.Normalized();
+            SetTransform(FacingVector, Vector3.UnitY, Position);
         }
 
         private void MoveInCircle()

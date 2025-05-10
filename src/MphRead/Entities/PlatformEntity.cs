@@ -819,7 +819,11 @@ namespace MphRead.Entities
             if (!soundUpdated)
             {
                 _soundSource.Update(_visiblePosition, _sfxRangeIndex);
-                if (_data.ModelId != 5) // Platform_Unit4_C1
+                if (_data.ModelId == 5) // Platform_Unit4_C1 (Drip Moat)
+                {
+                    _soundSource.Volume = 1;
+                }
+                else
                 {
                     UpdateNodeRefVolume();
                 }

@@ -980,7 +980,7 @@ namespace MphRead
             for (int i = 0; i < 4; i++)
             {
                 PlayerEntity player = players[i];
-                if (!player.LoadFlags.TestFlag(LoadFlags.Initial))
+                if (!player.LoadFlags.TestFlag(LoadFlags.Initial) || player.TeamIndex == -1)
                 {
                     continue;
                 }
