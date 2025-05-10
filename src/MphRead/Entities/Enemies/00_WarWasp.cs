@@ -87,7 +87,7 @@ namespace MphRead.Entities.Enemies
         private void StartMovingToward(Vector3 target, float step)
         {
             Vector3 travel = target - Position;
-            _stepDistance = step / 2; // todo: FPS stuff
+            _stepDistance = step;
             float distance = travel.Length;
             _stepCount = (int)(distance / _stepDistance) + 1;
             if (distance == 0)
@@ -97,6 +97,9 @@ namespace MphRead.Entities.Enemies
             else
             {
                 _speed = travel * (_stepDistance / distance);
+                // todo: FPS stuff
+                _speed /= 2;
+                _stepCount *= 2;
             }
         }
 
