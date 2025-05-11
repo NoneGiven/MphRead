@@ -2236,8 +2236,7 @@ namespace MphRead.Entities
                                         GameState.Points[attacker.SlotIndex]++;
                                     }
                                 }
-                                else if ((GameState.Mode == GameMode.Capture || GameState.Mode == GameMode.Bounty
-                                    || GameState.Mode == GameMode.BountyTeams) && OctolithFlag != null)
+                                else if (GameState.IsOctolithMode && OctolithFlag != null)
                                 {
                                     GameState.OctolithStops[attacker.SlotIndex]++;
                                 }

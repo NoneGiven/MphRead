@@ -40,6 +40,7 @@ namespace MphRead
         public static GameMode Mode { get; set; } = GameMode.SinglePlayer;
         public static bool SinglePlayer => Mode == GameMode.SinglePlayer;
         public static bool Multiplayer => Mode != GameMode.SinglePlayer;
+        public static bool IsOctolithMode => Mode == GameMode.Capture || Mode == GameMode.Bounty || Mode == GameMode.BountyTeams;
         public static bool MenuPause { get; private set; }
         public static bool DialogPause { get; private set; }
         public static MatchState MatchState { get; set; } = MatchState.InProgress;

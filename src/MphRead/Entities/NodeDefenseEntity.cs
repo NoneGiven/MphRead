@@ -19,6 +19,7 @@ namespace MphRead.Entities
         private readonly bool[] _occupiedBy = new bool[4];
         private float _blinkTimer = 0;
         private PlayerEntity? _capturedPlayer = null;
+        public PlayerEntity? CapturedPlayer => _capturedPlayer;
         private float _progress = 0;
         private float _scoreTimer = 0;
         private float _curRotation = 0;
@@ -30,6 +31,7 @@ namespace MphRead.Entities
         public int OccupyingTeam => _occupyingTeam;
         public bool Blinking => _blinkTimer > 0;
         public IReadOnlyList<bool> OccupiedBy => _occupiedBy;
+        public bool IsOccupied => _occupiedBy[0] || _occupiedBy[1] || _occupiedBy[2] || _occupiedBy[3];
         public float Progress => _progress;
 
         private readonly Material _terminalMat = null!;

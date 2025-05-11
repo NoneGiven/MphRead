@@ -57,6 +57,7 @@ namespace MphRead.Entities
             private OctolithFlagEntity? _octolithFlagDC = null;
             private FlagBaseEntity? _flagBaseE0 = null;
             private NodeDefenseEntity? _defenseE4 = null;
+            private DoorEntity? _doorE8 = null;
 
             private int _nodeDataSetIndex = 0;
             private byte _nodeDataSelOff = 0;
@@ -96,6 +97,7 @@ namespace MphRead.Entities
                 _octolithFlagCC = _octolithFlagD4 = _octolithFlagDC = null;
                 _flagBaseD0 = _flagBaseD8 = _flagBaseE0 = null;
                 _defenseE4 = null;
+                _doorE8 = null;
                 _nodeDataSetIndex = 0;
                 _nodeList = null!;
                 Array.Fill(_nodeTypeIndex, 0);
@@ -841,6 +843,7 @@ namespace MphRead.Entities
             // todo: member name
             private int Func2148394(int a2, int a3, int a4, PlayerEntity? player1, PlayerEntity? player2)
             {
+                // returns "priority" value for find certain entities
                 int result = 0;
                 for (int i = 0; i < _playerAggroCount; i++)
                 {
@@ -952,6 +955,30 @@ namespace MphRead.Entities
                     }
                 }
                 return null;
+            }
+
+            // todo: member name
+            private AiPlayerAggro? Func214847C(int a2, int a3, int a4, PlayerEntity? player1, PlayerEntity? player2)
+            {
+                AiPlayerAggro? result = null;
+                int maxField4 = -1;
+                for (int i = 0; i < _playerAggroCount; i++)
+                {
+                    AiPlayerAggro aggro = _playerAggro[i];
+                    if ((a2 == aggro.Field0A || a2 == 7)
+                        && (a3 == aggro.Field0C || a3 == 7)
+                        && (a4 == aggro.Field0D || a4 == 7)
+                        && (player1 == aggro.Player1 || a3 != 2)
+                        && (player2 == aggro.Player2 || a4 != 2))
+                    {
+                        if (aggro.Field4 > maxField4)
+                        {
+                            result = aggro;
+                            maxField4 = aggro.Field4;
+                        }
+                    }
+                }
+                return result;
             }
 
             // todo: member name
@@ -2262,6 +2289,7 @@ namespace MphRead.Entities
                 // skhere
             }
 
+            // process counterpart to Func4_21462DC
             private void Func2_213EA48(AiContext context)
             {
                 // skhere
@@ -3621,6 +3649,7 @@ namespace MphRead.Entities
             // todo: member names
             #region Funcs4
 
+            // init counterpart to Func2_213EA48
             private void Func4_21462DC(AiContext context)
             {
                 Func214715C(context);
@@ -3654,8 +3683,94 @@ namespace MphRead.Entities
                 {
                     _halfturret1C.GetPosition(out halfturretPos);
                 }
-                // skhereA
                 if (context.Field9 == 6)
+                {
+                    if (context.Field8 == 7)
+                    {
+                        FindEntityRef(AiEntRefType.Type55);
+                        UpdateSeekItem(_entityRefs.Field55);
+                    }
+                    else if (context.Field8 == 8)
+                    {
+                        FindEntityRef(AiEntRefType.Type56);
+                        UpdateSeekItem(_entityRefs.Field56);
+                    }
+                    else if (context.Field8 == 9)
+                    {
+                        FindEntityRef(AiEntRefType.Type57);
+                        UpdateSeekItem(_entityRefs.Field57);
+                    }
+                    else if (context.Field8 == 10)
+                    {
+                        FindEntityRef(AiEntRefType.Type58);
+                        UpdateSeekItem(_entityRefs.Field58);
+                    }
+                    else if (context.Field8 == 11)
+                    {
+                        FindEntityRef(AiEntRefType.Type59);
+                        UpdateSeekItem(_entityRefs.Field59);
+                    }
+                }
+                if (context.Field9 == 23 && !Flags2.TestFlag(AiFlags2.Bit5))
+                {
+                    Func2135320();
+                }
+                if (context.FieldC == 61 && !Flags2.TestFlag(AiFlags2.Bit6))
+                {
+                    Func21355D8();
+                }
+                if (context.FieldA == 32)
+                {
+                    if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.Bit2))
+                    {
+                        _field1038 = targetPos - _player.CameraInfo.Position;
+                    }
+                    else if (context.FieldB == 3 && Flags2.TestFlag(AiFlags2.Bit2))
+                    {
+                        AiPlayerAggro? aggro = Func214847C(4, 7, 1, null, null);
+                        if (aggro?.Player1 != null)
+                        {
+                            _field1038 = aggro.Player1.Position - _player.CameraInfo.Position;
+                        }
+                        else
+                        {
+                            _field1038 = _player.CameraInfo.Facing;
+                        }
+                    }
+                    else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.Bit3))
+                    {
+                        _field1038 = halfturretPos - _player.CameraInfo.Position;
+                    }
+                    else if (context.FieldB == 25)
+                    {
+                        float x = Rng.GetRandomInt2(4096) / 4096f - 0.5f;
+                        float y = Rng.GetRandomInt2(4096) / 4096f - 0.5f;
+                        float z = Rng.GetRandomInt2(4096) / 4096f - 0.5f;
+                        _field1038 = new Vector3(x, y, z);
+                    }
+                    else if (context.FieldB == 26)
+                    {
+                        float x = Rng.GetRandomInt2(4096) / 4096f - 0.5f;
+                        float z = Rng.GetRandomInt2(4096) / 4096f - 0.5f;
+                        float length = MathF.Sqrt(x * x + z * z);
+                        float y = Rng.GetRandomInt2(Fixed.ToInt(length)) / 4096f - length / 2;
+                        _field1038 = new Vector3(x, y, z);
+                    }
+                    else if (context.FieldB == 27)
+                    {
+                        _field1038 = _fieldB8 - _player.CameraInfo.Position;
+                    }
+                    if (_field1038 != Vector3.Zero)
+                    {
+                        _field1038 = _field1038.Normalized();
+                    }
+                    else
+                    {
+                        _field1038 = _player.CameraInfo.Facing;
+                    }
+                }
+                // skhereA
+                if (context.Field4 != 0)
                 {
 
                 }
@@ -3741,6 +3856,30 @@ namespace MphRead.Entities
                     _entityRefs.Field17 = null;
                     _entityRefs.Field18 = null;
                     _entityRefs.Field29 = null;
+                }
+            }
+
+            // todo: member name
+            private void Func2135624(NodeDefenseEntity? defense)
+            {
+                if (defense != null)
+                {
+                    Flags2 |= AiFlags2.Bit5;
+                    if (_defenseE4 != defense)
+                    {
+                        _defenseE4 = defense;
+                        _entityRefs.Field15 = null;
+                    }
+                }
+            }
+
+            // todo: member name
+            private void Func2135608(DoorEntity? door)
+            {
+                Flags2 |= AiFlags2.Bit6;
+                if (_doorE8 != door)
+                {
+                    _doorE8 = door;
                 }
             }
 
@@ -4382,12 +4521,43 @@ namespace MphRead.Entities
                 Func21356C0(_entityRefs.Field32);
             }
 
+            // todo: member name
+            private void Func2135320()
+            {
+                FindEntityRef(AiEntRefType.Type74);
+                Func2135624(_entityRefs.Field74);
+            }
+
+            // todo: member name
+            private void Func21355D8()
+            {
+                FindEntityRef(AiEntRefType.Type77);
+                Func2135608(_entityRefs.Field77);
+            }
+
+            private void UpdateSeekItem(ItemInstanceEntity? item)
+            {
+                if (item != null && item.DespawnTimer > 0)
+                {
+                    Flags2 |= AiFlags2.SeekItem;
+                }
+                else
+                {
+                    Flags2 &= ~AiFlags2.SeekItem;
+                }
+                if (item != _itemC8)
+                {
+                    _itemC8 = item;
+                }
+            }
+
             private void FindEntityRef(AiEntRefType type)
             {
                 if (_entityRefs.IsPopulated((int)type))
                 {
                     return;
                 }
+                // todo?: add behavior for seeking deathalt item/spawn?
                 if (type == AiEntRefType.Type0)
                 {
                     if (_player.ClosestNode != null)
@@ -4649,12 +4819,12 @@ namespace MphRead.Entities
                 }
                 else if (type == AiEntRefType.Type16)
                 {
-                    _entityRefs.Field16 = FindClosestNodeToPosition(_player.Position);
+                    _entityRefs.Field16 = FindFarthestNodeFromPosition(_player.Position);
                 }
                 else if (type == AiEntRefType.Type17)
                 {
                     Debug.Assert(_targetPlayer != null);
-                    _entityRefs.Field17 = FindClosestNodeToPosition(_targetPlayer.Position);
+                    _entityRefs.Field17 = FindFarthestNodeFromPosition(_targetPlayer.Position);
                 }
                 else if (type == AiEntRefType.Type18)
                 {
@@ -4724,183 +4894,241 @@ namespace MphRead.Entities
                         _entityRefs.Field32 = result;
                     }
                 }
-                // skhereB
                 else if (type == AiEntRefType.Type33)
                 {
-                    //_entityRefs.Field33; // halfturret
+                    _entityRefs.Field33 = Func2137D08(_player.Position);
                 }
                 else if (type == AiEntRefType.Type34)
                 {
-                    //_entityRefs.Field34; // item spawn
+                    _entityRefs.Field34 = FindClosestPopulatedItemSpawnToPosition(_player.Position);
                 }
                 else if (type == AiEntRefType.Type35)
                 {
-
+                    _entityRefs.Field35 = FindClosestPopulatedItemSpawnOfTypeToPosition(_player.Position,
+                        ItemType.HealthMedium, ItemType.HealthSmall, ItemType.HealthBig);
                 }
                 else if (type == AiEntRefType.Type36)
                 {
-
+                    _entityRefs.Field36 = FindItemSpawnForMissiles();
                 }
                 else if (type == AiEntRefType.Type37)
                 {
-
+                    _entityRefs.Field37 = FindItemSpawnForMissiles();
                 }
                 else if (type == AiEntRefType.Type38)
                 {
-
+                    _entityRefs.Field38 = FindItemSpawnForWeapon(ItemType.VoltDriver, BeamType.VoltDriver);
                 }
                 else if (type == AiEntRefType.Type39)
                 {
-
+                    _entityRefs.Field39 = FindItemSpawnForUa();
                 }
                 else if (type == AiEntRefType.Type40)
                 {
-
+                    _entityRefs.Field40 = FindItemSpawnForWeapon(ItemType.Battlehammer, BeamType.Battlehammer);
                 }
                 else if (type == AiEntRefType.Type41)
                 {
-
+                    _entityRefs.Field41 = FindItemSpawnForUa();
                 }
                 else if (type == AiEntRefType.Type42)
                 {
-
+                    _entityRefs.Field42 = FindItemSpawnForWeapon(ItemType.Imperialist, BeamType.Imperialist);
                 }
                 else if (type == AiEntRefType.Type43)
                 {
-
+                    _entityRefs.Field43 = FindItemSpawnForUa();
                 }
                 else if (type == AiEntRefType.Type44)
                 {
-
+                    _entityRefs.Field44 = FindItemSpawnForWeapon(ItemType.Judicator, BeamType.Judicator);
                 }
                 else if (type == AiEntRefType.Type45)
                 {
-
+                    _entityRefs.Field45 = FindItemSpawnForUa();
                 }
                 else if (type == AiEntRefType.Type46)
                 {
-
+                    _entityRefs.Field46 = FindItemSpawnForWeapon(ItemType.Magmaul, BeamType.Magmaul);
                 }
                 else if (type == AiEntRefType.Type47)
                 {
-
+                    _entityRefs.Field47 = FindItemSpawnForUa();
                 }
                 else if (type == AiEntRefType.Type48)
                 {
-
+                    _entityRefs.Field48 = FindItemSpawnForWeapon(ItemType.ShockCoil, BeamType.ShockCoil);
                 }
                 else if (type == AiEntRefType.Type49)
                 {
-
+                    _entityRefs.Field49 = FindItemSpawnForUa();
                 }
                 else if (type == AiEntRefType.Type50)
                 {
-
+                    _entityRefs.Field50 = FindItemSpawnForWeapon(ItemType.OmegaCannon, BeamType.OmegaCannon);
+                }
+                else if (type == AiEntRefType.Type51)
+                {
+                    // not implemented in-game, but this makes sense looking at 70/71
+                    _entityRefs.Field51 = FindItemSpawnForWeapon(ItemType.OmegaCannon, BeamType.OmegaCannon);
                 }
                 else if (type == AiEntRefType.Type52)
                 {
-
+                    _entityRefs.Field52 = FindClosestPopulatedItemSpawnOfTypeToPosition(_player.Position, ItemType.DoubleDamage);
                 }
                 else if (type == AiEntRefType.Type53)
                 {
-
+                    _entityRefs.Field53 = FindClosestPopulatedItemSpawnOfTypeToPosition(_player.Position, ItemType.Cloak);
                 }
                 else if (type == AiEntRefType.Type54)
                 {
-
+                    _entityRefs.Field54 = FindClosestItemToPosition(_player.Position);
                 }
                 else if (type == AiEntRefType.Type55)
                 {
-
+                    _entityRefs.Field55 = FindClosestItemOfTypeToPosition(_player.Position,
+                        ItemType.HealthMedium, ItemType.HealthSmall, ItemType.HealthBig);
                 }
                 else if (type == AiEntRefType.Type56)
                 {
-
+                    _entityRefs.Field56 = FindItemForMissiles();
                 }
                 else if (type == AiEntRefType.Type57)
                 {
-
+                    _entityRefs.Field57 = FindItemForMissiles();
                 }
                 else if (type == AiEntRefType.Type58)
                 {
-
+                    _entityRefs.Field58 = FindItemForWeapon(ItemType.VoltDriver, BeamType.VoltDriver);
                 }
                 else if (type == AiEntRefType.Type59)
                 {
-
+                    _entityRefs.Field59 = FindItemForUa();
                 }
                 else if (type == AiEntRefType.Type60)
                 {
-
+                    _entityRefs.Field60 = FindItemForWeapon(ItemType.Battlehammer, BeamType.Battlehammer);
                 }
                 else if (type == AiEntRefType.Type61)
                 {
-
+                    _entityRefs.Field61 = FindItemForUa();
                 }
                 else if (type == AiEntRefType.Type62)
                 {
-
+                    _entityRefs.Field62 = FindItemForWeapon(ItemType.Imperialist, BeamType.Imperialist);
                 }
                 else if (type == AiEntRefType.Type63)
                 {
-
+                    _entityRefs.Field63 = FindItemForUa();
                 }
                 else if (type == AiEntRefType.Type64)
                 {
-
+                    _entityRefs.Field64 = FindItemForWeapon(ItemType.Judicator, BeamType.Judicator);
                 }
                 else if (type == AiEntRefType.Type65)
                 {
-
+                    _entityRefs.Field65 = FindItemForUa();
                 }
                 else if (type == AiEntRefType.Type66)
                 {
-
+                    _entityRefs.Field66 = FindItemForWeapon(ItemType.Magmaul, BeamType.Magmaul);
                 }
                 else if (type == AiEntRefType.Type67)
                 {
-
+                    _entityRefs.Field67 = FindItemForUa();
                 }
                 else if (type == AiEntRefType.Type68)
                 {
-
+                    _entityRefs.Field68 = FindItemForWeapon(ItemType.ShockCoil, BeamType.ShockCoil);
                 }
                 else if (type == AiEntRefType.Type69)
                 {
-
+                    _entityRefs.Field69 = FindItemForUa();
                 }
                 else if (type == AiEntRefType.Type70)
                 {
-
+                    _entityRefs.Field70 = FindItemForWeapon(ItemType.OmegaCannon, BeamType.OmegaCannon);
                 }
                 else if (type == AiEntRefType.Type71)
                 {
-
+                    _entityRefs.Field71 = FindItemForWeapon(ItemType.OmegaCannon, BeamType.OmegaCannon);
                 }
                 else if (type == AiEntRefType.Type72)
                 {
-
+                    _entityRefs.Field72 = FindClosestItemOfTypeToPosition(_player.Position, ItemType.DoubleDamage);
                 }
                 else if (type == AiEntRefType.Type73)
                 {
-
+                    _entityRefs.Field73 = FindClosestItemOfTypeToPosition(_player.Position, ItemType.Cloak);
                 }
                 else if (type == AiEntRefType.Type74)
                 {
-
+                    _entityRefs.Field74 = FindClosestNodeDefense(_player.Position);
                 }
                 else if (type == AiEntRefType.Type75)
                 {
-
+                    _entityRefs.Field75 = ChooseNodeDefenseToRetake();
                 }
                 else if (type == AiEntRefType.Type76)
                 {
-
+                    _entityRefs.Field76 = FindClosestFriendlyNodeDefense();
                 }
                 else if (type == AiEntRefType.Type77)
                 {
-
+                    _entityRefs.Field77 = FindClosestDoor(_player.Position);
                 }
+            }
+
+            private ItemSpawnEntity? FindItemSpawnForWeapon(ItemType itemType, BeamType beamType)
+            {
+                ItemType type2 = ItemType.None;
+                if (Weapons.AffinityWeapons[(int)_player.Hunter] == beamType)
+                {
+                    type2 = ItemType.AffinityWeapon;
+                }
+                return FindClosestPopulatedItemSpawnOfTypeToPosition(_player.Position, itemType, type2);
+            }
+
+            private ItemInstanceEntity? FindItemForWeapon(ItemType itemType, BeamType beamType)
+            {
+                ItemType type2 = ItemType.None;
+                if (Weapons.AffinityWeapons[(int)_player.Hunter] == beamType)
+                {
+                    type2 = ItemType.AffinityWeapon;
+                }
+                return FindClosestItemOfTypeToPosition(_player.Position, itemType, type2);
+            }
+
+            private ItemSpawnEntity? FindItemSpawnForUa()
+            {
+                return FindClosestPopulatedItemSpawnOfTypeToPosition(_player.Position, ItemType.UASmall, ItemType.UABig);
+            }
+
+            private ItemInstanceEntity? FindItemForUa()
+            {
+                return FindClosestItemOfTypeToPosition(_player.Position, ItemType.UASmall, ItemType.UABig);
+            }
+
+            private ItemSpawnEntity? FindItemSpawnForMissiles()
+            {
+                ItemType type3 = ItemType.None;
+                if (Weapons.AffinityWeapons[(int)_player.Hunter] == BeamType.Missile)
+                {
+                    type3 = ItemType.AffinityWeapon;
+                }
+                return FindClosestPopulatedItemSpawnOfTypeToPosition(_player.Position,
+                    ItemType.MissileSmall, ItemType.MissileBig, type3);
+            }
+
+            private ItemInstanceEntity? FindItemForMissiles()
+            {
+                ItemType type3 = ItemType.None;
+                if (Weapons.AffinityWeapons[(int)_player.Hunter] == BeamType.Missile)
+                {
+                    type3 = ItemType.AffinityWeapon;
+                }
+                return FindClosestItemOfTypeToPosition(_player.Position,
+                    ItemType.MissileSmall, ItemType.MissileBig, type3);
             }
 
             private NodeData3 FindClosestNodeToPosition(Vector3 position)
@@ -5197,7 +5425,8 @@ namespace MphRead.Entities
                 {
                     return false;
                 }
-                if (!_player.Flags1.TestFlag(PlayerFlags1.Grounded) && _node40?.NodeType != NodeType.Aerial)
+                if (!_player.Flags1.TestFlag(PlayerFlags1.Grounded)
+                    && (_node40 == null || _node40.NodeType != NodeType.Aerial))
                 {
                     return false;
                 }
@@ -5429,7 +5658,7 @@ namespace MphRead.Entities
                 // same as FuncFunc2137E8C(), but only testing those for whom Func214857C() returns true
                 PlayerEntity? result = null;
                 float minDist = Single.MaxValue;
-                float dist = 0;
+                float dist = minDist;
                 int maxValue = 0;
                 Flags2 |= AiFlags2.Bit9;
                 for (int i = 0; i < _scene.Entities.Count; i++)
@@ -5522,6 +5751,427 @@ namespace MphRead.Entities
                             maxValue = value;
                             Flags2 &= ~AiFlags2.Bit9;
                         }
+                    }
+                }
+                return result;
+            }
+
+            // todo: member name
+            private HalfturretEntity? Func2137D08(Vector3 position)
+            {
+                // get opponent with primary criteria being max value from Func2148394(), then min distance as tiebreaker,
+                // with a "priority" value of 0 causing one to be discarded unless it's targeting us, in which case priority is 1
+                HalfturretEntity? result = null;
+                float minDist = 10000;
+                float dist = minDist;
+                int maxValue = 0;
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Player)
+                    {
+                        continue;
+                    }
+                    var player = (PlayerEntity)entity;
+                    if (player != _player && player.TeamIndex != _player.TeamIndex && player.Health > 0
+                        && player.Hunter == Hunter.Weavel && player.Halfturret.Health > 0)
+                    {
+                        int value = Func2148394(5, 2, 1, player, null);
+                        if (value == 0)
+                        {
+                            if (player.Halfturret.Target != _player)
+                            {
+                                continue;
+                            }
+                            value = 1;
+                        }
+                        if (value > maxValue)
+                        {
+                            result = player.Halfturret;
+                            minDist = dist; // the game might use an undefined value here
+                            maxValue = value;
+                        }
+                        else if (value == maxValue)
+                        {
+                            dist = Vector3.DistanceSquared(player.Position, position);
+                            if (dist <= minDist)
+                            {
+                                result = player.Halfturret;
+                                minDist = dist;
+                            }
+                        }
+                    }
+                }
+                return result;
+            }
+
+            private ItemSpawnEntity? FindClosestPopulatedItemSpawnToPosition(Vector3 position, bool checkNeeded = true)
+            {
+                // get item spawn, where priority is given to those whose items have spawned, then min distance is checked.
+                // if true is passed, IsItemNotNeeded() must return false, or the candidate is discarded.
+                // there are also specific checks in Func2137860() that may cause us to just return the first entity in the list,
+                // and specific checks in Func21377FC() that also cause us to discard the candidate.
+                ItemSpawnEntity? result = null;
+                float minDist = Single.MaxValue; // uninitialized in-game, but not used until after the first entity is found
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.ItemSpawn)
+                    {
+                        continue;
+                    }
+                    var itemSpawn = (ItemSpawnEntity)entity;
+                    if (result == null)
+                    {
+                        result = itemSpawn;
+                        if (Func2137860())
+                        {
+                            return result;
+                        }
+                        continue;
+                    }
+                    if ((!checkNeeded || !IsItemNotNeeded(itemSpawn.Data.ItemType))
+                        && (GameState.Mode != GameMode.PrimeHunter || GameState.PrimeHunter != _player.SlotIndex || !IsHealth(itemSpawn))
+                        && (result == null || result.Item == null || itemSpawn.Item != null)
+                        && (itemSpawn.Item == null || !Func21377FC(itemSpawn.Item)))
+                    {
+                        float dist = Vector3.DistanceSquared(itemSpawn.Position, position);
+                        if (result == null || result.Item == null && itemSpawn.Item != null || dist < minDist)
+                        {
+                            result = itemSpawn;
+                            minDist = dist;
+                        }
+                    }
+                }
+                return result;
+            }
+
+            private ItemSpawnEntity? FindClosestPopulatedItemSpawnOfTypeToPosition(Vector3 position,
+                ItemType type1, ItemType type2 = ItemType.None, ItemType type3 = ItemType.None)
+            {
+                bool IsType(ItemSpawnEntity candidate)
+                {
+                    return candidate.Data.ItemType == type1
+                        || type2 != ItemType.None && candidate.Data.ItemType == type2
+                        || type3 != ItemType.None && candidate.Data.ItemType == type3;
+                }
+
+                ItemSpawnEntity? result = null;
+                float minDist = Single.MaxValue; // uninitialized in-game, but not used until after the first entity is found
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.ItemSpawn)
+                    {
+                        continue;
+                    }
+                    var itemSpawn = (ItemSpawnEntity)entity;
+                    if (result == null)
+                    {
+                        result = itemSpawn;
+                        if (Func2137860())
+                        {
+                            return result;
+                        }
+                        continue;
+                    }
+                    if (!IsType(itemSpawn)
+                        || itemSpawn.Item != null && Func21377FC(itemSpawn.Item))
+                    {
+                        continue;
+                    }
+                    float dist = Vector3.DistanceSquared(itemSpawn.Position, position);
+                    if (result.Item == null && itemSpawn.Item != null
+                        || !IsType(result) || dist < minDist)
+                    {
+                        result = itemSpawn;
+                        minDist = dist;
+                    }
+                }
+                return result;
+            }
+
+            private ItemInstanceEntity? FindClosestItemToPosition(Vector3 position, bool checkNeeded = true)
+            {
+                ItemInstanceEntity? result = null;
+                float minDist = Single.MaxValue;
+                if (Func2137860())
+                {
+                    return result;
+                }
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.ItemInstance)
+                    {
+                        continue;
+                    }
+                    var item = (ItemInstanceEntity)entity;
+                    if ((!checkNeeded || !IsItemNotNeeded(item.ItemType))
+                        && (GameState.Mode != GameMode.PrimeHunter || GameState.PrimeHunter != _player.SlotIndex || !IsHealth(item))
+                        && item.DespawnTimer > 0
+                        && !Func21377FC(item))
+                    {
+                        float dist = Vector3.DistanceSquared(item.Position, position);
+                        if (dist < minDist)
+                        {
+                            result = item;
+                            minDist = dist;
+                        }
+                    }
+                }
+                return result;
+            }
+
+            private ItemInstanceEntity? FindClosestItemOfTypeToPosition(Vector3 position,
+                ItemType type1, ItemType type2 = ItemType.None, ItemType type3 = ItemType.None)
+            {
+                bool IsType(ItemInstanceEntity candidate)
+                {
+                    return candidate.ItemType == type1
+                        || type2 != ItemType.None && candidate.ItemType == type2
+                        || type3 != ItemType.None && candidate.ItemType == type3;
+                }
+
+                ItemInstanceEntity? result = null;
+                if (Func2137860())
+                {
+                    return result;
+                }
+                float minDist = Single.MaxValue; // uninitialized in-game, but not used until after the first entity is found
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.ItemInstance)
+                    {
+                        continue;
+                    }
+                    var item = (ItemInstanceEntity)entity;
+                    if (IsType(item) && item.DespawnTimer > 0 && !Func21377FC(item))
+                    {
+                        float dist = Vector3.DistanceSquared(item.Position, position);
+                        if (dist < minDist)
+                        {
+                            result = item;
+                            minDist = dist;
+                        }
+                    }
+                }
+                return result;
+            }
+
+            // todo: member name
+            private bool Func2137860()
+            {
+                // MP1 SANCTORUS (Data Shrine), or
+                // MP6 HEADSHOT (Head Shot) and currently carrying flag DC
+                return GameState.IsOctolithMode && (_scene.RoomId == 93 || _scene.RoomId == 99 && _octolithFlagDC?.Carrier == _player);
+            }
+
+            private bool IsItemNotNeeded(ItemType itemType)
+            {
+                if (itemType == ItemType.HealthMedium || itemType == ItemType.HealthSmall || itemType == ItemType.HealthBig)
+                {
+                    return _player.Health == _player.HealthMax;
+                }
+                if (itemType == ItemType.UASmall || itemType == ItemType.UABig)
+                {
+                    return _player._ammo[0] == _player._ammoMax[0];
+                }
+                if (itemType == ItemType.MissileSmall || itemType == ItemType.MissileBig
+                    || itemType == ItemType.AffinityWeapon && _player.Hunter == Hunter.Samus)
+                {
+                    return _player._ammo[1] == _player._ammoMax[1];
+                }
+                if (itemType == ItemType.VoltDriver || itemType == ItemType.Battlehammer || itemType == ItemType.Imperialist
+                    || itemType == ItemType.Judicator || itemType == ItemType.Magmaul || itemType == ItemType.ShockCoil
+                    || itemType == ItemType.OmegaCannon || itemType == ItemType.AffinityWeapon)
+                {
+                    int weapon = (int)itemType - 4;
+                    if (itemType == ItemType.AffinityWeapon)
+                    {
+                        weapon = (int)Weapons.AffinityWeapons[(int)_player.Hunter];
+                    }
+                    return _player.AvailableWeapons[weapon];
+                }
+                return false;
+            }
+
+            private bool IsHealth(ItemSpawnEntity itemSpawn)
+            {
+                return itemSpawn.Data.ItemType == ItemType.HealthMedium
+                    || itemSpawn.Data.ItemType == ItemType.HealthSmall
+                    || itemSpawn.Data.ItemType == ItemType.HealthBig;
+            }
+
+            private bool IsHealth(ItemInstanceEntity item)
+            {
+                return item.ItemType == ItemType.HealthMedium
+                    || item.ItemType == ItemType.HealthSmall
+                    || item.ItemType == ItemType.HealthBig;
+            }
+
+            // todo: member name
+            private bool Func21377FC(ItemInstanceEntity item)
+            {
+                // UNIT 4 ARCTERRA BASE (Arcterra Gateway)
+                return GameState.IsOctolithMode && _scene.RoomId == 117
+                    && _octolithFlagDC?.Carrier == _player && item.Owner?.Id == 53;
+            }
+
+            private NodeDefenseEntity? FindClosestNodeDefense(Vector3 position)
+            {
+                NodeDefenseEntity? result = null;
+                float minDist = Single.MaxValue;
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.NodeDefense)
+                    {
+                        continue;
+                    }
+                    var defense = (NodeDefenseEntity)entity;
+                    float dist = Vector3.DistanceSquared(defense.Position, position);
+                    if (dist < minDist)
+                    {
+                        result = defense;
+                        minDist = dist;
+                    }
+                }
+                return result;
+            }
+
+            private NodeDefenseEntity? ChooseNodeDefenseToRetake()
+            {
+                // if all nodes are held by our team, return the first node in the list.
+                // otherwise, find the opponent who has captured the most nodes, choosing randomly
+                // among any tied opponents, and randomly return one of that opponent's nodes.
+                // if no nodes are captured by opponents, randomly return a non-captured node.
+                NodeDefenseEntity? firstResult = null;
+                int[] captureList = new int[4];
+                int maxCaptureCount = 0;
+                int maxCaptureSlotIndex = 0;
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.NodeDefense)
+                    {
+                        continue;
+                    }
+                    var defense = (NodeDefenseEntity)entity;
+                    if (firstResult == null)
+                    {
+                        firstResult = defense;
+                    }
+                    if (defense.CapturedPlayer != null && defense.CapturedPlayer.TeamIndex != _player.TeamIndex)
+                    {
+                        int captureCount = ++captureList[defense.CapturedPlayer.SlotIndex];
+                        if (captureCount > maxCaptureCount)
+                        {
+                            maxCaptureSlotIndex = defense.CapturedPlayer.SlotIndex;
+                            maxCaptureCount = captureCount;
+                        }
+                    }
+                }
+                int resultCount = 0;
+                var resultList = new NodeDefenseEntity?[10];
+                if (maxCaptureCount > 0)
+                {
+                    int playerCount = 0;
+                    var playerList = new PlayerEntity?[4];
+                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    {
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type != EntityType.Player)
+                        {
+                            continue;
+                        }
+                        var player = (PlayerEntity)entity;
+                        if (player.TeamIndex != _player.TeamIndex && player.SlotIndex == maxCaptureSlotIndex)
+                        {
+                            playerList[playerCount++] = player;
+                        }
+                    }
+                    PlayerEntity? chosenPlayer = playerList[Rng.GetRandomInt2(playerCount)];
+                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    {
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type != EntityType.NodeDefense)
+                        {
+                            continue;
+                        }
+                        var defense = (NodeDefenseEntity)entity;
+                        if (resultCount < 10 && defense.CapturedPlayer == chosenPlayer)
+                        {
+                            resultList[resultCount++] = defense;
+                        }
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    {
+                        EntityBase entity = _scene.Entities[i];
+                        if (entity.Type != EntityType.NodeDefense)
+                        {
+                            continue;
+                        }
+                        var defense = (NodeDefenseEntity)entity;
+                        if (resultCount < 10 && defense.CapturedPlayer == null)
+                        {
+                            resultList[resultCount++] = defense;
+                        }
+                    }
+                }
+                if (resultCount > 0)
+                {
+                    return resultList[Rng.GetRandomInt2(resultCount)];
+                }
+                return firstResult;
+            }
+
+            private NodeDefenseEntity? FindClosestFriendlyNodeDefense()
+            {
+                NodeDefenseEntity? result = null;
+                float minDist = Single.MaxValue;
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.NodeDefense)
+                    {
+                        continue;
+                    }
+                    var defense = (NodeDefenseEntity)entity;
+                    if (defense.CapturedPlayer != null && defense.CapturedPlayer.TeamIndex == _player.TeamIndex && defense.IsOccupied)
+                    {
+                        float dist = Vector3.DistanceSquared(defense.Position, _player.Position);
+                        if (dist < minDist)
+                        {
+                            result = defense;
+                            minDist = dist;
+                        }
+                    }
+                }
+                return result;
+            }
+
+            private DoorEntity? FindClosestDoor(Vector3 position)
+            {
+                DoorEntity? result = null;
+                float minDist = Single.MaxValue;
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Door)
+                    {
+                        continue;
+                    }
+                    var defense = (DoorEntity)entity;
+                    float dist = Vector3.DistanceSquared(defense.Position, position);
+                    if (dist < minDist)
+                    {
+                        result = defense;
+                        minDist = dist;
                     }
                 }
                 return result;
@@ -5702,7 +6352,7 @@ namespace MphRead.Entities
                 public ItemSpawnEntity? Field48 { get; set; }
                 public ItemSpawnEntity? Field49 { get; set; }
                 public ItemSpawnEntity? Field50 { get; set; }
-                // 51 is unused -- maybe pick_wpn_missile or pick_wpn_all
+                public ItemSpawnEntity? Field51 { get; set; }
                 public ItemSpawnEntity? Field52 { get; set; }
                 public ItemSpawnEntity? Field53 { get; set; }
                 public ItemInstanceEntity? Field54 { get; set; }
@@ -6063,7 +6713,7 @@ namespace MphRead.Entities
         Type48 = 48,
         Type49 = 49,
         Type50 = 50,
-        // no type 51
+        Type51 = 51,
         Type52 = 52,
         Type53 = 53,
         Type54 = 54,

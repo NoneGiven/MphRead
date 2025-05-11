@@ -11,6 +11,7 @@ namespace MphRead.Entities
     {
         public PlayerEntity Owner { get; }
         private EntityBase? _target = null;
+        public EntityBase? Target => _target;
         public NodeData3? ClosestNode { get; set; } = null;
 
         private int _health = 0;
