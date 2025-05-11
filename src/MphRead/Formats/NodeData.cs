@@ -44,6 +44,7 @@ namespace MphRead.Formats
             Debug.Assert(setIndexCount == 0 || setIndexCount == 1);
             Debug.Assert(header.DataOffset == header.IndexOffset + 2);
             var types = new HashSet<uint>();
+            // track the minimum Offset1 so each data3's Offset1/Offset2 can be converted to an index
             uint min = UInt32.MaxValue;
             IReadOnlyList<ushort> setIndices = Read.DoOffsets<ushort>(bytes, header.IndexOffset, setIndexCount);
             var data = new List<IReadOnlyList<IReadOnlyList<NodeDataStruct3>>>();
@@ -64,8 +65,8 @@ namespace MphRead.Formats
                 }
                 data.Add(sub);
             }
-            int indexCount = (int)((bytes.Length - min) / 2);
-            IReadOnlyList<ushort> indices = Read.DoOffsets<ushort>(bytes, min, indexCount);
+            int valueCount = (int)((bytes.Length - min) / 2);
+            IReadOnlyList<ushort> values = Read.DoOffsets<ushort>(bytes, min, valueCount);
             var cast = new List<IReadOnlyList<IReadOnlyList<NodeData3>>>();
             foreach (IReadOnlyList<IReadOnlyList<NodeDataStruct3>> sub in data)
             {
@@ -75,15 +76,16 @@ namespace MphRead.Formats
                     var cast3s = new List<NodeData3>();
                     foreach (NodeDataStruct3 str3 in str3s)
                     {
+                        // determine an index for where the offset points in the entire list
                         int index1 = (int)((str3.Offset1 - min) / 2);
                         int index2 = (int)((str3.Offset2 - min) / 2);
-                        cast3s.Add(new NodeData3(str3, index1, index2));
+                        cast3s.Add(new NodeData3(str3, index1, index2, values));
                     }
                     newSub.Add(cast3s);
                 }
                 cast.Add(newSub);
             }
-            var nodeData = new NodeData(header, setIndices, indices, cast);
+            var nodeData = new NodeData(header, setIndices, cast);
             return nodeData;
         }
 
@@ -129,7 +131,6 @@ namespace MphRead.Formats
     {
         public NodeDataHeader Header { get; }
         public IReadOnlyList<ushort> SetIndices { get; }
-        public IReadOnlyList<ushort> DataIndices { get; }
         public IReadOnlyList<IReadOnlyList<IReadOnlyList<NodeData3>>> Data { get; }
 
         public bool Simple => Data.Count == 1 && Data[0].Count == 1;
@@ -137,24 +138,36 @@ namespace MphRead.Formats
         public bool[] SetSelector { get; } = new bool[16];
 
         public NodeData(NodeDataHeader header, IReadOnlyList<ushort> setIndices,
-            IReadOnlyList<ushort> dataIndices, IReadOnlyList<IReadOnlyList<IReadOnlyList<NodeData3>>> data)
+            IReadOnlyList<IReadOnlyList<IReadOnlyList<NodeData3>>> data)
         {
             Header = header;
             SetIndices = setIndices;
-            DataIndices = dataIndices;
             Data = data;
         }
     }
 
+    public enum NodeType : ushort
+    {
+        Navigation = 0,
+        UnknownGreen = 1,
+        Aerial = 2,
+        Vantage = 3,
+        AltForm = 4,
+        Hazard = 5
+    }
+
     public class NodeData3
     {
-        public ushort NodeType { get; }
-        public ushort Field2 { get; }
+        public NodeType NodeType { get; }
+        public ushort Id { get; }
         public uint Field4 { get; }
         public Vector3 Position { get; }
         public float MaxDistance { get; }
+        // Offset1 has no defined count, so we just include the whole list
+        // and keep indices for use as a starting point for Offset1 and Offset2
         public int Index1 { get; }
         public int Index2 { get; }
+        public IReadOnlyList<ushort> Values { get; }
 
         public Matrix4 Transform { get; }
         public Vector4 Color { get; }
@@ -169,17 +182,18 @@ namespace MphRead.Formats
             new Vector4(1, 1, 0, 1), // 5 - yellow  (hazard)
         };
 
-        public NodeData3(NodeDataStruct3 raw, int index1, int index2)
+        public NodeData3(NodeDataStruct3 raw, int index1, int index2, IReadOnlyList<ushort> values)
         {
-            NodeType = raw.NodeType;
-            Field2 = raw.Field2;
+            NodeType = (NodeType)raw.NodeType;
+            Id = raw.Id;
             Field4 = raw.Field4;
             Position = raw.Position.ToFloatVector();
-            MaxDistance = Fixed.ToFloat(raw.Field14);
+            MaxDistance = Fixed.ToFloat(raw.MaxDistance);
             Index1 = index1;
             Index2 = index2;
+            Values = values;
             Transform = Matrix4.CreateTranslation(Position);
-            Color = _nodeDataColors[NodeType];
+            Color = _nodeDataColors[raw.NodeType];
         }
     }
 
@@ -214,10 +228,11 @@ namespace MphRead.Formats
     public readonly struct NodeDataStruct3
     {
         public readonly ushort NodeType;
-        public readonly ushort Field2;
-        public readonly uint Field4;
+        public readonly ushort Id;
+        public readonly ushort Field4;
+        public readonly ushort Count2; // count for Offset2
         public readonly Vector3Fx Position;
-        public readonly int Field14;
+        public readonly int MaxDistance;
         public readonly uint Offset1;
         public readonly uint Offset2;
         public readonly uint Offset3; // always 0

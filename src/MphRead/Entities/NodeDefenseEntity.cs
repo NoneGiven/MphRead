@@ -35,7 +35,7 @@ namespace MphRead.Entities
         private readonly Material _terminalMat = null!;
         private readonly Material _ringMat = null!;
 
-        public NodeData3? EntNodeData { get; set; } = null;
+        public NodeData3? ClosestNode { get; set; } = null;
 
         public NodeDefenseEntity(NodeDefenseEntityData data, Scene scene) : base(EntityType.NodeDefense, scene)
         {

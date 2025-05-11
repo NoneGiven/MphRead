@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using MphRead.Formats;
 using OpenTK.Mathematics;
 
@@ -15,8 +16,8 @@ namespace MphRead.Entities
 
         public class PlayerAiData
         {
-            private PlayerEntity _player;
-            private Scene _scene;
+            private readonly PlayerEntity _player;
+            private readonly Scene _scene;
             private NodeData _nodeData = null!;
 
             public PlayerAiData(PlayerEntity player)
@@ -38,7 +39,16 @@ namespace MphRead.Entities
             private readonly int[] _slotHits = new int[4];
             private readonly int[] _slotDamage = new int[4];
 
+            // todo: member names
             private NodeData3? _node40 = null;
+            private readonly NodeData3?[] _field4C = new NodeData3?[11];
+            private ushort _field78 = 0;
+            private readonly ushort[] _field7A = new ushort[10]; // sktodo-ai: confirm this should be 10 and not 11 like field4C
+
+            // todo: member names
+            private PlayerEntity? _targetPlayer = null;
+            private HalfturretEntity? _halfturret1C = null;
+            private ItemSpawnEntity? _itemSpawnC4 = null;
             private ItemInstanceEntity? _itemC8 = null;
             private OctolithFlagEntity? _octolithFlagCC = null;
             private FlagBaseEntity? _flagBaseD0 = null;
@@ -46,6 +56,7 @@ namespace MphRead.Entities
             private FlagBaseEntity? _flagBaseD8 = null;
             private OctolithFlagEntity? _octolithFlagDC = null;
             private FlagBaseEntity? _flagBaseE0 = null;
+            private NodeDefenseEntity? _defenseE4 = null;
 
             private int _nodeDataSetIndex = 0;
             private byte _nodeDataSelOff = 0;
@@ -59,7 +70,9 @@ namespace MphRead.Entities
             private int _field116 = 0; // timer?
             private int _field1020 = 0; // timer?
             private NodeData3? _field44 = null;
+            private Vector3 _fieldB8 = Vector3.Zero;
             private Vector3 _field1038 = Vector3.Zero;
+            private int _field30 = 0; // don't think this is a timer, matched to ND3 field4
 
             public void Reset()
             {
@@ -73,9 +86,16 @@ namespace MphRead.Entities
                 Array.Fill(_slotHits, 0);
                 Array.Fill(_slotDamage, 0);
                 _node40 = null;
+                Array.Fill(_field4C, null);
+                _field78 = 0;
+                Array.Fill(_field7A, (ushort)0);
+                _targetPlayer = null;
+                _halfturret1C = null;
+                _itemSpawnC4 = null;
                 _itemC8 = null;
                 _octolithFlagCC = _octolithFlagD4 = _octolithFlagDC = null;
                 _flagBaseD0 = _flagBaseD8 = _flagBaseE0 = null;
+                _defenseE4 = null;
                 _nodeDataSetIndex = 0;
                 _nodeList = null!;
                 Array.Fill(_nodeTypeIndex, 0);
@@ -84,7 +104,9 @@ namespace MphRead.Entities
                 _field116 = 0;
                 _field1020 = 0;
                 _field44 = null;
+                _fieldB8 = Vector3.Zero;
                 _field1038 = Vector3.Zero;
+                _field30 = 0;
                 for (int i = 0; i < _executionTree.Length; i++)
                 {
                     if (_executionTree[i] == null)
@@ -817,6 +839,25 @@ namespace MphRead.Entities
             }
 
             // todo: member name
+            private int Func2148394(int a2, int a3, int a4, PlayerEntity? player1, PlayerEntity? player2)
+            {
+                int result = 0;
+                for (int i = 0; i < _playerAggroCount; i++)
+                {
+                    AiPlayerAggro aggro = _playerAggro[i];
+                    if ((a2 == aggro.Field0A || a2 == 7)
+                        && (a3 == aggro.Field0C || a3 == 7)
+                        && (a4 == aggro.Field0D || a4 == 7)
+                        && (player1 == aggro.Player1 || a3 != 2)
+                        && (player2 == aggro.Player2 || a4 != 2))
+                    {
+                        result += aggro.Field2B;
+                    }
+                }
+                return result;
+            }
+
+            // todo: member name
             private void Func214864C(int a2, int a3, int a4, PlayerEntity? player1,
                 PlayerEntity? player2, int a7, int a8, int a9, int a10)
             {
@@ -1071,7 +1112,7 @@ namespace MphRead.Entities
                 {
                     Flags2 &= ~AiFlags2.Bit7;
                 }
-                ExecuteFuncs4(context.Func24Id);
+                ExecuteFuncs4(context);
                 if (data1.Data1.Count > 0 && depth < _maxContextDepth - 1)
                 {
                     UpdateExecutionPath(data1.Data1[0], depth + 1);
@@ -1081,7 +1122,7 @@ namespace MphRead.Entities
             private void Execute(AiContext context)
             {
                 ExecuteFuncs1(context.Data1.Data3b);
-                ExecuteFuncs2(context.Func24Id);
+                ExecuteFuncs2(context);
                 if (context.Func24Id != 0 && _player.EquipInfo.Weapon.Flags.TestFlag(WeaponFlags.CanZoom)
                     && _buttons.Select.FramesUp > 5 * 2 // todo: FPS stuff
                     && (!_player.EquipInfo.Zoomed && Flags4.TestFlag(AiFlags4.Bit2)
@@ -1425,15 +1466,15 @@ namespace MphRead.Entities
             }
 
             // todo: member name
-            private void ExecuteFuncs2(int funcId)
+            private void ExecuteFuncs2(AiContext context)
             {
-                switch (funcId)
+                switch (context.Func24Id)
                 {
                 case 0:
                 case 125:
                     break;
                 case 1:
-                    Func2_213EA10();
+                    Func2_213EA10(context);
                     break;
                 case >= 2 and <= 44:
                 case 46:
@@ -1444,49 +1485,49 @@ namespace MphRead.Entities
                 case 103:
                 case >= 106 and <= 113:
                 case >= 115 and <= 122:
-                    Func2_213EA48();
+                    Func2_213EA48(context);
                     break;
                 case 45:
-                    Func2_213DDCC();
+                    Func2_213DDCC(context);
                     break;
                 case 47:
-                    Func2_213DA88();
+                    Func2_213DA88(context);
                     break;
                 case 49:
-                    Func2_213E148();
+                    Func2_213E148(context);
                     break;
                 case 79:
-                    Func2_213E9C8();
+                    Func2_213E9C8(context);
                     break;
                 case 80:
-                    Func2_213E984();
+                    Func2_213E984(context);
                     break;
                 case 81:
-                    Func2_213E934();
+                    Func2_213E934(context);
                     break;
                 case 99:
-                    Func2_213E904();
+                    Func2_213E904(context);
                     break;
                 case 100:
-                    Func2_213E684();
+                    Func2_213E684(context);
                     break;
                 case 102:
-                    Func2_213E3C4();
+                    Func2_213E3C4(context);
                     break;
                 case 104:
-                    Func2_213E31C();
+                    Func2_213E31C(context);
                     break;
                 case 105:
-                    Func2_213E274();
+                    Func2_213E274(context);
                     break;
                 case 114:
-                    Func2_213E1CC();
+                    Func2_213E1CC(context);
                     break;
                 case 123:
-                    Func2_213D9B8();
+                    Func2_213D9B8(context);
                     break;
                 case 124:
-                    Func2_213D96C();
+                    Func2_213D96C(context);
                     break;
                 default:
                     throw new ProgramException("Invalid AI func 2.");
@@ -1715,9 +1756,9 @@ namespace MphRead.Entities
             }
 
             // todo: member name
-            private void ExecuteFuncs4(int funcId)
+            private void ExecuteFuncs4(AiContext context)
             {
-                switch (funcId)
+                switch (context.Func24Id)
                 {
                 case 0:
                 case 1:
@@ -1734,43 +1775,43 @@ namespace MphRead.Entities
                 case 103:
                 case >= 106 and <= 113:
                 case >= 115 and <= 122:
-                    Func4_21462DC();
+                    Func4_21462DC(context);
                     break;
                 case 45:
-                    Func4_2145EB0();
+                    Func4_2145EB0(context);
                     break;
                 case 79:
-                    Func4_21462AC();
+                    Func4_21462AC(context);
                     break;
                 case 80:
-                    Func4_2146284();
+                    Func4_2146284(context);
                     break;
                 case 81:
-                    Func4_21461EC();
+                    Func4_21461EC(context);
                     break;
                 case 100:
-                    Func4_214612C();
+                    Func4_214612C(context);
                     break;
                 case 102:
-                    Func4_2145F78();
+                    Func4_2145F78(context);
                     break;
                 case 104:
-                    Func4_2145F50();
+                    Func4_2145F50(context);
                     break;
                 case 105:
-                    Func4_2145F28();
+                    Func4_2145F28(context);
                     break;
                 case 114:
-                    Func4_2145F00();
+                    Func4_2145F00(context);
                     break;
                 case 123:
-                    Func4_2145E54();
+                    Func4_2145E54(context);
                     break;
                 case 124:
-                    Func4_2145E40();
+                    Func4_2145E40(context);
                     break;
                 case 125:
-                    Func4_2145E2C();
+                    Func4_2145E2C(context);
                     break;
                 default:
                     throw new ProgramException("Invalid AI func 4.");
@@ -1968,7 +2009,16 @@ namespace MphRead.Entities
 
             private void Func1_21492DC()
             {
-                // skhere
+                // note: for MP, the game finds the first player object, rather than the main player.
+                if (PlayerEntity.Main == null)
+                {
+                    Flags2 |= AiFlags2.Bit9;
+                }
+                else
+                {
+                    Flags2 &= ~AiFlags2.Bit9;
+                    Func21356C0(PlayerEntity.Main);
+                }
             }
 
             private void Func1_21492CC()
@@ -2118,7 +2168,7 @@ namespace MphRead.Entities
 
             private void Func1_2149088()
             {
-                // skhere
+                _field30 = 1;
             }
 
             private void Func1_2149034()
@@ -2138,7 +2188,7 @@ namespace MphRead.Entities
 
             private void Func1_2148ECC()
             {
-                // skhere
+                _field30++;
             }
 
             private void Func1_2148EB8()
@@ -2198,7 +2248,7 @@ namespace MphRead.Entities
 
             private void Func1_2148C98()
             {
-                // skhere
+                Flags3 |= AiFlags3.Bit4;
             }
 
             #endregion
@@ -2207,82 +2257,82 @@ namespace MphRead.Entities
             // todo: member names
             #region Funcs2
 
-            private void Func2_213EA10()
+            private void Func2_213EA10(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213EA48()
+            private void Func2_213EA48(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213DDCC()
+            private void Func2_213DDCC(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213DA88()
+            private void Func2_213DA88(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213E148()
+            private void Func2_213E148(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213E9C8()
+            private void Func2_213E9C8(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213E984()
+            private void Func2_213E984(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213E934()
+            private void Func2_213E934(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213E904()
+            private void Func2_213E904(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213E684()
+            private void Func2_213E684(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213E3C4()
+            private void Func2_213E3C4(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213E31C()
+            private void Func2_213E31C(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213E274()
+            private void Func2_213E274(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213E1CC()
+            private void Func2_213E1CC(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213D9B8()
+            private void Func2_213D9B8(AiContext context)
             {
                 // skhere
             }
 
-            private void Func2_213D96C()
+            private void Func2_213D96C(AiContext context)
             {
                 // skhere
             }
@@ -3571,72 +3621,1911 @@ namespace MphRead.Entities
             // todo: member names
             #region Funcs4
 
-            private void Func4_21462DC()
+            private void Func4_21462DC(AiContext context)
+            {
+                Func214715C(context);
+                if (context.FieldA == 31)
+                {
+                    Flags2 &= ~AiFlags2.Bit0;
+                }
+                Vector3 targetPos = Vector3.Zero;
+                Vector3 halfturretPos = Vector3.Zero;
+                if (context.Field9 == 4 || context.FieldB == 4 || context.Field9 == 41 || context.FieldC == 56
+                    || context.FieldC == 57 || context.FieldC == 59 || context.Field5 == 58)
+                {
+                    // todo: field7 doesn't appear to be updated to anything other than 0
+                    if (context.Field7 == 1)
+                    {
+                        Func2135510();
+                    }
+                    if (context.Field7 == 2)
+                    {
+                        Func21354B0();
+                    }
+                    if (Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null)
+                    {
+                        _targetPlayer.GetPosition(out targetPos);
+                        targetPos = targetPos
+                            .AddY(_targetPlayer.Flags1.TestFlag(PlayerFlags1.AltForm) ? Fixed.ToFloat(_targetPlayer.Values.AltColYPos) : 0.5f);
+                    }
+                }
+                if (Flags2.TestFlag(AiFlags2.Bit3) && _halfturret1C != null
+                    && (context.Field9 == 5 || context.FieldB == 5 || context.FieldC == 60))
+                {
+                    _halfturret1C.GetPosition(out halfturretPos);
+                }
+                // skhereA
+                if (context.Field9 == 6)
+                {
+
+                }
+            }
+
+            private void Func4_2145EB0(AiContext context)
             {
                 // skhere
             }
 
-            private void Func4_2145EB0()
+            private void Func4_21462AC(AiContext context)
             {
                 // skhere
             }
 
-            private void Func4_21462AC()
+            private void Func4_2146284(AiContext context)
             {
                 // skhere
             }
 
-            private void Func4_2146284()
+            private void Func4_21461EC(AiContext context)
             {
                 // skhere
             }
 
-            private void Func4_21461EC()
+            private void Func4_214612C(AiContext context)
             {
                 // skhere
             }
 
-            private void Func4_214612C()
+            private void Func4_2145F78(AiContext context)
             {
                 // skhere
             }
 
-            private void Func4_2145F78()
+            private void Func4_2145F50(AiContext context)
             {
                 // skhere
             }
 
-            private void Func4_2145F50()
+            private void Func4_2145F28(AiContext context)
             {
                 // skhere
             }
 
-            private void Func4_2145F28()
+            private void Func4_2145F00(AiContext context)
             {
                 // skhere
             }
 
-            private void Func4_2145F00()
+            private void Func4_2145E54(AiContext context)
             {
                 // skhere
             }
 
-            private void Func4_2145E54()
+            private void Func4_2145E40(AiContext context)
             {
                 // skhere
             }
 
-            private void Func4_2145E40()
-            {
-                // skhere
-            }
-
-            private void Func4_2145E2C()
+            private void Func4_2145E2C(AiContext context)
             {
                 // skhere
             }
 
             #endregion
+
+            // todo: member name
+            private void Func21356C0(PlayerEntity? player)
+            {
+                if (Flags2.TestFlag(AiFlags2.Bit9))
+                {
+                    Flags2 &= ~AiFlags2.Bit2;
+                }
+                else
+                {
+                    Flags2 |= AiFlags2.Bit2;
+                }
+                if (player != _targetPlayer)
+                {
+                    _targetPlayer = player;
+                    _entityRefs.Field2 = null;
+                    _entityRefs.Field17 = null;
+                    _entityRefs.Field18 = null;
+                    _entityRefs.Field29 = null;
+                }
+            }
+
+            // todo: member name
+            private void Func214715C(AiContext context)
+            {
+                context.Field4 = 0;
+                context.Field5 = 0;
+                context.Field6 = 0;
+                context.Field7 = 0;
+                context.Field8 = 0;
+                context.Field9 = 0;
+                context.FieldA = 0;
+                context.FieldB = 0;
+                context.FieldC = 0;
+                context.FieldD = 28;
+                context.FieldE = 0;
+                context.FieldF = 0;
+                switch (context.Func24Id)
+                {
+                case 2:
+                    context.FieldA = 31;
+                    context.FieldB = 4;
+                    break;
+                case 3:
+                    context.FieldA = 31;
+                    context.FieldB = 4;
+                    context.FieldD = 29;
+                    break;
+                case 4:
+                    context.FieldA = 32;
+                    context.FieldB = 4;
+                    break;
+                case 5:
+                    context.FieldA = 32;
+                    context.FieldB = 4;
+                    context.FieldE = 38;
+                    break;
+                case 6:
+                    context.FieldA = 32;
+                    context.FieldB = 3;
+                    break;
+                case 7:
+                    context.FieldA = 32;
+                    context.FieldB = 25;
+                    break;
+                case 8:
+                    context.FieldA = 32;
+                    context.FieldB = 26;
+                    break;
+                case 9:
+                    context.Field4 = 37;
+                    break;
+                case 10:
+                    context.Field4 = 37;
+                    context.FieldE = 38;
+                    break;
+                case 11:
+                    context.Field4 = 33;
+                    context.Field9 = 39;
+                    break;
+                case 12:
+                    context.Field4 = 33;
+                    context.Field9 = 39;
+                    context.FieldD = 29;
+                    break;
+                case 13:
+                    context.Field4 = 33;
+                    context.Field9 = 39;
+                    context.Field6 = 51;
+                    break;
+                case 14:
+                    context.Field4 = 33;
+                    context.Field9 = 4;
+                    break;
+                case 15:
+                    context.Field4 = 33;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    break;
+                case 16:
+                    context.Field4 = 37;
+                    context.Field9 = 4;
+                    break;
+                case 17:
+                    context.Field4 = 33;
+                    context.Field9 = 4;
+                    context.FieldE = 38;
+                    context.FieldA = 32;
+                    context.FieldB = 4;
+                    break;
+                case 18:
+                    context.Field4 = 37;
+                    context.Field9 = 4;
+                    context.FieldE = 38;
+                    break;
+                case 19:
+                    context.FieldA = 32;
+                    context.FieldB = 4;
+                    context.Field4 = 37;
+                    context.Field9 = 4;
+                    break;
+                case 20:
+                    context.Field4 = 37;
+                    context.Field9 = 4;
+                    context.Field5 = 47;
+                    break;
+                case 21:
+                    context.Field4 = 37;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    break;
+                case 22:
+                    context.Field4 = 37;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    if (_player.BotLevel > 0)
+                    {
+                        context.Field5 = 48;
+                    }
+                    break;
+                case 23:
+                    context.Field4 = 37;
+                    context.Field9 = 24;
+                    context.FieldD = 29;
+                    break;
+                case 24:
+                    context.Field4 = 37;
+                    context.Field9 = 24;
+                    context.FieldD = 29;
+                    context.FieldC = 63;
+                    context.FieldF = 69;
+                    break;
+                case 25:
+                    context.Field4 = 37;
+                    context.Field9 = 12;
+                    context.FieldD = 29;
+                    break;
+                case 26:
+                    context.Field4 = 37;
+                    context.Field9 = 12;
+                    context.Field5 = 47;
+                    context.FieldD = 29;
+                    break;
+                case 27:
+                    context.Field4 = 37;
+                    context.Field9 = 13;
+                    context.FieldD = 29;
+                    break;
+                case 28:
+                    context.Field4 = 37;
+                    context.Field9 = 12;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 66;
+                    break;
+                case 29:
+                    context.Field4 = 37;
+                    context.Field9 = 4;
+                    context.Field5 = 47;
+                    context.FieldD = 29;
+                    break;
+                case 30:
+                    context.Field4 = 37;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 64;
+                    break;
+                case 31:
+                    context.Field4 = 33;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 64;
+                    break;
+                case 32:
+                    context.Field4 = 33;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    if (_player.BotLevel > 0)
+                    {
+                        context.Field5 = 48;
+                    }
+                    context.FieldF = 64;
+                    break;
+                case 33:
+                    context.Field4 = 37;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 65;
+                    break;
+                case 34:
+                    context.Field4 = 37;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    context.FieldC = 63;
+                    context.FieldF = 65;
+                    break;
+                case 35:
+                    context.Field4 = 33;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 65;
+                    break;
+                case 36:
+                    context.Field4 = 33;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    context.FieldC = 63;
+                    context.FieldF = 65;
+                    break;
+                case 37:
+                    context.Field4 = 37;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 66;
+                    break;
+                case 38:
+                    context.Field4 = 33;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 66;
+                    break;
+                case 39:
+                    context.Field4 = 37;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 67;
+                    break;
+                case 40:
+                    context.Field4 = 33;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 67;
+                    break;
+                case 41:
+                    context.Field4 = 34;
+                    context.Field9 = 4;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 67;
+                    break;
+                case 42:
+                    context.Field4 = 37;
+                    context.Field5 = 47;
+                    context.Field9 = 24;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 65;
+                    break;
+                case 43:
+                    context.Field4 = 37;
+                    context.Field5 = 47;
+                    context.Field9 = 24;
+                    context.FieldD = 29;
+                    context.FieldC = 63;
+                    context.FieldF = 65;
+                    break;
+                case 44:
+                    context.FieldA = 31;
+                    context.FieldB = 4;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 68;
+                    break;
+                case 45:
+                    context.Field4 = 33;
+                    context.Field9 = 4;
+                    context.FieldA = 31;
+                    context.FieldB = 4;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 69;
+                    break;
+                case 48:
+                    context.FieldA = 31;
+                    context.FieldB = 4;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 70;
+                    break;
+                case 50:
+                    context.Field4 = 37;
+                    context.Field9 = 40;
+                    break;
+                case 51:
+                    context.Field4 = 37;
+                    context.Field9 = 24;
+                    break;
+                case 52:
+                    context.Field4 = 37;
+                    context.Field9 = 24;
+                    context.FieldC = 56;
+                    break;
+                case 53:
+                    context.Field4 = 37;
+                    context.Field9 = 44;
+                    break;
+                case 54:
+                    context.Field4 = 37;
+                    context.Field9 = 44;
+                    context.FieldC = 56;
+                    break;
+                case 55:
+                    context.FieldA = 32;
+                    context.FieldB = 27;
+                    context.Field4 = 37;
+                    context.Field9 = 44;
+                    _fieldB8 = new Vector3(29, 15, 0);
+                    break;
+                case 56:
+                    context.Field4 = 37;
+                    context.Field9 = 45;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 65;
+                    break;
+                case 57:
+                    context.FieldA = 32;
+                    context.FieldB = 4;
+                    context.Field4 = 37;
+                    context.Field9 = 46;
+                    break;
+                case 59:
+                    context.Field4 = 37;
+                    context.Field9 = 6;
+                    break;
+                case 60:
+                    context.Field4 = 37;
+                    context.Field9 = 6;
+                    context.FieldC = 56;
+                    break;
+                case 61:
+                    context.Field4 = 37;
+                    context.Field9 = 6;
+                    context.Field8 = 7;
+                    break;
+                case 62:
+                    context.Field4 = 37;
+                    context.Field9 = 6;
+                    context.FieldC = 56;
+                    context.Field8 = 7;
+                    break;
+                case 63:
+                    context.Field4 = 37;
+                    context.Field9 = 6;
+                    context.Field8 = 7;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 65;
+                    break;
+                case 64:
+                    context.Field4 = 37;
+                    context.Field9 = 6;
+                    context.Field8 = 8;
+                    break;
+                case 65:
+                    context.Field4 = 37;
+                    context.Field9 = 6;
+                    context.Field8 = 9;
+                    break;
+                case 66:
+                    context.Field4 = 37;
+                    context.Field9 = 6;
+                    context.Field8 = 10;
+                    break;
+                case 67:
+                    context.Field4 = 37;
+                    context.Field9 = 6;
+                    context.Field8 = 11;
+                    break;
+                case 68:
+                    context.Field4 = 37;
+                    context.Field9 = 14;
+                    break;
+                case 69:
+                    context.Field4 = 37;
+                    context.Field9 = 14;
+                    context.FieldC = 56;
+                    break;
+                case 70:
+                    context.Field4 = 37;
+                    context.Field9 = 15;
+                    break;
+                case 71:
+                    context.Field4 = 37;
+                    context.Field9 = 15;
+                    context.FieldC = 56;
+                    break;
+                case 72:
+                    context.Field4 = 37;
+                    context.Field9 = 16;
+                    break;
+                case 73:
+                    context.Field4 = 37;
+                    context.Field9 = 16;
+                    context.FieldC = 56;
+                    break;
+                case 74:
+                    context.Field4 = 37;
+                    context.Field9 = 16;
+                    context.FieldC = 56;
+                    context.Field6 = 52;
+                    break;
+                case 75:
+                    context.Field4 = 37;
+                    context.Field9 = 16;
+                    context.FieldA = 32;
+                    context.FieldB = 4;
+                    break;
+                case 76:
+                    context.Field4 = 37;
+                    context.Field9 = 23;
+                    break;
+                case 77:
+                    context.Field4 = 37;
+                    context.Field9 = 23;
+                    context.FieldC = 56;
+                    break;
+                case 78:
+                    context.Field4 = 33;
+                    context.Field9 = 23;
+                    break;
+                case 82:
+                    context.Field4 = 33;
+                    context.Field9 = 6;
+                    break;
+                case 83:
+                    context.Field4 = 33;
+                    context.Field9 = 6;
+                    context.FieldC = 56;
+                    break;
+                case 84:
+                    context.Field4 = 33;
+                    context.Field9 = 6;
+                    context.Field8 = 7;
+                    break;
+                case 85:
+                    context.Field4 = 33;
+                    context.Field9 = 6;
+                    context.Field8 = 7;
+                    context.FieldD = 29;
+                    context.FieldC = 62;
+                    context.FieldF = 65;
+                    break;
+                case 86:
+                    context.Field4 = 33;
+                    context.Field9 = 6;
+                    context.Field8 = 8;
+                    break;
+                case 87:
+                    context.Field4 = 33;
+                    context.Field9 = 6;
+                    context.Field8 = 9;
+                    break;
+                case 88:
+                    context.Field4 = 33;
+                    context.Field9 = 6;
+                    context.Field8 = 10;
+                    break;
+                case 89:
+                    context.Field4 = 33;
+                    context.Field9 = 6;
+                    context.Field8 = 11;
+                    break;
+                case 90:
+                    context.Field4 = 33;
+                    context.Field9 = 20;
+                    break;
+                case 91:
+                    context.Field4 = 33;
+                    context.Field9 = 17;
+                    break;
+                case 92:
+                    context.Field4 = 33;
+                    context.Field9 = 15;
+                    break;
+                case 93:
+                    context.Field4 = 33;
+                    context.Field9 = 15;
+                    context.FieldC = 56;
+                    break;
+                case 94:
+                    context.Field4 = 33;
+                    context.Field9 = 19;
+                    break;
+                case 95:
+                    context.FieldA = 32;
+                    context.FieldB = 26;
+                    break;
+                case 96:
+                    context.FieldC = 55;
+                    _fieldB8 = new Vector3(29, 15, 0);
+                    break;
+                case 97:
+                    context.FieldC = 56;
+                    break;
+                case 98:
+                    context.FieldC = 57;
+                    break;
+                case 101:
+                    context.FieldC = 59;
+                    break;
+                case 103:
+                    context.FieldC = 61;
+                    break;
+                case 106:
+                    context.Field4 = 33;
+                    context.Field9 = 4;
+                    context.FieldC = 56;
+                    break;
+                case 108:
+                    context.Field4 = 37;
+                    context.Field9 = 4;
+                    context.FieldC = 56;
+                    break;
+                case 109:
+                    context.Field4 = 37;
+                    context.Field9 = 42;
+                    context.FieldC = 56;
+                    break;
+                case 110:
+                    context.Field4 = 37;
+                    context.Field9 = 42;
+                    context.FieldC = 56;
+                    context.Field5 = 47;
+                    context.Field6 = 51;
+                    break;
+                case 112:
+                    context.Field4 = 37;
+                    context.Field5 = 47;
+                    context.Field9 = 4;
+                    context.FieldC = 56;
+                    break;
+                case 113:
+                    context.Field4 = 37;
+                    context.Field5 = 47;
+                    context.Field9 = 5;
+                    context.FieldC = 60;
+                    break;
+                case 115:
+                    context.Field4 = 37;
+                    context.Field9 = 12;
+                    break;
+                case 116:
+                    context.Field4 = 37;
+                    context.Field9 = 12;
+                    context.FieldA = 32;
+                    context.FieldB = 4;
+                    break;
+                case 117:
+                    context.Field4 = 37;
+                    context.Field9 = 12;
+                    context.FieldC = 56;
+                    break;
+                case 118:
+                    context.Field4 = 37;
+                    context.Field9 = 12;
+                    context.FieldC = 56;
+                    context.Field6 = 52;
+                    break;
+                case 119:
+                    context.Field4 = 37;
+                    context.Field9 = 6;
+                    context.FieldD = 29;
+                    break;
+                case 120:
+                    context.Field4 = 33;
+                    context.Field9 = 6;
+                    context.FieldD = 29;
+                    break;
+                case 121:
+                    context.Field4 = 33;
+                    context.Field9 = 35;
+                    break;
+                case 122:
+                    context.Field4 = 33;
+                    context.Field9 = 36;
+                    break;
+                default:
+                    break;
+                }
+                if (_player.BotLevel == 0 && context.Field5 == 47)
+                {
+                    context.Field5 = 0;
+                }
+                if (context.Field4 != 37)
+                {
+                    Flags2 &= ~AiFlags2.Bit7;
+                }
+            }
+
+            // todo: member name
+            private void Func2135510()
+            {
+                FindEntityRef(AiEntRefType.Type26);
+                Func21356C0(_entityRefs.Field26);
+            }
+
+            // todo: member name
+            private void Func21354E0()
+            {
+                FindEntityRef(AiEntRefType.Type28);
+                Func21356C0(_entityRefs.Field28);
+            }
+
+            // todo: member name
+            private void Func2135540()
+            {
+                FindEntityRef(AiEntRefType.Type27);
+                Func21356C0(_entityRefs.Field27);
+            }
+
+            // todo: member name
+            private void Func21354B0()
+            {
+                FindEntityRef(AiEntRefType.Type30);
+                Func21356C0(_entityRefs.Field30);
+            }
+
+            // todo: member name
+            private void Func2135380()
+            {
+                FindEntityRef(AiEntRefType.Type31);
+                Func21356C0(_entityRefs.Field31);
+            }
+
+            // todo: member name
+            private void Func2135480()
+            {
+                FindEntityRef(AiEntRefType.Type32);
+                Func21356C0(_entityRefs.Field32);
+            }
+
+            private void FindEntityRef(AiEntRefType type)
+            {
+                if (_entityRefs.IsPopulated((int)type))
+                {
+                    return;
+                }
+                if (type == AiEntRefType.Type0)
+                {
+                    if (_player.ClosestNode != null)
+                    {
+                        _entityRefs.Field0 = _player.ClosestNode;
+                    }
+                    else
+                    {
+                        Vector3 position = _player.Position;
+                        position = position.AddY(_player.Flags1.TestFlag(PlayerFlags1.AltForm)
+                            ? -(Fixed.ToFloat(_player.Values.AltColRadius) - Fixed.ToFloat(_player.Values.AltColYPos))
+                            : -0.5f);
+                        _entityRefs.Field0 = FindClosestNodeToPosition(position);
+                        if (_nodeData.Simple)
+                        {
+                            _player.ClosestNode = _entityRefs.Field0;
+                        }
+                    }
+                }
+                else if (type == AiEntRefType.Type1)
+                {
+                    if (Flags2.TestFlag(AiFlags2.Bit10))
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _entityRefs.Field1 = _entityRefs.Field0;
+                        return;
+                    }
+                    Vector3 position = _player.Position;
+                    position = position.AddY(_player.Flags1.TestFlag(PlayerFlags1.AltForm)
+                        ? -(Fixed.ToFloat(_player.Values.AltColRadius) - Fixed.ToFloat(_player.Values.AltColYPos))
+                        : -0.5f);
+                    _entityRefs.Field1 = Func2138D28(position);
+                }
+                else if (type == AiEntRefType.Type2)
+                {
+                    if (!Flags2.TestFlag(AiFlags2.Bit2))
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _entityRefs.Field2 = _entityRefs.Field0;
+                        return;
+                    }
+                    Debug.Assert(_targetPlayer != null);
+                    if (_targetPlayer.ClosestNode != null)
+                    {
+                        _entityRefs.Field2 = _targetPlayer.ClosestNode;
+                    }
+                    else
+                    {
+                        Vector3 position = _targetPlayer.Position;
+                        position = position.AddY(_targetPlayer.Flags1.TestFlag(PlayerFlags1.AltForm)
+                            ? -(Fixed.ToFloat(_targetPlayer.Values.AltColRadius) - Fixed.ToFloat(_targetPlayer.Values.AltColYPos))
+                            : -0.5f);
+                        _entityRefs.Field2 = FindClosestNonHazardNodeToPosition(position);
+                        if (_nodeData.Simple)
+                        {
+                            _targetPlayer.ClosestNode = _entityRefs.Field2;
+                        }
+                    }
+                }
+                else if (type == AiEntRefType.Type3)
+                {
+                    if (!Flags2.TestFlag(AiFlags2.Bit3))
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _entityRefs.Field3 = _entityRefs.Field0;
+                        return;
+                    }
+                    Debug.Assert(_halfturret1C != null);
+                    if (_halfturret1C.ClosestNode != null)
+                    {
+                        _entityRefs.Field3 = _halfturret1C.ClosestNode;
+                    }
+                    else
+                    {
+                        _entityRefs.Field3 = FindClosestNonHazardNodeToPosition(_halfturret1C.Position);
+                        if (_nodeData.Simple)
+                        {
+                            _halfturret1C.ClosestNode = _entityRefs.Field3;
+                        }
+                    }
+                }
+                else if (type == AiEntRefType.Type4)
+                {
+                    if (_itemSpawnC4 == null)
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _entityRefs.Field4 = _entityRefs.Field0;
+                        return;
+                    }
+                    // todo?: bugfix? this pattern suggests that item spawns are supposed to have their node data
+                    // set in scene setup, but they don't -- only jump pads, octoliths, bases, and defense nodes do
+                    if (_nodeData.Simple)
+                    {
+                        _entityRefs.Field4 = _itemSpawnC4.ClosestNode;
+                    }
+                    else
+                    {
+                        _entityRefs.Field4 = FindClosestNonHazardNodeToPosition(_itemSpawnC4.Position);
+                    }
+                }
+                else if (type == AiEntRefType.Type5)
+                {
+                    if (!Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _entityRefs.Field5 = _entityRefs.Field0;
+                        return;
+                    }
+                    Debug.Assert(_itemC8 != null);
+                    if (_itemC8.ClosestNode != null)
+                    {
+                        _entityRefs.Field5 = _itemC8.ClosestNode;
+                    }
+                    else
+                    {
+                        _entityRefs.Field5 = FindClosestNonHazardNodeToPosition(_itemC8.Position);
+                        if (_nodeData.Simple)
+                        {
+                            _itemC8.ClosestNode = _entityRefs.Field5;
+                        }
+                    }
+                }
+                else if (type == AiEntRefType.Type6)
+                {
+                    if (_octolithFlagCC == _octolithFlagD4)
+                    {
+                        FindEntityRef(AiEntRefType.Type9);
+                        _entityRefs.Field6 = _entityRefs.Field9;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type12);
+                        _entityRefs.Field6 = _entityRefs.Field12;
+                    }
+                }
+                else if (type == AiEntRefType.Type7)
+                {
+                    if (_octolithFlagCC == _octolithFlagD4)
+                    {
+                        FindEntityRef(AiEntRefType.Type10);
+                        _entityRefs.Field7 = _entityRefs.Field10;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type13);
+                        _entityRefs.Field7 = _entityRefs.Field13;
+                    }
+                }
+                else if (type == AiEntRefType.Type8)
+                {
+                    if (_flagBaseD0 == _flagBaseD8)
+                    {
+                        FindEntityRef(AiEntRefType.Type11);
+                        _entityRefs.Field8 = _entityRefs.Field11;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type14);
+                        _entityRefs.Field8 = _entityRefs.Field14;
+                    }
+                }
+                else if (type == AiEntRefType.Type9)
+                {
+                    Debug.Assert(_octolithFlagD4 != null);
+                    if (_octolithFlagD4.ClosestNode != null)
+                    {
+                        _entityRefs.Field9 = _octolithFlagD4.ClosestNode;
+                    }
+                    else
+                    {
+                        _entityRefs.Field9 = FindClosestNonHazardNodeToPosition(_octolithFlagD4.Position);
+                        if (_nodeData.Simple)
+                        {
+                            _octolithFlagD4.ClosestNode = _entityRefs.Field9;
+                        }
+                    }
+                }
+                else if (type == AiEntRefType.Type10)
+                {
+                    Debug.Assert(_octolithFlagD4 != null);
+                    if (_nodeData.Simple)
+                    {
+                        _entityRefs.Field10 = _octolithFlagD4.BaseClosestNode;
+                    }
+                    else
+                    {
+                        _entityRefs.Field10 = FindClosestNonHazardNodeToPosition(_octolithFlagD4.BasePosition);
+                    }
+                }
+                else if (type == AiEntRefType.Type11)
+                {
+                    Debug.Assert(_flagBaseD8 != null);
+                    if (_nodeData.Simple)
+                    {
+                        _entityRefs.Field11 = _flagBaseD8.ClosestNode;
+                    }
+                    else
+                    {
+                        _entityRefs.Field11 = FindClosestNonHazardNodeToPosition(_flagBaseD8.Position);
+                    }
+                }
+                else if (type == AiEntRefType.Type12)
+                {
+                    Debug.Assert(_octolithFlagDC != null);
+                    if (_octolithFlagDC.ClosestNode != null)
+                    {
+                        _entityRefs.Field12 = _octolithFlagDC.ClosestNode;
+                    }
+                    else
+                    {
+                        _entityRefs.Field12 = FindClosestNonHazardNodeToPosition(_octolithFlagDC.Position);
+                        if (_nodeData.Simple)
+                        {
+                            _octolithFlagDC.ClosestNode = _entityRefs.Field12;
+                        }
+                    }
+                }
+                else if (type == AiEntRefType.Type13)
+                {
+                    Debug.Assert(_octolithFlagDC != null);
+                    if (_nodeData.Simple)
+                    {
+                        _entityRefs.Field13 = _octolithFlagDC.BaseClosestNode;
+                    }
+                    else
+                    {
+                        _entityRefs.Field13 = FindClosestNonHazardNodeToPosition(_octolithFlagDC.BasePosition);
+                    }
+                }
+                else if (type == AiEntRefType.Type14)
+                {
+                    Debug.Assert(_flagBaseE0 != null);
+                    if (_nodeData.Simple)
+                    {
+                        _entityRefs.Field14 = _flagBaseE0.ClosestNode;
+                    }
+                    else
+                    {
+                        _entityRefs.Field14 = FindClosestNonHazardNodeToPosition(_flagBaseE0.Position);
+                    }
+                }
+                else if (type == AiEntRefType.Type15)
+                {
+                    if (!Flags2.TestFlag(AiFlags2.Bit5))
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _entityRefs.Field15 = _entityRefs.Field0;
+                        return;
+                    }
+                    Debug.Assert(_defenseE4 != null);
+                    if (_nodeData.Simple)
+                    {
+                        _entityRefs.Field15 = _defenseE4.ClosestNode;
+                    }
+                    else
+                    {
+                        _entityRefs.Field15 = FindClosestNonHazardNodeToPosition(_defenseE4.Position);
+                    }
+                }
+                else if (type == AiEntRefType.Type16)
+                {
+                    _entityRefs.Field16 = FindClosestNodeToPosition(_player.Position);
+                }
+                else if (type == AiEntRefType.Type17)
+                {
+                    Debug.Assert(_targetPlayer != null);
+                    _entityRefs.Field17 = FindClosestNodeToPosition(_targetPlayer.Position);
+                }
+                else if (type == AiEntRefType.Type18)
+                {
+                    Debug.Assert(_targetPlayer != null);
+                    _entityRefs.Field18 = Func21396A0(_targetPlayer.Position);
+                }
+                else if (type == AiEntRefType.Type19)
+                {
+                    _entityRefs.Field19 = FindHighestNode();
+                }
+                else if (type == AiEntRefType.Type20)
+                {
+                    _entityRefs.Field20 = FindClosestVantageNodeToPosition(_player.Position);
+                }
+                else if (type == AiEntRefType.Type21)
+                {
+                    _entityRefs.Field21 = FindClosestVantageNodeToPositionWithRange(_player.Position);
+                }
+                else if (type == AiEntRefType.Type22)
+                {
+                    _entityRefs.Field22 = FindFarthestVantageNodeFromPosition(_player.Position);
+                }
+                else if (type == AiEntRefType.Type23)
+                {
+                    _entityRefs.Field23 = GetRandomAerialNode();
+                }
+                else if (type == AiEntRefType.Type24)
+                {
+                    _entityRefs.Field24 = GetRandomNavigationNodeByField4();
+                }
+                else if (type == AiEntRefType.Type25)
+                {
+                    _entityRefs.Field25 = FindClosestNavigationNodeByField4(_player.Position);
+                }
+                else if (type == AiEntRefType.Type26)
+                {
+                    _entityRefs.Field26 = FindClosestOpponentToPosition(_player.Position);
+                }
+                else if (type == AiEntRefType.Type27)
+                {
+                    _entityRefs.Field27 = FindClosestOpponentToPosition(_player.Position, botsOnly: true);
+                }
+                else if (type == AiEntRefType.Type28)
+                {
+                    _entityRefs.Field28 = Func2138038(_player.Position);
+                }
+                else if (type == AiEntRefType.Type29)
+                {
+                    Debug.Assert(_targetPlayer != null);
+                    // should be called when the target is dead, or it would find the same player
+                    _entityRefs.Field29 = FindClosestOpponentToPosition(_targetPlayer.Position);
+                }
+                else if (type == AiEntRefType.Type30)
+                {
+                    _entityRefs.Field30 = Func2137E8C(_player.Position);
+                }
+                else if (type == AiEntRefType.Type31)
+                {
+                    _entityRefs.Field31 = Func21378C0(_player.Position);
+                }
+                else if (type == AiEntRefType.Type32)
+                {
+                    // this function doesn't have a default/fallback return, so null means nothing was found
+                    PlayerEntity? result = Func2137AA4(_player.Position);
+                    if (result != null)
+                    {
+                        _entityRefs.Field32 = result;
+                    }
+                }
+                // skhereB
+                else if (type == AiEntRefType.Type33)
+                {
+                    //_entityRefs.Field33; // halfturret
+                }
+                else if (type == AiEntRefType.Type34)
+                {
+                    //_entityRefs.Field34; // item spawn
+                }
+                else if (type == AiEntRefType.Type35)
+                {
+
+                }
+                else if (type == AiEntRefType.Type36)
+                {
+
+                }
+                else if (type == AiEntRefType.Type37)
+                {
+
+                }
+                else if (type == AiEntRefType.Type38)
+                {
+
+                }
+                else if (type == AiEntRefType.Type39)
+                {
+
+                }
+                else if (type == AiEntRefType.Type40)
+                {
+
+                }
+                else if (type == AiEntRefType.Type41)
+                {
+
+                }
+                else if (type == AiEntRefType.Type42)
+                {
+
+                }
+                else if (type == AiEntRefType.Type43)
+                {
+
+                }
+                else if (type == AiEntRefType.Type44)
+                {
+
+                }
+                else if (type == AiEntRefType.Type45)
+                {
+
+                }
+                else if (type == AiEntRefType.Type46)
+                {
+
+                }
+                else if (type == AiEntRefType.Type47)
+                {
+
+                }
+                else if (type == AiEntRefType.Type48)
+                {
+
+                }
+                else if (type == AiEntRefType.Type49)
+                {
+
+                }
+                else if (type == AiEntRefType.Type50)
+                {
+
+                }
+                else if (type == AiEntRefType.Type52)
+                {
+
+                }
+                else if (type == AiEntRefType.Type53)
+                {
+
+                }
+                else if (type == AiEntRefType.Type54)
+                {
+
+                }
+                else if (type == AiEntRefType.Type55)
+                {
+
+                }
+                else if (type == AiEntRefType.Type56)
+                {
+
+                }
+                else if (type == AiEntRefType.Type57)
+                {
+
+                }
+                else if (type == AiEntRefType.Type58)
+                {
+
+                }
+                else if (type == AiEntRefType.Type59)
+                {
+
+                }
+                else if (type == AiEntRefType.Type60)
+                {
+
+                }
+                else if (type == AiEntRefType.Type61)
+                {
+
+                }
+                else if (type == AiEntRefType.Type62)
+                {
+
+                }
+                else if (type == AiEntRefType.Type63)
+                {
+
+                }
+                else if (type == AiEntRefType.Type64)
+                {
+
+                }
+                else if (type == AiEntRefType.Type65)
+                {
+
+                }
+                else if (type == AiEntRefType.Type66)
+                {
+
+                }
+                else if (type == AiEntRefType.Type67)
+                {
+
+                }
+                else if (type == AiEntRefType.Type68)
+                {
+
+                }
+                else if (type == AiEntRefType.Type69)
+                {
+
+                }
+                else if (type == AiEntRefType.Type70)
+                {
+
+                }
+                else if (type == AiEntRefType.Type71)
+                {
+
+                }
+                else if (type == AiEntRefType.Type72)
+                {
+
+                }
+                else if (type == AiEntRefType.Type73)
+                {
+
+                }
+                else if (type == AiEntRefType.Type74)
+                {
+
+                }
+                else if (type == AiEntRefType.Type75)
+                {
+
+                }
+                else if (type == AiEntRefType.Type76)
+                {
+
+                }
+                else if (type == AiEntRefType.Type77)
+                {
+
+                }
+            }
+
+            private NodeData3 FindClosestNodeToPosition(Vector3 position)
+            {
+                Debug.Assert(_nodeList.Count > 0);
+                NodeData3 result = _nodeList[0];
+                float minDist = Vector3.DistanceSquared(result.Position, position);
+                for (int i = 1; i < _nodeList.Count; i++)
+                {
+                    NodeData3 node = _nodeList[i];
+                    float dist = Vector3.DistanceSquared(node.Position, position);
+                    if (dist < minDist)
+                    {
+                        result = node;
+                        minDist = dist;
+                    }
+                }
+                return result;
+            }
+
+            private NodeData3 FindFarthestNodeFromPosition(Vector3 position)
+            {
+                Debug.Assert(_nodeList.Count > 0);
+                NodeData3 result = _nodeList[0];
+                float maxDist = Vector3.DistanceSquared(result.Position, position);
+                for (int i = 1; i < _nodeList.Count; i++)
+                {
+                    NodeData3 node = _nodeList[i];
+                    float dist = Vector3.DistanceSquared(node.Position, position);
+                    if (dist > maxDist)
+                    {
+                        result = node;
+                        maxDist = dist;
+                    }
+                }
+                return result;
+            }
+
+            // todo: member name
+            private NodeData3 Func2138D28(Vector3 position)
+            {
+                _field4C[1] = null;
+                int v4 = 0;
+                float minDist = 100000;
+                float[] distList = new float[10];
+                for (int i = 0; i < _nodeList.Count; i++)
+                {
+                    int j = 0;
+                    for (; j < _field78; j++)
+                    {
+                        if (_field7A[j] == i)
+                        {
+                            break;
+                        }
+                    }
+                    if (j >= _field78)
+                    {
+                        NodeData3 node = _nodeList[i];
+                        float dist = Vector3.DistanceSquared(node.Position, position);
+                        if (dist < minDist)
+                        {
+                            int k = 0;
+                            for (; k < v4; k++)
+                            {
+                                if (dist < distList[k])
+                                {
+                                    break;
+                                }
+                            }
+                            for (int l = v4; l > k; l--)
+                            {
+                                _field4C[l + 1] = _field4C[l];
+                                distList[l] = distList[l - 1];
+                            }
+                            if (k < 10)
+                            {
+                                _field4C[k + 1] = node;
+                                distList[k] = dist;
+                            }
+                            minDist = distList[v4];
+                            if (v4 < 9)
+                            {
+                                v4++;
+                            }
+                        }
+                    }
+                }
+                NodeData3? result = _field4C[1];
+                if (result != null)
+                {
+                    Flags2 |= AiFlags2.Bit10;
+                    Func214B810(v4);
+                    return result;
+                }
+                return FindClosestNonHazardNodeToPosition(position);
+            }
+
+            // todo: member name
+            private void Func214B810(int v4)
+            {
+                Debug.Assert(_field4C != null);
+                for (int i = 0; i < _globalField2; i++)
+                {
+                    AiGlobals obj = _globalObjs[i];
+                    if (obj.Player == _player)
+                    {
+                        obj.Field4 = v4;
+                        obj.NodeData = _field4C!;
+                        obj.NodeDataIndex = 1;
+                        return;
+                    }
+                }
+                Debug.Assert(_globalField2 < _globalObjs.Length);
+                AiGlobals nextObj = _globalObjs[_globalField2];
+                nextObj.Player = _player;
+                nextObj.Field4 = v4;
+                nextObj.NodeData = _field4C!;
+                nextObj.NodeDataIndex = 1;
+                _globalField2++;
+            }
+
+            private NodeData3 FindClosestNonHazardNodeToPosition(Vector3 position)
+            {
+                Debug.Assert(_nodeList.Count > 0);
+                NodeData3 result = _nodeList[0];
+                float minDist = Vector3.DistanceSquared(result.Position, position);
+                for (int i = 1; i < _nodeList.Count; i++)
+                {
+                    NodeData3 node = _nodeList[i];
+                    if (node.NodeType != NodeType.Hazard)
+                    {
+                        float dist = Vector3.DistanceSquared(node.Position, position);
+                        if (dist < minDist || result.NodeType == NodeType.Hazard)
+                        {
+                            result = node;
+                            minDist = dist;
+                        }
+                    }
+                }
+                return result;
+            }
+
+            // todo: member name
+            private int Func213A0A4(NodeData3? head, NodeData3?[] nodeList)
+            {
+                if (_nodeList.Count == 0 || head == null)
+                {
+                    return 0;
+                }
+                int count = 0;
+                int i = 0;
+                int index = 0;
+                while (i < _nodeList.Count)
+                {
+                    int j = 0;
+                    for (; j < count; j++)
+                    {
+                        // the ushort list contains pairs of values, at least when pointed to by ptr1
+                        // the second is an index used here, the first is an advancing/offset value used below
+                        if (nodeList[j] == _nodeList[head.Values[head.Index1 + index + 1]])
+                        {
+                            break;
+                        }
+                    }
+                    if (j == count)
+                    {
+                        NodeData3 node = _nodeList[head.Values[head.Index1 + index + 1]];
+                        if (node != head)
+                        {
+                            nodeList[count] = node;
+                            count++;
+                            if (count >= 19)
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    i += head.Values[head.Index1 + index];
+                    index += 2;
+                }
+                return count;
+            }
+
+            // todo: member name
+            private NodeData3? Func21396A0(Vector3 position)
+            {
+                var nodeList = new NodeData3[19];
+                int nodeCount = Func213A0A4(_node40, nodeList);
+                if (nodeCount == 0)
+                {
+                    return _node40;
+                }
+                NodeData3 result = nodeList[0];
+                float maxDist = (position - result.Position).LengthSquared
+                    - (_player.Position - result.Position).LengthSquared;
+                for (int i = 1; i < nodeCount; i++)
+                {
+                    NodeData3 node = nodeList[i];
+                    float dist = (position - node.Position).LengthSquared
+                        - (_player.Position - node.Position).LengthSquared;
+                    if (dist > maxDist)
+                    {
+                        result = node;
+                        maxDist = dist;
+                    }
+                }
+                return result;
+            }
+
+            private NodeData3 FindHighestNode()
+            {
+                // todo?: bugfixs? the game has a loop that looks like it should find the node with the highest Y pos,
+                // but the first item in the node list is compared in each iteration, so the comparison never succeeds
+                // --> the correct item for the iteration is returned if the comparison could succeed, which makes it look even more like a bug
+                return _nodeList[0];
+            }
+
+            private NodeData3 FindClosestVantageNodeToPosition(Vector3 position)
+            {
+                NodeData3 result = _nodeList[0];
+                float minDist = Vector3.DistanceSquared(result.Position, position);
+                for (int i = 1; i < _nodeList.Count; i++)
+                {
+                    NodeData3 node = _nodeList[i];
+                    if (node.NodeType != NodeType.Vantage && result.NodeType == NodeType.Vantage)
+                    {
+                        continue;
+                    }
+                    float dist = Vector3.DistanceSquared(node.Position, position);
+                    if (dist < minDist)
+                    {
+                        result = node;
+                        minDist = dist;
+                    }
+                }
+                return result;
+            }
+
+            private NodeData3 FindClosestVantageNodeToPositionWithRange(Vector3 position)
+            {
+                NodeData3 result = _nodeList[0];
+                float minDist = Vector3.DistanceSquared(result.Position, position);
+                bool resultInRange = IsNodeInRange(result);
+                for (int i = 1; i < _nodeList.Count; i++)
+                {
+                    NodeData3 node = _nodeList[i];
+                    // do not consider non-vantage nodes unless the current node is also non-vantage
+                    if (node.NodeType != NodeType.Vantage && result.NodeType == NodeType.Vantage)
+                    {
+                        continue;
+                    }
+                    float dist = Vector3.DistanceSquared(node.Position, position);
+                    bool nodeInRange = IsNodeInRange(node);
+                    // take the new node if any of the following:
+                    // - new node is vantage and current node is non-vantage
+                    // - new node is closer, and either both nodes are non-vantage or position is out of the new node's range
+                    // - both nodes are vantage, position is in the current node's range, and position is out of the new node's range
+                    if (result.NodeType != NodeType.Vantage && node.NodeType == NodeType.Vantage
+                        || dist < minDist && (!nodeInRange || result.NodeType != NodeType.Vantage && node.NodeType != NodeType.Vantage)
+                        || result.NodeType == NodeType.Vantage && node.NodeType == NodeType.Vantage && resultInRange && !nodeInRange)
+                    {
+                        result = node;
+                        resultInRange = nodeInRange;
+                        minDist = dist;
+                    }
+                }
+                return result;
+            }
+
+            private NodeData3 FindFarthestVantageNodeFromPosition(Vector3 position)
+            {
+                NodeData3 result = _nodeList[0];
+                float maxDist = Vector3.DistanceSquared(result.Position, position);
+                for (int i = 1; i < _nodeList.Count; i++)
+                {
+                    NodeData3 node = _nodeList[i];
+                    if (node.NodeType != NodeType.Vantage && result.NodeType == NodeType.Vantage)
+                    {
+                        continue;
+                    }
+                    float dist = Vector3.DistanceSquared(node.Position, position);
+                    if (dist > maxDist)
+                    {
+                        result = node;
+                        maxDist = dist;
+                    }
+                }
+                return result;
+            }
+
+            private bool IsNodeInRange(NodeData3 node)
+            {
+                if (_player._timeSinceJumpPad > 5 * 2 && IsJumpPadNode(node)) // todo: FPS stuff
+                {
+                    return false;
+                }
+                if (!_player.Flags1.TestFlag(PlayerFlags1.Grounded) && _node40?.NodeType != NodeType.Aerial)
+                {
+                    return false;
+                }
+                Vector3 between = node.Position - _player.Position;
+                between = between.AddY(_player.Flags1.TestFlag(PlayerFlags1.AltForm)
+                    ? Fixed.ToFloat(_player.Values.AltColRadius) - Fixed.ToFloat(_player.Values.AltColYPos)
+                    : 0.5f);
+                return between.LengthSquared < node.MaxDistance * node.MaxDistance;
+            }
+
+            private bool IsJumpPadNode(NodeData3 node)
+            {
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type == EntityType.JumpPad)
+                    {
+                        var jumpPad = (JumpPadEntity)entity;
+                        if (jumpPad.ClosestNode == node)
+                        {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            private NodeData3 GetRandomAerialNode()
+            {
+                int aerialIndex = _nodeTypeIndex[(int)NodeType.Aerial];
+                int vantageIndex = _nodeTypeIndex[(int)NodeType.Vantage];
+                if (aerialIndex == vantageIndex)
+                {
+                    // later index (vantage) is the same as earlier (aerial), so there are no aerial nodes
+                    return GetRandomNavigationNode();
+                }
+                int index = aerialIndex + (int)Rng.GetRandomInt2(vantageIndex - aerialIndex);
+                return _nodeList[index];
+            }
+
+            private NodeData3 GetRandomNavigationNode()
+            {
+                int index = (int)Rng.GetRandomInt2(_nodeTypeIndex[(int)NodeType.Navigation]);
+                return _nodeList[index];
+            }
+
+            // todo: member name
+            private NodeData3 GetRandomNavigationNodeByField4()
+            {
+                int navIndex = _nodeTypeIndex[(int)NodeType.Navigation];
+                int greenIndex = _nodeTypeIndex[(int)NodeType.UnknownGreen];
+                while (navIndex < greenIndex)
+                {
+                    NodeData3 node = _nodeList[navIndex];
+                    if (node.Field4 == _field30)
+                    {
+                        break;
+                    }
+                    navIndex++;
+                }
+                int endIndex = navIndex;
+                while (navIndex < greenIndex)
+                {
+                    NodeData3 node = _nodeList[endIndex];
+                    if (node.Field4 != _field30)
+                    {
+                        break;
+                    }
+                    endIndex++;
+                }
+                if (endIndex == navIndex)
+                {
+                    return GetRandomNavigationNode();
+                }
+                int index = navIndex + (int)Rng.GetRandomInt2(endIndex - navIndex);
+                return _nodeList[index];
+            }
+
+            // todo: member name
+            private NodeData3 FindClosestNavigationNodeByField4(Vector3 position)
+            {
+                int navIndex = _nodeTypeIndex[(int)NodeType.Navigation];
+                int greenIndex = _nodeTypeIndex[(int)NodeType.UnknownGreen];
+                if (navIndex == greenIndex)
+                {
+                    return FindClosestNonHazardNodeToPosition(position);
+                }
+                NodeData3 result = _nodeList[navIndex];
+                float minDist = Vector3.DistanceSquared(result.Position, position);
+                for (int i = navIndex + 1; i < greenIndex; i++)
+                {
+                    NodeData3 node = _nodeList[i];
+                    if (node.Field4 != _field30 && result.Field4 == _field30)
+                    {
+                        break;
+                    }
+                    float dist = Vector3.DistanceSquared(node.Position, position);
+                    if (dist < minDist
+                        || node.Field4 == _field30 && result.Field4 != _field30)
+                    {
+                        result = node;
+                        minDist = dist;
+                    }
+                }
+                return result;
+            }
+
+            private PlayerEntity FindClosestOpponentToPosition(Vector3 position, bool botsOnly = false)
+            {
+                PlayerEntity? result = null;
+                float minDist = Single.MaxValue;
+                Flags2 |= AiFlags2.Bit9;
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Player)
+                    {
+                        continue;
+                    }
+                    var player = (PlayerEntity)entity;
+                    if (result == null)
+                    {
+                        result = player;
+                        minDist = Vector3.DistanceSquared(player.Position, position);
+                    }
+                    if (player != _player && player.TeamIndex != _player.TeamIndex && player.Health > 0
+                        && (!botsOnly || player.IsBot))
+                    {
+                        float dist = Vector3.DistanceSquared(player.Position, position);
+                        if (dist <= minDist || result.Health == 0 || botsOnly && !result.IsBot)
+                        {
+                            result = player;
+                            minDist = dist;
+                            Flags2 &= ~AiFlags2.Bit9;
+                        }
+                    }
+                }
+                Debug.Assert(result != null);
+                return result;
+            }
+
+            // todo: member name
+            private PlayerEntity Func2138038(Vector3 position)
+            {
+                // same as FindClosestOpponentToPosition(), but only testing those for whom Func214857C() returns true
+                PlayerEntity? result = null;
+                float minDist = Single.MaxValue;
+                Flags2 |= AiFlags2.Bit9;
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Player)
+                    {
+                        continue;
+                    }
+                    var player = (PlayerEntity)entity;
+                    if (result == null)
+                    {
+                        result = player;
+                        minDist = Vector3.DistanceSquared(player.Position, position);
+                    }
+                    if (Func214857C(6, 1, 2, null, player)
+                        && player != _player && player.TeamIndex != _player.TeamIndex && player.Health > 0)
+                    {
+                        float dist = Vector3.DistanceSquared(player.Position, position);
+                        if (dist <= minDist || result.Health == 0)
+                        {
+                            result = player;
+                            minDist = dist;
+                            Flags2 &= ~AiFlags2.Bit9;
+                        }
+                    }
+                }
+                Debug.Assert(result != null);
+                return result;
+            }
+
+            // todo: member name
+            private PlayerEntity Func2137E8C(Vector3 position)
+            {
+                // get opponent with primary criteria being max value from Func2148394(), then min distance as tiebreaker
+                PlayerEntity? result = null;
+                float minDist = Single.MaxValue;
+                float dist = 0;
+                int maxValue = 0;
+                Flags2 |= AiFlags2.Bit9;
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Player)
+                    {
+                        continue;
+                    }
+                    var player = (PlayerEntity)entity;
+                    if (result == null)
+                    {
+                        result = player;
+                        minDist = Vector3.DistanceSquared(player.Position, position);
+                    }
+                    if (player != _player && player.TeamIndex != _player.TeamIndex && player.Health > 0)
+                    {
+                        int value = Func2148394(7, 2, 1, player, null);
+                        if (value > maxValue)
+                        {
+                            result = player;
+                            minDist = dist; // the game might use an undefined value here
+                            maxValue = value;
+                            Flags2 &= ~AiFlags2.Bit9;
+                        }
+                        else if (value == maxValue)
+                        {
+                            dist = Vector3.DistanceSquared(player.Position, position);
+                            if (dist <= minDist || result.Health == 0)
+                            {
+                                result = player;
+                                minDist = dist;
+                                Flags2 &= ~AiFlags2.Bit9;
+                            }
+                        }
+                    }
+                }
+                Debug.Assert(result != null);
+                return result;
+            }
+
+            // todo: member name
+            private PlayerEntity Func21378C0(Vector3 position)
+            {
+                // same as FuncFunc2137E8C(), but only testing those for whom Func214857C() returns true
+                PlayerEntity? result = null;
+                float minDist = Single.MaxValue;
+                float dist = 0;
+                int maxValue = 0;
+                Flags2 |= AiFlags2.Bit9;
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Player)
+                    {
+                        continue;
+                    }
+                    var player = (PlayerEntity)entity;
+                    if (result == null)
+                    {
+                        result = player;
+                        minDist = Vector3.DistanceSquared(player.Position, position);
+                    }
+                    if (Func214857C(6, 1, 2, null, player)
+                        && player != _player && player.TeamIndex != _player.TeamIndex && player.Health > 0)
+                    {
+                        int value = Func2148394(7, 2, 1, player, null);
+                        if (value > maxValue)
+                        {
+                            result = player;
+                            minDist = dist; // the game might use an undefined value here
+                            maxValue = value;
+                            Flags2 &= ~AiFlags2.Bit9;
+                        }
+                        else if (value == maxValue)
+                        {
+                            dist = Vector3.DistanceSquared(player.Position, position);
+                            if (dist <= minDist || result.Health == 0)
+                            {
+                                result = player;
+                                minDist = dist;
+                                Flags2 &= ~AiFlags2.Bit9;
+                            }
+                        }
+                    }
+                }
+                Debug.Assert(result != null);
+                return result;
+            }
+
+            // todo: member name
+            private PlayerEntity? Func2137AA4(Vector3 position)
+            {
+                // similar to Func21378C0(), but with additional criteria including another call to Func2148394()
+                // for teammates only, and something to do with the target's freeze timer apparently, and no default
+                PlayerEntity? result = null;
+                bool v4 = false;
+                int maxValue = -50000;
+                Flags2 |= AiFlags2.Bit9;
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.Player)
+                    {
+                        continue;
+                    }
+                    var player = (PlayerEntity)entity;
+                    bool v14 = Func214857C(6, 1, 2, null, player);
+                    if ((v14 || !v4) && player != _player && player.TeamIndex != _player.TeamIndex && player.Health > 0)
+                    {
+                        int value = Func2148394(7, 2, 1, player, null);
+                        for (int j = 0; j < _scene.Entities.Count; j++)
+                        {
+                            entity = _scene.Entities[j];
+                            if (entity.Type != EntityType.Player)
+                            {
+                                continue;
+                            }
+                            var other = (PlayerEntity)entity;
+                            if (other != _player && other.TeamIndex == _player.TeamIndex && other.Health > 0)
+                            {
+                                value += Func2148394(7, 2, 2, player, other);
+                            }
+                        }
+                        int dist = (int)Vector3.DistanceSquared(player.Position, position);
+                        if (dist < 400)
+                        {
+                            value += (400 - dist) / 4;
+                        }
+                        value += 2 * player._frozenTimer / 2; // todo: FPS stuff
+                        if (value > maxValue || !v4 && v14)
+                        {
+                            if (v14)
+                            {
+                                v4 = true;
+                            }
+                            result = player;
+                            maxValue = value;
+                            Flags2 &= ~AiFlags2.Bit9;
+                        }
+                    }
+                }
+                return result;
+            }
 
             private void UpdateNodeDataSetSelection()
             {
@@ -3716,7 +5605,7 @@ namespace MphRead.Entities
                 int curType = 0;
                 for (int i = 0; i < _nodeList.Count; i++)
                 {
-                    ushort type = _nodeList[i].NodeType;
+                    ushort type = (ushort)_nodeList[i].NodeType;
                     while (curType < type)
                     {
                         _nodeTypeIndex[curType] = i;
@@ -4121,6 +6010,88 @@ namespace MphRead.Entities
         Bit3 = 8
     }
 
+    public enum AiEntRefType
+    {
+        Type0 = 0,
+        Type1 = 1,
+        Type2 = 2,
+        Type3 = 3,
+        Type4 = 4,
+        Type5 = 5,
+        Type6 = 6,
+        Type7 = 7,
+        Type8 = 8,
+        Type9 = 9,
+        Type10 = 10,
+        Type11 = 11,
+        Type12 = 12,
+        Type13 = 13,
+        Type14 = 14,
+        Type15 = 15,
+        Type16 = 16,
+        Type17 = 17,
+        Type18 = 18,
+        Type19 = 19,
+        Type20 = 20,
+        Type21 = 21,
+        Type22 = 22,
+        Type23 = 23,
+        Type24 = 24,
+        Type25 = 25,
+        Type26 = 26,
+        Type27 = 27,
+        Type28 = 28,
+        Type29 = 29,
+        Type30 = 30,
+        Type31 = 31,
+        Type32 = 32,
+        Type33 = 33,
+        Type34 = 34,
+        Type35 = 35,
+        Type36 = 36,
+        Type37 = 37,
+        Type38 = 38,
+        Type39 = 39,
+        Type40 = 40,
+        Type41 = 41,
+        Type42 = 42,
+        Type43 = 43,
+        Type44 = 44,
+        Type45 = 45,
+        Type46 = 46,
+        Type47 = 47,
+        Type48 = 48,
+        Type49 = 49,
+        Type50 = 50,
+        // no type 51
+        Type52 = 52,
+        Type53 = 53,
+        Type54 = 54,
+        Type55 = 55,
+        Type56 = 56,
+        Type57 = 57,
+        Type58 = 58,
+        Type59 = 59,
+        Type60 = 60,
+        Type61 = 61,
+        Type62 = 62,
+        Type63 = 63,
+        Type64 = 64,
+        Type65 = 65,
+        Type66 = 66,
+        Type67 = 67,
+        Type68 = 68,
+        Type69 = 69,
+        Type70 = 70,
+        Type71 = 71,
+        Type72 = 72,
+        Type73 = 73,
+        Type74 = 74,
+        Type75 = 75,
+        Type76 = 76,
+        Type77 = 77
+    }
+
     public static class ReadBotAi
     {
         // copied Kanden 0 for Samus and Guardian 0 for Guardian, but they're unused anyway
@@ -4353,6 +6324,10 @@ namespace MphRead.Entities
             foreach (int offset in offsets)
             {
                 results.Add(LoadData(offset));
+                if (offset == 33232)
+                {
+                    results[^1].PrintAll();
+                }
             }
             _ = 5;
             _ = 5;
@@ -4408,24 +6383,111 @@ namespace MphRead.Entities
             Data3a = data3a;
             Data3b = data3b;
         }
+
+        public void PrintAll()
+        {
+            int id = 0;
+            int firstId = 0;
+            int depth = 0;
+            var queue = new Queue<(AiPersonalityData1, int)>();
+            int offset = 0;
+            queue.Enqueue((this, 0));
+            while (queue.Count > 0)
+            {
+                int count = queue.Count;
+                while (count > 0)
+                {
+                    (AiPersonalityData1 node, int offs) = queue.Dequeue();
+                    PrintNode(node, id++, firstId + offs);
+                    foreach (AiPersonalityData1 child in node.Data1)
+                    {
+                        queue.Enqueue((child, offset));
+                    }
+                    offset += node.Data1.Count;
+                    count--;
+                }
+                if (queue.Count > 0)
+                {
+                    depth++;
+                    offset = 0;
+                    firstId = id;
+                    Debug.WriteLine("--------------------------------------");
+                    Debug.WriteLine("");
+                }
+            }
+            _ = 5;
+            _ = 5;
+        }
+
+        private static string GetLabel(int id)
+        {
+            string label = "Root";
+            if (--id >= 0)
+            {
+                label = "";
+                while (id >= 0)
+                {
+                    label = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[id % 26] + label;
+                    id = id / 26 - 1;
+                }
+            }
+            return label;
+        }
+
+        private static void PrintNode(AiPersonalityData1 node, int id, int firstId)
+        {
+            Debug.WriteLine(GetLabel(id));
+            string d3a = node.Data3a.Count == 0 ? "-" : String.Join(", ", node.Data3a);
+            string d3b = node.Data3b.Count == 0 ? "-" : String.Join(", ", node.Data3b);
+            string f24 = node.Func24Id == 0 ? "-" : node.Func24Id.ToString();
+            Debug.WriteLine($"Init (3a): {d3a}");
+            Debug.WriteLine($"Init (F4): {f24}");
+            Debug.WriteLine($"Proc (3b): {d3b}");
+            Debug.WriteLine($"Proc (F2): {f24}");
+            if (node.Data2.Count == 0)
+            {
+                Debug.WriteLine("Switch(x): -");
+            }
+            else
+            {
+                int pad1 = (node.Data2.Count - 1).ToString().Length;
+                int pad2 = node.Data2.Select(d => d.Func3Id).Max().ToString().Length;
+                int pad3 = node.Data2.Select(d => d.Weight).Max().ToString().Length;
+                for (int i = 0; i < node.Data2.Count; i++)
+                {
+                    AiPersonalityData2 data2 = node.Data2[i];
+                    string str1 = i.ToString().PadLeft(pad1);
+                    string str2 = data2.Func3Id.ToString().PadLeft(pad2);
+                    string str3 = data2.Weight.ToString().PadLeft(pad3);
+                    if (data2.Data4.Count > 0)
+                    {
+                        string str4 = String.Join(", ", data2.Data4.Select(d => d.Func3Id));
+                        Debug.WriteLine($"Precon({str1}): {str4}");
+                    }
+                    Debug.WriteLine($"Switch({str1}): {str2}, {str3}, " +
+                        $"s = {data2.Data1SelectIndex} ({GetLabel(data2.Data1SelectIndex + firstId)})");
+                }
+            }
+            Debug.WriteLine("");
+        }
     }
 
     public class AiPersonalityData2
     {
         public int Data1SelectIndex { get; init; }
-        public int Field10 { get; init; }
+        public int Weight { get; init; }
         public IReadOnlyList<AiPersonalityData4> Data4 { get; init; }
         public int Func3Id { get; init; }
         public AiPersonalityData5 Parameters { get; init; }
 
-        public AiPersonalityData2(int fieldC, int field10, IReadOnlyList<AiPersonalityData4> data4,
-            int data5Type, AiPersonalityData5 data5)
+        public AiPersonalityData2(int selIndex, int weight, IReadOnlyList<AiPersonalityData4> data4,
+            int fund3Id, AiPersonalityData5 param)
         {
-            Data1SelectIndex = fieldC;
-            Field10 = field10;
+            Data1SelectIndex = selIndex;
+            Weight = weight;
             Data4 = data4;
-            Func3Id = data5Type;
-            Parameters = data5;
+            Func3Id = fund3Id;
+            Parameters = param;
         }
     }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using MphRead.Effects;
+using MphRead.Formats;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
@@ -32,6 +33,7 @@ namespace MphRead.Entities
 
         public int DespawnTimer { get; set; } = -1;
         public ItemSpawnEntity? Owner { get; set; }
+        public NodeData3? ClosestNode { get; set; } = null;
 
         private static readonly IReadOnlyList<int> _scanIds = new int[22]
         {

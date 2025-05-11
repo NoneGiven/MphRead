@@ -11,6 +11,7 @@ namespace MphRead.Entities
     {
         public PlayerEntity Owner { get; }
         private EntityBase? _target = null;
+        public NodeData3? ClosestNode { get; set; } = null;
 
         private int _health = 0;
         private ushort _timeSinceDamage = UInt16.MaxValue;
@@ -289,6 +290,7 @@ namespace MphRead.Entities
                 }
                 UpdateLightSources(Position);
                 NodeRef = _scene.UpdateNodeRef(NodeRef, prevPos, Position);
+                ClosestNode = null;
             }
             // todo?: wifi stuff
             Debug.Assert(_scene.Room != null);

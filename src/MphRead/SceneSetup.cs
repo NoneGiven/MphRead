@@ -112,7 +112,7 @@ namespace MphRead
             if (nodePath != null)
             {
                 nodeData = ReadNodeData.ReadData(Paths.Combine(@"", nodePath));
-                if (nodeData.Data.Count == 1 && nodeData.Data[0].Count == 1)
+                if (nodeData.Simple)
                 {
                     for (int i = 0; i < entities.Count; i++)
                     {
@@ -120,23 +120,23 @@ namespace MphRead
                         if (entity.Type == EntityType.JumpPad)
                         {
                             var jumpPad = (JumpPadEntity)entity;
-                            jumpPad.EntNodeData = ReadNodeData.FindClosestNode(nodeData, jumpPad.Position, useMaxDist: true);
+                            jumpPad.ClosestNode = ReadNodeData.FindClosestNode(nodeData, jumpPad.Position, useMaxDist: true);
                         }
                         else if (entity.Type == EntityType.OctolithFlag)
                         {
                             var octoFlag = (OctolithFlagEntity)entity;
-                            octoFlag.EntNodeData = ReadNodeData.FindClosestNode(nodeData, octoFlag.Position);
-                            octoFlag.BaseEntNodeData = ReadNodeData.FindClosestNode(nodeData, octoFlag.BasePosition);
+                            octoFlag.ClosestNode = ReadNodeData.FindClosestNode(nodeData, octoFlag.Position);
+                            octoFlag.BaseClosestNode = ReadNodeData.FindClosestNode(nodeData, octoFlag.BasePosition);
                         }
                         else if (entity.Type == EntityType.FlagBase)
                         {
                             var flagBase = (FlagBaseEntity)entity;
-                            flagBase.EntNodeData = ReadNodeData.FindClosestNode(nodeData, flagBase.Position);
+                            flagBase.ClosestNode = ReadNodeData.FindClosestNode(nodeData, flagBase.Position);
                         }
                         else if (entity.Type == EntityType.NodeDefense)
                         {
                             var nodeDefense = (NodeDefenseEntity)entity;
-                            nodeDefense.EntNodeData = ReadNodeData.FindClosestNode(nodeData, nodeDefense.Position);
+                            nodeDefense.ClosestNode = ReadNodeData.FindClosestNode(nodeData, nodeDefense.Position);
                         }
                     }
                 }

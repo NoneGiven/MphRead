@@ -1,3 +1,4 @@
+using MphRead.Formats;
 using MphRead.Formats.Culling;
 using OpenTK.Mathematics;
 
@@ -18,6 +19,7 @@ namespace MphRead.Entities
         public new bool Active { get; set; }
         public bool AlwaysActive { get; set; }
         public ItemInstanceEntity? Item { get; set; }
+        public NodeData3? ClosestNode { get; set; } = null;
 
         // used if there is no base model
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xC8, 0x00, 0xC8).AsVector4();

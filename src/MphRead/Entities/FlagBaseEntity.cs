@@ -10,7 +10,7 @@ namespace MphRead.Entities
         private readonly CollisionVolume _volume;
         private readonly bool _capture = false;
 
-        public NodeData3? EntNodeData { get; set; } = null;
+        public NodeData3? ClosestNode { get; set; } = null;
 
         // flag base has a model in Bounty, but is invisible in Capture
         protected override Vector4? OverrideColor { get; } = new ColorRgb(15, 207, 255).AsVector4();

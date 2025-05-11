@@ -17,7 +17,7 @@ namespace MphRead.Entities
 
         private ushort _cooldownTimer = 0;
 
-        public NodeData3? EntNodeData { get; set; } = null;
+        public NodeData3? ClosestNode { get; set; } = null;
 
         public JumpPadEntity(JumpPadEntityData data, string nodeName, Scene scene)
             : base(EntityType.JumpPad, nodeName, scene)
