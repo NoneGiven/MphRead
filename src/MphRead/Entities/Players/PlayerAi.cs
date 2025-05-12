@@ -40,7 +40,10 @@ namespace MphRead.Entities
             private readonly int[] _slotDamage = new int[4];
 
             // todo: member names
+            private NodeData3? _node3C = null;
             private NodeData3? _node40 = null;
+            private NodeData3? _node44 = null;
+            private NodeData3? _node48 = null;
             private readonly NodeData3?[] _field4C = new NodeData3?[11];
             private ushort _field78 = 0;
             private readonly ushort[] _field7A = new ushort[10]; // sktodo-ai: confirm this should be 10 and not 11 like field4C
@@ -70,10 +73,13 @@ namespace MphRead.Entities
             private uint _field1030 = 0;
             private int _field116 = 0; // timer?
             private int _field1020 = 0; // timer?
-            private NodeData3? _field44 = null;
+            private Vector3 _fieldAC = Vector3.Zero;
             private Vector3 _fieldB8 = Vector3.Zero;
             private Vector3 _field1038 = Vector3.Zero;
             private int _field30 = 0; // don't think this is a timer, matched to ND3 field4
+            private int _field118 = 0; // sktood-ai: FPS stuff? not sure if this is a timer/counter
+            private Vector3 _field90 = Vector3.Zero;
+            private float _field9C = 0;
 
             public void Reset()
             {
@@ -86,7 +92,10 @@ namespace MphRead.Entities
                 Field118 = 0;
                 Array.Fill(_slotHits, 0);
                 Array.Fill(_slotDamage, 0);
+                _node3C = null;
                 _node40 = null;
+                _node44 = null;
+                _node48 = null;
                 Array.Fill(_field4C, null);
                 _field78 = 0;
                 Array.Fill(_field7A, (ushort)0);
@@ -105,10 +114,14 @@ namespace MphRead.Entities
                 _field1030 = 0;
                 _field116 = 0;
                 _field1020 = 0;
-                _field44 = null;
+                _fieldAC = Vector3.Zero;
                 _fieldB8 = Vector3.Zero;
                 _field1038 = Vector3.Zero;
                 _field30 = 0;
+                _field118 = 0;
+                _field90 = Vector3.Zero;
+                _field9C = 0;
+                _findType2 = AiFindType2.None;
                 for (int i = 0; i < _executionTree.Length; i++)
                 {
                     if (_executionTree[i] == null)
@@ -1069,9 +1082,9 @@ namespace MphRead.Entities
                 public int Field1C { get; set; }
                 public int Field20 { get; set; }
                 public int Field24 { get; set; }
-                public int Field28 { get; set; }
+                public bool Field28 { get; set; }
                 public int Field2C { get; set; }
-                public int Field30 { get; set; }
+                public bool Field30 { get; set; }
                 public Vector3 Field34 { get; set; }
                 public int Field40 { get; set; }
                 public int Field44 { get; set; }
@@ -1101,9 +1114,9 @@ namespace MphRead.Entities
                     Field1C = 0;
                     Field20 = 0;
                     Field24 = 0;
-                    Field28 = 0;
+                    Field28 = false;
                     Field2C = 0;
-                    Field30 = 0;
+                    Field30 = false;
                     Field34 = Vector3.Zero;
                     Field40 = 0;
                     Field44 = 0;
@@ -1131,7 +1144,7 @@ namespace MphRead.Entities
                 context.Func24Id = context.Data1.Func24Id;
                 context.Field10 = 0;
                 _field1020 = 0;
-                _field44 = null;
+                _node44 = null;
                 Flags4 &= ~AiFlags4.Bit3;
                 Flags2 &= ~AiFlags2.Bit10;
                 RemovePlayerFromGlobals(_player);
@@ -2292,7 +2305,7 @@ namespace MphRead.Entities
             // process counterpart to Func4_21462DC
             private void Func2_213EA48(AiContext context)
             {
-                // skhere
+                // skhereA
             }
 
             private void Func2_213DDCC(AiContext context)
@@ -3769,10 +3782,373 @@ namespace MphRead.Entities
                         _field1038 = _player.CameraInfo.Facing;
                     }
                 }
-                // skhereA
                 if (context.Field4 != 0)
                 {
-
+                    _field118 = 0;
+                    _field78 = 0;
+                    Flags2 &= ~AiFlags2.Bit15;
+                    context.Field40 = 0;
+                    context.Field44 = 0;
+                    context.Field34 = _player.Position;
+                }
+                NodeData3? v25 = null;
+                if (context.Field4 == 37 || context.Field9 == 39)
+                {
+                    bool node40Set = false;
+                    if (Flags2.TestFlag(AiFlags2.Bit7) && context.Field4 == 37)
+                    {
+                        if (_node40 == _node48)
+                        {
+                            v25 = Func213A1A8();
+                            if (v25 == _field4C[0])
+                            {
+                                _node44 = _node40;
+                                _node40 = v25;
+                                node40Set = true;
+                            }
+                        }
+                        else if (!_player.Flags1.TestFlag(PlayerFlags1.Grounded))
+                        {
+                            _node40 = _field4C[0];
+                            node40Set = true;
+                        }
+                    }
+                    if (!node40Set)
+                    {
+                        FindEntityRef(AiEntRefType.Type1);
+                        _node40 = _entityRefs.Field1;
+                    }
+                    Debug.Assert(_node40 != null);
+                    if (_node40.NodeType != NodeType.AltForm || _player.Hunter == Hunter.Guardian)
+                    {
+                        context.Field18 = 1;
+                    }
+                    else
+                    {
+                        context.Field18 = 2;
+                    }
+                }
+                if (context.Field4 == 33)
+                {
+                    if (context.Field9 == 12)
+                    {
+                        FindEntityRef(AiEntRefType.Type25);
+                        _node3C = _node40 = _entityRefs.Field25;
+                    }
+                    else if (context.Field9 == 13)
+                    {
+                        FindEntityRef(AiEntRefType.Type24);
+                        _node3C = _node40 = _entityRefs.Field25;
+                    }
+                    else if (context.Field9 == 39)
+                    {
+                        _node3C = _node40;
+                    }
+                    else if (context.Field9 != 4)
+                    {
+                        Vector3? position = null;
+                        if (context.Field9 == 5)
+                        {
+                            Debug.Assert(_halfturret1C != null);
+                            position = _halfturret1C.Position;
+                        }
+                        else if (context.Field9 == 6)
+                        {
+                            Debug.Assert(_itemC8 != null);
+                            position = _itemC8.Position.AddY(-0.5f);
+                        }
+                        else if (context.Field9 == 14)
+                        {
+                            Debug.Assert(_octolithFlagCC != null);
+                            position = _octolithFlagCC.Position;
+                        }
+                        else if (context.Field9 == 15)
+                        {
+                            Debug.Assert(_octolithFlagCC != null);
+                            position = _octolithFlagCC.BasePosition;
+                        }
+                        else if (context.Field9 == 16)
+                        {
+                            Debug.Assert(_flagBaseD0 != null);
+                            position = _flagBaseD0.Position;
+                        }
+                        else if (context.Field9 == 17)
+                        {
+                            Debug.Assert(_octolithFlagD4 != null);
+                            position = _octolithFlagD4.Position;
+                        }
+                        else if (context.Field9 == 18)
+                        {
+                            Debug.Assert(_octolithFlagD4 != null);
+                            position = _octolithFlagD4.BasePosition;
+                        }
+                        else if (context.Field9 == 19)
+                        {
+                            Debug.Assert(_flagBaseD8 != null);
+                            position = _flagBaseD8.Position;
+                        }
+                        else if (context.Field9 == 20)
+                        {
+                            Debug.Assert(_octolithFlagDC != null);
+                            position = _octolithFlagDC.Position;
+                        }
+                        else if (context.Field9 == 21)
+                        {
+                            Debug.Assert(_octolithFlagDC != null);
+                            position = _octolithFlagDC.BasePosition;
+                        }
+                        else if (context.Field9 == 22)
+                        {
+                            Debug.Assert(_flagBaseE0 != null);
+                            position = _flagBaseE0.Position;
+                        }
+                        else if (context.Field9 == 23 && Flags2.TestFlag(AiFlags2.Bit5))
+                        {
+                            Debug.Assert(_defenseE4 != null);
+                            position = _defenseE4.Position;
+                        }
+                        if (position.HasValue)
+                        {
+                            NodeData3 node = FindClosestNonHazardNodeToPosition(position.Value);
+                            if (node.NodeType == NodeType.AltForm && _player.Hunter != Hunter.Guardian
+                                && context.FieldD != 29)
+                            {
+                                context.FieldD = 29;
+                                context.FieldE = 0;
+                            }
+                        }
+                    }
+                }
+                else if (context.Field4 == 34)
+                {
+                    if (context.Field9 == 4 && Flags2.TestFlag(AiFlags2.Bit2))
+                    {
+                        Debug.Assert(_targetPlayer != null);
+                        _fieldAC = (_targetPlayer.Position - _player.Position).WithY(0);
+                    }
+                    else if (context.Field9 == 5 && Flags2.TestFlag(AiFlags2.Bit3))
+                    {
+                        Debug.Assert(_halfturret1C != null);
+                        _fieldAC = (_halfturret1C.Position - _player.Position).WithY(0);
+                    }
+                    if (_fieldAC.X != 0 || _fieldAC.Z != 0)
+                    {
+                        _fieldAC = _fieldAC.Normalized();
+                    }
+                }
+                else if (context.Field4 == 37)
+                {
+                    context.Field20 = 0;
+                    context.Field24 = 1;
+                    context.Field14 = 0;
+                    context.Field18 = 0;
+                    context.Field1C = 0;
+                    if (context.Field5 == 47)
+                    {
+                        context.Field2C = 1;
+                    }
+                    else if (context.Field5 == 48)
+                    {
+                        context.Field2C = 2;
+                    }
+                    else
+                    {
+                        context.Field2C = 0;
+                    }
+                    context.Field28 = context.FieldD == 29;
+                    context.Field30 = context.FieldA == 0
+                        && context.FieldC != 55 && context.FieldC != 56 && context.FieldC != 57
+                        && context.FieldC != 59 && context.FieldC != 60 && context.FieldC != 61;
+                    if (context.Field9 == 4 && Flags2.TestFlag(AiFlags2.Bit2))
+                    {
+                        FindEntityRef(AiEntRefType.Type2);
+                        _node3C = _entityRefs.Field2;
+                        _findType2 = AiFindType2.Type0;
+                    }
+                    else if (context.Field9 == 5 && Flags2.TestFlag(AiFlags2.Bit3))
+                    {
+                        FindEntityRef(AiEntRefType.Type3);
+                        _node3C = _entityRefs.Field3;
+                        _findType2 = AiFindType2.Type8;
+                    }
+                    else if (context.Field9 == 6 && Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                        _findType2 = context.Field8 switch
+                        {
+                            7 => AiFindType2.Type12,
+                            8 => AiFindType2.Type13,
+                            9 => AiFindType2.Type14,
+                            10 => AiFindType2.Type15,
+                            11 => AiFindType2.Type16,
+                            _ => AiFindType2.None
+                        };
+                    }
+                    else if (context.Field9 == 12)
+                    {
+                        FindEntityRef(AiEntRefType.Type25);
+                        _node3C = _entityRefs.Field25;
+                        _findType2 = AiFindType2.None;
+                    }
+                    else if (context.Field9 == 13)
+                    {
+                        FindEntityRef(AiEntRefType.Type24);
+                        _node3C = _entityRefs.Field24;
+                        _findType2 = AiFindType2.None;
+                    }
+                    else if (context.Field9 == 14)
+                    {
+                        FindEntityRef(AiEntRefType.Type6);
+                        _node3C = _entityRefs.Field6;
+                        _findType2 = AiFindType2.Type27;
+                    }
+                    else if (context.Field9 == 15)
+                    {
+                        FindEntityRef(AiEntRefType.Type7);
+                        _node3C = _entityRefs.Field7;
+                        _findType2 = AiFindType2.Type28;
+                    }
+                    else if (context.Field9 == 16)
+                    {
+                        FindEntityRef(AiEntRefType.Type8);
+                        _node3C = _entityRefs.Field8;
+                        _findType2 = AiFindType2.Type29;
+                    }
+                    else if (context.Field9 == 17)
+                    {
+                        FindEntityRef(AiEntRefType.Type9);
+                        _node3C = _entityRefs.Field9;
+                        _findType2 = AiFindType2.Type30;
+                    }
+                    else if (context.Field9 == 18)
+                    {
+                        FindEntityRef(AiEntRefType.Type10);
+                        _node3C = _entityRefs.Field10;
+                        _findType2 = AiFindType2.Type31;
+                    }
+                    else if (context.Field9 == 19)
+                    {
+                        FindEntityRef(AiEntRefType.Type11);
+                        _node3C = _entityRefs.Field11;
+                        _findType2 = AiFindType2.Type32;
+                    }
+                    else if (context.Field9 == 20)
+                    {
+                        FindEntityRef(AiEntRefType.Type12);
+                        _node3C = _entityRefs.Field12;
+                        _findType2 = AiFindType2.Type33;
+                    }
+                    else if (context.Field9 == 21)
+                    {
+                        FindEntityRef(AiEntRefType.Type13);
+                        _node3C = _entityRefs.Field13;
+                        _findType2 = AiFindType2.Type34;
+                    }
+                    else if (context.Field9 == 22)
+                    {
+                        FindEntityRef(AiEntRefType.Type14);
+                        _node3C = _entityRefs.Field14;
+                        _findType2 = AiFindType2.Type35;
+                    }
+                    else if (context.Field9 == 23)
+                    {
+                        FindEntityRef(AiEntRefType.Type15);
+                        _node3C = _entityRefs.Field15;
+                        _findType2 = AiFindType2.Type36;
+                    }
+                    else if (context.Field9 == 24)
+                    {
+                        _node3C = GetRandomNavigationNode();
+                        _findType2 = AiFindType2.None;
+                    }
+                    else if (context.Field9 == 40)
+                    {
+                        _node3C = FindHighestNode();
+                        _findType2 = AiFindType2.Type9;
+                    }
+                    else if (context.Field9 == 41 && Flags2.TestFlag(AiFlags2.Bit2))
+                    {
+                        FindEntityRef(AiEntRefType.Type17);
+                        _node3C = _entityRefs.Field17;
+                        _findType2 = AiFindType2.Type3;
+                    }
+                    else if (context.Field9 == 42 && Flags2.TestFlag(AiFlags2.Bit2))
+                    {
+                        FindEntityRef(AiEntRefType.Type18);
+                        _node3C = _entityRefs.Field18;
+                        _findType2 = AiFindType2.Type4;
+                    }
+                    else if (context.Field9 == 44)
+                    {
+                        FindEntityRef(AiEntRefType.Type23);
+                        _node3C = _entityRefs.Field23;
+                        _findType2 = AiFindType2.None;
+                    }
+                    else if (context.Field9 == 45)
+                    {
+                        FindEntityRef(AiEntRefType.Type22);
+                        _node3C = _entityRefs.Field22;
+                        _findType2 = AiFindType2.None;
+                    }
+                    else if (context.Field9 == 46)
+                    {
+                        FindEntityRef(AiEntRefType.Type21);
+                        _node3C = _entityRefs.Field21;
+                        _findType2 = AiFindType2.None;
+                    }
+                    else
+                    {
+                        if (Flags2.TestFlag(AiFlags2.Bit1))
+                        {
+                            FindQueuedEntityRef();
+                        }
+                        else
+                        {
+                            _node3C = _node40;
+                        }
+                        _findType2 = AiFindType2.None;
+                    }
+                    if (_node40 != null && IsNodeInRange(_node40))
+                    {
+                        if (v25 == null)
+                        {
+                            v25 = Func213A1A8();
+                        }
+                        bool v33 = false;
+                        for (int i = 0; i < _node40.Count2; i++)
+                        {
+                            if (_node40.Values[_node40.Index2 + i] == v25.Id)
+                            {
+                                v33 = true;
+                                break;
+                            }
+                        }
+                        if (!v33)
+                        {
+                            _node48 = _node44 = _node40;
+                            _field4C[0] = _node40 = v25;
+                            if (_node40.NodeType != NodeType.AltForm || _player.Hunter == Hunter.Guardian)
+                            {
+                                context.Field18 = 1;
+                            }
+                            else
+                            {
+                                context.Field18 = 2;
+                            }
+                            Flags2 |= AiFlags2.Bit7;
+                        }
+                    }
+                }
+                if (context.Field5 == 47)
+                {
+                    _field90 = _player.Position;
+                    _field9C = 0.5f;
+                }
+                if (context.Field6 == 51 && !_player.IsAltForm && !_player.IsMorphing
+                    && !_player.Flags1.TestFlag(PlayerFlags1.UsedJump) && _buttons.L.FramesUp > 5 * 2) // todo: FPS stuff
+                {
+                    _buttons.L.IsDown = true;
                 }
             }
 
@@ -3828,12 +4204,12 @@ namespace MphRead.Entities
 
             private void Func4_2145E40(AiContext context)
             {
-                // skhere
+                Flags3 |= AiFlags3.Bit1;
             }
 
             private void Func4_2145E2C(AiContext context)
             {
-                // skhere
+                Flags3 |= AiFlags3.Bit3;
             }
 
             #endregion
@@ -5079,6 +5455,390 @@ namespace MphRead.Entities
                 }
             }
 
+            private void FindQueuedEntityRef()
+            {
+                if (_findType2 == AiFindType2.Type0)
+                {
+                    if (!Flags2.TestFlag(AiFlags2.Bit2))
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type2);
+                        _node3C = _entityRefs.Field2;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type1)
+                {
+                    Func2135510();
+                    FindEntityRef(AiEntRefType.Type2);
+                    _node3C = _entityRefs.Field2;
+                }
+                else if (_findType2 == AiFindType2.Type2)
+                {
+                    Func21354E0();
+                    FindEntityRef(AiEntRefType.Type2);
+                    _node3C = _entityRefs.Field2;
+                }
+                else if (_findType2 == AiFindType2.Type3)
+                {
+                    Func2135510();
+                    FindEntityRef(AiEntRefType.Type17);
+                    _node3C = _entityRefs.Field17;
+                }
+                else if (_findType2 == AiFindType2.Type4)
+                {
+                    if (!Flags2.TestFlag(AiFlags2.Bit2))
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type18);
+                        _node3C = _entityRefs.Field18;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type5)
+                {
+                    Func21354B0();
+                    FindEntityRef(AiEntRefType.Type2);
+                    _node3C = _entityRefs.Field2;
+                }
+                else if (_findType2 == AiFindType2.Type6)
+                {
+                    Func2135380();
+                    FindEntityRef(AiEntRefType.Type2);
+                    _node3C = _entityRefs.Field2;
+                }
+                else if (_findType2 == AiFindType2.Type7)
+                {
+                    Func21354B0();
+                    FindEntityRef(AiEntRefType.Type17);
+                    _node3C = _entityRefs.Field17;
+                }
+                else if (_findType2 == AiFindType2.Type8)
+                {
+                    if (!Flags2.TestFlag(AiFlags2.Bit2))
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type3);
+                        _node3C = _entityRefs.Field3;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type9)
+                {
+                    FindEntityRef(AiEntRefType.Type19);
+                    _node3C = _entityRefs.Field19;
+                }
+                else if (_findType2 == AiFindType2.Type10)
+                {
+                    FindEntityRef(AiEntRefType.Type54);
+                    UpdateSeekItem(_entityRefs.Field54);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type11)
+                {
+                    FindEntityRef(AiEntRefType.Type34);
+                    if (_itemSpawnC4 != _entityRefs.Field34)
+                    {
+                        _itemSpawnC4 = _entityRefs.Field34;
+                        if (_itemSpawnC4?.Item != null)
+                        {
+                            FindEntityRef(AiEntRefType.Type4);
+                            _node3C = _entityRefs.Field4;
+                        }
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type12)
+                {
+                    FindEntityRef(AiEntRefType.Type55);
+                    UpdateSeekItem(_entityRefs.Field55);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type13)
+                {
+                    FindEntityRef(AiEntRefType.Type56);
+                    UpdateSeekItem(_entityRefs.Field56);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type14)
+                {
+                    FindEntityRef(AiEntRefType.Type57);
+                    UpdateSeekItem(_entityRefs.Field57);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type15)
+                {
+                    FindEntityRef(AiEntRefType.Type58);
+                    UpdateSeekItem(_entityRefs.Field58);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type16)
+                {
+                    FindEntityRef(AiEntRefType.Type59);
+                    UpdateSeekItem(_entityRefs.Field59);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type17)
+                {
+                    FindEntityRef(AiEntRefType.Type60);
+                    UpdateSeekItem(_entityRefs.Field60);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type18)
+                {
+                    FindEntityRef(AiEntRefType.Type61);
+                    UpdateSeekItem(_entityRefs.Field61);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type19)
+                {
+                    // note: types 19 through 26 are never called in-game (among others), which is just as well since they
+                    // incorrect pass an item spawn instead to UpdateSeekItem(). we just pass the spawner's item if there is one.
+                    FindEntityRef(AiEntRefType.Type42);
+                    UpdateSeekItem(_entityRefs.Field42?.Item);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type20)
+                {
+                    FindEntityRef(AiEntRefType.Type43);
+                    UpdateSeekItem(_entityRefs.Field43?.Item);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type21)
+                {
+                    FindEntityRef(AiEntRefType.Type44);
+                    UpdateSeekItem(_entityRefs.Field44?.Item);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type22)
+                {
+                    FindEntityRef(AiEntRefType.Type45);
+                    UpdateSeekItem(_entityRefs.Field45?.Item);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type23)
+                {
+                    FindEntityRef(AiEntRefType.Type46);
+                    UpdateSeekItem(_entityRefs.Field46?.Item);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type24)
+                {
+                    FindEntityRef(AiEntRefType.Type47);
+                    UpdateSeekItem(_entityRefs.Field47?.Item);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type25)
+                {
+                    FindEntityRef(AiEntRefType.Type48);
+                    UpdateSeekItem(_entityRefs.Field48?.Item);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type26)
+                {
+                    FindEntityRef(AiEntRefType.Type49);
+                    UpdateSeekItem(_entityRefs.Field49?.Item);
+                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    {
+                        FindEntityRef(AiEntRefType.Type5);
+                        _node3C = _entityRefs.Field5;
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node3C = _entityRefs.Field0;
+                    }
+                }
+                else if (_findType2 == AiFindType2.Type27 || _findType2 == AiFindType2.Type28)
+                {
+                    FindEntityRef(AiEntRefType.Type6);
+                    _node3C = _entityRefs.Field6;
+                }
+                else if (_findType2 == AiFindType2.Type29)
+                {
+                    FindEntityRef(AiEntRefType.Type8);
+                    _node3C = _entityRefs.Field8;
+                }
+                else if (_findType2 == AiFindType2.Type30 || _findType2 == AiFindType2.Type31)
+                {
+                    FindEntityRef(AiEntRefType.Type9);
+                    _node3C = _entityRefs.Field9;
+                }
+                else if (_findType2 == AiFindType2.Type32)
+                {
+                    FindEntityRef(AiEntRefType.Type11);
+                    _node3C = _entityRefs.Field11;
+                }
+                else if (_findType2 == AiFindType2.Type33 || _findType2 == AiFindType2.Type34)
+                {
+                    FindEntityRef(AiEntRefType.Type12);
+                    _node3C = _entityRefs.Field12;
+                }
+                else if (_findType2 == AiFindType2.Type35)
+                {
+                    FindEntityRef(AiEntRefType.Type14);
+                    _node3C = _entityRefs.Field14;
+                }
+                else if (_findType2 == AiFindType2.Type36)
+                {
+                    FindEntityRef(AiEntRefType.Type15);
+                    _node3C = _entityRefs.Field15;
+                }
+                else if (_findType2 == AiFindType2.Type37)
+                {
+                    FindEntityRef(AiEntRefType.Type20);
+                    _node3C = _entityRefs.Field20;
+                }
+                else if (_findType2 == AiFindType2.Type38)
+                {
+                    FindEntityRef(AiEntRefType.Type21);
+                    _node3C = _entityRefs.Field21;
+                }
+                else if (_findType2 == AiFindType2.Type39)
+                {
+                    FindEntityRef(AiEntRefType.Type22);
+                    _node3C = _entityRefs.Field22;
+                }
+            }
+
             private ItemSpawnEntity? FindItemSpawnForWeapon(ItemType itemType, BeamType beamType)
             {
                 ItemType type2 = ItemType.None;
@@ -5310,6 +6070,29 @@ namespace MphRead.Entities
                     index += 2;
                 }
                 return count;
+            }
+
+            // todo: member name
+            private NodeData3 Func213A1A8()
+            {
+                Debug.Assert(_node3C != null);
+                Debug.Assert(_node40 != null);
+                int index = 0;
+                int maxId = _node3C.Id;
+                int valueTotal = 0;
+                if (_node40.Values[_node40.Index1] <= maxId)
+                {
+                    int value2;
+                    do
+                    {
+                        int value = _node40.Values[_node40.Index1 + index];
+                        valueTotal += value;
+                        index += 2;
+                        value2 = valueTotal + _node40.Values[_node40.Index1 + index];
+                    }
+                    while (value2 <= maxId);
+                }
+                return _nodeList[_node40.Values[_node40.Index1 + index + 1]];
             }
 
             // todo: member name
@@ -6547,6 +7330,7 @@ namespace MphRead.Entities
                 }
             }
 
+            private AiFindType2 _findType2 = AiFindType2.None; // todo: member name
             private readonly AiEntityRefs _entityRefs = new AiEntityRefs();
 
             public void OnTakeDamage(int damage, EntityBase source, PlayerEntity? attacker)
@@ -6740,6 +7524,52 @@ namespace MphRead.Entities
         Type75 = 75,
         Type76 = 76,
         Type77 = 77
+    }
+
+    // todo: member name
+    public enum AiFindType2
+    {
+        Type0 = 0,
+        Type1 = 1,
+        Type2 = 2,
+        Type3 = 3,
+        Type4 = 4,
+        Type5 = 5,
+        Type6 = 6,
+        Type7 = 7,
+        Type8 = 8,
+        Type9 = 9,
+        Type10 = 10,
+        Type11 = 11,
+        Type12 = 12,
+        Type13 = 13,
+        Type14 = 14,
+        Type15 = 15,
+        Type16 = 16,
+        Type17 = 17,
+        Type18 = 18,
+        Type19 = 19,
+        Type20 = 20,
+        Type21 = 21,
+        Type22 = 22,
+        Type23 = 23,
+        Type24 = 24,
+        Type25 = 25,
+        Type26 = 26,
+        Type27 = 27,
+        Type28 = 28,
+        Type29 = 29,
+        Type30 = 30,
+        Type31 = 31,
+        Type32 = 32,
+        Type33 = 33,
+        Type34 = 34,
+        Type35 = 35,
+        Type36 = 36,
+        Type37 = 37,
+        Type38 = 38,
+        Type39 = 39,
+        None = 40
     }
 
     public static class ReadBotAi

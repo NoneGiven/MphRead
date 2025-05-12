@@ -161,6 +161,7 @@ namespace MphRead.Formats
         public NodeType NodeType { get; }
         public ushort Id { get; }
         public uint Field4 { get; }
+        public int Count2 { get; }
         public Vector3 Position { get; }
         public float MaxDistance { get; }
         // Offset1 has no defined count, so we just include the whole list
@@ -187,6 +188,7 @@ namespace MphRead.Formats
             NodeType = (NodeType)raw.NodeType;
             Id = raw.Id;
             Field4 = raw.Field4;
+            Count2 = raw.Count2;
             Position = raw.Position.ToFloatVector();
             MaxDistance = Fixed.ToFloat(raw.MaxDistance);
             Index1 = index1;
