@@ -76,10 +76,14 @@ namespace MphRead.Entities
             private Vector3 _fieldAC = Vector3.Zero;
             private Vector3 _fieldB8 = Vector3.Zero;
             private Vector3 _field1038 = Vector3.Zero;
+            private Vector3 _field1048 = Vector3.Zero;
+            private Vector3 _field1054 = Vector3.Zero;
             private int _field30 = 0; // don't think this is a timer, matched to ND3 field4
             private int _field118 = 0; // sktood-ai: FPS stuff? not sure if this is a timer/counter
             private Vector3 _field90 = Vector3.Zero;
             private float _field9C = 0;
+
+            private int _weapon1 = 0;
 
             public void Reset()
             {
@@ -117,11 +121,14 @@ namespace MphRead.Entities
                 _fieldAC = Vector3.Zero;
                 _fieldB8 = Vector3.Zero;
                 _field1038 = Vector3.Zero;
+                _field1048 = Vector3.Zero;
+                _field1054 = Vector3.Zero;
                 _field30 = 0;
                 _field118 = 0;
                 _field90 = Vector3.Zero;
                 _field9C = 0;
                 _findType2 = AiFindType2.None;
+                _weapon1 = 0;
                 for (int i = 0; i < _executionTree.Length; i++)
                 {
                     if (_executionTree[i] == null)
@@ -255,7 +262,7 @@ namespace MphRead.Entities
                 AiGlobals global = _globalObjs[_globalField0];
                 PlayerEntity player = global.Player;
                 NodeData3 node = global.NodeData[global.NodeDataIndex];
-                Vector3 pos1 = player.Position.AddY(player.Flags1.TestFlag(PlayerFlags1.AltForm) ? 0.5f : 1);
+                Vector3 pos1 = player.Position.AddY(player.IsAltForm ? 0.5f : 1);
                 Vector3 pos2 = node.Position.AddY(0.5f);
                 CollisionResult discard = default;
                 if (CollisionDetection.CheckBetweenPoints(pos1, pos2, TestFlags.None, scene, ref discard))
@@ -514,13 +521,13 @@ namespace MphRead.Entities
                     }
                     else if (button == _buttons.L)
                     {
-                        control = _player.Flags1.TestFlag(PlayerFlags1.AltForm)
+                        control = _player.IsAltForm
                             ? _player.Controls.AltAttack
                             : _player.Controls.Shoot;
                     }
                     else if (button == _buttons.R)
                     {
-                        control = _player.Flags1.TestFlag(PlayerFlags1.AltForm)
+                        control = _player.IsAltForm
                             ? _player.Controls.Boost
                             : _player.Controls.Jump;
                     }
@@ -746,7 +753,7 @@ namespace MphRead.Entities
                     else
                     {
                         Vector3 between = other.Position - _player.CameraInfo.Position;
-                        between = between.AddY(other.Flags1.TestFlag(PlayerFlags1.AltForm) ? Fixed.ToFloat(other.Values.AltColYPos) : 0.5f);
+                        between = between.AddY(other.IsAltForm ? Fixed.ToFloat(other.Values.AltColYPos) : 0.5f);
                         int rand = (int)(between.LengthSquared * 4096);
                         int alpha = (int)(other.CurAlpha * 31);
                         if (alpha > 2)
@@ -1170,7 +1177,7 @@ namespace MphRead.Entities
                 {
                     _buttons.Select.IsDown = true;
                 }
-                if (_player.Hunter == Hunter.Spire && !_player.Flags1.TestFlag(PlayerFlags1.AltForm))
+                if (_player.Hunter == Hunter.Spire && !_player.IsAltForm)
                 {
                     _field116 = 0;
                 }
@@ -1238,6 +1245,126 @@ namespace MphRead.Entities
                 // succeeded with the "reset" index (reset weights and return -1)
                 Array.Fill(context.Weights, 0, 0, context.Data1.Data1.Count);
                 return -1;
+            }
+
+            // todo: member name (and delete the following)
+            /*
+                 0: index 0, clearY  no, normalize  no  |  000 0 0 000 *
+                 1: index 1, clearY  no, normalize  no  |  000 0 0 001 *
+                 2: index 2, clearY  no, normalize  no  |  000 0 0 010
+                 3: index 3, clearY  no, normalize  no  |  000 0 0 011
+                 4: index 4, clearY  no, normalize  no  |  000 0 0 100
+                 5: index 5, clearY  no, normalize  no  |  000 0 0 101
+                 6: index 6, clearY  no, normalize  no  |  000 0 0 110
+                 7: index 7, clearY  no, normalize  no  |  000 0 0 111 *
+                 8: index 0, clearY yes, normalize  no  |  000 0 1 000 *
+                 9: index 1, clearY yes, normalize  no  |  000 0 1 001
+                10: index 2, clearY yes, normalize  no  |  000 0 1 010
+                11: index 3, clearY yes, normalize  no  |  000 0 1 011
+                12: index 4, clearY yes, normalize  no  |  000 0 1 100
+                13: index 5, clearY yes, normalize  no  |  000 0 1 101
+                14: index 6, clearY yes, normalize  no  |  000 0 1 110
+                15: index 7, clearY yes, normalize  no  |  000 0 1 111
+                16: index 0, clearY  no, normalize yes  |  000 1 0 000
+                17: index 1, clearY  no, normalize yes  |  000 1 0 001
+                18: index 2, clearY  no, normalize yes  |  000 1 0 010
+                19: index 3, clearY  no, normalize yes  |  000 1 0 011
+                20: index 4, clearY  no, normalize yes  |  000 1 0 100
+                21: index 5, clearY  no, normalize yes  |  000 1 0 101
+                22: index 6, clearY  no, normalize yes  |  000 1 0 110
+                23: index 7, clearY  no, normalize yes  |  000 1 0 111
+                24: index 0, clearY yes, normalize yes  |  000 1 1 000
+                25: index 1, clearY yes, normalize yes  |  000 1 1 001
+                26: index 2, clearY yes, normalize yes  |  000 1 1 010
+                27: index 3, clearY yes, normalize yes  |  000 1 1 011
+                28: index 4, clearY yes, normalize yes  |  000 1 1 100
+                29: index 5, clearY yes, normalize yes  |  000 1 1 101
+                30: index 6, clearY yes, normalize yes  |  000 1 1 110
+                31: index 7, clearY yes, normalize yes  |  000 1 1 111
+            */
+            private Vector3 ExecuteVectorFunc(int index, bool clearY, bool normalize)
+            {
+                // the game encodes all three parameters in one value, which would be useful if it came from metadata,
+                // but it never does. this is only called with a small handful of constant values, so I'm not bothering.
+                Vector3 result = index switch
+                {
+                    0 => Func213A470(),
+                    1 => Func213A458(),
+                    2 => Func213A3DC(),
+                    3 => Func213A3C0(),
+                    4 => Func213A3A8(),
+                    5 => Func213A37C(),
+                    6 => Func213A35C(),
+                    7 => Func213A31C(),
+                    _ => throw new ProgramException("Invalid AI vector func.")
+                };
+                if (clearY)
+                {
+                    result = result.WithY(0);
+                }
+                if (normalize)
+                {
+                    result = result != Vector3.Zero ? result.Normalized() : Vector3.UnitX;
+                }
+                return result;
+            }
+
+            // todo: member name
+            private Vector3 Func213A470()
+            {
+                Debug.Assert(_targetPlayer != null);
+                return _targetPlayer.Position - _player.Position;
+            }
+
+            // todo: member name
+            private Vector3 Func213A458()
+            {
+                return _player._facingVector;
+            }
+
+            // todo: member name
+            private Vector3 Func213A3DC()
+            {
+                Debug.Assert(_targetPlayer != null);
+                _targetPlayer.GetPosition(out Vector3 targetPos);
+                targetPos = targetPos.AddY(_targetPlayer.IsAltForm
+                    ? Fixed.ToFloat(_targetPlayer.Values.AltColYPos)
+                    : 0.5f);
+                return targetPos - _player._muzzlePos;
+            }
+
+            // todo: member name
+            private Vector3 Func213A3C0()
+            {
+                return _player._aimPosition - _player._muzzlePos;
+            }
+
+            // todo: member name
+            private Vector3 Func213A3A8()
+            {
+                Debug.Assert(_targetPlayer != null);
+                return _targetPlayer._facingVector;
+            }
+
+            // todo: member name
+            private Vector3 Func213A37C()
+            {
+                Debug.Assert(_node40 != null);
+                return _node40.Position - _player.Position;
+            }
+
+            // todo: member name
+            private Vector3 Func213A35C()
+            {
+                return _player.CameraInfo.Facing;
+            }
+
+            // todo: member name
+            private Vector3 Func213A31C()
+            {
+                FindEntityRef(AiEntRefType.Type26);
+                Debug.Assert(_entityRefs.Field26 != null);
+                return _entityRefs.Field26.Position - _player.Position;
             }
 
             // todo: member name
@@ -2305,6 +2432,150 @@ namespace MphRead.Entities
             // process counterpart to Func4_21462DC
             private void Func2_213EA48(AiContext context)
             {
+                if (context.FieldD == 28 && _player.IsAltForm && context.Field4 != 37)
+                {
+                    CheckUnmorph();
+                    if (context.Field4 == 33)
+                    {
+                        _field118++;
+                    }
+                }
+                else if (context.FieldD == 29 && !_player.IsAltForm && context.Field4 != 37)
+                {
+                    if (_touchButtons.Morph.FramesUp > 10 * 2) // todo: FPS stuff
+                    {
+                        _touchButtons.Morph.IsDown = true;
+                    }
+                }
+                Vector3 targetPos = Vector3.Zero;
+                if (_player.IsAltForm || context.FieldA == 31)
+                {
+                    if (_player.Values.AltFormStrafe != 0 && context.FieldA == 31)
+                    {
+                        if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.Bit2))
+                        {
+                            Debug.Assert(_targetPlayer != null);
+                            _targetPlayer.GetPosition(out targetPos);
+                            targetPos = targetPos.AddY(_targetPlayer.IsAltForm
+                                ? Fixed.ToFloat(_targetPlayer.Values.AltColYPos)
+                                : 0.5f);
+                            Func2145C14(targetPos);
+                        }
+                        else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.Bit3))
+                        {
+                            Debug.Assert(_halfturret1C != null);
+                            _halfturret1C.GetPosition(out targetPos);
+                            Func2145C14(targetPos);
+                        }
+                    }
+                }
+                else if (context.FieldA == 32)
+                {
+                    if (_player.Values.AltFormStrafe != 0 && context.FieldA == 31)
+                    {
+                        if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.Bit2))
+                        {
+                            Debug.Assert(_targetPlayer != null);
+                            _targetPlayer.GetPosition(out targetPos);
+                            targetPos = targetPos.AddY(_targetPlayer.IsAltForm
+                                ? Fixed.ToFloat(_targetPlayer.Values.AltColYPos)
+                                : 0.5f);
+                            _field1038 = targetPos - _player.CameraInfo.Position;
+                            _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
+                        }
+                        else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.Bit3))
+                        {
+                            Debug.Assert(_halfturret1C != null);
+                            _halfturret1C.GetPosition(out targetPos);
+                            _field1038 = targetPos - _player.CameraInfo.Position;
+                            _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
+                        }
+                        else if (context.FieldB == 27)
+                        {
+                            _field1038 = _fieldB8 - _player.CameraInfo.Position;
+                            _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
+                        }
+                        Func21447E8();
+                    }
+                }
+                else if (context.FieldC == 55)
+                {
+                    Func21433A0(_fieldB8);
+                }
+                else if (context.FieldC == 56)
+                {
+                    if (Flags2.TestFlag(AiFlags2.Bit2))
+                    {
+                        Func21436D8();
+                    }
+                    else if (Flags4.TestFlag(AiFlags4.Bit1))
+                    {
+                        Func214380C();
+                    }
+                }
+                else if (context.FieldC == 57)
+                {
+                    if (Flags2.TestFlag(AiFlags2.Bit2))
+                    {
+                        Func2143658();
+                    }
+                    else if (Flags4.TestFlag(AiFlags4.Bit1))
+                    {
+                        Func214380C();
+                    }
+                }
+                else if (context.FieldC == 59)
+                {
+                    if (Flags2.TestFlag(AiFlags2.Bit2))
+                    {
+                        Func21433E4();
+                    }
+                    else if (Flags4.TestFlag(AiFlags4.Bit1))
+                    {
+                        Func214380C();
+                    }
+                }
+                else if (context.FieldC == 60)
+                {
+                    if (Flags2.TestFlag(AiFlags2.Bit3))
+                    {
+                        Func2143470();
+                    }
+                    else if (Flags4.TestFlag(AiFlags4.Bit1))
+                    {
+                        Func214380C();
+                    }
+                }
+                else if (context.FieldC == 61)
+                {
+                    Debug.Assert(_doorE8 != null);
+                    _doorE8.GetPosition(out targetPos);
+                    Func21433A0(targetPos);
+                }
+                else
+                {
+                    Func2145BA0();
+                }
+                // skhereA
+                if (context.Field4 == 37)
+                {
+                    if (context.FieldD == 29)
+                    {
+
+                    }
+                    else if (context.Field5 != 58 || _player.IsAltForm)
+                    {
+
+                    }
+                    else
+                    {
+
+                    }
+                    if (context.Field6 == 52)
+                    {
+
+                    }
+                }
                 // skhereA
             }
 
@@ -3688,7 +3959,7 @@ namespace MphRead.Entities
                     {
                         _targetPlayer.GetPosition(out targetPos);
                         targetPos = targetPos
-                            .AddY(_targetPlayer.Flags1.TestFlag(PlayerFlags1.AltForm) ? Fixed.ToFloat(_targetPlayer.Values.AltColYPos) : 0.5f);
+                            .AddY(_targetPlayer.IsAltForm ? Fixed.ToFloat(_targetPlayer.Values.AltColYPos) : 0.5f);
                     }
                 }
                 if (Flags2.TestFlag(AiFlags2.Bit3) && _halfturret1C != null
@@ -4257,6 +4528,364 @@ namespace MphRead.Entities
                 {
                     _doorE8 = door;
                 }
+            }
+
+            private void CheckUnmorph()
+            {
+                if (_player.IsAltForm && _touchButtons.Unmorph.FramesUp > 10 * 2) // todo: FPS stuff
+                {
+                    _touchButtons.Unmorph.IsDown = true;
+                }
+            }
+
+            // todo: member name -- dword_214C75C, dword_214C750
+            private static readonly IReadOnlyList<float> _dotValues = [255 / 256f, 3956 / 4096f, 3849 / 4096f];
+            private static readonly IReadOnlyList<float> _aimValues = [5, 15, 20];
+
+            // todo: member name -- Func2145C14() updates X, Func21447E8() updates X and Y
+            private void Func2145C14(Vector3 position)
+            {
+                Vector3 vec1 = _player.IsAltForm
+                    ? new Vector3(_player._field80, 0, _player._field84)
+                    : new Vector3(_player._field70, 0, _player._field74);
+                Vector3 vec2 = (position - _player.Position).WithY(0);
+                if (vec2.X != 0 || vec2.Z != 0)
+                {
+                    vec2 = vec2.Normalized();
+                }
+                else
+                {
+                    vec2 = vec1;
+                }
+                float dot = Vector3.Dot(vec1, vec2);
+                if (dot > 255 / 256f)
+                {
+                    Flags2 |= AiFlags2.Bit0;
+                }
+                else
+                {
+                    Flags2 &= ~AiFlags2.Bit0;
+                }
+                if (dot < 1)
+                {
+                    if (dot > _dotValues[_player.BotLevel])
+                    {
+                        // sktodo-ai: button aim (is any value conversion needed?)
+                        _buttonAimX = MathHelper.RadiansToDegrees(MathF.Acos(dot));
+                    }
+                    else
+                    {
+                        _buttonAimX = _aimValues[_player.BotLevel];
+                    }
+                    if (Vector3.Cross(vec1, vec2).Y < 0)
+                    {
+                        _buttonAimX = -_buttonAimX;
+                    }
+                }
+            }
+
+            // todo: member name -- Func2145C14() updates X, Func21447E8() updates X and Y
+            private void Func21447E8()
+            {
+                var vec1 = new Vector3(_player.CameraInfo.Field48, 0, _player.CameraInfo.Field4C);
+                Vector3 vec2 = _field1038.X != 0 || _field1038.Z != 0 ? _field1038.WithY(0).Normalized() : vec1;
+                float dot = Vector3.Dot(vec1, vec2);
+                float value = _aimValues[_player.BotLevel];
+                if (dot < 1)
+                {
+                    if (dot > _dotValues[_player.BotLevel])
+                    {
+                        // sktodo-ai: button aim (is any value conversion needed?)
+                        _buttonAimY = MathHelper.RadiansToDegrees(MathF.Acos(dot));
+                    }
+                    else
+                    {
+                        _buttonAimX = value;
+                    }
+                    if (Vector3.Cross(vec1, vec2).Y < 0)
+                    {
+                        _buttonAimX = -_buttonAimX;
+                    }
+                }
+                float angle1 = 90 - MathHelper.RadiansToDegrees(MathF.Acos(_player.CameraInfo.Facing.Y));
+                float angle2 = 90 - MathHelper.RadiansToDegrees(MathF.Acos(_field1038.Y)) - angle1;
+                _buttonAimY = Math.Clamp(angle2, -value, value);
+            }
+
+            // todo: member name
+            private void Func21436D8()
+            {
+                if (Flags2.TestFlag(AiFlags2.Bit2))
+                {
+                    Debug.Assert(_targetPlayer != null);
+                    Func2144B88();
+                    Vector3 vec = ExecuteVectorFunc(index: 0, clearY: false, normalize: false);
+                    if (Flags2.TestFlag(AiFlags2.Bit8)
+                        && Func213842C() && (Func214BAF8(_player, _targetPlayer) || _weapon1 == 7)
+                        || vec.LengthSquared < 10)
+                    {
+                        Func2143A40();
+                    }
+                    else if (Flags4.TestFlag(AiFlags4.Bit1) || _weapon1 <= 1)
+                    {
+                        Func214380C();
+                    }
+                }
+                else if (Flags4.TestFlag(AiFlags4.Bit1))
+                {
+                    Func214380C();
+                }
+            }
+
+            // todo: member name
+            private void Func2144B88()
+            {
+                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                {
+                    return;
+                }
+                Debug.Assert(_targetPlayer != null);
+                Vector3 toTarget = _targetPlayer.Position - _player.Position;
+                float targetDist = toTarget.Length;
+                if (_field1020 == 0 || Vector3.Dot(toTarget, _player._facingVector) < 0)
+                {
+                    _targetPlayer.GetPosition(out Vector3 targetPos);
+                    int prevField1020 = _field1020;
+                    if (Flags2.TestFlag(AiFlags2.Bit21))
+                    {
+                        _field1020 = 0;
+                    }
+                    if (_player.BotLevel == 0)
+                    {
+                        _field1020 = 15;
+                    }
+                    else if (_player.BotLevel == 1)
+                    {
+                        _field1020 = 7;
+                    }
+                    else
+                    {
+                        _field1020 = 3;
+                    }
+                    // sktodo-ai: FPS stuff for field1020, based on usage
+                    ushort disruptedTimer = (ushort)(_player._disruptedTimer / 2);
+                    if (_field1020 < disruptedTimer)
+                    {
+                        _field1020 += (int)Rng.GetRandomInt2(disruptedTimer - _field1020);
+                    }
+                    int field1020Diff = _field1020 - prevField1020;
+                    if (Flags4.TestFlag(AiFlags4.Bit3) && field1020Diff > 0 && _player.BotLevel > 0)
+                    {
+                        EquipInfo equip = _player.EquipInfo;
+                        WeaponInfo weapon = equip.Weapon;
+                        bool isCharged = false;
+                        float chargePct = 0;
+                        if (weapon.Flags.TestFlag(WeaponFlags.PartialCharge))
+                        {
+                            if (weapon.Flags.TestFlag(WeaponFlags.CanCharge)
+                                && equip.ChargeLevel >= weapon.MinCharge * 2) // todo: FPS stuff
+                            {
+                                isCharged = true;
+                                chargePct = (equip.ChargeLevel - weapon.MinCharge * 2) / (float)(weapon.FullCharge * 2 - weapon.MinCharge * 2);
+                            }
+                        }
+                        else if (equip.ChargeLevel >= weapon.FullCharge * 2) // todo: FPS stuff
+                        {
+                            isCharged = true;
+                            chargePct = 1;
+                        }
+                        Vector3 vec = (targetPos - _field1054) / field1020Diff;
+                        float homing;
+                        float speed;
+                        if (isCharged)
+                        {
+                            homing = (weapon.MinChargeHoming
+                                + ((weapon.ChargedHoming - weapon.MinChargeHoming) * chargePct)) / 4096f / 2; // todo: FPS stuff
+                            speed = (weapon.MinChargeSpeed
+                                + ((weapon.ChargedSpeed - weapon.MinChargeSpeed) * chargePct)) / 4096f / 2; // todo: FPS stuff
+                        }
+                        else
+                        {
+                            homing = weapon.UnchargedHoming / 4096f / 2; // todo: FPS stuff
+                            speed = weapon.UnchargedSpeed / 4096f / 2; // todo: FPS stuff
+                        }
+                        if (homing > 0 || speed <= 0)
+                        {
+                            vec *= _field1020 / 2f;
+                        }
+                        else
+                        {
+                            Vector3 muzzleTarget = targetPos - _player._muzzlePos;
+                            float muzzleDist = muzzleTarget.Length;
+                            vec *= muzzleDist;
+                            // the game checks the third speed decay value, but the result is the same as the second
+                            ushort decay = weapon.SpeedDecayTimes[isCharged ? 1 : 0];
+                            float finalSpeed;
+                            if (decay == 0)
+                            {
+                                finalSpeed = speed;
+                            }
+                            else if (isCharged)
+                            {
+                                finalSpeed = (weapon.MinChargeFinalSpeed
+                                    + ((weapon.ChargedFinalSpeed - weapon.MinChargeFinalSpeed) * chargePct)) / 4096f / 2; // todo: FPS stuff
+                            }
+                            else
+                            {
+                                finalSpeed = weapon.UnchargedFinalSpeed / 4096f / 2; // todo: FPS stuff
+                            }
+                            vec /= finalSpeed; // sktodo-ai: FPS stuff, by usage --> leading shots
+                        }
+                        _field1048 = targetPos + vec;
+                    }
+                    else
+                    {
+                        _field1048 = targetPos;
+                    }
+                    _field1054 = targetPos;
+                    Flags4 |= AiFlags4.Bit3;
+                    _field1048 = _field1048.AddY(_targetPlayer.IsAltForm ? Fixed.ToFloat(_targetPlayer.Values.AltColYPos) : 0.5f);
+                    // sktodo-ai: FPS stuff, by usage --> speed affecting camera
+                    Vector3 speedDiff = _player.Speed - _targetPlayer.Speed;
+                    var camVec = new Vector3(_player.CameraInfo.Field50, 0, _player.CameraInfo.Field54);
+                    float dot1 = MathF.Abs(Vector3.Dot(speedDiff, camVec));
+                    float dot2 = MathF.Abs(Vector3.Dot(speedDiff, _player.CameraInfo.UpVector));
+                    float v52;
+                    float v66;
+                    if (_player.BotLevel == 0)
+                    {
+                        v52 = (dot1 * 5) + 0.25f;
+                        v66 = (dot2 * 5) + 0.25f;
+                        if (Flags4.TestFlag(AiFlags4.Bit2))
+                        {
+                            v52 += targetDist / 2;
+                            v66 += targetDist / 2;
+                        }
+                    }
+                    else if (_player.BotLevel == 1)
+                    {
+                        v52 = (dot1 * 2) + 0.1f;
+                        v66 = (dot2 * 2) + 0.1f;
+                        if (Flags4.TestFlag(AiFlags4.Bit2))
+                        {
+                            v52 += targetDist / 9;
+                            v66 += targetDist / 9;
+                        }
+                    }
+                    else
+                    {
+                        v52 = (dot1 * 0.2f) + 0.01f;
+                        v66 = (dot2 * 0.2f) + 0.01f;
+                        if (Flags4.TestFlag(AiFlags4.Bit2))
+                        {
+                            v52 += targetDist / 50;
+                            v66 += targetDist / 50;
+                        }
+                    }
+                    if (_player._disruptedTimer > 0)
+                    {
+                        v52 *= 2;
+                        v66 *= 2;
+                    }
+                    if (Flags2.TestFlag(AiFlags2.Bit21))
+                    {
+                        v52 /= 2;
+                        v66 /= 2;
+                    }
+                    if (_player.ShockCoilTimer > 10 * 2) // todo: FPS stuff
+                    {
+                        v52 /= 2;
+                        v66 /= 2;
+                    }
+                    int v61 = (int)(v52 * 4096);
+                    int v62 = (int)(v66 * 4096);
+                    float rand1 = (Rng.GetRandomInt2(v61 * 2) - v61) / 4096f;
+                    float rand2 = (Rng.GetRandomInt2(v62 * 2) - v62) / 4096f;
+                    if (_player._disruptedTimer == 0)
+                    {
+                        if (rand1 > 6)
+                        {
+                            rand1 = Rng.GetRandomInt2(8192) / 4096f + 4;
+                        }
+                        else if (rand1 < -6)
+                        {
+                            rand1 = -4 - Rng.GetRandomInt2(9182) / 4096f;
+                        }
+                        if (rand2 > 6)
+                        {
+                            rand2 = Rng.GetRandomInt2(8192) / 4096f + 4;
+                        }
+                        else if (rand2 < -6)
+                        {
+                            rand2 = -4 - Rng.GetRandomInt2(9182) / 4096f;
+                        }
+                    }
+                    _field1048 += camVec * rand1 + _player.CameraInfo.UpVector * rand2;
+                }
+                Func2145738(_field1048);
+                if (Flags4.TestFlag(AiFlags4.Bit2))
+                {
+                    float aimValue = _aimValues[_player.BotLevel] / 2;
+                    _buttonAimX = Math.Clamp(_buttonAimX, -aimValue, aimValue);
+                    _buttonAimY = Math.Clamp(_buttonAimY, -aimValue, aimValue);
+                }
+                // skhereB
+            }
+
+            // todo: member name
+            private void Func2145738(Vector3 position)
+            {
+                // skhereB
+            }
+
+            // todo: member name
+            private bool Func213842C()
+            {
+                // skhereB
+                return true;
+            }
+
+            // todo: member name
+            private bool Func2143A40()
+            {
+                // skhereB
+                return true;
+            }
+
+            // todo: member name
+            private void Func214380C()
+            {
+                // skhereB
+            }
+
+            // todo: member name
+            private void Func2143658()
+            {
+                // skhereB
+            }
+
+            // todo: member name
+            private void Func21433E4()
+            {
+                // skhereB
+            }
+
+            // todo: member name
+            private void Func2143470()
+            {
+                // skhereB
+            }
+
+            // todo: member name
+            private void Func21433A0(Vector3 position)
+            {
+                // skhereB
+            }
+
+            // todo: member name
+            private void Func2145BA0()
+            {
+                // skhereB
             }
 
             // todo: member name
@@ -4943,7 +5572,7 @@ namespace MphRead.Entities
                     else
                     {
                         Vector3 position = _player.Position;
-                        position = position.AddY(_player.Flags1.TestFlag(PlayerFlags1.AltForm)
+                        position = position.AddY(_player.IsAltForm
                             ? -(Fixed.ToFloat(_player.Values.AltColRadius) - Fixed.ToFloat(_player.Values.AltColYPos))
                             : -0.5f);
                         _entityRefs.Field0 = FindClosestNodeToPosition(position);
@@ -4962,7 +5591,7 @@ namespace MphRead.Entities
                         return;
                     }
                     Vector3 position = _player.Position;
-                    position = position.AddY(_player.Flags1.TestFlag(PlayerFlags1.AltForm)
+                    position = position.AddY(_player.IsAltForm
                         ? -(Fixed.ToFloat(_player.Values.AltColRadius) - Fixed.ToFloat(_player.Values.AltColYPos))
                         : -0.5f);
                     _entityRefs.Field1 = Func2138D28(position);
@@ -4983,7 +5612,7 @@ namespace MphRead.Entities
                     else
                     {
                         Vector3 position = _targetPlayer.Position;
-                        position = position.AddY(_targetPlayer.Flags1.TestFlag(PlayerFlags1.AltForm)
+                        position = position.AddY(_targetPlayer.IsAltForm
                             ? -(Fixed.ToFloat(_targetPlayer.Values.AltColRadius) - Fixed.ToFloat(_targetPlayer.Values.AltColYPos))
                             : -0.5f);
                         _entityRefs.Field2 = FindClosestNonHazardNodeToPosition(position);
@@ -6214,7 +6843,7 @@ namespace MphRead.Entities
                     return false;
                 }
                 Vector3 between = node.Position - _player.Position;
-                between = between.AddY(_player.Flags1.TestFlag(PlayerFlags1.AltForm)
+                between = between.AddY(_player.IsAltForm
                     ? Fixed.ToFloat(_player.Values.AltColRadius) - Fixed.ToFloat(_player.Values.AltColYPos)
                     : 0.5f);
                 return between.LengthSquared < node.MaxDistance * node.MaxDistance;
@@ -7354,7 +7983,7 @@ namespace MphRead.Entities
                         if (player == _player)
                         {
                             if (source.Type == EntityType.BeamProjectile
-                                && attacker.Hunter == Hunter.Weavel && attacker.Flags1.TestFlag(PlayerFlags1.AltForm))
+                                && attacker.Hunter == Hunter.Weavel && attacker.IsAltForm)
                             {
                                 Func214864C(5, 2, 1, attacker, null, damage, damage, 2, 2);
                             }
@@ -7370,7 +7999,7 @@ namespace MphRead.Entities
                             }
                         }
                         else if (source.Type == EntityType.BeamProjectile
-                            && attacker.Hunter == Hunter.Weavel && attacker.Flags1.TestFlag(PlayerFlags1.AltForm))
+                            && attacker.Hunter == Hunter.Weavel && attacker.IsAltForm)
                         {
                             Func214864C(5, 2, 2, attacker, _player, damage, damage, 2, 2);
                         }
@@ -7578,7 +8207,7 @@ namespace MphRead.Entities
         private static readonly IReadOnlyList<IReadOnlyList<int>> _encounterAiOffsets =
         [
             //                  Sam    Kan    Tra    Syl    Nox    Spi    Wea    Gua
-            /* encounter 0 */ [ 33152, 33152, 33696, 33836, 33556, 33372, 33976, 13480 ],
+            /* encounter 0 */ [33152, 33152, 33696, 33836, 33556, 33372, 33976, 13480 ],
             /* encounter 1 */ [ 33152, 33196, 37576, 41948, 35428, 33416, 41492, 13480 ],
             /* encounter 3 */ [ 33152, 33152, 39420, 42772, 33556, 40312, 33976, 13480 ],
             /* encounter 4 */ [ 33152, 33152, 33696, 45176, 33556, 40556, 33976, 13480 ]
