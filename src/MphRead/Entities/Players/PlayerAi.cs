@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using MphRead.Formats;
+using MphRead.Memory;
 using OpenTK.Mathematics;
 
 namespace MphRead.Entities
@@ -84,6 +85,7 @@ namespace MphRead.Entities
             private float _field9C = 0;
 
             private int _weapon1 = 0;
+            private int _shotDelay = 0;
 
             public void Reset()
             {
@@ -129,6 +131,7 @@ namespace MphRead.Entities
                 _field9C = 0;
                 _findType2 = AiFindType2.None;
                 _weapon1 = 0;
+                _shotDelay = 0;
                 for (int i = 0; i < _executionTree.Length; i++)
                 {
                     if (_executionTree[i] == null)
@@ -1170,7 +1173,7 @@ namespace MphRead.Entities
             {
                 ExecuteFuncs1(context.Data1.Data3b);
                 ExecuteFuncs2(context);
-                if (context.Func24Id != 0 && _player.EquipInfo.Weapon.Flags.TestFlag(WeaponFlags.CanZoom)
+                if (context.Func24Id != 0 && _player.EquipWeapon.Flags.TestFlag(WeaponFlags.CanZoom)
                     && _buttons.Select.FramesUp > 5 * 2 // todo: FPS stuff
                     && (!_player.EquipInfo.Zoomed && Flags4.TestFlag(AiFlags4.Bit2)
                     || _player.EquipInfo.Zoomed && !Flags4.TestFlag(AiFlags4.Bit2)))
@@ -4579,7 +4582,7 @@ namespace MphRead.Entities
                     }
                     if (Vector3.Cross(vec1, vec2).Y < 0)
                     {
-                        _buttonAimX = -_buttonAimX;
+                        _buttonAimX *= -1;
                     }
                 }
             }
@@ -4604,12 +4607,13 @@ namespace MphRead.Entities
                     }
                     if (Vector3.Cross(vec1, vec2).Y < 0)
                     {
-                        _buttonAimX = -_buttonAimX;
+                        _buttonAimX *= -1;
                     }
                 }
                 float angle1 = 90 - MathHelper.RadiansToDegrees(MathF.Acos(_player.CameraInfo.Facing.Y));
-                float angle2 = 90 - MathHelper.RadiansToDegrees(MathF.Acos(_field1038.Y)) - angle1;
-                _buttonAimY = Math.Clamp(angle2, -value, value);
+                float angle2 = 90 - MathHelper.RadiansToDegrees(MathF.Acos(_field1038.Y));
+                float angleDiff = angle2 - angle1;
+                _buttonAimY = Math.Clamp(angleDiff, -value, value);
             }
 
             // todo: member name
@@ -4640,6 +4644,7 @@ namespace MphRead.Entities
             // todo: member name
             private void Func2144B88()
             {
+                // update aim, accounting for distance, beam travel, accuracy, etc.
                 if (!Flags2.TestFlag(AiFlags2.Bit2))
                 {
                     return;
@@ -4686,6 +4691,7 @@ namespace MphRead.Entities
                                 && equip.ChargeLevel >= weapon.MinCharge * 2) // todo: FPS stuff
                             {
                                 isCharged = true;
+                                // todo: FPS stuff
                                 chargePct = (equip.ChargeLevel - weapon.MinCharge * 2) / (float)(weapon.FullCharge * 2 - weapon.MinCharge * 2);
                             }
                         }
@@ -4829,63 +4835,535 @@ namespace MphRead.Entities
                     _buttonAimX = Math.Clamp(_buttonAimX, -aimValue, aimValue);
                     _buttonAimY = Math.Clamp(_buttonAimY, -aimValue, aimValue);
                 }
-                // skhereB
             }
 
             // todo: member name
             private void Func2145738(Vector3 position)
             {
-                // skhereB
+                // update aim
+                Vector3 toTarget = _player._aimPosition - _player._muzzlePos;
+                float toTargetX = toTarget.X;
+                float toTargetY = toTarget.Y;
+                float toTargetZ = toTarget.Z;
+                toTarget = toTarget.Normalized();
+                float toTargetYNrm = toTarget.Y;
+                toTarget = toTarget.WithY(0);
+                toTarget = toTarget != Vector3.Zero ? toTarget.Normalized() : Vector3.UnitX;
+                Vector3 toPos = position - _player._muzzlePos;
+                float distToPosH = toPos.WithY(0).Length;
+                float posY = toPos.Y;
+                toPos = toPos.Normalized();
+                float posYNrm = toPos.Y;
+                toPos = toPos.WithY(0);
+                toPos = toPos != Vector3.Zero ? toPos.Normalized() : toTarget;
+                float dot = Vector3.Dot(toTarget, toPos);
+                float value = _aimValues[_player.BotLevel];
+                if (dot < 1)
+                {
+                    // sktodo-ai: add a common function for this
+                    if (dot > _dotValues[_player.BotLevel])
+                    {
+                        _buttonAimX = MathHelper.RadiansToDegrees(MathF.Acos(dot));
+                    }
+                    else
+                    {
+                        _buttonAimX = value;
+                    }
+                    if (Vector3.Cross(toTarget, toPos).Y < 0)
+                    {
+                        _buttonAimX *= -1;
+                    }
+                }
+                EquipInfo equip = _player.EquipInfo;
+                WeaponInfo weapon = equip.Weapon;
+                // sktodo-ai: add a common function for the beam stuff
+                float chargePct = 0;
+                if (weapon.Flags.TestFlag(WeaponFlags.CanCharge)
+                        && equip.ChargeLevel >= weapon.MinCharge * 2) // todo: FPS stuff
+                {
+                    // todo: FPS stuff
+                    chargePct = (equip.ChargeLevel - weapon.MinCharge * 2) / (float)(weapon.FullCharge * 2 - weapon.MinCharge * 2);
+                }
+                // todo: bugfix: the game's math is wrong here, using charge pct as a factor between uncharged and min charge values.
+                // it should be a factor between min and max charge values (or uncharged should used directly for 0% charge).
+                // going between uncharged and min charge will make the calculation wrong for any weapon where uncahrged, min, and max
+                // aren't all identical.
+                float speed = (weapon.UnchargedSpeed
+                    + ((weapon.MinChargeSpeed - weapon.UnchargedSpeed) * chargePct)) / 4096f / 2; // todo: FPS stuff
+                float gravity = (weapon.UnchargedGravity
+                    + ((weapon.MinChargeGravity - weapon.UnchargedGravity) * chargePct)) / 4096f / 2; // todo: FPS stuff
+                float div = distToPosH * distToPosH * gravity / (speed * speed);
+                float angle1;
+                float angle2;
+                if (div != 0)
+                {
+                    float div2 = 0;
+                    if (toTargetX != 0 || toTargetZ != 0)
+                    {
+                        float toTargetDistH = MathF.Sqrt(toTargetX * toTargetX + toTargetZ * toTargetZ);
+                        div2 = toTargetY / toTargetDistH;
+                    }
+                    float v28 = distToPosH * distToPosH - 4 * (div / 2 * (div / 2) - posY);
+                    if (v28 < 0)
+                    {
+                        return;
+                    }
+                    float sqrt = MathF.Sqrt(v28);
+                    // note: the game chops the last bit off div, basically rounding it down to an even number of 1/4096ths
+                    float div3 = (sqrt - distToPosH) / div;
+                    angle1 = MathHelper.RadiansToDegrees(MathF.Atan(div2));
+                    angle2 = MathHelper.RadiansToDegrees(MathF.Atan(div3));
+                }
+                else
+                {
+                    angle1 = 90 - MathHelper.RadiansToDegrees(MathF.Acos(toTargetYNrm));
+                    angle2 = 90 - MathHelper.RadiansToDegrees(MathF.Acos(posYNrm));
+                }
+                float angleDiff = angle2 - angle1;
+                _buttonAimY = Math.Clamp(angleDiff, -value, value);
+                Flags2 &= ~AiFlags2.Bit8;
+                if (dot >= 255 / 256f && angleDiff > -5 && angleDiff < 5)
+                {
+                    Flags2 |= AiFlags2.Bit8;
+                }
             }
 
             // todo: member name
             private bool Func213842C()
             {
-                // skhereB
-                return true;
+                if (!Flags2.TestFlag(AiFlags2.Bit16))
+                {
+                    Flags2 |= AiFlags2.Bit16;
+                    Flags2 &= ~AiFlags2.Bit17;
+                    if (Flags2.TestFlag(AiFlags2.Bit2) && Func214857C(6, 1, 2, null, _targetPlayer))
+                    {
+                        Flags2 |= AiFlags2.Bit17;
+                    }
+                }
+                return Flags2.TestFlag(AiFlags2.Bit17);
             }
 
             // todo: member name
-            private bool Func2143A40()
+            private void Func2143A40()
             {
-                // skhereB
-                return true;
+                EquipInfo equip = _player.EquipInfo;
+                WeaponInfo weapon = _player.EquipWeapon;
+                int shotDelay;
+                if (_player.BotLevel == 0)
+                {
+                    shotDelay = 60;
+                }
+                else if (_player.BotLevel == 1)
+                {
+                    shotDelay = 15;
+                }
+                else
+                {
+                    shotDelay = 5;
+                }
+                if (Flags2.TestFlag(AiFlags2.Bit21))
+                {
+                    shotDelay /= 2;
+                }
+                shotDelay *= 2; // todo: FPS stuff
+                BeamType beam = _weapon1 switch
+                {
+                    1 => BeamType.Missile,
+                    2 => BeamType.VoltDriver,
+                    _ => (BeamType)_weapon1
+                };
+                if (beam != BeamType.ShockCoil && !_player.AvailableWeapons[beam])
+                {
+                    return;
+                }
+
+                void SetRandomDelay()
+                {
+                    _shotDelay = weapon.ShotCooldown * 2 + (int)Rng.GetRandomInt2(shotDelay); // todo: FPS stuff
+                }
+
+                if (beam == BeamType.PowerBeam)
+                {
+                    if (_player.CurrentWeapon != beam)
+                    {
+                        _touchButtons.PowerBeam.IsDown = true;
+                    }
+                    else if (Flags4.TestFlag(AiFlags4.Bit1) && weapon.Flags.TestFlag(WeaponFlags.CanCharge)
+                        && _player._availableCharges[beam] && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost)
+                    {
+                        if (!_player.Flags2.TestFlag(PlayerFlags2.Shooting) && _buttons.R.FramesUp == 0
+                            || equip.ChargeLevel >= weapon.FullCharge * 2) // todo: FPS stuff
+                        {
+                            SetRandomDelay();
+                        }
+                        else
+                        {
+                            _buttons.R.IsDown = true;
+                        }
+                    }
+                    else if (_buttons.R.FramesDown > 0 && _buttons.R.FramesDown < _shotDelay)
+                    {
+                        _buttons.R.IsDown = true;
+                    }
+                    else if (_buttons.R.FramesUp <= _shotDelay)
+                    {
+                        SetRandomDelay();
+                    }
+                    else
+                    {
+                        _buttons.R.IsDown = true;
+                        _shotDelay = (int)Rng.GetRandomInt2(weapon.FullCharge * 2); // todo: FPS stuff
+                    }
+                }
+                else if (beam == BeamType.Missile)
+                {
+                    if (_player.CurrentWeapon != beam)
+                    {
+                        _touchButtons.Missile.IsDown = true;
+                    }
+                    else if (Flags4.TestFlag(AiFlags4.Bit1) && weapon.Flags.TestFlag(WeaponFlags.CanCharge)
+                        && _player._availableCharges[beam] && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost)
+                    {
+                        if (!_player.Flags2.TestFlag(PlayerFlags2.Shooting) && _buttons.R.FramesUp <= _shotDelay
+                            || equip.ChargeLevel >= weapon.FullCharge * 2) // todo: FPS stuff
+                        {
+                            SetRandomDelay();
+                        }
+                        else
+                        {
+                            _buttons.R.IsDown = true;
+                        }
+                    }
+                    else if (_player.Flags1.TestFlag(PlayerFlags1.GunOpenAnimation) && _buttons.R.FramesUp > _shotDelay)
+                    {
+                        _buttons.R.IsDown = true;
+                        SetRandomDelay();
+                    }
+                }
+                else if (beam == BeamType.VoltDriver)
+                {
+                    if (_player.CurrentWeapon != beam)
+                    {
+                        _touchButtons.VoltDriver.IsDown = true;
+                    }
+                    else if (Flags4.TestFlag(AiFlags4.Bit1) && weapon.Flags.TestFlag(WeaponFlags.CanCharge)
+                        && _player._availableCharges[beam] && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost)
+                    {
+                        if (!_player.Flags2.TestFlag(PlayerFlags2.Shooting) && _buttons.R.FramesUp <= _shotDelay
+                            || equip.ChargeLevel >= weapon.FullCharge * 2) // todo: FPS stuff
+                        {
+                            SetRandomDelay();
+                        }
+                        else
+                        {
+                            _buttons.R.IsDown = true;
+                        }
+                    }
+                    else if (_buttons.R.FramesUp > _shotDelay)
+                    {
+                        _buttons.R.IsDown = true;
+                        SetRandomDelay();
+                    }
+                }
+                else if (beam == BeamType.Battlehammer)
+                {
+                    if (_player.CurrentWeapon != beam)
+                    {
+                        _touchButtons.Battlehammer.IsDown = true;
+                    }
+                    else if (_player.Flags1.TestFlag(PlayerFlags1.ShotUncharged) || _buttons.R.FramesUp > 0)
+                    {
+                        _buttons.R.IsDown = true;
+                    }
+                }
+                else if (beam == BeamType.Imperialist)
+                {
+                    if (_player.CurrentWeapon != beam)
+                    {
+                        _touchButtons.Imperialist.IsDown = true;
+                    }
+                    else if (_buttons.R.FramesUp > _shotDelay)
+                    {
+                        _buttons.R.IsDown = true;
+                    }
+                }
+                else if (beam == BeamType.Judicator)
+                {
+                    if (_player.CurrentWeapon != beam)
+                    {
+                        _touchButtons.Judicator.IsDown = true;
+                    }
+                    else if (Flags4.TestFlag(AiFlags4.Bit1) && weapon.Flags.TestFlag(WeaponFlags.CanCharge)
+                        && _player._availableCharges[beam] && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost)
+                    {
+                        if (!_player.Flags2.TestFlag(PlayerFlags2.Shooting) && _buttons.R.FramesUp <= _shotDelay
+                            || equip.ChargeLevel >= weapon.FullCharge * 2) // todo: FPS stuff
+                        {
+                            if (Flags2.TestFlag(AiFlags2.Bit2))
+                            {
+                                Debug.Assert(_targetPlayer != null);
+                                Vector3 toTarget = _targetPlayer.Position - _player.Position;
+                                float distSqr = toTarget.LengthSquared;
+                                if (distSqr > 3 * 3 && _player.BotLevel == 0
+                                    || distSqr > 11 && _player.BotLevel == 1
+                                    || distSqr > 13)
+                                {
+                                    SetRandomDelay();
+                                }
+                                else
+                                {
+                                    _buttons.R.IsDown = true;
+                                }
+                            }
+                            else
+                            {
+                                SetRandomDelay();
+                            }
+                        }
+                        else
+                        {
+                            _buttons.R.IsDown = true;
+                        }
+                    }
+                    else if (_buttons.R.FramesUp > _shotDelay)
+                    {
+                        _buttons.R.IsDown = true;
+                        SetRandomDelay();
+                    }
+                }
+                else if (beam == BeamType.Magmaul)
+                {
+                    if (_player.CurrentWeapon != beam)
+                    {
+                        _touchButtons.Magmaul.IsDown = true;
+                    }
+                    else if (Flags4.TestFlag(AiFlags4.Bit1) && weapon.Flags.TestFlag(WeaponFlags.CanCharge)
+                        && _player._availableCharges[beam] && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost)
+                    {
+                        if (!_player.Flags2.TestFlag(PlayerFlags2.Shooting) && _buttons.R.FramesUp <= _shotDelay
+                            || equip.ChargeLevel >= weapon.FullCharge * 2) // todo: FPS stuff
+                        {
+                            SetRandomDelay();
+                        }
+                        else
+                        {
+                            _buttons.R.IsDown = true;
+                        }
+                    }
+                    else if (_buttons.R.FramesUp > _shotDelay)
+                    {
+                        SetRandomDelay();
+                        _buttons.R.IsDown = true;
+                    }
+                }
+                else if (beam == BeamType.ShockCoil)
+                {
+                    Debug.Assert(_targetPlayer != null);
+                    Vector3 toTarget = _targetPlayer.Position - _player.Position;
+                    float distSqr = toTarget.LengthSquared;
+                    if (GameState.SinglePlayer || distSqr <= 15 * 15 || !_player.AvailableWeapons[BeamType.PowerBeam])
+                    {
+                        if (!_player.AvailableWeapons[beam])
+                        {
+                            return;
+                        }
+                        if (_player.CurrentWeapon != beam)
+                        {
+                            _touchButtons.ShockCoil.IsDown = true;
+                        }
+                        else if ((_player.Flags1.TestFlag(PlayerFlags1.ShotUncharged) || _buttons.R.FramesUp > 0)
+                            && (distSqr < 15 * 15 || distSqr < 16 * 16 && _player.Flags1.TestFlag(PlayerFlags1.ShotUncharged)))
+                        {
+                            _buttons.R.IsDown = true;
+                        }
+                    }
+                    else if (_player.CurrentWeapon != BeamType.PowerBeam)
+                    {
+                        _touchButtons.PowerBeam.IsDown = true;
+                    }
+                    else if (_buttons.R.FramesDown > 0 && _buttons.R.FramesDown < _shotDelay)
+                    {
+                        _buttons.R.IsDown = true;
+                    }
+                    else if (_buttons.R.FramesUp <= _shotDelay)
+                    {
+                        SetRandomDelay();
+                    }
+                    else
+                    {
+                        _buttons.R.IsDown = true;
+                        _shotDelay = (int)Rng.GetRandomInt2(weapon.FullCharge * 2); // todo: FPS stuff
+                    }
+                }
+                else if (beam == BeamType.OmegaCannon)
+                {
+                    if (_player.CurrentWeapon != beam)
+                    {
+                        _touchButtons.OmegaCannon.IsDown = true;
+                    }
+                    else if (Flags2.TestFlag(AiFlags2.Bit2) && _buttons.R.FramesUp > 0)
+                    {
+                        Debug.Assert(_targetPlayer != null);
+                        Vector3 toTarget = _targetPlayer.Position - _player.Position;
+                        if (toTarget.LengthSquared > 10 * 10)
+                        {
+                            _buttons.R.IsDown = true;
+                        }
+                    }
+                }
             }
 
             // todo: member name
             private void Func214380C()
             {
-                // skhereB
+                // switch to _weapon1 if possible. if not possible or it's already equipped,
+                // hold the fire button charge whatever we have equipped (provided it can charge).
+                EquipInfo equip = _player.EquipInfo;
+                WeaponInfo weapon = _player.EquipWeapon;
+                if (!weapon.Flags.TestFlag(WeaponFlags.CanCharge))
+                {
+                    return;
+                }
+                BeamType beam = _weapon1 switch
+                {
+                    1 => BeamType.Missile,
+                    2 => BeamType.VoltDriver,
+                    _ => (BeamType)_weapon1
+                };
+                if (_player.CurrentWeapon != beam && _player._availableWeapons[beam])
+                {
+                    if (beam == BeamType.PowerBeam)
+                    {
+                        _touchButtons.PowerBeam.IsDown = true;
+                    }
+                    else if (beam == BeamType.Missile)
+                    {
+                        _touchButtons.Missile.IsDown = true;
+                    }
+                    else if (beam == BeamType.VoltDriver)
+                    {
+                        _touchButtons.VoltDriver.IsDown = true;
+                    }
+                    else if (beam == BeamType.Judicator)
+                    {
+                        _touchButtons.Judicator.IsDown = true;
+                    }
+                    else if (beam == BeamType.Magmaul)
+                    {
+                        _touchButtons.Magmaul.IsDown = true;
+                    }
+                    return;
+                }
+                // note: the game checks the potentially overriden bot weapon's charge cost (0 for 1P) here, whereas it normally
+                // checks the original weapon metadata. 1P bots don't consume ammo, so the check will always succeed for them either way.
+                if (weapon.Flags.TestFlag(WeaponFlags.CanCharge) && _player._availableCharges[beam]
+                    && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost
+                    && (_buttons.R.FramesDown == 0 || equip.ChargeLevel > 0))
+                {
+                    _buttons.R.IsDown = true;
+                }
             }
 
             // todo: member name
             private void Func2143658()
             {
-                // skhereB
+                if (Flags2.TestFlag(AiFlags2.Bit2))
+                {
+                    Func2144AE4();
+                    if (Flags2.TestFlag(AiFlags2.Bit8))
+                    {
+                        Func2143A40();
+                    }
+                }
+                else if (Flags4.TestFlag(AiFlags4.Bit1))
+                {
+                    Func214380C();
+                }
+            }
+
+            // todo: member name
+            private void Func2144AE4()
+            {
+                if (Flags2.TestFlag(AiFlags2.Bit2))
+                {
+                    Debug.Assert(_targetPlayer != null);
+                    _targetPlayer.GetPosition(out Vector3 targetPos);
+                    _field1048 = targetPos.AddY(_targetPlayer.IsAltForm
+                        ? Fixed.ToFloat(_targetPlayer.Values.AltColYPos)
+                        : 0.5f);
+                    Func2145738(_field1048);
+                }
             }
 
             // todo: member name
             private void Func21433E4()
             {
-                // skhereB
+                if (Flags2.TestFlag(AiFlags2.Bit2))
+                {
+                    Func2144B88();
+                    Vector3 vec = ExecuteVectorFunc(index: 0, clearY: false, normalize: false);
+                    if (Vector3.Dot(_player._facingVector, vec) > 0.866f)
+                    {
+                        Func2143A40();
+                    }
+                }
             }
 
             // todo: member name
             private void Func2143470()
             {
-                // skhereB
+                if (Flags2.TestFlag(AiFlags2.Bit3))
+                {
+                    Debug.Assert(_halfturret1C != null);
+                    Func2144964();
+                    Vector3 toHalfturret = _halfturret1C.Position - _player.Position;
+                    if (Flags2.TestFlag(AiFlags2.Bit8) || toHalfturret.LengthSquared < 10)
+                    {
+                        Func2143A40();
+                    }
+                    else if (Flags4.TestFlag(AiFlags4.Bit1) || _weapon1 == 0 || _weapon1 == 1)
+                    {
+                        Func214380C();
+                    }
+                }
+                else if (Flags4.TestFlag(AiFlags4.Bit1))
+                {
+                    Func214380C();
+                }
+            }
+
+            // todo: member name
+            private void Func2144964()
+            {
+                if (Flags2.TestFlag(AiFlags2.Bit3))
+                {
+                    Debug.Assert(_halfturret1C != null);
+                    _halfturret1C.GetPosition(out Vector3 halfturretPos);
+                    _field1048 = halfturretPos.AddY(0.5f);
+                    Func2145738(_field1048);
+                }
             }
 
             // todo: member name
             private void Func21433A0(Vector3 position)
             {
-                // skhereB
+                Func2145738(position);
+                if (Flags2.TestFlag(AiFlags2.Bit8))
+                {
+                    Func2143A40();
+                }
             }
 
             // todo: member name
             private void Func2145BA0()
             {
-                // skhereB
+                float facingY = _player._facingVector.Y;
+                if (facingY != 0)
+                {
+                    float aimY = MathHelper.RadiansToDegrees(MathF.Acos(facingY)) - 90;
+                    float value = _aimValues[_player.BotLevel];
+                    _buttonAimY = Math.Clamp(aimY, -value, value);
+                }
             }
 
             // todo: member name
@@ -8019,8 +8497,8 @@ namespace MphRead.Entities
         None = 0,
         Bit0 = 1,
         Bit1 = 2,
-        Bit2 = 4,
-        Bit3 = 8,
+        Bit2 = 4, // has target player?
+        Bit3 = 8, // has target halfturret?
         SeekItem = 0x10,
         Bit5 = 0x20,
         Bit6 = 0x40,
