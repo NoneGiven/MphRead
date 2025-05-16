@@ -29,7 +29,7 @@ namespace MphRead.Entities
             public AiPersonalityData1 Personality { get; set; } = null!;
             public bool Flags1 { get; set; }
             public AiFlags2 Flags2 { get; set; }
-            public AiFlags3 Flags3 { get; set; }
+            public AiFlags3 Flags3 { get; set; } // frame flags -- cleared every frame and need to be reset by funcs
             public AiFlags4 Flags4 { get; set; }
             public ushort HealthThreshold { get; set; }
             public uint DamageFromHalfturret { get; set; }
@@ -1629,7 +1629,7 @@ namespace MphRead.Entities
                         Func1_UnlockEchoHallForceField();
                         break;
                     case 83:
-                        Func1_2148C98();
+                        Func1_SetInvulnerable();
                         break;
                     default:
                         throw new ProgramException("Invalid AI func 1.");
@@ -1983,7 +1983,7 @@ namespace MphRead.Entities
                     Func4_2145E40(context);
                     break;
                 case 125:
-                    Func4_2145E2C(context);
+                    Func4_SetDespawned(context);
                     break;
                 default:
                     throw new ProgramException("Invalid AI func 4.");
@@ -2415,12 +2415,25 @@ namespace MphRead.Entities
 
             private void Func1_UnlockEchoHallForceField()
             {
-                // skhere
+                for (int i = 0; i < _scene.Entities.Count; i++)
+                {
+                    EntityBase entity = _scene.Entities[i];
+                    if (entity.Type != EntityType.ForceField)
+                    {
+                        continue;
+                    }
+                    var forceField = (ForceFieldEntity)entity;
+                    if (forceField.Id == 19)
+                    {
+                        _scene.SendMessage(Message.Unlock, _player, forceField, 0, 0);
+                        break;
+                    }
+                }
             }
 
-            private void Func1_2148C98()
+            private void Func1_SetInvulnerable()
             {
-                Flags3 |= AiFlags3.Bit4;
+                Flags3 |= AiFlags3.Invulnerable;
             }
 
             #endregion
@@ -4777,9 +4790,9 @@ namespace MphRead.Entities
                 Flags3 |= AiFlags3.Bit1;
             }
 
-            private void Func4_2145E2C(AiContext context)
+            private void Func4_SetDespawned(AiContext context)
             {
-                Flags3 |= AiFlags3.Bit3;
+                Flags3 |= AiFlags3.Despawned;
             }
 
             #endregion
@@ -9663,8 +9676,8 @@ namespace MphRead.Entities
         NoInput = 1,
         Bit1 = 2,
         Bit2 = 4,
-        Bit3 = 8,
-        Bit4 = 0x10,
+        Despawned = 8,
+        Invulnerable = 0x10,
         Bit5 = 0x20
     }
 

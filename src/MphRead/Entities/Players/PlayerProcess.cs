@@ -65,10 +65,11 @@ namespace MphRead.Entities
                     }
                     AiData.Flags3 &= ~AiFlags3.Bit5;
                 }
-                if (AiData.Flags3.TestFlag(AiFlags3.Bit4))
+                if (AiData.Flags3.TestFlag(AiFlags3.Invulnerable))
                 {
-                    _spawnInvulnTimer = 2 * 2; // todo: FPS stuff
-                    AiData.Flags3 &= ~AiFlags3.Bit4;
+                    // not multiplying by 2 since this is meant to reset every frame, and run out as soon as it's not
+                    _spawnInvulnTimer = 2;
+                    AiData.Flags3 &= ~AiFlags3.Invulnerable;
                 }
                 if (AiData.Flags3.TestFlag(AiFlags3.Bit1))
                 {
@@ -87,7 +88,7 @@ namespace MphRead.Entities
                     AiData.Flags1 = false;
                     _soundSource.StopAllSfx(force: true);
                 }
-                if (AiData.Flags3.TestFlag(AiFlags3.Bit3))
+                if (AiData.Flags3.TestFlag(AiFlags3.Despawned))
                 {
                     _scene.SendMessage(Message.Destroyed, this, null, 0, 0, delay: 1);
                     if (EnemySpawner != null)
@@ -96,7 +97,7 @@ namespace MphRead.Entities
                     }
                     _health = 0;
                     Flags2 |= PlayerFlags2.HideModel;
-                    AiData.Flags3 &= ~AiFlags3.Bit3;
+                    AiData.Flags3 &= ~AiFlags3.Despawned;
                     AiData.Flags1 = false;
                     _soundSource.StopAllSfx(force: true);
                 }
