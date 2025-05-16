@@ -1234,7 +1234,7 @@ namespace MphRead.Entities
                     }
                     // sktodo-ai: we need to determine which funcs3 functions are frame/time-based and which are occurrence-based.
                     // occurrence-based should take the same number of repeats to hit 100,000, but frame-based will need to accumulate at half speed.
-                    context.Weights[weightIndex] += ExecuteFuncs3(context, data2.Func3Id, data2.Parameters);
+                    context.Weights[weightIndex] += ExecuteFuncs3(context, data2.Func3Id, data2.Parameters) * data2.Weight;
                     if (context.Weights[weightIndex] >= 100000)
                     {
                         result = data2.Data1SelectIndex;
