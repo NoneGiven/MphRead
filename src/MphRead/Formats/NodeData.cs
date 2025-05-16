@@ -149,7 +149,7 @@ namespace MphRead.Formats
     public enum NodeType : ushort
     {
         Navigation = 0,
-        UnknownGreen = 1,
+        Special = 1,
         Aerial = 2,
         Vantage = 3,
         AltForm = 4,
