@@ -976,8 +976,10 @@ namespace MphRead.Entities
                     Flags2 |= PlayerFlags2.HideModel;
                 }
             }
-            if (!EquipInfo.Zoomed)
+            if (!EquipInfo.Zoomed && CameraSequence.Current == null)
             {
+                // note: the game does this during cam seqs, resulting in the FOV thrashing a bit, but it has no visible effect
+                // since the sin/cos values for projection are set aside in the cam info update that's already occurred above.
                 float currentFov = CameraInfo.Fov;
                 float normalFov = Fixed.ToFloat(Values.NormalFov) * 2;
                 float diff = normalFov - currentFov;

@@ -796,8 +796,10 @@ namespace MphRead.Entities
                         {
                             UpdateZoom(!EquipInfo.Zoomed);
                         }
-                        if (EquipInfo.Zoomed)
+                        if (EquipInfo.Zoomed && CameraSequence.Current == null)
                         {
+                            // note: the game does this during cam seqs, resulting in the FOV thrashing a bit, but it has no visible effect
+                            // since the sin/cos values for projection are set aside in the cam info update that's already occurred above.
                             float zoomFov = Fixed.ToFloat(EquipInfo.Weapon.ZoomFov);
                             Vector3 facing = _facingVector;
 

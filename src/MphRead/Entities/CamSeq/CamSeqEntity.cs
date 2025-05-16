@@ -140,7 +140,7 @@ namespace MphRead.Entities
             {
                 return;
             }
-            // todo: test music mask
+            // mustodo: test music mask
             int sfxData = CameraSequence.SfxData[Data.SequenceId];
             if (_delayTimer == 0)
             {
