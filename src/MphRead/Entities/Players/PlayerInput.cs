@@ -2047,7 +2047,7 @@ namespace MphRead.Entities
             }
         }
 
-        public static void ProcessInput(KeyboardState keyboardState, MouseState mouseState)
+        public static void ProcessInput(KeyboardState keyboardState, MouseState mouseState, bool noPlayerInput)
         {
             KeyboardState keyboardSnap = keyboardState.GetSnapshot();
             MouseState mouseSnap = mouseState.GetSnapshot();
@@ -2057,6 +2057,10 @@ namespace MphRead.Entities
                 if (player.IsBot && player.LoadFlags.TestFlag(LoadFlags.Active))
                 {
                     player.AiData.ProcessInput();
+                    continue;
+                }
+                if (!player.IsBot && noPlayerInput)
+                {
                     continue;
                 }
                 if (i != 0)

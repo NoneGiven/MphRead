@@ -1188,14 +1188,11 @@ namespace MphRead
                 {
                     _elapsedTime += _frameTime;
                 }
-                if (_inputMode != InputMode.CameraOnly)
-                {
-                    PlayerEntity.ProcessInput(_keyboardState, _mouseState);
-                }
-                else
+                if (_inputMode == InputMode.CameraOnly)
                 {
                     PlayerEntity.Main.Controls.ClearAll();
                 }
+                PlayerEntity.ProcessInput(_keyboardState, _mouseState, _inputMode == InputMode.CameraOnly);
                 _room?.UpdateTransition();
             }
             OnKeyHeld();
