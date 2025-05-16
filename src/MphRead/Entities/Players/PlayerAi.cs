@@ -8507,8 +8507,8 @@ namespace MphRead.Entities
             private NodeData3 GetRandomNavigationNodeByField4()
             {
                 int navIndex = _nodeTypeIndex[(int)NodeType.Navigation];
-                int greenIndex = _nodeTypeIndex[(int)NodeType.UnknownGreen];
-                while (navIndex < greenIndex)
+                int specIndex = _nodeTypeIndex[(int)NodeType.Special];
+                while (navIndex < specIndex)
                 {
                     NodeData3 node = _nodeList[navIndex];
                     if (node.Field4 == _field30)
@@ -8518,7 +8518,7 @@ namespace MphRead.Entities
                     navIndex++;
                 }
                 int endIndex = navIndex;
-                while (navIndex < greenIndex)
+                while (navIndex < specIndex)
                 {
                     NodeData3 node = _nodeList[endIndex];
                     if (node.Field4 != _field30)
@@ -8539,14 +8539,14 @@ namespace MphRead.Entities
             private NodeData3 FindClosestNavigationNodeByField4(Vector3 position)
             {
                 int navIndex = _nodeTypeIndex[(int)NodeType.Navigation];
-                int greenIndex = _nodeTypeIndex[(int)NodeType.UnknownGreen];
-                if (navIndex == greenIndex)
+                int specIndex = _nodeTypeIndex[(int)NodeType.Special];
+                if (navIndex == specIndex)
                 {
                     return FindClosestNonHazardNodeToPosition(position);
                 }
                 NodeData3 result = _nodeList[navIndex];
                 float minDist = Vector3.DistanceSquared(result.Position, position);
-                for (int i = navIndex + 1; i < greenIndex; i++)
+                for (int i = navIndex + 1; i < specIndex; i++)
                 {
                     NodeData3 node = _nodeList[i];
                     if (node.Field4 != _field30 && result.Field4 == _field30)
