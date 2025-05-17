@@ -554,7 +554,7 @@ namespace MphRead.Entities
             {
                 return;
             }
-            ReadBotAi.LoadAll(GameState.Mode);
+            AiPersonality.LoadAll(GameState.Mode);
             if (token.IsCancellationRequested)
             {
                 return;

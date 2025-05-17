@@ -72,7 +72,7 @@ namespace MphRead
                 UpdateAreaHunters();
                 InitHunterSpawns(scene, entities, initialize: false); // see: "probably revisit this"
             }
-            ReadBotAi.LoadAll(mode);
+            AiPersonality.LoadAll(mode);
             room.SetNodeData(LoadNodeData(metadata.NodePath, room.RoomId, mode, entities));
             GameState.StorySave.CheckpointRoomId = room.RoomId;
             return (room, metadata, collision, entities);

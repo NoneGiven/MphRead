@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using MphRead.Formats;
 using OpenTK.Mathematics;
@@ -131,7 +130,7 @@ namespace MphRead.Entities
                 Field118 = 0;
                 _field90 = Vector3.Zero;
                 _field9C = 0;
-                _findType2 = AiFindType2.None;
+                _queuedFindEntityAction = AiQueuedEnt.None;
                 _weapon1 = 0;
                 _shotDelay = 0;
                 for (int i = 0; i < _executionTree.Length; i++)
@@ -1708,9 +1707,9 @@ namespace MphRead.Entities
             }
 
             // todo: member name
-            private int ExecuteFuncs3(AiContext context, int fundId, AiPersonalityData5 param)
+            private int ExecuteFuncs3(AiContext context, int funcId, AiPersonalityData5 param)
             {
-                return fundId switch
+                return funcId switch
                 {
                     0 => Func3_213D87C(context, param),
                     1 => Func3_213D83C(context, param),
@@ -2022,12 +2021,14 @@ namespace MphRead.Entities
 
             private void Func1_2149C68()
             {
-                // skhere
+                _weapon1 = 2;
+                Flags4 &= ~AiFlags4.Bit1;
             }
 
             private void Func1_2149C50()
             {
-                // skhere
+                _weapon1 = 2; // sktodo-ai: enum/mapping for these
+                Flags4 |= AiFlags4.Bit1;
             }
 
             private void Func1_2149C38()
@@ -2072,7 +2073,18 @@ namespace MphRead.Entities
 
             private void Func1_2149AD8()
             {
-                // skhere
+                // keep holding shoot to charge weapon
+                if (_buttons.R.FramesDown == 0 || _player.IsAltForm)
+                {
+                    return;
+                }
+                EquipInfo equip = _player.EquipInfo;
+                WeaponInfo weapon = _player.EquipWeapon;
+                if (weapon.Flags.TestFlag(WeaponFlags.CanCharge) && _player._availableCharges[_player.CurrentWeapon]
+                    && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost)
+                {
+                    _buttons.R.IsDown = true;
+                }
             }
 
             private void Func1_2149AC8()
@@ -2216,7 +2228,7 @@ namespace MphRead.Entities
 
             private void Func1_214928C()
             {
-                // skhere
+                Func21354B0();
             }
 
             private void Func1_214927C()
@@ -2261,12 +2273,13 @@ namespace MphRead.Entities
 
             private void Func1_21491FC()
             {
-                // skhere
+                Func21355D8();
             }
 
             private void Func1_21491E4()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type0;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_21491CC()
@@ -2376,12 +2389,12 @@ namespace MphRead.Entities
 
             private void Func1_2148E98()
             {
-                // skhere
+                _nodeDataSelOn = 255;
             }
 
             private void Func1_2148E88()
             {
-                // skhere
+                _nodeDataSelOff = 255;
             }
 
             private void Func1_2148E74()
@@ -2981,20 +2994,18 @@ namespace MphRead.Entities
 
             private int Func3_213D814(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                Debug.Assert(_node40 != null);
+                return _node40.Position.Y - _player.Position.Y > param.Param1 ? 1 : 0;
             }
 
             private int Func3_213D7F0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags2.TestFlag(AiFlags2.Bit0) ? 1 : 0;
             }
 
             private int Func3_213D800(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags4.TestFlag(AiFlags4.Bit0) ? 1 : 0;
             }
 
             private int Func3_213D7E8(AiContext context, AiPersonalityData5 param)
@@ -3059,14 +3070,22 @@ namespace MphRead.Entities
 
             private int Func3_213D624(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                {
+                    return 0;
+                }
+                FindEntityRef(AiEntRefType.Type0);
+                NodeData3? node0 = _entityRefs.Field0;
+                Debug.Assert(node0 != null);
+                FindEntityRef(AiEntRefType.Type2);
+                NodeData3? node2 = _entityRefs.Field2;
+                Debug.Assert(node2 != null);
+                return node0 == node2 || IsNodeInRange(node2) ? 1 : 0;
             }
 
             private int Func3_213D608(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D624(context, param) == 0 ? 1 : 0;
             }
 
             private int Func3_213D564(AiContext context, AiPersonalityData5 param)
@@ -3086,14 +3105,12 @@ namespace MphRead.Entities
 
             private int Func3_213D530(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func213842C() ? 1 : 0;
             }
 
             private int Func3_213D514(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D530(context, param) == 0 ? 1 : 0;
             }
 
             private int Func3_213D4C0(AiContext context, AiPersonalityData5 param)
@@ -3242,8 +3259,7 @@ namespace MphRead.Entities
 
             private int Func3_213CFA4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _slotHits[_player.SlotIndex] != 0 ? 1 : 0;
             }
 
             private int Func3_213CF0C(AiContext context, AiPersonalityData5 param)
@@ -3290,8 +3306,7 @@ namespace MphRead.Entities
 
             private int Func3_213CD58(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player._health < _player._healthMax / 4 ? 1 : 0;
             }
 
             private int Func3_213CD34(AiContext context, AiPersonalityData5 param)
@@ -3380,8 +3395,7 @@ namespace MphRead.Entities
 
             private int Func3_213CA70(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Field118 >= 151 ? 1 : 0; // sktodo-ai: FPS stuff?
             }
 
             private int Func3_213CA58(AiContext context, AiPersonalityData5 param)
@@ -3392,26 +3406,22 @@ namespace MphRead.Entities
 
             private int Func3_213CA2C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _executionTree[context.Depth + 1].CallCount > param.Param1 ? 1 : 0;
             }
 
             private int Func3_213CA00(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213CA2C(context, param); // identical
             }
 
             private int Func3_213C9D4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213CA2C(context, param); // identical
             }
 
             private int Func3_213C9C4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _slotHits[_player.SlotIndex];
             }
 
             private int Func3_213C89C(AiContext context, AiPersonalityData5 param)
@@ -3560,14 +3570,15 @@ namespace MphRead.Entities
 
             private int Func3_213BCE8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                EquipInfo equip = _player.EquipInfo;
+                WeaponInfo weapon = _player.EquipWeapon;
+                return weapon.Flags.TestFlag(WeaponFlags.CanCharge) && _player._availableCharges[_player.CurrentWeapon]
+                    && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost ? 1 : 0;
             }
 
             private int Func3_213BCC4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213BCE8(context, param) == 0 ? 1 : 0;
             }
 
             private int Func3_213BCB0(AiContext context, AiPersonalityData5 param)
@@ -4046,74 +4057,70 @@ namespace MphRead.Entities
 
             private int Func3_213ACCC(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Position.Y < param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213ACA8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                // instead of checking the Y pos here, the game calls Func3_213ACA8() and tests for a failure
+                return _player.Position.Y >= param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AC8C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Position.X > param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AC70(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Position.X < param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AC54(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Position.Z > param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AC38(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Position.Z < param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AC04(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                    && _targetPlayer.Position.Y < param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213ABC0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                // instead of checking the Y pos here, the game calls Func3_213AC04() and tests for a failure
+                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                    && _targetPlayer.Position.Y >= param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AB8C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                    && _targetPlayer.Position.X > param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AB58(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                    && _targetPlayer.Position.X < param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AB24(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                    && _targetPlayer.Position.Z > param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AAF0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                    && _targetPlayer.Position.Z < param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AA64(AiContext context, AiPersonalityData5 param)
@@ -4231,8 +4238,9 @@ namespace MphRead.Entities
 
             private int Func3_213A660(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                // sktodo-ai: if something like this is called every frame, we should halve the chances,
+                // or possibly even skip calling it on every other frame to match the number of RNG calls
+                return param.Param1 + (int)Rng.GetRandomInt2(param.Param2 - param.Param1);
             }
 
             private int Func3_213A650(AiContext context, AiPersonalityData5 param)
@@ -4547,139 +4555,139 @@ namespace MphRead.Entities
                     {
                         FindEntityRef(AiEntRefType.Type2);
                         _node3C = _entityRefs.Field2;
-                        _findType2 = AiFindType2.Type0;
+                        _queuedFindEntityAction = AiQueuedEnt.Type0;
                     }
                     else if (context.Field9 == 5 && Flags2.TestFlag(AiFlags2.Bit3))
                     {
                         FindEntityRef(AiEntRefType.Type3);
                         _node3C = _entityRefs.Field3;
-                        _findType2 = AiFindType2.Type8;
+                        _queuedFindEntityAction = AiQueuedEnt.Type8;
                     }
                     else if (context.Field9 == 6 && Flags2.TestFlag(AiFlags2.SeekItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
-                        _findType2 = context.Field8 switch
+                        _queuedFindEntityAction = context.Field8 switch
                         {
-                            7 => AiFindType2.Type12,
-                            8 => AiFindType2.Type13,
-                            9 => AiFindType2.Type14,
-                            10 => AiFindType2.Type15,
-                            11 => AiFindType2.Type16,
-                            _ => AiFindType2.None
+                            7 => AiQueuedEnt.Type12,
+                            8 => AiQueuedEnt.Type13,
+                            9 => AiQueuedEnt.Type14,
+                            10 => AiQueuedEnt.Type15,
+                            11 => AiQueuedEnt.Type16,
+                            _ => AiQueuedEnt.None
                         };
                     }
                     else if (context.Field9 == 12)
                     {
                         FindEntityRef(AiEntRefType.Type25);
                         _node3C = _entityRefs.Field25;
-                        _findType2 = AiFindType2.None;
+                        _queuedFindEntityAction = AiQueuedEnt.None;
                     }
                     else if (context.Field9 == 13)
                     {
                         FindEntityRef(AiEntRefType.Type24);
                         _node3C = _entityRefs.Field24;
-                        _findType2 = AiFindType2.None;
+                        _queuedFindEntityAction = AiQueuedEnt.None;
                     }
                     else if (context.Field9 == 14)
                     {
                         FindEntityRef(AiEntRefType.Type6);
                         _node3C = _entityRefs.Field6;
-                        _findType2 = AiFindType2.Type27;
+                        _queuedFindEntityAction = AiQueuedEnt.Type27;
                     }
                     else if (context.Field9 == 15)
                     {
                         FindEntityRef(AiEntRefType.Type7);
                         _node3C = _entityRefs.Field7;
-                        _findType2 = AiFindType2.Type28;
+                        _queuedFindEntityAction = AiQueuedEnt.Type28;
                     }
                     else if (context.Field9 == 16)
                     {
                         FindEntityRef(AiEntRefType.Type8);
                         _node3C = _entityRefs.Field8;
-                        _findType2 = AiFindType2.Type29;
+                        _queuedFindEntityAction = AiQueuedEnt.Type29;
                     }
                     else if (context.Field9 == 17)
                     {
                         FindEntityRef(AiEntRefType.Type9);
                         _node3C = _entityRefs.Field9;
-                        _findType2 = AiFindType2.Type30;
+                        _queuedFindEntityAction = AiQueuedEnt.Type30;
                     }
                     else if (context.Field9 == 18)
                     {
                         FindEntityRef(AiEntRefType.Type10);
                         _node3C = _entityRefs.Field10;
-                        _findType2 = AiFindType2.Type31;
+                        _queuedFindEntityAction = AiQueuedEnt.Type31;
                     }
                     else if (context.Field9 == 19)
                     {
                         FindEntityRef(AiEntRefType.Type11);
                         _node3C = _entityRefs.Field11;
-                        _findType2 = AiFindType2.Type32;
+                        _queuedFindEntityAction = AiQueuedEnt.Type32;
                     }
                     else if (context.Field9 == 20)
                     {
                         FindEntityRef(AiEntRefType.Type12);
                         _node3C = _entityRefs.Field12;
-                        _findType2 = AiFindType2.Type33;
+                        _queuedFindEntityAction = AiQueuedEnt.Type33;
                     }
                     else if (context.Field9 == 21)
                     {
                         FindEntityRef(AiEntRefType.Type13);
                         _node3C = _entityRefs.Field13;
-                        _findType2 = AiFindType2.Type34;
+                        _queuedFindEntityAction = AiQueuedEnt.Type34;
                     }
                     else if (context.Field9 == 22)
                     {
                         FindEntityRef(AiEntRefType.Type14);
                         _node3C = _entityRefs.Field14;
-                        _findType2 = AiFindType2.Type35;
+                        _queuedFindEntityAction = AiQueuedEnt.Type35;
                     }
                     else if (context.Field9 == 23)
                     {
                         FindEntityRef(AiEntRefType.Type15);
                         _node3C = _entityRefs.Field15;
-                        _findType2 = AiFindType2.Type36;
+                        _queuedFindEntityAction = AiQueuedEnt.Type36;
                     }
                     else if (context.Field9 == 24)
                     {
                         _node3C = GetRandomNavigationNode();
-                        _findType2 = AiFindType2.None;
+                        _queuedFindEntityAction = AiQueuedEnt.None;
                     }
                     else if (context.Field9 == 40)
                     {
                         _node3C = FindHighestNode();
-                        _findType2 = AiFindType2.Type9;
+                        _queuedFindEntityAction = AiQueuedEnt.Type9;
                     }
                     else if (context.Field9 == 41 && Flags2.TestFlag(AiFlags2.Bit2))
                     {
                         FindEntityRef(AiEntRefType.Type17);
                         _node3C = _entityRefs.Field17;
-                        _findType2 = AiFindType2.Type3;
+                        _queuedFindEntityAction = AiQueuedEnt.Type3;
                     }
                     else if (context.Field9 == 42 && Flags2.TestFlag(AiFlags2.Bit2))
                     {
                         FindEntityRef(AiEntRefType.Type18);
                         _node3C = _entityRefs.Field18;
-                        _findType2 = AiFindType2.Type4;
+                        _queuedFindEntityAction = AiQueuedEnt.Type4;
                     }
                     else if (context.Field9 == 44)
                     {
                         FindEntityRef(AiEntRefType.Type23);
                         _node3C = _entityRefs.Field23;
-                        _findType2 = AiFindType2.None;
+                        _queuedFindEntityAction = AiQueuedEnt.None;
                     }
                     else if (context.Field9 == 45)
                     {
                         FindEntityRef(AiEntRefType.Type22);
                         _node3C = _entityRefs.Field22;
-                        _findType2 = AiFindType2.None;
+                        _queuedFindEntityAction = AiQueuedEnt.None;
                     }
                     else if (context.Field9 == 46)
                     {
                         FindEntityRef(AiEntRefType.Type21);
                         _node3C = _entityRefs.Field21;
-                        _findType2 = AiFindType2.None;
+                        _queuedFindEntityAction = AiQueuedEnt.None;
                     }
                     else
                     {
@@ -4691,7 +4699,7 @@ namespace MphRead.Entities
                         {
                             _node3C = _node40;
                         }
-                        _findType2 = AiFindType2.None;
+                        _queuedFindEntityAction = AiQueuedEnt.None;
                     }
                     if (_node40 != null && IsNodeInRange(_node40))
                     {
@@ -7705,7 +7713,7 @@ namespace MphRead.Entities
 
             private void FindQueuedEntityRef()
             {
-                if (_findType2 == AiFindType2.Type0)
+                if (_queuedFindEntityAction == AiQueuedEnt.Type0)
                 {
                     if (!Flags2.TestFlag(AiFlags2.Bit2))
                     {
@@ -7718,25 +7726,25 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field2;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type1)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type1)
                 {
                     Func2135510();
                     FindEntityRef(AiEntRefType.Type2);
                     _node3C = _entityRefs.Field2;
                 }
-                else if (_findType2 == AiFindType2.Type2)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type2)
                 {
                     Func21354E0();
                     FindEntityRef(AiEntRefType.Type2);
                     _node3C = _entityRefs.Field2;
                 }
-                else if (_findType2 == AiFindType2.Type3)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type3)
                 {
                     Func2135510();
                     FindEntityRef(AiEntRefType.Type17);
                     _node3C = _entityRefs.Field17;
                 }
-                else if (_findType2 == AiFindType2.Type4)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type4)
                 {
                     if (!Flags2.TestFlag(AiFlags2.Bit2))
                     {
@@ -7749,25 +7757,25 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field18;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type5)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type5)
                 {
                     Func21354B0();
                     FindEntityRef(AiEntRefType.Type2);
                     _node3C = _entityRefs.Field2;
                 }
-                else if (_findType2 == AiFindType2.Type6)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type6)
                 {
                     Func2135380();
                     FindEntityRef(AiEntRefType.Type2);
                     _node3C = _entityRefs.Field2;
                 }
-                else if (_findType2 == AiFindType2.Type7)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type7)
                 {
                     Func21354B0();
                     FindEntityRef(AiEntRefType.Type17);
                     _node3C = _entityRefs.Field17;
                 }
-                else if (_findType2 == AiFindType2.Type8)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type8)
                 {
                     if (!Flags2.TestFlag(AiFlags2.Bit2))
                     {
@@ -7780,12 +7788,12 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field3;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type9)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type9)
                 {
                     FindEntityRef(AiEntRefType.Type19);
                     _node3C = _entityRefs.Field19;
                 }
-                else if (_findType2 == AiFindType2.Type10)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type10)
                 {
                     FindEntityRef(AiEntRefType.Type54);
                     UpdateSeekItem(_entityRefs.Field54);
@@ -7795,7 +7803,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field5;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type11)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type11)
                 {
                     FindEntityRef(AiEntRefType.Type34);
                     if (_itemSpawnC4 != _entityRefs.Field34)
@@ -7808,7 +7816,7 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                else if (_findType2 == AiFindType2.Type12)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type12)
                 {
                     FindEntityRef(AiEntRefType.Type55);
                     UpdateSeekItem(_entityRefs.Field55);
@@ -7823,7 +7831,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type13)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type13)
                 {
                     FindEntityRef(AiEntRefType.Type56);
                     UpdateSeekItem(_entityRefs.Field56);
@@ -7838,7 +7846,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type14)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type14)
                 {
                     FindEntityRef(AiEntRefType.Type57);
                     UpdateSeekItem(_entityRefs.Field57);
@@ -7853,7 +7861,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type15)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type15)
                 {
                     FindEntityRef(AiEntRefType.Type58);
                     UpdateSeekItem(_entityRefs.Field58);
@@ -7868,7 +7876,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type16)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type16)
                 {
                     FindEntityRef(AiEntRefType.Type59);
                     UpdateSeekItem(_entityRefs.Field59);
@@ -7883,7 +7891,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type17)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type17)
                 {
                     FindEntityRef(AiEntRefType.Type60);
                     UpdateSeekItem(_entityRefs.Field60);
@@ -7898,7 +7906,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type18)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type18)
                 {
                     FindEntityRef(AiEntRefType.Type61);
                     UpdateSeekItem(_entityRefs.Field61);
@@ -7913,7 +7921,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type19)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type19)
                 {
                     // note: types 19 through 26 are never called in-game (among others), which is just as well since they
                     // incorrect pass an item spawn instead to UpdateSeekItem(). we just pass the spawner's item if there is one.
@@ -7930,7 +7938,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type20)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type20)
                 {
                     FindEntityRef(AiEntRefType.Type43);
                     UpdateSeekItem(_entityRefs.Field43?.Item);
@@ -7945,7 +7953,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type21)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type21)
                 {
                     FindEntityRef(AiEntRefType.Type44);
                     UpdateSeekItem(_entityRefs.Field44?.Item);
@@ -7960,7 +7968,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type22)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type22)
                 {
                     FindEntityRef(AiEntRefType.Type45);
                     UpdateSeekItem(_entityRefs.Field45?.Item);
@@ -7975,7 +7983,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type23)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type23)
                 {
                     FindEntityRef(AiEntRefType.Type46);
                     UpdateSeekItem(_entityRefs.Field46?.Item);
@@ -7990,7 +7998,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type24)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type24)
                 {
                     FindEntityRef(AiEntRefType.Type47);
                     UpdateSeekItem(_entityRefs.Field47?.Item);
@@ -8005,7 +8013,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type25)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type25)
                 {
                     FindEntityRef(AiEntRefType.Type48);
                     UpdateSeekItem(_entityRefs.Field48?.Item);
@@ -8020,7 +8028,7 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type26)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type26)
                 {
                     FindEntityRef(AiEntRefType.Type49);
                     UpdateSeekItem(_entityRefs.Field49?.Item);
@@ -8035,52 +8043,52 @@ namespace MphRead.Entities
                         _node3C = _entityRefs.Field0;
                     }
                 }
-                else if (_findType2 == AiFindType2.Type27 || _findType2 == AiFindType2.Type28)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type27 || _queuedFindEntityAction == AiQueuedEnt.Type28)
                 {
                     FindEntityRef(AiEntRefType.Type6);
                     _node3C = _entityRefs.Field6;
                 }
-                else if (_findType2 == AiFindType2.Type29)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type29)
                 {
                     FindEntityRef(AiEntRefType.Type8);
                     _node3C = _entityRefs.Field8;
                 }
-                else if (_findType2 == AiFindType2.Type30 || _findType2 == AiFindType2.Type31)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type30 || _queuedFindEntityAction == AiQueuedEnt.Type31)
                 {
                     FindEntityRef(AiEntRefType.Type9);
                     _node3C = _entityRefs.Field9;
                 }
-                else if (_findType2 == AiFindType2.Type32)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type32)
                 {
                     FindEntityRef(AiEntRefType.Type11);
                     _node3C = _entityRefs.Field11;
                 }
-                else if (_findType2 == AiFindType2.Type33 || _findType2 == AiFindType2.Type34)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type33 || _queuedFindEntityAction == AiQueuedEnt.Type34)
                 {
                     FindEntityRef(AiEntRefType.Type12);
                     _node3C = _entityRefs.Field12;
                 }
-                else if (_findType2 == AiFindType2.Type35)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type35)
                 {
                     FindEntityRef(AiEntRefType.Type14);
                     _node3C = _entityRefs.Field14;
                 }
-                else if (_findType2 == AiFindType2.Type36)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type36)
                 {
                     FindEntityRef(AiEntRefType.Type15);
                     _node3C = _entityRefs.Field15;
                 }
-                else if (_findType2 == AiFindType2.Type37)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type37)
                 {
                     FindEntityRef(AiEntRefType.Type20);
                     _node3C = _entityRefs.Field20;
                 }
-                else if (_findType2 == AiFindType2.Type38)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type38)
                 {
                     FindEntityRef(AiEntRefType.Type21);
                     _node3C = _entityRefs.Field21;
                 }
-                else if (_findType2 == AiFindType2.Type39)
+                else if (_queuedFindEntityAction == AiQueuedEnt.Type39)
                 {
                     FindEntityRef(AiEntRefType.Type22);
                     _node3C = _entityRefs.Field22;
@@ -9578,7 +9586,7 @@ namespace MphRead.Entities
                 }
             }
 
-            private AiFindType2 _findType2 = AiFindType2.None; // todo: member name
+            private AiQueuedEnt _queuedFindEntityAction = AiQueuedEnt.None; // todo: member name
             private readonly AiEntityRefs _entityRefs = new AiEntityRefs();
 
             public void OnTakeDamage(int damage, EntityBase source, PlayerEntity? attacker)
@@ -9629,6 +9637,512 @@ namespace MphRead.Entities
                     }
                 }
             }
+
+            public enum AiEntRefType
+            {
+                Type0 = 0,
+                Type1 = 1,
+                Type2 = 2,
+                Type3 = 3,
+                Type4 = 4,
+                Type5 = 5,
+                Type6 = 6,
+                Type7 = 7,
+                Type8 = 8,
+                Type9 = 9,
+                Type10 = 10,
+                Type11 = 11,
+                Type12 = 12,
+                Type13 = 13,
+                Type14 = 14,
+                Type15 = 15,
+                Type16 = 16,
+                Type17 = 17,
+                Type18 = 18,
+                Type19 = 19,
+                Type20 = 20,
+                Type21 = 21,
+                Type22 = 22,
+                Type23 = 23,
+                Type24 = 24,
+                Type25 = 25,
+                Type26 = 26,
+                Type27 = 27,
+                Type28 = 28,
+                Type29 = 29,
+                Type30 = 30,
+                Type31 = 31,
+                Type32 = 32,
+                Type33 = 33,
+                Type34 = 34,
+                Type35 = 35,
+                Type36 = 36,
+                Type37 = 37,
+                Type38 = 38,
+                Type39 = 39,
+                Type40 = 40,
+                Type41 = 41,
+                Type42 = 42,
+                Type43 = 43,
+                Type44 = 44,
+                Type45 = 45,
+                Type46 = 46,
+                Type47 = 47,
+                Type48 = 48,
+                Type49 = 49,
+                Type50 = 50,
+                Type51 = 51,
+                Type52 = 52,
+                Type53 = 53,
+                Type54 = 54,
+                Type55 = 55,
+                Type56 = 56,
+                Type57 = 57,
+                Type58 = 58,
+                Type59 = 59,
+                Type60 = 60,
+                Type61 = 61,
+                Type62 = 62,
+                Type63 = 63,
+                Type64 = 64,
+                Type65 = 65,
+                Type66 = 66,
+                Type67 = 67,
+                Type68 = 68,
+                Type69 = 69,
+                Type70 = 70,
+                Type71 = 71,
+                Type72 = 72,
+                Type73 = 73,
+                Type74 = 74,
+                Type75 = 75,
+                Type76 = 76,
+                Type77 = 77
+            }
+
+            public enum AiQueuedEnt
+            {
+                Type0 = 0,
+                Type1 = 1,
+                Type2 = 2,
+                Type3 = 3,
+                Type4 = 4,
+                Type5 = 5,
+                Type6 = 6,
+                Type7 = 7,
+                Type8 = 8,
+                Type9 = 9,
+                Type10 = 10,
+                Type11 = 11,
+                Type12 = 12,
+                Type13 = 13,
+                Type14 = 14,
+                Type15 = 15,
+                Type16 = 16,
+                Type17 = 17,
+                Type18 = 18,
+                Type19 = 19,
+                Type20 = 20,
+                Type21 = 21,
+                Type22 = 22,
+                Type23 = 23,
+                Type24 = 24,
+                Type25 = 25,
+                Type26 = 26,
+                Type27 = 27,
+                Type28 = 28,
+                Type29 = 29,
+                Type30 = 30,
+                Type31 = 31,
+                Type32 = 32,
+                Type33 = 33,
+                Type34 = 34,
+                Type35 = 35,
+                Type36 = 36,
+                Type37 = 37,
+                Type38 = 38,
+                Type39 = 39,
+                None = 40
+            }
+
+            #region Debug
+
+            public static IEnumerable<string> GetFuncs1Names(IEnumerable<int> ids)
+            {
+                return ids.Select(i => GetFuncs1Name(i));
+            }
+
+            private static string GetFuncs1Name(int id)
+            {
+                // init (d3a) and process (d3b)
+                return id switch
+                {
+                    0 => nameof(Func1_214A39C),
+                    1 => nameof(Func1_214A098),
+                    2 => nameof(Func1_2149D3C),
+                    3 => nameof(Func1_2149C98),
+                    4 => nameof(Func1_2149C80),
+                    5 => nameof(Func1_2149C68),
+                    6 => nameof(Func1_2149C50),
+                    7 => nameof(Func1_2149C38),
+                    8 => nameof(Func1_2149C20),
+                    9 => nameof(Func1_2149C08),
+                    10 => nameof(Func1_2149BF0),
+                    11 => nameof(Func1_2149BD8),
+                    12 => nameof(Func1_2149BC0),
+                    13 => nameof(Func1_2149BA8),
+                    14 => nameof(Func1_2149B98),
+                    15 => nameof(Func1_2149AD8),
+                    16 => nameof(Func1_2149AC8),
+                    17 => nameof(Func1_2149ABC),
+                    18 => nameof(Func1_2149AB0),
+                    19 => nameof(Func1_2149AA4),
+                    20 => nameof(Func1_2149A98),
+                    21 => nameof(Func1_2149A64),
+                    22 => nameof(Func1_2149824),
+                    23 => nameof(Func1_21497F0),
+                    24 => nameof(Func1_2149570),
+                    25 => nameof(Func1_21494FC),
+                    26 => nameof(Func1_2149488),
+                    27 => nameof(Func1_2149414),
+                    28 => nameof(Func1_21493A0),
+                    29 => nameof(Func1_214932C),
+                    30 => nameof(Func1_21495A4),
+                    31 => nameof(Func1_2149530),
+                    32 => nameof(Func1_21494BC),
+                    33 => nameof(Func1_2149448),
+                    34 => nameof(Func1_21493D4),
+                    35 => nameof(Func1_2149360),
+                    36 => nameof(Func1_21492EC),
+                    37 => nameof(Func1_21492DC),
+                    38 => nameof(Func1_21492CC),
+                    39 => nameof(Func1_21492BC),
+                    40 => nameof(Func1_21492AC),
+                    41 => nameof(Func1_214929C),
+                    42 => nameof(Func1_214928C),
+                    43 => nameof(Func1_214927C),
+                    44 => nameof(Func1_214926C),
+                    45 => nameof(Func1_214925C),
+                    46 => nameof(Func1_214924C),
+                    47 => nameof(Func1_214923C),
+                    48 => nameof(Func1_214922C),
+                    49 => nameof(Func1_214921C),
+                    50 => nameof(Func1_214920C),
+                    51 => nameof(Func1_21491FC),
+                    52 => nameof(Func1_21491E4),
+                    53 => nameof(Func1_21491CC),
+                    54 => nameof(Func1_21491B4),
+                    55 => nameof(Func1_214919C),
+                    56 => nameof(Func1_2149184),
+                    57 => nameof(Func1_214916C),
+                    58 => nameof(Func1_2149154),
+                    59 => nameof(Func1_214913C),
+                    60 => nameof(Func1_2149124),
+                    61 => nameof(Func1_214910C),
+                    62 => nameof(Func1_21490F4),
+                    63 => nameof(Func1_21490DC),
+                    64 => nameof(Func1_21490C4),
+                    65 => nameof(Func1_21490AC),
+                    66 => nameof(Func1_2149094),
+                    67 => nameof(Func1_2149088),
+                    68 => nameof(Func1_2149034),
+                    69 => nameof(Func1_2148F10),
+                    70 => nameof(Func1_2148EDC),
+                    71 => nameof(Func1_2148ECC),
+                    72 => nameof(Func1_2148EB8),
+                    73 => nameof(Func1_2148EA8),
+                    74 => nameof(Func1_2148E98),
+                    75 => nameof(Func1_2148E88),
+                    76 => nameof(Func1_2148E74),
+                    77 => nameof(Func1_2148E64),
+                    78 => nameof(Func1_2148E54),
+                    79 => nameof(Func1_2148DF8),
+                    80 => nameof(Func1_2148DE8),
+                    81 => nameof(Func1_2148D50),
+                    82 => nameof(Func1_UnlockEchoHallForceField),
+                    83 => nameof(Func1_SetInvulnerable),
+                    _ => throw new ProgramException("Invalid AI func 1.")
+                };
+            }
+
+            public static IEnumerable<string> GetFuncs3Names(IEnumerable<int> ids)
+            {
+                return ids.Select(i => GetFuncs3Name(i));
+            }
+
+            public static string GetFuncs3Name(int id)
+            {
+                // preconditions (d2->d4->d5) and path updates (d2->d5)
+                return id switch
+                {
+                    0 => nameof(Func3_213D87C),
+                    1 => nameof(Func3_213D83C),
+                    2 => nameof(Func3_213D814),
+                    3 => nameof(Func3_213D7F0),
+                    4 => nameof(Func3_213D800),
+                    5 => nameof(Func3_213D7E8),
+                    6 => nameof(Func3_213D7D0),
+                    7 => nameof(Func3_213D7B8),
+                    8 => nameof(Func3_213D7A0),
+                    9 => nameof(Func3_213D77C),
+                    10 => nameof(Func3_213D758),
+                    11 => nameof(Func3_213D734),
+                    12 => nameof(Func3_213D710),
+                    13 => nameof(Func3_213D6D0),
+                    14 => nameof(Func3_213D6AC),
+                    15 => nameof(Func3_213D624),
+                    16 => nameof(Func3_213D608),
+                    17 => nameof(Func3_213D564),
+                    18 => nameof(Func3_213D540),
+                    19 => nameof(Func3_213D530),
+                    20 => nameof(Func3_213D514),
+                    21 => nameof(Func3_213D4C0),
+                    22 => nameof(Func3_213D49C),
+                    23 => nameof(Func3_213D43C),
+                    24 => nameof(Func3_213D418),
+                    25 => nameof(Func3_213D388),
+                    26 => nameof(Func3_213D36C),
+                    27 => nameof(Func3_213D2C0),
+                    28 => nameof(Func3_213D2A4),
+                    29 => nameof(Func3_213D234),
+                    30 => nameof(Func3_213D218),
+                    31 => nameof(Func3_213D178),
+                    32 => nameof(Func3_213D15C),
+                    33 => nameof(Func3_213D128),
+                    34 => nameof(Func3_213D0F4),
+                    35 => nameof(Func3_213D0C4),
+                    36 => nameof(Func3_213D0A8),
+                    37 => nameof(Func3_213D078),
+                    38 => nameof(Func3_213D05C),
+                    39 => nameof(Func3_213D044),
+                    40 => nameof(Func3_213D028),
+                    41 => nameof(Func3_213D010),
+                    42 => nameof(Func3_213CFF4),
+                    43 => nameof(Func3_213CFDC),
+                    44 => nameof(Func3_213CFC0),
+                    45 => nameof(Func3_213CFA4),
+                    46 => nameof(Func3_213CF0C),
+                    47 => nameof(Func3_213CEE8),
+                    48 => nameof(Func3_213CDB8),
+                    49 => nameof(Func3_213CF94),
+                    50 => nameof(Func3_213CF7C),
+                    51 => nameof(Func3_213CDA4),
+                    52 => nameof(Func3_213CD74),
+                    53 => nameof(Func3_213CD58),
+                    54 => nameof(Func3_213CD34),
+                    55 => nameof(Func3_213CD18),
+                    56 => nameof(Func3_213CCF4),
+                    57 => nameof(Func3_213CCD8),
+                    58 => nameof(Func3_213CCBC),
+                    59 => nameof(Func3_213CCB0),
+                    60 => nameof(Func3_213CC94),
+                    61 => nameof(Func3_213CBE4),
+                    62 => nameof(Func3_213CBC0),
+                    63 => nameof(Func3_213CBB0),
+                    64 => nameof(Func3_213CB8C),
+                    65 => nameof(Func3_213CADC),
+                    66 => nameof(Func3_213CAA8),
+                    67 => nameof(Func3_213CA84),
+                    68 => nameof(Func3_213CA70),
+                    69 => nameof(Func3_213CA58),
+                    70 => nameof(Func3_213CA2C),
+                    71 => nameof(Func3_213CA00),
+                    72 => nameof(Func3_213C9D4),
+                    73 => nameof(Func3_213C9C4),
+                    74 => nameof(Func3_213C89C),
+                    75 => nameof(Func3_213C88C),
+                    76 => nameof(Func3_213C764),
+                    77 => nameof(Func3_213C75C),
+                    78 => nameof(Func3_213C698),
+                    79 => nameof(Func3_213C64C),
+                    80 => nameof(Func3_213C600),
+                    81 => nameof(Func3_213C52C),
+                    82 => nameof(Func3_213C48C),
+                    83 => nameof(Func3_213C470),
+                    84 => nameof(Func3_213C334),
+                    85 => nameof(Func3_213C310),
+                    86 => nameof(Func3_213C0D0),
+                    87 => nameof(Func3_213C078),
+                    88 => nameof(Func3_213C054),
+                    89 => nameof(Func3_213BFFC),
+                    90 => nameof(Func3_213BFD8),
+                    91 => nameof(Func3_213BED8),
+                    92 => nameof(Func3_213BEBC),
+                    93 => nameof(Func3_213BEA0),
+                    94 => nameof(Func3_213BE48),
+                    95 => nameof(Func3_213BE10),
+                    96 => nameof(Func3_213BDF4),
+                    97 => nameof(Func3_213BD7C),
+                    98 => nameof(Func3_213BCE8),
+                    99 => nameof(Func3_213BCC4),
+                    100 => nameof(Func3_213BCB0),
+                    101 => nameof(Func3_213BC8C),
+                    102 => nameof(Func3_213BC70),
+                    103 => nameof(Func3_213BC4C),
+                    104 => nameof(Func3_213BC0C),
+                    105 => nameof(Func3_213BBE8),
+                    106 => nameof(Func3_213BBA0),
+                    107 => nameof(Func3_213BB7C),
+                    108 => nameof(Func3_213BAF4),
+                    109 => nameof(Func3_213BAD0),
+                    110 => nameof(Func3_213BA68),
+                    111 => nameof(Func3_213BA44),
+                    112 => nameof(Func3_213BA28),
+                    113 => nameof(Func3_213BA04),
+                    114 => nameof(Func3_213B99C),
+                    115 => nameof(Func3_213B978),
+                    116 => nameof(Func3_213B8B0),
+                    117 => nameof(Func3_213B88C),
+                    118 => nameof(Func3_213B7A0),
+                    119 => nameof(Func3_213B77C),
+                    120 => nameof(Func3_213B690),
+                    121 => nameof(Func3_213B5DC),
+                    122 => nameof(Func3_213B528),
+                    123 => nameof(Func3_213B4E4),
+                    124 => nameof(Func3_213B4A0),
+                    125 => nameof(Func3_213B45C),
+                    126 => nameof(Func3_213B3F0),
+                    127 => nameof(Func3_213B3A0),
+                    128 => nameof(Func3_213B37C),
+                    129 => nameof(Func3_213B34C),
+                    130 => nameof(Func3_213B328),
+                    131 => nameof(Func3_213B284),
+                    132 => nameof(Func3_213B260),
+                    133 => nameof(Func3_213B1F0),
+                    134 => nameof(Func3_213B1D8),
+                    135 => nameof(Func3_213B1C0),
+                    136 => nameof(Func3_213B1A8),
+                    137 => nameof(Func3_213B190),
+                    138 => nameof(Func3_213B178),
+                    139 => nameof(Func3_213B160),
+                    140 => nameof(Func3_213B148),
+                    141 => nameof(Func3_213B130),
+                    142 => nameof(Func3_213B118),
+                    143 => nameof(Func3_213B100),
+                    144 => nameof(Func3_213B0E8),
+                    145 => nameof(Func3_213B0D0),
+                    146 => nameof(Func3_213B0B8),
+                    147 => nameof(Func3_213B0A0),
+                    148 => nameof(Func3_213B088),
+                    149 => nameof(Func3_213B070),
+                    150 => nameof(Func3_213B058),
+                    151 => nameof(Func3_213B040),
+                    152 => nameof(Func3_213B020),
+                    153 => nameof(Func3_213B000),
+                    154 => nameof(Func3_213AFE0),
+                    155 => nameof(Func3_213AFC0),
+                    156 => nameof(Func3_213AFA0),
+                    157 => nameof(Func3_213AF80),
+                    158 => nameof(Func3_213AF68),
+                    159 => nameof(Func3_213AF50),
+                    160 => nameof(Func3_213AF38),
+                    161 => nameof(Func3_213AF20),
+                    162 => nameof(Func3_213AF08),
+                    163 => nameof(Func3_213AEF0),
+                    164 => nameof(Func3_213AED8),
+                    165 => nameof(Func3_213AEC0),
+                    166 => nameof(Func3_213AEA8),
+                    167 => nameof(Func3_213AE90),
+                    168 => nameof(Func3_213AE78),
+                    169 => nameof(Func3_213AE60),
+                    170 => nameof(Func3_213AE48),
+                    171 => nameof(Func3_213AE30),
+                    172 => nameof(Func3_213AE14),
+                    173 => nameof(Func3_213ADF8),
+                    174 => nameof(Func3_213ADC4),
+                    175 => nameof(Func3_213ADA0),
+                    176 => nameof(Func3_213AD88),
+                    177 => nameof(Func3_213AD64),
+                    178 => nameof(Func3_213ACE8),
+                    179 => nameof(Func3_213ACCC),
+                    180 => nameof(Func3_213ACA8),
+                    181 => nameof(Func3_213AC8C),
+                    182 => nameof(Func3_213AC70),
+                    183 => nameof(Func3_213AC54),
+                    184 => nameof(Func3_213AC38),
+                    185 => nameof(Func3_213AC04),
+                    186 => nameof(Func3_213ABC0),
+                    187 => nameof(Func3_213AB8C),
+                    188 => nameof(Func3_213AB58),
+                    189 => nameof(Func3_213AB24),
+                    190 => nameof(Func3_213AAF0),
+                    191 => nameof(Func3_213AA64),
+                    192 => nameof(Func3_213AA20),
+                    193 => nameof(Func3_213A9B8),
+                    194 => nameof(Func3_213A94C),
+                    195 => nameof(Func3_213A938),
+                    196 => nameof(Func3_213A91C),
+                    197 => nameof(Func3_213A900),
+                    198 => nameof(Func3_213A8DC),
+                    199 => nameof(Func3_213A8A8),
+                    200 => nameof(Func3_213A884),
+                    201 => nameof(Func3_213A868),
+                    202 => nameof(Func3_213A844),
+                    203 => nameof(Func3_213A828),
+                    204 => nameof(Func3_213A804),
+                    205 => nameof(Func3_213A798),
+                    206 => nameof(Func3_213A72C),
+                    207 => nameof(Func3_213A714),
+                    208 => nameof(Func3_213A698),
+                    209 => nameof(Func3_213A688),
+                    210 => nameof(Func3_213A660),
+                    211 => nameof(Func3_213A650),
+                    _ => throw new ProgramException("Invalid AI func 3.")
+                };
+            }
+
+            public static string GetFuncs4Name(int id)
+            {
+                // init (f2*4*)
+                return id switch
+                {
+                    0 or 1 or 47 or 49 or 99 => "empty",
+                    (>= 2 and <= 44) or 46 or 48 or (>= 50 and <= 78) or (>= 82 and <= 98) or 101 or 103
+                        or (>= 106 and <= 113) or (>= 115 and <= 122) => nameof(Func4_21462DC) + "*",
+                    45 => nameof(Func4_2145EB0),
+                    79 => nameof(Func4_21462AC),
+                    80 => nameof(Func4_2146284),
+                    81 => nameof(Func4_21461EC),
+                    100 => nameof(Func4_214612C),
+                    102 => nameof(Func4_2145F78),
+                    104 => nameof(Func4_2145F50),
+                    105 => nameof(Func4_2145F28),
+                    114 => nameof(Func4_2145F00),
+                    123 => nameof(Func4_2145E54),
+                    124 => nameof(Func4_2145E40),
+                    125 => nameof(Func4_SetDespawned),
+                    _ => throw new ProgramException("Invalid AI func 4.")
+                };
+            }
+
+            public static string GetFuncs2Name(int id)
+            {
+                // proc (f*2*4)
+                return id switch
+                {
+                    0 or 125 => "empty",
+                    1 => nameof(Func2_213EA10),
+                    (>= 2 and <= 44) or 46 or 48 or (>= 50 and <= 78) or (>= 82 and <= 98) or 101 or 103
+                        or (>= 106 and <= 113) or (>= 115 and <= 122) => nameof(Func2_213EA48) + "*",
+                    45 => nameof(Func2_213DDCC),
+                    47 => nameof(Func2_213DA88),
+                    49 => nameof(Func2_213E148),
+                    79 => nameof(Func2_213E9C8),
+                    80 => nameof(Func2_213E984),
+                    81 => nameof(Func2_213E934),
+                    99 => nameof(Func2_213E904),
+                    100 => nameof(Func2_213E684),
+                    102 => nameof(Func2_213E3C4),
+                    104 => nameof(Func2_213E31C),
+                    105 => nameof(Func2_213E274),
+                    114 => nameof(Func2_213E1CC),
+                    123 => nameof(Func2_213D9B8),
+                    124 => nameof(Func2_213D96C),
+                    _ => throw new ProgramException("Invalid AI func 2.")
+                };
+            }
+
+            #endregion
         }
     }
 
@@ -9690,563 +10204,5 @@ namespace MphRead.Entities
         Bit1 = 2,
         Bit2 = 4,
         Bit3 = 8
-    }
-
-    public enum AiEntRefType
-    {
-        Type0 = 0,
-        Type1 = 1,
-        Type2 = 2,
-        Type3 = 3,
-        Type4 = 4,
-        Type5 = 5,
-        Type6 = 6,
-        Type7 = 7,
-        Type8 = 8,
-        Type9 = 9,
-        Type10 = 10,
-        Type11 = 11,
-        Type12 = 12,
-        Type13 = 13,
-        Type14 = 14,
-        Type15 = 15,
-        Type16 = 16,
-        Type17 = 17,
-        Type18 = 18,
-        Type19 = 19,
-        Type20 = 20,
-        Type21 = 21,
-        Type22 = 22,
-        Type23 = 23,
-        Type24 = 24,
-        Type25 = 25,
-        Type26 = 26,
-        Type27 = 27,
-        Type28 = 28,
-        Type29 = 29,
-        Type30 = 30,
-        Type31 = 31,
-        Type32 = 32,
-        Type33 = 33,
-        Type34 = 34,
-        Type35 = 35,
-        Type36 = 36,
-        Type37 = 37,
-        Type38 = 38,
-        Type39 = 39,
-        Type40 = 40,
-        Type41 = 41,
-        Type42 = 42,
-        Type43 = 43,
-        Type44 = 44,
-        Type45 = 45,
-        Type46 = 46,
-        Type47 = 47,
-        Type48 = 48,
-        Type49 = 49,
-        Type50 = 50,
-        Type51 = 51,
-        Type52 = 52,
-        Type53 = 53,
-        Type54 = 54,
-        Type55 = 55,
-        Type56 = 56,
-        Type57 = 57,
-        Type58 = 58,
-        Type59 = 59,
-        Type60 = 60,
-        Type61 = 61,
-        Type62 = 62,
-        Type63 = 63,
-        Type64 = 64,
-        Type65 = 65,
-        Type66 = 66,
-        Type67 = 67,
-        Type68 = 68,
-        Type69 = 69,
-        Type70 = 70,
-        Type71 = 71,
-        Type72 = 72,
-        Type73 = 73,
-        Type74 = 74,
-        Type75 = 75,
-        Type76 = 76,
-        Type77 = 77
-    }
-
-    // todo: member name
-    public enum AiFindType2
-    {
-        Type0 = 0,
-        Type1 = 1,
-        Type2 = 2,
-        Type3 = 3,
-        Type4 = 4,
-        Type5 = 5,
-        Type6 = 6,
-        Type7 = 7,
-        Type8 = 8,
-        Type9 = 9,
-        Type10 = 10,
-        Type11 = 11,
-        Type12 = 12,
-        Type13 = 13,
-        Type14 = 14,
-        Type15 = 15,
-        Type16 = 16,
-        Type17 = 17,
-        Type18 = 18,
-        Type19 = 19,
-        Type20 = 20,
-        Type21 = 21,
-        Type22 = 22,
-        Type23 = 23,
-        Type24 = 24,
-        Type25 = 25,
-        Type26 = 26,
-        Type27 = 27,
-        Type28 = 28,
-        Type29 = 29,
-        Type30 = 30,
-        Type31 = 31,
-        Type32 = 32,
-        Type33 = 33,
-        Type34 = 34,
-        Type35 = 35,
-        Type36 = 36,
-        Type37 = 37,
-        Type38 = 38,
-        Type39 = 39,
-        None = 40
-    }
-
-    public static class ReadBotAi
-    {
-        // copied Kanden 0 for Samus and Guardian 0 for Guardian, but they're unused anyway
-        private static readonly IReadOnlyList<IReadOnlyList<int>> _encounterAiOffsets =
-        [
-            //                  Sam    Kan    Tra    Syl    Nox    Spi    Wea    Gua
-            /* encounter 0 */ [33152, 33152, 33696, 33836, 33556, 33372, 33976, 13480 ],
-            /* encounter 1 */ [ 33152, 33196, 37576, 41948, 35428, 33416, 41492, 13480 ],
-            /* encounter 3 */ [ 33152, 33152, 39420, 42772, 33556, 40312, 33976, 13480 ],
-            /* encounter 4 */ [ 33152, 33152, 33696, 45176, 33556, 40556, 33976, 13480 ]
-        ];
-
-        public static void LoadAll(GameMode mode)
-        {
-            for (int i = 0; i < PlayerEntity.Players.Count; i++)
-            {
-                PlayerEntity player = PlayerEntity.Players[i];
-                player.AiData.Reset();
-                if (!player.IsBot)
-                {
-                    continue;
-                }
-                int aiOffset = 32896; // default, Battle, BattleTeams
-                if (mode == GameMode.SinglePlayer)
-                {
-                    int encounterState = GameState.EncounterState[i];
-                    if (player.Hunter == Hunter.Guardian)
-                    {
-                        aiOffset = encounterState == 2 ? 32932 : 13480;
-                    }
-                    else
-                    {
-                        if (encounterState == 2)
-                        {
-                            aiOffset = 33232;
-                        }
-                        else
-                        {
-                            int index = encounterState switch
-                            {
-                                1 => 1,
-                                3 => 2,
-                                4 => 3,
-                                _ => 0
-                            };
-                            // todo?: if replacing enemy hunters, consider loading the offset belonging to the one replaced
-                            aiOffset = _encounterAiOffsets[index][(int)player.Hunter];
-                        }
-                        player.AiData.Flags1 = true;
-                    }
-                }
-                else if (mode == GameMode.Survival || mode == GameMode.SurvivalTeams)
-                {
-                    aiOffset = 45696;
-                }
-                else if (mode == GameMode.Capture
-                    || mode == GameMode.Bounty || mode == GameMode.BountyTeams)
-                {
-                    aiOffset = 32968;
-                }
-                else if (mode == GameMode.Nodes || mode == GameMode.NodesTeams
-                    || mode == GameMode.Defender || mode == GameMode.DefenderTeams)
-                {
-                    aiOffset = 33012;
-                }
-                else if (mode == GameMode.PrimeHunter)
-                {
-                    aiOffset = 45220;
-                }
-                player.AiData.Personality = LoadData(aiOffset);
-            }
-        }
-
-        private static string _cachedVersion = "";
-        private static byte[]? _aiPersonalityData = null;
-
-        private static AiPersonalityData1 LoadData(int offset)
-        {
-            if (Paths.MphKey != _cachedVersion)
-            {
-                _aiPersonalityData = null;
-                _data1Cache.Clear();
-                _data2Cache.Clear();
-                _cachedVersion = Paths.MphKey;
-            }
-            if (_aiPersonalityData == null)
-            {
-                _aiPersonalityData = File.ReadAllBytes(Paths.Combine(Paths.FileSystem, @"aiPersonalityData\aiPersonalityData.bin"));
-            }
-            return ParseData1(offset, count: 1)[0];
-        }
-
-        private static readonly Dictionary<int, IReadOnlyList<AiPersonalityData1>> _data1Cache = [];
-        private static readonly Dictionary<int, IReadOnlyList<int>> _data3Cache = [];
-
-        private static IReadOnlyList<AiPersonalityData1> ParseData1(int offset, int count)
-        {
-            if (_data1Cache.TryGetValue(offset, out IReadOnlyList<AiPersonalityData1>? cached))
-            {
-                return cached;
-            }
-            var bytes = new ReadOnlySpan<byte>(_aiPersonalityData);
-            var results = new List<AiPersonalityData1>(count);
-            IReadOnlyList<AiData1> data1s = Read.DoOffsets<AiData1>(bytes, offset, count);
-            for (int i = 0; i < data1s.Count; i++)
-            {
-                AiData1 data1 = data1s[i];
-                IReadOnlyList<AiPersonalityData1> data1Children = [];
-                if (data1.Data1Count > 0 && data1.Data1Offset != offset)
-                {
-                    data1Children = ParseData1(data1.Data1Offset, data1.Data1Count);
-                }
-                IReadOnlyList<AiPersonalityData2> data2 = [];
-                if (data1.Data2Count > 0)
-                {
-                    data2 = ParseData2(data1.Data2Offset, data1.Data2Count);
-                }
-                IReadOnlyList<int> data3a = [];
-                if (data1.Data3aCount > 0)
-                {
-                    if (_data3Cache.TryGetValue(data1.Data3aOffset, out IReadOnlyList<int>? cached3a))
-                    {
-                        data3a = cached3a;
-                    }
-                    else
-                    {
-                        data3a = Read.DoOffsets<int>(bytes, data1.Data3aOffset, data1.Data3aCount);
-                        _data3Cache.Add(data1.Data3aOffset, data3a);
-                    }
-                }
-                IReadOnlyList<int> data3b = [];
-                if (data1.Data3bCount > 0)
-                {
-                    if (_data3Cache.TryGetValue(data1.Data3bOffset, out IReadOnlyList<int>? cached3b))
-                    {
-                        data3b = cached3b;
-                    }
-                    else
-                    {
-                        data3b = Read.DoOffsets<int>(bytes, data1.Data3bOffset, data1.Data3bCount);
-                        _data3Cache.Add(data1.Data3bOffset, data3b);
-                    }
-                }
-                results.Add(new AiPersonalityData1(data1.Field0, data1Children, data2, data3a, data3b));
-            }
-            _data1Cache.Add(offset, results);
-            return results;
-        }
-
-        private static readonly Dictionary<int, IReadOnlyList<AiPersonalityData2>> _data2Cache = [];
-
-        private static IReadOnlyList<AiPersonalityData2> ParseData2(int offset, int count)
-        {
-            if (_data2Cache.TryGetValue(offset, out IReadOnlyList<AiPersonalityData2>? cached))
-            {
-                return cached;
-            }
-            var bytes = new ReadOnlySpan<byte>(_aiPersonalityData);
-            var results = new List<AiPersonalityData2>(count);
-            IReadOnlyList<AiData2> data2s = Read.DoOffsets<AiData2>(bytes, offset, count);
-            for (int i = 0; i < data2s.Count; i++)
-            {
-                AiData2 data2 = data2s[i];
-                IReadOnlyList<AiPersonalityData4> data4 = [];
-                if (data2.Data4Count > 0)
-                {
-                    data4 = ParseData4(data2.Data4Offset, data2.Data4Count);
-                }
-                AiPersonalityData5 data5 = _emptyParams;
-                if (data2.Data5Offset != 0)
-                {
-                    data5 = ParseData5(data2.Data5Type, data2.Data5Offset);
-                }
-                results.Add(new AiPersonalityData2(data2.FieldC, data2.Field10, data4, data2.Data5Type, data5));
-            }
-            _data2Cache.Add(offset, results);
-            return results;
-        }
-
-        private static readonly Dictionary<int, IReadOnlyList<AiPersonalityData4>> _data4Cache = [];
-
-        private static IReadOnlyList<AiPersonalityData4> ParseData4(int offset, int count)
-        {
-            if (_data4Cache.TryGetValue(offset, out IReadOnlyList<AiPersonalityData4>? cached))
-            {
-                return cached;
-            }
-            var bytes = new ReadOnlySpan<byte>(_aiPersonalityData);
-            var results = new List<AiPersonalityData4>(count);
-            IReadOnlyList<AiData4> data4s = Read.DoOffsets<AiData4>(bytes, offset, count);
-            for (int i = 0; i < data4s.Count; i++)
-            {
-                AiData4 data4 = data4s[i];
-                AiPersonalityData5 data5 = _emptyParams;
-                if (data4.Data5Offset != 0)
-                {
-                    data5 = ParseData5(data4.Data5Type, data4.Data5Offset);
-                }
-                results.Add(new AiPersonalityData4(data4.Data5Type, data5));
-            }
-            _data4Cache.Add(offset, results);
-            return results;
-        }
-
-        private static readonly AiPersonalityData5 _emptyParams = new AiPersonalityData5();
-        private static readonly Dictionary<int, AiPersonalityData5> _data5Cache = [];
-
-        private static AiPersonalityData5 ParseData5(int type, int offset)
-        {
-            if (_data5Cache.TryGetValue(offset, out AiPersonalityData5? cached))
-            {
-                return cached;
-            }
-            var bytes = new ReadOnlySpan<byte>(_aiPersonalityData);
-            uint param1 = Read.SpanReadUint(bytes, offset);
-            uint param2 = type == 210 ? Read.SpanReadUint(bytes, offset + 4) : 0;
-            return new AiPersonalityData5(param1, param2);
-        }
-
-        // skdebug
-        public static void TestRead()
-        {
-            var bytes = new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(Paths.FileSystem, @"aiPersonalityData\aiPersonalityData.bin")));
-            var offsets = new List<int>()
-            {
-                13480, 32896, 32932, 32968, 33012, 33152, 33196, 33232, 33372, 33416, 33556, 33696, 33836,
-                33976, 35428, 37576, 39420, 40312, 40556, 41492, 41948, 42772, 45176, 45220, 45696
-            };
-            var results = new List<AiPersonalityData1>();
-            foreach (int offset in offsets)
-            {
-                results.Add(LoadData(offset));
-                if (offset == 33232)
-                {
-                    results[^1].PrintAll();
-                }
-            }
-            _ = 5;
-            _ = 5;
-        }
-
-        // size: 36
-        public readonly struct AiData1
-        {
-            public readonly int Field0;
-            public readonly int Data1Count;
-            public readonly int Data1Offset;
-            public readonly int Data2Count;
-            public readonly int Data2Offset;
-            public readonly int Data3aCount;
-            public readonly int Data3aOffset;
-            public readonly int Data3bCount;
-            public readonly int Data3bOffset;
-        }
-
-        // size: 24
-        public readonly struct AiData2
-        {
-            public readonly int Data5Type;
-            public readonly int Data4Count;
-            public readonly int Data4Offset;
-            public readonly int FieldC;
-            public readonly int Field10;
-            public readonly int Data5Offset;
-        }
-
-        // size: 8
-        public readonly struct AiData4
-        {
-            public readonly int Data5Type;
-            public readonly int Data5Offset;
-        }
-    }
-
-    public class AiPersonalityData1
-    {
-        public int Func24Id { get; init; }
-        public IReadOnlyList<AiPersonalityData1> Data1 { get; init; }
-        public IReadOnlyList<AiPersonalityData2> Data2 { get; init; }
-        public IReadOnlyList<int> Data3a { get; init; }
-        public IReadOnlyList<int> Data3b { get; init; }
-
-        public AiPersonalityData1(int field0, IReadOnlyList<AiPersonalityData1> data1,
-            IReadOnlyList<AiPersonalityData2> data2, IReadOnlyList<int> data3a, IReadOnlyList<int> data3b)
-        {
-            Func24Id = field0;
-            Data1 = data1;
-            Data2 = data2;
-            Data3a = data3a;
-            Data3b = data3b;
-        }
-
-        public void PrintAll()
-        {
-            int id = 0;
-            int firstId = 0;
-            int depth = 0;
-            var queue = new Queue<(AiPersonalityData1, int)>();
-            int offset = 0;
-            queue.Enqueue((this, 0));
-            while (queue.Count > 0)
-            {
-                int count = queue.Count;
-                while (count > 0)
-                {
-                    (AiPersonalityData1 node, int offs) = queue.Dequeue();
-                    PrintNode(node, id++, firstId + offs);
-                    foreach (AiPersonalityData1 child in node.Data1)
-                    {
-                        queue.Enqueue((child, offset));
-                    }
-                    offset += node.Data1.Count;
-                    count--;
-                }
-                if (queue.Count > 0)
-                {
-                    depth++;
-                    offset = 0;
-                    firstId = id;
-                    Debug.WriteLine("--------------------------------------");
-                    Debug.WriteLine("");
-                }
-            }
-            _ = 5;
-            _ = 5;
-        }
-
-        private static string GetLabel(int id)
-        {
-            string label = "Root";
-            if (--id >= 0)
-            {
-                label = "";
-                while (id >= 0)
-                {
-                    label = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[id % 26] + label;
-                    id = id / 26 - 1;
-                }
-            }
-            return label;
-        }
-
-        private static void PrintNode(AiPersonalityData1 node, int id, int firstId)
-        {
-            Debug.WriteLine(GetLabel(id));
-            string d3a = node.Data3a.Count == 0 ? "-" : String.Join(", ", node.Data3a);
-            string d3b = node.Data3b.Count == 0 ? "-" : String.Join(", ", node.Data3b);
-            string f24 = node.Func24Id == 0 ? "-" : node.Func24Id.ToString();
-            Debug.WriteLine($"Init (3a): {d3a}");
-            Debug.WriteLine($"Init (F4): {f24}");
-            Debug.WriteLine($"Proc (3b): {d3b}");
-            Debug.WriteLine($"Proc (F2): {f24}");
-            if (node.Data2.Count == 0)
-            {
-                Debug.WriteLine("Switch(x): -");
-            }
-            else
-            {
-                int pad1 = (node.Data2.Count - 1).ToString().Length;
-                int pad2 = node.Data2.Select(d => d.Func3Id).Max().ToString().Length;
-                int pad3 = node.Data2.Select(d => d.Weight).Max().ToString().Length;
-                for (int i = 0; i < node.Data2.Count; i++)
-                {
-                    AiPersonalityData2 data2 = node.Data2[i];
-                    string str1 = i.ToString().PadLeft(pad1);
-                    string str2 = data2.Func3Id.ToString().PadLeft(pad2);
-                    string str3 = data2.Weight.ToString().PadLeft(pad3);
-                    if (data2.Data4.Count > 0)
-                    {
-                        string str4 = String.Join(", ", data2.Data4.Select(d => d.Func3Id));
-                        Debug.WriteLine($"Precon({str1}): {str4}");
-                    }
-                    Debug.WriteLine($"Switch({str1}): {str2}, {str3}, " +
-                        $"s = {data2.Data1SelectIndex} ({GetLabel(data2.Data1SelectIndex + firstId)})");
-                }
-            }
-            Debug.WriteLine("");
-        }
-    }
-
-    public class AiPersonalityData2
-    {
-        public int Data1SelectIndex { get; init; }
-        public int Weight { get; init; }
-        public IReadOnlyList<AiPersonalityData4> Data4 { get; init; }
-        public int Func3Id { get; init; }
-        public AiPersonalityData5 Parameters { get; init; }
-
-        public AiPersonalityData2(int selIndex, int weight, IReadOnlyList<AiPersonalityData4> data4,
-            int fund3Id, AiPersonalityData5 param)
-        {
-            Data1SelectIndex = selIndex;
-            Weight = weight;
-            Data4 = data4;
-            Func3Id = fund3Id;
-            Parameters = param;
-        }
-    }
-
-    public class AiPersonalityData4
-    {
-        public int Func3Id { get; init; }
-        public AiPersonalityData5 Parameters { get; init; }
-
-        public AiPersonalityData4(int data5Type, AiPersonalityData5 data5)
-        {
-            Func3Id = data5Type;
-            Parameters = data5;
-        }
-    }
-
-    public class AiPersonalityData5
-    {
-        public uint Param1 { get; init; }
-        public uint Param2 { get; init; }
-        // skdebug: see if an empty one ever gets used for parameters, since it would be a null ref in-game
-        public bool IsEmpty { get; init; }
-
-        public AiPersonalityData5()
-        {
-            IsEmpty = true;
-        }
-
-        public AiPersonalityData5(uint param1, uint param2)
-        {
-            Param1 = param1;
-            Param2 = param2;
-        }
     }
 }
