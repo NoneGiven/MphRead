@@ -475,12 +475,17 @@ namespace MphRead.Entities
                     }
                     Biped2Flags |= AnimFlags.NoLoop;
                 }
-                if (Controls.MouseAim && !Flags1.TestFlag(PlayerFlags1.NoAimInput))
+                if (Controls.MouseAim && !Flags1.TestFlag(PlayerFlags1.NoAimInput) && !IsBot)
                 {
                     float aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
                     float aimX = -Input.MouseDeltaX / 4f;
                     if (CameraSequence.Current?.Flags.TestFlag(CamSeqFlags.BlockInput) == true
                         || _scene.FrameAdvance || _scene.FrameAdvanceLastFrame) // skdebug
+                    {
+                        aimX = aimY = 0;
+                    }
+                    if (Controls.KeyboardAim && (Controls.AimLeft.IsDown || Controls.AimRight.IsDown
+                        || Controls.AimUp.IsDown || Controls.AimDown.IsDown))
                     {
                         aimX = aimY = 0;
                     }
@@ -528,9 +533,14 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                if (Controls.KeyboardAim)
+                if (Controls.KeyboardAim || IsBot)
                 {
-                    // itodo: button aim
+                    UpdateAimX(_buttonAimX);
+                    UpdateAimY(_buttonAimY);
+                    if (!IsBot)
+                    {
+                        // itodo: button aim (see free cam code for FPS-independent stuff)
+                    }
                 }
                 bool jumping = false;
                 if (!Flags2.TestAny(PlayerFlags2.BipedLock | PlayerFlags2.BipedStuck))
@@ -1180,10 +1190,40 @@ namespace MphRead.Entities
                     _altRollLrZ = CameraInfo.Field54;
                 }
                 // todo?: field35C targeting(?) stuff
+
+                void UpdateAnimation(float aimX, float aimY)
+                {
+                    if ((Hunter == Hunter.Trace || Hunter == Hunter.Weavel) && Flags1.TestFlag(PlayerFlags1.Grounded))
+                    {
+                        // sktodo: threshold values
+                        if (aimX > 3)
+                        {
+                            _timeIdle = 0;
+                            animId = (int)WeavelAltAnim.Turn; // or TraceAltAnim.MoveBackward
+                            animFlags = AnimFlags.Reverse;
+                            if (_altModel.AnimInfo.Index[0] == animId)
+                            {
+                                _altModel.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                _altModel.AnimInfo.Flags[0] |= AnimFlags.Reverse;
+                            }
+                        }
+                        else if (aimX < -3)
+                        {
+                            _timeIdle = 0;
+                            animId = (int)WeavelAltAnim.Turn; // or TraceAltAnim.MoveBackward
+                            if (_altModel.AnimInfo.Index[0] == animId)
+                            {
+                                _altModel.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
+                                _altModel.AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
+                            }
+                        }
+                    }
+                }
+
                 if (Values.AltFormStrafe != 0)
                 {
                     // Trace, Sylux, Weavel
-                    if (Controls.MouseAim && !Flags1.TestFlag(PlayerFlags1.NoAimInput))
+                    if (Controls.MouseAim && !Flags1.TestFlag(PlayerFlags1.NoAimInput) && !IsBot)
                     {
                         float aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
                         float aimX = -Input.MouseDeltaX / 4f;
@@ -1200,35 +1240,17 @@ namespace MphRead.Entities
                         UpdateHudShiftX(aimX);
                         UpdateAimY(aimY);
                         UpdateAimX(aimX);
-                        if ((Hunter == Hunter.Trace || Hunter == Hunter.Weavel) && Flags1.TestFlag(PlayerFlags1.Grounded))
-                        {
-                            // sktodo: threshold values
-                            if (aimX > 3)
-                            {
-                                _timeIdle = 0;
-                                animId = (int)WeavelAltAnim.Turn; // or TraceAltAnim.MoveBackward
-                                animFlags = AnimFlags.Reverse;
-                                if (_altModel.AnimInfo.Index[0] == animId)
-                                {
-                                    _altModel.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
-                                    _altModel.AnimInfo.Flags[0] |= AnimFlags.Reverse;
-                                }
-                            }
-                            else if (aimX < -3)
-                            {
-                                _timeIdle = 0;
-                                animId = (int)WeavelAltAnim.Turn; // or TraceAltAnim.MoveBackward
-                                if (_altModel.AnimInfo.Index[0] == animId)
-                                {
-                                    _altModel.AnimInfo.Flags[0] &= ~AnimFlags.NoLoop;
-                                    _altModel.AnimInfo.Flags[0] &= ~AnimFlags.Reverse;
-                                }
-                            }
-                        }
+                        UpdateAnimation(aimX, aimY);
                     }
-                    if (Controls.KeyboardAim)
+                    if (Controls.KeyboardAim || IsBot)
                     {
-                        // itodo: button aim
+                        UpdateAimX(_buttonAimX);
+                        UpdateAimY(_buttonAimY);
+                        UpdateAnimation(_buttonAimX, _buttonAimY);
+                        if (!IsBot)
+                        {
+                            // itodo: button aim (see free cam code for FPS-independent stuff)
+                        }
                     }
                     if (!Flags2.TestFlag(PlayerFlags2.BipedLock) && (Hunter != Hunter.Trace || !Flags2.TestFlag(PlayerFlags2.AltAttack)))
                     {
