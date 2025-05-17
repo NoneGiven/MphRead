@@ -663,16 +663,17 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                // sktodo-ai: clear player's button aim
+                _player._buttonAimX = 0;
+                _player._buttonAimY = 0;
                 if (_buttonAimX != 0)
                 {
                     Flags3 &= ~AiFlags3.NoInput;
-                    // sktodo-ai: set player's button aim X
+                    _player._buttonAimX = _buttonAimX;
                 }
                 if (_buttonAimY != 0)
                 {
                     Flags3 &= ~AiFlags3.NoInput;
-                    // sktodo-ai: set player's button aim Y
+                    _player._buttonAimY = _buttonAimY;
                 }
                 _buttonAimX = 0;
                 _buttonAimY = 0;

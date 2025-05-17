@@ -756,6 +756,8 @@ namespace MphRead.Entities
             Acceleration = Vector3.Zero;
             _accelerationTimer = 0;
             _aimY = 0;
+            _buttonAimX = 0;
+            _buttonAimY = 0;
             NodeRef = nodeRef;
             _gunViewBob = 0;
             _walkViewBob = 0;

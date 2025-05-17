@@ -7,6 +7,13 @@ namespace MphRead.Entities
 {
     public partial class PlayerEntity
     {
+        private readonly float[] _pastAimX = new float[8];
+        private readonly float[] _pastAimY = new float[8];
+        private float _buttonAimX = 0;
+        private float _buttonAimY = 0;
+        private const float _maxButtonAimX = 8;
+        private const float _maxButtonAimY = 8;
+
         private void ProcessInput()
         {
             if (_health > 0)
@@ -372,9 +379,6 @@ namespace MphRead.Entities
                 UpdateAimFacing();
             }
         }
-
-        private readonly float[] _pastAimX = new float[8];
-        private readonly float[] _pastAimY = new float[8];
 
         private void UpdateHudShiftY(float amount)
         {

@@ -623,14 +623,73 @@ namespace MphRead.Entities
                 }
                 float aimY = 0;
                 float aimX = 0;
-                if (Controls.MouseAim)
+                if (Controls.MouseAim && !IsBot)
                 {
-                    aimY = -Input.MouseDeltaY / 4f; // itodo: x and y sensitivity
-                    aimX = -Input.MouseDeltaX / 4f;
+                    // itodo: x and y sensitivity
+                    if (!Controls.KeyboardAim || !Controls.AimUp.IsDown && !Controls.AimDown.IsDown)
+                    {
+                        aimY = -Input.MouseDeltaY / 4f;
+                    }
+                    if (!Controls.KeyboardAim || !Controls.AimLeft.IsDown && !Controls.AimRight.IsDown)
+                    {
+                        aimX = -Input.MouseDeltaX / 4f;
+                    }
                 }
-                if (Controls.KeyboardAim)
+                if (Controls.KeyboardAim || IsBot)
                 {
-                    // itodo: button aim
+                    // 8 degrees per frame at 30 fps (45f/1.5s to complete one revolution)
+                    float maxAimX = _maxButtonAimX * 30;
+                    float aimStepX = maxAimX * (40 / 4096f);
+                    float maxAimY = _maxButtonAimY * 30;
+                    float aimStepY = maxAimY * (40 / 4096f);
+                    if (Controls.AimRight.IsDown)
+                    {
+                        (_buttonAimX, aimX) = ConstantAcceleration(-aimStepX, _buttonAimX, -maxAimX, -maxAimX * 0.4f);
+                    }
+                    else if (Controls.AimLeft.IsDown)
+                    {
+                        (_buttonAimX, aimX) = ConstantAcceleration(aimStepX, _buttonAimX, maxAimY * 0.4f, maxAimX);
+                    }
+                    else if (_buttonAimX != 0)
+                    {
+                        if (_buttonAimX > 0 && _buttonAimX < 1 / 4096f
+                        || _buttonAimX < 0 && _buttonAimX > -1 / 4096f)
+                        {
+                            _buttonAimX = 0;
+                        }
+                        else
+                        {
+                            (_buttonAimX, float updateAimX) = Drag(0.4f, _buttonAimX);
+                            if (aimX == 0)
+                            {
+                                aimX = updateAimX;
+                            }
+                        }
+                    }
+                    if (Controls.AimUp.IsDown)
+                    {
+                        (_buttonAimY, aimY) = ConstantAcceleration(aimStepY, _buttonAimY, maxAimY * 0.4f, maxAimY);
+                    }
+                    else if (Controls.AimDown.IsDown)
+                    {
+                        (_buttonAimY, aimY) = ConstantAcceleration(-aimStepY, _buttonAimY, -maxAimY, -maxAimY * 0.4f);
+                    }
+                    else if (_buttonAimY != 0)
+                    {
+                        if (_buttonAimY > 0 && _buttonAimY < 1 / 4096f
+                        || _buttonAimY < 0 && _buttonAimY > -1 / 4096f)
+                        {
+                            _buttonAimY = 0;
+                        }
+                        else
+                        {
+                            (_buttonAimY, float updateAimY) = Drag(0.4f, _buttonAimY);
+                            if (aimY == 0)
+                            {
+                                aimY = updateAimY;
+                            }
+                        }
+                    }
                 }
                 if (Controls.InvertAimY)
                 {
@@ -643,43 +702,28 @@ namespace MphRead.Entities
                 float sensitivity = 1; // itodo: this
                 aimY *= sensitivity;
                 aimX *= sensitivity;
-                if ((CameraInfo.Facing.Y < 0.985f || aimY < 0) && (CameraInfo.Facing.Y > -0.985f || aimY > 0))
+                bool updateY = aimY != 0 && (CameraInfo.Facing.Y < 0.985f || aimY < 0) && (CameraInfo.Facing.Y > -0.985f || aimY > 0);
+                bool updateX = aimX != 0;
+                if (updateY || updateX)
                 {
-                    aimY = MathHelper.DegreesToRadians(aimY);
-                    var cross = Vector3.Cross(CameraInfo.Facing, new Vector3(CameraInfo.Field50, 0, CameraInfo.Field54));
-                    float cosY;
-                    float sinY;
-                    if (aimY <= 0)
+                    // button aim causes constant acceleration/decay of the rate of change of the pitch/yaw of the facing vector.
+                    // to make that easy to implement independent of the frame rate, we convert the vector to angles and back.
+                    // there may be a better way to do this by operating on the vector itself.
+                    float pitch = MathHelper.RadiansToDegrees(MathF.Asin(CameraInfo.Facing.Y));
+                    float yaw = MathHelper.RadiansToDegrees(MathF.Atan2(CameraInfo.Facing.X, CameraInfo.Facing.Z));
+                    if (updateY)
                     {
-                        cosY = MathF.Cos(aimY);
-                        sinY = MathF.Sin(aimY);
+                        pitch = (pitch + aimY) % 360;
                     }
-                    else
+                    if (updateX)
                     {
-                        cosY = MathF.Cos(-aimY);
-                        sinY = -MathF.Sin(-aimY);
+                        yaw = (yaw + aimX) % 360;
                     }
-                    CameraInfo.Facing.X = cross.X * sinY + CameraInfo.Facing.X * cosY;
-                    CameraInfo.Facing.Y = cross.Y * sinY + CameraInfo.Facing.Y * cosY;
-                    CameraInfo.Facing.Z = cross.Z * sinY + CameraInfo.Facing.Z * cosY;
+                    pitch = MathHelper.DegreesToRadians(pitch);
+                    yaw = MathHelper.DegreesToRadians(yaw);
+                    float cos = MathF.Cos(pitch);
+                    CameraInfo.Facing = new Vector3(MathF.Sin(yaw) * cos, MathF.Sin(pitch), MathF.Cos(yaw) * cos);
                 }
-                aimX = MathHelper.DegreesToRadians(aimX);
-                float cosX;
-                float sinX;
-                if (aimX <= 0)
-                {
-                    cosX = MathF.Cos(aimX);
-                    sinX = MathF.Sin(aimX);
-                }
-                else
-                {
-                    cosX = MathF.Cos(-aimX);
-                    sinX = -MathF.Sin(-aimX);
-                }
-                float x = CameraInfo.Facing.X;
-                float z = CameraInfo.Facing.Z;
-                CameraInfo.Facing.X = x * cosX + z * sinX;
-                CameraInfo.Facing.Z = x * -sinX + z * cosX;
                 Vector3 pos = CameraInfo.Position;
                 if (_scene.Room.Meta.HasLimits)
                 {
