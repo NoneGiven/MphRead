@@ -4249,14 +4249,18 @@ namespace MphRead.Entities
                 return Flags2.TestFlag(AiFlags2.Bit14) ? 1 : 0;
             }
 
+            // todo: FPS stuff
+            private bool _ignore = false;
+
             private int Func3_213A660(AiContext context, AiPersonalityData5 param)
             {
-                // todo: FPS stuff
-                if (_scene.FrameCount > 0 && _scene.FrameCount % 2 == 0)
+                if (_ignore)
                 {
-                    return param.Param1 + (int)Rng.GetRandomInt2(param.Param2 - param.Param1);
+                    _ignore = false;
+                    return 0;
                 }
-                return 0;
+                _ignore = true;
+                return param.Param1 + (int)Rng.GetRandomInt2(param.Param2 - param.Param1);
             }
 
             private int Func3_213A650(AiContext context, AiPersonalityData5 param)
@@ -9809,7 +9813,8 @@ namespace MphRead.Entities
                         {
                             for (int j = 0; j < item.Data1.Data2.Count; j++)
                             {
-                                int index = item.Data1.Data2[j].Data1SelectIndex;
+                                AiPersonalityData2 data2 = item.Data1.Data2[j];
+                                int index = data2.Data1SelectIndex;
                                 string target;
                                 if (index >= 20)
                                 {
@@ -9823,6 +9828,14 @@ namespace MphRead.Entities
                                 int weight = _executionTree[i - 1].Weights[index];
                                 float pct = weight / 100000f * 100;
                                 sb.AppendLine($"w: {weight,6} / 100000 ({pct,5:f1}%) -> {target}");
+                                if (data2.Func3Id >= 70 && data2.Func3Id <= 72)
+                                {
+                                    int param1 = data2.Parameters.Param1 * 2; // todo: FPS stuff
+                                    int padding = param1.ToString().Length;
+                                    string calls = item.CallCount.ToString().PadLeft(padding);
+                                    pct = item.CallCount / (float)param1 * 100;
+                                    sb.AppendLine($"c: {calls} / {param1} ({pct,5:f1}%) -> {target}");
+                                }
                             }
                         }
                     }
