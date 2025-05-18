@@ -45,6 +45,7 @@ namespace MphRead
         PlayerLimit,
         CameraLimit,
         NodeBounds,
+        NodeData,
         Portal
     }
 
@@ -119,6 +120,7 @@ namespace MphRead
         private int _showInvisible = 0;
         private bool _showNodeData = false;
         private VolumeDisplay _showVolumes = VolumeDisplay.None;
+        private int _showBotAiSlot = -1;
         private bool _showCollision = false;
         private bool _showAllNodes = false;
         private bool _transformRoomNodes = false;
@@ -3971,6 +3973,28 @@ namespace MphRead
                     }
                 }
             }
+            else if (e.Key == Keys.J && _showBotAiSlot != -1)
+            {
+                if (e.Shift)
+                {
+                    if (_showBotAiSlot <= 0)
+                    {
+                        _showBotAiSlot = 3;
+                    }
+                    else
+                    {
+                        _showBotAiSlot--;
+                    }
+                }
+                else if (_showBotAiSlot >= 3)
+                {
+                    _showBotAiSlot = 0;
+                }
+                else
+                {
+                    _showBotAiSlot++;
+                }
+            }
             else if (e.Key == Keys.K)
             {
                 if (e.Alt)
@@ -4061,12 +4085,19 @@ namespace MphRead
                     _wireframe = !_wireframe;
                 }
             }
-            else if (e.Key == Keys.B && !e.Alt)
+            else if (e.Key == Keys.B)
             {
-                _faceCulling = !_faceCulling;
-                if (!_faceCulling)
+                if (e.Alt)
                 {
-                    GL.Disable(EnableCap.CullFace);
+                    _showBotAiSlot = _showBotAiSlot == -1 ? 1 : -1;
+                }
+                else
+                {
+                    _faceCulling = !_faceCulling;
+                    if (!_faceCulling)
+                    {
+                        GL.Disable(EnableCap.CullFace);
+                    }
                 }
             }
             else if (e.Key == Keys.F)
@@ -4427,31 +4458,58 @@ namespace MphRead
             string recording = _recording ? " - Recording" : "";
             string frameAdvance = _frameAdvanceOn ? " - Frame Advance" : "";
             _sb.AppendLine($"MphRead Version {Program.Version}{recording}{frameAdvance}");
-            if (_showCollision)
+            if (_showBotAiSlot >= 0 && _showBotAiSlot <= 3)
             {
-                OutputGetCollisionMenu();
+                OutputGetBotAi();
             }
-            if (Selection.Entity != null)
+            else
             {
-                OutputGetEntityInfo();
-                if (Selection.Instance != null)
+                if (_showCollision)
                 {
-                    OutputGetModel();
-                    if (Selection.Node != null)
+                    OutputGetCollisionMenu();
+                }
+                if (Selection.Entity != null)
+                {
+                    OutputGetEntityInfo();
+                    if (Selection.Instance != null)
                     {
-                        OutputGetNode();
-                        if (Selection.Mesh != null)
+                        OutputGetModel();
+                        if (Selection.Node != null)
                         {
-                            OutputGetMesh();
+                            OutputGetNode();
+                            if (Selection.Mesh != null)
+                            {
+                                OutputGetMesh();
+                            }
                         }
                     }
                 }
-            }
-            else if (!_showCollision)
-            {
-                OutputGetMenu();
+                else if (!_showCollision)
+                {
+                    OutputGetMenu();
+                }
             }
             return _sb.ToString();
+        }
+
+        private void OutputGetBotAi()
+        {
+            PlayerEntity player = PlayerEntity.Players[_showBotAiSlot];
+            _sb.AppendLine();
+            _sb.AppendLine($"Bot AI slot: {_showBotAiSlot} (J: Next slot, Shift+J: Previous slot)");
+            if (!player.LoadFlags.TestFlag(LoadFlags.SlotActive) && !player.LoadFlags.TestFlag(LoadFlags.Active))
+            {
+                _sb.AppendLine("none");
+            }
+            else if (!player.IsBot)
+            {
+                _sb.AppendLine($"Player - {player.Hunter}");
+            }
+            else
+            {
+                _sb.AppendLine($"Bot - {player.Hunter}");
+                player.AiData.GetOuptut(_sb);
+            }
         }
 
         private void OutputGetCollisionMenu()
@@ -4497,6 +4555,7 @@ namespace MphRead
                 VolumeDisplay.PlayerLimit => "room limits (player)",
                 VolumeDisplay.CameraLimit => "room limits (camera)",
                 VolumeDisplay.NodeBounds => "room node bounds",
+                VolumeDisplay.NodeData => "node data radius",
                 VolumeDisplay.Portal => "portals",
                 _ => "off"
             };

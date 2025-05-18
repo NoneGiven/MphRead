@@ -1248,6 +1248,8 @@ namespace MphRead.Entities
             return _activeRoomParts[nodeRef.PartIndex];
         }
 
+        private readonly HashSet<NodeData3> _drawnNodeData = [];
+
         public override void GetDrawInfo()
         {
             if (!Hidden)
@@ -1300,8 +1302,9 @@ namespace MphRead.Entities
             {
                 GetCollisionDrawInfo();
             }
-            if (_nodeData != null && _scene.ShowNodeData)
+            if (_nodeData != null && (_scene.ShowNodeData || _scene.ShowVolumes == VolumeDisplay.NodeData))
             {
+                _drawnNodeData.Clear();
                 Debug.Assert(_models.Count == 2);
                 ModelInstance inst = _models[1];
                 int polygonId = _scene.GetNextPolygonId();
@@ -1314,12 +1317,15 @@ namespace MphRead.Entities
                         for (int k = 0; k < str2.Count; k++)
                         {
                             NodeData3 str3 = str2[k];
-                            GetNodeDataItem(inst, str3.Transform, str3.Color, polygonId);
-                            // todo: add a new type
-                            if (_scene.ShowVolumes == VolumeDisplay.KillPlane)
+                            if (!_drawnNodeData.Contains(str3))
                             {
-                                var sphere = new CollisionVolume(str3.Position, str3.MaxDistance);
-                                AddVolumeItem(sphere, Vector3.UnitX);
+                                GetNodeDataItem(inst, str3.Transform, str3.Color, polygonId);
+                                _drawnNodeData.Add(str3);
+                                if (_scene.ShowVolumes == VolumeDisplay.NodeData)
+                                {
+                                    var sphere = new CollisionVolume(str3.Position, str3.MaxDistance);
+                                    AddVolumeItem(sphere, Vector3.UnitX);
+                                }
                             }
                         }
                     }

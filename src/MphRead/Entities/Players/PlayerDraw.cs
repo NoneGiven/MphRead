@@ -200,6 +200,7 @@ namespace MphRead.Entities
                 UpdateTransforms(_octolithSimpleModel, transform, recolor: 0);
                 GetDrawItems(_octolithSimpleModel, _octolithSimpleModel.Model.Nodes[0], alpha: 1, recolor: 0);
             }
+            DrawVolumes();
         }
 
         private void DrawKandenAlt()
@@ -524,6 +525,20 @@ namespace MphRead.Entities
                 }
                 nodePos += (nodePos - Position).Normalized() * offset;
                 _scene.AddSingleParticle(SingleType.Death, nodePos, Vector3.One, 1 - timePct, scale);
+            }
+        }
+
+        private void DrawVolumes()
+        {
+            if (_scene.ShowVolumes == VolumeDisplay.KillPlane)
+            {
+                if (!IsAltForm && !IsMorphing && !IsUnmorphing)
+                {
+                    AddVectorItem(_gunDrawPos, _aimVec * 3, Vector3.UnitZ);
+                    AddDotItem(_muzzlePos, Vector3.UnitX);
+                    AddDotItem(_muzzlePos + (_aimPosition - _muzzlePos).Normalized() * 3, Vector3.UnitX);
+                }
+                AddVectorItem(_position, _facingVector * 3, Vector3.UnitY);
             }
         }
 

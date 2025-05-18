@@ -6,14 +6,76 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using MphRead.Formats;
 
 namespace MphRead.Memory
 {
     public class Memory
     {
+        private List<string> _mem = [];
+
         private void DoProcess()
         {
-            _sb.AppendLine("processed");
+            var context = _players[1].AIContext;
+            Debug.Assert(context != null);
+            string tree = "";
+            for (int i = 1; i < 20; i++)
+            {
+                AIContext item = context[i];
+                if (item.AIData1 == null)
+                {
+                    break;
+                }
+                AIContext parent = context[i - 1];
+                int childIndex = -1;
+                for (int j = 0; j < parent.AIData1!.Data1Count; j++)
+                {
+                    if (parent.AIData1.Data1![j].Address == item.AIData1.Address)
+                    {
+                        childIndex = j;
+                        break;
+                    }
+                }
+                tree += $"{(tree == "" ? "" : " -> ")}{childIndex}";
+                _sb.AppendLine($"d{i}: {childIndex}");
+                if (parent.AIData1?.Data1Count > 1)
+                {
+                    for (int k = 0; k < item.AIData1.Data2Count; k++)
+                    {
+                        int index = item.AIData1.Data2![k].Data1SelectIdx;
+                        string target;
+                        if (index >= 20)
+                        {
+                            index = parent.AIData1.Data1Count;
+                            target = "reset";
+                        }
+                        else
+                        {
+                            target = index.ToString();
+                        }
+                        int weight = parent.Weights[index];
+                        float pct = weight / 100000f * 100;
+                        _sb.AppendLine($"w: {weight,6} / 100000 ({pct,5:f1}%) -> {target}");
+                    }
+                }
+                if (item.AIData1.Data1Count == 0)
+                {
+                    break;
+                }
+                _sb.AppendLine();
+                _ = 5;
+            }
+            int frameCount = BitConverter.ToInt32(_buffer, Addresses.FrameCount - 0x2000000);
+            if (_mem.Count == 0 || _mem.Last().Split(": ")[1] != tree)
+            {
+                _mem.Add($"{frameCount}: {tree}");
+            }
+            _sb.AppendLine();
+            foreach (string line in _mem)
+            {
+                _sb.AppendLine(line);
+            }
+            _ = 5;
         }
 
         private class AddressInfo

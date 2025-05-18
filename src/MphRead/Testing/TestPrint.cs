@@ -154,13 +154,13 @@ namespace MphRead.Testing
             };
             if (baseClass != null)
             {
-                Console.WriteLine($"public class {className} : {baseClass}");
+                Debug.WriteLine($"public class {className} : {baseClass}");
             }
             else
             {
-                Console.WriteLine($"public class {className} : MemoryClass");
+                Debug.WriteLine($"public class {className} : MemoryClass");
             }
-            Console.WriteLine("    {");
+            Debug.WriteLine("    {");
             var news = new List<string>();
             foreach (string line in data.Split(Environment.NewLine))
             {
@@ -458,47 +458,47 @@ namespace MphRead.Testing
                     }
                     size *= number;
                 }
-                Console.WriteLine($"        private const int _off{index} = 0x{offset:X1};{comment}");
+                Debug.WriteLine($"        private const int _off{index} = 0x{offset:X1};{comment}");
                 if (array)
                 {
-                    Console.WriteLine($"        public {type} {name} {{ get; }}");
+                    Debug.WriteLine($"        public {type} {name} {{ get; }}");
                     news.Add($"            {name} = new {type}(memory, address + _off{index}, {number}{param});");
                 }
                 else if (embed)
                 {
-                    Console.WriteLine($"        public {type} {name} {{ get; }}");
+                    Debug.WriteLine($"        public {type} {name} {{ get; }}");
                     news.Add($"            {name} = new {type}(memory, address + _off{index});");
                 }
                 else if (enums)
                 {
-                    Console.WriteLine($"        public {type} {name} {{ get => ({type}){getter}(_off{index}); " +
+                    Debug.WriteLine($"        public {type} {name} {{ get => ({type}){getter}(_off{index}); " +
                         $"set => {setter}(_off{index}, ({cast})value); }}");
                 }
                 else
                 {
-                    Console.WriteLine($"        public {type} {name} {{ get => {getter}(_off{index}); " +
+                    Debug.WriteLine($"        public {type} {name} {{ get => {getter}(_off{index}); " +
                         $"set => {setter}(_off{index}, value); }}");
                 }
-                Console.WriteLine();
+                Debug.WriteLine("");
                 index++;
                 offset += size;
             }
-            Console.WriteLine($"        public {className}(Memory memory, int address) : base(memory, address)");
-            Console.WriteLine("        {");
+            Debug.WriteLine($"        public {className}(Memory memory, int address) : base(memory, address)");
+            Debug.WriteLine("        {");
             foreach (string line in news)
             {
-                Console.WriteLine(line);
+                Debug.WriteLine(line);
             }
-            Console.WriteLine("        }");
-            Console.WriteLine();
-            Console.WriteLine($"        public {className}(Memory memory, IntPtr address) : base(memory, address)");
-            Console.WriteLine("        {");
+            Debug.WriteLine("        }");
+            Debug.WriteLine("");
+            Debug.WriteLine($"        public {className}(Memory memory, IntPtr address) : base(memory, address)");
+            Debug.WriteLine("        {");
             foreach (string line in news)
             {
-                Console.WriteLine(line);
+                Debug.WriteLine(line);
             }
-            Console.WriteLine("        }");
-            Console.WriteLine("    }");
+            Debug.WriteLine("        }");
+            Debug.WriteLine("    }");
             Debugger.Break();
         }
 

@@ -492,48 +492,63 @@ namespace MphRead.Entities
                     Keybind control;
                     if (button == _buttons.Up)
                     {
-                        control = _player.Controls.MoveUp;
+                        control = _player.IsAltForm
+                            ? _player.Controls.MoveUp
+                            : _player.Controls.AimUp;
                     }
                     else if (button == _buttons.Down)
                     {
-                        control = _player.Controls.MoveDown;
+                        control = _player.IsAltForm
+                            ? _player.Controls.MoveDown
+                            : _player.Controls.AimDown;
                     }
                     else if (button == _buttons.Left)
                     {
-                        control = _player.Controls.MoveLeft;
+                        control = _player.IsAltForm
+                            ? _player.Controls.MoveLeft
+                            : _player.Controls.AimLeft;
                     }
                     else if (button == _buttons.Right)
                     {
-                        control = _player.Controls.MoveRight;
+                        control = _player.IsAltForm
+                            ? _player.Controls.MoveRight
+                            : _player.Controls.AimRight;
                     }
                     else if (button == _buttons.A)
                     {
-                        // sktodo-ai: probably going to need to implement button aim?
-                        control = _player.Controls.AimRight;
+                        control = _player.IsAltForm
+                            ? _player.Controls.AimRight
+                            : _player.Controls.MoveRight;
                     }
                     else if (button == _buttons.B)
                     {
-                        control = _player.Controls.AimDown;
+                        control = _player.IsAltForm
+                            ? _player.Controls.AimDown
+                            : _player.Controls.MoveDown;
                     }
                     else if (button == _buttons.X)
                     {
-                        control = _player.Controls.AimUp;
+                        control = _player.IsAltForm
+                            ? _player.Controls.AimUp
+                            : _player.Controls.MoveUp;
                     }
                     else if (button == _buttons.Y)
                     {
-                        control = _player.Controls.AimLeft;
+                        control = _player.IsAltForm
+                            ? _player.Controls.AimLeft
+                            : _player.Controls.MoveLeft;
                     }
                     else if (button == _buttons.L)
                     {
                         control = _player.IsAltForm
                             ? _player.Controls.AltAttack
-                            : _player.Controls.Shoot;
+                            : _player.Controls.Jump;
                     }
                     else if (button == _buttons.R)
                     {
                         control = _player.IsAltForm
                             ? _player.Controls.Boost
-                            : _player.Controls.Jump;
+                            : _player.Controls.Shoot;
                     }
                     else if (button == _buttons.Start)
                     {
@@ -1186,7 +1201,7 @@ namespace MphRead.Entities
                 {
                     _field116 = 0;
                 }
-                if (context.CallCount < 18000)
+                if (context.CallCount < Int32.MaxValue)
                 {
                     context.CallCount++;
                 }
@@ -2071,6 +2086,13 @@ namespace MphRead.Entities
                 // skhere
             }
 
+            private bool CanChargeWeapon()
+            {
+                WeaponInfo weapon = _player.EquipWeapon;
+                return weapon.Flags.TestFlag(WeaponFlags.CanCharge) && _player._availableCharges[_player.CurrentWeapon]
+                    && (_player._ammo[weapon.AmmoType] >= weapon.ChargeCost || _player._ammo[weapon.AmmoType] == -1);
+            }
+
             private void Func1_2149AD8()
             {
                 // keep holding shoot to charge weapon
@@ -2080,8 +2102,7 @@ namespace MphRead.Entities
                 }
                 EquipInfo equip = _player.EquipInfo;
                 WeaponInfo weapon = _player.EquipWeapon;
-                if (weapon.Flags.TestFlag(WeaponFlags.CanCharge) && _player._availableCharges[_player.CurrentWeapon]
-                    && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost)
+                if (CanChargeWeapon())
                 {
                     _buttons.R.IsDown = true;
                 }
@@ -3406,7 +3427,7 @@ namespace MphRead.Entities
 
             private int Func3_213CA2C(AiContext context, AiPersonalityData5 param)
             {
-                return _executionTree[context.Depth + 1].CallCount > param.Param1 ? 1 : 0;
+                return _executionTree[context.Depth + 1].CallCount > (param.Param1 * 2) ? 1 : 0; // todo: FPS stuff
             }
 
             private int Func3_213CA00(AiContext context, AiPersonalityData5 param)
@@ -3570,10 +3591,7 @@ namespace MphRead.Entities
 
             private int Func3_213BCE8(AiContext context, AiPersonalityData5 param)
             {
-                EquipInfo equip = _player.EquipInfo;
-                WeaponInfo weapon = _player.EquipWeapon;
-                return weapon.Flags.TestFlag(WeaponFlags.CanCharge) && _player._availableCharges[_player.CurrentWeapon]
-                    && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost ? 1 : 0;
+                return CanChargeWeapon() ? 1 : 0;
             }
 
             private int Func3_213BCC4(AiContext context, AiPersonalityData5 param)
@@ -4238,9 +4256,12 @@ namespace MphRead.Entities
 
             private int Func3_213A660(AiContext context, AiPersonalityData5 param)
             {
-                // sktodo-ai: if something like this is called every frame, we should halve the chances,
-                // or possibly even skip calling it on every other frame to match the number of RNG calls
-                return param.Param1 + (int)Rng.GetRandomInt2(param.Param2 - param.Param1);
+                // todo: FPS stuff
+                if (_scene.FrameCount > 0 && _scene.FrameCount % 2 == 0)
+                {
+                    return param.Param1 + (int)Rng.GetRandomInt2(param.Param2 - param.Param1);
+                }
+                return 0;
             }
 
             private int Func3_213A650(AiContext context, AiPersonalityData5 param)
@@ -4891,7 +4912,6 @@ namespace MphRead.Entities
                 {
                     if (dot > _dotValues[_player.BotLevel])
                     {
-                        // sktodo-ai: button aim (is any value conversion needed?)
                         _buttonAimX = MathHelper.RadiansToDegrees(MathF.Acos(dot));
                     }
                     else
@@ -4916,7 +4936,6 @@ namespace MphRead.Entities
                 {
                     if (dot > _dotValues[_player.BotLevel])
                     {
-                        // sktodo-ai: button aim (is any value conversion needed?)
                         _buttonAimY = MathHelper.RadiansToDegrees(MathF.Acos(dot));
                     }
                     else
@@ -4970,6 +4989,8 @@ namespace MphRead.Entities
                 Debug.Assert(_targetPlayer != null);
                 Vector3 toTarget = _targetPlayer.Position - _player.Position;
                 float targetDist = toTarget.Length;
+                // field1020 -- deviation
+                // if we haven't set the deviation yet, or we have but the bot is facing away by more than 90 degrees:
                 if (_field1020 == 0 || Vector3.Dot(toTarget, _player._facingVector) < 0)
                 {
                     _targetPlayer.GetPosition(out Vector3 targetPos);
@@ -5197,7 +5218,7 @@ namespace MphRead.Entities
                 // sktodo-ai: add a common function for the beam stuff
                 float chargePct = 0;
                 if (weapon.Flags.TestFlag(WeaponFlags.CanCharge)
-                        && equip.ChargeLevel >= weapon.MinCharge * 2) // todo: FPS stuff
+                    && equip.ChargeLevel >= weapon.MinCharge * 2) // todo: FPS stuff
                 {
                     // todo: FPS stuff
                     chargePct = (equip.ChargeLevel - weapon.MinCharge * 2) / (float)(weapon.FullCharge * 2 - weapon.MinCharge * 2);
@@ -5306,8 +5327,7 @@ namespace MphRead.Entities
                     {
                         _touchButtons.PowerBeam.IsDown = true;
                     }
-                    else if (Flags4.TestFlag(AiFlags4.Bit1) && weapon.Flags.TestFlag(WeaponFlags.CanCharge)
-                        && _player._availableCharges[beam] && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost)
+                    else if (Flags4.TestFlag(AiFlags4.Bit1) && CanChargeWeapon())
                     {
                         if (!_player.Flags2.TestFlag(PlayerFlags2.Shooting) && _buttons.R.FramesUp == 0
                             || equip.ChargeLevel >= weapon.FullCharge * 2) // todo: FPS stuff
@@ -5339,8 +5359,7 @@ namespace MphRead.Entities
                     {
                         _touchButtons.Missile.IsDown = true;
                     }
-                    else if (Flags4.TestFlag(AiFlags4.Bit1) && weapon.Flags.TestFlag(WeaponFlags.CanCharge)
-                        && _player._availableCharges[beam] && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost)
+                    else if (Flags4.TestFlag(AiFlags4.Bit1) && CanChargeWeapon())
                     {
                         if (!_player.Flags2.TestFlag(PlayerFlags2.Shooting) && _buttons.R.FramesUp <= _shotDelay
                             || equip.ChargeLevel >= weapon.FullCharge * 2) // todo: FPS stuff
@@ -5364,8 +5383,7 @@ namespace MphRead.Entities
                     {
                         _touchButtons.VoltDriver.IsDown = true;
                     }
-                    else if (Flags4.TestFlag(AiFlags4.Bit1) && weapon.Flags.TestFlag(WeaponFlags.CanCharge)
-                        && _player._availableCharges[beam] && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost)
+                    else if (Flags4.TestFlag(AiFlags4.Bit1) && CanChargeWeapon())
                     {
                         if (!_player.Flags2.TestFlag(PlayerFlags2.Shooting) && _buttons.R.FramesUp <= _shotDelay
                             || equip.ChargeLevel >= weapon.FullCharge * 2) // todo: FPS stuff
@@ -5411,8 +5429,7 @@ namespace MphRead.Entities
                     {
                         _touchButtons.Judicator.IsDown = true;
                     }
-                    else if (Flags4.TestFlag(AiFlags4.Bit1) && weapon.Flags.TestFlag(WeaponFlags.CanCharge)
-                        && _player._availableCharges[beam] && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost)
+                    else if (Flags4.TestFlag(AiFlags4.Bit1) && CanChargeWeapon())
                     {
                         if (!_player.Flags2.TestFlag(PlayerFlags2.Shooting) && _buttons.R.FramesUp <= _shotDelay
                             || equip.ChargeLevel >= weapon.FullCharge * 2) // todo: FPS stuff
@@ -5455,8 +5472,7 @@ namespace MphRead.Entities
                     {
                         _touchButtons.Magmaul.IsDown = true;
                     }
-                    else if (Flags4.TestFlag(AiFlags4.Bit1) && weapon.Flags.TestFlag(WeaponFlags.CanCharge)
-                        && _player._availableCharges[beam] && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost)
+                    else if (Flags4.TestFlag(AiFlags4.Bit1) && CanChargeWeapon())
                     {
                         if (!_player.Flags2.TestFlag(PlayerFlags2.Shooting) && _buttons.R.FramesUp <= _shotDelay
                             || equip.ChargeLevel >= weapon.FullCharge * 2) // todo: FPS stuff
@@ -5574,9 +5590,7 @@ namespace MphRead.Entities
                 }
                 // note: the game checks the potentially overriden bot weapon's charge cost (0 for 1P) here, but it normally
                 // checks the original weapon metadata. 1P bots don't consume ammo, so the check will always succeed for them either way.
-                if (weapon.Flags.TestFlag(WeaponFlags.CanCharge) && _player._availableCharges[beam]
-                    && _player._ammo[weapon.AmmoType] >= weapon.ChargeCost
-                    && (_buttons.R.FramesDown == 0 || equip.ChargeLevel > 0))
+                if (CanChargeWeapon() && (_buttons.R.FramesDown == 0 || equip.ChargeLevel > 0))
                 {
                     _buttons.R.IsDown = true;
                 }
@@ -9766,6 +9780,64 @@ namespace MphRead.Entities
             }
 
             #region Debug
+
+            public void GetOuptut(System.Text.StringBuilder sb)
+            {
+                for (int i = 0; i < _executionTree.Length; i++)
+                {
+                    AiContext item = _executionTree[i];
+                    //AiPersonalityData1.PrintNode(item.Data1, sb);
+                    if (i == 0)
+                    {
+                        sb.AppendLine();
+                        for (int j = 0; j < _executionTree.Length; j++)
+                        {
+                            AiContext node = _executionTree[j];
+                            if (j != 0)
+                            {
+                                sb.Append(" -> ");
+                            }
+                            sb.Append(node.Data1.Label);
+                            if (node.Data1.Data1.Count == 0)
+                            {
+                                break;
+                            }
+                        }
+                        sb.AppendLine();
+                    }
+                    else
+                    {
+                        sb.AppendLine(item.Data1.Label);
+                        Debug.Assert(item.Data1.Parent != null);
+                        IReadOnlyList<AiPersonalityData1> level = item.Data1.Parent.Data1;
+                        if (level.Count > 1)
+                        {
+                            for (int j = 0; j < item.Data1.Data2.Count; j++)
+                            {
+                                int index = item.Data1.Data2[j].Data1SelectIndex;
+                                string target;
+                                if (index >= 20)
+                                {
+                                    index = level.Count;
+                                    target = "reset";
+                                }
+                                else
+                                {
+                                    target = level[index].Label;
+                                }
+                                int weight = _executionTree[i - 1].Weights[index];
+                                float pct = weight / 100000f * 100;
+                                sb.AppendLine($"w: {weight,6} / 100000 ({pct,5:f1}%) -> {target}");
+                            }
+                        }
+                    }
+                    if (item.Data1.Data1.Count == 0)
+                    {
+                        break;
+                    }
+                    sb.AppendLine();
+                }
+            }
 
             public static IEnumerable<string> GetFuncs1Names(IEnumerable<int> ids)
             {

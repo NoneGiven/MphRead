@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Emit;
+using System.Text;
 using MphRead.Entities;
 
 namespace MphRead.Formats
@@ -96,7 +98,9 @@ namespace MphRead.Formats
             {
                 _aiPersonalityData = File.ReadAllBytes(Paths.Combine(Paths.FileSystem, @"aiPersonalityData\aiPersonalityData.bin"));
             }
-            return ParseData1(offset, count: 1)[0];
+            AiPersonalityData1 data = ParseData1(offset, count: 1)[0];
+            data.SetLabels();
+            return data;
         }
 
         private static readonly Dictionary<int, IReadOnlyList<AiPersonalityData1>> _data1Cache = [];
@@ -238,9 +242,9 @@ namespace MphRead.Formats
             var results = new List<AiPersonalityData1>();
             foreach (int offset in offsets)
             {
-                results.Add(LoadData(offset));
                 if (offset == 33196)
                 {
+                    results.Add(LoadData(offset));
                     results[^1].PrintAll();
                 }
             }
@@ -283,11 +287,13 @@ namespace MphRead.Formats
 
     public class AiPersonalityData1
     {
+        public string Label { get; set; } = "?";
         public int Func24Id { get; init; }
         public IReadOnlyList<AiPersonalityData1> Data1 { get; init; }
         public IReadOnlyList<AiPersonalityData2> Data2 { get; init; }
         public IReadOnlyList<int> Data3a { get; init; }
         public IReadOnlyList<int> Data3b { get; init; }
+        public AiPersonalityData1? Parent { get; private set; } = null;
 
         public AiPersonalityData1(int field0, IReadOnlyList<AiPersonalityData1> data1,
             IReadOnlyList<AiPersonalityData2> data2, IReadOnlyList<int> data3a, IReadOnlyList<int> data3b)
@@ -297,6 +303,31 @@ namespace MphRead.Formats
             Data2 = data2;
             Data3a = data3a;
             Data3b = data3b;
+            foreach (AiPersonalityData1 item in Data1)
+            {
+                item.Parent = this;
+            }
+        }
+
+        public void SetLabels()
+        {
+            int id = 0;
+            var queue = new Queue<AiPersonalityData1>();
+            queue.Enqueue(this);
+            while (queue.Count > 0)
+            {
+                int count = queue.Count;
+                while (count > 0)
+                {
+                    AiPersonalityData1 node = queue.Dequeue();
+                    node.Label = GetLabel(id++);
+                    foreach (AiPersonalityData1 child in node.Data1)
+                    {
+                        queue.Enqueue(child);
+                    }
+                    count--;
+                }
+            }
         }
 
         public void PrintAll()
@@ -305,8 +336,6 @@ namespace MphRead.Formats
             var names2 = new HashSet<string>();
             var names3 = new HashSet<string>();
             var names4 = new HashSet<string>();
-            int id = 0;
-            int firstId = 0;
             int depth = 0;
             var queue = new Queue<(AiPersonalityData1, int)>();
             int offset = 0;
@@ -317,7 +346,7 @@ namespace MphRead.Formats
                 while (count > 0)
                 {
                     (AiPersonalityData1 node, int offs) = queue.Dequeue();
-                    PrintNode(node, id++, firstId + offs, names1, names2, names3, names4);
+                    PrintNode(node, names1, names2, names3, names4);
                     foreach (AiPersonalityData1 child in node.Data1)
                     {
                         queue.Enqueue((child, offset));
@@ -329,7 +358,6 @@ namespace MphRead.Formats
                 {
                     depth++;
                     offset = 0;
-                    firstId = id;
                     Debug.WriteLine("-------------------------------------------------------------------------------------------" +
                         "-------------------------------------------------------------------------------------------------------");
                     Debug.WriteLine("");
@@ -358,10 +386,33 @@ namespace MphRead.Formats
             return label;
         }
 
-        private static void PrintNode(AiPersonalityData1 node, int id, int firstId,
+        public static void PrintNode(AiPersonalityData1 node,
             HashSet<string> names1, HashSet<string> names2, HashSet<string> names3, HashSet<string> names4)
         {
-            Debug.WriteLine(GetLabel(id));
+            PrintNode(node, null, names1, names2, names3, names4);
+        }
+
+        public static void PrintNode(AiPersonalityData1 node, StringBuilder sb)
+        {
+            PrintNode(node, sb, null, null, null, null);
+        }
+
+        private static void PrintNode(AiPersonalityData1 node, StringBuilder? sb,
+            HashSet<string>? names1, HashSet<string>? names2, HashSet<string>? names3, HashSet<string>? names4)
+        {
+            void WriteLine(string message)
+            {
+                if (sb != null)
+                {
+                    sb.AppendLine(message);
+                }
+                else
+                {
+                    Debug.WriteLine(message);
+                }
+            }
+
+            WriteLine(node.Label);
             string d3a = "-";
             string d3b = "-";
             string f4s = "-";
@@ -371,7 +422,7 @@ namespace MphRead.Formats
                 IEnumerable<string> names = PlayerEntity.PlayerAiData.GetFuncs1Names(node.Data3a);
                 foreach (string item in names)
                 {
-                    names1.Add(item);
+                    names1?.Add(item);
                 }
                 d3a = String.Join(", ", node.Data3a) + " -> " + String.Join(", ", names);
             }
@@ -380,7 +431,7 @@ namespace MphRead.Formats
                 IEnumerable<string> names = PlayerEntity.PlayerAiData.GetFuncs1Names(node.Data3b);
                 foreach (string item in names)
                 {
-                    names1.Add(item);
+                    names1?.Add(item);
                 }
                 d3b = String.Join(", ", node.Data3b) + " -> " + String.Join(", ", names);
             }
@@ -388,18 +439,18 @@ namespace MphRead.Formats
             {
                 string name4 = PlayerEntity.PlayerAiData.GetFuncs4Name(node.Func24Id);
                 string name2 = PlayerEntity.PlayerAiData.GetFuncs2Name(node.Func24Id);
-                names4.Add(name4);
-                names2.Add(name2);
+                names4?.Add(name4);
+                names2?.Add(name2);
                 f4s = node.Func24Id.ToString() + " -> " + name4;
                 f2s = node.Func24Id.ToString() + " -> " + name2;
             }
-            Debug.WriteLine($"Init (3a): {d3a}");
-            Debug.WriteLine($"Init (F4): {f4s}");
-            Debug.WriteLine($"Proc (3b): {d3b}");
-            Debug.WriteLine($"Proc (F2): {f2s}");
+            WriteLine($"Init (3a): {d3a}");
+            WriteLine($"Init (F4): {f4s}");
+            WriteLine($"Proc (3b): {d3b}");
+            WriteLine($"Proc (F2): {f2s}");
             if (node.Data2.Count == 0)
             {
-                Debug.WriteLine("Switch(x): -");
+                WriteLine("Switch(x): -");
             }
             else
             {
@@ -418,18 +469,27 @@ namespace MphRead.Formats
                         IEnumerable<string> names = PlayerEntity.PlayerAiData.GetFuncs3Names(ids);
                         foreach (string item in names)
                         {
-                            names3.Add(item);
+                            names3?.Add(item);
                         }
                         string str4 = String.Join(", ", ids) + " -> " + String.Join(", ", names);
-                        Debug.WriteLine($"Precon({str1}): {str4}");
+                        WriteLine($"Precon({str1}): {str4}");
                     }
                     string name = PlayerEntity.PlayerAiData.GetFuncs3Name(data2.Func3Id);
-                    names3.Add(name);
-                    Debug.WriteLine($"Switch({str1}): {str2}, {str3}, " +
-                        $"s = {data2.Data1SelectIndex} ({GetLabel(data2.Data1SelectIndex + firstId)}) -> {name}");
+                    names3?.Add(name);
+                    Debug.Assert(node.Parent != null);
+                    string selection = "-";
+                    if (data2.Data1SelectIndex < 20)
+                    {
+                        selection = node.Parent.Data1[data2.Data1SelectIndex].Label;
+                    }
+                    WriteLine($"Switch({str1}): {str2}, {str3}, " +
+                        $"s = {data2.Data1SelectIndex} ({selection}) -> {name}");
                 }
             }
-            Debug.WriteLine("");
+            if (sb == null)
+            {
+                WriteLine("");
+            }
         }
     }
 

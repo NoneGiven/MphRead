@@ -624,7 +624,12 @@ namespace MphRead.Entities
             return transform;
         }
 
-        protected void AddVolumeItem(CollisionVolume volume, Vector3 color)
+        protected void AddDotItem(Vector3 position, Vector3 color)
+        {
+            AddVolumeItem(new CollisionVolume(position, 0.1f), color, 1);
+        }
+
+        protected void AddVolumeItem(CollisionVolume volume, Vector3 color, float alpha = 0.5f)
         {
             if (!Selection.CheckVolume(this))
             {
@@ -701,7 +706,7 @@ namespace MphRead.Entities
                 }
             }
             CullingMode cullingMode = volume.TestPoint(_scene.CameraPosition) ? CullingMode.Front : CullingMode.Back;
-            _scene.AddRenderItem(cullingMode, _scene.GetNextPolygonId(), new Vector4(color, 0.5f), (RenderItemType)(volume.Type + 1), verts);
+            _scene.AddRenderItem(cullingMode, _scene.GetNextPolygonId(), new Vector4(color, alpha), (RenderItemType)(volume.Type + 1), verts);
         }
 
         private Vector3 GetDiscVertices(float radius, int index)
@@ -718,11 +723,11 @@ namespace MphRead.Entities
             CollisionVolume volume;
             if (vector == Vector3.Zero)
             {
-                volume = new CollisionVolume(point, 0.15f);
+                volume = new CollisionVolume(point, 0.1f);
             }
             else
             {
-                volume = new CollisionVolume(vector.Normalized(), point, 0.25f, vector.Length);
+                volume = new CollisionVolume(vector.Normalized(), point, 0.05f, vector.Length);
             }
             AddVolumeItem(volume, color);
         }

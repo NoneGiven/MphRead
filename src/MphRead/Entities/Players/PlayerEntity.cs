@@ -1287,7 +1287,7 @@ namespace MphRead.Entities
                 _availableCharges[beam] = true;
                 _ammo[info.AmmoType] = _ammoMax[info.AmmoType];
             }
-            bool hasAmmo = beam == BeamType.PowerBeam || _ammo[ammoType] >= info.AmmoCost;
+            bool hasAmmo = beam == BeamType.PowerBeam || _ammo[ammoType] >= info.AmmoCost || _ammo[ammoType] == -1;
             if (!silent && (!hasAmmo || !_availableWeapons[beam] || GunAnimation == GunAnimation.UpDown))
             {
                 if (IsMainPlayer)
