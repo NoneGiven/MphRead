@@ -7,7 +7,7 @@ namespace MphRead.Memory
     public abstract class MemoryClass
     {
         protected readonly Memory _memory;
-        private readonly int _offset;
+        protected readonly int _offset;
 
         public IntPtr Address { get; }
 
@@ -4582,6 +4582,12 @@ namespace MphRead.Memory
         public int WeaponSfxHandle { get => ReadInt32(_off639); set => WriteInt32(_off639, value); }
 
         public StructArray<AIContext>? AIContext { get; }
+        public uint AggroCount
+        {
+            get => ReadUInt32(AiData.ToInt32() - Memory.Offset - _offset + 0x1060);
+            set => WriteUInt32(AiData.ToInt32() - Memory.Offset - _offset + 0x1060, value);
+        }
+        public StructArray<AIAggro>? AIAggro { get; }
 
         public CPlayer(Memory memory, int address) : base(memory, address)
         {
@@ -4606,6 +4612,8 @@ namespace MphRead.Memory
             {
                 var offset = AiData + new IntPtr(0x2FC);
                 AIContext = new StructArray<AIContext>(memory, offset, 20, 0xA8, (Memory m, int a) => new AIContext(m, a));
+                offset = AiData + new IntPtr(0x1064);
+                AIAggro = new StructArray<AIAggro>(memory, offset, 25, 0x10, (Memory m, int a) => new AIAggro(m, a));
             }
         }
 
@@ -4632,6 +4640,8 @@ namespace MphRead.Memory
             {
                 var offset = AiData + new IntPtr(0x2FC);
                 AIContext = new StructArray<AIContext>(memory, offset, 20, 0xA8, (Memory m, int a) => new AIContext(m, a));
+                offset = AiData + new IntPtr(0x1064);
+                AIAggro = new StructArray<AIAggro>(memory, offset, 25, 0x10, (Memory m, int a) => new AIAggro(m, a));
             }
         }
     }
@@ -4851,6 +4861,109 @@ namespace MphRead.Memory
         }
 
         public AIData2(Memory memory, IntPtr address) : base(memory, address)
+        {
+        }
+    }
+
+    public class AIAggro : MemoryClass
+    {
+        private const int _off0 = 0x0;
+        public ushort Flags { get => ReadUInt16(_off0); set => WriteUInt16(_off0, value); }
+
+        private const int _off1 = 0x2;
+        public ushort Field2 { get => ReadUInt16(_off1); set => WriteUInt16(_off1, value); }
+
+        private const int _off2 = 0x4;
+        public ushort Field4 { get => ReadUInt16(_off2); set => WriteUInt16(_off2, value); }
+
+        private const int _off3 = 0x6;
+        public ushort Field6 { get => ReadUInt16(_off3); set => WriteUInt16(_off3, value); }
+
+        private const int _off4 = 0x8; // CPlayer*
+        public IntPtr Player1 { get => ReadPointer(_off4); set => WritePointer(_off4, value); }
+
+        private const int _off5 = 0xC; // CPlayer*
+        public IntPtr Player2 { get => ReadPointer(_off5); set => WritePointer(_off5, value); }
+
+        public int Slot1 { get; set; }
+        public int Slot2 { get; set; }
+
+        public void UpdateSlots(CPlayer[] players)
+        {
+            Slot1 = -1;
+            Slot2 = -1;
+            for (int i = 0; i < 4; i++)
+            {
+                if (Player1 == players[i].Address)
+                {
+                    Slot1 = i;
+                }
+                if (Player2 == players[i].Address)
+                {
+                    Slot2 = i;
+                }
+            }
+        }
+
+        public byte Field0A
+        {
+            get
+            {
+                ushort value = Flags;
+                return (byte)(value & 0xF);
+            }
+        }
+
+        public byte Field0B
+        {
+            get
+            {
+                ushort value = Flags;
+                return (byte)((value & 0xF0) >> 4);
+            }
+        }
+
+        public byte Field0C
+        {
+            get
+            {
+                ushort value = Flags;
+                return (byte)((value & 0xF00) >> 8);
+            }
+        }
+
+        public byte Field0D
+        {
+            get
+            {
+                ushort value = Flags;
+                return (byte)((value & 0xF000) >> 12);
+            }
+        }
+
+        public byte Field2A
+        {
+            get
+            {
+                ushort value = Field2;
+                return (byte)(value & 0xF);
+            }
+        }
+
+        public ushort Field2B
+        {
+            get
+            {
+                ushort value = Field2;
+                return (ushort)((value & 0xFFF0) >> 4);
+            }
+        }
+
+        public AIAggro(Memory memory, int address) : base(memory, address)
+        {
+        }
+
+        public AIAggro(Memory memory, IntPtr address) : base(memory, address)
         {
         }
     }

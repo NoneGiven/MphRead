@@ -16,6 +16,18 @@ namespace MphRead.Memory
 
         private void DoProcess()
         {
+            uint count = _players[1].AggroCount;
+            var list = _players[1].AIAggro;
+            Debug.Assert(list != null);
+            for (int i = 0; i < list.Length; i++)
+            {
+                list[i].UpdateSlots(_players);
+            }
+            _ = 5;
+        }
+
+        private void PrintAiContext()
+        {
             var context = _players[1].AIContext;
             Debug.Assert(context != null);
             string tree = "";
@@ -75,7 +87,6 @@ namespace MphRead.Memory
             {
                 _sb.AppendLine(line);
             }
-            _ = 5;
         }
 
         private class AddressInfo

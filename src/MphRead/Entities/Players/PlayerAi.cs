@@ -220,7 +220,7 @@ namespace MphRead.Entities
                 // but we don't really need to worry about that, and we're not being 100% accurate
                 // to the game by doing this once per 60 fps frame anyway, so yeah.
                 // the game's unused counter that disables these updates for a certain number of frames
-                // was probaably also added to make them even less frequent, but was ultimately not needed.
+                // was probably also added to make them even less frequent, but was ultimately not needed.
                 _playerVisibility[_visIndex1, _visIndex2] = false;
                 _playerVisibility[_visIndex2, _visIndex1] = false;
                 PlayerEntity player1 = Players[_visIndex1];
@@ -726,7 +726,7 @@ namespace MphRead.Entities
             private void Func2134594()
             {
                 _entityRefs.Clear();
-                Func21384CC();
+                UpdateAggro();
                 if (GameState.Mode == GameMode.PrimeHunter && GameState.PrimeHunter == _player.SlotIndex
                     && Flags2.TestFlag(AiFlags2.SeekItem) && _itemC8 != null && (_itemC8.ItemType == ItemType.HealthSmall
                     || _itemC8.ItemType == ItemType.HealthMedium || _itemC8.ItemType == ItemType.HealthBig))
@@ -735,10 +735,8 @@ namespace MphRead.Entities
                 }
             }
 
-            // todo: member name
-            private void Func21384CC()
+            private void UpdateAggro()
             {
-                Matrix4 viewMatrix = _player.CameraInfo.ViewMatrix;
                 float fov = MathHelper.DegreesToRadians(_player.CameraInfo.Fov > 0 ? _player.CameraInfo.Fov : 78);
                 Matrix4 perspectiveMatrix = _scene.GetPerspectiveMatrix(fov);
                 for (int i = 0; i < _scene.Entities.Count; i++)
@@ -749,11 +747,11 @@ namespace MphRead.Entities
                         continue;
                     }
                     var other = (PlayerEntity)entity;
-                    if (other == _player || other.Health == 0 || !Func214BAF8(_player, other))
+                    if (other == _player || other.Health == 0 || !IsPlayerVisible(_player, other))
                     {
                         continue;
                     }
-                    float w = Matrix.ProjectPosition(other.Position, viewMatrix, perspectiveMatrix, out Vector2 proj);
+                    float w = Matrix.ProjectPosition(other.Position, Matrix4.Identity, perspectiveMatrix, out Vector2 proj);
                     if (w < 0)
                     {
                         // sktodo-ai: bug? should this be a continue? or is the byte array check only expected to pass for one player?
@@ -768,7 +766,7 @@ namespace MphRead.Entities
                     if (other.CurAlpha >= 1 || other.Flags2.TestFlag(PlayerFlags2.RadarReveal) || GameState.RadarPlayers
                         || other.OctolithFlag != null || GameState.PrimeHunter == other.SlotIndex)
                     {
-                        Func214864C(6, 1, 2, null, other, 0, 30, 10, 3);
+                        AggroFunc214864C(6, 1, 2, null, other, 0, 30, 10, 3);
                     }
                     else
                     {
@@ -787,7 +785,7 @@ namespace MphRead.Entities
                             rand /= 2 * 2 * 853;
                         }
                         int div = 1;
-                        if (Func214857C(4, 2, 1, other, null))
+                        if (AggroFunc214857C(4, 2, 1, other, null))
                         {
                             div = 4;
                         }
@@ -797,12 +795,11 @@ namespace MphRead.Entities
                             return;
                         }
                         alpha = alpha <= 2 ? 1 : (alpha - 2);
-                        Func214864C(6, 1, 2, null, other, 0, alpha, 10, 3);
+                        AggroFunc214864C(6, 1, 2, null, other, 0, alpha, 10, 3);
                     }
-                    Matrix4 otherView = other.CameraInfo.ViewMatrix;
                     float otherFov = MathHelper.DegreesToRadians(other.CameraInfo.Fov > 0 ? other.CameraInfo.Fov : 78);
                     Matrix4 otherPerspective = _scene.GetPerspectiveMatrix(otherFov);
-                    w = Matrix.ProjectPosition(_player.Position, otherView, otherPerspective, out proj);
+                    w = Matrix.ProjectPosition(_player.Position, Matrix4.Identity, otherPerspective, out proj);
                     if (w < 0)
                     {
                         // sktodo-ai: same as above
@@ -811,13 +808,12 @@ namespace MphRead.Entities
                     }
                     if (proj.X < 1 && proj.Y < 1)
                     {
-                        Func214864C(6, 2, 1, other, null, 0, 30, 10, 3);
+                        AggroFunc214864C(6, 2, 1, other, null, 0, 30, 10, 3);
                     }
                 }
             }
 
-            // todo: member name
-            private bool Func214BAF8(PlayerEntity player, PlayerEntity other)
+            private bool IsPlayerVisible(PlayerEntity player, PlayerEntity other)
             {
                 return _playerVisibility[other.SlotIndex, player.SlotIndex];
             }
@@ -830,8 +826,8 @@ namespace MphRead.Entities
                 public byte Field0D { get; set; }
                 public byte Field2A { get; set; }
                 public ushort Field2B { get; set; }
-                public ushort Field4 { get; set; }
-                public ushort Field6 { get; set; }
+                public ushort Staleness { get; set; }
+                public ushort Expiration { get; set; }
                 public PlayerEntity? Player1 { get; set; }
                 public PlayerEntity? Player2 { get; set; }
 
@@ -843,8 +839,8 @@ namespace MphRead.Entities
                     Field0D = 0;
                     Field2A = 0;
                     Field2B = 0;
-                    Field4 = 0;
-                    Field6 = 0;
+                    Staleness = 0;
+                    Expiration = 0;
                     Player1 = null;
                     Player2 = null;
                 }
@@ -861,7 +857,51 @@ namespace MphRead.Entities
             ];
 
             // todo: member name
-            private bool Func214857C(int a2, int a3, int a4, PlayerEntity? player1, PlayerEntity? player2)
+            private int AggroFunc2148394(int a2, int a3, int a4, PlayerEntity? player1, PlayerEntity? player2)
+            {
+                // returns "priority" value for finding certain entities
+                int result = 0;
+                for (int i = 0; i < _playerAggroCount; i++)
+                {
+                    AiPlayerAggro aggro = _playerAggro[i];
+                    if ((a2 == aggro.Field0A || a2 == 7)
+                        && (a3 == aggro.Field0C || a3 == 7)
+                        && (a4 == aggro.Field0D || a4 == 7)
+                        && (player1 == aggro.Player1 || a3 != 2)
+                        && (player2 == aggro.Player2 || a4 != 2))
+                    {
+                        result += aggro.Field2B;
+                    }
+                }
+                return result;
+            }
+
+            // todo: member name
+            private AiPlayerAggro? AggroFunc214847C(int a2, int a3, int a4, PlayerEntity? player1, PlayerEntity? player2)
+            {
+                AiPlayerAggro? result = null;
+                int maxField4 = -1;
+                for (int i = 0; i < _playerAggroCount; i++)
+                {
+                    AiPlayerAggro aggro = _playerAggro[i];
+                    if ((a2 == aggro.Field0A || a2 == 7)
+                        && (a3 == aggro.Field0C || a3 == 7)
+                        && (a4 == aggro.Field0D || a4 == 7)
+                        && (player1 == aggro.Player1 || a3 != 2)
+                        && (player2 == aggro.Player2 || a4 != 2))
+                    {
+                        if (aggro.Staleness > maxField4)
+                        {
+                            result = aggro;
+                            maxField4 = aggro.Staleness;
+                        }
+                    }
+                }
+                return result;
+            }
+
+            // todo: member name
+            private bool AggroFunc214857C(int a2, int a3, int a4, PlayerEntity? player1, PlayerEntity? player2)
             {
                 // note: in-game, this function returns the list item if it finds one,
                 // but its usage is boolean (checking whether there is a return value)
@@ -881,44 +921,24 @@ namespace MphRead.Entities
             }
 
             // todo: member name
-            private int Func2148394(int a2, int a3, int a4, PlayerEntity? player1, PlayerEntity? player2)
-            {
-                // returns "priority" value for find certain entities
-                int result = 0;
-                for (int i = 0; i < _playerAggroCount; i++)
-                {
-                    AiPlayerAggro aggro = _playerAggro[i];
-                    if ((a2 == aggro.Field0A || a2 == 7)
-                        && (a3 == aggro.Field0C || a3 == 7)
-                        && (a4 == aggro.Field0D || a4 == 7)
-                        && (player1 == aggro.Player1 || a3 != 2)
-                        && (player2 == aggro.Player2 || a4 != 2))
-                    {
-                        result += aggro.Field2B;
-                    }
-                }
-                return result;
-            }
-
-            // todo: member name
-            private void Func214864C(int a2, int a3, int a4, PlayerEntity? player1,
+            private void AggroFunc214864C(int a2, int a3, int a4, PlayerEntity? player1,
                 PlayerEntity? player2, int a7, int a8, int a9, int a10)
             {
                 if (a10 == 2)
                 {
-                    AiPlayerAggro? aggro = Func21489B4(a2, a3, a4, player1, player2);
+                    AiPlayerAggro? aggro = AggroFunc21489B4(a2, a3, a4, player1, player2);
                     if (aggro != null)
                     {
-                        aggro.Field6 += (ushort)a8;
-                        if (aggro.Field6 > 54000)
+                        aggro.Expiration += (ushort)a8; // sktodo-ai: FPS stuff for these fields?
+                        if (aggro.Expiration > 54000)
                         {
-                            aggro.Field6 = 54000;
+                            aggro.Expiration = 54000;
                         }
                         if (a9 > aggro.Field0B)
                         {
                             aggro.Field0B = (byte)(a9 & 0xF);
                         }
-                        aggro.Field2B += (ushort)a7;
+                        aggro.Field2B += (ushort)a7; // sktodo-ai: also maybe FPS stuff for this field?
                         if (aggro.Field2B > 4000)
                         {
                             aggro.Field2B = 4000;
@@ -928,7 +948,7 @@ namespace MphRead.Entities
                 }
                 else if (a10 == 3)
                 {
-                    AiPlayerAggro? aggro = Func21489B4(a2, a3, a4, player1, player2);
+                    AiPlayerAggro? aggro = AggroFunc21489B4(a2, a3, a4, player1, player2);
                     if (aggro != null)
                     {
                         aggro.Field0A = (byte)(a2 & 0xF);
@@ -937,8 +957,8 @@ namespace MphRead.Entities
                         aggro.Field0D = (byte)(a4 & 0xF);
                         aggro.Field2A = 3;
                         aggro.Field2B = (byte)(a7 & 0xF);
-                        aggro.Field4 = 0;
-                        aggro.Field6 = (ushort)a8;
+                        aggro.Staleness = 0;
+                        aggro.Expiration = (ushort)a8;
                         aggro.Player1 = player1;
                         aggro.Player2 = player2;
                         return;
@@ -971,15 +991,15 @@ namespace MphRead.Entities
                     aggro.Field0D = (byte)(a4 & 0xF);
                     aggro.Field2A = (byte)(a10 & 0xF);
                     aggro.Field2B = (byte)(a7 & 0xF);
-                    aggro.Field4 = 0;
-                    aggro.Field6 = (ushort)a8;
+                    aggro.Staleness = 0;
+                    aggro.Expiration = (ushort)a8;
                     aggro.Player1 = player1;
                     aggro.Player2 = player2;
                 }
             }
 
             // todo: member name
-            private AiPlayerAggro? Func21489B4(int a2, int a3, int a4, PlayerEntity? player1, PlayerEntity? player2)
+            private AiPlayerAggro? AggroFunc21489B4(int a2, int a3, int a4, PlayerEntity? player1, PlayerEntity? player2)
             {
                 for (int i = 0; i < _playerAggroCount; i++)
                 {
@@ -997,34 +1017,37 @@ namespace MphRead.Entities
                 return null;
             }
 
-            // todo: member name
-            private AiPlayerAggro? Func214847C(int a2, int a3, int a4, PlayerEntity? player1, PlayerEntity? player2)
+            private void UpdateAggroExpiration()
             {
-                AiPlayerAggro? result = null;
-                int maxField4 = -1;
-                for (int i = 0; i < _playerAggroCount; i++)
+                int i = 0;
+                while (i < _playerAggroCount)
                 {
                     AiPlayerAggro aggro = _playerAggro[i];
-                    if ((a2 == aggro.Field0A || a2 == 7)
-                        && (a3 == aggro.Field0C || a3 == 7)
-                        && (a4 == aggro.Field0D || a4 == 7)
-                        && (player1 == aggro.Player1 || a3 != 2)
-                        && (player2 == aggro.Player2 || a4 != 2))
+                    aggro.Staleness++;
+                    if (aggro.Staleness > aggro.Expiration * 2) // sktodo-ai: FPS stuff? review Field6 (expiration) changes
                     {
-                        if (aggro.Field4 > maxField4)
-                        {
-                            result = aggro;
-                            maxField4 = aggro.Field4;
-                        }
+                        AiPlayerAggro last = _playerAggro[_playerAggroCount - 1];
+                        aggro.Field0A = last.Field0A;
+                        aggro.Field0B = last.Field0B;
+                        aggro.Field0C = last.Field0C;
+                        aggro.Field0D = last.Field0D;
+                        aggro.Staleness = last.Staleness;
+                        aggro.Expiration = last.Expiration;
+                        aggro.Player1 = last.Player1;
+                        aggro.Player2 = last.Player2;
+                        _playerAggroCount--;
+                    }
+                    else
+                    {
+                        i++;
                     }
                 }
-                return result;
             }
 
             // todo: member name
             private void Func2148ABC()
             {
-                Func2148238();
+                UpdateAggroExpiration();
                 Flags4 &= ~AiFlags4.Bit0;
                 if (Vector3.Dot(_field1038, _player.CameraInfo.Facing) >= 255 / 256f)
                 {
@@ -1033,34 +1056,6 @@ namespace MphRead.Entities
                 if (_field1020 > 0)
                 {
                     _field1020--;
-                }
-            }
-
-            // todo: member name
-            private void Func2148238()
-            {
-                int i = 0;
-                while (i < _playerAggroCount)
-                {
-                    AiPlayerAggro aggro = _playerAggro[i];
-                    aggro.Field4++;
-                    if (aggro.Field4 <= aggro.Field6 * 2) // sktodo-ai: FPS stuff? review Field6 changes
-                    {
-                        i++;
-                    }
-                    else
-                    {
-                        AiPlayerAggro last = _playerAggro[_playerAggroCount - 1];
-                        aggro.Field0A = last.Field0A;
-                        aggro.Field0B = last.Field0B;
-                        aggro.Field0C = last.Field0C;
-                        aggro.Field0D = last.Field0D;
-                        aggro.Field4 = last.Field4;
-                        aggro.Field6 = last.Field6;
-                        aggro.Player1 = last.Player1;
-                        aggro.Player2 = last.Player2;
-                        _playerAggroCount--;
-                    }
                 }
             }
 
@@ -2644,8 +2639,8 @@ namespace MphRead.Entities
                     if (context.Field6 == 52 && !_player.IsAltForm && !_player.IsMorphing
                         && !_player.Flags1.TestFlag(PlayerFlags1.UsedJump) && _buttons.L.FramesUp > 5 * 2) // todo: FPS stuff
                     {
-                        AiPlayerAggro? aggro = Func214847C(4, 7, 1, null, null);
-                        if (aggro != null && aggro.Field4 < 30 * 2) // sktodo-ai: FPS stuff? review this and Field6
+                        AiPlayerAggro? aggro = AggroFunc214847C(4, 7, 1, null, null);
+                        if (aggro != null && aggro.Staleness < 30 * 2) // sktodo-ai: FPS stuff? review this and Field6
                         {
                             Debug.Assert(_node40 != null);
                             Vector3 toNode = _node40.Position - _player.Position;
@@ -4353,7 +4348,7 @@ namespace MphRead.Entities
                     }
                     else if (context.FieldB == 3 && Flags2.TestFlag(AiFlags2.Bit2))
                     {
-                        AiPlayerAggro? aggro = Func214847C(4, 7, 1, null, null);
+                        AiPlayerAggro? aggro = AggroFunc214847C(4, 7, 1, null, null);
                         if (aggro?.Player1 != null)
                         {
                             _field1038 = aggro.Player1.Position - _player.CameraInfo.Position;
@@ -4962,7 +4957,7 @@ namespace MphRead.Entities
                     Func2144B88();
                     Vector3 vec = ExecuteVectorFunc(index: 0, clearY: false, normalize: false);
                     if (Flags2.TestFlag(AiFlags2.Bit8)
-                        && Func213842C() && (Func214BAF8(_player, _targetPlayer) || _weapon1 == 7)
+                        && Func213842C() && (IsPlayerVisible(_player, _targetPlayer) || _weapon1 == 7)
                         || vec.LengthSquared < 10)
                     {
                         Func2143A40();
@@ -5274,7 +5269,7 @@ namespace MphRead.Entities
                 {
                     Flags2 |= AiFlags2.Bit16;
                     Flags2 &= ~AiFlags2.Bit17;
-                    if (Flags2.TestFlag(AiFlags2.Bit2) && Func214857C(6, 1, 2, null, _targetPlayer))
+                    if (Flags2.TestFlag(AiFlags2.Bit2) && AggroFunc214857C(6, 1, 2, null, _targetPlayer))
                     {
                         Flags2 |= AiFlags2.Bit17;
                     }
@@ -8641,7 +8636,7 @@ namespace MphRead.Entities
                         result = player;
                         minDist = Vector3.DistanceSquared(player.Position, position);
                     }
-                    if (Func214857C(6, 1, 2, null, player)
+                    if (AggroFunc214857C(6, 1, 2, null, player)
                         && player != _player && player.TeamIndex != _player.TeamIndex && player.Health > 0)
                     {
                         float dist = Vector3.DistanceSquared(player.Position, position);
@@ -8681,7 +8676,7 @@ namespace MphRead.Entities
                     }
                     if (player != _player && player.TeamIndex != _player.TeamIndex && player.Health > 0)
                     {
-                        int value = Func2148394(7, 2, 1, player, null);
+                        int value = AggroFunc2148394(7, 2, 1, player, null);
                         if (value > maxValue)
                         {
                             result = player;
@@ -8727,10 +8722,10 @@ namespace MphRead.Entities
                         result = player;
                         minDist = Vector3.DistanceSquared(player.Position, position);
                     }
-                    if (Func214857C(6, 1, 2, null, player)
+                    if (AggroFunc214857C(6, 1, 2, null, player)
                         && player != _player && player.TeamIndex != _player.TeamIndex && player.Health > 0)
                     {
-                        int value = Func2148394(7, 2, 1, player, null);
+                        int value = AggroFunc2148394(7, 2, 1, player, null);
                         if (value > maxValue)
                         {
                             result = player;
@@ -8771,10 +8766,10 @@ namespace MphRead.Entities
                         continue;
                     }
                     var player = (PlayerEntity)entity;
-                    bool v14 = Func214857C(6, 1, 2, null, player);
+                    bool v14 = AggroFunc214857C(6, 1, 2, null, player);
                     if ((v14 || !v4) && player != _player && player.TeamIndex != _player.TeamIndex && player.Health > 0)
                     {
-                        int value = Func2148394(7, 2, 1, player, null);
+                        int value = AggroFunc2148394(7, 2, 1, player, null);
                         for (int j = 0; j < _scene.Entities.Count; j++)
                         {
                             entity = _scene.Entities[j];
@@ -8785,7 +8780,7 @@ namespace MphRead.Entities
                             var other = (PlayerEntity)entity;
                             if (other != _player && other.TeamIndex == _player.TeamIndex && other.Health > 0)
                             {
-                                value += Func2148394(7, 2, 2, player, other);
+                                value += AggroFunc2148394(7, 2, 2, player, other);
                             }
                         }
                         int dist = (int)Vector3.DistanceSquared(player.Position, position);
@@ -8829,7 +8824,7 @@ namespace MphRead.Entities
                     if (player != _player && player.TeamIndex != _player.TeamIndex && player.Health > 0
                         && player.Hunter == Hunter.Weavel && player.Halfturret.Health > 0)
                     {
-                        int value = Func2148394(5, 2, 1, player, null);
+                        int value = AggroFunc2148394(5, 2, 1, player, null);
                         if (value == 0)
                         {
                             if (player.Halfturret.Target != _player)
@@ -9626,11 +9621,11 @@ namespace MphRead.Entities
                             if (source.Type == EntityType.BeamProjectile
                                 && attacker.Hunter == Hunter.Weavel && attacker.IsAltForm)
                             {
-                                Func214864C(5, 2, 1, attacker, null, damage, damage, 2, 2);
+                                AggroFunc214864C(5, 2, 1, attacker, null, damage, damage, 2, 2);
                             }
                             else
                             {
-                                Func214864C(4, 2, 1, attacker, null, damage, damage, 2, 2);
+                                AggroFunc214864C(4, 2, 1, attacker, null, damage, damage, 2, 2);
                                 if (source.Type == EntityType.BeamProjectile
                                     && ((BeamProjectileEntity)entity).Beam == BeamType.ShockCoil
                                     && attacker.ShockCoilTimer > 10 * 2) // todo: FPS stuff
@@ -9642,11 +9637,11 @@ namespace MphRead.Entities
                         else if (source.Type == EntityType.BeamProjectile
                             && attacker.Hunter == Hunter.Weavel && attacker.IsAltForm)
                         {
-                            Func214864C(5, 2, 2, attacker, _player, damage, damage, 2, 2);
+                            AggroFunc214864C(5, 2, 2, attacker, _player, damage, damage, 2, 2);
                         }
                         else
                         {
-                            Func214864C(4, 2, 2, attacker, _player, damage, damage, 2, 2);
+                            AggroFunc214864C(4, 2, 2, attacker, _player, damage, damage, 2, 2);
                         }
                     }
                 }
