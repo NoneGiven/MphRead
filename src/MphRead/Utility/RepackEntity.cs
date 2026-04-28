@@ -2411,6 +2411,25 @@ namespace MphRead.Utility
 
         private static void WriteFhEntity(EntityEditorBase entity, BinaryWriter writer)
         {
+            if ((int)entity.Type < 100)
+            {
+                if (entity.Type == EntityType.PlayerSpawn)
+                {
+                    entity.Type = EntityType.FhPlayerSpawn;
+                }
+                else if (entity.Type == EntityType.PointModule)
+                {
+                    entity.Type = EntityType.FhPointModule;
+                }
+                else if (entity.Type == EntityType.MorphCamera)
+                {
+                    entity.Type = EntityType.FhMorphCamera;
+                }
+                else
+                {
+                    throw new ProgramException($"Invalid FH entity type {entity.Type}");
+                }
+            }
             writer.Write((ushort)((ushort)entity.Type - 100));
             writer.Write(entity.Id);
             writer.WriteVector3(entity.Position);

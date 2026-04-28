@@ -352,6 +352,10 @@ namespace MphRead.Editor
         public Vector3 EffectPositionOffset { get; set; } // maximum value for random offset
         public CollisionVolume Volume { get; set; }
 
+        public ObjectEntityEditor() : base(EntityType.Object)
+        {
+        }
+
         public ObjectEntityEditor(Entity header, ObjectEntityData raw) : base(header)
         {
             Flags = raw.Flags;
@@ -906,6 +910,10 @@ namespace MphRead.Editor
         public short PrevId { get; set; }
         public bool Active { get; set; }
 
+        public PointModuleEntityEditor() : base(EntityType.PointModule)
+        {
+        }
+
         public PointModuleEntityEditor(Entity header, PointModuleEntityData raw) : base(header)
         {
             NextId = raw.NextId;
@@ -924,6 +932,10 @@ namespace MphRead.Editor
     public class MorphCameraEntityEditor : EntityEditorBase
     {
         public CollisionVolume Volume { get; set; }
+
+        public MorphCameraEntityEditor() : base(EntityType.MorphCamera)
+        {
+        }
 
         public MorphCameraEntityEditor(Entity header, MorphCameraEntityData raw) : base(header)
         {
@@ -945,6 +957,10 @@ namespace MphRead.Editor
     {
         public byte TeamId { get; set; }
 
+        public OctolithFlagEntityEditor() : base(EntityType.OctolithFlag)
+        {
+        }
+
         public OctolithFlagEntityEditor(Entity header, OctolithFlagEntityData raw) : base(header)
         {
             TeamId = raw.TeamId;
@@ -960,6 +976,10 @@ namespace MphRead.Editor
     {
         public uint TeamId { get; set; }
         public CollisionVolume Volume { get; set; }
+
+        public FlagBaseEntityEditor() : base(EntityType.FlagBase)
+        {
+        }
 
         public FlagBaseEntityEditor(Entity header, FlagBaseEntityData raw) : base(header)
         {
@@ -984,6 +1004,10 @@ namespace MphRead.Editor
         public string TargetRoom { get; set; } = "";
         public Vector3 TargetPosition { get; set; }
         public string TeleporterNodeName { get; set; } = "";
+
+        public TeleporterEntityEditor() : base(EntityType.Teleporter)
+        {
+        }
 
         public TeleporterEntityEditor(Entity header, TeleporterEntityData raw) : base(header)
         {
@@ -1014,6 +1038,10 @@ namespace MphRead.Editor
     {
         public CollisionVolume Volume { get; set; }
 
+        public NodeDefenseEntityEditor() : base(EntityType.NodeDefense)
+        {
+        }
+
         public NodeDefenseEntityEditor(Entity header, NodeDefenseEntityData raw) : base(header)
         {
             Volume = new CollisionVolume(raw.Volume);
@@ -1034,6 +1062,10 @@ namespace MphRead.Editor
         public bool Light2Enabled { get; set; }
         public ColorRgb Light2Color { get; set; }
         public Vector3 Light2Vector { get; set; }
+
+        public LightSourceEntityEditor() : base(EntityType.LightSource)
+        {
+        }
 
         public LightSourceEntityEditor(Entity header, LightSourceEntityData raw) : base(header)
         {
@@ -1071,6 +1103,10 @@ namespace MphRead.Editor
         public short Message3Target { get; set; }
         public Message Message3 { get; set; }
         public short LinkedEntityId { get; set; } // always -1
+
+        public ArtifactEntityEditor() : base(EntityType.Artifact)
+        {
+        }
 
         public ArtifactEntityEditor(Entity header, ArtifactEntityData raw) : base(header)
         {
@@ -1120,6 +1156,10 @@ namespace MphRead.Editor
         public Message EndMessage { get; set; }
         public int EndMessageParam { get; set; }
 
+        public CameraSequenceEntityEditor() : base(EntityType.CameraSequence)
+        {
+        }
+
         public CameraSequenceEntityEditor(Entity header, CameraSequenceEntityData raw) : base(header)
         {
             SequenceId = raw.SequenceId;
@@ -1163,6 +1203,10 @@ namespace MphRead.Editor
         public float Width { get; set; }
         public float Height { get; set; }
         public bool Active { get; set; }
+
+        public ForceFieldEntityEditor() : base(EntityType.ForceField)
+        {
+        }
 
         public ForceFieldEntityEditor(Entity header, ForceFieldEntityData raw) : base(header)
         {
