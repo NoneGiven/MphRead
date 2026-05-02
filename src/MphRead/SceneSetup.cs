@@ -412,7 +412,7 @@ namespace MphRead
                 return results;
             }
             // only FirstHunt is passed here, not Hybrid -- model/anim/col should be loaded from FH, and ent/node from MPH
-            IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, layerId, metadata.FirstHunt);
+            IReadOnlyList<Entity> entities = Read.GetEntities(metadata.EntityPath, layerId, metadata.FirstHunt, allowHook: true);
             foreach (Entity entity in entities)
             {
                 string nodeName = entity.NodeName;

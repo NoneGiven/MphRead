@@ -9614,7 +9614,7 @@ namespace MphRead.Entities
                     var player = (PlayerEntity)entity;
                     if (!player.IsBot)
                     {
-                        return;
+                        continue;
                     }
                     player.AiData._slotHits[_player.SlotIndex]++;
                     player.AiData._slotDamage[_player.SlotIndex] += damage;
@@ -9631,7 +9631,7 @@ namespace MphRead.Entities
                             {
                                 AggroFunc214864C(4, 2, 1, attacker, null, damage, damage, 2, 2);
                                 if (source.Type == EntityType.BeamProjectile
-                                    && ((BeamProjectileEntity)entity).Beam == BeamType.ShockCoil
+                                    && ((BeamProjectileEntity)source).Beam == BeamType.ShockCoil
                                     && attacker.ShockCoilTimer > 10 * 2) // todo: FPS stuff
                                 {
                                     player.AiData.Flags2 |= AiFlags2.Bit21;

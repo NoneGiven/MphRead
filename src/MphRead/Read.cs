@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using MphRead.Archive;
 using MphRead.Export;
+using MphRead.Utility;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -607,7 +608,7 @@ namespace MphRead
             return results;
         }
 
-        private static ReadOnlySpan<byte> ReadBytes(string path, bool firstHunt)
+        public static ReadOnlySpan<byte> ReadBytes(string path, bool firstHunt)
         {
             return new ReadOnlySpan<byte>(File.ReadAllBytes(Paths.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path)));
         }
@@ -704,16 +705,16 @@ namespace MphRead
 
         private static byte AlphaFromA3I5(byte value) => (byte)MathF.Round((value >> 5) / 7.0f * 255.0f);
 
-        public static IReadOnlyList<Entity> GetEntities(string path, int layerId, bool firstHunt)
+        public static IReadOnlyList<Entity> GetEntities(string path, int layerId, bool firstHunt, bool allowHook = false)
         {
             path = Paths.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path);
-            return GetEntitiesFromPath(path, layerId, firstHunt);
+            return GetEntitiesFromPath(path, layerId, firstHunt, allowHook);
         }
 
-        public static IReadOnlyList<Entity> GetEntitiesFromPath(string path, int layerId, bool firstHunt)
+        public static IReadOnlyList<Entity> GetEntitiesFromPath(string path, int layerId, bool firstHunt, bool allowHook = false)
         {
             path = Paths.Combine(firstHunt ? Paths.FhFileSystem : Paths.FileSystem, path);
-            ReadOnlySpan<byte> bytes = ReadBytes(path, firstHunt);
+            ReadOnlySpan<byte> bytes = allowHook ? Repack.RepackHook(path, firstHunt) : ReadBytes(path, firstHunt);
             uint version = BitConverter.ToUInt32(bytes[0..4]);
             if (version == 1)
             {
