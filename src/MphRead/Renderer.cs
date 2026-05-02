@@ -1438,6 +1438,10 @@ namespace MphRead
                 UnsetHudLayerUniforms();
             }
 
+            GL.UseProgram(_rttShaderProgramId);
+            GL.Uniform1(_shaderLocations.LayerAlpha, 1f);
+            GL.Uniform4(_shaderLocations.FadeColor, Vector4.Zero);
+
             if (PlayerEntity.Main.HudDisruptedState != 0 || PlayerEntity.Main.HudWhiteoutState != -1)
             {
                 float div = _elapsedTime / (1 / 30f);
@@ -1453,12 +1457,6 @@ namespace MphRead
                     GL.Uniform1(_shaderLocations.WhiteoutTable, 192, PlayerEntity.HudWhiteoutTable);
                 }
             }
-            else
-            {
-                GL.UseProgram(_rttShaderProgramId);
-            }
-            GL.Uniform1(_shaderLocations.LayerAlpha, 1f);
-            GL.Uniform4(_shaderLocations.FadeColor, Vector4.Zero);
 
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.Clear(ClearBufferMask.ColorBufferBit);
