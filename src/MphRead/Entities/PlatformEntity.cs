@@ -1615,7 +1615,7 @@ namespace MphRead.Entities
         private int _moveTimer;
         private Vector3 _velocity = Vector3.Zero;
 
-        public FhPlatformEntity(FhPlatformEntityData data, Scene scene) : base(EntityType.Platform, scene)
+        public FhPlatformEntity(FhPlatformEntityData data, Scene scene) : base(EntityType.FhPlatform, scene)
         {
             _data = data;
             Id = data.Header.EntityId;

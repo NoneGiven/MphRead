@@ -219,7 +219,7 @@ namespace MphRead.Entities
 
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xC8, 0x00, 0xC8).AsVector4();
 
-        public FhItemSpawnEntity(FhItemSpawnEntityData data, Scene scene) : base(EntityType.ItemSpawn, scene)
+        public FhItemSpawnEntity(FhItemSpawnEntityData data, Scene scene) : base(EntityType.FhItemSpawn, scene)
         {
             _data = data;
             Id = data.Header.EntityId;

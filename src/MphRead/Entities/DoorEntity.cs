@@ -567,7 +567,7 @@ namespace MphRead.Entities
     {
         private readonly FhDoorEntityData _data;
 
-        public FhDoorEntity(FhDoorEntityData data, Scene scene) : base(EntityType.Door, scene)
+        public FhDoorEntity(FhDoorEntityData data, Scene scene) : base(EntityType.FhDoor, scene)
         {
             _data = data;
             Id = data.Header.EntityId;

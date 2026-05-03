@@ -286,7 +286,7 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0x8C, 0x00).AsVector4();
         public FhTriggerVolumeEntityData Data => _data;
 
-        public FhTriggerVolumeEntity(FhTriggerVolumeEntityData data, Scene scene) : base(EntityType.TriggerVolume, scene)
+        public FhTriggerVolumeEntity(FhTriggerVolumeEntityData data, Scene scene) : base(EntityType.FhTriggerVolume, scene)
         {
             _data = data;
             Id = data.Header.EntityId;

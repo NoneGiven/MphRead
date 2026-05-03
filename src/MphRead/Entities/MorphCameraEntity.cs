@@ -77,7 +77,7 @@ namespace MphRead.Entities
         private readonly CollisionVolume _volume;
         private static readonly Vector3 _volumeColor = new Vector3(1, 1, 0);
 
-        public FhMorphCameraEntity(FhMorphCameraEntityData data, Scene scene) : base(EntityType.MorphCamera, scene)
+        public FhMorphCameraEntity(FhMorphCameraEntityData data, Scene scene) : base(EntityType.FhMorphCamera, scene)
         {
             _data = data;
             Id = data.Header.EntityId;

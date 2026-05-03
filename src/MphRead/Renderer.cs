@@ -127,7 +127,6 @@ namespace MphRead
         private bool _outputCameraPos = false;
 
         private readonly List<EntityBase> _entities = new List<EntityBase>();
-        private readonly List<EntityBase> _destroyedEntities = new List<EntityBase>();
         private readonly Dictionary<int, EntityBase> _entityMap = new Dictionary<int, EntityBase>();
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -257,7 +256,7 @@ namespace MphRead
             {
                 GameState.Mode = meta.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;
             }
-            _entities.Add(room);
+            _entities.Insert(0, room);
             InitEntity(room);
             _room = room;
             if (meta.InGameName != null)
@@ -266,10 +265,11 @@ namespace MphRead
             }
             foreach (EntityBase entity in entities)
             {
-                _entities.Add(entity);
+                InsertEntityByType(entity);
                 Debug.Assert(entity.Id != -1);
                 _entityMap.Add(entity.Id, entity);
                 InitEntity(entity);
+                entity.Initialized = false;
             }
             SceneSetup.LoadItemResources(this);
             SceneSetup.LoadObjectResources(this);
@@ -345,7 +345,7 @@ namespace MphRead
         {
             ModelInstance model = Read.GetModelInstance(name, firstHunt, dir);
             var entity = new ModelEntity(model, this, recolor);
-            _entities.Add(entity);
+            InsertEntityByType(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
@@ -367,11 +367,25 @@ namespace MphRead
 
         public void InsertEntity(EntityBase entity)
         {
-            _entities.Add(entity);
+            InsertEntityByType(entity);
             if (entity.Id != -1)
             {
                 _entityMap.Add(entity.Id, entity);
             }
+        }
+
+        private void InsertEntityByType(EntityBase entity)
+        {
+            for (int i = 0; i < _entities.Count; i++)
+            {
+                EntityBase existing = _entities[i];
+                if (existing.Type != EntityType.Room && existing.Type > entity.Type)
+                {
+                    _entities.Insert(i, entity);
+                    return;
+                }
+            }
+            _entities.Add(entity);
         }
 
         public void InitializeEntity(EntityBase entity)
@@ -489,18 +503,22 @@ namespace MphRead
             {
                 _freeRenderItems.Enqueue(new RenderItem());
             }
-            // entities added during initialization of other entities will already be initialized
-            int count = _entities.Count;
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < _entities.Count; i++)
             {
-                _entities[i].Initialize();
+                EntityBase entity = _entities[i];
+                // entities added during initialization of other entities will already be initialized
+                if (!entity.Initialized)
+                {
+                    entity.Initialize();
+                    entity.Initialized = true;
+                }
             }
             // todo: probably revisit this
             foreach (PlayerEntity player in PlayerEntity.Players)
             {
                 if (player.LoadFlags.TestFlag(LoadFlags.SlotActive))
                 {
-                    _entities.Add(player);
+                    InsertEntityByType(player);
                     player.Initialize();
                     InitEntity(player);
                     InitEntity(player.Halfturret);
@@ -1212,7 +1230,6 @@ namespace MphRead
                 _freeRenderItems.Enqueue(item);
             }
             _nextPolygonId = 1;
-            _destroyedEntities.Clear();
             if (ProcessFrame)
             {
                 GameState.ProcessFrame(this);
@@ -2690,7 +2707,8 @@ namespace MphRead
                         SendMessage(Message.Destroyed, entity, null, 0, 0, delay: 1);
                         // todo: need to handle destroying vs. unloading etc.
                         entity.Destroy();
-                        _destroyedEntities.Add(entity);
+                        RemoveEntity(entity);
+                        i--;
                     }
                 }
                 PlayerEntity.PlayerAiData.UpdateVisibilityAndGlobals(this);
@@ -2738,7 +2756,7 @@ namespace MphRead
                 {
                     continue;
                 }
-                if (entity.Type != EntityType.Player || _destroyedEntities.Contains(entity))
+                if (entity.Type != EntityType.Player)
                 {
                     continue;
                 }
@@ -2757,7 +2775,7 @@ namespace MphRead
                 {
                     continue;
                 }
-                if (entity.Type == EntityType.Player || entity.Type == EntityType.Room || _destroyedEntities.Contains(entity))
+                if (entity.Type == EntityType.Player || entity.Type == EntityType.Room)
                 {
                     continue;
                 }
@@ -2769,12 +2787,6 @@ namespace MphRead
                 {
                     entity.GetDisplayVolumes();
                 }
-            }
-
-            for (int i = 0; i < _destroyedEntities.Count; i++)
-            {
-                EntityBase entity = _destroyedEntities[i];
-                RemoveEntity(entity);
             }
 
             if (ProcessFrame && GameState.MatchState == MatchState.InProgress && !GameState.DialogPause)

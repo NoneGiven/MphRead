@@ -542,7 +542,7 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0x00, 0x00, 0x8B).AsVector4();
 
         // todo: FH enemy spawning
-        public FhEnemySpawnEntity(FhEnemySpawnEntityData data, Scene scene) : base(EntityType.EnemySpawn, scene)
+        public FhEnemySpawnEntity(FhEnemySpawnEntityData data, Scene scene) : base(EntityType.FhEnemySpawn, scene)
         {
             _data = data;
             Id = data.Header.EntityId;

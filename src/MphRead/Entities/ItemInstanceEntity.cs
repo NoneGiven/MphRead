@@ -203,7 +203,7 @@ namespace MphRead.Entities
     public class FhItemEntity : SpinningEntityBase
     {
         public FhItemEntity(FhItemInstanceEntityData data, Scene scene)
-            : base(0.35f, Vector3.UnitY, 0, 0, EntityType.ItemInstance, scene)
+            : base(0.35f, Vector3.UnitY, 0, 0, EntityType.FhItemInstance, scene)
         {
             // note: the actual height at creation is 1.0f greater than the spawner's,
             // but 0.5f is subtracted when drawing (after the floating calculation)

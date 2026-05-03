@@ -194,7 +194,7 @@ namespace MphRead.Entities
 
         private readonly CollisionVolume _volume;
 
-        public FhJumpPadEntity(FhJumpPadEntityData data, Scene scene) : base(EntityType.JumpPad, scene)
+        public FhJumpPadEntity(FhJumpPadEntityData data, Scene scene) : base(EntityType.FhJumpPad, scene)
         {
             _data = data;
             Id = data.Header.EntityId;

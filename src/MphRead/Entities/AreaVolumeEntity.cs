@@ -341,7 +341,7 @@ namespace MphRead.Entities
         protected override Vector4? OverrideColor { get; } = new ColorRgb(0xFF, 0xFF, 0x00).AsVector4();
         public FhAreaVolumeEntityData Data => _data;
 
-        public FhAreaVolumeEntity(FhAreaVolumeEntityData data, Scene scene) : base(EntityType.AreaVolume, scene)
+        public FhAreaVolumeEntity(FhAreaVolumeEntityData data, Scene scene) : base(EntityType.FhAreaVolume, scene)
         {
             _data = data;
             Id = data.Header.EntityId;
