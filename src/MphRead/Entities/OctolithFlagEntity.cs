@@ -76,9 +76,8 @@ namespace MphRead.Entities
             bool pickedUp = false;
             if (_carrier == null)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Player)
                     {
                         continue;

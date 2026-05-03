@@ -66,9 +66,8 @@ namespace MphRead.Entities.Enemies
             if ((_state1 == 0 || _state1 == 7 || _state1 == 10) && _state2 != 0 && _state2 != 7 && _state2 != 10)
             {
                 int count = 0;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type == EntityType.EnemyInstance && entity is Enemy02Entity temroid && temroid.Field1D0)
                     {
                         count++;
@@ -231,9 +230,8 @@ namespace MphRead.Entities.Enemies
             CallStateProcess();
             if (_state1 != 8)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Door)
                     {
                         continue;

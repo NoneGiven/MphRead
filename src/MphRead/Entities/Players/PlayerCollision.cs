@@ -21,9 +21,8 @@ namespace MphRead.Entities
         // todo: visualize EVERYTHING
         private void CheckPlayerCollision()
         {
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.Player)
                 {
                     continue;
@@ -516,9 +515,8 @@ namespace MphRead.Entities
                     HandleCollision(results[i]);
                 }
             }
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.Door)
                 {
                     continue;
@@ -554,9 +552,8 @@ namespace MphRead.Entities
                     }
                 }
             }
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.ForceField)
                 {
                     continue;

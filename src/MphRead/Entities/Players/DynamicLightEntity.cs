@@ -57,9 +57,8 @@ namespace MphRead.Entities
             Vector3 light2Color = _light2Color;
             Vector3 light2Vector = _light2Vector;
             float frames = _scene.FrameTime * 30;
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.LightSource)
                 {
                     continue;

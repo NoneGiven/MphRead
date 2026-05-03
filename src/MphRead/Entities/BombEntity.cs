@@ -112,9 +112,8 @@ namespace MphRead.Entities
             }
             if (!Flags.TestFlag(BombFlags.Exploded))
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Player)
                     {
                         continue;
@@ -154,9 +153,8 @@ namespace MphRead.Entities
                 }
                 if (BombType == BombType.Stinglarva && _target == null)
                 {
-                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    foreach (EntityBase entity in _scene.Entities)
                     {
-                        EntityBase entity = _scene.Entities[i];
                         if (entity.Type != EntityType.Halfturret)
                         {
                             continue;
@@ -170,9 +168,8 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.EnemyInstance)
                     {
                         continue;
@@ -185,9 +182,8 @@ namespace MphRead.Entities
                         Flags |= BombFlags.Exploding;
                     }
                 }
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.EnemyInstance)
                     {
                         continue;
@@ -205,9 +201,8 @@ namespace MphRead.Entities
                 }
                 if (Flags.TestFlag(BombFlags.Exploding))
                 {
-                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    foreach (EntityBase entity in _scene.Entities)
                     {
-                        EntityBase entity = _scene.Entities[i];
                         if (entity.Type != EntityType.Door)
                         {
                             continue;

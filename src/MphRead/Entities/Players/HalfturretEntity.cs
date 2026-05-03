@@ -180,9 +180,8 @@ namespace MphRead.Entities
                 if (_target == null)
                 {
                     float minDistSqr = 15 * 15;
-                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    foreach (EntityBase entity in _scene.Entities)
                     {
-                        EntityBase entity = _scene.Entities[i];
                         if (entity.Type != EntityType.Player || entity == Owner)
                         {
                             continue;

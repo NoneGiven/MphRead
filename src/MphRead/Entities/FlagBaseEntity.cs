@@ -38,9 +38,8 @@ namespace MphRead.Entities
         public override bool Process()
         {
             base.Process();
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.Player)
                 {
                     continue;
@@ -68,9 +67,8 @@ namespace MphRead.Entities
 
         private bool CheckOwnOctolith(PlayerEntity player)
         {
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.OctolithFlag)
                 {
                     continue;

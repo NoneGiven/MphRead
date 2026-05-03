@@ -237,9 +237,8 @@ namespace MphRead.Entities.Enemies
 
         private Enemy45Entity? FindTurret()
         {
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type == EntityType.EnemyInstance
                     && entity is Enemy45Entity turret && turret.Index == _index)
                 {

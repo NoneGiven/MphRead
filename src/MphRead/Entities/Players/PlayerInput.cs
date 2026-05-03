@@ -819,9 +819,8 @@ namespace MphRead.Entities
 
                             void CheckZoomTargets(EntityType type)
                             {
-                                for (int i = 0; i < _scene.Entities.Count; i++)
+                                foreach (EntityBase entity in _scene.Entities)
                                 {
-                                    EntityBase entity = _scene.Entities[i];
                                     if (entity.Type != type || entity == this || !entity.GetTargetable())
                                     {
                                         continue;

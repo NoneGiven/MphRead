@@ -913,9 +913,8 @@ namespace MphRead.Entities.Enemies
                 {
                     return true;
                 }
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Door)
                     {
                         continue;

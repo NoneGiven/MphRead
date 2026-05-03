@@ -304,9 +304,8 @@ namespace MphRead.Entities
                         anyRes = colRes;
                     }
                 }
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Door)
                     {
                         continue;
@@ -341,9 +340,8 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.ForceField)
                     {
                         continue;
@@ -375,9 +373,8 @@ namespace MphRead.Entities
             Debug.Assert(Owner != null);
             if (Owner.Type != EntityType.EnemyInstance)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.EnemyInstance)
                     {
                         continue;
@@ -403,9 +400,8 @@ namespace MphRead.Entities
             }
             bool hitHalfturret = false;
             // todo: visualize player collision (and rename some "pickup" fields)
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.Player)
                 {
                     continue;
@@ -490,9 +486,8 @@ namespace MphRead.Entities
             }
             if (GameState.SinglePlayer)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.BeamProjectile)
                     {
                         continue;
@@ -968,9 +963,8 @@ namespace MphRead.Entities
 
         private void CheckSplashDamage(EntityBase? colWith)
         {
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.Player || entity == colWith)
                 {
                     continue;
@@ -1016,9 +1010,8 @@ namespace MphRead.Entities
                     OmegaCannonFlash();
                 }
             }
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.EnemyInstance || entity == colWith)
                 {
                     continue;
@@ -1819,9 +1812,8 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
-                for (int j = 0; j < scene.Entities.Count; j++)
+                foreach (EntityBase entity in scene.Entities)
                 {
-                    EntityBase entity = scene.Entities[j];
                     if (entity.Type != type || entity == beam.Owner || !entity.GetTargetable())
                     {
                         continue;
@@ -1960,9 +1952,8 @@ namespace MphRead.Entities
         private void CheckIceWaveCollision(float angle)
         {
             float angleCos = MathF.Cos(MathHelper.DegreesToRadians(angle));
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.Player || Owner == entity)
                 {
                     continue;

@@ -798,9 +798,8 @@ namespace MphRead.Entities.Enemies
             float minDist = Single.MaxValue;
             float maxDist = 0;
             int value = (int)(GoreaFlags & (Gorea2Flags.Bit14 | Gorea2Flags.Bit15)) >> 14;
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.TriggerVolume)
                 {
                     continue;
@@ -976,9 +975,8 @@ namespace MphRead.Entities.Enemies
             else
             {
                 TriggerVolumeEntity? found = null;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type == EntityType.TriggerVolume)
                     {
                         var trigger = (TriggerVolumeEntity)entity;

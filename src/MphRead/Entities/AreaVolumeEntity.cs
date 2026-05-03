@@ -154,9 +154,8 @@ namespace MphRead.Entities
             _triggeredSlots[player.SlotIndex] = true;
             if (_data.AllowMultiple == 0)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.AreaVolume)
                     {
                         continue;
@@ -195,9 +194,8 @@ namespace MphRead.Entities
             _cooldownSlots[player.SlotIndex] = _cooldownTime;
             if (_data.InsideMessage == Message.Gravity)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.AreaVolume)
                     {
                         continue;
@@ -206,9 +204,8 @@ namespace MphRead.Entities
                     other._prioritySlots[player.SlotIndex] = other.Data.Priority;
                 }
             }
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.AreaVolume)
                 {
                     continue;
@@ -237,9 +234,8 @@ namespace MphRead.Entities
         private bool PrioritizeGravity(Vector3 position, int slot)
         {
             bool result = true;
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.AreaVolume)
                 {
                     continue;
@@ -267,9 +263,8 @@ namespace MphRead.Entities
                 return base.Process();
             }
             TriggerFlags flags = _data.TriggerFlags;
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.Player)
                 {
                     continue;
@@ -279,9 +274,9 @@ namespace MphRead.Entities
                 {
                     continue;
                 }
-                for (int j = 0; j < player.EquipInfo.Beams.Length; j++)
+                for (int i = 0; i < player.EquipInfo.Beams.Length; i++)
                 {
-                    BeamProjectileEntity beam = player.EquipInfo.Beams[j];
+                    BeamProjectileEntity beam = player.EquipInfo.Beams[i];
                     if (beam.Lifespan > 0)
                     {
                         CollisionResult discard = default;

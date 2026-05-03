@@ -299,9 +299,8 @@ namespace MphRead.Entities
                 SetClosestNodeList(_player.Position);
                 if (GameState.Mode == GameMode.Capture)
                 {
-                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    foreach (EntityBase entity in _scene.Entities)
                     {
-                        EntityBase entity = _scene.Entities[i];
                         if (entity.Type == EntityType.OctolithFlag)
                         {
                             var octoFlag = (OctolithFlagEntity)entity;
@@ -330,9 +329,8 @@ namespace MphRead.Entities
                 }
                 else if (GameState.Mode == GameMode.Bounty || GameState.Mode == GameMode.BountyTeams)
                 {
-                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    foreach (EntityBase entity in _scene.Entities)
                     {
-                        EntityBase entity = _scene.Entities[i];
                         if (entity.Type == EntityType.OctolithFlag && _octolithFlagCC == null)
                         {
                             _octolithFlagCC = _octolithFlagD4 = _octolithFlagDC = (OctolithFlagEntity)entity;
@@ -739,9 +737,8 @@ namespace MphRead.Entities
             {
                 float fov = MathHelper.DegreesToRadians(_player.CameraInfo.Fov > 0 ? _player.CameraInfo.Fov : 78);
                 Matrix4 perspectiveMatrix = _scene.GetPerspectiveMatrix(fov);
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Player)
                     {
                         continue;
@@ -2445,9 +2442,8 @@ namespace MphRead.Entities
 
             private void Func1_UnlockEchoHallForceField()
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.ForceField)
                     {
                         continue;
@@ -5984,9 +5980,8 @@ namespace MphRead.Entities
             {
                 // note: the game returns up to 10 sets of results, but only the first one is used by Func2139F84()
                 float nodeMidpointY = (node1.Position.Y + node2.Position.Y) / 2;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Player)
                     {
                         continue;
@@ -8491,9 +8486,8 @@ namespace MphRead.Entities
 
             private bool IsJumpPadNode(NodeData3 node)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type == EntityType.JumpPad)
                     {
                         var jumpPad = (JumpPadEntity)entity;
@@ -8591,9 +8585,8 @@ namespace MphRead.Entities
                 PlayerEntity? result = null;
                 float minDist = Single.MaxValue;
                 Flags2 |= AiFlags2.Bit9;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Player)
                     {
                         continue;
@@ -8627,9 +8620,8 @@ namespace MphRead.Entities
                 PlayerEntity? result = null;
                 float minDist = Single.MaxValue;
                 Flags2 |= AiFlags2.Bit9;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Player)
                     {
                         continue;
@@ -8665,9 +8657,8 @@ namespace MphRead.Entities
                 float dist = 0;
                 int maxValue = 0;
                 Flags2 |= AiFlags2.Bit9;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Player)
                     {
                         continue;
@@ -8713,9 +8704,8 @@ namespace MphRead.Entities
                 float dist = minDist;
                 int maxValue = 0;
                 Flags2 |= AiFlags2.Bit9;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Player)
                     {
                         continue;
@@ -8762,26 +8752,24 @@ namespace MphRead.Entities
                 bool v4 = false;
                 int maxValue = -50000;
                 Flags2 |= AiFlags2.Bit9;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase playerEntity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
-                    if (entity.Type != EntityType.Player)
+                    if (playerEntity.Type != EntityType.Player)
                     {
                         continue;
                     }
-                    var player = (PlayerEntity)entity;
+                    var player = (PlayerEntity)playerEntity;
                     bool v14 = AggroFunc214857C(6, 1, 2, null, player);
                     if ((v14 || !v4) && player != _player && player.TeamIndex != _player.TeamIndex && player.Health > 0)
                     {
                         int value = AggroFunc2148394(7, 2, 1, player, null);
-                        for (int j = 0; j < _scene.Entities.Count; j++)
+                        foreach (EntityBase otherPlayerEntity in _scene.Entities)
                         {
-                            entity = _scene.Entities[j];
-                            if (entity.Type != EntityType.Player)
+                            if (otherPlayerEntity.Type != EntityType.Player)
                             {
                                 continue;
                             }
-                            var other = (PlayerEntity)entity;
+                            var other = (PlayerEntity)otherPlayerEntity;
                             if (other != _player && other.TeamIndex == _player.TeamIndex && other.Health > 0)
                             {
                                 value += AggroFunc2148394(7, 2, 2, player, other);
@@ -8817,9 +8805,8 @@ namespace MphRead.Entities
                 float minDist = 10000;
                 float dist = minDist;
                 int maxValue = 0;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Player)
                     {
                         continue;
@@ -8865,9 +8852,8 @@ namespace MphRead.Entities
                 // and specific checks in Func21377FC() that also cause us to discard the candidate.
                 ItemSpawnEntity? result = null;
                 float minDist = Single.MaxValue; // uninitialized in-game, but not used until after the first entity is found
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.ItemSpawn)
                     {
                         continue;
@@ -8910,9 +8896,8 @@ namespace MphRead.Entities
 
                 ItemSpawnEntity? result = null;
                 float minDist = Single.MaxValue; // uninitialized in-game, but not used until after the first entity is found
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.ItemSpawn)
                     {
                         continue;
@@ -8951,9 +8936,8 @@ namespace MphRead.Entities
                 {
                     return result;
                 }
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.ItemInstance)
                     {
                         continue;
@@ -8991,9 +8975,8 @@ namespace MphRead.Entities
                     return result;
                 }
                 float minDist = Single.MaxValue; // uninitialized in-game, but not used until after the first entity is found
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.ItemInstance)
                     {
                         continue;
@@ -9075,9 +9058,8 @@ namespace MphRead.Entities
             {
                 NodeDefenseEntity? result = null;
                 float minDist = Single.MaxValue;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.NodeDefense)
                     {
                         continue;
@@ -9103,9 +9085,8 @@ namespace MphRead.Entities
                 int[] captureList = new int[4];
                 int maxCaptureCount = 0;
                 int maxCaptureSlotIndex = 0;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.NodeDefense)
                     {
                         continue;
@@ -9131,9 +9112,8 @@ namespace MphRead.Entities
                 {
                     int playerCount = 0;
                     var playerList = new PlayerEntity?[4];
-                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    foreach (EntityBase entity in _scene.Entities)
                     {
-                        EntityBase entity = _scene.Entities[i];
                         if (entity.Type != EntityType.Player)
                         {
                             continue;
@@ -9145,9 +9125,8 @@ namespace MphRead.Entities
                         }
                     }
                     PlayerEntity? chosenPlayer = playerList[Rng.GetRandomInt2(playerCount)];
-                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    foreach (EntityBase entity in _scene.Entities)
                     {
-                        EntityBase entity = _scene.Entities[i];
                         if (entity.Type != EntityType.NodeDefense)
                         {
                             continue;
@@ -9161,9 +9140,8 @@ namespace MphRead.Entities
                 }
                 else
                 {
-                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    foreach (EntityBase entity in _scene.Entities)
                     {
-                        EntityBase entity = _scene.Entities[i];
                         if (entity.Type != EntityType.NodeDefense)
                         {
                             continue;
@@ -9186,9 +9164,8 @@ namespace MphRead.Entities
             {
                 NodeDefenseEntity? result = null;
                 float minDist = Single.MaxValue;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.NodeDefense)
                     {
                         continue;
@@ -9211,9 +9188,8 @@ namespace MphRead.Entities
             {
                 DoorEntity? result = null;
                 float minDist = Single.MaxValue;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Door)
                     {
                         continue;
@@ -9249,9 +9225,8 @@ namespace MphRead.Entities
                     newIndex += (_nodeData.SetSelector[i] ? 1 : 0) << i;
                 }
                 // todo?: it's kind of jank how this is called for each bot, but updates all bots
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type == EntityType.Player)
                     {
                         var player = (PlayerEntity)entity;
@@ -9604,9 +9579,8 @@ namespace MphRead.Entities
 
             public void OnTakeDamage(int damage, EntityBase source, PlayerEntity? attacker)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Player)
                     {
                         continue;

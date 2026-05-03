@@ -129,9 +129,8 @@ namespace MphRead.Entities
             {
                 if (_rangeNodeRef != NodeRef.None && _scene.CameraMode == CameraMode.Player) // skdebug
                 {
-                    for (int i = 0; i < _scene.Entities.Count; i++)
+                    foreach (EntityBase entity in _scene.Entities)
                     {
-                        EntityBase entity = _scene.Entities[i];
                         if (entity.Type != EntityType.Player)
                         {
                             continue;
@@ -158,9 +157,8 @@ namespace MphRead.Entities
             if (_data.EnemyType != EnemyType.CarnivorousPlant // the game doesn't have this condition
                 && _scene.CameraMode == CameraMode.Player) // skdebug
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Player)
                     {
                         continue;
@@ -344,9 +342,8 @@ namespace MphRead.Entities
             }
             else if (info.Message == Message.Gorea2Trigger)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.EnemyInstance)
                     {
                         continue;

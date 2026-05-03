@@ -1921,9 +1921,8 @@ namespace MphRead.Entities
                     if (IsBot && GameState.GetAreaState(_scene.AreaId) == AreaState.Clear)
                     {
                         bool unlockDoors = true;
-                        for (int i = 0; i < _scene.Entities.Count; i++)
+                        foreach (EntityBase entity in _scene.Entities)
                         {
-                            EntityBase entity = _scene.Entities[i];
                             if (entity.Type != EntityType.EnemySpawn)
                             {
                                 continue;
@@ -1937,9 +1936,9 @@ namespace MphRead.Entities
                                 && (spawner.Data.SpawnLimit == 0 || spawner.ActiveCount < spawner.Data.SpawnLimit
                                 || spawner.SpawnedCount != 0))
                             {
-                                for (int j = 1; j < MaxPlayers; j++)
+                                for (int i = 1; i < MaxPlayers; i++)
                                 {
-                                    if (Players[j].EnemySpawner == spawner)
+                                    if (Players[i].EnemySpawner == spawner)
                                     {
                                         unlockDoors = false;
                                         break;
@@ -1954,9 +1953,8 @@ namespace MphRead.Entities
                         if (unlockDoors)
                         {
                             GameState.CompleteRandomEncounter(_scene.RoomId);
-                            for (int i = 0; i < _scene.Entities.Count; i++)
+                            foreach (EntityBase entity in _scene.Entities)
                             {
-                                EntityBase entity = _scene.Entities[i];
                                 if (entity.Type != EntityType.Door)
                                 {
                                     continue;
@@ -2049,9 +2047,8 @@ namespace MphRead.Entities
                         if (dropId < 8)
                         {
                             RestoreOctolith(dropId);
-                            for (int i = 0; i < _scene.Entities.Count; i++)
+                            foreach (EntityBase entity in _scene.Entities)
                             {
-                                EntityBase entity = _scene.Entities[i];
                                 if (entity.Type != EntityType.Artifact || entity.Id != -1) // the game doesn't check the ID
                                 {
                                     continue;

@@ -126,17 +126,16 @@ namespace MphRead.Entities
             {
                 bool colliding = false;
                 TriggerFlags flags = _data.TriggerFlags;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Player)
                     {
                         continue;
                     }
                     var player = (PlayerEntity)entity;
-                    for (int j = 0; j < player.EquipInfo.Beams.Length; j++)
+                    for (int i = 0; i < player.EquipInfo.Beams.Length; i++)
                     {
-                        BeamProjectileEntity beam = player.EquipInfo.Beams[j];
+                        BeamProjectileEntity beam = player.EquipInfo.Beams[i];
                         if (beam.Lifespan > 0)
                         {
                             CollisionResult discard = default;

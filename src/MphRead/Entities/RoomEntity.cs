@@ -223,9 +223,9 @@ namespace MphRead.Entities
             int roomPartId = -1;
             int roomNodeIndex = -1;
             IReadOnlyList<Node> roomNodes = _models[0].Model.Nodes;
-            for (int j = 0; j < roomNodes.Count; j++)
+            for (int i = 0; i < roomNodes.Count; i++)
             {
-                Node node = roomNodes[j];
+                Node node = roomNodes[i];
                 if (node.ChildIndex == door.NodeRef.NodeIndex && node.RoomPartId == door.NodeRef.PartIndex)
                 {
                     roomNodeName = node.Name;
@@ -241,9 +241,9 @@ namespace MphRead.Entities
             Debug.Assert(meta != null);
             ModelInstance conInst = Read.GetRoomModelInstance(meta.Name); // cached
             IReadOnlyList<Node> conNodes = conInst.Model.Nodes;
-            for (int j = 0; j < conNodes.Count; j++)
+            for (int i = 0; i < conNodes.Count; i++)
             {
-                Node node = conNodes[j];
+                Node node = conNodes[i];
                 if (node.Name.StartsWith("rm"))
                 {
                     node.RoomPartId = _nextRoomPartId++;
@@ -367,9 +367,8 @@ namespace MphRead.Entities
             door.ConnectorModel.Active = true;
             door.ConnectorCollision.Active = true;
             Debug.Assert(door.LoaderDoor != null);
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type == EntityType.Door)
                 {
                     var other = (DoorEntity)entity;
@@ -449,9 +448,8 @@ namespace MphRead.Entities
             Debug.Assert(GameState.TransitionRoomId != -1);
             GameState.TransitionState = TransitionState.Process;
             // mustodo: update music
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type == EntityType.Room || entity.Type == EntityType.Model
                     || entity.Type == EntityType.Player && resume)
                 {
@@ -468,7 +466,6 @@ namespace MphRead.Entities
                     {
                         _scene.RemoveEntity(door);
                         door.Destroy();
-                        i--;
                     }
                 }
                 else if (LoaderDoor != null && _keepEntities[(int)entity.Type])
@@ -479,7 +476,6 @@ namespace MphRead.Entities
                     {
                         _scene.RemoveEntity(entity);
                         entity.Destroy();
-                        i--;
                     }
                     else if (entity.Type == EntityType.BeamProjectile)
                     {
@@ -488,7 +484,6 @@ namespace MphRead.Entities
                         {
                             _scene.RemoveEntity(beam);
                             beam.Destroy();
-                            i--;
                         }
                     }
                 }
@@ -496,7 +491,6 @@ namespace MphRead.Entities
                 {
                     _scene.RemoveEntity(entity);
                     entity.Destroy();
-                    i--;
                 }
             }
             CamSeqEntity.Current = null;
@@ -591,9 +585,8 @@ namespace MphRead.Entities
                     }
                 }
             }
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.Door)
                 {
                     continue;
@@ -646,9 +639,8 @@ namespace MphRead.Entities
             DoorEntity? prevConnector = null;
             DoorEntity? newLoader = null;
             NodeRef nodeRef = NodeRef.None;
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 entity.Initialized = true;
                 if (LoaderDoor != null && entity.Type == EntityType.Door)
                 {
@@ -661,7 +653,6 @@ namespace MphRead.Entities
                         }
                         _scene.RemoveEntity(door);
                         door.Destroy();
-                        i--;
                     }
                     else if (door.Data.OutConnectorId == LoaderDoor.Data.OutLoaderId)
                     {
@@ -690,9 +681,8 @@ namespace MphRead.Entities
             if (LoaderDoor != null)
             {
                 Debug.Assert(nodeRef != NodeRef.None);
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type == EntityType.Player)
                     {
                         var player = (PlayerEntity)entity;
@@ -721,9 +711,8 @@ namespace MphRead.Entities
             if (newLoader?.ConnectorDoor != null)
             {
                 DoorEntity targetDoor = newLoader.ConnectorDoor;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.EnemySpawn)
                     {
                         continue;
@@ -747,9 +736,8 @@ namespace MphRead.Entities
             }
             if (GameState.GetAreaState(_scene.AreaId) == AreaState.Clear && PlayerEntity.PlayerCount > 1)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Door)
                     {
                         continue;

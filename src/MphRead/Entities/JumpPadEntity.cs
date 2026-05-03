@@ -80,9 +80,8 @@ namespace MphRead.Entities
             }
             if (Active && _cooldownTimer == 0)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.Player)
                     {
                         continue;

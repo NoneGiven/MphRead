@@ -876,16 +876,15 @@ namespace MphRead.Formats
 
         private static void GetEntityCandidates(Vector3 limitMin, Vector3 limitMax, Scene scene)
         {
-            for (int i = 0; i < scene.Entities.Count; i++)
+            foreach (EntityBase entity in scene.Entities)
             {
-                EntityBase entity = scene.Entities[i];
                 if (entity.Type != EntityType.Object && entity.Type != EntityType.Platform)
                 {
                     continue;
                 }
-                for (int j = 0; j < 2; j++)
+                for (int i = 0; i < 2; i++)
                 {
-                    EntityCollision? entCol = entity.EntityCollision[j];
+                    EntityCollision? entCol = entity.EntityCollision[i];
                     // sktodo: handle FH collision
                     if (entCol?.Collision == null || !entCol.Collision.Active || entCol.Collision.Info.FirstHunt)
                     {

@@ -179,9 +179,8 @@ namespace MphRead.Entities
             _soundSource.PlaySfx(SfxId.TELEPORTER_LOOP, loop: true);
             bool activated = false;
             Vector3 testPos = Position.AddY(1);
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.Player)
                 {
                     continue;

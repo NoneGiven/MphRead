@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using MphRead.Entities;
 using OpenTK.Mathematics;
@@ -362,7 +363,7 @@ namespace MphRead
             }
             else if (!shift)
             {
-                Entity = scene.Entities.FirstOrDefault();
+                Entity = scene.Entities.Count == 0 ? null : scene.Entities.First();
             }
         }
 
@@ -631,7 +632,8 @@ namespace MphRead
         private static void SelectEntity(int direction, Scene scene)
         {
             EntityBase? entity = null;
-            int index = scene.Entities.IndexOf(e => e == Entity);
+            Debug.Assert(Entity != null);
+            int index = scene.Entities.IndexOf(Entity);
             while (entity != Entity)
             {
                 index += direction;

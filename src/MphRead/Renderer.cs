@@ -126,7 +126,7 @@ namespace MphRead
         private bool _transformRoomNodes = false;
         private bool _outputCameraPos = false;
 
-        private readonly List<EntityBase> _entities = new List<EntityBase>();
+        private readonly LinkedList<EntityBase> _entities = new LinkedList<EntityBase>();
         private readonly Dictionary<int, EntityBase> _entityMap = new Dictionary<int, EntityBase>();
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
@@ -211,7 +211,7 @@ namespace MphRead
         public Vector3 Light1Color => _light1Color;
         public Vector3 Light2Vector => _light2Vector;
         public Vector3 Light2Color => _light2Color;
-        public IReadOnlyList<EntityBase> Entities => _entities;
+        public LinkedListIterator<EntityBase> Entities => new LinkedListIterator<EntityBase>(_entities); // skhere: could store instead of recreating
         public RoomEntity? Room => _room;
         public int ActiveCutscene => _activeCutscene;
         // todo: disallow if camera roll is not zero?
@@ -256,7 +256,7 @@ namespace MphRead
             {
                 GameState.Mode = meta.Multiplayer ? GameMode.Battle : GameMode.SinglePlayer;
             }
-            _entities.Insert(0, room);
+            _entities.AddFirst(room);
             InitEntity(room);
             _room = room;
             if (meta.InGameName != null)
@@ -376,16 +376,17 @@ namespace MphRead
 
         private void InsertEntityByType(EntityBase entity)
         {
-            for (int i = 0; i < _entities.Count; i++)
+            // todo: in-game entity storage can jump to the first item of a given type
+            for (LinkedListNode<EntityBase>? item = _entities.First; item != null; item = item.Next)
             {
-                EntityBase existing = _entities[i];
+                EntityBase existing = item.Value;
                 if (existing.Type != EntityType.Room && existing.Type > entity.Type)
                 {
-                    _entities.Insert(i, entity);
+                    _entities.AddBefore(item, entity);
                     return;
                 }
             }
-            _entities.Add(entity);
+            _entities.AddLast(entity);
         }
 
         public void InitializeEntity(EntityBase entity)
@@ -421,37 +422,6 @@ namespace MphRead
         public bool TryGetEntity(int id, [NotNullWhen(true)] out EntityBase? entity)
         {
             return _entityMap.TryGetValue(id, out entity);
-        }
-
-        public bool TryGetEntity(EntityType entityType, [NotNullWhen(true)] out EntityBase? entity)
-        {
-            for (int i = 0; i < _entities.Count; i++)
-            {
-                EntityBase item = _entities[i];
-                if (item.Type == entityType)
-                {
-                    entity = item;
-                    return true;
-                }
-            }
-            entity = null;
-            return false;
-        }
-
-        public bool TryGetEntity(EnemyType enemyType, [NotNullWhen(true)] out EnemyInstanceEntity? entity)
-        {
-            for (int i = 0; i < _entities.Count; i++)
-            {
-                EntityBase item = _entities[i];
-                if (item.Type == EntityType.EnemyInstance && item is EnemyInstanceEntity enemy
-                    && enemy.EnemyType == enemyType)
-                {
-                    entity = enemy;
-                    return true;
-                }
-            }
-            entity = null;
-            return false;
         }
 
         public void RemoveEntity(EntityBase entity)
@@ -503,9 +473,8 @@ namespace MphRead
             {
                 _freeRenderItems.Enqueue(new RenderItem());
             }
-            for (int i = 0; i < _entities.Count; i++)
+            foreach (EntityBase entity in Entities)
             {
-                EntityBase entity = _entities[i];
                 // entities added during initialization of other entities will already be initialized
                 if (!entity.Initialized)
                 {
@@ -2699,16 +2668,14 @@ namespace MphRead
                     PlayerEntity.Main.UpdateTimedSounds();
                     PlayerEntity.Main.ProcessHudMessageQueue();
                 }
-                for (int i = 0; i < _entities.Count; i++)
+                foreach (EntityBase entity in Entities)
                 {
-                    EntityBase entity = _entities[i];
                     if (entity.Initialized && !entity.Process())
                     {
                         SendMessage(Message.Destroyed, entity, null, 0, 0, delay: 1);
                         // todo: need to handle destroying vs. unloading etc.
                         entity.Destroy();
                         RemoveEntity(entity);
-                        i--;
                     }
                 }
                 PlayerEntity.PlayerAiData.UpdateVisibilityAndGlobals(this);
@@ -2749,14 +2716,9 @@ namespace MphRead
                 _room.GetDrawInfo();
                 _room.GetDisplayVolumes();
             }
-            for (int i = 0; i < _entities.Count; i++)
+            foreach (EntityBase entity in Entities)
             {
-                EntityBase entity = _entities[i];
-                if (!entity.Initialized)
-                {
-                    continue;
-                }
-                if (entity.Type != EntityType.Player)
+                if (!entity.Initialized || entity.Type != EntityType.Player)
                 {
                     continue;
                 }
@@ -2768,14 +2730,9 @@ namespace MphRead
                     entity.GetDisplayVolumes();
                 }
             }
-            for (int i = 0; i < _entities.Count; i++)
+            foreach (EntityBase entity in Entities)
             {
-                EntityBase entity = _entities[i];
-                if (!entity.Initialized)
-                {
-                    continue;
-                }
-                if (entity.Type == EntityType.Player || entity.Type == EntityType.Room)
+                if (!entity.Initialized || entity.Type == EntityType.Player || entity.Type == EntityType.Room)
                 {
                     continue;
                 }
@@ -5019,6 +4976,105 @@ namespace MphRead
         public void Add(int textureId, int paletteId, int recolorId, int bindingId, bool onlyOpaque)
         {
             this[GetKey(textureId, paletteId, recolorId)] = (bindingId, onlyOpaque);
+        }
+    }
+
+    // this class supports allocation-free foreach while also handling entities being added or removed during enumeration.
+    // count and index methods are exposed for flat list-like behavior in cases where adds/removes are known not to occur.
+    // the indexer and IndexOf() are O(n), but are only used in entity selection code.
+    public struct LinkedListIterator<T> where T : class
+    {
+        private readonly LinkedList<T> _list;
+        public int Count => _list.Count;
+
+        public LinkedListIterator(LinkedList<T> list)
+        {
+            _list = list;
+        }
+
+        public LinkedListEnumerator<T> GetEnumerator()
+        {
+            return new LinkedListEnumerator<T>(_list.First);
+        }
+
+        public T this[int index]
+        {
+            get
+            {
+                if (index >= 0 && index < _list.Count)
+                {
+                    int count = 0;
+                    foreach (T existing in this)
+                    {
+                        if (count++ == index)
+                        {
+                            return existing;
+                        }
+                    }
+                }
+                throw new ArgumentOutOfRangeException($"Index was out of range. " +
+                    $"Must be non-negative and less than the size of the collection. (Parameter '{nameof(index)}')");
+            }
+        }
+
+        public T First()
+        {
+            if (_list.Count == 0)
+            {
+                throw new InvalidOperationException("Sequence contains no elements");
+            }
+            Debug.Assert(_list.First != null);
+            return _list.First.Value;
+        }
+
+        public int IndexOf(T item)
+        {
+            int count = 0;
+            foreach (T existing in this)
+            {
+                if (existing == item)
+                {
+                    return count;
+                }
+                count++;
+            }
+            return -1;
+        }
+    }
+
+    public struct LinkedListEnumerator<T>
+    {
+        private bool first = true;
+        private LinkedListNode<T>? _node;
+        private LinkedListNode<T>? _next;
+
+        public T Current => _node == null ? throw new InvalidOperationException() : _node.Value;
+
+        public LinkedListEnumerator(LinkedListNode<T>? first)
+        {
+            _node = first;
+            _next = first?.Next;
+        }
+
+        public bool MoveNext()
+        {
+            if (!first)
+            {
+                Debug.Assert(_node != null);
+                LinkedListNode<T>? next = _node.Next ?? _next;
+                if (next == null)
+                {
+                    return false;
+                }
+                _node = next;
+                _next = next.Next;
+            }
+            else if (_node == null)
+            {
+                return false;
+            }
+            first = false;
+            return true;
         }
     }
 }

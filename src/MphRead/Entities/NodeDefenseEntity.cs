@@ -80,9 +80,8 @@ namespace MphRead.Entities
         {
             int team = 4;
             _contested = false;
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.Player)
                 {
                     continue;
@@ -138,9 +137,8 @@ namespace MphRead.Entities
             int slot = 0;
             bool occupiedByAny = false;
             _soundSource.Update(Position, rangeIndex: 17);
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.Player)
                 {
                     continue;
@@ -226,9 +224,8 @@ namespace MphRead.Entities
             }
             if (team != 4)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.NodeDefense)
                     {
                         continue;

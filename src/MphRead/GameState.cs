@@ -460,9 +460,8 @@ namespace MphRead
                         }
                         else
                         {
-                            for (int j = 0; j < scene.Entities.Count; j++)
+                            foreach (EntityBase entity in scene.Entities)
                             {
-                                EntityBase entity = scene.Entities[j];
                                 if (entity.Type == EntityType.CameraSequence)
                                 {
                                     scene.SendMessage(Message.Activate, null!, entity, param1: 0, param2: 0);

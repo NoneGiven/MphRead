@@ -1656,9 +1656,8 @@ namespace MphRead.Entities
         private void ProcessHudSurvival()
         {
             int reveal = 0;
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.Player)
                 {
                     continue;
@@ -1723,9 +1722,8 @@ namespace MphRead.Entities
             var goodColor = new ColorRgb(15, 15, 31);
             if (OctolithFlag != null)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.FlagBase)
                     {
                         continue;
@@ -1735,9 +1733,8 @@ namespace MphRead.Entities
             }
             else
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.OctolithFlag)
                     {
                         continue;
@@ -1756,9 +1753,8 @@ namespace MphRead.Entities
         private void ProcessHudCapture()
         {
             var goodColor = new ColorRgb(15, 15, 31); // todo: share common colors
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.OctolithFlag)
                 {
                     continue;
@@ -1782,9 +1778,8 @@ namespace MphRead.Entities
 
         private void ProcessHudDefender()
         {
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.NodeDefense)
                 {
                     continue;
@@ -1827,9 +1822,8 @@ namespace MphRead.Entities
                 _teamNodeCounts[i] = 0;
             }
             bool showBar = false;
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.NodeDefense)
                 {
                     continue;
@@ -2020,9 +2014,8 @@ namespace MphRead.Entities
             }
             if (_scene.RoomId == 92) // Gorea_b2
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type == EntityType.EnemyInstance)
                     {
                         var enemy = (EnemyInstanceEntity)entity;
@@ -2106,9 +2099,8 @@ namespace MphRead.Entities
             }
             else if (GameState.Teams)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type != EntityType.OctolithFlag)
                     {
                         continue;
@@ -2198,9 +2190,8 @@ namespace MphRead.Entities
         {
             float startX = 12;
             int nodeCount = 0;
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type == EntityType.NodeDefense)
                 {
                     nodeCount++;
@@ -2211,9 +2202,8 @@ namespace MphRead.Entities
                 startX = (16 * nodeCount / 2) - 12;
             }
             float posX = 0;
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.NodeDefense)
                 {
                     continue;

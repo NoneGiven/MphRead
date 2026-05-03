@@ -245,9 +245,8 @@ namespace MphRead.Entities
                 Debug.Assert(_scene.Room != null && _scene.Room.LoaderDoor == null);
                 _scene.Room.LoaderDoor = this;
                 GameState.TransitionRoomId = TargetRoomId;
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type == EntityType.Door)
                     {
                         var other = (DoorEntity)entity;
@@ -413,9 +412,8 @@ namespace MphRead.Entities
             {
                 return false;
             }
-            for (int i = 0; i < _scene.Entities.Count; i++)
+            foreach (EntityBase entity in _scene.Entities)
             {
-                EntityBase entity = _scene.Entities[i];
                 if (entity.Type != EntityType.Player)
                 {
                     continue;
@@ -492,9 +490,8 @@ namespace MphRead.Entities
             }
             else if (info.Message == Message.UnlockConnectors)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type == EntityType.Door && entity.Id == -1)
                     {
                         ((DoorEntity)entity).Unlock(updateState: true, noLockAnimSfx: false);
@@ -503,9 +500,8 @@ namespace MphRead.Entities
             }
             else if (info.Message == Message.LockConnectors)
             {
-                for (int i = 0; i < _scene.Entities.Count; i++)
+                foreach (EntityBase entity in _scene.Entities)
                 {
-                    EntityBase entity = _scene.Entities[i];
                     if (entity.Type == EntityType.Door && entity.Id == -1)
                     {
                         ((DoorEntity)entity).Lock(updateState: true);
