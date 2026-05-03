@@ -4980,12 +4980,14 @@ namespace MphRead
     }
 
     // this class supports allocation-free foreach while also handling entities being added or removed during enumeration.
-    // count and index methods are exposed for flat list-like behavior in cases where adds/removes are known not to occur.
-    // the indexer and IndexOf() are O(n), but are only used in entity selection code.
+    // access to the head/tail nodes is provided for custom iteration in a couple places (where adds/removes do not occur).
     public struct LinkedListIterator<T> where T : class
     {
         private readonly LinkedList<T> _list;
         public int Count => _list.Count;
+
+        public LinkedListNode<T>? FirstNode => _list.First;
+        public LinkedListNode<T>? LastNode => _list.Last;
 
         public LinkedListIterator(LinkedList<T> list)
         {
@@ -4995,50 +4997,6 @@ namespace MphRead
         public LinkedListEnumerator<T> GetEnumerator()
         {
             return new LinkedListEnumerator<T>(_list.First);
-        }
-
-        public T this[int index]
-        {
-            get
-            {
-                if (index >= 0 && index < _list.Count)
-                {
-                    int count = 0;
-                    foreach (T existing in this)
-                    {
-                        if (count++ == index)
-                        {
-                            return existing;
-                        }
-                    }
-                }
-                throw new ArgumentOutOfRangeException($"Index was out of range. " +
-                    $"Must be non-negative and less than the size of the collection. (Parameter '{nameof(index)}')");
-            }
-        }
-
-        public T First()
-        {
-            if (_list.Count == 0)
-            {
-                throw new InvalidOperationException("Sequence contains no elements");
-            }
-            Debug.Assert(_list.First != null);
-            return _list.First.Value;
-        }
-
-        public int IndexOf(T item)
-        {
-            int count = 0;
-            foreach (T existing in this)
-            {
-                if (existing == item)
-                {
-                    return count;
-                }
-                count++;
-            }
-            return -1;
         }
     }
 
@@ -5058,22 +5016,19 @@ namespace MphRead
 
         public bool MoveNext()
         {
-            if (!first)
+            if (first)
             {
-                Debug.Assert(_node != null);
-                LinkedListNode<T>? next = _node.Next ?? _next;
-                if (next == null)
-                {
-                    return false;
-                }
-                _node = next;
-                _next = next.Next;
+                first = false;
+                return _node != null;
             }
-            else if (_node == null)
+            Debug.Assert(_node != null);
+            LinkedListNode<T>? next = _node.Next ?? _next;
+            if (next == null)
             {
                 return false;
             }
-            first = false;
+            _node = next;
+            _next = next.Next;
             return true;
         }
     }

@@ -11,7 +11,8 @@ namespace MphRead
 {
     public static class Selection
     {
-        public static EntityBase? Entity { get; private set; }
+        public static LinkedListNode<EntityBase>? EntityNode { get; private set; }
+        public static EntityBase? Entity => EntityNode?.Value;
         public static ModelInstance? Instance { get; private set; }
         public static Node? Node { get; private set; }
         public static Mesh? Mesh { get; private set; }
@@ -31,7 +32,7 @@ namespace MphRead
             Mesh = null;
             Node = null;
             Instance = null;
-            Entity = null;
+            EntityNode = null;
         }
 
         public static SelectionType CheckSelection(EntityBase entity, ModelInstance inst, Node node, Mesh mesh)
@@ -309,7 +310,7 @@ namespace MphRead
         {
             if (control && shift)
             {
-                Entity = null;
+                EntityNode = null;
                 Instance = null;
                 Node = null;
                 Mesh = null;
@@ -322,7 +323,7 @@ namespace MphRead
                 }
                 else
                 {
-                    Entity = null;
+                    EntityNode = null;
                     Instance = null;
                     Node = null;
                     Mesh = null;
@@ -354,7 +355,7 @@ namespace MphRead
             {
                 if (shift)
                 {
-                    Entity = null;
+                    EntityNode = null;
                 }
                 else if (Entity.GetModels().Any(m => !m.IsPlaceholder))
                 {
@@ -363,7 +364,7 @@ namespace MphRead
             }
             else if (!shift)
             {
-                Entity = scene.Entities.Count == 0 ? null : scene.Entities.First();
+                EntityNode = scene.Entities.FirstNode;
             }
         }
 
@@ -631,24 +632,21 @@ namespace MphRead
 
         private static void SelectEntity(int direction, Scene scene)
         {
-            EntityBase? entity = null;
-            Debug.Assert(Entity != null);
-            int index = scene.Entities.IndexOf(Entity);
-            while (entity != Entity)
+            LinkedListNode<EntityBase>? entity = EntityNode;
+            while (entity != null)
             {
-                index += direction;
-                if (index < 0)
+                entity = direction == -1 ? entity.Previous : entity.Next;
+                if (entity == null)
                 {
-                    index = scene.Entities.Count - 1;
+                    entity = direction == -1 ? scene.Entities.LastNode : scene.Entities.FirstNode;
                 }
-                else if (index >= scene.Entities.Count)
+                else if (entity == EntityNode)
                 {
-                    index = 0;
+                    break;
                 }
-                entity = scene.Entities[index];
-                if (FilterEntity(entity, scene))
+                if (entity != null && FilterEntity(entity.Value, scene))
                 {
-                    Entity = entity;
+                    EntityNode = entity;
                     break;
                 }
             }
