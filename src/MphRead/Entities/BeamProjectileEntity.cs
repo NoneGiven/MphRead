@@ -1342,6 +1342,7 @@ namespace MphRead.Entities
         public override void Destroy()
         {
             _soundSource.StopAllSfx();
+            Lifespan = 0;
             if (Effect != null)
             {
                 _scene.DetachEffectEntry(Effect, setExpired: true);
