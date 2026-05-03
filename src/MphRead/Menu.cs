@@ -1714,6 +1714,7 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (E) No Random Encounters: {OnOff(Cheats.NoRandomEncounters)}");
                     Console.WriteLine($"{X(s++)} (D) All Doors Unlocked: {OnOff(Cheats.UnlockAllDoors)}");
                     Console.WriteLine($"{X(s++)} (R) Retry From Current Room: {OnOff(Cheats.ContinueFromCurrentRoom)}");
+                    Console.WriteLine($"{X(s++)} (I) Skip Planet Intros: {OnOff(Cheats.SkipPlanetIntros)}");
                     Console.WriteLine($"{X(s++)} (U) Start With All Upgrades: {OnOff(Cheats.StartWithAllUpgrades)}");
                     Console.WriteLine($"{X(s++)} (O) Start With All Octoliths: {OnOff(Cheats.StartWithAllOctoliths)}");
                     Console.WriteLine($"{X(s++)} (G) Walk Through Walls: {OnOff(Cheats.WalkThroughWalls)}");
@@ -2075,25 +2076,29 @@ namespace MphRead
                     {
                         selection = 4;
                     }
-                    else if (keyInfo.Key == ConsoleKey.U)
+                    else if (keyInfo.Key == ConsoleKey.I)
                     {
                         selection = 5;
                     }
-                    else if (keyInfo.Key == ConsoleKey.O)
+                    else if (keyInfo.Key == ConsoleKey.U)
                     {
                         selection = 6;
                     }
-                    else if (keyInfo.Key == ConsoleKey.G)
+                    else if (keyInfo.Key == ConsoleKey.O)
                     {
                         selection = 7;
                     }
-                    else if (keyInfo.Key == ConsoleKey.D2 || keyInfo.Key == ConsoleKey.NumPad2)
+                    else if (keyInfo.Key == ConsoleKey.G)
                     {
                         selection = 8;
                     }
-                    else if (keyInfo.Key == ConsoleKey.Q)
+                    else if (keyInfo.Key == ConsoleKey.D2 || keyInfo.Key == ConsoleKey.NumPad2)
                     {
                         selection = 9;
+                    }
+                    else if (keyInfo.Key == ConsoleKey.Q)
+                    {
+                        selection = 10;
                     }
                     else if (keyInfo.Key == ConsoleKey.Backspace || keyInfo.Key == ConsoleKey.Delete)
                     {
@@ -2119,21 +2124,25 @@ namespace MphRead
                         }
                         else if (selection == 5)
                         {
-                            Cheats.StartWithAllUpgrades = false;
+                            Cheats.SkipPlanetIntros = false;
                         }
                         else if (selection == 6)
                         {
-                            Cheats.StartWithAllOctoliths = false;
+                            Cheats.StartWithAllUpgrades = false;
                         }
                         else if (selection == 7)
                         {
-                            Cheats.WalkThroughWalls = false;
+                            Cheats.StartWithAllOctoliths = false;
                         }
                         else if (selection == 8)
                         {
-                            Cheats.AlwaysFightGorea2 = false;
+                            Cheats.WalkThroughWalls = false;
                         }
                         else if (selection == 9)
+                        {
+                            Cheats.AlwaysFightGorea2 = false;
+                        }
+                        else if (selection == 10)
                         {
                             Cheats.QuadrupleDamage = false;
                         }
@@ -2166,21 +2175,25 @@ namespace MphRead
                         }
                         else if (selection == 5)
                         {
-                            Cheats.StartWithAllUpgrades = !Cheats.StartWithAllUpgrades;
+                            Cheats.SkipPlanetIntros = !Cheats.SkipPlanetIntros;
                         }
                         else if (selection == 6)
                         {
-                            Cheats.StartWithAllOctoliths = !Cheats.StartWithAllOctoliths;
+                            Cheats.StartWithAllUpgrades = !Cheats.StartWithAllUpgrades;
                         }
                         else if (selection == 7)
                         {
-                            Cheats.WalkThroughWalls = !Cheats.WalkThroughWalls;
+                            Cheats.StartWithAllOctoliths = !Cheats.StartWithAllOctoliths;
                         }
                         else if (selection == 8)
                         {
-                            Cheats.AlwaysFightGorea2 = !Cheats.AlwaysFightGorea2;
+                            Cheats.WalkThroughWalls = !Cheats.WalkThroughWalls;
                         }
                         else if (selection == 9)
+                        {
+                            Cheats.AlwaysFightGorea2 = !Cheats.AlwaysFightGorea2;
+                        }
+                        else if (selection == 10)
                         {
                             Cheats.QuadrupleDamage = !Cheats.QuadrupleDamage;
                         }
@@ -2305,6 +2318,7 @@ namespace MphRead
             Cheats.NoRandomEncounters = false;
             Cheats.UnlockAllDoors = false;
             Cheats.ContinueFromCurrentRoom = false;
+            Cheats.SkipPlanetIntros = false;
             Cheats.StartWithAllUpgrades = false;
             Cheats.StartWithAllOctoliths = false;
             Cheats.WalkThroughWalls = false;

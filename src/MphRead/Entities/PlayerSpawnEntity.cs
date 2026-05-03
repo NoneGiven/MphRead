@@ -27,7 +27,8 @@ namespace MphRead.Entities
             SetTransform(_data.Header.FacingVector, _data.Header.UpVector, _data.Header.Position);
             if (GameState.Mode == GameMode.SinglePlayer)
             {
-                _active = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active: _data.Active != 0) != 0;
+                bool active = Cheats.SkipPlanetIntros ? true : (_data.Active != 0);
+                _active = GameState.StorySave.InitRoomState(_scene.RoomId, Id, active) != 0;
             }
             else
             {

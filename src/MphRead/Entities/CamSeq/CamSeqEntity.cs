@@ -266,6 +266,11 @@ namespace MphRead.Entities
                 }
                 if (activate)
                 {
+                    if (Cheats.SkipPlanetIntros && (Name == "unit2_land_intro" || Name == "unit1_land_intro"
+                        || Name == "unit3_land_intro" || Name == "unit4_land_intro" || Name == "gorea_land_intro"))
+                    {
+                        return;
+                    }
                     if (Current != null && Current != this)
                     {
                         if (handoff)

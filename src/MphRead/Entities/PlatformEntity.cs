@@ -198,7 +198,7 @@ namespace MphRead.Entities
                     _animFlags &= ~PlatAnimFlags.Draw;
                 }
             }
-            if (Flags.TestFlag(PlatformFlags.SamusShip))
+            if (Flags.TestFlag(PlatformFlags.SamusShip) && !Cheats.SkipPlanetIntros)
             {
                 SleepWake(wake: true, instant: true);
                 _currentAnimState = -2;

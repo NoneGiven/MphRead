@@ -179,6 +179,7 @@ namespace MphRead
         public static bool NoRandomEncounters { get; set; } = false;
         public static bool UnlockAllDoors { get; set; } = false;
         public static bool ContinueFromCurrentRoom { get; set; } = false;
+        public static bool SkipPlanetIntros { get; set; } = false;
         public static bool StartWithAllUpgrades { get; set; } = false;
         public static bool StartWithAllOctoliths { get; set; } = false;
         public static bool WalkThroughWalls { get; set; } = false;
@@ -206,6 +207,10 @@ namespace MphRead
             if (values.TryGetValue(nameof(ContinueFromCurrentRoom), out value) && Boolean.TryParse(value, out boolean))
             {
                 ContinueFromCurrentRoom = boolean;
+            }
+            if (values.TryGetValue(nameof(SkipPlanetIntros), out value) && Boolean.TryParse(value, out boolean))
+            {
+                SkipPlanetIntros = boolean;
             }
             if (values.TryGetValue(nameof(StartWithAllUpgrades), out value) && Boolean.TryParse(value, out boolean))
             {
@@ -238,6 +243,7 @@ namespace MphRead
                 { nameof(NoRandomEncounters), NoRandomEncounters.ToString() },
                 { nameof(UnlockAllDoors), UnlockAllDoors.ToString() },
                 { nameof(ContinueFromCurrentRoom), ContinueFromCurrentRoom.ToString() },
+                { nameof(SkipPlanetIntros), SkipPlanetIntros.ToString() },
                 { nameof(StartWithAllUpgrades), StartWithAllUpgrades.ToString() },
                 { nameof(StartWithAllOctoliths), StartWithAllOctoliths.ToString().ToLower() },
                 { nameof(WalkThroughWalls), WalkThroughWalls.ToString().ToLower() },
