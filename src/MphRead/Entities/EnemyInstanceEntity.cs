@@ -664,7 +664,7 @@ namespace MphRead.Entities
             return true;
         }
 
-        // similar to the above, where current is always the facing vector and axis is always Y up
+        // similar to the above, where current is always the facing vector and current up vector is maintained
         public bool SeekTargetFacing(Vector3 target, Vector3 up, ref ushort steps, float angle)
         {
             bool result = false;

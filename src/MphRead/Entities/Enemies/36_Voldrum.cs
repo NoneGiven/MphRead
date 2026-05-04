@@ -38,6 +38,13 @@ namespace MphRead.Entities.Enemies
             _values = Metadata.Enemy36Values[(int)_spawner.Data.Fields.S06.EnemySubtype];
             Vector3 facing = _spawner.Data.Header.FacingVector.ToFloatVector().Normalized();
             Vector3 up = FixParallelVectors(facing, Vector3.UnitY);
+            // todo: see comment about this hack in Enemy35Entity
+            if (facing == Vector3.UnitY)
+            {
+                Vector3 swap = facing;
+                facing = up;
+                up = swap;
+            }
             SetTransform(facing, up, _spawner.Data.Header.Position.ToFloatVector());
             Flags |= EnemyFlags.Visible;
             Flags |= EnemyFlags.OnRadar;
@@ -200,7 +207,7 @@ namespace MphRead.Entities.Enemies
         private bool Behavior00()
         {
             bool collided = HandleCollision();
-            if (!SeekTargetFacing(_targetVec, Vector3.UnitY, ref _aimSteps, _aimAngleStep) || !collided)
+            if (!SeekTargetFacing(_targetVec, UpVector, ref _aimSteps, _aimAngleStep) || !collided)
             {
                 return false;
             }

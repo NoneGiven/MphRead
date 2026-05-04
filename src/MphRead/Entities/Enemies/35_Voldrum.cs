@@ -58,6 +58,15 @@ namespace MphRead.Entities.Enemies
         {
             Vector3 facing = _spawner.Data.Header.FacingVector.ToFloatVector().Normalized();
             Vector3 up = FixParallelVectors(facing, Vector3.UnitY);
+            // todo: this additional hack is needed so the orientation isn't totally wrong after spawning,
+            // but what actually happens in the game needs to be investigated more, as it seems like it just has unit Y
+            // for both until eventually overwritten by seeking the player -- but in our case the first seek would cause NaN
+            if (facing == Vector3.UnitY)
+            {
+                Vector3 swap = facing;
+                facing = up;
+                up = swap;
+            }
             SetTransform(facing, up, _spawner.Data.Header.Position.ToFloatVector());
             Flags |= EnemyFlags.Visible;
             Flags |= EnemyFlags.OnRadar;
@@ -325,7 +334,7 @@ namespace MphRead.Entities.Enemies
         private bool Behavior00()
         {
             bool collided = HandleCollision();
-            if (!SeekTargetFacing(_targetVec, Vector3.UnitY, ref _aimSteps, _aimAngleStep) || !collided)
+            if (!SeekTargetFacing(_targetVec, UpVector, ref _aimSteps, _aimAngleStep) || !collided)
             {
                 return false;
             }
