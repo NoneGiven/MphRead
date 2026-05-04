@@ -1872,7 +1872,7 @@ namespace MphRead.Entities
                         Vector3 between = position - beam.Position;
                         float distSqr = Vector3.Dot(between, between);
                         float range = Fixed.ToFloat(weapon.HomingRange);
-                        if ((weapon.Flags.TestFlag(WeaponFlags.Continuous) && beam.BeamKind == BeamType.Platform
+                        if ((weapon.Flags.TestFlag(WeaponFlags.Continuous) && beam.BeamKind != BeamType.Platform
                             || distSqr <= range * range) && distSqr > 0)
                         {
                             float dist = MathF.Sqrt(distSqr);
