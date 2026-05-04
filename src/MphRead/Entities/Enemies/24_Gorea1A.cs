@@ -627,6 +627,13 @@ namespace MphRead.Entities.Enemies
             CallSubroutine(Metadata.Enemy24Subroutines, this);
         }
 
+        private static readonly IReadOnlyList<int> _chargeEffects = new int[6]
+        {
+            // goreaChargeJak, goreaChargeElc, goreaChargeMrt,
+            // goreaChargeIce, goreaChargeSnp, goreaArmChargeUp
+            48, 46, 49, 47, 50, 41
+        };
+
         private static readonly IReadOnlyList<int> _shotEffects = new int[6]
         {
             // goreaFireJak, goreaFireElc, goreaFireMrt,
@@ -1103,11 +1110,11 @@ namespace MphRead.Entities.Enemies
                 _model.SetAnimation(15, 0, _animSetNoMat);
                 if (!armL.ArmFlags.TestFlag(GoreaArmFlags.Bit0))
                 {
-                    CreateShotEffectAttached(0);
+                    CreateChargeEffect(0);
                 }
                 if (!armR.ArmFlags.TestFlag(GoreaArmFlags.Bit0))
                 {
-                    CreateShotEffectAttached(1);
+                    CreateChargeEffect(1);
                 }
                 _nextState = 6;
                 PlayBeamChargeSfx(_beamTypes[WeaponIndex]);
@@ -1125,10 +1132,10 @@ namespace MphRead.Entities.Enemies
             }
         }
 
-        private void CreateShotEffectAttached(int index)
+        private void CreateChargeEffect(int index)
         {
             StopShots(index, detach: true);
-            _arms[index].SpawnShotEffect(_shotEffects[WeaponIndex]);
+            _arms[index].SpawnShotEffect(_chargeEffects[WeaponIndex]);
         }
 
         private void SetShotAnimation()
