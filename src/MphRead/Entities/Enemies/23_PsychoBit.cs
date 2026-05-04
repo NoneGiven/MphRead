@@ -67,6 +67,8 @@ namespace MphRead.Entities.Enemies
             Recolor = _recolors[version];
             Vector3 facing = _spawner.FacingVector;
             Vector3 up = FixParallelVectors(facing, Vector3.UnitY);
+            // todo: same hack is applied when seeking target facing below, since a Psycho Bit moving straight up out of its spawner
+            // will end up with UnitY as its facing vec -- could use a review of what happens in the game, same as with Voldrum spawns
             SetTransform(facing, up, _spawner.Position);
             SetUpModel(Metadata.EnemyModelNames[23], animIndex: 3);
             Flags |= EnemyFlags.Visible;
@@ -380,7 +382,8 @@ namespace MphRead.Entities.Enemies
         {
             Vector3 facing = FacingVector;
             bool result = SeekTargetVector(_targetVec, ref facing, _crossVec, ref _aimSteps, _aimAngleStep);
-            SetTransform(facing, Vector3.UnitY, Position);
+            Vector3 up = FixParallelVectors(facing, Vector3.UnitY);
+            SetTransform(facing, up, Position);
             if (!result)
             {
                 return false;
@@ -434,7 +437,8 @@ namespace MphRead.Entities.Enemies
         {
             Vector3 facing = FacingVector;
             bool result = SeekTargetVector(_targetVec, ref facing, _crossVec, ref _aimSteps, _aimAngleStep);
-            SetTransform(facing, Vector3.UnitY, Position);
+            Vector3 up = FixParallelVectors(facing, Vector3.UnitY);
+            SetTransform(facing, up, Position);
             if (!result)
             {
                 return false;
@@ -458,7 +462,8 @@ namespace MphRead.Entities.Enemies
         {
             Vector3 facing = FacingVector;
             bool result = SeekTargetVector(_targetVec, ref facing, _crossVec, ref _aimSteps, _aimAngleStep);
-            SetTransform(facing, Vector3.UnitY, Position);
+            Vector3 up = FixParallelVectors(facing, Vector3.UnitY);
+            SetTransform(facing, up, Position);
             if (!result)
             {
                 return false;
