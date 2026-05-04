@@ -1583,19 +1583,19 @@ namespace MphRead.Memory
         public IntPtr NodeRef { get => ReadPointer(_off5); set => WritePointer(_off5, value); }
 
         private const int _off6 = 0x24;
-        public ushort SomeEntId { get => ReadUInt16(_off6); set => WriteUInt16(_off6, value); }
+        public ushort LinkedEntity { get => ReadUInt16(_off6); set => WriteUInt16(_off6, value); }
 
         private const int _off7 = 0x26;
-        public ushort Field26 { get => ReadUInt16(_off7); set => WriteUInt16(_off7, value); }
+        public ushort Padding26 { get => ReadUInt16(_off7); set => WriteUInt16(_off7, value); }
 
         private const int _off8 = 0x28;
-        public Vector3 Field28 { get => ReadVec3(_off8); set => WriteVec3(_off8, value); }
+        public Vector3 LinkInvPos { get => ReadVec3(_off8); set => WriteVec3(_off8, value); }
 
         private const int _off9 = 0x34;
-        public Vector3 Field34 { get => ReadVec3(_off9); set => WriteVec3(_off9, value); }
+        public Vector3 LinkInvVec2 { get => ReadVec3(_off9); set => WriteVec3(_off9, value); }
 
         private const int _off10 = 0x40;
-        public Vector3 Field40 { get => ReadVec3(_off10); set => WriteVec3(_off10, value); }
+        public Vector3 LinkInvVec1 { get => ReadVec3(_off10); set => WriteVec3(_off10, value); }
 
         private const int _off11 = 0x4C;
         public Vector3 Pos { get => ReadVec3(_off11); set => WriteVec3(_off11, value); }
@@ -1607,22 +1607,22 @@ namespace MphRead.Memory
         public Vector3 Vec1 { get => ReadVec3(_off13); set => WriteVec3(_off13, value); }
 
         private const int _off14 = 0x70;
-        public byte Flags { get => ReadByte(_off14); set => WriteByte(_off14, value); }
+        public SpawnerFlags Flags { get => (SpawnerFlags)ReadByte(_off14); set => WriteByte(_off14, (byte)value); }
 
         private const int _off15 = 0x71;
-        public byte SomeCount { get => ReadByte(_off15); set => WriteByte(_off15, value); }
+        public byte SpawnedCount { get => ReadByte(_off15); set => WriteByte(_off15, value); }
 
         private const int _off16 = 0x72;
-        public byte Field72 { get => ReadByte(_off16); set => WriteByte(_off16, value); }
+        public byte ActiveCount { get => ReadByte(_off16); set => WriteByte(_off16, value); }
 
         private const int _off17 = 0x73;
-        public byte Field73 { get => ReadByte(_off17); set => WriteByte(_off17, value); }
+        public byte Padding73 { get => ReadByte(_off17); set => WriteByte(_off17, value); }
 
         private const int _off18 = 0x74;
         public ushort CooldownTimer { get => ReadUInt16(_off18); set => WriteUInt16(_off18, value); }
 
         private const int _off19 = 0x76;
-        public ushort Field76 { get => ReadUInt16(_off19); set => WriteUInt16(_off19, value); }
+        public ushort Padding76 { get => ReadUInt16(_off19); set => WriteUInt16(_off19, value); }
 
         private const int _off20 = 0x78;
         public int ActiveDistSqr { get => ReadInt32(_off20); set => WriteInt32(_off20, value); }

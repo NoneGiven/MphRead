@@ -192,9 +192,9 @@ namespace MphRead
         public readonly ushort Padding26; // so this padding isn't actually there
         public readonly EnumSpawnUnion Fields;
         public readonly short LinkedEntityId; // always -1 except for Cretaphid 4
-        public readonly byte SpawnLimit;
-        public readonly byte SpawnTotal;
-        public readonly byte SpawnCount;
+        public readonly byte SpawnTotal; // max enemy instances to spawn overall
+        public readonly byte SpawnLimit; // max concurrent enemy instances
+        public readonly byte SpawnCount; // number of instances spawned at once
         public readonly byte Active; // boolean
         public readonly byte AlwaysActive; // boolean
         public readonly byte ItemChance;
@@ -246,8 +246,8 @@ namespace MphRead.Editor
     {
         public EnemyType EnemyType { get; set; }
         public short LinkedEntityId { get; set; } // always -1 except for Cretaphid 4
-        public byte SpawnLimit { get; set; }
         public byte SpawnTotal { get; set; }
+        public byte SpawnLimit { get; set; }
         public byte SpawnCount { get; set; }
         public bool Active { get; set; }
         public bool AlwaysActive { get; set; }
@@ -389,8 +389,8 @@ namespace MphRead.Editor
         {
             EnemyType = raw.EnemyType;
             LinkedEntityId = raw.LinkedEntityId;
-            SpawnLimit = raw.SpawnLimit;
             SpawnTotal = raw.SpawnTotal;
+            SpawnLimit = raw.SpawnLimit;
             SpawnCount = raw.SpawnCount;
             Active = raw.Active != 0;
             AlwaysActive = raw.AlwaysActive != 0;
@@ -533,8 +533,8 @@ namespace MphRead.Editor
         {
             PrintValue(EnemyType, other.EnemyType, nameof(EnemyType));
             PrintValue(LinkedEntityId, other.LinkedEntityId, nameof(LinkedEntityId));
-            PrintValue(SpawnLimit, other.SpawnLimit, nameof(SpawnLimit));
             PrintValue(SpawnTotal, other.SpawnTotal, nameof(SpawnTotal));
+            PrintValue(SpawnLimit, other.SpawnLimit, nameof(SpawnLimit));
             PrintValue(SpawnCount, other.SpawnCount, nameof(SpawnCount));
             PrintValue(Active, other.Active, nameof(Active));
             PrintValue(AlwaysActive, other.AlwaysActive, nameof(AlwaysActive));

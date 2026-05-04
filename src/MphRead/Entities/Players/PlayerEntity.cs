@@ -1933,8 +1933,8 @@ namespace MphRead.Entities
                                 continue;
                             }
                             if (spawner.Flags.TestFlag(SpawnerFlags.Active)
-                                && (spawner.Data.SpawnLimit == 0 || spawner.ActiveCount < spawner.Data.SpawnLimit
-                                || spawner.SpawnedCount != 0))
+                                && (spawner.Data.SpawnTotal == 0 || spawner.SpawnedCount < spawner.Data.SpawnTotal
+                                || spawner.ActiveCount != 0))
                             {
                                 for (int i = 1; i < MaxPlayers; i++)
                                 {

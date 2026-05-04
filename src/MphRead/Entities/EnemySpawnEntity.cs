@@ -23,10 +23,10 @@ namespace MphRead.Entities
     public class EnemySpawnEntity : EntityBase
     {
         private readonly EnemySpawnEntityData _data;
-        private int _activeCount = 0; // todo: names are backwards?
-        public int ActiveCount => _activeCount;
         private int _spawnedCount = 0;
         public int SpawnedCount => _spawnedCount;
+        private int _activeCount = 0;
+        public int ActiveCount => _activeCount;
         private int _cooldownTimer = 0;
         private EntityBase? _entity1;
         private EntityBase? _entity2;
@@ -178,8 +178,8 @@ namespace MphRead.Entities
             {
                 Flags |= SpawnerFlags.Suspended;
             }
-            else if (_spawnedCount < _data.SpawnTotal && _cooldownTimer == 0 && _data.SpawnCount > 0
-                && (_data.SpawnLimit == 0 || _activeCount < _data.SpawnLimit))
+            else if (_activeCount < _data.SpawnLimit && _cooldownTimer == 0 && _data.SpawnCount > 0
+                && (_data.SpawnTotal == 0 || _spawnedCount < _data.SpawnTotal))
             {
                 for (int i = 0; i < _data.SpawnCount; i++)
                 {
@@ -204,16 +204,16 @@ namespace MphRead.Entities
                     {
                         Flags |= SpawnerFlags.PlayAnimation;
                     }
-                    _spawnedCount++;
                     _activeCount++;
+                    _spawnedCount++;
                     _cooldownTimer = _data.CooldownTime * 2; // todo: FPS stuff
-                    if (_spawnedCount >= _data.SpawnTotal || _data.SpawnLimit > 0 && _activeCount >= _data.SpawnLimit)
+                    if (_activeCount >= _data.SpawnLimit || _data.SpawnTotal > 0 && _spawnedCount >= _data.SpawnTotal)
                     {
                         break;
                     }
                 }
             }
-            if (_data.SpawnLimit > 0 && _activeCount >= _data.SpawnLimit && _spawnedCount == 0)
+            if (_data.SpawnTotal > 0 && _spawnedCount >= _data.SpawnTotal && _activeCount == 0)
             {
                 DeactivateAndSendMessages();
             }
@@ -299,8 +299,8 @@ namespace MphRead.Entities
                 if ((int)info.Param1 != 0)
                 {
                     // enemy was out of range
-                    --_spawnedCount;
                     --_activeCount;
+                    --_spawnedCount;
                     _cooldownTimer = 0;
                 }
                 else
@@ -313,11 +313,11 @@ namespace MphRead.Entities
                     }
                     else
                     {
-                        --_spawnedCount;
+                        --_activeCount;
                         _cooldownTimer = _data.CooldownTime * 2; // todo: FPS stuff
                     }
                 }
-                if (!Flags.TestFlag(SpawnerFlags.Active) && _spawnedCount == 0)
+                if (!Flags.TestFlag(SpawnerFlags.Active) && _activeCount == 0)
                 {
                     DeactivateAndSendMessages();
                 }

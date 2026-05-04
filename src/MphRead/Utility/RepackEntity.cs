@@ -88,6 +88,13 @@ namespace MphRead.Utility
                         new Vector3(-4.866759f, -2.576416f, 3.890676f), trigger.Volume.BoxDot1, trigger.Volume.BoxDot2, trigger.Volume.BoxDot3);
                     return RepackEntities(entities);
                 }
+                if (filename == Metadata.RoomMetadata["Gorea_b1"].EntityPath)
+                {
+                    List<EntityEditorBase> entities = GetEntities(filename);
+                    var spawn = (PlayerSpawnEntityEditor)entities.Single(e => e.Type == EntityType.PlayerSpawn);
+                    spawn.Position = new Vector3(0, -0.27163085f, -30.45435f);
+                    return RepackEntities(entities);
+                }
             }
             return bytes;
         }
@@ -536,8 +543,8 @@ namespace MphRead.Utility
                         Position = enemySpawn.Position,
                         LinkedEntityId = -1,
                         SpawnCount = enemySpawn.SpawnCount,
-                        SpawnLimit = enemySpawn.SpawnLimit,
                         SpawnTotal = enemySpawn.SpawnTotal,
+                        SpawnLimit = enemySpawn.SpawnLimit,
                         SpawnNodeName = enemySpawn.SpawnNodeName,
                         SpawnerHealth = 0,
                         Up = enemySpawn.Up
@@ -2231,8 +2238,8 @@ namespace MphRead.Utility
                 throw new InvalidOperationException();
             }
             writer.Write(entity.LinkedEntityId);
-            writer.Write(entity.SpawnLimit);
             writer.Write(entity.SpawnTotal);
+            writer.Write(entity.SpawnLimit);
             writer.Write(entity.SpawnCount);
             writer.WriteByte(entity.Active);
             writer.WriteByte(entity.AlwaysActive);
