@@ -450,6 +450,35 @@ namespace MphRead.Entities
             }
             if (type == EnemyType.Trocra)
             {
+                if (scene.RoomId == 91) // Gorea_b1
+                {
+                    // whether intentional or not, Gorea1A only adds 8 slots to the in-game enemy linked list despite spawning 9 enemies
+                    // (1A, head, arm x2, leg x3, 1B, seal sphere). this leaves the last enemy in the room, a Trocra, unable to spawn
+                    // unless another Trocra is destroyed. emulate that behavior here. technically this shouldn't be limited to the boss room.
+                    int enemyCount = 0;
+                    bool isGorea1 = false;
+                    foreach (EntityBase entity in scene.Entities)
+                    {
+                        if (entity.Type == EntityType.EnemyInstance)
+                        {
+                            EnemyType enemyType = ((EnemyInstanceEntity)entity).EnemyType;
+                            if (enemyType == EnemyType.Gorea1A)
+                            {
+                                enemyCount++;
+                                isGorea1 = true;
+                            }
+                            else if (enemyType == EnemyType.Trocra || enemyType == EnemyType.GoreaHead || enemyType == EnemyType.GoreaArm
+                                 || enemyType == EnemyType.GoreaLeg || enemyType == EnemyType.Gorea1B || enemyType == EnemyType.GoreaSealSphere1)
+                            {
+                                enemyCount++;
+                            }
+                        }
+                    }
+                    if (isGorea1 && enemyCount >= 14)
+                    {
+                        return null;
+                    }
+                }
                 return new Enemy30Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
             }
             if (type == EnemyType.Gorea2)
@@ -528,7 +557,7 @@ namespace MphRead.Entities
             {
                 return new Enemy51Entity(new EnemyInstanceEntityData(type, spawner), nodeRef, scene);
             }
-            //throw new ProgramException("Invalid enemy type."); // also make non-nullable
+            //throw new ProgramException("Invalid enemy type."); // could make non-nullable
             return null;
         }
     }
