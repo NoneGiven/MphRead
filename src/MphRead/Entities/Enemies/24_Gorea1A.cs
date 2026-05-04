@@ -717,7 +717,11 @@ namespace MphRead.Entities.Enemies
 
         private void CreateShotEffectLoose(Enemy26Entity arm, int effectId)
         {
+            // because of the node transform hack, we need to make sure this node animation update doesn't prevent the arms
+            // from doing the "actual" update that they need -- not sure if this makes us use a value that's one anim frame old
+            ulong? prevUpdate = _lastNodeTransformUpdate;
             arm.GetElbowNodeVectors(out Vector3 spawnPos, out Vector3 spawnFacing, out Vector3 spawnUp); // swap up and facing
+            _lastNodeTransformUpdate = prevUpdate;
             spawnFacing = spawnFacing.Normalized();
             spawnUp = spawnUp.Normalized();
             spawnPos += spawnFacing * Fixed.ToFloat(8343);
@@ -726,7 +730,10 @@ namespace MphRead.Entities.Enemies
 
         private void GetArmAim(Enemy26Entity arm, out Vector3 position, out Vector3 direction)
         {
+            // see comment above
+            ulong? prevUpdate = _lastNodeTransformUpdate;
             arm.GetElbowNodeVectors(out position, out direction, out _);
+            _lastNodeTransformUpdate = prevUpdate;
             //direction = direction.Normalized();
             position += direction * Fixed.ToFloat(8343);
             Vector3 playerPosition = PlayerEntity.Main.Position.AddY(0.5f);
