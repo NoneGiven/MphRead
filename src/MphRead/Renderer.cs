@@ -4,7 +4,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime;
 using System.Text;
@@ -126,8 +125,6 @@ namespace MphRead
         private bool _transformRoomNodes = false;
         private bool _outputCameraPos = false;
 
-        private readonly LinkedList<EntityBase> _entities = new LinkedList<EntityBase>();
-        private readonly Dictionary<int, EntityBase> _entityMap = new Dictionary<int, EntityBase>();
         // map each model's texture ID/palette ID combinations to the bound OpenGL texture ID and "onlyOpaque" boolean
         private int _textureCount = 0;
         private readonly Dictionary<int, TextureMap> _texPalMap = new Dictionary<int, TextureMap>();
@@ -211,7 +208,6 @@ namespace MphRead
         public Vector3 Light1Color => _light1Color;
         public Vector3 Light2Vector => _light2Vector;
         public Vector3 Light2Color => _light2Color;
-        public LinkedListIterator<EntityBase> Entities => new LinkedListIterator<EntityBase>(_entities); // todo: could store instead of recreating
         public RoomEntity? Room => _room;
         public int ActiveCutscene => _activeCutscene;
         // todo: disallow if camera roll is not zero?
@@ -358,43 +354,6 @@ namespace MphRead
             return entity;
         }
 
-        // called after load -- entity needs init
-        public void AddEntity(EntityBase entity)
-        {
-            InsertEntity(entity);
-            InitializeEntity(entity);
-        }
-
-        public void InsertEntity(EntityBase entity)
-        {
-            InsertEntityByType(entity);
-            if (entity.Id != -1)
-            {
-                _entityMap.Add(entity.Id, entity);
-            }
-        }
-
-        private void InsertEntityByType(EntityBase entity)
-        {
-            for (LinkedListNode<EntityBase>? item = _entities.First; item != null; item = item.Next)
-            {
-                EntityBase existing = item.Value;
-                if (existing.Type != EntityType.Room && existing.Type > entity.Type)
-                {
-                    _entities.AddBefore(item, entity);
-                    return;
-                }
-            }
-            _entities.AddLast(entity);
-        }
-
-        public void InitializeEntity(EntityBase entity)
-        {
-            // important to call in this order because the entity may add models (at least in development)
-            entity.Initialize();
-            InitEntity(entity);
-        }
-
         public void AddPlayer(Hunter hunter, int recolor = 0, int team = -1, Vector3? position = null)
         {
             if (!_roomLoaded)
@@ -416,22 +375,6 @@ namespace MphRead
                     PlayerEntity.PlayerCount++;
                 }
             }
-        }
-
-        public bool TryGetEntity(int id, [NotNullWhen(true)] out EntityBase? entity)
-        {
-            return _entityMap.TryGetValue(id, out entity);
-        }
-
-        public void RemoveEntity(EntityBase entity)
-        {
-            _entityMap.Remove(entity.Id);
-            _entities.Remove(entity);
-        }
-
-        public void RemoveEntityFromMap(EntityBase entity)
-        {
-            _entityMap.Remove(entity.Id);
         }
 
         public NodeRef UpdateNodeRef(NodeRef current, Vector3 prevPos, Vector3 curPos)
@@ -4975,60 +4918,6 @@ namespace MphRead
         public void Add(int textureId, int paletteId, int recolorId, int bindingId, bool onlyOpaque)
         {
             this[GetKey(textureId, paletteId, recolorId)] = (bindingId, onlyOpaque);
-        }
-    }
-
-    // this class supports allocation-free foreach while also handling entities being added or removed during enumeration.
-    // access to the head/tail nodes is provided for custom iteration in a couple places (where adds/removes do not occur).
-    public struct LinkedListIterator<T> where T : class
-    {
-        private readonly LinkedList<T> _list;
-        public int Count => _list.Count;
-
-        public LinkedListNode<T>? FirstNode => _list.First;
-        public LinkedListNode<T>? LastNode => _list.Last;
-
-        public LinkedListIterator(LinkedList<T> list)
-        {
-            _list = list;
-        }
-
-        public LinkedListEnumerator<T> GetEnumerator()
-        {
-            return new LinkedListEnumerator<T>(_list.First);
-        }
-    }
-
-    public struct LinkedListEnumerator<T>
-    {
-        private bool first = true;
-        private LinkedListNode<T>? _node;
-        private LinkedListNode<T>? _next;
-
-        public T Current => _node == null ? throw new InvalidOperationException() : _node.Value;
-
-        public LinkedListEnumerator(LinkedListNode<T>? first)
-        {
-            _node = first;
-            _next = first?.Next;
-        }
-
-        public bool MoveNext()
-        {
-            if (first)
-            {
-                first = false;
-                return _node != null;
-            }
-            Debug.Assert(_node != null);
-            LinkedListNode<T>? next = _node.Next ?? _next;
-            if (next == null)
-            {
-                return false;
-            }
-            _node = next;
-            _next = next.Next;
-            return true;
         }
     }
 }
