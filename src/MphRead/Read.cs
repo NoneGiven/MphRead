@@ -370,7 +370,7 @@ namespace MphRead
                     }
                     for (int i = 0; i < replacePaletteData.Count; i++)
                     {
-                        if (meta.ReplaceIds.TryGetValue(i, out IEnumerable<int>? replaceIds))
+                        if (meta.ReplaceIds.TryGetValue(i, out IReadOnlyList<int>? replaceIds))
                         {
                             // note: palette header is not being replaced
                             foreach (int replaceId in replaceIds)

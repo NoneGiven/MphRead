@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -358,9 +359,9 @@ namespace MphRead
             Metadata.SetPlatformSfxData(platformSfx);
         }
 
-        private static readonly IReadOnlyDictionary<string, RomData> _romData = new Dictionary<string, RomData>()
-        {
-            {
+        private static readonly ImmutableDictionary<string, RomData> _romData = ImmutableDictionary.CreateRange<string, RomData>(
+        [
+            new(
                 Ver.A76E0,
                 new RomData()
                 {
@@ -375,8 +376,8 @@ namespace MphRead
                     EnemyDeathSfx = new RomDataValues("arm9.bin", 0x9B644, 208),
                     PlatformSfx = new RomDataValues("overlay9_12", 0x81E4, 360)
                 }
-            },
-            {
+            ),
+            new (
                 Ver.AMHE0,
                 new RomData()
                 {
@@ -391,8 +392,8 @@ namespace MphRead
                     EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC5578, 208),
                     PlatformSfx = new RomDataValues("overlay9_15", 0x8284, 360)
                 }
-            },
-            {
+            ),
+            new (
                 Ver.AMHE1,
                 new RomData()
                 {
@@ -407,8 +408,8 @@ namespace MphRead
                     EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC5E00, 208),
                     PlatformSfx = new RomDataValues("overlay9_15", 0x8284, 360)
                 }
-            },
-            {
+            ),
+            new (
                 Ver.AMHJ0,
                 new RomData()
                 {
@@ -423,8 +424,8 @@ namespace MphRead
                     EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC7348, 208),
                     PlatformSfx = new RomDataValues("overlay9_15", 0x8284, 360)
                 }
-            },
-            {
+            ),
+            new (
                 Ver.AMHJ1,
                 new RomData()
                 {
@@ -439,8 +440,8 @@ namespace MphRead
                     EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC7308, 208),
                     PlatformSfx = new RomDataValues("overlay9_15", 0x8284, 360)
                 }
-            },
-            {
+            ),
+            new (
                 Ver.AMHP0,
                 new RomData()
                 {
@@ -455,8 +456,8 @@ namespace MphRead
                     EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC5E20, 208),
                     PlatformSfx = new RomDataValues("overlay9_15", 0x8284, 360)
                 }
-            },
-            {
+            ),
+            new (
                 Ver.AMHP1,
                 new RomData()
                 {
@@ -471,8 +472,8 @@ namespace MphRead
                     EnemyDeathSfx = new RomDataValues("arm9.bin", 0xC5EA0, 208),
                     PlatformSfx = new RomDataValues("overlay9_15", 0x8284, 360)
                 }
-            },
-            {
+            ),
+            new (
                 Ver.AMHK0,
                 new RomData()
                 {
@@ -487,8 +488,8 @@ namespace MphRead
                     EnemyDeathSfx = new RomDataValues("arm9.bin", 0xBE5AC, 208),
                     PlatformSfx = new RomDataValues("overlay9_15", 0x7CC0, 360)
                 }
-            },
-            {
+            ),
+            new (
                 Ver.NTRJ0,
                 new RomData()
                 {
@@ -498,7 +499,7 @@ namespace MphRead
                     FontOffsets = new RomDataValues("arm9.bin", 0x1FC25C, 480),
                     FontCharData = new RomDataValues("arm9.bin", 0x1FC93C, 0x4000)
                 }
-            }
-        };
+            )
+        ]);
     }
 }

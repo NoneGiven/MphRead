@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using MphRead.Sound;
@@ -98,24 +99,24 @@ namespace MphRead
                 "Samus", "Kanden", "Spire", "Trace", "Noxus", "Sylux", "Weavel", "Guardian"
             };
             int modeId = 0;
-            var modeOpts = new Dictionary<string, string>()
-            {
-                { "adventure", "Adventure" },
-                { "story", "Adventure" },
-                { "1p", "Adventure" },
-                { "battle", "Battle" },
-                { "battleteams", "Battle Teams" },
-                { "survival", "Survival" },
-                { "survivalteams", "Survival Teams" },
-                { "capture", "Capture" },
-                { "bounty", "Bounty" },
-                { "bountyteams", "Bounty Teams" },
-                { "nodes", "Nodes" },
-                { "nodesteams", "Nodes Teams" },
-                { "defender", "Defender" },
-                { "defenderteams", "Defender Teams" },
-                { "primehunter", "Prime Hunter" },
-            };
+            var modeOpts = ImmutableDictionary.CreateRange<string, string>(
+            [
+                new("adventure", "Adventure"),
+                new("story", "Adventure"),
+                new("1p", "Adventure"),
+                new("battle", "Battle"),
+                new("battleteams", "Battle Teams"),
+                new("survival", "Survival"),
+                new("survivalteams", "Survival Teams"),
+                new("capture", "Capture"),
+                new("bounty", "Bounty"),
+                new("bountyteams", "Bounty Teams"),
+                new("nodes", "Nodes"),
+                new("nodesteams", "Nodes Teams"),
+                new("defender", "Defender"),
+                new("defenderteams", "Defender Teams"),
+                new("primehunter", "Prime Hunter")
+            ]);
             var modes = new List<string>()
             {
                 "auto-select", "Adventure", "Battle", "Battle Teams", "Survival", "Survival Teams", "Capture",
@@ -129,22 +130,22 @@ namespace MphRead
             var mphVersions = new List<string>() { Ver.A76E0, Ver.AMHE0, Ver.AMHE1,
                 Ver.AMHP0, Ver.AMHP1, Ver.AMHJ0, Ver.AMHJ1, Ver.AMHK0 };
             var fhVersions = new List<string>() { Ver.AMFE0, Ver.AMFP0 };
-            var mphInfo = new Dictionary<string, string>()
-            {
-                { Ver.A76E0, "Kiosk demo" },
-                { Ver.AMHE0, "USA rev 0" },
-                { Ver.AMHE1, "USA rev 1" },
-                { Ver.AMHP0, "EUR rev 0" },
-                { Ver.AMHP1, "EUR rev 1" },
-                { Ver.AMHJ0, "JPN rev 0" },
-                { Ver.AMHJ1, "JPN rev 1" },
-                { Ver.AMHK0, "KOR rev 0" }
-            };
-            var fhInfo = new Dictionary<string, string>()
-            {
-                { Ver.AMFE0, "USA rev 0" },
-                { Ver.AMFP0, "EUR rev 0" }
-            };
+            var mphInfo = ImmutableDictionary.CreateRange<string, string>(
+            [
+                new(Ver.A76E0, "Kiosk demo"),
+                new(Ver.AMHE0, "USA rev 0"),
+                new(Ver.AMHE1, "USA rev 1"),
+                new(Ver.AMHP0, "EUR rev 0"),
+                new(Ver.AMHP1, "EUR rev 1"),
+                new(Ver.AMHJ0, "JPN rev 0"),
+                new(Ver.AMHJ1, "JPN rev 1"),
+                new(Ver.AMHK0, "KOR rev 0")
+            ]);
+            var fhInfo = ImmutableDictionary.CreateRange<string, string>(
+            [
+                new(Ver.AMFE0, "USA rev 0"),
+                new(Ver.AMFP0, "EUR rev 0")
+            ]);
             MenuSettings menuSettings = GameState.LoadSettings();
             LoadSettings(menuSettings);
             UpdateSettings();

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using OpenTK.Mathematics;
 
@@ -4080,30 +4081,30 @@ namespace MphRead
                 firstHunt: true)
         };
 
-        public static readonly IReadOnlyDictionary<string, RoomMetadata> RoomMetadata = RoomList.ToDictionary(d => d.Name);
+        public static readonly ImmutableDictionary<string, RoomMetadata> RoomMetadata = RoomList.ToImmutableDictionary(d => d.Name);
 
-        public static readonly IReadOnlyDictionary<int, string> EncounterNodeDataOverrides = new Dictionary<int, string>()
-        {
-            { 28, @"levels\nodeData\unit1_C0_Boss_Node.bin" },   // 28 - UNIT1_C0 (Echo Hall)
-            { 29, @"levels\nodeData\unit1_RM1_Boss_Node.bin" },  // 29 - UNIT1_RM1 (High Ground)
-            { 31, @"levels\nodeData\unit1_RM6_Boss_Node.bin" },  // 31 - UNIT1_RM6 (Elder Passage)
-            { 50, @"levels\nodeData\unit2_RM2_Boss_Node.bin" },  // 50 - UNIT2_RM2 (Data Shrine 02)
-            { 52, @"levels\nodeData\unit2_RM3_Boss_Node.bin" },  // 52 - UNIT2_RM3 (Data Shrine 03)
-            { 65, @"levels\nodeData\unit3_Land_Boss_Node.bin" }, // 65 - UNIT3_LAND (VDO Gateway)
-            { 68, @"levels\nodeData\unit3_RM1_Boss_Node.bin" },  // 68 - UNIT3_RM1 (Weapons Complex)
-            { 79, @"levels\nodeData\unit4_RM3_Boss_Node.bin" }   // 79 - UNIT4_RM3 (Sic Transit)
-        };
+        public static readonly ImmutableDictionary<int, string> EncounterNodeDataOverrides = ImmutableDictionary.CreateRange<int, string>(
+        [
+            new(28, @"levels\nodeData\unit1_C0_Boss_Node.bin"),   // 28 - UNIT1_C0 (Echo Hall)
+            new(29, @"levels\nodeData\unit1_RM1_Boss_Node.bin"),  // 29 - UNIT1_RM1 (High Ground)
+            new(31, @"levels\nodeData\unit1_RM6_Boss_Node.bin"),  // 31 - UNIT1_RM6 (Elder Passage)
+            new(50, @"levels\nodeData\unit2_RM2_Boss_Node.bin"),  // 50 - UNIT2_RM2 (Data Shrine 02)
+            new(52, @"levels\nodeData\unit2_RM3_Boss_Node.bin"),  // 52 - UNIT2_RM3 (Data Shrine 03)
+            new(65, @"levels\nodeData\unit3_Land_Boss_Node.bin"), // 65 - UNIT3_LAND (VDO Gateway)
+            new(68, @"levels\nodeData\unit3_RM1_Boss_Node.bin"),  // 68 - UNIT3_RM1 (Weapons Complex)
+            new(79, @"levels\nodeData\unit4_RM3_Boss_Node.bin")   // 79 - UNIT4_RM3 (Sic Transit)
+        ]);
 
-        public static readonly IReadOnlyDictionary<int, string> CtfNodeDataOverrides = new Dictionary<int, string>()
-        {
-            {  93, @"levels\nodeData\mp1_CTF_node.bin" },    // MP1 SANCTORUS (Data Shrine)
-            {  99, @"levels\nodeData\mp6_CTF_node.bin" },    // MP6 HEADSHOT (Head Shot)
-            { 101, @"levels\nodeData\mp8_CTF_node.bin" },    // MP8 FIRE CONTROL (Weapons Complex)
-            { 102, @"levels\nodeData\mp9_CTF_node.bin" },    // MP9 CRYOCHASM (Ice Hive)
-            { 105, @"levels\nodeData\mp12_CTF_node.bin" },   // MP12 SIC TRANSIT (Sic Transit)
-            { 107, @"levels\nodeData\mp14_CTF_node.bin" },   // MP14 OUTER REACH (Outer Reach)
-            { 108, @"levels\nodeData\ctf1_CTF_node.bin" },   // CTF1 FAULT LINE - EXPANDED (Fault Line)
-            { 119, @"levels\nodeData\e3Level_CTF_Node.bin" } // E3 FIRST HUNT (Stasis Bunker)
-        };
+        public static readonly ImmutableDictionary<int, string> CtfNodeDataOverrides = ImmutableDictionary.CreateRange<int, string>(
+        [
+            new( 93, @"levels\nodeData\mp1_CTF_node.bi)"),    // MP1 SANCTORUS (Data Shrine)
+            new( 99, @"levels\nodeData\mp6_CTF_node.bi)"),    // MP6 HEADSHOT (Head Shot)
+            new(101, @"levels\nodeData\mp8_CTF_node.bin"),    // MP8 FIRE CONTROL (Weapons Complex)
+            new(102, @"levels\nodeData\mp9_CTF_node.bin"),    // MP9 CRYOCHASM (Ice Hive)
+            new(105, @"levels\nodeData\mp12_CTF_node.bin"),   // MP12 SIC TRANSIT (Sic Transit)
+            new(107, @"levels\nodeData\mp14_CTF_node.bin"),   // MP14 OUTER REACH (Outer Reach)
+            new(108, @"levels\nodeData\ctf1_CTF_node.bin"),   // CTF1 FAULT LINE - EXPANDED (Fault Line)
+            new(119, @"levels\nodeData\e3Level_CTF_Node.bin") // E3 FIRST HUNT (Stasis Bunker)
+        ]);
     }
 }

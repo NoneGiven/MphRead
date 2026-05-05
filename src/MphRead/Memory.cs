@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -137,9 +138,9 @@ namespace MphRead.Memory
 
         private static AddressInfo Addresses { get; set; } = null!;
 
-        private static readonly IReadOnlyDictionary<string, AddressInfo> AllAddresses = new Dictionary<string, AddressInfo>()
-        {
-            ["a76e"] = new AddressInfo(
+        private static readonly ImmutableDictionary<string, AddressInfo> AllAddresses = ImmutableDictionary.CreateRange<string, AddressInfo>(
+        [
+            new("a76e", new AddressInfo(
                 gameState: 0x20BC420, // todo: class
                 entityListHead: 0x20B85F8,
                 frameCount: 0x20AE514,
@@ -155,8 +156,8 @@ namespace MphRead.Memory
                     license: 0x20EB948, // todo
                     friends: 0x20ECEE0 // todo
                 )
-            ),
-            ["amhp1"] = new AddressInfo(
+            )),
+            new("amhp1", new AddressInfo(
                 gameState: 0x20E845C,
                 entityListHead: 0x20E3EE0,
                 frameCount: 0x20D94FC,
@@ -172,8 +173,8 @@ namespace MphRead.Memory
                     license: 0x20EB948,
                     friends: 0x20ECEE0
                 )
-            )
-        };
+            ))
+        ]);
 
         public struct SystemInfo
         {

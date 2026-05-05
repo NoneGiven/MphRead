@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using MphRead.Entities;
@@ -100,8 +101,8 @@ namespace MphRead.Effects
     [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
     public abstract class EffectFuncBase
     {
-        public virtual IReadOnlyDictionary<FuncAction, FxFuncInfo> Actions { get; set; } = null!;
-        public virtual IReadOnlyDictionary<uint, FxFuncInfo> Funcs { get; set; } = null!;
+        public virtual ImmutableDictionary<FuncAction, FxFuncInfo> Actions { get; set; } = null!;
+        public virtual ImmutableDictionary<uint, FxFuncInfo> Funcs { get; set; } = null!;
 
         protected abstract void FxFunc01(IReadOnlyList<int> param, TimeValues times, ref Vector3 vec);
 
@@ -925,13 +926,13 @@ namespace MphRead.Effects
         public BillboardMode BillboardMode { get; private set; }
         public Matrix4 NodeTransform { get; private set; }
 
-        public override IReadOnlyDictionary<uint, FxFuncInfo> Funcs
+        public override ImmutableDictionary<uint, FxFuncInfo> Funcs
         {
             get => Owner.Funcs;
             set => Owner.Funcs = value;
         }
 
-        public override IReadOnlyDictionary<FuncAction, FxFuncInfo> Actions
+        public override ImmutableDictionary<FuncAction, FxFuncInfo> Actions
         {
             get => Owner.Actions;
             set => Owner.Actions = value;

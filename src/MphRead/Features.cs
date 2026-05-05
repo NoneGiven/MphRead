@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Globalization;
 
 namespace MphRead
@@ -13,7 +14,7 @@ namespace MphRead
         public static bool NoDoubleEnemyDeath { get; set; } = true;
         public static bool NoSlenchRollTimerUnderflow { get; set; } = true;
 
-        public static void Load(IReadOnlyDictionary<string, string> values)
+        public static void Load(ImmutableDictionary<string, string> values)
         {
             if (values.TryGetValue(nameof(SmoothCamSeqHandoff), out string? value) && Boolean.TryParse(value, out bool result))
             {
@@ -41,17 +42,17 @@ namespace MphRead
             }
         }
 
-        public static IReadOnlyDictionary<string, string> Commit()
+        public static ImmutableDictionary<string, string> Commit()
         {
-            return new Dictionary<string, string>()
-            {
-                { nameof(SmoothCamSeqHandoff), SmoothCamSeqHandoff.ToString().ToLower() },
-                { nameof(BetterCamSeqNodeRef), BetterCamSeqNodeRef.ToString().ToLower() },
-                { nameof(NoStrayRespawnText), NoStrayRespawnText.ToString().ToLower() },
-                { nameof(CorrectBountySfx), CorrectBountySfx.ToString().ToLower() },
-                { nameof(NoDoubleEnemyDeath), NoDoubleEnemyDeath.ToString().ToLower() },
-                { nameof(NoSlenchRollTimerUnderflow), NoSlenchRollTimerUnderflow.ToString().ToLower() }
-            };
+            return ImmutableDictionary.CreateRange<string, string>(
+            [
+                new(nameof(SmoothCamSeqHandoff), SmoothCamSeqHandoff.ToString().ToLower()),
+                new(nameof(BetterCamSeqNodeRef), BetterCamSeqNodeRef.ToString().ToLower()),
+                new(nameof(NoStrayRespawnText), NoStrayRespawnText.ToString().ToLower()),
+                new(nameof(CorrectBountySfx), CorrectBountySfx.ToString().ToLower()),
+                new(nameof(NoDoubleEnemyDeath), NoDoubleEnemyDeath.ToString().ToLower()),
+                new(nameof(NoSlenchRollTimerUnderflow), NoSlenchRollTimerUnderflow.ToString().ToLower())
+            ]);
         }
     }
 
@@ -75,7 +76,7 @@ namespace MphRead
         public static bool FullBoostCharge { get; set; } = false; // false
         public static bool AlternateHunters1P { get; set; } = true; // false
 
-        public static void Load(IReadOnlyDictionary<string, string> values)
+        public static void Load(ImmutableDictionary<string, string> values)
         {
             if (values.TryGetValue(nameof(NoRepeatEncounters), out string? value) && Boolean.TryParse(value, out bool boolean))
             {
@@ -147,28 +148,28 @@ namespace MphRead
             }
         }
 
-        public static IReadOnlyDictionary<string, string> Commit()
+        public static ImmutableDictionary<string, string> Commit()
         {
-            return new Dictionary<string, string>()
-            {
-                { nameof(NoRepeatEncounters), NoRepeatEncounters.ToString().ToLower() },
-                { nameof(AllowInvalidTeams), AllowInvalidTeams.ToString().ToLower() },
-                { nameof(TopScreenTargetInfo), TopScreenTargetInfo.ToString().ToLower() },
-                { nameof(HelmetOpacity), HelmetOpacity.ToString(CultureInfo.InvariantCulture) },
-                { nameof(VisorOpacity), VisorOpacity.ToString(CultureInfo.InvariantCulture) },
-                { nameof(HudOpacity), HudOpacity.ToString(CultureInfo.InvariantCulture) },
-                { nameof(ReticleOpacity), ReticleOpacity.ToString(CultureInfo.InvariantCulture) },
-                { nameof(HudSway), HudSway.ToString().ToLower() },
-                { nameof(TargetInfoSway), TargetInfoSway.ToString().ToLower() },
-                { nameof(DelayedIdleSway), DelayedIdleSway.ToString().ToLower() },
-                { nameof(NoIdleSway), NoIdleSway.ToString().ToLower() },
-                { nameof(MaxRoomDetail), MaxRoomDetail.ToString().ToLower() },
-                { nameof(MaxPlayerDetail), MaxPlayerDetail.ToString().ToLower() },
-                { nameof(LogSpatialAudio), LogSpatialAudio.ToString().ToLower() },
-                { nameof(HalfSecondAlarm), HalfSecondAlarm.ToString().ToLower() },
-                { nameof(FullBoostCharge), FullBoostCharge.ToString().ToLower() },
-                { nameof(AlternateHunters1P), AlternateHunters1P.ToString().ToLower() }
-            };
+            return ImmutableDictionary.CreateRange<string, string>(
+            [
+                new(nameof(NoRepeatEncounters), NoRepeatEncounters.ToString().ToLower()),
+                new(nameof(AllowInvalidTeams), AllowInvalidTeams.ToString().ToLower()),
+                new(nameof(TopScreenTargetInfo), TopScreenTargetInfo.ToString().ToLower()),
+                new(nameof(HelmetOpacity), HelmetOpacity.ToString(CultureInfo.InvariantCulture)),
+                new(nameof(VisorOpacity), VisorOpacity.ToString(CultureInfo.InvariantCulture)),
+                new(nameof(HudOpacity), HudOpacity.ToString(CultureInfo.InvariantCulture)),
+                new(nameof(ReticleOpacity), ReticleOpacity.ToString(CultureInfo.InvariantCulture)),
+                new(nameof(HudSway), HudSway.ToString().ToLower()),
+                new(nameof(TargetInfoSway), TargetInfoSway.ToString().ToLower()),
+                new(nameof(DelayedIdleSway), DelayedIdleSway.ToString().ToLower()),
+                new(nameof(NoIdleSway), NoIdleSway.ToString().ToLower()),
+                new(nameof(MaxRoomDetail), MaxRoomDetail.ToString().ToLower()),
+                new(nameof(MaxPlayerDetail), MaxPlayerDetail.ToString().ToLower()),
+                new(nameof(LogSpatialAudio), LogSpatialAudio.ToString().ToLower()),
+                new(nameof(HalfSecondAlarm), HalfSecondAlarm.ToString().ToLower()),
+                new(nameof(FullBoostCharge), FullBoostCharge.ToString().ToLower()),
+                new(nameof(AlternateHunters1P), AlternateHunters1P.ToString().ToLower())
+            ]);
         }
     }
 
@@ -186,7 +187,7 @@ namespace MphRead
         public static bool AlwaysFightGorea2 { get; set; } = false;
         public static bool QuadrupleDamage { get; set; } = false;
 
-        public static void Load(IReadOnlyDictionary<string, string> values)
+        public static void Load(ImmutableDictionary<string, string> values)
         {
             if (values.TryGetValue(nameof(FreeWeaponSelect), out string? value) && Boolean.TryParse(value, out bool boolean))
             {
@@ -234,22 +235,22 @@ namespace MphRead
             }
         }
 
-        public static IReadOnlyDictionary<string, string> Commit()
+        public static ImmutableDictionary<string, string> Commit()
         {
-            return new Dictionary<string, string>()
-            {
-                { nameof(FreeWeaponSelect), FreeWeaponSelect.ToString().ToLower() },
-                { nameof(UnlimitedJumps), UnlimitedJumps.ToString().ToLower() },
-                { nameof(NoRandomEncounters), NoRandomEncounters.ToString() },
-                { nameof(UnlockAllDoors), UnlockAllDoors.ToString() },
-                { nameof(ContinueFromCurrentRoom), ContinueFromCurrentRoom.ToString() },
-                { nameof(SkipPlanetIntros), SkipPlanetIntros.ToString() },
-                { nameof(StartWithAllUpgrades), StartWithAllUpgrades.ToString() },
-                { nameof(StartWithAllOctoliths), StartWithAllOctoliths.ToString().ToLower() },
-                { nameof(WalkThroughWalls), WalkThroughWalls.ToString().ToLower() },
-                { nameof(AlwaysFightGorea2), AlwaysFightGorea2.ToString().ToLower() },
-                { nameof(QuadrupleDamage), QuadrupleDamage.ToString().ToLower() }
-            };
+            return ImmutableDictionary.CreateRange<string, string>(
+            [
+                new(nameof(FreeWeaponSelect), FreeWeaponSelect.ToString().ToLower()),
+                new(nameof(UnlimitedJumps), UnlimitedJumps.ToString().ToLower()),
+                new(nameof(NoRandomEncounters), NoRandomEncounters.ToString()),
+                new(nameof(UnlockAllDoors), UnlockAllDoors.ToString()),
+                new(nameof(ContinueFromCurrentRoom), ContinueFromCurrentRoom.ToString()),
+                new(nameof(SkipPlanetIntros), SkipPlanetIntros.ToString()),
+                new(nameof(StartWithAllUpgrades), StartWithAllUpgrades.ToString()),
+                new(nameof(StartWithAllOctoliths), StartWithAllOctoliths.ToString().ToLower()),
+                new(nameof(WalkThroughWalls), WalkThroughWalls.ToString().ToLower()),
+                new(nameof(AlwaysFightGorea2), AlwaysFightGorea2.ToString().ToLower()),
+                new(nameof(QuadrupleDamage), QuadrupleDamage.ToString().ToLower())
+            ]);
         }
     }
 }

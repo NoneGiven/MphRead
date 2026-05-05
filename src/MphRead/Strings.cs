@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -126,19 +127,19 @@ namespace MphRead.Text
             return null;
         }
 
-        private static readonly IReadOnlyDictionary<char, int> _categoryMap = new Dictionary<char, int>()
-        {
-            ['L'] = 0,
-            ['l'] = 0,
-            ['B'] = 1,
-            ['b'] = 1,
-            ['O'] = 2,
-            ['o'] = 2,
-            ['E'] = 3,
-            ['e'] = 3,
-            ['X'] = 4,
-            ['x'] = 4
-        };
+        private static readonly ImmutableDictionary<char, int> _categoryMap = ImmutableDictionary.CreateRange<char, int>(
+        [
+            new('L', 0),
+            new('l', 0),
+            new('B', 1),
+            new('b', 1),
+            new('O', 2),
+            new('o', 2),
+            new('E', 3),
+            new('e', 3),
+            new('X', 4),
+            new('x', 4)
+        ]);
 
         public static readonly StringTableEntry EmptyScanEntry = new StringTableEntry(
             id: "000",

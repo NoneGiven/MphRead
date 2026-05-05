@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using OpenTK.Mathematics;
 
@@ -67,33 +68,33 @@ namespace MphRead
             }
         }
 
-        private readonly IReadOnlyDictionary<MetaDir, string> _dirs = new Dictionary<MetaDir, string>()
-        {
-            [MetaDir.CharSelect] = "characterselect",
-            [MetaDir.CreateJoin] = "createjoin",
-            [MetaDir.GameOption] = "gameoptions",
-            [MetaDir.GamersCard] = "gamerscard",
-            [MetaDir.Hud] = "hud",
-            [MetaDir.Keyboard] = "keyboard",
-            [MetaDir.Keypad] = "keypad",
-            [MetaDir.Logo] = @"logo_screen\MAYA",
-            [MetaDir.MainMenu] = "main menu",
-            [MetaDir.Models] = "models",
-            [MetaDir.MoviePlayer] = "movieplayer",
-            [MetaDir.MultiMaster] = "multimaster",
-            [MetaDir.Multiplayer] = "multiplayer",
-            [MetaDir.PaxControls] = "pax_controls",
-            [MetaDir.Popup] = "popup",
-            [MetaDir.Results] = "results",
-            [MetaDir.ScStartGame] = "sc_startgame",
-            [MetaDir.Stage] = "stage",
-            [MetaDir.StartGame] = "startgame",
-            [MetaDir.ToStart] = "tostart",
-            [MetaDir.TouchToStart] = "touchtostart",
-            [MetaDir.TouchToStart2] = "touchtostart_2",
-            [MetaDir.WifiCreate] = "wifi_createjoin",
-            [MetaDir.WifiGames] = "wifi_games",
-        };
+        private readonly ImmutableDictionary<MetaDir, string> _dirs = ImmutableDictionary.CreateRange<MetaDir, string>(
+        [
+            new (MetaDir.CharSelect, "characterselect"),
+            new (MetaDir.CreateJoin, "createjoin"),
+            new (MetaDir.GameOption, "gameoptions"),
+            new (MetaDir.GamersCard, "gamerscard"),
+            new (MetaDir.Hud, "hud"),
+            new (MetaDir.Keyboard, "keyboard"),
+            new (MetaDir.Keypad, "keypad"),
+            new (MetaDir.Logo, @"logo_screen\MAYA"),
+            new (MetaDir.MainMenu, "main menu"),
+            new (MetaDir.Models, "models"),
+            new (MetaDir.MoviePlayer, "movieplayer"),
+            new (MetaDir.MultiMaster, "multimaster"),
+            new (MetaDir.Multiplayer, "multiplayer"),
+            new (MetaDir.PaxControls, "pax_controls"),
+            new (MetaDir.Popup, "popup"),
+            new (MetaDir.Results, "results"),
+            new (MetaDir.ScStartGame, "sc_startgame"),
+            new (MetaDir.Stage, "stage"),
+            new (MetaDir.StartGame, "startgame"),
+            new (MetaDir.ToStart, "tostart"),
+            new (MetaDir.TouchToStart, "touchtostart"),
+            new (MetaDir.TouchToStart2, "touchtostart_2"),
+            new (MetaDir.WifiCreate, "wifi_createjoin"),
+            new (MetaDir.WifiGames, "wifi_games")
+        ]);
 
         public ModelMetadata(string name, MetaDir dir, string? anim = null)
         {
@@ -285,8 +286,7 @@ namespace MphRead
         public string TexturePath { get; }
         public string PalettePath { get; }
         public string? ReplacePath { get; }
-        private readonly Dictionary<int, IEnumerable<int>> _replaceIds = new Dictionary<int, IEnumerable<int>>();
-        public IReadOnlyDictionary<int, IEnumerable<int>> ReplaceIds => _replaceIds;
+        public ImmutableDictionary<int, IReadOnlyList<int>> ReplaceIds { get; }
 
         public RecolorMetadata(string name, string modelPath)
         {
@@ -294,6 +294,7 @@ namespace MphRead
             ModelPath = modelPath;
             TexturePath = modelPath;
             PalettePath = modelPath;
+            ReplaceIds = ImmutableDictionary.Create<int, IReadOnlyList<int>>();
         }
 
         public RecolorMetadata(string name, string modelPath, string texturePath)
@@ -302,10 +303,11 @@ namespace MphRead
             ModelPath = modelPath;
             TexturePath = texturePath;
             PalettePath = texturePath;
+            ReplaceIds = ImmutableDictionary.Create<int, IReadOnlyList<int>>();
         }
 
         public RecolorMetadata(string name, string modelPath, string texturePath, string palettePath,
-            Dictionary<int, IEnumerable<int>>? replaceIds = null, bool separateReplace = false)
+            Dictionary<int, IReadOnlyList<int>>? replaceIds = null, bool separateReplace = false)
         {
             Name = name;
             ModelPath = modelPath;
@@ -319,13 +321,15 @@ namespace MphRead
             {
                 PalettePath = palettePath;
             }
+            var replaceIdsDict = new Dictionary<int, IReadOnlyList<int>>();
             if (replaceIds != null)
             {
-                foreach (KeyValuePair<int, IEnumerable<int>> kvp in replaceIds)
+                foreach (KeyValuePair<int, IReadOnlyList<int>> kvp in replaceIds)
                 {
-                    _replaceIds.Add(kvp.Key, kvp.Value);
+                    replaceIdsDict.Add(kvp.Key, kvp.Value);
                 }
             }
+            ReplaceIds = replaceIdsDict.ToImmutableDictionary();
         }
     }
 
@@ -413,23 +417,23 @@ namespace MphRead
 
     public static partial class Metadata
     {
-        private static readonly IReadOnlyDictionary<GameMode, IReadOnlyList<int>> _modeLayers
-            = new Dictionary<GameMode, IReadOnlyList<int>>()
-        {
-            { GameMode.Battle, new List<int>() { 0, 1, 2 } },
-            { GameMode.BattleTeams, new List<int>() { 3 } },
-            { GameMode.Survival, new List<int>() { 15 } },
-            { GameMode.SurvivalTeams, new List<int>() { 15 } },
-            { GameMode.Capture, new List<int>() { 12 } },
-            { GameMode.Bounty, new List<int>() { 8, 9, 10 } },
-            { GameMode.BountyTeams, new List<int>() { 11 } },
-            { GameMode.Nodes, new List<int>() { 4, 5, 6 } },
-            { GameMode.NodesTeams, new List<int>() { 7 } },
-            { GameMode.Defender, new List<int>() { 14 } },
-            { GameMode.DefenderTeams, new List<int>() { 14 } },
-            { GameMode.PrimeHunter, new List<int>() { 0, 1, 2 } },
-            { GameMode.Unknown15, new List<int>() { 13 } }
-        };
+        private static readonly ImmutableDictionary<GameMode, IReadOnlyList<int>> _modeLayers
+            = ImmutableDictionary.CreateRange<GameMode, IReadOnlyList<int>>(
+        [
+            new (GameMode.Battle, new List<int>() { 0, 1, 2 }),
+            new (GameMode.BattleTeams, new List<int>() { 3 }),
+            new (GameMode.Survival, new List<int>() { 15 }),
+            new (GameMode.SurvivalTeams, new List<int>() { 15 }),
+            new (GameMode.Capture, new List<int>() { 12 }),
+            new (GameMode.Bounty, new List<int>() { 8, 9, 10 }),
+            new (GameMode.BountyTeams, new List<int>() { 11 }),
+            new (GameMode.Nodes, new List<int>() { 4, 5, 6 }),
+            new (GameMode.NodesTeams, new List<int>() { 7 }),
+            new (GameMode.Defender, new List<int>() { 14 }),
+            new (GameMode.DefenderTeams, new List<int>() { 14 }),
+            new (GameMode.PrimeHunter, new List<int>() { 0, 1, 2 }),
+            new (GameMode.Unknown15, new List<int>() { 13 })
+        ]);
 
         public static int GetMultiplayerEntityLayer(GameMode mode, int playerCount)
         {
@@ -580,10 +584,10 @@ namespace MphRead
             return new Vector3(r / 31.0f, g / 31.0f, b / 31.0f);
         }
 
-        public static readonly IReadOnlyDictionary<string, IReadOnlyList<PaletteData>> PowerPalettes
-            = new Dictionary<string, IReadOnlyList<PaletteData>>()
-            {
-                ["Alimbic_Power"] = new List<PaletteData>()
+        public static readonly ImmutableDictionary<string, IReadOnlyList<PaletteData>> PowerPalettes
+            = ImmutableDictionary.CreateRange<string, IReadOnlyList<PaletteData>>(
+            [
+                new("Alimbic_Power", new List<PaletteData>()
                 {
                     new PaletteData(32576),
                     new PaletteData(32576),
@@ -593,8 +597,8 @@ namespace MphRead
                     new PaletteData(32719),
                     new PaletteData(32758),
                     new PaletteData(32733)
-                },
-                ["Generic_Power"] = new List<PaletteData>()
+                }),
+                new("Generic_Power", new List<PaletteData>()
                 {
                     new PaletteData(19393),
                     new PaletteData(18369),
@@ -604,8 +608,8 @@ namespace MphRead
                     new PaletteData(23535),
                     new PaletteData(26614),
                     new PaletteData(31741)
-                },
-                ["Ice_Power"] = new List<PaletteData>()
+                }),
+                new("Ice_Power", new List<PaletteData>()
                 {
                     new PaletteData(29453),
                     new PaletteData(29453),
@@ -615,8 +619,8 @@ namespace MphRead
                     new PaletteData(30614),
                     new PaletteData(31705),
                     new PaletteData(32734)
-                },
-                ["Lava_Power"] = new List<PaletteData>()
+                }),
+                new("Lava_Power", new List<PaletteData>()
                 {
                     new PaletteData(671),
                     new PaletteData(639),
@@ -626,56 +630,57 @@ namespace MphRead
                     new PaletteData(16127),
                     new PaletteData(23391),
                     new PaletteData(30719)
-                }
-            };
+                })
+            ]);
 
-        public static readonly IReadOnlyDictionary<Hunter, float> HunterScales = new Dictionary<Hunter, float>
-        {
-            { Hunter.Samus, 1.0f },
-            { Hunter.Kanden, Fixed.ToFloat(0x10F5) },
-            { Hunter.Trace, 1.0f },
-            { Hunter.Sylux, 1.0f },
-            { Hunter.Noxus, 1.0f },
-            { Hunter.Spire, Fixed.ToFloat(0x123D) },
-            { Hunter.Weavel, 1.0f },
-            { Hunter.Guardian, 1.0f }
-        };
+        public static readonly ImmutableDictionary<Hunter, float> HunterScales = ImmutableDictionary.CreateRange<Hunter, float>(
+        [
+            new (Hunter.Samus, 1.0f),
+            new (Hunter.Kanden, Fixed.ToFloat(0x10F5)),
+            new (Hunter.Trace, 1.0f),
+            new (Hunter.Sylux, 1.0f),
+            new (Hunter.Noxus, 1.0f),
+            new (Hunter.Spire, Fixed.ToFloat(0x123D)),
+            new (Hunter.Weavel, 1.0f),
+            new (Hunter.Guardian, 1.0f)
+        ]);
 
-        public static readonly IReadOnlyDictionary<Hunter, IReadOnlyList<string>> HunterModels = new Dictionary<Hunter, IReadOnlyList<string>>
-        {
-            {
+        public static readonly ImmutableDictionary<Hunter, IReadOnlyList<string>> HunterModels
+            = ImmutableDictionary.CreateRange<Hunter, IReadOnlyList<string>>(
+        [
+            new(
                 Hunter.Samus,
                 new List<string>() { "Samus_lod0", "Samus_lod1", "SamusAlt_lod0", "SamusGun" }
-            },
-            {
+            ),
+            new(
                 Hunter.Kanden,
                 new List<string>() { "Kanden_lod0", "Kanden_lod1", "KandenAlt_lod0", "KandenGun" }
-            },
-            {
+            ),
+            new(
                 Hunter.Trace,
                 new List<string>() { "Trace_lod0", "Trace_lod1", "TraceAlt_lod0", "TraceGun" }
-            },
-            {
+            ),
+            new(
                 Hunter.Sylux,
                 new List<string>() { "Sylux_lod0", "Sylux_lod1", "SyluxAlt_lod0", "SyluxGun" }
-            },
-            {
+            ),
+            new(
                 Hunter.Noxus,
                 new List<string>() { "Nox_lod0", "Nox_lod1", "NoxAlt_lod0", "NoxGun" }
-            },
-            {
+            ),
+            new(
                 Hunter.Spire,
                 new List<string>() { "Spire_lod0", "Spire_lod1", "SpireAlt_lod0", "SpireGun" }
-            },
-            {
+            ),
+            new(
                 Hunter.Weavel,
                 new List<string>() { "Weavel_lod0", "Weavel_lod1", "WeavelAlt_lod0", "WeavelGun" }
-            },
-            {
+            ),
+            new(
                 Hunter.Guardian,
                 new List<string>() { "Guardian_lod0", "Guardian_lod1", "SamusAlt_lod0", "SamusGun" }
-            }
-        };
+            )
+        ]);
 
         public static readonly IReadOnlyList<int> AdpcmTable = new List<int>()
         {
@@ -1545,34 +1550,34 @@ namespace MphRead
             113, 152, 151, 153, 150, 149
         };
 
-        public static readonly IReadOnlyDictionary<SingleType, (string Model, string Particle)> SingleParticles
-            = new Dictionary<SingleType, (string, string)>()
-        {
-            { SingleType.Death, ("deathParticle", "death") },
-            { SingleType.Fuzzball, ("particles", "fuzzBall") },
-            { SingleType.Lore, ("icons", "lore") },
-            { SingleType.LoreDim, ("icons", "lore_dim") },
-            { SingleType.Enemy, ("icons", "enemy") },
-            { SingleType.EnemyDim, ("icons", "enemy_dim") },
-            { SingleType.Object, ("icons", "object") },
-            { SingleType.ObjectDim, ("icons", "object_dim") },
-            { SingleType.Equipment, ("icons", "equipment") },
-            { SingleType.EquipmentDim, ("icons", "equipment_dim") },
-            { SingleType.Red, ("icons", "red") },
-            { SingleType.RedDim, ("icons", "red_dim") }
-        };
+        public static readonly ImmutableDictionary<SingleType, (string Model, string Particle)> SingleParticles
+            = ImmutableDictionary.CreateRange<SingleType, (string, string)>(
+        [
+            new(SingleType.Death, ("deathParticle", "death")),
+            new(SingleType.Fuzzball, ("particles", "fuzzBall")),
+            new(SingleType.Lore, ("icons", "lore")),
+            new(SingleType.LoreDim, ("icons", "lore_dim")),
+            new(SingleType.Enemy, ("icons", "enemy")),
+            new(SingleType.EnemyDim, ("icons", "enemy_dim")),
+            new(SingleType.Object, ("icons", "object")),
+            new(SingleType.ObjectDim, ("icons", "object_dim")),
+            new(SingleType.Equipment, ("icons", "equipment")),
+            new(SingleType.EquipmentDim, ("icons", "equipment_dim")),
+            new(SingleType.Red, ("icons", "red")),
+            new(SingleType.RedDim, ("icons", "red_dim"))
+        ]);
 
-        public static readonly IReadOnlyDictionary<string, bool> PreloadResources = new Dictionary<string, bool>()
-        {
-            { "deathParticle", true },
-            { "particles", true },
-            { "particles2", true },
-            { "TearParticle", true },
-            { "icons", true },
-            { "iceWave", true },
-            { "sniperBeam", true },
-            { "cylBossLaserBurn", true }
-        };
+        public static readonly ImmutableDictionary<string, bool> PreloadResources = ImmutableDictionary.CreateRange<string, bool>(
+        [
+            new("deathParticle", true),
+            new("particles", true),
+            new("particles2", true),
+            new("TearParticle", true),
+            new("icons", true),
+            new("iceWave", true),
+            new("sniperBeam", true),
+            new("cylBossLaserBurn", true)
+        ]);
 
         public static (RoomMetadata?, int) GetRoomByName(string name)
         {
@@ -1656,38 +1661,38 @@ namespace MphRead
         public static readonly ModelMetadata DoubleDamageImg
             = new ModelMetadata("doubleDamage_img", animation: false, archive: "common");
 
-        public static readonly IReadOnlyDictionary<string, ModelMetadata> ModelMetadata
-            = new Dictionary<string, ModelMetadata>()
-            {
-                {
+        public static readonly ImmutableDictionary<string, ModelMetadata> ModelMetadata
+            = ImmutableDictionary.CreateRange<string, ModelMetadata>(
+            [
+                new(
                     "AlimbicBossDoorLock",
                     new ModelMetadata("AlimbicBossDoorLock",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
-                },
-                {
+                ),
+                new(
                     "AlimbicBossDoor",
                     new ModelMetadata("AlimbicBossDoor")
-                },
-                {
+                ),
+                new(
                     "AlimbicCapsule",
                     new ModelMetadata("AlimbicCapsule", collision: true, extraCollision: "AlmbCapsuleShld")
-                },
-                {
+                ),
+                new(
                     "AlimbicComputerStationControl",
                     new ModelMetadata("AlimbicComputerStationControl")
-                },
-                {
+                ),
+                new(
                     "AlimbicComputerStationControl02",
                     new ModelMetadata("AlimbicComputerStationControl02")
-                },
-                {
+                ),
+                new(
                     "AlimbicDoorLock",
                     new ModelMetadata("AlimbicDoorLock",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
-                },
-                {
+                ),
+                new(
                     "AlimbicDoor",
                     new ModelMetadata("AlimbicDoor",
                         modelPath: @"models\AlimbicDoor_Model.bin",
@@ -1699,81 +1704,81 @@ namespace MphRead
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 1 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 0, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_02",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 1 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 1, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_03",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 1 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 2, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_04",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 1 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 3, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_05",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 1 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 4, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_06",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 1 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 5, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_07",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 1 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 6, new List<int> { 1 } } }),
                             new RecolorMetadata("pal_08",
                                 modelPath: @"models\AlimbicDoor_Model.bin",
                                 texturePath: @"models\AlimbicDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 1 } } })
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 7, new List<int> { 1 } } })
                         })
-                },
-                {
+                ),
+                new(
                     "AlimbicEnergySensor",
                     new ModelMetadata("AlimbicEnergySensor")
-                },
-                {
+                ),
+                new(
                     "AlimbicGhost_01",
                     new ModelMetadata("AlimbicGhost_01")
-                },
-                {
+                ),
+                new(
                     "AlimbicLightPole",
                     new ModelMetadata("AlimbicLightPole", collision: true)
-                },
-                {
+                ),
+                new(
                     "AlimbicLightPole02",
                     new ModelMetadata("AlimbicLightPole02", collision: true)
-                },
-                {
+                ),
+                new(
                     "AlimbicMorphBallDoor",
                     new ModelMetadata("AlimbicMorphBallDoor",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
-                },
-                {
+                ),
+                new(
                     "AlimbicMorphBallDoorLock",
                     new ModelMetadata("AlimbicMorphBallDoorLock",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
-                },
-                {
+                ),
+                new(
                     "AlimbicStationShieldControl",
                     new ModelMetadata("AlimbicStationShieldControl")
-                },
-                {
+                ),
+                new(
                     "AlimbicStatue_lod0",
                     new ModelMetadata("AlimbicStatue_lod0", remove: "_lod0", collision: true)
-                },
-                {
+                ),
+                new(
                     "AlimbicThinDoor",
                     new ModelMetadata("AlimbicThinDoor",
                         modelPath: @"models\AlimbicThinDoor_Model.bin",
@@ -1785,78 +1790,78 @@ namespace MphRead
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 1, 2 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 0, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_02",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 1, 2 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 1, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_03",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 1, 2 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 2, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_04",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 1, 2 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 3, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_05",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 1, 2 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 4, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_06",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 1, 2 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 5, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_07",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 1, 2 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 6, new List<int> { 1, 2 } } }),
                             new RecolorMetadata("pal_08",
                                 modelPath: @"models\AlimbicThinDoor_Model.bin",
                                 texturePath: @"models\AlimbicThinDoor_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 1, 2 } } })
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 7, new List<int> { 1, 2 } } })
                         })
-                },
-                {
+                ),
+                new(
                     "Alimbic_Console",
                     new ModelMetadata("Alimbic_Console",
                         share: @"models\AlimbicEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Alimbic_Monitor",
                     new ModelMetadata("Alimbic_Monitor",
                         share: @"models\AlimbicEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Alimbic_Power",
                     new ModelMetadata("Alimbic_Power",
                         share: @"models\AlimbicEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Alimbic_Scanner",
                     new ModelMetadata("Alimbic_Scanner",
                         share: @"models\AlimbicEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Alimbic_Switch",
                     new ModelMetadata("Alimbic_Switch",
                         share: @"models\AlimbicEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Alimbic_Turret",
                     new ModelMetadata("Alimbic_Turret",
                         recolors: new List<string>()
@@ -1867,8 +1872,8 @@ namespace MphRead
                         },
                         animationPath: @"models\AlimbicTurret_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "alt_ice",
                     new ModelMetadata("alt_ice",
                         modelPath: @"_archives\common\alt_ice_mdl_Model.bin",
@@ -1881,12 +1886,12 @@ namespace MphRead
                                 texturePath: @"_archives\common\samus_ice_img_Model.bin",
                                 palettePath: @"_archives\common\samus_ice_img_Model.bin")
                         }, useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "arcWelder",
                     new ModelMetadata("arcWelder", animation: false, archive: "common")
-                },
-                {
+                ),
+                new(
                     "arcWelder1",
                     new ModelMetadata("arcWelder1",
                         remove: "1",
@@ -1900,80 +1905,80 @@ namespace MphRead
                         },
                         animation: false,
                         noUnderscore: true)
-                },
-                {
+                ),
+                new(
                     "ArtifactBase",
                     new ModelMetadata("ArtifactBase")
-                },
-                {
+                ),
+                new(
                     "Artifact_Key",
                     new ModelMetadata("Artifact_Key")
-                },
-                {
+                ),
+                new(
                     "Artifact01",
                     new ModelMetadata("Artifact01",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Artifact02",
                     new ModelMetadata("Artifact02",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Artifact03",
                     new ModelMetadata("Artifact03",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Artifact04",
                     new ModelMetadata("Artifact04",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Artifact05",
                     new ModelMetadata("Artifact05",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Artifact06",
                     new ModelMetadata("Artifact06",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Artifact07",
                     new ModelMetadata("Artifact07",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Artifact08",
                     new ModelMetadata("Artifact08",
                         share: @"models\ArtifactTextureShare_img_Model.bin",
                         animationPath: @"models\Artifact_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "balljump",
                     new ModelMetadata("balljump", animation: false)
-                },
-                {
+                ),
+                new(
                     "balljump_ray",
                     new ModelMetadata("balljump_ray")
-                },
-                {
+                ),
+                new(
                     "BarbedWarWasp",
                     new ModelMetadata("BarbedWarWasp",
                         recolors: new List<string>()
@@ -1984,138 +1989,138 @@ namespace MphRead
                         },
                         mdlSuffix: MdlSuffix.Model,
                         animationPath: @"models\warWasp_Anim.bin")
-                },
-                {
+                ),
+                new(
                     "BigEyeBall",
                     new ModelMetadata("BigEyeBall")
-                },
-                {
+                ),
+                new(
                     "BigEyeNest",
                     new ModelMetadata("BigEyeNest")
-                },
-                {
+                ),
+                new(
                     "BigEyeShield",
                     new ModelMetadata("BigEyeShield")
-                },
-                {
+                ),
+                new(
                     "BigEyeSynapse_01",
                     new ModelMetadata("BigEyeSynapse_01", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
-                },
-                {
+                ),
+                new(
                     "BigEyeSynapse_02",
                     new ModelMetadata("BigEyeSynapse_02", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
-                },
-                {
+                ),
+                new(
                     "BigEyeSynapse_03",
                     new ModelMetadata("BigEyeSynapse_03", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
-                },
-                {
+                ),
+                new(
                     "BigEyeSynapse_04",
                     new ModelMetadata("BigEyeSynapse_04", animation: true, animationPath: @"models\BigEyeSynapse_Anim.bin")
-                },
-                {
+                ),
+                new(
                     "BigEyeTurret",
                     new ModelMetadata("BigEyeTurret")
-                },
-                {
+                ),
+                new(
                     "blastcap",
                     new ModelMetadata("blastcap")
-                },
-                {
+                ),
+                new(
                     "brain_unit3_c2",
                     new ModelMetadata("brain_unit3_c2", animation: false)
-                },
-                {
+                ),
+                new(
                     "Chomtroid",
                     new ModelMetadata("Chomtroid", animation: true, animationPath: @"models\Mochtroid_Anim.bin")
-                },
-                {
+                ),
+                new(
                     "Crate01",
                     new ModelMetadata("Crate01", collision: true)
-                },
-                {
+                ),
+                new(
                     "cylBossLaserBurn",
                     new ModelMetadata("cylBossLaserBurn")
-                },
-                {
+                ),
+                new(
                     "cylBossLaserColl",
                     new ModelMetadata("cylBossLaserColl")
-                },
-                {
+                ),
+                new(
                     "cylBossLaserG",
                     new ModelMetadata("cylBossLaserG")
-                },
-                {
+                ),
+                new(
                     "cylBossLaserY",
                     new ModelMetadata("cylBossLaserY")
-                },
-                {
+                ),
+                new(
                     "cylBossLaser",
                     new ModelMetadata("cylBossLaser")
-                },
-                {
+                ),
+                new(
                     "cylinderbase",
                     new ModelMetadata("cylinderbase", @"models\cylinderbase_model.bin", null, @"models\cylinderbase_collision.bin")
-                },
-                {
+                ),
+                new(
                     "CylinderBossEye",
                     new ModelMetadata("CylinderBossEye")
-                },
-                {
+                ),
+                new(
                     "CylinderBoss",
                     new ModelMetadata("CylinderBoss")
-                },
-                {
+                ),
+                new(
                     "deepspace",
                     new ModelMetadata("deepspace", archive: "shipSpace")
-                },
-                {
+                ),
+                new(
                     "Door_Unit4_RM1",
                     new ModelMetadata("Door_Unit4_RM1", animation: false, collision: true)
-                },
-                {
+                ),
+                new(
                     "DripStank_lod0",
                     new ModelMetadata("DripStank_lod0", remove: "_lod0")
-                },
-                {
+                ),
+                new(
                     "ElectroField1",
                     new ModelMetadata("ElectroField1", collision: true)
-                },
-                {
+                ),
+                new(
                     "electroTrail",
                     new ModelMetadata("electroTrail", animation: false, archive: "common")
-                },
-                {
+                ),
+                new(
                     "Elevator",
                     new ModelMetadata("Elevator", animation: false, collision: true)
-                },
-                {
+                ),
+                new(
                     "EnemySpawner",
                     new ModelMetadata("EnemySpawner",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
-                },
-                {
+                ),
+                new(
                     "energyBeam",
                     new ModelMetadata("energyBeam")
-                },
-                {
+                ),
+                new(
                     "filter",
                     new ModelMetadata("filter", animation: false, archive: "common")
-                },
-                {
+                ),
+                new(
                     "hudfont",
                     new ModelMetadata("hudfont", animation: false)
-                },
-                {
+                ),
+                new(
                     "flagbase_bounty",
                     new ModelMetadata("flagbase_bounty")
-                },
-                {
+                ),
+                new(
                     "flagbase_cap",
                     new ModelMetadata("flagbase_cap")
-                },
-                {
+                ),
+                new(
                     "flagbase_ctf",
                     new ModelMetadata("flagbase_ctf",
                         recolors: new List<string>()
@@ -2125,9 +2130,9 @@ namespace MphRead
                         },
                         animation: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
+                ),
                 // todo: confirm all texture shares with load_object
-                {
+                new(
                     "ForceField",
                     new ModelMetadata("ForceField",
                         modelPath: @"models\ForceField_Model.bin",
@@ -2139,45 +2144,45 @@ namespace MphRead
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 0 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 0, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_02",
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 0 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 1, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_03",
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 0 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 2, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_04",
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 0 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 3, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_05",
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 0 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 4, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_06",
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 0 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 5, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_07",
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 0 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 6, new List<int> { 0 } } }),
                             new RecolorMetadata("pal_08",
                                 modelPath: @"models\ForceField_Model.bin",
                                 texturePath: @"models\ForceField_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 0 } } })
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 7, new List<int> { 0 } } })
                         })
-                },
-                {
+                ),
+                new(
                     "ForceFieldLock",
                     new ModelMetadata("ForceFieldLock",
                         modelPath: @"models\ForceFieldLock_mdl_Model.bin",
@@ -2190,151 +2195,151 @@ namespace MphRead
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 0, new List<int> { 3 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 0, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_02",
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 1, new List<int> { 3 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 1, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_03",
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 2, new List<int> { 3 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 2, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_04",
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 3, new List<int> { 3 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 3, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_05",
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 4, new List<int> { 3 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 4, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_06",
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 5, new List<int> { 3 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 5, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_07",
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 6, new List<int> { 3 } } }),
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 6, new List<int> { 3 } } }),
                             new RecolorMetadata("pal_08",
                                 modelPath: @"models\AlimbicTextureShare_img_Model.bin",
                                 texturePath: @"models\AlimbicTextureShare_img_Model.bin",
                                 palettePath: @"models\AlimbicPalettes_pal_Model.bin",
                                 separateReplace: true,
-                                replaceIds: new Dictionary<int, IEnumerable<int>>() { { 7, new List<int> { 3 } } })
+                                replaceIds: new Dictionary<int, IReadOnlyList<int>>() { { 7, new List<int> { 3 } } })
                         })
-                },
-                {
+                ),
+                new(
                     "furlEffect",
                     new ModelMetadata("furlEffect")
-                },
-                {
+                ),
+                new(
                     "geemer",
                     new ModelMetadata("geemer", @"models\geemer_Model.bin", @"models\Geemer_Anim.bin", null)
-                },
-                {
+                ),
+                new(
                     "Generic_Console",
                     new ModelMetadata("Generic_Console",
                         share: @"models\GenericEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Generic_Monitor",
                     new ModelMetadata("Generic_Monitor",
                         share: @"models\GenericEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Generic_Power",
                     new ModelMetadata("Generic_Power",
                         share: @"models\GenericEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Generic_Scanner",
                     new ModelMetadata("Generic_Scanner",
                         share: @"models\GenericEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Generic_Switch",
                     new ModelMetadata("Generic_Switch",
                         share: @"models\GenericEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "GhostSwitch",
                     new ModelMetadata("GhostSwitch",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
-                },
-                {
+                ),
+                new(
                     "Gorea1A_lod0",
                     new ModelMetadata("Gorea1A_lod0", remove: "_lod0")
-                },
-                {
+                ),
+                new(
                     "Gorea1B_lod0",
                     new ModelMetadata("Gorea1B_lod0", remove: "_lod0")
-                },
-                {
+                ),
+                new(
                     "Gorea2_lod0",
                     new ModelMetadata("Gorea2_lod0", remove: "_lod0")
-                },
-                {
+                ),
+                new(
                     "goreaArmRegen",
                     new ModelMetadata("goreaArmRegen")
-                },
-                {
+                ),
+                new(
                     "goreaGeo",
                     new ModelMetadata("goreaGeo", animation: false, texture: true)
-                },
-                {
+                ),
+                new(
                     "goreaGrappleBeam",
                     new ModelMetadata("goreaGrappleBeam")
-                },
-                {
+                ),
+                new(
                     "goreaLaserColl",
                     new ModelMetadata("goreaLaserColl")
-                },
-                {
+                ),
+                new(
                     "goreaLaser",
                     new ModelMetadata("goreaLaser")
-                },
-                {
+                ),
+                new(
                     "goreaMeteor",
                     new ModelMetadata("goreaMeteor")
-                },
-                {
+                ),
+                new(
                     "goreaMindTrick",
                     new ModelMetadata("goreaMindTrick")
-                },
-                {
+                ),
+                new(
                     "gorea_gun",
                     new ModelMetadata("gorea_gun")
-                },
-                {
+                ),
+                new(
                     "Guardbot01_Dead",
                     new ModelMetadata("Guardbot01_Dead", animation: false)
-                },
-                {
+                ),
+                new(
                     "Guardbot02_Dead",
                     new ModelMetadata("Guardbot02_Dead", animation: false)
-                },
-                {
+                ),
+                new(
                     "GuardBot1",
                     new ModelMetadata("GuardBot1",
                         recolors: new List<string>()
@@ -2347,20 +2352,20 @@ namespace MphRead
                         },
                         animationPath: @"models\GuardBot01_Anim.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "GuardBot2_lod0",
                     new ModelMetadata("GuardBot2_lod0",
                         remove: "_lod0",
                         animationPath: @"models\GuardBot02_Anim.bin")
-                },
-                {
+                ),
+                new(
                     "Guardian_Dead",
                     new ModelMetadata("Guardian_Dead", animation: false)
-                },
+                ),
                 // Note: pal_02-04 are copies of 01 (with the same 3 unused textures/palettes),
                 // and pal_Team01-02 are broken if extracted with the main model's header info.
-                {
+                new(
                     "Guardian_lod0",
                     new ModelMetadata("Guardian_lod0",
                         remove: "_lod0",
@@ -2378,8 +2383,8 @@ namespace MphRead
                         animationPath: @"_archives\Guardian\Guardian_Anim.bin",
                         animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "Guardian_lod1",
                     new ModelMetadata("Guardian_lod1",
                         remove: "_lod1",
@@ -2396,89 +2401,89 @@ namespace MphRead
                         animationPath: @"_archives\Guardian\Guardian_Anim.bin",
                         animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "Guardian_Stasis",
                     new ModelMetadata("Guardian_Stasis")
-                },
-                {
+                ),
+                new(
                     "gunSmoke",
                     new ModelMetadata("gunSmoke", archive: "common")
-                },
-                {
+                ),
+                new(
                     "Ice_Console",
                     new ModelMetadata("Ice_Console",
                         share: @"models\IceEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Ice_Monitor",
                     new ModelMetadata("Ice_Monitor",
                         share: @"models\IceEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Ice_Power",
                     new ModelMetadata("Ice_Power",
                         share: @"models\IceEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Ice_Scanner",
                     new ModelMetadata("Ice_Scanner",
                         share: @"models\IceEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Ice_Switch",
                     new ModelMetadata("Ice_Switch",
                         share: @"models\IceEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "iceShard",
                     new ModelMetadata("iceShard", animation: false, archive: "common")
-                },
-                {
+                ),
+                new(
                     "iceWave",
                     new ModelMetadata("iceWave", archive: "common")
-                },
-                {
+                ),
+                new(
                     "items_base",
                     new ModelMetadata("items_base", animation: false, archive: "common")
-                },
-                {
+                ),
+                new(
                     "JumpPad_Alimbic",
                     new ModelMetadata("JumpPad_Alimbic")
-                },
-                {
+                ),
+                new(
                     "JumpPad_Beam",
                     new ModelMetadata("JumpPad_Beam")
-                },
-                {
+                ),
+                new(
                     "JumpPad_IceStation",
                     new ModelMetadata("JumpPad_IceStation")
-                },
-                {
+                ),
+                new(
                     "JumpPad_Ice",
                     new ModelMetadata("JumpPad_Ice")
-                },
-                {
+                ),
+                new(
                     "JumpPad_Lava",
                     new ModelMetadata("JumpPad_Lava")
-                },
-                {
+                ),
+                new(
                     "JumpPad",
                     new ModelMetadata("JumpPad")
-                },
-                {
+                ),
+                new(
                     "JumpPad_Station",
                     new ModelMetadata("JumpPad_Station")
-                },
-                {
+                ),
+                new(
                     "Kanden_lod0",
                     new ModelMetadata("Kanden_lod0",
                         remove: "_lod0",
@@ -2496,8 +2501,8 @@ namespace MphRead
                         archive: "Kanden",
                         animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "Kanden_lod1",
                     new ModelMetadata("Kanden_lod1",
                         remove: "_lod1",
@@ -2515,8 +2520,8 @@ namespace MphRead
                         texture: true,
                         animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "KandenAlt_lod0",
                     new ModelMetadata("KandenAlt_lod0",
                         remove: "_lod0",
@@ -2534,9 +2539,9 @@ namespace MphRead
                         archive: "Kanden",
                         recolorName: "Kanden",
                         useLightSources: true)
-                },
+                ),
                 // note: confirmed this does not use light sources
-                {
+                new(
                     "KandenAlt_TailBomb",
                     new ModelMetadata("KandenAlt_TailBomb",
                         recolors: new List<string>()
@@ -2552,8 +2557,8 @@ namespace MphRead
                         texture: true,
                         archive: "Kanden",
                         recolorName: "Kanden")
-                },
-                {
+                ),
+                new(
                     "KandenGun",
                     new ModelMetadata("KandenGun",
                         recolors: new List<string>()
@@ -2569,16 +2574,16 @@ namespace MphRead
                         texture: true,
                         archive: "localKanden",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "koth_data_flow",
                     new ModelMetadata("koth_data_flow", animation: false)
-                },
-                {
+                ),
+                new(
                     "koth_terminal",
                     new ModelMetadata("koth_terminal", animation: false)
-                },
-                {
+                ),
+                new(
                     "LavaDemon",
                     new ModelMetadata("LavaDemon",
                         recolors: new List<string>()
@@ -2588,49 +2593,49 @@ namespace MphRead
                         },
                         animation: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Lava_Console",
                     new ModelMetadata("Lava_Console",
                         share: @"models\LavaEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Lava_Monitor",
                     new ModelMetadata("Lava_Monitor",
                         share: @"models\LavaEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Lava_Power",
                     new ModelMetadata("Lava_Power",
                         share: @"models\LavaEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Lava_Scanner",
                     new ModelMetadata("Lava_Scanner",
                         share: @"models\LavaEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Lava_Switch",
                     new ModelMetadata("Lava_Switch",
                         share: @"models\LavaEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "lines",
                     new ModelMetadata("lines", addToAnim: "_Idle", archive: "frontend2d")
-                },
-                {
+                ),
+                new(
                     "MoverTest",
                     new ModelMetadata("MoverTest", @"models\MoverTest_Model.bin", @"models\movertest_Anim.bin", null)
-                },
-                {
+                ),
+                new(
                     "Nox_lod0",
                     new ModelMetadata("Nox_lod0",
                         remove: "_lod0",
@@ -2648,8 +2653,8 @@ namespace MphRead
                         archive: "Nox",
                         animationShare: @"models\NoxSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "Nox_lod1",
                     new ModelMetadata("Nox_lod1",
                         remove: "_lod1",
@@ -2667,8 +2672,8 @@ namespace MphRead
                         texture: true,
                         animationShare: @"models\NoxSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "NoxAlt_lod0",
                     new ModelMetadata("NoxAlt_lod0",
                         remove: "_lod0",
@@ -2686,8 +2691,8 @@ namespace MphRead
                         archive: "Nox",
                         recolorName: "Nox",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "NoxGun",
                     new ModelMetadata("NoxGun",
                         recolors: new List<string>()
@@ -2703,8 +2708,8 @@ namespace MphRead
                         texture: true,
                         archive: "localNox",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "nox_ice",
                     new ModelMetadata("nox_ice",
                         modelPath: @"_archives\common\nox_ice_mdl_Model.bin",
@@ -2717,8 +2722,8 @@ namespace MphRead
                                 texturePath: @"_archives\common\samus_ice_img_Model.bin",
                                 palettePath: @"_archives\common\samus_ice_img_Model.bin")
                         }, useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "octolith_ctf",
                     new ModelMetadata("octolith_ctf",
                         recolors: new List<string>()
@@ -2729,140 +2734,140 @@ namespace MphRead
                         },
                         animation: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Octolith",
                     new ModelMetadata("Octolith")
-                },
-                {
+                ),
+                new(
                     "octolith_simple",
                     new ModelMetadata("octolith_simple", animation: false)
-                },
-                {
+                ),
+                new(
                     "PickUp_AmmoExp",
                     new ModelMetadata("PickUp_AmmoExp", animation: false)
-                },
-                {
+                ),
+                new(
                     "PickUp_EnergyExp",
                     new ModelMetadata("PickUp_EnergyExp")
-                },
-                {
+                ),
+                new(
                     "PickUp_MissileExp",
                     new ModelMetadata("PickUp_MissileExp")
-                },
-                {
+                ),
+                new(
                     "pick_ammo_green",
                     new ModelMetadata("pick_ammo_green", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_ammo_orange",
                     new ModelMetadata("pick_ammo_orange", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_dblDamage",
                     new ModelMetadata("pick_dblDamage", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_deathball",
                     new ModelMetadata("pick_deathball", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_health_A",
                     new ModelMetadata("pick_health_A", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_health_B",
                     new ModelMetadata("pick_health_B", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_health_C",
                     new ModelMetadata("pick_health_C", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_invis",
                     new ModelMetadata("pick_invis", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_wpn_all",
                     new ModelMetadata("pick_wpn_all", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_wpn_electro",
                     new ModelMetadata("pick_wpn_electro", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_wpn_ghostbuster",
                     new ModelMetadata("pick_wpn_ghostbuster", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_wpn_gorea",
                     new ModelMetadata("pick_wpn_gorea", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_wpn_jackhammer",
                     new ModelMetadata("pick_wpn_jackhammer", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_wpn_missile",
                     new ModelMetadata("pick_wpn_missile", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_wpn_mortar",
                     new ModelMetadata("pick_wpn_mortar", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_wpn_shotgun",
                     new ModelMetadata("pick_wpn_shotgun", animation: false)
-                },
-                {
+                ),
+                new(
                     "pick_wpn_snipergun",
                     new ModelMetadata("pick_wpn_snipergun", animation: false)
-                },
-                {
+                ),
+                new(
                     "pillar",
                     new ModelMetadata("pillar", animation: false, collision: true)
-                },
-                {
+                ),
+                new(
                     "pistonmp7",
                     new ModelMetadata("pistonmp7", animation: false, collision: true)
-                },
-                {
+                ),
+                new(
                     "piston_gorealand",
                     new ModelMetadata("piston_gorealand", @"models\piston_gorealand_model.bin", null, @"models\piston_gorealand_collision.bin")
-                },
-                {
+                ),
+                new(
                     "PlantCarnivarous_Branched",
                     new ModelMetadata("PlantCarnivarous_Branched")
-                },
-                {
+                ),
+                new(
                     "PlantCarnivarous_PodLeaves",
                     new ModelMetadata("PlantCarnivarous_PodLeaves")
-                },
-                {
+                ),
+                new(
                     "PlantCarnivarous_Pod",
                     new ModelMetadata("PlantCarnivarous_Pod")
-                },
-                {
+                ),
+                new(
                     "PlantCarnivarous_Vine",
                     new ModelMetadata("PlantCarnivarous_Vine")
-                },
-                {
+                ),
+                new(
                     "platform",
                     new ModelMetadata("platform", animation: false, collision: true)
-                },
-                {
+                ),
+                new(
                     "Platform_Unit4_C1",
                     new ModelMetadata("Platform_Unit4_C1", animation: false, collision: true)
-                },
-                {
+                ),
+                new(
                     "PowerBomb",
                     new ModelMetadata("PowerBomb")
-                },
-                {
+                ),
+                new(
                     "Psychobit_Dead",
                     new ModelMetadata("Psychobit_Dead", animation: false)
-                },
-                {
+                ),
+                new(
                     "PsychoBit",
                     new ModelMetadata("PsychoBit",
                         recolors: new List<string>()
@@ -2875,49 +2880,49 @@ namespace MphRead
                         },
                         animation: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "quads",
                     new ModelMetadata("quads", animation: false)
-                },
-                {
+                ),
+                new(
                     "Ruins_Console",
                     new ModelMetadata("Ruins_Console",
                         share: @"models\RuinsEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Ruins_Monitor",
                     new ModelMetadata("Ruins_Monitor",
                         share: @"models\RuinsEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Ruins_Power",
                     new ModelMetadata("Ruins_Power",
                         share: @"models\RuinsEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Ruins_Scanner",
                     new ModelMetadata("Ruins_Scanner",
                         share: @"models\RuinsEquipTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Ruins_Switch",
                     new ModelMetadata("Ruins_Switch",
                         share: @"models\RuinsEquipTextureShare_img_Model.bin",
                         collision: true,
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "SamusShip",
                     new ModelMetadata("SamusShip", collision: true)
-                },
-                {
+                ),
+                new(
                     "Samus_lod0",
                     new ModelMetadata("Samus_lod0",
                         remove: "_lod0",
@@ -2935,8 +2940,8 @@ namespace MphRead
                         archive: "Samus",
                         animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "Samus_lod1",
                     new ModelMetadata("Samus_lod1",
                         remove: "_lod1",
@@ -2954,8 +2959,8 @@ namespace MphRead
                         texture: true,
                         animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "SamusAlt_lod0",
                     new ModelMetadata("SamusAlt_lod0",
                         remove: "_lod0",
@@ -2972,8 +2977,8 @@ namespace MphRead
                         archive: "Samus",
                         recolorName: "Samus",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "SamusGun",
                     new ModelMetadata("SamusGun",
                         recolors: new List<string>()
@@ -2989,8 +2994,8 @@ namespace MphRead
                         texture: true,
                         archive: "localSamus",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "samus_ice",
                     new ModelMetadata("samus_ice",
                         modelPath: @"_archives\common\samus_ice_mdl_Model.bin",
@@ -3009,8 +3014,8 @@ namespace MphRead
                                 texturePath: @"_archives\common\doubleDamage_img_Model.bin",
                                 palettePath: @"_archives\common\doubleDamage_img_Model.bin")
                         }, useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "SecretSwitch",
                     new ModelMetadata("SecretSwitch",
                         modelPath: @"models\SecretSwitch_Model.bin",
@@ -3048,32 +3053,32 @@ namespace MphRead
                                 texturePath: @"models\SecretSwitch_Model.bin",
                                 palettePath: @"models\SecretSwitch_pal_06_Model.bin")
                         })
-                },
-                {
+                ),
+                new(
                     "shriekbat",
                     new ModelMetadata("shriekbat")
-                },
-                {
+                ),
+                new(
                     "slots",
                     new ModelMetadata("slots", addToAnim: "_Idle", archive: "frontend2d")
-                },
-                {
+                ),
+                new(
                     "smasher",
                     new ModelMetadata("smasher", animation: false, collision: true)
-                },
-                {
+                ),
+                new(
                     "sniperBeam",
                     new ModelMetadata("sniperBeam", archive: "common")
-                },
-                {
+                ),
+                new(
                     "SniperTarget",
                     new ModelMetadata("SniperTarget")
-                },
-                {
+                ),
+                new(
                     "SphinkTick_lod0",
                     new ModelMetadata("SphinkTick_lod0", remove: "_lod0")
-                },
-                {
+                ),
+                new(
                     "Spire_lod0",
                     new ModelMetadata("Spire_lod0",
                         remove: "_lod0",
@@ -3091,8 +3096,8 @@ namespace MphRead
                         archive: "Spire",
                         animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "Spire_lod1",
                     new ModelMetadata("Spire_lod1",
                         remove: "_lod1",
@@ -3110,8 +3115,8 @@ namespace MphRead
                         texture: true,
                         animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "SpireAlt_lod0",
                     new ModelMetadata("SpireAlt_lod0",
                         remove: "_lod0",
@@ -3129,8 +3134,8 @@ namespace MphRead
                         archive: "Spire",
                         recolorName: "Spire",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "SpireGun",
                     new ModelMetadata("SpireGun",
                         recolors: new List<string>()
@@ -3146,19 +3151,19 @@ namespace MphRead
                         texture: true,
                         archive: "localSpire",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "splashRing",
                     new ModelMetadata("splashRing")
-                },
-                {
+                ),
+                new(
                     "Switch",
                     new ModelMetadata("Switch",
                         animation: false,
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.Model)
-                },
-                {
+                ),
+                new(
                     "Sylux_lod0",
                     new ModelMetadata("Sylux_lod0",
                         remove: "_lod0",
@@ -3176,8 +3181,8 @@ namespace MphRead
                         archive: "Sylux",
                         animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "Sylux_lod1",
                     new ModelMetadata("Sylux_lod1",
                         remove: "_lod1",
@@ -3195,8 +3200,8 @@ namespace MphRead
                         texture: true,
                         animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "SyluxAlt_lod0",
                     new ModelMetadata("SyluxAlt_lod0",
                         remove: "_lod0",
@@ -3214,8 +3219,8 @@ namespace MphRead
                         archive: "Sylux",
                         recolorName: "Sylux",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "SyluxGun",
                     new ModelMetadata("SyluxGun",
                         recolors: new List<string>()
@@ -3231,16 +3236,16 @@ namespace MphRead
                         texture: true,
                         archive: "localSylux",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "SyluxShip",
                     new ModelMetadata("SyluxShip", @"models\SyluxShip_Model.bin", @"models\Syluxship_Anim.bin", @"models\SyluxShip_Collision.bin")
-                },
-                {
+                ),
+                new(
                     "SyluxTurret",
                     new ModelMetadata("SyluxTurret")
-                },
-                {
+                ),
+                new(
                     "Teleporter",
                     new ModelMetadata("Teleporter",
                         modelPath: @"models\Teleporter_mdl_Model.bin",
@@ -3285,8 +3290,8 @@ namespace MphRead
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
                                 palettePath: @"models\Teleporter_pal_09_Model.bin")
                         })
-                },
-                {
+                ),
+                new(
                     "TeleporterSmall",
                     new ModelMetadata("TeleporterSmall",
                         modelPath: @"models\TeleporterSmall_mdl_Model.bin",
@@ -3331,22 +3336,22 @@ namespace MphRead
                                 texturePath: @"models\TeleporterTextureShare_img_Model.bin",
                                 palettePath: @"models\Teleporter_pal_09_Model.bin")
                         })
-                },
-                {
+                ),
+                new(
                     "TeleporterMP",
                     new ModelMetadata("TeleporterMP")
-                },
-                {
+                ),
+                new(
                     "Temroid_lod0",
                     new ModelMetadata("Temroid_lod0", remove: "_lod0", animation: false)
-                },
-                {
+                ),
+                new(
                     "ThinDoorLock",
                     new ModelMetadata("ThinDoorLock",
                         share: @"models\AlimbicTextureShare_img_Model.bin",
                         mdlSuffix: MdlSuffix.All)
-                },
-                {
+                ),
+                new(
                     "Trace_lod0",
                     new ModelMetadata("Trace_lod0",
                         remove: "_lod0",
@@ -3364,8 +3369,8 @@ namespace MphRead
                         archive: "Trace",
                         animationShare: @"models\NoxSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "Trace_lod1",
                     new ModelMetadata("Trace_lod1",
                         remove: "_lod1",
@@ -3383,8 +3388,8 @@ namespace MphRead
                         texture: true,
                         animationShare: @"models\NoxSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "TraceAlt_lod0",
                     new ModelMetadata("TraceAlt_lod0",
                         remove: "_lod0",
@@ -3402,8 +3407,8 @@ namespace MphRead
                         archive: "Trace",
                         recolorName: "Trace",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "TraceGun",
                     new ModelMetadata("TraceGun",
                         recolors: new List<string>()
@@ -3419,132 +3424,132 @@ namespace MphRead
                         texture: true,
                         archive: "localTrace",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "trail",
                     new ModelMetadata("trail", animation: false, archive: "common")
-                },
-                {
+                ),
+                new(
                     "unit1_land_plat1",
                     new ModelMetadata("unit1_land_plat1", @"models\unit1_land_plat1_model.bin", null, @"models\unit1_land_plat1_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit1_land_plat2",
                     new ModelMetadata("unit1_land_plat2", @"models\unit1_land_plat2_model.bin", null, @"models\unit1_land_plat2_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit1_land_plat3",
                     new ModelMetadata("unit1_land_plat3", @"models\unit1_land_plat3_model.bin", null, @"models\unit1_land_plat3_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit1_land_plat4",
                     new ModelMetadata("unit1_land_plat4", @"models\unit1_land_plat4_model.bin", null, @"models\unit1_land_plat4_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit1_land_plat5",
                     new ModelMetadata("unit1_land_plat5", @"models\unit1_land_plat5_model.bin", null, @"models\unit1_land_plat5_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit1_mover1",
                     new ModelMetadata("unit1_mover1", @"models\unit1_mover1_model.bin", @"models\unit1_mover1_anim.bin", @"models\unit1_mover1_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit1_mover2",
                     new ModelMetadata("unit1_mover2", @"models\unit1_mover2_model.bin", null, @"models\unit1_mover2_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit2_c1_mover",
                     new ModelMetadata("unit2_c1_mover", @"models\unit2_c1_mover_Model.bin", null, @"models\unit2_c1_mover_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit2_c4_plat",
                     new ModelMetadata("unit2_c4_plat", @"models\unit2_c4_plat_model.bin", null, @"models\unit2_c4_plat_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit2_land_elev",
                     new ModelMetadata("unit2_land_elev", @"models\unit2_land_elev_model.bin", null, @"models\unit2_land_elev_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit2_mover1",
                     new ModelMetadata("unit2_mover1", @"models\unit2_mover1_model.bin", null, @"models\unit2_mover1_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit3_brain",
                     new ModelMetadata("unit3_brain", @"models\unit3_brain_Model.bin", @"models\Unit3_brain_Anim.bin", @"models\unit3_brain_Collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit3_jar",
                     new ModelMetadata("unit3_jar")
-                },
-                {
+                ),
+                new(
                     "unit3_jartop",
                     new ModelMetadata("unit3_jartop", @"models\unit3_jartop_model.bin", @"models\unit3_jartop_anim.bin", null)
-                },
-                {
+                ),
+                new(
                     "unit3_mover1",
                     new ModelMetadata("unit3_mover1", @"models\unit3_mover1_model.bin", null, @"models\unit3_mover1_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit3_mover2",
                     new ModelMetadata("unit3_mover2", collision: true)
-                },
-                {
+                ),
+                new(
                     "unit3_pipe1",
                     new ModelMetadata("unit3_pipe1", collision: true)
-                },
-                {
+                ),
+                new(
                     "unit3_pipe2",
                     new ModelMetadata("unit3_pipe2", collision: true)
-                },
-                {
+                ),
+                new(
                     "Unit3_platform1",
                     new ModelMetadata("Unit3_platform1", @"models\Unit3_platform1_Model.bin", @"models\unit3_platform1_Anim.bin", @"models\unit3_platform1_Collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit3_platform",
                     new ModelMetadata("unit3_platform", animation: false, collision: true)
-                },
-                {
+                ),
+                new(
                     "unit3_platform2",
                     new ModelMetadata("unit3_platform2", @"models\unit3_platform2_model.bin", null, @"models\unit3_platform2_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit4_mover1",
                     new ModelMetadata("unit4_mover1", collision: true)
-                },
-                {
+                ),
+                new(
                     "unit4_mover2",
                     new ModelMetadata("unit4_mover2", @"models\unit4_mover2_model.bin", @"models\unit4_mover2_anim.bin", @"models\unit4_mover2_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit4_mover3",
                     new ModelMetadata("unit4_mover3", @"models\unit4_mover3_model.bin", null, @"models\unit4_mover3_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit4_mover4",
                     new ModelMetadata("unit4_mover4", @"models\unit4_mover4_model.bin", null, @"models\unit4_mover4_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit4_platform1",
                     new ModelMetadata("unit4_platform1", @"models\unit4_platform1_model.bin", null, @"models\unit4_platform1_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit4_tp1_artifact_wo",
                     new ModelMetadata("unit4_tp1_artifact_wo", @"models\unit4_tp1_artifact_wo_model.bin", null, @"models\unit4_tp1_artifact_wo_collision.bin")
-                },
-                {
+                ),
+                new(
                     "unit4_tp2_artifact_wo",
                     new ModelMetadata("unit4_tp2_artifact_wo", animation: false, collision: true)
-                },
-                {
+                ),
+                new(
                     "WallSwitch",
                     new ModelMetadata("WallSwitch")
-                },
-                {
+                ),
+                new(
                     "warwasp_lod0",
                     new ModelMetadata("warwasp_lod0", @"models\warwasp_lod0_Model.bin", @"models\warWasp_Anim.bin", null)
-                },
-                {
+                ),
+                new(
                     "Weavel_lod0",
                     new ModelMetadata("Weavel_lod0",
                         remove: "_lod0",
@@ -3562,8 +3567,8 @@ namespace MphRead
                         archive: "Weavel",
                         animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "Weavel_lod1",
                     new ModelMetadata("Weavel_lod1",
                         remove: "_lod1",
@@ -3581,8 +3586,8 @@ namespace MphRead
                         texture: true,
                         animationShare: @"models\SamusSharedAnim_Anim.bin",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "WeavelAlt_lod0",
                     new ModelMetadata("WeavelAlt_lod0",
                         remove: "_lod0",
@@ -3600,8 +3605,8 @@ namespace MphRead
                         archive: "Weavel",
                         recolorName: "Weavel",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "WeavelAlt_Turret_lod0",
                     new ModelMetadata("WeavelAlt_Turret_lod0",
                         remove: "_lod0",
@@ -3619,8 +3624,8 @@ namespace MphRead
                         archive: "Weavel",
                         recolorName: "Weavel",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "WeavelGun",
                     new ModelMetadata("WeavelGun",
                         recolors: new List<string>()
@@ -3636,191 +3641,191 @@ namespace MphRead
                         texture: true,
                         archive: "localWeavel",
                         useLightSources: true)
-                },
-                {
+                ),
+                new(
                     "zoomer",
                     new ModelMetadata("zoomer")
-                },
+                ),
                 // effectsBase
-                {
+                new(
                     "deathParticle",
                     new ModelMetadata("deathParticle", animation: false, texture: true, archive: "effectsBase")
-                },
-                {
+                ),
+                new(
                     "geo1",
                     new ModelMetadata("geo1", animation: false, texture: true, archive: "effectsBase")
-                },
-                {
+                ),
+                new(
                     "particles",
                     new ModelMetadata("particles", animation: false, texture: true, archive: "effectsBase")
-                },
-                {
+                ),
+                new(
                     "particles2",
                     new ModelMetadata("particles2", animation: false, texture: true, archive: "effectsBase")
-                },
-                {
+                ),
+                new(
                     "TearParticle",
                     new ModelMetadata("TearParticle", animation: false, texture: true)
-                }
-            };
+                )
+            ]);
 
-        public static readonly IReadOnlyDictionary<string, ModelMetadata> FirstHuntModels
-            = new Dictionary<string, ModelMetadata>()
-            {
-                {
+        public static readonly ImmutableDictionary<string, ModelMetadata> FirstHuntModels
+            = ImmutableDictionary.CreateRange<string, ModelMetadata>(
+            [
+                new(
                     "ballDeath",
                     new ModelMetadata("ballDeath", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "balljump",
                     new ModelMetadata("balljump", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "balljump_ray",
                     new ModelMetadata("balljump_ray", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "bomb",
                     new ModelMetadata("bomb", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "bombLite",
                     new ModelMetadata("bombLite", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "bombStart",
                     new ModelMetadata("bombStart", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "bombStartLite",
                     new ModelMetadata("bombStartLite", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "bombStartLiter",
                     new ModelMetadata("bombStartLiter", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "dashEffect",
                     new ModelMetadata("dashEffect", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "door",
                     new ModelMetadata("door", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "door2",
                     new ModelMetadata("door2", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "door2_holo",
                     new ModelMetadata("door2_holo", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "effWaspDeath",
                     new ModelMetadata("effWaspDeath", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "furlEffect",
                     new ModelMetadata("furlEffect", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "fuzzball",
                     new ModelMetadata("fuzzball", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "genericMover",
                     new ModelMetadata("genericMover", @"models\genericMover_Model.bin", @"models\genericmover_Anim.bin", @"models\genericMover_Collision.bin")
-                },
-                {
+                ),
+                new(
                     "gun_idle",
                     new ModelMetadata("gun_idle", remove: "_idle", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "gunEffElectroCharge",
                     new ModelMetadata("gunEffElectroCharge", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "gunEffMissileCharge",
                     new ModelMetadata("gunEffMissileCharge", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "gunLobFlash",
                     new ModelMetadata("gunLobFlash", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "gunMuzzleFlash",
                     new ModelMetadata("gunMuzzleFlash", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "gunSmoke",
                     new ModelMetadata("gunSmoke", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     // unused
                     "jumpad_ray",
                     new ModelMetadata("jumpad_ray", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "jumppad_base",
                     new ModelMetadata("jumppad_base", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "jumppad_ray",
                     new ModelMetadata("jumppad_ray", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "lightningCol",
                     new ModelMetadata("lightningCol", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "lightningColLite",
                     new ModelMetadata("lightningColLite", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "lightningColLiter",
                     new ModelMetadata("lightningColLiter", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "lightningColLiterER",
                     new ModelMetadata("lightningColLiterER", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "lightningLob",
                     new ModelMetadata("lightningLob", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "metroid",
                     new ModelMetadata("metroid", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "Metroid_Lo",
                     new ModelMetadata("Metroid_Lo", @"models\Metroid_Lo_Model.bin", @"models\metroid_Anim.bin", null)
-                },
-                {
+                ),
+                new(
                     "missileCollide",
                     new ModelMetadata("missileCollide", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "missileColLite",
                     new ModelMetadata("missileColLite", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "missileColLiter",
                     new ModelMetadata("missileColLiter", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "missileColLiterER",
                     new ModelMetadata("missileColLiterER", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "Mochtroid",
                     new ModelMetadata("Mochtroid", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "Mochtroid_Lo",
                     new ModelMetadata("Mochtroid_Lo", remove: "_Lo", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "morphBall",
                     new ModelMetadata("morphBall",
                         recolors: new List<string>()
@@ -3832,64 +3837,64 @@ namespace MphRead
                         },
                         animation: false,
                         firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "morphBall_Blue",
                     new ModelMetadata("morphBall_Blue", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "morphBall_Green",
                     new ModelMetadata("morphBall_Green", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "morphBall_White",
                     new ModelMetadata("morphBall_White", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "pb_charged",
                     new ModelMetadata("pb_charged", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "pb_normal",
                     new ModelMetadata("pb_normal", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "pick_ammo_A",
                     new ModelMetadata("pick_ammo_A", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "pick_ammo_B",
                     new ModelMetadata("pick_ammo_B", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "pick_dblDamage",
                     new ModelMetadata("pick_dblDamage", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "pick_health_A",
                     new ModelMetadata("pick_health_A", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "pick_health_B",
                     new ModelMetadata("pick_health_B", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "pick_morphball",
                     new ModelMetadata("pick_morphball", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "pick_wpn_electro",
                     new ModelMetadata("pick_wpn_electro", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "pick_wpn_missile",
                     new ModelMetadata("pick_wpn_missile", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "platform",
                     new ModelMetadata("platform", animation: false, collision: true, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "samus_hi_yellow",
                     new ModelMetadata("samus_hi_yellow",
                         recolors: new List<string>()
@@ -3902,8 +3907,8 @@ namespace MphRead
                         animationPath: @"models\samus_Anim.bin",
                         remove: "_hi_yellow",
                         firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "samus_low_yellow",
                     new ModelMetadata("samus_low_yellow",
                         recolors: new List<string>()
@@ -3916,35 +3921,35 @@ namespace MphRead
                         animationPath: @"models\samus_Anim.bin",
                         remove: "_low_yellow",
                         firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "samus_hi_blue",
                     new ModelMetadata("samus_hi_blue", remove: "_hi_blue", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "samus_hi_green",
                     new ModelMetadata("samus_hi_green", remove: "_hi_green", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "samus_hi_white",
                     new ModelMetadata("samus_hi_white", remove: "_hi_white", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "spawnEffect",
                     new ModelMetadata("spawnEffect", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "trail",
                     new ModelMetadata("trail", animation: false, firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "warWasp",
                     new ModelMetadata("warWasp", firstHunt: true)
-                },
-                {
+                ),
+                new(
                     "zoomer",
                     new ModelMetadata("zoomer", firstHunt: true)
-                }
-            };
+                )
+            ]);
     }
 }

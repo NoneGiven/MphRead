@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -970,15 +971,16 @@ namespace MphRead.Hud
                 "_archives/localWeavel/rad_lights.bin",
                 "_archives/localWeavel/rad_ammobar.bin"
             };
-            IReadOnlyDictionary<string, IReadOnlyList<int>> exportPalettes = new Dictionary<string, IReadOnlyList<int>>() {
-                { "hud_etank", new List<int>() { 0, 1, 2 } },
-                { "hud_ammobar", new List<int>() { 0, 1, 2 } },
-                { "hud_energybar", new List<int>() { 0, 1, 2 } },
-                { "hud_energybar2", new List<int>() { 0, 1, 2 } },
-                { "hud_msgBox", new List<int>() { 0, 2, 3 } },
-                { "message_spacer", new List<int>() { 0, 2, 3 } },
-                { "rad_wepsel", new List<int>() { 0, 1 } }
-            };
+            ImmutableDictionary<string, IReadOnlyList<int>> exportPalettes = ImmutableDictionary.CreateRange<string, IReadOnlyList<int>>(
+            [
+                new("hud_etank", new List<int>() { 0, 1, 2 }),
+                new("hud_ammobar", new List<int>() { 0, 1, 2 }),
+                new("hud_energybar", new List<int>() { 0, 1, 2 }),
+                new("hud_energybar2", new List<int>() { 0, 1, 2 }),
+                new("hud_msgBox", new List<int>() { 0, 2, 3 }),
+                new("message_spacer", new List<int>() { 0, 2, 3 }),
+                new("rad_wepsel", new List<int>() { 0, 1 })
+            ]);
             if (filename != null)
             {
                 files.Clear();

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using MphRead.Entities;
@@ -405,54 +406,54 @@ namespace MphRead
 
         public T Current => _node == null ? throw new InvalidOperationException() : (T)_node.Value;
 
-        private static readonly IReadOnlyDictionary<Type, EntityType> _typeMap = new Dictionary<Type, EntityType>
-        {
-            { typeof(PlatformEntity), EntityType.Platform },
-            { typeof(ObjectEntity), EntityType.Object },
-            { typeof(PlayerSpawnEntity), EntityType.PlayerSpawn },
-            { typeof(DoorEntity), EntityType.Door },
-            { typeof(ItemSpawnEntity), EntityType.ItemSpawn },
-            { typeof(ItemInstanceEntity), EntityType.ItemInstance },
-            { typeof(EnemySpawnEntity), EntityType.EnemySpawn },
-            { typeof(TriggerVolumeEntity), EntityType.TriggerVolume },
-            { typeof(AreaVolumeEntity), EntityType.AreaVolume },
-            { typeof(JumpPadEntity), EntityType.JumpPad },
-            { typeof(PointModuleEntity), EntityType.PointModule },
-            { typeof(MorphCameraEntity), EntityType.MorphCamera },
-            { typeof(OctolithFlagEntity), EntityType.OctolithFlag },
-            { typeof(FlagBaseEntity), EntityType.FlagBase },
-            { typeof(TeleporterEntity), EntityType.Teleporter },
-            { typeof(NodeDefenseEntity), EntityType.NodeDefense },
-            { typeof(LightSourceEntity), EntityType.LightSource },
-            { typeof(ArtifactEntity), EntityType.Artifact },
-            { typeof(CamSeqEntity), EntityType.CameraSequence },
-            { typeof(ForceFieldEntity), EntityType.ForceField },
-            { typeof(BeamEffectEntity), EntityType.BeamEffect },
-            { typeof(BombEntity), EntityType.Bomb },
-            { typeof(EnemyInstanceEntity), EntityType.EnemyInstance },
-            { typeof(HalfturretEntity), EntityType.Halfturret },
-            { typeof(PlayerEntity), EntityType.Player },
-            { typeof(BeamProjectileEntity), EntityType.BeamProjectile },
+        private static readonly ImmutableDictionary<Type, EntityType> _typeMap = ImmutableDictionary.CreateRange<Type, EntityType>(
+        [
+            new(typeof(PlatformEntity), EntityType.Platform),
+            new(typeof(ObjectEntity), EntityType.Object),
+            new(typeof(PlayerSpawnEntity), EntityType.PlayerSpawn),
+            new(typeof(DoorEntity), EntityType.Door),
+            new(typeof(ItemSpawnEntity), EntityType.ItemSpawn),
+            new(typeof(ItemInstanceEntity), EntityType.ItemInstance),
+            new(typeof(EnemySpawnEntity), EntityType.EnemySpawn),
+            new(typeof(TriggerVolumeEntity), EntityType.TriggerVolume),
+            new(typeof(AreaVolumeEntity), EntityType.AreaVolume),
+            new(typeof(JumpPadEntity), EntityType.JumpPad),
+            new(typeof(PointModuleEntity), EntityType.PointModule),
+            new(typeof(MorphCameraEntity), EntityType.MorphCamera),
+            new(typeof(OctolithFlagEntity), EntityType.OctolithFlag),
+            new(typeof(FlagBaseEntity), EntityType.FlagBase),
+            new(typeof(TeleporterEntity), EntityType.Teleporter),
+            new(typeof(NodeDefenseEntity), EntityType.NodeDefense),
+            new(typeof(LightSourceEntity), EntityType.LightSource),
+            new(typeof(ArtifactEntity), EntityType.Artifact),
+            new(typeof(CamSeqEntity), EntityType.CameraSequence),
+            new(typeof(ForceFieldEntity), EntityType.ForceField),
+            new(typeof(BeamEffectEntity), EntityType.BeamEffect),
+            new(typeof(BombEntity), EntityType.Bomb),
+            new(typeof(EnemyInstanceEntity), EntityType.EnemyInstance),
+            new(typeof(HalfturretEntity), EntityType.Halfturret),
+            new(typeof(PlayerEntity), EntityType.Player),
+            new(typeof(BeamProjectileEntity), EntityType.BeamProjectile),
             // todo: revisit for First Hunt entity types
-            //{ typeof(), EntityType.FhUnknown0 },
-            //{ typeof(), EntityType.FhPlayerSpawn },
-            //{ typeof(), EntityType.FhUnknown2 },
-            { typeof(FhDoorEntity), EntityType.FhDoor },
-            { typeof(FhItemSpawnEntity), EntityType.FhItemSpawn },
-            //{ typeof(), EntityType.FhItemInstance },
-            { typeof(FhEnemySpawnEntity), EntityType.FhEnemySpawn },
-            //{ typeof(), EntityType.FhEffectInstance },
-            //{ typeof(), EntityType.FhBomb },
-            { typeof(FhTriggerVolumeEntity), EntityType.FhTriggerVolume },
-            { typeof(FhAreaVolumeEntity), EntityType.FhAreaVolume },
-            { typeof(FhPlatformEntity), EntityType.FhPlatform },
-            { typeof(FhJumpPadEntity), EntityType.FhJumpPad },
-            //{ typeof(), EntityType.FhPointModule },
-            { typeof(FhMorphCameraEntity), EntityType.FhMorphCamera }
-            //{ typeof(), EntityType.FhEnemyInstance },
-            //{ typeof(), EntityType.FhPlayer },
-            //{ typeof(), EntityType.FhBeamProjectile }
-        };
+            //new(typeof(), EntityType.FhUnknown0),
+            //new(typeof(), EntityType.FhPlayerSpawn),
+            //new(typeof(), EntityType.FhUnknown2),
+            new(typeof(FhDoorEntity), EntityType.FhDoor),
+            new(typeof(FhItemSpawnEntity), EntityType.FhItemSpawn),
+            //new(typeof(), EntityType.FhItemInstance),
+            new(typeof(FhEnemySpawnEntity), EntityType.FhEnemySpawn),
+            //new(typeof(), EntityType.FhEffectInstance),
+            //new(typeof(), EntityType.FhBomb),
+            new(typeof(FhTriggerVolumeEntity), EntityType.FhTriggerVolume),
+            new(typeof(FhAreaVolumeEntity), EntityType.FhAreaVolume),
+            new(typeof(FhPlatformEntity), EntityType.FhPlatform),
+            new(typeof(FhJumpPadEntity), EntityType.FhJumpPad),
+            //new(typeof(), EntityType.FhPointModule),
+            new(typeof(FhMorphCameraEntity), EntityType.FhMorphCamera)
+            //new(typeof(), EntityType.FhEnemyInstance),
+            //new(typeof(), EntityType.FhPlayer),
+            //new(typeof(), EntityType.FhBeamProjectile)
+        ]);
 
         public LinkedListEnumeratorSpecialized(LinkedListNode<EntityBase>? first)
         {

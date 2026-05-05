@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats.Collision;
@@ -324,17 +325,18 @@ namespace MphRead.Entities
             }
         }
 
-        private static readonly IReadOnlyDictionary<int, EffectSfxInfo> _sfxInfo = new Dictionary<int, EffectSfxInfo>()
-        {
-            { 10, new EffectSfxInfo(102 | 0x4000, 0x1B, environment: false) },
-            { 88, new EffectSfxInfo(4, 0xE3) },
-            { 89, new EffectSfxInfo(57 | 0x4000, 0x1B, environment: false) },
-            { 97, new EffectSfxInfo(57 | 0x4000, 0x1B, environment: false) },
-            { 106, new EffectSfxInfo(1, 0x1F) },
-            { 127, new EffectSfxInfo(7, 0xA4) },
-            { 186, new EffectSfxInfo(3, 0x8F) },
-            { 199, new EffectSfxInfo(2, 0x9C) }
-        };
+        private static readonly ImmutableDictionary<int, EffectSfxInfo> _sfxInfo =
+            ImmutableDictionary.CreateRange<int, EffectSfxInfo>(
+        [
+            new(10, new EffectSfxInfo(102 | 0x4000, 0x1B, environment: false)),
+            new(88, new EffectSfxInfo(4, 0xE3)),
+            new(89, new EffectSfxInfo(57 | 0x4000, 0x1B, environment: false)),
+            new(97, new EffectSfxInfo(57 | 0x4000, 0x1B, environment: false)),
+            new(106, new EffectSfxInfo(1, 0x1F)),
+            new(127, new EffectSfxInfo(7, 0xA4)),
+            new(186, new EffectSfxInfo(3, 0x8F)),
+            new(199, new EffectSfxInfo(2, 0x9C))
+        ]);
 
         public override bool Process()
         {
