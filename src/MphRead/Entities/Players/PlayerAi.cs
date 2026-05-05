@@ -2922,7 +2922,13 @@ namespace MphRead.Entities
 
             private void Func2_213EA10(AiContext context)
             {
-                // skhere
+                if (!_player.Flags1.TestFlag(PlayerFlags1.AltForm))
+                {
+                    if (_touchButtons.Morph.FramesUp > 10 * 2) // todo: FPS stuff
+                    {
+                        _touchButtons.Morph.IsDown = true;
+                    }
+                }
             }
 
             // process counterpart to Func4_21462DC
@@ -3446,8 +3452,7 @@ namespace MphRead.Entities
 
             private int Func3_213D87C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return 1;
             }
 
             private int Func3_213D83C(AiContext context, AiPersonalityData5 param)
@@ -3857,13 +3862,13 @@ namespace MphRead.Entities
 
             private int Func3_213CA58(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Field118 > param.Param1 ? 1 : 0; // sktodo-ai: FPS stuff?
             }
 
             private int Func3_213CA2C(AiContext context, AiPersonalityData5 param)
             {
-                return _executionTree[context.Depth + 1].CallCount > (param.Param1 * 2) ? 1 : 0; // todo: FPS stuff
+                // sktodo: does this call count really need to be multiplied by 2? // todo: FPS stuff
+                return _executionTree[context.Depth + 1].CallCount > (param.Param1 * 2) ? 1 : 0;
             }
 
             private int Func3_213CA00(AiContext context, AiPersonalityData5 param)
@@ -3883,20 +3888,38 @@ namespace MphRead.Entities
 
             private int Func3_213C89C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                int hits = 0;
+                foreach (EntityBase entity in _scene.Entities)
+                {
+                    if (entity.Type != EntityType.Player)
+                    {
+                        continue;
+                    }
+                    var other = (PlayerEntity)entity;
+                    float distSqr = Vector3.DistanceSquared(other.Position, _player.Position);
+                    bool hasAggro = false;
+                    if (distSqr >= 7 * 7)
+                    {
+                        hasAggro = AggroFunc214857C(6, 1, 2, null, other);
+                    }
+                    if (other != _player && other.TeamIndex == _player.TeamIndex && other.Health != 0
+                        && (distSqr < 7 * 7 || hasAggro))
+                    {
+                        hits += _slotHits[other.SlotIndex];
+                    }
+                }
+                return hits;
             }
 
             private int Func3_213C88C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _slotDamage[_player.SlotIndex];
             }
 
             private int Func3_213C764(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                // this is duplicated code in-game
+                return Func3_213C89C(context, param);
             }
 
             private int Func3_213C75C(AiContext context, AiPersonalityData5 param)
@@ -3927,14 +3950,17 @@ namespace MphRead.Entities
 
             private int Func3_213C64C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                if (_player.Hunter == Hunter.Sylux)
+                {
+                    return 100000 * _slotDamage[_player.SlotIndex] / 25;
+                }
                 return 0;
             }
 
             private int Func3_213C600(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                // sktodo: does this call count really need to be multiplied by 2? // todo: FPS stuff
+                return _player.Hunter == Hunter.Sylux && _executionTree[context.Depth + 1].CallCount > (120 * 2) ? 1 : 0;
             }
 
             private int Func3_213C52C(AiContext context, AiPersonalityData5 param)
@@ -3955,16 +3981,40 @@ namespace MphRead.Entities
                 return 0;
             }
 
+            // helper
+            private bool Func3_2139A1C(AiContext contex, Vector3 targetPos, float angleCos, float maxDistSqr)
+            {
+                Vector3 toTarget = targetPos - _player.Position;
+                float distSqr = toTarget.LengthSquared;
+                if (maxDistSqr > 0 && distSqr >= maxDistSqr)
+                {
+                    return false;
+                }
+                toTarget = toTarget.Normalized();
+                float dot = Vector3.Dot(_player.FacingVector, toTarget);
+                return dot > angleCos || dot > 0 && distSqr < 1;
+            }
+
             private int Func3_213C48C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                if (Flags2.TestFlag(AiFlags2.Bit2))
+                {
+                    Debug.Assert(_targetPlayer != null);
+                    _targetPlayer.GetPosition(out Vector3 targetPos);
+                    targetPos = targetPos.AddY(_targetPlayer.Flags1.TestFlag(PlayerFlags1.AltForm)
+                        ? _targetPlayer.Values.AltColYPos
+                        : 0.5f);
+                    if (Func3_2139A1C(context, targetPos, angleCos: 0.5f, maxDistSqr: 15 * 15))
+                    {
+                        return 1;
+                    }
+                }
                 return 0;
             }
 
             private int Func3_213C470(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213C48C(context, param) == 0 ? 1 : 0; // inverted
             }
 
             private int Func3_213C334(AiContext context, AiPersonalityData5 param)
