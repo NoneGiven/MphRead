@@ -84,6 +84,8 @@ namespace MphRead.Entities
             private float _field9C = 0;
 
             private int _weapon1 = 0;
+            private int _weapon2 = 0;
+            private int _findWeaponIndex = 0;
             private int _shotDelay = 0;
 
             public void Reset()
@@ -132,6 +134,7 @@ namespace MphRead.Entities
                 _field9C = 0;
                 _queuedFindEntityAction = AiQueuedEnt.None;
                 _weapon1 = 0;
+                _weapon2 = 0;
                 _shotDelay = 0;
                 for (int i = 0; i < _executionTree.Length; i++)
                 {
@@ -2001,29 +2004,229 @@ namespace MphRead.Entities
             // todo: member names
             #region Funcs1
 
+            // helper
+            private bool CheckBeam(BeamType beam)
+            {
+                WeaponInfo info = Weapons.Current[(int)beam];
+                return _player._ammo[info.AmmoType] >= info.AmmoCost && _player._availableWeapons[beam];
+            }
+
+            // helper
+            private bool CheckCharge(BeamType beam)
+            {
+                WeaponInfo info = Weapons.Current[(int)beam];
+                return info.Flags.TestFlag(WeaponFlags.CanCharge)
+                    && _player._ammo[info.AmmoType] >= info.ChargeCost && _player._availableCharges[beam];
+            }
+
             private void Func1_214A39C()
             {
-                // skhere
+                _weapon1 = 0;
+                Flags4 &= ~AiFlags4.Bit1;
+                if (CheckBeam(BeamType.Magmaul))
+                {
+                    _weapon1 = 6;
+                }
+                else if (CheckBeam(BeamType.Judicator))
+                {
+                    _weapon1 = 5;
+                }
+                else if (CheckBeam(BeamType.Imperialist))
+                {
+                    _weapon1 = 4;
+                }
+                else if (CheckBeam(BeamType.Battlehammer))
+                {
+                    _weapon1 = 3;
+                }
+                else if (CheckBeam(BeamType.VoltDriver))
+                {
+                    _weapon1 = 2;
+                }
+                else if (CheckBeam(BeamType.ShockCoil))
+                {
+                    _weapon1 = 7;
+                }
+                else if (CheckBeam(BeamType.Missile))
+                {
+                    _weapon1 = 1;
+                }
+                if (CheckCharge(GetBeamType(_weapon1)))
+                {
+                    Flags4 |= AiFlags4.Bit1;
+                }
             }
 
             private void Func1_214A098()
             {
-                // skhere
+                // check item spawns for missing affinity weapons
+                BeamType affinityWeapon = Weapons.AffinityWeapons[(int)_player.Hunter];
+                int affinityIndex = GetWeaponIndex(affinityWeapon);
+                int seenBits = 1 | 2;
+                bool sawAffinity = false;
+                int seenCount = 0;
+                Span<int> seenItems = stackalloc int[7];
+                foreach (EntityBase entity in _scene.Entities)
+                {
+                    // todo?: this condition is just for efficiency, but it's probably the wrong value since OC is also checked
+                    // if all affinity weapons and Omega Cannon were on the map, filling bits 0-7 would prevent finding OC (bit 8),
+                    // and finding OC will prevent the efficiency check condition from being hit
+                    if (seenBits == 255)
+                    {
+                        break;
+                    }
+                    if (entity.Type != EntityType.ItemSpawn)
+                    {
+                        continue;
+                    }
+                    var spawn = (ItemSpawnEntity)entity;
+                    ItemType type = spawn.Data.ItemType;
+                    if (type == ItemType.AffinityWeapon)
+                    {
+                        // todo: bugfix: this should load the pickup type, but loads the beam ID instead
+                        // Samus    - HealthBig
+                        // Kanden   - HealthSmall
+                        // Trace    - EnergyTank
+                        // Sylux    - Battlehammer
+                        // Noxus    - VoltDriver
+                        // Spire    - MissileExpansion
+                        // Weavel   - DoubleDamage
+                        // Guardian - HealthMedium
+                        // only Sylux's and Noxus's options are covered below at all, and they aren't their actual affinity
+                        type = (ItemType)affinityWeapon;
+                    }
+                    int index = type switch
+                    {
+                        ItemType.VoltDriver => 2,
+                        ItemType.Battlehammer => 3,
+                        ItemType.Imperialist => 4,
+                        ItemType.Judicator => 5,
+                        ItemType.Magmaul => 6,
+                        ItemType.ShockCoil => 7,
+                        ItemType.OmegaCannon => 8,
+                        _ => 0
+                    };
+                    if ((seenBits & (1 << index)) == 0)
+                    {
+                        seenBits |= (1 << index);
+                        if (!_player.AvailableWeapons[GetBeamType(index)])
+                        {
+                            seenItems[seenCount++] = index;
+                            if (index == affinityIndex)
+                            {
+                                sawAffinity = true;
+                            }
+                        }
+                    }
+                }
+                int randIdx = (int)Rng.GetRandomInt2(seenCount * (sawAffinity ? 2 : 1));
+                if (randIdx < seenCount)
+                {
+                    _findWeaponIndex = seenItems[randIdx];
+                }
+                else
+                {
+                    _findWeaponIndex = affinityIndex;
+                }
             }
 
             private void Func1_2149D3C()
             {
-                // skhere
+                // check beams to switch to
+                if (CheckBeam(BeamType.OmegaCannon))
+                {
+                    _weapon2 = 8;
+                    return;
+                }
+                int affinityIndex = 0;
+                int candidateCount = 0;
+                Span<int> candidates = stackalloc int[8];
+                bool includeMissile = Weapons.AffinityWeapons[(int)_player.Hunter] == BeamType.Missile;
+                for (int i = includeMissile ? 1 : 2; i < 9; i++)
+                {
+                    BeamType beam = GetBeamType(i);
+                    if (CheckBeam(beam))
+                    {
+                        candidates[candidateCount++] = i;
+                        if (Weapons.AffinityWeapons[(int)_player.Hunter] == beam)
+                        {
+                            affinityIndex = i;
+                        }
+                    }
+                }
+                if (candidateCount == 1)
+                {
+                    candidates[0] = 1; // Missile
+                    candidates[1] = 0; // Power Beam
+                    candidateCount = 2;
+                }
+                else if (candidateCount == 0)
+                {
+                    candidates[0] = 0; // Power Beam
+                    candidateCount = 1;
+                    if (CheckBeam(BeamType.Missile))
+                    {
+                        candidates[1] = 1; // Missle
+                        candidateCount = 2;
+                    }
+                }
+                // if the affinity weapon is available, give a 50% chance to switch to that instead of using the random candidates
+                int randIdx = (int)Rng.GetRandomInt2(candidateCount * (affinityIndex != 0 ? 2 : 1));
+                int noChargeChanceOneIn;
+                if (randIdx < candidateCount)
+                {
+                    _weapon2 = candidates[randIdx];
+                    noChargeChanceOneIn = 2;
+                }
+                else
+                {
+                    _weapon2 = affinityIndex;
+                    noChargeChanceOneIn = 4;
+                }
+                if (CheckCharge(GetBeamType(_weapon2)) && _player.BotLevel > 0)
+                {
+                    if (Rng.GetRandomInt2(noChargeChanceOneIn) == 0)
+                    {
+                        Flags4 &= ~AiFlags4.Bit1;
+                    }
+                    else
+                    {
+                        Flags4 |= AiFlags4.Bit1;
+                    }
+                }
+            }
+
+            // helper
+            private static BeamType GetBeamType(int weapon)
+            {
+                return weapon switch
+                {
+                    1 => BeamType.Missile,
+                    2 => BeamType.VoltDriver,
+                    _ => (BeamType)weapon
+                };
+            }
+
+            // helper
+            private static int GetWeaponIndex(BeamType beam)
+            {
+                return beam switch
+                {
+                    BeamType.Missile => 1,
+                    BeamType.VoltDriver => 2,
+                    _ => (int)beam
+                };
             }
 
             private void Func1_2149C98()
             {
-                // skhere
+                _weapon1 = CheckBeam(GetBeamType(_weapon2)) ? _weapon2 : 0;
             }
 
             private void Func1_2149C80()
             {
-                // skhere
+                _weapon1 = 0;
+                Flags4 &= ~AiFlags4.Bit1;
             }
 
             private void Func1_2149C68()
@@ -2040,44 +2243,52 @@ namespace MphRead.Entities
 
             private void Func1_2149C38()
             {
-                // skhere
+                _weapon1 = 5;
+                Flags4 &= ~AiFlags4.Bit1;
             }
 
             private void Func1_2149C20()
             {
-                // skhere
+                _weapon1 = 5;
+                Flags4 |= AiFlags4.Bit1;
             }
 
             private void Func1_2149C08()
             {
-                // skhere
+                _weapon1 = 4;
+                Flags4 &= ~AiFlags4.Bit1;
             }
 
             private void Func1_2149BF0()
             {
-                // skhere
+                _weapon1 = 6;
+                Flags4 &= ~AiFlags4.Bit1;
             }
 
             private void Func1_2149BD8()
             {
-                // skhere
+                _weapon1 = 6;
+                Flags4 |= AiFlags4.Bit1;
             }
 
             private void Func1_2149BC0()
             {
-                // skhere
+                _weapon1 = 7;
+                Flags4 &= ~AiFlags4.Bit1;
             }
 
             private void Func1_2149BA8()
             {
-                // skhere
+                _weapon1 = 3;
+                Flags4 &= ~AiFlags4.Bit1;
             }
 
             private void Func1_2149B98()
             {
-                // skhere
+                Flags4 |= AiFlags4.Bit1;
             }
 
+            // helper
             private bool CanChargeWeapon()
             {
                 WeaponInfo weapon = _player.EquipWeapon;
@@ -2102,107 +2313,348 @@ namespace MphRead.Entities
 
             private void Func1_2149AC8()
             {
-                // skhere
+                Flags4 |= AiFlags4.Bit2;
             }
 
             private void Func1_2149ABC()
             {
-                // skhere
+                _octolithFlagCC = _octolithFlagD4;
             }
 
             private void Func1_2149AB0()
             {
-                // skhere
+                _octolithFlagCC = _octolithFlagDC;
             }
 
             private void Func1_2149AA4()
             {
-                // skhere
+                _flagBaseD0 = _flagBaseD8;
             }
 
             private void Func1_2149A98()
             {
-                // skhere
+                _flagBaseD0 = _flagBaseE0;
             }
 
             private void Func1_2149A64()
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type54);
+                UpdateSeekItem(_entityRefs.Field54);
             }
 
+
+            // like Func1_21495A4, except it updates the seek item instead of setting _itemSpawnC4
+            // like Func3_213C0D0, except it updates the seek item instead of returning a boolean for its presence
             private void Func1_2149824()
             {
-                // skhere
+                if (_findWeaponIndex == 1)
+                {
+                    if (_player._availableWeapons[BeamType.Missile])
+                    {
+                        FindEntityRef(AiEntRefType.Type57);
+                        UpdateSeekItem(_entityRefs.Field57);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type56);
+                        UpdateSeekItem(_entityRefs.Field56);
+                    }
+                }
+                else if (_findWeaponIndex == 2)
+                {
+                    if (_player._availableWeapons[BeamType.VoltDriver])
+                    {
+                        FindEntityRef(AiEntRefType.Type59);
+                        UpdateSeekItem(_entityRefs.Field59);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type58);
+                        UpdateSeekItem(_entityRefs.Field58);
+                    }
+                }
+                else if (_findWeaponIndex == 3)
+                {
+                    if (_player._availableWeapons[BeamType.Battlehammer])
+                    {
+                        FindEntityRef(AiEntRefType.Type60);
+                        UpdateSeekItem(_entityRefs.Field60);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type61);
+                        UpdateSeekItem(_entityRefs.Field61);
+                    }
+                }
+                else if (_findWeaponIndex == 4)
+                {
+                    if (_player._availableWeapons[BeamType.Imperialist])
+                    {
+                        FindEntityRef(AiEntRefType.Type63);
+                        UpdateSeekItem(_entityRefs.Field63);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type62);
+                        UpdateSeekItem(_entityRefs.Field62);
+                    }
+                }
+                else if (_findWeaponIndex == 5)
+                {
+                    if (_player._availableWeapons[BeamType.Judicator])
+                    {
+                        FindEntityRef(AiEntRefType.Type65);
+                        UpdateSeekItem(_entityRefs.Field65);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type64);
+                        UpdateSeekItem(_entityRefs.Field64);
+                    }
+                }
+                else if (_findWeaponIndex == 6)
+                {
+                    if (_player._availableWeapons[BeamType.Magmaul])
+                    {
+                        FindEntityRef(AiEntRefType.Type67);
+                        UpdateSeekItem(_entityRefs.Field67);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type66);
+                        UpdateSeekItem(_entityRefs.Field66);
+                    }
+                }
+                else if (_findWeaponIndex == 7)
+                {
+                    if (_player._availableWeapons[BeamType.ShockCoil])
+                    {
+                        FindEntityRef(AiEntRefType.Type69);
+                        UpdateSeekItem(_entityRefs.Field69);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type68);
+                        UpdateSeekItem(_entityRefs.Field68);
+                    }
+                }
+                else if (_findWeaponIndex == 8)
+                {
+                    if (_player._availableWeapons[BeamType.OmegaCannon])
+                    {
+                        FindEntityRef(AiEntRefType.Type71);
+                        UpdateSeekItem(_entityRefs.Field71);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type70);
+                        UpdateSeekItem(_entityRefs.Field70);
+                    }
+                }
+                else
+                {
+                    UpdateSeekItem(null);
+                }
             }
 
             private void Func1_21497F0()
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type55);
+                UpdateSeekItem(_entityRefs.Field55);
             }
 
             private void Func1_2149570()
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type56);
+                UpdateSeekItem(_entityRefs.Field56);
             }
 
             private void Func1_21494FC()
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type57);
+                UpdateSeekItem(_entityRefs.Field57);
             }
 
             private void Func1_2149488()
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type58);
+                UpdateSeekItem(_entityRefs.Field58);
             }
 
             private void Func1_2149414()
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type59);
+                UpdateSeekItem(_entityRefs.Field59);
             }
 
             private void Func1_21493A0()
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type72);
+                UpdateSeekItem(_entityRefs.Field72);
             }
 
             private void Func1_214932C()
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type73);
+                UpdateSeekItem(_entityRefs.Field73);
             }
 
+            // like Func1_2149824, except it sets _itemSpawnC4 instead of updating the seek item
             private void Func1_21495A4()
             {
-                // skhere
+                void SetEntity(ItemSpawnEntity? entity)
+                {
+                    _itemSpawnC4 = entity?.Item != null ? entity : null;
+                }
+
+                if (_findWeaponIndex == 1)
+                {
+                    if (_player._availableWeapons[BeamType.Missile])
+                    {
+                        FindEntityRef(AiEntRefType.Type37);
+                        SetEntity(_entityRefs.Field37);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type36);
+                        SetEntity(_entityRefs.Field36);
+                    }
+                }
+                else if (_findWeaponIndex == 2)
+                {
+                    if (_player._availableWeapons[BeamType.VoltDriver])
+                    {
+                        FindEntityRef(AiEntRefType.Type39);
+                        SetEntity(_entityRefs.Field39);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type38);
+                        SetEntity(_entityRefs.Field38);
+                    }
+                }
+                else if (_findWeaponIndex == 3)
+                {
+                    if (_player._availableWeapons[BeamType.Battlehammer])
+                    {
+                        FindEntityRef(AiEntRefType.Type41);
+                        SetEntity(_entityRefs.Field41);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type40);
+                        SetEntity(_entityRefs.Field40);
+                    }
+                }
+                else if (_findWeaponIndex == 4)
+                {
+                    if (_player._availableWeapons[BeamType.Imperialist])
+                    {
+                        FindEntityRef(AiEntRefType.Type43);
+                        SetEntity(_entityRefs.Field43);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type42);
+                        SetEntity(_entityRefs.Field42);
+                    }
+                }
+                else if (_findWeaponIndex == 5)
+                {
+                    if (_player._availableWeapons[BeamType.Judicator])
+                    {
+                        FindEntityRef(AiEntRefType.Type45);
+                        SetEntity(_entityRefs.Field45);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type44);
+                        SetEntity(_entityRefs.Field44);
+                    }
+                }
+                else if (_findWeaponIndex == 6)
+                {
+                    if (_player._availableWeapons[BeamType.Magmaul])
+                    {
+                        FindEntityRef(AiEntRefType.Type47);
+                        SetEntity(_entityRefs.Field47);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type46);
+                        SetEntity(_entityRefs.Field46);
+                    }
+                }
+                else if (_findWeaponIndex == 7)
+                {
+                    if (_player._availableWeapons[BeamType.ShockCoil])
+                    {
+                        FindEntityRef(AiEntRefType.Type49);
+                        SetEntity(_entityRefs.Field49);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type48);
+                        SetEntity(_entityRefs.Field48);
+                    }
+                }
+                else if (_findWeaponIndex == 8)
+                {
+                    // todo: bugfix: this is clearly supposed to check Omega Cannon
+                    // (although it doesn't matter since if you already have OC, you don't need another pickup)
+                    if (_player._availableWeapons[BeamType.ShockCoil])
+                    {
+                        FindEntityRef(AiEntRefType.Type51);
+                        SetEntity(_entityRefs.Field51);
+                    }
+                    else
+                    {
+                        FindEntityRef(AiEntRefType.Type50);
+                        SetEntity(_entityRefs.Field50);
+                    }
+                }
+                else
+                {
+                    // the game's code is slightly different between 0 and default,
+                    // but it's not impactful, and out-of-range values shouldn't occur anyway
+                    _itemSpawnC4 = null;
+                }
             }
 
             private void Func1_2149530()
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type36);
+                _itemSpawnC4 = _entityRefs.Field36?.Item != null ? _entityRefs.Field36 : null;
             }
 
             private void Func1_21494BC()
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type37);
+                _itemSpawnC4 = _entityRefs.Field37?.Item != null ? _entityRefs.Field37 : null;
             }
 
             private void Func1_2149448()
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type38);
+                _itemSpawnC4 = _entityRefs.Field38?.Item != null ? _entityRefs.Field38 : null;
             }
 
             private void Func1_21493D4()
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type39);
+                _itemSpawnC4 = _entityRefs.Field39?.Item != null ? _entityRefs.Field39 : null;
             }
 
             private void Func1_2149360()
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type52);
+                _itemSpawnC4 = _entityRefs.Field52?.Item != null ? _entityRefs.Field52 : null;
             }
 
             private void Func1_21492EC()
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type53);
+                _itemSpawnC4 = _entityRefs.Field53?.Item != null ? _entityRefs.Field53 : null;
             }
 
             private void Func1_21492DC()
@@ -3294,26 +3746,22 @@ namespace MphRead.Entities
 
             private int Func3_213CF94(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags2.TestFlag(AiFlags2.Bit21) ? 1 : 0;
             }
 
             private int Func3_213CF7C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags2.TestFlag(AiFlags2.Bit21) ? 0 : 1; // inverted
             }
 
             private int Func3_213CDA4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return DamageFromHalfturret != 0 ? 1 : 0;
             }
 
             private int Func3_213CD74(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Flags1.TestFlag(PlayerFlags1.AltForm) && _player.Halfturret.Health == 0 ? 1 : 0;
             }
 
             private int Func3_213CD58(AiContext context, AiPersonalityData5 param)
@@ -3323,44 +3771,41 @@ namespace MphRead.Entities
 
             private int Func3_213CD34(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player._health < _player._healthMax / 4 ? 0 : 1; // inverted
             }
 
             private int Func3_213CD18(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player._health == _player._healthMax ? 1 : 0;
             }
 
             private int Func3_213CCF4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player._health == _player._healthMax ? 0 : 1; // inverted
             }
 
             private int Func3_213CCD8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player._health < param.Param1 ? 1 : 0;
             }
 
             private int Func3_213CCBC(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player._health > param.Param1 ? 1 : 0;
             }
 
             private int Func3_213CCB0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player._health;
             }
 
             private int Func3_213CC94(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (_player._healthMax <= _player._health)
+                {
+                    return 0;
+                }
+                return _player._healthMax - _player._health;
             }
 
             private int Func3_213CBE4(AiContext context, AiPersonalityData5 param)
@@ -3456,13 +3901,27 @@ namespace MphRead.Entities
 
             private int Func3_213C75C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return (int)DamageFromHalfturret;
             }
 
             private int Func3_213C698(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                if (_player.Hunter == Hunter.Spire)
+                {
+                    return _player._health < (GameState.EncounterState[_player.SlotIndex] == 4 ? 270 : 500) ? 1 : 0;
+                }
+                if (_player.Hunter == Hunter.Weavel)
+                {
+                    return _player._health < 110 ? 1 : 0;
+                }
+                if (_player.Hunter == Hunter.Sylux)
+                {
+                    return _player._health < 700 ? 1 : 0;
+                }
+                if (_player.Hunter == Hunter.Trace)
+                {
+                    return _player._health < 590 ? 1 : 0;
+                }
                 return 0;
             }
 
@@ -3480,7 +3939,19 @@ namespace MphRead.Entities
 
             private int Func3_213C52C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                foreach (EntityBase entity in _scene.Entities)
+                {
+                    if (entity.Type != EntityType.Player)
+                    {
+                        continue;
+                    }
+                    var other = (PlayerEntity)entity;
+                    if (other != _player && other.TeamIndex != _player.TeamIndex && other.Health != 0
+                        && other.Hunter == Hunter.Weavel && other.Halfturret.Health != 0)
+                    {
+                        return AggroFunc2148394(5, 7, 1, null, null) > 0 ? 1 : 0;
+                    }
+                }
                 return 0;
             }
 
@@ -3498,86 +3969,209 @@ namespace MphRead.Entities
 
             private int Func3_213C334(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                if (_findWeaponIndex >= 0 && _findWeaponIndex <= 8)
+                {
+                    return _player._availableWeapons[GetBeamType(_findWeaponIndex)] ? 1 : 0;
+                }
                 return 0;
             }
 
             private int Func3_213C310(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213C334(context, param) == 0 ? 1 : 0; // inverted
             }
 
+            // like Func1_2149824, except it returns a boolean for the presence of the entity instead of updating seek item
             private int Func3_213C0D0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                if (_findWeaponIndex == 1)
+                {
+                    if (_player._availableWeapons[BeamType.Missile])
+                    {
+                        FindEntityRef(AiEntRefType.Type57);
+                        return _entityRefs.Field57 != null ? 1 : 0;
+                    }
+                    FindEntityRef(AiEntRefType.Type56);
+                    return _entityRefs.Field56 != null ? 1 : 0;
+                }
+                if (_findWeaponIndex == 2)
+                {
+                    if (_player._availableWeapons[BeamType.VoltDriver])
+                    {
+                        FindEntityRef(AiEntRefType.Type59);
+                        return _entityRefs.Field59 != null ? 1 : 0;
+                    }
+                    FindEntityRef(AiEntRefType.Type58);
+                    return _entityRefs.Field58 != null ? 1 : 0;
+                }
+                if (_findWeaponIndex == 3)
+                {
+                    if (_player._availableWeapons[BeamType.Battlehammer])
+                    {
+                        FindEntityRef(AiEntRefType.Type60);
+                        return _entityRefs.Field60 != null ? 1 : 0;
+                    }
+                    FindEntityRef(AiEntRefType.Type61);
+                    return _entityRefs.Field61 != null ? 1 : 0;
+                }
+                if (_findWeaponIndex == 4)
+                {
+                    if (_player._availableWeapons[BeamType.Imperialist])
+                    {
+                        FindEntityRef(AiEntRefType.Type63);
+                        return _entityRefs.Field63 != null ? 1 : 0;
+                    }
+                    FindEntityRef(AiEntRefType.Type62);
+                    return _entityRefs.Field62 != null ? 1 : 0;
+                }
+                if (_findWeaponIndex == 5)
+                {
+                    if (_player._availableWeapons[BeamType.Judicator])
+                    {
+                        FindEntityRef(AiEntRefType.Type65);
+                        return _entityRefs.Field65 != null ? 1 : 0;
+                    }
+                    FindEntityRef(AiEntRefType.Type64);
+                    return _entityRefs.Field64 != null ? 1 : 0;
+                }
+                if (_findWeaponIndex == 6)
+                {
+                    if (_player._availableWeapons[BeamType.Magmaul])
+                    {
+                        FindEntityRef(AiEntRefType.Type67);
+                        return _entityRefs.Field67 != null ? 1 : 0;
+                    }
+                    FindEntityRef(AiEntRefType.Type66);
+                    return _entityRefs.Field66 != null ? 1 : 0;
+                }
+                if (_findWeaponIndex == 7)
+                {
+                    if (_player._availableWeapons[BeamType.ShockCoil])
+                    {
+                        FindEntityRef(AiEntRefType.Type69);
+                        return _entityRefs.Field69 != null ? 1 : 0;
+                    }
+                    FindEntityRef(AiEntRefType.Type68);
+                    return _entityRefs.Field68 != null ? 1 : 0;
+                }
+                if (_findWeaponIndex == 8)
+                {
+                    if (_player._availableWeapons[BeamType.OmegaCannon])
+                    {
+                        FindEntityRef(AiEntRefType.Type71);
+                        return _entityRefs.Field71 != null ? 1 : 0;
+                    }
+                    FindEntityRef(AiEntRefType.Type70);
+                    return _entityRefs.Field70 != null ? 1 : 0;
+                }
                 return 0;
             }
 
+            // same as Func3_213BFFC but for _weapon1 instead of _weapon2
             private int Func3_213C078(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                WeaponInfo info = Weapons.Current[(int)GetBeamType(_weapon1)];
+                return _player._ammo[info.AmmoType] < info.AmmoCost ? 1 : 0;
             }
 
+            // same as Func3_213BFD8 but for _weapon1 instead of _weapon2
             private int Func3_213C054(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                WeaponInfo info = Weapons.Current[(int)GetBeamType(_weapon1)];
+                return _player._ammo[info.AmmoType] >= info.AmmoCost ? 1 : 0; // inverted
             }
 
+            // same as Func3_213C078 but for _weapon2 instead of _weapon1
             private int Func3_213BFFC(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                WeaponInfo info = Weapons.Current[(int)GetBeamType(_weapon2)];
+                return _player._ammo[info.AmmoType] < info.AmmoCost ? 1 : 0;
             }
 
+            // same as Func3_213C054 but for _weapon2 instead of _weapon1
             private int Func3_213BFD8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                WeaponInfo info = Weapons.Current[(int)GetBeamType(_weapon2)];
+                return _player._ammo[info.AmmoType] >= info.AmmoCost ? 1 : 0;
             }
 
             private int Func3_213BED8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                if (_weapon1 == 1)
+                {
+                    FindEntityRef(AiEntRefType.Type57);
+                    return _entityRefs.Field57 != null ? 1 : 0;
+                }
+                if (_weapon1 == 2)
+                {
+                    FindEntityRef(AiEntRefType.Type59);
+                    return _entityRefs.Field59 != null ? 1 : 0;
+                }
+                if (_weapon1 == 3)
+                {
+                    FindEntityRef(AiEntRefType.Type61);
+                    return _entityRefs.Field61 != null ? 1 : 0;
+                }
+                if (_weapon1 == 4)
+                {
+                    FindEntityRef(AiEntRefType.Type63);
+                    return _entityRefs.Field63 != null ? 1 : 0;
+                }
+                if (_weapon1 == 5)
+                {
+                    FindEntityRef(AiEntRefType.Type65);
+                    return _entityRefs.Field65 != null ? 1 : 0;
+                }
+                if (_weapon1 == 6)
+                {
+                    FindEntityRef(AiEntRefType.Type67);
+                    return _entityRefs.Field67 != null ? 1 : 0;
+                }
+                if (_weapon1 == 7)
+                {
+                    FindEntityRef(AiEntRefType.Type69);
+                    return _entityRefs.Field69 != null ? 1 : 0;
+                }
+                if (_weapon1 == 8)
+                {
+                    FindEntityRef(AiEntRefType.Type71);
+                    return _entityRefs.Field71 != null ? 1 : 0;
+                }
                 return 0;
             }
 
             private int Func3_213BEBC(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player._availableWeapons[BeamType.Missile] ? 1 : 0;
             }
 
             private int Func3_213BEA0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player._availableWeapons[BeamType.Missile] ? 0 : 1; // inverted
             }
 
             private int Func3_213BE48(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                FindEntityRef(AiEntRefType.Type56);
+                return _entityRefs.Field56 != null && Func3_213BEA0(context, param) == 1 ? 1 : 0;
             }
 
             private int Func3_213BE10(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                WeaponInfo info = Weapons.Current[(int)BeamType.Missile];
+                return _player._ammo[info.AmmoType] < info.AmmoCost ? 1 : 0;
             }
 
             private int Func3_213BDF4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                WeaponInfo info = Weapons.Current[(int)BeamType.Missile];
+                return _player._ammo[info.AmmoType] >= info.AmmoCost ? 1 : 0; // inverted
             }
 
             private int Func3_213BD7C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                FindEntityRef(AiEntRefType.Type57);
+                return _entityRefs.Field57 != null && Func3_213BE10(context, param) == 1 ? 1 : 0;
             }
 
             private int Func3_213BCE8(AiContext context, AiPersonalityData5 param)
@@ -3796,110 +4390,92 @@ namespace MphRead.Entities
 
             private int Func3_213B1D8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 == 0 ? 1 : 0;
             }
 
             private int Func3_213B1C0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 != 0 ? 1 : 0; // inverted
             }
 
             private int Func3_213B1A8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 == 1 ? 1 : 0;
             }
 
             private int Func3_213B190(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 != 1 ? 1 : 0; // inverted
             }
 
             private int Func3_213B178(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 == 2 ? 1 : 0;
             }
 
             private int Func3_213B160(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 != 2 ? 1 : 0; // inverted
             }
 
             private int Func3_213B148(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 == 3 ? 1 : 0;
             }
 
             private int Func3_213B130(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 != 3 ? 1 : 0; // inverted
             }
 
             private int Func3_213B118(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 == 4 ? 1 : 0;
             }
 
             private int Func3_213B100(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 != 4 ? 1 : 0; // inverted
             }
 
             private int Func3_213B0E8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 == 5 ? 1 : 0;
             }
 
             private int Func3_213B0D0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 != 5 ? 1 : 0; // inverted
             }
 
             private int Func3_213B0B8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 == 6 ? 1 : 0;
             }
 
             private int Func3_213B0A0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 != 6 ? 1 : 0; // inverted
             }
 
             private int Func3_213B088(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 == 7 ? 1 : 0;
             }
 
             private int Func3_213B070(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 != 7 ? 1 : 0; // inverted
             }
 
             private int Func3_213B058(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 == 8 ? 1 : 0;
             }
 
             private int Func3_213B040(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _weapon2 != 8 ? 1 : 0; // inverted
             }
 
             private int Func3_213B020(AiContext context, AiPersonalityData5 param)
@@ -5300,12 +5876,7 @@ namespace MphRead.Entities
                     shotDelay /= 2;
                 }
                 shotDelay *= 2; // todo: FPS stuff
-                BeamType beam = _weapon1 switch
-                {
-                    1 => BeamType.Missile,
-                    2 => BeamType.VoltDriver,
-                    _ => (BeamType)_weapon1
-                };
+                BeamType beam = GetBeamType(_weapon1);
                 if (beam != BeamType.ShockCoil && !_player.AvailableWeapons[beam])
                 {
                     return;
@@ -5553,12 +6124,7 @@ namespace MphRead.Entities
                 {
                     return;
                 }
-                BeamType beam = _weapon1 switch
-                {
-                    1 => BeamType.Missile,
-                    2 => BeamType.VoltDriver,
-                    _ => (BeamType)_weapon1
-                };
+                BeamType beam = GetBeamType(_weapon1);
                 if (_player.CurrentWeapon != beam && _player._availableWeapons[beam])
                 {
                     if (beam == BeamType.PowerBeam)
