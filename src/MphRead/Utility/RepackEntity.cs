@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -1601,8 +1602,8 @@ namespace MphRead.Utility
             return entries;
         }
 
-        private static readonly HashSet<EntityType> _validTypesMph = new HashSet<EntityType>()
-        {
+        private static readonly ImmutableHashSet<EntityType> _validTypesMph =
+        [
             EntityType.Platform,
             EntityType.Object,
             EntityType.PlayerSpawn,
@@ -1622,10 +1623,10 @@ namespace MphRead.Utility
             EntityType.Artifact,
             EntityType.CameraSequence,
             EntityType.ForceField
-        };
+        ];
 
-        private static readonly HashSet<EntityType> _validTypesFh = new HashSet<EntityType>()
-        {
+        private static readonly ImmutableHashSet<EntityType> _validTypesFh =
+        [
             EntityType.FhUnknown0,
             EntityType.FhPlayerSpawn,
             EntityType.FhUnknown2,
@@ -1638,10 +1639,10 @@ namespace MphRead.Utility
             EntityType.FhJumpPad,
             EntityType.FhPointModule,
             EntityType.FhMorphCamera
-        };
+        ];
 
-        private static readonly HashSet<EnemyType> _validEnemiesFh = new HashSet<EnemyType>()
-        {
+        private static readonly ImmutableHashSet<EnemyType> _validEnemiesFh =
+        [
             EnemyType.WarWasp,
             EnemyType.BarbedWarWasp,
             EnemyType.Zoomer,
@@ -1651,7 +1652,7 @@ namespace MphRead.Utility
             EnemyType.Petrasyl2,
             EnemyType.Petrasyl3,
             EnemyType.Petrasyl4
-        };
+        ];
 
         private static void ThrowIfInvalid(EntityEditorBase entity, bool firstHunt)
         {
