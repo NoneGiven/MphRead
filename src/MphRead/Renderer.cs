@@ -211,7 +211,7 @@ namespace MphRead
         public Vector3 Light1Color => _light1Color;
         public Vector3 Light2Vector => _light2Vector;
         public Vector3 Light2Color => _light2Color;
-        public LinkedListIterator<EntityBase> Entities => new LinkedListIterator<EntityBase>(_entities); // skhere: could store instead of recreating
+        public LinkedListIterator<EntityBase> Entities => new LinkedListIterator<EntityBase>(_entities); // todo: could store instead of recreating
         public RoomEntity? Room => _room;
         public int ActiveCutscene => _activeCutscene;
         // todo: disallow if camera roll is not zero?
@@ -376,7 +376,6 @@ namespace MphRead
 
         private void InsertEntityByType(EntityBase entity)
         {
-            // todo: in-game entity storage can jump to the first item of a given type
             for (LinkedListNode<EntityBase>? item = _entities.First; item != null; item = item.Next)
             {
                 EntityBase existing = item.Value;
