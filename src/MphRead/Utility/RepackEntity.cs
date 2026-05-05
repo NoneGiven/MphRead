@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -1602,7 +1602,7 @@ namespace MphRead.Utility
             return entries;
         }
 
-        private static readonly ImmutableHashSet<EntityType> _validTypesMph =
+        private static readonly FrozenSet<EntityType> _validTypesMph =
         [
             EntityType.Platform,
             EntityType.Object,
@@ -1625,7 +1625,7 @@ namespace MphRead.Utility
             EntityType.ForceField
         ];
 
-        private static readonly ImmutableHashSet<EntityType> _validTypesFh =
+        private static readonly FrozenSet<EntityType> _validTypesFh =
         [
             EntityType.FhUnknown0,
             EntityType.FhPlayerSpawn,
@@ -1641,7 +1641,7 @@ namespace MphRead.Utility
             EntityType.FhMorphCamera
         ];
 
-        private static readonly ImmutableHashSet<EnemyType> _validEnemiesFh =
+        private static readonly FrozenSet<EnemyType> _validEnemiesFh =
         [
             EnemyType.WarWasp,
             EnemyType.BarbedWarWasp,

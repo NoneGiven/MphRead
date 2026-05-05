@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using MphRead.Formats;
@@ -1153,7 +1153,7 @@ namespace MphRead.Entities
             private const int _maxContextDepth = 20;
             private readonly AiContext[] _executionTree = new AiContext[_maxContextDepth];
             // IDs that map to something other than Func4_21462DC()
-            private static readonly ImmutableHashSet<int> _func4Ids = [1, 2, 3];
+            private static readonly FrozenSet<int> _func4Ids = [1, 2, 3];
 
             private void UpdateExecutionPath(AiPersonalityData1 data1, int depth)
             {

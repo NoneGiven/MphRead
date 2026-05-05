@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
@@ -102,8 +102,8 @@ namespace MphRead.Utility
             }
         }
 
-        private static readonly ImmutableDictionary<string, IReadOnlyList<Thing>> _things
-            = ImmutableDictionary.CreateRange<string, IReadOnlyList<Thing>>(
+        private static readonly FrozenDictionary<string, IReadOnlyList<Thing>> _things
+            = Frozen.Create<string, IReadOnlyList<Thing>>(
         [
             new(
                 "POLYGON_ATTR",

@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Globalization;
 
 namespace MphRead
@@ -14,7 +14,7 @@ namespace MphRead
         public static bool NoDoubleEnemyDeath { get; set; } = true;
         public static bool NoSlenchRollTimerUnderflow { get; set; } = true;
 
-        public static void Load(ImmutableDictionary<string, string> values)
+        public static void Load(IReadOnlyDictionary<string, string> values)
         {
             if (values.TryGetValue(nameof(SmoothCamSeqHandoff), out string? value) && Boolean.TryParse(value, out bool result))
             {
@@ -42,9 +42,9 @@ namespace MphRead
             }
         }
 
-        public static ImmutableDictionary<string, string> Commit()
+        public static FrozenDictionary<string, string> Commit()
         {
-            return ImmutableDictionary.CreateRange<string, string>(
+            return Frozen.Create<string, string>(
             [
                 new(nameof(SmoothCamSeqHandoff), SmoothCamSeqHandoff.ToString().ToLower()),
                 new(nameof(BetterCamSeqNodeRef), BetterCamSeqNodeRef.ToString().ToLower()),
@@ -76,7 +76,7 @@ namespace MphRead
         public static bool FullBoostCharge { get; set; } = false; // false
         public static bool AlternateHunters1P { get; set; } = true; // false
 
-        public static void Load(ImmutableDictionary<string, string> values)
+        public static void Load(IReadOnlyDictionary<string, string> values)
         {
             if (values.TryGetValue(nameof(NoRepeatEncounters), out string? value) && Boolean.TryParse(value, out bool boolean))
             {
@@ -148,9 +148,9 @@ namespace MphRead
             }
         }
 
-        public static ImmutableDictionary<string, string> Commit()
+        public static FrozenDictionary<string, string> Commit()
         {
-            return ImmutableDictionary.CreateRange<string, string>(
+            return Frozen.Create<string, string>(
             [
                 new(nameof(NoRepeatEncounters), NoRepeatEncounters.ToString().ToLower()),
                 new(nameof(AllowInvalidTeams), AllowInvalidTeams.ToString().ToLower()),
@@ -187,7 +187,7 @@ namespace MphRead
         public static bool AlwaysFightGorea2 { get; set; } = false;
         public static bool QuadrupleDamage { get; set; } = false;
 
-        public static void Load(ImmutableDictionary<string, string> values)
+        public static void Load(IReadOnlyDictionary<string, string> values)
         {
             if (values.TryGetValue(nameof(FreeWeaponSelect), out string? value) && Boolean.TryParse(value, out bool boolean))
             {
@@ -235,9 +235,9 @@ namespace MphRead
             }
         }
 
-        public static ImmutableDictionary<string, string> Commit()
+        public static FrozenDictionary<string, string> Commit()
         {
-            return ImmutableDictionary.CreateRange<string, string>(
+            return Frozen.Create<string, string>(
             [
                 new(nameof(FreeWeaponSelect), FreeWeaponSelect.ToString().ToLower()),
                 new(nameof(UnlimitedJumps), UnlimitedJumps.ToString().ToLower()),

@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using OpenTK.Mathematics;
 
@@ -68,7 +68,7 @@ namespace MphRead
             }
         }
 
-        private readonly ImmutableDictionary<MetaDir, string> _dirs = ImmutableDictionary.CreateRange<MetaDir, string>(
+        private readonly FrozenDictionary<MetaDir, string> _dirs = Frozen.Create<MetaDir, string>(
         [
             new (MetaDir.CharSelect, "characterselect"),
             new (MetaDir.CreateJoin, "createjoin"),
@@ -286,7 +286,7 @@ namespace MphRead
         public string TexturePath { get; }
         public string PalettePath { get; }
         public string? ReplacePath { get; }
-        public ImmutableDictionary<int, IReadOnlyList<int>> ReplaceIds { get; }
+        public FrozenDictionary<int, IReadOnlyList<int>> ReplaceIds { get; }
 
         public RecolorMetadata(string name, string modelPath)
         {
@@ -294,7 +294,7 @@ namespace MphRead
             ModelPath = modelPath;
             TexturePath = modelPath;
             PalettePath = modelPath;
-            ReplaceIds = ImmutableDictionary.Create<int, IReadOnlyList<int>>();
+            ReplaceIds = FrozenDictionary<int, IReadOnlyList<int>>.Empty;
         }
 
         public RecolorMetadata(string name, string modelPath, string texturePath)
@@ -303,7 +303,7 @@ namespace MphRead
             ModelPath = modelPath;
             TexturePath = texturePath;
             PalettePath = texturePath;
-            ReplaceIds = ImmutableDictionary.Create<int, IReadOnlyList<int>>();
+            ReplaceIds = FrozenDictionary<int, IReadOnlyList<int>>.Empty;
         }
 
         public RecolorMetadata(string name, string modelPath, string texturePath, string palettePath,
@@ -329,7 +329,7 @@ namespace MphRead
                     replaceIdsDict.Add(kvp.Key, kvp.Value);
                 }
             }
-            ReplaceIds = replaceIdsDict.ToImmutableDictionary();
+            ReplaceIds = replaceIdsDict.ToFrozenDictionary();
         }
     }
 
@@ -417,8 +417,8 @@ namespace MphRead
 
     public static partial class Metadata
     {
-        private static readonly ImmutableDictionary<GameMode, IReadOnlyList<int>> _modeLayers
-            = ImmutableDictionary.CreateRange<GameMode, IReadOnlyList<int>>(
+        private static readonly FrozenDictionary<GameMode, IReadOnlyList<int>> _modeLayers
+            = Frozen.Create<GameMode, IReadOnlyList<int>>(
         [
             new (GameMode.Battle, new List<int>() { 0, 1, 2 }),
             new (GameMode.BattleTeams, new List<int>() { 3 }),
@@ -584,8 +584,8 @@ namespace MphRead
             return new Vector3(r / 31.0f, g / 31.0f, b / 31.0f);
         }
 
-        public static readonly ImmutableDictionary<string, IReadOnlyList<PaletteData>> PowerPalettes
-            = ImmutableDictionary.CreateRange<string, IReadOnlyList<PaletteData>>(
+        public static readonly FrozenDictionary<string, IReadOnlyList<PaletteData>> PowerPalettes
+            = Frozen.Create<string, IReadOnlyList<PaletteData>>(
             [
                 new("Alimbic_Power", new List<PaletteData>()
                 {
@@ -633,7 +633,7 @@ namespace MphRead
                 })
             ]);
 
-        public static readonly ImmutableDictionary<Hunter, float> HunterScales = ImmutableDictionary.CreateRange<Hunter, float>(
+        public static readonly FrozenDictionary<Hunter, float> HunterScales = Frozen.Create<Hunter, float>(
         [
             new (Hunter.Samus, 1.0f),
             new (Hunter.Kanden, Fixed.ToFloat(0x10F5)),
@@ -645,8 +645,8 @@ namespace MphRead
             new (Hunter.Guardian, 1.0f)
         ]);
 
-        public static readonly ImmutableDictionary<Hunter, IReadOnlyList<string>> HunterModels
-            = ImmutableDictionary.CreateRange<Hunter, IReadOnlyList<string>>(
+        public static readonly FrozenDictionary<Hunter, IReadOnlyList<string>> HunterModels
+            = Frozen.Create<Hunter, IReadOnlyList<string>>(
         [
             new(
                 Hunter.Samus,
@@ -1550,8 +1550,8 @@ namespace MphRead
             113, 152, 151, 153, 150, 149
         };
 
-        public static readonly ImmutableDictionary<SingleType, (string Model, string Particle)> SingleParticles
-            = ImmutableDictionary.CreateRange<SingleType, (string, string)>(
+        public static readonly FrozenDictionary<SingleType, (string Model, string Particle)> SingleParticles
+            = Frozen.Create<SingleType, (string, string)>(
         [
             new(SingleType.Death, ("deathParticle", "death")),
             new(SingleType.Fuzzball, ("particles", "fuzzBall")),
@@ -1567,7 +1567,7 @@ namespace MphRead
             new(SingleType.RedDim, ("icons", "red_dim"))
         ]);
 
-        public static readonly ImmutableDictionary<string, bool> PreloadResources = ImmutableDictionary.CreateRange<string, bool>(
+        public static readonly FrozenDictionary<string, bool> PreloadResources = Frozen.Create<string, bool>(
         [
             new("deathParticle", true),
             new("particles", true),
@@ -1661,8 +1661,8 @@ namespace MphRead
         public static readonly ModelMetadata DoubleDamageImg
             = new ModelMetadata("doubleDamage_img", animation: false, archive: "common");
 
-        public static readonly ImmutableDictionary<string, ModelMetadata> ModelMetadata
-            = ImmutableDictionary.CreateRange<string, ModelMetadata>(
+        public static readonly FrozenDictionary<string, ModelMetadata> ModelMetadata
+            = Frozen.Create<string, ModelMetadata>(
             [
                 new(
                     "AlimbicBossDoorLock",
@@ -3669,8 +3669,8 @@ namespace MphRead
                 )
             ]);
 
-        public static readonly ImmutableDictionary<string, ModelMetadata> FirstHuntModels
-            = ImmutableDictionary.CreateRange<string, ModelMetadata>(
+        public static readonly FrozenDictionary<string, ModelMetadata> FirstHuntModels
+            = Frozen.Create<string, ModelMetadata>(
             [
                 new(
                     "ballDeath",

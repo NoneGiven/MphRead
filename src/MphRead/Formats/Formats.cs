@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -266,12 +266,12 @@ namespace MphRead
         public IReadOnlyList<float> Scales { get; }
         public IReadOnlyList<float> Rotations { get; }
         public IReadOnlyList<float> Translations { get; }
-        public ImmutableDictionary<string, NodeAnimation> Animations { get; }
+        public FrozenDictionary<string, NodeAnimation> Animations { get; }
 
         private NodeAnimationGroup()
         {
             Translations = Rotations = Scales = Enumerable.Empty<float>().ToList();
-            Animations = ImmutableDictionary.Create<string, NodeAnimation>();
+            Animations = FrozenDictionary<string, NodeAnimation>.Empty;
         }
 
         public NodeAnimationGroup(RawNodeAnimationGroup raw, IReadOnlyList<float> scales, IReadOnlyList<float> rotations,
@@ -281,7 +281,7 @@ namespace MphRead
             Scales = scales;
             Rotations = rotations;
             Translations = translations;
-            Animations = animations.ToImmutableDictionary();
+            Animations = animations.ToFrozenDictionary();
             Count = Animations.Count;
         }
 
@@ -300,12 +300,12 @@ namespace MphRead
         public IReadOnlyList<float> Scales { get; }
         public IReadOnlyList<float> Rotations { get; }
         public IReadOnlyList<float> Translations { get; }
-        public ImmutableDictionary<string, TexcoordAnimation> Animations { get; }
+        public FrozenDictionary<string, TexcoordAnimation> Animations { get; }
 
         private TexcoordAnimationGroup()
         {
             Translations = Rotations = Scales = Enumerable.Empty<float>().ToList();
-            Animations = ImmutableDictionary.Create<string, TexcoordAnimation>();
+            Animations = FrozenDictionary<string, TexcoordAnimation>.Empty;
         }
 
         public TexcoordAnimationGroup(RawTexcoordAnimationGroup raw, IReadOnlyList<float> scales, IReadOnlyList<float> rotations,
@@ -318,7 +318,7 @@ namespace MphRead
             Scales = scales;
             Rotations = rotations;
             Translations = translations;
-            Animations = animations.ToImmutableDictionary();
+            Animations = animations.ToFrozenDictionary();
             Debug.Assert(Count == Animations.Count);
         }
 
@@ -337,13 +337,13 @@ namespace MphRead
         public IReadOnlyList<ushort> FrameIndices { get; }
         public IReadOnlyList<ushort> TextureIds { get; }
         public IReadOnlyList<ushort> PaletteIds { get; }
-        public ImmutableDictionary<string, TextureAnimation> Animations { get; }
+        public FrozenDictionary<string, TextureAnimation> Animations { get; }
         public ushort UnusedA { get; }
 
         private TextureAnimationGroup()
         {
             PaletteIds = TextureIds = FrameIndices = Enumerable.Empty<ushort>().ToList();
-            Animations = ImmutableDictionary.Create<string, TextureAnimation>();
+            Animations = FrozenDictionary<string, TextureAnimation>.Empty;
         }
 
         public TextureAnimationGroup(RawTextureAnimationGroup raw, IReadOnlyList<ushort> frameIndices, IReadOnlyList<ushort> textureIds,
@@ -356,7 +356,7 @@ namespace MphRead
             FrameIndices = frameIndices;
             TextureIds = textureIds;
             PaletteIds = paletteIds;
-            Animations = animations.ToImmutableDictionary();
+            Animations = animations.ToFrozenDictionary();
             Debug.Assert(Count == Animations.Count);
             UnusedA = raw.UnusedA;
         }
@@ -374,12 +374,12 @@ namespace MphRead
         public int UnusedFrame { get; }
         public int Count { get; }
         public IReadOnlyList<float> Colors { get; }
-        public ImmutableDictionary<string, MaterialAnimation> Animations { get; }
+        public FrozenDictionary<string, MaterialAnimation> Animations { get; }
 
         private MaterialAnimationGroup()
         {
             Colors = Enumerable.Empty<float>().ToList();
-            Animations = ImmutableDictionary.Create<string, MaterialAnimation>();
+            Animations = FrozenDictionary<string, MaterialAnimation>.Empty;
         }
 
         public MaterialAnimationGroup(RawMaterialAnimationGroup raw, IReadOnlyList<float> colors,
@@ -390,7 +390,7 @@ namespace MphRead
             UnusedFrame = raw.Unused12;
             Count = (int)raw.AnimationCount;
             Colors = colors;
-            Animations = animations.ToImmutableDictionary();
+            Animations = animations.ToFrozenDictionary();
             Debug.Assert(Count == Animations.Count);
         }
 
@@ -418,7 +418,7 @@ namespace MphRead
         public string Name { get; }
         public uint Field0 { get; }
         // the key is the file offset, which we need to keep around because e.g. fx15's parameters are themselves function pointers
-        public ImmutableDictionary<uint, FxFuncInfo> Funcs { get; }
+        public FrozenDictionary<uint, FxFuncInfo> Funcs { get; }
         public IReadOnlyList<uint> List2 { get; }
         public IReadOnlyList<EffectElement> Elements { get; }
 
@@ -427,7 +427,7 @@ namespace MphRead
         {
             Name = Path.GetFileNameWithoutExtension(name).Replace("_PS", "");
             Field0 = raw.Field0;
-            Funcs = funcs.ToImmutableDictionary();
+            Funcs = funcs.ToFrozenDictionary();
             List2 = list2;
             Elements = elements;
         }
@@ -446,8 +446,8 @@ namespace MphRead
         public float DrainTime { get; }
         public float BufferTime { get; }
         public int DrawType { get; }
-        public ImmutableDictionary<FuncAction, FxFuncInfo> Actions { get; }
-        public ImmutableDictionary<uint, FxFuncInfo> Funcs { get; }
+        public FrozenDictionary<FuncAction, FxFuncInfo> Actions { get; }
+        public FrozenDictionary<uint, FxFuncInfo> Funcs { get; }
 
         public EffectElement(RawEffectElement raw, IReadOnlyList<Particle> particles,
             IReadOnlyDictionary<uint, FxFuncInfo> funcs, IReadOnlyDictionary<FuncAction, FxFuncInfo> actions)
@@ -462,8 +462,8 @@ namespace MphRead
             BufferTime = raw.BufferTime.FloatValue;
             DrawType = raw.DrawType;
             Particles = particles;
-            Funcs = funcs.ToImmutableDictionary();
-            Actions = actions.ToImmutableDictionary();
+            Funcs = funcs.ToFrozenDictionary();
+            Actions = actions.ToFrozenDictionary();
         }
     }
 
@@ -1381,8 +1381,8 @@ namespace MphRead
         public InstructionCode Code { get; }
         public IReadOnlyList<uint> Arguments { get; }
 
-        private static readonly ImmutableDictionary<InstructionCode, int> _arityMap =
-            ImmutableDictionary.CreateRange<InstructionCode, int>(
+        private static readonly FrozenDictionary<InstructionCode, int> _arityMap =
+            Frozen.Create<InstructionCode, int>(
             [
                 new(InstructionCode.NOP, 0),
                 new(InstructionCode.MTX_RESTORE, 1),
@@ -1653,6 +1653,14 @@ namespace MphRead
             }
             result = source.FirstOrDefault(s => predicate.Invoke(s));
             return result != null;
+        }
+    }
+
+    public static class Frozen
+    {
+        public static FrozenDictionary<TKey, TValue> Create<TKey, TValue>(params KeyValuePair<TKey, TValue>[] list) where TKey : notnull
+        {
+            return list.ToFrozenDictionary();
         }
     }
 }

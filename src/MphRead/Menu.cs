@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using MphRead.Sound;
@@ -99,7 +98,7 @@ namespace MphRead
                 "Samus", "Kanden", "Spire", "Trace", "Noxus", "Sylux", "Weavel", "Guardian"
             };
             int modeId = 0;
-            var modeOpts = ImmutableDictionary.CreateRange<string, string>(
+            var modeOpts = Frozen.Create<string, string>(
             [
                 new("adventure", "Adventure"),
                 new("story", "Adventure"),
@@ -130,7 +129,7 @@ namespace MphRead
             var mphVersions = new List<string>() { Ver.A76E0, Ver.AMHE0, Ver.AMHE1,
                 Ver.AMHP0, Ver.AMHP1, Ver.AMHJ0, Ver.AMHJ1, Ver.AMHK0 };
             var fhVersions = new List<string>() { Ver.AMFE0, Ver.AMFP0 };
-            var mphInfo = ImmutableDictionary.CreateRange<string, string>(
+            var mphInfo = Frozen.Create<string, string>(
             [
                 new(Ver.A76E0, "Kiosk demo"),
                 new(Ver.AMHE0, "USA rev 0"),
@@ -141,7 +140,7 @@ namespace MphRead
                 new(Ver.AMHJ1, "JPN rev 1"),
                 new(Ver.AMHK0, "KOR rev 0")
             ]);
-            var fhInfo = ImmutableDictionary.CreateRange<string, string>(
+            var fhInfo = Frozen.Create<string, string>(
             [
                 new(Ver.AMFE0, "USA rev 0"),
                 new(Ver.AMFP0, "EUR rev 0")

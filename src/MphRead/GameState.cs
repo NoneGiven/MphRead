@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -1443,9 +1443,9 @@ namespace MphRead
 
         private class SerializedSettings
         {
-            public ImmutableDictionary<string, string>? Bugfixes { get; set; }
-            public ImmutableDictionary<string, string>? Features { get; set; }
-            public ImmutableDictionary<string, string>? Cheats { get; set; }
+            public IReadOnlyDictionary<string, string>? Bugfixes { get; set; }
+            public IReadOnlyDictionary<string, string>? Features { get; set; }
+            public IReadOnlyDictionary<string, string>? Cheats { get; set; }
             public MenuSettings? MenuSettings { get; set; }
         }
 

@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using MphRead.Effects;
 using MphRead.Formats.Collision;
@@ -325,8 +325,8 @@ namespace MphRead.Entities
             }
         }
 
-        private static readonly ImmutableDictionary<int, EffectSfxInfo> _sfxInfo =
-            ImmutableDictionary.CreateRange<int, EffectSfxInfo>(
+        private static readonly FrozenDictionary<int, EffectSfxInfo> _sfxInfo =
+            Frozen.Create<int, EffectSfxInfo>(
         [
             new(10, new EffectSfxInfo(102 | 0x4000, 0x1B, environment: false)),
             new(88, new EffectSfxInfo(4, 0xE3)),

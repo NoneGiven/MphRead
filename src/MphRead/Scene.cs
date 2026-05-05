@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using MphRead.Entities;
@@ -406,7 +406,7 @@ namespace MphRead
 
         public T Current => _node == null ? throw new InvalidOperationException() : (T)_node.Value;
 
-        private static readonly ImmutableDictionary<Type, EntityType> _typeMap = ImmutableDictionary.CreateRange<Type, EntityType>(
+        private static readonly FrozenDictionary<Type, EntityType> _typeMap = Frozen.Create<Type, EntityType>(
         [
             new(typeof(PlatformEntity), EntityType.Platform),
             new(typeof(ObjectEntity), EntityType.Object),

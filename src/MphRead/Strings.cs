@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -127,7 +127,7 @@ namespace MphRead.Text
             return null;
         }
 
-        private static readonly ImmutableDictionary<char, int> _categoryMap = ImmutableDictionary.CreateRange<char, int>(
+        private static readonly FrozenDictionary<char, int> _categoryMap = Frozen.Create<char, int>(
         [
             new('L', 0),
             new('l', 0),

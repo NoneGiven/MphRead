@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -359,7 +359,7 @@ namespace MphRead
             Metadata.SetPlatformSfxData(platformSfx);
         }
 
-        private static readonly ImmutableDictionary<string, RomData> _romData = ImmutableDictionary.CreateRange<string, RomData>(
+        private static readonly FrozenDictionary<string, RomData> _romData = Frozen.Create<string, RomData>(
         [
             new(
                 Ver.A76E0,

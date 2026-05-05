@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+using System.Collections.Frozen;
 
 namespace MphRead
 {
@@ -8,8 +8,8 @@ namespace MphRead
         public static readonly ModelMetadata Ad2Dm2
             = new ModelMetadata("ad2_dm2", dir: MetaDir.Stage);
 
-        public static readonly ImmutableDictionary<string, ModelMetadata> HudModels
-            = ImmutableDictionary.CreateRange<string, ModelMetadata>(
+        public static readonly FrozenDictionary<string, ModelMetadata> HudModels
+            = Frozen.Create<string, ModelMetadata>(
             [
                 // cockpit
                 new(
@@ -95,8 +95,8 @@ namespace MphRead
                 )
             ]);
 
-        public static readonly ImmutableDictionary<string, ModelMetadata> TouchToStartModels
-            = ImmutableDictionary.CreateRange<string, ModelMetadata>(
+        public static readonly FrozenDictionary<string, ModelMetadata> TouchToStartModels
+            = Frozen.Create<string, ModelMetadata>(
             [
                 // touchtostart
                 new(
@@ -105,8 +105,8 @@ namespace MphRead
                 )
             ]);
 
-        public static readonly ImmutableDictionary<string, ModelMetadata> MultiplayerModels
-            = ImmutableDictionary.CreateRange<string, ModelMetadata>(
+        public static readonly FrozenDictionary<string, ModelMetadata> MultiplayerModels
+            = Frozen.Create<string, ModelMetadata>(
             [
                 // multiplayer
                 new(
@@ -167,8 +167,8 @@ namespace MphRead
                 )
             ]);
 
-        public static readonly ImmutableDictionary<string, ModelMetadata> LogoModels
-            = ImmutableDictionary.CreateRange<string, ModelMetadata>(
+        public static readonly FrozenDictionary<string, ModelMetadata> LogoModels
+            = Frozen.Create<string, ModelMetadata>(
             [
                 // logos
                 new(
@@ -218,8 +218,8 @@ namespace MphRead
             ]);
 
         // sktodo: multiple animation files
-        public static readonly ImmutableDictionary<string, ModelMetadata> FrontendModels
-            = ImmutableDictionary.CreateRange<string, ModelMetadata>(
+        public static readonly FrozenDictionary<string, ModelMetadata> FrontendModels
+            = Frozen.Create<string, ModelMetadata>(
             [
                 // characterselect
                 new(

@@ -1,6 +1,5 @@
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
 using OpenTK.Mathematics;
 
 namespace MphRead
@@ -4081,9 +4080,9 @@ namespace MphRead
                 firstHunt: true)
         };
 
-        public static readonly ImmutableDictionary<string, RoomMetadata> RoomMetadata = RoomList.ToImmutableDictionary(d => d.Name);
+        public static readonly FrozenDictionary<string, RoomMetadata> RoomMetadata = RoomList.ToFrozenDictionary(d => d.Name);
 
-        public static readonly ImmutableDictionary<int, string> EncounterNodeDataOverrides = ImmutableDictionary.CreateRange<int, string>(
+        public static readonly FrozenDictionary<int, string> EncounterNodeDataOverrides = Frozen.Create<int, string>(
         [
             new(28, @"levels\nodeData\unit1_C0_Boss_Node.bin"),   // 28 - UNIT1_C0 (Echo Hall)
             new(29, @"levels\nodeData\unit1_RM1_Boss_Node.bin"),  // 29 - UNIT1_RM1 (High Ground)
@@ -4095,7 +4094,7 @@ namespace MphRead
             new(79, @"levels\nodeData\unit4_RM3_Boss_Node.bin")   // 79 - UNIT4_RM3 (Sic Transit)
         ]);
 
-        public static readonly ImmutableDictionary<int, string> CtfNodeDataOverrides = ImmutableDictionary.CreateRange<int, string>(
+        public static readonly FrozenDictionary<int, string> CtfNodeDataOverrides = Frozen.Create<int, string>(
         [
             new( 93, @"levels\nodeData\mp1_CTF_node.bi)"),    // MP1 SANCTORUS (Data Shrine)
             new( 99, @"levels\nodeData\mp6_CTF_node.bi)"),    // MP6 HEADSHOT (Head Shot)

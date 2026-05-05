@@ -1,13 +1,12 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using MphRead.Formats;
 
 namespace MphRead.Memory
 {
@@ -138,7 +137,7 @@ namespace MphRead.Memory
 
         private static AddressInfo Addresses { get; set; } = null!;
 
-        private static readonly ImmutableDictionary<string, AddressInfo> AllAddresses = ImmutableDictionary.CreateRange<string, AddressInfo>(
+        private static readonly FrozenDictionary<string, AddressInfo> AllAddresses = Frozen.Create<string, AddressInfo>(
         [
             new("a76e", new AddressInfo(
                 gameState: 0x20BC420, // todo: class

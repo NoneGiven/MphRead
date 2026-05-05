@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -971,7 +971,7 @@ namespace MphRead.Hud
                 "_archives/localWeavel/rad_lights.bin",
                 "_archives/localWeavel/rad_ammobar.bin"
             };
-            ImmutableDictionary<string, IReadOnlyList<int>> exportPalettes = ImmutableDictionary.CreateRange<string, IReadOnlyList<int>>(
+            FrozenDictionary<string, IReadOnlyList<int>> exportPalettes = Frozen.Create<string, IReadOnlyList<int>>(
             [
                 new("hud_etank", new List<int>() { 0, 1, 2 }),
                 new("hud_ammobar", new List<int>() { 0, 1, 2 }),
