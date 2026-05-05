@@ -112,13 +112,8 @@ namespace MphRead.Entities
             }
             if (!Flags.TestFlag(BombFlags.Exploded))
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (PlayerEntity player in _scene.GetPlayerEntities())
                 {
-                    if (entity.Type != EntityType.Player)
-                    {
-                        continue;
-                    }
-                    var player = (PlayerEntity)entity;
                     if (player == Owner || player.Health == 0 || player.TeamIndex == Owner.TeamIndex)
                     {
                         continue;
@@ -153,13 +148,8 @@ namespace MphRead.Entities
                 }
                 if (BombType == BombType.Stinglarva && _target == null)
                 {
-                    foreach (EntityBase entity in _scene.Entities)
+                    foreach (HalfturretEntity halfturret in _scene.GetHalfturretEntities())
                     {
-                        if (entity.Type != EntityType.Halfturret)
-                        {
-                            continue;
-                        }
-                        var halfturret = (HalfturretEntity)entity;
                         Vector3 between = halfturret.Position - Position;
                         if (between.LengthSquared < 5 * 5)
                         {
@@ -168,13 +158,8 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (EnemyInstanceEntity enemy in _scene.GetEnemyInstanceEntities())
                 {
-                    if (entity.Type != EntityType.EnemyInstance)
-                    {
-                        continue;
-                    }
-                    var enemy = (EnemyInstanceEntity)entity;
                     if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam) && (enemy.EnemyType != EnemyType.Temroid || enemy.StateA != 8)
                         && enemy.CheckHitByBomb(this))
                     {
@@ -182,13 +167,8 @@ namespace MphRead.Entities
                         Flags |= BombFlags.Exploding;
                     }
                 }
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (EnemyInstanceEntity enemy in _scene.GetEnemyInstanceEntities())
                 {
-                    if (entity.Type != EntityType.EnemyInstance)
-                    {
-                        continue;
-                    }
-                    var enemy = (EnemyInstanceEntity)entity;
                     if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam) && enemy.EnemyType == EnemyType.Temroid && enemy.StateA == 8
                         && ((Enemy02Entity)enemy).CheckTemroidHitByBomb(this))
                     {
@@ -201,13 +181,8 @@ namespace MphRead.Entities
                 }
                 if (Flags.TestFlag(BombFlags.Exploding))
                 {
-                    foreach (EntityBase entity in _scene.Entities)
+                    foreach (DoorEntity door in _scene.GetDoorEntities())
                     {
-                        if (entity.Type != EntityType.Door)
-                        {
-                            continue;
-                        }
-                        var door = (DoorEntity)entity;
                         Vector3 doorFacing = door.FacingVector;
                         Vector3 between = Position - door.LockPosition;
                         float dot = Vector3.Dot(doorFacing, between);

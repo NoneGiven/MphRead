@@ -264,13 +264,8 @@ namespace MphRead.Entities
             {
                 if (info.Sender.Type == EntityType.EnemySpawn && ((EnemySpawnEntity)info.Sender).Data.EnemyType == EnemyType.Hunter)
                 {
-                    foreach (EntityBase entity in _scene.Entities)
+                    foreach (PlayerEntity player in _scene.GetPlayerEntities())
                     {
-                        if (entity.Type != EntityType.Player)
-                        {
-                            continue;
-                        }
-                        var player = (PlayerEntity)entity;
                         if (player.EnemySpawner == info.Sender)
                         {
                             player.GetPosition(out Vector3 position);

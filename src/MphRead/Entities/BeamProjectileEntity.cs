@@ -304,13 +304,8 @@ namespace MphRead.Entities
                         anyRes = colRes;
                     }
                 }
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (DoorEntity door in _scene.GetDoorEntities())
                 {
-                    if (entity.Type != EntityType.Door)
-                    {
-                        continue;
-                    }
-                    var door = (DoorEntity)entity;
                     if (door.Flags.TestFlag(DoorFlags.Open) || door.ConnectorInactive)
                     {
                         continue;
@@ -340,14 +335,9 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (ForceFieldEntity forceField in _scene.GetForceFieldEntities())
                 {
-                    if (entity.Type != EntityType.ForceField)
-                    {
-                        continue;
-                    }
                     // todo: some of these properties are compatible with the entity moving, some aren't
-                    var forceField = (ForceFieldEntity)entity;
                     if (forceField.Active
                         && CollisionDetection.CheckCylinderIntersectPlane(BackPosition, Position, forceField.Plane, ref colRes)
                         && colRes.Distance < minDist)
@@ -373,14 +363,9 @@ namespace MphRead.Entities
             Debug.Assert(Owner != null);
             if (Owner.Type != EntityType.EnemyInstance)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (EnemyInstanceEntity enemy in _scene.GetEnemyInstanceEntities())
                 {
-                    if (entity.Type != EntityType.EnemyInstance)
-                    {
-                        continue;
-                    }
                     CollisionResult res = default;
-                    var enemy = (EnemyInstanceEntity)entity;
                     if (enemy.Flags.TestFlag(EnemyFlags.CollideBeam)
                         && CollisionDetection.CheckCylinderOverlapVolume(enemy.HurtVolume, BackPosition, Position, CylinderRadius, ref res))
                     {
@@ -400,13 +385,8 @@ namespace MphRead.Entities
             }
             bool hitHalfturret = false;
             // todo: visualize player collision (and rename some "pickup" fields)
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (PlayerEntity player in _scene.GetPlayerEntities())
             {
-                if (entity.Type != EntityType.Player)
-                {
-                    continue;
-                }
-                var player = (PlayerEntity)entity;
                 if (player.Health == 0)
                 {
                     continue;
@@ -486,13 +466,8 @@ namespace MphRead.Entities
             }
             if (GameState.SinglePlayer)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (BeamProjectileEntity other in _scene.GetBeamProjectileEntities())
                 {
-                    if (entity.Type != EntityType.BeamProjectile)
-                    {
-                        continue;
-                    }
-                    var other = (BeamProjectileEntity)entity;
                     if (other.Owner == Owner || other.Flags.TestFlag(BeamFlags.Collided) || !other.Flags.TestFlag(BeamFlags.Destroyable)
                         || other.Owner?.Type == EntityType.EnemyInstance && Owner.Type == EntityType.EnemyInstance)
                     {
@@ -963,13 +938,12 @@ namespace MphRead.Entities
 
         private void CheckSplashDamage(EntityBase? colWith)
         {
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (PlayerEntity player in _scene.GetPlayerEntities())
             {
-                if (entity.Type != EntityType.Player || entity == colWith)
+                if (player == colWith)
                 {
                     continue;
                 }
-                var player = (PlayerEntity)entity;
 
                 void OmegaCannonFlash()
                 {
@@ -1010,14 +984,9 @@ namespace MphRead.Entities
                     OmegaCannonFlash();
                 }
             }
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (EnemyInstanceEntity enemy in _scene.GetEnemyInstanceEntities())
             {
-                if (entity.Type != EntityType.EnemyInstance || entity == colWith)
-                {
-                    continue;
-                }
-                var enemy = (EnemyInstanceEntity)entity;
-                if (!enemy.Flags.TestFlag(EnemyFlags.CollideBeam))
+                if (enemy == colWith || !enemy.Flags.TestFlag(EnemyFlags.CollideBeam))
                 {
                     continue;
                 }
@@ -1953,14 +1922,9 @@ namespace MphRead.Entities
         private void CheckIceWaveCollision(float angle)
         {
             float angleCos = MathF.Cos(MathHelper.DegreesToRadians(angle));
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (PlayerEntity player in _scene.GetPlayerEntities())
             {
-                if (entity.Type != EntityType.Player || Owner == entity)
-                {
-                    continue;
-                }
-                var player = (PlayerEntity)entity;
-                if (player.Health == 0)
+                if (player == Owner || player.Health == 0)
                 {
                     continue;
                 }

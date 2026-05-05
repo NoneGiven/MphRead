@@ -129,13 +129,8 @@ namespace MphRead.Entities
             {
                 if (_rangeNodeRef != NodeRef.None && _scene.CameraMode == CameraMode.Player) // skdebug
                 {
-                    foreach (EntityBase entity in _scene.Entities)
+                    foreach (PlayerEntity player in _scene.GetPlayerEntities())
                     {
-                        if (entity.Type != EntityType.Player)
-                        {
-                            continue;
-                        }
-                        var player = (PlayerEntity)entity;
                         if (player.Health > 0 && player.NodeRef == _rangeNodeRef)
                         {
                             Flags &= ~SpawnerFlags.Suspended;
@@ -157,13 +152,9 @@ namespace MphRead.Entities
             if (_data.EnemyType != EnemyType.CarnivorousPlant // the game doesn't have this condition
                 && _scene.CameraMode == CameraMode.Player) // skdebug
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (PlayerEntity player in _scene.GetPlayerEntities())
                 {
-                    if (entity.Type != EntityType.Player)
-                    {
-                        continue;
-                    }
-                    if (Vector3.DistanceSquared(Position, entity.Position) < distSqr)
+                    if (Vector3.DistanceSquared(Position, player.Position) < distSqr)
                     {
                         inRange = true;
                         break;
@@ -342,13 +333,8 @@ namespace MphRead.Entities
             }
             else if (info.Message == Message.Gorea2Trigger)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (EnemyInstanceEntity enemy in _scene.GetEnemyInstanceEntities())
                 {
-                    if (entity.Type != EntityType.EnemyInstance)
-                    {
-                        continue;
-                    }
-                    var enemy = (EnemyInstanceEntity)entity;
                     if (enemy.EnemyType == EnemyType.Gorea2)
                     {
                         ((Enemy31Entity)enemy).HandleMessage(info);
@@ -457,21 +443,18 @@ namespace MphRead.Entities
                     // unless another Trocra is destroyed. emulate that behavior here. technically this shouldn't be limited to the boss room.
                     int enemyCount = 0;
                     bool isGorea1 = false;
-                    foreach (EntityBase entity in scene.Entities)
+                    foreach (EnemyInstanceEntity enemy in scene.GetEnemyInstanceEntities())
                     {
-                        if (entity.Type == EntityType.EnemyInstance)
+                        EnemyType enemyType = enemy.EnemyType;
+                        if (enemyType == EnemyType.Gorea1A)
                         {
-                            EnemyType enemyType = ((EnemyInstanceEntity)entity).EnemyType;
-                            if (enemyType == EnemyType.Gorea1A)
-                            {
-                                enemyCount++;
-                                isGorea1 = true;
-                            }
-                            else if (enemyType == EnemyType.Trocra || enemyType == EnemyType.GoreaHead || enemyType == EnemyType.GoreaArm
-                                 || enemyType == EnemyType.GoreaLeg || enemyType == EnemyType.Gorea1B || enemyType == EnemyType.GoreaSealSphere1)
-                            {
-                                enemyCount++;
-                            }
+                            enemyCount++;
+                            isGorea1 = true;
+                        }
+                        else if (enemyType == EnemyType.Trocra || enemyType == EnemyType.GoreaHead || enemyType == EnemyType.GoreaArm
+                                || enemyType == EnemyType.GoreaLeg || enemyType == EnemyType.Gorea1B || enemyType == EnemyType.GoreaSealSphere1)
+                        {
+                            enemyCount++;
                         }
                     }
                     if (isGorea1 && enemyCount >= 14)

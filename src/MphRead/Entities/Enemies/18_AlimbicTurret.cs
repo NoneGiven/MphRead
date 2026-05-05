@@ -193,13 +193,8 @@ namespace MphRead.Entities.Enemies
         {
             if (_target == null)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (PlayerEntity player in _scene.GetPlayerEntities())
                 {
-                    if (entity.Type != EntityType.Player)
-                    {
-                        continue;
-                    }
-                    var player = (PlayerEntity)entity;
                     if (player.IsBot && GameState.SinglePlayer || player.Health == 0 || !_rangeVolume.TestPoint(player.Position)
                         || GameState.Mode == GameMode.BountyTeams && player.TeamIndex == 0)
                     {
@@ -239,13 +234,8 @@ namespace MphRead.Entities.Enemies
             {
                 return false;
             }
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (PlayerEntity player in _scene.GetPlayerEntities())
             {
-                if (entity.Type != EntityType.Player)
-                {
-                    continue;
-                }
-                var player = (PlayerEntity)entity;
                 // bug?: condition to ignore 1P bots is missing
                 if (player.Health == 0 || !_rangeVolume.TestPoint(player.Position)
                     || GameState.Mode == GameMode.BountyTeams && player.TeamIndex == 0)

@@ -179,13 +179,8 @@ namespace MphRead.Entities
             _soundSource.PlaySfx(SfxId.TELEPORTER_LOOP, loop: true);
             bool activated = false;
             Vector3 testPos = Position.AddY(1);
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (PlayerEntity player in _scene.GetPlayerEntities())
             {
-                if (entity.Type != EntityType.Player)
-                {
-                    continue;
-                }
-                var player = (PlayerEntity)entity;
                 if (player.Health == 0 || player.IsBot && !GameState.Multiplayer)
                 {
                     continue;

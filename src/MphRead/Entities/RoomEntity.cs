@@ -367,15 +367,11 @@ namespace MphRead.Entities
             door.ConnectorModel.Active = true;
             door.ConnectorCollision.Active = true;
             Debug.Assert(door.LoaderDoor != null);
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (DoorEntity other in _scene.GetDoorEntities())
             {
-                if (entity.Type == EntityType.Door)
+                if (other.LoaderDoor != null)
                 {
-                    var other = (DoorEntity)entity;
-                    if (other.LoaderDoor != null)
-                    {
-                        other.LoaderDoor.ConnectorInactive = true;
-                    }
+                    other.LoaderDoor.ConnectorInactive = true;
                 }
             }
             door.LoaderDoor.ConnectorInactive = false;
@@ -585,13 +581,8 @@ namespace MphRead.Entities
                     }
                 }
             }
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (DoorEntity door in _scene.GetDoorEntities())
             {
-                if (entity.Type != EntityType.Door)
-                {
-                    continue;
-                }
-                var door = (DoorEntity)entity;
                 if (door.Data.ConnectorId == 255 || door.Portal != null)
                 {
                     continue;
@@ -711,13 +702,8 @@ namespace MphRead.Entities
             if (newLoader?.ConnectorDoor != null)
             {
                 DoorEntity targetDoor = newLoader.ConnectorDoor;
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (EnemySpawnEntity spawner in _scene.GetEnemySpawnEntities())
                 {
-                    if (entity.Type != EntityType.EnemySpawn)
-                    {
-                        continue;
-                    }
-                    var spawner = (EnemySpawnEntity)entity;
                     if (spawner.Data.EnemyType != EnemyType.Cretaphid && spawner.Data.EnemyType != EnemyType.Slench)
                     {
                         continue;
@@ -736,13 +722,13 @@ namespace MphRead.Entities
             }
             if (GameState.GetAreaState(_scene.AreaId) == AreaState.Clear && PlayerEntity.PlayerCount > 1)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (DoorEntity entity in _scene.GetDoorEntities())
                 {
                     if (entity.Type != EntityType.Door)
                     {
                         continue;
                     }
-                    var door = (DoorEntity)entity;
+                    DoorEntity door = entity;
                     if (door.Id != -1 && door.Data.ConnectorId != 255)
                     {
                         if (door.LoaderDoor != null && door.LoaderDoor == newLoader)

@@ -773,12 +773,9 @@ namespace MphRead
 
         public static void LoadObjectResources(Scene scene)
         {
-            foreach (EntityBase entity in scene.Entities)
+            foreach (ObjectEntity obj in scene.GetObjectEntities())
             {
-                if (entity is ObjectEntity obj)
-                {
-                    LoadObjectResources(obj, scene);
-                }
+                LoadObjectResources(obj, scene);
             }
         }
 
@@ -792,12 +789,9 @@ namespace MphRead
 
         public static void LoadPlatformResources(Scene scene)
         {
-            foreach (EntityBase entity in scene.Entities)
+            foreach (PlatformEntity platform in scene.GetPlatformEntities())
             {
-                if (entity is PlatformEntity platform)
-                {
-                    LoadPlatformResources(platform, scene);
-                }
+                LoadPlatformResources(platform, scene);
             }
         }
 
@@ -834,12 +828,9 @@ namespace MphRead
         public static void LoadEnemyResources(Scene scene)
         {
             // todo?: pre-allocation(?)
-            foreach (EntityBase entity in scene.Entities)
+            foreach (EnemySpawnEntity spawner in scene.GetEnemySpawnEntities())
             {
-                if (entity is EnemySpawnEntity spawner)
-                {
-                    LoadEnemyResources(spawner, scene);
-                }
+                LoadEnemyResources(spawner, scene);
             }
         }
 
@@ -1058,12 +1049,9 @@ namespace MphRead
                 LoadItem(ItemType.MissileSmall, scene);
                 LoadItem(ItemType.MissileBig, scene);
             }
-            foreach (EntityBase entity in scene.Entities)
+            foreach (ItemSpawnEntity itemSpawner in scene.GetItemSpawnEntities())
             {
-                if (entity is ItemSpawnEntity itemSpawner)
-                {
-                    LoadItemResources(itemSpawner, scene);
-                }
+                LoadItemResources(itemSpawner, scene);
             }
         }
 

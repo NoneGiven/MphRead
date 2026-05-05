@@ -1921,13 +1921,8 @@ namespace MphRead.Entities
                     if (IsBot && GameState.GetAreaState(_scene.AreaId) == AreaState.Clear)
                     {
                         bool unlockDoors = true;
-                        foreach (EntityBase entity in _scene.Entities)
+                        foreach (EnemySpawnEntity spawner in _scene.GetEnemySpawnEntities())
                         {
-                            if (entity.Type != EntityType.EnemySpawn)
-                            {
-                                continue;
-                            }
-                            var spawner = (EnemySpawnEntity)entity;
                             if (spawner.Data.EnemyType != EnemyType.Hunter)
                             {
                                 continue;
@@ -1953,13 +1948,8 @@ namespace MphRead.Entities
                         if (unlockDoors)
                         {
                             GameState.CompleteRandomEncounter(_scene.RoomId);
-                            foreach (EntityBase entity in _scene.Entities)
+                            foreach (DoorEntity door in _scene.GetDoorEntities())
                             {
-                                if (entity.Type != EntityType.Door)
-                                {
-                                    continue;
-                                }
-                                var door = (DoorEntity)entity;
                                 if (door.Data.ConnectorId == 255 && door.Id != -1)
                                 {
                                     continue;
@@ -2047,13 +2037,12 @@ namespace MphRead.Entities
                         if (dropId < 8)
                         {
                             RestoreOctolith(dropId);
-                            foreach (EntityBase entity in _scene.Entities)
+                            foreach (ArtifactEntity artifact in _scene.GetArtifactEntities())
                             {
-                                if (entity.Type != EntityType.Artifact || entity.Id != -1) // the game doesn't check the ID
+                                if (artifact.Id != -1) // the game doesn't check the ID
                                 {
                                     continue;
                                 }
-                                var artifact = (ArtifactEntity)entity;
                                 if (artifact.ModelId >= 8 && artifact.ArtifactId == dropId)
                                 {
                                     artifact.Position = Position.AddY(1.5f);

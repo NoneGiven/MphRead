@@ -180,14 +180,9 @@ namespace MphRead.Entities
                 if (_target == null)
                 {
                     float minDistSqr = 15 * 15;
-                    foreach (EntityBase entity in _scene.Entities)
+                    foreach (PlayerEntity player in _scene.GetPlayerEntities())
                     {
-                        if (entity.Type != EntityType.Player || entity == Owner)
-                        {
-                            continue;
-                        }
-                        var player = (PlayerEntity)entity;
-                        if (player.Health == 0 || player.TeamIndex == Owner.TeamIndex || player.CurAlpha < 6 / 31f)
+                        if (player == Owner || player.Health == 0 || player.TeamIndex == Owner.TeamIndex || player.CurAlpha < 6 / 31f)
                         {
                             continue;
                         }

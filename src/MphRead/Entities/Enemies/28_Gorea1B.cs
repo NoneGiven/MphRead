@@ -134,10 +134,9 @@ namespace MphRead.Entities.Enemies
         private void ActivateTrocraSpawns()
         {
             int count = _phasesLeft == 3 ? 1 : 2;
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (EnemySpawnEntity spawner in _scene.GetEnemySpawnEntities())
             {
-                if (entity.Type == EntityType.EnemySpawn && entity is EnemySpawnEntity spawner
-                    && spawner.Data.EnemyType == EnemyType.Trocra && !spawner.Flags.TestFlag(SpawnerFlags.Active))
+                if (spawner.Data.EnemyType == EnemyType.Trocra && !spawner.Flags.TestFlag(SpawnerFlags.Active))
                 {
                     _scene.SendMessage(Message.Activate, this, spawner, 0, 0);
                     if (_phasesLeft != 1 && --count == 0)
@@ -1036,10 +1035,9 @@ namespace MphRead.Entities.Enemies
 
         private void DeactivateAllTrocraSpawns()
         {
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (EnemySpawnEntity spawner in _scene.GetEnemySpawnEntities())
             {
-                if (entity.Type == EntityType.EnemySpawn && entity is EnemySpawnEntity spawner
-                    && spawner.Data.EnemyType == EnemyType.Trocra)
+                if (spawner.Data.EnemyType == EnemyType.Trocra)
                 {
                     _scene.SendMessage(Message.SetActive, this, spawner, 0, 0);
                 }
@@ -1048,9 +1046,9 @@ namespace MphRead.Entities.Enemies
 
         private void DestroyAllTrocras()
         {
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (EnemyInstanceEntity enemy in _scene.GetEnemyInstanceEntities())
             {
-                if (entity.Type == EntityType.EnemyInstance && entity is Enemy30Entity trocra)
+                if (enemy is Enemy30Entity trocra)
                 {
                     trocra.Explode();
                 }

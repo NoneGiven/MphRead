@@ -174,14 +174,9 @@ namespace MphRead.Entities.Enemies
                         {
                             if (Flags.TestFlag(EnemyFlags.Visible))
                             {
-                                foreach (EntityBase entity in _scene.Entities)
+                                foreach (EnemyInstanceEntity enemy in _scene.GetEnemyInstanceEntities())
                                 {
-                                    if (entity.Type != EntityType.EnemyInstance || entity == this)
-                                    {
-                                        continue;
-                                    }
-                                    var enemy = (EnemyInstanceEntity)entity;
-                                    if (enemy.EnemyType != EnemyType.Petrasyl3)
+                                    if (enemy == this || enemy.EnemyType != EnemyType.Petrasyl3)
                                     {
                                         continue;
                                     }

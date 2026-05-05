@@ -180,13 +180,8 @@ namespace MphRead.Entities
 
                 if (GameState.Multiplayer)
                 {
-                    foreach (EntityBase entity in _scene.Entities)
+                    foreach (PlayerEntity player in _scene.GetPlayerEntities())
                     {
-                        if (entity.Type != EntityType.Player)
-                        {
-                            continue;
-                        }
-                        var player = (PlayerEntity)entity;
                         if (player.Health > 0 && CheckInRange(player.Position))
                         {
                             inRange = true;
@@ -217,13 +212,8 @@ namespace MphRead.Entities
                     _soundSource.Update(Position, rangeIndex);
                     UpdateNodeRefVolume();
                     ClearHitPlayers();
-                    foreach (EntityBase entity in _scene.Entities)
+                    foreach (PlayerEntity player in _scene.GetPlayerEntities())
                     {
-                        if (entity.Type != EntityType.Player)
-                        {
-                            continue;
-                        }
-                        var player = (PlayerEntity)entity;
                         CollisionResult hitRes = default;
                         if (player.Health > 0)
                         {

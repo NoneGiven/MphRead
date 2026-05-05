@@ -44,13 +44,8 @@ namespace MphRead.Entities
             {
                 if (AiData.Flags3.TestFlag(AiFlags3.Bit5))
                 {
-                    foreach (EntityBase entity in _scene.Entities)
+                    foreach (PlayerEntity other in _scene.GetPlayerEntities())
                     {
-                        if (entity.Type != EntityType.Player)
-                        {
-                            continue;
-                        }
-                        var other = (PlayerEntity)entity;
                         if (!other.IsBot || other == this)
                         {
                             continue;
@@ -142,16 +137,12 @@ namespace MphRead.Entities
                     if (_scene.Room?.LoadEntityId >= 0)
                     {
                         TeleporterEntity? targetTeleporter = null;
-                        foreach (EntityBase entity in _scene.Entities)
+                        foreach (TeleporterEntity teleporter in _scene.GetTeleporterEntities())
                         {
-                            if (entity.Type == EntityType.Teleporter)
+                            if (teleporter.Data.LoadIndex == _scene.Room.LoadEntityId)
                             {
-                                var teleporter = (TeleporterEntity)entity;
-                                if (teleporter.Data.LoadIndex == _scene.Room.LoadEntityId)
-                                {
-                                    targetTeleporter = teleporter;
-                                    break;
-                                }
+                                targetTeleporter = teleporter;
+                                break;
                             }
                         }
                         if (targetTeleporter != null)
@@ -175,16 +166,12 @@ namespace MphRead.Entities
                         else
                         {
                             DoorEntity? targetDoor = null;
-                            foreach (EntityBase entity in _scene.Entities)
+                            foreach (DoorEntity door in _scene.GetDoorEntities())
                             {
-                                if (entity.Type == EntityType.Door)
+                                if (door.Data.OutConnectorId == _scene.Room.LoadEntityId)
                                 {
-                                    var door = (DoorEntity)entity;
-                                    if (door.Data.OutConnectorId == _scene.Room.LoadEntityId)
-                                    {
-                                        targetDoor = door;
-                                        break;
-                                    }
+                                    targetDoor = door;
+                                    break;
                                 }
                             }
                             if (targetDoor != null)
@@ -1184,13 +1171,8 @@ namespace MphRead.Entities
             // todo: visualize
             float distSqr = _volume.SphereRadius + 0.45f;
             distSqr *= distSqr;
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (ItemInstanceEntity item in _scene.GetItemInstanceEntities())
             {
-                if (entity.Type != EntityType.ItemInstance)
-                {
-                    continue;
-                }
-                var item = (ItemInstanceEntity)entity;
                 bool inRange = false;
                 if (IsAltForm)
                 {
@@ -1888,13 +1870,12 @@ namespace MphRead.Entities
                 {
                     _scene.SpawnEffect(37, Vector3.UnitX, Vector3.UnitY, Position); // spireAltSlam
                     CameraInfo.SetShake(0.3f);
-                    foreach (EntityBase entity in _scene.Entities)
+                    foreach (PlayerEntity other in _scene.GetPlayerEntities())
                     {
-                        if (entity.Type != EntityType.Player || entity == this)
+                        if (other == this)
                         {
                             continue;
                         }
-                        var other = (PlayerEntity)entity;
                         if (other.Flags1.TestFlag(PlayerFlags1.Standing) && Vector3.DistanceSquared(Position, other.Position) < 16)
                         {
                             other.CameraInfo.SetShake(0.3f);
@@ -2026,17 +2007,12 @@ namespace MphRead.Entities
             float bestDistance = 0;
             // the game iterates 25 entities starting with the first spawn point; we iterate 25 spawn points
             // --> shouldn't matter since spawn points are meant to be together in the entity list
-            foreach (EntityBase spawn in _scene.Entities)
+            foreach (PlayerSpawnEntity candidate in _scene.GetPlayerSpawnEntities())
             {
                 if (limit >= 25)
                 {
                     break;
                 }
-                if (spawn.Type != EntityType.PlayerSpawn)
-                {
-                    continue;
-                }
-                var candidate = (PlayerSpawnEntity)spawn;
                 if (!candidate.IsActive || candidate.Cooldown != 0 || _scene.FrameCount == 0 && candidate.Availability)
                 {
                     limit++;
@@ -2049,13 +2025,8 @@ namespace MphRead.Entities
                     continue;
                 }
                 float minDistSqr = 100;
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (PlayerEntity player in _scene.GetPlayerEntities())
                 {
-                    if (entity.Type != EntityType.Player)
-                    {
-                        continue;
-                    }
-                    var player = (PlayerEntity)entity;
                     if (player.Health > 0)
                     {
                         Vector3 between = candidate.Position - player.Position;

@@ -76,13 +76,8 @@ namespace MphRead.Entities
             bool pickedUp = false;
             if (_carrier == null)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (PlayerEntity player in _scene.GetPlayerEntities())
                 {
-                    if (entity.Type != EntityType.Player)
-                    {
-                        continue;
-                    }
-                    var player = (PlayerEntity)entity;
                     if (player.Health == 0 || player.IsAltForm || player.IsMorphing
                         || !_bounty && player.TeamIndex == _data.TeamId && _atBase)
                     {

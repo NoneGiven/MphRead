@@ -445,13 +445,8 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (DoorEntity door in _scene.GetDoorEntities())
                 {
-                    if (entity.Type != EntityType.Door)
-                    {
-                        continue;
-                    }
-                    var door = (DoorEntity)entity;
                     if (door.Flags.TestFlag(DoorFlags.Open) || door.ConnectorInactive)
                     {
                         continue;

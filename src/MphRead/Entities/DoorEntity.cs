@@ -245,15 +245,11 @@ namespace MphRead.Entities
                 Debug.Assert(_scene.Room != null && _scene.Room.LoaderDoor == null);
                 _scene.Room.LoaderDoor = this;
                 GameState.TransitionRoomId = TargetRoomId;
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (DoorEntity other in _scene.GetDoorEntities())
                 {
-                    if (entity.Type == EntityType.Door)
+                    if (other.LoaderDoor == this)
                     {
-                        var other = (DoorEntity)entity;
-                        if (other.LoaderDoor == this)
-                        {
-                            other.ForceClose();
-                        }
+                        other.ForceClose();
                     }
                 }
             }
@@ -412,13 +408,8 @@ namespace MphRead.Entities
             {
                 return false;
             }
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (PlayerEntity player in _scene.GetPlayerEntities())
             {
-                if (entity.Type != EntityType.Player)
-                {
-                    continue;
-                }
-                var player = (PlayerEntity)entity;
                 if (player.Health > 0 && !player.IsBot && (Position - player.Position).LengthSquared < 16)
                 {
                     return true;
@@ -490,21 +481,21 @@ namespace MphRead.Entities
             }
             else if (info.Message == Message.UnlockConnectors)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (DoorEntity door in _scene.GetDoorEntities())
                 {
-                    if (entity.Type == EntityType.Door && entity.Id == -1)
+                    if (door.Id == -1)
                     {
-                        ((DoorEntity)entity).Unlock(updateState: true, noLockAnimSfx: false);
+                        door.Unlock(updateState: true, noLockAnimSfx: false);
                     }
                 }
             }
             else if (info.Message == Message.LockConnectors)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (DoorEntity door in _scene.GetDoorEntities())
                 {
-                    if (entity.Type == EntityType.Door && entity.Id == -1)
+                    if (door.Id == -1)
                     {
-                        ((DoorEntity)entity).Lock(updateState: true);
+                        door.Lock(updateState: true);
                     }
                 }
             }

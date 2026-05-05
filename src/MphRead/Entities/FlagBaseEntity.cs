@@ -38,13 +38,8 @@ namespace MphRead.Entities
         public override bool Process()
         {
             base.Process();
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (PlayerEntity player in _scene.GetPlayerEntities())
             {
-                if (entity.Type != EntityType.Player)
-                {
-                    continue;
-                }
-                var player = (PlayerEntity)entity;
                 if (player.OctolithFlag == null || _capture && player.TeamIndex != _data.TeamId)
                 {
                     continue;
@@ -67,13 +62,8 @@ namespace MphRead.Entities
 
         private bool CheckOwnOctolith(PlayerEntity player)
         {
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (OctolithFlagEntity octolith in _scene.GetOctolithFlagEntities())
             {
-                if (entity.Type != EntityType.OctolithFlag)
-                {
-                    continue;
-                }
-                var octolith = (OctolithFlagEntity)entity;
                 if (octolith.Data.TeamId == player.TeamIndex && !octolith.AtBase)
                 {
                     return false;

@@ -66,9 +66,9 @@ namespace MphRead.Entities.Enemies
             if ((_state1 == 0 || _state1 == 7 || _state1 == 10) && _state2 != 0 && _state2 != 7 && _state2 != 10)
             {
                 int count = 0;
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (EnemyInstanceEntity enemy in _scene.GetEnemyInstanceEntities())
                 {
-                    if (entity.Type == EntityType.EnemyInstance && entity is Enemy02Entity temroid && temroid.Field1D0)
+                    if (enemy is Enemy02Entity temroid && temroid.Field1D0)
                     {
                         count++;
                     }
@@ -230,13 +230,8 @@ namespace MphRead.Entities.Enemies
             CallStateProcess();
             if (_state1 != 8)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (DoorEntity door in _scene.GetDoorEntities())
                 {
-                    if (entity.Type != EntityType.Door)
-                    {
-                        continue;
-                    }
-                    var door = (DoorEntity)entity;
                     Vector3 doorFacing = door.FacingVector;
                     Vector3 between = Position - door.LockPosition;
                     float magSqr = between.LengthSquared;

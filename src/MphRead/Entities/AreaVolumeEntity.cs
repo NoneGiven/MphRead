@@ -154,13 +154,8 @@ namespace MphRead.Entities
             _triggeredSlots[player.SlotIndex] = true;
             if (_data.AllowMultiple == 0)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (AreaVolumeEntity other in _scene.GetAreaVolumeEntities())
                 {
-                    if (entity.Type != EntityType.AreaVolume)
-                    {
-                        continue;
-                    }
-                    var other = (AreaVolumeEntity)entity;
                     if (other != this && other._parent == _parent
                         && other._triggeredSlots[player.SlotIndex]
                         && other.Data.InsideMessage == _data.InsideMessage
@@ -194,23 +189,13 @@ namespace MphRead.Entities
             _cooldownSlots[player.SlotIndex] = _cooldownTime;
             if (_data.InsideMessage == Message.Gravity)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (AreaVolumeEntity other in _scene.GetAreaVolumeEntities())
                 {
-                    if (entity.Type != EntityType.AreaVolume)
-                    {
-                        continue;
-                    }
-                    var other = (AreaVolumeEntity)entity;
                     other._prioritySlots[player.SlotIndex] = other.Data.Priority;
                 }
             }
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (AreaVolumeEntity other in _scene.GetAreaVolumeEntities())
             {
-                if (entity.Type != EntityType.AreaVolume)
-                {
-                    continue;
-                }
-                var other = (AreaVolumeEntity)entity;
                 if (other != this && other._child == _child
                     && other._triggeredSlots[player.SlotIndex]
                     && other.Data.ExitMessage == _data.ExitMessage
@@ -234,13 +219,8 @@ namespace MphRead.Entities
         private bool PrioritizeGravity(Vector3 position, int slot)
         {
             bool result = true;
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (AreaVolumeEntity other in _scene.GetAreaVolumeEntities())
             {
-                if (entity.Type != EntityType.AreaVolume)
-                {
-                    continue;
-                }
-                var other = (AreaVolumeEntity)entity;
                 if (other.Data.InsideMessage == _data.InsideMessage && other._volume.TestPoint(position))
                 {
                     if (other.Data.Priority > _prioritySlots[slot])
@@ -263,13 +243,8 @@ namespace MphRead.Entities
                 return base.Process();
             }
             TriggerFlags flags = _data.TriggerFlags;
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (PlayerEntity player in _scene.GetPlayerEntities())
             {
-                if (entity.Type != EntityType.Player)
-                {
-                    continue;
-                }
-                var player = (PlayerEntity)entity;
                 if (GameState.Mode == GameMode.SinglePlayer && player != PlayerEntity.Main)
                 {
                     continue;

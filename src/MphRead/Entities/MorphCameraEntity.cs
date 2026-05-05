@@ -24,13 +24,8 @@ namespace MphRead.Entities
         public override bool Process()
         {
             CollisionResult discard = default;
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (PlayerEntity player in _scene.GetPlayerEntities())
             {
-                if (entity.Type != EntityType.Player)
-                {
-                    continue;
-                }
-                var player = (PlayerEntity)entity;
                 if (player.IsAltForm)
                 {
                     if (player.MorphCamera == null)

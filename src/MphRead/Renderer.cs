@@ -2658,18 +2658,17 @@ namespace MphRead
                 _room.GetDrawInfo();
                 _room.GetDisplayVolumes();
             }
-            foreach (EntityBase entity in Entities)
+            foreach (PlayerEntity player in GetPlayerEntities())
             {
-                if (!entity.Initialized || entity.Type != EntityType.Player)
+                if (!player.Initialized)
                 {
                     continue;
                 }
-                var player = (PlayerEntity)entity;
                 if (player.LoadFlags.TestFlag(LoadFlags.Active))
                 {
                     player.Draw();
                     // skdebug
-                    entity.GetDisplayVolumes();
+                    player.GetDisplayVolumes();
                 }
             }
             foreach (EntityBase entity in Entities)

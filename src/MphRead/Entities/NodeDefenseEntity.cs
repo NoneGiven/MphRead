@@ -80,13 +80,8 @@ namespace MphRead.Entities
         {
             int team = 4;
             _contested = false;
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (PlayerEntity player in _scene.GetPlayerEntities())
             {
-                if (entity.Type != EntityType.Player)
-                {
-                    continue;
-                }
-                var player = (PlayerEntity)entity;
                 if (player.Health > 0 && _volume.TestPoint(player.Volume.SpherePosition))
                 {
                     if (team == 4)
@@ -137,13 +132,8 @@ namespace MphRead.Entities
             int slot = 0;
             bool occupiedByAny = false;
             _soundSource.Update(Position, rangeIndex: 17);
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (PlayerEntity player in _scene.GetPlayerEntities())
             {
-                if (entity.Type != EntityType.Player)
-                {
-                    continue;
-                }
-                var player = (PlayerEntity)entity;
                 if (player.Health > 0 && _volume.TestPoint(player.Volume.SpherePosition))
                 {
                     if (_occupyingTeam == player.TeamIndex)
@@ -224,13 +214,8 @@ namespace MphRead.Entities
             }
             if (team != 4)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (NodeDefenseEntity node in _scene.GetNodeDefenseEntities())
                 {
-                    if (entity.Type != EntityType.NodeDefense)
-                    {
-                        continue;
-                    }
-                    var node = (NodeDefenseEntity)entity;
                     if (node._currentTeam == team && node._occupyingTeam == 4)
                     {
                         nodeCount++;

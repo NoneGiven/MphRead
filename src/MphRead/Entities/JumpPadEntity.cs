@@ -80,13 +80,8 @@ namespace MphRead.Entities
             }
             if (Active && _cooldownTimer == 0)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (PlayerEntity player in _scene.GetPlayerEntities())
                 {
-                    if (entity.Type != EntityType.Player)
-                    {
-                        continue;
-                    }
-                    var player = (PlayerEntity)entity;
                     if (player.Health == 0)
                     {
                         continue;

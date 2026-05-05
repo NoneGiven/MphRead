@@ -126,13 +126,8 @@ namespace MphRead.Entities
             {
                 bool colliding = false;
                 TriggerFlags flags = _data.TriggerFlags;
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (PlayerEntity player in _scene.GetPlayerEntities())
                 {
-                    if (entity.Type != EntityType.Player)
-                    {
-                        continue;
-                    }
-                    var player = (PlayerEntity)entity;
                     for (int i = 0; i < player.EquipInfo.Beams.Length; i++)
                     {
                         BeamProjectileEntity beam = player.EquipInfo.Beams[i];

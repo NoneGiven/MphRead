@@ -461,13 +461,10 @@ namespace MphRead
                         }
                         else
                         {
-                            foreach (EntityBase entity in scene.Entities)
+                            foreach (CamSeqEntity entity in scene.GetCamSeqEntities())
                             {
-                                if (entity.Type == EntityType.CameraSequence)
-                                {
-                                    scene.SendMessage(Message.Activate, null!, entity, param1: 0, param2: 0);
-                                    break;
-                                }
+                                scene.SendMessage(Message.Activate, null!, entity, param1: 0, param2: 0);
+                                break;
                             }
                         }
                         break;

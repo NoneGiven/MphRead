@@ -1656,13 +1656,8 @@ namespace MphRead.Entities
         private void ProcessHudSurvival()
         {
             int reveal = 0;
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (PlayerEntity player in _scene.GetPlayerEntities())
             {
-                if (entity.Type != EntityType.Player)
-                {
-                    continue;
-                }
-                var player = (PlayerEntity)entity;
                 if (player.Health == 0 || player.TeamIndex == TeamIndex)
                 {
                     continue;
@@ -1722,24 +1717,15 @@ namespace MphRead.Entities
             var goodColor = new ColorRgb(15, 15, 31);
             if (OctolithFlag != null)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (FlagBaseEntity flagBase in _scene.GetFlagBaseEntities())
                 {
-                    if (entity.Type != EntityType.FlagBase)
-                    {
-                        continue;
-                    }
-                    AddLocatorInfo(entity.Position, _nodeLocator, goodColor);
+                    AddLocatorInfo(flagBase.Position, _nodeLocator, goodColor);
                 }
             }
             else
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (OctolithFlagEntity flag in _scene.GetOctolithFlagEntities())
                 {
-                    if (entity.Type != EntityType.OctolithFlag)
-                    {
-                        continue;
-                    }
-                    var flag = (OctolithFlagEntity)entity;
                     var color = new ColorRgb(31, 31, 31);
                     if (flag.Carrier != null && (_scene.FrameCount & (4 * 2)) != 0) // todo: FPS stuff
                     {
@@ -1753,13 +1739,8 @@ namespace MphRead.Entities
         private void ProcessHudCapture()
         {
             var goodColor = new ColorRgb(15, 15, 31); // todo: share common colors
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (OctolithFlagEntity flag in _scene.GetOctolithFlagEntities())
             {
-                if (entity.Type != EntityType.OctolithFlag)
-                {
-                    continue;
-                }
-                var flag = (OctolithFlagEntity)entity;
                 if (flag.Carrier != this)
                 {
                     ColorRgb color = Metadata.TeamColors[flag.Data.TeamId];
@@ -1778,13 +1759,8 @@ namespace MphRead.Entities
 
         private void ProcessHudDefender()
         {
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (NodeDefenseEntity defense in _scene.GetNodeDefenseEntities())
             {
-                if (entity.Type != EntityType.NodeDefense)
-                {
-                    continue;
-                }
-                var defense = (NodeDefenseEntity)entity;
                 ColorRgb color;
                 if (defense.CurrentTeam == 4)
                 {
@@ -1822,13 +1798,8 @@ namespace MphRead.Entities
                 _teamNodeCounts[i] = 0;
             }
             bool showBar = false;
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (NodeDefenseEntity defense in _scene.GetNodeDefenseEntities())
             {
-                if (entity.Type != EntityType.NodeDefense)
-                {
-                    continue;
-                }
-                var defense = (NodeDefenseEntity)entity;
                 ColorRgb color;
                 if (defense.CurrentTeam == 4)
                 {
@@ -2014,20 +1985,16 @@ namespace MphRead.Entities
             }
             if (_scene.RoomId == 92) // Gorea_b2
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (EnemyInstanceEntity enemy in _scene.GetEnemyInstanceEntities())
                 {
-                    if (entity.Type == EntityType.EnemyInstance)
+                    if (enemy.EnemyType == EnemyType.GoreaSealSphere2)
                     {
-                        var enemy = (EnemyInstanceEntity)entity;
-                        if (enemy.EnemyType == EnemyType.GoreaSealSphere2)
+                        var sphere = (Enemy32Entity)enemy;
+                        if (sphere.Damage < sphere.HealthMax && sphere.Targetable)
                         {
-                            var sphere = (Enemy32Entity)enemy;
-                            if (sphere.Damage < sphere.HealthMax && sphere.Targetable)
-                            {
-                                DrawTargetHealthbar(sphere);
-                            }
-                            break;
+                            DrawTargetHealthbar(sphere);
                         }
+                        break;
                     }
                 }
             }
@@ -2099,13 +2066,8 @@ namespace MphRead.Entities
             }
             else if (GameState.Teams)
             {
-                foreach (EntityBase entity in _scene.Entities)
+                foreach (OctolithFlagEntity flag in _scene.GetOctolithFlagEntities())
                 {
-                    if (entity.Type != EntityType.OctolithFlag)
-                    {
-                        continue;
-                    }
-                    var flag = (OctolithFlagEntity)entity;
                     if (flag.Carrier != null && flag.Carrier.TeamIndex == TeamIndex)
                     {
                         drawIcon = true;
@@ -2190,9 +2152,9 @@ namespace MphRead.Entities
         {
             float startX = 12;
             int nodeCount = 0;
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (NodeDefenseEntity defense in _scene.GetNodeDefenseEntities())
             {
-                if (entity.Type == EntityType.NodeDefense)
+                if (defense.Type == EntityType.NodeDefense)
                 {
                     nodeCount++;
                 }
@@ -2202,13 +2164,8 @@ namespace MphRead.Entities
                 startX = (16 * nodeCount / 2) - 12;
             }
             float posX = 0;
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (NodeDefenseEntity defense in _scene.GetNodeDefenseEntities())
             {
-                if (entity.Type != EntityType.NodeDefense)
-                {
-                    continue;
-                }
-                var defense = (NodeDefenseEntity)entity;
                 int frame;
                 if (defense.CurrentTeam == 4)
                 {

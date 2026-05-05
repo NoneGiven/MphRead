@@ -21,13 +21,8 @@ namespace MphRead.Entities
         // todo: visualize EVERYTHING
         private void CheckPlayerCollision()
         {
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (PlayerEntity other in _scene.GetPlayerEntities())
             {
-                if (entity.Type != EntityType.Player)
-                {
-                    continue;
-                }
-                var other = (PlayerEntity)entity;
                 if (!other.LoadFlags.TestFlag(LoadFlags.Active) || other.Health == 0)
                 {
                     continue;
@@ -515,13 +510,8 @@ namespace MphRead.Entities
                     HandleCollision(results[i]);
                 }
             }
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (DoorEntity door in _scene.GetDoorEntities())
             {
-                if (entity.Type != EntityType.Door)
-                {
-                    continue;
-                }
-                var door = (DoorEntity)entity;
                 if (door.Flags.TestFlag(DoorFlags.Open) || door.ConnectorInactive)
                 {
                     continue;
@@ -552,13 +542,8 @@ namespace MphRead.Entities
                     }
                 }
             }
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (ForceFieldEntity forceField in _scene.GetForceFieldEntities())
             {
-                if (entity.Type != EntityType.ForceField)
-                {
-                    continue;
-                }
-                var forceField = (ForceFieldEntity)entity;
                 if (!forceField.Active)
                 {
                     continue;
