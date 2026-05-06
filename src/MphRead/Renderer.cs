@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +22,8 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace MphRead
 {
@@ -1465,6 +1468,7 @@ namespace MphRead
                     }
                 }
             }
+            //DrawVideoFrame(); // todo: render movies
             GL.Enable(EnableCap.DepthTest);
             GL.Disable(EnableCap.Blend);
             if (_faceCulling)
@@ -3293,6 +3297,78 @@ namespace MphRead
             GL.Enable(EnableCap.DepthTest);
             GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref _viewMatrix);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref _perspectiveMatrix);
+        }
+
+        private const int _frameWidth = 256;
+        private const int _frameHeight = 192;
+        private int _videoBinding = -1;
+
+        private readonly byte[] _imageBuffer = new byte[_frameWidth * _frameHeight * 3];
+        // needs to be disposed
+        private readonly Image<Rgb24>? _videoImages = null; // Image.Load<Rgb24>(@"");
+
+        private void DrawVideoFrame()
+        {
+            if (_videoImages == null)
+            {
+                return;
+            }
+            if (_videoBinding == -1)
+            {
+                _videoBinding = ++_textureCount;
+            }
+            GL.Uniform1(_shaderLocations.LayerAlpha, 1);
+            GL.BindTexture(TextureTarget.Texture2D, _videoBinding);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            // todo: these are metadata values
+            const int tilesX = 36;
+            const int tilexY = 36;
+            // todo: control playback
+            int frameId = (int)_frameCount / 4; // 15 fps
+            int tileRow = frameId / tilesX;
+            int tileColumn = frameId % tilexY;
+            int pixelY = tileRow * _frameHeight;
+            int pixelX = tileColumn * _frameWidth;
+            // todo: the image doesn't need to be updated unless this is a new frame
+            _videoImages.ProcessPixelRows(accessor =>
+            {
+                for (int i = 0; i < _frameHeight; i++)
+                {
+                    Span<Rgb24> rowSpan = accessor.GetRowSpan(pixelY + i);
+                    Span<byte> frameSpan = MemoryMarshal.Cast<Rgb24, byte>(rowSpan.Slice(pixelX, _frameWidth));
+                    Debug.Assert(frameSpan.Length == _frameWidth * 3);
+                    Span<byte> bufferSpan = new Span<byte>(_imageBuffer).Slice(i * _frameWidth * 3, _frameWidth * 3);
+                    frameSpan.CopyTo(bufferSpan);
+                }
+            });
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, _frameWidth, _frameHeight, 0,
+                PixelFormat.Rgb, PixelType.UnsignedByte, _imageBuffer);
+            float viewWidth = Size.X;
+            float viewHeight = Size.Y;
+            float width = viewWidth * 1f / 2 / (viewWidth / 2);
+            float height = viewHeight * 1f / 2 / (viewHeight / 2);
+            GL.Begin(PrimitiveType.TriangleStrip);
+            // top right
+            GL.TexCoord3(1f, 0f, 0f);
+            GL.Vertex3(width, height, 0f);
+            // top left
+            GL.TexCoord3(0f, 0f, 0f);
+            GL.Vertex3(-width, height, 0f);
+            // bottom right
+            GL.TexCoord3(1f, 1f, 0f);
+            GL.Vertex3(width, -height, 0f);
+            // bottom left
+            GL.TexCoord3(0f, 1f, 0f);
+            GL.Vertex3(-width, -height, 0f);
+            GL.End();
+            GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
         private void DrawHudLayer(LayerInfo info)
