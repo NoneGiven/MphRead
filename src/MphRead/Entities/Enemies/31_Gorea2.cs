@@ -984,7 +984,7 @@ namespace MphRead.Entities.Enemies
                 {
                     _currentTrigger = found;
                     GoreaFlags |= Gorea2Flags.Bit4 | Gorea2Flags.Bit5;
-                    _field22C = 90 * 2; // tood: FPS stuff
+                    _field22C = 90 * 2; // todo: FPS stuff
                 }
             }
         }

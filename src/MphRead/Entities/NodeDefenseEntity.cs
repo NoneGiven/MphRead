@@ -12,6 +12,7 @@ namespace MphRead.Entities
         private readonly NodeDefenseEntityData _data;
         private readonly Matrix4 _circleScale;
         private readonly CollisionVolume _volume;
+        public CollisionVolume Volume => _volume;
         private readonly bool _defender = false;
 
         private int _currentTeam = 4;
