@@ -5874,6 +5874,8 @@ namespace MphRead.Entities
                     bool node40Set = false;
                     if (Flags2.TestFlag(AiFlags2.Bit7) && context.Field4 == 37)
                     {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node40 = _entityRefs.Field0;
                         if (_node40 == _node48)
                         {
                             v25 = Func213A1A8();
@@ -5915,7 +5917,7 @@ namespace MphRead.Entities
                     else if (context.Field9 == 13)
                     {
                         FindEntityRef(AiEntRefType.Type24);
-                        _node3C = _node40 = _entityRefs.Field25;
+                        _node3C = _node40 = _entityRefs.Field24;
                     }
                     else if (context.Field9 == 39)
                     {
@@ -5931,8 +5933,11 @@ namespace MphRead.Entities
                         }
                         else if (context.Field9 == 6)
                         {
-                            Debug.Assert(_itemC8 != null);
-                            position = _itemC8.Position.AddY(-0.5f);
+                            if (Flags2.TestFlag(AiFlags2.SeekItem))
+                            {
+                                Debug.Assert(_itemC8 != null);
+                                position = _itemC8.Position.AddY(-0.5f);
+                            }
                         }
                         else if (context.Field9 == 14)
                         {

@@ -284,6 +284,14 @@ namespace MphRead
             for (int i = 0; i < PlayerEntity.Players.Count; i++)
             {
                 PlayerEntity player = PlayerEntity.Players[i];
+                if (player.LoadFlags.TestFlag(LoadFlags.SlotActive))
+                {
+                    InsertEntityByType(player);
+                }
+            }
+            for (int i = 0; i < PlayerEntity.Players.Count; i++)
+            {
+                PlayerEntity player = PlayerEntity.Players[i];
                 if (player.IsBot)
                 {
                     player.AiData.InitializeAtLoad();
@@ -432,7 +440,6 @@ namespace MphRead
             {
                 if (player.LoadFlags.TestFlag(LoadFlags.SlotActive))
                 {
-                    InsertEntityByType(player);
                     player.Initialize();
                     InitEntity(player);
                     InitEntity(player.Halfturret);
