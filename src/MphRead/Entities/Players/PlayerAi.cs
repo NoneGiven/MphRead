@@ -50,7 +50,7 @@ namespace MphRead.Entities
 
             // todo: member names
             private PlayerEntity? _targetPlayer = null;
-            private HalfturretEntity? _halfturret1C = null;
+            private HalfturretEntity? _targetHalfturret = null;
             private ItemSpawnEntity? _itemSpawnC4 = null;
             private ItemInstanceEntity? _itemC8 = null;
             private OctolithFlagEntity? _octolithFlagCC = null;
@@ -59,8 +59,8 @@ namespace MphRead.Entities
             private FlagBaseEntity? _flagBaseD8 = null;
             private OctolithFlagEntity? _octolithFlagDC = null;
             private FlagBaseEntity? _flagBaseE0 = null;
-            private NodeDefenseEntity? _defenseE4 = null;
-            private DoorEntity? _doorE8 = null;
+            private NodeDefenseEntity? _targetDefense = null;
+            private DoorEntity? _targetDoor = null;
 
             private int _nodeDataSetIndex = 0;
             private byte _nodeDataSelOff = 0;
@@ -110,13 +110,13 @@ namespace MphRead.Entities
                 _field78 = 0;
                 Array.Fill(_field7A, (ushort)0);
                 _targetPlayer = null;
-                _halfturret1C = null;
+                _targetHalfturret = null;
                 _itemSpawnC4 = null;
                 _itemC8 = null;
                 _octolithFlagCC = _octolithFlagD4 = _octolithFlagDC = null;
                 _flagBaseD0 = _flagBaseD8 = _flagBaseE0 = null;
-                _defenseE4 = null;
-                _doorE8 = null;
+                _targetDefense = null;
+                _targetDoor = null;
                 _nodeDataSetIndex = 0;
                 _nodeList = null!;
                 Array.Fill(_nodeTypeIndex, 0);
@@ -707,9 +707,9 @@ namespace MphRead.Entities
                 {
                     return;
                 }
-                if (Flags2.TestFlag(AiFlags2.SeekItem) && _itemC8?.DespawnTimer == 0)
+                if (Flags2.TestFlag(AiFlags2.TargetItem) && _itemC8?.DespawnTimer == 0)
                 {
-                    Flags2 &= ~AiFlags2.SeekItem;
+                    Flags2 &= ~AiFlags2.TargetItem;
                 }
                 Flags2 &= ~AiFlags2.Bit18;
                 Flags2 &= ~AiFlags2.Bit19;
@@ -721,7 +721,7 @@ namespace MphRead.Entities
                 Array.Fill(_slotHits, 0);
                 Array.Fill(_slotDamage, 0);
                 DamageFromHalfturret = 0;
-                Flags2 &= ~AiFlags2.Bit14;
+                Flags2 &= ~AiFlags2.AiEnabled;
                 Flags2 &= ~AiFlags2.Bit16;
                 Flags2 &= ~AiFlags2.Bit17;
                 Flags2 &= ~AiFlags2.Bit21;
@@ -733,10 +733,10 @@ namespace MphRead.Entities
                 _entityRefs.Clear();
                 UpdateAggro();
                 if (GameState.Mode == GameMode.PrimeHunter && GameState.PrimeHunter == _player.SlotIndex
-                    && Flags2.TestFlag(AiFlags2.SeekItem) && _itemC8 != null && (_itemC8.ItemType == ItemType.HealthSmall
+                    && Flags2.TestFlag(AiFlags2.TargetItem) && _itemC8 != null && (_itemC8.ItemType == ItemType.HealthSmall
                     || _itemC8.ItemType == ItemType.HealthMedium || _itemC8.ItemType == ItemType.HealthBig))
                 {
-                    Flags2 &= ~AiFlags2.SeekItem;
+                    Flags2 &= ~AiFlags2.TargetItem;
                 }
             }
 
@@ -2332,12 +2332,12 @@ namespace MphRead.Entities
             private void Func1_2149A64()
             {
                 FindEntityRef(AiEntRefType.Type54);
-                UpdateSeekItem(_entityRefs.Field54);
+                UpdateTargetItem(_entityRefs.Field54);
             }
 
 
-            // like Func1_21495A4, except it updates the seek item instead of setting _itemSpawnC4
-            // like Func3_213C0D0, except it updates the seek item instead of returning a boolean for its presence
+            // like Func1_21495A4, except it updates the target item instead of setting _itemSpawnC4
+            // like Func3_213C0D0, except it updates the target item instead of returning a boolean for its presence
             private void Func1_2149824()
             {
                 if (_findWeaponIndex == 1)
@@ -2345,12 +2345,12 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.Missile])
                     {
                         FindEntityRef(AiEntRefType.Type57);
-                        UpdateSeekItem(_entityRefs.Field57);
+                        UpdateTargetItem(_entityRefs.Field57);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type56);
-                        UpdateSeekItem(_entityRefs.Field56);
+                        UpdateTargetItem(_entityRefs.Field56);
                     }
                 }
                 else if (_findWeaponIndex == 2)
@@ -2358,12 +2358,12 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.VoltDriver])
                     {
                         FindEntityRef(AiEntRefType.Type59);
-                        UpdateSeekItem(_entityRefs.Field59);
+                        UpdateTargetItem(_entityRefs.Field59);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type58);
-                        UpdateSeekItem(_entityRefs.Field58);
+                        UpdateTargetItem(_entityRefs.Field58);
                     }
                 }
                 else if (_findWeaponIndex == 3)
@@ -2371,12 +2371,12 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.Battlehammer])
                     {
                         FindEntityRef(AiEntRefType.Type60);
-                        UpdateSeekItem(_entityRefs.Field60);
+                        UpdateTargetItem(_entityRefs.Field60);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type61);
-                        UpdateSeekItem(_entityRefs.Field61);
+                        UpdateTargetItem(_entityRefs.Field61);
                     }
                 }
                 else if (_findWeaponIndex == 4)
@@ -2384,12 +2384,12 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.Imperialist])
                     {
                         FindEntityRef(AiEntRefType.Type63);
-                        UpdateSeekItem(_entityRefs.Field63);
+                        UpdateTargetItem(_entityRefs.Field63);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type62);
-                        UpdateSeekItem(_entityRefs.Field62);
+                        UpdateTargetItem(_entityRefs.Field62);
                     }
                 }
                 else if (_findWeaponIndex == 5)
@@ -2397,12 +2397,12 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.Judicator])
                     {
                         FindEntityRef(AiEntRefType.Type65);
-                        UpdateSeekItem(_entityRefs.Field65);
+                        UpdateTargetItem(_entityRefs.Field65);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type64);
-                        UpdateSeekItem(_entityRefs.Field64);
+                        UpdateTargetItem(_entityRefs.Field64);
                     }
                 }
                 else if (_findWeaponIndex == 6)
@@ -2410,12 +2410,12 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.Magmaul])
                     {
                         FindEntityRef(AiEntRefType.Type67);
-                        UpdateSeekItem(_entityRefs.Field67);
+                        UpdateTargetItem(_entityRefs.Field67);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type66);
-                        UpdateSeekItem(_entityRefs.Field66);
+                        UpdateTargetItem(_entityRefs.Field66);
                     }
                 }
                 else if (_findWeaponIndex == 7)
@@ -2423,12 +2423,12 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.ShockCoil])
                     {
                         FindEntityRef(AiEntRefType.Type69);
-                        UpdateSeekItem(_entityRefs.Field69);
+                        UpdateTargetItem(_entityRefs.Field69);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type68);
-                        UpdateSeekItem(_entityRefs.Field68);
+                        UpdateTargetItem(_entityRefs.Field68);
                     }
                 }
                 else if (_findWeaponIndex == 8)
@@ -2436,63 +2436,63 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.OmegaCannon])
                     {
                         FindEntityRef(AiEntRefType.Type71);
-                        UpdateSeekItem(_entityRefs.Field71);
+                        UpdateTargetItem(_entityRefs.Field71);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type70);
-                        UpdateSeekItem(_entityRefs.Field70);
+                        UpdateTargetItem(_entityRefs.Field70);
                     }
                 }
                 else
                 {
-                    UpdateSeekItem(null);
+                    UpdateTargetItem(null);
                 }
             }
 
             private void Func1_21497F0()
             {
                 FindEntityRef(AiEntRefType.Type55);
-                UpdateSeekItem(_entityRefs.Field55);
+                UpdateTargetItem(_entityRefs.Field55);
             }
 
             private void Func1_2149570()
             {
                 FindEntityRef(AiEntRefType.Type56);
-                UpdateSeekItem(_entityRefs.Field56);
+                UpdateTargetItem(_entityRefs.Field56);
             }
 
             private void Func1_21494FC()
             {
                 FindEntityRef(AiEntRefType.Type57);
-                UpdateSeekItem(_entityRefs.Field57);
+                UpdateTargetItem(_entityRefs.Field57);
             }
 
             private void Func1_2149488()
             {
                 FindEntityRef(AiEntRefType.Type58);
-                UpdateSeekItem(_entityRefs.Field58);
+                UpdateTargetItem(_entityRefs.Field58);
             }
 
             private void Func1_2149414()
             {
                 FindEntityRef(AiEntRefType.Type59);
-                UpdateSeekItem(_entityRefs.Field59);
+                UpdateTargetItem(_entityRefs.Field59);
             }
 
             private void Func1_21493A0()
             {
                 FindEntityRef(AiEntRefType.Type72);
-                UpdateSeekItem(_entityRefs.Field72);
+                UpdateTargetItem(_entityRefs.Field72);
             }
 
             private void Func1_214932C()
             {
                 FindEntityRef(AiEntRefType.Type73);
-                UpdateSeekItem(_entityRefs.Field73);
+                UpdateTargetItem(_entityRefs.Field73);
             }
 
-            // like Func1_2149824, except it sets _itemSpawnC4 instead of updating the seek item
+            // like Func1_2149824, except it sets _itemSpawnC4 instead of updating the target item
             private void Func1_21495A4()
             {
                 void SetEntity(ItemSpawnEntity? entity)
@@ -2743,15 +2743,15 @@ namespace MphRead.Entities
                 // delegates to otherwise unused helper 213568C in-game
                 if (_entityRefs.Field33 != null)
                 {
-                    Flags2 |= AiFlags2.Bit3;
+                    Flags2 |= AiFlags2.TargetHalfturret;
                 }
                 else
                 {
-                    Flags2 &= ~AiFlags2.Bit3;
+                    Flags2 &= ~AiFlags2.TargetHalfturret;
                 }
-                if (_entityRefs.Field33 != _halfturret1C)
+                if (_entityRefs.Field33 != _targetHalfturret)
                 {
-                    _halfturret1C = _entityRefs.Field33;
+                    _targetHalfturret = _entityRefs.Field33;
                     _entityRefs.Field3 = null;
                 }
             }
@@ -3058,7 +3058,7 @@ namespace MphRead.Entities
                 {
                     if (_player.Values.AltFormStrafe != 0 && context.FieldA == 31)
                     {
-                        if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.Bit2))
+                        if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                         {
                             Debug.Assert(_targetPlayer != null);
                             _targetPlayer.GetPosition(out targetPos);
@@ -3067,10 +3067,10 @@ namespace MphRead.Entities
                                 : 0.5f);
                             Func2145C14(targetPos);
                         }
-                        else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.Bit3))
+                        else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret))
                         {
-                            Debug.Assert(_halfturret1C != null);
-                            _halfturret1C.GetPosition(out targetPos);
+                            Debug.Assert(_targetHalfturret != null);
+                            _targetHalfturret.GetPosition(out targetPos);
                             Func2145C14(targetPos);
                         }
                     }
@@ -3079,7 +3079,7 @@ namespace MphRead.Entities
                 {
                     if (_player.Values.AltFormStrafe != 0 && context.FieldA == 31)
                     {
-                        if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.Bit2))
+                        if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                         {
                             Debug.Assert(_targetPlayer != null);
                             _targetPlayer.GetPosition(out targetPos);
@@ -3089,10 +3089,10 @@ namespace MphRead.Entities
                             _field1038 = targetPos - _player.CameraInfo.Position;
                             _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
                         }
-                        else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.Bit3))
+                        else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret))
                         {
-                            Debug.Assert(_halfturret1C != null);
-                            _halfturret1C.GetPosition(out targetPos);
+                            Debug.Assert(_targetHalfturret != null);
+                            _targetHalfturret.GetPosition(out targetPos);
                             _field1038 = targetPos - _player.CameraInfo.Position;
                             _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
                         }
@@ -3110,7 +3110,7 @@ namespace MphRead.Entities
                 }
                 else if (context.FieldC == 56)
                 {
-                    if (Flags2.TestFlag(AiFlags2.Bit2))
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         Func21436D8();
                     }
@@ -3121,7 +3121,7 @@ namespace MphRead.Entities
                 }
                 else if (context.FieldC == 57)
                 {
-                    if (Flags2.TestFlag(AiFlags2.Bit2))
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         Func2143658();
                     }
@@ -3132,7 +3132,7 @@ namespace MphRead.Entities
                 }
                 else if (context.FieldC == 59)
                 {
-                    if (Flags2.TestFlag(AiFlags2.Bit2))
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         Func21433E4();
                     }
@@ -3143,7 +3143,7 @@ namespace MphRead.Entities
                 }
                 else if (context.FieldC == 60)
                 {
-                    if (Flags2.TestFlag(AiFlags2.Bit3))
+                    if (Flags2.TestFlag(AiFlags2.TargetHalfturret))
                     {
                         Func2143470();
                     }
@@ -3154,8 +3154,8 @@ namespace MphRead.Entities
                 }
                 else if (context.FieldC == 61)
                 {
-                    Debug.Assert(_doorE8 != null);
-                    _doorE8.GetPosition(out targetPos);
+                    Debug.Assert(_targetDoor != null);
+                    _targetDoor.GetPosition(out targetPos);
                     Func21433A0(targetPos);
                 }
                 else
@@ -3169,7 +3169,7 @@ namespace MphRead.Entities
                         Func2140094(context);
                         if (_player.Values.AltFormStrafe != 0 && _buttonAimX == 0 && _buttonAimY == 0)
                         {
-                            if (Flags2.TestFlag(AiFlags2.Bit2) && context.Field9 == 4)
+                            if (Flags2.TestFlag(AiFlags2.TargetPlayer) && context.Field9 == 4)
                             {
                                 // sktodo-ai: this is being repeated a lot, including the call to Func2145C14() in some cases
                                 Debug.Assert(_targetPlayer != null);
@@ -3210,8 +3210,8 @@ namespace MphRead.Entities
                     }
                 }
                 else if (context.Field4 == 33
-                    && (context.Field9 != 4 || Flags2.TestFlag(AiFlags2.Bit2))
-                    && (context.Field9 != 5 || Flags2.TestFlag(AiFlags2.Bit3)))
+                    && (context.Field9 != 4 || Flags2.TestFlag(AiFlags2.TargetPlayer))
+                    && (context.Field9 != 5 || Flags2.TestFlag(AiFlags2.TargetHalfturret)))
                 {
                     Vector3? position = null;
                     if (context.Field9 == 4)
@@ -3221,10 +3221,10 @@ namespace MphRead.Entities
                     }
                     else if (context.Field9 == 5)
                     {
-                        Debug.Assert(_halfturret1C != null);
-                        position = _halfturret1C.Position;
+                        Debug.Assert(_targetHalfturret != null);
+                        position = _targetHalfturret.Position;
                     }
-                    else if (context.Field9 == 6 && Flags2.TestFlag(AiFlags2.SeekItem))
+                    else if (context.Field9 == 6 && Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         Debug.Assert(_itemC8 != null);
                         position = targetPos = _itemC8.Position.AddY(-0.5f);
@@ -3279,10 +3279,10 @@ namespace MphRead.Entities
                         Debug.Assert(_flagBaseE0 != null);
                         position = _flagBaseE0.Position;
                     }
-                    else if (context.Field9 == 23 && Flags2.TestFlag(AiFlags2.Bit5))
+                    else if (context.Field9 == 23 && Flags2.TestFlag(AiFlags2.TargetDefense))
                     {
-                        Debug.Assert(_defenseE4 != null);
-                        position = _defenseE4.Position;
+                        Debug.Assert(_targetDefense != null);
+                        position = _targetDefense.Position;
                     }
                     else if (context.Field9 == 35)
                     {
@@ -3447,7 +3447,7 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                if (!_player.IsAltForm && !_player.IsMorphing && Flags2.TestFlag(AiFlags2.Bit2))
+                if (!_player.IsAltForm && !_player.IsMorphing && Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Debug.Assert(_targetPlayer != null);
                     if (_targetPlayer.Hunter == Hunter.Sylux && _targetPlayer.IsAltForm && Func2139C60(_targetPlayer))
@@ -3524,7 +3524,7 @@ namespace MphRead.Entities
             {
                 if (_player.IsAltForm)
                 {
-                    if (Flags2.TestFlag(AiFlags2.Bit2))
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         Func2142DCC();
                         Debug.Assert(_targetPlayer != null);
@@ -3610,7 +3610,7 @@ namespace MphRead.Entities
                 if (_player.IsAltForm)
                 {
                     _buttons.A.IsDown = true;
-                    if (Flags2.TestFlag(AiFlags2.Bit2))
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         // todo?: bug? using zero for this means all the "vectors" below are from the origin
                         // it seems like there should be a position variable that isn't here, not sure how to fix (if this is used)
@@ -3699,7 +3699,7 @@ namespace MphRead.Entities
                 {
                     _touchButtons.Morph.IsDown = true;
                 }
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Func2142FC0();
                     Debug.Assert(_targetPlayer != null);
@@ -3710,7 +3710,7 @@ namespace MphRead.Entities
             // todo: member name
             private void Func213FD94()
             {
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Debug.Assert(_targetPlayer != null);
                     Vector3 toTarget = _targetPlayer.Position - _player.Position;
@@ -3770,7 +3770,7 @@ namespace MphRead.Entities
             private void Func2_213E9C8(AiContext context)
             {
                 CheckUnmorph();
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Func21436D8();
                 }
@@ -3830,7 +3830,7 @@ namespace MphRead.Entities
 
             private void Func2_213E904(AiContext context)
             {
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Func2143578();
                 }
@@ -3841,7 +3841,7 @@ namespace MphRead.Entities
                 if (_player.IsAltForm)
                 {
                     float distSqr = 7 * 7;
-                    if (Flags2.TestFlag(AiFlags2.Bit2))
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         Debug.Assert(_targetPlayer != null);
                         distSqr = Vector3.DistanceSquared(_targetPlayer.Position, _player.Position);
@@ -3897,22 +3897,22 @@ namespace MphRead.Entities
                 {
                     CheckUnmorph();
                 }
-                else if (Flags2.TestFlag(AiFlags2.Bit5))
+                else if (Flags2.TestFlag(AiFlags2.TargetDefense))
                 {
-                    Debug.Assert(_defenseE4 != null);
+                    Debug.Assert(_targetDefense != null);
                     // Func4_2145F78 has a pared down version of this code
                     float radius = 0;
-                    if (_defenseE4.Volume.Type == VolumeType.Cylinder)
+                    if (_targetDefense.Volume.Type == VolumeType.Cylinder)
                     {
-                        radius = _defenseE4.Volume.CylinderRadius;
+                        radius = _targetDefense.Volume.CylinderRadius;
                     }
-                    else if (_defenseE4.Volume.Type == VolumeType.Sphere)
+                    else if (_targetDefense.Volume.Type == VolumeType.Sphere)
                     {
-                        radius = _defenseE4.Volume.SphereRadius;
+                        radius = _targetDefense.Volume.SphereRadius;
                     }
                     if (radius > 0.5f)
                     {
-                        Vector3 toDefense = (_defenseE4.Position - _player.Position).WithY(0);
+                        Vector3 toDefense = (_targetDefense.Position - _player.Position).WithY(0);
                         if (radius * radius <= toDefense.LengthSquared)
                         {
                             Field118 = 0;
@@ -3924,7 +3924,7 @@ namespace MphRead.Entities
                             float x = Rng.GetRandomInt2(4096) / 4096f;
                             _fieldA0 = new Vector3(x * MathF.Sign(toDefense.X), 0, MathF.Sqrt(1 - x * x) * MathF.Sign(toDefense.Z));
                             _fieldA0 *= radius;
-                            _fieldA0 += _defenseE4.Position;
+                            _fieldA0 += _targetDefense.Position;
                         }
                         Func2142AE8(_fieldA0);
                         Field118++;
@@ -3964,7 +3964,7 @@ namespace MphRead.Entities
             {
                 // mostly the same as Func2_213E274 below, but with one helper call difference
                 CheckUnmorph();
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Func21433E4();
                 }
@@ -4026,7 +4026,7 @@ namespace MphRead.Entities
             {
                 // mostly the same as Func2_213E31C above, but with one helper call difference
                 CheckUnmorph();
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Func21436D8();
                     Func21431B4();
@@ -4042,7 +4042,7 @@ namespace MphRead.Entities
             private void Func21430B4()
             {
                 // the game checks flags2 bit3 first, but we only call this helper inside that condition
-                Debug.Assert(_halfturret1C != null);
+                Debug.Assert(_targetHalfturret != null);
                 if (_buttons.Y.FramesDown > 30 * 2 || _buttons.A.FramesDown < 60 * 2 && _buttons.A.FramesDown != 0) // todo: FPS stuff
                 {
                     _buttons.A.IsDown = true;
@@ -4051,7 +4051,7 @@ namespace MphRead.Entities
                 {
                     _buttons.Y.IsDown = true;
                 }
-                float distSqr = Vector3.DistanceSquared(_halfturret1C.Position, _player.Position);
+                float distSqr = Vector3.DistanceSquared(_targetHalfturret.Position, _player.Position);
                 if (distSqr < 2 * 2)
                 {
                     _buttons.B.IsDown = true;
@@ -4066,7 +4066,7 @@ namespace MphRead.Entities
             {
                 // mostly the same as Func2_213E274 above, but with two helper call differences amd checking flags2 bit3 instead of bit2
                 CheckUnmorph();
-                if (Flags2.TestFlag(AiFlags2.Bit3))
+                if (Flags2.TestFlag(AiFlags2.TargetHalfturret))
                 {
                     Func2143470();
                     Func21430B4();
@@ -4103,7 +4103,7 @@ namespace MphRead.Entities
             private void Func2_213D96C(AiContext context)
             {
                 CheckUnmorph();
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Debug.Assert(_targetPlayer != null);
                     Func2145C14(_targetPlayer.Position);
@@ -4149,7 +4149,7 @@ namespace MphRead.Entities
 
             private int Func3_213D7D0(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.SeekItem) ? 0 : 1;
+                return Flags2.TestFlag(AiFlags2.TargetItem) ? 0 : 1;
             }
 
             private int Func3_213D7B8(AiContext context, AiPersonalityData5 param)
@@ -4166,10 +4166,10 @@ namespace MphRead.Entities
 
             private int Func3_213D77C(AiContext context, AiPersonalityData5 param)
             {
-                if (Flags2.TestFlag(AiFlags2.Bit6))
+                if (Flags2.TestFlag(AiFlags2.TargetDoor))
                 {
-                    Debug.Assert(_doorE8 != null);
-                    return _doorE8.Flags.TestFlag(DoorFlags.ShotOpen) ? 1 : 0;
+                    Debug.Assert(_targetDoor != null);
+                    return _targetDoor.Flags.TestFlag(DoorFlags.ShotOpen) ? 1 : 0;
                 }
                 return 0;
             }
@@ -4181,10 +4181,10 @@ namespace MphRead.Entities
 
             private int Func3_213D734(AiContext context, AiPersonalityData5 param)
             {
-                if (Flags2.TestFlag(AiFlags2.Bit6))
+                if (Flags2.TestFlag(AiFlags2.TargetDoor))
                 {
-                    Debug.Assert(_doorE8 != null);
-                    return _doorE8.Flags.TestFlag(DoorFlags.Locked) ? 1 : 0;
+                    Debug.Assert(_targetDoor != null);
+                    return _targetDoor.Flags.TestFlag(DoorFlags.Locked) ? 1 : 0;
                 }
                 return 0;
             }
@@ -4208,7 +4208,7 @@ namespace MphRead.Entities
 
             private int Func3_213D624(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return 0;
                 }
@@ -4228,7 +4228,7 @@ namespace MphRead.Entities
 
             private int Func3_213D564(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return 0;
                 }
@@ -4253,7 +4253,7 @@ namespace MphRead.Entities
 
             private int Func3_213D4C0(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return 0;
                 }
@@ -4342,7 +4342,7 @@ namespace MphRead.Entities
 
             private int Func3_213D234(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return 0;
                 }
@@ -4401,7 +4401,7 @@ namespace MphRead.Entities
 
             private int Func3_213D0C4(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return 0;
                 }
@@ -4416,7 +4416,7 @@ namespace MphRead.Entities
 
             private int Func3_213D078(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return 0;
                 }
@@ -4431,7 +4431,7 @@ namespace MphRead.Entities
 
             private int Func3_213D044(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit2) ? 1 : 0;
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) ? 1 : 0;
             }
 
             private int Func3_213D028(AiContext context, AiPersonalityData5 param)
@@ -4441,7 +4441,7 @@ namespace MphRead.Entities
 
             private int Func3_213D010(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit3) ? 1 : 0;
+                return Flags2.TestFlag(AiFlags2.TargetHalfturret) ? 1 : 0;
             }
 
             private int Func3_213CFF4(AiContext context, AiPersonalityData5 param)
@@ -4451,7 +4451,7 @@ namespace MphRead.Entities
 
             private int Func3_213CFDC(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.SeekItem) ? 1 : 0;
+                return Flags2.TestFlag(AiFlags2.TargetItem) ? 1 : 0;
             }
 
             private int Func3_213CFC0(AiContext context, AiPersonalityData5 param)
@@ -4466,7 +4466,7 @@ namespace MphRead.Entities
 
             private int Func3_213CF0C(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return 0;
                 }
@@ -4756,7 +4756,7 @@ namespace MphRead.Entities
 
             private int Func3_213C48C(AiContext context, AiPersonalityData5 param)
             {
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Debug.Assert(_targetPlayer != null);
                     _targetPlayer.GetPosition(out Vector3 targetPos);
@@ -4788,7 +4788,7 @@ namespace MphRead.Entities
                 return Func3_213C334(context, param) ^ 1; // inverted
             }
 
-            // like Func1_2149824, except it returns a boolean for the presence of the entity instead of updating seek item
+            // like Func1_2149824, except it returns a boolean for the presence of the entity instead of updating target item
             private int Func3_213C0D0(AiContext context, AiPersonalityData5 param)
             {
                 if (_findWeaponIndex == 1)
@@ -5158,27 +5158,27 @@ namespace MphRead.Entities
 
             private int Func3_213B4E4(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit5))
+                if (!Flags2.TestFlag(AiFlags2.TargetDefense))
                 {
                     return 0;
                 }
-                Debug.Assert(_defenseE4 != null);
-                return _defenseE4.Volume.TestPoint(_player.Volume.SpherePosition) ? 1 : 0;
+                Debug.Assert(_targetDefense != null);
+                return _targetDefense.Volume.TestPoint(_player.Volume.SpherePosition) ? 1 : 0;
             }
 
             private int Func3_213B4A0(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit5) && Func3_213B4E4(context, param) == 0 ? 1 : 0; // inverted
+                return Flags2.TestFlag(AiFlags2.TargetDefense) && Func3_213B4E4(context, param) == 0 ? 1 : 0; // inverted
             }
 
             private int Func3_213B45C(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit5))
+                if (!Flags2.TestFlag(AiFlags2.TargetDefense))
                 {
                     return 0;
                 }
-                Debug.Assert(_defenseE4 != null);
-                return _defenseE4.CapturedPlayer?.TeamIndex == _player.TeamIndex ? 1 : 0;
+                Debug.Assert(_targetDefense != null);
+                return _targetDefense.CapturedPlayer?.TeamIndex == _player.TeamIndex ? 1 : 0;
             }
 
             private int Func3_213B3F0(AiContext context, AiPersonalityData5 param)
@@ -5195,12 +5195,12 @@ namespace MphRead.Entities
 
             private int Func3_213B3A0(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit5))
+                if (!Flags2.TestFlag(AiFlags2.TargetDefense))
                 {
                     return 0;
                 }
-                Debug.Assert(_defenseE4 != null);
-                return _defenseE4.CapturedPlayer?.TeamIndex == _player.TeamIndex && _defenseE4.OccupiedBy != null ? 1 : 0;
+                Debug.Assert(_targetDefense != null);
+                return _targetDefense.CapturedPlayer?.TeamIndex == _player.TeamIndex && _targetDefense.OccupiedBy != null ? 1 : 0;
             }
 
             private int Func3_213B37C(AiContext context, AiPersonalityData5 param)
@@ -5222,13 +5222,13 @@ namespace MphRead.Entities
 
             private int Func3_213B284(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit5))
+                if (!Flags2.TestFlag(AiFlags2.TargetDefense))
                 {
                     return 0;
                 }
-                Debug.Assert(_defenseE4 != null);
+                Debug.Assert(_targetDefense != null);
                 float dist = param.Param1 / 4096f;
-                return Vector3.DistanceSquared(_defenseE4.Position, _player.Position) < dist * dist ? 1 : 0;
+                return Vector3.DistanceSquared(_targetDefense.Position, _player.Position) < dist * dist ? 1 : 0;
             }
 
             private int Func3_213B260(AiContext context, AiPersonalityData5 param)
@@ -5526,44 +5526,44 @@ namespace MphRead.Entities
 
             private int Func3_213AC04(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null
                     && _targetPlayer.Position.Y < param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213ABC0(AiContext context, AiPersonalityData5 param)
             {
                 // instead of checking the Y pos here, the game calls Func3_213AC04() and tests for a failure
-                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null
                     && _targetPlayer.Position.Y >= param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AB8C(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null
                     && _targetPlayer.Position.X > param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AB58(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null
                     && _targetPlayer.Position.X < param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AB24(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null
                     && _targetPlayer.Position.Z > param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AAF0(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null
                     && _targetPlayer.Position.Z < param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AA64(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return 0;
                 }
@@ -5575,12 +5575,12 @@ namespace MphRead.Entities
 
             private int Func3_213AA20(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit2) && Func3_213AA64(context, param) == 0 ? 1 : 0; // inverted
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) && Func3_213AA64(context, param) == 0 ? 1 : 0; // inverted
             }
 
             private int Func3_213A9B8(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return 0;
                 }
@@ -5599,7 +5599,7 @@ namespace MphRead.Entities
 
             private int Func3_213A94C(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return 31;
                 }
@@ -5638,7 +5638,7 @@ namespace MphRead.Entities
 
             private int Func3_213A8A8(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return 0;
                 }
@@ -5712,7 +5712,7 @@ namespace MphRead.Entities
 
             private int Func3_213A688(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit14) ? 1 : 0;
+                return Flags2.TestFlag(AiFlags2.AiEnabled) ? 1 : 0;
             }
 
             // todo: FPS stuff
@@ -5761,61 +5761,61 @@ namespace MphRead.Entities
                     {
                         Func21354B0();
                     }
-                    if (Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null)
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null)
                     {
                         _targetPlayer.GetPosition(out targetPos);
                         targetPos = targetPos
                             .AddY(_targetPlayer.IsAltForm ? Fixed.ToFloat(_targetPlayer.Values.AltColYPos) : 0.5f);
                     }
                 }
-                if (Flags2.TestFlag(AiFlags2.Bit3) && _halfturret1C != null
+                if (Flags2.TestFlag(AiFlags2.TargetHalfturret) && _targetHalfturret != null
                     && (context.Field9 == 5 || context.FieldB == 5 || context.FieldC == 60))
                 {
-                    _halfturret1C.GetPosition(out halfturretPos);
+                    _targetHalfturret.GetPosition(out halfturretPos);
                 }
                 if (context.Field9 == 6)
                 {
                     if (context.Field8 == 7)
                     {
                         FindEntityRef(AiEntRefType.Type55);
-                        UpdateSeekItem(_entityRefs.Field55);
+                        UpdateTargetItem(_entityRefs.Field55);
                     }
                     else if (context.Field8 == 8)
                     {
                         FindEntityRef(AiEntRefType.Type56);
-                        UpdateSeekItem(_entityRefs.Field56);
+                        UpdateTargetItem(_entityRefs.Field56);
                     }
                     else if (context.Field8 == 9)
                     {
                         FindEntityRef(AiEntRefType.Type57);
-                        UpdateSeekItem(_entityRefs.Field57);
+                        UpdateTargetItem(_entityRefs.Field57);
                     }
                     else if (context.Field8 == 10)
                     {
                         FindEntityRef(AiEntRefType.Type58);
-                        UpdateSeekItem(_entityRefs.Field58);
+                        UpdateTargetItem(_entityRefs.Field58);
                     }
                     else if (context.Field8 == 11)
                     {
                         FindEntityRef(AiEntRefType.Type59);
-                        UpdateSeekItem(_entityRefs.Field59);
+                        UpdateTargetItem(_entityRefs.Field59);
                     }
                 }
-                if (context.Field9 == 23 && !Flags2.TestFlag(AiFlags2.Bit5))
+                if (context.Field9 == 23 && !Flags2.TestFlag(AiFlags2.TargetDefense))
                 {
                     Func2135320();
                 }
-                if (context.FieldC == 61 && !Flags2.TestFlag(AiFlags2.Bit6))
+                if (context.FieldC == 61 && !Flags2.TestFlag(AiFlags2.TargetDoor))
                 {
                     Func21355D8();
                 }
                 if (context.FieldA == 32)
                 {
-                    if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.Bit2))
+                    if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         _field1038 = targetPos - _player.CameraInfo.Position;
                     }
-                    else if (context.FieldB == 3 && Flags2.TestFlag(AiFlags2.Bit2))
+                    else if (context.FieldB == 3 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         AiPlayerAggro? aggro = AggroFunc214847C(4, 7, 1, null, null);
                         if (aggro?.Player1 != null)
@@ -5827,7 +5827,7 @@ namespace MphRead.Entities
                             _field1038 = _player.CameraInfo.Facing;
                         }
                     }
-                    else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.Bit3))
+                    else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret))
                     {
                         _field1038 = halfturretPos - _player.CameraInfo.Position;
                     }
@@ -5928,12 +5928,12 @@ namespace MphRead.Entities
                         Vector3? position = null;
                         if (context.Field9 == 5)
                         {
-                            Debug.Assert(_halfturret1C != null);
-                            position = _halfturret1C.Position;
+                            Debug.Assert(_targetHalfturret != null);
+                            position = _targetHalfturret.Position;
                         }
                         else if (context.Field9 == 6)
                         {
-                            if (Flags2.TestFlag(AiFlags2.SeekItem))
+                            if (Flags2.TestFlag(AiFlags2.TargetItem))
                             {
                                 Debug.Assert(_itemC8 != null);
                                 position = _itemC8.Position.AddY(-0.5f);
@@ -5984,10 +5984,10 @@ namespace MphRead.Entities
                             Debug.Assert(_flagBaseE0 != null);
                             position = _flagBaseE0.Position;
                         }
-                        else if (context.Field9 == 23 && Flags2.TestFlag(AiFlags2.Bit5))
+                        else if (context.Field9 == 23 && Flags2.TestFlag(AiFlags2.TargetDefense))
                         {
-                            Debug.Assert(_defenseE4 != null);
-                            position = _defenseE4.Position;
+                            Debug.Assert(_targetDefense != null);
+                            position = _targetDefense.Position;
                         }
                         if (position.HasValue)
                         {
@@ -6003,15 +6003,15 @@ namespace MphRead.Entities
                 }
                 else if (context.Field4 == 34)
                 {
-                    if (context.Field9 == 4 && Flags2.TestFlag(AiFlags2.Bit2))
+                    if (context.Field9 == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         Debug.Assert(_targetPlayer != null);
                         _fieldAC = (_targetPlayer.Position - _player.Position).WithY(0);
                     }
-                    else if (context.Field9 == 5 && Flags2.TestFlag(AiFlags2.Bit3))
+                    else if (context.Field9 == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret))
                     {
-                        Debug.Assert(_halfturret1C != null);
-                        _fieldAC = (_halfturret1C.Position - _player.Position).WithY(0);
+                        Debug.Assert(_targetHalfturret != null);
+                        _fieldAC = (_targetHalfturret.Position - _player.Position).WithY(0);
                     }
                     if (_fieldAC.X != 0 || _fieldAC.Z != 0)
                     {
@@ -6041,19 +6041,19 @@ namespace MphRead.Entities
                     context.Field30 = context.FieldA == 0
                         && context.FieldC != 55 && context.FieldC != 56 && context.FieldC != 57
                         && context.FieldC != 59 && context.FieldC != 60 && context.FieldC != 61;
-                    if (context.Field9 == 4 && Flags2.TestFlag(AiFlags2.Bit2))
+                    if (context.Field9 == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         FindEntityRef(AiEntRefType.Type2);
                         _node3C = _entityRefs.Field2;
                         _queuedFindEntityAction = AiQueuedEnt.Type0;
                     }
-                    else if (context.Field9 == 5 && Flags2.TestFlag(AiFlags2.Bit3))
+                    else if (context.Field9 == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret))
                     {
                         FindEntityRef(AiEntRefType.Type3);
                         _node3C = _entityRefs.Field3;
                         _queuedFindEntityAction = AiQueuedEnt.Type8;
                     }
-                    else if (context.Field9 == 6 && Flags2.TestFlag(AiFlags2.SeekItem))
+                    else if (context.Field9 == 6 && Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -6149,13 +6149,13 @@ namespace MphRead.Entities
                         _node3C = FindHighestNode();
                         _queuedFindEntityAction = AiQueuedEnt.Type9;
                     }
-                    else if (context.Field9 == 41 && Flags2.TestFlag(AiFlags2.Bit2))
+                    else if (context.Field9 == 41 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         FindEntityRef(AiEntRefType.Type17);
                         _node3C = _entityRefs.Field17;
                         _queuedFindEntityAction = AiQueuedEnt.Type3;
                     }
-                    else if (context.Field9 == 42 && Flags2.TestFlag(AiFlags2.Bit2))
+                    else if (context.Field9 == 42 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         FindEntityRef(AiEntRefType.Type18);
                         _node3C = _entityRefs.Field18;
@@ -6266,7 +6266,7 @@ namespace MphRead.Entities
             {
                 FindEntityRef(AiEntRefType.Type1);
                 _node40 = _entityRefs.Field1;
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     FindEntityRef(AiEntRefType.Type17);
                     _node3C = _entityRefs.Field17;
@@ -6321,7 +6321,7 @@ namespace MphRead.Entities
 
             private void Func4_2145F78(AiContext context)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit5))
+                if (!Flags2.TestFlag(AiFlags2.TargetDefense))
                 {
                     Func2135320();
                 }
@@ -6331,26 +6331,26 @@ namespace MphRead.Entities
                 context.Field40 = 0;
                 context.Field44 = 0;
                 context.Field34 = _player.Position;
-                if (Flags2.TestFlag(AiFlags2.Bit5))
+                if (Flags2.TestFlag(AiFlags2.TargetDefense))
                 {
-                    Debug.Assert(_defenseE4 != null);
+                    Debug.Assert(_targetDefense != null);
                     // pared down version of code found in Func2_213E3C4
                     float radius = 0;
-                    if (_defenseE4.Volume.Type == VolumeType.Cylinder)
+                    if (_targetDefense.Volume.Type == VolumeType.Cylinder)
                     {
-                        radius = _defenseE4.Volume.CylinderRadius;
+                        radius = _targetDefense.Volume.CylinderRadius;
                     }
-                    else if (_defenseE4.Volume.Type == VolumeType.Sphere)
+                    else if (_targetDefense.Volume.Type == VolumeType.Sphere)
                     {
-                        radius = _defenseE4.Volume.SphereRadius;
+                        radius = _targetDefense.Volume.SphereRadius;
                     }
                     if (radius > 0.5f)
                     {
-                        Vector3 toDefense = (_defenseE4.Position - _player.Position).WithY(0);
+                        Vector3 toDefense = (_targetDefense.Position - _player.Position).WithY(0);
                         float x = Rng.GetRandomInt2(4096) / 4096f;
                         _fieldA0 = new Vector3(x * MathF.Sign(toDefense.X), 0, MathF.Sqrt(1 - x * x) * MathF.Sign(toDefense.Z));
                         _fieldA0 *= radius;
-                        _fieldA0 += _defenseE4.Position;
+                        _fieldA0 += _targetDefense.Position;
                     }
                 }
             }
@@ -6401,11 +6401,11 @@ namespace MphRead.Entities
             {
                 if (Flags2.TestFlag(AiFlags2.Bit9))
                 {
-                    Flags2 &= ~AiFlags2.Bit2;
+                    Flags2 &= ~AiFlags2.TargetPlayer;
                 }
                 else
                 {
-                    Flags2 |= AiFlags2.Bit2;
+                    Flags2 |= AiFlags2.TargetPlayer;
                 }
                 if (player != _targetPlayer)
                 {
@@ -6422,10 +6422,10 @@ namespace MphRead.Entities
             {
                 if (defense != null)
                 {
-                    Flags2 |= AiFlags2.Bit5;
-                    if (_defenseE4 != defense)
+                    Flags2 |= AiFlags2.TargetDefense;
+                    if (_targetDefense != defense)
                     {
-                        _defenseE4 = defense;
+                        _targetDefense = defense;
                         _entityRefs.Field15 = null;
                     }
                 }
@@ -6434,10 +6434,10 @@ namespace MphRead.Entities
             // todo: member name
             private void Func2135608(DoorEntity? door)
             {
-                Flags2 |= AiFlags2.Bit6;
-                if (_doorE8 != door)
+                Flags2 |= AiFlags2.TargetDoor;
+                if (_targetDoor != door)
                 {
-                    _doorE8 = door;
+                    _targetDoor = door;
                 }
             }
 
@@ -6525,7 +6525,7 @@ namespace MphRead.Entities
             // todo: member name
             private void Func21436D8()
             {
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Debug.Assert(_targetPlayer != null);
                     Func2144B88();
@@ -6551,7 +6551,7 @@ namespace MphRead.Entities
             private void Func2144B88()
             {
                 // update aim, accounting for distance, beam travel, accuracy, etc.
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return;
                 }
@@ -6843,7 +6843,7 @@ namespace MphRead.Entities
                 {
                     Flags2 |= AiFlags2.Bit16;
                     Flags2 &= ~AiFlags2.Bit17;
-                    if (Flags2.TestFlag(AiFlags2.Bit2) && AggroFunc214857C(6, 1, 2, null, _targetPlayer))
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer) && AggroFunc214857C(6, 1, 2, null, _targetPlayer))
                     {
                         Flags2 |= AiFlags2.Bit17;
                     }
@@ -6998,7 +6998,7 @@ namespace MphRead.Entities
                         if (!_player.Flags2.TestFlag(PlayerFlags2.Shooting) && _buttons.R.FramesUp <= _shotDelay
                             || equip.ChargeLevel >= weapon.FullCharge * 2) // todo: FPS stuff
                         {
-                            if (Flags2.TestFlag(AiFlags2.Bit2))
+                            if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                             {
                                 Debug.Assert(_targetPlayer != null);
                                 Vector3 toTarget = _targetPlayer.Position - _player.Position;
@@ -7099,7 +7099,7 @@ namespace MphRead.Entities
                     {
                         _touchButtons.OmegaCannon.IsDown = true;
                     }
-                    else if (Flags2.TestFlag(AiFlags2.Bit2) && _buttons.R.FramesUp > 0)
+                    else if (Flags2.TestFlag(AiFlags2.TargetPlayer) && _buttons.R.FramesUp > 0)
                     {
                         Debug.Assert(_targetPlayer != null);
                         Vector3 toTarget = _targetPlayer.Position - _player.Position;
@@ -7158,7 +7158,7 @@ namespace MphRead.Entities
             // todo: member name
             private void Func2143658()
             {
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Func2144AE4();
                     if (Flags2.TestFlag(AiFlags2.Bit8))
@@ -7175,7 +7175,7 @@ namespace MphRead.Entities
             // todo: member name
             private void Func2144AE4()
             {
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Debug.Assert(_targetPlayer != null);
                     _targetPlayer.GetPosition(out Vector3 targetPos);
@@ -7189,7 +7189,7 @@ namespace MphRead.Entities
             // todo: member name
             private void Func21433E4()
             {
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Func2144B88();
                     Vector3 vec = ExecuteVectorFunc(index: 0, clearY: false, normalize: false);
@@ -7203,11 +7203,11 @@ namespace MphRead.Entities
             // todo: member name
             private void Func2143470()
             {
-                if (Flags2.TestFlag(AiFlags2.Bit3))
+                if (Flags2.TestFlag(AiFlags2.TargetHalfturret))
                 {
-                    Debug.Assert(_halfturret1C != null);
+                    Debug.Assert(_targetHalfturret != null);
                     Func2144964();
-                    Vector3 toHalfturret = _halfturret1C.Position - _player.Position;
+                    Vector3 toHalfturret = _targetHalfturret.Position - _player.Position;
                     if (Flags2.TestFlag(AiFlags2.Bit8) || toHalfturret.LengthSquared < 10)
                     {
                         Func2143A40();
@@ -7226,10 +7226,10 @@ namespace MphRead.Entities
             // todo: member name
             private void Func2144964()
             {
-                if (Flags2.TestFlag(AiFlags2.Bit3))
+                if (Flags2.TestFlag(AiFlags2.TargetHalfturret))
                 {
-                    Debug.Assert(_halfturret1C != null);
-                    _halfturret1C.GetPosition(out Vector3 halfturretPos);
+                    Debug.Assert(_targetHalfturret != null);
+                    _targetHalfturret.GetPosition(out Vector3 halfturretPos);
                     _field1048 = halfturretPos.AddY(0.5f);
                     Func2145738(_field1048);
                 }
@@ -7458,7 +7458,7 @@ namespace MphRead.Entities
                             Debug.Assert(_node40 != null);
                             context.Field18 = _node40.NodeType == NodeType.AltForm && _player.Hunter != Hunter.Guardian ? 2 : 0;
                         }
-                        else if (Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                        else if (Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null
                             && _targetPlayer.Hunter == Hunter.Sylux && _targetPlayer.IsAltForm)
                         {
                             if (Func2139C60(_targetPlayer))
@@ -8071,7 +8071,7 @@ namespace MphRead.Entities
             // todo: member name
             private void Func214003C(AiContext context)
             {
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Func21436D8();
                 }
@@ -8734,15 +8734,15 @@ namespace MphRead.Entities
                 Func2135608(_entityRefs.Field77);
             }
 
-            private void UpdateSeekItem(ItemInstanceEntity? item)
+            private void UpdateTargetItem(ItemInstanceEntity? item)
             {
                 if (item != null && item.DespawnTimer > 0)
                 {
-                    Flags2 |= AiFlags2.SeekItem;
+                    Flags2 |= AiFlags2.TargetItem;
                 }
                 else
                 {
-                    Flags2 &= ~AiFlags2.SeekItem;
+                    Flags2 &= ~AiFlags2.TargetItem;
                 }
                 if (item != _itemC8)
                 {
@@ -8792,7 +8792,7 @@ namespace MphRead.Entities
                 }
                 else if (type == AiEntRefType.Type2)
                 {
-                    if (!Flags2.TestFlag(AiFlags2.Bit2))
+                    if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         FindEntityRef(AiEntRefType.Type0);
                         _entityRefs.Field2 = _entityRefs.Field0;
@@ -8818,23 +8818,23 @@ namespace MphRead.Entities
                 }
                 else if (type == AiEntRefType.Type3)
                 {
-                    if (!Flags2.TestFlag(AiFlags2.Bit3))
+                    if (!Flags2.TestFlag(AiFlags2.TargetHalfturret))
                     {
                         FindEntityRef(AiEntRefType.Type0);
                         _entityRefs.Field3 = _entityRefs.Field0;
                         return;
                     }
-                    Debug.Assert(_halfturret1C != null);
-                    if (_halfturret1C.ClosestNode != null)
+                    Debug.Assert(_targetHalfturret != null);
+                    if (_targetHalfturret.ClosestNode != null)
                     {
-                        _entityRefs.Field3 = _halfturret1C.ClosestNode;
+                        _entityRefs.Field3 = _targetHalfturret.ClosestNode;
                     }
                     else
                     {
-                        _entityRefs.Field3 = FindClosestNonHazardNodeToPosition(_halfturret1C.Position);
+                        _entityRefs.Field3 = FindClosestNonHazardNodeToPosition(_targetHalfturret.Position);
                         if (_nodeData.Simple)
                         {
-                            _halfturret1C.ClosestNode = _entityRefs.Field3;
+                            _targetHalfturret.ClosestNode = _entityRefs.Field3;
                         }
                     }
                 }
@@ -8859,7 +8859,7 @@ namespace MphRead.Entities
                 }
                 else if (type == AiEntRefType.Type5)
                 {
-                    if (!Flags2.TestFlag(AiFlags2.SeekItem))
+                    if (!Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type0);
                         _entityRefs.Field5 = _entityRefs.Field0;
@@ -9000,20 +9000,20 @@ namespace MphRead.Entities
                 }
                 else if (type == AiEntRefType.Type15)
                 {
-                    if (!Flags2.TestFlag(AiFlags2.Bit5))
+                    if (!Flags2.TestFlag(AiFlags2.TargetDefense))
                     {
                         FindEntityRef(AiEntRefType.Type0);
                         _entityRefs.Field15 = _entityRefs.Field0;
                         return;
                     }
-                    Debug.Assert(_defenseE4 != null);
+                    Debug.Assert(_targetDefense != null);
                     if (_nodeData.Simple)
                     {
-                        _entityRefs.Field15 = _defenseE4.ClosestNode;
+                        _entityRefs.Field15 = _targetDefense.ClosestNode;
                     }
                     else
                     {
-                        _entityRefs.Field15 = FindClosestNonHazardNodeToPosition(_defenseE4.Position);
+                        _entityRefs.Field15 = FindClosestNonHazardNodeToPosition(_targetDefense.Position);
                     }
                 }
                 else if (type == AiEntRefType.Type16)
@@ -9282,7 +9282,7 @@ namespace MphRead.Entities
             {
                 if (_queuedFindEntityAction == AiQueuedEnt.Type0)
                 {
-                    if (!Flags2.TestFlag(AiFlags2.Bit2))
+                    if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         FindEntityRef(AiEntRefType.Type0);
                         _node3C = _entityRefs.Field0;
@@ -9313,7 +9313,7 @@ namespace MphRead.Entities
                 }
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type4)
                 {
-                    if (!Flags2.TestFlag(AiFlags2.Bit2))
+                    if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         FindEntityRef(AiEntRefType.Type0);
                         _node3C = _entityRefs.Field0;
@@ -9344,7 +9344,7 @@ namespace MphRead.Entities
                 }
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type8)
                 {
-                    if (!Flags2.TestFlag(AiFlags2.Bit2))
+                    if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         FindEntityRef(AiEntRefType.Type0);
                         _node3C = _entityRefs.Field0;
@@ -9363,8 +9363,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type10)
                 {
                     FindEntityRef(AiEntRefType.Type54);
-                    UpdateSeekItem(_entityRefs.Field54);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field54);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9386,8 +9386,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type12)
                 {
                     FindEntityRef(AiEntRefType.Type55);
-                    UpdateSeekItem(_entityRefs.Field55);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field55);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9401,8 +9401,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type13)
                 {
                     FindEntityRef(AiEntRefType.Type56);
-                    UpdateSeekItem(_entityRefs.Field56);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field56);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9416,8 +9416,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type14)
                 {
                     FindEntityRef(AiEntRefType.Type57);
-                    UpdateSeekItem(_entityRefs.Field57);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field57);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9431,8 +9431,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type15)
                 {
                     FindEntityRef(AiEntRefType.Type58);
-                    UpdateSeekItem(_entityRefs.Field58);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field58);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9446,8 +9446,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type16)
                 {
                     FindEntityRef(AiEntRefType.Type59);
-                    UpdateSeekItem(_entityRefs.Field59);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field59);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9461,8 +9461,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type17)
                 {
                     FindEntityRef(AiEntRefType.Type60);
-                    UpdateSeekItem(_entityRefs.Field60);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field60);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9476,8 +9476,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type18)
                 {
                     FindEntityRef(AiEntRefType.Type61);
-                    UpdateSeekItem(_entityRefs.Field61);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field61);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9491,10 +9491,10 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type19)
                 {
                     // note: types 19 through 26 are never called in-game (among others), which is just as well since they
-                    // incorrect pass an item spawn instead to UpdateSeekItem(). we just pass the spawner's item if there is one.
+                    // incorrect pass an item spawn instead to UpdateTargetItem(). we just pass the spawner's item if there is one.
                     FindEntityRef(AiEntRefType.Type42);
-                    UpdateSeekItem(_entityRefs.Field42?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field42?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9508,8 +9508,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type20)
                 {
                     FindEntityRef(AiEntRefType.Type43);
-                    UpdateSeekItem(_entityRefs.Field43?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field43?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9523,8 +9523,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type21)
                 {
                     FindEntityRef(AiEntRefType.Type44);
-                    UpdateSeekItem(_entityRefs.Field44?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field44?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9538,8 +9538,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type22)
                 {
                     FindEntityRef(AiEntRefType.Type45);
-                    UpdateSeekItem(_entityRefs.Field45?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field45?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9553,8 +9553,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type23)
                 {
                     FindEntityRef(AiEntRefType.Type46);
-                    UpdateSeekItem(_entityRefs.Field46?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field46?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9568,8 +9568,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type24)
                 {
                     FindEntityRef(AiEntRefType.Type47);
-                    UpdateSeekItem(_entityRefs.Field47?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field47?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9583,8 +9583,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type25)
                 {
                     FindEntityRef(AiEntRefType.Type48);
-                    UpdateSeekItem(_entityRefs.Field48?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field48?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9598,8 +9598,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type26)
                 {
                     FindEntityRef(AiEntRefType.Type49);
-                    UpdateSeekItem(_entityRefs.Field49?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field49?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -11662,11 +11662,11 @@ namespace MphRead.Entities
         None = 0,
         Bit0 = 1,
         Bit1 = 2,
-        Bit2 = 4, // has target player
-        Bit3 = 8, // has target halfturret
-        SeekItem = 0x10,
-        Bit5 = 0x20, // has defense node E4
-        Bit6 = 0x40, // has door E8
+        TargetPlayer = 4,
+        TargetHalfturret = 8,
+        TargetItem = 0x10,
+        TargetDefense = 0x20,
+        TargetDoor = 0x40,
         Bit7 = 0x80,
         Bit8 = 0x100,
         Bit9 = 0x200,
@@ -11674,7 +11674,7 @@ namespace MphRead.Entities
         Bit11 = 0x800,
         Bit12 = 0x1000,
         Bit13 = 0x2000,
-        Bit14 = 0x4000,
+        AiEnabled = 0x4000,
         Bit15 = 0x8000,
         Bit16 = 0x10000,
         Bit17 = 0x20000,

@@ -2114,7 +2114,7 @@ namespace MphRead.Entities
             {
                 if (IsBot)
                 {
-                    AiData.Flags2 |= AiFlags2.Bit14;
+                    AiData.Flags2 |= AiFlags2.AiEnabled;
                 }
             }
             else if (info.Message == Message.Impact)
