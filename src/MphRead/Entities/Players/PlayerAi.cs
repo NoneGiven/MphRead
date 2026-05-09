@@ -721,7 +721,7 @@ namespace MphRead.Entities
                 Array.Fill(_slotHits, 0);
                 Array.Fill(_slotDamage, 0);
                 DamageFromHalfturret = 0;
-                Flags2 &= ~AiFlags2.AiEnabled;
+                Flags2 &= ~AiFlags2.AiStart;
                 Flags2 &= ~AiFlags2.Bit16;
                 Flags2 &= ~AiFlags2.Bit17;
                 Flags2 &= ~AiFlags2.Bit21;
@@ -5712,7 +5712,7 @@ namespace MphRead.Entities
 
             private int Func3_213A688(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.AiEnabled) ? 1 : 0;
+                return Flags2.TestFlag(AiFlags2.AiStart) ? 1 : 0;
             }
 
             // todo: FPS stuff
@@ -11674,7 +11674,7 @@ namespace MphRead.Entities
         Bit11 = 0x800,
         Bit12 = 0x1000,
         Bit13 = 0x2000,
-        AiEnabled = 0x4000,
+        AiStart = 0x4000,
         Bit15 = 0x8000,
         Bit16 = 0x10000,
         Bit17 = 0x20000,
