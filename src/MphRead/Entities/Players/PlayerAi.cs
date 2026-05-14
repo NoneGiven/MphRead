@@ -521,25 +521,25 @@ namespace MphRead.Entities
                     }
                     else if (button == _buttons.A)
                     {
-                        control = _player.IsAltForm
+                        control = _player.IsAltForm && _player.Values.AltFormStrafe == 0
                             ? _player.Controls.AimRight
                             : _player.Controls.MoveRight;
                     }
                     else if (button == _buttons.B)
                     {
-                        control = _player.IsAltForm
+                        control = _player.IsAltForm && _player.Values.AltFormStrafe == 0
                             ? _player.Controls.AimDown
                             : _player.Controls.MoveDown;
                     }
                     else if (button == _buttons.X)
                     {
-                        control = _player.IsAltForm
+                        control = _player.IsAltForm && _player.Values.AltFormStrafe == 0
                             ? _player.Controls.AimUp
                             : _player.Controls.MoveUp;
                     }
                     else if (button == _buttons.Y)
                     {
-                        control = _player.IsAltForm
+                        control = _player.IsAltForm && _player.Values.AltFormStrafe == 0
                             ? _player.Controls.AimLeft
                             : _player.Controls.MoveLeft;
                     }
