@@ -5162,16 +5162,17 @@ namespace MphRead.Memory
     public class AIAggro : MemoryClass
     {
         private const int _off0 = 0x0;
-        public ushort Flags { get => ReadUInt16(_off0); set => WriteUInt16(_off0, value); }
+        public ushort Bits1 { get => ReadUInt16(_off0); set => WriteUInt16(_off0, value); }
 
         private const int _off1 = 0x2;
-        public ushort Field2 { get => ReadUInt16(_off1); set => WriteUInt16(_off1, value); }
+        public ushort Bits2 { get => ReadUInt16(_off1); set => WriteUInt16(_off1, value); }
 
         private const int _off2 = 0x4;
-        public ushort Field4 { get => ReadUInt16(_off2); set => WriteUInt16(_off2, value); }
+        public ushort Staleness { get => ReadUInt16(_off2); set => WriteUInt16(_off2, value); }
 
+        // capped at 54000 (30 minutes)
         private const int _off3 = 0x6;
-        public ushort Field6 { get => ReadUInt16(_off3); set => WriteUInt16(_off3, value); }
+        public ushort Expiration { get => ReadUInt16(_off3); set => WriteUInt16(_off3, value); }
 
         private const int _off4 = 0x8; // CPlayer*
         public IntPtr Player1 { get => ReadPointer(_off4); set => WritePointer(_off4, value); }
@@ -5199,56 +5200,62 @@ namespace MphRead.Memory
             }
         }
 
-        public byte Field0A
+        // a2/a2b - bits 0-3 of the first word (0-15)
+        public byte VarA2
         {
             get
             {
-                ushort value = Flags;
+                ushort value = Bits1;
                 return (byte)(value & 0xF);
             }
         }
 
-        public byte Field0B
+        // a9 - bits 4-7 of the first word (0-15)
+        public byte VarA9
         {
             get
             {
-                ushort value = Flags;
+                ushort value = Bits1;
                 return (byte)((value & 0xF0) >> 4);
             }
         }
 
-        public byte Field0C
+        // a3 - bits 8-11 of the first word (0-15)
+        public byte VarA3
         {
             get
             {
-                ushort value = Flags;
+                ushort value = Bits1;
                 return (byte)((value & 0xF00) >> 8);
             }
         }
 
-        public byte Field0D
+        // a4 - bits 12-15 of the first word (0-15)
+        public byte VarA4
         {
             get
             {
-                ushort value = Flags;
+                ushort value = Bits1;
                 return (byte)((value & 0xF000) >> 12);
             }
         }
 
-        public byte Field2A
+        // a10 - bits 0-3 of the second word (0-15)
+        public byte VarA10
         {
             get
             {
-                ushort value = Field2;
+                ushort value = Bits2;
                 return (byte)(value & 0xF);
             }
         }
 
-        public ushort Field2B
+        // a7 - bits 4-15 of the second word (0 - 4095, capped at 40000)
+        public ushort VarA7
         {
             get
             {
-                ushort value = Field2;
+                ushort value = Bits2;
                 return (ushort)((value & 0xFFF0) >> 4);
             }
         }

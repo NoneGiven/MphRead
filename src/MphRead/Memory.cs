@@ -13,15 +13,29 @@ namespace MphRead.Memory
     public class Memory
     {
         private List<string> _mem = [];
+        private readonly AIAggro[] _aggroItems = new AIAggro[25]
+        {
+            null!, null!, null!, null!, null!,
+            null!, null!, null!, null!, null!,
+            null!, null!, null!, null!, null!,
+            null!, null!, null!, null!, null!,
+            null!, null!, null!, null!, null!
+        };
 
         private void DoProcess()
         {
-            uint count = _players[1].AggroCount;
+            //_players[0].Pos = new OpenTK.Mathematics.Vector3(11.411133f, 0.4909668f, -8.3811035f);
+            //_players[0].PrevPos = new OpenTK.Mathematics.Vector3(11.411133f, 0.4909668f, -8.3811035f);
+            //WriteMemory(Addresses.FrameCount, new byte[4] { 2, 0, 0, 0 }, 4);
+            //WriteMemory(Addresses.Rng2, new byte[4] { 11, 0, 0, 0 }, 4);
+            uint aggroCount = _players[1].AggroCount;
             var list = _players[1].AIAggro;
             Debug.Assert(list != null);
             for (int i = 0; i < list.Length; i++)
             {
-                list[i].UpdateSlots(_players);
+                AIAggro item = list[i];
+                item.UpdateSlots(_players);
+                _aggroItems[i] = item;
             }
             _ = 5;
         }
