@@ -87,6 +87,9 @@ namespace MphRead.Utility
                     var trigger = (TriggerVolumeEntityEditor)entities.Single(e => e.Id == 25 && e.Type == EntityType.TriggerVolume);
                     trigger.Volume = new CollisionVolume(trigger.Volume.BoxVector1, trigger.Volume.BoxVector2, trigger.Volume.BoxVector3,
                         new Vector3(-4.866759f, -2.576416f, 3.890676f), trigger.Volume.BoxDot1, trigger.Volume.BoxDot2, trigger.Volume.BoxDot3);
+                    var spawn = (PlayerSpawnEntityEditor)entities.Single(e => e.Type == EntityType.PlayerSpawn);
+                    spawn.Position = new Vector3(18.898872f, 3.5332031f, -19.64511f);
+                    spawn.NodeName = "rmE";
                     return RepackEntities(entities);
                 }
                 if (filename == Metadata.RoomMetadata["Gorea_b1"].EntityPath)

@@ -498,25 +498,25 @@ namespace MphRead.Entities
                     if (button == _buttons.Up)
                     {
                         control = _player.IsAltForm
-                            ? _player.Controls.MoveUp
+                            ? _player.Controls.RollUp
                             : _player.Controls.AimUp;
                     }
                     else if (button == _buttons.Down)
                     {
                         control = _player.IsAltForm
-                            ? _player.Controls.MoveDown
+                            ? _player.Controls.RollDown
                             : _player.Controls.AimDown;
                     }
                     else if (button == _buttons.Left)
                     {
                         control = _player.IsAltForm
-                            ? _player.Controls.MoveLeft
+                            ? _player.Controls.RolltLeft
                             : _player.Controls.AimLeft;
                     }
                     else if (button == _buttons.Right)
                     {
                         control = _player.IsAltForm
-                            ? _player.Controls.MoveRight
+                            ? _player.Controls.RollRight
                             : _player.Controls.AimRight;
                     }
                     else if (button == _buttons.A)
@@ -750,7 +750,7 @@ namespace MphRead.Entities
                     {
                         continue;
                     }
-                    float w = Matrix.ProjectPosition(other.Position, Matrix4.Identity, perspectiveMatrix, out Vector2 proj);
+                    float w = Matrix.ProjectPosition(other.Position, _player.CameraInfo.ViewMatrix, perspectiveMatrix, out Vector2 proj);
                     if (w < 0)
                     {
                         // sktodo-ai: bug? should this be a continue? or is the byte array check only expected to pass for one player?
@@ -798,7 +798,7 @@ namespace MphRead.Entities
                     }
                     float otherFov = MathHelper.DegreesToRadians(other.CameraInfo.Fov > 0 ? other.CameraInfo.Fov : 78);
                     Matrix4 otherPerspective = _scene.GetPerspectiveMatrix(otherFov);
-                    w = Matrix.ProjectPosition(_player.Position, Matrix4.Identity, otherPerspective, out proj);
+                    w = Matrix.ProjectPosition(_player.Position, other.CameraInfo.ViewMatrix, otherPerspective, out proj);
                     if (w < 0)
                     {
                         // sktodo-ai: same as above
@@ -7355,11 +7355,11 @@ namespace MphRead.Entities
                         if (Flags2.TestFlag(AiFlags2.Bit21) || _player.Flags1.TestFlag(PlayerFlags1.Grounded)
                             || (_player.Position - _node40.Position).WithY(0).LengthSquared > _node40.MaxDistance * _node40.MaxDistance)
                         {
-                            if (context.Field30 && ((context.Field2C = context.Field2C) == 0 || context.Field2C == 2 || context.Field20 == 2))
+                            if (context.Field30 && (context.Field2C == 0 || context.Field2C == 2 || context.Field20 == 2))
                             {
                                 Func2142A80();
                             }
-                            else if (!context.Field30 && ((context.Field2C = context.Field2C) == 0 || context.Field2C == 2 || context.Field20 == 2))
+                            else if (!context.Field30 && (context.Field2C == 0 || context.Field2C == 2 || context.Field20 == 2))
                             {
                                 Func2142AE8(_node40.Position);
                             }
@@ -11707,7 +11707,7 @@ namespace MphRead.Entities
     }
 
     [Flags]
-    public enum AiFlags4 : uint
+    public enum AiFlags4 : byte
     {
         None = 0,
         Bit0 = 1,

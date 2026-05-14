@@ -1175,8 +1175,8 @@ namespace MphRead.Entities
             if (_frozenTimer == 0 && _health > 0)
             {
                 // todo?: if touch movement for alt form was a thing, this would need extra conditions
-                if ((!Controls.MoveRight.IsDown && !Controls.MoveLeft.IsDown && !Controls.MoveUp.IsDown && !Controls.MoveDown.IsDown)
-                    || Controls.MoveRight.IsPressed || Controls.MoveLeft.IsPressed || Controls.MoveUp.IsPressed || Controls.MoveDown.IsPressed)
+                if ((!Controls.RollRight.IsDown && !Controls.RolltLeft.IsDown && !Controls.RollUp.IsDown && !Controls.RollDown.IsDown)
+                    || Controls.RollRight.IsPressed || Controls.RolltLeft.IsPressed || Controls.RollUp.IsPressed || Controls.RollDown.IsPressed)
                 {
                     Flags1 &= ~PlayerFlags1.AltDirOverride;
                 }
@@ -1349,22 +1349,22 @@ namespace MphRead.Entities
                     {
                         traction *= Fixed.ToFloat(Values.JumpPadSlideFactor);
                     }
-                    if (Controls.MoveUp.IsDown)
+                    if (Controls.RollUp.IsDown)
                     {
                         speedDelta.X += _altRollFbX * traction;
                         speedDelta.Z += _altRollFbZ * traction;
                     }
-                    else if (Controls.MoveDown.IsDown)
+                    else if (Controls.RollDown.IsDown)
                     {
                         speedDelta.X -= _altRollFbX * traction;
                         speedDelta.Z -= _altRollFbZ * traction;
                     }
-                    if (Controls.MoveLeft.IsDown)
+                    if (Controls.RolltLeft.IsDown)
                     {
                         speedDelta.X += _altRollLrX * traction;
                         speedDelta.Z += _altRollLrZ * traction;
                     }
-                    else if (Controls.MoveRight.IsDown)
+                    else if (Controls.RollRight.IsDown)
                     {
                         speedDelta.X -= _altRollLrX * traction;
                         speedDelta.Z -= _altRollLrZ * traction;
@@ -2269,6 +2269,10 @@ namespace MphRead.Entities
         public Keybind MoveRight { get; }
         public Keybind MoveUp { get; }
         public Keybind MoveDown { get; }
+        public Keybind RolltLeft { get; }
+        public Keybind RollRight { get; }
+        public Keybind RollUp { get; }
+        public Keybind RollDown { get; }
         public Keybind AimLeft { get; }
         public Keybind AimRight { get; }
         public Keybind AimUp { get; }
@@ -2302,11 +2306,11 @@ namespace MphRead.Entities
 
         public Keybind[] All { get; }
 
-        public PlayerControls(Keybind moveLeft, Keybind moveRight, Keybind moveUp, Keybind moveDown, Keybind aimLeft, Keybind aimRight,
-            Keybind aimUp, Keybind aimDown, Keybind shoot, Keybind zoom, Keybind jump, Keybind morph, Keybind boost, Keybind altAttack,
-            Keybind scanVisor, Keybind scan, Keybind nextWeapon, Keybind prevWeapon, Keybind weaponMenu, Keybind powerBeam, Keybind missile,
-            Keybind voltDriver, Keybind battlehammer, Keybind imperialist, Keybind judicator, Keybind magmaul, Keybind shockCoil,
-            Keybind omegaCannon, Keybind affinitySlot, Keybind pause)
+        public PlayerControls(Keybind moveLeft, Keybind moveRight, Keybind moveUp, Keybind moveDown, Keybind rollLeft, Keybind rollRight,
+            Keybind rollUp, Keybind rollDown, Keybind aimLeft, Keybind aimRight, Keybind aimUp, Keybind aimDown, Keybind shoot, Keybind zoom,
+            Keybind jump, Keybind morph, Keybind boost, Keybind altAttack, Keybind scanVisor, Keybind scan, Keybind nextWeapon,
+            Keybind prevWeapon, Keybind weaponMenu, Keybind powerBeam, Keybind missile, Keybind voltDriver, Keybind battlehammer,
+            Keybind imperialist, Keybind judicator, Keybind magmaul, Keybind shockCoil, Keybind omegaCannon, Keybind affinitySlot, Keybind pause)
         {
             MouseAim = true;
             KeyboardAim = true;
@@ -2315,6 +2319,10 @@ namespace MphRead.Entities
             MoveRight = moveRight;
             MoveUp = moveUp;
             MoveDown = moveDown;
+            RolltLeft = rollLeft;
+            RollRight = rollRight;
+            RollUp = rollUp;
+            RollDown = rollDown;
             AimLeft = aimLeft;
             AimRight = aimRight;
             AimUp = aimUp;
@@ -2343,9 +2351,9 @@ namespace MphRead.Entities
             Pause = pause;
             All = new[]
             {
-                moveLeft, moveRight, moveUp, moveDown, aimLeft, aimRight, aimUp, aimDown, shoot, zoom, jump, morph, boost,
-                altAttack, scanVisor, scan, nextWeapon, prevWeapon, weaponMenu, powerBeam, missile, voltDriver, battlehammer,
-                imperialist, judicator, magmaul, shockCoil, omegaCannon, affinitySlot, pause
+                moveLeft, moveRight, moveUp, moveDown, rollLeft, rollRight, rollUp, rollDown, aimLeft, aimRight, aimUp, aimDown,
+                shoot, zoom, jump, morph, boost, altAttack, scanVisor, scan, nextWeapon, prevWeapon, weaponMenu, powerBeam,
+                missile, voltDriver, battlehammer, imperialist, judicator, magmaul, shockCoil, omegaCannon, affinitySlot, pause
             };
         }
 
@@ -2374,6 +2382,10 @@ namespace MphRead.Entities
                 moveRight: new Keybind(Keys.D),
                 moveUp: new Keybind(Keys.W),
                 moveDown: new Keybind(Keys.S),
+                rollLeft: new Keybind(Keys.A),
+                rollRight: new Keybind(Keys.D),
+                rollUp: new Keybind(Keys.W),
+                rollDown: new Keybind(Keys.S),
                 aimLeft: new Keybind(Keys.Left),
                 aimRight: new Keybind(Keys.Right),
                 aimUp: new Keybind(Keys.Up),
