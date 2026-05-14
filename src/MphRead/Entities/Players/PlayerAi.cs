@@ -819,12 +819,12 @@ namespace MphRead.Entities
 
             private class AiPlayerAggro
             {
-                public byte Field0A { get; set; }
-                public byte Field0B { get; set; }
-                public byte Field0C { get; set; }
-                public byte Field0D { get; set; }
-                public byte Field2A { get; set; }
-                public ushort Field2B { get; set; }
+                public byte VarA2 { get; set; }
+                public byte VarA9 { get; set; }
+                public byte VarA3 { get; set; }
+                public byte VarA4 { get; set; }
+                public byte VarA10 { get; set; }
+                public ushort VarA7 { get; set; }
                 public ushort Staleness { get; set; }
                 public ushort Expiration { get; set; }
                 public PlayerEntity? Player1 { get; set; }
@@ -832,12 +832,12 @@ namespace MphRead.Entities
 
                 public void Clear()
                 {
-                    Field0A = 0;
-                    Field0B = 0;
-                    Field0C = 0;
-                    Field0D = 0;
-                    Field2A = 0;
-                    Field2B = 0;
+                    VarA2 = 0;
+                    VarA9 = 0;
+                    VarA3 = 0;
+                    VarA4 = 0;
+                    VarA10 = 0;
+                    VarA7 = 0;
                     Staleness = 0;
                     Expiration = 0;
                     Player1 = null;
@@ -863,13 +863,13 @@ namespace MphRead.Entities
                 for (int i = 0; i < _playerAggroCount; i++)
                 {
                     AiPlayerAggro aggro = _playerAggro[i];
-                    if ((a2 == aggro.Field0A || a2 == 7)
-                        && (a3 == aggro.Field0C || a3 == 7)
-                        && (a4 == aggro.Field0D || a4 == 7)
+                    if ((a2 == aggro.VarA2 || a2 == 7)
+                        && (a3 == aggro.VarA3 || a3 == 7)
+                        && (a4 == aggro.VarA4 || a4 == 7)
                         && (player1 == aggro.Player1 || a3 != 2)
                         && (player2 == aggro.Player2 || a4 != 2))
                     {
-                        result += aggro.Field2B;
+                        result += aggro.VarA7;
                     }
                 }
                 return result;
@@ -883,9 +883,9 @@ namespace MphRead.Entities
                 for (int i = 0; i < _playerAggroCount; i++)
                 {
                     AiPlayerAggro aggro = _playerAggro[i];
-                    if ((a2 == aggro.Field0A || a2 == 7)
-                        && (a3 == aggro.Field0C || a3 == 7)
-                        && (a4 == aggro.Field0D || a4 == 7)
+                    if ((a2 == aggro.VarA2 || a2 == 7)
+                        && (a3 == aggro.VarA3 || a3 == 7)
+                        && (a4 == aggro.VarA4 || a4 == 7)
                         && (player1 == aggro.Player1 || a3 != 2)
                         && (player2 == aggro.Player2 || a4 != 2))
                     {
@@ -907,9 +907,9 @@ namespace MphRead.Entities
                 for (int i = 0; i < _playerAggroCount; i++)
                 {
                     AiPlayerAggro aggro = _playerAggro[i];
-                    if ((a2 == aggro.Field0A || a2 == 7)
-                        && (a3 == aggro.Field0C || a3 == 7)
-                        && (a4 == aggro.Field0D || a4 == 7)
+                    if ((a2 == aggro.VarA2 || a2 == 7)
+                        && (a3 == aggro.VarA3 || a3 == 7)
+                        && (a4 == aggro.VarA4 || a4 == 7)
                         && (player1 == aggro.Player1 || a3 != 2)
                         && (player2 == aggro.Player2 || a4 != 2))
                     {
@@ -925,37 +925,40 @@ namespace MphRead.Entities
             {
                 if (a10 == 2)
                 {
+                    // update, called when taking damage (value in a7)
                     AiPlayerAggro? aggro = AggroFunc21489B4(a2, a3, a4, player1, player2);
                     if (aggro != null)
                     {
-                        aggro.Expiration += (ushort)a8; // sktodo-ai: FPS stuff for these fields?
+                        // note: FPS stuff applied at staleness comparison
+                        aggro.Expiration += (ushort)a8;
                         if (aggro.Expiration > 54000)
                         {
                             aggro.Expiration = 54000;
                         }
-                        if (a9 > aggro.Field0B)
+                        if (a9 > aggro.VarA9)
                         {
-                            aggro.Field0B = (byte)(a9 & 0xF);
+                            aggro.VarA9 = (byte)(a9 & 0xF);
                         }
-                        aggro.Field2B += (ushort)a7; // sktodo-ai: also maybe FPS stuff for this field?
-                        if (aggro.Field2B > 4000)
+                        aggro.VarA7 += (ushort)a7; // sktodo-ai: also maybe FPS stuff for this field?
+                        if (aggro.VarA7 > 4000)
                         {
-                            aggro.Field2B = 4000;
+                            aggro.VarA7 = 4000;
                         }
                         return;
                     }
                 }
                 else if (a10 == 3)
                 {
+                    // replace, called at the start of the processing loop
                     AiPlayerAggro? aggro = AggroFunc21489B4(a2, a3, a4, player1, player2);
                     if (aggro != null)
                     {
-                        aggro.Field0A = (byte)(a2 & 0xF);
-                        aggro.Field0B = (byte)(a9 & 0xF);
-                        aggro.Field0C = (byte)(a3 & 0xF);
-                        aggro.Field0D = (byte)(a4 & 0xF);
-                        aggro.Field2A = 3;
-                        aggro.Field2B = (byte)(a7 & 0xF);
+                        aggro.VarA2 = (byte)(a2 & 0xF);
+                        aggro.VarA9 = (byte)(a9 & 0xF);
+                        aggro.VarA3 = (byte)(a3 & 0xF);
+                        aggro.VarA4 = (byte)(a4 & 0xF);
+                        aggro.VarA10 = 3; // a10
+                        aggro.VarA7 = (byte)(a7 & 0xF);
                         aggro.Staleness = 0;
                         aggro.Expiration = (ushort)a8;
                         aggro.Player1 = player1;
@@ -970,10 +973,10 @@ namespace MphRead.Entities
                     for (int i = 0; i < _playerAggro.Length; i++)
                     {
                         AiPlayerAggro aggro = _playerAggro[i];
-                        if (aggro.Field0B < min)
+                        if (aggro.VarA9 < min)
                         {
                             index = i;
-                            min = aggro.Field0B;
+                            min = aggro.VarA9;
                         }
                     }
                 }
@@ -984,12 +987,12 @@ namespace MphRead.Entities
                 if (index < _playerAggro.Length)
                 {
                     AiPlayerAggro aggro = _playerAggro[index];
-                    aggro.Field0A = (byte)(a2 & 0xF);
-                    aggro.Field0B = (byte)(a9 & 0xF);
-                    aggro.Field0C = (byte)(a3 & 0xF);
-                    aggro.Field0D = (byte)(a4 & 0xF);
-                    aggro.Field2A = (byte)(a10 & 0xF);
-                    aggro.Field2B = (byte)(a7 & 0xF);
+                    aggro.VarA2 = (byte)(a2 & 0xF);
+                    aggro.VarA9 = (byte)(a9 & 0xF);
+                    aggro.VarA3 = (byte)(a3 & 0xF);
+                    aggro.VarA4 = (byte)(a4 & 0xF);
+                    aggro.VarA10 = (byte)(a10 & 0xF);
+                    aggro.VarA7 = (byte)(a7 & 0xF);
                     aggro.Staleness = 0;
                     aggro.Expiration = (ushort)a8;
                     aggro.Player1 = player1;
@@ -1003,10 +1006,10 @@ namespace MphRead.Entities
                 for (int i = 0; i < _playerAggroCount; i++)
                 {
                     AiPlayerAggro aggro = _playerAggro[i];
-                    if (aggro.Field2A != 1
-                        && (a2 == aggro.Field0A || a2 == 7)
-                        && (a3 == aggro.Field0C || a3 == 7)
-                        && (a4 == aggro.Field0D || a4 == 7)
+                    if (aggro.VarA10 != 1
+                        && (a2 == aggro.VarA2 || a2 == 7)
+                        && (a3 == aggro.VarA3 || a3 == 7)
+                        && (a4 == aggro.VarA4 || a4 == 7)
                         && (player1 == aggro.Player1 || a3 != 2)
                         && (player2 == aggro.Player2 || a4 != 2))
                     {
@@ -1026,10 +1029,10 @@ namespace MphRead.Entities
                     if (aggro.Staleness > aggro.Expiration * 2) // sktodo-ai: FPS stuff? review Field6 (expiration) changes
                     {
                         AiPlayerAggro last = _playerAggro[_playerAggroCount - 1];
-                        aggro.Field0A = last.Field0A;
-                        aggro.Field0B = last.Field0B;
-                        aggro.Field0C = last.Field0C;
-                        aggro.Field0D = last.Field0D;
+                        aggro.VarA2 = last.VarA2;
+                        aggro.VarA9 = last.VarA9;
+                        aggro.VarA3 = last.VarA3;
+                        aggro.VarA4 = last.VarA4;
                         aggro.Staleness = last.Staleness;
                         aggro.Expiration = last.Expiration;
                         aggro.Player1 = last.Player1;
