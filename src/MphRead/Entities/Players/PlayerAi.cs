@@ -1003,12 +1003,12 @@ namespace MphRead.Entities
                 for (int i = 0; i < _playerAggroCount; i++)
                 {
                     AiPlayerAggro aggro = _playerAggro[i];
-                    if (aggro.Field2A == 1
-                        || a2 != aggro.Field0A && a2 != 7
-                        || a3 != aggro.Field0C && a3 != 7
-                        || a4 != aggro.Field0D && a4 != 7
-                        || player1 != aggro.Player1 && a3 == 2
-                        || player2 != aggro.Player2 && a4 == 2)
+                    if (aggro.Field2A != 1
+                        && (a2 == aggro.Field0A || a2 == 7)
+                        && (a3 == aggro.Field0C || a3 == 7)
+                        && (a4 == aggro.Field0D || a4 == 7)
+                        && (player1 == aggro.Player1 || a3 != 2)
+                        && (player2 == aggro.Player2 || a4 != 2))
                     {
                         return aggro;
                     }
