@@ -392,7 +392,7 @@ namespace MphRead
                         _stateChanged = false;
                         winner.SetUpMatchEndCamera();
                     }
-                    PlayerEntity.Main.UpdateMatchEndCamera(winner, scene.ElapsedTime - _matchEndTime);
+                    PlayerEntity.Main.UpdateMatchEndCamera(winner, scene.GlobalElapsedTime - _matchEndTime);
                 }
                 else
                 {
