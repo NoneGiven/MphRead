@@ -373,7 +373,7 @@ namespace MphRead
                     MatchTime = 90 / 30f;
                     scene.SetFade(FadeType.None, length: 0, overwrite: true);
                     _stateChanged = true;
-                    _matchEndTime = scene.ElapsedTime;
+                    _matchEndTime = scene.GlobalElapsedTime;
                     Sfx.Instance.StopFreeSfxScripts();
                     Sfx.Instance.StopAllSound();
                     PlayerEntity.Main.StopLongSfx();
