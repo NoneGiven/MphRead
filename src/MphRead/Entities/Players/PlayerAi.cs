@@ -3077,32 +3077,29 @@ namespace MphRead.Entities
                 }
                 else if (context.FieldA == 32)
                 {
-                    if (_player.Values.AltFormStrafe != 0 && context.FieldA == 31)
+                    if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
-                        if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer))
-                        {
-                            Debug.Assert(_targetPlayer != null);
-                            _targetPlayer.GetPosition(out targetPos);
-                            targetPos = targetPos.AddY(_targetPlayer.IsAltForm
-                                ? Fixed.ToFloat(_targetPlayer.Values.AltColYPos)
-                                : 0.5f);
-                            _field1038 = targetPos - _player.CameraInfo.Position;
-                            _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
-                        }
-                        else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret))
-                        {
-                            Debug.Assert(_targetHalfturret != null);
-                            _targetHalfturret.GetPosition(out targetPos);
-                            _field1038 = targetPos - _player.CameraInfo.Position;
-                            _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
-                        }
-                        else if (context.FieldB == 27)
-                        {
-                            _field1038 = _fieldB8 - _player.CameraInfo.Position;
-                            _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
-                        }
-                        Func21447E8();
+                        Debug.Assert(_targetPlayer != null);
+                        _targetPlayer.GetPosition(out targetPos);
+                        targetPos = targetPos.AddY(_targetPlayer.IsAltForm
+                            ? Fixed.ToFloat(_targetPlayer.Values.AltColYPos)
+                            : 0.5f);
+                        _field1038 = targetPos - _player.CameraInfo.Position;
+                        _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
                     }
+                    else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret))
+                    {
+                        Debug.Assert(_targetHalfturret != null);
+                        _targetHalfturret.GetPosition(out targetPos);
+                        _field1038 = targetPos - _player.CameraInfo.Position;
+                        _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
+                    }
+                    else if (context.FieldB == 27)
+                    {
+                        _field1038 = _fieldB8 - _player.CameraInfo.Position;
+                        _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
+                    }
+                    Func21447E8();
                 }
                 else if (context.FieldC == 55)
                 {
