@@ -3038,7 +3038,7 @@ namespace MphRead.Entities
                 }
             }
 
-            // process counterpart to Func4_21462DC
+            // main proc - process counterpart to Func4_21462DC
             private void Func2_213EA48(AiContext context)
             {
                 if (context.FieldD == 28 && _player.IsAltForm && context.Field4 != 37)
@@ -5739,7 +5739,7 @@ namespace MphRead.Entities
             // todo: member names
             #region Funcs4
 
-            // init counterpart to Func2_213EA48
+            // main init - init counterpart to Func2_213EA48
             private void Func4_21462DC(AiContext context)
             {
                 Func214715C(context);
