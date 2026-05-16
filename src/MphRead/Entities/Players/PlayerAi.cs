@@ -6811,7 +6811,7 @@ namespace MphRead.Entities
                         float toTargetDistH = MathF.Sqrt(toTargetX * toTargetX + toTargetZ * toTargetZ);
                         div2 = toTargetY / toTargetDistH;
                     }
-                    float v28 = distToPosH * distToPosH - 4 * (div / 2 * (div / 2) - posY);
+                    float v28 = distToPosH * distToPosH - 4 * (div / 2 * (div / 2 - posY));
                     if (v28 < 0)
                     {
                         return;
