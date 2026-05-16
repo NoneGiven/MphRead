@@ -4127,7 +4127,7 @@ namespace MphRead.Entities
             private int Func3_213D814(AiContext context, AiPersonalityData5 param)
             {
                 Debug.Assert(_node40 != null);
-                return _node40.Position.Y - _player.Position.Y > param.Param1 ? 1 : 0;
+                return _node40.Position.Y - _player.Position.Y > param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213D7F0(AiContext context, AiPersonalityData5 param)
@@ -4231,7 +4231,8 @@ namespace MphRead.Entities
                     return 0;
                 }
                 Debug.Assert(_targetPlayer != null);
-                return Vector3.DistanceSquared(_targetPlayer.Position, _player.Position) < param.Param1 * param.Param1 ? 1 : 0;
+                float dist = param.Param1 / 4096f;
+                return Vector3.DistanceSquared(_targetPlayer.Position, _player.Position) < dist * dist ? 1 : 0;
             }
 
             private int Func3_213D540(AiContext context, AiPersonalityData5 param)
