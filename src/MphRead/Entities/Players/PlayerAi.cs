@@ -2299,8 +2299,6 @@ namespace MphRead.Entities
                 {
                     return;
                 }
-                EquipInfo equip = _player.EquipInfo;
-                WeaponInfo weapon = _player.EquipWeapon;
                 if (CanChargeWeapon())
                 {
                     _buttons.R.IsDown = true;
@@ -6793,7 +6791,7 @@ namespace MphRead.Entities
                     chargePct = (equip.ChargeLevel - weapon.MinCharge * 2) / (float)(weapon.FullCharge * 2 - weapon.MinCharge * 2);
                 }
                 // todo: bugfix: the game's math is wrong here, using charge pct as a factor between uncharged and min charge values.
-                // it should be a factor between min and max charge values (or uncharged should used directly for 0% charge).
+                // it should be a factor between min and max charge values (or uncharged should be used directly for 0% charge).
                 // going between uncharged and min charge will make the calculation wrong for any weapon where uncahrged, min, and max
                 // aren't all identical.
                 float speed = (weapon.UnchargedSpeed
@@ -8736,7 +8734,7 @@ namespace MphRead.Entities
 
             private void UpdateTargetItem(ItemInstanceEntity? item)
             {
-                if (item != null && item.DespawnTimer > 0)
+                if (item != null && item.DespawnTimer != 0)
                 {
                     Flags2 |= AiFlags2.TargetItem;
                 }
@@ -10450,7 +10448,7 @@ namespace MphRead.Entities
                 {
                     if ((!checkNeeded || !IsItemNotNeeded(item.ItemType))
                         && (GameState.Mode != GameMode.PrimeHunter || GameState.PrimeHunter != _player.SlotIndex || !IsHealth(item))
-                        && item.DespawnTimer > 0
+                        && item.DespawnTimer != 0
                         && !Func21377FC(item))
                     {
                         float dist = Vector3.DistanceSquared(item.Position, position);
@@ -10482,7 +10480,7 @@ namespace MphRead.Entities
                 float minDist = Single.MaxValue; // uninitialized in-game, but not used until after the first entity is found
                 foreach (ItemInstanceEntity item in _scene.GetItemInstanceEntities())
                 {
-                    if (IsType(item) && item.DespawnTimer > 0 && !Func21377FC(item))
+                    if (IsType(item) && item.DespawnTimer != 0 && !Func21377FC(item))
                     {
                         float dist = Vector3.DistanceSquared(item.Position, position);
                         if (dist < minDist)
