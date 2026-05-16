@@ -6503,7 +6503,7 @@ namespace MphRead.Entities
                 {
                     if (dot > _dotValues[_player.BotLevel])
                     {
-                        _buttonAimY = MathHelper.RadiansToDegrees(MathF.Acos(dot));
+                        _buttonAimX = MathHelper.RadiansToDegrees(MathF.Acos(dot));
                     }
                     else
                     {
