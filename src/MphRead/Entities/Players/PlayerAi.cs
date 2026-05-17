@@ -34,7 +34,7 @@ namespace MphRead.Entities
             public ushort HealthThreshold { get; set; }
             public uint DamageFromHalfturret { get; set; }
             // todo: member name -- set by teleporter
-            public int Field118 { get; set; } // sktodo-ai: FPS stuff? not sure if this is a timer/counter
+            public int Field118 { get; set; }
 
             private readonly int[] _slotHits = new int[4];
             private readonly int[] _slotDamage = new int[4];
@@ -4625,12 +4625,12 @@ namespace MphRead.Entities
 
             private int Func3_213CA70(AiContext context, AiPersonalityData5 param)
             {
-                return Field118 >= 151 ? 1 : 0; // sktodo-ai: FPS stuff?
+                return Field118 >= 151 * 2 ? 1 : 0; // todo: FPS stuff
             }
 
             private int Func3_213CA58(AiContext context, AiPersonalityData5 param)
             {
-                return Field118 > param.Param1 ? 1 : 0; // sktodo-ai: FPS stuff?
+                return Field118 > param.Param1 * 2 ? 1 : 0; // todo: FPS stuff
             }
 
             private int Func3_213CA2C(AiContext context, AiPersonalityData5 param)
@@ -7285,11 +7285,11 @@ namespace MphRead.Entities
                         && _player.Position.Z > -2 && _player.Position.Z < 2
                         && _player.Speed.Y > 0 && _player.Position.Y - _node40.Position.Y > 1)
                     {
-                        Field118 = 151; // sktodo-ai: FPS stuff?
+                        Field118 = 151 * 2; // todo: FPS stuff
                     }
                     else
                     {
-                        Field118++; // sktodo-ai: FPS stuff?
+                        Field118++;
                     }
                 }
 
@@ -7446,7 +7446,7 @@ namespace MphRead.Entities
                     {
                         if (_player._horizColTimer > 30 * 2 // todo: FPS stuff
                             && _player.Flags1.TestFlag(PlayerFlags1.Grounded) && _player.IsAltForm && !_player.IsUnmorphing
-                            && Field118 > 30) // sktodo-AI: FPS stuff?
+                            && Field118 > 30 * 2) // todo: FPS stuff
                         {
                             _field7A[_field78] = _node40.Id;
                             if (_field78 < 9)
@@ -7475,9 +7475,9 @@ namespace MphRead.Entities
                             Vector3 toNode = _node40.Position - _player.Position;
                             if (toNode.LengthSquared < 0.5f * 0.5f
                                 && _player.Flags1.TestFlag(PlayerFlags1.Grounded)
-                                && Field118 > 30) // sktodo-AI: FPS stuff?
+                                && Field118 > 30 * 2) // todo: FPS stuff
                             {
-                                Field118 = 151; // sktodo-AI: FPS stuff?
+                                Field118 = 151 * 2; // todo: FPS stuff
                             }
                         }
                     }
