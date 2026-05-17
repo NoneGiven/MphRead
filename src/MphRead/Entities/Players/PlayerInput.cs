@@ -2081,18 +2081,17 @@ namespace MphRead.Entities
             for (int i = 0; i < Players.Count; i++)
             {
                 PlayerEntity player = Players[i];
-                if (player.IsBot && player.LoadFlags.TestFlag(LoadFlags.Active))
+                if (player.IsBot)
                 {
-                    player.AiData.ProcessInput();
+                    if (player.LoadFlags.TestFlag(LoadFlags.Active))
+                    {
+                        player.AiData.ProcessInput();
+                    }
                     continue;
                 }
-                if (!player.IsBot && noPlayerInput)
+                if (noPlayerInput || i != 0) // todo: multiple input?
                 {
                     continue;
-                }
-                if (i != 0)
-                {
-                    break; // todo: multiple input?
                 }
                 player.Input.HasInput = false;
                 KeyboardState? prevKeyboardSnap = player.Input.KeyboardState;
