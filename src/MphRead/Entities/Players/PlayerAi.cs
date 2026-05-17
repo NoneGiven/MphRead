@@ -163,7 +163,6 @@ namespace MphRead.Entities
                 InitializeMain();
                 ClearInput();
                 InitializeSub();
-                Log("init at load");
                 UpdateExecutionPath(Personality, depth: 0);
             }
 
@@ -171,11 +170,6 @@ namespace MphRead.Entities
             {
                 InitializeMain();
                 ClearInput();
-                Log();
-                Log("--------------------------------------------------------------------------------------------------" +
-                    "--------------------------------------------------------------------------------------------------");
-                Log();
-                Log("init at spawn");
                 UpdateExecutionPath(Personality, depth: 0);
             }
 
@@ -723,11 +717,6 @@ namespace MphRead.Entities
                 Flags4 &= ~AiFlags4.Bit2;
                 Func2134594();
                 Func2148ABC();
-                Log();
-                Log("--------------------------------------------------------------------------------------------------" +
-                    "--------------------------------------------------------------------------------------------------");
-                Log();
-                Log($"frame {_scene.FrameCount}");
                 Execute(_executionTree[0]);
                 Array.Fill(_slotHits, 0);
                 Array.Fill(_slotDamage, 0);
@@ -1162,31 +1151,6 @@ namespace MphRead.Entities
                 }
             }
 
-            private static bool _logging = false;
-
-            [Conditional("DEBUG")]
-            private static void Log()
-            {
-                Log("");
-            }
-
-            [Conditional("DEBUG")]
-            private static void Log(string message)
-            {
-                if (_logging)
-                {
-                    Debug.WriteLine(message);
-                }
-            }
-
-            private static uint TestRng2(int value)
-            {
-                uint currentValue = Rng.Rng2;
-                uint returnValue = Rng.GetRandomInt2(value);
-                Rng.SetRng2(currentValue);
-                return returnValue;
-            }
-
             private const int _maxContextDepth = 20;
             private readonly AiContext[] _executionTree = new AiContext[_maxContextDepth];
             // IDs that map to something other than Func4_21462DC()
@@ -1194,16 +1158,13 @@ namespace MphRead.Entities
 
             private void UpdateExecutionPath(AiPersonalityData1 data1, int depth)
             {
-                Log();
-                Log($"init node {data1.Label}");
-                Log();
                 Debug.Assert(depth < _maxContextDepth);
                 AiContext context = _executionTree[depth];
                 context.Data1 = data1;
                 context.Depth = depth;
                 context.CallCount = 0;
                 Array.Fill(context.Weights, 0, 0, data1.Data1.Count);
-                ExecuteFuncs1(context.Data1.Data3a, init: true);
+                ExecuteFuncs1(context.Data1.Data3a);
                 context.Func24Id = context.Data1.Func24Id;
                 context.Field10 = 0;
                 _field1020 = 0;
@@ -1224,10 +1185,7 @@ namespace MphRead.Entities
 
             private void Execute(AiContext context)
             {
-                Log();
-                Log($"execute depth {context.Depth} node {context.Data1.Label}");
-                Log();
-                ExecuteFuncs1(context.Data1.Data3b, init: false);
+                ExecuteFuncs1(context.Data1.Data3b);
                 ExecuteFuncs2(context);
                 if (context.Func24Id != 0 && _player.EquipWeapon.Flags.TestFlag(WeaponFlags.CanZoom)
                     && _buttons.Select.FramesUp > 5 * 2 // todo: FPS stuff
@@ -1244,12 +1202,9 @@ namespace MphRead.Entities
                 {
                     context.CallCount++;
                 }
-                Log($"execute depth {context.Depth} call count = {context.CallCount}");
-                Log($"execute depth {context.Depth} children = {context.Data1.Data1.Count}");
                 if (context.Data1.Data1.Count > 0 && context.Depth < _maxContextDepth - 1)
                 {
                     Execute(_executionTree[context.Depth + 1]);
-                    Log();
                     int newChildIndex = UpdatePathWeights(context);
                     if (newChildIndex != -1)
                     {
@@ -1264,31 +1219,21 @@ namespace MphRead.Entities
                 AiPersonalityData1 nextData1 = _executionTree[context.Depth + 1].Data1;
                 if (nextData1.Data2.Count == 0)
                 {
-                    Log($"depth {context.Depth} -> {context.Depth + 1} nothing to switch");
                     return -1;
                 }
                 int result = -1;
-                Log($"depth {context.Depth} -> {context.Depth + 1} switch options = {nextData1.Data2.Count}");
                 for (int i = 0; i < nextData1.Data2.Count; i++)
                 {
                     AiPersonalityData2 data2 = nextData1.Data2[i];
                     bool noUpdate = false;
-                    string label = "reset";
-                    if (data2.Data1SelectIndex < 20)
-                    {
-                        label = $"node {context.Data1.Data1[data2.Data1SelectIndex].Label}";
-                    }
-                    Log($"depth {context.Depth} -> {context.Depth + 1} {label} data4 precon count = {data2.Data4.Count}");
                     for (int j = 0; j < data2.Data4.Count; j++)
                     {
                         AiPersonalityData4 data4 = data2.Data4[j];
-                        if (ExecuteFuncs3(context, data4.Func3Id, data4.Parameters, precon: true) == 0)
+                        if (ExecuteFuncs3(context, data4.Func3Id, data4.Parameters) == 0)
                         {
-                            Log($"depth {context.Depth} -> {context.Depth + 1} {label} data4 {j} returned false");
                             noUpdate = true;
                             break;
                         }
-                        Log($"depth {context.Depth} -> {context.Depth + 1} {label} data4 {j} returned true");
                     }
                     if (noUpdate)
                     {
@@ -1301,17 +1246,7 @@ namespace MphRead.Entities
                     }
                     // sktodo-ai: we need to determine which funcs3 functions are frame/time-based and which are occurrence-based.
                     // occurrence-based should take the same number of repeats to hit 100,000, but frame-based will need to accumulate at half speed.
-                    int weightBefore = context.Weights[weightIndex];
-                    context.Weights[weightIndex] += ExecuteFuncs3(context, data2.Func3Id, data2.Parameters, precon: false) * data2.Weight;
-                    int weightNow = context.Weights[weightIndex];
-                    if (weightNow == weightBefore)
-                    {
-                        Log($"depth {context.Depth} -> {context.Depth + 1} weight unchanged {weightIndex} x{data2.Weight} ({label}): {weightNow}");
-                    }
-                    else
-                    {
-                        Log($"depth {context.Depth} -> {context.Depth + 1} weight updated {weightIndex} x{data2.Weight} ({label}): {weightBefore} -> {weightNow}");
-                    }
+                    context.Weights[weightIndex] += ExecuteFuncs3(context, data2.Func3Id, data2.Parameters) * data2.Weight;
                     if (context.Weights[weightIndex] >= 100000)
                     {
                         result = data2.Data1SelectIndex;
@@ -1321,13 +1256,9 @@ namespace MphRead.Entities
                 }
                 if (result < 20)
                 {
-                    Log(result == -1
-                        ? $"did not switch depth {context.Depth} -> {context.Depth + 1}"
-                        : $"switching depth {context.Depth} -> {context.Depth + 1} to {result} node {context.Data1.Data1[result].Label}");
                     // succeded with valid index (return that index), or didn't find a new index (return -1)
                     return result;
                 }
-                Log("reset weights");
                 // succeeded with the "reset" index (reset weights and return -1)
                 Array.Fill(context.Weights, 0, 0, context.Data1.Data1.Count);
                 return -1;
@@ -1454,12 +1385,10 @@ namespace MphRead.Entities
             }
 
             // todo: member name
-            private void ExecuteFuncs1(IReadOnlyList<int> funcsIds, bool init)
+            private void ExecuteFuncs1(IReadOnlyList<int> funcsIds)
             {
-                Log($"funcs1 {(init ? "init" : "exec")} count = {funcsIds.Count}");
                 for (int i = 0; i < funcsIds.Count; i++)
                 {
-                    Log($"funcs1 {(init ? "init" : "exec")} {funcsIds[i]} -> {GetFuncs1Desc(funcsIds[i])}");
                     switch (funcsIds[i])
                     {
                     case 0:
@@ -1723,7 +1652,6 @@ namespace MphRead.Entities
             // todo: member name
             private void ExecuteFuncs2(AiContext context)
             {
-                Log($"funcs2 {context.Func24Id} -> {GetFuncs2Desc(context.Func24Id)}");
                 switch (context.Func24Id)
                 {
                 case 0:
@@ -1791,9 +1719,8 @@ namespace MphRead.Entities
             }
 
             // todo: member name
-            private int ExecuteFuncs3(AiContext context, int funcId, AiPersonalityData5 param, bool precon)
+            private int ExecuteFuncs3(AiContext context, int funcId, AiPersonalityData5 param)
             {
-                Log($"funcs3 {(precon ? "precon" : "switch")} {funcId} -> {GetFuncs3Desc(funcId)}");
                 return funcId switch
                 {
                     0 => Func3_213D87C(context, param),
@@ -2015,7 +1942,6 @@ namespace MphRead.Entities
             // todo: member name
             private void ExecuteFuncs4(AiContext context)
             {
-                Log($"funcs4 {context.Func24Id} -> {GetFuncs4Desc(context.Func24Id)}");
                 switch (context.Func24Id)
                 {
                 case 0:
@@ -3113,82 +3039,28 @@ namespace MphRead.Entities
             // main proc - process counterpart to Func4_21462DC
             private void Func2_213EA48(AiContext context)
             {
-                Log($"if context.FieldD == 28 ({context.FieldD}) && _player.IsAltForm ({_player.IsAltForm}) && context.Field4 != 37 ({context.Field4}): " +
-                    $"({context.FieldD == 28 && _player.IsAltForm && context.Field4 != 37})");
-                if (context.FieldD != 28 || !_player.IsAltForm || context.Field4 == 37)
-                {
-                    Log($"  if context.FieldD == 29 {context.FieldD} && !_player.IsAltForm ({_player.IsAltForm}) && context.Field4 != 37 {context.Field4}: " +
-                        $"({context.FieldD == 29 && !_player.IsAltForm && context.Field4 != 37})");
-                }
                 if (context.FieldD == 28 && _player.IsAltForm && context.Field4 != 37)
                 {
-                    Log("  try to unmorph");
                     CheckUnmorph();
-                    Log($"  if context.Field4 == 33 {context.Field4}: ({context.Field4 == 33})");
                     if (context.Field4 == 33)
                     {
-                        Log($"    increment data.Field118: {Field118} -> {Field118 + 1}");
                         Field118++;
                     }
                 }
                 else if (context.FieldD == 29 && !_player.IsAltForm && context.Field4 != 37)
                 {
-                    Log("  try to morph");
                     if (_touchButtons.Morph.FramesUp > 10 * 2) // todo: FPS stuff
                     {
                         _touchButtons.Morph.IsDown = true;
                     }
                 }
                 Vector3 targetPos = Vector3.Zero;
-                Log($"if _player.IsAltForm ({_player.IsAltForm}) || context.FieldA == 31 {context.FieldA}: ({_player.IsAltForm && context.FieldA == 31})");
-                if (!_player.IsAltForm && context.FieldA != 31)
-                {
-                    Log($"if context.FieldA == 32 {context.FieldA}: ({context.FieldA == 32})");
-                    if (context.FieldA != 32)
-                    {
-                        Log($"if context.FieldC == 55 {context.FieldC}: ({context.FieldC == 55})");
-                        if (context.FieldC != 55)
-                        {
-                            Log($"if context.FieldC == 56 {context.FieldC}: ({context.FieldC == 56})");
-                            if (context.FieldC != 56)
-                            {
-                                Log($"if context.FieldC == 57 {context.FieldC}: ({context.FieldC == 57})");
-                                if (context.FieldC != 57)
-                                {
-                                    Log($"if context.FieldC == 59 {context.FieldC}: ({context.FieldC == 59})");
-                                    if (context.FieldC != 59)
-                                    {
-                                        Log($"if context.FieldC == 60 {context.FieldC}: ({context.FieldC == 60})");
-                                        if (context.FieldC != 60)
-                                        {
-                                            Log($"if context.FieldC == 61 {context.FieldC}: ({context.FieldC == 61})");
-                                            if (context.FieldC != 61)
-                                            {
-                                                Log("else");
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
                 if (_player.IsAltForm || context.FieldA == 31)
                 {
-                    Log($"  if _player.Values.AltFormStrafe != 0 ({_player.Values.AltFormStrafe}) && context.FieldA == 31 ({context.FieldA}): " +
-                        $"({_player.Values.AltFormStrafe != 0 && context.FieldA == 31})");
                     if (_player.Values.AltFormStrafe != 0 && context.FieldA == 31)
                     {
-                        Log($"    if context.FieldB == 4 ({context.FieldB}) && Flags2.TestFlag(AiFlags2.TargetPlayer) ({Flags2}): " +
-                            $"({_player.Values.AltFormStrafe != 0 && context.FieldA == 31})");
-                        if (context.FieldB != 4 || !Flags2.TestFlag(AiFlags2.TargetPlayer))
-                        {
-                            Log($"    if context.FieldB == 5 ({context.FieldB}) && Flags2.TestFlag(AiFlags2.TargetHalfturret) ({Flags2}): " +
-                                $"({context.FieldB == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret)})");
-                        }
                         if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                         {
-                            Log("      pass _targetPlayer position to Func2145C14 to update button aim");
                             Debug.Assert(_targetPlayer != null);
                             _targetPlayer.GetPosition(out targetPos);
                             targetPos = targetPos.AddY(_targetPlayer.IsAltForm
@@ -3198,7 +3070,6 @@ namespace MphRead.Entities
                         }
                         else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret))
                         {
-                            Log("      pass _targetHalfturret position to Func2145C14 to update button aim");
                             Debug.Assert(_targetHalfturret != null);
                             _targetHalfturret.GetPosition(out targetPos);
                             Func2145C14(targetPos);
@@ -3207,20 +3078,8 @@ namespace MphRead.Entities
                 }
                 else if (context.FieldA == 32)
                 {
-                    Log($"  if context.FieldB == 4 ({context.FieldB}) && Flags2.TestFlag(AiFlags2.TargetPlayer) ({Flags2}): " +
-                        $"({context.FieldB == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer)})");
-                    if (context.FieldB != 4 || !Flags2.TestFlag(AiFlags2.TargetPlayer))
-                    {
-                        Log($"  if context.FieldB == 5 ({context.FieldB}) && Flags2.TestFlag(AiFlags2.TargetHalfturret) ({Flags2}): " +
-                            $"({context.FieldB == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret)})");
-                        if (context.FieldB != 5 || !Flags2.TestFlag(AiFlags2.TargetHalfturret))
-                        {
-                            Log($"  if context.FieldB == 27 ({context.FieldB}): ({context.FieldB == 27})");
-                        }
-                    }
                     if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
-                        Log("    set _field1038 based on _targetPlayer");
                         Debug.Assert(_targetPlayer != null);
                         _targetPlayer.GetPosition(out targetPos);
                         targetPos = targetPos.AddY(_targetPlayer.IsAltForm
@@ -3231,7 +3090,6 @@ namespace MphRead.Entities
                     }
                     else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret))
                     {
-                        Log("    set _field1038 based on _targetHalfturret");
                         Debug.Assert(_targetHalfturret != null);
                         _targetHalfturret.GetPosition(out targetPos);
                         _field1038 = targetPos - _player.CameraInfo.Position;
@@ -3239,147 +3097,78 @@ namespace MphRead.Entities
                     }
                     else if (context.FieldB == 27)
                     {
-                        Log("    set _field1038 based on _fieldB8");
                         _field1038 = _fieldB8 - _player.CameraInfo.Position;
                         _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
                     }
-                    Log("  call Func21447E8 to update button aim based on _field1038");
                     Func21447E8();
                 }
                 else if (context.FieldC == 55)
                 {
-                    Log("  pass _fieldB8 to Func21433A0 to update button aim, which calls Func2143A40 to continue charging/shooting");
                     Func21433A0(_fieldB8);
                 }
                 else if (context.FieldC == 56)
                 {
-                    Log($"  if Flags2.TestFlag(AiFlags2.TargetPlayer) ({Flags2}): ({Flags2.TestFlag(AiFlags2.TargetPlayer)})");
-                    if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
-                    {
-                        Log($"  if Flags4.TestFlag(AiFlags4.Bit1) ({Flags4}): ({Flags4.TestFlag(AiFlags4.Bit1)})");
-                    }
                     if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
-                        Log("    call Func21436D8, which based on _targetPlayer calls Func214380C to switch weapons " +
-                            "and begin charging or calls Func2143A40 to continue charging/shooting");
                         Func21436D8();
                     }
                     else if (Flags4.TestFlag(AiFlags4.Bit1))
                     {
-                        Log("    call Func214380C to switch weapons and begin charging");
                         Func214380C();
                     }
                 }
                 else if (context.FieldC == 57)
                 {
-                    Log($"  if Flags2.TestFlag(AiFlags2.TargetPlayer) ({Flags2}): ({Flags2.TestFlag(AiFlags2.TargetPlayer)})");
-                    if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
-                    {
-                        Log($"  if Flags4.TestFlag(AiFlags4.Bit1) ({Flags4}): ({Flags4.TestFlag(AiFlags4.Bit1)})");
-                    }
                     if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
-                        Log("    call Func2143658 to set _field1048 based on _targetPlayer, which may call Func2143A40 to continue charging/shooting");
                         Func2143658();
                     }
                     else if (Flags4.TestFlag(AiFlags4.Bit1))
                     {
-                        Log("    call Func214380C to switch weapons and begin charging");
                         Func214380C();
                     }
                 }
                 else if (context.FieldC == 59)
                 {
-                    Log($"  if Flags2.TestFlag(AiFlags2.TargetPlayer) ({Flags2}): ({Flags2.TestFlag(AiFlags2.TargetPlayer)})");
-                    if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
-                    {
-                        Log($"  if Flags4.TestFlag(AiFlags4.Bit1) ({Flags4}): ({Flags4.TestFlag(AiFlags4.Bit1)})");
-                    }
                     if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
-                        Log("    call Func21433E4, which calls Func2144B88 to update aim, and may call Func2143A40 to continue charging/shooting");
                         Func21433E4();
                     }
                     else if (Flags4.TestFlag(AiFlags4.Bit1))
                     {
-                        Log("    call Func214380C to switch weapons and begin charging");
                         Func214380C();
                     }
                 }
                 else if (context.FieldC == 60)
                 {
-                    Log($"  if Flags2.TestFlag(AiFlags2.TargetHalfturret) ({Flags2}): ({Flags2.TestFlag(AiFlags2.TargetPlayer)})");
-                    if (!Flags2.TestFlag(AiFlags2.TargetHalfturret))
-                    {
-                        Log($"  if Flags4.TestFlag(AiFlags4.Bit1) ({Flags4}): ({Flags4.TestFlag(AiFlags4.Bit1)})");
-                    }
                     if (Flags2.TestFlag(AiFlags2.TargetHalfturret))
                     {
-                        Log("    call Func2143470, which based on _targetHalfturret calls Func214380C to switch weapons " +
-                            "and begin charging or calls Func2143A40 to continue charging/shooting");
                         Func2143470();
                     }
                     else if (Flags4.TestFlag(AiFlags4.Bit1))
                     {
-                        Log("    call Func214380C to switch weapons and begin charging");
                         Func214380C();
                     }
                 }
                 else if (context.FieldC == 61)
                 {
-                    Log("  pass _targetDoor pos to Func21433A0 to update button aim, which calls Func2143A40 to continue charging/shooting");
                     Debug.Assert(_targetDoor != null);
                     _targetDoor.GetPosition(out targetPos);
                     Func21433A0(targetPos);
                 }
                 else
                 {
-                    Log("  call Func2145BA0 to bring aim Y to 0");
                     Func2145BA0();
-                }
-                Log($"if context.Field4 == 37 ({context.Field4}): ({context.Field4 == 37})");
-                if (context.Field4 != 37)
-                {
-                    Log($"  if context.Field4 == 33 ({context.Field4})\r\n" +
-                        $"  && (context.Field9 != 4 ({context.Field9}) || Flags2.TestFlag(AiFlags2.TargetPlayer) ({Flags2}))\r\n" +
-                        $"  && (context.Field9 != 5 ({context.Field9}) || Flags2.TestFlag(AiFlags2.TargetHalfturret) ({Flags2})):\r\n" +
-                        $"  ({context.Field4 == 33
-                        && (context.Field9 != 4 || Flags2.TestFlag(AiFlags2.TargetPlayer))
-                        && (context.Field9 != 5 || Flags2.TestFlag(AiFlags2.TargetHalfturret))})");
-                    if (context.Field4 != 33
-                        || context.Field9 == 4 && !Flags2.TestFlag(AiFlags2.TargetPlayer)
-                        || context.Field9 == 5 && !Flags2.TestFlag(AiFlags2.TargetHalfturret))
-                    {
-                        Log($"  if context.Field4 == 34 ({context.Field4}) && context.FieldD == 29 ({context.FieldD}): " +
-                            $"({context.Field4 == 34 && context.FieldD == 29})");
-                    }
                 }
                 if (context.Field4 == 37)
                 {
-                    Log($"  if context.FieldD ({context.FieldD}) == 29: ({context.FieldD == 29})");
-                    if (context.FieldD != 29)
-                    {
-                        Log($"  if context.Field5 != 58 ({context.Field5}) || _player.IsAltForm ({_player.IsAltForm}): " +
-                            $"({context.Field5 != 58 || _player.IsAltForm})");
-                        if (context.Field5 == 58 && !_player.IsAltForm)
-                        {
-                            Log("  else");
-                        }
-                    }
                     if (context.FieldD == 29)
                     {
-                        Log("    call Func2140094 to ?");
                         Func2140094(context);
-                        Log($"    if _player.Values.AltFormStrafe != 0 ({_player.Values.AltFormStrafe}) " +
-                            $"&& _buttonAimX == 0 ({_buttonAimX}) && _buttonAimY == 0 ({_buttonAimY}): " +
-                            $"({_player.Values.AltFormStrafe != 0 && _buttonAimX == 0 && _buttonAimY == 0})");
                         if (_player.Values.AltFormStrafe != 0 && _buttonAimX == 0 && _buttonAimY == 0)
                         {
-                            Log($"      if Flags2.TestFlag(AiFlags2.TargetPlayer) ({Flags2}) && context.Field9 == 4 ({context.Field9}): " +
-                                $"({Flags2.TestFlag(AiFlags2.TargetPlayer) && context.Field9 == 4})");
                             if (Flags2.TestFlag(AiFlags2.TargetPlayer) && context.Field9 == 4)
                             {
-                                Log($"        pass _targetPlayer pos to Func2145C14 to update button aim");
                                 // sktodo-ai: this is being repeated a lot, including the call to Func2145C14() in some cases
                                 Debug.Assert(_targetPlayer != null);
                                 _targetPlayer.GetPosition(out targetPos);
@@ -3390,8 +3179,6 @@ namespace MphRead.Entities
                             }
                             else
                             {
-                                Log("      else");
-                                Log("        pass _node40 pos to Func2145C14 to update button aim");
                                 Debug.Assert(_node40 != null);
                                 Func2145C14(_node40.Position);
                             }
@@ -3399,36 +3186,22 @@ namespace MphRead.Entities
                     }
                     else if (context.Field5 != 58 || _player.IsAltForm)
                     {
-                        Log("    call Func2140094 to ?");
                         Func2140094(context);
                     }
                     else
                     {
-                        Log("    call Func214003C, which if targeting player calls Func21436D8, which based on _targetPlayer" +
-                            "calls Func214380C to switch weapons and begin charging or calls Func2143A40 to continue charging/shooting," +
-                            "or it not targeting player and flags4 bit1 is set calls Func214380C itself; and lastly calls Func2140094 to ?");
                         Func214003C(context);
                     }
-                    Log($"  if context.Field6 == 52 ({context.Field6}) && !_player.IsAltForm ({_player.IsAltForm}) " +
-                        $"&& !_player.IsMorphing ({_player.IsMorphing})\r\n" +
-                        $"  && !_player.Flags1.TestFlag(PlayerFlags1.UsedJump) ({_player.Flags1}) && _buttons.L.FramesUp > 5 * 2 ({_buttons.L.FramesUp}): " +
-                        $"({context.Field6 == 52 && !_player.IsAltForm && !_player.IsMorphing
-                        && !_player.Flags1.TestFlag(PlayerFlags1.UsedJump) && _buttons.L.FramesUp > 5 * 2})");
                     if (context.Field6 == 52 && !_player.IsAltForm && !_player.IsMorphing
                         && !_player.Flags1.TestFlag(PlayerFlags1.UsedJump) && _buttons.L.FramesUp > 5 * 2) // todo: FPS stuff
                     {
-                        Log("    call AggroFunc214847C");
                         AiPlayerAggro? aggro = AggroFunc214847C(4, 7, 1, null, null);
-                        Log($"    if aggro != null ({(aggro != null ? "set" : "null")}) && aggro.Staleness < 30 * 2 ({aggro?.Staleness}): " +
-                            $"{aggro != null && aggro.Staleness < 30 * 2}");
                         if (aggro != null && aggro.Staleness < 30 * 2) // sktodo-ai: FPS stuff? review this and Field6
                         {
                             Debug.Assert(_node40 != null);
                             Vector3 toNode = _node40.Position - _player.Position;
-                            Log($"      if toNode40.LengthSquared > 3 * 3 ({toNode.LengthSquared}): ({toNode.LengthSquared > 3 * 3})");
                             if (toNode.LengthSquared > 3 * 3)
                             {
-                                Log("        press L");
                                 _buttons.L.IsDown = true;
                             }
                         }
@@ -3441,188 +3214,128 @@ namespace MphRead.Entities
                     Vector3? position = null;
                     if (context.Field9 == 4)
                     {
-                        Log("  context.Field9 == 4 -> choose _targetPlayer position");
                         Debug.Assert(_targetPlayer != null);
                         position = _targetPlayer.Position;
                     }
                     else if (context.Field9 == 5)
                     {
-                        Log("  context.Field9 == 5 -> choose _targetHalfturret position");
                         Debug.Assert(_targetHalfturret != null);
                         position = _targetHalfturret.Position;
                     }
                     else if (context.Field9 == 6 && Flags2.TestFlag(AiFlags2.TargetItem))
                     {
-                        Log("  context.Field9 == 6 && Flags2.TestFlag(AiFlags2.TargetItem) -> choose _itemC8 position and overwrite targetPos");
                         Debug.Assert(_itemC8 != null);
                         position = targetPos = _itemC8.Position.AddY(-0.5f);
                     }
                     else if (context.Field9 == 12 || context.Field9 == 13 || context.Field9 == 39)
                     {
-                        Log($"  context.Field9 == 12 || 13 || 39 ({context.Field9}) -> choose _node40 position");
                         Debug.Assert(_node40 != null);
                         position = _node40.Position;
                     }
                     else if (context.Field9 == 14)
                     {
-                        Log("  context.Field9 == 14 -> choose _octolithFlagCC position");
                         Debug.Assert(_octolithFlagCC != null);
                         position = _octolithFlagCC.Position;
                     }
                     else if (context.Field9 == 15)
                     {
-                        Log("  context.Field9 == 15 -> choose _octolithFlagCC position");
                         Debug.Assert(_octolithFlagCC != null);
                         position = _octolithFlagCC.BasePosition;
                     }
                     else if (context.Field9 == 16)
                     {
-                        Log("  context.Field9 == 16 -> choose _flagBaseD0 position");
                         Debug.Assert(_flagBaseD0 != null);
                         position = _flagBaseD0.Position;
                     }
                     else if (context.Field9 == 17)
                     {
-                        Log("  context.Field9 == 17 -> choose _octolithFlagD4 position");
                         Debug.Assert(_octolithFlagD4 != null);
                         position = _octolithFlagD4.Position;
                     }
                     else if (context.Field9 == 18)
                     {
-                        Log("  context.Field9 == 18 -> choose _octolithFlagD4 base position");
                         Debug.Assert(_octolithFlagD4 != null);
                         position = _octolithFlagD4.BasePosition;
                     }
                     else if (context.Field9 == 19)
                     {
-                        Log("  context.Field9 == 19 -> choose _flagBaseD8 position");
                         Debug.Assert(_flagBaseD8 != null);
                         position = _flagBaseD8.Position;
                     }
                     else if (context.Field9 == 20)
                     {
-                        Log("  context.Field9 == 20 -> choose _octolithFlagDC position");
                         Debug.Assert(_octolithFlagDC != null);
                         position = _octolithFlagDC.Position;
                     }
                     else if (context.Field9 == 21)
                     {
-                        Log("  context.Field9 == 21 -> choose _octolithFlagDC base position");
                         Debug.Assert(_octolithFlagDC != null);
                         position = _octolithFlagDC.BasePosition;
                     }
                     else if (context.Field9 == 22)
                     {
-                        Log("  context.Field9 == 22 -> choose _flagBaseE0 position");
                         Debug.Assert(_flagBaseE0 != null);
                         position = _flagBaseE0.Position;
                     }
                     else if (context.Field9 == 23 && Flags2.TestFlag(AiFlags2.TargetDefense))
                     {
-                        Log("  context.Field9 == 23 && Flags2.TestFlag(AiFlags2.TargetDefense) -> choose _targetDefense position");
                         Debug.Assert(_targetDefense != null);
                         position = _targetDefense.Position;
                     }
                     else if (context.Field9 == 35)
                     {
-                        Log("  context.Field9 == 35 -> choose _targetPlayer position with 1 added to Z");
                         position = targetPos = _player.Position.AddZ(1);
                     }
                     else if (context.Field9 == 36)
                     {
-                        Log("  context.Field9 == 36 -> choose _targetPlayer position with 1 subtracted from Z");
                         position = targetPos = _player.Position.AddZ(-1);
-                    }
-                    if (!position.HasValue)
-                    {
-                        Log($"  other context.Field9 value ({context.Field9}) -> no position");
                     }
                     if (position.HasValue)
                     {
-                        Log($"  has position");
-                        Log($"  if _player.IsAltForm ({_player.IsAltForm}): ({_player.IsAltForm})");
                         if (_player.IsAltForm)
                         {
-                            Log($"    if _player.Values.AltFormStrafe != 0 ({_player.Values.AltFormStrafe}): ({_player.Values.AltFormStrafe != 0})");
-                            if (_player.Values.AltFormStrafe == 0)
-                            {
-                                Log($"    if context.Field5 != 48 ({context.Field5}) || _player.Hunter != Hunter.Samus ({_player.Hunter}): " +
-                                    $"({context.Field5 != 48 || _player.Hunter != Hunter.Samus})");
-                                if (context.Field5 == 48 && _player.Hunter == Hunter.Samus)
-                                {
-                                    Log("    else");
-                                }
-                            }
                             if (_player.Values.AltFormStrafe != 0)
                             {
-                                Log("      pass targetPos to Func2145C14 to update button aim, and pass position to Func2142AE8 to update movement buttons");
                                 Func2145C14(targetPos);
                                 Func2142AE8(position.Value);
                             }
                             else if (context.Field5 != 48 || _player.Hunter != Hunter.Samus)
                             {
-                                Log("      pass position to Func21418D8 to update movement buttons");
                                 Func21418D8(position.Value);
                             }
                             else
                             {
-                                Log("      pass position to Func2141840 to update touch boost and/or movement buttons");
                                 Func2141840(position.Value);
                             }
                         }
                         else
                         {
-                            Log("  else");
-                            Log("    pass position to Func2140B18 to update movement buttons");
                             Func2140B18(context, position.Value);
-                            Log($"  if context.FieldA != 0 ({context.FieldA}) || context.FieldC in [55, 56, 57, 59, 60, 61] ({context.FieldC}): " +
-                                $"({context.FieldA != 0 || context.FieldC == 56 || context.FieldC == 57 || context.FieldC == 59
-                                || context.FieldC == 60 || context.FieldC == 61 || context.FieldC == 55})");
                             if (context.FieldA != 0 || context.FieldC == 56 || context.FieldC == 57 || context.FieldC == 59
                                 || context.FieldC == 60 || context.FieldC == 61 || context.FieldC == 55)
                             {
-                                Log("    pass position to Func2142AE8 to update movement buttons");
                                 Func2142AE8(position.Value);
                             }
                             else
                             {
-                                Log("  else");
-                                Log("    pass position to Func2142ABC to update movement buttons and button aim");
                                 Func2142ABC(position.Value);
                             }
-                            Log($"  if !_player.IsMorphing ({_player.IsMorphing}) && !_player.IsUnmorphing ({_player.IsUnmorphing}): " +
-                                $"({!_player.IsMorphing && !_player.IsUnmorphing})");
                             if (!_player.IsMorphing && !_player.IsUnmorphing)
                             {
-                                Log($"    if _player._horizColTimer > 10 * 2 ({_player._horizColTimer}) " +
-                                    $"&& _player.Flags1.TestFlag(PlayerFlags1.Grounded) ({_player.Flags1}): " +
-                                    $"({_player._horizColTimer > 10 * 2 && _player.Flags1.TestFlag(PlayerFlags1.Grounded)})");
                                 if (_player._horizColTimer > 10 * 2 && _player.Flags1.TestFlag(PlayerFlags1.Grounded)) // todo: FPS stuff
                                 {
-                                    Log("      press L");
                                     PressL();
                                 }
-                                Log($"    if context.Field9 in [6, 14, 17, 20] ({context.Field9}): " +
-                                    $"({context.Field9 == 6 || context.Field9 == 14 || context.Field9 == 17 || context.Field9 == 20})");
                                 if (context.Field9 == 6 || context.Field9 == 14 || context.Field9 == 17 || context.Field9 == 20)
                                 {
                                     Vector3 toPos = position.Value - _player.Position;
                                     toPos = toPos.AddY(-Fixed.ToFloat(_player.Values.MaxPickupHeight));
                                     if (context.Field9 != 6)
                                     {
-                                        Log("      aim lower when context.Field9 != 6");
                                         toPos = toPos.AddY(-1.25f);
                                     }
-                                    else
-                                    {
-                                        Log("      aim higher when context.Field9 == 6");
-                                    }
-                                    Log($"      if toPos.Y > -0.5f ({toPos.Y})" +
-                                        $"&& toPos.WithY(0).LengthSquared < 0.5f * 0.5f ({toPos.WithY(0).LengthSquared}):" +
-                                        $"({toPos.Y > -0.5f && toPos.WithY(0).LengthSquared < 0.5f * 0.5f})");
                                     if (toPos.Y > -0.5f && toPos.WithY(0).LengthSquared < 0.5f * 0.5f)
                                     {
-                                        Log("        press L");
                                         PressL();
                                     }
                                 }
@@ -3632,32 +3345,18 @@ namespace MphRead.Entities
                 }
                 else if (context.Field4 == 34 && context.FieldD == 29)
                 {
-                    Log($"  if !_player.IsAltForm ({_player.IsAltForm}): ({!_player.IsAltForm})");
-                    if (_player.IsAltForm)
-                    {
-                        Log($"  if _fieldAC.X != 0 ({_fieldAC.X}) || _fieldAC.Z != 0 ({_fieldAC.Z}): ({_fieldAC.X != 0 || _fieldAC.Z != 0})");
-                    }
                     if (!_player.IsAltForm)
                     {
-                        Log("    press morph");
                         PressButton(_touchButtons.Morph, 10);
                     }
                     else if (_fieldAC.X != 0 || _fieldAC.Z != 0)
                     {
-                        Log("    pass _fieldAC to Func2141CD4 to update movement buttons");
                         Func2141CD4(_fieldAC);
                     }
                 }
-                Log($"if context.FieldE == 38 ({context.FieldE}) && !_player.IsAltForm ({_player.IsAltForm}): ({context.FieldE == 38 && !_player.IsAltForm})");
                 if (context.FieldE == 38 && !_player.IsAltForm)
                 {
-                    Log("  call Func214380C to switch weapons and begin charging");
                     Func214380C();
-                }
-                Log($"if context.FieldC == 62 ({context.FieldC}) && _player.IsAltForm ({_player.IsAltForm}): ({context.FieldC == 62 && _player.IsAltForm})");
-                if (context.FieldC != 62 || !_player.IsAltForm)
-                {
-                    Log($"if context.FieldC == 63 ({context.FieldC}): ({context.FieldC == 63})");
                 }
                 if (context.FieldC == 62 && _player.IsAltForm)
                 {
@@ -3670,69 +3369,30 @@ namespace MphRead.Entities
                         }
                     }
 
-                    Log($"  if context.FieldF == 64 ({context.FieldF}): ({context.FieldF == 64})");
-                    if (context.FieldF != 64)
-                    {
-                        Log($"  if context.FieldF == 65 ({context.FieldF}): ({context.FieldF == 65})");
-                        if (context.FieldF != 65)
-                        {
-                            Log($"  if context.FieldF == 66 ({context.FieldF}): ({context.FieldF == 66})");
-                            if (context.FieldF != 66)
-                            {
-                                Log($"  if context.FieldF == 67 ({context.FieldF}): ({context.FieldF == 67})");
-                                if (context.FieldF != 67)
-                                {
-                                    Log($"  if context.FieldF == 68 ({context.FieldF}): ({context.FieldF == 68})");
-                                    if (context.FieldF != 68)
-                                    {
-                                        Log($"  if context.FieldF == 69 ({context.FieldF}): ({context.FieldF == 69})");
-                                        if (context.FieldF != 69)
-                                        {
-                                            Log($"  if context.FieldF == 70 ({context.FieldF}): ({context.FieldF == 70})");
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
                     if (context.FieldF == 64)
                     {
-                        Log($"    if _player._abilities.TestFlag(AbilityFlags.Bombs) ({_player._abilities})\r\n" +
-                            $"    && _player._bombAmmo > 0 ({_player._bombAmmo}) && _player._bombCooldown ({_player._bombCooldown}) == 0: " +
-                            $"({_player._abilities.TestFlag(AbilityFlags.Bombs) && _player._bombAmmo > 0 && _player._bombCooldown == 0})");
                         if (_player._abilities.TestFlag(AbilityFlags.Bombs) && _player._bombAmmo > 0 && _player._bombCooldown == 0)
                         {
-                            Log("      press L and set delay");
                             ShootAndSetDelay();
                         }
                     }
                     else if (context.FieldF == 65)
                     {
-                        Log($"    _player._abilities.TestFlag(AbilityFlags.Bombs) ({_player._abilities}) && _player._bombCooldown == 0 ({_player._bombCooldown}): " +
-                            $"({_player._abilities.TestFlag(AbilityFlags.Bombs) && _player._bombCooldown == 0})");
                         if (_player._abilities.TestFlag(AbilityFlags.Bombs) && _player._bombCooldown == 0)
                         {
-                            Log("      press L and set delay");
                             ShootAndSetDelay();
                         }
                     }
                     else if (context.FieldF == 66)
                     {
-                        Log($"  if _player._abilities.TestFlag(AbilityFlags.SpireAltAttack) ({_player._abilities})" +
-                            $"&& !_player.Flags2.TestFlag(PlayerFlags2.AltAttack) ({_player.Flags2}): " +
-                            $"({_player._abilities.TestFlag(AbilityFlags.SpireAltAttack) && !_player.Flags2.TestFlag(PlayerFlags2.AltAttack)})");
                         if (_player._abilities.TestFlag(AbilityFlags.SpireAltAttack)
                             && !_player.Flags2.TestFlag(PlayerFlags2.AltAttack))
                         {
-                            Log("      press L and set delay");
                             ShootAndSetDelay();
                         }
                     }
                     else if (context.FieldF == 67)
                     {
-                        Log($"    if _player._altAttackTime > 0 ({_player._altAttackTime}): ({_player._altAttackTime > 0})");
-                        Log("      press L and set delay");
                         if (_player._altAttackTime > 0 || _buttons.L.FramesUp > _field102E)
                         {
                             _buttons.L.IsDown = true;
@@ -3741,124 +3401,72 @@ namespace MphRead.Entities
                     }
                     else if (context.FieldF == 68)
                     {
-                        Log($"    if _player._abilities.TestFlag(AbilityFlags.TraceAltAttack) ({_player._abilities}) " +
-                            $"&& _player._altAttackCooldown == 0 ({_player._altAttackCooldown}) && Flags2.TestFlag(AiFlags2.Bit0) ({Flags2}): " +
-                            $"({_player._abilities.TestFlag(AbilityFlags.TraceAltAttack)
-                            && _player._altAttackCooldown == 0 && Flags2.TestFlag(AiFlags2.Bit0)})");
                         if (_player._abilities.TestFlag(AbilityFlags.TraceAltAttack)
                             && _player._altAttackCooldown == 0 && Flags2.TestFlag(AiFlags2.Bit0))
                         {
-                            Log("      press L and set delay");
                             ShootAndSetDelay();
                         }
                     }
                     else if (context.FieldF == 69)
                     {
-                        Log($"    if Rng.GetRandomInt2(15 * _player.SyluxBombCount + 10) == 0 ({_player.SyluxBombCount} " +
-                            $"-> {TestRng2(15 * _player.SyluxBombCount + 10)})\r\n" +
-                            $"    && _player._abilities.TestFlag(AbilityFlags.Bombs) ({_player._abilities})\r\n" +
-                            $"    && _player._bombAmmo > 0 ({_player._bombAmmo}) && _player._bombCooldown == 0 ({_player._bombCooldown}): " +
-                            $"({TestRng2(15 * _player.SyluxBombCount + 10) == 0
-                                && _player._abilities.TestFlag(AbilityFlags.Bombs) && _player._bombAmmo > 0 && _player._bombCooldown == 0})");
                         if (Rng.GetRandomInt2(15 * _player.SyluxBombCount + 10) == 0 // sktodo-ai: FPS stuff if this is called repeatedly
                             && _player._abilities.TestFlag(AbilityFlags.Bombs)
                             && _player._bombAmmo > 0 && _player._bombCooldown == 0)
                         {
-                            Log("      press L and set delay");
                             ShootAndSetDelay();
                         }
                     }
                     else if (context.FieldF == 70)
                     {
-                        Log($"    if _player._abilities.TestFlag(AbilityFlags.WeavelAltAttack) ({_player._abilities}) " +
-                            $"&& _player._altAttackCooldown == 0 ({_player._altAttackCooldown}) && Flags2.TestFlag(AiFlags2.Bit0) ({Flags2}): " +
-                            $"({_player._abilities.TestFlag(AbilityFlags.WeavelAltAttack)
-                            && _player._altAttackCooldown == 0 && Flags2.TestFlag(AiFlags2.Bit0)})");
                         if (_player._abilities.TestFlag(AbilityFlags.WeavelAltAttack)
                             && _player._altAttackCooldown == 0 && Flags2.TestFlag(AiFlags2.Bit0))
                         {
-                            Log("      press L and set delay");
                             ShootAndSetDelay();
                         }
                     }
                 }
                 else if (context.FieldC == 63)
                 {
-                    Log($"  if context.FieldF == 65 ({context.FieldF}): ({context.FieldF == 65})");
-                    if (context.FieldF != 65)
-                    {
-                        Log($"  if context.FieldF == 69 ({context.FieldF}) && _player.SyluxBombCount < 2 ({_player.SyluxBombCount}): " +
-                            $"({context.FieldF == 69 && _player.SyluxBombCount < 2})");
-                    }
                     if (context.FieldF == 65)
                     {
-                        Log($"    if _player._abilities.TestFlag(AbilityFlags.Bombs) ({_player._abilities})\r\n" +
-                            $"    && _player._bombCooldown == 0 ({_player._bombCooldown}) && _buttons.L.FramesUp > 60 * 2 ({_buttons.L.FramesUp}): " +
-                            $"({_player._abilities.TestFlag(AbilityFlags.Bombs) && _player._bombCooldown == 0 && _buttons.L.FramesUp > 60 * 2})");
                         if (_player._abilities.TestFlag(AbilityFlags.Bombs)
                             && _player._bombCooldown == 0 && _buttons.L.FramesUp > 60 * 2) // todo: FPS stuff
                         {
-                            Log("      press L");
                             _buttons.L.IsDown = true;
                         }
                     }
                     else if (context.FieldF == 69 && _player.SyluxBombCount < 2)
                     {
                         Debug.Assert(_node3C != null);
-                        Log($"    IsNodeInRange(_node3C) ({IsNodeInRange(_node3C)})\r\n" +
-                            $"    && _player._abilities.TestFlag(AbilityFlags.Bombs) ({_player._abilities}) && _player._bombAmmo > 0({_player._bombAmmo})\r\n" +
-                            $"    && _player._bombCooldown == 0 ({_player._bombCooldown}) && _buttons.L.FramesUp > 0 ({_buttons.L.FramesUp}): " +
-                            $"({_player._abilities.TestFlag(AbilityFlags.Bombs) && _player._bombCooldown == 0 && _buttons.L.FramesUp > 60 * 2})");
                         if (IsNodeInRange(_node3C) && _player._abilities.TestFlag(AbilityFlags.Bombs)
                             && _player._bombAmmo > 0 && _player._bombCooldown == 0 && _buttons.L.FramesUp > 0)
                         {
-                            Log("      press L");
                             _buttons.L.IsDown = true;
                         }
                     }
                 }
-                Log($"if !_player.IsAltForm && !_player.IsMorphing && Flags2.TestFlag(AiFlags2.TargetPlayer)");
                 if (!_player.IsAltForm && !_player.IsMorphing && Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Debug.Assert(_targetPlayer != null);
-                    Log($"  if _targetPlayer.Hunter == Hunter.Sylux ({_targetPlayer.Hunter}) && _targetPlayer.IsAltForm ({_targetPlayer.IsAltForm})\r\n" +
-                        $"  && Func2139C60(_targetPlayer) ({(_targetPlayer.Hunter == Hunter.Sylux ? Func2139C60(_targetPlayer) : "N/A")}): " +
-                        $"({_targetPlayer.Hunter == Hunter.Sylux && _targetPlayer.IsAltForm && Func2139C60(_targetPlayer)})");
                     if (_targetPlayer.Hunter == Hunter.Sylux && _targetPlayer.IsAltForm && Func2139C60(_targetPlayer))
                     {
-                        Log("    try to press L");
                         PressL();
                     }
                 }
-                Log($"if context.Field6 == 51 ({context.Field6}) && !_player.IsAltForm ({_player.IsAltForm}) && !_player.IsMorphing ({_player.IsMorphing})\r\n" +
-                    $"&& !_player.Flags1.TestFlag(PlayerFlags1.UsedJump) ({_player.Flags1}): ({context.Field6 == 51 && !_player.IsAltForm
-                    && !_player.IsMorphing && !_player.Flags1.TestFlag(PlayerFlags1.UsedJump)})");
                 if (context.Field6 == 51 && !_player.IsAltForm && !_player.IsMorphing
                     && !_player.Flags1.TestFlag(PlayerFlags1.UsedJump))
                 {
-                    Log("  try to press L");
                     PressButton(_buttons.L, 5);
                 }
-                Log($"if Flags2.TestFlag(AiFlags2.Bit21) ({Flags2}) && Rng.GetRandomInt2(10) == 0 ({TestRng2(10)})\r\n" +
-                    $"&& !_player.IsAltForm ({_player.IsAltForm}) && !_player.IsMorphing ({_player.IsMorphing})\r\n" +
-                    $"&& !_player.Flags1.TestFlag(PlayerFlags1.UsedJump) ({_player.Flags1}): ({Flags2.TestFlag(AiFlags2.Bit21) && TestRng2(10) == 0
-                    && !_player.IsAltForm && !_player.IsMorphing && !_player.Flags1.TestFlag(PlayerFlags1.UsedJump)})");
                 if (Flags2.TestFlag(AiFlags2.Bit21) && Rng.GetRandomInt2(10) == 0 // sktodo-ai: FPS stuff if this is called repeatedly
                     && !_player.IsAltForm && !_player.IsMorphing && !_player.Flags1.TestFlag(PlayerFlags1.UsedJump))
                 {
-                    Log("  try to press L");
                     PressButton(_buttons.L, 5);
                 }
-                Log($"if context.Func24Id == 95 ({context.Func24Id}) && !_player.IsAltForm ({_player.IsAltForm}) && !_player.IsMorphing ({_player.IsMorphing})\r\n" +
-                    $"&& !_player.Flags1.TestFlag(PlayerFlags1.UsedJump) ({_player.Flags1})\r\n" +
-                    $"&& Metadata.SlipSpeedFactors[_player._slipperiness] > 0 ({_player._slipperiness} -> {Metadata.SlipSpeedFactors[_player._slipperiness]})" +
-                    $"&& _player._hSpeedMag > 0 ({_player._hSpeedMag}): ({context.Func24Id == 95 && !_player.IsAltForm && !_player.IsMorphing
-                    && !_player.Flags1.TestFlag(PlayerFlags1.UsedJump) && Metadata.SlipSpeedFactors[_player._slipperiness] > 0 && _player._hSpeedMag > 0})");
                 if (context.Func24Id == 95 // maps to the "default" 2/4 function, but evidently a specific case
                     && !_player.IsAltForm && !_player.IsMorphing && !_player.Flags1.TestFlag(PlayerFlags1.UsedJump)
                     && Metadata.SlipSpeedFactors[_player._slipperiness] > 0 && _player._hSpeedMag > 0)
                 {
-                    Log("  try to press L");
                     PressButton(_buttons.L, 5);
                 }
             }
@@ -11766,99 +11374,6 @@ namespace MphRead.Entities
                 };
             }
 
-            private static string GetFuncs1Desc(int id)
-            {
-                // init (d3a) and process (d3b)
-                return id switch
-                {
-                    0 => $"{nameof(Func1_214A39C)} - ?",
-                    1 => $"{nameof(Func1_214A098)} - ?",
-                    2 => $"{nameof(Func1_2149D3C)} - ?",
-                    3 => $"{nameof(Func1_2149C98)} - ?",
-                    4 => $"{nameof(Func1_2149C80)} - ?",
-                    5 => $"{nameof(Func1_2149C68)} - set weapon1 to Volt Driver and clear flags4 bit1",
-                    6 => $"{nameof(Func1_2149C50)} - ?",
-                    7 => $"{nameof(Func1_2149C38)} - ?",
-                    8 => $"{nameof(Func1_2149C20)} - ?",
-                    9 => $"{nameof(Func1_2149C08)} - ?",
-                    10 => $"{nameof(Func1_2149BF0)} - ?",
-                    11 => $"{nameof(Func1_2149BD8)} - ?",
-                    12 => $"{nameof(Func1_2149BC0)} - ?",
-                    13 => $"{nameof(Func1_2149BA8)} - ?",
-                    14 => $"{nameof(Func1_2149B98)} - ?",
-                    15 => $"{nameof(Func1_2149AD8)} - ?",
-                    16 => $"{nameof(Func1_2149AC8)} - ?",
-                    17 => $"{nameof(Func1_2149ABC)} - ?",
-                    18 => $"{nameof(Func1_2149AB0)} - ?",
-                    19 => $"{nameof(Func1_2149AA4)} - ?",
-                    20 => $"{nameof(Func1_2149A98)} - ?",
-                    21 => $"{nameof(Func1_2149A64)} - ?",
-                    22 => $"{nameof(Func1_2149824)} - ?",
-                    23 => $"{nameof(Func1_21497F0)} - ?",
-                    24 => $"{nameof(Func1_2149570)} - ?",
-                    25 => $"{nameof(Func1_21494FC)} - ?",
-                    26 => $"{nameof(Func1_2149488)} - ?",
-                    27 => $"{nameof(Func1_2149414)} - ?",
-                    28 => $"{nameof(Func1_21493A0)} - ?",
-                    29 => $"{nameof(Func1_214932C)} - ?",
-                    30 => $"{nameof(Func1_21495A4)} - ?",
-                    31 => $"{nameof(Func1_2149530)} - ?",
-                    32 => $"{nameof(Func1_21494BC)} - ?",
-                    33 => $"{nameof(Func1_2149448)} - ?",
-                    34 => $"{nameof(Func1_21493D4)} - ?",
-                    35 => $"{nameof(Func1_2149360)} - ?",
-                    36 => $"{nameof(Func1_21492EC)} - ?",
-                    37 => $"{nameof(Func1_21492DC)} - clear flags2 bit9 and pass main player to Func21356C0 which sets target player and flag bit",
-                    38 => $"{nameof(Func1_21492CC)} - ?",
-                    39 => $"{nameof(Func1_21492BC)} - ?",
-                    40 => $"{nameof(Func1_21492AC)} - ?",
-                    41 => $"{nameof(Func1_214929C)} - ?",
-                    42 => $"{nameof(Func1_214928C)} - ?",
-                    43 => $"{nameof(Func1_214927C)} - ?",
-                    44 => $"{nameof(Func1_214926C)} - ?",
-                    45 => $"{nameof(Func1_214925C)} - ?",
-                    46 => $"{nameof(Func1_214924C)} - ?",
-                    47 => $"{nameof(Func1_214923C)} - ?",
-                    48 => $"{nameof(Func1_214922C)} - ?",
-                    49 => $"{nameof(Func1_214921C)} - ?",
-                    50 => $"{nameof(Func1_214920C)} - ?",
-                    51 => $"{nameof(Func1_21491FC)} - call Func21355D8 which finds Door ent ref 77 and passes it to Func2135608 which sets target door and flag bit",
-                    52 => $"{nameof(Func1_21491E4)} - ?",
-                    53 => $"{nameof(Func1_21491CC)} - ?",
-                    54 => $"{nameof(Func1_21491B4)} - ?",
-                    55 => $"{nameof(Func1_214919C)} - ?",
-                    56 => $"{nameof(Func1_2149184)} - ?",
-                    57 => $"{nameof(Func1_214916C)} - ?",
-                    58 => $"{nameof(Func1_2149154)} - ?",
-                    59 => $"{nameof(Func1_214913C)} - ?",
-                    60 => $"{nameof(Func1_2149124)} - ?",
-                    61 => $"{nameof(Func1_214910C)} - ?",
-                    62 => $"{nameof(Func1_21490F4)} - ?",
-                    63 => $"{nameof(Func1_21490DC)} - ?",
-                    64 => $"{nameof(Func1_21490C4)} - ?",
-                    65 => $"{nameof(Func1_21490AC)} - ?",
-                    66 => $"{nameof(Func1_2149094)} - ?",
-                    67 => $"{nameof(Func1_2149088)} - set AiData field30 to 1",
-                    68 => $"{nameof(Func1_2149034)} - ?",
-                    69 => $"{nameof(Func1_2148F10)} - ?",
-                    70 => $"{nameof(Func1_2148EDC)} - ?",
-                    71 => $"{nameof(Func1_2148ECC)} - ?",
-                    72 => $"{nameof(Func1_2148EB8)} - ?",
-                    73 => $"{nameof(Func1_2148EA8)} - ?",
-                    74 => $"{nameof(Func1_2148E98)} - set nodeDataSelOn to 255",
-                    75 => $"{nameof(Func1_2148E88)} - ?",
-                    76 => $"{nameof(Func1_2148E74)} - ?",
-                    77 => $"{nameof(Func1_2148E64)} - ?",
-                    78 => $"{nameof(Func1_2148E54)} - ?",
-                    79 => $"{nameof(Func1_2148DF8)} - ?",
-                    80 => $"{nameof(Func1_2148DE8)} - ?",
-                    81 => $"{nameof(Func1_2148D50)} - ?",
-                    82 => $"{nameof(Func1_UnlockEchoHallForceField)} - ?",
-                    83 => $"{nameof(Func1_SetInvulnerable)} - set flags3 bit for invulnerable",
-                    _ => throw new ProgramException("Invalid AI func 1.")
-                };
-            }
-
             public static IEnumerable<string> GetFuncs3Names(IEnumerable<int> ids)
             {
                 return ids.Select(i => GetFuncs3Name(i));
@@ -12085,231 +11600,6 @@ namespace MphRead.Entities
                 };
             }
 
-            public static string GetFuncs3Desc(int id)
-            {
-                // preconditions (d2->d4->d5) and path updates (d2->d5)
-                return id switch
-                {
-                    0 => $"{nameof(Func3_213D87C)} - ?",
-                    1 => $"{nameof(Func3_213D83C)} - returns whether node3C is in range and node3C == node40",
-                    2 => $"{nameof(Func3_213D814)} - ?",
-                    3 => $"{nameof(Func3_213D7F0)} - ?",
-                    4 => $"{nameof(Func3_213D800)} - ?",
-                    5 => $"{nameof(Func3_213D7E8)} - ?",
-                    6 => $"{nameof(Func3_213D7D0)} - ?",
-                    7 => $"{nameof(Func3_213D7B8)} - ?",
-                    8 => $"{nameof(Func3_213D7A0)} - ?",
-                    9 => $"{nameof(Func3_213D77C)} - ?",
-                    10 => $"{nameof(Func3_213D758)} - ?",
-                    11 => $"{nameof(Func3_213D734)} - ?",
-                    12 => $"{nameof(Func3_213D710)} - ?",
-                    13 => $"{nameof(Func3_213D6D0)} - ?",
-                    14 => $"{nameof(Func3_213D6AC)} - ?",
-                    15 => $"{nameof(Func3_213D624)} - ?",
-                    16 => $"{nameof(Func3_213D608)} - ?",
-                    17 => $"{nameof(Func3_213D564)} - ?",
-                    18 => $"{nameof(Func3_213D540)} - ?",
-                    19 => $"{nameof(Func3_213D530)} - return whether flags2 bit17 is set after updating it if flags2 bit16 is not set, " +
-                        $"in which case bit16 is set and bit17 is set based on having player target and checking aggro (inv of Func3_213D514)",
-                    20 => $"{nameof(Func3_213D514)} - return whether flags2 bit17 is not set after updating it if flags2 bit16 is not set, " +
-                        $"in which case bit16 is set and bit17 is set based on having player target and checking aggro (inv of Func3_213D530)",
-                    21 => $"{nameof(Func3_213D4C0)} - ?",
-                    22 => $"{nameof(Func3_213D49C)} - ?",
-                    23 => $"{nameof(Func3_213D43C)} - ?",
-                    24 => $"{nameof(Func3_213D418)} - ?",
-                    25 => $"{nameof(Func3_213D388)} - ?",
-                    26 => $"{nameof(Func3_213D36C)} - ?",
-                    27 => $"{nameof(Func3_213D2C0)} - ?",
-                    28 => $"{nameof(Func3_213D2A4)} - ?",
-                    29 => $"{nameof(Func3_213D234)} - ?",
-                    30 => $"{nameof(Func3_213D218)} - ?",
-                    31 => $"{nameof(Func3_213D178)} - ?",
-                    32 => $"{nameof(Func3_213D15C)} - ?",
-                    33 => $"{nameof(Func3_213D128)} - ?",
-                    34 => $"{nameof(Func3_213D0F4)} - ?",
-                    35 => $"{nameof(Func3_213D0C4)} - ?",
-                    36 => $"{nameof(Func3_213D0A8)} - ?",
-                    37 => $"{nameof(Func3_213D078)} - ?",
-                    38 => $"{nameof(Func3_213D05C)} - ?",
-                    39 => $"{nameof(Func3_213D044)} - ?",
-                    40 => $"{nameof(Func3_213D028)} - ?",
-                    41 => $"{nameof(Func3_213D010)} - ?",
-                    42 => $"{nameof(Func3_213CFF4)} - ?",
-                    43 => $"{nameof(Func3_213CFDC)} - ?",
-                    44 => $"{nameof(Func3_213CFC0)} - ?",
-                    45 => $"{nameof(Func3_213CFA4)} - ?",
-                    46 => $"{nameof(Func3_213CF0C)} - ?",
-                    47 => $"{nameof(Func3_213CEE8)} - ?",
-                    48 => $"{nameof(Func3_213CDB8)} - ?",
-                    49 => $"{nameof(Func3_213CF94)} - ?",
-                    50 => $"{nameof(Func3_213CF7C)} - ?",
-                    51 => $"{nameof(Func3_213CDA4)} - ?",
-                    52 => $"{nameof(Func3_213CD74)} - ?",
-                    53 => $"{nameof(Func3_213CD58)} - return whether the bot's health is less than a quarter of its max value",
-                    54 => $"{nameof(Func3_213CD34)} - ?",
-                    55 => $"{nameof(Func3_213CD18)} - ?",
-                    56 => $"{nameof(Func3_213CCF4)} - ?",
-                    57 => $"{nameof(Func3_213CCD8)} - ?",
-                    58 => $"{nameof(Func3_213CCBC)} - ?",
-                    59 => $"{nameof(Func3_213CCB0)} - ?",
-                    60 => $"{nameof(Func3_213CC94)} - ?",
-                    61 => $"{nameof(Func3_213CBE4)} - ?",
-                    62 => $"{nameof(Func3_213CBC0)} - ?",
-                    63 => $"{nameof(Func3_213CBB0)} - ?",
-                    64 => $"{nameof(Func3_213CB8C)} - ?",
-                    65 => $"{nameof(Func3_213CADC)} - ?",
-                    66 => $"{nameof(Func3_213CAA8)} - ?",
-                    67 => $"{nameof(Func3_213CA84)} - ?",
-                    68 => $"{nameof(Func3_213CA70)} - return whether AiData field118 is greater than or equal to 151 --> needs change in MphRead for FPS reasons?",
-                    69 => $"{nameof(Func3_213CA58)} - ?",
-                    70 => $"{nameof(Func3_213CA2C)} - ?",
-                    71 => $"{nameof(Func3_213CA00)} - return via Func3_213CA2C whether the current context at depth + 1 has call count exceeding" +
-                        $" param1 --> param1 is multiplied by 2 in MphRead for FPS reasons(?)",
-                    72 => $"{nameof(Func3_213C9D4)} - return via Func3_213CA2C whether the current context at depth + 1 has call count exceeding " +
-                        $"param1 --> param1 is multiplied by 2 in MphRead for FPS reasons(?)",
-                    73 => $"{nameof(Func3_213C9C4)} - return how many hits the bot has taken in slot hits",
-                    74 => $"{nameof(Func3_213C89C)} - ?",
-                    75 => $"{nameof(Func3_213C88C)} - ?",
-                    76 => $"{nameof(Func3_213C764)} - ?",
-                    77 => $"{nameof(Func3_213C75C)} - ?",
-                    78 => $"{nameof(Func3_213C698)} - ?",
-                    79 => $"{nameof(Func3_213C64C)} - ?",
-                    80 => $"{nameof(Func3_213C600)} - ?",
-                    81 => $"{nameof(Func3_213C52C)} - ?",
-                    82 => $"{nameof(Func3_213C48C)} - ?",
-                    83 => $"{nameof(Func3_213C470)} - ?",
-                    84 => $"{nameof(Func3_213C334)} - ?",
-                    85 => $"{nameof(Func3_213C310)} - ?",
-                    86 => $"{nameof(Func3_213C0D0)} - ?",
-                    87 => $"{nameof(Func3_213C078)} - ?",
-                    88 => $"{nameof(Func3_213C054)} - ?",
-                    89 => $"{nameof(Func3_213BFFC)} - ?",
-                    90 => $"{nameof(Func3_213BFD8)} - ?",
-                    91 => $"{nameof(Func3_213BED8)} - ?",
-                    92 => $"{nameof(Func3_213BEBC)} - ?",
-                    93 => $"{nameof(Func3_213BEA0)} - ?",
-                    94 => $"{nameof(Func3_213BE48)} - ?",
-                    95 => $"{nameof(Func3_213BE10)} - ?",
-                    96 => $"{nameof(Func3_213BDF4)} - ?",
-                    97 => $"{nameof(Func3_213BD7C)} - ?",
-                    98 => $"{nameof(Func3_213BCE8)} - ?",
-                    99 => $"{nameof(Func3_213BCC4)} - ?",
-                    100 => $"{nameof(Func3_213BCB0)} - ?",
-                    101 => $"{nameof(Func3_213BC8C)} - ?",
-                    102 => $"{nameof(Func3_213BC70)} - ?",
-                    103 => $"{nameof(Func3_213BC4C)} - ?",
-                    104 => $"{nameof(Func3_213BC0C)} - ?",
-                    105 => $"{nameof(Func3_213BBE8)} - ?",
-                    106 => $"{nameof(Func3_213BBA0)} - ?",
-                    107 => $"{nameof(Func3_213BB7C)} - ?",
-                    108 => $"{nameof(Func3_213BAF4)} - ?",
-                    109 => $"{nameof(Func3_213BAD0)} - ?",
-                    110 => $"{nameof(Func3_213BA68)} - ?",
-                    111 => $"{nameof(Func3_213BA44)} - ?",
-                    112 => $"{nameof(Func3_213BA28)} - ?",
-                    113 => $"{nameof(Func3_213BA04)} - ?",
-                    114 => $"{nameof(Func3_213B99C)} - ?",
-                    115 => $"{nameof(Func3_213B978)} - ?",
-                    116 => $"{nameof(Func3_213B8B0)} - ?",
-                    117 => $"{nameof(Func3_213B88C)} - ?",
-                    118 => $"{nameof(Func3_213B7A0)} - ?",
-                    119 => $"{nameof(Func3_213B77C)} - ?",
-                    120 => $"{nameof(Func3_213B690)} - ?",
-                    121 => $"{nameof(Func3_213B5DC)} - ?",
-                    122 => $"{nameof(Func3_213B528)} - ?",
-                    123 => $"{nameof(Func3_213B4E4)} - ?",
-                    124 => $"{nameof(Func3_213B4A0)} - ?",
-                    125 => $"{nameof(Func3_213B45C)} - ?",
-                    126 => $"{nameof(Func3_213B3F0)} - ?",
-                    127 => $"{nameof(Func3_213B3A0)} - ?",
-                    128 => $"{nameof(Func3_213B37C)} - ?",
-                    129 => $"{nameof(Func3_213B34C)} - ?",
-                    130 => $"{nameof(Func3_213B328)} - ?",
-                    131 => $"{nameof(Func3_213B284)} - ?",
-                    132 => $"{nameof(Func3_213B260)} - ?",
-                    133 => $"{nameof(Func3_213B1F0)} - ?",
-                    134 => $"{nameof(Func3_213B1D8)} - ?",
-                    135 => $"{nameof(Func3_213B1C0)} - ?",
-                    136 => $"{nameof(Func3_213B1A8)} - ?",
-                    137 => $"{nameof(Func3_213B190)} - ?",
-                    138 => $"{nameof(Func3_213B178)} - ?",
-                    139 => $"{nameof(Func3_213B160)} - ?",
-                    140 => $"{nameof(Func3_213B148)} - ?",
-                    141 => $"{nameof(Func3_213B130)} - ?",
-                    142 => $"{nameof(Func3_213B118)} - ?",
-                    143 => $"{nameof(Func3_213B100)} - ?",
-                    144 => $"{nameof(Func3_213B0E8)} - ?",
-                    145 => $"{nameof(Func3_213B0D0)} - ?",
-                    146 => $"{nameof(Func3_213B0B8)} - ?",
-                    147 => $"{nameof(Func3_213B0A0)} - ?",
-                    148 => $"{nameof(Func3_213B088)} - ?",
-                    149 => $"{nameof(Func3_213B070)} - ?",
-                    150 => $"{nameof(Func3_213B058)} - ?",
-                    151 => $"{nameof(Func3_213B040)} - ?",
-                    152 => $"{nameof(Func3_213B020)} - ?",
-                    153 => $"{nameof(Func3_213B000)} - ?",
-                    154 => $"{nameof(Func3_213AFE0)} - ?",
-                    155 => $"{nameof(Func3_213AFC0)} - ?",
-                    156 => $"{nameof(Func3_213AFA0)} - ?",
-                    157 => $"{nameof(Func3_213AF80)} - ?",
-                    158 => $"{nameof(Func3_213AF68)} - ?",
-                    159 => $"{nameof(Func3_213AF50)} - ?",
-                    160 => $"{nameof(Func3_213AF38)} - ?",
-                    161 => $"{nameof(Func3_213AF20)} - ?",
-                    162 => $"{nameof(Func3_213AF08)} - ?",
-                    163 => $"{nameof(Func3_213AEF0)} - ?",
-                    164 => $"{nameof(Func3_213AED8)} - ?",
-                    165 => $"{nameof(Func3_213AEC0)} - ?",
-                    166 => $"{nameof(Func3_213AEA8)} - ?",
-                    167 => $"{nameof(Func3_213AE90)} - ?",
-                    168 => $"{nameof(Func3_213AE78)} - ?",
-                    169 => $"{nameof(Func3_213AE60)} - ?",
-                    170 => $"{nameof(Func3_213AE48)} - ?",
-                    171 => $"{nameof(Func3_213AE30)} - ?",
-                    172 => $"{nameof(Func3_213AE14)} - ?",
-                    173 => $"{nameof(Func3_213ADF8)} - ?",
-                    174 => $"{nameof(Func3_213ADC4)} - ?",
-                    175 => $"{nameof(Func3_213ADA0)} - ?",
-                    176 => $"{nameof(Func3_213AD88)} - ?",
-                    177 => $"{nameof(Func3_213AD64)} - ?",
-                    178 => $"{nameof(Func3_213ACE8)} - ?",
-                    179 => $"{nameof(Func3_213ACCC)} - ?",
-                    180 => $"{nameof(Func3_213ACA8)} - ?",
-                    181 => $"{nameof(Func3_213AC8C)} - ?",
-                    182 => $"{nameof(Func3_213AC70)} - ?",
-                    183 => $"{nameof(Func3_213AC54)} - ?",
-                    184 => $"{nameof(Func3_213AC38)} - ?",
-                    185 => $"{nameof(Func3_213AC04)} - ?",
-                    186 => $"{nameof(Func3_213ABC0)} - ?",
-                    187 => $"{nameof(Func3_213AB8C)} - ?",
-                    188 => $"{nameof(Func3_213AB58)} - ?",
-                    189 => $"{nameof(Func3_213AB24)} - ?",
-                    190 => $"{nameof(Func3_213AAF0)} - ?",
-                    191 => $"{nameof(Func3_213AA64)} - ?",
-                    192 => $"{nameof(Func3_213AA20)} - ?",
-                    193 => $"{nameof(Func3_213A9B8)} - ?",
-                    194 => $"{nameof(Func3_213A94C)} - ?",
-                    195 => $"{nameof(Func3_213A938)} - ?",
-                    196 => $"{nameof(Func3_213A91C)} - ?",
-                    197 => $"{nameof(Func3_213A900)} - ?",
-                    198 => $"{nameof(Func3_213A8DC)} - ?",
-                    199 => $"{nameof(Func3_213A8A8)} - ?",
-                    200 => $"{nameof(Func3_213A884)} - ?",
-                    201 => $"{nameof(Func3_213A868)} - ?",
-                    202 => $"{nameof(Func3_213A844)} - ?",
-                    203 => $"{nameof(Func3_213A828)} - ?",
-                    204 => $"{nameof(Func3_213A804)} - ?",
-                    205 => $"{nameof(Func3_213A798)} - ?",
-                    206 => $"{nameof(Func3_213A72C)} - ?",
-                    207 => $"{nameof(Func3_213A714)} - ?",
-                    208 => $"{nameof(Func3_213A698)} - ?",
-                    209 => $"{nameof(Func3_213A688)} - return whether flags2 bit for AiStart is set",
-                    210 => $"{nameof(Func3_213A660)} - return rng2 value in [param1, param2) --> every second call is ignored in MphRead for FPS reasons",
-                    211 => $"{nameof(Func3_213A650)} - ?",
-                    _ => throw new ProgramException("Invalid AI func 3.")
-                };
-            }
-
             public static string GetFuncs4Name(int id)
             {
                 // init (f2*4*)
@@ -12330,30 +11620,6 @@ namespace MphRead.Entities
                     123 => nameof(Func4_2145E54),
                     124 => nameof(Func4_2145E40),
                     125 => nameof(Func4_SetDespawned),
-                    _ => throw new ProgramException("Invalid AI func 4.")
-                };
-            }
-
-            public static string GetFuncs4Desc(int id)
-            {
-                // init (f2*4*)
-                return id switch
-                {
-                    0 or 1 or 47 or 49 or 99 => "empty",
-                    (>= 2 and <= 44) or 46 or 48 or (>= 50 and <= 78) or (>= 82 and <= 98) or 101 or 103
-                        or (>= 106 and <= 113) or (>= 115 and <= 122) => $"{nameof(Func4_21462DC)} - *",
-                    45 => $"{nameof(Func4_2145EB0)} - ?",
-                    79 => $"{nameof(Func4_21462AC)} - ?",
-                    80 => $"{nameof(Func4_2146284)} - ?",
-                    81 => $"{nameof(Func4_21461EC)} - ?",
-                    100 => $"{nameof(Func4_214612C)} - ?",
-                    102 => $"{nameof(Func4_2145F78)} - ?",
-                    104 => $"{nameof(Func4_2145F50)} - ?",
-                    105 => $"{nameof(Func4_2145F28)} - ?",
-                    114 => $"{nameof(Func4_2145F00)} - ?",
-                    123 => $"{nameof(Func4_2145E54)} - ?",
-                    124 => $"{nameof(Func4_2145E40)} - ?",
-                    125 => $"{nameof(Func4_SetDespawned)} - ?",
                     _ => throw new ProgramException("Invalid AI func 4.")
                 };
             }
@@ -12381,33 +11647,6 @@ namespace MphRead.Entities
                     114 => nameof(Func2_213E1CC),
                     123 => nameof(Func2_213D9B8),
                     124 => nameof(Func2_213D96C),
-                    _ => throw new ProgramException("Invalid AI func 2.")
-                };
-            }
-
-            public static string GetFuncs2Desc(int id)
-            {
-                // proc (f*2*4)
-                return id switch
-                {
-                    0 or 125 => "empty",
-                    1 => nameof(Func2_213EA10),
-                    (>= 2 and <= 44) or 46 or 48 or (>= 50 and <= 78) or (>= 82 and <= 98) or 101 or 103
-                        or (>= 106 and <= 113) or (>= 115 and <= 122) => $"{nameof(Func2_213EA48)} - *",
-                    45 => $"{nameof(Func2_213DDCC)} - ?",
-                    47 => $"{nameof(Func2_213DA88)} - ?",
-                    49 => $"{nameof(Func2_213E148)} - ?",
-                    79 => $"{nameof(Func2_213E9C8)} - ?",
-                    80 => $"{nameof(Func2_213E984)} - ?",
-                    81 => $"{nameof(Func2_213E934)} - ?",
-                    99 => $"{nameof(Func2_213E904)} - ?",
-                    100 => $"{nameof(Func2_213E684)} - ?",
-                    102 => $"{nameof(Func2_213E3C4)} - ?",
-                    104 => $"{nameof(Func2_213E31C)} - ?",
-                    105 => $"{nameof(Func2_213E274)} - ?",
-                    114 => $"{nameof(Func2_213E1CC)} - ?",
-                    123 => $"{nameof(Func2_213D9B8)} - ?",
-                    124 => $"{nameof(Func2_213D96C)} - ?",
                     _ => throw new ProgramException("Invalid AI func 2.")
                 };
             }

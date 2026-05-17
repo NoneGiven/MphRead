@@ -714,7 +714,6 @@ namespace MphRead.Entities
             _availableCharges.ClearAll();
             InitializeWeapon();
             // todo: much of this is the same as what's done in init, so we could use a common method
-            EquipInfo.InfiniteAmmo = false;
             EquipInfo.ChargeLevel = 0;
             EquipInfo.SmokeLevel = 0;
             _doubleDmgTimer = 0;
@@ -940,8 +939,7 @@ namespace MphRead.Entities
                 _ammo[0] = 0;
                 _ammo[1] = 0;
                 WeaponInfo weaponInfo = Weapons.Current[(int)weapon];
-                _ammo[weaponInfo.AmmoType] = Int32.MaxValue;
-                EquipInfo.InfiniteAmmo = true;
+                _ammo[weaponInfo.AmmoType] = -1;
                 EquipInfo.ChargeLevel = 0;
                 EquipInfo.SmokeLevel = 0;
                 _doubleDmgTimer = 0;
