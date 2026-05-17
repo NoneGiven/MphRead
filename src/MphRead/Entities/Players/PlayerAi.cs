@@ -74,7 +74,7 @@ namespace MphRead.Entities
             private uint _field1030 = 0;
             private uint _field1034 = 0; // timer set for jumping
             private int _field116 = 0; // timer?
-            private int _field1020 = 0; // timer?
+            private int _field1020 = 0; // initial aim deviation
             private int _field1032 = 0; // timer/counter
             private Vector3 _fieldA0 = Vector3.Zero;
             private Vector3 _fieldAC = Vector3.Zero;
@@ -6565,25 +6565,23 @@ namespace MphRead.Entities
                     int prevField1020 = _field1020;
                     if (Flags2.TestFlag(AiFlags2.Bit21))
                     {
-                        _field1020 = 0;
+                        _field1020 = 0; // bug? always overwritten
                     }
                     if (_player.BotLevel == 0)
                     {
-                        _field1020 = 15;
+                        _field1020 = 15 * 2; // todo: FPS stuff
                     }
                     else if (_player.BotLevel == 1)
                     {
-                        _field1020 = 7;
+                        _field1020 = 7 * 2; // todo: FPS stuff
                     }
                     else
                     {
-                        _field1020 = 3;
+                        _field1020 = 3 * 2; // todo: FPS stuff
                     }
-                    // sktodo-ai: FPS stuff for field1020, based on usage
-                    ushort disruptedTimer = (ushort)(_player._disruptedTimer / 2);
-                    if (_field1020 < disruptedTimer)
+                    if (_field1020 < _player._disruptedTimer)
                     {
-                        _field1020 += (int)Rng.GetRandomInt2(disruptedTimer - _field1020);
+                        _field1020 += (int)Rng.GetRandomInt2(_player._disruptedTimer - _field1020);
                     }
                     int field1020Diff = _field1020 - prevField1020;
                     if (Flags4.TestFlag(AiFlags4.Bit3) && field1020Diff > 0 && _player.BotLevel > 0)
@@ -6607,7 +6605,7 @@ namespace MphRead.Entities
                             isCharged = true;
                             chargePct = 1;
                         }
-                        Vector3 vec = (targetPos - _field1054) / field1020Diff;
+                        Vector3 vec = (targetPos - _field1054) / (field1020Diff / 2f); // todo: FPS stuff (see below)
                         float homing;
                         float speed;
                         if (isCharged)
@@ -6624,7 +6622,9 @@ namespace MphRead.Entities
                         }
                         if (homing > 0 || speed <= 0)
                         {
-                            vec *= _field1020 / 2f;
+                            // note: here and above, the aim deviation is halved because it's otherwise treated like a counter/timer
+                            // and therefore multiplied by 2 and be decremented every frame. halving it applies the correct deviation.
+                            vec *= (_field1020 / 2f) / 2f; // todo: FPS stuff
                         }
                         else
                         {
@@ -6669,7 +6669,7 @@ namespace MphRead.Entities
                     {
                         v52 = (dot1 * 5) + 0.25f;
                         v66 = (dot2 * 5) + 0.25f;
-                        if (Flags4.TestFlag(AiFlags4.Bit2))
+                        if (!Flags4.TestFlag(AiFlags4.Bit2))
                         {
                             v52 += targetDist / 2;
                             v66 += targetDist / 2;
@@ -6679,7 +6679,7 @@ namespace MphRead.Entities
                     {
                         v52 = (dot1 * 2) + 0.1f;
                         v66 = (dot2 * 2) + 0.1f;
-                        if (Flags4.TestFlag(AiFlags4.Bit2))
+                        if (!Flags4.TestFlag(AiFlags4.Bit2))
                         {
                             v52 += targetDist / 9;
                             v66 += targetDist / 9;
@@ -6689,7 +6689,7 @@ namespace MphRead.Entities
                     {
                         v52 = (dot1 * 0.2f) + 0.01f;
                         v66 = (dot2 * 0.2f) + 0.01f;
-                        if (Flags4.TestFlag(AiFlags4.Bit2))
+                        if (!Flags4.TestFlag(AiFlags4.Bit2))
                         {
                             v52 += targetDist / 50;
                             v66 += targetDist / 50;
