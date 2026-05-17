@@ -27,6 +27,8 @@ namespace MphRead.Entities
         private float _spinSpeed = 0;
         private bool _contested = false;
         private bool _inProgress = false;
+        public bool Contested => _contested;
+        public bool InProgress => _inProgress;
 
         public int CurrentTeam => _currentTeam;
         public int OccupyingTeam => _occupyingTeam;

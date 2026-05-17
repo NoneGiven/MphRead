@@ -5210,8 +5210,11 @@ namespace MphRead.Entities
 
             private int Func3_213B34C(AiContext context, AiPersonalityData5 param)
             {
-                // if flags2 bit5 is set (indicating _defenseE4 is present),
-                // the game checks bit 0 of a possible flags field at 0x88 on the entity, but that field is never set
+                if (Flags2.TestFlag(AiFlags2.TargetDefense))
+                {
+                    Debug.Assert(_targetDefense != null);
+                    return _targetDefense.Contested ? 1 : 0; // skhere
+                }
                 return 0;
             }
 
