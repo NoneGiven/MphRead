@@ -597,6 +597,7 @@ namespace MphRead.Entities
                 {
                     // sktodo-ai: this would set mouse aim values, but it's only used for Morph Ball,
                     // which we haven't implemented touch controls for (see Func2141A0C)
+                    Debugger.Break();
                     Flags3 &= ~AiFlags3.NoInput;
                     _framesWithoutTouch = 0;
                     if (_framesWithTouch < 6000)
