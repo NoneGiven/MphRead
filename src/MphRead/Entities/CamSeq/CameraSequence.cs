@@ -534,8 +534,12 @@ namespace MphRead.Formats
         {
             if (type == (short)EntityType.Player)
             {
-                Debug.Assert(id < PlayerEntity.MaxPlayers);
-                return PlayerEntity.Players[id];
+                // note: the game uses max players for the same purpose
+                if (id < PlayerEntity.PlayerCount)
+                {
+                    return PlayerEntity.Players[id];
+                }
+                return null;
             }
             if (type != -1 && id != -1 && _scene.TryGetEntity(id, out EntityBase? entity))
             {
