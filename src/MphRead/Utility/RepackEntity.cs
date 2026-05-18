@@ -92,6 +92,15 @@ namespace MphRead.Utility
                     spawn.NodeName = "rmE";
                     return RepackEntities(entities);
                 }
+                if (filename == Metadata.RoomMetadata["UNIT3_RM1"].EntityPath)
+                {
+                    List<EntityEditorBase> entities = GetEntities(filename);
+                    var spawn = (PlayerSpawnEntityEditor)entities.Single(e => e.Id == 16 && e.Type == EntityType.PlayerSpawn);
+                    spawn.Position = new Vector3(15.581741f, 11.746094f, -17.398003f);
+                    spawn.Facing = Vector3.UnitZ;
+                    spawn.NodeName = "rmHallB";
+                    return RepackEntities(entities);
+                }
                 if (filename == Metadata.RoomMetadata["Gorea_b1"].EntityPath)
                 {
                     List<EntityEditorBase> entities = GetEntities(filename);
