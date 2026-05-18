@@ -1475,7 +1475,7 @@ namespace MphRead
                     }
                 }
             }
-            //DrawVideoFrame(); // todo: render movies
+            //DrawMovieFrame(); // todo: render movies
             GL.Enable(EnableCap.DepthTest);
             GL.Disable(EnableCap.Blend);
             if (_faceCulling)
@@ -3308,24 +3308,24 @@ namespace MphRead
 
         private const int _frameWidth = 256;
         private const int _frameHeight = 192;
-        private int _videoBinding = -1;
+        private int _movieBinding = -1;
 
         private readonly byte[] _imageBuffer = new byte[_frameWidth * _frameHeight * 3];
         // needs to be disposed
-        private readonly Image<Rgb24>? _videoImages = null; // Image.Load<Rgb24>(@"");
+        private readonly Image<Rgb24>? _movieImages = null; // Image.Load<Rgb24>(@"");
 
-        private void DrawVideoFrame()
+        private void DrawMovieFrame()
         {
-            if (_videoImages == null)
+            if (_movieImages == null)
             {
                 return;
             }
-            if (_videoBinding == -1)
+            if (_movieBinding == -1)
             {
-                _videoBinding = ++_textureCount;
+                _movieBinding = ++_textureCount;
             }
             GL.Uniform1(_shaderLocations.LayerAlpha, 1);
-            GL.BindTexture(TextureTarget.Texture2D, _videoBinding);
+            GL.BindTexture(TextureTarget.Texture2D, _movieBinding);
             int minParameter = (int)TextureMinFilter.Nearest;
             int magParameter = (int)TextureMagFilter.Nearest;
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
@@ -3344,7 +3344,7 @@ namespace MphRead
             int pixelY = tileRow * _frameHeight;
             int pixelX = tileColumn * _frameWidth;
             // todo: the image doesn't need to be updated unless this is a new frame
-            _videoImages.ProcessPixelRows(accessor =>
+            _movieImages.ProcessPixelRows(accessor =>
             {
                 for (int i = 0; i < _frameHeight; i++)
                 {
