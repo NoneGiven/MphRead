@@ -23,7 +23,7 @@ namespace MphRead.Formats
             foreach (string file in files)
             {
                 // @"C:\Users\auser\Home\MPH\Video\actimagine-main\movies\..."
-                await VxDecoder.Decode(file, makeTexture: false, writeFiles: false);
+                await VxDecoder.Instance1.Decode(file, makeTexture: false, writeFiles: false);
                 //var bytes = File.ReadAllBytes(file);
                 //act.DecodeVx(bytes, Path.GetFileName(file));
                 break;
@@ -45,29 +45,32 @@ namespace MphRead.Formats
         }
     }
 
-    public static class VxDecoder
+    public class VxDecoder
     {
-        public static char[] Magic { get; } = new char[4];
-        public static int FrameCount { get; set; }
-        public static int FrameWidth { get; set; }
-        public static int FrameHeight { get; set; }
-        public static decimal FrameRate { get; set; }
-        public static int Quantizer { get; set; }
-        public static int AudioSampleRate { get; set; }
-        public static int AudioStreamCount { get; set; }
-        public static int MaxDataSize { get; set; }
-        public static int ExtradataOffset { get; set; }
-        public static int SeekTableOffset { get; set; }
-        public static int SeekTableCount { get; set; }
-        public static int[,,] ExtradataLpcCodebooks { get; } = new int[3, 64, 8]; // 1536
-        public static int[] ExtradataScaleModifiers { get; } = new int[8];
-        public static int[] ExtradataLpcBase { get; } = new int[8];
-        public static int ExtradataScaleInitial { get; set; }
-        public static SeekTableEntry[] SeekTable { get; } = new SeekTableEntry[1];
-        public static int[] QuantizerTable { get; } = new int[3];
-        private static readonly VideoFrame?[] _prevVideoFrames = new VideoFrame?[3];
-        private static int _framesQueued = 0;
-        private static List<VxFrame> _vxFrames = null!;
+        public static VxDecoder Instance1 { get; } = new VxDecoder();
+        public static VxDecoder Instance2 { get; } = new VxDecoder();
+
+        public char[] Magic { get; } = new char[4];
+        public int FrameCount { get; set; }
+        public int FrameWidth { get; set; }
+        public int FrameHeight { get; set; }
+        public decimal FrameRate { get; set; }
+        public int Quantizer { get; set; }
+        public int AudioSampleRate { get; set; }
+        public int AudioStreamCount { get; set; }
+        public int MaxDataSize { get; set; }
+        public int ExtradataOffset { get; set; }
+        public int SeekTableOffset { get; set; }
+        public int SeekTableCount { get; set; }
+        public int[,,] ExtradataLpcCodebooks { get; } = new int[3, 64, 8]; // 1536
+        public int[] ExtradataScaleModifiers { get; } = new int[8];
+        public int[] ExtradataLpcBase { get; } = new int[8];
+        public int ExtradataScaleInitial { get; set; }
+        public SeekTableEntry[] SeekTable { get; } = new SeekTableEntry[1];
+        public int[] QuantizerTable { get; } = new int[3];
+        private readonly VideoFrame?[] _prevVideoFrames = new VideoFrame?[3];
+        private int _framesQueued = 0;
+        private List<VxFrame> _vxFrames = null!;
 
         private static readonly ImmutableArray<ImmutableArray<int>> Quantizer4x4Table =
         [
@@ -79,26 +82,26 @@ namespace MphRead.Formats
             [ 0x12, 0x17, 0x1D ]
         ];
 
-        public static void Reset()
+        public void Reset()
         {
             _vxFrames?.Clear();
         }
 
-        public static async Task Decode(string filePath, bool makeTexture = false, bool writeFiles = false,
+        public async Task Decode(string filePath, bool makeTexture = false, bool writeFiles = false,
             CancellationToken token = default)
         {
             using FileStream fs = File.OpenRead(filePath);
             await Decode(fs, Path.GetFileName(filePath), makeTexture, writeFiles, token);
         }
 
-        public static async Task Decode(byte[] data, string filename, bool makeTexture = false, bool writeFiles = false,
+        public async Task Decode(byte[] data, string filename, bool makeTexture = false, bool writeFiles = false,
             CancellationToken token = default)
         {
             using var ms = new MemoryStream(data);
             await Decode(ms, filename, makeTexture, writeFiles, token);
         }
 
-        public static async Task Decode(Stream stream, string filename, bool makeTexture = false, bool writeFiles = false,
+        public async Task Decode(Stream stream, string filename, bool makeTexture = false, bool writeFiles = false,
             CancellationToken token = default)
         {
             string folder = Path.Combine(@"C:\Users\auser\Temp\movie", Path.GetFileNameWithoutExtension(filename));
@@ -229,7 +232,7 @@ namespace MphRead.Formats
                 }
             }
 
-            static void WriteFile(VxFrame vxFrame, string folder, int f)
+            void WriteFile(VxFrame vxFrame, string folder, int f)
             {
                 VideoFrame videoFrame = vxFrame.VideoFrame;
                 using var image = new Image<Rgb24>(FrameWidth, FrameHeight);
@@ -300,7 +303,7 @@ namespace MphRead.Formats
             }
         }
 
-        public static bool GetImage(int frameIndex, byte[] texture)
+        public bool GetImage(int frameIndex, byte[] texture)
         {
             if (_vxFrames == null || frameIndex >= _vxFrames.Count)
             {
@@ -332,18 +335,18 @@ namespace MphRead.Formats
         public static bool UseStaticBuffers { get; set; } = true;
 
         private const int _mphMaxDataSize = 7602;
-        private static readonly byte[] _dataBuffer = new byte[_mphMaxDataSize];
+        private readonly byte[] _dataBuffer = new byte[_mphMaxDataSize];
 
-        private static byte[] GetDataBuffer()
+        private byte[] GetDataBuffer()
         {
             return UseStaticBuffers /*|| MaxDataSize <= _mphMaxDataSize*/ ? _dataBuffer : new byte[MaxDataSize];
         }
 
         private const int _mphFrameW = 256;
         private const int _mphFrameH = 192;
-        private static int _nextPlaneBufferIndex = 0;
+        private int _nextPlaneBufferIndex = 0;
 
-        private static readonly ImmutableArray<byte[,]> _planeBuffers =
+        private readonly ImmutableArray<byte[,]> _planeBuffers =
         [
             //                  Y                                          U                                                  V
             /* frame n   */ new byte[_mphFrameH, _mphFrameW], new byte[_mphFrameH / 2, _mphFrameW / 2], new byte[_mphFrameH / 2, _mphFrameW / 2],
@@ -352,7 +355,7 @@ namespace MphRead.Formats
             /* frame n-3 */ new byte[_mphFrameH, _mphFrameW], new byte[_mphFrameH / 2, _mphFrameW / 2], new byte[_mphFrameH / 2, _mphFrameW / 2]
         ];
 
-        private static (byte[,], byte[,], byte[,]) GetPlaneBuffers()
+        private (byte[,], byte[,], byte[,]) GetPlaneBuffers()
         {
             byte[,] bufferY = _planeBuffers[_nextPlaneBufferIndex++];
             byte[,] bufferU = _planeBuffers[_nextPlaneBufferIndex++];

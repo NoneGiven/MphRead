@@ -3338,17 +3338,17 @@ namespace MphRead
             // - we need to change the decoder to two static instances so we can decode top and bottom at the same time
             // - need to display top and bottom frames together
             // - should try to identify code that needs to be aware of when the decoder takes too long to return a frame (and add a note about audio)
-            VxDecoder.Reset();
+            VxDecoder.Instance1.Reset();
             _decoderCts = new CancellationTokenSource();
             string path = @"C:\Users\auser\Home\MPH\Video\actimagine-main\movies\15_bot.vx";
             //byte[] fileBytes = File.ReadAllBytes(path);
             //Task.Run(async () => await VxDecoder.Decode(fileBytes, path, token: _decoderCts.Token), _decoderCts.Token);
-            Task.Run(async () => await VxDecoder.Decode(path, token: _decoderCts.Token), _decoderCts.Token);
-            while (!VxDecoder.GetImage(frameIndex: 0, _imageBuffer))
+            Task.Run(async () => await VxDecoder.Instance1.Decode(path, token: _decoderCts.Token), _decoderCts.Token);
+            while (!VxDecoder.Instance1.GetImage(frameIndex: 0, _imageBuffer))
             {
                 Thread.Sleep(TimeSpan.FromMilliseconds(10));
             }
-            _movieFrameCount = VxDecoder.FrameCount;
+            _movieFrameCount = VxDecoder.Instance1.FrameCount;
             if (_movieBinding == -1)
             {
                 _movieBinding = ++_textureCount;
@@ -3380,7 +3380,7 @@ namespace MphRead
                     return;
                 }
                 _movieFrameIndex = frameIndex;
-                while (!VxDecoder.GetImage(frameIndex, _imageBuffer))
+                while (!VxDecoder.Instance1.GetImage(frameIndex, _imageBuffer))
                 {
                     Thread.Sleep(TimeSpan.FromMilliseconds(10));
                 }
