@@ -1455,7 +1455,7 @@ namespace MphRead
                     GL.BindTexture(TextureTarget.Texture2D, 0);
                     GL.ActiveTexture(TextureUnit.Texture0);
                 }
-                if (_fadeType != FadeType.None)
+                if (_fadeType != FadeType.None && _movieFrameIndex == -1)
                 {
                     float percent = _fadePercent;
                     if (_fadeIn)
