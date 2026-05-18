@@ -1245,14 +1245,20 @@ namespace MphRead.Entities
                     {
                         weightIndex = context.Data1.Data1.Count;
                     }
-                    // sktodo-ai: we need to determine which funcs3 functions are frame/time-based and which are occurrence-based.
-                    // occurrence-based should take the same number of repeats to hit 100,000, but frame-based will need to accumulate at half speed.
-                    context.Weights[weightIndex] += ExecuteFuncs3(context, data2.Func3Id, data2.Parameters) * data2.Weight;
-                    if (context.Weights[weightIndex] >= 100000)
+                    // todo: revisit this hack. in order to make sure time-based and occurrence-based state changes happen in same
+                    // amount of time as the game, the state checks are done evert other frame, except if the weight is enough for
+                    // one check to trigger the state change (some checks like that can't be deferred even one frame, since the
+                    // bot might no longer be processing). the RNG check (210) is also subject to this even if the weight is 100k.
+                    // a proper solution would account for which checks are time vs. occurrence-based.
+                    if (data2.Weight >= 100000 && data2.Func3Id != 210 || _scene.FrameCount % 2 == 0) // todo: FPS stuff
                     {
-                        result = data2.Data1SelectIndex;
-                        context.Weights[weightIndex] = 0;
-                        break;
+                        context.Weights[weightIndex] += ExecuteFuncs3(context, data2.Func3Id, data2.Parameters) * data2.Weight;
+                        if (context.Weights[weightIndex] >= 100000)
+                        {
+                            result = data2.Data1SelectIndex;
+                            context.Weights[weightIndex] = 0;
+                            break;
+                        }
                     }
                 }
                 if (result < 20)
@@ -5718,17 +5724,8 @@ namespace MphRead.Entities
                 return Flags2.TestFlag(AiFlags2.AiStart) ? 1 : 0;
             }
 
-            // todo: FPS stuff
-            private bool _ignore = false;
-
             private int Func3_213A660(AiContext context, AiPersonalityData5 param)
             {
-                if (_ignore)
-                {
-                    _ignore = false;
-                    return 0;
-                }
-                _ignore = true;
                 return param.Param1 + (int)Rng.GetRandomInt2(param.Param2 - param.Param1);
             }
 
