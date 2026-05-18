@@ -4,7 +4,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Runtime;
 using System.Text;
@@ -3322,26 +3321,26 @@ namespace MphRead
         private int _movieBinding = -1;
         private ulong _movieStartFrame = 0;
         private int _movieFrameIndex = -1;
+        private int _lastRenderedMovieFrameIndex = 0;
+        private int _movieFrameCount = 0;
 
         private readonly byte[] _imageBuffer = new byte[_frameWidth * _frameHeight * 3];
         private CancellationTokenSource _decoderCts = null!;
 
         public void PlayMovie()
         {
-            _movieStartFrame = _frameCount;
-            _movieFrameIndex = 0;
-            // todo:
             // - start decoding and wait for first frame
             // - proceed with scene processing to draw first frame
             // - after enough time has elapsed, request the next frame's color buffer from the decoder
             // - decoder can decode up to 4 frames, then needs to wait until its oldest frame is requested by the renderer,
             //   then it can drop that frame and decode another one
-            // - use GL.TexSubImage2D() in DrawMovieFrame() for second frame and later for efficiency
-            // - once this is working, we need to change the decoder to two static instances so we can decode top and bottom at the same time
+            // todo
+            // - we need to change the decoder to two static instances so we can decode top and bottom at the same time
+            // - need to display top and bottom frames together
             // - should try to identify code that needs to be aware of when the decoder takes too long to return a frame (and add a note about audio)
             VxDecoder.Reset();
             _decoderCts = new CancellationTokenSource();
-            string path = @"C:\Users\auser\Home\MPH\Video\actimagine-main\movies\01_bot.vx";
+            string path = @"C:\Users\auser\Home\MPH\Video\actimagine-main\movies\15_bot.vx";
             //byte[] fileBytes = File.ReadAllBytes(path);
             //Task.Run(async () => await VxDecoder.Decode(fileBytes, path, token: _decoderCts.Token), _decoderCts.Token);
             Task.Run(async () => await VxDecoder.Decode(path, token: _decoderCts.Token), _decoderCts.Token);
@@ -3349,6 +3348,18 @@ namespace MphRead
             {
                 Thread.Sleep(TimeSpan.FromMilliseconds(10));
             }
+            _movieFrameCount = VxDecoder.FrameCount;
+            if (_movieBinding == -1)
+            {
+                _movieBinding = ++_textureCount;
+            }
+            GL.BindTexture(TextureTarget.Texture2D, _movieBinding);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, _frameWidth, _frameHeight, 0,
+                PixelFormat.Rgb, PixelType.UnsignedByte, _imageBuffer);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            _movieStartFrame = _frameCount;
+            _lastRenderedMovieFrameIndex = 0;
+            _movieFrameIndex = 0;
         }
 
         public void StopMovie()
@@ -3363,6 +3374,11 @@ namespace MphRead
             int frameIndex = (int)(_frameCount - _movieStartFrame) / 4; // 15 fps
             if (frameIndex != _movieFrameIndex)
             {
+                if (frameIndex >= _movieFrameCount)
+                {
+                    StopMovie();
+                    return;
+                }
                 _movieFrameIndex = frameIndex;
                 while (!VxDecoder.GetImage(frameIndex, _imageBuffer))
                 {
@@ -3373,10 +3389,6 @@ namespace MphRead
 
         private void DrawMovieFrame()
         {
-            if (_movieBinding == -1)
-            {
-                _movieBinding = ++_textureCount;
-            }
             GL.Uniform1(_shaderLocations.LayerAlpha, 1);
             GL.BindTexture(TextureTarget.Texture2D, _movieBinding);
             int minParameter = (int)TextureMinFilter.Nearest;
@@ -3387,10 +3399,11 @@ namespace MphRead
                 TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            // skhere: todo: the image doesn't need to be updated unless this is a new frame
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, _frameWidth, _frameHeight, 0,
-                PixelFormat.Rgb, PixelType.UnsignedByte, _imageBuffer);
-            //GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, _frameWidth, _frameHeight, PixelFormat.Rgb, PixelType.UnsignedByte, _imageBuffer);
+            if (_movieFrameIndex != _lastRenderedMovieFrameIndex)
+            {
+                _lastRenderedMovieFrameIndex = _movieFrameIndex;
+                GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, _frameWidth, _frameHeight, PixelFormat.Rgb, PixelType.UnsignedByte, _imageBuffer);
+            }
             float viewWidth = Size.X;
             float viewHeight = Size.Y;
             float width = viewWidth * 1f / 2 / (viewWidth / 2);

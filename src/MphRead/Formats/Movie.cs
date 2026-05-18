@@ -191,7 +191,7 @@ namespace MphRead.Formats
                 {
                     try
                     {
-                        await Task.Delay(TimeSpan.FromMilliseconds(5), token);
+                        await Task.Delay(TimeSpan.FromMilliseconds(10), token);
                     }
                     catch (TaskCanceledException) { }
                 }
