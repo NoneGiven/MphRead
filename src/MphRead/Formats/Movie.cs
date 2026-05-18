@@ -7,6 +7,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -15,13 +17,13 @@ namespace MphRead.Formats
     internal class DecoderProgram
     {
         // skhere
-        public static void Test()
+        public static async Task Test()
         {
             var files = Directory.EnumerateFiles(@"C:\Users\auser\Home\MPH\Video\actimagine-main\movies").ToList();
             foreach (string file in files)
             {
                 // @"C:\Users\auser\Home\MPH\Video\actimagine-main\movies\..."
-                VxDecoder.Decode(file, makeTexture: false, writeFiles: true);
+                await VxDecoder.Decode(file, makeTexture: false, writeFiles: false);
                 //var bytes = File.ReadAllBytes(file);
                 //act.DecodeVx(bytes, Path.GetFileName(file));
                 break;
@@ -63,7 +65,9 @@ namespace MphRead.Formats
         public static int ExtradataScaleInitial { get; set; }
         public static SeekTableEntry[] SeekTable { get; } = new SeekTableEntry[1];
         public static int[] QuantizerTable { get; } = new int[3];
-        public static VideoFrame?[] PrevVideoFrames { get; } = new VideoFrame?[3];
+        private static readonly VideoFrame?[] _prevVideoFrames = new VideoFrame?[3];
+        private static int _framesQueued = 0;
+        private static List<VxFrame> _vxFrames = null!;
 
         private static readonly ImmutableArray<ImmutableArray<int>> Quantizer4x4Table =
         [
@@ -75,22 +79,31 @@ namespace MphRead.Formats
             [ 0x12, 0x17, 0x1D ]
         ];
 
-        public static void Decode(string filePath, bool makeTexture = false, bool writeFiles = false)
+        public static void Reset()
+        {
+            _vxFrames?.Clear();
+        }
+
+        public static async Task Decode(string filePath, bool makeTexture = false, bool writeFiles = false,
+            CancellationToken token = default)
         {
             using FileStream fs = File.OpenRead(filePath);
-            Decode(fs, Path.GetFileName(filePath), makeTexture, writeFiles);
+            await Decode(fs, Path.GetFileName(filePath), makeTexture, writeFiles);
         }
 
-        public static void Decode(byte[] data, string filename, bool makeTexture = false, bool writeFiles = false)
+        public static async Task Decode(byte[] data, string filename, bool makeTexture = false, bool writeFiles = false,
+            CancellationToken token = default)
         {
             using var ms = new MemoryStream(data);
-            Decode(ms, filename, makeTexture, writeFiles);
+            await Decode(ms, filename, makeTexture, writeFiles);
         }
 
-        public static void Decode(Stream stream, string filename, bool makeTexture = false, bool writeFiles = false)
+        public static async Task Decode(Stream stream, string filename, bool makeTexture = false, bool writeFiles = false,
+            CancellationToken token = default)
         {
             string folder = Path.Combine(@"C:\Users\auser\Temp\movie", Path.GetFileNameWithoutExtension(filename));
             using var reader = new BinaryReader(stream);
+            _framesQueued = 0;
 
             Magic[0] = reader.ReadChar(); // V (86)
             Magic[1] = reader.ReadChar(); // X (88)
@@ -167,11 +180,23 @@ namespace MphRead.Formats
 
             byte[] buffer = GetDataBuffer();
             // todo: avoid list allocation? buffers are recycled anyway, but when decoding in realtime, we only need 4 frames
-            var vxFrames = new List<VxFrame>(FrameCount);
-            PrevVideoFrames[0] = PrevVideoFrames[1] = PrevVideoFrames[2] = null;
+            _vxFrames = new List<VxFrame>(FrameCount);
+            _prevVideoFrames[0] = _prevVideoFrames[1] = _prevVideoFrames[2] = null;
             AudioFrame? prevAudioFrame = null;
             for (int i = 0; i < FrameCount; i++)
             {
+                while (_framesQueued >= 4) // sktodo: enable or disable this behavior for realtime vs. export
+                {
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromMilliseconds(5), token);
+                    }
+                    catch (TaskCanceledException) { }
+                }
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
                 int dataSize = reader.ReadUInt16();
                 dataSize -= 2; // subtract 2 for audioFrameCount
                 Debug.Assert(dataSize % 2 == 0); // for byte swapping
@@ -184,17 +209,18 @@ namespace MphRead.Formats
                 {
                     (planeBufferY, planeBufferU, planeBufferV) = GetPlaneBuffers();
                 }
-                var vxFrame = new VxFrame(FrameWidth, FrameHeight, PrevVideoFrames, audioFrameCount, prevAudioFrame,
+                var vxFrame = new VxFrame(FrameWidth, FrameHeight, _prevVideoFrames, audioFrameCount, prevAudioFrame,
                     QuantizerTable, planeBufferY, planeBufferU, planeBufferV);
-                vxFrames.Add(vxFrame);
                 //if (audioFrameCount > 0)
                 //{
                 //    prevAudioFrame = vxFrame.AudioFrames[^1];
                 //}
                 vxFrame.Decode(reader, buffer, dataSize);
-                PrevVideoFrames[2] = PrevVideoFrames[1];
-                PrevVideoFrames[1] = PrevVideoFrames[0];
-                PrevVideoFrames[0] = vxFrame.VideoFrame;
+                _vxFrames.Add(vxFrame);
+                _framesQueued++;
+                _prevVideoFrames[2] = _prevVideoFrames[1];
+                _prevVideoFrames[1] = _prevVideoFrames[0];
+                _prevVideoFrames[0] = vxFrame.VideoFrame;
                 if (writeFiles && UseStaticBuffers)
                 {
                     WriteFile(vxFrame, folder, i);
@@ -226,7 +252,7 @@ namespace MphRead.Formats
             {
                 Directory.CreateDirectory(folder);
                 int f = 0;
-                foreach (VxFrame vxFrame in vxFrames)
+                foreach (VxFrame vxFrame in _vxFrames)
                 {
                     WriteFile(vxFrame, folder, f++);
                 }
@@ -258,9 +284,9 @@ namespace MphRead.Formats
                 {
                     for (int x = 0; x < FrameWidth; x++)
                     {
-                        int cy = vxFrames[0].VideoFrame.PlaneBufferY[y, x];
-                        int cu = vxFrames[0].VideoFrame.PlaneBufferU[y / 2, x / 2];
-                        int cv = vxFrames[0].VideoFrame.PlaneBufferV[y / 2, x / 2];
+                        int cy = _vxFrames[0].VideoFrame.PlaneBufferY[y, x];
+                        int cu = _vxFrames[0].VideoFrame.PlaneBufferU[y / 2, x / 2];
+                        int cv = _vxFrames[0].VideoFrame.PlaneBufferV[y / 2, x / 2];
                         Rgb24 rgb = YuvToRgb(cy, cu, cv);
                         texture[y * 256 * 3 + x * 3] = rgb.R;
                         texture[y * 256 * 3 + x * 3 + 1] = rgb.G;
@@ -272,19 +298,43 @@ namespace MphRead.Formats
             }
         }
 
+        public static bool GetImage(int frameIndex, byte[] texture)
+        {
+            if (_vxFrames == null || frameIndex >= _vxFrames.Count)
+            {
+                return false;
+            }
+            VxFrame vxFrame = _vxFrames[frameIndex];
+            for (int y = 0; y < FrameHeight; y++)
+            {
+                for (int x = 0; x < FrameWidth; x++)
+                {
+                    int cy = vxFrame.VideoFrame.PlaneBufferY[y, x];
+                    int cu = vxFrame.VideoFrame.PlaneBufferU[y / 2, x / 2];
+                    int cv = vxFrame.VideoFrame.PlaneBufferV[y / 2, x / 2];
+                    Rgb24 rgb = YuvToRgb(cy, cu, cv);
+                    texture[y * 256 * 3 + x * 3] = rgb.R;
+                    texture[y * 256 * 3 + x * 3 + 1] = rgb.G;
+                    texture[y * 256 * 3 + x * 3 + 2] = rgb.B;
+                }
+            }
+            _framesQueued--;
+            return true;
+        }
+
         // because we know the dimensions and maximum data size of MPH's videos, we can decode successive videos with reusable, permanent static allocations.
         // in order to keep this code flexible to allow decoding other videos with unknown sizes, this behavior can be disabled. when enabled, the code will:
         // - use one buffer for the file data of the frame currently being decoded. this buffer could be removed if the bit reader operated on a stream.
         // - use three plane buffers for YUV of the frame being decoded and the three previous frames. the plane buffer collection is used circularly.
         // when disabled, the data buffer will be allocated once for each video file, and the plane buffers will be newly allocated within each video frame.
-        public static bool UseStaticBuffers { get; set; } = false;
+        public static bool UseStaticBuffers { get; set; } = true;
 
         private const int _mphMaxDataSize = 7602;
         private static readonly byte[] _dataBuffer = new byte[_mphMaxDataSize];
 
         private static byte[] GetDataBuffer()
         {
-            return UseStaticBuffers || MaxDataSize <= _mphMaxDataSize ? _dataBuffer : new byte[MaxDataSize];
+            return UseStaticBuffers /*|| MaxDataSize <= _mphMaxDataSize*/ ? _dataBuffer : new byte[MaxDataSize];
         }
 
         private const int _mphFrameW = 256;

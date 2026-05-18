@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime;
 using System.Runtime.InteropServices;
@@ -22,7 +23,6 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace MphRead
@@ -1182,6 +1182,15 @@ namespace MphRead
                     _frameCount++;
                 }
                 GameState.UpdateTime(this);
+                // skhere: todo: call from elsewhere
+                if (_frameCount == 1)
+                {
+                    PlayMovie();
+                }
+                else if (_movieFrameIndex != -1)
+                {
+                    UpdateMovie();
+                }
             }
             _frameAdvanceLastFrame = _frameAdvanceOn;
         }
@@ -1475,7 +1484,10 @@ namespace MphRead
                     }
                 }
             }
-            //DrawMovieFrame(); // todo: render movies
+            if (_movieFrameIndex != -1)
+            {
+                DrawMovieFrame();
+            }
             GL.Enable(EnableCap.DepthTest);
             GL.Disable(EnableCap.Blend);
             if (_faceCulling)
@@ -2857,6 +2869,7 @@ namespace MphRead
                 EnemyInstanceEntity.DestroyBeams();
                 Sound.Sfx.ShutDown();
                 OutputStop();
+                StopMovie();
                 Selection.Clear();
             }
         }
@@ -3309,17 +3322,62 @@ namespace MphRead
         private const int _frameWidth = 256;
         private const int _frameHeight = 192;
         private int _movieBinding = -1;
+        private ulong _movieStartFrame = 0;
+        private int _movieFrameIndex = -1;
 
         private readonly byte[] _imageBuffer = new byte[_frameWidth * _frameHeight * 3];
-        // needs to be disposed
-        private readonly Image<Rgb24>? _movieImages = null; // Image.Load<Rgb24>(@"");
+        private CancellationTokenSource _decoderCts = null!;
+
+        public void PlayMovie()
+        {
+            _movieStartFrame = _frameCount;
+            _movieFrameIndex = 0;
+            // todo:
+            // - start decoding and wait for first frame
+            // - proceed with scene processing to draw first frame
+            // - after enough time has elapsed, request the next frame's color buffer from the decoder
+            // - decoder can decode up to 4 frames, then needs to wait until its oldest frame is requested by the renderer,
+            //   then it can drop that frame and decode another one
+            // - use GL.TexSubImage2D() in DrawMovieFrame() for second frame and later for efficiency
+            // - once this is working, we need to change the decoder to two static instances so we can decode top and bottom at the same time
+            // - should try to identify code that needs to be aware of when the decoder takes too long to return a frame (and add a note about audio)
+            // current issues:
+            // - need to force the texture storage to be created during loading, because it takes too long if it has to wait at the draw call
+            // - corruption/exceptions when reusing the decoder for a second video, even with no file stream and static buffers disabled --> need to debug
+            VxDecoder.Reset();
+            _decoderCts = new CancellationTokenSource();
+            string path = @"C:\Users\auser\Home\MPH\Video\actimagine-main\movies\01_bot.vx";
+            byte[] fileBytes = File.ReadAllBytes(path);
+            Task.Run(async () => await VxDecoder.Decode(fileBytes, path, token: _decoderCts.Token), _decoderCts.Token);
+            //Task.Run(async () => await VxDecoder.Decode(path, token: _decoderCts.Token), _decoderCts.Token);
+            while (!VxDecoder.GetImage(frameIndex: 0, _imageBuffer))
+            {
+                Thread.Sleep(TimeSpan.FromMilliseconds(10));
+            }
+        }
+
+        public void StopMovie()
+        {
+            _decoderCts.Cancel();
+            _movieFrameIndex = -1;
+            _movieStartFrame = 0;
+        }
+
+        private void UpdateMovie()
+        {
+            int frameIndex = (int)(_frameCount - _movieStartFrame) / 4; // 15 fps
+            if (frameIndex != _movieFrameIndex)
+            {
+                _movieFrameIndex = frameIndex;
+                while (!VxDecoder.GetImage(frameIndex, _imageBuffer))
+                {
+                    Thread.Sleep(TimeSpan.FromMilliseconds(10));
+                }
+            }
+        }
 
         private void DrawMovieFrame()
         {
-            if (_movieImages == null)
-            {
-                return;
-            }
             if (_movieBinding == -1)
             {
                 _movieBinding = ++_textureCount;
@@ -3334,29 +3392,10 @@ namespace MphRead
                 TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            // todo: these are metadata values
-            const int tilesX = 36;
-            const int tilexY = 36;
-            // todo: control playback
-            int frameId = (int)_frameCount / 4; // 15 fps
-            int tileRow = frameId / tilesX;
-            int tileColumn = frameId % tilexY;
-            int pixelY = tileRow * _frameHeight;
-            int pixelX = tileColumn * _frameWidth;
-            // todo: the image doesn't need to be updated unless this is a new frame
-            _movieImages.ProcessPixelRows(accessor =>
-            {
-                for (int i = 0; i < _frameHeight; i++)
-                {
-                    Span<Rgb24> rowSpan = accessor.GetRowSpan(pixelY + i);
-                    Span<byte> frameSpan = MemoryMarshal.Cast<Rgb24, byte>(rowSpan.Slice(pixelX, _frameWidth));
-                    Debug.Assert(frameSpan.Length == _frameWidth * 3);
-                    Span<byte> bufferSpan = new Span<byte>(_imageBuffer).Slice(i * _frameWidth * 3, _frameWidth * 3);
-                    frameSpan.CopyTo(bufferSpan);
-                }
-            });
+            // skhere: todo: the image doesn't need to be updated unless this is a new frame
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, _frameWidth, _frameHeight, 0,
                 PixelFormat.Rgb, PixelType.UnsignedByte, _imageBuffer);
+            //GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, _frameWidth, _frameHeight, PixelFormat.Rgb, PixelType.UnsignedByte, _imageBuffer);
             float viewWidth = Size.X;
             float viewHeight = Size.Y;
             float width = viewWidth * 1f / 2 / (viewWidth / 2);
