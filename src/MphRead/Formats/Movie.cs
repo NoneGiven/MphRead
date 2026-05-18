@@ -12,25 +12,22 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace MphRead.Formats
 {
-    internal class Program
+    internal class DecoderProgram
     {
         // skhere
-        public static void Main(string[] args)
+        public static void Test()
         {
-            Test();
-        }
-
-        private static void Test()
-        {
-            var act = new VxDecoder();
             var files = Directory.EnumerateFiles(@"C:\Users\auser\Home\MPH\Video\actimagine-main\movies").ToList();
             foreach (string file in files)
             {
                 // @"C:\Users\auser\Home\MPH\Video\actimagine-main\movies\..."
-                act.DecodeVx(file, makeTexture: true, writeFiles: false);
+                VxDecoder.Decode(file, makeTexture: false, writeFiles: true);
                 //var bytes = File.ReadAllBytes(file);
                 //act.DecodeVx(bytes, Path.GetFileName(file));
+                break;
             }
+            _ = 5;
+            _ = 5;
         }
     }
 
@@ -46,26 +43,27 @@ namespace MphRead.Formats
         }
     }
 
-    public sealed class VxDecoder
+    public static class VxDecoder
     {
-        public char[] Magic { get; } = new char[4];
-        public int FrameCount { get; set; }
-        public int FrameWidth { get; set; }
-        public int FrameHeight { get; set; }
-        public decimal FrameRate { get; set; }
-        public int Quantizer { get; set; }
-        public int AudioSampleRate { get; set; }
-        public int AudioStreamCount { get; set; }
-        public int MaxDataSize { get; set; }
-        public int ExtradataOffset { get; set; }
-        public int SeekTableOffset { get; set; }
-        public int SeekTableCount { get; set; }
-        public int[,,] ExtradataLpcCodebooks { get; } = new int[3, 64, 8]; // 1536
-        public int[] ExtradataScaleModifiers { get; } = new int[8];
-        public int[] ExtradataLpcBase { get; } = new int[8];
-        public int ExtradataScaleInitial { get; set; }
-        public SeekTableEntry[] SeekTable { get; } = new SeekTableEntry[1];
-        public int[] QuantizerTable { get; } = new int[3];
+        public static char[] Magic { get; } = new char[4];
+        public static int FrameCount { get; set; }
+        public static int FrameWidth { get; set; }
+        public static int FrameHeight { get; set; }
+        public static decimal FrameRate { get; set; }
+        public static int Quantizer { get; set; }
+        public static int AudioSampleRate { get; set; }
+        public static int AudioStreamCount { get; set; }
+        public static int MaxDataSize { get; set; }
+        public static int ExtradataOffset { get; set; }
+        public static int SeekTableOffset { get; set; }
+        public static int SeekTableCount { get; set; }
+        public static int[,,] ExtradataLpcCodebooks { get; } = new int[3, 64, 8]; // 1536
+        public static int[] ExtradataScaleModifiers { get; } = new int[8];
+        public static int[] ExtradataLpcBase { get; } = new int[8];
+        public static int ExtradataScaleInitial { get; set; }
+        public static SeekTableEntry[] SeekTable { get; } = new SeekTableEntry[1];
+        public static int[] QuantizerTable { get; } = new int[3];
+        public static VideoFrame?[] PrevVideoFrames { get; } = new VideoFrame?[3];
 
         private static readonly ImmutableArray<ImmutableArray<int>> Quantizer4x4Table =
         [
@@ -77,20 +75,21 @@ namespace MphRead.Formats
             [ 0x12, 0x17, 0x1D ]
         ];
 
-        public void DecodeVx(string filePath, bool makeTexture = false, bool writeFiles = false)
+        public static void Decode(string filePath, bool makeTexture = false, bool writeFiles = false)
         {
             using FileStream fs = File.OpenRead(filePath);
-            DecodeVx(fs, Path.GetFileName(filePath), makeTexture, writeFiles);
+            Decode(fs, Path.GetFileName(filePath), makeTexture, writeFiles);
         }
 
-        public void DecodeVx(byte[] data, string filename, bool makeTexture = false, bool writeFiles = false)
+        public static void Decode(byte[] data, string filename, bool makeTexture = false, bool writeFiles = false)
         {
             using var ms = new MemoryStream(data);
-            DecodeVx(ms, filename, makeTexture, writeFiles);
+            Decode(ms, filename, makeTexture, writeFiles);
         }
 
-        public void DecodeVx(Stream stream, string filename, bool makeTexture = false, bool writeFiles = false)
+        public static void Decode(Stream stream, string filename, bool makeTexture = false, bool writeFiles = false)
         {
+            string folder = Path.Combine(@"C:\Users\auser\Temp\movie", Path.GetFileNameWithoutExtension(filename));
             using var reader = new BinaryReader(stream);
 
             Magic[0] = reader.ReadChar(); // V (86)
@@ -105,6 +104,7 @@ namespace MphRead.Formats
             AudioSampleRate = reader.ReadInt32();
             AudioStreamCount = reader.ReadInt32();
             MaxDataSize = reader.ReadInt32();
+            MaxDataSize -= 2; // subtract 2 for audioFrameCount
             Debug.Assert(MaxDataSize % 2 == 0);
             ExtradataOffset = reader.ReadInt32();
             SeekTableOffset = reader.ReadInt32();
@@ -112,7 +112,7 @@ namespace MphRead.Formats
 
             if (FrameWidth % 16 != 0 || FrameHeight % 16 != 0)
             {
-                throw new ProgramException($"VX decoding error 001: {FrameWidth}x{FrameHeight}");
+                throw new ProgramException($"VX decoding error 001: {FrameWidth} x {FrameHeight}");
             }
 
             long prevPosition = reader.BaseStream.Position;
@@ -163,60 +163,72 @@ namespace MphRead.Formats
             reader.BaseStream.Position = prevPosition;
 
             // static init
-            _ = VLC.Temp; // skhere
+            _ = VLC.Temp;
 
-            var sw = new Stopwatch();
-            var decodeTimes = new List<TimeSpan>();
-
-            byte[] buffer = new byte[MaxDataSize];
+            byte[] buffer = GetDataBuffer();
+            // todo: avoid list allocation? buffers are recycled anyway, but when decoding in realtime, we only need 4 frames
             var vxFrames = new List<VxFrame>(FrameCount);
-            VideoFrame?[] refVideoFrames = new VideoFrame?[3];
+            PrevVideoFrames[0] = PrevVideoFrames[1] = PrevVideoFrames[2] = null;
             AudioFrame? prevAudioFrame = null;
             for (int i = 0; i < FrameCount; i++)
             {
                 int dataSize = reader.ReadUInt16();
+                dataSize -= 2; // subtract 2 for audioFrameCount
                 Debug.Assert(dataSize % 2 == 0); // for byte swapping
                 Debug.Assert(dataSize <= MaxDataSize);
                 int audioFrameCount = reader.ReadUInt16();
-                var vxFrame = new VxFrame(FrameWidth, FrameHeight, refVideoFrames, audioFrameCount, prevAudioFrame, QuantizerTable);
+                byte[,]? planeBufferY = null;
+                byte[,]? planeBufferU = null;
+                byte[,]? planeBufferV = null;
+                if (UseStaticBuffers)
+                {
+                    (planeBufferY, planeBufferU, planeBufferV) = GetPlaneBuffers();
+                }
+                var vxFrame = new VxFrame(FrameWidth, FrameHeight, PrevVideoFrames, audioFrameCount, prevAudioFrame,
+                    QuantizerTable, planeBufferY, planeBufferU, planeBufferV);
                 vxFrames.Add(vxFrame);
                 //if (audioFrameCount > 0)
                 //{
                 //    prevAudioFrame = vxFrame.AudioFrames[^1];
                 //}
-                sw.Restart();
-                vxFrame.Decode(reader, buffer, dataSize - 2); // subtract 2 for audoiFrameCount
-                sw.Stop();
-                decodeTimes.Add(sw.Elapsed);
-                refVideoFrames[2] = refVideoFrames[1];
-                refVideoFrames[1] = refVideoFrames[0];
-                refVideoFrames[0] = vxFrame.VideoFrame;
+                vxFrame.Decode(reader, buffer, dataSize);
+                PrevVideoFrames[2] = PrevVideoFrames[1];
+                PrevVideoFrames[1] = PrevVideoFrames[0];
+                PrevVideoFrames[0] = vxFrame.VideoFrame;
+                if (writeFiles && UseStaticBuffers)
+                {
+                    WriteFile(vxFrame, folder, i);
+                }
             }
 
-            if (writeFiles)
+            static void WriteFile(VxFrame vxFrame, string folder, int f)
             {
-                string folder = Path.Combine(@"C:\Users\auser\Temp\movie", Path.GetFileNameWithoutExtension(filename));
+                VideoFrame videoFrame = vxFrame.VideoFrame;
+                using var image = new Image<Rgb24>(FrameWidth, FrameHeight);
+                image.ProcessPixelRows(accessor =>
+                {
+                    for (int y = 0; y < FrameHeight; y++)
+                    {
+                        Span<Rgb24> row = accessor.GetRowSpan(y);
+                        for (int x = 0; x < FrameWidth; x++)
+                        {
+                            int cy = videoFrame.PlaneBufferY[y, x];
+                            int cu = videoFrame.PlaneBufferU[y / 2, x / 2];
+                            int cv = videoFrame.PlaneBufferV[y / 2, x / 2];
+                            row[x] = YuvToRgb(cy, cu, cv);
+                        }
+                    }
+                });
+                image.SaveAsPng(Path.Combine(folder, $"{f.ToString().PadLeft(4, '0')}.png"));
+            }
+
+            if (writeFiles && !UseStaticBuffers)
+            {
                 Directory.CreateDirectory(folder);
                 int f = 0;
                 foreach (VxFrame vxFrame in vxFrames)
                 {
-                    VideoFrame videoFrame = vxFrame.VideoFrame;
-                    using var image = new Image<Rgb24>(FrameWidth, FrameHeight);
-                    image.ProcessPixelRows(accessor =>
-                    {
-                        for (int y = 0; y < FrameHeight; y++)
-                        {
-                            Span<Rgb24> row = accessor.GetRowSpan(y);
-                            for (int x = 0; x < FrameWidth; x++)
-                            {
-                                int cy = videoFrame.PlaneBufferY[y, x];
-                                int cu = videoFrame.PlaneBufferU[y / 2, x / 2];
-                                int cv = videoFrame.PlaneBufferV[y / 2, x / 2];
-                                row[x] = YuvToRgb(cy, cu, cv);
-                            }
-                        }
-                    });
-                    image.SaveAsPng(Path.Combine(folder, $"{f++.ToString().PadLeft(4, '0')}.png"));
+                    WriteFile(vxFrame, folder, f++);
                 }
             }
 
@@ -227,7 +239,9 @@ namespace MphRead.Formats
             // main thing for optimization is avoiding any giant GCs when the movie is done loading and/or unloaded
             // we could try a shared/persistent buffers approach IF we do the decoding on the fly during playback
             // that way we would only need:
-            // plane buffers for frame n being decoded, coeff buffers for frame being decoded, vector buffer for frame being decoded
+            // plane buffers for frame n being decoded
+            // coeff buffers for frame being decoded
+            // vector buffer for frame being decoded
             // plane buffers for frame n - 1
             // plane buffers for frame n - 2
             // plane buffers for frame n - 3
@@ -258,6 +272,64 @@ namespace MphRead.Formats
             }
         }
 
+        // because we know the dimensions and maximum data size of MPH's videos, we can decode successive videos with reusable, permanent static allocations.
+        // in order to keep this code flexible to allow decoding other videos with unknown sizes, this behavior can be disabled. when enabled, the code will:
+        // - use one buffer for the file data of the frame currently being decoded. this buffer could be removed if the bit reader operated on a stream.
+        // - use three plane buffers for YUV of the frame being decoded and the three previous frames. the plane buffer collection is used circularly.
+        // when disabled, the data buffer will be allocated once for each video file, and the plane buffers will be newly allocated within each video frame.
+        public static bool UseStaticBuffers { get; set; } = false;
+
+        private const int _mphMaxDataSize = 7602;
+        private static readonly byte[] _dataBuffer = new byte[_mphMaxDataSize];
+
+        private static byte[] GetDataBuffer()
+        {
+            return UseStaticBuffers || MaxDataSize <= _mphMaxDataSize ? _dataBuffer : new byte[MaxDataSize];
+        }
+
+        private const int _mphFrameW = 256;
+        private const int _mphFrameH = 192;
+        private static int _nextPlaneBufferIndex = 0;
+
+        private static readonly ImmutableArray<byte[,]> _planeBuffers =
+        [
+            //                  Y                                          U                                                  V
+            /* frame n   */ new byte[_mphFrameH, _mphFrameW], new byte[_mphFrameH / 2, _mphFrameW / 2], new byte[_mphFrameH / 2, _mphFrameW / 2],
+            /* frame n-1 */ new byte[_mphFrameH, _mphFrameW], new byte[_mphFrameH / 2, _mphFrameW / 2], new byte[_mphFrameH / 2, _mphFrameW / 2],
+            /* frame n-2 */ new byte[_mphFrameH, _mphFrameW], new byte[_mphFrameH / 2, _mphFrameW / 2], new byte[_mphFrameH / 2, _mphFrameW / 2],
+            /* frame n-3 */ new byte[_mphFrameH, _mphFrameW], new byte[_mphFrameH / 2, _mphFrameW / 2], new byte[_mphFrameH / 2, _mphFrameW / 2]
+        ];
+
+        private static (byte[,], byte[,], byte[,]) GetPlaneBuffers()
+        {
+            byte[,] bufferY = _planeBuffers[_nextPlaneBufferIndex++];
+            byte[,] bufferU = _planeBuffers[_nextPlaneBufferIndex++];
+            byte[,] bufferV = _planeBuffers[_nextPlaneBufferIndex++];
+            for (int y = 0; y < _mphFrameH; y++)
+            {
+                for (int x = 0; x < _mphFrameW; x++)
+                {
+                    bufferY[y, x] = 0;
+                }
+            }
+            for (int y = 0; y < _mphFrameH / 2; y++)
+            {
+                for (int x = 0; x < _mphFrameW / 2; x++)
+                {
+                    bufferU[y, x] = 0;
+                }
+            }
+            for (int y = 0; y < _mphFrameH / 2; y++)
+            {
+                for (int x = 0; x < _mphFrameW / 2; x++)
+                {
+                    bufferV[y, x] = 0;
+                }
+            }
+            _nextPlaneBufferIndex %= _planeBuffers.Length;
+            return (bufferY, bufferU, bufferV);
+        }
+
         private static Rgb24 YuvToRgb(int y, int u, int v)
         {
             u -= 128;
@@ -275,9 +347,10 @@ namespace MphRead.Formats
         public int AudioFrameCount { get; }
         //public List<AudioFrame> AudioFrames { get; } = new List<AidioFrame>();
 
-        public VxFrame(int frameWidth, int frameHeight, VideoFrame?[] refVideoFrames, int audioFrameCount, AudioFrame? prevAudioFrame, int[] quantizerTable)
+        public VxFrame(int frameWidth, int frameHeight, VideoFrame?[] PrevVideoFrames, int audioFrameCount, AudioFrame? prevAudioFrame, int[] quantizerTable,
+            byte[,]? planeBufferY, byte[,]? planeBufferU, byte[,]? planeBufferV)
         {
-            VideoFrame = new VideoFrame(frameWidth, frameHeight, refVideoFrames, quantizerTable);
+            VideoFrame = new VideoFrame(frameWidth, frameHeight, PrevVideoFrames, quantizerTable, planeBufferY, planeBufferU, planeBufferV);
             AudioFrameCount = audioFrameCount;
             //for (int i = 0; i < audioFrameCount; i++)
             //{
@@ -453,26 +526,33 @@ namespace MphRead.Formats
         public byte[,] PlaneBufferU => _planeBufferU;
         public byte[,] PlaneBufferV => _planeBufferV;
         private static Vector2ir[,] _vectors = null!;
-        private readonly VideoFrame?[] _refVideoFrames;
+        private readonly VideoFrame?[] _prevVideoFrames;
         private readonly int[] _quantizerTable;
 
         private BitStreamReader _reader = null!;
 
-        public VideoFrame(int frameWidth, int frameHeight, VideoFrame?[] refVideoFrames, int[] quantizerTable)
+        public VideoFrame(int frameWidth, int frameHeight, VideoFrame?[] prevVideoFrames, int[] quantizerTable,
+            byte[,]? planeBufferY, byte[,]? planeBufferU, byte[,]? planeBufferV)
         {
             FrameWidth = frameWidth;
             FrameHeight = frameHeight;
-            _refVideoFrames = refVideoFrames;
+            _prevVideoFrames = prevVideoFrames;
             _quantizerTable = quantizerTable;
+            _planeBufferY = planeBufferY!;
+            _planeBufferU = planeBufferU!;
+            _planeBufferV = planeBufferV!;
         }
 
         public void Decode(byte[] buffer, int length)
         {
             _reader = new BitStreamReader(buffer, length);
 
-            _planeBufferY = new byte[FrameHeight, FrameWidth];
-            _planeBufferU = new byte[FrameHeight / 2, FrameWidth / 2];
-            _planeBufferV = new byte[FrameHeight / 2, FrameWidth / 2];
+            if (_planeBufferY == null)
+            {
+                _planeBufferY = new byte[FrameHeight, FrameWidth];
+                _planeBufferU = new byte[FrameHeight / 2, FrameWidth / 2];
+                _planeBufferV = new byte[FrameHeight / 2, FrameWidth / 2];
+            }
 
             if (_coeffBufferY == null)
             {
@@ -615,7 +695,7 @@ namespace MphRead.Formats
             }
             else if (mode == 1) // no delta, no residue, ref 0
             {
-                PredictInter(block, predictionVector, false, _refVideoFrames[0]);
+                PredictInter(block, predictionVector, false, _prevVideoFrames[0]);
                 if (block.W >= 8 && block.H >= 8)
                 {
                     ClearTotalCoeff(block);
@@ -644,7 +724,7 @@ namespace MphRead.Formats
             }
             else if (mode == 4) // delta, no residue, ref 0
             {
-                PredictInter(block, predictionVector, true, _refVideoFrames[0]);
+                PredictInter(block, predictionVector, true, _prevVideoFrames[0]);
                 if (block.W >= 8 && block.H >= 8)
                 {
                     ClearTotalCoeff(block);
@@ -652,7 +732,7 @@ namespace MphRead.Formats
             }
             else if (mode == 5) // delta, no residue, ref 1
             {
-                PredictInter(block, predictionVector, true, _refVideoFrames[1]);
+                PredictInter(block, predictionVector, true, _prevVideoFrames[1]);
                 if (block.W >= 8 && block.H >= 8)
                 {
                     ClearTotalCoeff(block);
@@ -660,7 +740,7 @@ namespace MphRead.Formats
             }
             else if (mode == 6) // delta, no residue, ref 2
             {
-                PredictInter(block, predictionVector, true, _refVideoFrames[2]);
+                PredictInter(block, predictionVector, true, _prevVideoFrames[2]);
                 if (block.W >= 8 && block.H >= 8)
                 {
                     ClearTotalCoeff(block);
@@ -686,7 +766,7 @@ namespace MphRead.Formats
             }
             else if (mode == 9) // no delta, no residue, ref 1
             {
-                PredictInter(block, predictionVector, false, _refVideoFrames[1]);
+                PredictInter(block, predictionVector, false, _prevVideoFrames[1]);
                 if (block.W >= 8 && block.H >= 8)
                 {
                     ClearTotalCoeff(block);
@@ -707,7 +787,7 @@ namespace MphRead.Formats
             }
             else if (mode == 12) // no delta, residue, ref 0
             {
-                PredictInter(block, predictionVector, false, _refVideoFrames[0]);
+                PredictInter(block, predictionVector, false, _prevVideoFrames[0]);
                 DecodeResidueBlocks(block);
             }
             else if (mode == 13) // h-split, residue
@@ -722,7 +802,7 @@ namespace MphRead.Formats
             }
             else if (mode == 14) // no delta, no residue, ref 2
             {
-                PredictInter(block, predictionVector, false, _refVideoFrames[2]);
+                PredictInter(block, predictionVector, false, _prevVideoFrames[2]);
                 if (block.W >= 8 && block.H >= 8)
                 {
                     ClearTotalCoeff(block);
@@ -738,17 +818,17 @@ namespace MphRead.Formats
             }
             else if (mode == 16) // delta, residue, ref 0
             {
-                PredictInter(block, predictionVector, true, _refVideoFrames[0]);
+                PredictInter(block, predictionVector, true, _prevVideoFrames[0]);
                 DecodeResidueBlocks(block);
             }
             else if (mode == 17) // delta, residue, ref 1
             {
-                PredictInter(block, predictionVector, true, _refVideoFrames[1]);
+                PredictInter(block, predictionVector, true, _prevVideoFrames[1]);
                 DecodeResidueBlocks(block);
             }
             else if (mode == 18) // delta, residue, ref 2
             {
-                PredictInter(block, predictionVector, true, _refVideoFrames[2]);
+                PredictInter(block, predictionVector, true, _prevVideoFrames[2]);
                 DecodeResidueBlocks(block);
             }
             else if (mode == 19) // predict4, residue
@@ -758,12 +838,12 @@ namespace MphRead.Formats
             }
             else if (mode == 20) // no delta, residue, ref 1
             {
-                PredictInter(block, predictionVector, false, _refVideoFrames[1]);
+                PredictInter(block, predictionVector, false, _prevVideoFrames[1]);
                 DecodeResidueBlocks(block);
             }
             else if (mode == 21) // no delta, residue, ref 2
             {
-                PredictInter(block, predictionVector, false, _refVideoFrames[2]);
+                PredictInter(block, predictionVector, false, _prevVideoFrames[2]);
                 DecodeResidueBlocks(block);
             }
             else if (mode == 22) // predict notile, residue
@@ -782,9 +862,9 @@ namespace MphRead.Formats
             }
         }
 
-        private void PredictInter(Block block, Vector2ir predictionVector, bool hasDelta, VideoFrame? refVideoFrame)
+        private void PredictInter(Block block, Vector2ir predictionVector, bool hasDelta, VideoFrame? prevVideoFrame)
         {
-            Debug.Assert(refVideoFrame != null);
+            Debug.Assert(prevVideoFrame != null);
 
             if (hasDelta)
             {
@@ -797,21 +877,21 @@ namespace MphRead.Formats
             {
                 for (int x = block.X; x < block.X + block.W; x++)
                 {
-                    _planeBufferY[y, x] = refVideoFrame.PlaneBufferGetter(refVideoFrame._planeBufferY, 1, x + predictionVector.X, y + predictionVector.Y);
+                    _planeBufferY[y, x] = prevVideoFrame.PlaneBufferGetter(prevVideoFrame._planeBufferY, 1, x + predictionVector.X, y + predictionVector.Y);
                 }
             }
             for (int y = block.Y; y < block.Y + block.H; y += 2)
             {
                 for (int x = block.X; x < block.X + block.W; x += 2)
                 {
-                    _planeBufferU[y / 2, x / 2] = refVideoFrame.PlaneBufferGetter(refVideoFrame._planeBufferU, 2, x + predictionVector.X, y + predictionVector.Y);
+                    _planeBufferU[y / 2, x / 2] = prevVideoFrame.PlaneBufferGetter(prevVideoFrame._planeBufferU, 2, x + predictionVector.X, y + predictionVector.Y);
                 }
             }
             for (int y = block.Y; y < block.Y + block.H; y += 2)
             {
                 for (int x = block.X; x < block.X + block.W; x += 2)
                 {
-                    _planeBufferV[y / 2, x / 2] = refVideoFrame.PlaneBufferGetter(refVideoFrame._planeBufferV, 2, x + predictionVector.X, y + predictionVector.Y);
+                    _planeBufferV[y / 2, x / 2] = prevVideoFrame.PlaneBufferGetter(prevVideoFrame._planeBufferV, 2, x + predictionVector.X, y + predictionVector.Y);
                 }
             }
         }
@@ -847,13 +927,13 @@ namespace MphRead.Formats
             }
             dcV *= 2;
 
-            VideoFrame? refVideoFrame = _refVideoFrames[0];
-            Debug.Assert(refVideoFrame != null);
+            VideoFrame? prevVideoFrame = _prevVideoFrames[0];
+            Debug.Assert(prevVideoFrame != null);
             for (int y = block.Y; y < block.Y + block.H; y++)
             {
                 for (int x = block.X; x < block.X + block.W; x++)
                 {
-                    int pixel = refVideoFrame.PlaneBufferGetter(refVideoFrame._planeBufferY, 1, x + vec.X, y + vec.Y) + dcY;
+                    int pixel = prevVideoFrame.PlaneBufferGetter(prevVideoFrame._planeBufferY, 1, x + vec.X, y + vec.Y) + dcY;
                     _planeBufferY[y, x] = (byte)Math.Clamp(pixel, 0, 255);
                 }
             }
@@ -861,7 +941,7 @@ namespace MphRead.Formats
             {
                 for (int x = block.X; x < block.X + block.W; x += 2)
                 {
-                    int pixel = refVideoFrame.PlaneBufferGetter(refVideoFrame._planeBufferU, 2, x + vec.X, y + vec.Y) + dcU;
+                    int pixel = prevVideoFrame.PlaneBufferGetter(prevVideoFrame._planeBufferU, 2, x + vec.X, y + vec.Y) + dcU;
                     _planeBufferU[y / 2, x / 2] = (byte)Math.Clamp(pixel, 0, 255);
                 }
             }
@@ -869,7 +949,7 @@ namespace MphRead.Formats
             {
                 for (int x = block.X; x < block.X + block.W; x += 2)
                 {
-                    int pixel = refVideoFrame.PlaneBufferGetter(refVideoFrame._planeBufferV, 2, x + vec.X, y + vec.Y) + dcV;
+                    int pixel = prevVideoFrame.PlaneBufferGetter(prevVideoFrame._planeBufferV, 2, x + vec.X, y + vec.Y) + dcV;
                     _planeBufferV[y / 2, x / 2] = (byte)Math.Clamp(pixel, 0, 255);
                 }
             }
