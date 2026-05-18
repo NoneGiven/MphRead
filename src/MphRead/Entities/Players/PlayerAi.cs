@@ -19,6 +19,7 @@ namespace MphRead.Entities
             private readonly PlayerEntity _player;
             private readonly Scene _scene;
             private NodeData _nodeData = null!;
+            private bool _forceDisable = false;
 
             public PlayerAiData(PlayerEntity player)
             {
@@ -94,6 +95,7 @@ namespace MphRead.Entities
             public void Reset()
             {
                 _nodeData = null!;
+                _forceDisable = false;
                 Flags1 = false;
                 Flags2 = AiFlags2.None;
                 Flags3 = AiFlags3.None;
@@ -333,6 +335,11 @@ namespace MphRead.Entities
                             }
                         }
                     }
+                    if (_octolithFlagCC == null || _octolithFlagD4 == null || _octolithFlagDC == null)
+                    {
+                        // if a map is loaded in an incompatible mode, skip bot AI to avoid null refs
+                        _forceDisable = true;
+                    }
                 }
                 else if (GameState.Mode == GameMode.Bounty || GameState.Mode == GameMode.BountyTeams)
                 {
@@ -346,6 +353,11 @@ namespace MphRead.Entities
                         {
                             _flagBaseD0 = _flagBaseD8 = _flagBaseE0 = (FlagBaseEntity)entity;
                         }
+                    }
+                    if (_octolithFlagCC == null || _octolithFlagD4 == null || _octolithFlagDC == null)
+                    {
+                        // see above
+                        _forceDisable = true;
                     }
                 }
             }
@@ -704,7 +716,7 @@ namespace MphRead.Entities
 
             public void Process()
             {
-                if (_nodeData == null)
+                if (_nodeData == null || _forceDisable)
                 {
                     return;
                 }
