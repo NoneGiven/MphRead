@@ -3339,15 +3339,12 @@ namespace MphRead
             // - use GL.TexSubImage2D() in DrawMovieFrame() for second frame and later for efficiency
             // - once this is working, we need to change the decoder to two static instances so we can decode top and bottom at the same time
             // - should try to identify code that needs to be aware of when the decoder takes too long to return a frame (and add a note about audio)
-            // current issues:
-            // - need to force the texture storage to be created during loading, because it takes too long if it has to wait at the draw call
-            // - corruption/exceptions when reusing the decoder for a second video, even with no file stream and static buffers disabled --> need to debug
             VxDecoder.Reset();
             _decoderCts = new CancellationTokenSource();
             string path = @"C:\Users\auser\Home\MPH\Video\actimagine-main\movies\01_bot.vx";
-            byte[] fileBytes = File.ReadAllBytes(path);
-            Task.Run(async () => await VxDecoder.Decode(fileBytes, path, token: _decoderCts.Token), _decoderCts.Token);
-            //Task.Run(async () => await VxDecoder.Decode(path, token: _decoderCts.Token), _decoderCts.Token);
+            //byte[] fileBytes = File.ReadAllBytes(path);
+            //Task.Run(async () => await VxDecoder.Decode(fileBytes, path, token: _decoderCts.Token), _decoderCts.Token);
+            Task.Run(async () => await VxDecoder.Decode(path, token: _decoderCts.Token), _decoderCts.Token);
             while (!VxDecoder.GetImage(frameIndex: 0, _imageBuffer))
             {
                 Thread.Sleep(TimeSpan.FromMilliseconds(10));

@@ -88,14 +88,14 @@ namespace MphRead.Formats
             CancellationToken token = default)
         {
             using FileStream fs = File.OpenRead(filePath);
-            await Decode(fs, Path.GetFileName(filePath), makeTexture, writeFiles);
+            await Decode(fs, Path.GetFileName(filePath), makeTexture, writeFiles, token);
         }
 
         public static async Task Decode(byte[] data, string filename, bool makeTexture = false, bool writeFiles = false,
             CancellationToken token = default)
         {
             using var ms = new MemoryStream(data);
-            await Decode(ms, filename, makeTexture, writeFiles);
+            await Decode(ms, filename, makeTexture, writeFiles, token);
         }
 
         public static async Task Decode(Stream stream, string filename, bool makeTexture = false, bool writeFiles = false,
@@ -103,6 +103,7 @@ namespace MphRead.Formats
         {
             string folder = Path.Combine(@"C:\Users\auser\Temp\movie", Path.GetFileNameWithoutExtension(filename));
             using var reader = new BinaryReader(stream);
+            _nextPlaneBufferIndex = 0;
             _framesQueued = 0;
 
             Magic[0] = reader.ReadChar(); // V (86)
@@ -179,13 +180,14 @@ namespace MphRead.Formats
             _ = VLC.Temp;
 
             byte[] buffer = GetDataBuffer();
+            Array.Fill<byte>(buffer, 0);
             // todo: avoid list allocation? buffers are recycled anyway, but when decoding in realtime, we only need 4 frames
             _vxFrames = new List<VxFrame>(FrameCount);
             _prevVideoFrames[0] = _prevVideoFrames[1] = _prevVideoFrames[2] = null;
             AudioFrame? prevAudioFrame = null;
             for (int i = 0; i < FrameCount; i++)
             {
-                while (_framesQueued >= 4) // sktodo: enable or disable this behavior for realtime vs. export
+                while (_framesQueued >= 4 && !token.IsCancellationRequested) // sktodo: enable or disable this behavior for realtime vs. export
                 {
                     try
                     {
