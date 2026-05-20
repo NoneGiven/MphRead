@@ -17,6 +17,13 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace MphRead
 {
+    public enum AfterMovie
+    {
+        StartGame,
+        LoadRoom,
+        EndGame
+    }
+
     public partial class Scene
     {
         private const int _frameWidth = 256;
@@ -36,15 +43,15 @@ namespace MphRead
         private CancellationTokenSource _decoderCts = null!;
 
         public void StartMovies(Movie movieId, Movie afterMovieId, FadeType fadeToMovieType, float fadeToMovieLength,
-            FadeType fadeFromMovieType, float fadeFromMovieLength, bool endGameAfter = false)
+            FadeType fadeFromMovieType, float fadeFromMovieLength, AfterMovie afterMovieAction = AfterMovie.LoadRoom)
         {
             StartMovie(movieId, fadeToMovieType, fadeToMovieLength, fadeFromMovieType, fadeFromMovieLength,
-                afterMovieId: afterMovieId, endGameAfter: endGameAfter);
+                afterMovieId: afterMovieId, afterMovieAction: afterMovieAction);
         }
 
         public void StartMovie(Movie movieId, FadeType fadeToMovieType, float fadeToMovieLength, FadeType fadeFromMovieType,
             float fadeFromMovieLength, Vector3? afterPosition = null, Vector3? afterFacing = null, Movie? afterMovieId = null,
-            bool endGameAfter = false)
+            AfterMovie afterMovieAction = AfterMovie.LoadRoom)
         {
             // on the frame when the whiteout completes (middle frame if the type is out+in, last frame if out only), the scene needs to pause
             // it can start playing the movie then or delay a couple frames to match the game, but the movie plays during the end of the fade
@@ -62,7 +69,7 @@ namespace MphRead
             _movieSettings.AfterFadeLength = fadeFromMovieLength;
             _movieSettings.AfterPosition = afterPosition;
             _movieSettings.AfterFacing = afterFacing;
-            _movieSettings.EndGameAfter = endGameAfter;
+            _movieSettings.AfterMovieAction = afterMovieAction;
             SetFade(fadeToMovieType, fadeToMovieLength, overwrite: true, AfterFade.PlayMovie);
         }
 
@@ -140,14 +147,17 @@ namespace MphRead
                 PlayMovie(_movieSettings.MovieId);
                 _fadeType = FadeType.None;
             }
-            else if (_movieSettings.EndGameAfter)
+            else if (_movieSettings.AfterMovieAction == AfterMovie.EndGame)
             {
                 QuitGame(enteringShip: true);
             }
             else
             {
-                Debug.Assert(_room != null);
-                _room.LoadRoom(resume: GameState.TransitionRoomId == -1);
+                if (_movieSettings.AfterMovieAction != AfterMovie.StartGame)
+                {
+                    Debug.Assert(_room != null);
+                    _room.LoadRoom(resume: GameState.TransitionRoomId == -1);
+                }
                 Sfx.SfxMute = false;
                 Sfx.LongSfxMute--;
                 Sfx.TimedSfxMute--;

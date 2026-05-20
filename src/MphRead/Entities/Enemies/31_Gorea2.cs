@@ -945,7 +945,7 @@ namespace MphRead.Entities.Enemies
                 _sealSphere.SetDead();
                 // todo: credits
                 _scene.StartMovie(Movie.GoodEnding, FadeType.FadeOutInWhite, 60 / 30f,
-                    FadeType.FadeOutBlack, 0, endGameAfter: true);
+                    FadeType.FadeOutBlack, 0, afterMovieAction: AfterMovie.EndGame);
             }
             if (Behavior03())
             {

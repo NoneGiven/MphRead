@@ -1314,6 +1314,7 @@ namespace MphRead
 
     public enum Movie
     {
+        None = -1,
         Opening = 0,
         StoryIntro = 1,
         GoodEnding = 2,

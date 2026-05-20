@@ -297,6 +297,22 @@ namespace MphRead
             }
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
             _inputMode = _cameraMode == CameraMode.Player ? InputMode.All : InputMode.CameraOnly;
+            if (GameState.SinglePlayer && !meta.FirstHunt && PlayerEntity.PlayerCount > 0 && !Cheats.SkipPlanetIntros)
+            {
+                Movie movieId = _room.RoomId switch
+                {
+                    27 => Movie.AlinosLanding,
+                    45 => Movie.CALanding,
+                    65 => Movie.VDOLanding,
+                    77 => Movie.ArcterraLanding,
+                    89 => Movie.OublietteLanding,
+                    _ => Movie.None
+                };
+                if (movieId != Movie.None)
+                {
+                    StartMovie(movieId, FadeType.FadeOutInBlack, 0, FadeType.FadeOutWhite, 5 / 30f, afterMovieAction: AfterMovie.StartGame);
+                }
+            }
         }
 
         public void SetRoomValues(RoomMetadata meta)
@@ -2800,7 +2816,7 @@ namespace MphRead
             public float AfterFadeLength { get; set; }
             public Vector3? AfterPosition { get; set; }
             public Vector3? AfterFacing { get; set; }
-            public bool EndGameAfter { get; set; }
+            public AfterMovie AfterMovieAction { get; set; }
         }
 
         private readonly MovieFadeSettings _movieSettings = new MovieFadeSettings();
@@ -4869,7 +4885,7 @@ namespace MphRead
 
         public void QueueMovie(int movieId)
         {
-            Scene.StartMovie((Movie)movieId, FadeType.FadeOutInBlack, 0, FadeType.FadeOutBlack, 0, endGameAfter: true);
+            Scene.StartMovie((Movie)movieId, FadeType.FadeOutInBlack, 0, FadeType.FadeOutBlack, 0, afterMovieAction: AfterMovie.EndGame);
         }
 
         protected override void OnLoad()

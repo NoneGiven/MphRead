@@ -1027,7 +1027,7 @@ namespace MphRead.Entities.Enemies
                 {
                     // todo: credits
                     _scene.StartMovies(Movie.BadEndingPart1, Movie.BadEndingPart2, FadeType.FadeOutInWhite, 45 / 30f,
-                        FadeType.FadeOutBlack, 0, endGameAfter: true);
+                        FadeType.FadeOutBlack, 0, AfterMovie.EndGame);
                 }
                 return true;
             }
