@@ -626,6 +626,7 @@ namespace MphRead
 
         private static bool _whiteoutStarted = false;
         private static bool _gameOverShown = false;
+        public static int QueuedOctolithMessageId { get; set; } = -1;
 
         public static void UpdateFrame(Scene scene)
         {
@@ -802,6 +803,14 @@ namespace MphRead
                     }
                 }
             }
+            // start displaying dialog during the fade back in after the movie
+            if (QueuedOctolithMessageId != -1 && scene.FadeType != FadeType.FadeOutInWhite && !scene.MoviePlaying)
+            {
+                // OCTOLITH ACQUIRED you obtained an OCTOLITH!
+                PlayerEntity.Main.ShowDialog(DialogType.Event, messageId: 7, param1: (int)EventType.Octolith);
+                scene.SendMessage(Message.ShowPrompt, PlayerEntity.Main, null, param1: QueuedOctolithMessageId, param2: 0, delay: 1);
+                QueuedOctolithMessageId = -1;
+            }
             float countdown = PlayerEntity.Main.DeathCountdown;
             if (SinglePlayer && PlayerEntity.Main.Health == 0 && countdown > 0)
             {
@@ -835,6 +844,14 @@ namespace MphRead
                     _whiteoutStarted = true;
                 }
             }
+        }
+
+        public static void UpdateBossFlags(int areaId)
+        {
+            uint flags = (uint)StorySave.BossFlags;
+            flags &= (uint)~(3 << (2 * areaId));
+            flags |= (uint)(1 << (2 * areaId));
+            StorySave.BossFlags = (BossFlags)flags;
         }
 
         private static void EnterShip()

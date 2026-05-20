@@ -76,8 +76,18 @@ namespace MphRead
         None,
         Exit,
         LoadRoom,
-        AfterMovie,
+        PlayMovie,
+        StopMovie,
+        AfterMovie, // todo: remove
         EnterShip
+    }
+
+    public class MovieFadeSettings
+    {
+        public Movie MovieId { get; set; }
+        public Movie AfterMovieId { get; set; } // for bad ending
+        public FadeType AfterFadeType { get; set; }
+        public float AfterFadeLength { get; set; }
     }
 
     public partial class Scene
@@ -1179,12 +1189,7 @@ namespace MphRead
                     _frameCount++;
                 }
                 GameState.UpdateTime(this);
-                // skhere: todo: call from elsewhere
-                if (_frameCount == 1)
-                {
-                    PlayMovie();
-                }
-                else if (_movieFrameIndex != -1)
+                if (_movieFrameIndex != -1)
                 {
                     UpdateMovie();
                 }
@@ -1454,36 +1459,36 @@ namespace MphRead
                     GL.BindTexture(TextureTarget.Texture2D, 0);
                     GL.ActiveTexture(TextureUnit.Texture0);
                 }
-                if (_fadeType != FadeType.None && _movieFrameIndex == -1)
-                {
-                    float percent = _fadePercent;
-                    if (_fadeIn)
-                    {
-                        percent = 1 - percent;
-                    }
-                    if (percent > 0)
-                    {
-                        GL.Uniform4(_shaderLocations.FadeColor, _fadeColor, _fadeColor, _fadeColor, percent);
-                        GL.Begin(PrimitiveType.TriangleStrip);
-                        // top right
-                        GL.TexCoord3(1f, 1f, 0f);
-                        GL.Vertex3(1f, 1f, 0f);
-                        // top left
-                        GL.TexCoord3(0f, 1f, 0f);
-                        GL.Vertex3(-1f, 1f, 0f);
-                        // bottom right
-                        GL.TexCoord3(1f, 0f, 0f);
-                        GL.Vertex3(1f, -1f, 0f);
-                        // bottom left
-                        GL.TexCoord3(0f, 0f, 0f);
-                        GL.Vertex3(-1f, -1f, 0f);
-                        GL.End();
-                    }
-                }
             }
             if (_movieFrameIndex != -1)
             {
                 DrawMovieFrame();
+            }
+            if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player && _fadeType != FadeType.None)
+            {
+                float percent = _fadePercent;
+                if (_fadeIn)
+                {
+                    percent = 1 - percent;
+                }
+                if (percent > 0)
+                {
+                    GL.Uniform4(_shaderLocations.FadeColor, _fadeColor, _fadeColor, _fadeColor, percent);
+                    GL.Begin(PrimitiveType.TriangleStrip);
+                    // top right
+                    GL.TexCoord3(1f, 1f, 0f);
+                    GL.Vertex3(1f, 1f, 0f);
+                    // top left
+                    GL.TexCoord3(0f, 1f, 0f);
+                    GL.Vertex3(-1f, 1f, 0f);
+                    // bottom right
+                    GL.TexCoord3(1f, 0f, 0f);
+                    GL.Vertex3(1f, -1f, 0f);
+                    // bottom left
+                    GL.TexCoord3(0f, 0f, 0f);
+                    GL.Vertex3(-1f, -1f, 0f);
+                    GL.End();
+                }
             }
             GL.Enable(EnableCap.DepthTest);
             GL.Disable(EnableCap.Blend);
@@ -2780,6 +2785,7 @@ namespace MphRead
             GL.Uniform3(_shaderLocations.Light2Color, color);
         }
 
+        public MovieFadeSettings AfterFadeSettings { get; } = new MovieFadeSettings();
         private FadeType _fadeType = FadeType.None;
         public FadeType FadeType => _fadeType;
         private float _fadeColor = 0;
@@ -2890,6 +2896,14 @@ namespace MphRead
                 _close.Invoke();
                 return;
             }
+            if (_afterFade == AfterFade.PlayMovie)
+            {
+                PlayMovie(AfterFadeSettings.MovieId);
+            }
+            else if (_afterFade == AfterFade.StopMovie)
+            {
+                StopMovie();
+            }
             if (_fadeType == FadeType.FadeOutInBlack)
             {
                 SetFade(FadeType.FadeInBlack, _fadeLength, overwrite: true);
@@ -2903,7 +2917,7 @@ namespace MphRead
                 Debug.Assert(_room != null);
                 _room.LoadRoom(resume: _afterFade == AfterFade.AfterMovie);
             }
-            else
+            else if (_afterFade != AfterFade.PlayMovie && _afterFade != AfterFade.StopMovie)
             {
                 _fadeType = FadeType.None;
                 _fadeColor = 0;
@@ -3314,115 +3328,6 @@ namespace MphRead
             GL.Enable(EnableCap.DepthTest);
             GL.UniformMatrix4(_shaderLocations.ViewMatrix, transpose: false, ref _viewMatrix);
             GL.UniformMatrix4(_shaderLocations.ProjectionMatrix, transpose: false, ref _perspectiveMatrix);
-        }
-
-        private const int _frameWidth = 256;
-        private const int _frameHeight = 192;
-        private int _movieBinding = -1;
-        private ulong _movieStartFrame = 0;
-        private int _movieFrameIndex = -1;
-        private int _lastRenderedMovieFrameIndex = 0;
-        private int _movieFrameCount = 0;
-
-        private readonly byte[] _imageBuffer = new byte[_frameWidth * _frameHeight * 3];
-        private CancellationTokenSource _decoderCts = null!;
-
-        public void PlayMovie()
-        {
-            // - start decoding and wait for first frame
-            // - proceed with scene processing to draw first frame
-            // - after enough time has elapsed, request the next frame's color buffer from the decoder
-            // - decoder can decode up to 4 frames, then needs to wait until its oldest frame is requested by the renderer,
-            //   then it can drop that frame and decode another one
-            // todo
-            // - we need to change the decoder to two static instances so we can decode top and bottom at the same time
-            // - need to display top and bottom frames together
-            // - should try to identify code that needs to be aware of when the decoder takes too long to return a frame (and add a note about audio)
-            VxDecoder.Instance1.Reset();
-            _decoderCts = new CancellationTokenSource();
-            string path = @"C:\Users\auser\Home\MPH\Video\actimagine-main\movies\15_bot.vx";
-            //byte[] fileBytes = File.ReadAllBytes(path);
-            //Task.Run(async () => await VxDecoder.Decode(fileBytes, path, token: _decoderCts.Token), _decoderCts.Token);
-            Task.Run(async () => await VxDecoder.Instance1.Decode(path, token: _decoderCts.Token), _decoderCts.Token);
-            while (!VxDecoder.Instance1.GetImage(frameIndex: 0, _imageBuffer))
-            {
-                Thread.Sleep(TimeSpan.FromMilliseconds(10));
-            }
-            _movieFrameCount = VxDecoder.Instance1.FrameCount;
-            if (_movieBinding == -1)
-            {
-                _movieBinding = ++_textureCount;
-            }
-            GL.BindTexture(TextureTarget.Texture2D, _movieBinding);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, _frameWidth, _frameHeight, 0,
-                PixelFormat.Rgb, PixelType.UnsignedByte, _imageBuffer);
-            GL.BindTexture(TextureTarget.Texture2D, 0);
-            _movieStartFrame = _frameCount;
-            _lastRenderedMovieFrameIndex = 0;
-            _movieFrameIndex = 0;
-        }
-
-        public void StopMovie()
-        {
-            _decoderCts.Cancel();
-            _movieFrameIndex = -1;
-            _movieStartFrame = 0;
-        }
-
-        private void UpdateMovie()
-        {
-            int frameIndex = (int)(_frameCount - _movieStartFrame) / 4; // 15 fps
-            if (frameIndex != _movieFrameIndex)
-            {
-                if (frameIndex >= _movieFrameCount)
-                {
-                    StopMovie();
-                    return;
-                }
-                _movieFrameIndex = frameIndex;
-                while (!VxDecoder.Instance1.GetImage(frameIndex, _imageBuffer))
-                {
-                    Thread.Sleep(TimeSpan.FromMilliseconds(10));
-                }
-            }
-        }
-
-        private void DrawMovieFrame()
-        {
-            GL.Uniform1(_shaderLocations.LayerAlpha, 1);
-            GL.BindTexture(TextureTarget.Texture2D, _movieBinding);
-            int minParameter = (int)TextureMinFilter.Nearest;
-            int magParameter = (int)TextureMagFilter.Nearest;
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
-            GL.TexParameter(TextureTarget.Texture2D,
-                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D,
-                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            if (_movieFrameIndex != _lastRenderedMovieFrameIndex)
-            {
-                _lastRenderedMovieFrameIndex = _movieFrameIndex;
-                GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, _frameWidth, _frameHeight, PixelFormat.Rgb, PixelType.UnsignedByte, _imageBuffer);
-            }
-            float viewWidth = Size.X;
-            float viewHeight = Size.Y;
-            float width = viewWidth * 1f / 2 / (viewWidth / 2);
-            float height = viewHeight * 1f / 2 / (viewHeight / 2);
-            GL.Begin(PrimitiveType.TriangleStrip);
-            // top right
-            GL.TexCoord3(1f, 0f, 0f);
-            GL.Vertex3(width, height, 0f);
-            // top left
-            GL.TexCoord3(0f, 0f, 0f);
-            GL.Vertex3(-width, height, 0f);
-            // bottom right
-            GL.TexCoord3(1f, 1f, 0f);
-            GL.Vertex3(width, -height, 0f);
-            // bottom left
-            GL.TexCoord3(0f, 1f, 0f);
-            GL.Vertex3(-width, -height, 0f);
-            GL.End();
-            GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
         private void DrawHudLayer(LayerInfo info)

@@ -9,8 +9,159 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using MphRead.Formats;
+using MphRead.Sound;
+using OpenTK.Graphics.OpenGL;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+
+namespace MphRead
+{
+    public partial class Scene
+    {
+        private const int _frameWidth = 256;
+        private const int _frameHeight = 192;
+        private int _movieBinding = -1;
+        private int _movieFrameCount = 0;
+        private int _movieFrameIndex = -1;
+        private int _lastRenderedMovieFrameIndex = 0;
+        private int _movieFrameTotal = 0;
+        public bool MoviePlaying => _movieFrameIndex != -1;
+
+        private readonly byte[] _imageBuffer = new byte[_frameWidth * _frameHeight * 3];
+        private CancellationTokenSource _decoderCts = null!;
+
+        public void StartMovie(Movie movieId, FadeType fadeToMovieType, float fadeToMovieLength, FadeType fadeFromMovieType, float fadeFromMovieLength)
+        {
+            // on the frame when the whiteout completes (middle frame if the type is out+in, last frame if out only), the scene needs to pause
+            // it can start playing the movie then or delay a couple frames to match the game, but the movie plays during the end of the fade
+            // at the end of the movie (or when skipped), the last frame of the movie needs to freeze on-screen while after-fade occurs
+            // then at the complete (middle) of the after-fade, the movie should stop being dislayed and the scene should unpause
+            // --> what exactly happens depends on the after-movie action
+            // - resume as-is
+            // - resume with updated position/facing/node ref
+            // - do room transition and then resume
+            // - end game/credits/menu/etc.
+            // follow-up todos: add a menu option to watch the opening movie (and credits too, although those aren't a movie)
+            AfterFadeSettings.MovieId = movieId;
+            AfterFadeSettings.AfterFadeType = fadeFromMovieType;
+            AfterFadeSettings.AfterFadeLength = fadeFromMovieLength;
+            SetFade(fadeToMovieType, fadeToMovieLength, overwrite: true, AfterFade.PlayMovie);
+            Sfx.SfxMute = true;
+            Sfx.LongSfxMute++;
+            Sfx.TimedSfxMute++;
+            Sfx.ForceFieldSfxMute++;
+        }
+
+        private void PlayMovie(Movie movieId)
+        {
+            // - start decoding and wait for first frame
+            // - proceed with scene processing to draw first frame
+            // - after enough time has elapsed, request the next frame's color buffer from the decoder
+            // - decoder can decode up to 4 frames, then needs to wait until its oldest frame is requested by the renderer,
+            //   then it can drop that frame and decode another one
+            // todo
+            // - we need to change the decoder to two static instances so we can decode top and bottom at the same time
+            // - need to display top and bottom frames together
+            // - should try to identify code that needs to be aware of when the decoder takes too long to return a frame (and add a note about audio)
+            GameState.PauseDialog();
+            VxDecoder.Instance1.Reset();
+            _decoderCts = new CancellationTokenSource();
+            Metadata.MovieInfo info = Metadata.MovieFiles[(int)movieId];
+            string path = Paths.Combine(Paths.FileSystem, info.TopScreenPath);
+            Task.Run(async () => await VxDecoder.Instance1.Decode(path, token: _decoderCts.Token), _decoderCts.Token);
+            while (!VxDecoder.Instance1.GetImage(frameIndex: 0, _imageBuffer))
+            {
+                Thread.Sleep(TimeSpan.FromMilliseconds(10));
+            }
+            _movieFrameTotal = VxDecoder.Instance1.FrameCount;
+            if (_movieBinding == -1)
+            {
+                _movieBinding = ++_textureCount;
+            }
+            GL.BindTexture(TextureTarget.Texture2D, _movieBinding);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, _frameWidth, _frameHeight, 0,
+                PixelFormat.Rgb, PixelType.UnsignedByte, _imageBuffer);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            _lastRenderedMovieFrameIndex = 0;
+            _movieFrameIndex = 0;
+        }
+
+        public void StopMovie()
+        {
+            Sfx.SfxMute = false;
+            Sfx.LongSfxMute--;
+            Sfx.TimedSfxMute--;
+            Sfx.ForceFieldSfxMute--;
+            GameState.UnpauseDialog();
+            _decoderCts?.Cancel();
+            _movieFrameIndex = -1;
+        }
+
+        private void UpdateMovie()
+        {
+            if ((!_frameAdvanceOn || _frameAdvanceLastFrame) && _movieFrameCount != Int32.MaxValue)
+            {
+                _movieFrameCount++;
+            }
+            int frameIndex = _movieFrameCount / 4; // 15 fps
+            if (frameIndex != _movieFrameIndex)
+            {
+                if (frameIndex == _movieFrameTotal)
+                {
+                    _movieFrameCount = Int32.MaxValue;
+                    SetFade(AfterFadeSettings.AfterFadeType, AfterFadeSettings.AfterFadeLength, overwrite: true, AfterFade.StopMovie);
+                }
+                else if (frameIndex < _movieFrameTotal)
+                {
+                    _movieFrameIndex = frameIndex;
+                    while (!VxDecoder.Instance1.GetImage(frameIndex, _imageBuffer))
+                    {
+                        Thread.Sleep(TimeSpan.FromMilliseconds(10));
+                    }
+                }
+            }
+        }
+
+        private void DrawMovieFrame()
+        {
+            GL.Uniform1(_shaderLocations.LayerAlpha, 1);
+            GL.BindTexture(TextureTarget.Texture2D, _movieBinding);
+            int minParameter = (int)TextureMinFilter.Nearest;
+            int magParameter = (int)TextureMagFilter.Nearest;
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            if (_movieFrameIndex != _lastRenderedMovieFrameIndex)
+            {
+                _lastRenderedMovieFrameIndex = _movieFrameIndex;
+                GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, _frameWidth, _frameHeight, PixelFormat.Rgb, PixelType.UnsignedByte, _imageBuffer);
+            }
+            float viewWidth = Size.X;
+            float viewHeight = Size.Y;
+            float width = viewWidth * 1f / 2 / (viewWidth / 2);
+            float height = viewHeight * 1f / 2 / (viewHeight / 2);
+            GL.Begin(PrimitiveType.TriangleStrip);
+            // top right
+            GL.TexCoord3(1f, 0f, 0f);
+            GL.Vertex3(width, height, 0f);
+            // top left
+            GL.TexCoord3(0f, 0f, 0f);
+            GL.Vertex3(-width, height, 0f);
+            // bottom right
+            GL.TexCoord3(1f, 1f, 0f);
+            GL.Vertex3(width, -height, 0f);
+            // bottom left
+            GL.TexCoord3(0f, 1f, 0f);
+            GL.Vertex3(-width, -height, 0f);
+            GL.End();
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
+    }
+}
 
 namespace MphRead.Formats
 {
