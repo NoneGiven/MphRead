@@ -415,6 +415,8 @@ namespace MphRead.Entities
             {
                 GameState.TransitionRoomId = RoomId;
             }
+            _scene.ResetFrameCount();
+            Rng.SetRng2(0);
             StartTransition(fromDoor: false, resume);
             _scene.ClearEffects();
             if (!resume)
@@ -711,6 +713,7 @@ namespace MphRead.Entities
                     }
                     if (GameState.StorySave.GetRoomState(_scene.RoomId, spawner.Id) != 0)
                     {
+                        // skhere
                         // todo: play movie and defer repositioning
                         _scene.SetFade(FadeType.FadeInBlack, 5 / 30f, overwrite: true);
                         Vector3 newPosition = (targetDoor.Position + targetDoor.FacingVector * 0.75f)

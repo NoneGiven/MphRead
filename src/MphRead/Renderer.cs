@@ -78,7 +78,6 @@ namespace MphRead
         LoadRoom,
         PlayMovie,
         StopMovie,
-        AfterMovie, // todo: remove
         EnterShip
     }
 
@@ -1688,6 +1687,11 @@ namespace MphRead
             }
         }
 
+        public void ResetFrameCount()
+        {
+            _frameCount = 0;
+        }
+
         // in-game: 64 effects, 96 elements, 200 particles
         private static readonly int _effectEntryMax = 64;
         private static readonly int _effectElementMax = 96;
@@ -2923,10 +2927,10 @@ namespace MphRead
             {
                 SetFade(FadeType.FadeInWhite, _fadeLength, overwrite: true);
             }
-            else if (_afterFade == AfterFade.LoadRoom || _afterFade == AfterFade.AfterMovie)
+            else if (_afterFade == AfterFade.LoadRoom)
             {
                 Debug.Assert(_room != null);
-                _room.LoadRoom(resume: _afterFade == AfterFade.AfterMovie);
+                _room.LoadRoom(resume: false);
             }
             else if (_afterFade != AfterFade.PlayMovie && _afterFade != AfterFade.StopMovie)
             {

@@ -90,8 +90,6 @@ namespace MphRead
 
         public void StopMovie()
         {
-            _frameCount = 0;
-            Rng.SetRng2(0);
             Debug.Assert(_room != null);
             _room.LoadRoom(resume: GameState.TransitionRoomId == -1);
             Sfx.SfxMute = false;
@@ -170,25 +168,6 @@ namespace MphRead
 
 namespace MphRead.Formats
 {
-    internal class DecoderProgram
-    {
-        // skhere
-        public static async Task Test()
-        {
-            var files = Directory.EnumerateFiles(@"C:\Users\auser\Home\MPH\Video\actimagine-main\movies").ToList();
-            foreach (string file in files)
-            {
-                // @"C:\Users\auser\Home\MPH\Video\actimagine-main\movies\..."
-                await VxDecoder.Instance1.Decode(file, makeTexture: false, writeFiles: false);
-                //var bytes = File.ReadAllBytes(file);
-                //act.DecodeVx(bytes, Path.GetFileName(file));
-                break;
-            }
-            _ = 5;
-            _ = 5;
-        }
-    }
-
     public readonly struct SeekTableEntry
     {
         public readonly int FrameId;
