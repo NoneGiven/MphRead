@@ -1016,6 +1016,7 @@ namespace MphRead.Entities.Enemies
                 StopGrappling();
                 DeactivateAllTrocraSpawns();
                 DestroyAllTrocras();
+                // skhere
                 // todo: movie and/or credits stuff
                 GameState.StorySave.CheckpointRoomId = -1;
                 GameState.StorySave.CheckpointEntityId = -1;

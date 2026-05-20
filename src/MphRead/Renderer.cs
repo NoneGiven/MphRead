@@ -2940,6 +2940,8 @@ namespace MphRead
             {
                 Debug.Assert(_room != null);
                 _room.LoadRoom(resume: false);
+                FadeType fadeType = _fadeType == FadeType.FadeOutWhite ? FadeType.FadeInWhite : FadeType.FadeInBlack;
+                SetFade(fadeType, 10 / 30f, overwrite: true);
             }
             else if (_afterFade != AfterFade.PlayMovie && _afterFade != AfterFade.StopMovie)
             {

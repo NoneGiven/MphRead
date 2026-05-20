@@ -498,7 +498,7 @@ namespace MphRead
                     if (message.Message == Message.LoadOubliette && message.ExecuteFrame == scene.FrameCount)
                     {
                         TransitionRoomId = 91; // Gorea_b1
-                        scene.SetFade(FadeType.FadeOutWhite, length: 10 / 30f, overwrite: true, AfterFade.LoadRoom);
+                        scene.StartMovie(Movie.Gorea1Intro, FadeType.FadeOutInWhite, 10 / 30f, FadeType.FadeOutInWhite, 10 / 30f);
                         break;
                     }
                 }
