@@ -187,13 +187,11 @@ namespace MphRead.Entities
                     }
                     else
                     {
-                        // todo: start movie, update global state and story save, defer the second dialog
                         GameState.UpdateCleanSave(force: false);
-                        // OCTOLITH ACQUIRED you obtained an OCTOLITH!
-                        PlayerEntity.Main.ShowDialog(DialogType.Event, messageId: 7, param1: (int)EventType.Octolith);
+                        _scene.StartMovie(Movie.OctolithPickUp, FadeType.FadeOutInWhite, 5 / 30f, FadeType.FadeOutInWhite, 5 / 30f);
+                        GameState.UpdateBossFlags(_scene.AreaId);
                         int collected = GameState.StorySave.CountFoundOctoliths();
-                        int messageId = _octolithMessageIds[collected - 1];
-                        _scene.SendMessage(Message.ShowPrompt, this, null, param1: messageId, param2: 0, delay: 1);
+                        GameState.QueuedOctolithMessageId = _octolithMessageIds[collected - 1];
                     }
                 }
                 else

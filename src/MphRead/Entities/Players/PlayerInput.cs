@@ -2177,6 +2177,43 @@ namespace MphRead.Entities
                     player.Input.ClickX = -1;
                     player.Input.ClickY = -1;
                 }
+                // todo?: besides the code duplication, input processing like this should work even if
+                // there's no player or the player is not active (will need to revisit this for menus)
+                if (i == 0 && player._scene.MoviePlaying)
+                {
+                    bool skipMovie = false;
+                    Keybind skipControl = player.Controls.Shoot;
+                    if (skipControl.Type == ButtonType.Key)
+                    {
+                        if (skipControl.Key != Keys.Unknown)
+                        {
+                            bool prevDown = prevKeyboardSnap?.IsKeyDown(skipControl.Key) ?? false;
+                            bool isDown = keyboardSnap.IsKeyDown(skipControl.Key);
+                            bool isPressed = isDown && !prevDown;
+                            skipMovie = isPressed;
+                        }
+                    }
+                    else if (skipControl.Type == ButtonType.Mouse)
+                    {
+                        bool prevDown = prevMouseSnap?.IsButtonDown(skipControl.MouseButton) ?? false;
+                        bool isDown = mouseSnap.IsButtonDown(skipControl.MouseButton);
+                        bool isPressed = isDown && !prevDown;
+                        skipMovie = isPressed;
+                    }
+                    else
+                    {
+                        // todo?: deal with overflow or whatever
+                        float curScrollY = mouseSnap.Scroll.Y;
+                        float prevScrollY = prevMouseSnap?.Scroll.Y ?? 0;
+                        bool isDown = skipControl.Type == ButtonType.ScrollUp && curScrollY > prevScrollY
+                            || skipControl.Type == ButtonType.ScrollDown && curScrollY < prevScrollY;
+                        skipMovie = isDown;
+                    }
+                    if (skipMovie)
+                    {
+                        player._scene.SkipMovie();
+                    }
+                }
             }
         }
 

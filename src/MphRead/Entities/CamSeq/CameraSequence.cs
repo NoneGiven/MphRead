@@ -48,6 +48,8 @@ namespace MphRead.Formats
         public static CameraSequence? Intro { get; set; }
         public bool IsIntro => SequenceId >= 172 && SequenceId <= 198;
         private static readonly FrozenSet<int> _cockpitLoops = [102, 103, 104, 105, 106, 168];
+        private static readonly FrozenSet<int> _landingIntros = [0, 1, 2, 3, 167];
+        private static readonly FrozenSet<int> _landingIntrosWithoutFade = [0, 3, 167];
 
         private CameraSequence(int id, string name, Scene scene,
             CameraSequenceHeader header, IReadOnlyList<RawCameraSequenceKeyframe> keyframes)
@@ -133,9 +135,17 @@ namespace MphRead.Formats
                 fadeType = curFrame.FadeOutType;
                 fadeTime = curFrame.FadeOutTime;
             }
+            else if (_keyframeIndex == 0 && _keyframeElapsed == 0 && _landingIntrosWithoutFade.Contains(SequenceId))
+            {
+                fadeType = FadeType.FadeInWhite;
+                fadeTime = 5 / 30f;
+            }
             if (fadeType != FadeType.None)
             {
-                _scene.SetFade(fadeType, fadeTime, overwrite: false);
+                // need to overwrite for a smooth transition out of a landing movie at game start
+                // an additional hack is needed for Alinos/Arcterra/Oubliette, because their landing seqs don't have a fade of their own
+                bool overwrite = _keyframeIndex == 0 && _landingIntros.Contains(SequenceId);
+                _scene.SetFade(fadeType, fadeTime, overwrite);
             }
             _keyframeElapsed += _scene.FrameTime;
             if (_keyframeElapsed >= frameLength)

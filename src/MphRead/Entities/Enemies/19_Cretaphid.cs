@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using MphRead.Formats.Collision;
@@ -402,6 +403,14 @@ namespace MphRead.Entities.Enemies
             }
         }
 
+        private static readonly ImmutableArray<Movie> _deathMovieIds =
+        [
+            Movie.CretaphidCA1Defeat,
+            Movie.CretaphidVDO1Defeat,
+            Movie.CretaphidAlinos2Defeat,
+            Movie.CretaphidArcterra2Defeat
+        ];
+
         public override void HandleMessage(MessageInfo info)
         {
             if (info.Message == Message.Destroyed)
@@ -436,13 +445,9 @@ namespace MphRead.Entities.Enemies
                     _soundSource.PlaySfx(SfxId.CYLINDER_BOSS_DIE); // empty
                     _soundSource.PlaySfx(SfxId.CYLINDER_BOSS_CRYSTAL_SCR); // empty
                 }
-                // todo: movie transition stuff (fix camera(?), avoid SFX like the door locking)
-                if (PlayerEntity.Main.Health > 0)
+                if (PlayerEntity.Main.Health > 0 && GameState.SinglePlayer)
                 {
-                    GameState.StorySave.CheckpointRoomId = -1;
-                    GameState.StorySave.CheckpointEntityId = -1;
-                    GameState.TransitionRoomId = _scene.RoomId;
-                    _scene.SetFade(FadeType.FadeOutWhite, length: 40 / 30f, overwrite: true, AfterFade.AfterMovie);
+                    _scene.StartMovie(_deathMovieIds[_subtype], FadeType.FadeOutInWhite, 40 / 30f, FadeType.FadeOutInWhite, 5 / 30f);
                 }
             }
         }

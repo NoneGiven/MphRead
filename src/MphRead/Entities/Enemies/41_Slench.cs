@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using MphRead.Effects;
@@ -1175,6 +1176,14 @@ namespace MphRead.Entities.Enemies
             return EnemyTakeDamage(source);
         }
 
+        private static readonly ImmutableArray<Movie> _deathMovieIds =
+        [
+            Movie.SlenchAlinos1Defeat,
+            Movie.SlenchArcterra1Defeat,
+            Movie.SlenchCA2Defeat,
+            Movie.SlenchVDO2Defeat
+        ];
+
         protected override bool EnemyTakeDamage(EntityBase? source)
         {
             if (_subtype == 3 && SlenchFlags.TestFlag(SlenchFlags.Rolling) && source?.Type == EntityType.Bomb)
@@ -1238,13 +1247,9 @@ namespace MphRead.Entities.Enemies
                     ChangeState(SlenchState.Dead);
                     _soundSource.PlaySfx(SfxId.BIGEYE_DIE_SCR, noUpdate: true, recency: Single.MaxValue, sourceOnly: true);
                 }
-                // todo: movie transition stuff
-                if (PlayerEntity.Main.Health > 0)
+                if (PlayerEntity.Main.Health > 0 && GameState.SinglePlayer)
                 {
-                    GameState.StorySave.CheckpointRoomId = -1;
-                    GameState.StorySave.CheckpointEntityId = -1;
-                    GameState.TransitionRoomId = _scene.RoomId;
-                    _scene.SetFade(FadeType.FadeOutWhite, length: 40 / 30f, overwrite: true, AfterFade.AfterMovie);
+                    _scene.StartMovie(_deathMovieIds[_subtype], FadeType.FadeOutInWhite, 40 / 30f, FadeType.FadeOutInWhite, 5 / 30f);
                 }
             }
             return false;

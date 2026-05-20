@@ -5231,7 +5231,7 @@ namespace MphRead.Entities
                 if (Flags2.TestFlag(AiFlags2.TargetDefense))
                 {
                     Debug.Assert(_targetDefense != null);
-                    return _targetDefense.Contested ? 1 : 0; // skhere
+                    return _targetDefense.Contested ? 1 : 0;
                 }
                 return 0;
             }
