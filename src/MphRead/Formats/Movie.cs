@@ -193,7 +193,7 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.LayerAlpha, 1);
             bool newFrame = false;
 
-            void DrawScreen(int movieBinding, byte[] imageBuffer)
+            void DrawScreen(int movieBinding, byte[] imageBuffer, float y)
             {
                 GL.BindTexture(TextureTarget.Texture2D, movieBinding);
                 int minParameter = (int)TextureMinFilter.Nearest;
@@ -210,29 +210,40 @@ namespace MphRead
                     _lastRenderedMovieFrameIndex = _movieFrameIndex;
                     GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, _frameWidth, _frameHeight, PixelFormat.Rgb, PixelType.UnsignedByte, imageBuffer);
                 }
-                float viewWidth = Size.X;
-                float viewHeight = Size.Y;
-                float width = viewWidth * 1f / 2 / (viewWidth / 2);
-                float height = viewHeight * 1f / 2 / (viewHeight / 2);
                 GL.Begin(PrimitiveType.TriangleStrip);
                 // top right
                 GL.TexCoord3(1f, 0f, 0f);
-                GL.Vertex3(width, height, 0f);
+                GL.Vertex3(0.5f, y, 0f);
                 // top left
                 GL.TexCoord3(0f, 0f, 0f);
-                GL.Vertex3(-width, height, 0f);
+                GL.Vertex3(-0.5f, y, 0f);
                 // bottom right
                 GL.TexCoord3(1f, 1f, 0f);
-                GL.Vertex3(width, -height, 0f);
+                GL.Vertex3(0.5f, y - 1, 0f);
                 // bottom left
                 GL.TexCoord3(0f, 1f, 0f);
-                GL.Vertex3(-width, -height, 0f);
+                GL.Vertex3(-0.5f, y - 1, 0f);
                 GL.End();
                 GL.BindTexture(TextureTarget.Texture2D, 0);
             }
 
-            DrawScreen(_topMovieBinding, _topImageBuffer);
-            DrawScreen(_botMovieBinding, _botImageBuffer);
+            GL.Uniform4(_shaderLocations.FadeColor, 0, 0, 0, 1);
+            GL.Begin(PrimitiveType.TriangleStrip);
+            // top right
+            GL.TexCoord3(1f, 1f, 0f);
+            GL.Vertex3(1f, 1f, 0f);
+            // top left
+            GL.TexCoord3(0f, 1f, 0f);
+            GL.Vertex3(-1f, 1f, 0f);
+            // bottom right
+            GL.TexCoord3(1f, 0f, 0f);
+            GL.Vertex3(1f, -1f, 0f);
+            // bottom left
+            GL.TexCoord3(0f, 0f, 0f);
+            GL.Vertex3(-1f, -1f, 0f);
+            GL.End();
+            DrawScreen(_topMovieBinding, _topImageBuffer, y: 1);
+            DrawScreen(_botMovieBinding, _botImageBuffer, y: 0);
         }
     }
 }
