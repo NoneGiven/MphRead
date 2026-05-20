@@ -28,6 +28,7 @@ namespace MphRead
         private int _lastRenderedMovieFrameIndex = 0;
         private int _movieFrameTotal = 0;
         public bool MoviePlaying => _movieFrameIndex != -1;
+        private bool _skipMovie = false;
 
         private bool _dualScreenMovie = true;
         private readonly byte[] _topImageBuffer = new byte[_frameWidth * _frameHeight * 3];
@@ -123,9 +124,10 @@ namespace MphRead
             _lastRenderedMovieFrameIndex = 0;
             _movieFrameIndex = 0;
             _movieFrameCount = 0;
+            _skipMovie = false;
         }
 
-        public void StopMovie()
+        private void StopMovie()
         {
             if (_movieSettings.AfterMovieId.HasValue)
             {
@@ -156,8 +158,25 @@ namespace MphRead
             }
         }
 
+        public void SkipMovie()
+        {
+            if (_movieFrameIndex != -1 && _movieFrameCount != Int32.MaxValue)
+            {
+                _skipMovie = true;
+            }
+        }
+
         private void UpdateMovie()
         {
+            if (_skipMovie)
+            {
+                if (_movieFrameCount != Int32.MaxValue)
+                {
+                    _movieFrameCount = Int32.MaxValue;
+                    SetFade(_movieSettings.AfterFadeType, _movieSettings.AfterFadeLength, overwrite: true, AfterFade.StopMovie);
+                }
+                return;
+            }
             if ((!_frameAdvanceOn || _frameAdvanceLastFrame) && _movieFrameCount != Int32.MaxValue)
             {
                 _movieFrameCount++;
