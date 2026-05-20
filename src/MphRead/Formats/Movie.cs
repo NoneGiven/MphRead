@@ -31,8 +31,16 @@ namespace MphRead
         private readonly byte[] _imageBuffer = new byte[_frameWidth * _frameHeight * 3];
         private CancellationTokenSource _decoderCts = null!;
 
-        public void StartMovie(Movie movieId, FadeType fadeToMovieType, float fadeToMovieLength, FadeType fadeFromMovieType, float fadeFromMovieLength,
-            Vector3? afterPosition = null, Vector3? afterFacing = null)
+        public void StartMovies(Movie movieId, Movie afterMovieId, FadeType fadeToMovieType, float fadeToMovieLength,
+            FadeType fadeFromMovieType, float fadeFromMovieLength, bool endGameAfter = false)
+        {
+            StartMovie(movieId, fadeToMovieType, fadeToMovieLength, fadeFromMovieType, fadeFromMovieLength,
+                afterMovieId: afterMovieId, endGameAfter: endGameAfter);
+        }
+
+        public void StartMovie(Movie movieId, FadeType fadeToMovieType, float fadeToMovieLength, FadeType fadeFromMovieType,
+            float fadeFromMovieLength, Vector3? afterPosition = null, Vector3? afterFacing = null, Movie? afterMovieId = null,
+            bool endGameAfter = false)
         {
             // on the frame when the whiteout completes (middle frame if the type is out+in, last frame if out only), the scene needs to pause
             // it can start playing the movie then or delay a couple frames to match the game, but the movie plays during the end of the fade
@@ -45,11 +53,12 @@ namespace MphRead
             // - end game/credits/menu/etc.
             // follow-up todos: add a menu option to watch the opening movie (and credits too, although those aren't a movie)
             _movieSettings.MovieId = movieId;
-            _movieSettings.AfterMovieId = null;
+            _movieSettings.AfterMovieId = afterMovieId;
             _movieSettings.AfterFadeType = fadeFromMovieType;
             _movieSettings.AfterFadeLength = fadeFromMovieLength;
             _movieSettings.AfterPosition = afterPosition;
             _movieSettings.AfterFacing = afterFacing;
+            _movieSettings.EndGameAfter = endGameAfter;
             SetFade(fadeToMovieType, fadeToMovieLength, overwrite: true, AfterFade.PlayMovie);
         }
 
@@ -94,15 +103,33 @@ namespace MphRead
 
         public void StopMovie()
         {
-            Debug.Assert(_room != null);
-            _room.LoadRoom(resume: GameState.TransitionRoomId == -1);
-            Sfx.SfxMute = false;
-            Sfx.LongSfxMute--;
-            Sfx.TimedSfxMute--;
-            Sfx.ForceFieldSfxMute--;
-            GameState.UnpauseDialog();
-            _decoderCts?.Cancel();
-            _movieFrameIndex = -1;
+            if (_movieSettings.AfterMovieId.HasValue)
+            {
+                Sfx.LongSfxMute--;
+                Sfx.TimedSfxMute--;
+                Sfx.ForceFieldSfxMute--;
+                _decoderCts?.Cancel();
+                _movieSettings.MovieId = _movieSettings.AfterMovieId.Value;
+                _movieSettings.AfterMovieId = null;
+                PlayMovie(_movieSettings.MovieId);
+                _fadeType = FadeType.None;
+            }
+            else if (_movieSettings.EndGameAfter)
+            {
+                QuitGame(enteringShip: true);
+            }
+            else
+            {
+                Debug.Assert(_room != null);
+                _room.LoadRoom(resume: GameState.TransitionRoomId == -1);
+                Sfx.SfxMute = false;
+                Sfx.LongSfxMute--;
+                Sfx.TimedSfxMute--;
+                Sfx.ForceFieldSfxMute--;
+                GameState.UnpauseDialog();
+                _decoderCts?.Cancel();
+                _movieFrameIndex = -1;
+            }
         }
 
         private void UpdateMovie()
@@ -226,22 +253,19 @@ namespace MphRead.Formats
             _vxFrames?.Clear();
         }
 
-        public async Task Decode(string filePath, bool makeTexture = false, bool writeFiles = false,
-            CancellationToken token = default)
+        public async Task Decode(string filePath, bool writeFiles = false, CancellationToken token = default)
         {
             using FileStream fs = File.OpenRead(filePath);
-            await Decode(fs, Path.GetFileName(filePath), makeTexture, writeFiles, token);
+            await Decode(fs, Path.GetFileName(filePath), writeFiles, token);
         }
 
-        public async Task Decode(byte[] data, string filename, bool makeTexture = false, bool writeFiles = false,
-            CancellationToken token = default)
+        public async Task Decode(byte[] data, string filename, bool writeFiles = false, CancellationToken token = default)
         {
             using var ms = new MemoryStream(data);
-            await Decode(ms, filename, makeTexture, writeFiles, token);
+            await Decode(ms, filename, writeFiles, token);
         }
 
-        public async Task Decode(Stream stream, string filename, bool makeTexture = false, bool writeFiles = false,
-            CancellationToken token = default)
+        public async Task Decode(Stream stream, string filename, bool writeFiles = false, CancellationToken token = default)
         {
             string folder = Path.Combine(@"C:\Users\auser\Temp\movie", Path.GetFileNameWithoutExtension(filename));
             using var reader = new BinaryReader(stream);
@@ -401,47 +425,16 @@ namespace MphRead.Formats
                     WriteFile(vxFrame, folder, f++);
                 }
             }
-
-            // todo: instead of converting to PNG, take 2 upcoming frames and put the RGB data into persistent double buffers
-            // display the first frame, then after 1/15th of a second, swap to the other image and copy frame #3 into the unused buffer, etc.
-            // note: we don't have to wait for decoding to finish before we start playback, so we can keep loading short (matching the game is nice)
-            //
-            // main thing for optimization is avoiding any giant GCs when the movie is done loading and/or unloaded
-            // we could try a shared/persistent buffers approach IF we do the decoding on the fly during playback
-            // that way we would only need:
-            // plane buffers for frame n being decoded
-            // coeff buffers for frame being decoded
-            // vector buffer for frame being decoded
-            // plane buffers for frame n - 1
-            // plane buffers for frame n - 2
-            // plane buffers for frame n - 3
-            // color buffer for frame being displayed
-            // color buffer for frame to be displayed next
-            //
-            // with some careful synchronization, this would be possible -- we can decode a frame in 5 ms at absolute max (well, on this machine)
-            // 67 ms is the max to play back at 15 fps, and we'd need some leeway for weaker hardware
-            // average time is under 1 ms in release mode currently
-            if (makeTexture)
-            {
-                byte[] texture = new byte[256 * 192 * 3];
-                for (int y = 0; y < FrameHeight; y++)
-                {
-                    for (int x = 0; x < FrameWidth; x++)
-                    {
-                        int cy = _vxFrames[0].VideoFrame.PlaneBufferY[y, x];
-                        int cu = _vxFrames[0].VideoFrame.PlaneBufferU[y / 2, x / 2];
-                        int cv = _vxFrames[0].VideoFrame.PlaneBufferV[y / 2, x / 2];
-                        Rgb24 rgb = YuvToRgb(cy, cu, cv);
-                        texture[y * 256 * 3 + x * 3] = rgb.R;
-                        texture[y * 256 * 3 + x * 3 + 1] = rgb.G;
-                        texture[y * 256 * 3 + x * 3 + 2] = rgb.B;
-                    }
-                }
-                //using var image = Image.WrapMemory<Rgb24>(texture, 256, 192);
-                //image.SaveAsPng(@"C:\Users\auser\Temp\texture.png");
-            }
         }
 
+        // with a realtime approach, we only need:
+        // plane buffers for frame n being decoded
+        // coeff buffers for frame being decoded
+        // vector buffer for frame being decoded
+        // plane buffers for frame n - 1
+        // plane buffers for frame n - 2
+        // plane buffers for frame n - 3
+        // color buffer for frame being displayed
         public bool GetImage(int frameIndex, byte[] texture)
         {
             if (_vxFrames == null || frameIndex >= _vxFrames.Count)
@@ -487,7 +480,7 @@ namespace MphRead.Formats
 
         private readonly ImmutableArray<byte[,]> _planeBuffers =
         [
-            //                  Y                                          U                                                  V
+            //                  Y                                 U                                         V
             /* frame n   */ new byte[_mphFrameH, _mphFrameW], new byte[_mphFrameH / 2, _mphFrameW / 2], new byte[_mphFrameH / 2, _mphFrameW / 2],
             /* frame n-1 */ new byte[_mphFrameH, _mphFrameW], new byte[_mphFrameH / 2, _mphFrameW / 2], new byte[_mphFrameH / 2, _mphFrameW / 2],
             /* frame n-2 */ new byte[_mphFrameH, _mphFrameW], new byte[_mphFrameH / 2, _mphFrameW / 2], new byte[_mphFrameH / 2, _mphFrameW / 2],
@@ -499,6 +492,7 @@ namespace MphRead.Formats
             byte[,] bufferY = _planeBuffers[_nextPlaneBufferIndex++];
             byte[,] bufferU = _planeBuffers[_nextPlaneBufferIndex++];
             byte[,] bufferV = _planeBuffers[_nextPlaneBufferIndex++];
+            // todo: revisit clearing buffers
             for (int y = 0; y < _mphFrameH; y++)
             {
                 for (int x = 0; x < _mphFrameW; x++)
@@ -755,6 +749,7 @@ namespace MphRead.Formats
             }
             else
             {
+                // todo: revisit clearing buffers
                 for (int y = 0; y < FrameHeight / 4 + 1; y++)
                 {
                     for (int x = 0; x < FrameWidth / 4 + 1; x++)

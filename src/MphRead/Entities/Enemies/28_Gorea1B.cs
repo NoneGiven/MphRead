@@ -1016,18 +1016,18 @@ namespace MphRead.Entities.Enemies
                 StopGrappling();
                 DeactivateAllTrocraSpawns();
                 DestroyAllTrocras();
-                // skhere
-                // todo: movie and/or credits stuff
                 GameState.StorySave.CheckpointRoomId = -1;
                 GameState.StorySave.CheckpointEntityId = -1;
                 if ((GameState.StorySave.TriggerState[1] & 0x10) != 0 || Cheats.AlwaysFightGorea2)
                 {
                     GameState.TransitionRoomId = 92; // Gorea_b2
-                    _scene.SetFade(FadeType.FadeOutWhite, length: 45 / 30f, overwrite: true, AfterFade.LoadRoom);
+                    _scene.StartMovie(Movie.Gorea2Intro, FadeType.FadeOutInWhite, 45 / 30f, FadeType.FadeOutInWhite, 45 / 30f);
                 }
                 else
                 {
-                    _scene.SetFade(FadeType.FadeOutWhite, length: 45 / 30f, overwrite: true, AfterFade.EnterShip);
+                    // todo: credits
+                    _scene.StartMovies(Movie.BadEndingPart1, Movie.BadEndingPart2, FadeType.FadeOutInWhite, 45 / 30f,
+                        FadeType.FadeOutBlack, 0, endGameAfter: true);
                 }
                 return true;
             }

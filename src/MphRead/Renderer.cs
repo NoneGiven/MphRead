@@ -2800,6 +2800,7 @@ namespace MphRead
             public float AfterFadeLength { get; set; }
             public Vector3? AfterPosition { get; set; }
             public Vector3? AfterFacing { get; set; }
+            public bool EndGameAfter { get; set; }
         }
 
         private readonly MovieFadeSettings _movieSettings = new MovieFadeSettings();
@@ -2868,13 +2869,19 @@ namespace MphRead
             GL.ClearColor(_clearColor);
         }
 
-        public void QuitGame()
+        private void QuitGame(bool enteringShip)
         {
+            _fadeType = FadeType.None;
             DoCleanup();
-            // todo: if this has callers in the future, determine save type
             if (GameState.SinglePlayer)
             {
-                Menu.NeededSave = Menu.SaveFromExit;
+                Menu.NeededSave = enteringShip ? Menu.SaveFromShip : Menu.SaveFromExit;
+                if (enteringShip)
+                {
+                    GameState.StorySave.Health = GameState.StorySave.HealthMax;
+                    GameState.StorySave.Ammo[0] = GameState.StorySave.AmmoMax[0];
+                    GameState.StorySave.Ammo[1] = GameState.StorySave.AmmoMax[1];
+                }
             }
             _close.Invoke();
         }
@@ -2898,19 +2905,7 @@ namespace MphRead
         {
             if (_afterFade == AfterFade.Exit || _afterFade == AfterFade.EnterShip)
             {
-                _fadeType = FadeType.None;
-                DoCleanup();
-                if (GameState.SinglePlayer)
-                {
-                    Menu.NeededSave = _afterFade == AfterFade.EnterShip ? Menu.SaveFromShip : Menu.SaveFromExit;
-                    if (_afterFade == AfterFade.EnterShip)
-                    {
-                        GameState.StorySave.Health = GameState.StorySave.HealthMax;
-                        GameState.StorySave.Ammo[0] = GameState.StorySave.AmmoMax[0];
-                        GameState.StorySave.Ammo[1] = GameState.StorySave.AmmoMax[1];
-                    }
-                }
-                _close.Invoke();
+                QuitGame(enteringShip: _afterFade == AfterFade.EnterShip);
                 return;
             }
             if (_afterFade == AfterFade.PlayMovie)

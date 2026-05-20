@@ -943,9 +943,9 @@ namespace MphRead.Entities.Enemies
                 Flags &= ~EnemyFlags.OnRadar;
                 _health = 1;
                 _sealSphere.SetDead();
-                // skhere
-                // todo: movie/credits
-                _scene.SetFade(FadeType.FadeOutWhite, length: 60 / 30f, overwrite: true, AfterFade.EnterShip);
+                // todo: credits
+                _scene.StartMovie(Movie.GoodEnding, FadeType.FadeOutInWhite, 60 / 30f,
+                    FadeType.FadeOutBlack, 0, endGameAfter: true);
             }
             if (Behavior03())
             {
