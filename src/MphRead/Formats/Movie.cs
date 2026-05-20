@@ -558,6 +558,8 @@ namespace MphRead.Formats
             return (bufferY, bufferU, bufferV);
         }
 
+        // unlike the plane buffers, these are reusable for each new frame. the static buffers setting only
+        // determines whether they're also reused across different movie files decoded by the same decoder instance.
         private readonly byte[,] _coeffBufferY = new byte[_mphFrameH / 4 + 1, _mphFrameW / 4 + 1];
         private readonly byte[,] _coeffBufferUV = new byte[_mphFrameH / 8 + 1, _mphFrameW / 8 + 1];
         private readonly Vector2ir[,] _vectors = new Vector2ir[_mphFrameH / 16 + 1, _mphFrameW / 16 + 2];
@@ -572,17 +574,9 @@ namespace MphRead.Formats
             return new Rgb24((byte)Math.Clamp(r, 0, 255), (byte)Math.Clamp(g, 0, 255), (byte)Math.Clamp(b, 0, 255));
         }
 
-        public static void ClearArray<T>(T[,] array) where T : struct
+        private static void ClearArray<T>(T[,] array) where T : struct
         {
-            int rows = array.GetLength(0);
-            int cols = array.GetLength(1);
-            for (int y = 0; y < rows; y++)
-            {
-                for (int x = 0; x < cols; x++)
-                {
-                    array[y, x] = default;
-                }
-            }
+            MemoryMarshal.CreateSpan(ref Unsafe.As<byte, T>(ref MemoryMarshal.GetArrayDataReference(array)), array.Length).Fill(default);
         }
     }
 
