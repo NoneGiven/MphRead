@@ -440,11 +440,21 @@ namespace MphRead
             return (AreaState)(((int)save.BossFlags >> (2 * areaId)) & 3);
         }
 
+        public static bool QueuedOublietteUnlockMessage { get; set; }
+
         public static void ModeStateAdventure(Scene scene)
         {
             PlayerEntity.Main.SaveStatus();
             if ((StorySave.Areas & 0x100) == 0)
             {
+                if (QueuedOublietteUnlockMessage && scene.FadeType == FadeType.FadeInBlack && !scene.MoviePlaying)
+                {
+                    StorySave.Areas |= 0x100;
+                    StorySave.CurrentOctoliths = 0;
+                    // GUNSHIP TRANSMISSION severe timefield disruption detected in the vicinity of the ALIMBIC CLUSTER.
+                    PlayerEntity.Main.ShowDialog(DialogType.Okay, messageId: 43);
+                    QueuedOublietteUnlockMessage = false;
+                }
                 for (int i = 0; i < scene.MessageQueue.Count; i++)
                 {
                     MessageInfo message = scene.MessageQueue[i];
@@ -452,11 +462,8 @@ namespace MphRead
                     {
                         if (StorySave.CurrentOctoliths == 0xFF)
                         {
-                            // todo: play movie and defer dialog
-                            StorySave.Areas |= 0x100;
-                            StorySave.CurrentOctoliths = 0;
-                            // GUNSHIP TRANSMISSION severe timefield disruption detected in the vicinity of the ALIMBIC CLUSTER.
-                            PlayerEntity.Main.ShowDialog(DialogType.Okay, messageId: 43);
+                            scene.StartMovie(Movie.OublietteUnlock, FadeType.FadeOutInWhite, 20 / 30f, FadeType.FadeOutInBlack, 5 / 30f);
+                            GameState.QueuedOublietteUnlockMessage = true;
                         }
                         else
                         {
@@ -804,7 +811,7 @@ namespace MphRead
                 }
             }
             // start displaying dialog during the fade back in after the movie
-            if (QueuedOctolithMessageId != -1 && scene.FadeType != FadeType.FadeOutInWhite && !scene.MoviePlaying)
+            if (QueuedOctolithMessageId != -1 && scene.FadeType == FadeType.FadeInWhite && !scene.MoviePlaying)
             {
                 // OCTOLITH ACQUIRED you obtained an OCTOLITH!
                 PlayerEntity.Main.ShowDialog(DialogType.Event, messageId: 7, param1: (int)EventType.Octolith);
@@ -1574,6 +1581,8 @@ namespace MphRead
             EscapeState = EscapeState.None;
             EscapeTimer = -1;
             EscapePaused = false;
+            QueuedOctolithMessageId = -1;
+            QueuedOublietteUnlockMessage = false;
         }
     }
 
