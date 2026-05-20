@@ -21,14 +21,17 @@ namespace MphRead
     {
         private const int _frameWidth = 256;
         private const int _frameHeight = 192;
-        private int _movieBinding = -1;
+        private int _topMovieBinding = -1;
+        private int _botMovieBinding = -1;
         private int _movieFrameCount = 0;
         private int _movieFrameIndex = -1;
         private int _lastRenderedMovieFrameIndex = 0;
         private int _movieFrameTotal = 0;
         public bool MoviePlaying => _movieFrameIndex != -1;
 
-        private readonly byte[] _imageBuffer = new byte[_frameWidth * _frameHeight * 3];
+        private bool _dualScreenMovie = true;
+        private readonly byte[] _topImageBuffer = new byte[_frameWidth * _frameHeight * 3];
+        private readonly byte[] _botImageBuffer = new byte[_frameWidth * _frameHeight * 3];
         private CancellationTokenSource _decoderCts = null!;
 
         public void StartMovies(Movie movieId, Movie afterMovieId, FadeType fadeToMovieType, float fadeToMovieLength,
@@ -70,8 +73,6 @@ namespace MphRead
             // - decoder can decode up to 4 frames, then needs to wait until its oldest frame is requested by the renderer,
             //   then it can drop that frame and decode another one
             // todo
-            // - we need to change the decoder to two static instances so we can decode top and bottom at the same time
-            // - need to display top and bottom frames together
             // - should try to identify code that needs to be aware of when the decoder takes too long to return a frame (and add a note about audio)
             GameState.PauseDialog();
             Sfx.SfxMute = true;
@@ -79,22 +80,45 @@ namespace MphRead
             Sfx.TimedSfxMute++;
             Sfx.ForceFieldSfxMute++;
             VxDecoder.Instance1.Reset();
+            VxDecoder.Instance2.Reset();
             _decoderCts = new CancellationTokenSource();
             Metadata.MovieInfo info = Metadata.MovieFiles[(int)movieId];
-            string path = Paths.Combine(Paths.FileSystem, info.TopScreenPath);
-            Task.Run(async () => await VxDecoder.Instance1.Decode(path, token: _decoderCts.Token), _decoderCts.Token);
-            while (!VxDecoder.Instance1.GetImage(frameIndex: 0, _imageBuffer))
+            _dualScreenMovie = info.BottomScreenPath != null;
+            string topPath = Paths.Combine(Paths.FileSystem, info.TopScreenPath);
+            Task.Run(async () => await VxDecoder.Instance1.Decode(topPath, token: _decoderCts.Token), _decoderCts.Token);
+            if (_dualScreenMovie)
+            {
+                string botPath = Paths.Combine(Paths.FileSystem, info.BottomScreenPath!);
+                Task.Run(async () => await VxDecoder.Instance2.Decode(botPath, token: _decoderCts.Token), _decoderCts.Token);
+            }
+            else
+            {
+                Array.Fill<byte>(_botImageBuffer, 0);
+            }
+            while (!VxDecoder.Instance1.GetImage(frameIndex: 0, _topImageBuffer))
             {
                 Thread.Sleep(TimeSpan.FromMilliseconds(10));
             }
-            _movieFrameTotal = VxDecoder.Instance1.FrameCount;
-            if (_movieBinding == -1)
+            if (_dualScreenMovie)
             {
-                _movieBinding = ++_textureCount;
+                while (!VxDecoder.Instance2.GetImage(frameIndex: 0, _botImageBuffer))
+                {
+                    Thread.Sleep(TimeSpan.FromMilliseconds(10));
+                }
             }
-            GL.BindTexture(TextureTarget.Texture2D, _movieBinding);
+            _movieFrameTotal = VxDecoder.Instance1.FrameCount;
+            Debug.Assert(!_dualScreenMovie || VxDecoder.Instance2.FrameCount == _movieFrameTotal);
+            if (_topMovieBinding == -1)
+            {
+                _topMovieBinding = ++_textureCount;
+                _botMovieBinding = ++_textureCount;
+            }
+            GL.BindTexture(TextureTarget.Texture2D, _topMovieBinding);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, _frameWidth, _frameHeight, 0,
-                PixelFormat.Rgb, PixelType.UnsignedByte, _imageBuffer);
+                PixelFormat.Rgb, PixelType.UnsignedByte, _topImageBuffer);
+            GL.BindTexture(TextureTarget.Texture2D, _botMovieBinding);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, _frameWidth, _frameHeight, 0,
+                PixelFormat.Rgb, PixelType.UnsignedByte, _botImageBuffer);
             GL.BindTexture(TextureTarget.Texture2D, 0);
             _lastRenderedMovieFrameIndex = 0;
             _movieFrameIndex = 0;
@@ -149,9 +173,16 @@ namespace MphRead
                 else if (frameIndex < _movieFrameTotal)
                 {
                     _movieFrameIndex = frameIndex;
-                    while (!VxDecoder.Instance1.GetImage(frameIndex, _imageBuffer))
+                    while (!VxDecoder.Instance1.GetImage(frameIndex, _topImageBuffer))
                     {
                         Thread.Sleep(TimeSpan.FromMilliseconds(10));
+                    }
+                    if (_dualScreenMovie)
+                    {
+                        while (!VxDecoder.Instance2.GetImage(frameIndex, _botImageBuffer))
+                        {
+                            Thread.Sleep(TimeSpan.FromMilliseconds(10));
+                        }
                     }
                 }
             }
@@ -160,39 +191,48 @@ namespace MphRead
         private void DrawMovieFrame()
         {
             GL.Uniform1(_shaderLocations.LayerAlpha, 1);
-            GL.BindTexture(TextureTarget.Texture2D, _movieBinding);
-            int minParameter = (int)TextureMinFilter.Nearest;
-            int magParameter = (int)TextureMagFilter.Nearest;
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
-            GL.TexParameter(TextureTarget.Texture2D,
-                TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D,
-                TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            if (_movieFrameIndex != _lastRenderedMovieFrameIndex)
+            bool newFrame = false;
+
+            void DrawScreen(int movieBinding, byte[] imageBuffer)
             {
-                _lastRenderedMovieFrameIndex = _movieFrameIndex;
-                GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, _frameWidth, _frameHeight, PixelFormat.Rgb, PixelType.UnsignedByte, _imageBuffer);
+                GL.BindTexture(TextureTarget.Texture2D, movieBinding);
+                int minParameter = (int)TextureMinFilter.Nearest;
+                int magParameter = (int)TextureMagFilter.Nearest;
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
+                GL.TexParameter(TextureTarget.Texture2D,
+                    TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+                GL.TexParameter(TextureTarget.Texture2D,
+                    TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+                if (_movieFrameIndex != _lastRenderedMovieFrameIndex || newFrame && _dualScreenMovie)
+                {
+                    newFrame = true;
+                    _lastRenderedMovieFrameIndex = _movieFrameIndex;
+                    GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, _frameWidth, _frameHeight, PixelFormat.Rgb, PixelType.UnsignedByte, imageBuffer);
+                }
+                float viewWidth = Size.X;
+                float viewHeight = Size.Y;
+                float width = viewWidth * 1f / 2 / (viewWidth / 2);
+                float height = viewHeight * 1f / 2 / (viewHeight / 2);
+                GL.Begin(PrimitiveType.TriangleStrip);
+                // top right
+                GL.TexCoord3(1f, 0f, 0f);
+                GL.Vertex3(width, height, 0f);
+                // top left
+                GL.TexCoord3(0f, 0f, 0f);
+                GL.Vertex3(-width, height, 0f);
+                // bottom right
+                GL.TexCoord3(1f, 1f, 0f);
+                GL.Vertex3(width, -height, 0f);
+                // bottom left
+                GL.TexCoord3(0f, 1f, 0f);
+                GL.Vertex3(-width, -height, 0f);
+                GL.End();
+                GL.BindTexture(TextureTarget.Texture2D, 0);
             }
-            float viewWidth = Size.X;
-            float viewHeight = Size.Y;
-            float width = viewWidth * 1f / 2 / (viewWidth / 2);
-            float height = viewHeight * 1f / 2 / (viewHeight / 2);
-            GL.Begin(PrimitiveType.TriangleStrip);
-            // top right
-            GL.TexCoord3(1f, 0f, 0f);
-            GL.Vertex3(width, height, 0f);
-            // top left
-            GL.TexCoord3(0f, 0f, 0f);
-            GL.Vertex3(-width, height, 0f);
-            // bottom right
-            GL.TexCoord3(1f, 1f, 0f);
-            GL.Vertex3(width, -height, 0f);
-            // bottom left
-            GL.TexCoord3(0f, 1f, 0f);
-            GL.Vertex3(-width, -height, 0f);
-            GL.End();
-            GL.BindTexture(TextureTarget.Texture2D, 0);
+
+            DrawScreen(_topMovieBinding, _topImageBuffer);
+            DrawScreen(_botMovieBinding, _botImageBuffer);
         }
     }
 }
@@ -347,6 +387,21 @@ namespace MphRead.Formats
 
             byte[] buffer = GetDataBuffer();
             Array.Fill<byte>(buffer, 0);
+            byte[,] coeffBufferY;
+            byte[,] coeffBufferUV;
+            Vector2ir[,] vectors;
+            if (UseStaticBuffers)
+            {
+                coeffBufferY = _coeffBufferY;
+                coeffBufferUV = _coeffBufferUV;
+                vectors = _vectors;
+            }
+            else
+            {
+                coeffBufferY = new byte[FrameHeight / 4 + 1, FrameWidth / 4 + 1];
+                coeffBufferUV = new byte[FrameHeight / 8 + 1, FrameWidth / 8 + 1];
+                vectors = new Vector2ir[FrameHeight / 16 + 1, FrameWidth / 16 + 2];
+            }
             // todo: avoid list allocation? buffers are recycled anyway, but when decoding in realtime, we only need 4 frames
             _vxFrames = new List<VxFrame>(FrameCount);
             _prevVideoFrames[0] = _prevVideoFrames[1] = _prevVideoFrames[2] = null;
@@ -377,8 +432,12 @@ namespace MphRead.Formats
                 {
                     (planeBufferY, planeBufferU, planeBufferV) = GetPlaneBuffers();
                 }
-                var vxFrame = new VxFrame(FrameWidth, FrameHeight, _prevVideoFrames, audioFrameCount, prevAudioFrame,
-                    QuantizerTable, planeBufferY, planeBufferU, planeBufferV);
+                ClearArray(coeffBufferY);
+                ClearArray(coeffBufferUV);
+                ClearArray(vectors);
+                VxBuffers buffers = new VxBuffers(_prevVideoFrames, prevAudioFrame, QuantizerTable, planeBufferY,
+                    planeBufferU, planeBufferV, coeffBufferY, coeffBufferUV, vectors);
+                var vxFrame = new VxFrame(FrameWidth, FrameHeight, audioFrameCount, buffers);
                 //if (audioFrameCount > 0)
                 //{
                 //    prevAudioFrame = vxFrame.AudioFrames[^1];
@@ -471,7 +530,7 @@ namespace MphRead.Formats
 
         private byte[] GetDataBuffer()
         {
-            return UseStaticBuffers /*|| MaxDataSize <= _mphMaxDataSize*/ ? _dataBuffer : new byte[MaxDataSize];
+            return UseStaticBuffers || MaxDataSize <= _mphMaxDataSize ? _dataBuffer : new byte[MaxDataSize];
         }
 
         private const int _mphFrameW = 256;
@@ -492,31 +551,16 @@ namespace MphRead.Formats
             byte[,] bufferY = _planeBuffers[_nextPlaneBufferIndex++];
             byte[,] bufferU = _planeBuffers[_nextPlaneBufferIndex++];
             byte[,] bufferV = _planeBuffers[_nextPlaneBufferIndex++];
-            // todo: revisit clearing buffers
-            for (int y = 0; y < _mphFrameH; y++)
-            {
-                for (int x = 0; x < _mphFrameW; x++)
-                {
-                    bufferY[y, x] = 0;
-                }
-            }
-            for (int y = 0; y < _mphFrameH / 2; y++)
-            {
-                for (int x = 0; x < _mphFrameW / 2; x++)
-                {
-                    bufferU[y, x] = 0;
-                }
-            }
-            for (int y = 0; y < _mphFrameH / 2; y++)
-            {
-                for (int x = 0; x < _mphFrameW / 2; x++)
-                {
-                    bufferV[y, x] = 0;
-                }
-            }
             _nextPlaneBufferIndex %= _planeBuffers.Length;
+            ClearArray(bufferV);
+            ClearArray(bufferU);
+            ClearArray(bufferV);
             return (bufferY, bufferU, bufferV);
         }
+
+        private readonly byte[,] _coeffBufferY = new byte[_mphFrameH / 4 + 1, _mphFrameW / 4 + 1];
+        private readonly byte[,] _coeffBufferUV = new byte[_mphFrameH / 8 + 1, _mphFrameW / 8 + 1];
+        private readonly Vector2ir[,] _vectors = new Vector2ir[_mphFrameH / 16 + 1, _mphFrameW / 16 + 2];
 
         private static Rgb24 YuvToRgb(int y, int u, int v)
         {
@@ -527,6 +571,46 @@ namespace MphRead.Formats
             int b = y + 2 * u;
             return new Rgb24((byte)Math.Clamp(r, 0, 255), (byte)Math.Clamp(g, 0, 255), (byte)Math.Clamp(b, 0, 255));
         }
+
+        public static void ClearArray<T>(T[,] array) where T : struct
+        {
+            int rows = array.GetLength(0);
+            int cols = array.GetLength(1);
+            for (int y = 0; y < rows; y++)
+            {
+                for (int x = 0; x < cols; x++)
+                {
+                    array[y, x] = default;
+                }
+            }
+        }
+    }
+
+    public readonly struct VxBuffers
+    {
+        public readonly VideoFrame?[] PrevVideoFrames;
+        public readonly AudioFrame? PrevAudioFrame;
+        public readonly int[] QuantizerTable;
+        public readonly byte[,]? PlaneBufferY;
+        public readonly byte[,]? PlaneBufferU;
+        public readonly byte[,]? PlaneBufferV;
+        public readonly byte[,] CoeffBufferY;
+        public readonly byte[,] CoeffBufferUV;
+        public readonly Vector2ir[,] Vectors;
+
+        public VxBuffers(VideoFrame?[] prevVideoFrames, AudioFrame? prevAudioFrame, int[] quantizerTable, byte[,]? planeBufferY,
+            byte[,]? planeBufferU, byte[,]? planeBufferV, byte[,] coeffBufferY, byte[,] coeffBufferUV, Vector2ir[,] vectors)
+        {
+            PrevVideoFrames = prevVideoFrames;
+            PrevAudioFrame = prevAudioFrame;
+            QuantizerTable = quantizerTable;
+            PlaneBufferY = planeBufferY;
+            PlaneBufferU = planeBufferU;
+            PlaneBufferV = planeBufferV;
+            CoeffBufferY = coeffBufferY;
+            CoeffBufferUV = coeffBufferUV;
+            Vectors = vectors;
+        }
     }
 
     public class VxFrame
@@ -535,10 +619,9 @@ namespace MphRead.Formats
         public int AudioFrameCount { get; }
         //public List<AudioFrame> AudioFrames { get; } = new List<AidioFrame>();
 
-        public VxFrame(int frameWidth, int frameHeight, VideoFrame?[] PrevVideoFrames, int audioFrameCount, AudioFrame? prevAudioFrame, int[] quantizerTable,
-            byte[,]? planeBufferY, byte[,]? planeBufferU, byte[,]? planeBufferV)
+        public VxFrame(int frameWidth, int frameHeight, int audioFrameCount, VxBuffers buffers)
         {
-            VideoFrame = new VideoFrame(frameWidth, frameHeight, PrevVideoFrames, quantizerTable, planeBufferY, planeBufferU, planeBufferV);
+            VideoFrame = new VideoFrame(frameWidth, frameHeight, buffers);
             AudioFrameCount = audioFrameCount;
             //for (int i = 0; i < audioFrameCount; i++)
             //{
@@ -708,27 +791,29 @@ namespace MphRead.Formats
         private byte[,] _planeBufferY = null!;
         private byte[,] _planeBufferU = null!;
         private byte[,] _planeBufferV = null!;
-        private static byte[,] _coeffBufferY = null!;
-        private static byte[,] _coeffBufferUV = null!;
         public byte[,] PlaneBufferY => _planeBufferY;
         public byte[,] PlaneBufferU => _planeBufferU;
         public byte[,] PlaneBufferV => _planeBufferV;
-        private static Vector2ir[,] _vectors = null!;
+        private byte[,] _coeffBufferY;
+        private byte[,] _coeffBufferUV;
+        private Vector2ir[,] _vectors;
         private readonly VideoFrame?[] _prevVideoFrames;
         private readonly int[] _quantizerTable;
 
         private BitStreamReader _reader = null!;
 
-        public VideoFrame(int frameWidth, int frameHeight, VideoFrame?[] prevVideoFrames, int[] quantizerTable,
-            byte[,]? planeBufferY, byte[,]? planeBufferU, byte[,]? planeBufferV)
+        public VideoFrame(int frameWidth, int frameHeight, VxBuffers buffers)
         {
             FrameWidth = frameWidth;
             FrameHeight = frameHeight;
-            _prevVideoFrames = prevVideoFrames;
-            _quantizerTable = quantizerTable;
-            _planeBufferY = planeBufferY!;
-            _planeBufferU = planeBufferU!;
-            _planeBufferV = planeBufferV!;
+            _prevVideoFrames = buffers.PrevVideoFrames;
+            _quantizerTable = buffers.QuantizerTable;
+            _planeBufferY = buffers.PlaneBufferY!;
+            _planeBufferU = buffers.PlaneBufferU!;
+            _planeBufferV = buffers.PlaneBufferV!;
+            _coeffBufferY = buffers.CoeffBufferY;
+            _coeffBufferUV = buffers.CoeffBufferUV;
+            _vectors = buffers.Vectors;
         }
 
         public void Decode(byte[] buffer, int length)
@@ -740,45 +825,6 @@ namespace MphRead.Formats
                 _planeBufferY = new byte[FrameHeight, FrameWidth];
                 _planeBufferU = new byte[FrameHeight / 2, FrameWidth / 2];
                 _planeBufferV = new byte[FrameHeight / 2, FrameWidth / 2];
-            }
-
-            if (_coeffBufferY == null)
-            {
-                _coeffBufferY = new byte[FrameHeight / 4 + 1, FrameWidth / 4 + 1];
-                _coeffBufferUV = new byte[FrameHeight / 8 + 1, FrameWidth / 8 + 1];
-            }
-            else
-            {
-                // todo: revisit clearing buffers
-                for (int y = 0; y < FrameHeight / 4 + 1; y++)
-                {
-                    for (int x = 0; x < FrameWidth / 4 + 1; x++)
-                    {
-                        _coeffBufferY[y, x] = 0;
-                    }
-                }
-                for (int y = 0; y < FrameHeight / 8 + 1; y++)
-                {
-                    for (int x = 0; x < FrameWidth / 8 + 1; x++)
-                    {
-                        _coeffBufferUV[y, x] = 0;
-                    }
-                }
-            }
-
-            if (_vectors == null)
-            {
-                _vectors = new Vector2ir[FrameHeight / 16 + 1, FrameWidth / 16 + 2];
-            }
-            else
-            {
-                for (int y = 0; y < FrameHeight / 16 + 1; y++)
-                {
-                    for (int x = 0; x < FrameWidth / 16 + 2; x++)
-                    {
-                        _vectors[y, x] = new Vector2ir();
-                    }
-                }
             }
 
             for (int y = 0; y < FrameHeight; y += 16)
