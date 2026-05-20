@@ -2030,6 +2030,17 @@ namespace MphRead
             return count;
         }
 
+        public void ClearEffects()
+        {
+            for (int i = 0; i < _activeElements.Count; i++)
+            {
+                EffectElementEntry element = _activeElements[i];
+                UnlinkEffectElement(element);
+                i--;
+                continue;
+            }
+        }
+
         private void ProcessEffects()
         {
             for (int i = 0; i < _activeElements.Count; i++)
@@ -2872,7 +2883,7 @@ namespace MphRead
                 EnemyInstanceEntity.DestroyBeams();
                 Sound.Sfx.ShutDown();
                 OutputStop();
-                StopMovie();
+                _decoderCts?.Cancel();
                 Selection.Clear();
             }
         }

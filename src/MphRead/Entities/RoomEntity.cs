@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -393,11 +394,11 @@ namespace MphRead.Entities
             }
         }
 
-        private static readonly IReadOnlyList<bool> _keepEntities = new bool[27]
-        {
+        private static readonly ImmutableArray<bool> _keepEntities =
+        [
             false, false, false, false, false, false, false, false, false, false, false, false, false,
             false, false, false, false, false, false, false, false, true, true, false, true, true, true
-        };
+        ];
 
         public DoorEntity? LoaderDoor { get; set; }
         public int LoadEntityId { get; set; } = -1;
@@ -408,7 +409,14 @@ namespace MphRead.Entities
             player.StopAllSfx();
             Hunter hunter = player.Hunter;
             int recolor = player.Recolor;
+            GameState.StorySave.CheckpointRoomId = -1;
+            GameState.StorySave.CheckpointEntityId = -1;
+            if (GameState.TransitionRoomId == -1)
+            {
+                GameState.TransitionRoomId = RoomId;
+            }
             StartTransition(fromDoor: false, resume);
+            _scene.ClearEffects();
             if (!resume)
             {
                 PlayerEntity.Reset();
@@ -430,13 +438,6 @@ namespace MphRead.Entities
                 _scene.InitEntity(player);
                 _scene.InitEntity(player.Halfturret);
             }
-            FadeType fadeType = _scene.FadeType == FadeType.FadeOutWhite ? FadeType.FadeInWhite : FadeType.FadeInBlack;
-            float length = 10 / 30f;
-            if (resume)
-            {
-                length = 5 / 30f;
-            }
-            _scene.SetFade(fadeType, length, overwrite: true);
         }
 
         private void StartTransition(bool fromDoor, bool resume = false)

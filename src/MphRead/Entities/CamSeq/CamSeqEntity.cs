@@ -285,12 +285,14 @@ namespace MphRead.Entities
                     }
                     if (!_active)
                     {
+                        // hack to avoid delay when Octolith intro seqs start at room reload (player view should not be visible in between)
+                        bool quickStart = Name == "unit2_b1_octolith_intro" || Name == "bigeye_octolith_intro";
                         _active = true;
-                        _delayTimer = 0;
+                        _delayTimer = (byte)(quickStart ? 7 : 0);
                         _handoffTimer = 0;
                         _handoff = handoff;
                         Current = this;
-                        if (Data.DelayFrames == 0)
+                        if (Data.DelayFrames == 0 || quickStart)
                         {
                             TryStart();
                         }

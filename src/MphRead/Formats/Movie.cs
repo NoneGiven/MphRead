@@ -47,10 +47,6 @@ namespace MphRead
             AfterFadeSettings.AfterFadeType = fadeFromMovieType;
             AfterFadeSettings.AfterFadeLength = fadeFromMovieLength;
             SetFade(fadeToMovieType, fadeToMovieLength, overwrite: true, AfterFade.PlayMovie);
-            Sfx.SfxMute = true;
-            Sfx.LongSfxMute++;
-            Sfx.TimedSfxMute++;
-            Sfx.ForceFieldSfxMute++;
         }
 
         private void PlayMovie(Movie movieId)
@@ -65,6 +61,10 @@ namespace MphRead
             // - need to display top and bottom frames together
             // - should try to identify code that needs to be aware of when the decoder takes too long to return a frame (and add a note about audio)
             GameState.PauseDialog();
+            Sfx.SfxMute = true;
+            Sfx.LongSfxMute++;
+            Sfx.TimedSfxMute++;
+            Sfx.ForceFieldSfxMute++;
             VxDecoder.Instance1.Reset();
             _decoderCts = new CancellationTokenSource();
             Metadata.MovieInfo info = Metadata.MovieFiles[(int)movieId];
@@ -90,6 +90,10 @@ namespace MphRead
 
         public void StopMovie()
         {
+            _frameCount = 0;
+            Rng.SetRng2(0);
+            Debug.Assert(_room != null);
+            _room.LoadRoom(resume: GameState.TransitionRoomId == -1);
             Sfx.SfxMute = false;
             Sfx.LongSfxMute--;
             Sfx.TimedSfxMute--;
