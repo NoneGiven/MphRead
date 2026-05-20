@@ -1149,7 +1149,7 @@ namespace MphRead
                 _freeRenderItems.Enqueue(item);
             }
             _nextPolygonId = 1;
-            if (ProcessFrame)
+            if (ProcessFrame && _room != null)
             {
                 GameState.ProcessFrame(this);
                 if (GameState.MatchState == MatchState.InProgress)
@@ -4865,6 +4865,11 @@ namespace MphRead
         public void AddPlayer(Hunter hunter, int recolor = 0, int team = -1, Vector3? position = null)
         {
             Scene.AddPlayer(hunter, recolor, team, position);
+        }
+
+        public void QueueMovie(int movieId)
+        {
+            Scene.StartMovie((Movie)movieId, FadeType.FadeOutInBlack, 0, FadeType.FadeOutBlack, 0, endGameAfter: true);
         }
 
         protected override void OnLoad()

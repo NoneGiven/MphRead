@@ -61,6 +61,7 @@ namespace MphRead
         private static string _mode = "auto-select";
         private static Language _language = Language.English;
         private static decimal _sfxVolume = 0.35m;
+        private static int _movieId = -1;
 
         public static void ShowMenuPrompts()
         {
@@ -636,6 +637,7 @@ namespace MphRead
                     roomString = $"{roomString} [{roomKey}] - {roomId}";
                     string modeString = _mode == "auto-select" ? "auto-select (Adventure or Battle)" : _mode;
                     string languageString = Paths.MphKey == Ver.AMHK0 ? "Korean" : _language.ToString();
+                    string movieString = _movieId == -1 ? "none" : Metadata.MovieDisplayInfo[_movieId];
                     Console.Clear();
                     Console.WriteLine($"MphRead Version {Program.Version}");
                     Console.WriteLine();
@@ -654,6 +656,7 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (F) FH Version: {fhKey} ({fhInfo[fhKey]})");
                     Console.WriteLine($"{X(s++)} (I) Language: {languageString}");
                     Console.WriteLine($"{X(s++)} (V) Volume: {_sfxVolume:0.00}");
+                    Console.WriteLine($"{X(s++)} (T) Movie Player: {movieString}");
                     Console.WriteLine($"{X(s++)} (A) Adventure Mode Settings...");
                     Console.WriteLine($"{X(s++)} (S) Match Settings...");
                     Console.WriteLine($"{X(s++)} (C) Features...");
@@ -766,27 +769,31 @@ namespace MphRead
                         {
                             selection = 10;
                         }
-                        else if (keyInfo.Key == ConsoleKey.A)
+                        else if (keyInfo.Key == ConsoleKey.T)
                         {
                             selection = 11;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.A)
+                        {
+                            selection = s - 4;
                             prompt = -2;
                             continue;
                         }
                         else if (keyInfo.Key == ConsoleKey.S)
                         {
-                            selection = 12;
+                            selection = s - 3;
                             prompt = -1;
                             continue;
                         }
                         else if (keyInfo.Key == ConsoleKey.C)
                         {
-                            selection = 13;
+                            selection = s - 2;
                             prompt = -3;
                             continue;
                         }
                         else if (keyInfo.Key == ConsoleKey.X)
                         {
-                            selection = 14;
+                            selection = s - 1;
                         }
                         else if (keyInfo.Key == ConsoleKey.UpArrow || keyInfo.Key == ConsoleKey.W)
                         {
@@ -842,6 +849,10 @@ namespace MphRead
                             {
                                 _sfxVolume = 0.35m;
                                 Sfx.Volume = (float)_sfxVolume;
+                            }
+                            else if (selection == 11)
+                            {
+                                _movieId = -1;
                             }
                         }
                         else if (keyInfo.Key == ConsoleKey.Add || keyInfo.Key == ConsoleKey.OemPlus
@@ -970,6 +981,18 @@ namespace MphRead
                             {
                                 _sfxVolume = Math.Min(_sfxVolume + 0.05m, 1.5m);
                                 Sfx.Volume = (float)_sfxVolume;
+                            }
+                            else if (selection == 11)
+                            {
+                                _movieId++;
+                                if (_movieId == 13 || _movieId == 34)
+                                {
+                                    _movieId++;
+                                }
+                                if (_movieId > 35)
+                                {
+                                    _movieId = -1;
+                                }
                             }
                         }
                         else if (keyInfo.Key == ConsoleKey.Subtract || keyInfo.Key == ConsoleKey.OemMinus
@@ -1102,6 +1125,18 @@ namespace MphRead
                                 _sfxVolume = Math.Max(_sfxVolume - 0.05m, 0);
                                 Sfx.Volume = (float)_sfxVolume;
                             }
+                            else if (selection == 11)
+                            {
+                                _movieId--;
+                                if (_movieId == 13 || _movieId == 34)
+                                {
+                                    _movieId--;
+                                }
+                                if (_movieId < -1)
+                                {
+                                    _movieId = 35;
+                                }
+                            }
                         }
                     }
                     else
@@ -1160,7 +1195,11 @@ namespace MphRead
                 }
                 _applySettings = true;
                 using var renderer = new RenderWindow();
-                if (room != "none")
+                if (_movieId != -1)
+                {
+                    renderer.QueueMovie(_movieId);
+                }
+                else if (room != "none")
                 {
                     if (!fhRoom)
                     {

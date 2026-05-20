@@ -1270,6 +1270,46 @@ namespace MphRead
                 BottomScreenPath = bottomScreenPath;
             }
         }
+
+        public static readonly ImmutableArray<string> MovieDisplayInfo =
+        [
+            "Opening (01_top/01_bot) - 0",
+            "Story Intro (02_top/02_bot) - 1",
+            "Good Ending (03_top/03_bot) - 2",
+            "Alinos Landing (04_top) - 3",
+            "Alinos Takeoff (05_top) - 4",
+            "Celestial Archives Landing (06_top) - 5",
+            "Celestial Archives Takeoff (07_top) - 6",
+            "Arcterra Landing (08_top) - 7",
+            "Arcterra Takeoff (09_top) - 8",
+            "VDO Landing (10_top) - 9",
+            "VDO Takeoff (11_top) - 10",
+            "Oubliette Unlock (12_top/12_bot) - 11",
+            "Oubliette Landing (13_top) - 12",
+            "Unused (14_top/14_bot) - 13",
+            "Octolith Obtained(15_top/15_bot) - 14",
+            "Cretaphid V1 Intro (16_top/16_bot) - 15",
+            "Cretaphid V1 Defeat (17_top/17_bot) - 16",
+            "Cretaphid V2 Intro (18_top/18_bot) - 17",
+            "Cretaphid V2 Defeat (19_top/19_bot) - 18",
+            "Cretaphid V3 Intro (20_top/20_bot) - 19",
+            "Cretaphid V3 Defeat (21_top/21_bot) - 20",
+            "Cretaphid V4 Intro (22_top/22_bot) - 21",
+            "Cretaphid V4 Defeat (23_top/23_bot) - 22",
+            "Slench 1 Intro (24_top/24_bot) - 23",
+            "Slench 1 Defeat (25_top/25_bot) - 24",
+            "Slench 2 Intro (26_top/26_bot) - 25",
+            "Slench 2 Defeat (27_top/27_bot) - 26",
+            "Slench 3 Intro (28_top/28_bot) - 27",
+            "Slench 3 Defeat (29_top/29_bot) - 28",
+            "Slench 4 Intro (30_top/30_bot) - 29",
+            "Slench 4 Defeat (31_top/31_bot) - 30",
+            "Gorea Intro (32_top/32_bot) - 31",
+            "Bad Ending Part 1 (33_top/33_bot) - 32",
+            "Gorea 2 Intro (34_top/34_bot) - 33",
+            "Unused (35_top/35_bot) - 34",
+            "Bad Ending Part 2 (36_top/36_bot) - 35"
+        ];
     }
 
     public enum Movie
