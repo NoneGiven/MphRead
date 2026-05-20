@@ -657,7 +657,24 @@ namespace MphRead
                     {
                         // yes to ship hatch (enter)
                         EnterShip(); // the game does this in the cockpit
-                        scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, AfterFade.EnterShip);
+                        Debug.Assert(scene.Room != null);
+                        Movie movieId = scene.Room.RoomId switch
+                        {
+                            27 => Movie.AlinosTakeoff,
+                            45 => Movie.CATakeoff,
+                            65 => Movie.VDOTakeoff,
+                            77 => Movie.ArcterraTakeoff,
+                            _ => Movie.None
+                        };
+                        if (movieId != Movie.None && !Cheats.SkipPlanetIntros)
+                        {
+                            scene.StartMovie(movieId, FadeType.FadeOutInWhite, 20 / 30f,
+                                FadeType.FadeOutBlack, 5 / 30f, afterMovieAction: AfterMovie.EndGame);
+                        }
+                        else
+                        {
+                            scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, AfterFade.EnterShip);
+                        }
                         // mustodo: stop music
                         // todo: fade SFX
                         Sfx.Instance.PlaySample((int)SfxId.RETURN_TO_SHIP_YES, source: null, loop: false,

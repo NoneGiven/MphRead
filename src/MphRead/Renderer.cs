@@ -2827,6 +2827,7 @@ namespace MphRead
         private float _fadeStart = 0;
         private float _fadeLength = 0;
         private float _fadePercent = 0;
+        private bool _fadeEnded = false;
         private AfterFade _afterFade = AfterFade.None;
 
         public void SetFade(FadeType type, float length, bool overwrite, AfterFade afterFade = AfterFade.None)
@@ -2868,6 +2869,7 @@ namespace MphRead
             _fadeStart = _globalElapsedTime;
             _fadeLength = length;
             _afterFade = afterFade;
+            _fadeEnded = false;
         }
 
         private void UpdateFade()
@@ -2879,8 +2881,20 @@ namespace MphRead
                 if (_fadePercent >= 1)
                 {
                     _fadePercent = 1;
-                    EndFade();
+                    if (!_fadeEnded)
+                    {
+                        EndFade();
+                        _fadeEnded = true;
+                    }
                 }
+                else
+                {
+                    _fadeEnded = false;
+                }
+            }
+            else
+            {
+                _fadeEnded = false;
             }
             GL.ClearColor(_clearColor);
         }
