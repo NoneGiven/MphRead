@@ -85,6 +85,7 @@ namespace MphRead
             GL.BindTexture(TextureTarget.Texture2D, 0);
             _lastRenderedMovieFrameIndex = 0;
             _movieFrameIndex = 0;
+            _movieFrameCount = 0;
         }
 
         public void StopMovie()
