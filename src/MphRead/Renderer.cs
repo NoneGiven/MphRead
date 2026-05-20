@@ -2798,6 +2798,8 @@ namespace MphRead
             public Movie? AfterMovieId { get; set; } // for bad ending
             public FadeType AfterFadeType { get; set; }
             public float AfterFadeLength { get; set; }
+            public Vector3? AfterPosition { get; set; }
+            public Vector3? AfterFacing { get; set; }
         }
 
         private readonly MovieFadeSettings _movieSettings = new MovieFadeSettings();
@@ -2917,6 +2919,13 @@ namespace MphRead
             }
             else if (_afterFade == AfterFade.StopMovie)
             {
+                if (_movieSettings.AfterPosition.HasValue)
+                {
+                    Vector3 position = _movieSettings.AfterPosition.Value;
+                    Vector3 facing = _movieSettings.AfterFacing ?? PlayerEntity.Main.FacingVector;
+                    NodeRef newNodeRef = GetNodeRefByName("rmMain");
+                    PlayerEntity.Main.Reposition(position, facing, newNodeRef);
+                }
                 StopMovie();
             }
             if (_fadeType == FadeType.FadeOutInBlack)

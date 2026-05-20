@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -12,6 +11,7 @@ using System.Threading.Tasks;
 using MphRead.Formats;
 using MphRead.Sound;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -31,7 +31,8 @@ namespace MphRead
         private readonly byte[] _imageBuffer = new byte[_frameWidth * _frameHeight * 3];
         private CancellationTokenSource _decoderCts = null!;
 
-        public void StartMovie(Movie movieId, FadeType fadeToMovieType, float fadeToMovieLength, FadeType fadeFromMovieType, float fadeFromMovieLength)
+        public void StartMovie(Movie movieId, FadeType fadeToMovieType, float fadeToMovieLength, FadeType fadeFromMovieType, float fadeFromMovieLength,
+            Vector3? afterPosition = null, Vector3? afterFacing = null)
         {
             // on the frame when the whiteout completes (middle frame if the type is out+in, last frame if out only), the scene needs to pause
             // it can start playing the movie then or delay a couple frames to match the game, but the movie plays during the end of the fade
@@ -44,8 +45,11 @@ namespace MphRead
             // - end game/credits/menu/etc.
             // follow-up todos: add a menu option to watch the opening movie (and credits too, although those aren't a movie)
             _movieSettings.MovieId = movieId;
+            _movieSettings.AfterMovieId = null;
             _movieSettings.AfterFadeType = fadeFromMovieType;
             _movieSettings.AfterFadeLength = fadeFromMovieLength;
+            _movieSettings.AfterPosition = afterPosition;
+            _movieSettings.AfterFacing = afterFacing;
             SetFade(fadeToMovieType, fadeToMovieLength, overwrite: true, AfterFade.PlayMovie);
         }
 

@@ -413,7 +413,7 @@ namespace MphRead.Entities
             GameState.StorySave.CheckpointEntityId = -1;
             if (GameState.TransitionRoomId == -1)
             {
-                GameState.TransitionRoomId = RoomId;
+                GameState.TransitionRoomId = _scene.RoomId;
             }
             _scene.ResetFrameCount();
             Rng.SetRng2(0);
@@ -713,13 +713,30 @@ namespace MphRead.Entities
                     }
                     if (GameState.StorySave.GetRoomState(_scene.RoomId, spawner.Id) != 0)
                     {
-                        // skhere
-                        // todo: play movie and defer repositioning
-                        _scene.SetFade(FadeType.FadeInBlack, 5 / 30f, overwrite: true);
+                        Movie movieId;
+                        if (spawner.Data.EnemyType == EnemyType.Cretaphid)
+                        {
+                            movieId = spawner.Data.Fields.S05.EnemySubtype switch
+                            {
+                                3 => Movie.CretaphidArcterra2Intro,
+                                2 => Movie.CretaphidAlinso2Intro,
+                                1 => Movie.CretaphidVDO1Intro,
+                                _ => Movie.CretaphidCA1Intro // 0
+                            };
+                        }
+                        else // if (spawner.Data.EnemyType == EnemyType.Slench)
+                        {
+                            movieId = _scene.RoomId switch
+                            {
+                                76 => Movie.SlenchVDO2Intro,
+                                64 => Movie.SlenchCA2Intro,
+                                82 => Movie.SlenchArcterra1Intro,
+                                _ => Movie.SlenchAlinos1Intro // 35
+                            };
+                        }
                         Vector3 newPosition = (targetDoor.Position + targetDoor.FacingVector * 0.75f)
                             .AddY(Fixed.ToFloat(-PlayerEntity.Main.Values.MinPickupHeight));
-                        NodeRef newNodeRef = GetNodeRefByName("rmMain");
-                        PlayerEntity.Main.Reposition(newPosition, targetDoor.FacingVector, newNodeRef);
+                        _scene.StartMovie(movieId, FadeType.FadeOutInBlack, 0, FadeType.FadeOutInBlack, 5 / 30f, newPosition, targetDoor.FacingVector);
                     }
                     break;
                 }
