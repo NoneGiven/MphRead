@@ -2795,7 +2795,7 @@ namespace MphRead
         private class MovieFadeSettings
         {
             public Movie MovieId { get; set; }
-            public Movie AfterMovieId { get; set; } // for bad ending
+            public Movie? AfterMovieId { get; set; } // for bad ending
             public FadeType AfterFadeType { get; set; }
             public float AfterFadeLength { get; set; }
         }
