@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -62,7 +63,6 @@ namespace MphRead
             // - resume with updated position/facing/node ref
             // - do room transition and then resume
             // - end game/credits/menu/etc.
-            // follow-up todos: add a menu option to watch the opening movie (and credits too, although those aren't a movie)
             _movieSettings.MovieId = movieId;
             _movieSettings.AfterMovieId = afterMovieId;
             _movieSettings.AfterFadeType = fadeFromMovieType;
@@ -333,6 +333,37 @@ namespace MphRead.Formats
             _vxFrames?.Clear();
         }
 
+        public async Task ExportAll()
+        {
+            int i = 0;
+            var files = Directory.EnumerateFiles(Paths.Combine(Paths.FileSystem, "movies")).ToList();
+            foreach (string path in files)
+            {
+                if (Path.GetExtension(path) == ".vx")
+                {
+                    Console.WriteLine($"Exporting {++i} of {files.Count}: {Path.GetFileName(path)}");
+                    await Decode(path, writeFiles: true);
+                }
+            }
+            Console.WriteLine("Done.");
+        }
+
+        public async Task Export(string filePath)
+        {
+            string path = Paths.Combine(Paths.FileSystem, "movies", filePath);
+            if (!File.Exists(path))
+            {
+                path = Paths.Combine(Paths.FileSystem, filePath);
+                if (!File.Exists(path))
+                {
+                    path = filePath;
+                }
+            }
+            Console.WriteLine("Exporting...");
+            await Decode(path, writeFiles: true);
+            Console.WriteLine("Done.");
+        }
+
         public async Task Decode(string filePath, bool writeFiles = false, CancellationToken token = default)
         {
             using FileStream fs = File.OpenRead(filePath);
@@ -347,7 +378,11 @@ namespace MphRead.Formats
 
         public async Task Decode(Stream stream, string filename, bool writeFiles = false, CancellationToken token = default)
         {
-            string folder = Path.Combine(@"C:\Users\auser\Temp\movie", Path.GetFileNameWithoutExtension(filename));
+            string folder = Paths.Combine(Paths.Export, Path.GetFileNameWithoutExtension(filename));
+            if (writeFiles)
+            {
+                Directory.CreateDirectory(folder);
+            }
             using var reader = new BinaryReader(stream);
             _nextPlaneBufferIndex = 0;
             _framesQueued = 0;
@@ -448,7 +483,7 @@ namespace MphRead.Formats
             AudioFrame? prevAudioFrame = null;
             for (int i = 0; i < FrameCount; i++)
             {
-                while (_framesQueued >= 4 && !token.IsCancellationRequested) // sktodo: enable or disable this behavior for realtime vs. export
+                while (!writeFiles && _framesQueued >= 4 && !token.IsCancellationRequested)
                 {
                     try
                     {
@@ -517,7 +552,6 @@ namespace MphRead.Formats
 
             if (writeFiles && !UseStaticBuffers)
             {
-                Directory.CreateDirectory(folder);
                 int f = 0;
                 foreach (VxFrame vxFrame in _vxFrames)
                 {

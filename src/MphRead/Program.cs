@@ -62,6 +62,19 @@ namespace MphRead
                 {
                     SoundRead.ExportAllFh();
                 }
+                else if (exportValue.ToLower() == "movie")
+                {
+                    TryGetArgument(arguments, "export", "e", out Argument? exportArgument);
+                    Formats.VxDecoder.Instance1.Reset();
+                    if (exportArgument!.Value.ValueTwo != null)
+                    {
+                        Formats.VxDecoder.Instance1.Export(exportArgument!.Value.ValueTwo).GetAwaiter().GetResult();
+                    }
+                    else
+                    {
+                        Formats.VxDecoder.Instance1.ExportAll().GetAwaiter().GetResult();
+                    }
+                }
                 else
                 {
                     bool firstHunt = arguments.Any(a => a.Name == "fh");
