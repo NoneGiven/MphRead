@@ -43,9 +43,9 @@ namespace MphRead
             // - do room transition and then resume
             // - end game/credits/menu/etc.
             // follow-up todos: add a menu option to watch the opening movie (and credits too, although those aren't a movie)
-            AfterFadeSettings.MovieId = movieId;
-            AfterFadeSettings.AfterFadeType = fadeFromMovieType;
-            AfterFadeSettings.AfterFadeLength = fadeFromMovieLength;
+            _movieSettings.MovieId = movieId;
+            _movieSettings.AfterFadeType = fadeFromMovieType;
+            _movieSettings.AfterFadeLength = fadeFromMovieLength;
             SetFade(fadeToMovieType, fadeToMovieLength, overwrite: true, AfterFade.PlayMovie);
         }
 
@@ -113,7 +113,7 @@ namespace MphRead
                 if (frameIndex == _movieFrameTotal)
                 {
                     _movieFrameCount = Int32.MaxValue;
-                    SetFade(AfterFadeSettings.AfterFadeType, AfterFadeSettings.AfterFadeLength, overwrite: true, AfterFade.StopMovie);
+                    SetFade(_movieSettings.AfterFadeType, _movieSettings.AfterFadeLength, overwrite: true, AfterFade.StopMovie);
                 }
                 else if (frameIndex < _movieFrameTotal)
                 {

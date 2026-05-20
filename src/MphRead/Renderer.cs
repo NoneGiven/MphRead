@@ -81,14 +81,6 @@ namespace MphRead
         EnterShip
     }
 
-    public class MovieFadeSettings
-    {
-        public Movie MovieId { get; set; }
-        public Movie AfterMovieId { get; set; } // for bad ending
-        public FadeType AfterFadeType { get; set; }
-        public float AfterFadeLength { get; set; }
-    }
-
     public partial class Scene
     {
         public Vector2i Size { get; set; }
@@ -2800,7 +2792,15 @@ namespace MphRead
             GL.Uniform3(_shaderLocations.Light2Color, color);
         }
 
-        public MovieFadeSettings AfterFadeSettings { get; } = new MovieFadeSettings();
+        private class MovieFadeSettings
+        {
+            public Movie MovieId { get; set; }
+            public Movie AfterMovieId { get; set; } // for bad ending
+            public FadeType AfterFadeType { get; set; }
+            public float AfterFadeLength { get; set; }
+        }
+
+        private readonly MovieFadeSettings _movieSettings = new MovieFadeSettings();
         private FadeType _fadeType = FadeType.None;
         public FadeType FadeType => _fadeType;
         private float _fadeColor = 0;
@@ -2913,7 +2913,7 @@ namespace MphRead
             }
             if (_afterFade == AfterFade.PlayMovie)
             {
-                PlayMovie(AfterFadeSettings.MovieId);
+                PlayMovie(_movieSettings.MovieId);
             }
             else if (_afterFade == AfterFade.StopMovie)
             {
