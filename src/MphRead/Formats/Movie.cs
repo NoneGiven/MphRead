@@ -331,10 +331,12 @@ namespace MphRead.Formats
         public void Reset()
         {
             _vxFrames?.Clear();
+            UseStaticBuffers = true;
         }
 
         public async Task ExportAll()
         {
+            UseStaticBuffers = false;
             int i = 0;
             var files = Directory.EnumerateFiles(Paths.Combine(Paths.FileSystem, "movies")).ToList();
             foreach (string path in files)
@@ -360,6 +362,7 @@ namespace MphRead.Formats
                 }
             }
             Console.WriteLine("Exporting...");
+            UseStaticBuffers = false;
             await Decode(path, writeFiles: true);
             Console.WriteLine("Done.");
         }
