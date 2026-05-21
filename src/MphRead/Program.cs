@@ -10,7 +10,7 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 33, 0, 0);
+        public static Version Version { get; } = new Version(0, 34, 0, 0);
         private static readonly Version _minExtractVersion = new Version(0, 19, 0, 0);
 
         private static void Main(string[] args)
@@ -61,6 +61,19 @@ namespace MphRead
                 else if (exportValue.ToLower() == "fhsfx")
                 {
                     SoundRead.ExportAllFh();
+                }
+                else if (exportValue.ToLower() == "movie")
+                {
+                    TryGetArgument(arguments, "export", "e", out Argument? exportArgument);
+                    Formats.VxDecoder.Instance1.Reset();
+                    if (exportArgument!.Value.ValueTwo != null)
+                    {
+                        Formats.VxDecoder.Instance1.Export(exportArgument!.Value.ValueTwo).GetAwaiter().GetResult();
+                    }
+                    else
+                    {
+                        Formats.VxDecoder.Instance1.ExportAll().GetAwaiter().GetResult();
+                    }
                 }
                 else
                 {

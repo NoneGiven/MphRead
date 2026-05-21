@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -374,7 +373,7 @@ namespace MphRead
                     MatchTime = 90 / 30f;
                     scene.SetFade(FadeType.None, length: 0, overwrite: true);
                     _stateChanged = true;
-                    _matchEndTime = scene.ElapsedTime;
+                    _matchEndTime = scene.GlobalElapsedTime;
                     Sfx.Instance.StopFreeSfxScripts();
                     Sfx.Instance.StopAllSound();
                     PlayerEntity.Main.StopLongSfx();
@@ -393,7 +392,7 @@ namespace MphRead
                         _stateChanged = false;
                         winner.SetUpMatchEndCamera();
                     }
-                    PlayerEntity.Main.UpdateMatchEndCamera(winner, scene.ElapsedTime - _matchEndTime);
+                    PlayerEntity.Main.UpdateMatchEndCamera(winner, scene.GlobalElapsedTime - _matchEndTime);
                 }
                 else
                 {
@@ -441,11 +440,21 @@ namespace MphRead
             return (AreaState)(((int)save.BossFlags >> (2 * areaId)) & 3);
         }
 
+        public static bool QueuedOublietteUnlockMessage { get; set; }
+
         public static void ModeStateAdventure(Scene scene)
         {
             PlayerEntity.Main.SaveStatus();
             if ((StorySave.Areas & 0x100) == 0)
             {
+                if (QueuedOublietteUnlockMessage && scene.FadeType == FadeType.FadeInBlack && !scene.MoviePlaying)
+                {
+                    StorySave.Areas |= 0x100;
+                    StorySave.CurrentOctoliths = 0;
+                    // GUNSHIP TRANSMISSION severe timefield disruption detected in the vicinity of the ALIMBIC CLUSTER.
+                    PlayerEntity.Main.ShowDialog(DialogType.Okay, messageId: 43);
+                    QueuedOublietteUnlockMessage = false;
+                }
                 for (int i = 0; i < scene.MessageQueue.Count; i++)
                 {
                     MessageInfo message = scene.MessageQueue[i];
@@ -453,11 +462,8 @@ namespace MphRead
                     {
                         if (StorySave.CurrentOctoliths == 0xFF)
                         {
-                            // todo: play movie and defer dialog
-                            StorySave.Areas |= 0x100;
-                            StorySave.CurrentOctoliths = 0;
-                            // GUNSHIP TRANSMISSION severe timefield disruption detected in the vicinity of the ALIMBIC CLUSTER.
-                            PlayerEntity.Main.ShowDialog(DialogType.Okay, messageId: 43);
+                            scene.StartMovie(Movie.OublietteUnlock, FadeType.FadeOutInWhite, 20 / 30f, FadeType.FadeOutInBlack, 5 / 30f);
+                            GameState.QueuedOublietteUnlockMessage = true;
                         }
                         else
                         {
@@ -492,7 +498,7 @@ namespace MphRead
                     if (message.Message == Message.LoadOubliette && message.ExecuteFrame == scene.FrameCount)
                     {
                         TransitionRoomId = 91; // Gorea_b1
-                        scene.SetFade(FadeType.FadeOutWhite, length: 10 / 30f, overwrite: true, AfterFade.LoadRoom);
+                        scene.StartMovie(Movie.Gorea1Intro, FadeType.FadeOutInWhite, 10 / 30f, FadeType.FadeOutInWhite, 10 / 30f);
                         break;
                     }
                 }
@@ -627,6 +633,7 @@ namespace MphRead
 
         private static bool _whiteoutStarted = false;
         private static bool _gameOverShown = false;
+        public static int QueuedOctolithMessageId { get; set; } = -1;
 
         public static void UpdateFrame(Scene scene)
         {
@@ -650,7 +657,24 @@ namespace MphRead
                     {
                         // yes to ship hatch (enter)
                         EnterShip(); // the game does this in the cockpit
-                        scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, AfterFade.EnterShip);
+                        Debug.Assert(scene.Room != null);
+                        Movie movieId = scene.Room.RoomId switch
+                        {
+                            27 => Movie.AlinosTakeoff,
+                            45 => Movie.CATakeoff,
+                            65 => Movie.VDOTakeoff,
+                            77 => Movie.ArcterraTakeoff,
+                            _ => Movie.None
+                        };
+                        if (movieId != Movie.None && !Cheats.SkipPlanetIntros)
+                        {
+                            scene.StartMovie(movieId, FadeType.FadeOutInWhite, 20 / 30f,
+                                FadeType.FadeOutBlack, 5 / 30f, afterMovieAction: AfterMovie.EndGame);
+                        }
+                        else
+                        {
+                            scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, AfterFade.EnterShip);
+                        }
                         // mustodo: stop music
                         // todo: fade SFX
                         Sfx.Instance.PlaySample((int)SfxId.RETURN_TO_SHIP_YES, source: null, loop: false,
@@ -803,6 +827,14 @@ namespace MphRead
                     }
                 }
             }
+            // start displaying dialog during the fade back in after the movie
+            if (QueuedOctolithMessageId != -1 && scene.FadeType == FadeType.FadeInWhite && !scene.MoviePlaying)
+            {
+                // OCTOLITH ACQUIRED you obtained an OCTOLITH!
+                PlayerEntity.Main.ShowDialog(DialogType.Event, messageId: 7, param1: (int)EventType.Octolith);
+                scene.SendMessage(Message.ShowPrompt, PlayerEntity.Main, null, param1: QueuedOctolithMessageId, param2: 0, delay: 1);
+                QueuedOctolithMessageId = -1;
+            }
             float countdown = PlayerEntity.Main.DeathCountdown;
             if (SinglePlayer && PlayerEntity.Main.Health == 0 && countdown > 0)
             {
@@ -836,6 +868,14 @@ namespace MphRead
                     _whiteoutStarted = true;
                 }
             }
+        }
+
+        public static void UpdateBossFlags(int areaId)
+        {
+            uint flags = (uint)StorySave.BossFlags;
+            flags &= (uint)~(3 << (2 * areaId));
+            flags |= (uint)(1 << (2 * areaId));
+            StorySave.BossFlags = (BossFlags)flags;
         }
 
         private static void EnterShip()
@@ -1405,8 +1445,13 @@ namespace MphRead
             {
                 StorySave.WeaponSlots[2] = (int)BeamType.None;
             }
-            StorySave.RoomState[91 - 27] = new byte[60];
-            StorySave.RoomState[92 - 27] = new byte[60];
+            for (int r = 91; r <= 92; r++)
+            {
+                for (int b = 0; b < 60; b++)
+                {
+                    StorySave.RoomState[r - 27, b] = 0;
+                }
+            }
             File.WriteAllText(GetSavePath(Menu.SaveSlot), JsonSerializer.Serialize(StorySave, _jsonOpt));
         }
 
@@ -1558,16 +1603,18 @@ namespace MphRead
             EscapeState = EscapeState.None;
             EscapeTimer = -1;
             EscapePaused = false;
+            QueuedOctolithMessageId = -1;
+            QueuedOublietteUnlockMessage = false;
         }
     }
 
     public class StorySave
     {
-        public byte[][] RoomState { get; init; }
+        public byte[,] RoomState { get; init; } = new byte[66, 60];
         public byte[] VisitedRooms { get; init; } = new byte[9];
         public byte[] TriggerState { get; init; } = new byte[4];
         public byte[] Logbook { get; init; } = new byte[68];
-        public byte[][] EnemyEncounters { get; init; }
+        public byte[,] EnemyEncounters { get; init; } = new byte[9, 8];
         public int ScanCount { get; set; }
         public int EquipmentCount { get; set; }
         public int CheckpointEntityId { get; set; } = -1;
@@ -1590,16 +1637,6 @@ namespace MphRead
 
         public StorySave()
         {
-            RoomState = new byte[66][];
-            for (int i = 0; i < RoomState.Length; i++)
-            {
-                RoomState[i] = new byte[60];
-            }
-            EnemyEncounters = new byte[8][];
-            for (int i = 0; i < EnemyEncounters.Length; i++)
-            {
-                EnemyEncounters[i] = new byte[8];
-            }
             PlayerValues values = Metadata.PlayerValues[0];
             Health = HealthMax = values.EnergyTank - 1;
             Ammo[0] = AmmoMax[0] = 400;
@@ -1650,10 +1687,10 @@ namespace MphRead
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
             int pairMask = 3 << pairIndex;
-            if ((RoomState[roomId][byteIndex] & pairMask) == 0)
+            if ((RoomState[roomId, byteIndex] & pairMask) == 0)
             {
-                RoomState[roomId][byteIndex] &= (byte)~pairMask;
-                RoomState[roomId][byteIndex] |= (byte)((active ? activeState : inactiveState) << pairIndex);
+                RoomState[roomId, byteIndex] &= (byte)~pairMask;
+                RoomState[roomId, byteIndex] |= (byte)((active ? activeState : inactiveState) << pairIndex);
             }
             return GetRoomState(roomId + 27, entityId);
         }
@@ -1671,7 +1708,7 @@ namespace MphRead
             roomId -= 27;
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
-            return ((RoomState[roomId][byteIndex] >> pairIndex) & 3) - 1;
+            return ((RoomState[roomId, byteIndex] >> pairIndex) & 3) - 1;
         }
 
         public void SetRoomState(int roomId, int entityId, int state)
@@ -1685,8 +1722,8 @@ namespace MphRead
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
             int pairMask = 3 << pairIndex;
-            RoomState[roomId][byteIndex] &= (byte)~pairMask;
-            RoomState[roomId][byteIndex] |= (byte)(state << pairIndex);
+            RoomState[roomId, byteIndex] &= (byte)~pairMask;
+            RoomState[roomId, byteIndex] |= (byte)(state << pairIndex);
             return;
         }
 
@@ -1868,16 +1905,8 @@ namespace MphRead
 
         public void CopyTo(StorySave other)
         {
-            for (int i = 0; i < RoomState.Length; i++)
-            {
-                byte[] source = RoomState[i];
-                Array.Copy(source, other.RoomState[i], source.Length);
-            }
-            for (int i = 0; i < EnemyEncounters.Length; i++)
-            {
-                byte[] source = EnemyEncounters[i];
-                Array.Copy(source, other.EnemyEncounters[i], source.Length);
-            }
+            Array.Copy(RoomState, other.RoomState, RoomState.GetLength(0) * RoomState.GetLength(1));
+            Array.Copy(EnemyEncounters, other.EnemyEncounters, EnemyEncounters.GetLength(0) * EnemyEncounters.GetLength(1));
             VisitedRooms.CopyTo(other.VisitedRooms, index: 0);
             TriggerState.CopyTo(other.TriggerState, index: 0);
             Logbook.CopyTo(other.Logbook, index: 0);

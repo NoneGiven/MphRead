@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -393,11 +394,11 @@ namespace MphRead.Entities
             }
         }
 
-        private static readonly IReadOnlyList<bool> _keepEntities = new bool[27]
-        {
+        private static readonly ImmutableArray<bool> _keepEntities =
+        [
             false, false, false, false, false, false, false, false, false, false, false, false, false,
             false, false, false, false, false, false, false, false, true, true, false, true, true, true
-        };
+        ];
 
         public DoorEntity? LoaderDoor { get; set; }
         public int LoadEntityId { get; set; } = -1;
@@ -408,7 +409,16 @@ namespace MphRead.Entities
             player.StopAllSfx();
             Hunter hunter = player.Hunter;
             int recolor = player.Recolor;
+            GameState.StorySave.CheckpointRoomId = -1;
+            GameState.StorySave.CheckpointEntityId = -1;
+            if (GameState.TransitionRoomId == -1)
+            {
+                GameState.TransitionRoomId = _scene.RoomId;
+            }
+            _scene.ResetFrameCount();
+            Rng.SetRng2(0);
             StartTransition(fromDoor: false, resume);
+            _scene.ClearEffects();
             if (!resume)
             {
                 PlayerEntity.Reset();
@@ -430,13 +440,6 @@ namespace MphRead.Entities
                 _scene.InitEntity(player);
                 _scene.InitEntity(player.Halfturret);
             }
-            FadeType fadeType = _scene.FadeType == FadeType.FadeOutWhite ? FadeType.FadeInWhite : FadeType.FadeInBlack;
-            float length = 10 / 30f;
-            if (resume)
-            {
-                length = 5 / 30f;
-            }
-            _scene.SetFade(fadeType, length, overwrite: true);
         }
 
         private void StartTransition(bool fromDoor, bool resume = false)
@@ -710,12 +713,31 @@ namespace MphRead.Entities
                     }
                     if (GameState.StorySave.GetRoomState(_scene.RoomId, spawner.Id) != 0)
                     {
-                        // todo: play movie and defer repositioning
-                        _scene.SetFade(FadeType.FadeInBlack, 5 / 30f, overwrite: true);
+                        Movie movieId;
+                        if (spawner.Data.EnemyType == EnemyType.Cretaphid)
+                        {
+                            movieId = spawner.Data.Fields.S05.EnemySubtype switch
+                            {
+                                3 => Movie.CretaphidArcterra2Intro,
+                                2 => Movie.CretaphidAlinso2Intro,
+                                1 => Movie.CretaphidVDO1Intro,
+                                _ => Movie.CretaphidCA1Intro // 0
+                            };
+                        }
+                        else // if (spawner.Data.EnemyType == EnemyType.Slench)
+                        {
+                            movieId = _scene.RoomId switch
+                            {
+                                76 => Movie.SlenchVDO2Intro,
+                                64 => Movie.SlenchCA2Intro,
+                                82 => Movie.SlenchArcterra1Intro,
+                                _ => Movie.SlenchAlinos1Intro // 35
+                            };
+                        }
                         Vector3 newPosition = (targetDoor.Position + targetDoor.FacingVector * 0.75f)
                             .AddY(Fixed.ToFloat(-PlayerEntity.Main.Values.MinPickupHeight));
-                        NodeRef newNodeRef = GetNodeRefByName("rmMain");
-                        PlayerEntity.Main.Reposition(newPosition, targetDoor.FacingVector, newNodeRef);
+                        // todo?: faster loading makes this transition kind of abrupt
+                        _scene.StartMovie(movieId, FadeType.FadeOutInBlack, 0, FadeType.FadeOutInBlack, 5 / 30f, newPosition, targetDoor.FacingVector);
                     }
                     break;
                 }

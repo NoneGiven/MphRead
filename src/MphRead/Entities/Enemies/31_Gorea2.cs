@@ -943,8 +943,9 @@ namespace MphRead.Entities.Enemies
                 Flags &= ~EnemyFlags.OnRadar;
                 _health = 1;
                 _sealSphere.SetDead();
-                // todo: movie/credits
-                _scene.SetFade(FadeType.FadeOutWhite, length: 60 / 30f, overwrite: true, AfterFade.EnterShip);
+                // todo: credits
+                _scene.StartMovie(Movie.GoodEnding, FadeType.FadeOutInWhite, 60 / 30f,
+                    FadeType.FadeOutBlack, 0, afterMovieAction: AfterMovie.EndGame);
             }
             if (Behavior03())
             {
@@ -984,7 +985,7 @@ namespace MphRead.Entities.Enemies
                 {
                     _currentTrigger = found;
                     GoreaFlags |= Gorea2Flags.Bit4 | Gorea2Flags.Bit5;
-                    _field22C = 90 * 2; // tood: FPS stuff
+                    _field22C = 90 * 2; // todo: FPS stuff
                 }
             }
         }

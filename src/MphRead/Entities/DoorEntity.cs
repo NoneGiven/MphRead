@@ -456,10 +456,19 @@ namespace MphRead.Entities
                 return;
             }
             Flags |= DoorFlags.Unlocked;
-            PlayerEntity.Main.DoorChimeSfxTimer = 2 / 30f;
-            if (!noLockAnimSfx)
+            // hack to prevent door SFX from playing after boss room transitions/movies
+            // UNIT2_B1, UNIT3_B1, UNIT1_B2, UNIT4_B2 (Cretaphid)
+            // UNIT1_B1, UNIT4_B1, UNIT2_B2, UNIT3_B2 (Slench)
+            // the game has its own weird hacks for this where fade state is checked in the timed SFX code.
+            // note: lock SFX is prevented by the frame count check in Process()
+            if (_scene.RoomId != 55 && _scene.RoomId != 71 && _scene.RoomId != 44 && _scene.RoomId != 88
+                && _scene.RoomId != 35 && _scene.RoomId != 82 && _scene.RoomId != 64 && _scene.RoomId != 76)
             {
-                PlayerEntity.Main.DoorUnlockSfxTimer = 2 / 30f;
+                PlayerEntity.Main.DoorChimeSfxTimer = 2 / 30f;
+                if (!noLockAnimSfx)
+                {
+                    PlayerEntity.Main.DoorUnlockSfxTimer = 2 / 30f;
+                }
             }
             _lock.SetAnimation(1, AnimFlags.NoLoop);
             _scene.SpawnEffect(114, UpVector, FacingVector, LockPosition); // lockDefeat

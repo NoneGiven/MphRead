@@ -385,6 +385,14 @@ namespace MphRead.Testing
                     size = 0x14;
                     embed = true;
                 }
+                else if (split[0] == "AIButton")
+                {
+                    type = "AiButton";
+                    getter = "";
+                    setter = "";
+                    size = 6;
+                    embed = true;
+                }
                 else if (byteEnums.TryGetValue(split[0], out string? value))
                 {
                     type = value;

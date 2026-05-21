@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using OpenTK.Mathematics;
@@ -377,6 +378,9 @@ namespace MphRead
                 + pos.Z * projectionMtx.Row2.W;
             if (w <= 0)
             {
+                // possible bug: in-game, if w == 0, dest is not written, but the caller's condition for using the value is w >= 0
+                // if w was ever exactly 0, garbage data from the stack location of dest would be read for the screen coordinates
+                Debug.Assert(w != 0);
                 dest = Vector2.Zero;
                 return w;
             }
@@ -413,6 +417,8 @@ namespace MphRead
             }
             else
             {
+                // see note above about possible in-game bug
+                Debug.Assert(depth != 0);
                 scaleInv = 0;
                 screenPos = Vector2.Zero;
                 return;

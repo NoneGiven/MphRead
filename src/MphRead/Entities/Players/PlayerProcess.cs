@@ -641,7 +641,14 @@ namespace MphRead.Entities
                 }
             }
             UpdateGunAnimation();
-            UpdateAnimFrames(_gunModel);
+            // Shock Coil needs to be updated (restarted) every frame to prevent the animation from jumping
+            // todo: bugfix: because Shock Coil restarts every frame, texcoord and other animations don't play
+            // (very noticeable with the display screen on Sylux's gun)
+            if (_scene.FrameCount != 0 && _scene.FrameCount % 2 == 0 // todo: FPS stuff
+                || CurrentWeapon == BeamType.ShockCoil && GunAnimation == GunAnimation.Shot)
+            {
+                _gunModel.UpdateAnimFrames();
+            }
             if (IsMainPlayer && _gunModel.AnimInfo.Frame[0] == 15 && _scene.FrameCount % 2 == 0 // todo: FPS stuff
                 && (GunAnimation == GunAnimation.Unknown9 || GunAnimation == GunAnimation.MissileShot))
             {
@@ -2114,7 +2121,7 @@ namespace MphRead.Entities
             {
                 if (IsBot)
                 {
-                    AiData.Flags2 |= AiFlags2.Bit14;
+                    AiData.Flags2 |= AiFlags2.AiStart;
                 }
             }
             else if (info.Message == Message.Impact)

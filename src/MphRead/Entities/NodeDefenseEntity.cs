@@ -12,6 +12,7 @@ namespace MphRead.Entities
         private readonly NodeDefenseEntityData _data;
         private readonly Matrix4 _circleScale;
         private readonly CollisionVolume _volume;
+        public CollisionVolume Volume => _volume;
         private readonly bool _defender = false;
 
         private int _currentTeam = 4;
@@ -26,6 +27,8 @@ namespace MphRead.Entities
         private float _spinSpeed = 0;
         private bool _contested = false;
         private bool _inProgress = false;
+        public bool Contested => _contested;
+        public bool InProgress => _inProgress;
 
         public int CurrentTeam => _currentTeam;
         public int OccupyingTeam => _occupyingTeam;

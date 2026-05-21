@@ -230,16 +230,6 @@ namespace MphRead.Entities
         private void DeactivateAndSendMessages()
         {
             bool updateSave = false;
-
-            void UpdateBossFlags()
-            {
-                uint flags = (uint)GameState.StorySave.BossFlags;
-                flags &= (uint)~(3 << (2 * _scene.AreaId));
-                flags |= (uint)(1 << (2 * _scene.AreaId));
-                GameState.StorySave.BossFlags = (BossFlags)flags;
-                updateSave = true;
-            }
-
             Flags &= ~SpawnerFlags.Active;
             GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
             if (_data.EnemyType != EnemyType.Hunter || _data.Fields.S09.EncounterType == 1)
@@ -248,22 +238,25 @@ namespace MphRead.Entities
                 int type = (int)_data.EnemyType;
                 if (type >= 0 && (type >> 3) < 8)
                 {
-                    GameState.StorySave.EnemyEncounters[_scene.AreaId][type >> 3] |= (byte)(1 << (type & 7));
+                    GameState.StorySave.EnemyEncounters[_scene.AreaId, type >> 3] |= (byte)(1 << (type & 7));
                 }
             }
             if (_data.EnemyType == EnemyType.Cretaphid)
             {
                 GameState.StorySave.Areas |= 3; // Alinos 1 & 2
-                UpdateBossFlags();
+                GameState.UpdateBossFlags(_scene.AreaId);
+                updateSave = true;
             }
             else if (_data.EnemyType == EnemyType.Slench)
             {
                 GameState.StorySave.Areas |= 0xF0; // VDO 1 & 2, Arcterra 1 & 2
-                UpdateBossFlags();
+                GameState.UpdateBossFlags(_scene.AreaId);
+                updateSave = true;
             }
             else if (_data.EnemyType == EnemyType.Gorea1A)
             {
-                UpdateBossFlags();
+                GameState.UpdateBossFlags(_scene.AreaId);
+                updateSave = true;
             }
             if (_entity1 != null)
             {

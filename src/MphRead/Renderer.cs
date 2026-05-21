@@ -76,7 +76,8 @@ namespace MphRead
         None,
         Exit,
         LoadRoom,
-        AfterMovie,
+        PlayMovie,
+        StopMovie,
         EnterShip
     }
 
@@ -281,6 +282,14 @@ namespace MphRead
             for (int i = 0; i < PlayerEntity.Players.Count; i++)
             {
                 PlayerEntity player = PlayerEntity.Players[i];
+                if (player.LoadFlags.TestFlag(LoadFlags.SlotActive))
+                {
+                    InsertEntityByType(player);
+                }
+            }
+            for (int i = 0; i < PlayerEntity.Players.Count; i++)
+            {
+                PlayerEntity player = PlayerEntity.Players[i];
                 if (player.IsBot)
                 {
                     player.AiData.InitializeAtLoad();
@@ -288,6 +297,22 @@ namespace MphRead
             }
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
             _inputMode = _cameraMode == CameraMode.Player ? InputMode.All : InputMode.CameraOnly;
+            if (GameState.SinglePlayer && !meta.FirstHunt && PlayerEntity.PlayerCount > 0 && !Cheats.SkipPlanetIntros)
+            {
+                Movie movieId = _room.RoomId switch
+                {
+                    27 => Movie.AlinosLanding,
+                    45 => Movie.CALanding,
+                    65 => Movie.VDOLanding,
+                    77 => Movie.ArcterraLanding,
+                    89 => Movie.OublietteLanding,
+                    _ => Movie.None
+                };
+                if (movieId != Movie.None)
+                {
+                    StartMovie(movieId, FadeType.FadeOutInBlack, 0, FadeType.FadeOutWhite, 5 / 30f, afterMovieAction: AfterMovie.StartGame);
+                }
+            }
         }
 
         public void SetRoomValues(RoomMetadata meta)
@@ -429,7 +454,6 @@ namespace MphRead
             {
                 if (player.LoadFlags.TestFlag(LoadFlags.SlotActive))
                 {
-                    InsertEntityByType(player);
                     player.Initialize();
                     InitEntity(player);
                     InitEntity(player.Halfturret);
@@ -1141,7 +1165,7 @@ namespace MphRead
                 _freeRenderItems.Enqueue(item);
             }
             _nextPolygonId = 1;
-            if (ProcessFrame)
+            if (ProcessFrame && _room != null)
             {
                 GameState.ProcessFrame(this);
                 if (GameState.MatchState == MatchState.InProgress)
@@ -1172,6 +1196,10 @@ namespace MphRead
                     _frameCount++;
                 }
                 GameState.UpdateTime(this);
+                if (_movieFrameIndex != -1)
+                {
+                    UpdateMovie();
+                }
             }
             _frameAdvanceLastFrame = _frameAdvanceOn;
         }
@@ -1438,31 +1466,35 @@ namespace MphRead
                     GL.BindTexture(TextureTarget.Texture2D, 0);
                     GL.ActiveTexture(TextureUnit.Texture0);
                 }
-                if (_fadeType != FadeType.None)
+            }
+            if (_movieFrameIndex != -1)
+            {
+                DrawMovieFrame();
+            }
+            if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player && _fadeType != FadeType.None)
+            {
+                float percent = _fadePercent;
+                if (_fadeIn)
                 {
-                    float percent = _fadePercent;
-                    if (_fadeIn)
-                    {
-                        percent = 1 - percent;
-                    }
-                    if (percent > 0)
-                    {
-                        GL.Uniform4(_shaderLocations.FadeColor, _fadeColor, _fadeColor, _fadeColor, percent);
-                        GL.Begin(PrimitiveType.TriangleStrip);
-                        // top right
-                        GL.TexCoord3(1f, 1f, 0f);
-                        GL.Vertex3(1f, 1f, 0f);
-                        // top left
-                        GL.TexCoord3(0f, 1f, 0f);
-                        GL.Vertex3(-1f, 1f, 0f);
-                        // bottom right
-                        GL.TexCoord3(1f, 0f, 0f);
-                        GL.Vertex3(1f, -1f, 0f);
-                        // bottom left
-                        GL.TexCoord3(0f, 0f, 0f);
-                        GL.Vertex3(-1f, -1f, 0f);
-                        GL.End();
-                    }
+                    percent = 1 - percent;
+                }
+                if (percent > 0)
+                {
+                    GL.Uniform4(_shaderLocations.FadeColor, _fadeColor, _fadeColor, _fadeColor, percent);
+                    GL.Begin(PrimitiveType.TriangleStrip);
+                    // top right
+                    GL.TexCoord3(1f, 1f, 0f);
+                    GL.Vertex3(1f, 1f, 0f);
+                    // top left
+                    GL.TexCoord3(0f, 1f, 0f);
+                    GL.Vertex3(-1f, 1f, 0f);
+                    // bottom right
+                    GL.TexCoord3(1f, 0f, 0f);
+                    GL.Vertex3(1f, -1f, 0f);
+                    // bottom left
+                    GL.TexCoord3(0f, 0f, 0f);
+                    GL.Vertex3(-1f, -1f, 0f);
+                    GL.End();
                 }
             }
             GL.Enable(EnableCap.DepthTest);
@@ -1661,6 +1693,11 @@ namespace MphRead
             {
                 SetFade(FadeType.None, length: 0, overwrite: true);
             }
+        }
+
+        public void ResetFrameCount()
+        {
+            _frameCount = 0;
         }
 
         // in-game: 64 effects, 96 elements, 200 particles
@@ -2003,6 +2040,17 @@ namespace MphRead
                 }
             }
             return count;
+        }
+
+        public void ClearEffects()
+        {
+            for (int i = 0; i < _activeElements.Count; i++)
+            {
+                EffectElementEntry element = _activeElements[i];
+                UnlinkEffectElement(element);
+                i--;
+                continue;
+            }
         }
 
         private void ProcessEffects()
@@ -2760,6 +2808,18 @@ namespace MphRead
             GL.Uniform3(_shaderLocations.Light2Color, color);
         }
 
+        private class MovieFadeSettings
+        {
+            public Movie MovieId { get; set; }
+            public Movie? AfterMovieId { get; set; } // for bad ending
+            public FadeType AfterFadeType { get; set; }
+            public float AfterFadeLength { get; set; }
+            public Vector3? AfterPosition { get; set; }
+            public Vector3? AfterFacing { get; set; }
+            public AfterMovie AfterMovieAction { get; set; }
+        }
+
+        private readonly MovieFadeSettings _movieSettings = new MovieFadeSettings();
         private FadeType _fadeType = FadeType.None;
         public FadeType FadeType => _fadeType;
         private float _fadeColor = 0;
@@ -2767,6 +2827,7 @@ namespace MphRead
         private float _fadeStart = 0;
         private float _fadeLength = 0;
         private float _fadePercent = 0;
+        private bool _fadeEnded = false;
         private AfterFade _afterFade = AfterFade.None;
 
         public void SetFade(FadeType type, float length, bool overwrite, AfterFade afterFade = AfterFade.None)
@@ -2808,6 +2869,7 @@ namespace MphRead
             _fadeStart = _globalElapsedTime;
             _fadeLength = length;
             _afterFade = afterFade;
+            _fadeEnded = false;
         }
 
         private void UpdateFade()
@@ -2819,19 +2881,37 @@ namespace MphRead
                 if (_fadePercent >= 1)
                 {
                     _fadePercent = 1;
-                    EndFade();
+                    if (!_fadeEnded)
+                    {
+                        EndFade();
+                        _fadeEnded = true;
+                    }
                 }
+                else
+                {
+                    _fadeEnded = false;
+                }
+            }
+            else
+            {
+                _fadeEnded = false;
             }
             GL.ClearColor(_clearColor);
         }
 
-        public void QuitGame()
+        private void QuitGame(bool enteringShip)
         {
+            _fadeType = FadeType.None;
             DoCleanup();
-            // todo: if this has callers in the future, determine save type
             if (GameState.SinglePlayer)
             {
-                Menu.NeededSave = Menu.SaveFromExit;
+                Menu.NeededSave = enteringShip ? Menu.SaveFromShip : Menu.SaveFromExit;
+                if (enteringShip)
+                {
+                    GameState.StorySave.Health = GameState.StorySave.HealthMax;
+                    GameState.StorySave.Ammo[0] = GameState.StorySave.AmmoMax[0];
+                    GameState.StorySave.Ammo[1] = GameState.StorySave.AmmoMax[1];
+                }
             }
             _close.Invoke();
         }
@@ -2846,6 +2926,7 @@ namespace MphRead
                 EnemyInstanceEntity.DestroyBeams();
                 Sound.Sfx.ShutDown();
                 OutputStop();
+                _decoderCts?.Cancel();
                 Selection.Clear();
             }
         }
@@ -2854,20 +2935,23 @@ namespace MphRead
         {
             if (_afterFade == AfterFade.Exit || _afterFade == AfterFade.EnterShip)
             {
-                _fadeType = FadeType.None;
-                DoCleanup();
-                if (GameState.SinglePlayer)
-                {
-                    Menu.NeededSave = _afterFade == AfterFade.EnterShip ? Menu.SaveFromShip : Menu.SaveFromExit;
-                    if (_afterFade == AfterFade.EnterShip)
-                    {
-                        GameState.StorySave.Health = GameState.StorySave.HealthMax;
-                        GameState.StorySave.Ammo[0] = GameState.StorySave.AmmoMax[0];
-                        GameState.StorySave.Ammo[1] = GameState.StorySave.AmmoMax[1];
-                    }
-                }
-                _close.Invoke();
+                QuitGame(enteringShip: _afterFade == AfterFade.EnterShip);
                 return;
+            }
+            if (_afterFade == AfterFade.PlayMovie)
+            {
+                PlayMovie(_movieSettings.MovieId);
+            }
+            else if (_afterFade == AfterFade.StopMovie)
+            {
+                if (_movieSettings.AfterPosition.HasValue)
+                {
+                    Vector3 position = _movieSettings.AfterPosition.Value;
+                    Vector3 facing = _movieSettings.AfterFacing ?? PlayerEntity.Main.FacingVector;
+                    NodeRef newNodeRef = GetNodeRefByName("rmMain");
+                    PlayerEntity.Main.Reposition(position, facing, newNodeRef);
+                }
+                StopMovie();
             }
             if (_fadeType == FadeType.FadeOutInBlack)
             {
@@ -2877,12 +2961,14 @@ namespace MphRead
             {
                 SetFade(FadeType.FadeInWhite, _fadeLength, overwrite: true);
             }
-            else if (_afterFade == AfterFade.LoadRoom || _afterFade == AfterFade.AfterMovie)
+            else if (_afterFade == AfterFade.LoadRoom)
             {
                 Debug.Assert(_room != null);
-                _room.LoadRoom(resume: _afterFade == AfterFade.AfterMovie);
+                _room.LoadRoom(resume: false);
+                FadeType fadeType = _fadeType == FadeType.FadeOutWhite ? FadeType.FadeInWhite : FadeType.FadeInBlack;
+                SetFade(fadeType, 10 / 30f, overwrite: true);
             }
-            else
+            else if (_afterFade != AfterFade.PlayMovie && _afterFade != AfterFade.StopMovie)
             {
                 _fadeType = FadeType.None;
                 _fadeColor = 0;
@@ -4809,6 +4895,11 @@ namespace MphRead
         public void AddPlayer(Hunter hunter, int recolor = 0, int team = -1, Vector3? position = null)
         {
             Scene.AddPlayer(hunter, recolor, team, position);
+        }
+
+        public void QueueMovie(int movieId)
+        {
+            Scene.StartMovie((Movie)movieId, FadeType.FadeOutInBlack, 0, FadeType.FadeOutBlack, 0, afterMovieAction: AfterMovie.EndGame);
         }
 
         protected override void OnLoad()

@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using System.Collections.Immutable;
 
 namespace MphRead
 {
@@ -1217,5 +1218,138 @@ namespace MphRead
                     new ModelMetadata("stageright_highlight", dir: MetaDir.Stage)
                 )
             ]);
+
+        public static readonly ImmutableArray<MovieInfo> MovieFiles =
+        [
+            /*  0 */ new MovieInfo(@"movies\01_top.vx", @"movies\01_bot.vx"),
+            /*  1 */ new MovieInfo(@"movies\02_top.vx", @"movies\02_bot.vx"),
+            /*  2 */ new MovieInfo(@"movies\03_top.vx", @"movies\03_bot.vx"),
+            /*  3 */ new MovieInfo(@"movies\04.vx"),
+            /*  4 */ new MovieInfo(@"movies\05.vx"),
+            /*  5 */ new MovieInfo(@"movies\06.vx"),
+            /*  6 */ new MovieInfo(@"movies\07.vx"),
+            /*  7 */ new MovieInfo(@"movies\08.vx"),
+            /*  8 */ new MovieInfo(@"movies\09.vx"),
+            /*  9 */ new MovieInfo(@"movies\10.vx"),
+            /* 10 */ new MovieInfo(@"movies\11.vx"),
+            /* 11 */ new MovieInfo(@"movies\12_top.vx", @"movies\12_bot.vx"),
+            /* 12 */ new MovieInfo(@"movies\13.vx"),
+            /* 13 */ null!,
+            /* 14 */ new MovieInfo(@"movies\15_top.vx", @"movies\15_bot.vx"),
+            /* 15 */ new MovieInfo(@"movies\16_top.vx", @"movies\16_bot.vx"),
+            /* 16 */ new MovieInfo(@"movies\17_top.vx", @"movies\17_bot.vx"),
+            /* 17 */ new MovieInfo(@"movies\18_top.vx", @"movies\18_bot.vx"),
+            /* 18 */ new MovieInfo(@"movies\19_top.vx", @"movies\19_bot.vx"),
+            /* 19 */ new MovieInfo(@"movies\20_top.vx", @"movies\20_bot.vx"),
+            /* 20 */ new MovieInfo(@"movies\21_top.vx", @"movies\21_bot.vx"),
+            /* 21 */ new MovieInfo(@"movies\22_top.vx", @"movies\22_bot.vx"),
+            /* 22 */ new MovieInfo(@"movies\23_top.vx", @"movies\23_bot.vx"),
+            /* 23 */ new MovieInfo(@"movies\24_top.vx", @"movies\24_bot.vx"),
+            /* 24 */ new MovieInfo(@"movies\25_top.vx", @"movies\25_bot.vx"),
+            /* 25 */ new MovieInfo(@"movies\26_top.vx", @"movies\26_bot.vx"),
+            /* 26 */ new MovieInfo(@"movies\27_top.vx", @"movies\27_bot.vx"),
+            /* 27 */ new MovieInfo(@"movies\28_top.vx", @"movies\28_bot.vx"),
+            /* 28 */ new MovieInfo(@"movies\29_top.vx", @"movies\29_bot.vx"),
+            /* 29 */ new MovieInfo(@"movies\30_top.vx", @"movies\30_bot.vx"),
+            /* 30 */ new MovieInfo(@"movies\31_top.vx", @"movies\31_bot.vx"),
+            /* 31 */ new MovieInfo(@"movies\32_top.vx", @"movies\32_bot.vx"),
+            /* 32 */ new MovieInfo(@"movies\33_top.vx", @"movies\33_bot.vx"),
+            /* 33 */ new MovieInfo(@"movies\34_top.vx", @"movies\34_bot.vx"),
+            /* 34 */ null!,
+            /* 35 */ new MovieInfo(@"movies\36_top.vx", @"movies\36_bot.vx")
+        ];
+
+        public class MovieInfo
+        {
+            public string TopScreenPath { get; }
+            public string? BottomScreenPath { get; }
+
+            public MovieInfo(string topScreenPath, string? bottomScreenPath = null)
+            {
+                TopScreenPath = topScreenPath;
+                BottomScreenPath = bottomScreenPath;
+            }
+        }
+
+        public static readonly ImmutableArray<string> MovieDisplayInfo =
+        [
+            "Opening (01_top/01_bot) - 0",
+            "Story Intro (02_top/02_bot) - 1",
+            "Good Ending (03_top/03_bot) - 2",
+            "Alinos Landing (04_top) - 3",
+            "Alinos Takeoff (05_top) - 4",
+            "Celestial Archives Landing (06_top) - 5",
+            "Celestial Archives Takeoff (07_top) - 6",
+            "Arcterra Landing (08_top) - 7",
+            "Arcterra Takeoff (09_top) - 8",
+            "VDO Landing (10_top) - 9",
+            "VDO Takeoff (11_top) - 10",
+            "Oubliette Unlock (12_top/12_bot) - 11",
+            "Oubliette Landing (13_top) - 12",
+            "Unused (14_top/14_bot) - 13",
+            "Octolith Obtained(15_top/15_bot) - 14",
+            "Cretaphid V1 Intro (16_top/16_bot) - 15",
+            "Cretaphid V1 Defeat (17_top/17_bot) - 16",
+            "Cretaphid V2 Intro (18_top/18_bot) - 17",
+            "Cretaphid V2 Defeat (19_top/19_bot) - 18",
+            "Cretaphid V3 Intro (20_top/20_bot) - 19",
+            "Cretaphid V3 Defeat (21_top/21_bot) - 20",
+            "Cretaphid V4 Intro (22_top/22_bot) - 21",
+            "Cretaphid V4 Defeat (23_top/23_bot) - 22",
+            "Slench 1 Intro (24_top/24_bot) - 23",
+            "Slench 1 Defeat (25_top/25_bot) - 24",
+            "Slench 2 Intro (26_top/26_bot) - 25",
+            "Slench 2 Defeat (27_top/27_bot) - 26",
+            "Slench 3 Intro (28_top/28_bot) - 27",
+            "Slench 3 Defeat (29_top/29_bot) - 28",
+            "Slench 4 Intro (30_top/30_bot) - 29",
+            "Slench 4 Defeat (31_top/31_bot) - 30",
+            "Gorea Intro (32_top/32_bot) - 31",
+            "Bad Ending Part 1 (33_top/33_bot) - 32",
+            "Gorea 2 Intro (34_top/34_bot) - 33",
+            "Unused (35_top/35_bot) - 34",
+            "Bad Ending Part 2 (36_top/36_bot) - 35"
+        ];
+    }
+
+    public enum Movie
+    {
+        None = -1,
+        Opening = 0,
+        StoryIntro = 1,
+        GoodEnding = 2,
+        AlinosLanding = 3,
+        AlinosTakeoff = 4,
+        CALanding = 5,
+        CATakeoff = 6,
+        ArcterraLanding = 7,
+        ArcterraTakeoff = 8,
+        VDOLanding = 9,
+        VDOTakeoff = 10,
+        OublietteUnlock = 11,
+        OublietteLanding = 12,
+        Unused14TopBot = 13,
+        OctolithPickUp = 14,
+        CretaphidCA1Intro = 15,
+        CretaphidCA1Defeat = 16,
+        CretaphidVDO1Intro = 17,
+        CretaphidVDO1Defeat = 18,
+        CretaphidAlinso2Intro = 19,
+        CretaphidAlinos2Defeat = 20,
+        CretaphidArcterra2Intro = 21,
+        CretaphidArcterra2Defeat = 22,
+        SlenchAlinos1Intro = 23,
+        SlenchAlinos1Defeat = 24,
+        SlenchArcterra1Intro = 25,
+        SlenchArcterra1Defeat = 26,
+        SlenchCA2Intro = 27,
+        SlenchCA2Defeat = 28,
+        SlenchVDO2Intro = 29,
+        SlenchVDO2Defeat = 30,
+        Gorea1Intro = 31,
+        BadEndingPart1 = 32,
+        Gorea2Intro = 33,
+        Unused35TopBot = 34,
+        BadEndingPart2 = 35
     }
 }

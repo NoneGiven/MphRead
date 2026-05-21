@@ -19,6 +19,7 @@ namespace MphRead.Entities
             private readonly PlayerEntity _player;
             private readonly Scene _scene;
             private NodeData _nodeData = null!;
+            private bool _forceDisable = false;
 
             public PlayerAiData(PlayerEntity player)
             {
@@ -34,7 +35,7 @@ namespace MphRead.Entities
             public ushort HealthThreshold { get; set; }
             public uint DamageFromHalfturret { get; set; }
             // todo: member name -- set by teleporter
-            public int Field118 { get; set; } // sktodo-ai: FPS stuff? not sure if this is a timer/counter
+            public int Field118 { get; set; }
 
             private readonly int[] _slotHits = new int[4];
             private readonly int[] _slotDamage = new int[4];
@@ -50,7 +51,7 @@ namespace MphRead.Entities
 
             // todo: member names
             private PlayerEntity? _targetPlayer = null;
-            private HalfturretEntity? _halfturret1C = null;
+            private HalfturretEntity? _targetHalfturret = null;
             private ItemSpawnEntity? _itemSpawnC4 = null;
             private ItemInstanceEntity? _itemC8 = null;
             private OctolithFlagEntity? _octolithFlagCC = null;
@@ -59,8 +60,8 @@ namespace MphRead.Entities
             private FlagBaseEntity? _flagBaseD8 = null;
             private OctolithFlagEntity? _octolithFlagDC = null;
             private FlagBaseEntity? _flagBaseE0 = null;
-            private NodeDefenseEntity? _defenseE4 = null;
-            private DoorEntity? _doorE8 = null;
+            private NodeDefenseEntity? _targetDefense = null;
+            private DoorEntity? _targetDoor = null;
 
             private int _nodeDataSetIndex = 0;
             private byte _nodeDataSelOff = 0;
@@ -72,9 +73,11 @@ namespace MphRead.Entities
             private uint _field102C = 0; // random value bounds based on bot level
             private uint _field102E = 0; // timer set from field102C -- bomb delay
             private uint _field1030 = 0;
+            private uint _field1034 = 0; // timer set for jumping
             private int _field116 = 0; // timer?
-            private int _field1020 = 0; // timer?
+            private int _field1020 = 0; // initial aim deviation
             private int _field1032 = 0; // timer/counter
+            private Vector3 _fieldA0 = Vector3.Zero;
             private Vector3 _fieldAC = Vector3.Zero;
             private Vector3 _fieldB8 = Vector3.Zero;
             private Vector3 _field1038 = Vector3.Zero;
@@ -92,6 +95,7 @@ namespace MphRead.Entities
             public void Reset()
             {
                 _nodeData = null!;
+                _forceDisable = false;
                 Flags1 = false;
                 Flags2 = AiFlags2.None;
                 Flags3 = AiFlags3.None;
@@ -108,13 +112,13 @@ namespace MphRead.Entities
                 _field78 = 0;
                 Array.Fill(_field7A, (ushort)0);
                 _targetPlayer = null;
-                _halfturret1C = null;
+                _targetHalfturret = null;
                 _itemSpawnC4 = null;
                 _itemC8 = null;
                 _octolithFlagCC = _octolithFlagD4 = _octolithFlagDC = null;
                 _flagBaseD0 = _flagBaseD8 = _flagBaseE0 = null;
-                _defenseE4 = null;
-                _doorE8 = null;
+                _targetDefense = null;
+                _targetDoor = null;
                 _nodeDataSetIndex = 0;
                 _nodeList = null!;
                 Array.Fill(_nodeTypeIndex, 0);
@@ -124,6 +128,7 @@ namespace MphRead.Entities
                 _field116 = 0;
                 _field1020 = 0;
                 _field1032 = 0;
+                _fieldA0 = Vector3.Zero;
                 _fieldAC = Vector3.Zero;
                 _fieldB8 = Vector3.Zero;
                 _field1038 = Vector3.Zero;
@@ -330,6 +335,11 @@ namespace MphRead.Entities
                             }
                         }
                     }
+                    if (_octolithFlagCC == null || _octolithFlagD4 == null || _octolithFlagDC == null)
+                    {
+                        // if a map is loaded in an incompatible mode, skip bot AI to avoid null refs
+                        _forceDisable = true;
+                    }
                 }
                 else if (GameState.Mode == GameMode.Bounty || GameState.Mode == GameMode.BountyTeams)
                 {
@@ -343,6 +353,11 @@ namespace MphRead.Entities
                         {
                             _flagBaseD0 = _flagBaseD8 = _flagBaseE0 = (FlagBaseEntity)entity;
                         }
+                    }
+                    if (_octolithFlagCC == null || _octolithFlagD4 == null || _octolithFlagDC == null)
+                    {
+                        // see above
+                        _forceDisable = true;
                     }
                 }
             }
@@ -495,48 +510,48 @@ namespace MphRead.Entities
                     if (button == _buttons.Up)
                     {
                         control = _player.IsAltForm
-                            ? _player.Controls.MoveUp
+                            ? _player.Controls.RollUp
                             : _player.Controls.AimUp;
                     }
                     else if (button == _buttons.Down)
                     {
                         control = _player.IsAltForm
-                            ? _player.Controls.MoveDown
+                            ? _player.Controls.RollDown
                             : _player.Controls.AimDown;
                     }
                     else if (button == _buttons.Left)
                     {
                         control = _player.IsAltForm
-                            ? _player.Controls.MoveLeft
+                            ? _player.Controls.RolltLeft
                             : _player.Controls.AimLeft;
                     }
                     else if (button == _buttons.Right)
                     {
                         control = _player.IsAltForm
-                            ? _player.Controls.MoveRight
+                            ? _player.Controls.RollRight
                             : _player.Controls.AimRight;
                     }
                     else if (button == _buttons.A)
                     {
-                        control = _player.IsAltForm
+                        control = _player.IsAltForm && _player.Values.AltFormStrafe == 0
                             ? _player.Controls.AimRight
                             : _player.Controls.MoveRight;
                     }
                     else if (button == _buttons.B)
                     {
-                        control = _player.IsAltForm
+                        control = _player.IsAltForm && _player.Values.AltFormStrafe == 0
                             ? _player.Controls.AimDown
                             : _player.Controls.MoveDown;
                     }
                     else if (button == _buttons.X)
                     {
-                        control = _player.IsAltForm
+                        control = _player.IsAltForm && _player.Values.AltFormStrafe == 0
                             ? _player.Controls.AimUp
                             : _player.Controls.MoveUp;
                     }
                     else if (button == _buttons.Y)
                     {
-                        control = _player.IsAltForm
+                        control = _player.IsAltForm && _player.Values.AltFormStrafe == 0
                             ? _player.Controls.AimLeft
                             : _player.Controls.MoveLeft;
                     }
@@ -594,6 +609,7 @@ namespace MphRead.Entities
                 {
                     // sktodo-ai: this would set mouse aim values, but it's only used for Morph Ball,
                     // which we haven't implemented touch controls for (see Func2141A0C)
+                    Debugger.Break();
                     Flags3 &= ~AiFlags3.NoInput;
                     _framesWithoutTouch = 0;
                     if (_framesWithTouch < 6000)
@@ -700,13 +716,13 @@ namespace MphRead.Entities
 
             public void Process()
             {
-                if (_nodeData == null)
+                if (_nodeData == null || _forceDisable)
                 {
                     return;
                 }
-                if (Flags2.TestFlag(AiFlags2.SeekItem) && _itemC8?.DespawnTimer == 0)
+                if (Flags2.TestFlag(AiFlags2.TargetItem) && _itemC8?.DespawnTimer == 0)
                 {
-                    Flags2 &= ~AiFlags2.SeekItem;
+                    Flags2 &= ~AiFlags2.TargetItem;
                 }
                 Flags2 &= ~AiFlags2.Bit18;
                 Flags2 &= ~AiFlags2.Bit19;
@@ -718,7 +734,7 @@ namespace MphRead.Entities
                 Array.Fill(_slotHits, 0);
                 Array.Fill(_slotDamage, 0);
                 DamageFromHalfturret = 0;
-                Flags2 &= ~AiFlags2.Bit14;
+                Flags2 &= ~AiFlags2.AiStart;
                 Flags2 &= ~AiFlags2.Bit16;
                 Flags2 &= ~AiFlags2.Bit17;
                 Flags2 &= ~AiFlags2.Bit21;
@@ -730,10 +746,10 @@ namespace MphRead.Entities
                 _entityRefs.Clear();
                 UpdateAggro();
                 if (GameState.Mode == GameMode.PrimeHunter && GameState.PrimeHunter == _player.SlotIndex
-                    && Flags2.TestFlag(AiFlags2.SeekItem) && _itemC8 != null && (_itemC8.ItemType == ItemType.HealthSmall
+                    && Flags2.TestFlag(AiFlags2.TargetItem) && _itemC8 != null && (_itemC8.ItemType == ItemType.HealthSmall
                     || _itemC8.ItemType == ItemType.HealthMedium || _itemC8.ItemType == ItemType.HealthBig))
                 {
-                    Flags2 &= ~AiFlags2.SeekItem;
+                    Flags2 &= ~AiFlags2.TargetItem;
                 }
             }
 
@@ -747,7 +763,7 @@ namespace MphRead.Entities
                     {
                         continue;
                     }
-                    float w = Matrix.ProjectPosition(other.Position, Matrix4.Identity, perspectiveMatrix, out Vector2 proj);
+                    float w = Matrix.ProjectPosition(other.Position, _player.CameraInfo.ViewMatrix, perspectiveMatrix, out Vector2 proj);
                     if (w < 0)
                     {
                         // sktodo-ai: bug? should this be a continue? or is the byte array check only expected to pass for one player?
@@ -795,7 +811,7 @@ namespace MphRead.Entities
                     }
                     float otherFov = MathHelper.DegreesToRadians(other.CameraInfo.Fov > 0 ? other.CameraInfo.Fov : 78);
                     Matrix4 otherPerspective = _scene.GetPerspectiveMatrix(otherFov);
-                    w = Matrix.ProjectPosition(_player.Position, Matrix4.Identity, otherPerspective, out proj);
+                    w = Matrix.ProjectPosition(_player.Position, other.CameraInfo.ViewMatrix, otherPerspective, out proj);
                     if (w < 0)
                     {
                         // sktodo-ai: same as above
@@ -816,12 +832,12 @@ namespace MphRead.Entities
 
             private class AiPlayerAggro
             {
-                public byte Field0A { get; set; }
-                public byte Field0B { get; set; }
-                public byte Field0C { get; set; }
-                public byte Field0D { get; set; }
-                public byte Field2A { get; set; }
-                public ushort Field2B { get; set; }
+                public byte VarA2 { get; set; }
+                public byte VarA9 { get; set; }
+                public byte VarA3 { get; set; }
+                public byte VarA4 { get; set; }
+                public byte VarA10 { get; set; }
+                public ushort VarA7 { get; set; }
                 public ushort Staleness { get; set; }
                 public ushort Expiration { get; set; }
                 public PlayerEntity? Player1 { get; set; }
@@ -829,12 +845,12 @@ namespace MphRead.Entities
 
                 public void Clear()
                 {
-                    Field0A = 0;
-                    Field0B = 0;
-                    Field0C = 0;
-                    Field0D = 0;
-                    Field2A = 0;
-                    Field2B = 0;
+                    VarA2 = 0;
+                    VarA9 = 0;
+                    VarA3 = 0;
+                    VarA4 = 0;
+                    VarA10 = 0;
+                    VarA7 = 0;
                     Staleness = 0;
                     Expiration = 0;
                     Player1 = null;
@@ -860,13 +876,13 @@ namespace MphRead.Entities
                 for (int i = 0; i < _playerAggroCount; i++)
                 {
                     AiPlayerAggro aggro = _playerAggro[i];
-                    if ((a2 == aggro.Field0A || a2 == 7)
-                        && (a3 == aggro.Field0C || a3 == 7)
-                        && (a4 == aggro.Field0D || a4 == 7)
+                    if ((a2 == aggro.VarA2 || a2 == 7)
+                        && (a3 == aggro.VarA3 || a3 == 7)
+                        && (a4 == aggro.VarA4 || a4 == 7)
                         && (player1 == aggro.Player1 || a3 != 2)
                         && (player2 == aggro.Player2 || a4 != 2))
                     {
-                        result += aggro.Field2B;
+                        result += aggro.VarA7;
                     }
                 }
                 return result;
@@ -880,9 +896,9 @@ namespace MphRead.Entities
                 for (int i = 0; i < _playerAggroCount; i++)
                 {
                     AiPlayerAggro aggro = _playerAggro[i];
-                    if ((a2 == aggro.Field0A || a2 == 7)
-                        && (a3 == aggro.Field0C || a3 == 7)
-                        && (a4 == aggro.Field0D || a4 == 7)
+                    if ((a2 == aggro.VarA2 || a2 == 7)
+                        && (a3 == aggro.VarA3 || a3 == 7)
+                        && (a4 == aggro.VarA4 || a4 == 7)
                         && (player1 == aggro.Player1 || a3 != 2)
                         && (player2 == aggro.Player2 || a4 != 2))
                     {
@@ -904,9 +920,9 @@ namespace MphRead.Entities
                 for (int i = 0; i < _playerAggroCount; i++)
                 {
                     AiPlayerAggro aggro = _playerAggro[i];
-                    if ((a2 == aggro.Field0A || a2 == 7)
-                        && (a3 == aggro.Field0C || a3 == 7)
-                        && (a4 == aggro.Field0D || a4 == 7)
+                    if ((a2 == aggro.VarA2 || a2 == 7)
+                        && (a3 == aggro.VarA3 || a3 == 7)
+                        && (a4 == aggro.VarA4 || a4 == 7)
                         && (player1 == aggro.Player1 || a3 != 2)
                         && (player2 == aggro.Player2 || a4 != 2))
                     {
@@ -922,37 +938,40 @@ namespace MphRead.Entities
             {
                 if (a10 == 2)
                 {
+                    // update, called when taking damage (value in a7)
                     AiPlayerAggro? aggro = AggroFunc21489B4(a2, a3, a4, player1, player2);
                     if (aggro != null)
                     {
-                        aggro.Expiration += (ushort)a8; // sktodo-ai: FPS stuff for these fields?
+                        // note: FPS stuff applied at staleness comparison
+                        aggro.Expiration += (ushort)a8;
                         if (aggro.Expiration > 54000)
                         {
                             aggro.Expiration = 54000;
                         }
-                        if (a9 > aggro.Field0B)
+                        if (a9 > aggro.VarA9)
                         {
-                            aggro.Field0B = (byte)(a9 & 0xF);
+                            aggro.VarA9 = (byte)(a9 & 0xF);
                         }
-                        aggro.Field2B += (ushort)a7; // sktodo-ai: also maybe FPS stuff for this field?
-                        if (aggro.Field2B > 4000)
+                        aggro.VarA7 += (ushort)a7; // sktodo-ai: also maybe FPS stuff for this field?
+                        if (aggro.VarA7 > 4000)
                         {
-                            aggro.Field2B = 4000;
+                            aggro.VarA7 = 4000;
                         }
                         return;
                     }
                 }
                 else if (a10 == 3)
                 {
+                    // replace, called at the start of the processing loop
                     AiPlayerAggro? aggro = AggroFunc21489B4(a2, a3, a4, player1, player2);
                     if (aggro != null)
                     {
-                        aggro.Field0A = (byte)(a2 & 0xF);
-                        aggro.Field0B = (byte)(a9 & 0xF);
-                        aggro.Field0C = (byte)(a3 & 0xF);
-                        aggro.Field0D = (byte)(a4 & 0xF);
-                        aggro.Field2A = 3;
-                        aggro.Field2B = (byte)(a7 & 0xF);
+                        aggro.VarA2 = (byte)(a2 & 0xF);
+                        aggro.VarA9 = (byte)(a9 & 0xF);
+                        aggro.VarA3 = (byte)(a3 & 0xF);
+                        aggro.VarA4 = (byte)(a4 & 0xF);
+                        aggro.VarA10 = 3; // a10
+                        aggro.VarA7 = (byte)(a7 & 0xF);
                         aggro.Staleness = 0;
                         aggro.Expiration = (ushort)a8;
                         aggro.Player1 = player1;
@@ -967,10 +986,10 @@ namespace MphRead.Entities
                     for (int i = 0; i < _playerAggro.Length; i++)
                     {
                         AiPlayerAggro aggro = _playerAggro[i];
-                        if (aggro.Field0B < min)
+                        if (aggro.VarA9 < min)
                         {
                             index = i;
-                            min = aggro.Field0B;
+                            min = aggro.VarA9;
                         }
                     }
                 }
@@ -981,12 +1000,12 @@ namespace MphRead.Entities
                 if (index < _playerAggro.Length)
                 {
                     AiPlayerAggro aggro = _playerAggro[index];
-                    aggro.Field0A = (byte)(a2 & 0xF);
-                    aggro.Field0B = (byte)(a9 & 0xF);
-                    aggro.Field0C = (byte)(a3 & 0xF);
-                    aggro.Field0D = (byte)(a4 & 0xF);
-                    aggro.Field2A = (byte)(a10 & 0xF);
-                    aggro.Field2B = (byte)(a7 & 0xF);
+                    aggro.VarA2 = (byte)(a2 & 0xF);
+                    aggro.VarA9 = (byte)(a9 & 0xF);
+                    aggro.VarA3 = (byte)(a3 & 0xF);
+                    aggro.VarA4 = (byte)(a4 & 0xF);
+                    aggro.VarA10 = (byte)(a10 & 0xF);
+                    aggro.VarA7 = (byte)(a7 & 0xF);
                     aggro.Staleness = 0;
                     aggro.Expiration = (ushort)a8;
                     aggro.Player1 = player1;
@@ -1000,12 +1019,12 @@ namespace MphRead.Entities
                 for (int i = 0; i < _playerAggroCount; i++)
                 {
                     AiPlayerAggro aggro = _playerAggro[i];
-                    if (aggro.Field2A == 1
-                        || a2 != aggro.Field0A && a2 != 7
-                        || a3 != aggro.Field0C && a3 != 7
-                        || a4 != aggro.Field0D && a4 != 7
-                        || player1 != aggro.Player1 && a3 == 2
-                        || player2 != aggro.Player2 && a4 == 2)
+                    if (aggro.VarA10 != 1
+                        && (a2 == aggro.VarA2 || a2 == 7)
+                        && (a3 == aggro.VarA3 || a3 == 7)
+                        && (a4 == aggro.VarA4 || a4 == 7)
+                        && (player1 == aggro.Player1 || a3 != 2)
+                        && (player2 == aggro.Player2 || a4 != 2))
                     {
                         return aggro;
                     }
@@ -1023,10 +1042,10 @@ namespace MphRead.Entities
                     if (aggro.Staleness > aggro.Expiration * 2) // sktodo-ai: FPS stuff? review Field6 (expiration) changes
                     {
                         AiPlayerAggro last = _playerAggro[_playerAggroCount - 1];
-                        aggro.Field0A = last.Field0A;
-                        aggro.Field0B = last.Field0B;
-                        aggro.Field0C = last.Field0C;
-                        aggro.Field0D = last.Field0D;
+                        aggro.VarA2 = last.VarA2;
+                        aggro.VarA9 = last.VarA9;
+                        aggro.VarA3 = last.VarA3;
+                        aggro.VarA4 = last.VarA4;
                         aggro.Staleness = last.Staleness;
                         aggro.Expiration = last.Expiration;
                         aggro.Player1 = last.Player1;
@@ -1238,14 +1257,20 @@ namespace MphRead.Entities
                     {
                         weightIndex = context.Data1.Data1.Count;
                     }
-                    // sktodo-ai: we need to determine which funcs3 functions are frame/time-based and which are occurrence-based.
-                    // occurrence-based should take the same number of repeats to hit 100,000, but frame-based will need to accumulate at half speed.
-                    context.Weights[weightIndex] += ExecuteFuncs3(context, data2.Func3Id, data2.Parameters) * data2.Weight;
-                    if (context.Weights[weightIndex] >= 100000)
+                    // todo: revisit this hack. in order to make sure time-based and occurrence-based state changes happen in same
+                    // amount of time as the game, the state checks are done evert other frame, except if the weight is enough for
+                    // one check to trigger the state change (some checks like that can't be deferred even one frame, since the
+                    // bot might no longer be processing). the RNG check (210) is also subject to this even if the weight is 100k.
+                    // a proper solution would account for which checks are time vs. occurrence-based.
+                    if (data2.Weight >= 100000 && data2.Func3Id != 210 || _scene.FrameCount % 2 == 0) // todo: FPS stuff
                     {
-                        result = data2.Data1SelectIndex;
-                        context.Weights[weightIndex] = 0;
-                        break;
+                        context.Weights[weightIndex] += ExecuteFuncs3(context, data2.Func3Id, data2.Parameters) * data2.Weight;
+                        if (context.Weights[weightIndex] >= 100000)
+                        {
+                            result = data2.Data1SelectIndex;
+                            context.Weights[weightIndex] = 0;
+                            break;
+                        }
                     }
                 }
                 if (result < 20)
@@ -1996,7 +2021,6 @@ namespace MphRead.Entities
                 }
             }
 
-            // skhere
             // todo: member names
             #region Funcs1
 
@@ -2294,8 +2318,6 @@ namespace MphRead.Entities
                 {
                     return;
                 }
-                EquipInfo equip = _player.EquipInfo;
-                WeaponInfo weapon = _player.EquipWeapon;
                 if (CanChargeWeapon())
                 {
                     _buttons.R.IsDown = true;
@@ -2330,12 +2352,12 @@ namespace MphRead.Entities
             private void Func1_2149A64()
             {
                 FindEntityRef(AiEntRefType.Type54);
-                UpdateSeekItem(_entityRefs.Field54);
+                UpdateTargetItem(_entityRefs.Field54);
             }
 
 
-            // like Func1_21495A4, except it updates the seek item instead of setting _itemSpawnC4
-            // like Func3_213C0D0, except it updates the seek item instead of returning a boolean for its presence
+            // like Func1_21495A4, except it updates the target item instead of setting _itemSpawnC4
+            // like Func3_213C0D0, except it updates the target item instead of returning a boolean for its presence
             private void Func1_2149824()
             {
                 if (_findWeaponIndex == 1)
@@ -2343,12 +2365,12 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.Missile])
                     {
                         FindEntityRef(AiEntRefType.Type57);
-                        UpdateSeekItem(_entityRefs.Field57);
+                        UpdateTargetItem(_entityRefs.Field57);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type56);
-                        UpdateSeekItem(_entityRefs.Field56);
+                        UpdateTargetItem(_entityRefs.Field56);
                     }
                 }
                 else if (_findWeaponIndex == 2)
@@ -2356,12 +2378,12 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.VoltDriver])
                     {
                         FindEntityRef(AiEntRefType.Type59);
-                        UpdateSeekItem(_entityRefs.Field59);
+                        UpdateTargetItem(_entityRefs.Field59);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type58);
-                        UpdateSeekItem(_entityRefs.Field58);
+                        UpdateTargetItem(_entityRefs.Field58);
                     }
                 }
                 else if (_findWeaponIndex == 3)
@@ -2369,12 +2391,12 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.Battlehammer])
                     {
                         FindEntityRef(AiEntRefType.Type60);
-                        UpdateSeekItem(_entityRefs.Field60);
+                        UpdateTargetItem(_entityRefs.Field60);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type61);
-                        UpdateSeekItem(_entityRefs.Field61);
+                        UpdateTargetItem(_entityRefs.Field61);
                     }
                 }
                 else if (_findWeaponIndex == 4)
@@ -2382,12 +2404,12 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.Imperialist])
                     {
                         FindEntityRef(AiEntRefType.Type63);
-                        UpdateSeekItem(_entityRefs.Field63);
+                        UpdateTargetItem(_entityRefs.Field63);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type62);
-                        UpdateSeekItem(_entityRefs.Field62);
+                        UpdateTargetItem(_entityRefs.Field62);
                     }
                 }
                 else if (_findWeaponIndex == 5)
@@ -2395,12 +2417,12 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.Judicator])
                     {
                         FindEntityRef(AiEntRefType.Type65);
-                        UpdateSeekItem(_entityRefs.Field65);
+                        UpdateTargetItem(_entityRefs.Field65);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type64);
-                        UpdateSeekItem(_entityRefs.Field64);
+                        UpdateTargetItem(_entityRefs.Field64);
                     }
                 }
                 else if (_findWeaponIndex == 6)
@@ -2408,12 +2430,12 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.Magmaul])
                     {
                         FindEntityRef(AiEntRefType.Type67);
-                        UpdateSeekItem(_entityRefs.Field67);
+                        UpdateTargetItem(_entityRefs.Field67);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type66);
-                        UpdateSeekItem(_entityRefs.Field66);
+                        UpdateTargetItem(_entityRefs.Field66);
                     }
                 }
                 else if (_findWeaponIndex == 7)
@@ -2421,12 +2443,12 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.ShockCoil])
                     {
                         FindEntityRef(AiEntRefType.Type69);
-                        UpdateSeekItem(_entityRefs.Field69);
+                        UpdateTargetItem(_entityRefs.Field69);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type68);
-                        UpdateSeekItem(_entityRefs.Field68);
+                        UpdateTargetItem(_entityRefs.Field68);
                     }
                 }
                 else if (_findWeaponIndex == 8)
@@ -2434,63 +2456,63 @@ namespace MphRead.Entities
                     if (_player._availableWeapons[BeamType.OmegaCannon])
                     {
                         FindEntityRef(AiEntRefType.Type71);
-                        UpdateSeekItem(_entityRefs.Field71);
+                        UpdateTargetItem(_entityRefs.Field71);
                     }
                     else
                     {
                         FindEntityRef(AiEntRefType.Type70);
-                        UpdateSeekItem(_entityRefs.Field70);
+                        UpdateTargetItem(_entityRefs.Field70);
                     }
                 }
                 else
                 {
-                    UpdateSeekItem(null);
+                    UpdateTargetItem(null);
                 }
             }
 
             private void Func1_21497F0()
             {
                 FindEntityRef(AiEntRefType.Type55);
-                UpdateSeekItem(_entityRefs.Field55);
+                UpdateTargetItem(_entityRefs.Field55);
             }
 
             private void Func1_2149570()
             {
                 FindEntityRef(AiEntRefType.Type56);
-                UpdateSeekItem(_entityRefs.Field56);
+                UpdateTargetItem(_entityRefs.Field56);
             }
 
             private void Func1_21494FC()
             {
                 FindEntityRef(AiEntRefType.Type57);
-                UpdateSeekItem(_entityRefs.Field57);
+                UpdateTargetItem(_entityRefs.Field57);
             }
 
             private void Func1_2149488()
             {
                 FindEntityRef(AiEntRefType.Type58);
-                UpdateSeekItem(_entityRefs.Field58);
+                UpdateTargetItem(_entityRefs.Field58);
             }
 
             private void Func1_2149414()
             {
                 FindEntityRef(AiEntRefType.Type59);
-                UpdateSeekItem(_entityRefs.Field59);
+                UpdateTargetItem(_entityRefs.Field59);
             }
 
             private void Func1_21493A0()
             {
                 FindEntityRef(AiEntRefType.Type72);
-                UpdateSeekItem(_entityRefs.Field72);
+                UpdateTargetItem(_entityRefs.Field72);
             }
 
             private void Func1_214932C()
             {
                 FindEntityRef(AiEntRefType.Type73);
-                UpdateSeekItem(_entityRefs.Field73);
+                UpdateTargetItem(_entityRefs.Field73);
             }
 
-            // like Func1_2149824, except it sets _itemSpawnC4 instead of updating the seek item
+            // like Func1_2149824, except it sets _itemSpawnC4 instead of updating the target item
             private void Func1_21495A4()
             {
                 void SetEntity(ItemSpawnEntity? entity)
@@ -2664,22 +2686,24 @@ namespace MphRead.Entities
 
             private void Func1_21492CC()
             {
-                // skhere
+                // delegates to otherwise unused helper 2135540 in-game
+                FindEntityRef(AiEntRefType.Type27);
+                Func21356C0(_entityRefs.Field27);
             }
 
             private void Func1_21492BC()
             {
-                // skhere
+                Func2135510();
             }
 
             private void Func1_21492AC()
             {
-                // skhere
+                Func21354E0();
             }
 
             private void Func1_214929C()
             {
-                // skhere
+                Func2135510();
             }
 
             private void Func1_214928C()
@@ -2689,42 +2713,81 @@ namespace MphRead.Entities
 
             private void Func1_214927C()
             {
-                // skhere
+                Func2135380();
             }
 
             private void Func1_214926C()
             {
-                // skhere
+                Func2135480();
             }
 
             private void Func1_214925C()
             {
-                // skhere
+                // delegates to otherwise unused helper 2135400 in-game
+                if (GameState.PrimeHunter == -1 || _player.SlotIndex == GameState.PrimeHunter)
+                {
+                    FindEntityRef(AiEntRefType.Type32);
+                    Func21356C0(_entityRefs.Field32);
+                }
+                else
+                {
+                    Flags2 &= ~AiFlags2.Bit9;
+                    Func21356C0(PlayerEntity.Players[GameState.PrimeHunter]);
+                }
             }
 
             private void Func1_214924C()
             {
-                // skhere
+                Func21354B0();
             }
 
             private void Func1_214923C()
             {
-                // skhere
+                // delegates to otherwise unused helper 21353B0 in-game
+                Debug.Assert(_octolithFlagCC != null);
+                if (_octolithFlagCC.Carrier != null && _octolithFlagCC.Carrier.Health != 0)
+                {
+                    Func21356C0(_octolithFlagCC.Carrier);
+                    Flags2 &= ~AiFlags2.Bit9;
+                }
+                else
+                {
+                    Flags2 |= AiFlags2.Bit9;
+                }
             }
 
             private void Func1_214922C()
             {
-                // skhere
+                // delegates to otherwise unused helper 2135350 in-game
+                FindEntityRef(AiEntRefType.Type33);
+                // delegates to otherwise unused helper 213568C in-game
+                if (_entityRefs.Field33 != null)
+                {
+                    Flags2 |= AiFlags2.TargetHalfturret;
+                }
+                else
+                {
+                    Flags2 &= ~AiFlags2.TargetHalfturret;
+                }
+                if (_entityRefs.Field33 != _targetHalfturret)
+                {
+                    _targetHalfturret = _entityRefs.Field33;
+                    _entityRefs.Field3 = null;
+                }
             }
 
             private void Func1_214921C()
             {
-                // skhere
+                // delegates to otherwise unused helper 21352F0 in-game
+                FindEntityRef(AiEntRefType.Type75);
+                Func2135624(_entityRefs.Field75);
             }
 
             private void Func1_214920C()
             {
-                // skhere
+                // delegates to otherwise unused helper 21352C0 in-game
+                FindEntityRef(AiEntRefType.Type76);
+                Func2135624(_entityRefs.Field76);
             }
 
             private void Func1_21491FC()
@@ -2740,72 +2803,86 @@ namespace MphRead.Entities
 
             private void Func1_21491CC()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type1;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_21491B4()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type2;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_214919C()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type3;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_2149184()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type5;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_214916C()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type6;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_2149154()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type7;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_214913C()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type9;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_2149124()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type10;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_214910C()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type11;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_21490F4()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type12;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_21490DC()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type13;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_21490C4()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type14;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_21490AC()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type15;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_2149094()
             {
-                // skhere
+                _queuedFindEntityAction = AiQueuedEnt.Type16;
+                Flags2 |= AiFlags2.Bit1;
             }
 
             private void Func1_2149088()
@@ -2815,17 +2892,65 @@ namespace MphRead.Entities
 
             private void Func1_2149034()
             {
-                // skhere
+                int navIndex = _nodeTypeIndex[(int)NodeType.Navigation];
+                int specIndex = _nodeTypeIndex[(int)NodeType.Special];
+                if (navIndex == specIndex)
+                {
+                    _field30 = 0;
+                }
+                else
+                {
+                    int offset = (int)Rng.GetRandomInt2((ushort)(specIndex - navIndex));
+                    _field30 = (int)_nodeList[navIndex + offset].Field4;
+                }
             }
 
             private void Func1_2148F10()
             {
-                // skhere
+                int navIndex = _nodeTypeIndex[(int)NodeType.Navigation];
+                int specIndex = _nodeTypeIndex[(int)NodeType.Special];
+                if (navIndex == specIndex)
+                {
+                    _field30 = 0;
+                }
+                else
+                {
+                    int i = 0;
+                    int offsetCount = 0;
+                    Span<int> offsets = stackalloc int[10];
+                    while (offsetCount < 10 && i < specIndex - navIndex)
+                    {
+                        if (GameState.Mode == GameMode.Capture && _player.TeamIndex == 1)
+                        {
+                            uint field4 = _nodeList[navIndex + i].Field4;
+                            if (field4 > 100 && field4 <= 110)
+                            {
+                                offsets[offsetCount++] = i;
+                            }
+                        }
+                        else if (_nodeList[navIndex + i].Field4 <= 10)
+                        {
+                            offsets[offsetCount++] = i;
+                        }
+                        i++;
+                    }
+                    int offset = offsets[(int)Rng.GetRandomInt2(offsetCount)];
+                    _field30 = (int)_nodeList[navIndex + offset].Field4;
+                }
             }
 
             private void Func1_2148EDC()
             {
-                // skhere
+                int navIndex = _nodeTypeIndex[(int)NodeType.Navigation];
+                int specIndex = _nodeTypeIndex[(int)NodeType.Special];
+                if (specIndex <= navIndex)
+                {
+                    _field30 = 0;
+                }
+                else
+                {
+                    _field30 = (int)_nodeList[specIndex - 1].Field4;
+                }
             }
 
             private void Func1_2148ECC()
@@ -2835,12 +2960,15 @@ namespace MphRead.Entities
 
             private void Func1_2148EB8()
             {
-                // skhere
+                if (_field30 != 0)
+                {
+                    _field30--;
+                }
             }
 
             private void Func1_2148EA8()
             {
-                // skhere
+                _field30 += 10; // sktodo-ai: FPS stuff?
             }
 
             private void Func1_2148E98()
@@ -2855,32 +2983,43 @@ namespace MphRead.Entities
 
             private void Func1_2148E74()
             {
-                // skhere
+                Flags3 |= AiFlags3.Bit5;
             }
 
             private void Func1_2148E64()
             {
-                // skhere
+                Flags2 |= AiFlags2.Bit18;
             }
 
             private void Func1_2148E54()
             {
-                // skhere
+                Flags2 |= AiFlags2.Bit19;
             }
 
             private void Func1_2148DF8()
             {
-                // skhere
+                // todo: not sure this volume update matters
+                float volume = _player._soundSource.Volume;
+                _player._soundSource.Volume = 1;
+                _player._soundSource.PlaySfx(SfxId.TRACE_WARNING_SCR, noUpdate: true);
+                _player._soundSource.Volume = volume;
             }
 
             private void Func1_2148DE8()
             {
-                // skhere
+                Flags2 |= AiFlags2.Bit20;
             }
 
             private void Func1_2148D50()
             {
-                // skhere
+                foreach (CamSeqEntity camSeq in _scene.GetCamSeqEntities())
+                {
+                    if (camSeq.Id == 56)
+                    {
+                        _scene.SendMessage(Message.Activate, _player, camSeq, 0, 0);
+                        break;
+                    }
+                }
             }
 
             private void Func1_UnlockEchoHallForceField()
@@ -2902,13 +3041,12 @@ namespace MphRead.Entities
 
             #endregion
 
-            // skhere
             // todo: member names
             #region Funcs2
 
             private void Func2_213EA10(AiContext context)
             {
-                if (!_player.Flags1.TestFlag(PlayerFlags1.AltForm))
+                if (!_player.IsAltForm)
                 {
                     if (_touchButtons.Morph.FramesUp > 10 * 2) // todo: FPS stuff
                     {
@@ -2917,7 +3055,7 @@ namespace MphRead.Entities
                 }
             }
 
-            // process counterpart to Func4_21462DC
+            // main proc - process counterpart to Func4_21462DC
             private void Func2_213EA48(AiContext context)
             {
                 if (context.FieldD == 28 && _player.IsAltForm && context.Field4 != 37)
@@ -2940,7 +3078,7 @@ namespace MphRead.Entities
                 {
                     if (_player.Values.AltFormStrafe != 0 && context.FieldA == 31)
                     {
-                        if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.Bit2))
+                        if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                         {
                             Debug.Assert(_targetPlayer != null);
                             _targetPlayer.GetPosition(out targetPos);
@@ -2949,42 +3087,39 @@ namespace MphRead.Entities
                                 : 0.5f);
                             Func2145C14(targetPos);
                         }
-                        else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.Bit3))
+                        else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret))
                         {
-                            Debug.Assert(_halfturret1C != null);
-                            _halfturret1C.GetPosition(out targetPos);
+                            Debug.Assert(_targetHalfturret != null);
+                            _targetHalfturret.GetPosition(out targetPos);
                             Func2145C14(targetPos);
                         }
                     }
                 }
                 else if (context.FieldA == 32)
                 {
-                    if (_player.Values.AltFormStrafe != 0 && context.FieldA == 31)
+                    if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
-                        if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.Bit2))
-                        {
-                            Debug.Assert(_targetPlayer != null);
-                            _targetPlayer.GetPosition(out targetPos);
-                            targetPos = targetPos.AddY(_targetPlayer.IsAltForm
-                                ? Fixed.ToFloat(_targetPlayer.Values.AltColYPos)
-                                : 0.5f);
-                            _field1038 = targetPos - _player.CameraInfo.Position;
-                            _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
-                        }
-                        else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.Bit3))
-                        {
-                            Debug.Assert(_halfturret1C != null);
-                            _halfturret1C.GetPosition(out targetPos);
-                            _field1038 = targetPos - _player.CameraInfo.Position;
-                            _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
-                        }
-                        else if (context.FieldB == 27)
-                        {
-                            _field1038 = _fieldB8 - _player.CameraInfo.Position;
-                            _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
-                        }
-                        Func21447E8();
+                        Debug.Assert(_targetPlayer != null);
+                        _targetPlayer.GetPosition(out targetPos);
+                        targetPos = targetPos.AddY(_targetPlayer.IsAltForm
+                            ? Fixed.ToFloat(_targetPlayer.Values.AltColYPos)
+                            : 0.5f);
+                        _field1038 = targetPos - _player.CameraInfo.Position;
+                        _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
                     }
+                    else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret))
+                    {
+                        Debug.Assert(_targetHalfturret != null);
+                        _targetHalfturret.GetPosition(out targetPos);
+                        _field1038 = targetPos - _player.CameraInfo.Position;
+                        _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
+                    }
+                    else if (context.FieldB == 27)
+                    {
+                        _field1038 = _fieldB8 - _player.CameraInfo.Position;
+                        _field1038 = _field1038 != Vector3.Zero ? _field1038.Normalized() : _player.CameraInfo.Facing;
+                    }
+                    Func21447E8();
                 }
                 else if (context.FieldC == 55)
                 {
@@ -2992,7 +3127,7 @@ namespace MphRead.Entities
                 }
                 else if (context.FieldC == 56)
                 {
-                    if (Flags2.TestFlag(AiFlags2.Bit2))
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         Func21436D8();
                     }
@@ -3003,7 +3138,7 @@ namespace MphRead.Entities
                 }
                 else if (context.FieldC == 57)
                 {
-                    if (Flags2.TestFlag(AiFlags2.Bit2))
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         Func2143658();
                     }
@@ -3014,7 +3149,7 @@ namespace MphRead.Entities
                 }
                 else if (context.FieldC == 59)
                 {
-                    if (Flags2.TestFlag(AiFlags2.Bit2))
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         Func21433E4();
                     }
@@ -3025,7 +3160,7 @@ namespace MphRead.Entities
                 }
                 else if (context.FieldC == 60)
                 {
-                    if (Flags2.TestFlag(AiFlags2.Bit3))
+                    if (Flags2.TestFlag(AiFlags2.TargetHalfturret))
                     {
                         Func2143470();
                     }
@@ -3036,8 +3171,8 @@ namespace MphRead.Entities
                 }
                 else if (context.FieldC == 61)
                 {
-                    Debug.Assert(_doorE8 != null);
-                    _doorE8.GetPosition(out targetPos);
+                    Debug.Assert(_targetDoor != null);
+                    _targetDoor.GetPosition(out targetPos);
                     Func21433A0(targetPos);
                 }
                 else
@@ -3051,7 +3186,7 @@ namespace MphRead.Entities
                         Func2140094(context);
                         if (_player.Values.AltFormStrafe != 0 && _buttonAimX == 0 && _buttonAimY == 0)
                         {
-                            if (Flags2.TestFlag(AiFlags2.Bit2) && context.Field9 == 4)
+                            if (Flags2.TestFlag(AiFlags2.TargetPlayer) && context.Field9 == 4)
                             {
                                 // sktodo-ai: this is being repeated a lot, including the call to Func2145C14() in some cases
                                 Debug.Assert(_targetPlayer != null);
@@ -3092,8 +3227,8 @@ namespace MphRead.Entities
                     }
                 }
                 else if (context.Field4 == 33
-                    && (context.Field9 != 4 || Flags2.TestFlag(AiFlags2.Bit2))
-                    && (context.Field9 != 5 || Flags2.TestFlag(AiFlags2.Bit3)))
+                    && (context.Field9 != 4 || Flags2.TestFlag(AiFlags2.TargetPlayer))
+                    && (context.Field9 != 5 || Flags2.TestFlag(AiFlags2.TargetHalfturret)))
                 {
                     Vector3? position = null;
                     if (context.Field9 == 4)
@@ -3103,10 +3238,10 @@ namespace MphRead.Entities
                     }
                     else if (context.Field9 == 5)
                     {
-                        Debug.Assert(_halfturret1C != null);
-                        position = _halfturret1C.Position;
+                        Debug.Assert(_targetHalfturret != null);
+                        position = _targetHalfturret.Position;
                     }
-                    else if (context.Field9 == 6 && Flags2.TestFlag(AiFlags2.SeekItem))
+                    else if (context.Field9 == 6 && Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         Debug.Assert(_itemC8 != null);
                         position = targetPos = _itemC8.Position.AddY(-0.5f);
@@ -3161,10 +3296,10 @@ namespace MphRead.Entities
                         Debug.Assert(_flagBaseE0 != null);
                         position = _flagBaseE0.Position;
                     }
-                    else if (context.Field9 == 23 && Flags2.TestFlag(AiFlags2.Bit5))
+                    else if (context.Field9 == 23 && Flags2.TestFlag(AiFlags2.TargetDefense))
                     {
-                        Debug.Assert(_defenseE4 != null);
-                        position = _defenseE4.Position;
+                        Debug.Assert(_targetDefense != null);
+                        position = _targetDefense.Position;
                     }
                     else if (context.Field9 == 35)
                     {
@@ -3249,7 +3384,7 @@ namespace MphRead.Entities
                         if (_buttons.L.FramesUp > _field102E)
                         {
                             _buttons.L.IsDown = true;
-                            _field102E = _field102C + Rng.GetRandomInt2(_field102C / 2); // note: FPS stuff when _field101C is set
+                            _field102E = _field102C + Rng.GetRandomInt2(_field102C / 2); // note: FPS stuff when _field102C is set
                         }
                     }
 
@@ -3280,7 +3415,7 @@ namespace MphRead.Entities
                         if (_player._altAttackTime > 0 || _buttons.L.FramesUp > _field102E)
                         {
                             _buttons.L.IsDown = true;
-                            _field102E = _field102C + Rng.GetRandomInt2(_field102C / 2); // note: FPS stuff when _field101C is set
+                            _field102E = _field102C + Rng.GetRandomInt2(_field102C / 2); // note: FPS stuff when _field102C is set
                         }
                     }
                     else if (context.FieldF == 68)
@@ -3329,7 +3464,7 @@ namespace MphRead.Entities
                         }
                     }
                 }
-                if (!_player.IsAltForm && !_player.IsMorphing && Flags2.TestFlag(AiFlags2.Bit2))
+                if (!_player.IsAltForm && !_player.IsMorphing && Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Debug.Assert(_targetPlayer != null);
                     if (_targetPlayer.Hunter == Hunter.Sylux && _targetPlayer.IsAltForm && Func2139C60(_targetPlayer))
@@ -3355,75 +3490,637 @@ namespace MphRead.Entities
                 }
             }
 
+            // todo: member name
+            private void Func2142DCC()
+            {
+                // the game checks flags2 bit2 first, but we only call this helper inside that condition
+                if (Flags2.TestFlag(AiFlags2.Bit12))
+                {
+                    _buttons.A.IsDown = true;
+                }
+                else
+                {
+                    _buttons.Y.IsDown = true;
+                }
+                Vector3 vec = ExecuteVectorFunc(index: 0, clearY: true, normalize: false);
+                float lengthSqr = vec.LengthSquared;
+                if (lengthSqr < 2 * 2)
+                {
+                    _buttons.B.IsDown = true;
+                }
+                else if (lengthSqr > 3 * 3)
+                {
+                    _buttons.X.IsDown = true;
+                }
+            }
+
+            // todo: member name
+            private bool Func2142EB0(AiContext context)
+            {
+                Vector3 toSelf = (_player.Position - context.Field34).WithY(0);
+                if (_player.IsMorphing || _player.IsUnmorphing || toSelf.LengthSquared >= 0.5f * 0.5f)
+                {
+                    context.Field40 = 0;
+                    context.Field34 = _player.Position;
+                }
+                else
+                {
+                    context.Field40++;
+                }
+                if (context.Field40 < 15 * 2) // todo: FPS stuff
+                {
+                    return false;
+                }
+                context.Field40 = 0;
+                context.Field34 = _player.Position;
+                Flags2 ^= AiFlags2.Bit12;
+                return true;
+            }
+
             private void Func2_213DDCC(AiContext context)
             {
-                // skhere
+                if (_player.IsAltForm)
+                {
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer))
+                    {
+                        Func2142DCC();
+                        Debug.Assert(_targetPlayer != null);
+                        Func2145C14(_targetPlayer.Position);
+                        bool spawnBomb = false;
+                        if (_player.SyluxBombCount == 0)
+                        {
+                            spawnBomb = true;
+                            if (Rng.GetRandomInt2(2) == 0)
+                            {
+                                Flags2 &= ~AiFlags2.Bit12;
+                            }
+                            else
+                            {
+                                Flags2 |= AiFlags2.Bit12;
+                            }
+                        }
+                        else if (_player.SyluxBombCount == 1 || _player.SyluxBombCount == 2)
+                        {
+                            BombEntity? firstBomb = _player.SyluxBombs[_player.SyluxBombCount - 1];
+                            Debug.Assert(firstBomb != null);
+                            Vector3 targetToBomb = (firstBomb.Position - _targetPlayer.Position).WithY(0);
+                            if (targetToBomb != Vector3.Zero)
+                            {
+                                targetToBomb = targetToBomb.Normalized();
+                            }
+                            else
+                            {
+                                targetToBomb = Vector3.UnitX;
+                            }
+                            Vector3 targetToSelf = (_player.Position - _targetPlayer.Position).WithY(0);
+                            if (targetToSelf != Vector3.Zero)
+                            {
+                                targetToSelf = targetToSelf.Normalized();
+                            }
+                            else
+                            {
+                                targetToSelf = targetToBomb;
+                            }
+                            if (Vector3.Dot(targetToBomb, targetToSelf) < -0.5f)
+                            {
+                                if (_player.SyluxBombCount == 1)
+                                {
+                                    spawnBomb = true;
+                                }
+                                else // if (_player.SyluxBombCount == 2)
+                                {
+                                    Vector3 added = targetToBomb + targetToSelf;
+                                    if (added == Vector3.Zero)
+                                    {
+                                        spawnBomb = true;
+                                    }
+                                    else
+                                    {
+                                        BombEntity? secondBomb = _player.SyluxBombs[0];
+                                        Debug.Assert(secondBomb != null);
+                                        targetToBomb = (secondBomb.Position - _targetPlayer.Position).WithY(0);
+                                        spawnBomb = Vector3.Dot(added, targetToBomb) > 0;
+                                    }
+                                }
+                            }
+                        }
+                        if (Func2142EB0(context))
+                        {
+                            spawnBomb = true;
+                        }
+                        if (spawnBomb && _player._abilities.TestFlag(AbilityFlags.Bombs) && _player._bombAmmo > 0
+                            && _player._bombCooldown == 0 && _buttons.L.FramesUp > _field102E)
+                        {
+                            _buttons.L.IsDown = true;
+                            _field102E = _field102C + Rng.GetRandomInt2(_field102C / 2); // note: FPS stuff when _field102C is set
+                        }
+                    }
+                }
+                else if (_touchButtons.Morph.FramesUp > 10 * 2) // todo: FPS stuff
+                {
+                    _touchButtons.Morph.IsDown = true;
+                }
             }
 
             private void Func2_213DA88(AiContext context)
             {
-                // skhere
+                if (_player.IsAltForm)
+                {
+                    _buttons.A.IsDown = true;
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer))
+                    {
+                        // todo?: bug? using zero for this means all the "vectors" below are from the origin
+                        // it seems like there should be a position variable that isn't here, not sure how to fix (if this is used)
+                        // this is similar to Func2_213DDCC above but with the added jank, and has 4/9 length checks like Func2142DCC
+                        Debug.Assert(_targetPlayer != null);
+                        Vector3 zero = Vector3.Zero;
+                        float targetLengthSqr = _targetPlayer.Position.WithY(0).LengthSquared;
+                        float selfLengthSqr = _player.Position.WithY(0).LengthSquared;
+                        bool spawnBomb = false;
+                        if (_player.SyluxBombCount == 0)
+                        {
+                            spawnBomb = _buttons.L.FramesUp > 1 * 2; // todo: FPS stuff
+                        }
+                        else if (_player.SyluxBombCount == 1 || _player.SyluxBombCount == 2)
+                        {
+                            BombEntity? bomb = _player.SyluxBombs[_player.SyluxBombCount - 1];
+                            Debug.Assert(bomb != null);
+                            Vector3 bombPos = bomb.Position.WithY(0);
+                            if (bombPos != Vector3.Zero)
+                            {
+                                bombPos = bombPos.Normalized();
+                            }
+                            else
+                            {
+                                bombPos = Vector3.UnitX;
+                            }
+                            Vector3 selfPos = _player.Position.WithY(0);
+                            if (selfPos != Vector3.Zero)
+                            {
+                                selfPos = selfPos.Normalized();
+                            }
+                            else
+                            {
+                                selfPos = bombPos;
+                            }
+                            spawnBomb = Vector3.Dot(bombPos, selfPos) < -0.5f;
+                        }
+                        if (selfLengthSqr < targetLengthSqr + 2 * 2)
+                        {
+                            _buttons.B.IsDown = true;
+                        }
+                        else if (selfLengthSqr > targetLengthSqr + 3 * 3)
+                        {
+                            _buttons.X.IsDown = true;
+                        }
+                        Func2145C14(zero);
+                        if (spawnBomb)
+                        {
+                            _buttons.L.IsDown = true;
+                        }
+                    }
+                }
+                else if (_touchButtons.Morph.FramesUp > 10 * 2) // todo: FPS stuff
+                {
+                    _touchButtons.Morph.IsDown = true;
+                }
+            }
+
+            // todo: member name
+            private void Func2142FC0()
+            {
+                // the game checks flags2 bit2 first, but we only call this helper inside that condition
+                if (_buttons.A.FramesDown < 180 * 2 && _buttons.Y.FramesUp != 0) // todo: FPS stuff
+                {
+                    _buttons.A.IsDown = true;
+                }
+                else if (_buttons.Y.FramesDown < 180 * 2) // todo: FPS stuff
+                {
+                    _buttons.Y.IsDown = true;
+                }
+                Vector3 vec = ExecuteVectorFunc(index: 0, clearY: true, normalize: false);
+                float lengthSqr = vec.LengthSquared;
+                if (lengthSqr < 2 * 2)
+                {
+                    _buttons.B.IsDown = true;
+                }
+                else if (lengthSqr > 3 * 3)
+                {
+                    _buttons.X.IsDown = true;
+                }
             }
 
             private void Func2_213E148(AiContext context)
             {
-                // skhere
+                if (!_player.IsAltForm && _touchButtons.Morph.FramesUp > 10 * 2) // todo: FPS stuff
+                {
+                    _touchButtons.Morph.IsDown = true;
+                }
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    Func2142FC0();
+                    Debug.Assert(_targetPlayer != null);
+                    Func2145C14(_targetPlayer.Position);
+                }
+            }
+
+            // todo: member name
+            private void Func213FD94()
+            {
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    Debug.Assert(_targetPlayer != null);
+                    Vector3 toTarget = _targetPlayer.Position - _player.Position;
+                    float minLengthSqr = toTarget.LengthSquared;
+                    BeamProjectileEntity? closestBeam = null;
+                    for (int i = 0; i < _targetPlayer.EquipInfo.Beams.Length; i++)
+                    {
+                        BeamProjectileEntity beam = _targetPlayer.EquipInfo.Beams[i];
+                        if (beam.Lifespan > 0)
+                        {
+                            Vector3 toBeam = beam.Position - _player.Position;
+                            float toBeamLenSq = toBeam.LengthSquared;
+                            if (toBeamLenSq > 0)
+                            {
+                                toBeam = toBeam.Normalized();
+                            }
+                            else
+                            {
+                                toBeam = beam.Direction;
+                            }
+                            Vector3 beamVelocity = beam.Velocity;
+                            if (beamVelocity != Vector3.Zero)
+                            {
+                                beamVelocity = beamVelocity.Normalized();
+                            }
+                            else
+                            {
+                                beamVelocity = toBeam;
+                            }
+                            if (Vector3.Dot(toBeam, beamVelocity) <= Fixed.ToFloat(-2896) && toBeamLenSq <= minLengthSqr)
+                            {
+                                minLengthSqr = toBeamLenSq;
+                                closestBeam = beam;
+                            }
+                        }
+                    }
+                    if (closestBeam != null)
+                    {
+                        Vector3 beamVelocityH = closestBeam.Velocity.WithY(0);
+                        Vector3 altVec = _player.IsAltForm
+                            ? new Vector3(_player._field80, 0, _player._field84)
+                            : new Vector3(_player._field70, 0, _player._field74);
+                        Vector3 cross = Vector3.Cross(altVec, beamVelocityH);
+                        if (cross.Y > 0)
+                        {
+                            _buttons.A.IsDown = true;
+                        }
+                        else
+                        {
+                            _buttons.Y.IsDown = true;
+                        }
+                        _buttons.L.IsDown = true;
+                    }
+                }
             }
 
             private void Func2_213E9C8(AiContext context)
             {
-                // skhere
+                CheckUnmorph();
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    Func21436D8();
+                }
+                Func213FD94();
             }
 
             private void Func2_213E984(AiContext context)
             {
-                // skhere
+                CheckUnmorph();
+                // the game calls a nullsub if flags2 bit2 is set
             }
 
             private void Func2_213E934(AiContext context)
             {
-                // skhere
+                Func2140094(context);
+                if (_player.IsAltForm && _buttons.L.FramesUp > _player.Values.BombRefillTime) // todo: FPS stuff (the game divides by 2)
+                {
+                    _buttons.L.IsDown = true;
+                }
+            }
+
+            // todo: member name
+            private void Func21449DC()
+            {
+                // the game checks flags2 bit2 first, but we only call this helper inside that condition
+                Debug.Assert(_targetPlayer != null);
+                _targetPlayer.GetPosition(out _field1048);
+                _field1048 = new Vector3(
+                    _field1048.X + (Rng.GetRandomInt2(8192) / 4096f - 1), // -1.0f to 1.0f // todo: accuracy?
+                    _field1048.Y + (_targetPlayer.IsAltForm ? _targetPlayer.Values.AltColYPos : 0.5f),
+                    _field1048.Z + (Rng.GetRandomInt2(8192) / 4096f - 1)
+                );
+                if (!Func213842C())
+                {
+                    _field1048 = _field1048.AddZ(_field1048.Z < 0 ? -1.5f : 1.5f);
+                }
+                Func2145738(_field1048);
+            }
+
+            // todo: member name
+            private void Func2143578()
+            {
+                // the game checks flags2 bit2 first, but we only call this helper inside that condition
+                Func21449DC();
+                _buttonAimX = Math.Clamp(_buttonAimX, -0.75f, 0.75f);
+                _buttonAimY = Math.Clamp(_buttonAimY, -0.75f, 0.75f);
+                if (_player.WeaponSelection != BeamType.Imperialist)
+                {
+                    _touchButtons.Imperialist.IsDown = true;
+                }
+                else if (_buttons.R.FramesUp > 10 * 2) // todo: FPs stuff
+                {
+                    _buttons.R.IsDown = true;
+                }
+                // if flags2 bit2 is not set, and flags4 bit1 is, the game calls Func214380C instead of doing the above
             }
 
             private void Func2_213E904(AiContext context)
             {
-                // skhere
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    Func2143578();
+                }
             }
 
             private void Func2_213E684(AiContext context)
             {
-                // skhere
+                if (_player.IsAltForm)
+                {
+                    float distSqr = 7 * 7;
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer))
+                    {
+                        Debug.Assert(_targetPlayer != null);
+                        distSqr = Vector3.DistanceSquared(_targetPlayer.Position, _player.Position);
+                    }
+                    context.Field2C = 0;
+                    if (_player.SyluxBombCount != 1 && (distSqr >= 10 * 10 || _player.SyluxBombCount != 0))
+                    {
+                        Func2140094(context);
+                    }
+                    if (_player._abilities.TestFlag(AbilityFlags.Bombs) && _player._bombAmmo > 0
+                        && _player._bombCooldown == 0 && _buttons.L.FramesUp > 1 * 2) // todo: FPS stuff
+                    {
+                        if (distSqr >= 10 * 10 || _player.SyluxBombCount != 0)
+                        {
+                            if (_player.SyluxBombCount == 1)
+                            {
+                                _buttons.A.IsDown = false;
+                                _buttons.Y.IsDown = true;
+                                _buttons.X.IsDown = false;
+                                _buttons.B.IsDown = false;
+                                if (_buttons.Y.FramesDown > 10 * 2 && _buttons.L.FramesUp != 0) // todo: FPS stuff
+                                {
+                                    _buttons.L.IsDown = true;
+                                }
+                            }
+                            else if (_player.SyluxBombCount == 2 && _buttons.L.FramesUp > 150 * 2) // todo: FPS stuff
+                            {
+                                _buttons.L.IsDown = true;
+                            }
+                        }
+                        else
+                        {
+                            _buttons.A.IsDown = true;
+                            _buttons.Y.IsDown = false;
+                            _buttons.X.IsDown = false;
+                            _buttons.B.IsDown = false;
+                            if (_buttons.A.FramesDown > 10 * 2 && _buttons.L.FramesUp != 0) // todo: FPS stuff
+                            {
+                                _buttons.L.IsDown = true;
+                            }
+                        }
+                    }
+                }
+                else if (_touchButtons.Morph.FramesUp > 10 * 2) // todo: FPS stuff
+                {
+                    _touchButtons.Morph.IsDown = true;
+                }
             }
 
             private void Func2_213E3C4(AiContext context)
             {
-                // skhere
+                if (_player.IsAltForm)
+                {
+                    CheckUnmorph();
+                }
+                else if (Flags2.TestFlag(AiFlags2.TargetDefense))
+                {
+                    Debug.Assert(_targetDefense != null);
+                    // Func4_2145F78 has a pared down version of this code
+                    float radius = 0;
+                    if (_targetDefense.Volume.Type == VolumeType.Cylinder)
+                    {
+                        radius = _targetDefense.Volume.CylinderRadius;
+                    }
+                    else if (_targetDefense.Volume.Type == VolumeType.Sphere)
+                    {
+                        radius = _targetDefense.Volume.SphereRadius;
+                    }
+                    if (radius > 0.5f)
+                    {
+                        Vector3 toDefense = (_targetDefense.Position - _player.Position).WithY(0);
+                        if (radius * radius <= toDefense.LengthSquared)
+                        {
+                            Field118 = 0;
+                            context.Field40 = 0;
+                            context.Field44 = 0;
+                            context.Field34 = _player.Position;
+                            _field78 = 0;
+                            Flags2 &= ~AiFlags2.Bit15;
+                            float x = Rng.GetRandomInt2(4096) / 4096f;
+                            _fieldA0 = new Vector3(x * MathF.Sign(toDefense.X), 0, MathF.Sqrt(1 - x * x) * MathF.Sign(toDefense.Z));
+                            _fieldA0 *= radius;
+                            _fieldA0 += _targetDefense.Position;
+                        }
+                        Func2142AE8(_fieldA0);
+                        Field118++;
+                        Func2140B18(context, _fieldA0);
+                    }
+                    Func21436D8();
+                }
+                if (Flags2.TestFlag(AiFlags2.Bit10) && Rng.GetRandomInt2(10) == 0 && !_player.IsAltForm && !_player.IsMorphing
+                    && !_player.Flags1.TestFlag(PlayerFlags1.UsedJump) && _buttons.L.FramesUp > 5 * 2) // todo: FPS stuff
+                {
+                    _buttons.L.IsDown = true;
+                }
+            }
+
+            // todo: member name
+            private void Func2142D38()
+            {
+                if (_buttons.Y.FramesUp > 30 * 2 || _buttons.Y.FramesDown < 30 * 2 && _buttons.Y.FramesDown != 0) // todo: FPS stuff
+                {
+                    _buttons.Y.IsDown = true;
+                }
+                else
+                {
+                    _buttons.A.IsDown = true;
+                }
+                if (_buttons.X.FramesUp > 15 * 2 || _buttons.X.FramesDown < 15 * 2 && _buttons.X.FramesDown != 0) // todo: FPS stuff
+                {
+                    _buttons.X.IsDown = true;
+                }
+                else
+                {
+                    _buttons.B.IsDown = true;
+                }
             }
 
             private void Func2_213E31C(AiContext context)
             {
-                // skhere
+                // mostly the same as Func2_213E274 below, but with one helper call difference
+                CheckUnmorph();
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    Func21433E4();
+                }
+                Func2142D38();
+                if (!_player.Flags1.TestFlag(PlayerFlags1.UsedJump) && _buttons.L.FramesUp > _field1034)
+                {
+                    _buttons.L.IsDown = true;
+                    _field1034 = Rng.GetRandomInt2(75 * 2) + 15 * 2; // todo: FPS stuff
+                }
+            }
+
+            // todo: member name
+            private void Func21431B4()
+            {
+                // the game checks flags2 bit2 first, but we only call this helper inside that condition
+                Debug.Assert(_targetPlayer != null);
+                Vector3 selfAltVec = _player.IsAltForm
+                    ? new Vector3(_player._field80, 0, _player._field84)
+                    : new Vector3(_player._field70, 0, _player._field74);
+                Vector3 targetAltVec = _targetPlayer.IsAltForm
+                    ? new Vector3(_targetPlayer._field80, 0, _targetPlayer._field84)
+                    : new Vector3(_targetPlayer._field70, 0, _targetPlayer._field74);
+                if (Vector3.Dot(selfAltVec, targetAltVec) <= Fixed.ToFloat(-3138))
+                {
+                    if (_buttons.A.FramesDown != 0)
+                    {
+                        _buttons.A.IsDown = true;
+                    }
+                    else
+                    {
+                        _buttons.Y.IsDown = true;
+                    }
+                }
+                else
+                {
+                    Vector3 cross = Vector3.Cross(selfAltVec, targetAltVec);
+                    if (cross.Y >= 0)
+                    {
+                        _buttons.A.IsDown = true;
+                    }
+                    else
+                    {
+                        _buttons.Y.IsDown = true;
+                    }
+                }
+                Vector3 vec = ExecuteVectorFunc(index: 0, clearY: true, normalize: false);
+                float lengthSqr = vec.LengthSquared;
+                if (lengthSqr < 2 * 2)
+                {
+                    _buttons.B.IsDown = true;
+                }
+                else if (lengthSqr > 3 * 3)
+                {
+                    _buttons.X.IsDown = true;
+                }
             }
 
             private void Func2_213E274(AiContext context)
             {
-                // skhere
+                // mostly the same as Func2_213E31C above, but with one helper call difference
+                CheckUnmorph();
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    Func21436D8();
+                    Func21431B4();
+                }
+                if (!_player.Flags1.TestFlag(PlayerFlags1.UsedJump) && _buttons.L.FramesUp > _field1034)
+                {
+                    _buttons.L.IsDown = true;
+                    _field1034 = Rng.GetRandomInt2(75 * 2) + 15 * 2; // todo: FPS stuff
+                }
+            }
+
+            // todo: member name
+            private void Func21430B4()
+            {
+                // the game checks flags2 bit3 first, but we only call this helper inside that condition
+                Debug.Assert(_targetHalfturret != null);
+                if (_buttons.Y.FramesDown > 30 * 2 || _buttons.A.FramesDown < 60 * 2 && _buttons.A.FramesDown != 0) // todo: FPS stuff
+                {
+                    _buttons.A.IsDown = true;
+                }
+                else
+                {
+                    _buttons.Y.IsDown = true;
+                }
+                float distSqr = Vector3.DistanceSquared(_targetHalfturret.Position, _player.Position);
+                if (distSqr < 2 * 2)
+                {
+                    _buttons.B.IsDown = true;
+                }
+                else if (distSqr > 3 * 3)
+                {
+                    _buttons.X.IsDown = true;
+                }
             }
 
             private void Func2_213E1CC(AiContext context)
             {
-                // skhere
+                // mostly the same as Func2_213E274 above, but with two helper call differences amd checking flags2 bit3 instead of bit2
+                CheckUnmorph();
+                if (Flags2.TestFlag(AiFlags2.TargetHalfturret))
+                {
+                    Func2143470();
+                    Func21430B4();
+                }
+                if (!_player.Flags1.TestFlag(PlayerFlags1.UsedJump) && _buttons.L.FramesUp > _field1034)
+                {
+                    _buttons.L.IsDown = true;
+                    _field1034 = Rng.GetRandomInt2(75 * 2) + 15 * 2; // todo: FPS stuff
+                }
             }
 
             private void Func2_213D9B8(AiContext context)
             {
-                // skhere
+                if (_player.IsAltForm)
+                {
+                    CheckUnmorph();
+                }
+                else
+                {
+                    Debug.Assert(_node40 != null);
+                    Func2142ABC(_node40.Position);
+                    Field118++;
+                    // todo: FPS stuff
+                    if (!_player.Flags1.TestFlag(PlayerFlags1.UsedJump) && _buttons.L.FramesUp > 5 * 2
+                        && (_player._standTerrain == Terrain.Lava
+                        || _player._horizColTimer > 10 * 2 && _player.Flags1.TestFlag(PlayerFlags1.Grounded)))
+                    {
+                        _buttons.L.IsDown = true;
+                    }
+                    Func2140B18(context, _node40.Position);
+                }
             }
 
             private void Func2_213D96C(AiContext context)
             {
                 CheckUnmorph();
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Debug.Assert(_targetPlayer != null);
                     Func2145C14(_targetPlayer.Position);
@@ -3432,7 +4129,6 @@ namespace MphRead.Entities
 
             #endregion
 
-            // skhere
             // todo: member names
             #region Funcs3
 
@@ -3450,7 +4146,7 @@ namespace MphRead.Entities
             private int Func3_213D814(AiContext context, AiPersonalityData5 param)
             {
                 Debug.Assert(_node40 != null);
-                return _node40.Position.Y - _player.Position.Y > param.Param1 ? 1 : 0;
+                return _node40.Position.Y - _player.Position.Y > param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213D7F0(AiContext context, AiPersonalityData5 param)
@@ -3465,67 +4161,71 @@ namespace MphRead.Entities
 
             private int Func3_213D7E8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
                 return 0;
             }
 
             private int Func3_213D7D0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags2.TestFlag(AiFlags2.TargetItem) ? 0 : 1;
             }
 
             private int Func3_213D7B8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                // this is duplicated code in-game
+                return Func3_213D7D0(context, param);
             }
 
             private int Func3_213D7A0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                // this is duplicated code in-game
+                return Func3_213D7D0(context, param);
             }
 
             private int Func3_213D77C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                if (Flags2.TestFlag(AiFlags2.TargetDoor))
+                {
+                    Debug.Assert(_targetDoor != null);
+                    return _targetDoor.Flags.TestFlag(DoorFlags.ShotOpen) ? 1 : 0;
+                }
                 return 0;
             }
 
             private int Func3_213D758(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D77C(context, param) ^ 1; // inverted
             }
 
             private int Func3_213D734(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                if (Flags2.TestFlag(AiFlags2.TargetDoor))
+                {
+                    Debug.Assert(_targetDoor != null);
+                    return _targetDoor.Flags.TestFlag(DoorFlags.Locked) ? 1 : 0;
+                }
                 return 0;
             }
 
             private int Func3_213D710(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D734(context, param) ^ 1; // inverted
             }
 
             private int Func3_213D6D0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                FindEntityRef(AiEntRefType.Type0);
+                Debug.Assert(_entityRefs.Field0 != null);
+                return IsNodeInRange(_entityRefs.Field0) ? 1 : 0;
             }
 
             private int Func3_213D6AC(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D6D0(context, param) ^ 1; // inverted
             }
 
             private int Func3_213D624(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return 0;
                 }
@@ -3540,22 +4240,23 @@ namespace MphRead.Entities
 
             private int Func3_213D608(AiContext context, AiPersonalityData5 param)
             {
-                return Func3_213D624(context, param) == 0 ? 1 : 0;
+                return Func3_213D624(context, param) ^ 1; // inverted
             }
 
             private int Func3_213D564(AiContext context, AiPersonalityData5 param)
             {
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return 0;
                 }
                 Debug.Assert(_targetPlayer != null);
-                return Vector3.DistanceSquared(_targetPlayer.Position, _player.Position) < param.Param1 * param.Param1 ? 1 : 0;
+                float dist = param.Param1 / 4096f;
+                return Vector3.DistanceSquared(_targetPlayer.Position, _player.Position) < dist * dist ? 1 : 0;
             }
 
             private int Func3_213D540(AiContext context, AiPersonalityData5 param)
             {
-                return Func3_213D564(context, param) == 0 ? 1 : 0;
+                return Func3_213D564(context, param) ^ 1; // inverted
             }
 
             private int Func3_213D530(AiContext context, AiPersonalityData5 param)
@@ -3565,151 +4266,215 @@ namespace MphRead.Entities
 
             private int Func3_213D514(AiContext context, AiPersonalityData5 param)
             {
-                return Func3_213D530(context, param) == 0 ? 1 : 0;
+                return Func3_213D530(context, param) ^ 1; // inverted
             }
 
             private int Func3_213D4C0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    return 0;
+                }
+                Debug.Assert(_targetPlayer != null);
+                for (int i = 0; i < _targetPlayer.EquipInfo.Beams.Length; i++)
+                {
+                    if (_targetPlayer.EquipInfo.Beams[i].Lifespan != 0)
+                    {
+                        return 1;
+                    }
+                }
                 return 0;
             }
 
             private int Func3_213D49C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D4C0(context, param) ^ 1; // inverted
             }
 
             private int Func3_213D43C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                foreach (BeamProjectileEntity beam in _scene.GetBeamProjectileEntities())
+                {
+                    if (beam.Lifespan != 0 && beam.Beam == BeamType.OmegaCannon)
+                    {
+                        return 1;
+                    }
+                }
                 return 0;
             }
 
             private int Func3_213D418(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D43C(context, param) ^ 1; // inverted
             }
 
             private int Func3_213D388(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                PlayerEntity? player = null;
+                if (GameState.Mode == GameMode.SinglePlayer)
+                {
+                    player = PlayerEntity.Main;
+                }
+                else
+                {
+                    // todo?: if we exposed "get entity from storage," we wouldn't need a loop
+                    foreach (PlayerEntity entity in _scene.GetPlayerEntities())
+                    {
+                        player = entity;
+                        break;
+                    }
+                }
+                if (player == null)
+                {
+                    // I don't think this can happen, but whatever
+                    return 0;
+                }
+                return AggroFunc214857C(6, 1, 2, null, player) ? 1 : 0;
             }
 
             private int Func3_213D36C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D388(context, param) ^ 1; // inverted
             }
 
             private int Func3_213D2C0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                // same as Func3_213D178 below but calls aggro for bots only
+                foreach (PlayerEntity player in _scene.GetPlayerEntities())
+                {
+                    if (player != _player && player.IsBot)
+                    {
+                        if (AggroFunc214857C(6, 1, 2, null, player))
+                        {
+                            return 1;
+                        }
+                    }
+                }
                 return 0;
             }
 
             private int Func3_213D2A4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D2C0(context, param) ^ 1; // inverted
             }
 
             private int Func3_213D234(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    return 0;
+                }
+                return AggroFunc214857C(6, 2, 1, _targetPlayer, null) ? 1 : 0;
             }
 
             private int Func3_213D218(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D234(context, param) ^ 1; // inverted
             }
 
             private int Func3_213D178(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                // same as Func3_213D2C0 above but calls aggro for bots and non-bots
+                foreach (PlayerEntity player in _scene.GetPlayerEntities())
+                {
+                    if (player != _player)
+                    {
+                        if (AggroFunc214857C(6, 1, 2, null, player))
+                        {
+                            return 1;
+                        }
+                    }
+                }
                 return 0;
             }
 
             private int Func3_213D15C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D178(context, param) ^ 1; // inverted
+            }
+
+            // todo: member name
+            private bool Func213995C(float angleCos, float maxDistSqr)
+            {
+                Vector3 vec1 = ExecuteVectorFunc(index: 7, clearY: false, normalize: false);
+                float lengthSqr = vec1.LengthSquared;
+                if (maxDistSqr > 0 && lengthSqr >= maxDistSqr)
+                {
+                    return false;
+                }
+                Vector3 vec2 = ExecuteVectorFunc(index: 1, clearY: false, normalize: false);
+                float dot = Vector3.Dot(vec2, vec1);
+                return dot > angleCos || dot > 0 && lengthSqr < 1;
             }
 
             private int Func3_213D128(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func213995C(Fixed.ToFloat(3849), maxDistSqr: 4 * 4) ? 1 : 0;
             }
 
             private int Func3_213D0F4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func213995C(Fixed.ToFloat(3849), maxDistSqr: 5 * 5) ? 0 : 1; // inverted
             }
 
             private int Func3_213D0C4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    return 0;
+                }
+                Debug.Assert(_targetPlayer != null);
+                return _targetPlayer.IsAltForm ? 1 : 0;
             }
 
             private int Func3_213D0A8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D0C4(context, param) ^ 1; // inverted
             }
 
             private int Func3_213D078(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    return 0;
+                }
+                Debug.Assert(_targetPlayer != null);
+                return _targetPlayer._frozenTimer != 0 ? 1 : 0;
             }
 
             private int Func3_213D05C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D078(context, param) ^ 1; // inverted
             }
 
             private int Func3_213D044(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) ? 1 : 0;
             }
 
             private int Func3_213D028(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D044(context, param) ^ 1; // inverted
             }
 
             private int Func3_213D010(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags2.TestFlag(AiFlags2.TargetHalfturret) ? 1 : 0;
             }
 
             private int Func3_213CFF4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213D010(context, param) ^ 1; // inverted
             }
 
             private int Func3_213CFDC(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags2.TestFlag(AiFlags2.TargetItem) ? 1 : 0;
             }
 
             private int Func3_213CFC0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213CFDC(context, param) ^ 1; // inverted
             }
 
             private int Func3_213CFA4(AiContext context, AiPersonalityData5 param)
@@ -3719,19 +4484,36 @@ namespace MphRead.Entities
 
             private int Func3_213CF0C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    return 0;
+                }
+                Debug.Assert(_targetPlayer != null);
+                return AggroFunc214857C(4, 2, 1, _targetPlayer, null) ? 1 : 0;
             }
 
             private int Func3_213CEE8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213CF0C(context, param) ^ 1; // inverted
             }
 
             private int Func3_213CDB8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                // same as Func3_213C89C below, but returns if there are any non-zero hits instead of returning the number of hits
+                foreach (PlayerEntity other in _scene.GetPlayerEntities())
+                {
+                    float distSqr = Vector3.DistanceSquared(other.Position, _player.Position);
+                    bool hasAggro = false;
+                    if (distSqr >= 7 * 7)
+                    {
+                        hasAggro = AggroFunc214857C(6, 1, 2, null, other);
+                    }
+                    if (other != _player && other.TeamIndex == _player.TeamIndex && other.Health != 0
+                        && (distSqr < 7 * 7 || hasAggro) && _slotHits[other.SlotIndex] != 0)
+                    {
+                        return 1;
+                    }
+                }
                 return 0;
             }
 
@@ -3752,7 +4534,7 @@ namespace MphRead.Entities
 
             private int Func3_213CD74(AiContext context, AiPersonalityData5 param)
             {
-                return _player.Flags1.TestFlag(PlayerFlags1.AltForm) && _player.Halfturret.Health == 0 ? 1 : 0;
+                return _player.IsAltForm && _player.Halfturret.Health == 0 ? 1 : 0;
             }
 
             private int Func3_213CD58(AiContext context, AiPersonalityData5 param)
@@ -3801,54 +4583,72 @@ namespace MphRead.Entities
 
             private int Func3_213CBE4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                FindEntityRef(AiEntRefType.Type54);
+                if (_entityRefs.Field54 == null)
+                {
+                    return 0;
+                }
+                float dist = param.Param1 / 4096f;
+                return Vector3.DistanceSquared(_entityRefs.Field54.Position, _player.Position) < dist * dist ? 1 : 0;
             }
 
             private int Func3_213CBC0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213CBE4(context, param) ^ 1; // inverted
             }
 
             private int Func3_213CBB0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                // the game returns from an otherwise unused helper 2137640
+                if (Func2137860())
+                {
+                    return 0;
+                }
+                foreach (ItemInstanceEntity item in _scene.GetItemInstanceEntities())
+                {
+                    if (!IsItemNotNeeded(item.ItemType) && !Func21377FC(item))
+                    {
+                        return 1;
+                    }
+                }
                 return 0;
             }
 
             private int Func3_213CB8C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213CBB0(context, param) ^ 1; // inverted
             }
 
             private int Func3_213CADC(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                FindEntityRef(AiEntRefType.Type55);
+                if (_entityRefs.Field55 == null)
+                {
+                    return 0;
+                }
+                float dist = param.Param1 / 4096f;
+                return Vector3.DistanceSquared(_entityRefs.Field55.Position, _player.Position) < dist * dist ? 1 : 0;
             }
 
             private int Func3_213CAA8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                FindEntityRef(AiEntRefType.Type55);
+                return _entityRefs.Field55 != null ? 1 : 0;
             }
 
             private int Func3_213CA84(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213CAA8(context, param) ^ 1; // inverted
             }
 
             private int Func3_213CA70(AiContext context, AiPersonalityData5 param)
             {
-                return Field118 >= 151 ? 1 : 0; // sktodo-ai: FPS stuff?
+                return Field118 >= 151 * 2 ? 1 : 0; // todo: FPS stuff
             }
 
             private int Func3_213CA58(AiContext context, AiPersonalityData5 param)
             {
-                return Field118 > param.Param1 ? 1 : 0; // sktodo-ai: FPS stuff?
+                return Field118 > param.Param1 * 2 ? 1 : 0; // todo: FPS stuff
             }
 
             private int Func3_213CA2C(AiContext context, AiPersonalityData5 param)
@@ -3874,6 +4674,7 @@ namespace MphRead.Entities
 
             private int Func3_213C89C(AiContext context, AiPersonalityData5 param)
             {
+                // same as Func3_213CDB8 above, but returns the number of hits instead of returning if there are any non-zero hits
                 int hits = 0;
                 foreach (PlayerEntity other in _scene.GetPlayerEntities())
                 {
@@ -3973,13 +4774,11 @@ namespace MphRead.Entities
 
             private int Func3_213C48C(AiContext context, AiPersonalityData5 param)
             {
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Debug.Assert(_targetPlayer != null);
                     _targetPlayer.GetPosition(out Vector3 targetPos);
-                    targetPos = targetPos.AddY(_targetPlayer.Flags1.TestFlag(PlayerFlags1.AltForm)
-                        ? _targetPlayer.Values.AltColYPos
-                        : 0.5f);
+                    targetPos = targetPos.AddY(_targetPlayer.IsAltForm ? _targetPlayer.Values.AltColYPos : 0.5f);
                     if (Func3_2139A1C(context, targetPos, angleCos: 0.5f, maxDistSqr: 15 * 15))
                     {
                         return 1;
@@ -3990,7 +4789,7 @@ namespace MphRead.Entities
 
             private int Func3_213C470(AiContext context, AiPersonalityData5 param)
             {
-                return Func3_213C48C(context, param) == 0 ? 1 : 0; // inverted
+                return Func3_213C48C(context, param) ^ 1; // inverted
             }
 
             private int Func3_213C334(AiContext context, AiPersonalityData5 param)
@@ -4004,10 +4803,10 @@ namespace MphRead.Entities
 
             private int Func3_213C310(AiContext context, AiPersonalityData5 param)
             {
-                return Func3_213C334(context, param) == 0 ? 1 : 0; // inverted
+                return Func3_213C334(context, param) ^ 1; // inverted
             }
 
-            // like Func1_2149824, except it returns a boolean for the presence of the entity instead of updating seek item
+            // like Func1_2149824, except it returns a boolean for the presence of the entity instead of updating target item
             private int Func3_213C0D0(AiContext context, AiPersonalityData5 param)
             {
                 if (_findWeaponIndex == 1)
@@ -4207,211 +5006,267 @@ namespace MphRead.Entities
 
             private int Func3_213BCC4(AiContext context, AiPersonalityData5 param)
             {
-                return Func3_213BCE8(context, param) == 0 ? 1 : 0;
+                return Func3_213BCE8(context, param) ^ 1; // inverted
             }
 
             private int Func3_213BCB0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Flags2.TestFlag(PlayerFlags2.AltAttack) ? 1 : 0;
             }
 
             private int Func3_213BC8C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213BCB0(context, param) ^ 1; // inverted
             }
 
             private int Func3_213BC70(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                Debug.Assert(_octolithFlagDC != null);
+                return _octolithFlagDC.Carrier == _player ? 1 : 0;
             }
 
             private int Func3_213BC4C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213BC70(context, param) ^ 1; // inverted
             }
 
             private int Func3_213BC0C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                Debug.Assert(_octolithFlagD4 != null);
+                PlayerEntity? carrier = _octolithFlagD4.Carrier;
+                return carrier != null && carrier.Health != 0 && carrier.TeamIndex != _player.TeamIndex ? 1 : 0;
             }
 
             private int Func3_213BBE8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213BC0C(context, param) ^ 1; // inverted
             }
 
             private int Func3_213BBA0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                Debug.Assert(_octolithFlagDC != null);
+                PlayerEntity? carrier = _octolithFlagDC.Carrier;
+                return carrier != null && carrier.Health != 0 && carrier.TeamIndex == _player.TeamIndex && carrier != _player ? 1 : 0;
             }
 
             private int Func3_213BB7C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213BBA0(context, param) ^ 1; // inverted
             }
 
             private int Func3_213BAF4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                Debug.Assert(_octolithFlagCC != null);
+                float dist = param.Param1 / 4096f;
+                return Vector3.DistanceSquared(_octolithFlagCC.Position, _player.Position) < dist * dist ? 1 : 0;
             }
 
             private int Func3_213BAD0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213BAF4(context, param) ^ 1; // inverted
             }
 
             private int Func3_213BA68(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                Debug.Assert(_octolithFlagDC != null);
+                return Vector3.DistanceSquared(_octolithFlagDC.Position, _player.Position) < 3 * 3 ? 1 : 0;
             }
 
             private int Func3_213BA44(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213BA68(context, param) ^ 1; // inverted
             }
 
             private int Func3_213BA28(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                Debug.Assert(_octolithFlagD4 != null);
+                return _octolithFlagD4.AtBase ? 1 : 0;
             }
 
             private int Func3_213BA04(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213BA28(context, param) ^ 1; // inverted
             }
 
             private int Func3_213B99C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                Debug.Assert(_flagBaseD8 != null);
+                return Vector3.DistanceSquared(_flagBaseD8.Position, _player.Position) < 3 * 3 ? 1 : 0;
             }
 
             private int Func3_213B978(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213B99C(context, param) ^ 1; // inverted
             }
 
             private int Func3_213B8B0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                Debug.Assert(_flagBaseD8 != null);
+                foreach (PlayerEntity other in _scene.GetPlayerEntities())
+                {
+                    if (other != _player && other.TeamIndex == _player.TeamIndex
+                        && Vector3.DistanceSquared(_flagBaseD8.Position, other.Position) < 3 * 3)
+                    {
+                        return 1;
+                    }
+                }
                 return 0;
             }
 
             private int Func3_213B88C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213B8B0(context, param) ^ 1; // inverted
             }
 
             private int Func3_213B7A0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                Debug.Assert(_octolithFlagD4 != null);
+                Debug.Assert(_flagBaseD8 != null);
+                if (_octolithFlagD4.Carrier != null)
+                {
+                    foreach (PlayerEntity other in _scene.GetPlayerEntities())
+                    {
+                        if (other != _player && other.TeamIndex != _octolithFlagD4.Carrier.TeamIndex
+                            && Vector3.DistanceSquared(_flagBaseD8.Position, other.Position) < 3 * 3)
+                        {
+                            return 1;
+                        }
+                    }
+                }
                 return 0;
             }
 
             private int Func3_213B77C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213B7A0(context, param) ^ 1; // inverted
             }
 
             private int Func3_213B690(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (GameState.Mode == GameMode.Capture)
+                {
+                    return 0;
+                }
+                // todo?: confirm if both these fields should be used, given this is not Capture mode
+                Debug.Assert(_octolithFlagD4 != null);
+                Debug.Assert(_octolithFlagDC != null);
+                if (_octolithFlagD4.Carrier == null)
+                {
+                    return 0;
+                }
+                return Vector3.DistanceSquared(_octolithFlagDC.BasePosition, _player.Position)
+                    < Vector3.DistanceSquared(_octolithFlagD4.Carrier.Position, _player.Position) ? 1 : 0;
             }
 
             private int Func3_213B5DC(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                Debug.Assert(_octolithFlagDC != null);
+                Debug.Assert(_flagBaseD8 != null);
+                return Vector3.DistanceSquared(_octolithFlagDC.Position, _player.Position)
+                    < Vector3.DistanceSquared(_flagBaseD8.Position, _player.Position) ? 1 : 0;
             }
 
             private int Func3_213B528(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                Debug.Assert(_flagBaseD8 != null);
+                Debug.Assert(_octolithFlagDC != null);
+                return Vector3.DistanceSquared(_flagBaseD8.Position, _player.Position)
+                    < Vector3.DistanceSquared(_octolithFlagDC.Position, _player.Position) ? 1 : 0;
             }
 
             private int Func3_213B4E4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (!Flags2.TestFlag(AiFlags2.TargetDefense))
+                {
+                    return 0;
+                }
+                Debug.Assert(_targetDefense != null);
+                return _targetDefense.Volume.TestPoint(_player.Volume.SpherePosition) ? 1 : 0;
             }
 
             private int Func3_213B4A0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags2.TestFlag(AiFlags2.TargetDefense) && Func3_213B4E4(context, param) == 0 ? 1 : 0; // inverted
             }
 
             private int Func3_213B45C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (!Flags2.TestFlag(AiFlags2.TargetDefense))
+                {
+                    return 0;
+                }
+                Debug.Assert(_targetDefense != null);
+                return _targetDefense.CapturedPlayer?.TeamIndex == _player.TeamIndex ? 1 : 0;
             }
 
             private int Func3_213B3F0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                foreach (NodeDefenseEntity defense in _scene.GetNodeDefenseEntities())
+                {
+                    if (defense.CapturedPlayer?.TeamIndex == _player.TeamIndex && defense.OccupiedBy != null)
+                    {
+                        return 1;
+                    }
+                }
                 return 0;
             }
 
             private int Func3_213B3A0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (!Flags2.TestFlag(AiFlags2.TargetDefense))
+                {
+                    return 0;
+                }
+                Debug.Assert(_targetDefense != null);
+                return _targetDefense.CapturedPlayer?.TeamIndex == _player.TeamIndex && _targetDefense.OccupiedBy != null ? 1 : 0;
             }
 
             private int Func3_213B37C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213B3A0(context, param) ^ 1; // inverted
             }
 
             private int Func3_213B34C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                if (Flags2.TestFlag(AiFlags2.TargetDefense))
+                {
+                    Debug.Assert(_targetDefense != null);
+                    return _targetDefense.Contested ? 1 : 0;
+                }
                 return 0;
             }
 
             private int Func3_213B328(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213B34C(context, param) ^ 1; // inverted
             }
 
             private int Func3_213B284(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (!Flags2.TestFlag(AiFlags2.TargetDefense))
+                {
+                    return 0;
+                }
+                Debug.Assert(_targetDefense != null);
+                float dist = param.Param1 / 4096f;
+                return Vector3.DistanceSquared(_targetDefense.Position, _player.Position) < dist * dist ? 1 : 0;
             }
 
             private int Func3_213B260(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213B284(context, param) ^ 1; // inverted
             }
 
             private int Func3_213B1F0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                foreach (NodeDefenseEntity defense in _scene.GetNodeDefenseEntities())
+                {
+                    if (defense.CapturedPlayer == null || defense.CapturedPlayer.TeamIndex != _player.TeamIndex || defense.OccupiedBy != null)
+                    {
+                        return 0;
+                    }
+                }
+                return 1;
             }
 
             private int Func3_213B1D8(AiContext context, AiPersonalityData5 param)
@@ -4506,164 +5361,157 @@ namespace MphRead.Entities
 
             private int Func3_213B020(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.BotLevel == 0 ? 1 : 0;
             }
 
             private int Func3_213B000(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.BotLevel != 0 ? 1 : 0; // inverted
             }
 
             private int Func3_213AFE0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.BotLevel == 1 ? 1 : 0;
             }
 
             private int Func3_213AFC0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.BotLevel != 1 ? 1 : 0; // inverted
             }
 
             private int Func3_213AFA0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.BotLevel == 2 ? 1 : 0;
             }
 
             private int Func3_213AF80(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.BotLevel != 2 ? 1 : 0; // inverted
             }
 
+            // todo: depending on what these are used for, we might need a hack for Guardians
             private int Func3_213AF68(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Hunter == Hunter.Samus ? 1 : 0;
             }
 
             private int Func3_213AF50(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Hunter != Hunter.Samus ? 1 : 0; // inverted
             }
 
             private int Func3_213AF38(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Hunter == Hunter.Kanden ? 1 : 0;
             }
 
             private int Func3_213AF20(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Hunter != Hunter.Kanden ? 1 : 0; // inverted
             }
 
             private int Func3_213AF08(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Hunter == Hunter.Spire ? 1 : 0;
             }
 
             private int Func3_213AEF0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Hunter != Hunter.Spire ? 1 : 0; // inverted
             }
 
             private int Func3_213AED8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Hunter == Hunter.Noxus ? 1 : 0;
             }
 
             private int Func3_213AEC0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Hunter != Hunter.Noxus ? 1 : 0; // inverted
             }
 
             private int Func3_213AEA8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Hunter == Hunter.Trace ? 1 : 0;
             }
 
             private int Func3_213AE90(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Hunter != Hunter.Trace ? 1 : 0; // inverted
             }
 
             private int Func3_213AE78(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Hunter == Hunter.Sylux ? 1 : 0;
             }
 
             private int Func3_213AE60(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Hunter != Hunter.Sylux ? 1 : 0; // inverted
             }
 
             private int Func3_213AE48(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Hunter == Hunter.Weavel ? 1 : 0;
             }
 
             private int Func3_213AE30(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Hunter != Hunter.Weavel ? 1 : 0; // inverted
             }
 
             private int Func3_213AE14(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return GameState.Mode == GameMode.Capture ? 1 : 0;
             }
 
             private int Func3_213ADF8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return GameState.Mode != GameMode.Capture ? 1 : 0; // inverted
             }
 
             private int Func3_213ADC4(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return GameState.Mode == GameMode.PrimeHunter && _player.IsPrimeHunter ? 1 : 0;
             }
 
             private int Func3_213ADA0(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213ADC4(context, param) ^ 1; // inverted
             }
 
             private int Func3_213AD88(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _field30 == param.Param1 ? 1 : 0; // sktodo-ai: FPS stuff?
             }
 
             private int Func3_213AD64(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213AD88(context, param) ^ 1; // inverted
             }
 
             private int Func3_213ACE8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (GameState.Mode == GameMode.Capture && _player.TeamIndex == 0 && _field30 > 100) // sktodo-ai: FPS stuff?
+                {
+                    return 1;
+                }
+                int navIndex = _nodeTypeIndex[(int)NodeType.Navigation];
+                int specIndex = _nodeTypeIndex[(int)NodeType.Special];
+                if (navIndex >= specIndex)
+                {
+                    return 1;
+                }
+                while (navIndex < specIndex)
+                {
+                    NodeData3 node = _nodeList[navIndex];
+                    if (node.Field4 == _field30)
+                    {
+                        return 0;
+                    }
+                    navIndex++;
+                }
+                return 1;
             }
 
             private int Func3_213ACCC(AiContext context, AiPersonalityData5 param)
@@ -4699,165 +5547,197 @@ namespace MphRead.Entities
 
             private int Func3_213AC04(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null
                     && _targetPlayer.Position.Y < param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213ABC0(AiContext context, AiPersonalityData5 param)
             {
                 // instead of checking the Y pos here, the game calls Func3_213AC04() and tests for a failure
-                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null
                     && _targetPlayer.Position.Y >= param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AB8C(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null
                     && _targetPlayer.Position.X > param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AB58(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null
                     && _targetPlayer.Position.X < param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AB24(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null
                     && _targetPlayer.Position.Z > param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AAF0(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null
                     && _targetPlayer.Position.Z < param.Param1 / 4096f ? 1 : 0;
             }
 
             private int Func3_213AA64(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    return 0;
+                }
+                Debug.Assert(_targetPlayer != null);
+                float dist = param.Param1 / 4096f;
+                // todo?: bug? checking distance to the origin instead of to this bot or another entity
+                return _targetPlayer.Position.LengthSquared < dist * dist ? 1 : 0;
             }
 
             private int Func3_213AA20(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags2.TestFlag(AiFlags2.TargetPlayer) && Func3_213AA64(context, param) == 0 ? 1 : 0; // inverted
             }
 
             private int Func3_213A9B8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    return 0;
+                }
+                // todo-ai: need to confirm what's done with this alpha value and if it needs (re)normalization
+                if (GameState.RadarPlayers)
+                {
+                    return 31;
+                }
+                Debug.Assert(_targetPlayer != null);
+                if (_targetPlayer.Flags2.TestFlag(PlayerFlags2.RadarReveal) || _targetPlayer.OctolithFlag != null || _targetPlayer.IsPrimeHunter)
+                {
+                    return 31;
+                }
+                return (int)(_targetPlayer.CurAlpha * 31);
             }
 
             private int Func3_213A94C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    return 31;
+                }
+                // todo-ai: need to confirm what's done with this alpha value and if it needs (re)normalization
+                if (GameState.RadarPlayers)
+                {
+                    return 0;
+                }
+                Debug.Assert(_targetPlayer != null);
+                if (_targetPlayer.Flags2.TestFlag(PlayerFlags2.RadarReveal) || _targetPlayer.OctolithFlag != null || _targetPlayer.IsPrimeHunter)
+                {
+                    return 0;
+                }
+                return 31 - (int)(_targetPlayer.CurAlpha * 31);
             }
 
             private int Func3_213A938(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags4.TestFlag(AiFlags4.Bit2) ? 1 : 0;
             }
 
             private int Func3_213A91C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Flags4.TestFlag(AiFlags4.Bit2) ? 0 : 1; // inverted
             }
 
             private int Func3_213A900(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player._deathaltTimer != 0 ? 1 : 0;
             }
 
             private int Func3_213A8DC(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213A900(context, param) ^ 1; // inverted
             }
 
             private int Func3_213A8A8(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    return 0;
+                }
+                Debug.Assert(_targetPlayer != null);
+                return _targetPlayer._deathaltTimer != 0 ? 1 : 0;
             }
 
             private int Func3_213A884(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213A8A8(context, param) ^ 1; // inverted
             }
 
             private int Func3_213A868(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player._timeSinceGrounded > 30 * 2 ? 1 : 0; // todo: FPS stuff
             }
 
             private int Func3_213A844(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213A868(context, param) ^ 1; // inverted
             }
 
             private int Func3_213A828(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player.Flags1.TestFlag(PlayerFlags1.UsedJump) ? 0 : 1;
             }
 
             private int Func3_213A804(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return Func3_213A828(context, param) ^ 1;
             }
 
             private int Func3_213A798(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                foreach (PlayerEntity other in _scene.GetPlayerEntities())
+                {
+                    if (other != _player && other.IsBot && other.AiData.Flags2.TestFlag(AiFlags2.Bit18))
+                    {
+                        return 1;
+                    }
+                }
                 return 0;
             }
 
             private int Func3_213A72C(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
+                foreach (PlayerEntity other in _scene.GetPlayerEntities())
+                {
+                    if (other != _player && other.IsBot && other.AiData.Flags2.TestFlag(AiFlags2.Bit19))
+                    {
+                        return 1;
+                    }
+                }
                 return 0;
             }
 
             private int Func3_213A714(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                return _player._horizColTimer > 10 * 2 ? 1 : 0; // todo: FPS stuff
             }
 
             private int Func3_213A698(AiContext context, AiPersonalityData5 param)
             {
-                // skhere
-                return 0;
+                // UNIT1 ALINOS LANDFALL (Alinos Gateway) or AD2 MAGMA VENTS (Council Chamber)
+                if ((_scene.RoomId == 114 || _scene.RoomId == 112) && _player.Speed != Vector3.Zero && !_player.IsAltForm)
+                {
+                    return 0;
+                }
+                return _player._standTerrain == Terrain.Lava ? 1 : 0;
             }
 
             private int Func3_213A688(AiContext context, AiPersonalityData5 param)
             {
-                return Flags2.TestFlag(AiFlags2.Bit14) ? 1 : 0;
+                return Flags2.TestFlag(AiFlags2.AiStart) ? 1 : 0;
             }
-
-            // todo: FPS stuff
-            private bool _ignore = false;
 
             private int Func3_213A660(AiContext context, AiPersonalityData5 param)
             {
-                if (_ignore)
-                {
-                    _ignore = false;
-                    return 0;
-                }
-                _ignore = true;
                 return param.Param1 + (int)Rng.GetRandomInt2(param.Param2 - param.Param1);
             }
 
@@ -4868,11 +5748,10 @@ namespace MphRead.Entities
 
             #endregion
 
-            // skhere
             // todo: member names
             #region Funcs4
 
-            // init counterpart to Func2_213EA48
+            // main init - init counterpart to Func2_213EA48
             private void Func4_21462DC(AiContext context)
             {
                 Func214715C(context);
@@ -4894,61 +5773,61 @@ namespace MphRead.Entities
                     {
                         Func21354B0();
                     }
-                    if (Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null)
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null)
                     {
                         _targetPlayer.GetPosition(out targetPos);
                         targetPos = targetPos
                             .AddY(_targetPlayer.IsAltForm ? Fixed.ToFloat(_targetPlayer.Values.AltColYPos) : 0.5f);
                     }
                 }
-                if (Flags2.TestFlag(AiFlags2.Bit3) && _halfturret1C != null
+                if (Flags2.TestFlag(AiFlags2.TargetHalfturret) && _targetHalfturret != null
                     && (context.Field9 == 5 || context.FieldB == 5 || context.FieldC == 60))
                 {
-                    _halfturret1C.GetPosition(out halfturretPos);
+                    _targetHalfturret.GetPosition(out halfturretPos);
                 }
                 if (context.Field9 == 6)
                 {
                     if (context.Field8 == 7)
                     {
                         FindEntityRef(AiEntRefType.Type55);
-                        UpdateSeekItem(_entityRefs.Field55);
+                        UpdateTargetItem(_entityRefs.Field55);
                     }
                     else if (context.Field8 == 8)
                     {
                         FindEntityRef(AiEntRefType.Type56);
-                        UpdateSeekItem(_entityRefs.Field56);
+                        UpdateTargetItem(_entityRefs.Field56);
                     }
                     else if (context.Field8 == 9)
                     {
                         FindEntityRef(AiEntRefType.Type57);
-                        UpdateSeekItem(_entityRefs.Field57);
+                        UpdateTargetItem(_entityRefs.Field57);
                     }
                     else if (context.Field8 == 10)
                     {
                         FindEntityRef(AiEntRefType.Type58);
-                        UpdateSeekItem(_entityRefs.Field58);
+                        UpdateTargetItem(_entityRefs.Field58);
                     }
                     else if (context.Field8 == 11)
                     {
                         FindEntityRef(AiEntRefType.Type59);
-                        UpdateSeekItem(_entityRefs.Field59);
+                        UpdateTargetItem(_entityRefs.Field59);
                     }
                 }
-                if (context.Field9 == 23 && !Flags2.TestFlag(AiFlags2.Bit5))
+                if (context.Field9 == 23 && !Flags2.TestFlag(AiFlags2.TargetDefense))
                 {
                     Func2135320();
                 }
-                if (context.FieldC == 61 && !Flags2.TestFlag(AiFlags2.Bit6))
+                if (context.FieldC == 61 && !Flags2.TestFlag(AiFlags2.TargetDoor))
                 {
                     Func21355D8();
                 }
                 if (context.FieldA == 32)
                 {
-                    if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.Bit2))
+                    if (context.FieldB == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         _field1038 = targetPos - _player.CameraInfo.Position;
                     }
-                    else if (context.FieldB == 3 && Flags2.TestFlag(AiFlags2.Bit2))
+                    else if (context.FieldB == 3 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         AiPlayerAggro? aggro = AggroFunc214847C(4, 7, 1, null, null);
                         if (aggro?.Player1 != null)
@@ -4960,7 +5839,7 @@ namespace MphRead.Entities
                             _field1038 = _player.CameraInfo.Facing;
                         }
                     }
-                    else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.Bit3))
+                    else if (context.FieldB == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret))
                     {
                         _field1038 = halfturretPos - _player.CameraInfo.Position;
                     }
@@ -5007,6 +5886,8 @@ namespace MphRead.Entities
                     bool node40Set = false;
                     if (Flags2.TestFlag(AiFlags2.Bit7) && context.Field4 == 37)
                     {
+                        FindEntityRef(AiEntRefType.Type0);
+                        _node40 = _entityRefs.Field0;
                         if (_node40 == _node48)
                         {
                             v25 = Func213A1A8();
@@ -5048,7 +5929,7 @@ namespace MphRead.Entities
                     else if (context.Field9 == 13)
                     {
                         FindEntityRef(AiEntRefType.Type24);
-                        _node3C = _node40 = _entityRefs.Field25;
+                        _node3C = _node40 = _entityRefs.Field24;
                     }
                     else if (context.Field9 == 39)
                     {
@@ -5059,13 +5940,16 @@ namespace MphRead.Entities
                         Vector3? position = null;
                         if (context.Field9 == 5)
                         {
-                            Debug.Assert(_halfturret1C != null);
-                            position = _halfturret1C.Position;
+                            Debug.Assert(_targetHalfturret != null);
+                            position = _targetHalfturret.Position;
                         }
                         else if (context.Field9 == 6)
                         {
-                            Debug.Assert(_itemC8 != null);
-                            position = _itemC8.Position.AddY(-0.5f);
+                            if (Flags2.TestFlag(AiFlags2.TargetItem))
+                            {
+                                Debug.Assert(_itemC8 != null);
+                                position = _itemC8.Position.AddY(-0.5f);
+                            }
                         }
                         else if (context.Field9 == 14)
                         {
@@ -5112,10 +5996,10 @@ namespace MphRead.Entities
                             Debug.Assert(_flagBaseE0 != null);
                             position = _flagBaseE0.Position;
                         }
-                        else if (context.Field9 == 23 && Flags2.TestFlag(AiFlags2.Bit5))
+                        else if (context.Field9 == 23 && Flags2.TestFlag(AiFlags2.TargetDefense))
                         {
-                            Debug.Assert(_defenseE4 != null);
-                            position = _defenseE4.Position;
+                            Debug.Assert(_targetDefense != null);
+                            position = _targetDefense.Position;
                         }
                         if (position.HasValue)
                         {
@@ -5131,15 +6015,15 @@ namespace MphRead.Entities
                 }
                 else if (context.Field4 == 34)
                 {
-                    if (context.Field9 == 4 && Flags2.TestFlag(AiFlags2.Bit2))
+                    if (context.Field9 == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         Debug.Assert(_targetPlayer != null);
                         _fieldAC = (_targetPlayer.Position - _player.Position).WithY(0);
                     }
-                    else if (context.Field9 == 5 && Flags2.TestFlag(AiFlags2.Bit3))
+                    else if (context.Field9 == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret))
                     {
-                        Debug.Assert(_halfturret1C != null);
-                        _fieldAC = (_halfturret1C.Position - _player.Position).WithY(0);
+                        Debug.Assert(_targetHalfturret != null);
+                        _fieldAC = (_targetHalfturret.Position - _player.Position).WithY(0);
                     }
                     if (_fieldAC.X != 0 || _fieldAC.Z != 0)
                     {
@@ -5169,19 +6053,19 @@ namespace MphRead.Entities
                     context.Field30 = context.FieldA == 0
                         && context.FieldC != 55 && context.FieldC != 56 && context.FieldC != 57
                         && context.FieldC != 59 && context.FieldC != 60 && context.FieldC != 61;
-                    if (context.Field9 == 4 && Flags2.TestFlag(AiFlags2.Bit2))
+                    if (context.Field9 == 4 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         FindEntityRef(AiEntRefType.Type2);
                         _node3C = _entityRefs.Field2;
                         _queuedFindEntityAction = AiQueuedEnt.Type0;
                     }
-                    else if (context.Field9 == 5 && Flags2.TestFlag(AiFlags2.Bit3))
+                    else if (context.Field9 == 5 && Flags2.TestFlag(AiFlags2.TargetHalfturret))
                     {
                         FindEntityRef(AiEntRefType.Type3);
                         _node3C = _entityRefs.Field3;
                         _queuedFindEntityAction = AiQueuedEnt.Type8;
                     }
-                    else if (context.Field9 == 6 && Flags2.TestFlag(AiFlags2.SeekItem))
+                    else if (context.Field9 == 6 && Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -5277,13 +6161,13 @@ namespace MphRead.Entities
                         _node3C = FindHighestNode();
                         _queuedFindEntityAction = AiQueuedEnt.Type9;
                     }
-                    else if (context.Field9 == 41 && Flags2.TestFlag(AiFlags2.Bit2))
+                    else if (context.Field9 == 41 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         FindEntityRef(AiEntRefType.Type17);
                         _node3C = _entityRefs.Field17;
                         _queuedFindEntityAction = AiQueuedEnt.Type3;
                     }
-                    else if (context.Field9 == 42 && Flags2.TestFlag(AiFlags2.Bit2))
+                    else if (context.Field9 == 42 && Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         FindEntityRef(AiEntRefType.Type18);
                         _node3C = _entityRefs.Field18;
@@ -5364,52 +6248,152 @@ namespace MphRead.Entities
 
             private void Func4_2145EB0(AiContext context)
             {
-                // skhere
+                context.Field40 = 0;
+                context.Field34 = _player.Position;
+                if (Rng.GetRandomInt2(2) == 0)
+                {
+                    Flags2 &= ~AiFlags2.Bit12;
+                }
+                else
+                {
+                    Flags2 |= AiFlags2.Bit12;
+                }
             }
 
             private void Func4_21462AC(AiContext context)
             {
-                // skhere
+                if (_player.IsAltForm)
+                {
+                    _touchButtons.Unmorph.IsDown = true;
+                }
             }
 
             private void Func4_2146284(AiContext context)
             {
-                // skhere
+                // this is duplicated code in-game
+                Func4_21462AC(context);
             }
 
             private void Func4_21461EC(AiContext context)
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type1);
+                _node40 = _entityRefs.Field1;
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
+                {
+                    FindEntityRef(AiEntRefType.Type17);
+                    _node3C = _entityRefs.Field17;
+                }
+                else
+                {
+                    _node3C = _node40;
+                }
+                Field118 = 0;
+                _field78 = 0;
+                Flags2 &= ~AiFlags2.Bit15;
+                _queuedFindEntityAction = AiQueuedEnt.Type3;
+                context.Field20 = 0;
+                context.Field24 = 1;
+                context.Field14 = 0;
+                context.Field18 = 0;
+                context.Field1C = 0;
+                context.Field2C = 0;
+                context.Field28 = true;
+                context.Field30 = false;
             }
 
             private void Func4_214612C(AiContext context)
             {
-                // skhere
+                Field118 = 0;
+                _field78 = 0;
+                Flags2 &= ~AiFlags2.Bit15;
+                context.Field40 = 0;
+                context.Field44 = 0;
+                context.Field34 = _player.Position;
+                context.Field20 = 0;
+                context.Field24 = 1;
+                context.Field14 = 0;
+                context.Field18 = 0;
+                context.Field1C = 0;
+                context.Field2C = 0;
+                context.Field28 = true;
+                context.Field30 = true;
+                FindEntityRef(AiEntRefType.Type1);
+                _node40 = _entityRefs.Field1;
+                FindEntityRef(AiEntRefType.Type25);
+                _node3C = _entityRefs.Field25;
+                _queuedFindEntityAction = AiQueuedEnt.None;
+                Debug.Assert(_node40 != null);
+                if (IsNodeInRange(_node40))
+                {
+                    NodeData3 node = Func213A1A8();
+                    _node44 = _node40;
+                    _node40 = node;
+                }
             }
 
             private void Func4_2145F78(AiContext context)
             {
-                // skhere
+                if (!Flags2.TestFlag(AiFlags2.TargetDefense))
+                {
+                    Func2135320();
+                }
+                Field118 = 0;
+                _field78 = 0;
+                Flags2 &= ~AiFlags2.Bit15;
+                context.Field40 = 0;
+                context.Field44 = 0;
+                context.Field34 = _player.Position;
+                if (Flags2.TestFlag(AiFlags2.TargetDefense))
+                {
+                    Debug.Assert(_targetDefense != null);
+                    // pared down version of code found in Func2_213E3C4
+                    float radius = 0;
+                    if (_targetDefense.Volume.Type == VolumeType.Cylinder)
+                    {
+                        radius = _targetDefense.Volume.CylinderRadius;
+                    }
+                    else if (_targetDefense.Volume.Type == VolumeType.Sphere)
+                    {
+                        radius = _targetDefense.Volume.SphereRadius;
+                    }
+                    if (radius > 0.5f)
+                    {
+                        Vector3 toDefense = (_targetDefense.Position - _player.Position).WithY(0);
+                        float x = Rng.GetRandomInt2(4096) / 4096f;
+                        _fieldA0 = new Vector3(x * MathF.Sign(toDefense.X), 0, MathF.Sqrt(1 - x * x) * MathF.Sign(toDefense.Z));
+                        _fieldA0 *= radius;
+                        _fieldA0 += _targetDefense.Position;
+                    }
+                }
             }
 
             private void Func4_2145F50(AiContext context)
             {
-                // skhere
+                // this is duplicated code in-game
+                Func4_21462AC(context);
             }
 
             private void Func4_2145F28(AiContext context)
             {
-                // skhere
+                // this is duplicated code in-game
+                Func4_21462AC(context);
             }
 
             private void Func4_2145F00(AiContext context)
             {
-                // skhere
+                // this is duplicated code in-game
+                Func4_21462AC(context);
             }
 
             private void Func4_2145E54(AiContext context)
             {
-                // skhere
+                FindEntityRef(AiEntRefType.Type0);
+                _node40 = _entityRefs.Field0;
+                _node3C = _node40;
+                Field118 = 0;
+                context.Field40 = 0;
+                context.Field44 = 0;
+                context.Field34 = _player.Position;
             }
 
             private void Func4_2145E40(AiContext context)
@@ -5429,11 +6413,11 @@ namespace MphRead.Entities
             {
                 if (Flags2.TestFlag(AiFlags2.Bit9))
                 {
-                    Flags2 &= ~AiFlags2.Bit2;
+                    Flags2 &= ~AiFlags2.TargetPlayer;
                 }
                 else
                 {
-                    Flags2 |= AiFlags2.Bit2;
+                    Flags2 |= AiFlags2.TargetPlayer;
                 }
                 if (player != _targetPlayer)
                 {
@@ -5450,10 +6434,10 @@ namespace MphRead.Entities
             {
                 if (defense != null)
                 {
-                    Flags2 |= AiFlags2.Bit5;
-                    if (_defenseE4 != defense)
+                    Flags2 |= AiFlags2.TargetDefense;
+                    if (_targetDefense != defense)
                     {
-                        _defenseE4 = defense;
+                        _targetDefense = defense;
                         _entityRefs.Field15 = null;
                     }
                 }
@@ -5462,10 +6446,10 @@ namespace MphRead.Entities
             // todo: member name
             private void Func2135608(DoorEntity? door)
             {
-                Flags2 |= AiFlags2.Bit6;
-                if (_doorE8 != door)
+                Flags2 |= AiFlags2.TargetDoor;
+                if (_targetDoor != door)
                 {
-                    _doorE8 = door;
+                    _targetDoor = door;
                 }
             }
 
@@ -5533,7 +6517,7 @@ namespace MphRead.Entities
                 {
                     if (dot > _dotValues[_player.BotLevel])
                     {
-                        _buttonAimY = MathHelper.RadiansToDegrees(MathF.Acos(dot));
+                        _buttonAimX = MathHelper.RadiansToDegrees(MathF.Acos(dot));
                     }
                     else
                     {
@@ -5553,7 +6537,7 @@ namespace MphRead.Entities
             // todo: member name
             private void Func21436D8()
             {
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Debug.Assert(_targetPlayer != null);
                     Func2144B88();
@@ -5579,7 +6563,7 @@ namespace MphRead.Entities
             private void Func2144B88()
             {
                 // update aim, accounting for distance, beam travel, accuracy, etc.
-                if (!Flags2.TestFlag(AiFlags2.Bit2))
+                if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     return;
                 }
@@ -5594,25 +6578,23 @@ namespace MphRead.Entities
                     int prevField1020 = _field1020;
                     if (Flags2.TestFlag(AiFlags2.Bit21))
                     {
-                        _field1020 = 0;
+                        _field1020 = 0; // bug? always overwritten
                     }
                     if (_player.BotLevel == 0)
                     {
-                        _field1020 = 15;
+                        _field1020 = 15 * 2; // todo: FPS stuff
                     }
                     else if (_player.BotLevel == 1)
                     {
-                        _field1020 = 7;
+                        _field1020 = 7 * 2; // todo: FPS stuff
                     }
                     else
                     {
-                        _field1020 = 3;
+                        _field1020 = 3 * 2; // todo: FPS stuff
                     }
-                    // sktodo-ai: FPS stuff for field1020, based on usage
-                    ushort disruptedTimer = (ushort)(_player._disruptedTimer / 2);
-                    if (_field1020 < disruptedTimer)
+                    if (_field1020 < _player._disruptedTimer)
                     {
-                        _field1020 += (int)Rng.GetRandomInt2(disruptedTimer - _field1020);
+                        _field1020 += (int)Rng.GetRandomInt2(_player._disruptedTimer - _field1020);
                     }
                     int field1020Diff = _field1020 - prevField1020;
                     if (Flags4.TestFlag(AiFlags4.Bit3) && field1020Diff > 0 && _player.BotLevel > 0)
@@ -5636,7 +6618,7 @@ namespace MphRead.Entities
                             isCharged = true;
                             chargePct = 1;
                         }
-                        Vector3 vec = (targetPos - _field1054) / field1020Diff;
+                        Vector3 vec = (targetPos - _field1054) / (field1020Diff / 2f); // todo: FPS stuff (see below)
                         float homing;
                         float speed;
                         if (isCharged)
@@ -5653,7 +6635,9 @@ namespace MphRead.Entities
                         }
                         if (homing > 0 || speed <= 0)
                         {
-                            vec *= _field1020 / 2f;
+                            // note: here and above, the aim deviation is halved because it's otherwise treated like a counter/timer
+                            // and therefore multiplied by 2 and be decremented every frame. halving it applies the correct deviation.
+                            vec *= (_field1020 / 2f) / 2f; // todo: FPS stuff
                         }
                         else
                         {
@@ -5698,7 +6682,7 @@ namespace MphRead.Entities
                     {
                         v52 = (dot1 * 5) + 0.25f;
                         v66 = (dot2 * 5) + 0.25f;
-                        if (Flags4.TestFlag(AiFlags4.Bit2))
+                        if (!Flags4.TestFlag(AiFlags4.Bit2))
                         {
                             v52 += targetDist / 2;
                             v66 += targetDist / 2;
@@ -5708,7 +6692,7 @@ namespace MphRead.Entities
                     {
                         v52 = (dot1 * 2) + 0.1f;
                         v66 = (dot2 * 2) + 0.1f;
-                        if (Flags4.TestFlag(AiFlags4.Bit2))
+                        if (!Flags4.TestFlag(AiFlags4.Bit2))
                         {
                             v52 += targetDist / 9;
                             v66 += targetDist / 9;
@@ -5718,7 +6702,7 @@ namespace MphRead.Entities
                     {
                         v52 = (dot1 * 0.2f) + 0.01f;
                         v66 = (dot2 * 0.2f) + 0.01f;
-                        if (Flags4.TestFlag(AiFlags4.Bit2))
+                        if (!Flags4.TestFlag(AiFlags4.Bit2))
                         {
                             v52 += targetDist / 50;
                             v66 += targetDist / 50;
@@ -5821,7 +6805,7 @@ namespace MphRead.Entities
                     chargePct = (equip.ChargeLevel - weapon.MinCharge * 2) / (float)(weapon.FullCharge * 2 - weapon.MinCharge * 2);
                 }
                 // todo: bugfix: the game's math is wrong here, using charge pct as a factor between uncharged and min charge values.
-                // it should be a factor between min and max charge values (or uncharged should used directly for 0% charge).
+                // it should be a factor between min and max charge values (or uncharged should be used directly for 0% charge).
                 // going between uncharged and min charge will make the calculation wrong for any weapon where uncahrged, min, and max
                 // aren't all identical.
                 float speed = (weapon.UnchargedSpeed
@@ -5839,7 +6823,7 @@ namespace MphRead.Entities
                         float toTargetDistH = MathF.Sqrt(toTargetX * toTargetX + toTargetZ * toTargetZ);
                         div2 = toTargetY / toTargetDistH;
                     }
-                    float v28 = distToPosH * distToPosH - 4 * (div / 2 * (div / 2) - posY);
+                    float v28 = distToPosH * distToPosH - 4 * (div / 2 * (div / 2 - posY));
                     if (v28 < 0)
                     {
                         return;
@@ -5871,7 +6855,7 @@ namespace MphRead.Entities
                 {
                     Flags2 |= AiFlags2.Bit16;
                     Flags2 &= ~AiFlags2.Bit17;
-                    if (Flags2.TestFlag(AiFlags2.Bit2) && AggroFunc214857C(6, 1, 2, null, _targetPlayer))
+                    if (Flags2.TestFlag(AiFlags2.TargetPlayer) && AggroFunc214857C(6, 1, 2, null, _targetPlayer))
                     {
                         Flags2 |= AiFlags2.Bit17;
                     }
@@ -6026,7 +7010,7 @@ namespace MphRead.Entities
                         if (!_player.Flags2.TestFlag(PlayerFlags2.Shooting) && _buttons.R.FramesUp <= _shotDelay
                             || equip.ChargeLevel >= weapon.FullCharge * 2) // todo: FPS stuff
                         {
-                            if (Flags2.TestFlag(AiFlags2.Bit2))
+                            if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                             {
                                 Debug.Assert(_targetPlayer != null);
                                 Vector3 toTarget = _targetPlayer.Position - _player.Position;
@@ -6127,7 +7111,7 @@ namespace MphRead.Entities
                     {
                         _touchButtons.OmegaCannon.IsDown = true;
                     }
-                    else if (Flags2.TestFlag(AiFlags2.Bit2) && _buttons.R.FramesUp > 0)
+                    else if (Flags2.TestFlag(AiFlags2.TargetPlayer) && _buttons.R.FramesUp > 0)
                     {
                         Debug.Assert(_targetPlayer != null);
                         Vector3 toTarget = _targetPlayer.Position - _player.Position;
@@ -6186,7 +7170,7 @@ namespace MphRead.Entities
             // todo: member name
             private void Func2143658()
             {
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Func2144AE4();
                     if (Flags2.TestFlag(AiFlags2.Bit8))
@@ -6203,7 +7187,7 @@ namespace MphRead.Entities
             // todo: member name
             private void Func2144AE4()
             {
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Debug.Assert(_targetPlayer != null);
                     _targetPlayer.GetPosition(out Vector3 targetPos);
@@ -6217,7 +7201,7 @@ namespace MphRead.Entities
             // todo: member name
             private void Func21433E4()
             {
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Func2144B88();
                     Vector3 vec = ExecuteVectorFunc(index: 0, clearY: false, normalize: false);
@@ -6231,11 +7215,11 @@ namespace MphRead.Entities
             // todo: member name
             private void Func2143470()
             {
-                if (Flags2.TestFlag(AiFlags2.Bit3))
+                if (Flags2.TestFlag(AiFlags2.TargetHalfturret))
                 {
-                    Debug.Assert(_halfturret1C != null);
+                    Debug.Assert(_targetHalfturret != null);
                     Func2144964();
-                    Vector3 toHalfturret = _halfturret1C.Position - _player.Position;
+                    Vector3 toHalfturret = _targetHalfturret.Position - _player.Position;
                     if (Flags2.TestFlag(AiFlags2.Bit8) || toHalfturret.LengthSquared < 10)
                     {
                         Func2143A40();
@@ -6254,10 +7238,10 @@ namespace MphRead.Entities
             // todo: member name
             private void Func2144964()
             {
-                if (Flags2.TestFlag(AiFlags2.Bit3))
+                if (Flags2.TestFlag(AiFlags2.TargetHalfturret))
                 {
-                    Debug.Assert(_halfturret1C != null);
-                    _halfturret1C.GetPosition(out Vector3 halfturretPos);
+                    Debug.Assert(_targetHalfturret != null);
+                    _targetHalfturret.GetPosition(out Vector3 halfturretPos);
                     _field1048 = halfturretPos.AddY(0.5f);
                     Func2145738(_field1048);
                 }
@@ -6313,11 +7297,11 @@ namespace MphRead.Entities
                         && _player.Position.Z > -2 && _player.Position.Z < 2
                         && _player.Speed.Y > 0 && _player.Position.Y - _node40.Position.Y > 1)
                     {
-                        Field118 = 151; // sktodo-ai: FPS stuff?
+                        Field118 = 151 * 2; // todo: FPS stuff
                     }
                     else
                     {
-                        Field118++; // sktodo-ai: FPS stuff?
+                        Field118++;
                     }
                 }
 
@@ -6383,11 +7367,11 @@ namespace MphRead.Entities
                         if (Flags2.TestFlag(AiFlags2.Bit21) || _player.Flags1.TestFlag(PlayerFlags1.Grounded)
                             || (_player.Position - _node40.Position).WithY(0).LengthSquared > _node40.MaxDistance * _node40.MaxDistance)
                         {
-                            if (context.Field30 && ((context.Field2C = context.Field2C) == 0 || context.Field2C == 2 || context.Field20 == 2))
+                            if (context.Field30 && (context.Field2C == 0 || context.Field2C == 2 || context.Field20 == 2))
                             {
                                 Func2142A80();
                             }
-                            else if (!context.Field30 && ((context.Field2C = context.Field2C) == 0 || context.Field2C == 2 || context.Field20 == 2))
+                            else if (!context.Field30 && (context.Field2C == 0 || context.Field2C == 2 || context.Field20 == 2))
                             {
                                 Func2142AE8(_node40.Position);
                             }
@@ -6474,7 +7458,7 @@ namespace MphRead.Entities
                     {
                         if (_player._horizColTimer > 30 * 2 // todo: FPS stuff
                             && _player.Flags1.TestFlag(PlayerFlags1.Grounded) && _player.IsAltForm && !_player.IsUnmorphing
-                            && Field118 > 30) // sktodo-AI: FPS stuff?
+                            && Field118 > 30 * 2) // todo: FPS stuff
                         {
                             _field7A[_field78] = _node40.Id;
                             if (_field78 < 9)
@@ -6486,7 +7470,7 @@ namespace MphRead.Entities
                             Debug.Assert(_node40 != null);
                             context.Field18 = _node40.NodeType == NodeType.AltForm && _player.Hunter != Hunter.Guardian ? 2 : 0;
                         }
-                        else if (Flags2.TestFlag(AiFlags2.Bit2) && _targetPlayer != null
+                        else if (Flags2.TestFlag(AiFlags2.TargetPlayer) && _targetPlayer != null
                             && _targetPlayer.Hunter == Hunter.Sylux && _targetPlayer.IsAltForm)
                         {
                             if (Func2139C60(_targetPlayer))
@@ -6503,9 +7487,9 @@ namespace MphRead.Entities
                             Vector3 toNode = _node40.Position - _player.Position;
                             if (toNode.LengthSquared < 0.5f * 0.5f
                                 && _player.Flags1.TestFlag(PlayerFlags1.Grounded)
-                                && Field118 > 30) // sktodo-AI: FPS stuff?
+                                && Field118 > 30 * 2) // todo: FPS stuff
                             {
-                                Field118 = 151; // sktodo-AI: FPS stuff?
+                                Field118 = 151 * 2; // todo: FPS stuff
                             }
                         }
                     }
@@ -7099,7 +8083,7 @@ namespace MphRead.Entities
             // todo: member name
             private void Func214003C(AiContext context)
             {
-                if (Flags2.TestFlag(AiFlags2.Bit2))
+                if (Flags2.TestFlag(AiFlags2.TargetPlayer))
                 {
                     Func21436D8();
                 }
@@ -7762,15 +8746,15 @@ namespace MphRead.Entities
                 Func2135608(_entityRefs.Field77);
             }
 
-            private void UpdateSeekItem(ItemInstanceEntity? item)
+            private void UpdateTargetItem(ItemInstanceEntity? item)
             {
-                if (item != null && item.DespawnTimer > 0)
+                if (item != null && item.DespawnTimer != 0)
                 {
-                    Flags2 |= AiFlags2.SeekItem;
+                    Flags2 |= AiFlags2.TargetItem;
                 }
                 else
                 {
-                    Flags2 &= ~AiFlags2.SeekItem;
+                    Flags2 &= ~AiFlags2.TargetItem;
                 }
                 if (item != _itemC8)
                 {
@@ -7820,7 +8804,7 @@ namespace MphRead.Entities
                 }
                 else if (type == AiEntRefType.Type2)
                 {
-                    if (!Flags2.TestFlag(AiFlags2.Bit2))
+                    if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         FindEntityRef(AiEntRefType.Type0);
                         _entityRefs.Field2 = _entityRefs.Field0;
@@ -7846,23 +8830,23 @@ namespace MphRead.Entities
                 }
                 else if (type == AiEntRefType.Type3)
                 {
-                    if (!Flags2.TestFlag(AiFlags2.Bit3))
+                    if (!Flags2.TestFlag(AiFlags2.TargetHalfturret))
                     {
                         FindEntityRef(AiEntRefType.Type0);
                         _entityRefs.Field3 = _entityRefs.Field0;
                         return;
                     }
-                    Debug.Assert(_halfturret1C != null);
-                    if (_halfturret1C.ClosestNode != null)
+                    Debug.Assert(_targetHalfturret != null);
+                    if (_targetHalfturret.ClosestNode != null)
                     {
-                        _entityRefs.Field3 = _halfturret1C.ClosestNode;
+                        _entityRefs.Field3 = _targetHalfturret.ClosestNode;
                     }
                     else
                     {
-                        _entityRefs.Field3 = FindClosestNonHazardNodeToPosition(_halfturret1C.Position);
+                        _entityRefs.Field3 = FindClosestNonHazardNodeToPosition(_targetHalfturret.Position);
                         if (_nodeData.Simple)
                         {
-                            _halfturret1C.ClosestNode = _entityRefs.Field3;
+                            _targetHalfturret.ClosestNode = _entityRefs.Field3;
                         }
                     }
                 }
@@ -7887,7 +8871,7 @@ namespace MphRead.Entities
                 }
                 else if (type == AiEntRefType.Type5)
                 {
-                    if (!Flags2.TestFlag(AiFlags2.SeekItem))
+                    if (!Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type0);
                         _entityRefs.Field5 = _entityRefs.Field0;
@@ -8028,20 +9012,20 @@ namespace MphRead.Entities
                 }
                 else if (type == AiEntRefType.Type15)
                 {
-                    if (!Flags2.TestFlag(AiFlags2.Bit5))
+                    if (!Flags2.TestFlag(AiFlags2.TargetDefense))
                     {
                         FindEntityRef(AiEntRefType.Type0);
                         _entityRefs.Field15 = _entityRefs.Field0;
                         return;
                     }
-                    Debug.Assert(_defenseE4 != null);
+                    Debug.Assert(_targetDefense != null);
                     if (_nodeData.Simple)
                     {
-                        _entityRefs.Field15 = _defenseE4.ClosestNode;
+                        _entityRefs.Field15 = _targetDefense.ClosestNode;
                     }
                     else
                     {
-                        _entityRefs.Field15 = FindClosestNonHazardNodeToPosition(_defenseE4.Position);
+                        _entityRefs.Field15 = FindClosestNonHazardNodeToPosition(_targetDefense.Position);
                     }
                 }
                 else if (type == AiEntRefType.Type16)
@@ -8310,7 +9294,7 @@ namespace MphRead.Entities
             {
                 if (_queuedFindEntityAction == AiQueuedEnt.Type0)
                 {
-                    if (!Flags2.TestFlag(AiFlags2.Bit2))
+                    if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         FindEntityRef(AiEntRefType.Type0);
                         _node3C = _entityRefs.Field0;
@@ -8341,7 +9325,7 @@ namespace MphRead.Entities
                 }
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type4)
                 {
-                    if (!Flags2.TestFlag(AiFlags2.Bit2))
+                    if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         FindEntityRef(AiEntRefType.Type0);
                         _node3C = _entityRefs.Field0;
@@ -8372,7 +9356,7 @@ namespace MphRead.Entities
                 }
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type8)
                 {
-                    if (!Flags2.TestFlag(AiFlags2.Bit2))
+                    if (!Flags2.TestFlag(AiFlags2.TargetPlayer))
                     {
                         FindEntityRef(AiEntRefType.Type0);
                         _node3C = _entityRefs.Field0;
@@ -8391,8 +9375,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type10)
                 {
                     FindEntityRef(AiEntRefType.Type54);
-                    UpdateSeekItem(_entityRefs.Field54);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field54);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8414,8 +9398,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type12)
                 {
                     FindEntityRef(AiEntRefType.Type55);
-                    UpdateSeekItem(_entityRefs.Field55);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field55);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8429,8 +9413,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type13)
                 {
                     FindEntityRef(AiEntRefType.Type56);
-                    UpdateSeekItem(_entityRefs.Field56);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field56);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8444,8 +9428,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type14)
                 {
                     FindEntityRef(AiEntRefType.Type57);
-                    UpdateSeekItem(_entityRefs.Field57);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field57);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8459,8 +9443,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type15)
                 {
                     FindEntityRef(AiEntRefType.Type58);
-                    UpdateSeekItem(_entityRefs.Field58);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field58);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8474,8 +9458,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type16)
                 {
                     FindEntityRef(AiEntRefType.Type59);
-                    UpdateSeekItem(_entityRefs.Field59);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field59);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8489,8 +9473,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type17)
                 {
                     FindEntityRef(AiEntRefType.Type60);
-                    UpdateSeekItem(_entityRefs.Field60);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field60);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8504,8 +9488,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type18)
                 {
                     FindEntityRef(AiEntRefType.Type61);
-                    UpdateSeekItem(_entityRefs.Field61);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field61);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8519,10 +9503,10 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type19)
                 {
                     // note: types 19 through 26 are never called in-game (among others), which is just as well since they
-                    // incorrect pass an item spawn instead to UpdateSeekItem(). we just pass the spawner's item if there is one.
+                    // incorrect pass an item spawn instead to UpdateTargetItem(). we just pass the spawner's item if there is one.
                     FindEntityRef(AiEntRefType.Type42);
-                    UpdateSeekItem(_entityRefs.Field42?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field42?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8536,8 +9520,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type20)
                 {
                     FindEntityRef(AiEntRefType.Type43);
-                    UpdateSeekItem(_entityRefs.Field43?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field43?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8551,8 +9535,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type21)
                 {
                     FindEntityRef(AiEntRefType.Type44);
-                    UpdateSeekItem(_entityRefs.Field44?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field44?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8566,8 +9550,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type22)
                 {
                     FindEntityRef(AiEntRefType.Type45);
-                    UpdateSeekItem(_entityRefs.Field45?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field45?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8581,8 +9565,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type23)
                 {
                     FindEntityRef(AiEntRefType.Type46);
-                    UpdateSeekItem(_entityRefs.Field46?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field46?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8596,8 +9580,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type24)
                 {
                     FindEntityRef(AiEntRefType.Type47);
-                    UpdateSeekItem(_entityRefs.Field47?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field47?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8611,8 +9595,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type25)
                 {
                     FindEntityRef(AiEntRefType.Type48);
-                    UpdateSeekItem(_entityRefs.Field48?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field48?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -8626,8 +9610,8 @@ namespace MphRead.Entities
                 else if (_queuedFindEntityAction == AiQueuedEnt.Type26)
                 {
                     FindEntityRef(AiEntRefType.Type49);
-                    UpdateSeekItem(_entityRefs.Field49?.Item);
-                    if (Flags2.TestFlag(AiFlags2.SeekItem))
+                    UpdateTargetItem(_entityRefs.Field49?.Item);
+                    if (Flags2.TestFlag(AiFlags2.TargetItem))
                     {
                         FindEntityRef(AiEntRefType.Type5);
                         _node3C = _entityRefs.Field5;
@@ -9478,7 +10462,7 @@ namespace MphRead.Entities
                 {
                     if ((!checkNeeded || !IsItemNotNeeded(item.ItemType))
                         && (GameState.Mode != GameMode.PrimeHunter || GameState.PrimeHunter != _player.SlotIndex || !IsHealth(item))
-                        && item.DespawnTimer > 0
+                        && item.DespawnTimer != 0
                         && !Func21377FC(item))
                     {
                         float dist = Vector3.DistanceSquared(item.Position, position);
@@ -9510,7 +10494,7 @@ namespace MphRead.Entities
                 float minDist = Single.MaxValue; // uninitialized in-game, but not used until after the first entity is found
                 foreach (ItemInstanceEntity item in _scene.GetItemInstanceEntities())
                 {
-                    if (IsType(item) && item.DespawnTimer > 0 && !Func21377FC(item))
+                    if (IsType(item) && item.DespawnTimer != 0 && !Func21377FC(item))
                     {
                         float dist = Vector3.DistanceSquared(item.Position, position);
                         if (dist < minDist)
@@ -10690,11 +11674,11 @@ namespace MphRead.Entities
         None = 0,
         Bit0 = 1,
         Bit1 = 2,
-        Bit2 = 4, // has target player?
-        Bit3 = 8, // has target halfturret?
-        SeekItem = 0x10,
-        Bit5 = 0x20,
-        Bit6 = 0x40,
+        TargetPlayer = 4,
+        TargetHalfturret = 8,
+        TargetItem = 0x10,
+        TargetDefense = 0x20,
+        TargetDoor = 0x40,
         Bit7 = 0x80,
         Bit8 = 0x100,
         Bit9 = 0x200,
@@ -10702,7 +11686,7 @@ namespace MphRead.Entities
         Bit11 = 0x800,
         Bit12 = 0x1000,
         Bit13 = 0x2000,
-        Bit14 = 0x4000,
+        AiStart = 0x4000,
         Bit15 = 0x8000,
         Bit16 = 0x10000,
         Bit17 = 0x20000,
@@ -10735,7 +11719,7 @@ namespace MphRead.Entities
     }
 
     [Flags]
-    public enum AiFlags4 : uint
+    public enum AiFlags4 : byte
     {
         None = 0,
         Bit0 = 1,

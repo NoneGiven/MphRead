@@ -686,7 +686,7 @@ namespace MphRead.Entities
             {
                 int stackCount = Scene.DisplaySphereStacks;
                 int sectorCount = Scene.DisplaySphereSectors;
-                verts = ArrayPool<Vector3>.Shared.Rent(stackCount * sectorCount);
+                verts = ArrayPool<Vector3>.Shared.Rent((stackCount + 1) * (sectorCount + 1));
                 float radius = volume.SphereRadius;
                 float sectorStep = 2 * MathF.PI / sectorCount;
                 float stackStep = MathF.PI / stackCount;
