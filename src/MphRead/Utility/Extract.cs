@@ -47,6 +47,7 @@ namespace MphRead
                 PrintExit($"The specified {gameCode} ROM has unexpected version {header.Version}.");
                 return;
             }
+            Paths.UpdatePaths();
             if (File.Exists("paths.txt"))
             {
                 if ((!isFh && !String.IsNullOrWhiteSpace(Paths.FileSystem))
