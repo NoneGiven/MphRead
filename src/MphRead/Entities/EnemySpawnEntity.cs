@@ -238,7 +238,7 @@ namespace MphRead.Entities
                 int type = (int)_data.EnemyType;
                 if (type >= 0 && (type >> 3) < 8)
                 {
-                    GameState.StorySave.EnemyEncounters[_scene.AreaId, type >> 3] |= (byte)(1 << (type & 7));
+                    GameState.StorySave.EnemyEncounters[_scene.AreaId][type >> 3] |= (byte)(1 << (type & 7));
                 }
             }
             if (_data.EnemyType == EnemyType.Cretaphid)

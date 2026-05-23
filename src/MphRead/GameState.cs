@@ -1449,7 +1449,7 @@ namespace MphRead
             {
                 for (int b = 0; b < 60; b++)
                 {
-                    StorySave.RoomState[r - 27, b] = 0;
+                    StorySave.RoomState[r - 27][b] = 0;
                 }
             }
             File.WriteAllText(GetSavePath(Menu.SaveSlot), JsonSerializer.Serialize(StorySave, _jsonOpt));
@@ -1610,11 +1610,12 @@ namespace MphRead
 
     public class StorySave
     {
-        public byte[,] RoomState { get; init; } = new byte[66, 60];
+        // use jagged arrays since 2D arrays can't be serialized out of the box
+        public byte[][] RoomState { get; init; } // 66 x 60
         public byte[] VisitedRooms { get; init; } = new byte[9];
         public byte[] TriggerState { get; init; } = new byte[4];
         public byte[] Logbook { get; init; } = new byte[68];
-        public byte[,] EnemyEncounters { get; init; } = new byte[9, 8];
+        public byte[][] EnemyEncounters { get; init; } // 9 x 8
         public int ScanCount { get; set; }
         public int EquipmentCount { get; set; }
         public int CheckpointEntityId { get; set; } = -1;
@@ -1637,6 +1638,16 @@ namespace MphRead
 
         public StorySave()
         {
+            RoomState = new byte[66][];
+            for (int i = 0; i < RoomState.Length; i++)
+            {
+                RoomState[i] = new byte[60];
+            }
+            EnemyEncounters = new byte[8][];
+            for (int i = 0; i < EnemyEncounters.Length; i++)
+            {
+                EnemyEncounters[i] = new byte[8];
+            }
             PlayerValues values = Metadata.PlayerValues[0];
             Health = HealthMax = values.EnergyTank - 1;
             Ammo[0] = AmmoMax[0] = 400;
@@ -1687,10 +1698,10 @@ namespace MphRead
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
             int pairMask = 3 << pairIndex;
-            if ((RoomState[roomId, byteIndex] & pairMask) == 0)
+            if ((RoomState[roomId][byteIndex] & pairMask) == 0)
             {
-                RoomState[roomId, byteIndex] &= (byte)~pairMask;
-                RoomState[roomId, byteIndex] |= (byte)((active ? activeState : inactiveState) << pairIndex);
+                RoomState[roomId][byteIndex] &= (byte)~pairMask;
+                RoomState[roomId][byteIndex] |= (byte)((active ? activeState : inactiveState) << pairIndex);
             }
             return GetRoomState(roomId + 27, entityId);
         }
@@ -1708,7 +1719,7 @@ namespace MphRead
             roomId -= 27;
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
-            return ((RoomState[roomId, byteIndex] >> pairIndex) & 3) - 1;
+            return ((RoomState[roomId][byteIndex] >> pairIndex) & 3) - 1;
         }
 
         public void SetRoomState(int roomId, int entityId, int state)
@@ -1722,8 +1733,8 @@ namespace MphRead
             (int byteIndex, int pairIndex) = Math.DivRem(entityId, 4);
             pairIndex *= 2;
             int pairMask = 3 << pairIndex;
-            RoomState[roomId, byteIndex] &= (byte)~pairMask;
-            RoomState[roomId, byteIndex] |= (byte)(state << pairIndex);
+            RoomState[roomId][byteIndex] &= (byte)~pairMask;
+            RoomState[roomId][byteIndex] |= (byte)(state << pairIndex);
             return;
         }
 
@@ -1905,8 +1916,16 @@ namespace MphRead
 
         public void CopyTo(StorySave other)
         {
-            Array.Copy(RoomState, other.RoomState, RoomState.GetLength(0) * RoomState.GetLength(1));
-            Array.Copy(EnemyEncounters, other.EnemyEncounters, EnemyEncounters.GetLength(0) * EnemyEncounters.GetLength(1));
+            for (int i = 0; i < RoomState.Length; i++)
+            {
+                byte[] source = RoomState[i];
+                Array.Copy(source, other.RoomState[i], source.Length);
+            }
+            for (int i = 0; i < EnemyEncounters.Length; i++)
+            {
+                byte[] source = EnemyEncounters[i];
+                Array.Copy(source, other.EnemyEncounters[i], source.Length);
+            }
             VisitedRooms.CopyTo(other.VisitedRooms, index: 0);
             TriggerState.CopyTo(other.TriggerState, index: 0);
             Logbook.CopyTo(other.Logbook, index: 0);
