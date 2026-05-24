@@ -2827,16 +2827,18 @@ namespace MphRead
         private float _fadeStart = 0;
         private float _fadeLength = 0;
         private float _fadePercent = 0;
+        private float _fadeDelay = 0;
         private bool _fadeEnded = false;
         private AfterFade _afterFade = AfterFade.None;
 
-        public void SetFade(FadeType type, float length, bool overwrite, AfterFade afterFade = AfterFade.None)
+        public void SetFade(FadeType type, float length, bool overwrite, AfterFade afterFade = AfterFade.None, float delay = 0)
         {
             if (!overwrite && _fadeType != FadeType.None)
             {
                 return;
             }
             _fadeType = type;
+            _fadeDelay = delay;
             _fadePercent = 0;
             if (type == FadeType.None)
             {
@@ -2877,6 +2879,11 @@ namespace MphRead
             Color4 clearColor = _clearColor;
             if (_fadeType != FadeType.None)
             {
+                if (_fadeDelay > 0)
+                {
+                    _fadeDelay -= _frameTime;
+                    _fadeStart = _globalElapsedTime;
+                }
                 _fadePercent = (_globalElapsedTime - _fadeStart) / _fadeLength;
                 if (_fadePercent >= 1)
                 {
@@ -2938,11 +2945,12 @@ namespace MphRead
                 QuitGame(enteringShip: _afterFade == AfterFade.EnterShip);
                 return;
             }
-            if (_afterFade == AfterFade.PlayMovie)
+            AfterFade afterFade = _afterFade; // may get updated
+            if (afterFade == AfterFade.PlayMovie)
             {
                 PlayMovie(_movieSettings.MovieId);
             }
-            else if (_afterFade == AfterFade.StopMovie)
+            else if (afterFade == AfterFade.StopMovie)
             {
                 if (_movieSettings.AfterPosition.HasValue)
                 {
@@ -2961,14 +2969,14 @@ namespace MphRead
             {
                 SetFade(FadeType.FadeInWhite, _fadeLength, overwrite: true);
             }
-            else if (_afterFade == AfterFade.LoadRoom)
+            else if (afterFade == AfterFade.LoadRoom)
             {
                 Debug.Assert(_room != null);
                 _room.LoadRoom(resume: false);
                 FadeType fadeType = _fadeType == FadeType.FadeOutWhite ? FadeType.FadeInWhite : FadeType.FadeInBlack;
                 SetFade(fadeType, 10 / 30f, overwrite: true);
             }
-            else if (_afterFade != AfterFade.PlayMovie && _afterFade != AfterFade.StopMovie)
+            else if (afterFade != AfterFade.PlayMovie && afterFade != AfterFade.StopMovie)
             {
                 _fadeType = FadeType.None;
                 _fadeColor = 0;
