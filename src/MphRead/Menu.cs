@@ -67,7 +67,7 @@ namespace MphRead
         {
             SoundCapability soundCapability = Sfx.CheckAudioLoad();
             int prompt = 0;
-            int selection = 15;
+            int selection = 16;
             int roomId = -1;
             string room = "";
             string roomKey = "";

@@ -158,6 +158,12 @@ namespace MphRead
                     Debug.Assert(_room != null);
                     _room.LoadRoom(resume: GameState.TransitionRoomId == -1);
                 }
+                else
+                {
+                    // hold on white to give the landing cam seq a chance to fade in, overwriting this, if any.
+                    // otherwise this fade will fade out to gameplay (no cam seq for an existing save).
+                    SetFade(FadeType.FadeInWhite, 5 / 30f, overwrite: true, delay: 5 / 30f);
+                }
                 Sfx.SfxMute = false;
                 Sfx.LongSfxMute--;
                 Sfx.TimedSfxMute--;
