@@ -176,26 +176,12 @@ namespace MphRead.Formats.Sound
             ExportAudio(waveData, GetSampleCount(sample), sample.SampleRate, sample.Format, id, prefix);
         }
 
-        private static void ExportAudio(ReadOnlySpan<byte> waveData, uint sampleCount, ushort sampleRate,
-            WaveFormat format, string name, string? prefix = null)
+        public static void WriteWavHeader(BinaryWriter writer, uint sampleCount, ushort sampleRate, WaveFormat format)
         {
-            if (waveData.Length == 0)
-            {
-                throw new WaveExportException($"Sample {name} contains no data.");
-            }
-            if (format != WaveFormat.ADPCM && format != WaveFormat.PCM8)
-            {
-                throw new WaveExportException($"Format {format} is unsupported.");
-            }
             uint bps = format == WaveFormat.PCM8 ? 8u : 16u;
             uint headerSize = 0x2C;
             uint waveSize = sampleCount * bps / 8 + headerSize;
             uint decodedSize = sampleCount * (bps / 8);
-            string path = Paths.Combine(Paths.Export, "_SFX");
-            Directory.CreateDirectory(path);
-            path = Paths.Combine(path, $"{prefix + name}.wav");
-            using FileStream file = File.OpenWrite(path);
-            using var writer = new BinaryWriter(file);
             writer.WriteC("RIFF");
             writer.Write4(waveSize - 8);
             writer.WriteC("WAVE");
@@ -209,6 +195,25 @@ namespace MphRead.Formats.Sound
             writer.Write2(bps);
             writer.WriteC("data");
             writer.Write4(decodedSize);
+        }
+
+        private static void ExportAudio(ReadOnlySpan<byte> waveData, uint sampleCount, ushort sampleRate,
+            WaveFormat format, string name, string? prefix = null)
+        {
+            if (waveData.Length == 0)
+            {
+                throw new WaveExportException($"Sample {name} contains no data.");
+            }
+            if (format != WaveFormat.ADPCM && format != WaveFormat.PCM8 && format != WaveFormat.PCM16)
+            {
+                throw new WaveExportException($"Format {format} is unsupported.");
+            }
+            string path = Paths.Combine(Paths.Export, "_SFX");
+            Directory.CreateDirectory(path);
+            path = Paths.Combine(path, $"{prefix + name}.wav");
+            using FileStream file = File.OpenWrite(path);
+            using var writer = new BinaryWriter(file);
+            WriteWavHeader(writer, sampleCount, sampleRate, format);
             for (int i = 0; i < waveData.Length; i++)
             {
                 writer.Write(waveData[i]);
