@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using MphRead.Formats;
 using MphRead.Formats.Sound;
 using MphRead.Sound;
+using OpenTK.Audio.OpenAL;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using SixLabors.ImageSharp;
@@ -43,6 +44,11 @@ namespace MphRead
         private readonly byte[] _topImageBuffer = new byte[_frameWidth * _frameHeight * 3];
         private readonly byte[] _botImageBuffer = new byte[_frameWidth * _frameHeight * 3];
         private CancellationTokenSource _decoderCts = null!;
+
+        private int _audioHandle = -1;
+        private const int _audioBufferCount = 48;
+        private int _audioBufferIndex = 0;
+        private readonly int[] _audioBufferIds = new int[_audioBufferCount];
 
         public void StartMovies(Movie movieId, Movie afterMovieId, FadeType fadeToMovieType, float fadeToMovieLength,
             FadeType fadeFromMovieType, float fadeFromMovieLength, AfterMovie afterMovieAction = AfterMovie.LoadRoom)
@@ -104,6 +110,15 @@ namespace MphRead
             {
                 Array.Fill<byte>(_botImageBuffer, 0);
             }
+            if (_audioHandle != -1)
+            {
+                AL.DeleteSource(_audioHandle);
+                AL.DeleteBuffers(_audioBufferIds);
+            }
+            _audioHandle = AL.GenSource();
+            AL.GenBuffers(_audioBufferIds);
+            AL.Source(_audioHandle, ALSourcef.Gain, Sfx.Volume);
+            _audioBufferIndex = 0;
             while (!VxDecoder.Instance1.GetImage(frameIndex: 0, _topImageBuffer))
             {
                 Thread.Sleep(TimeSpan.FromMilliseconds(10));
@@ -133,6 +148,49 @@ namespace MphRead
             _movieFrameIndex = 0;
             _movieFrameCount = 0;
             _skipMovie = false;
+        }
+
+        private void UpdateMovieAudio()
+        {
+            //byte[] fileBytes = File.ReadAllBytes(@"C:\Users\auser\Home\MPH\Data\_Export\04\audio.wav");
+            //var waveData = new short[(fileBytes.Length - 44) / 2];
+            //for (int i = 44; i < fileBytes.Length; i += 2)
+            //{
+            //    byte byte1 = fileBytes[i];
+            //    byte byte2 = fileBytes[i + 1];
+            //    ushort value = (ushort)((ushort)byte1 + ((ushort)byte2 << 8));
+            //    waveData[(i - 44) / 2] = (short)value;
+            //}
+            for (int i = 0; i < _audioBufferCount && i < VxDecoder.Instance1.AudioFrameTotal; i++)
+            {
+                ReadOnlySpan<short> buffer = VxDecoder.Instance1.GetAudioBuffer(_audioBufferIndex++);
+                //int start = (_audioBufferIndex - 1) * 128;
+                //int end = start + 128;
+                //ReadOnlySpan<short> buffer2 = waveData[start..end];
+                //Debug.WriteLine(String.Join(", ", buffer.ToArray()));
+                //Debug.WriteLine(String.Join(", ", buffer.ToArray()));
+                //Debug.WriteLine(String.Join(", ", buffer2.ToArray()));
+                //Debug.WriteLine("---------------------------------------------------");
+                AL.BufferData<short>(_audioBufferIds[i], ALFormat.Mono16, buffer, VxDecoder.Instance1.AudioSampleRate);
+            }
+            AL.SourceQueueBuffers(_audioHandle, _audioBufferIds);
+            AL.SourcePlay(_audioHandle); // sktodo: wait until the first call to UpdateMovie()?
+
+            int buffersProcessed = AL.GetSource(_audioHandle, ALGetSourcei.BuffersProcessed);
+            if (buffersProcessed > 0)
+            {
+                Span<int> buffersIds = stackalloc int[buffersProcessed];
+                AL.SourceUnqueueBuffers(_audioHandle, buffersIds);
+                for (int i = 0; i < buffersProcessed && _audioBufferIndex < VxDecoder.Instance1.AudioFrameTotal; i++)
+                {
+                    // sktodo: stereo support
+                    // sktodo: when to cut off (or fade?) audio upon movie skip?
+                    // sktodo: spawn SFX still playing before movie
+                    ReadOnlySpan<short> buffer = VxDecoder.Instance1.GetAudioBuffer(_audioBufferIndex++);
+                    AL.BufferData<short>(_audioBufferIds[i], ALFormat.Mono16, buffer, VxDecoder.Instance1.AudioSampleRate);
+                }
+                AL.SourceQueueBuffers(_audioHandle, buffersIds);
+            }
         }
 
         private void StopMovie()
@@ -328,6 +386,7 @@ namespace MphRead.Formats
         public int[] QuantizerTable { get; } = new int[3];
         private readonly VideoFrame?[] _prevVideoFrames = new VideoFrame?[3];
         private int _framesQueued = 0;
+        private int _audioFrameTotal = 0;
         private List<VxFrame> _vxFrames = null!;
 
         private static readonly ImmutableArray<ImmutableArray<int>> _quantizer4x4Table =
@@ -403,6 +462,7 @@ namespace MphRead.Formats
             }
             using var reader = new BinaryReader(stream);
             _nextPlaneBufferIndex = 0;
+            _nextSampleBufferIndex = 0;
             _framesQueued = 0;
 
             Magic[0] = reader.ReadChar(); // V (86)
@@ -506,7 +566,14 @@ namespace MphRead.Formats
             Array.Clear(_lpcFilterBuffer);
             Array.Clear(_influenceBuffer);
             AudioFrame? prevAudioFrame = null;
-            int audioFrameTotal = 0;
+            _audioFrameTotal = 0;
+            using Stream file = writeFiles && AudioStreamCount >= 1 ? File.OpenWrite(Path.Combine(folder, "audio.wav")) : Stream.Null;
+            using BinaryWriter writer = new BinaryWriter(file);
+            for (int i = 0; i < 11; i++)
+            {
+                // dummy space for 44-byte WAV header will be overwritten later (contains sizes)
+                writer.Write(0);
+            }
             for (int i = 0; i < FrameCount; i++)
             {
                 while (!writeFiles && _framesQueued >= 4 && !token.IsCancellationRequested)
@@ -541,16 +608,17 @@ namespace MphRead.Formats
                 ClearArray(coeffBufferY);
                 ClearArray(coeffBufferUV);
                 ClearArray(vectors);
-                int[] sampleBuffer = GetSampleBuffer();
-                VxBuffers buffers = new VxBuffers(_prevVideoFrames, QuantizerTable, planeBufferY, planeBufferU, planeBufferV,
-                    coeffBufferY, coeffBufferUV, vectors, _prevSampleBuffer, _prevPulseBuffer, sampleBuffer, _lpcFilterBuffer, _influenceBuffer);
-                var vxFrame = new VxFrame(FrameWidth, FrameHeight, audioFrameCount, Extradata, prevAudioFrame, buffers);
+                VxBuffers buffers = new VxBuffers(_prevVideoFrames, QuantizerTable, planeBufferY, planeBufferU, planeBufferV, coeffBufferY,
+                    coeffBufferUV, vectors, _prevSampleBuffer, _prevPulseBuffer, _lpcFilterBuffer, _influenceBuffer, _sampleBuffer);
+                var vxFrame = new VxFrame(FrameWidth, FrameHeight, audioFrameCount, Extradata, prevAudioFrame, buffers, _nextSampleBufferIndex);
+                vxFrame.Decode(reader, buffer, dataSize);
                 if (audioFrameCount > 0)
                 {
                     prevAudioFrame = vxFrame.AudioFrames[^1];
+                    _nextSampleBufferIndex += audioFrameCount;
+                    _nextSampleBufferIndex %= SampleBufferCount;
                 }
-                audioFrameTotal += audioFrameCount;
-                vxFrame.Decode(reader, buffer, dataSize);
+                _audioFrameTotal += audioFrameCount;
                 _vxFrames.Add(vxFrame);
                 _framesQueued++;
                 _prevVideoFrames[2] = _prevVideoFrames[1];
@@ -560,6 +628,24 @@ namespace MphRead.Formats
                 {
                     WriteFile(vxFrame, folder, i);
                 }
+                if (writeFiles && audioFrameCount > 0)
+                {
+                    for (int j = 0; j < audioFrameCount; j++)
+                    {
+                        AudioFrame audioFrame = vxFrame.AudioFrames[j];
+                        for (int k = 0; k < 128; k++)
+                        {
+                            ushort sample = (ushort)audioFrame.SampleBuffer[k];
+                            writer.Write((byte)(sample & 0xFF));
+                            writer.Write((byte)((sample >> 8) & 0xFF));
+                        }
+                    }
+                }
+            }
+            if (writeFiles && _audioFrameTotal > 0)
+            {
+                writer.Seek(0, SeekOrigin.Begin);
+                SoundRead.WriteWavHeader(writer, (uint)_audioFrameTotal * 128, (ushort)AudioSampleRate, WaveFormat.PCM16);
             }
 
             void WriteFile(VxFrame vxFrame, string folder, int f)
@@ -581,32 +667,6 @@ namespace MphRead.Formats
                     }
                 });
                 image.SaveAsPng(Path.Combine(folder, $"{f.ToString().PadLeft(4, '0')}.png"));
-            }
-
-            // current todo:
-            // - switch sample buffers to short, and other buffers to short/byte if possible
-            // - implement on-the-fly file output by writing dummy size values in the header then seeking back at the end
-            // - investigate YUV-RGB conversion (compare frames to emulator output)
-            // - start implementing OpenAL playback and adjust buffer strategy as needed
-
-            // sktodo: we can only export after the fact like this because we're allocating a new sample buffer for every frame (temporarily)
-            // but if/when trying to do this on the fly, we wouldn't necessarily know the sizes to put in the header --> seek back up to the header when done
-            using FileStream file = File.OpenWrite(Path.Combine(folder, "audio.wav"));
-            using var writer = new BinaryWriter(file);
-            SoundRead.WriteWavHeader(writer, (uint)audioFrameTotal * 128, (ushort)AudioSampleRate, WaveFormat.PCM16);
-            for (int i = 0; i < _vxFrames.Count; i++)
-            {
-                VxFrame vxFrame = _vxFrames[i];
-                for (int j = 0; j < vxFrame.AudioFrameCount; j++)
-                {
-                    AudioFrame audioFrame = vxFrame.AudioFrames[j];
-                    for (int k = 0; k < 128; k++)
-                    {
-                        ushort sample = (ushort)audioFrame.SampleBuffer[k];
-                        writer.Write((byte)(sample & 0xFF));
-                        writer.Write((byte)((sample >> 8) & 0xFF));
-                    }
-                }
             }
 
             //if (writeFiles && !UseStaticBuffers)
@@ -651,43 +711,29 @@ namespace MphRead.Formats
             return true;
         }
 
-        // sktodo: todo? can/should these be stored as a smaller data type? (memory savings vs. code simplicity and possible performance differences)
-        // unlike the below video buffers, these audio buffers have a consistent size regardless of the file being decoded
-        private readonly int[] _prevSampleBuffer = new int[8];
+        public int AudioFrameTotal => _audioFrameTotal;
+
+        public ReadOnlySpan<short> GetAudioBuffer(int index)
+        {
+            index %= SampleBufferCount;
+            return new Span<short>(_sampleBuffer, 128 * index, 128);
+        }
+
+        private readonly short[] _prevSampleBuffer = new short[8];
         private readonly int[] _prevPulseBuffer = new int[256];
         private readonly int[] _lpcFilterBuffer = new int[8];
         private readonly int[] _influenceBuffer = new int[8];
         private int _nextSampleBufferIndex = 0;
+        public static int SampleBufferCount => 4 * 12;
 
-        // sktodo: how many do we actually need? (depends on what we're doing with OpenAL -- may need synchronization too)
-        // --> seems to be a max of 12 audio frames per video frame (verify with sample rate)
-        // we could use a single memory allocation and slice it with spans
-        // spans can be put into VxBuffers if we make it readonly ref
-        // (can't do this for 2D arrays though)
-        // while we slice and reuse the same allocation, is it possible to point OpenAL to certain ranges within it to begin playing?
-        private readonly ImmutableArray<int[]> _sampleBuffers =
-        [
-            new int[128]
-        ];
-
-        // sktodo: this
-        private Span<int> SpanTest()
-        {
-            int start = 128 * _nextSampleBufferIndex++;
-            int end = start + 128;
-            _nextSampleBufferIndex %= 12;
-            var span = new Span<int>(_sampleBuffers[0][start..end]);
-            span.Clear();
-            return span;
-        }
-
-        private int[] GetSampleBuffer()
-        {
-            int[] sampleBuffer = _sampleBuffers[_nextSampleBufferIndex++];
-            _nextSampleBufferIndex %= _sampleBuffers.Length;
-            Array.Clear(sampleBuffer);
-            return sampleBuffer;
-        }
+        // because we don't know how fast decoding will be, we have to assume that the maximum of 5 video frames x 12 audio frames will be
+        // sitting around waiting while the previous frame is displaying and previous audio buffers are not yet played. so we'll have to
+        // have 48 buffers for audio frame samples. if video and audio decoding were decoupled, then instead of the 4 video frame decoding limit
+        // applying to both, audio frames could have their own decoding limit based on fast they get played, reducing the number of buffers
+        // needed to just a few. this 12 KB static allocation (x2 decoders) could be reduced to 1-2 KB.
+        // note: 128-byte spans of this buffer are used by each audio frame. because the audio frame needs to be hold those samples until export
+        // or playback, the frame must store a reference to this entire array, but it's only accessed through the span per _nextSampleBufferIndex.
+        private readonly short[] _sampleBuffer = new short[SampleBufferCount * 128];
 
         // because we know the dimensions and maximum data size of MPH's videos, we can decode successive videos with reusable, permanent static allocations.
         // in order to keep this code flexible to allow decoding other videos with unknown sizes, this behavior can be disabled. when enabled, the code will:
@@ -708,6 +754,7 @@ namespace MphRead.Formats
         private const int _mphFrameH = 192;
         private int _nextPlaneBufferIndex = 0;
 
+        // if spans were supported for 2D arrays, these could also use the single allocation, multiple span approach used by _sampleBuffer
         private readonly ImmutableArray<byte[,]> _planeBuffers =
         [
             //                  Y                                 U                                         V
@@ -762,15 +809,15 @@ namespace MphRead.Formats
         public readonly byte[,] CoeffBufferY;
         public readonly byte[,] CoeffBufferUV;
         public readonly Vector2ir[,] Vectors;
-        public readonly int[] PrevSampleBuffer;
+        public readonly short[] PrevSampleBuffer;
         public readonly int[] PrevPulseBuffer;
-        public readonly int[] SampleBuffer;
         public readonly int[] LpcFilterBuffer;
         public readonly int[] InfluenceBuffer;
+        public readonly short[] SampleBuffer;
 
         public VxBuffers(VideoFrame?[] prevVideoFrames, int[] quantizerTable, byte[,]? planeBufferY, byte[,]? planeBufferU, byte[,]? planeBufferV,
-            byte[,] coeffBufferY, byte[,] coeffBufferUV, Vector2ir[,] vectors, int[] prevSampleBuffer, int[] prevPulseBuffer, int[] sampleBuffer,
-            int[] lpcFilterBuffer, int[] influenceBuffer)
+            byte[,] coeffBufferY, byte[,] coeffBufferUV, Vector2ir[,] vectors, short[] prevSampleBuffer, int[] prevPulseBuffer, int[] lpcFilterBuffer,
+            int[] influenceBuffer, short[] sampleBuffer)
         {
             PrevVideoFrames = prevVideoFrames;
             QuantizerTable = quantizerTable;
@@ -782,9 +829,9 @@ namespace MphRead.Formats
             Vectors = vectors;
             PrevSampleBuffer = prevSampleBuffer;
             PrevPulseBuffer = prevPulseBuffer;
-            SampleBuffer = sampleBuffer;
             LpcFilterBuffer = lpcFilterBuffer;
             InfluenceBuffer = influenceBuffer;
+            SampleBuffer = sampleBuffer;
         }
     }
 
@@ -794,16 +841,18 @@ namespace MphRead.Formats
         public int AudioFrameCount { get; }
         public AudioFrame[] AudioFrames { get; }
 
-        public VxFrame(int frameWidth, int frameHeight, int audioFrameCount, AudioExtradata extradata, AudioFrame? prevAudioFrame, VxBuffers buffers)
+        public VxFrame(int frameWidth, int frameHeight, int audioFrameCount, AudioExtradata extradata,
+            AudioFrame? prevAudioFrame, VxBuffers buffers, int sampleBufferIndex)
         {
             VideoFrame = new VideoFrame(frameWidth, frameHeight, buffers);
             AudioFrameCount = audioFrameCount;
             AudioFrames = new AudioFrame[audioFrameCount];
             for (int i = 0; i < audioFrameCount; i++)
             {
-                var audioFrame = new AudioFrame(extradata, prevAudioFrame, buffers);
+                var audioFrame = new AudioFrame(extradata, prevAudioFrame, buffers, sampleBufferIndex++);
                 AudioFrames[i] = audioFrame;
                 prevAudioFrame = audioFrame;
+                sampleBufferIndex %= VxDecoder.SampleBufferCount;
             }
         }
 
@@ -2206,28 +2255,29 @@ namespace MphRead.Formats
     {
         private readonly AudioExtradata _extradata;
         private readonly AudioFrame? _prevAudioFrame;
-        private readonly int[] _prevSampleBuffer;
+        private readonly short[] _prevSampleBuffer;
         private readonly int[] _prevPulseBuffer;
         private readonly int[] _lpcFilterBuffer;
         private readonly int[] _influenceBuffer;
-        private readonly int[] _sampleBuffer;
-        public int[] SampleBuffer => _sampleBuffer;
+        private readonly short[] _sampleBuffer;
+        private readonly int _sampleBufferIndex;
+        public Span<short> SampleBuffer => new Span<short>(_sampleBuffer, 128 * _sampleBufferIndex, 128);
 
         private int _scale;
         public int Scale => _scale;
 
         private BitStreamReader _reader = null!;
 
-        public AudioFrame(AudioExtradata extradata, AudioFrame? prevAudioFrame, VxBuffers buffers)
+        public AudioFrame(AudioExtradata extradata, AudioFrame? prevAudioFrame, VxBuffers buffers, int sampleBufferIndex)
         {
             _extradata = extradata;
             _prevAudioFrame = prevAudioFrame;
             _prevSampleBuffer = buffers.PrevSampleBuffer;
             _prevPulseBuffer = buffers.PrevPulseBuffer;
-            //_sampleBuffer = buffers.SampleBuffer; // sktodo: revert
-            _sampleBuffer = new int[buffers.SampleBuffer.Length];
             _lpcFilterBuffer = buffers.LpcFilterBuffer;
             _influenceBuffer = buffers.InfluenceBuffer;
+            _sampleBuffer = buffers.SampleBuffer;
+            _sampleBufferIndex = sampleBufferIndex;
         }
 
         private static readonly ImmutableArray<int> _pulseDataLengths = [8, 5, 4, 3];
@@ -2269,7 +2319,7 @@ namespace MphRead.Formats
             }
             // mode 0: pulseData length 8, 5 loop iterations, plus 2 more values = 42 output values
             // others: pulseData length 3/4/5, 8 loop iterations = 24/32/40 output values
-            Span<int> pulseValues = stackalloc int[pulsePackingMode == 0 ? 42 : pulseDataLength * 8]; // sktodo: todo? some of these could just as well be 1-byte values
+            Span<int> pulseValues = stackalloc int[pulsePackingMode == 0 ? 42 : pulseDataLength * 8];
             if (pulsePackingMode == 0)
             {
                 int v = 0;
@@ -2375,6 +2425,8 @@ namespace MphRead.Formats
                 influenceValues.CopyTo(influenceQuarters[16..24]);
                 influenceValues.CopyTo(influenceQuarters[24..32]);
             }
+            Span<short> sampleBuffer = SampleBuffer;
+            sampleBuffer.Clear();
             for (int i = 0; i < 128; i++)
             {
                 int quarterStart = i * 4 / 128 * 8;
@@ -2384,22 +2436,20 @@ namespace MphRead.Formats
                 for (int j = 0; j < 8; j++)
                 {
                     int sampleIndex = i - j - 1;
-                    int prevSample = sampleIndex >= 0 ? _sampleBuffer[sampleIndex] : _prevSampleBuffer[sampleIndex + 8];
+                    int prevSample = sampleIndex >= 0 ? sampleBuffer[sampleIndex] : _prevSampleBuffer[sampleIndex + 8];
                     sample += prevSample * quarterSpan[j];
                 }
                 sample = sample / 16384;
-                _sampleBuffer[i] = Math.Clamp(sample, Int16.MinValue, Int16.MaxValue);
+                sampleBuffer[i] = (short)Math.Clamp(sample, Int16.MinValue, Int16.MaxValue);
             }
             // copy the last 128 elements of the prev pulse array (n-1) into that array's first 128 elements (n-2)
             Array.Copy(_prevPulseBuffer, 128, _prevPulseBuffer, 0, 128);
             // copy our 128 pulse values (n) into the last 128 elements of the prev pulse array (n-1)
-            var pulseDest = new Span<int>(_prevPulseBuffer, 128, 128);
-            pulseBuffer.CopyTo(pulseDest);
+            pulseBuffer.CopyTo(new Span<int>(_prevPulseBuffer, 128, 128));
             // copy the last 8 of our 128 sample values (n) into the prev sample array's 8 elements (n-1)
-            Array.Copy(_sampleBuffer, 120, _prevSampleBuffer, 0, 8);
+            sampleBuffer[120..128].CopyTo(_prevSampleBuffer);
             // copy our 8 influence values (n) into the prev influence array's 8 elements (n-1)
-            var influenceDest = new Span<int>(_influenceBuffer);
-            influenceValues.CopyTo(influenceDest);
+            influenceValues.CopyTo(_influenceBuffer);
             _reader = null!;
         }
     }
