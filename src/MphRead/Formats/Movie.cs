@@ -301,10 +301,6 @@ namespace MphRead
             }
         }
 
-        private readonly string[] _log = new string[100000];
-        private int _logIndex = 0;
-        private readonly Stopwatch _sw = new Stopwatch();
-
         private void UpdateMovie()
         {
             if (_skipMovie)
