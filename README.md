@@ -27,7 +27,7 @@ If you do not want to build from source, simply download and run the latest [rel
 
 ### With Visual Studio
 
-With a recent version of [Visual Studio 2022](https://visualstudio.microsoft.com/vs/) installed, you should be able to open the solution and build immediately.
+With a recent version of [Visual Studio 2022 or 2026](https://visualstudio.microsoft.com/vs/) installed, you should be able to open the solution and build immediately.
 
 ### Without Visual Studio
 
