@@ -167,6 +167,7 @@ namespace MphRead
 
         private async Task UpdateMovieAudio(CancellationToken token)
         {
+            Span<short> stereoBuffer = stackalloc short[128 * 2];
             bool initial = _audioBufferIndex == 0;
             int framesAvailable = VxDecoder.Instance1.AudioFrameTotal - _audioBufferIndex;
             if (framesAvailable > 0)
@@ -212,8 +213,22 @@ namespace MphRead
                             }
                         }
                         Debug.Assert(bufferIndex < _audioBufferCount);
-                        ReadOnlySpan<short> buffer = VxDecoder.Instance1.GetAudioBuffer(_audioBufferIndex++);
-                        AL.BufferData<short>(queueBuffers[i], ALFormat.Mono16, buffer, VxDecoder.Instance1.AudioSampleRate);
+                        if (_dualScreenMovie)
+                        {
+                            ReadOnlySpan<short> buffer1 = VxDecoder.Instance1.GetAudioBuffer(_audioBufferIndex);
+                            ReadOnlySpan<short> buffer2 = VxDecoder.Instance2.GetAudioBuffer(_audioBufferIndex++);
+                            for (int j = 0; j < 128; j++)
+                            {
+                                stereoBuffer[j * 2] = buffer1[j];
+                                stereoBuffer[j * 2 + 1] = buffer2[j];
+                            }
+                            AL.BufferData<short>(queueBuffers[i], ALFormat.Stereo16, stereoBuffer, VxDecoder.Instance1.AudioSampleRate);
+                        }
+                        else
+                        {
+                            ReadOnlySpan<short> buffer = VxDecoder.Instance1.GetAudioBuffer(_audioBufferIndex++);
+                            AL.BufferData<short>(queueBuffers[i], ALFormat.Mono16, buffer, VxDecoder.Instance1.AudioSampleRate);
+                        }
                     }
                     AL.SourceQueueBuffers(_audioHandle, queueBuffers);
                     var state = (ALSourceState)AL.GetSource(_audioHandle, ALGetSourcei.SourceState);
