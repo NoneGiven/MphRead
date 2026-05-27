@@ -176,7 +176,7 @@ public static class NCSF
     /// <param name="search">The search pattern.</param>
     /// <param name="memory">The <see cref="ReadOnlyMemory{T}" /> to search within.</param>
     /// <returns>A byte position within the data where the search pattern was found.</returns>
-    public static IEnumerable<int> FindOffsetsInFile(ReadOnlyMemory<byte> search, ReadOnlyMemory<byte> memory)
+    public static int? FindOffsetsInFile(ReadOnlyMemory<byte> search, ReadOnlySpan<byte> memory)
     {
         int m = search.Length;
         int n = memory.Length;
@@ -196,19 +196,20 @@ public static class NCSF
             int d = ~0;
             while (i >= 0 && d != 0)
             {
-                d &= B[memory.Span[j + i]];
+                d &= B[memory[j + i]];
                 --i;
                 if (d != 0)
                 {
                     if (i >= 0)
                         last = i + 1;
                     else
-                        yield return j;
+                        return j;
                 }
                 d <<= 1;
             }
             j += last;
         }
+        return null;
     }
 
     /// <summary>
@@ -257,18 +258,18 @@ public static class NCSF
     /// <param name="memory">A <see cref="ReadOnlyMemory{T}"/> to the data to extract the tags from.</param>
     /// <param name="versionByte">The PSF version byte to check for.</param>
     /// <returns>The list of tags contained within the given PSF.</returns>
-    public static TagList GetTagsFromPSF(ReadOnlyMemory<byte> memory, byte versionByte)
+    public static TagList GetTagsFromPSF(ReadOnlySpan<byte> memory, byte versionByte)
     {
         // Check to make sure the file is valid.
-        NCSF.CheckForValidPSF(memory.Span, versionByte);
+        NCSF.CheckForValidPSF(memory, versionByte);
 
         // Get the starting offset of the tags.
-        int tagOffset = NCSF.FindOffsetsInFile(NCSF.TAGHeader, memory).SingleOrDefault(-1);
+        int tagOffset = NCSF.FindOffsetsInFile(NCSF.TAGHeader, memory) ?? -1;
 
         // Only continue on if we have tags.
         if (tagOffset != -1)
         {
-            var tagsSpan = memory.Span[(tagOffset + NCSF.TAGHeader.Length)..];
+            var tagsSpan = memory[(tagOffset + NCSF.TAGHeader.Length)..];
             // First we read the tags using the system codepage, and then if we have a utf8 flag, we re-read the tags using UTF-8.
             var tags = NCSF.GetTagsFromPSFWithEncoding(tagsSpan, NCSF.SystemCodePageEncoding);
             if (tags.Contains("utf8"))
