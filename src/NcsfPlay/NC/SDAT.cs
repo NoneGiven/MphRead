@@ -28,8 +28,8 @@ public class SDAT : NDSStandardHeader
     public static readonly ReadOnlyMemory<byte> Signature = new byte[]
     {
         0x53, 0x44, 0x41, 0x54, // "SDAT"
-		0xFF, 0xFE, 0x00, 0x01 // Magic bytes
-	};
+        0xFF, 0xFE, 0x00, 0x01 // Magic bytes
+    };
 
     /// <summary>
     /// "FILE" as bytes.
