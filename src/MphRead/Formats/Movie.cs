@@ -45,11 +45,6 @@ namespace MphRead
         private readonly byte[] _botImageBuffer = new byte[_frameWidth * _frameHeight * 3];
         private CancellationTokenSource _decoderCts = null!;
 
-        private int _audioHandle = -1;
-        private const int _audioBufferCount = 48;
-        private int _audioBufferIndex = 0;
-        private readonly int[] _audioBufferIds = new int[_audioBufferCount];
-
         public void StartMovies(Movie movieId, Movie afterMovieId, FadeType fadeToMovieType, float fadeToMovieLength,
             FadeType fadeFromMovieType, float fadeFromMovieLength, AfterMovie afterMovieAction = AfterMovie.LoadRoom)
         {
@@ -87,8 +82,6 @@ namespace MphRead
             // - after enough time has elapsed, request the next frame's color buffer from the decoder
             // - decoder can decode up to 4 frames, then needs to wait until its oldest frame is requested by the renderer,
             //   then it can drop that frame and decode another one
-            // todo
-            // - should try to identify code that needs to be aware of when the decoder takes too long to return a frame (and add a note about audio)
             GameState.PauseDialog();
             Sfx.SfxMute = true;
             Sfx.LongSfxMute++;
@@ -97,6 +90,17 @@ namespace MphRead
             VxDecoder.Instance1.Reset();
             VxDecoder.Instance2.Reset();
             _decoderCts = new CancellationTokenSource();
+            if (_audioHandle != -1)
+            {
+                AL.SourceStop(_audioHandle);
+                AL.DeleteSource(_audioHandle);
+                AL.DeleteBuffers(_audioBufferIds);
+            }
+            _audioHandle = AL.GenSource();
+            AL.GenBuffers(_audioBufferIds);
+            AL.Source(_audioHandle, ALSourcef.Gain, Sfx.Volume);
+            Array.Fill(_audioBuffersAvailable, true);
+            _audioBufferIndex = 0;
             Metadata.MovieInfo info = Metadata.MovieFiles[(int)movieId];
             _dualScreenMovie = info.BottomScreenPath != null;
             string topPath = Paths.Combine(Paths.FileSystem, info.TopScreenPath);
@@ -110,25 +114,20 @@ namespace MphRead
             {
                 Array.Fill<byte>(_botImageBuffer, 0);
             }
-            if (_audioHandle != -1)
-            {
-                AL.DeleteSource(_audioHandle);
-                AL.DeleteBuffers(_audioBufferIds);
-            }
-            _audioHandle = AL.GenSource();
-            AL.GenBuffers(_audioBufferIds);
-            AL.Source(_audioHandle, ALSourcef.Gain, Sfx.Volume);
-            _audioBufferIndex = 0;
-            while (!VxDecoder.Instance1.GetImage(frameIndex: 0, _topImageBuffer))
+            // start with a few frames to make sure audio doesn't run out
+            // (note that even if we don't sleep, we'll hit the max of 4 anyway)
+            while (VxDecoder.Instance1.FramesQueued < 4)
             {
                 Thread.Sleep(TimeSpan.FromMilliseconds(10));
             }
+            VxDecoder.Instance1.GetImage(frameIndex: 0, _topImageBuffer);
             if (_dualScreenMovie)
             {
-                while (!VxDecoder.Instance2.GetImage(frameIndex: 0, _botImageBuffer))
+                while (VxDecoder.Instance2.FramesQueued < 4)
                 {
                     Thread.Sleep(TimeSpan.FromMilliseconds(10));
                 }
+                VxDecoder.Instance2.GetImage(frameIndex: 0, _botImageBuffer);
             }
             _movieFrameTotal = VxDecoder.Instance1.FrameCount;
             Debug.Assert(!_dualScreenMovie || VxDecoder.Instance2.FrameCount == _movieFrameTotal);
@@ -148,53 +147,99 @@ namespace MphRead
             _movieFrameIndex = 0;
             _movieFrameCount = 0;
             _skipMovie = false;
+            Task.Run(async () =>
+            {
+                // while loop outside the method so we can use stackalloc without limitation (possibly different sizes each iteration)
+                while (!_decoderCts.Token.IsCancellationRequested && _movieFrameCount != Int32.MaxValue)
+                {
+                    await UpdateMovieAudio(_decoderCts.Token);
+                }
+            }, _decoderCts.Token);
+            Task.Run(async () => await UpdateMovieImage(_decoderCts.Token), _decoderCts.Token);
         }
 
-        private void UpdateMovieAudio()
-        {
-            //byte[] fileBytes = File.ReadAllBytes(@"C:\Users\auser\Home\MPH\Data\_Export\04\audio.wav");
-            //var waveData = new short[(fileBytes.Length - 44) / 2];
-            //for (int i = 44; i < fileBytes.Length; i += 2)
-            //{
-            //    byte byte1 = fileBytes[i];
-            //    byte byte2 = fileBytes[i + 1];
-            //    ushort value = (ushort)((ushort)byte1 + ((ushort)byte2 << 8));
-            //    waveData[(i - 44) / 2] = (short)value;
-            //}
-            for (int i = 0; i < _audioBufferCount && i < VxDecoder.Instance1.AudioFrameTotal; i++)
-            {
-                ReadOnlySpan<short> buffer = VxDecoder.Instance1.GetAudioBuffer(_audioBufferIndex++);
-                //int start = (_audioBufferIndex - 1) * 128;
-                //int end = start + 128;
-                //ReadOnlySpan<short> buffer2 = waveData[start..end];
-                //Debug.WriteLine(String.Join(", ", buffer.ToArray()));
-                //Debug.WriteLine(String.Join(", ", buffer.ToArray()));
-                //Debug.WriteLine(String.Join(", ", buffer2.ToArray()));
-                //Debug.WriteLine("---------------------------------------------------");
-                AL.BufferData<short>(_audioBufferIds[i], ALFormat.Mono16, buffer, VxDecoder.Instance1.AudioSampleRate);
-            }
-            AL.SourceQueueBuffers(_audioHandle, _audioBufferIds);
-            AL.SourcePlay(_audioHandle); // sktodo: wait until the first call to UpdateMovie()?
+        private int _audioHandle = -1;
+        public int MovieAudioHandle => _audioHandle;
+        private const int _audioBufferCount = 16;
+        private int _audioBufferIndex = 0;
+        private readonly int[] _audioBufferIds = new int[_audioBufferCount];
+        private readonly bool[] _audioBuffersAvailable = new bool[_audioBufferCount];
 
-            int buffersProcessed = AL.GetSource(_audioHandle, ALGetSourcei.BuffersProcessed);
-            if (buffersProcessed > 0)
+        private async Task UpdateMovieAudio(CancellationToken token)
+        {
+            bool initial = _audioBufferIndex == 0;
+            int framesAvailable = VxDecoder.Instance1.AudioFrameTotal - _audioBufferIndex;
+            if (framesAvailable > 0)
             {
-                Span<int> buffersIds = stackalloc int[buffersProcessed];
-                AL.SourceUnqueueBuffers(_audioHandle, buffersIds);
-                for (int i = 0; i < buffersProcessed && _audioBufferIndex < VxDecoder.Instance1.AudioFrameTotal; i++)
+                int buffersAvailable = 0;
+                if (_audioBufferIndex == 0)
                 {
-                    // sktodo: stereo support
-                    // sktodo: when to cut off (or fade?) audio upon movie skip?
-                    // sktodo: spawn SFX still playing before movie
-                    ReadOnlySpan<short> buffer = VxDecoder.Instance1.GetAudioBuffer(_audioBufferIndex++);
-                    AL.BufferData<short>(_audioBufferIds[i], ALFormat.Mono16, buffer, VxDecoder.Instance1.AudioSampleRate);
+                    buffersAvailable = _audioBufferCount;
                 }
-                AL.SourceQueueBuffers(_audioHandle, buffersIds);
+                else
+                {
+                    int buffersProcessed = AL.GetSource(_audioHandle, ALGetSourcei.BuffersProcessed);
+                    if (buffersProcessed > 0)
+                    {
+                        Span<int> processedIds = stackalloc int[Math.Min(framesAvailable, buffersProcessed)];
+                        AL.SourceUnqueueBuffers(_audioHandle, processedIds);
+                        for (int i = 0; i < _audioBufferCount; i++)
+                        {
+                            _audioBuffersAvailable[i] = processedIds.Contains(_audioBufferIds[i]);
+                        }
+                    }
+                    for (int i = 0; i < _audioBufferCount; i++)
+                    {
+                        if (_audioBuffersAvailable[i])
+                        {
+                            buffersAvailable++;
+                        }
+                    }
+                }
+                if (buffersAvailable > 0)
+                {
+                    Span<int> queueBuffers = stackalloc int[Math.Min(framesAvailable, buffersAvailable)];
+                    int bufferIndex = 0;
+                    for (int i = 0; i < queueBuffers.Length; i++)
+                    {
+                        for (; bufferIndex < _audioBufferCount; bufferIndex++)
+                        {
+                            if (_audioBuffersAvailable[bufferIndex])
+                            {
+                                queueBuffers[i] = _audioBufferIds[bufferIndex];
+                                _audioBuffersAvailable[bufferIndex] = false;
+                                break;
+                            }
+                        }
+                        Debug.Assert(bufferIndex < _audioBufferCount);
+                        ReadOnlySpan<short> buffer = VxDecoder.Instance1.GetAudioBuffer(_audioBufferIndex++);
+                        AL.BufferData<short>(queueBuffers[i], ALFormat.Mono16, buffer, VxDecoder.Instance1.AudioSampleRate);
+                    }
+                    AL.SourceQueueBuffers(_audioHandle, queueBuffers);
+                    var state = (ALSourceState)AL.GetSource(_audioHandle, ALGetSourcei.SourceState);
+                    if (state != ALSourceState.Playing)
+                    {
+                        // this should only occur once unless things are lagging behind
+                        AL.SourcePlay(_audioHandle);
+                    }
+                }
             }
+            try
+            {
+                await Task.Delay(1);
+            }
+            catch (TaskCanceledException) { }
         }
 
         private void StopMovie()
         {
+            if (_audioHandle != -1)
+            {
+                AL.SourceStop(_audioHandle);
+                AL.DeleteSource(_audioHandle);
+                AL.DeleteBuffers(_audioBufferIds);
+                _audioHandle = -1;
+            }
             if (_movieSettings.AfterMovieId.HasValue)
             {
                 Sfx.LongSfxMute--;
@@ -241,6 +286,10 @@ namespace MphRead
             }
         }
 
+        private readonly string[] _log = new string[100000];
+        private int _logIndex = 0;
+        private readonly Stopwatch _sw = new Stopwatch();
+
         private void UpdateMovie()
         {
             if (_skipMovie)
@@ -252,33 +301,48 @@ namespace MphRead
                 }
                 return;
             }
-            if ((!_frameAdvanceOn || _frameAdvanceLastFrame) && _movieFrameCount != Int32.MaxValue)
+        }
+
+        private async Task UpdateMovieImage(CancellationToken token)
+        {
+            TimeSpan frameTime = TimeSpan.FromSeconds(1 / 15.0);
+            TimeSpan nextFrameElapsed = frameTime;
+            // tolerance is used mainly so the audio doesn't run out if we end up sleeping a bit past the next 15 fps mark
+            // there are either 11 or 12 audio frames per video frame, which balance each other out, but will drift unless the video waits are balanced
+            TimeSpan tolerance = TimeSpan.FromMilliseconds(15);
+            var sw = new Stopwatch();
+            sw.Start();
+            while (!token.IsCancellationRequested && _movieFrameCount != Int32.MaxValue)
             {
-                _movieFrameCount++;
-            }
-            int frameIndex = _movieFrameCount / 4; // 15 fps
-            if (frameIndex != _movieFrameIndex)
-            {
-                if (frameIndex == _movieFrameTotal)
+                TimeSpan elapsed = sw.Elapsed;
+                if (elapsed >= nextFrameElapsed && nextFrameElapsed - elapsed < tolerance)
                 {
-                    _movieFrameCount = Int32.MaxValue;
-                    SetFade(_movieSettings.AfterFadeType, _movieSettings.AfterFadeLength, overwrite: true, AfterFade.StopMovie);
+                    _movieFrameCount++;
+                    nextFrameElapsed += frameTime;
                 }
-                else if (frameIndex < _movieFrameTotal)
+                int frameIndex = _movieFrameCount;
+                if (_movieFrameCount != _movieFrameIndex)
                 {
-                    _movieFrameIndex = frameIndex;
-                    while (!VxDecoder.Instance1.GetImage(frameIndex, _topImageBuffer))
+                    if (frameIndex == _movieFrameTotal)
                     {
-                        Thread.Sleep(TimeSpan.FromMilliseconds(10));
+                        _movieFrameCount = Int32.MaxValue;
+                        SetFade(_movieSettings.AfterFadeType, _movieSettings.AfterFadeLength, overwrite: true, AfterFade.StopMovie);
+                        return;
                     }
-                    if (_dualScreenMovie)
+                    if (frameIndex < _movieFrameTotal)
                     {
-                        while (!VxDecoder.Instance2.GetImage(frameIndex, _botImageBuffer))
+                        if (VxDecoder.Instance1.GetImage(frameIndex, _topImageBuffer)
+                            && !_dualScreenMovie || VxDecoder.Instance2.GetImage(frameIndex, _botImageBuffer))
                         {
-                            Thread.Sleep(TimeSpan.FromMilliseconds(10));
+                            _movieFrameIndex = frameIndex;
                         }
                     }
                 }
+                try
+                {
+                    await Task.Delay(1);
+                }
+                catch (TaskCanceledException) { }
             }
         }
 
@@ -386,6 +450,7 @@ namespace MphRead.Formats
         public int[] QuantizerTable { get; } = new int[3];
         private readonly VideoFrame?[] _prevVideoFrames = new VideoFrame?[3];
         private int _framesQueued = 0;
+        public int FramesQueued => _framesQueued;
         private int _audioFrameTotal = 0;
         private List<VxFrame> _vxFrames = null!;
 
@@ -403,6 +468,7 @@ namespace MphRead.Formats
         {
             _vxFrames?.Clear();
             UseStaticBuffers = true;
+            Array.Clear(_sampleBuffer);
         }
 
         public async Task ExportAll()
@@ -580,7 +646,7 @@ namespace MphRead.Formats
                 {
                     try
                     {
-                        await Task.Delay(TimeSpan.FromMilliseconds(10), token);
+                        await Task.Delay(1);
                     }
                     catch (TaskCanceledException) { }
                 }
@@ -593,11 +659,6 @@ namespace MphRead.Formats
                 Debug.Assert(dataSize % 2 == 0); // for byte swapping
                 Debug.Assert(dataSize <= MaxDataSize);
                 int audioFrameCount = reader.ReadUInt16();
-                // sktodo: remove
-                if (audioFrameCount > 12)
-                {
-                    Debugger.Break();
-                }
                 byte[,]? planeBufferY = null;
                 byte[,]? planeBufferU = null;
                 byte[,]? planeBufferV = null;
@@ -669,14 +730,14 @@ namespace MphRead.Formats
                 image.SaveAsPng(Path.Combine(folder, $"{f.ToString().PadLeft(4, '0')}.png"));
             }
 
-            //if (writeFiles && !UseStaticBuffers)
-            //{
-            //    int f = 0;
-            //    foreach (VxFrame vxFrame in _vxFrames)
-            //    {
-            //        WriteFile(vxFrame, folder, f++);
-            //    }
-            //}
+            if (writeFiles && !UseStaticBuffers)
+            {
+                int f = 0;
+                foreach (VxFrame vxFrame in _vxFrames)
+                {
+                    WriteFile(vxFrame, folder, f++);
+                }
+            }
         }
 
         // with a realtime approach, we only need:
@@ -724,7 +785,7 @@ namespace MphRead.Formats
         private readonly int[] _lpcFilterBuffer = new int[8];
         private readonly int[] _influenceBuffer = new int[8];
         private int _nextSampleBufferIndex = 0;
-        public static int SampleBufferCount => 4 * 12;
+        public static int SampleBufferCount => 5 * 12;
 
         // because we don't know how fast decoding will be, we have to assume that the maximum of 5 video frames x 12 audio frames will be
         // sitting around waiting while the previous frame is displaying and previous audio buffers are not yet played. so we'll have to
@@ -782,7 +843,6 @@ namespace MphRead.Formats
         private readonly byte[,] _coeffBufferUV = new byte[_mphFrameH / 8 + 1, _mphFrameW / 8 + 1];
         private readonly Vector2ir[,] _vectors = new Vector2ir[_mphFrameH / 16 + 1, _mphFrameW / 16 + 2];
 
-        // sktodo: is this the best formula? integer-only is nice, though it may not be totally necessary
         private static Rgb24 YuvToRgb(int y, int u, int v)
         {
             u -= 128;

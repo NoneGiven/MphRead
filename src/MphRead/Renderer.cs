@@ -4907,6 +4907,8 @@ namespace MphRead
 
         public void QueueMovie(int movieId)
         {
+            Sound.Sfx.Load(Scene);
+            GameState.Mode = GameMode.Unknown15; // avoid save prompt from 1P mode
             Scene.StartMovie((Movie)movieId, FadeType.FadeOutInBlack, 0, FadeType.FadeOutBlack, 0, afterMovieAction: AfterMovie.EndGame);
         }
 
