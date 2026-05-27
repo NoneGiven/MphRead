@@ -1,8 +1,6 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
-using CommunityToolkit.Diagnostics;
 using CommunityToolkit.HighPerformance;
-using DotNext;
 
 namespace NCSFCommon.NC;
 
@@ -72,8 +70,9 @@ public class SYMBSection
     /// <exception cref="InvalidDataException">If the header is incorrect.</exception>
     public SYMBSection Read(ReadOnlySpan<byte> span)
     {
-        if (!Common.VerifyHeader(span[..0x04], SYMBSection.Header.Span))
-            ThrowHelper.ThrowInvalidDataException("SDAT SYMB Section invalid");
+        //if (!Common.VerifyHeader(span[..0x04], SYMBSection.Header.Span))
+        //    ThrowHelper.ThrowInvalidDataException("SDAT SYMB Section invalid");
+        Debug.Assert(Common.VerifyHeader(span[..0x04], SYMBSection.Header.Span));
         // Skipping size as we are just calculating that on the fly.
         // Record offsets start at byte 0x08 of the SYMB section.
         span[0x08..0x28].Cast<byte, uint>().CopyTo(this.recordOffsets);
@@ -174,8 +173,9 @@ public class SYMBSection
     /// <exception cref="InvalidOperationException">If both INFO sections are <see langword="null" />.</exception>
     public static SYMBSection operator +(SYMBSection? symbSection1, SYMBSection? symbSection2)
     {
-        if (symbSection1 is null && symbSection2 is null)
-            ThrowHelper.ThrowInvalidOperationException("At least one of the SYMB sections to add together must be non-null.");
+        //if (symbSection1 is null && symbSection2 is null)
+        //    ThrowHelper.ThrowInvalidOperationException("At least one of the SYMB sections to add together must be non-null.");
+        Debug.Assert(symbSection1 != null || symbSection2 != null);
 
         symbSection1 ??= new();
         symbSection2 ??= new();

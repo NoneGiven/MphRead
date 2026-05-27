@@ -1,4 +1,4 @@
-using CommunityToolkit.Diagnostics;
+using System.Diagnostics;
 
 namespace NCSFCommon;
 
@@ -269,7 +269,8 @@ public abstract class Player
     /// <param name="value">The value for the variable.</param>
     public void SetVariable(sbyte variableNumber, short value)
     {
-        Guard.IsBetweenOrEqualTo(variableNumber, (sbyte)0, (sbyte)31);
+        //Guard.IsBetweenOrEqualTo(variableNumber, (sbyte)0, (sbyte)31);
+        Debug.Assert(variableNumber >= 0 && variableNumber <= 31);
 
         this.variables[variableNumber] = value;
     }
@@ -281,7 +282,8 @@ public abstract class Player
     /// <param name="swar">The <see cref="NC.SWAR" /> to set.</param>
     public void SetSWAR(int index, NC.SWAR swar)
     {
-        Guard.IsBetweenOrEqualTo(index, 0, 3);
+        //Guard.IsBetweenOrEqualTo(index, 0, 3);
+        Debug.Assert(index >= 0 && index <= 3);
 
         this.swars[index] = swar;
     }

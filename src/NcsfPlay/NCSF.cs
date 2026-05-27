@@ -1,9 +1,9 @@
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO.Compression;
 using System.IO.Hashing;
 using System.Text;
-using CommunityToolkit.Diagnostics;
 using CommunityToolkit.HighPerformance;
 using CommunityToolkit.HighPerformance.Buffers;
 
@@ -87,30 +87,36 @@ public static class NCSF
     {
         // Various checks on the file's size will be done throughout.
         int fileSize = span.Length;
-        if (fileSize < 0x04)
-            ThrowHelper.ThrowInvalidDataException("File is too small.");
+        //if (fileSize < 0x04)
+        //    ThrowHelper.ThrowInvalidDataException("File is too small.");
+        Debug.Assert(fileSize >= 4);
 
         // Verify it actually is a PSF file, as well as having the NCSF version byte.
-        if (!span[..0x03].SequenceEqual(NCSF.PSFHeader.Span))
-            ThrowHelper.ThrowInvalidDataException("Not a PSF file.");
+        //if (!span[..0x03].SequenceEqual(NCSF.PSFHeader.Span))
+        //    ThrowHelper.ThrowInvalidDataException("Not a PSF file.");
+        Debug.Assert(span[..0x03].SequenceEqual(NCSF.PSFHeader.Span));
 
-        if (span[0x03] != versionByte)
-            ThrowHelper.ThrowInvalidDataException($"Version byte of 0x{span[0x03]:X2} does not equal what we were looking for (0x{versionByte:X2}).");
+        //if (span[0x03] != versionByte)
+        //    ThrowHelper.ThrowInvalidDataException($"Version byte of 0x{span[0x03]:X2} does not equal what we were looking for (0x{versionByte:X2}).");
+        Debug.Assert(span[0x03] == versionByte);
 
-        if (fileSize < 0x10)
-            ThrowHelper.ThrowInvalidDataException("File is too small.");
+        //if (fileSize < 0x10)
+        //    ThrowHelper.ThrowInvalidDataException("File is too small.");
+        Debug.Assert(fileSize >= 0x10);
 
         // Get the sizes on the reserved and program sections.
         uint reservedSize = BinaryPrimitives.ReadUInt32LittleEndian(span[0x04..]);
         uint programCompressedSize = BinaryPrimitives.ReadUInt32LittleEndian(span[0x08..]);
 
         // Check the reserved section.
-        if (reservedSize != 0 && fileSize < reservedSize + 0x10)
-            ThrowHelper.ThrowInvalidDataException("File is too small.");
+        //if (reservedSize != 0 && fileSize < reservedSize + 0x10)
+        //    ThrowHelper.ThrowInvalidDataException("File is too small.");
+        Debug.Assert(reservedSize == 0 || fileSize >= reservedSize + 0x10);
 
         // Check the program section.
-        if (programCompressedSize != 0 && fileSize < reservedSize + programCompressedSize + 0x10)
-            ThrowHelper.ThrowInvalidDataException("File is too small.");
+        //if (programCompressedSize != 0 && fileSize < reservedSize + programCompressedSize + 0x10)
+        //    ThrowHelper.ThrowInvalidDataException("File is too small.");
+        Debug.Assert(programCompressedSize == 0 || fileSize >= reservedSize + programCompressedSize + 0x10);
     }
 
     /// <summary>

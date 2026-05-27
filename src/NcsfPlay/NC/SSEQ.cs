@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using CommunityToolkit.Diagnostics;
 using CommunityToolkit.HighPerformance;
 
 namespace NCSFCommon.NC;
@@ -102,8 +102,9 @@ public class SSEQ(string? filename = null, string? originalFilename = null) :
             else
                 return;
         }
-        if (!Common.VerifyHeader(span[0x10..0x14], Common.DataBytes.Span))
-            ThrowHelper.ThrowInvalidDataException("SSEQ DATA structure invalid");
+        //if (!Common.VerifyHeader(span[0x10..0x14], Common.DataBytes.Span))
+        //    ThrowHelper.ThrowInvalidDataException("SSEQ DATA structure invalid");
+        Debug.Assert(Common.VerifyHeader(span[0x10..0x14], Common.DataBytes.Span));
         uint size = BinaryPrimitives.ReadUInt32LittleEndian(span[0x14..]);
         // 0x0C is subtracted from size as the size includes the DATA header, the size itself and the data offset.
         CollectionsMarshal.SetCount(this.data, (int)(size - 0x0C));

@@ -1,6 +1,5 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
-using CommunityToolkit.Diagnostics;
 using CommunityToolkit.HighPerformance;
 
 namespace NCSFCommon.NC;
@@ -86,7 +85,8 @@ public class INFOEntryBANK : INFOEntry
     /// <exception cref="ArgumentOutOfRangeException">If <paramref name="i" /> is not between 0 and 3 inclusive.</exception>
     public void ReplaceWaveArchive(int i, ushort newWaveArchive)
     {
-        Guard.IsBetweenOrEqualTo(i, 0, 3);
+        //Guard.IsBetweenOrEqualTo(i, 0, 3);
+        Debug.Assert(i >= 0 && i <= 3);
 
         this.waveArchives[i] = newWaveArchive;
     }

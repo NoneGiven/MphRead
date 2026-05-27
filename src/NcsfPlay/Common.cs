@@ -1,9 +1,9 @@
+using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using CommunityToolkit.Diagnostics;
 using CommunityToolkit.HighPerformance;
-using DotNext;
 
 namespace NCSFCommon;
 
@@ -50,7 +50,7 @@ public static class Common
     /// <typeparam name="T">The enum type to convert from.</typeparam>
     /// <param name="enum">The enum to convert from.</param>
     /// <returns>The enum as a <see langword="byte" />.</returns>
-    public static byte ToByte<T>(this T @enum) where T : struct, Enum => EnumConverter.FromEnum<T, byte>(@enum);
+    public static byte ToByte<T>(this T @enum) where T : struct, Enum => Unsafe.BitCast<T, byte>(@enum);
 
     /// <summary>
     /// Replacement for removed ToEnum method from DotNext's EnumConverter, converts a <see langword="byte" /> byte to an enum.
@@ -58,7 +58,7 @@ public static class Common
     /// <typeparam name="T">The enum type to convert to.</typeparam>
     /// <param name="num">The <see langword="byte" /> to convert to an enum.</param>
     /// <returns>The <see langword="byte" /> as an enum.</returns>
-    public static T ToEnum<T>(this byte num) where T : struct, Enum => EnumConverter.ToEnum<T, byte>(num);
+    public static T ToEnum<T>(this byte num) where T : struct, Enum => Unsafe.BitCast<byte, T>(num);
 
     /// <summary>
     /// "DATA" as bytes.
@@ -196,9 +196,10 @@ public static class Common
         foreach (var info in includesAndExcludes)
         {
             string[] parts = info.Filename.Split('/');
-            if (parts.Length > 2)
-                ThrowHelper.ThrowArgumentException("Must have either no slash or only a single slash.");
-            else if (parts.Length == 2)
+            //if (parts.Length > 2)
+            //    ThrowHelper.ThrowArgumentException("Must have either no slash or only a single slash.");
+            Debug.Assert(parts.Length <= 2);
+            if (parts.Length == 2)
             {
                 if (Common.WildcardStringToRegex(parts[0]).IsMatch(sdatNumber) && Common.WildcardStringToRegex(parts[1]).IsMatch(filename))
                     keep = info.Keep;
@@ -225,8 +226,9 @@ public static class Common
     public static int StringToMS(ReadOnlySpan<char> time)
     {
         int colons = System.MemoryExtensions.Count(time, ':');
-        if (colons > 2)
-            return ThrowHelper.ThrowFormatException<int>("Time cannot have more than 2 colons.");
+        //if (colons > 2)
+        //    return ThrowHelper.ThrowFormatException<int>("Time cannot have more than 2 colons.");
+        Debug.Assert(colons <= 2);
         Span<Range> ranges = stackalloc Range[colons + 1];
         _ = time.Split(ranges, ':');
         return colons switch

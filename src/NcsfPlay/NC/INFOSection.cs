@@ -1,8 +1,6 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
-using CommunityToolkit.Diagnostics;
 using CommunityToolkit.HighPerformance;
-using DotNext;
 
 namespace NCSFCommon.NC;
 
@@ -72,8 +70,9 @@ public class INFOSection
     /// <exception cref="InvalidDataException">If the header is incorrect.</exception>
     public void Read(ReadOnlySpan<byte> span)
     {
-        if (!Common.VerifyHeader(span[..0x04], INFOSection.Header.Span))
-            ThrowHelper.ThrowInvalidDataException("SDAT INFO Section invalid");
+        //if (!Common.VerifyHeader(span[..0x04], INFOSection.Header.Span))
+        //    ThrowHelper.ThrowInvalidDataException("SDAT INFO Section invalid");
+        Debug.Assert(Common.VerifyHeader(span[..0x04], INFOSection.Header.Span));
         // Skipping size as we are just calculating that on the fly.
         // Record offsets start at byte 8 of the INFO section.
         span[0x08..0x28].Cast<byte, uint>().CopyTo(this.recordOffsets);
@@ -169,8 +168,9 @@ public class INFOSection
     /// <exception cref="InvalidOperationException">If both INFO sections are <see langword="null" />.</exception>
     public static INFOSection operator +(INFOSection? infoSection1, INFOSection? infoSection2)
     {
-        if (infoSection1 is null && infoSection2 is null)
-            ThrowHelper.ThrowInvalidOperationException("At least one of the INFO sections to add together must be non-null.");
+        //if (infoSection1 is null && infoSection2 is null)
+        //    ThrowHelper.ThrowInvalidOperationException("At least one of the INFO sections to add together must be non-null.");
+        Debug.Assert(infoSection1 != null || infoSection2 != null);
 
         infoSection1 ??= new();
         infoSection2 ??= new();

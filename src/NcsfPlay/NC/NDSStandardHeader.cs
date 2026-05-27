@@ -1,5 +1,5 @@
 using System.Buffers.Binary;
-using CommunityToolkit.Diagnostics;
+using System.Diagnostics;
 
 namespace NCSFCommon.NC;
 
@@ -67,10 +67,13 @@ public abstract class NDSStandardHeader
         // Not reading file size because this gets calculated on-the-fly.
         // Not reading blocks in, mostly because for SDAT, it could be 3 or 4 and
         // we won't know which it SHOULD be until after we've read the header.
-        if (!Common.VerifyHeader(span[..0x04], this.expectedHeader.Value) ||
-            BinaryPrimitives.ReadUInt32LittleEndian(span[0x04..]) != this.Magic ||
-            BinaryPrimitives.ReadUInt16LittleEndian(span[0x0C..]) != this.HeaderSize)
-            ThrowHelper.ThrowInvalidDataException($"NDS Standard Header for {this.GetType().Name} invalid");
+        //if (!Common.VerifyHeader(span[..0x04], this.expectedHeader.Value) ||
+        //    BinaryPrimitives.ReadUInt32LittleEndian(span[0x04..]) != this.Magic ||
+        //    BinaryPrimitives.ReadUInt16LittleEndian(span[0x0C..]) != this.HeaderSize)
+        //    ThrowHelper.ThrowInvalidDataException($"NDS Standard Header for {this.GetType().Name} invalid");
+        Debug.Assert(Common.VerifyHeader(span[..0x04], this.expectedHeader.Value));
+        Debug.Assert(BinaryPrimitives.ReadUInt32LittleEndian(span[0x04..]) == this.Magic);
+        Debug.Assert(BinaryPrimitives.ReadUInt16LittleEndian(span[0x0C..]) == this.HeaderSize);
     }
 
     /// <summary>

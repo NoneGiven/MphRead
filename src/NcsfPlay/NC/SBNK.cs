@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using CommunityToolkit.Diagnostics;
 using CommunityToolkit.HighPerformance;
 
 namespace NCSFCommon.NC;
@@ -95,8 +95,9 @@ public class SBNK(string? filename = null) : NDSStandardHeader, IEquatable<SBNK>
             else
                 return;
         }
-        if (!Common.VerifyHeader(span[0x10..0x14], Common.DataBytes.Span))
-            ThrowHelper.ThrowInvalidDataException("SBNK DATA structure invalid");
+        //if (!Common.VerifyHeader(span[0x10..0x14], Common.DataBytes.Span))
+        //    ThrowHelper.ThrowInvalidDataException("SBNK DATA structure invalid");
+        Debug.Assert(Common.VerifyHeader(span[0x10..0x14], Common.DataBytes.Span));
         // Skipping size and the 8 32-bit integers marked as reserved.
         uint count = BinaryPrimitives.ReadUInt32LittleEndian(span[0x38..]);
         CollectionsMarshal.SetCount(this.entries, (int)count);

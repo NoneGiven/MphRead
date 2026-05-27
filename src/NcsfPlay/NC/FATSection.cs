@@ -1,7 +1,6 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using CommunityToolkit.Diagnostics;
 using CommunityToolkit.HighPerformance;
 
 namespace NCSFCommon.NC;
@@ -51,8 +50,9 @@ public class FATSection
     /// <exception cref="InvalidDataException">If the header is incorrect.</exception>
     public void Read(ReadOnlySpan<byte> span)
     {
-        if (!Common.VerifyHeader(span[..0x04], FATSection.Header.Span))
-            ThrowHelper.ThrowInvalidDataException("SDAT FAT Section invalid");
+        //if (!Common.VerifyHeader(span[..0x04], FATSection.Header.Span))
+        //    ThrowHelper.ThrowInvalidDataException("SDAT FAT Section invalid");
+        Debug.Assert(Common.VerifyHeader(span[..0x04], FATSection.Header.Span));
         // Skipping size as we are just calculating that on the fly.
         // Not storing count as the records list can be used for the count.
         uint count = BinaryPrimitives.ReadUInt32LittleEndian(span[0x08..]);
@@ -128,8 +128,9 @@ public class FATSection
     /// <exception cref="InvalidOperationException">If both FAT sections are <see langword="null" />.</exception>
     public static FATSection operator +(FATSection? fatSection1, FATSection? fatSection2)
     {
-        if (fatSection1 is null && fatSection2 is null)
-            ThrowHelper.ThrowInvalidOperationException("At least one of the FAT sections to add together must be non-null.");
+        //if (fatSection1 is null && fatSection2 is null)
+        //    ThrowHelper.ThrowInvalidOperationException("At least one of the FAT sections to add together must be non-null.");
+        Debug.Assert(fatSection1 != null || fatSection2 != null);
 
         fatSection1 ??= new();
         fatSection2 ??= new();

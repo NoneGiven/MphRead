@@ -2,11 +2,11 @@ using System.ComponentModel;
 
 namespace NCSFPlayer;
 
-[GenerateHelper(GenerateHelperOption.UseItselfWhenNoDescription)]
 public enum Interpolation
 {
     [Description("No Interpolation")]
     None,
+    [Description("Linear")]
     Linear,
     [Description("4-Point Lagrange")]
     FourPointLagrange,
@@ -16,6 +16,7 @@ public enum Interpolation
     Sinc,
     [Description("Sinc")]
     SimpleSinc,
+    [Description("Lanczos")]
     Lanczos
 }
 

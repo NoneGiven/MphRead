@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using CommunityToolkit.Diagnostics;
 using CommunityToolkit.HighPerformance;
 
 namespace NCSFCommon.NC;
@@ -183,8 +183,9 @@ public class SDAT : NDSStandardHeader
         this.FATSection.Read(span[(int)this.FATOffset..]);
 
         // Throw an exception if there were no SSEQ records.
-        if (this.INFOSection.SEQRecord.Entries.Length == 0)
-            ThrowHelper.ThrowInvalidDataException("No SSEQ records found in SDAT");
+        //if (this.INFOSection.SEQRecord.Entries.Length == 0)
+        //    ThrowHelper.ThrowInvalidDataException("No SSEQ records found in SDAT");
+        Debug.Assert(this.INFOSection.SEQRecord.Entries.Length > 0);
     }
 
     /// <summary>
@@ -302,15 +303,17 @@ public class SDAT : NDSStandardHeader
         bool hasSYMBSection = this.SYMBOffset != 0;
         var seqINFOEntries = this.INFOSection.SEQRecord.Entries;
 
-        Guard.IsBetweenOrEqualTo(sseqToLoad, 0, seqINFOEntries.Length);
+        //Guard.IsBetweenOrEqualTo(sseqToLoad, 0, seqINFOEntries.Length);
+        Debug.Assert(sseqToLoad >= 0 && sseqToLoad <= seqINFOEntries.Length);
 
         // Read SSEQ.
         this.sseqs.Clear();
         var seqSYMBEntries = hasSYMBSection ? this.SYMBSection!.SEQRecord.Entries : default;
         var fatRecords = this.FATSection.Records;
         var (SEQOffset, SEQEntry) = seqINFOEntries[(int)sseqToLoad];
-        if (SEQOffset == 0 || SEQEntry is null)
-            ThrowHelper.ThrowInvalidDataException("There is no valid SSEQ for the given SSEQ number.");
+        //if (SEQOffset == 0 || SEQEntry is null)
+        //    ThrowHelper.ThrowInvalidDataException("There is no valid SSEQ for the given SSEQ number.");
+        Debug.Assert(SEQOffset != 0 && SEQEntry != null);
         uint fileID = SEQEntry.FileID;
         string origName = $"SSEQ{fileID:X4}";
         string name = origName;
@@ -334,8 +337,9 @@ public class SDAT : NDSStandardHeader
         this.sbnks.Clear();
         ushort bankID = SEQEntry.Bank;
         var (BANKOffset, BANKEntry) = this.INFOSection.BANKRecord.Entries[bankID];
-        if (BANKOffset == 0 || BANKEntry is null)
-            ThrowHelper.ThrowInvalidDataException("The requested SSEQ is asking for an invalid SBNK.");
+        //if (BANKOffset == 0 || BANKEntry is null)
+        //    ThrowHelper.ThrowInvalidDataException("The requested SSEQ is asking for an invalid SBNK.");
+        Debug.Assert(BANKOffset != 0 && BANKEntry != null);
         fileID = BANKEntry.FileID;
         origName = hasSYMBSection ? this.SYMBSection!.BANKRecord.Entries[bankID].Name! : $"SBNK{fileID:X4}";
         BANKEntry.OriginalFilename = origName;
@@ -357,8 +361,9 @@ public class SDAT : NDSStandardHeader
             if (waveArcID != 0xFFFF)
             {
                 var (WAVEARCEOffset, WAVEARCEntry) = this.INFOSection.WAVEARCRecord.Entries[waveArcID];
-                if (WAVEARCEOffset == 0 || WAVEARCEntry is null)
-                    ThrowHelper.ThrowInvalidDataException("The requested SBNK is asking for an invalid SWAR.");
+                //if (WAVEARCEOffset == 0 || WAVEARCEntry is null)
+                //    ThrowHelper.ThrowInvalidDataException("The requested SBNK is asking for an invalid SWAR.");
+                Debug.Assert(WAVEARCEOffset != 0 && WAVEARCEntry != null);
                 fileID = WAVEARCEntry.FileID;
                 origName = hasSYMBSection ? this.SYMBSection!.WAVEARCRecord.Entries[waveArcID].Name! : $"SWAR{fileID:X4}";
                 WAVEARCEntry.OriginalFilename = origName;

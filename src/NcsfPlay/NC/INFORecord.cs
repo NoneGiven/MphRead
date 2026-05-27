@@ -1,7 +1,6 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using CommunityToolkit.Diagnostics;
 using CommunityToolkit.HighPerformance;
 
 namespace NCSFCommon.NC;
@@ -161,7 +160,8 @@ public class INFORecord<T> where T : INFOEntry, new()
     /// <exception cref="ArgumentOutOfRangeException">If the given index is out of range.</exception>
     public void SetEntry(uint i, (uint Offset, T? Entry) entry)
     {
-        Guard.IsInRange(i, 0, this.entries.Count);
+        //Guard.IsInRange(i, 0, this.entries.Count);
+        Debug.Assert(i >= 0 && i <= this.entries.Count);
 
         this.entries[(int)i] = entry;
     }

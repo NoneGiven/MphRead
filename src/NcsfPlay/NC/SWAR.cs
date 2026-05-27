@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Numerics;
-using CommunityToolkit.Diagnostics;
 using CommunityToolkit.HighPerformance;
 
 namespace NCSFCommon.NC;
@@ -96,8 +96,9 @@ public class SWAR : NDSStandardHeader, IEquatable<SWAR>, IEqualityOperators<SWAR
             else
                 return;
         }
-        if (!Common.VerifyHeader(span[0x10..0x14], Common.DataBytes.Span))
-            ThrowHelper.ThrowInvalidDataException("SWAR DATA structure invalid");
+        //if (!Common.VerifyHeader(span[0x10..0x14], Common.DataBytes.Span))
+        //    ThrowHelper.ThrowInvalidDataException("SWAR DATA structure invalid");
+        Debug.Assert(Common.VerifyHeader(span[0x10..0x14], Common.DataBytes.Span));
         // Skipping size and the 8 32-bit integers marked as reserved.
         // Count will then be at offset 0x38 of the SWAR.
         uint count = BinaryPrimitives.ReadUInt32LittleEndian(span[0x38..]);
