@@ -2,15 +2,23 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using CommunityToolkit.HighPerformance.Buffers;
+using NCSF123;
 using NCSFCommon;
 using NCSFCommon.NC;
 using NCSFCommon.ReplayGain;
+using NCSFPlayer;
+using OpenTK.Audio.OpenAL;
 
 namespace MphRead.Testing
 {
     public class TestNcsf
     {
-        public static void Test()
+        public static void TestPlay()
+        {
+            NcsfPlay.Player.Play();
+        }
+
+        public static void TestConvert()
         {
             ReadOnlySpan<byte> sdatBytes = File.ReadAllBytes(@"C:\Users\auser\Home\MPH\Sound\copy.sdat");
 
