@@ -644,7 +644,7 @@ namespace MphRead.Formats
             Array.Clear(_influenceBuffer);
             AudioFrame? prevAudioFrame = null;
             _audioFrameTotal = 0;
-            using Stream file = writeFiles && AudioStreamCount >= 1 ? File.OpenWrite(Path.Combine(folder, "audio.wav")) : Stream.Null;
+            using Stream file = writeFiles && AudioStreamCount >= 1 ? File.OpenWrite(Paths.Combine(folder, "audio.wav")) : Stream.Null;
             using BinaryWriter writer = new BinaryWriter(file);
             for (int i = 0; i < 11; i++)
             {
@@ -738,7 +738,7 @@ namespace MphRead.Formats
                         }
                     }
                 });
-                image.SaveAsPng(Path.Combine(folder, $"{f.ToString().PadLeft(4, '0')}.png"));
+                image.SaveAsPng(Paths.Combine(folder, $"{f.ToString().PadLeft(4, '0')}.png"));
             }
 
             if (writeFiles && !UseStaticBuffers)
