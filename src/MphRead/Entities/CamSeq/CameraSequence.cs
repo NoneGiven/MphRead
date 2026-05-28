@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -558,8 +559,25 @@ namespace MphRead.Formats
             return null;
         }
 
-        public static IReadOnlyList<int> SfxData { get; } = new int[199]
-        {
+        public static ImmutableArray<int> MusicData { get; } =
+        [
+            28, 27, 29, 30, 0, 0, 0, 0, 0, 0, 0, 1 | 0x4000, 0, 0, 0, 30 | 0x4000, 0, 0, 3 | 0x4000,
+            0, 5 | 0x4000, 0, 38 | 0x8000, 0, 0, 0, 0, 0, 16 | 0x400 | 0x4000, 14 | 0x400 | 0x4000,
+            0, 49 | 0x4000, 48 | 0x4000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 53 | 0x8000,
+            9 | 0x4000, 37 | 0x4000, 13 | 0x4000, 0, 0, 41 | 0x800 | 0x4000, 0, 19 | 0x1000 | 0x4000,
+            51 | 0x1000 | 0x4000, 57 | 0x1000 | 0x4000, 44 | 0x2000 | 0x4000, 0, 10 | 0x4000,
+            5 | 0x4000, 0, 0, 0, 0, 0, 0, 0, 0, 16 | 0x4000, 60 | 0x4000, 50 | 0x1000 | 0x4000,
+            53 | 0x1000 | 0x4000, 50 | 0x1000 | 0x4000, 53 | 0x1000 | 0x4000, 0, 53 | 0x1000 | 0x4000,
+            0, 0, 0, 0, 0, 0, 52 | 0x1000 | 0x4000, 0, 0 | 0x1000 | 0x4000, 0, 0, 39 | 0x4000,
+            0 | 0x1000 | 0x4000, 0, 0, 0, 0, 0, 0, 0, 1 | 0x4000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 53 | 0x1000 | 0x4000,
+            0, 0, 0, 0, 0, 14 | 0x4000, 0, 0, 0, 0, 0, 0, 28 | 0x4000, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 59, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ];
+
+        public static ImmutableArray<int> SfxData { get; } =
+        [
             92 | 0x8000, 17 | 0x8000, 94 | 0x8000, 93 | 0x8000, 0, 0, 19, 0, 0, 19, 0, 0,
             19, 0, 19, 0, 19, 19, 0, 0, 0, 18 | 0x8000, 20 | 0x8000, 0, 0, 19, 0, 0, 0, 19,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70, 0, 19 | 0x2000, 0, 69, 66 | 0x4000, 0, 0,
@@ -570,7 +588,7 @@ namespace MphRead.Formats
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 0,
             0, 99 | 0x8000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0
-        };
+        ];
 
         public static IReadOnlyList<string> Filenames { get; } = new List<string>()
         {
@@ -582,7 +600,7 @@ namespace MphRead.Formats
             /*   5 */ "unit2_co_scan_intro.bin",
             /*   6 */ "unit2_co_scan_outro.bin",
             /*   7 */ "unit2_co_bit_intro.bin",
-            /*   8 */ "unit2_c4_teleporter_intro.bin",  // no file
+            /*   8 */ "unit2_c4_teleporter_intro.bin", // no file
             /*   9 */ "unit2_co_bit_outro.bin",
             /*  10 */ "unit2_co_helm_flyby.bin",
             /*  11 */ "unit2_rm1_artifact_intro.bin",

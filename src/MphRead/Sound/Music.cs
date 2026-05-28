@@ -13,7 +13,9 @@ namespace MphRead
 {
     public static class Music
     {
-        // sktodo: need seek/resume for suspended music
+        // sktodo: do we need seek/resume for suspended music?
+        // sktodo: need counters like the game's for track and tempo changes over time (depending on how/when the tracks and tempo are changed, anyway)
+        // sktodo: need the ability to update track volume from 0-127, not just on/off
         private static MiniAudioEngine _audioEngine;
         private static AudioPlaybackDevice _playbackDevice;
         private static RawDataProvider? _provider = null;
