@@ -213,7 +213,7 @@ namespace MphRead
         YELLOW = 5,
         RESULTS = 6,
         TIMEOUT = 7,
-        WIN = 8,
+        WIN = 8, // empty
         GARLIC = 9,
         MP2_X = 10,
         PARASITE_X = 11,
@@ -243,7 +243,7 @@ namespace MphRead
         GET_WEAPON = 35,
         GET_OCTOLITH = 36,
         NEW_GAME = 37,
-        BEAT_HUNTER1 = 38,
+        BEAT_HUNTER1 = 38, // empty
         INTRO_GUARDIAN = 39,
         GUARDIAN = 40,
         BEAT_CYLBOSS1 = 41,

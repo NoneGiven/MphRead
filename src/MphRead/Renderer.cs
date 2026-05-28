@@ -16,6 +16,7 @@ using MphRead.Formats;
 using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
 using MphRead.Hud;
+using MphRead.Sound;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -234,6 +235,9 @@ namespace MphRead
             Text.Strings.ClearCache();
             GameState.Reset();
             PlayerEntity.Construct(this);
+            // play empty seq to ensure initialization
+            Music.Play(SeqId.WIN);
+            Music.Stop();
         }
 
         // called before load

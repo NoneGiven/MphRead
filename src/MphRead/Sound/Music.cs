@@ -9,7 +9,7 @@ using SoundFlow.Enums;
 using SoundFlow.Providers;
 using SoundFlow.Structs;
 
-namespace MphRead.Sound
+namespace MphRead
 {
     public static class Music
     {
@@ -37,8 +37,15 @@ namespace MphRead.Sound
 
         public static void Play(SeqId seqId, ushort tracks = UInt16.MaxValue, float volume = 1)
         {
+            // todo?: non-looping seqs (jingles, credits) will apparently stay in playing state indefinitely when playForever is on
+            // --> should get overwritten with another seq before long
             Stop();
+            if (seqId == SeqId.None)
+            {
+                return;
+            }
             string path = Paths.Combine(Paths.FileSystem, "_seq", Metadata.SequenceFiles[(int)seqId]);
+            // todo: need to look at allocations (including recreating these objects, but especially the byte and float lists internal to NCSF)
             _stream = new NCSFPlayerStream(path, (uint)_sampleRate, Interpolation.None, skipSilenceOnStartSec: 5,
                 defaultLengthInMS: 115000, defaultFadeInMS: 5000, NCSF123.VolumeType.ReplayGainAlbum, PeakType.ReplayGainTrack,
                 playForever: true, volume, channelMutes: 0, (ushort)(tracks ^ UInt16.MaxValue), ignoreVolume: false);
@@ -123,7 +130,7 @@ namespace MphRead.Sound
                 Debug.Assert(_provider != null);
                 Debug.Assert(_stream != null);
                 _player.Stop();
-                //_playbackDevice.Stop();
+                _playbackDevice.Stop();
                 _playbackDevice.MasterMixer.RemoveComponent(_player);
                 _provider.Dispose();
                 _stream.Dispose();
