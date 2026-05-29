@@ -235,9 +235,7 @@ namespace MphRead
             Text.Strings.ClearCache();
             GameState.Reset();
             PlayerEntity.Construct(this);
-            // play empty seq to ensure initialization
-            Music.Play(SeqId.WIN);
-            Music.Stop();
+            Music.Init();
         }
 
         // called before load
@@ -298,6 +296,11 @@ namespace MphRead
                 {
                     player.AiData.InitializeAtLoad();
                 }
+            }
+            if (GameState.Mode == GameMode.Bounty || GameState.Mode == GameMode.BountyTeams
+                || GameState.Mode == GameMode.Nodes || GameState.Mode == GameMode.NodesTeams)
+            {
+                Music.PlayRoomMusic(_room.RoomId, track: 0);
             }
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
             _inputMode = _cameraMode == CameraMode.Player ? InputMode.All : InputMode.CameraOnly;
@@ -2701,6 +2704,7 @@ namespace MphRead
                 GameState.UpdateFrame(this);
             }
             Sound.Sfx.Update(_frameTime);
+            Music.UpdateMusic();
         }
 
         private void GetDrawItems()
