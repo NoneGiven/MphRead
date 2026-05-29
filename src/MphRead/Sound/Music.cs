@@ -18,6 +18,11 @@ namespace MphRead
 {
     public static class Music
     {
+        public static float UserVolume { get; set; } = 1;
+        public static float MusicVolume { get; set; } = 1;
+
+        public static float Volume => UserVolume * MusicVolume;
+
         private static IReadOnlyList<MusicTrack> _musicInfo = null!;
         private static IReadOnlyList<RoomMusic> _roomMusic = null!;
 
@@ -44,7 +49,7 @@ namespace MphRead
             // play empty seq to ensure initialization
             MusicPlayer.Load(SeqId.WIN);
             MusicPlayer.WaitForLoad();
-            MusicPlayer.Play();
+            MusicPlayer.Play(Volume);
             MusicPlayer.Stop();
         }
 
@@ -142,7 +147,7 @@ namespace MphRead
                 _isReady = true;
                 if (_playing)
                 {
-                    MusicPlayer.Play();
+                    MusicPlayer.Play(Volume);
                     // skhere : set tempo
                     // the game applies the likely frontend pause flag to the player, as well as lid mute/unmute
                     // skhere: update negated tracks
@@ -365,7 +370,7 @@ namespace MphRead
                 if (_isReady)
                 {
                     MusicPlayer.WaitForLoad(); // sktodo: need to ensure this works okay waiting-wise (cam seq direct seq ID play only)
-                    MusicPlayer.Play();
+                    MusicPlayer.Play(Volume);
                     _negatedTracks = 0;
                 }
                 // skhere: set tempo
@@ -496,19 +501,15 @@ namespace MphRead
             }
         }
 
-        public static void Play()
+        public static void Play(float volume)
         {
+            Volume = volume;
             _player?.Play();
         }
 
         public static void Pause()
         {
             _player?.Pause();
-        }
-
-        public static void Resume()
-        {
-            _player?.Play();
         }
 
         public static PlaybackState State
