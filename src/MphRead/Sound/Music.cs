@@ -79,7 +79,7 @@ namespace MphRead
         public static void PlayRoomMusic(int roomId, int track)
         {
             track = Math.Clamp(track, 0, 2);
-            for (int i = 0;  i < _roomMusic.Count; i++)
+            for (int i = 0; i < _roomMusic.Count; i++)
             {
                 RoomMusic room = _roomMusic[i];
                 if (room.RoomId == roomId)
@@ -146,6 +146,16 @@ namespace MphRead
         }
 
         private static int _musicEncounterSuspension = 0;
+        public static int MusicEncounterSuspension => _musicEncounterSuspension;
+        public static MusicId MusicToResume { get; set; } = MusicId.None;
+
+        public static void UpdateMusicIdIfPaused(MusicId musicId)
+        {
+            if (IsPaused)
+            {
+                _currentMusicId = musicId;
+            }
+        }
 
         public static void PlaySeq(SeqId seqId, bool notReady = true)
         {

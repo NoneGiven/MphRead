@@ -608,6 +608,7 @@ namespace MphRead.Entities
                 _flagCarrySfxHandle = _soundSource.PlayFreeSfx(SfxId.FLAG_CARRIED);
             }
             // the game plays the unused WEAPON_ALARM alarm SFX here
+            MusicId musicId = MusicId.Invalid;
             for (int i = 0; i < _scene.MessageQueue.Count; i++)
             {
                 MessageInfo message = _scene.MessageQueue[i];
@@ -629,7 +630,23 @@ namespace MphRead.Entities
                 }
                 else if (message.Message == Message.UpdateMusic)
                 {
-                    // mustodo: update music
+                    musicId = CheckMusicUpdate(musicId, (int)message.Param1, (int)message.Param2);
+                }
+            }
+            if (musicId != MusicId.Invalid && PlayerEntity.Main.Health > 0
+                && (GameState.EscapeTimer == -1 || GameState.EscapeState != EscapeState.Escape))
+            {
+                if (Music.MusicEncounterSuspension != 0)
+                {
+                    Music.MusicToResume = musicId;
+                }
+                else if (Sfx.TimedSfxMute > 0)
+                {
+                    Music.UpdateMusicIdIfPaused(musicId);
+                }
+                else
+                {
+                    Music.PlayMusic(musicId);
                 }
             }
             // sfxtodo: escape sequence and pause stuff
@@ -693,6 +710,45 @@ namespace MphRead.Entities
                 }
                 _scrollSfxTimer -= _scene.FrameTime;
             }
+        }
+
+        private MusicId CheckMusicUpdate(MusicId currentMusicId, int param1, int param2)
+        {
+            MusicId newMusicId = (MusicId)param1;
+            if (param2 == 0)
+            {
+                return newMusicId;
+            }
+            int idValue = (param2 & 0x7F); // bottom 6 bits
+            bool negation = (param2 & 0x80) >> 7 != 0; // bit 7
+            if (idValue > 70)
+            {
+                // artifact ID (with model ID baked in)
+                bool hasArtifact = GameState.StorySave.CheckFoundArtifact(idValue - 71, modelId: 0);
+                if (hasArtifact || negation)
+                {
+                    return newMusicId;
+                }
+            }
+            else if ((param2 & 0x100) >> 8 != 0) // bit 8
+            {
+                // entity ID
+                bool hasRoomState = GameState.StorySave.GetRoomState(_scene.RoomId, idValue) != 0;
+                if (hasRoomState || negation)
+                {
+                    return newMusicId;
+                }
+            }
+            else
+            {
+                // enemy type
+                bool hasNoEncounterState = (GameState.StorySave.EnemyEncounters[_scene.AreaId][idValue >> 3] & (byte)(1 << (idValue & 7))) == 0;
+                if (hasNoEncounterState || negation)
+                {
+                    return newMusicId;
+                }
+            }
+            return currentMusicId;
         }
     }
 }
