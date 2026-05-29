@@ -2012,7 +2012,7 @@ namespace MphRead.Entities
                             }
                         }
                         Music.UpdateEncounterMusic(-2);
-                        Music.Stop(fadeOutFrames: 150);
+                        Music.Stop(fadeTime: 150 / 30f);
                     }
                     else if (attacker?.IsMainPlayer == true)
                     {

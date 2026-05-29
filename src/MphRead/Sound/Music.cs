@@ -46,6 +46,12 @@ namespace MphRead
             _activeTracks = 0;
             _mutedTracks = 0;
             _negatedTracks = 0;
+            MusicVolume = 1;
+            _volumeFadeStart = 1;
+            _volumeFadeTarget = 1;
+            _volumeFadeTimeMs = 0;
+            _volumeFadeTimer.Reset();
+            _stopAfterFade = false;
             // play empty seq to ensure initialization
             MusicPlayer.Load(SeqId.WIN);
             MusicPlayer.WaitForLoad();
@@ -137,11 +143,13 @@ namespace MphRead
                 return;
             }
             _paused = false;
+            _stopAfterFade = false;
             PlaySeq(info.SeqId, _pendingTracks, queue: true, notReady: true);
         }
 
         public static void UpdateMusic()
         {
+            UpdateVolume();
             if (!_isReady && !MusicPlayer.Loading)
             {
                 _isReady = true;
@@ -315,7 +323,7 @@ namespace MphRead
                         if (MusicToResume == MusicId.None)
                         {
                             // the game doesn't do this, but we don't want eternal encounter music after loading directly into a room
-                            Stop(fadeOutFrames: 30);
+                            Stop(fadeTime: 1);
                         }
                         else
                         {
@@ -352,6 +360,7 @@ namespace MphRead
         public static void PlaySeq(SeqId seqId, ushort tracks, bool queue = false, bool notReady = false,
             ushort fadeOutFrames = 0, ushort fadeInFrames = 0)
         {
+            _stopAfterFade = false;
             // the game may update the seq ID first using download play values
             if (!queue)
             {
@@ -359,7 +368,6 @@ namespace MphRead
                 Stop();
                 _isReady = !notReady;
                 _activeTracks = tracks;
-                // todo?: stop music if needed (finished playing)
                 // the game checks whether the music is loaded and/or available before proceeding
                 _currentMusicSeq = seqId;
                 _mutedTracks = 0;
@@ -369,7 +377,7 @@ namespace MphRead
                 MusicPlayer.Load(seqId, tracks);
                 if (_isReady)
                 {
-                    MusicPlayer.WaitForLoad(); // sktodo: need to ensure this works okay waiting-wise (cam seq direct seq ID play only)
+                    MusicPlayer.WaitForLoad();
                     MusicPlayer.Play(Volume);
                     _negatedTracks = 0;
                 }
@@ -396,7 +404,7 @@ namespace MphRead
                     }
                     // the game sets the fade out frames in an unused music state field
                     // the game checks a pause flag we don't have before calling stop
-                    Stop(fadeOutFrames);
+                    Stop(fadeOutFrames / 30f);
                     _musicQueued = true;
                 }
                 _nextTrackNotReady = notReady;
@@ -420,14 +428,63 @@ namespace MphRead
         private static ushort _mutedTracks = 0;
         private static ushort _negatedTracks = 0;
 
-        // sktodo: implement fade out with additional volume factor
-        public static void Stop(int fadeOutFrames = 0)
+        public static void Stop(float fadeTime = 0)
         {
             _playing = false;
             _musicQueued = false;
             _nextMusicSeq = SeqId.None;
             _isReady = true;
-            MusicPlayer.Stop();
+            if (fadeTime <= 0)
+            {
+                MusicPlayer.Stop();
+                _stopAfterFade = false;
+            }
+            else
+            {
+                FadeVolume(0, fadeTime, stopAfterFade: true);
+            }
+        }
+
+        private static float _volumeFadeStart = 1;
+        private static float _volumeFadeTarget = 1;
+        private static float _volumeFadeTimeMs = 0;
+        private static readonly Stopwatch _volumeFadeTimer = new Stopwatch();
+        // kind of a hack since there's no connection between fading out and stopping
+        private static bool _stopAfterFade = false;
+
+        public static void FadeVolume(float volume, float time, bool stopAfterFade = false)
+        {
+            _volumeFadeStart = MusicVolume;
+            _volumeFadeTarget = volume;
+            _volumeFadeTimeMs = time * 1000;
+            if (_volumeFadeTimeMs <= 0)
+            {
+                _volumeFadeTimeMs = 1;
+            }
+            _stopAfterFade = stopAfterFade;
+            _volumeFadeTimer.Restart();
+        }
+
+        private static void UpdateVolume()
+        {
+            if (MusicVolume != _volumeFadeTarget)
+            {
+                float pct = _volumeFadeTimer.ElapsedMilliseconds / _volumeFadeTimeMs;
+                if (pct >= 1)
+                {
+                    MusicVolume = _volumeFadeTarget;
+                    _volumeFadeTimer.Stop();
+                    if (_stopAfterFade)
+                    {
+                        MusicPlayer.Stop();
+                    }
+                }
+                else
+                {
+                    MusicVolume = _volumeFadeStart + (_volumeFadeTarget - _volumeFadeStart) * pct;
+                }
+                MusicPlayer.Volume = Volume;
+            }
         }
     }
 
@@ -460,8 +517,6 @@ namespace MphRead
 
         public static void Load(SeqId seqId, ushort tracks = UInt16.MaxValue, float volume = 1)
         {
-            // todo?: non-looping seqs (jingles, credits) will apparently stay in playing state indefinitely when playForever is on
-            // --> should get overwritten with another seq before long
             Loading = true;
             Stop();
             if (seqId == SeqId.None)
@@ -476,7 +531,7 @@ namespace MphRead
                 {
                     Remove();
                     string path = Paths.Combine(Paths.FileSystem, "_seq", Metadata.SequenceFiles[(int)seqId]);
-                    // todo: need to look at allocations (including recreating these objects, but especially the byte and float lists internal to NCSF)
+                    // todo: should look at allocations (including recreating these objects, but especially the byte and float lists internal to NCSF)
                     _stream = new NCSFPlayerStream(path, (uint)_sampleRate, Interpolation.None, skipSilenceOnStartSec: 5,
                         defaultLengthInMS: 115000, defaultFadeInMS: 5000, NCSF123.VolumeType.ReplayGainAlbum, PeakType.ReplayGainTrack,
                         playForever: true, volume, channelMutes: 0, (ushort)(tracks ^ UInt16.MaxValue), ignoreVolume: false);

@@ -646,7 +646,7 @@ namespace MphRead
             void Quit()
             {
                 scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, AfterFade.Exit);
-                Music.Stop(fadeOutFrames: 10);
+                Music.Stop(fadeTime: 10 / 30f);
                 Sfx.Instance.PlaySample((int)SfxId.QUIT_GAME, source: null, loop: false,
                     noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
             }
@@ -678,7 +678,7 @@ namespace MphRead
                         {
                             scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, AfterFade.EnterShip);
                         }
-                        Music.Stop(fadeOutFrames: 20);
+                        Music.Stop(fadeTime: 20 / 30f);
                         // todo: fade SFX
                         Sfx.Instance.PlaySample((int)SfxId.RETURN_TO_SHIP_YES, source: null, loop: false,
                             noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
