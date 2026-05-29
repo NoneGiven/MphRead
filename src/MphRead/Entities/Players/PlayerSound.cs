@@ -499,7 +499,7 @@ namespace MphRead.Entities
             UpdateCloakSfx(index: 0, play: false);
             UpdateScanSfx(index: -1, enable: false);
             // the game doesn't stop music if a likely download play check passes
-            // mustodo: the game stops music here, but I think we have other cases covered, and need to not stop for teleporters
+            // todo: the game stops music here, but I think we have other cases covered, and need to not stop for teleporters
             _soundSource.StopFreeSfxScripts();
             _soundSource.StopFreeSfx(SfxId.FAST_SCROLL_UP_LOOP);
             Sfx.Instance.StopEnvironmentSfx();
