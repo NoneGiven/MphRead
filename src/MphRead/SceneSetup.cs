@@ -67,7 +67,7 @@ namespace MphRead
             var room = new RoomEntity(scene);
             (CollisionInstance collision, IReadOnlyList<EntityBase> entities) = SetUpRoom(mode, playerCount,
                 bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene, isRoomTransition: false);
-            Music.TryPlayRoomMusic(room.RoomId, GameState.SinglePlayer && (((int)bossFlags >> (2 * scene.AreaId)) & 3) != 0 ? 1 : 0);
+            Music.TryPlayRoomMusic(room.RoomId, GameState.SinglePlayer && (((int)GameState.StorySave.BossFlags >> (2 * scene.AreaId)) & 3) != 0 ? 1 : 0);
             if (GameState.SinglePlayer)
             {
                 UpdateAreaHunters();
