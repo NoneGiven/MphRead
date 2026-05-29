@@ -82,6 +82,7 @@ namespace MphRead
             // - after enough time has elapsed, request the next frame's color buffer from the decoder
             // - decoder can decode up to 4 frames, then needs to wait until its oldest frame is requested by the renderer,
             //   then it can drop that frame and decode another one
+            Music.Stop();
             GameState.PauseDialog();
             Sfx.SfxMute = true;
             Sfx.LongSfxMute++;
@@ -282,6 +283,7 @@ namespace MphRead
                     // hold on white to give the landing cam seq a chance to fade in, overwriting this, if any.
                     // otherwise this fade will fade out to gameplay (no cam seq for an existing save).
                     SetFade(FadeType.FadeInWhite, 5 / 30f, overwrite: true, delay: 5 / 30f);
+                    Music.PlayPausedMusic();
                 }
                 Sfx.SfxMute = false;
                 Sfx.LongSfxMute--;

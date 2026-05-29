@@ -317,6 +317,7 @@ namespace MphRead
                 };
                 if (movieId != Movie.None)
                 {
+                    Music.Pause(); // set the room music to be resumed (unless a cam seq plays to overwrite it)
                     StartMovie(movieId, FadeType.FadeOutInBlack, 0, FadeType.FadeOutWhite, 5 / 30f, afterMovieAction: AfterMovie.StartGame);
                 }
             }
