@@ -8,6 +8,8 @@ namespace MphRead.Entities
     public class TriggerVolumeEntity : EntityBase
     {
         private readonly TriggerVolumeEntityData _data;
+        private readonly int _parentMsgParam2;
+        private readonly int _childMsgParam2;
         private EntityBase? _parent = null;
         private EntityBase? _child = null;
 
@@ -44,7 +46,8 @@ namespace MphRead.Entities
                 Active = state != 0;
             }
             _delayTimer = data.RepeatDelay * 2; // todo: FPS stuff
-            // todo: music event stuff
+            _parentMsgParam2 = GetParam2(data.ParentMessage, data.ParentMsgParam2);
+            _childMsgParam2 = GetParam2(data.ChildMessage, data.ChildMsgParam2);
         }
 
         public override void Initialize()
@@ -98,7 +101,7 @@ namespace MphRead.Entities
                 {
                     Deactivate();
                 }
-                _scene.SendMessage(_data.ParentMessage, this, _parent, _data.ParentMsgParam1, _data.ParentMsgParam2);
+                _scene.SendMessage(_data.ParentMessage, this, _parent, _data.ParentMsgParam1, _parentMsgParam2);
             }
             if (_data.ChildMessage != Message.None)
             {
@@ -106,7 +109,7 @@ namespace MphRead.Entities
                 {
                     Deactivate();
                 }
-                _scene.SendMessage(_data.ChildMessage, this, _child, _data.ChildMsgParam1, _data.ChildMsgParam2);
+                _scene.SendMessage(_data.ChildMessage, this, _child, _data.ChildMsgParam1, _childMsgParam2);
             }
             _delayTimer = _data.RepeatDelay * 2; // todo: FPS stuff
             if (_data.Subtype == TriggerType.StateBits)
@@ -114,6 +117,19 @@ namespace MphRead.Entities
                 Active = false;
             }
             return true;
+        }
+
+        private int GetParam2(Message message, int param2)
+        {
+            if (message != Message.UpdateMusic)
+            {
+                return param2;
+            }
+            // this appears to have been done because of some kind of base-10/16 confusion in the entity file field
+            // for example, a value of 148 being used for ID = 48 w/ negation flag, which really needs to be 176 (0x80 | 48)
+            // unclear if this was a fix for an error or done intentionally for convenience
+            uint param = (uint)param2;
+            return (int)((param % 100) & 0x7F | (((param / 100 % 10) & 1) << 7) & ~0x100 | (((param / 0x3E8 % 10) & 1) << 8));
         }
 
         public override bool Process()

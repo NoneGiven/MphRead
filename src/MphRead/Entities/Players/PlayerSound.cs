@@ -719,7 +719,7 @@ namespace MphRead.Entities
             {
                 return newMusicId;
             }
-            int idValue = (param2 & 0x7F); // bottom 6 bits
+            int idValue = (param2 & 0x7F); // bits 0-6
             bool negation = (param2 & 0x80) >> 7 != 0; // bit 7
             if (idValue > 70)
             {
