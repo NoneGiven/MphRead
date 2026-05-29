@@ -22,9 +22,24 @@ namespace MphRead
 
         public static void Init()
         {
-            // skodo: reset variables
             _musicInfo = SoundRead.ReadInterMusicInfo();
             _roomMusic = SoundRead.ReadAssignMusic();
+            _pendingTracks = 0;
+            _currentMusicId = MusicId.None;
+            _musicEncounterSuspension = 0;
+            MusicToResume = MusicId.None;
+            _playing = false;
+            _paused = false;
+            _musicQueued = false;
+            _currentMusicSeq = SeqId.None;
+            _nextMusicSeq = SeqId.None;
+            _isReady = true;
+            _nextTrackNotReady = false;
+            _nextFadeInFrames = 0;
+            _nextTracks = 0;
+            _activeTracks = 0;
+            _mutedTracks = 0;
+            _negatedTracks = 0;
             // play empty seq to ensure initialization
             MusicPlayer.Load(SeqId.WIN);
             MusicPlayer.WaitForLoad();
