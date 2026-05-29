@@ -926,7 +926,7 @@ namespace MphRead.Entities
             AiData.HealthThreshold = data.HunterHealthThreshold;
             if (Hunter == Hunter.Guardian)
             {
-                // mustodo: start music
+                Music.PlayEncounterMusic(Hunter.Guardian);
             }
             // todo: update story save for multiplayer unlock
             if (data.HunterWeapon != 255)
@@ -1882,13 +1882,13 @@ namespace MphRead.Entities
                         else
                         {
                             _sfxStopTimer = 10 / 30f;
-                            // mustodo?: update music or something?
+                            // todo: rumble
                             _soundSource.PlayFreeSfx(SfxId.SAMUS_DEATH);
                         }
                     }
                     else
                     {
-                        // mustodo: update hunter music
+                        Music.UpdateEncounterMusic((int)Hunter);
                         PlayHunterSfx(HunterSfx.Death);
                     }
                     StopBeamChargeSfx(CurrentWeapon);
@@ -2010,7 +2010,8 @@ namespace MphRead.Entities
                                 _lostOctolithDrawPos = Position.AddY(0.6f);
                                 _lostOctolithSpeed = 0.2f * 30; // frame-independent drag
                             }
-                            // mustodo: update music
+                            Music.UpdateEncounterMusic(-2);
+                            Music.Stop(fadeOutFrames: 150);
                         }
                     }
                     else if (attacker?.IsMainPlayer == true)
@@ -2483,7 +2484,7 @@ namespace MphRead.Entities
             }
             if (IsMainPlayer)
             {
-                // todo: do something (HUD or camera-related?)
+                // todo: rumble
             }
         }
 

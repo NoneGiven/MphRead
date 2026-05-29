@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -177,6 +178,111 @@ namespace MphRead
             // skhere
         }
 
+        private static readonly ImmutableArray<int> _hunterMusicTracks = [16, 4, 1, 0, 2, 5, 3, 16];
+
+        public static void PlayEncounterMusic(Hunter hunter)
+        {
+            if (_musicEncounterSuspension == 0)
+            {
+                MusicToResume = _currentMusicId;
+                // only played if no non-Guardian hunters are in the random encounter, otherwise some suspension bits are already set
+                if (hunter == Hunter.Guardian)
+                {
+                    PlayMusic(MusicId.SEQ_GUARDIAN_M18);
+                }
+            }
+            int bitIndex;
+            if (hunter == Hunter.Guardian)
+            {   
+                int i;
+                for (i = 7; i <= 9; i++)
+                {
+                    if ((_musicEncounterSuspension & (1 << i)) == 0)
+                    {
+                        break;
+                    }
+                }
+                bitIndex = i; // always 7/8/9, can't reach 10+ in practice since enemy hunter/Guardian max is 3
+            }
+            else
+            {
+                bitIndex = (int)hunter;
+                if (_currentMusicId != MusicId.SEQ_GUMBO_M3)
+                {
+                    PlayMusic(MusicId.SEQ_GUMBO_M3);
+                    // track 4 is on by default in the mask, but it's only for Kanden, so it's disabled here
+                    PlayMusic(MusicId.SEQ_GUMBO_M3, tracks: 1 << 4, toggleOffTracks: true);
+                }
+                // enable the track specific to this hunter
+                PlayMusic(MusicId.SEQ_GUMBO_M3, tracks: (ushort)(1 << _hunterMusicTracks[bitIndex]), toggleOnTracks: true);
+                if (hunter == Hunter.Spire)
+                {
+                    // disable an addition track that Spire doesn't use
+                    PlayMusic(MusicId.SEQ_GUMBO_M3, tracks: 1 << 9, toggleOffTracks: true);
+                }
+            }
+            _musicEncounterSuspension |= (1 << bitIndex);
+        }
+
+        public static void UpdateEncounterMusic(int clearId)
+        {
+            if (_musicEncounterSuspension == 0)
+            {
+                return;
+            }
+            if (clearId < 0)
+            {
+                _musicEncounterSuspension = 0;
+                if (clearId != -2)
+                {
+                    PlayMusic(MusicToResume);
+                }
+            }
+            else
+            {
+                int bitIndex = clearId;
+                Hunter hunter = (Hunter)clearId;
+                if (hunter == Hunter.Guardian)
+                {
+                    int i;
+                    for (i = 9; i >= 7; i--)
+                    {
+                        if ((_musicEncounterSuspension & (1 << i)) != 0)
+                        {
+                            break;
+                        }
+                    }
+                    bitIndex = i; // always 9/8/7, can't reach 6- in practice since enemy hunter/Guardian max is 3
+                }
+                if ((_musicEncounterSuspension & (1 << bitIndex)) != 0)
+                {
+                    _musicEncounterSuspension &= ~(1 << bitIndex);
+                    if (_musicEncounterSuspension == 0)
+                    {
+                        PlayMusic(MusicToResume);
+                    }
+                    else if (hunter != Hunter.Guardian)
+                    {
+                        // when clearing a Guardian bit, no update is needed
+                        if ((_musicEncounterSuspension & 0x7F) != 0)
+                        {
+                            // hunter defeated, still other hunters remaining
+                            PlayMusic(MusicId.SEQ_GUMBO_M3, tracks: (ushort)(1 << _hunterMusicTracks[bitIndex]), toggleOffTracks: true);
+                            if (hunter == Hunter.Spire)
+                            {
+                                PlayMusic(MusicId.SEQ_GUMBO_M3, tracks: 1 << 9, toggleOnTracks: true);
+                            }
+                        }
+                        else
+                        {
+                            // hunter defeated, only Guardians remaining
+                            PlayMusic(MusicId.SEQ_GUARDIAN_M18);
+                        }
+                    }
+                }
+            }
+        }
+
         public static void PlaySeq(SeqId seqId, bool notReady = true)
         {
             PlaySeq(seqId, UInt16.MaxValue, notReady: notReady);
@@ -218,7 +324,8 @@ namespace MphRead
                     {
                         if (_isReady)
                         {
-                            // skhere: set up track faders
+                            // skhere: set up track faders instead of setting immediately
+                            MusicPlayer.Tracks = tracks;
                         }
                         else
                         {

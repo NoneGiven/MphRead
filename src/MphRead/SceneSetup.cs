@@ -275,11 +275,11 @@ namespace MphRead
                                     }
                                 }
                             }
-                            if (j > 0 && j < 7)
-                            {
-                                // mustodo: play hunter music
-                            }
                             hunter = (Hunter)j;
+                            if (hunter != Hunter.Samus && hunter != Hunter.Guardian)
+                            {
+                                Music.PlayEncounterMusic(hunter);
+                            }
                         }
                         else
                         {

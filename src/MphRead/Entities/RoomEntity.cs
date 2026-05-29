@@ -446,7 +446,7 @@ namespace MphRead.Entities
         {
             Debug.Assert(GameState.TransitionRoomId != -1);
             GameState.TransitionState = TransitionState.Process;
-            // mustodo: update music
+            Music.UpdateEncounterMusic(-1);
             foreach (EntityBase entity in _scene.Entities)
             {
                 if (entity.Type == EntityType.Room || entity.Type == EntityType.Model
