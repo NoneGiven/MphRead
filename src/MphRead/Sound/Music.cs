@@ -175,7 +175,55 @@ namespace MphRead
 
         public static void UpdateEscapeMusic()
         {
-            // skhere
+            if (_currentMusicSeq != SeqId.OREGANO)
+            {
+                return;
+            }
+            if (GameState.EscapeTimer >= 5400 / 30f) // 3 min+
+            {
+                // sktodo: update tempo
+            }
+            else if (GameState.EscapeTimer >= 5100 / 30f) // 3 min - 2 min 50 sec
+            {
+                // sktodo: update tempo
+            }
+            else if (GameState.EscapeTimer >= 3600 / 30f) // 2 min 50 sec - 2 min
+            {
+                // sktodo: update tempo
+            }
+            else if (GameState.EscapeTimer >= 3400 / 30f) // 2 min - 1 min 53 sec
+            {
+                // sktodo: update tempo
+            }
+            else if (GameState.EscapeTimer >= 1800 / 30f) // 1 min 53 sec - 1 min
+            {
+                if (GameState.EscapeTimer == 1800)
+                {
+                    SwitchEscapeMusicIfNeeded();
+                }
+                // sktodo: update tempo
+            }
+            else if (GameState.EscapeTimer >= 1700 / 30f) // 1 min - 57 sec
+            {
+                SwitchEscapeMusicIfNeeded();
+                // sktodo: update tempo
+            }
+            else // 57 sec - 0 sec
+            {
+                SwitchEscapeMusicIfNeeded();
+                // sktodo: update tempo
+            }
+        }
+
+        private static void SwitchEscapeMusicIfNeeded()
+        {
+            // switch ASAP at or after 1 min remaining
+            // the game does this on the exact frame the timer hits 1800 (1 min), but we may miss that mark
+            // escape timer (actual escape) is never set to 1 minute or lower, so no issue of a behavior difference w/ at vs. at-or-after
+            if (_currentMusicId != MusicId.SEQ_OREGANO_M56)
+            {
+                PlayMusic(MusicId.SEQ_OREGANO_M56);
+            }
         }
 
         private static readonly ImmutableArray<int> _hunterMusicTracks = [16, 4, 1, 0, 2, 5, 3, 16];
@@ -193,7 +241,7 @@ namespace MphRead
             }
             int bitIndex;
             if (hunter == Hunter.Guardian)
-            {   
+            {
                 int i;
                 for (i = 7; i <= 9; i++)
                 {

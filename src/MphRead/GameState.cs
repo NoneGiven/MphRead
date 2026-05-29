@@ -299,7 +299,7 @@ namespace MphRead
                         EscapeTimer -= scene.FrameTime;
                         if (EscapeState == EscapeState.Escape)
                         {
-                            UpdateEscapeSounds(EscapeTimer);
+                            Music.UpdateEscapeMusic();
                         }
                         else
                         {
@@ -378,7 +378,6 @@ namespace MphRead
                     Sfx.Instance.StopAllSound();
                     PlayerEntity.Main.StopLongSfx();
                     // sfxtodo: stop more kinds of SFX? fade for 1P mode?
-                    // mustodo: stop music and play timeout jingle
                     if (!GameState.SinglePlayer)
                     {
                         Music.PlaySeq(SeqId.TIMEOUT);
@@ -961,7 +960,8 @@ namespace MphRead
                     Sfx.QueueStream(VoiceId.VOICE_EVACUATE);
                     Sfx.QueueStream(VoiceId.VOICE_EVACUATE, delay: 3);
                     Sfx.QueueStream(VoiceId.VOICE_EVACUATE, delay: 6);
-                    // mustodo: play music and update tempo
+                    Music.PlayMusic(MusicId.SEQ_OREGANO_M55);
+                    // mustodo: update tempo
                     StorySave.TriggerState[2] |= 0x80;
                 }
                 else
@@ -991,11 +991,6 @@ namespace MphRead
                 PlayerEntity.Main.StopTimedSfx(SfxId.PUZZLE_TIMER1_SCR);
                 _playedTimedEventSfx = false;
             }
-        }
-
-        private static void UpdateEscapeSounds(float timer)
-        {
-            // mustodo: update tempo and/or switch tracks
         }
 
         public static void UpdateState()
