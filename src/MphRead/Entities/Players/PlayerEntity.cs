@@ -1988,7 +1988,7 @@ namespace MphRead.Entities
                         CameraInfo.SetShake(0.25f);
                         _lostOctolithEnemyIndex = -1;
                         if (GameState.StorySave.CurrentOctoliths != 0 && PlayerCount > 1
-                            && (GameState.EscapeTimer == 0 || GameState.EscapeState != EscapeState.Escape))
+                            && (GameState.EscapeTimer != 0 || GameState.EscapeState != EscapeState.Escape))
                         {
                             float minDistance = 0;
                             for (int i = 1; i < PlayerCount; i++)
@@ -2010,9 +2010,9 @@ namespace MphRead.Entities
                                 _lostOctolithDrawPos = Position.AddY(0.6f);
                                 _lostOctolithSpeed = 0.2f * 30; // frame-independent drag
                             }
-                            Music.UpdateEncounterMusic(-2);
-                            Music.Stop(fadeOutFrames: 150);
                         }
+                        Music.UpdateEncounterMusic(-2);
+                        Music.Stop(fadeOutFrames: 150);
                     }
                     else if (attacker?.IsMainPlayer == true)
                     {

@@ -39,6 +39,8 @@ namespace MphRead
         private int _movieFrameTotal = 0;
         public bool MoviePlaying => _movieFrameIndex != -1;
         private bool _skipMovie = false;
+        // hack to avoid things (like spawn SFX) happening on frame 0 of processing before we can start playing the landing movie
+        private bool _playingLandingMovie = false;
 
         private bool _dualScreenMovie = true;
         private readonly byte[] _topImageBuffer = new byte[_frameWidth * _frameHeight * 3];
@@ -284,6 +286,7 @@ namespace MphRead
                     // otherwise this fade will fade out to gameplay (no cam seq for an existing save).
                     SetFade(FadeType.FadeInWhite, 5 / 30f, overwrite: true, delay: 5 / 30f);
                     Music.PlayPausedMusic();
+                    _playingLandingMovie = false;
                 }
                 Sfx.SfxMute = false;
                 Sfx.LongSfxMute--;

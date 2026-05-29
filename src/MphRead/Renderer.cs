@@ -317,6 +317,7 @@ namespace MphRead
                 };
                 if (movieId != Movie.None)
                 {
+                    _playingLandingMovie = true;
                     Music.Pause(); // set the room music to be resumed (unless a cam seq plays to overwrite it)
                     StartMovie(movieId, FadeType.FadeOutInBlack, 0, FadeType.FadeOutWhite, 5 / 30f, afterMovieAction: AfterMovie.StartGame);
                 }
@@ -2660,6 +2661,10 @@ namespace MphRead
 
         private void UpdateScene()
         {
+            if (_playingLandingMovie)
+            {
+                return;
+            }
             bool playerActive = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active);
             if (!GameState.DialogPause)
             {
