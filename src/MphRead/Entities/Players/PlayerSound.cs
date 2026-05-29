@@ -724,8 +724,8 @@ namespace MphRead.Entities
             if (idValue > 70)
             {
                 // artifact ID (with model ID baked in)
-                bool hasArtifact = GameState.StorySave.CheckFoundArtifact(idValue - 71, modelId: 0);
-                if (hasArtifact || negation)
+                bool hasArtifact = (GameState.StorySave.CheckFoundArtifact(idValue - 71, modelId: 0)) ^ negation;
+                if (hasArtifact)
                 {
                     return newMusicId;
                 }
@@ -733,8 +733,8 @@ namespace MphRead.Entities
             else if ((param2 & 0x100) >> 8 != 0) // bit 8
             {
                 // entity ID
-                bool hasRoomState = GameState.StorySave.GetRoomState(_scene.RoomId, idValue) != 0;
-                if (hasRoomState || negation)
+                bool hasRoomState = (GameState.StorySave.GetRoomState(_scene.RoomId, idValue) != 0) ^ negation;
+                if (hasRoomState)
                 {
                     return newMusicId;
                 }
@@ -742,8 +742,10 @@ namespace MphRead.Entities
             else
             {
                 // enemy type
-                bool hasNoEncounterState = (GameState.StorySave.EnemyEncounters[_scene.AreaId][idValue >> 3] & (byte)(1 << (idValue & 7))) == 0;
-                if (hasNoEncounterState || negation)
+                int byteIndex = idValue >> 3;
+                int bitmask = (byte)(1 << (idValue & 7));
+                bool hasEncounterState = ((GameState.StorySave.EnemyEncounters[_scene.AreaId][byteIndex] & bitmask) == 0) ^ negation;
+                if (hasEncounterState)
                 {
                     return newMusicId;
                 }
