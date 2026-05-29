@@ -167,7 +167,7 @@ namespace MphRead.Entities
                 {
                     if (_occupiedBy[PlayerEntity.Main.SlotIndex])
                     {
-                        // todo: update music
+                        _soundSource.SetPausedFreeSfxScripts(true);
                     }
                 }
                 else if (_currentTeam != _occupyingTeam)
@@ -176,11 +176,11 @@ namespace MphRead.Entities
                     {
                         if (!_inProgress && _progress >= 10 / 30f)
                         {
-                            // todo: update music
+                            Music.PlayRoomMusic(_scene.RoomId, track: 1);
                             value1 = 1;
                             _inProgress = true;
                         }
-                        // todo: update music
+                        _soundSource.SetPausedFreeSfxScripts(false);
                     }
                     _progress += _scene.FrameTime;
                     float spinSpeed = _progress / (300 / 30f) * (15 * 30f);
@@ -197,7 +197,7 @@ namespace MphRead.Entities
             {
                 if (prevOccupiedBy[PlayerEntity.Main.SlotIndex])
                 {
-                    // todo: update music
+                    Music.PlayRoomMusic(_scene.RoomId, track: 0);
                     if (value1 != 2)
                     {
                         value1 = 3;
@@ -336,7 +336,7 @@ namespace MphRead.Entities
             _scoreTimer = 150 / 30f;
             if (_currentTeam == PlayerEntity.Main.TeamIndex)
             {
-                // todo: update music
+                Music.PlayRoomMusic(_scene.RoomId, track: 0);
                 dest1 = 2;
             }
             else

@@ -131,7 +131,7 @@ namespace MphRead.Entities
                         {
                             _soundSource.QueueStream(VoiceId.VOICE_OCTO_PICKUP, delay: 1, expiration: 2);
                             PlayerEntity.Main.StartFlagCarrySfx();
-                            // mustodo: update music
+                            Music.PlayRoomMusic(_scene.RoomId, track: 1);
                         }
                         else
                         {
@@ -140,7 +140,7 @@ namespace MphRead.Entities
                     }
                     else
                     {
-                        // todo: update music
+                        Music.PlayRoomMusic(_scene.RoomId, track: 1);
                         if (_carrier == PlayerEntity.Main)
                         {
                             _soundSource.QueueStream(VoiceId.VOICE_OCTO_PICKUP, delay: 1, expiration: 2);
@@ -289,7 +289,7 @@ namespace MphRead.Entities
             }
             PlayerEntity.Main.QueueHudMessage(128, 133, 60 / 30f, 1, messageId);
             PlayerEntity.Main.StopFlagCarrySfx();
-            // mustodo: update music
+            Music.PlayRoomMusic(_scene.RoomId, track: 0);
             if (reset)
             {
                 SetAtBase();
@@ -337,7 +337,7 @@ namespace MphRead.Entities
                 PlayerEntity.Main.QueueHudMessage(128, 133, 90 / 30f, 1, 203); // bounty received
             }
             PlayerEntity.Main.StopFlagCarrySfx();
-            // mustodo: update music
+            Music.PlayRoomMusic(_scene.RoomId, track: 0);
             GameState.Points[_carrier.SlotIndex]++;
             GameState.OctolithScores[_carrier.SlotIndex]++;
             SetAtBase();
