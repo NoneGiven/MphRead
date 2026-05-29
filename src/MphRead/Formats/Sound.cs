@@ -1149,7 +1149,7 @@ namespace MphRead.Formats.Sound
         public MusicTrack(uint id, RawMusicTrack raw)
         {
             MusicId = (MusicId)id;
-            SeqId = (SeqId)raw.SeqId;
+            SeqId = raw.SeqId == UInt16.MaxValue ? SeqId.None : (SeqId)raw.SeqId;
             FadeOutFrames = raw.FadeOutFrames;
             Tracks = raw.Tracks;
             FadeInFrames = raw.FadeInFrames;

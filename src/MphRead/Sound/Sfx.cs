@@ -1440,7 +1440,7 @@ namespace MphRead.Sound
 
         public override void ShutDown()
         {
-            MusicPlayer.Stop();
+            MusicPlayer.Remove(shutdown: true);
             for (int i = 0; i < _instances.Length; i++)
             {
                 SoundInstance inst = _instances[i];

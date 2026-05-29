@@ -1179,6 +1179,8 @@ namespace MphRead
                 {
                     UpdateScene();
                 }
+                Sound.Sfx.Update(_frameTime);
+                Music.UpdateMusic();
             }
             if (ProcessFrame || CameraMode != CameraMode.Player)
             {
@@ -2703,8 +2705,6 @@ namespace MphRead
                 }
                 GameState.UpdateFrame(this);
             }
-            Sound.Sfx.Update(_frameTime);
-            Music.UpdateMusic();
         }
 
         private void GetDrawItems()

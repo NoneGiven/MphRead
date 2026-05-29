@@ -377,8 +377,12 @@ namespace MphRead
                     Sfx.Instance.StopFreeSfxScripts();
                     Sfx.Instance.StopAllSound();
                     PlayerEntity.Main.StopLongSfx();
-                    // sfxtodo: stop more kinds of SFX?
+                    // sfxtodo: stop more kinds of SFX? fade for 1P mode?
                     // mustodo: stop music and play timeout jingle
+                    if (!GameState.SinglePlayer)
+                    {
+                        Music.PlaySeq(SeqId.TIMEOUT);
+                    }
                 }
             }
             else if (MatchState == MatchState.GameOver)

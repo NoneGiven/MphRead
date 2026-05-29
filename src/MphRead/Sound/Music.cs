@@ -90,6 +90,15 @@ namespace MphRead
             }
         }
 
+        public static void Pause()
+        {
+            if (!_paused)
+            {
+                Stop();
+                _paused = true;
+            }
+        }
+
         public static void PlayPausedMusic()
         {
             if (!_paused)
@@ -138,9 +147,9 @@ namespace MphRead
 
         private static int _musicEncounterSuspension = 0;
 
-        public static void PlaySeq(SeqId seqId)
+        public static void PlaySeq(SeqId seqId, bool notReady = true)
         {
-            PlaySeq(seqId, UInt16.MaxValue);
+            PlaySeq(seqId, UInt16.MaxValue, notReady: notReady);
         }
 
         public static void PlaySeq(SeqId seqId, ushort tracks, bool queue = false, bool notReady = false,
@@ -201,6 +210,7 @@ namespace MphRead
 
         private static bool _playing = false;
         private static bool _paused = false;
+        public static bool IsPaused => _paused;
         private static bool _musicQueued = false;
         private static SeqId _currentMusicSeq = SeqId.None;
         private static SeqId _nextMusicSeq = SeqId.None;
@@ -266,6 +276,7 @@ namespace MphRead
             {
                 try
                 {
+                    Remove();
                     string path = Paths.Combine(Paths.FileSystem, "_seq", Metadata.SequenceFiles[(int)seqId]);
                     // todo: need to look at allocations (including recreating these objects, but especially the byte and float lists internal to NCSF)
                     _stream = new NCSFPlayerStream(path, (uint)_sampleRate, Interpolation.None, skipSilenceOnStartSec: 5,
@@ -278,6 +289,7 @@ namespace MphRead
                 }
                 finally
                 {
+                    _break++;
                     Loading = false;
                 }
             });
@@ -375,14 +387,29 @@ namespace MphRead
             }
         }
 
+        private static Lock _lock = new Lock();
+
         public static void Stop()
+        {
+            if (_player != null)
+            {
+                _player.Stop();
+            }
+        }
+
+        private static int _break = 0;
+
+        public static void Remove(bool shutdown = false)
         {
             if (_player != null)
             {
                 Debug.Assert(_provider != null);
                 Debug.Assert(_stream != null);
                 _player.Stop();
-                _playbackDevice.Stop();
+                if (shutdown)
+                {
+                    _playbackDevice.Stop();
+                }
                 _playbackDevice.MasterMixer.RemoveComponent(_player);
                 _provider.Dispose();
                 _stream.Dispose();
