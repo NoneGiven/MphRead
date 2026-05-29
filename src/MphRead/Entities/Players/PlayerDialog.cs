@@ -521,6 +521,7 @@ namespace MphRead.Entities
                     {
                         if (_dialogPageIndex != _dialogPageCount - 1)
                         {
+                            _soundSource.PlayFreeSfx(SfxId.SCAN_SCROLL_BUTTONS);
                             _dialogPageIndex++;
                         }
                     }
@@ -528,6 +529,7 @@ namespace MphRead.Entities
                     {
                         if (_dialogPageIndex != 0)
                         {
+                            _soundSource.PlayFreeSfx(SfxId.SCAN_SCROLL_BUTTONS);
                             _dialogPageIndex--;
                         }
                     }
