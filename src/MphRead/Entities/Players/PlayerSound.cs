@@ -498,7 +498,8 @@ namespace MphRead.Entities
             UpdateDoubleDamageSfx(index: 0, play: false);
             UpdateCloakSfx(index: 0, play: false);
             UpdateScanSfx(index: -1, enable: false);
-            // mustodo: update music
+            // the game doesn't stop music if a likely download play check passes
+            Music.Stop();
             _soundSource.StopFreeSfxScripts();
             _soundSource.StopFreeSfx(SfxId.FAST_SCROLL_UP_LOOP);
             Sfx.Instance.StopEnvironmentSfx();
