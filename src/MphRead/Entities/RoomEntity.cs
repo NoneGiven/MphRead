@@ -433,6 +433,7 @@ namespace MphRead.Entities
             }
             ProcessTransition(CancellationToken.None);
             EndTransition();
+            Music.TryPlayRoomMusic(_scene.RoomId, GameState.SinglePlayer && (((int)GameState.StorySave.BossFlags >> (2 * _scene.AreaId)) & 3) != 0 ? 1 : 0);
             if (!resume)
             {
                 _scene.InsertEntity(player);

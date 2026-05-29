@@ -307,7 +307,15 @@ namespace MphRead
                     _musicEncounterSuspension &= ~(1 << bitIndex);
                     if (_musicEncounterSuspension == 0)
                     {
-                        PlayMusic(MusicToResume);
+                        if (MusicToResume == MusicId.None)
+                        {
+                            // the game doesn't do this, but we don't want eternal encounter music after loading directly into a room
+                            Stop(fadeOutFrames: 30);
+                        }
+                        else
+                        {
+                            PlayMusic(MusicToResume);
+                        }
                     }
                     else if (hunter != Hunter.Guardian)
                     {
