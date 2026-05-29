@@ -404,7 +404,10 @@ namespace MphRead
                     }
                     // the game sets the fade out frames in an unused music state field
                     // the game checks a pause flag we don't have before calling stop
-                    Stop(fadeOutFrames / 30f);
+                    if (MusicPlayer.State != PlaybackState.Stopped)
+                    {
+                        Stop(fadeOutFrames / 30f);
+                    }
                     _musicQueued = true;
                 }
                 _nextTrackNotReady = notReady;

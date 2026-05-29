@@ -297,11 +297,7 @@ namespace MphRead
                     player.AiData.InitializeAtLoad();
                 }
             }
-            if (GameState.Mode == GameMode.Bounty || GameState.Mode == GameMode.BountyTeams
-                || GameState.Mode == GameMode.Nodes || GameState.Mode == GameMode.NodesTeams)
-            {
-                Music.PlayRoomMusic(_room.RoomId, track: 0);
-            }
+            // the game has a redundant/early call for playing room track 0 in bounty/nodes
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
             _inputMode = _cameraMode == CameraMode.Player ? InputMode.All : InputMode.CameraOnly;
             if (GameState.SinglePlayer && !meta.FirstHunt && PlayerEntity.PlayerCount > 0 && !Cheats.SkipPlanetIntros)
