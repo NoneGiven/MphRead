@@ -172,6 +172,11 @@ namespace MphRead
             }
         }
 
+        public static void UpdateEscapeMusic()
+        {
+            // skhere
+        }
+
         public static void PlaySeq(SeqId seqId, bool notReady = true)
         {
             PlaySeq(seqId, UInt16.MaxValue, notReady: notReady);
