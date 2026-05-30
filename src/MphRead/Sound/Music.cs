@@ -52,6 +52,10 @@ namespace MphRead
             _volumeFadeTimeMs = 0;
             _volumeFadeTimer.Reset();
             _stopAfterFade = false;
+            _tempoUpdateStart = 256;
+            _tempoUpdateTarget = 256;
+            _tempoUpdateTimeMs = 0;
+            _tempoUpdateTimer.Reset();
             // play empty seq to ensure initialization
             MusicPlayer.Load(SeqId.WIN);
             MusicPlayer.WaitForLoad();
@@ -149,14 +153,15 @@ namespace MphRead
 
         public static void UpdateMusic()
         {
-            UpdateVolume();
+            ProcessVolume();
             if (!_isReady && !MusicPlayer.Loading)
             {
                 _isReady = true;
                 if (_playing)
                 {
+                    MusicVolume = 1;
                     MusicPlayer.Play(Volume);
-                    // skhere : set tempo
+                    ProcessTempo();
                     // the game applies the likely frontend pause flag to the player, as well as lid mute/unmute
                     // skhere: update negated tracks
                 }
@@ -165,7 +170,7 @@ namespace MphRead
             if (!_isReady || MusicPlayer.State != PlaybackState.Stopped)
             {
                 // if not ready, there's no player to update, but we can still update our own fields
-                // skhere: update tempo and tracks
+                ProcessTempo();
             }
             else if (_musicQueued)
             {
@@ -194,19 +199,23 @@ namespace MphRead
             }
             if (GameState.EscapeTimer >= 5400 / 30f) // 3 min+
             {
-                // sktodo: update tempo
+                UpdateTempo(245, 1 / 30f); // 95.7%
             }
             else if (GameState.EscapeTimer >= 5100 / 30f) // 3 min - 2 min 50 sec
             {
-                // sktodo: update tempo
+                int frames = (int)(GameState.EscapeTimer * 30);
+                int tempo = 266 - ((frames - 5100) << 11) / 30000;
+                UpdateTempo((ushort)tempo, 1 / 30f); // 95.7% --> 103.9%
             }
             else if (GameState.EscapeTimer >= 3600 / 30f) // 2 min 50 sec - 2 min
             {
-                // sktodo: update tempo
+                UpdateTempo(266, 1 / 30f); // 103.9%
             }
             else if (GameState.EscapeTimer >= 3400 / 30f) // 2 min - 1 min 53 sec
             {
-                // sktodo: update tempo
+                int frames = (int)(GameState.EscapeTimer * 30);
+                int tempo = 281 - 1536 * (frames - 3400) / 20000;
+                UpdateTempo((ushort)tempo, 1 / 30f); // 103.9% --> 109.8%
             }
             else if (GameState.EscapeTimer >= 1800 / 30f) // 1 min 53 sec - 1 min
             {
@@ -214,17 +223,19 @@ namespace MphRead
                 {
                     SwitchEscapeMusicIfNeeded();
                 }
-                // sktodo: update tempo
+                UpdateTempo(281, 1 / 30f); // 109.8%
             }
             else if (GameState.EscapeTimer >= 1700 / 30f) // 1 min - 57 sec
             {
                 SwitchEscapeMusicIfNeeded();
-                // sktodo: update tempo
+                int frames = (int)(GameState.EscapeTimer * 30);
+                int tempo = 294 - 1280 * (frames - 1700) / 10000;
+                UpdateTempo((ushort)tempo, 1 / 30f); // 109.8% --> 114.8%
             }
             else // 57 sec - 0 sec
             {
                 SwitchEscapeMusicIfNeeded();
-                // sktodo: update tempo
+                UpdateTempo(294, 1 / 30f); // 114.8%
             }
         }
 
@@ -379,6 +390,7 @@ namespace MphRead
                 {
                     MusicPlayer.WaitForLoad();
                     MusicPlayer.Play(Volume);
+                    UpdateTempo(256, 0);
                     _negatedTracks = 0;
                 }
                 // skhere: set tempo
@@ -468,9 +480,9 @@ namespace MphRead
             _volumeFadeTimer.Restart();
         }
 
-        private static void UpdateVolume()
+        private static void ProcessVolume()
         {
-            if (MusicVolume != _volumeFadeTarget)
+            if (MusicVolume != _volumeFadeTarget && _volumeFadeTimer.IsRunning)
             {
                 float pct = _volumeFadeTimer.ElapsedMilliseconds / _volumeFadeTimeMs;
                 if (pct >= 1)
@@ -481,12 +493,53 @@ namespace MphRead
                     {
                         MusicPlayer.Stop();
                     }
+                    _stopAfterFade = false;
                 }
                 else
                 {
                     MusicVolume = _volumeFadeStart + (_volumeFadeTarget - _volumeFadeStart) * pct;
                 }
                 MusicPlayer.Volume = Volume;
+            }
+        }
+
+        private static ushort _tempoUpdateStart = 256;
+        private static ushort _tempoUpdateTarget = 256;
+        private static float _tempoUpdateTimeMs = 0;
+        private static readonly Stopwatch _tempoUpdateTimer = new Stopwatch();
+
+        public static void UpdateTempo(ushort tempo, float time)
+        {
+            if (time <= 0)
+            {
+                MusicPlayer.Tempo = tempo;
+                _tempoUpdateStart = _tempoUpdateTarget = tempo;
+                _tempoUpdateTimeMs = 0;
+                _tempoUpdateTimer.Reset();
+            }
+            else if (_tempoUpdateTarget != tempo)
+            {
+                _tempoUpdateStart = MusicPlayer.Tempo;
+                _tempoUpdateTarget = tempo;
+                _tempoUpdateTimeMs = time * 1000;
+                _tempoUpdateTimer.Restart();
+            }
+        }
+
+        private static void ProcessTempo()
+        {
+            if (MusicPlayer.Tempo != _tempoUpdateTarget && _tempoUpdateTimer.IsRunning)
+            {
+                float pct = _tempoUpdateTimer.ElapsedMilliseconds / _tempoUpdateTimeMs;
+                if (pct >= 1)
+                {
+                    MusicPlayer.Tempo = _tempoUpdateTarget;
+                    _tempoUpdateTimer.Stop();
+                }
+                else
+                {
+                    MusicPlayer.Tempo = (ushort)(_tempoUpdateStart + (_tempoUpdateTarget - _tempoUpdateStart) * pct);
+                }
             }
         }
     }
@@ -626,7 +679,7 @@ namespace MphRead
             {
                 if (_stream != null)
                 {
-                    return _stream.Player.Tempo;
+                    return _stream.Player.TempoRatio;
                 }
                 return 0;
             }
@@ -634,7 +687,7 @@ namespace MphRead
             {
                 if (_stream != null)
                 {
-                    _stream.Player.Tempo = value;
+                    _stream.Player.TempoRatio = value;
                 }
             }
         }

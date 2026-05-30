@@ -27,6 +27,8 @@ public abstract class Player
     readonly byte[] trackIds = [.. Enumerable.Repeat(Player.InvalidTrackIndex, Player.TrackCount)];
 
     public ushort Tempo { get; set; } = 120;
+    public ushort TempoRatio { get => tempoRatio; set => tempoRatio = value; }
+
     protected ushort tempoRatio = 256;
     protected ushort tempoCounter = Player.TimerRate;
 

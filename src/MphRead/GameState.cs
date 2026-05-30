@@ -961,7 +961,7 @@ namespace MphRead
                     Sfx.QueueStream(VoiceId.VOICE_EVACUATE, delay: 3);
                     Sfx.QueueStream(VoiceId.VOICE_EVACUATE, delay: 6);
                     Music.PlayMusic(MusicId.SEQ_OREGANO_M55);
-                    // mustodo: update tempo
+                    Music.UpdateTempo(245, 0); // 95.7%
                     StorySave.TriggerState[2] |= 0x80;
                 }
                 else
