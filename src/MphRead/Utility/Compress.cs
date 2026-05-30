@@ -412,6 +412,7 @@ namespace MphRead
                 instream.Position -= 4;
                 instream.ReadExactly(buffer, 0, 3);
                 int compressedSize = buffer[0] | (buffer[1] << 8) | (buffer[2] << 16);
+                compressedSize -= headerSize;
 
                 // the compressed size sometimes is the file size.
                 if (compressedSize + headerSize >= inLength)
