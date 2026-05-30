@@ -223,6 +223,7 @@ namespace MphRead
                 scene.SetFade(FadeType.FadeInBlack, 20 / 30f, overwrite: true);
             }
             ForceEndGame = false;
+            _tempoChanged = false;
             _stateChanged = false;
             _lastAlarmTime = 0;
             _nextAlarmIndex = 0;
@@ -237,6 +238,7 @@ namespace MphRead
             }
         }
 
+        private static bool _tempoChanged = false;
         private static bool _stateChanged = false;
         private static float _matchEndTime = 0;
         private static float _lastAlarmTime = 0;
@@ -317,10 +319,14 @@ namespace MphRead
                 }
                 if (MatchTime != 0 && !ForceEndGame)
                 {
-                    // mustodo: update music tempo
                     if (Multiplayer)
                     {
                         var time = TimeSpan.FromSeconds(MatchTime);
+                        if (time.TotalMinutes < 1 && time.Seconds <= 59 && !_tempoChanged)
+                        {
+                            Music.UpdateTempo(307, 900 / 30f);
+                            _tempoChanged = true;
+                        }
                         if (time.TotalMinutes < 1 && time.Seconds <= 9)
                         {
                             float comparison = 1;
@@ -976,7 +982,7 @@ namespace MphRead
 
         private static void UpdateEventSounds(float timer)
         {
-            // mustodo: update tempo
+            Music.UpdateEventMusic(timer);
             if (timer > 165 / 30f)
             {
                 _playedTimedEventSfx = false;

@@ -250,6 +250,16 @@ namespace MphRead
             }
         }
 
+        public static void UpdateEventMusic(float time)
+        {
+            if (_currentMusicId == MusicId.SEQ_ENERGY_TIMER_M51 && time >= 600 / 30f && time < 1800 / 30f)
+            {
+                int frames = (int)(time * 30);
+                int tempo = 384 - 12800 * (frames - 600) / 120000;
+                UpdateTempo((ushort)tempo, 1 / 30f); // 100.4% --> 150%
+            }
+        }
+
         private static readonly ImmutableArray<int> _hunterMusicTracks = [16, 4, 1, 0, 2, 5, 3, 16];
 
         public static void PlayEncounterMusic(Hunter hunter)
