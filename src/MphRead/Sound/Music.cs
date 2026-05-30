@@ -56,6 +56,10 @@ namespace MphRead
             _tempoUpdateTarget = 256;
             _tempoUpdateTimeMs = 0;
             _tempoUpdateTimer.Reset();
+            for (int i = 0; i < _trackFaders.Length; i++)
+            {
+                _trackFaders[i].Initialize();
+            }
             // play empty seq to ensure initialization
             MusicPlayer.Load(SeqId.WIN);
             MusicPlayer.WaitForLoad();
@@ -513,6 +517,56 @@ namespace MphRead
             }
         }
 
+        private class TrackFader
+        {
+            public byte Start { get; set; } = 127;
+            public byte Target { get; set; } = 127;
+            public float TimeMs { get; set; }
+            public Stopwatch Timer { get; } = new Stopwatch();
+
+            public void Initialize()
+            {
+                Start = 127;
+                Target = 127;
+                TimeMs = 0;
+                Timer.Reset();
+            }
+        }
+
+        private static readonly ImmutableArray<TrackFader> _trackFaders =
+        [
+            new TrackFader(), new TrackFader(), new TrackFader(), new TrackFader(),
+            new TrackFader(), new TrackFader(), new TrackFader(), new TrackFader(),
+            new TrackFader(), new TrackFader(), new TrackFader(), new TrackFader(),
+            new TrackFader(), new TrackFader(), new TrackFader(), new TrackFader()
+        ];
+
+        // sktodo: make use of this instead of directly updating the track mutes in some places
+        private static void ProcessTrackFaders()
+        {
+            for (int i = 0; i < _trackFaders.Length; i++)
+            {
+                TrackFader trackFader = _trackFaders[i];
+                if (trackFader.Timer.IsRunning)
+                {
+                    NCSFCommon.Track? track = MusicPlayer.GetTrack(i);
+                    if (track != null && track.Volume != trackFader.Target)
+                    {
+                        float pct = trackFader.Timer.ElapsedMilliseconds / trackFader.TimeMs;
+                        if (pct >= 1)
+                        {
+                            track.Volume = trackFader.Target;
+                            trackFader.Timer.Stop();
+                        }
+                        else
+                        {
+                            track.Volume = (byte)(trackFader.Start + (trackFader.Target - trackFader.Start) * pct);
+                        }
+                    }
+                }
+            }
+        }
+
         private static ushort _tempoUpdateStart = 256;
         private static ushort _tempoUpdateTarget = 256;
         private static float _tempoUpdateTimeMs = 0;
@@ -702,7 +756,10 @@ namespace MphRead
             }
         }
 
-        private static Lock _lock = new Lock();
+        public static NCSFCommon.Track? GetTrack(int index)
+        {
+            return _stream?.Player.GetTrack(index);
+        }
 
         public static void Stop()
         {

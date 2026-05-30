@@ -32,6 +32,7 @@ public abstract class Track
     protected ushort program;
 
     protected byte volume;
+    public byte Volume { get => volume; set => volume = value; }
     protected byte expression;
     protected sbyte pitchBend;
     protected byte bendRange;
