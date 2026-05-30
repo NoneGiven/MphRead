@@ -56,10 +56,7 @@ namespace MphRead
             _tempoUpdateTarget = 256;
             _tempoUpdateTimeMs = 0;
             _tempoUpdateTimer.Reset();
-            for (int i = 0; i < _trackFaders.Length; i++)
-            {
-                _trackFaders[i].Initialize();
-            }
+            InitializeTrackFaders();
             // play empty seq to ensure initialization
             MusicPlayer.Load(SeqId.WIN);
             MusicPlayer.WaitForLoad();
@@ -540,6 +537,14 @@ namespace MphRead
             new TrackFader(), new TrackFader(), new TrackFader(), new TrackFader(),
             new TrackFader(), new TrackFader(), new TrackFader(), new TrackFader()
         ];
+
+        private static void InitializeTrackFaders()
+        {
+            for (int i = 0; i < _trackFaders.Length; i++)
+            {
+                _trackFaders[i].Initialize();
+            }
+        }
 
         // sktodo: make use of this instead of directly updating the track mutes in some places
         private static void ProcessTrackFaders()
