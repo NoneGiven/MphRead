@@ -101,7 +101,7 @@ namespace MphRead
             }
             _audioHandle = AL.GenSource();
             AL.GenBuffers(_audioBufferIds);
-            AL.Source(_audioHandle, ALSourcef.Gain, Sfx.Volume);
+            AL.Source(_audioHandle, ALSourcef.Gain, Music.UserVolume * 0.5f);
             Array.Fill(_audioBuffersAvailable, true);
             _audioBufferIndex = 0;
             Metadata.MovieInfo info = Metadata.MovieFiles[(int)movieId];
