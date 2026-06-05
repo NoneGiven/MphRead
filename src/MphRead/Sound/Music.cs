@@ -45,7 +45,7 @@ namespace MphRead
             _nextTracks = 0;
             _activeTracks = 0;
             _mutedTracks = 0;
-            _negatedTracks = 0;
+            _fadingTracks = 0;
             MusicVolume = 1;
             _volumeFadeStart = 1;
             _volumeFadeTarget = 1;
@@ -164,7 +164,6 @@ namespace MphRead
                     MusicPlayer.Play(Volume);
                     ProcessTempo();
                     // the game applies the likely frontend pause flag to the player, as well as lid mute/unmute
-                    // skhere: update negated tracks
                 }
             }
             // the game checks the likely frontend pause flag before proceeding
@@ -172,6 +171,7 @@ namespace MphRead
             {
                 // if not ready, there's no player to update, but we can still update our own fields
                 ProcessTempo();
+                ProcessTrackFaders();
             }
             else if (_musicQueued)
             {
@@ -393,18 +393,17 @@ namespace MphRead
                 // the game checks whether the music is loaded and/or available before proceeding
                 _currentMusicSeq = seqId;
                 _mutedTracks = 0;
-                _negatedTracks = (ushort)(~_activeTracks);
-                // skhere: init track faders
+                _fadingTracks = (ushort)(~_activeTracks);
+                InitializeTrackFaders();
                 _playing = true;
                 MusicPlayer.Load(seqId, tracks);
                 if (_isReady)
                 {
                     MusicPlayer.WaitForLoad();
                     MusicPlayer.Play(Volume);
-                    UpdateTempo(256, 0);
-                    _negatedTracks = 0;
+                    _fadingTracks = 0;
                 }
-                // skhere: set tempo
+                UpdateTempo(256, 0);
                 _musicQueued = false;
                 _nextMusicSeq = seqId;
             }
@@ -416,8 +415,8 @@ namespace MphRead
                     {
                         if (_isReady)
                         {
-                            // skhere: set up track faders instead of setting immediately
-                            MusicPlayer.Tracks = tracks;
+                            SetTrackFaders(tracks, target: 127, time: fadeInFrames / 30f);
+                            SetTrackFaders((ushort)(tracks ^ UInt16.MaxValue), target: 0, time: fadeOutFrames / 30f);
                         }
                         else
                         {
@@ -452,7 +451,7 @@ namespace MphRead
         private static ushort _nextTracks = 0;
         private static ushort _activeTracks = 0;
         private static ushort _mutedTracks = 0;
-        private static ushort _negatedTracks = 0;
+        private static ushort _fadingTracks = 0;
 
         public static void Stop(float fadeTime = 0)
         {
@@ -542,13 +541,53 @@ namespace MphRead
         {
             for (int i = 0; i < _trackFaders.Length; i++)
             {
-                _trackFaders[i].Initialize();
+                TrackFader fader = _trackFaders[i];
+                fader.Initialize();
+                if ((_activeTracks & (i << i)) == 0)
+                {
+                    fader.Start = 0;
+                    fader.Target = 0;
+                }
             }
         }
 
-        // sktodo: make use of this instead of directly updating the track mutes in some places
+        private static void SetTrackFaders(ushort tracks, byte target, float time)
+        {
+            if (target == 0)
+            {
+                _activeTracks &= (ushort)~tracks;
+            }
+            else
+            {
+                _activeTracks |= tracks;
+            }
+            for (int i = 0; i < _trackFaders.Length; i++)
+            {
+                if ((tracks & (1 << i)) != 0)
+                {
+                    TrackFader trackFader = _trackFaders[i];
+                    if ((_fadingTracks & (1 << i)) != 0)
+                    {
+                        NCSFCommon.Track? track = MusicPlayer.GetTrack(i);
+                        if (track != null)
+                        {
+                            trackFader.Start = track.Volume;
+                        }
+                    }
+                    trackFader.Target = target;
+                    trackFader.TimeMs = time * 1000;
+                    trackFader.Timer.Reset();
+                }
+            }
+            _fadingTracks |= tracks;
+        }
+
         private static void ProcessTrackFaders()
         {
+            if (_fadingTracks == 0)
+            {
+                return;
+            }
             for (int i = 0; i < _trackFaders.Length; i++)
             {
                 TrackFader trackFader = _trackFaders[i];
@@ -562,6 +601,7 @@ namespace MphRead
                         {
                             track.Volume = trackFader.Target;
                             trackFader.Timer.Stop();
+                            _fadingTracks &= (ushort)(~(1 << i));
                         }
                         else
                         {
@@ -615,8 +655,6 @@ namespace MphRead
 
     public static class MusicPlayer
     {
-        // sktodo: need counters like the game's for track and tempo changes over time (depending on how/when the tracks and tempo are changed, anyway)
-        // sktodo: need the ability to update track volume internally from 0-127, not just on/off
         private static MiniAudioEngine _audioEngine;
         private static AudioPlaybackDevice _playbackDevice;
         private static RawDataProvider? _provider = null;
