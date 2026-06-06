@@ -42,6 +42,7 @@ namespace MphRead.Entities.Enemies
                 _hurtVolumeInit = new CollisionVolume(Vector3.Zero, _owner.Scale.X);
                 _health = 65535;
                 _healthMax = 3000;
+                _scanId = 0;
             }
         }
 
