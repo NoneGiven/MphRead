@@ -176,7 +176,7 @@ namespace MphRead.Entities
                     {
                         if (!_inProgress && _progress >= 10 / 30f)
                         {
-                            Music.PlayRoomMusic(_scene.RoomId, track: 1);
+                            Music.PlayRoomMusic(_scene.RoomId, track: 2);
                             value1 = 1;
                             _inProgress = true;
                         }
