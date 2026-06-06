@@ -300,7 +300,7 @@ namespace MphRead
                     input = input.Trim().ToLower();
                     if (Int32.TryParse(input, out int id))
                     {
-                        RoomMetadata? meta = Metadata.GetRoomById(id);
+                        RoomMetadata? meta = Metadata.GetRoomById(id, noThrow: true);
                         if (meta != null)
                         {
                             roomId = id;
