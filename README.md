@@ -10,7 +10,6 @@ This project is a reverse engineering and game recreation effort comprising a mo
 - Generates Python scripts to import model animations and more into Blender
 
 ## Planned
-- Music playback
 - Room editor and save editor
 - Render more things, implement more gameplay logic
 - And even more!
@@ -46,6 +45,7 @@ A significant portion of this project's code was based on the file format inform
 - **[loveemu's swav2wav](https://github.com/loveemu/loveemu-lab)** - SWAV conversion function.
 - **[Gericom's ffmpeg patch](https://lists.ffmpeg.org/pipermail/ffmpeg-devel/2021-March/277774.html)** - ActImagine VX movie file format information.
 - **[CharlesVanEeckhout's actimagine decoder](https://github.com/CharlesVanEeckhout/actimagine)** - Further understanding of VX video decoding, based on the above ffmpeg patch.
+- **[CyberBotX's NCSF](https://github.com/CyberBotX/NCSF)** - Source code for the NCSF converter and player for Nintendo DS sequenced music.
 
 ## Special Thanks
 
