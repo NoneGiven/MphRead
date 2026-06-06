@@ -26,46 +26,64 @@ namespace MphRead
         private static IReadOnlyList<MusicTrack> _musicInfo = null!;
         private static IReadOnlyList<RoomMusic> _roomMusic = null!;
 
+        private static bool _playing = false;
+        private static bool _paused = false;
+        public static bool IsPaused => _paused;
+        private static bool _nextTrackNotReady = false;
+        private static bool _isReady = false;
+        private static bool _musicQueued = false;
+        private static ushort _nextFadeInFrames = 0;
+
+        private static MusicId _currentMusicId = MusicId.None;
+        private static SeqId _currentMusicSeq = SeqId.None;
+        private static SeqId _nextMusicSeq = SeqId.None;
+
+        private static int _musicEncounterSuspension = 0;
+        public static int MusicEncounterSuspension => _musicEncounterSuspension;
+        public static MusicId MusicToResume { get; set; } = MusicId.None;
+
+        private static ushort _nextTracks = 0;
+        private static ushort _pendingTracks = 0;
+        private static ushort _activeTracks = 0;
+        private static ushort _mutedTracks = 0;
+        private static ushort _fadingTracks = 0;
+
         public static void Init()
         {
             _musicInfo = SoundRead.ReadInterMusicInfo();
             _roomMusic = SoundRead.ReadAssignMusic();
             _pendingTracks = 0;
             _currentMusicId = MusicId.None;
-            _musicEncounterSuspension = 0;
-            MusicToResume = MusicId.None;
             _playing = false;
             _paused = false;
-            _musicQueued = false;
-            _currentMusicSeq = SeqId.None;
-            _nextMusicSeq = SeqId.None;
-            _isReady = true;
             _nextTrackNotReady = false;
+            _isReady = false;
+            _currentMusicSeq = SeqId.None;
+            _musicQueued = false;
+            _nextMusicSeq = SeqId.None;
             _nextFadeInFrames = 0;
             _nextTracks = 0;
-            _activeTracks = 0;
-            _mutedTracks = 0;
-            _fadingTracks = 0;
-            MusicVolume = 1;
+            _musicEncounterSuspension = 0;
+            MusicToResume = MusicId.None;
+            _tempoUpdateStart = 256;
+            _tempoUpdateTarget = 256;
+            _tempoUpdateTimeMs = 0;
+            _tempoUpdateTimer.Reset();
             _volumeFadeStart = 1;
             _volumeFadeTarget = 1;
             _volumeFadeTimeMs = 0;
             _volumeFadeTimer.Reset();
             _stopAfterFade = false;
-            _tempoUpdateStart = 256;
-            _tempoUpdateTarget = 256;
-            _tempoUpdateTimeMs = 0;
-            _tempoUpdateTimer.Reset();
-            InitializeTrackFaders();
+            for (int i = 0; i < _trackFaders.Length; i++)
+            {
+                _trackFaders[i].Reset();
+            }
             // play empty seq to ensure initialization
             MusicPlayer.Load(SeqId.WIN);
             MusicPlayer.WaitForLoad();
             MusicPlayer.Play(Volume);
             MusicPlayer.Stop();
         }
-
-        private static ushort _pendingTracks = 0;
-        private static MusicId _currentMusicId = MusicId.None;
 
         public static void PlayMusic(MusicId musicId, ushort? tracks = null, bool toggleOnTracks = false, bool toggleOffTracks = false)
         {
@@ -122,54 +140,105 @@ namespace MphRead
             }
         }
 
-        public static void Pause()
+        public static void PlaySeq(SeqId seqId, bool notReady = true)
         {
-            if (!_paused)
-            {
-                Stop();
-                _paused = true;
-            }
+            PlaySeq(seqId, UInt16.MaxValue, notReady: notReady);
         }
 
-        public static void PlayPausedMusic()
+        public static void PlaySeq(SeqId seqId, ushort tracks, bool queue = false, bool notReady = false,
+            ushort fadeOutFrames = 0, ushort fadeInFrames = 0)
         {
-            if (!_paused)
+            // the game may update the seq ID first using download play values
+            if (!queue)
             {
-                return;
+                _nextTrackNotReady = false;
+                Stop();
+                _isReady = !notReady;
+                _activeTracks = tracks;
+                // init seq
+                // the game has a redundant check for stopping the music again that preserves the ready value
+                _currentMusicSeq = seqId;
+                _mutedTracks = 0;
+                _fadingTracks = (ushort)(~_activeTracks);
+                // the game sets up a possible volume factor from the seq here, which NCSF should handle internally
+                MusicVolume = 1;
+                _volumeFadeTarget = 1;
+                _volumeFadeTimer.Stop();
+                for (int i = 0; i < _trackFaders.Length; i++)
+                {
+                    _trackFaders[i].Reset(volume: (byte)((_activeTracks & (1 << i)) != 0 ? 127 : 0));
+                }
+                // start music player
+                MusicPlayer.Load(seqId, tracks);
+                _playing = true;
+                if (_isReady)
+                {
+                    MusicPlayer.WaitForLoad();
+                    MusicPlayer.Play(Volume);
+                    _mutedTracks = 0;
+                    UpdateTrackVolume(_fadingTracks, 0);
+                    _fadingTracks = 0;
+                }
+                UpdateTempo(256, 0);
+                _musicQueued = false;
+                _nextMusicSeq = seqId;
             }
-            int index = (int)_currentMusicId;
-            if (index < 0 || index >= _musicInfo.Count)
+            else
             {
-                return;
+                if (!_musicQueued)
+                {
+                    if (_nextMusicSeq == seqId)
+                    {
+                        if (_isReady)
+                        {
+                            SetTrackFaders(tracks, target: 127, time: fadeInFrames / 30f);
+                            SetTrackFaders((ushort)(tracks ^ UInt16.MaxValue), target: 0, time: fadeOutFrames / 30f);
+                        }
+                        else
+                        {
+                            _activeTracks = tracks;
+                        }
+                        return;
+                    }
+                    // the game sets the fade out frames in an unused music state field
+                    // the game checks a pause flag we don't have before calling stop
+                    Stop(fadeOutFrames / 30f);
+                    _musicQueued = true;
+                }
+                _nextTrackNotReady = notReady;
+                _nextMusicSeq = seqId;
+                _nextTracks = tracks;
+                _nextFadeInFrames = fadeInFrames;
             }
-            MusicTrack info = _musicInfo[index];
-            if (info.SeqId == SeqId.None)
-            {
-                return;
-            }
-            _paused = false;
-            _stopAfterFade = false;
-            PlaySeq(info.SeqId, _pendingTracks, queue: true, notReady: true);
         }
 
         public static void UpdateMusic()
         {
-            ProcessVolume();
             if (!_isReady && !MusicPlayer.Loading)
             {
                 _isReady = true;
                 if (_playing)
                 {
-                    MusicVolume = 1;
+                    MusicPlayer.Volume = Volume;
+                    MusicPlayer.Tempo = _baseTempo;
                     MusicPlayer.Play(Volume);
-                    ProcessTempo();
                     // the game applies the likely frontend pause flag to the player, as well as lid mute/unmute
+                    for (int i = 0; i < _trackFaders.Length; i++)
+                    {
+                        if ((_fadingTracks & (1 << i)) == 0)
+                        {
+                            _fadingTracks |= (ushort)(1 << i);
+                            _mutedTracks = 0;
+                            _trackFaders[i].TimeMs = Single.Epsilon;
+                        }
+                    }
                 }
             }
             // the game checks the likely frontend pause flag before proceeding
             if (!_isReady || MusicPlayer.State != PlaybackState.Stopped)
             {
                 // if not ready, there's no player to update, but we can still update our own fields
+                ProcessVolume();
                 ProcessTempo();
                 ProcessTrackFaders();
             }
@@ -180,13 +249,9 @@ namespace MphRead
             }
         }
 
-        private static int _musicEncounterSuspension = 0;
-        public static int MusicEncounterSuspension => _musicEncounterSuspension;
-        public static MusicId MusicToResume { get; set; } = MusicId.None;
-
         public static void UpdateMusicIdIfPaused(MusicId musicId)
         {
-            if (IsPaused)
+            if (_paused)
             {
                 _currentMusicId = musicId;
             }
@@ -374,95 +439,48 @@ namespace MphRead
             }
         }
 
-        public static void PlaySeq(SeqId seqId, bool notReady = true)
+        public static void PlayPausedMusic()
         {
-            PlaySeq(seqId, UInt16.MaxValue, notReady: notReady);
+            if (!_paused)
+            {
+                return;
+            }
+            int index = (int)_currentMusicId;
+            if (index < 0 || index >= _musicInfo.Count)
+            {
+                return;
+            }
+            MusicTrack info = _musicInfo[index];
+            if (info.SeqId == SeqId.None)
+            {
+                return;
+            }
+            _paused = false;
+            PlaySeq(info.SeqId, _pendingTracks, queue: true, notReady: true);
         }
 
-        public static void PlaySeq(SeqId seqId, ushort tracks, bool queue = false, bool notReady = false,
-            ushort fadeOutFrames = 0, ushort fadeInFrames = 0)
+        public static void Pause()
         {
-            _stopAfterFade = false;
-            // the game may update the seq ID first using download play values
-            if (!queue)
+            if (!_paused)
             {
-                _nextTrackNotReady = false;
                 Stop();
-                _isReady = !notReady;
-                _activeTracks = tracks;
-                // the game checks whether the music is loaded and/or available before proceeding
-                _currentMusicSeq = seqId;
-                _mutedTracks = 0;
-                _fadingTracks = (ushort)(~_activeTracks);
-                InitializeTrackFaders();
-                _playing = true;
-                MusicPlayer.Load(seqId, tracks);
-                if (_isReady)
-                {
-                    MusicPlayer.WaitForLoad();
-                    MusicPlayer.Play(Volume);
-                    _fadingTracks = 0;
-                }
-                UpdateTempo(256, 0);
-                _musicQueued = false;
-                _nextMusicSeq = seqId;
-            }
-            else
-            {
-                if (!_musicQueued)
-                {
-                    if (_nextMusicSeq == seqId)
-                    {
-                        if (_isReady)
-                        {
-                            SetTrackFaders(tracks, target: 127, time: fadeInFrames / 30f);
-                            SetTrackFaders((ushort)(tracks ^ UInt16.MaxValue), target: 0, time: fadeOutFrames / 30f);
-                        }
-                        else
-                        {
-                            _activeTracks = tracks;
-                        }
-                        return;
-                    }
-                    // the game sets the fade out frames in an unused music state field
-                    // the game checks a pause flag we don't have before calling stop
-                    if (MusicPlayer.State != PlaybackState.Stopped)
-                    {
-                        Stop(fadeOutFrames / 30f);
-                    }
-                    _musicQueued = true;
-                }
-                _nextTrackNotReady = notReady;
-                _nextMusicSeq = seqId;
-                _nextTracks = tracks;
-                _nextFadeInFrames = fadeInFrames;
+                _paused = true;
             }
         }
-
-        private static bool _playing = false;
-        private static bool _paused = false;
-        public static bool IsPaused => _paused;
-        private static bool _musicQueued = false;
-        private static SeqId _currentMusicSeq = SeqId.None;
-        private static SeqId _nextMusicSeq = SeqId.None;
-        private static bool _isReady = true;
-        private static bool _nextTrackNotReady = false;
-        private static ushort _nextFadeInFrames = 0;
-        private static ushort _nextTracks = 0;
-        private static ushort _activeTracks = 0;
-        private static ushort _mutedTracks = 0;
-        private static ushort _fadingTracks = 0;
 
         public static void Stop(float fadeTime = 0)
         {
             _playing = false;
             _musicQueued = false;
             _nextMusicSeq = SeqId.None;
+            if (!_isReady && MusicPlayer.Loading)
+            {
+                MusicPlayer.StopLoading = true;
+            }
             _isReady = true;
             if (fadeTime <= 0)
             {
                 MusicPlayer.Stop();
-                _stopAfterFade = false;
             }
             else
             {
@@ -479,20 +497,21 @@ namespace MphRead
 
         public static void FadeVolume(float volume, float time, bool stopAfterFade = false)
         {
-            _volumeFadeStart = MusicVolume;
+            MusicVolume = volume;
+            _volumeFadeStart = MusicPlayer.Volume;
             _volumeFadeTarget = volume;
             _volumeFadeTimeMs = time * 1000;
             if (_volumeFadeTimeMs <= 0)
             {
                 _volumeFadeTimeMs = 1;
             }
-            _stopAfterFade = stopAfterFade;
             _volumeFadeTimer.Restart();
+            _stopAfterFade = stopAfterFade;
         }
 
         private static void ProcessVolume()
         {
-            if (MusicVolume != _volumeFadeTarget && _volumeFadeTimer.IsRunning)
+            if (_volumeFadeTimer.IsRunning)
             {
                 float pct = _volumeFadeTimer.ElapsedMilliseconds / _volumeFadeTimeMs;
                 if (pct >= 1)
@@ -513,6 +532,48 @@ namespace MphRead
             }
         }
 
+        private static ushort _baseTempo = 256;
+        private static ushort _tempoUpdateStart = 256;
+        private static ushort _tempoUpdateTarget = 256;
+        private static float _tempoUpdateTimeMs = 0;
+        private static readonly Stopwatch _tempoUpdateTimer = new Stopwatch();
+
+        public static void UpdateTempo(ushort tempo, float time)
+        {
+            if (time <= 0)
+            {
+                MusicPlayer.Tempo = tempo;
+                _baseTempo = tempo;
+                _tempoUpdateStart = _tempoUpdateTarget = tempo;
+                _tempoUpdateTimeMs = 0;
+                _tempoUpdateTimer.Reset();
+            }
+            else if (_tempoUpdateTarget != tempo)
+            {
+                _tempoUpdateStart = MusicPlayer.Tempo;
+                _tempoUpdateTarget = tempo;
+                _tempoUpdateTimeMs = time * 1000;
+                _tempoUpdateTimer.Restart();
+            }
+        }
+
+        private static void ProcessTempo()
+        {
+            if (MusicPlayer.Tempo != _tempoUpdateTarget && _tempoUpdateTimer.IsRunning)
+            {
+                float pct = _tempoUpdateTimer.ElapsedMilliseconds / _tempoUpdateTimeMs;
+                if (pct >= 1)
+                {
+                    MusicPlayer.Tempo = _tempoUpdateTarget;
+                    _tempoUpdateTimer.Stop();
+                }
+                else
+                {
+                    MusicPlayer.Tempo = (ushort)(_tempoUpdateStart + (_tempoUpdateTarget - _tempoUpdateStart) * pct);
+                }
+            }
+        }
+
         private class TrackFader
         {
             public byte Start { get; set; } = 127;
@@ -520,10 +581,10 @@ namespace MphRead
             public float TimeMs { get; set; }
             public Stopwatch Timer { get; } = new Stopwatch();
 
-            public void Initialize()
+            public void Reset(byte volume = 127)
             {
-                Start = 127;
-                Target = 127;
+                Start = volume;
+                Target = volume;
                 TimeMs = 0;
                 Timer.Reset();
             }
@@ -537,17 +598,57 @@ namespace MphRead
             new TrackFader(), new TrackFader(), new TrackFader(), new TrackFader()
         ];
 
-        private static void InitializeTrackFaders()
+        private static void UpdateTrackVolume(ushort tracks, byte volume)
         {
-            for (int i = 0; i < _trackFaders.Length; i++)
+            if (volume > 0)
             {
-                TrackFader fader = _trackFaders[i];
-                fader.Initialize();
-                if ((_activeTracks & (i << i)) == 0)
+                for (int i = 0; i < _trackFaders.Length; i++)
                 {
-                    fader.Start = 0;
-                    fader.Target = 0;
+                    if ((tracks & (1 << i)) != 0)
+                    {
+                        NCSFCommon.Track? track = MusicPlayer.GetTrack(i);
+                        if (track != null)
+                        {
+                            track.Volume = volume;
+                        }
+                    }
                 }
+                if ((_mutedTracks & tracks) != 0)
+                {
+                    if (_isReady)
+                    {
+                        for (int i = 0; i < _trackFaders.Length; i++)
+                        {
+                            if ((tracks & (1 << i)) != 0)
+                            {
+                                NCSFCommon.Track? track = MusicPlayer.GetTrack(i);
+                                if (track != null)
+                                {
+                                    track.Mute = false;
+                                }
+                            }
+                        }
+                    }
+                    _mutedTracks &= (ushort)(~(_mutedTracks & tracks));
+                }
+            }
+            else if ((_mutedTracks & tracks) != tracks)
+            {
+                if (_isReady)
+                {
+                    for (int i = 0; i < _trackFaders.Length; i++)
+                    {
+                        if ((tracks & (1 << i)) != 0)
+                        {
+                            NCSFCommon.Track? track = MusicPlayer.GetTrack(i);
+                            if (track != null)
+                            {
+                                track.Mute = true;
+                            }
+                        }
+                    }
+                }
+                _mutedTracks |= tracks;
             }
         }
 
@@ -590,6 +691,10 @@ namespace MphRead
             }
             for (int i = 0; i < _trackFaders.Length; i++)
             {
+                if ((_fadingTracks & (1 << i)) == 0)
+                {
+                    continue;
+                }
                 TrackFader trackFader = _trackFaders[i];
                 if (trackFader.Timer.IsRunning)
                 {
@@ -599,55 +704,15 @@ namespace MphRead
                         float pct = trackFader.Timer.ElapsedMilliseconds / trackFader.TimeMs;
                         if (pct >= 1)
                         {
-                            track.Volume = trackFader.Target;
+                            UpdateTrackVolume((ushort)(1 << i), trackFader.Target);
                             trackFader.Timer.Stop();
                             _fadingTracks &= (ushort)(~(1 << i));
                         }
                         else
                         {
-                            track.Volume = (byte)(trackFader.Start + (trackFader.Target - trackFader.Start) * pct);
+                            UpdateTrackVolume((ushort)(1 << i), (byte)(trackFader.Start + (trackFader.Target - trackFader.Start) * pct));
                         }
                     }
-                }
-            }
-        }
-
-        private static ushort _tempoUpdateStart = 256;
-        private static ushort _tempoUpdateTarget = 256;
-        private static float _tempoUpdateTimeMs = 0;
-        private static readonly Stopwatch _tempoUpdateTimer = new Stopwatch();
-
-        public static void UpdateTempo(ushort tempo, float time)
-        {
-            if (time <= 0)
-            {
-                MusicPlayer.Tempo = tempo;
-                _tempoUpdateStart = _tempoUpdateTarget = tempo;
-                _tempoUpdateTimeMs = 0;
-                _tempoUpdateTimer.Reset();
-            }
-            else if (_tempoUpdateTarget != tempo)
-            {
-                _tempoUpdateStart = MusicPlayer.Tempo;
-                _tempoUpdateTarget = tempo;
-                _tempoUpdateTimeMs = time * 1000;
-                _tempoUpdateTimer.Restart();
-            }
-        }
-
-        private static void ProcessTempo()
-        {
-            if (MusicPlayer.Tempo != _tempoUpdateTarget && _tempoUpdateTimer.IsRunning)
-            {
-                float pct = _tempoUpdateTimer.ElapsedMilliseconds / _tempoUpdateTimeMs;
-                if (pct >= 1)
-                {
-                    MusicPlayer.Tempo = _tempoUpdateTarget;
-                    _tempoUpdateTimer.Stop();
-                }
-                else
-                {
-                    MusicPlayer.Tempo = (ushort)(_tempoUpdateStart + (_tempoUpdateTarget - _tempoUpdateStart) * pct);
                 }
             }
         }
@@ -677,6 +742,7 @@ namespace MphRead
         }
 
         public static bool Loading { get; private set; }
+        public static bool StopLoading { get; set; }
 
         public static void Load(SeqId seqId, ushort tracks = UInt16.MaxValue, float volume = 1)
         {
@@ -687,26 +753,49 @@ namespace MphRead
                 Loading = false;
                 return;
             }
-            // sktodo: add CTS
             Task.Run(() =>
             {
                 try
                 {
+                    while (StopLoading)
+                    {
+                        Thread.Sleep(1);
+                    }
                     Remove();
+                    if (StopLoading)
+                    {
+                        return;
+                    }
                     string path = Paths.Combine(Paths.FileSystem, "_seq", Metadata.SequenceFiles[(int)seqId]);
                     // todo: should look at allocations (including recreating these objects, but especially the byte and float lists internal to NCSF)
                     _stream = new NCSFPlayerStream(path, (uint)_sampleRate, Interpolation.None, skipSilenceOnStartSec: 5,
                         defaultLengthInMS: 115000, defaultFadeInMS: 5000, NCSF123.VolumeType.ReplayGainAlbum, PeakType.ReplayGainTrack,
                         playForever: true, volume, channelMutes: 0, (ushort)(tracks ^ UInt16.MaxValue), ignoreVolume: false);
+                    if (StopLoading)
+                    {
+                        return;
+                    }
                     _provider = new RawDataProvider(_stream, SampleFormat.F32, _sampleRate);
+                    if (StopLoading)
+                    {
+                        return;
+                    }
                     _player = new SoundPlayer(_audioEngine, _format, _provider);
+                    if (StopLoading)
+                    {
+                        return;
+                    }
                     _playbackDevice.MasterMixer.AddComponent(_player);
+                    if (StopLoading)
+                    {
+                        return;
+                    }
                     _playbackDevice.Start();
                 }
                 finally
                 {
-                    _break++;
                     Loading = false;
+                    StopLoading = false;
                 }
             });
         }
@@ -811,8 +900,6 @@ namespace MphRead
                 _player.Stop();
             }
         }
-
-        private static int _break = 0;
 
         public static void Remove(bool shutdown = false)
         {
