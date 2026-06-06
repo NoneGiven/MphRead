@@ -640,15 +640,16 @@ namespace MphRead.Entities
                     _dialogFrameInst.Alpha = 0.5f;
                     _dialogFrameInst.PositionX = posX / 256f;
                     _dialogFrameInst.PositionY = posY / 192f;
-                    _scene.DrawHudObject(_dialogFrameInst);
                     if (_eventType == EventType.Octolith)
                     {
+                        _scene.DrawHudObject(_dialogFrameInst);
                         _dialogCrystalInst.PositionX = (posX + 16) / 256f;
                         _dialogCrystalInst.PositionY = posY / 192f;
                         _scene.DrawHudObject(_dialogCrystalInst);
                     }
                     else if (_eventType != EventType.UATank)
                     {
+                        _scene.DrawHudObject(_dialogFrameInst);
                         _dialogPickupInst.PositionX = (posX + 16) / 256f;
                         _dialogPickupInst.PositionY = (posY + 16) / 192f;
                         _scene.DrawHudObject(_dialogPickupInst);
