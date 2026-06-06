@@ -497,8 +497,15 @@ namespace MphRead.Entities
             }
         }
 
+        // for spawning after boss intro movie
+        public bool ReloadInit { get; set; }
+
         public override void Initialize()
         {
+            Vector3 prevPos = _position;
+            Vector3 prevUp = _upVector;
+            Vector3 prevFacing = _facingVector;
+            int prevHealth = _health;
             _models.Clear();
             _bipedModelLods[0] = Read.GetModelInstance(Metadata.HunterModels[Hunter][0]);
             _bipedModelLods[1] = Read.GetModelInstance(Metadata.HunterModels[Hunter][1]);
@@ -630,8 +637,18 @@ namespace MphRead.Entities
             {
                 _bipedIceTransforms[i] = Matrix4.Identity;
             }
-            // todo?: some other kind of respawn?
-            if (_scene.Room == null || _scene.Room.LoadEntityId == -1)
+            if (ReloadInit)
+            {
+                // the game preserves a node name string across movie load, and there is functionality to specify it
+                // when starting the movie, but that value is ignored and rmMain is always set to be preserved instead
+                NodeRef nodeRef = _scene.GetNodeRefByName("rmMain");
+                Spawn(prevPos, prevFacing, prevUp, nodeRef, respawn: false);
+                _health = prevHealth;
+                Flags1 |= PlayerFlags1.Grounded;
+                Flags1 |= PlayerFlags1.GroundedPrevious;
+                ReloadInit = false;
+            }
+            else if (_scene.Room == null || _scene.Room.LoadEntityId == -1)
             {
                 int checkpointId = GameState.StorySave.CheckpointEntityId;
                 if (IsMainPlayer && GameState.Mode == GameMode.SinglePlayer

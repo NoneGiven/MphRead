@@ -437,7 +437,11 @@ namespace MphRead.Entities
             if (!resume)
             {
                 _scene.InsertEntity(player);
-                player.Initialize();
+            }
+            player.ReloadInit = resume;
+            player.Initialize();
+            if (!resume)
+            {
                 _scene.InitEntity(player);
                 _scene.InitEntity(player.Halfturret);
             }
