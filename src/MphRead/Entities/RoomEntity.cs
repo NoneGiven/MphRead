@@ -433,6 +433,7 @@ namespace MphRead.Entities
             }
             ProcessTransition(CancellationToken.None);
             EndTransition();
+            Music.TryPlayRoomMusic(_scene.RoomId, GameState.SinglePlayer && (((int)GameState.StorySave.BossFlags >> (2 * _scene.AreaId)) & 3) != 0 ? 1 : 0);
             if (!resume)
             {
                 _scene.InsertEntity(player);
@@ -446,7 +447,7 @@ namespace MphRead.Entities
         {
             Debug.Assert(GameState.TransitionRoomId != -1);
             GameState.TransitionState = TransitionState.Process;
-            // mustodo: update music
+            Music.UpdateEncounterMusic(-1);
             foreach (EntityBase entity in _scene.Entities)
             {
                 if (entity.Type == EntityType.Room || entity.Type == EntityType.Model

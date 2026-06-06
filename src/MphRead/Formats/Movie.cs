@@ -39,6 +39,8 @@ namespace MphRead
         private int _movieFrameTotal = 0;
         public bool MoviePlaying => _movieFrameIndex != -1;
         private bool _skipMovie = false;
+        // hack to avoid things (like spawn SFX) happening on frame 0 of processing before we can start playing the landing movie
+        private bool _playingLandingMovie = false;
 
         private bool _dualScreenMovie = true;
         private readonly byte[] _topImageBuffer = new byte[_frameWidth * _frameHeight * 3];
@@ -82,6 +84,7 @@ namespace MphRead
             // - after enough time has elapsed, request the next frame's color buffer from the decoder
             // - decoder can decode up to 4 frames, then needs to wait until its oldest frame is requested by the renderer,
             //   then it can drop that frame and decode another one
+            Music.Stop();
             GameState.PauseDialog();
             Sfx.SfxMute = true;
             Sfx.LongSfxMute++;
@@ -98,7 +101,7 @@ namespace MphRead
             }
             _audioHandle = AL.GenSource();
             AL.GenBuffers(_audioBufferIds);
-            AL.Source(_audioHandle, ALSourcef.Gain, Sfx.Volume);
+            AL.Source(_audioHandle, ALSourcef.Gain, Music.UserVolume * 0.5f);
             Array.Fill(_audioBuffersAvailable, true);
             _audioBufferIndex = 0;
             Metadata.MovieInfo info = Metadata.MovieFiles[(int)movieId];
@@ -282,6 +285,8 @@ namespace MphRead
                     // hold on white to give the landing cam seq a chance to fade in, overwriting this, if any.
                     // otherwise this fade will fade out to gameplay (no cam seq for an existing save).
                     SetFade(FadeType.FadeInWhite, 5 / 30f, overwrite: true, delay: 5 / 30f);
+                    Music.PlayPausedMusic();
+                    _playingLandingMovie = false;
                 }
                 Sfx.SfxMute = false;
                 Sfx.LongSfxMute--;
@@ -300,10 +305,6 @@ namespace MphRead
                 _skipMovie = true;
             }
         }
-
-        private readonly string[] _log = new string[100000];
-        private int _logIndex = 0;
-        private readonly Stopwatch _sw = new Stopwatch();
 
         private void UpdateMovie()
         {
@@ -648,7 +649,7 @@ namespace MphRead.Formats
             Array.Clear(_influenceBuffer);
             AudioFrame? prevAudioFrame = null;
             _audioFrameTotal = 0;
-            using Stream file = writeFiles && AudioStreamCount >= 1 ? File.OpenWrite(Path.Combine(folder, "audio.wav")) : Stream.Null;
+            using Stream file = writeFiles && AudioStreamCount >= 1 ? File.OpenWrite(Paths.Combine(folder, "audio.wav")) : Stream.Null;
             using BinaryWriter writer = new BinaryWriter(file);
             for (int i = 0; i < 11; i++)
             {
@@ -742,7 +743,7 @@ namespace MphRead.Formats
                         }
                     }
                 });
-                image.SaveAsPng(Path.Combine(folder, $"{f.ToString().PadLeft(4, '0')}.png"));
+                image.SaveAsPng(Paths.Combine(folder, $"{f.ToString().PadLeft(4, '0')}.png"));
             }
 
             if (writeFiles && !UseStaticBuffers)

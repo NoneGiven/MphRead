@@ -136,6 +136,11 @@ namespace MphRead.Sound
             Sfx.Instance.StopFreeSfxScripts();
         }
 
+        public void SetPausedFreeSfxScripts(bool paused)
+        {
+            Sfx.Instance.SetPausedFreeSfxScripts(paused);
+        }
+
         public bool IsHandlePlaying(int handle)
         {
             return Sfx.Instance.IsHandlePlaying(handle);
@@ -277,6 +282,7 @@ namespace MphRead.Sound
             public SoundSource? Source { get; set; }
             public float[] Volume { get; } = new float[_maxPerInst];
             public float[] Pitch { get; } = new float[_maxPerInst];
+            public bool Paused { get; set; }
             public float PlayTime { get; set; } = -1;
             public int SfxId { get; set; } = -1;
             public bool NoUpdate { get; set; }
@@ -392,6 +398,7 @@ namespace MphRead.Sound
                     Pitch[i] = 1;
                     Loop[i] = false;
                 }
+                Paused = false;
                 PlayTime = -1;
                 SfxId = -1;
                 DgnFile = null;
@@ -597,6 +604,7 @@ namespace MphRead.Sound
             }
             inst = FindInstance(source);
             inst.Source = source;
+            inst.Paused = false;
             inst.PlayTime = 0;
             inst.Cancellable = cancellable;
             inst.SfxId = id;
@@ -849,6 +857,18 @@ namespace MphRead.Sound
             }
         }
 
+        public override void SetPausedFreeSfxScripts(bool paused)
+        {
+            for (int i = 0; i < _instances.Length; i++)
+            {
+                SoundInstance inst = _instances[i];
+                if (inst.ScriptFile != null)
+                {
+                    inst.Paused = paused;
+                }
+            }
+        }
+
         public override bool IsHandlePlaying(int handle)
         {
             if (handle >= 0)
@@ -995,6 +1015,10 @@ namespace MphRead.Sound
         private void UpdateScript(SoundInstance inst, float time)
         {
             Debug.Assert(inst.ScriptFile != null);
+            if (inst.Paused)
+            {
+                return;
+            }
             if (inst.PlayTime >= 0)
             {
                 inst.PlayTime += time;
@@ -1440,6 +1464,7 @@ namespace MphRead.Sound
 
         public override void ShutDown()
         {
+            MusicPlayer.Remove(shutdown: true);
             for (int i = 0; i < _instances.Length; i++)
             {
                 SoundInstance inst = _instances[i];
@@ -1549,6 +1574,10 @@ namespace MphRead.Sound
         }
 
         public virtual void StopFreeSfxScripts()
+        {
+        }
+
+        public virtual void SetPausedFreeSfxScripts(bool paused)
         {
         }
 

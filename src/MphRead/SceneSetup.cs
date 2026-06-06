@@ -67,6 +67,7 @@ namespace MphRead
             var room = new RoomEntity(scene);
             (CollisionInstance collision, IReadOnlyList<EntityBase> entities) = SetUpRoom(mode, playerCount,
                 bossFlags, nodeLayerMask, entityLayerId, metadata, room, scene, isRoomTransition: false);
+            Music.TryPlayRoomMusic(room.RoomId, GameState.SinglePlayer && (((int)GameState.StorySave.BossFlags >> (2 * scene.AreaId)) & 3) != 0 ? 1 : 0);
             if (GameState.SinglePlayer)
             {
                 UpdateAreaHunters();
@@ -274,11 +275,11 @@ namespace MphRead
                                     }
                                 }
                             }
-                            if (j > 0 && j < 7)
-                            {
-                                // mustodo: play hunter music
-                            }
                             hunter = (Hunter)j;
+                            if (hunter != Hunter.Samus && hunter != Hunter.Guardian)
+                            {
+                                Music.PlayEncounterMusic(hunter);
+                            }
                         }
                         else
                         {

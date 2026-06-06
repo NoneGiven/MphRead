@@ -234,6 +234,7 @@ namespace MphRead
             Text.Strings.ClearCache();
             GameState.Reset();
             PlayerEntity.Construct(this);
+            Music.Init();
         }
 
         // called before load
@@ -295,6 +296,7 @@ namespace MphRead
                     player.AiData.InitializeAtLoad();
                 }
             }
+            // the game has a redundant/early call for playing room track 0 in bounty/nodes
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
             _inputMode = _cameraMode == CameraMode.Player ? InputMode.All : InputMode.CameraOnly;
             if (GameState.SinglePlayer && !meta.FirstHunt && PlayerEntity.PlayerCount > 0 && !Cheats.SkipPlanetIntros)
@@ -310,6 +312,8 @@ namespace MphRead
                 };
                 if (movieId != Movie.None)
                 {
+                    _playingLandingMovie = true;
+                    Music.Pause(); // set the room music to be resumed (unless a cam seq plays to overwrite it)
                     StartMovie(movieId, FadeType.FadeOutInBlack, 0, FadeType.FadeOutWhite, 5 / 30f, afterMovieAction: AfterMovie.StartGame);
                 }
             }
@@ -1172,6 +1176,8 @@ namespace MphRead
                 {
                     UpdateScene();
                 }
+                Sound.Sfx.Update(_frameTime);
+                Music.UpdateMusic();
             }
             if (ProcessFrame || CameraMode != CameraMode.Player)
             {
@@ -2650,6 +2656,10 @@ namespace MphRead
 
         private void UpdateScene()
         {
+            if (_playingLandingMovie)
+            {
+                return;
+            }
             bool playerActive = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active);
             if (!GameState.DialogPause)
             {
@@ -2696,7 +2706,6 @@ namespace MphRead
                 }
                 GameState.UpdateFrame(this);
             }
-            Sound.Sfx.Update(_frameTime);
         }
 
         private void GetDrawItems()

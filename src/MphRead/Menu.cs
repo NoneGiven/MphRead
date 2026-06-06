@@ -27,6 +27,7 @@ namespace MphRead
         public string FhVersion { get; set; } = "AMFE0";
         public string Language { get; set; } = "English";
         public string SfxVolume { get; set; } = "0.35";
+        public string MusicVolume { get; set; } = "0.50";
         public string PointGoal { get; set; } = "7";
         public string TimeLimit { get; set; } = "7:00";
         public string TimeGoal { get; set; } = "1:30";
@@ -61,13 +62,14 @@ namespace MphRead
         private static string _mode = "auto-select";
         private static Language _language = Language.English;
         private static decimal _sfxVolume = 0.35m;
+        private static decimal _musicVolume = 0.50m;
         private static int _movieId = -1;
 
         public static void ShowMenuPrompts()
         {
             SoundCapability soundCapability = Sfx.CheckAudioLoad();
             int prompt = 0;
-            int selection = 16;
+            int selection = 17;
             int roomId = -1;
             string room = "";
             string roomKey = "";
@@ -195,6 +197,11 @@ namespace MphRead
                     _sfxVolume = sfxVolume;
                     Sfx.Volume = (float)_sfxVolume;
                 }
+                if (Decimal.TryParse(settings.MusicVolume, out decimal musicVolume))
+                {
+                    _musicVolume = musicVolume;
+                    Music.UserVolume = (float)_musicVolume;
+                }
                 if (Int32.TryParse(settings.PointGoal, out int pointGoal))
                 {
                     _pointGoal = pointGoal;
@@ -293,7 +300,7 @@ namespace MphRead
                     input = input.Trim().ToLower();
                     if (Int32.TryParse(input, out int id))
                     {
-                        RoomMetadata? meta = Metadata.GetRoomById(id);
+                        RoomMetadata? meta = Metadata.GetRoomById(id, noThrow: true);
                         if (meta != null)
                         {
                             roomId = id;
@@ -505,6 +512,7 @@ namespace MphRead
                     FhVersion = Paths.FhKey,
                     Language = _language.ToString(),
                     SfxVolume = _sfxVolume.ToString(),
+                    MusicVolume = _musicVolume.ToString(),
                     PointGoal = _pointGoal.ToString(),
                     TimeLimit = FormatTime(_timeLimit),
                     TimeGoal = FormatTime(_timeGoal),
@@ -655,7 +663,8 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (P) MPH Version: {mphKey} ({mphInfo[mphKey]})");
                     Console.WriteLine($"{X(s++)} (F) FH Version: {fhKey} ({fhInfo[fhKey]})");
                     Console.WriteLine($"{X(s++)} (I) Language: {languageString}");
-                    Console.WriteLine($"{X(s++)} (V) Volume: {_sfxVolume:0.00}");
+                    Console.WriteLine($"{X(s++)} (V) SFX Volume: {_sfxVolume:0.00}");
+                    Console.WriteLine($"{X(s++)} (B) Music Volume: {_musicVolume:0.00}");
                     Console.WriteLine($"{X(s++)} (T) Movie Player: {movieString}");
                     Console.WriteLine($"{X(s++)} (A) Adventure Mode Settings...");
                     Console.WriteLine($"{X(s++)} (S) Match Settings...");
@@ -769,9 +778,13 @@ namespace MphRead
                         {
                             selection = 10;
                         }
-                        else if (keyInfo.Key == ConsoleKey.T)
+                        else if (keyInfo.Key == ConsoleKey.B)
                         {
                             selection = 11;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.T)
+                        {
+                            selection = 12;
                         }
                         else if (keyInfo.Key == ConsoleKey.A)
                         {
@@ -851,6 +864,11 @@ namespace MphRead
                                 Sfx.Volume = (float)_sfxVolume;
                             }
                             else if (selection == 11)
+                            {
+                                _musicVolume = 0.50m;
+                                Music.UserVolume = (float)_musicVolume;
+                            }
+                            else if (selection == 12)
                             {
                                 _movieId = -1;
                             }
@@ -983,6 +1001,11 @@ namespace MphRead
                                 Sfx.Volume = (float)_sfxVolume;
                             }
                             else if (selection == 11)
+                            {
+                                _musicVolume = Math.Min(_musicVolume + 0.05m, 1.0m);
+                                Music.UserVolume = (float)_musicVolume;
+                            }
+                            else if (selection == 12)
                             {
                                 _movieId++;
                                 if (_movieId == 13 || _movieId == 34)
@@ -1126,6 +1149,11 @@ namespace MphRead
                                 Sfx.Volume = (float)_sfxVolume;
                             }
                             else if (selection == 11)
+                            {
+                                _musicVolume = Math.Max(_musicVolume - 0.05m, 0);
+                                Music.UserVolume = (float)_musicVolume;
+                            }
+                            else if (selection == 12)
                             {
                                 _movieId--;
                                 if (_movieId == 13 || _movieId == 34)

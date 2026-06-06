@@ -502,6 +502,10 @@ namespace MphRead.Entities
 
             public void ProcessInput()
             {
+                if (_nodeData == null)
+                {
+                    return;
+                }
                 Flags3 |= AiFlags3.NoInput;
                 for (int i = 0; i < _buttons.AllButtons.Count; i++)
                 {

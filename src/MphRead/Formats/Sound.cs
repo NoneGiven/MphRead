@@ -530,28 +530,24 @@ namespace MphRead.Formats.Sound
             // SSEQ
             foreach (SeqInfo info in seqInfo)
             {
-                // mustodo: read SSEQ files
                 filesRead++;
             }
 
             // SSAR
             foreach (uint fileId in seqarcInfo)
             {
-                // mustodo: read SSAR files
                 filesRead++;
             }
 
             // SBNK
             foreach (BankInfo info in bankInfo)
             {
-                // mustodo: read SBNK files
                 filesRead++;
             }
 
             // SWAR
             foreach (uint fileId in wavearcInfo)
             {
-                // mustodo: read SWAR files
                 filesRead++;
             }
 
@@ -1133,26 +1129,26 @@ namespace MphRead.Formats.Sound
     public readonly struct RawMusicTrack
     {
         public readonly ushort SeqId;
-        public readonly ushort Field2;
+        public readonly ushort FadeOutFrames;
         public readonly ushort Tracks;
-        public readonly ushort Field6;
+        public readonly ushort FadeInFrames;
     }
 
     public class MusicTrack
     {
-        public uint Id { get; }
-        public ushort SeqId { get; }
-        public ushort Field2 { get; }
+        public MusicId MusicId { get; }
+        public SeqId SeqId { get; }
         public ushort Tracks { get; }
-        public ushort Field6 { get; }
+        public ushort FadeOutFrames { get; }
+        public ushort FadeInFrames { get; }
 
         public MusicTrack(uint id, RawMusicTrack raw)
         {
-            Id = id;
-            SeqId = raw.SeqId;
-            Field2 = raw.Field2;
+            MusicId = (MusicId)id;
+            SeqId = raw.SeqId == UInt16.MaxValue ? SeqId.None : (SeqId)raw.SeqId;
+            FadeOutFrames = raw.FadeOutFrames;
             Tracks = raw.Tracks;
-            Field6 = raw.Field6;
+            FadeInFrames = raw.FadeInFrames;
         }
     }
 

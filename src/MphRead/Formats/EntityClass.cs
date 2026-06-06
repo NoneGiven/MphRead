@@ -1150,8 +1150,8 @@ namespace MphRead.Editor
         public ushort DelayFrames { get; set; }
         public byte PlayerId1 { get; set; }
         public byte PlayerId2 { get; set; }
-        public short Entity1 { get; set; }
-        public short Entity2 { get; set; }
+        public short Entity1 { get; set; } = -1;
+        public short Entity2 { get; set; } = -1;
         public short EndMessageTargetId { get; set; }
         public Message EndMessage { get; set; }
         public int EndMessageParam { get; set; }

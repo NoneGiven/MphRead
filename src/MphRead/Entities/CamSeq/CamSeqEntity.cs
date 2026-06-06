@@ -121,7 +121,15 @@ namespace MphRead.Entities
                         {
                             PlayerEntity.Main.RestartTimedSfx();
                         }
-                        // mustodo: play paused music
+                        int musicValue = CameraSequence.MusicData[Data.SequenceId];
+                        if (musicValue != 0
+                            && ((musicValue & 0x2000) == 0 || (((int)GameState.StorySave.BossFlags >> (2 * _scene.AreaId)) & 3) == 0)
+                            && ((musicValue & 0x400) == 0 || GameState.EscapeTimer == -1 || GameState.EscapeState != EscapeState.Escape)
+                            && (musicValue & 0x4000) == 0
+                            && (musicValue & 0x8000) == 0)
+                        {
+                            Music.PlayPausedMusic();
+                        }
                         _active = false;
                         Sequence.End();
                         Current = null;
@@ -140,7 +148,10 @@ namespace MphRead.Entities
             {
                 return;
             }
-            // mustodo: test music mask
+            int musicValue = CameraSequence.MusicData[Data.SequenceId];
+            bool hasMusic = musicValue != 0
+                && ((musicValue & 0x2000) == 0 || (((int)GameState.StorySave.BossFlags >> (2 * _scene.AreaId)) & 3) == 0)
+                && ((musicValue & 0x400) == 0 || GameState.EscapeTimer == -1 || GameState.EscapeState != EscapeState.Escape);
             int sfxData = CameraSequence.SfxData[Data.SequenceId];
             if (_delayTimer == 0)
             {
@@ -163,12 +174,35 @@ namespace MphRead.Entities
                         PlayerEntity.Main.StopTimedSfx();
                     }
                 }
-                // mustodo: stop music or something
+                if (hasMusic && (musicValue & 0x4000) == 0)
+                {
+                    Music.Pause();
+                }
             }
             _delayTimer++;
             if (_delayTimer > Data.DelayFrames * 2) // todo: FPS stuff
             {
-                // mustodo: update music
+                if (hasMusic)
+                {
+                    int musicOrSeqId = musicValue & 0x3FF;
+                    if ((musicValue & 0x800) != 0)
+                    {
+                        Music.MusicToResume = (MusicId)musicOrSeqId;
+                    }
+                    else if ((musicValue & 0x1000) != 0 && GameState.EscapeTimer != -1 && GameState.EscapeState == EscapeState.Escape)
+                    {
+                        Music.PlayMusic(MusicId.SEQ_OREGANO_M55);
+                        Music.UpdateEscapeMusic();
+                    }
+                    else if ((musicValue & 0x4000) != 0)
+                    {
+                        Music.PlayMusic((MusicId)musicOrSeqId);
+                    }
+                    else
+                    {
+                        Music.PlaySeq((SeqId)musicOrSeqId);
+                    }
+                }
                 int scriptId = sfxData & 0x1FFF;
                 if (scriptId != 0)
                 {

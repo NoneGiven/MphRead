@@ -223,6 +223,7 @@ namespace MphRead
                 scene.SetFade(FadeType.FadeInBlack, 20 / 30f, overwrite: true);
             }
             ForceEndGame = false;
+            _tempoChanged = false;
             _stateChanged = false;
             _lastAlarmTime = 0;
             _nextAlarmIndex = 0;
@@ -237,6 +238,7 @@ namespace MphRead
             }
         }
 
+        private static bool _tempoChanged = false;
         private static bool _stateChanged = false;
         private static float _matchEndTime = 0;
         private static float _lastAlarmTime = 0;
@@ -299,7 +301,7 @@ namespace MphRead
                         EscapeTimer -= scene.FrameTime;
                         if (EscapeState == EscapeState.Escape)
                         {
-                            UpdateEscapeSounds(EscapeTimer);
+                            Music.UpdateEscapeMusic();
                         }
                         else
                         {
@@ -317,10 +319,14 @@ namespace MphRead
                 }
                 if (MatchTime != 0 && !ForceEndGame)
                 {
-                    // mustodo: update music
                     if (Multiplayer)
                     {
                         var time = TimeSpan.FromSeconds(MatchTime);
+                        if (time.TotalMinutes < 1 && time.Seconds <= 59 && !_tempoChanged)
+                        {
+                            Music.UpdateTempo(307, 900 / 30f);
+                            _tempoChanged = true;
+                        }
                         if (time.TotalMinutes < 1 && time.Seconds <= 9)
                         {
                             float comparison = 1;
@@ -377,8 +383,11 @@ namespace MphRead
                     Sfx.Instance.StopFreeSfxScripts();
                     Sfx.Instance.StopAllSound();
                     PlayerEntity.Main.StopLongSfx();
-                    // sfxtodo: stop more kinds of SFX?
-                    // mustodo: stop music and play timeout jingle
+                    // sfxtodo: stop more kinds of SFX? fade for 1P mode?
+                    if (!GameState.SinglePlayer)
+                    {
+                        Music.PlaySeq(SeqId.TIMEOUT);
+                    }
                 }
             }
             else if (MatchState == MatchState.GameOver)
@@ -643,7 +652,7 @@ namespace MphRead
             void Quit()
             {
                 scene.SetFade(FadeType.FadeOutBlack, length: 10 / 30f, overwrite: true, AfterFade.Exit);
-                // mustodo: stop music
+                Music.Stop(fadeTime: 10 / 30f);
                 Sfx.Instance.PlaySample((int)SfxId.QUIT_GAME, source: null, loop: false,
                     noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
             }
@@ -675,7 +684,7 @@ namespace MphRead
                         {
                             scene.SetFade(FadeType.FadeOutWhite, length: 20 / 30f, overwrite: true, AfterFade.EnterShip);
                         }
-                        // mustodo: stop music
+                        Music.Stop(fadeTime: 20 / 30f);
                         // todo: fade SFX
                         Sfx.Instance.PlaySample((int)SfxId.RETURN_TO_SHIP_YES, source: null, loop: false,
                             noUpdate: false, recency: -1, sourceOnly: false, cancellable: false);
@@ -957,7 +966,8 @@ namespace MphRead
                     Sfx.QueueStream(VoiceId.VOICE_EVACUATE);
                     Sfx.QueueStream(VoiceId.VOICE_EVACUATE, delay: 3);
                     Sfx.QueueStream(VoiceId.VOICE_EVACUATE, delay: 6);
-                    // mustodo: play music and update tempo
+                    Music.PlayMusic(MusicId.SEQ_OREGANO_M55);
+                    Music.UpdateTempo(245, 0); // 95.7%
                     StorySave.TriggerState[2] |= 0x80;
                 }
                 else
@@ -972,7 +982,7 @@ namespace MphRead
 
         private static void UpdateEventSounds(float timer)
         {
-            // mustodo: update tempo
+            Music.UpdateEventMusic(timer);
             if (timer > 165 / 30f)
             {
                 _playedTimedEventSfx = false;
@@ -987,11 +997,6 @@ namespace MphRead
                 PlayerEntity.Main.StopTimedSfx(SfxId.PUZZLE_TIMER1_SCR);
                 _playedTimedEventSfx = false;
             }
-        }
-
-        private static void UpdateEscapeSounds(float timer)
-        {
-            // mustodo: update tempo and/or switch tracks
         }
 
         public static void UpdateState()

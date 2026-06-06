@@ -926,7 +926,7 @@ namespace MphRead.Entities
             AiData.HealthThreshold = data.HunterHealthThreshold;
             if (Hunter == Hunter.Guardian)
             {
-                // mustodo: start music
+                Music.PlayEncounterMusic(Hunter.Guardian);
             }
             // todo: update story save for multiplayer unlock
             if (data.HunterWeapon != 255)
@@ -1882,13 +1882,13 @@ namespace MphRead.Entities
                         else
                         {
                             _sfxStopTimer = 10 / 30f;
-                            // mustodo?: update music or something?
+                            // todo: rumble
                             _soundSource.PlayFreeSfx(SfxId.SAMUS_DEATH);
                         }
                     }
                     else
                     {
-                        // mustodo: update hunter music
+                        Music.UpdateEncounterMusic((int)Hunter);
                         PlayHunterSfx(HunterSfx.Death);
                     }
                     StopBeamChargeSfx(CurrentWeapon);
@@ -1988,7 +1988,7 @@ namespace MphRead.Entities
                         CameraInfo.SetShake(0.25f);
                         _lostOctolithEnemyIndex = -1;
                         if (GameState.StorySave.CurrentOctoliths != 0 && PlayerCount > 1
-                            && (GameState.EscapeTimer == 0 || GameState.EscapeState != EscapeState.Escape))
+                            && (GameState.EscapeTimer != 0 || GameState.EscapeState != EscapeState.Escape))
                         {
                             float minDistance = 0;
                             for (int i = 1; i < PlayerCount; i++)
@@ -2010,8 +2010,9 @@ namespace MphRead.Entities
                                 _lostOctolithDrawPos = Position.AddY(0.6f);
                                 _lostOctolithSpeed = 0.2f * 30; // frame-independent drag
                             }
-                            // mustodo: update music
                         }
+                        Music.UpdateEncounterMusic(-2);
+                        Music.Stop(fadeTime: 150 / 30f);
                     }
                     else if (attacker?.IsMainPlayer == true)
                     {
@@ -2483,7 +2484,7 @@ namespace MphRead.Entities
             }
             if (IsMainPlayer)
             {
-                // todo: do something (HUD or camera-related?)
+                // todo: rumble
             }
         }
 
