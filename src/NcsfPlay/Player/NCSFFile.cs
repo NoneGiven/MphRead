@@ -1,6 +1,5 @@
 using System.Buffers.Binary;
 using System.ComponentModel;
-using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using CommunityToolkit.HighPerformance;
 using NCSFCommon;

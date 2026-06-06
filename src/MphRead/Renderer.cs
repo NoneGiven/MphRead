@@ -16,7 +16,6 @@ using MphRead.Formats;
 using MphRead.Formats.Collision;
 using MphRead.Formats.Culling;
 using MphRead.Hud;
-using MphRead.Sound;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
