@@ -1401,6 +1401,11 @@ namespace MphRead.Effects
             }
             else
             {
+                if (MaterialId >= Owner.Model.Materials.Count)
+                {
+                    // todo: investigate this
+                    return;
+                }
                 Vector3[] uvsAndVerts = ArrayPool<Vector3>.Shared.Rent(8);
                 uvsAndVerts[0] = new Vector3(Texcoord0);
                 uvsAndVerts[1] = Vertex0;
