@@ -200,6 +200,7 @@ namespace MphRead
         VOICE_OCTO_RESET = 8,
         VOICE_MULTI_NODE = 9,
         VOICE_EVACUATE = 10
+        // STRM_TITLE_SCREEN = 11
     }
 
     public enum SeqId
@@ -315,7 +316,6 @@ namespace MphRead
         SEQ_SAFFRON_M29 = 29,
         SEQ_INTRO_KANDEN_M30 = 30,
         SEQ_CHUTNEY_M31 = 31,
-        SEQ_CHUTNEY_M68 = 68,
         SEQ_GOREA_2_M32 = 32,
         SEQ_GOREA_2_M34 = 34,
         SEQ_GOREA_2_M35 = 35,
@@ -338,7 +338,8 @@ namespace MphRead
         SEQ_INDIGO_M59 = 59,
         SEQ_CREDITS_M65 = 65,
         SEQ_CREDITS_M66 = 66,
-        SEQ_BRINSTAR_M67 = 67
+        SEQ_BRINSTAR_M67 = 67,
+        SEQ_CHUTNEY_M68 = 68
     }
 
     public enum SfxId
