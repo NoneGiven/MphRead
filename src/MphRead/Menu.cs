@@ -663,8 +663,8 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (P) MPH Version: {mphKey} ({mphInfo[mphKey]})");
                     Console.WriteLine($"{X(s++)} (F) FH Version: {fhKey} ({fhInfo[fhKey]})");
                     Console.WriteLine($"{X(s++)} (I) Language: {languageString}");
-                    Console.WriteLine($"{X(s++)} (V) Volume: {_sfxVolume:0.00}");
-                    Console.WriteLine($"{X(s++)} (B) Volume: {_musicVolume:0.00}");
+                    Console.WriteLine($"{X(s++)} (V) SFX Volume: {_sfxVolume:0.00}");
+                    Console.WriteLine($"{X(s++)} (B) Music Volume: {_musicVolume:0.00}");
                     Console.WriteLine($"{X(s++)} (T) Movie Player: {movieString}");
                     Console.WriteLine($"{X(s++)} (A) Adventure Mode Settings...");
                     Console.WriteLine($"{X(s++)} (S) Match Settings...");
