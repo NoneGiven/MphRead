@@ -434,12 +434,12 @@ namespace MphRead.Entities.Enemies
 
         private readonly ImmutableArray<MusicId> _musicTracks = // 6
         [
-            MusicId.SEQ_GOREA_1_M22,
-            MusicId.SEQ_GOREA_1_M26,
-            MusicId.SEQ_GOREA_1_M27,
-            MusicId.SEQ_GOREA_1_M24,
-            MusicId.SEQ_GOREA_1_M23,
-            MusicId.SEQ_GOREA_1_M25
+            MusicId.SEQ_GOREA_1_M22, // Battlehammer (Weavel)
+            MusicId.SEQ_GOREA_1_M26, // Volt Driver  (Kanden)
+            MusicId.SEQ_GOREA_1_M27, // Mamgmaul     (Spire)
+            MusicId.SEQ_GOREA_1_M24, // Judicator    (Noxus)
+            MusicId.SEQ_GOREA_1_M23, // Imperialist  (Trace)
+            MusicId.SEQ_GOREA_1_M25  // Shock Coil   (Sylux)
         ];
 
         protected override void EnemyProcess()
