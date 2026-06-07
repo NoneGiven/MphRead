@@ -10,7 +10,7 @@ namespace MphRead
 {
     internal static class Program
     {
-        public static Version Version { get; } = new Version(0, 34, 3, 0);
+        public static Version Version { get; } = new Version(0, 35, 0, 0);
         private static readonly Version _minExtractVersion = new Version(0, 19, 0, 0);
 
         private static void Main(string[] args)
