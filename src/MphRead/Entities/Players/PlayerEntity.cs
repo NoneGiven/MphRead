@@ -505,6 +505,7 @@ namespace MphRead.Entities
             Vector3 prevPos = _position;
             Vector3 prevUp = _upVector;
             Vector3 prevFacing = _facingVector;
+            NodeRef prevNodeRef = NodeRef;
             int prevHealth = _health;
             _models.Clear();
             _bipedModelLods[0] = Read.GetModelInstance(Metadata.HunterModels[Hunter][0]);
@@ -641,7 +642,12 @@ namespace MphRead.Entities
             {
                 // the game preserves a node name string across movie load, and there is functionality to specify it
                 // when starting the movie, but that value is ignored and rmMain is always set to be preserved instead
+                // on the other hand, we could be reloading a room without rmMain, so fall back to the previous value
                 NodeRef nodeRef = _scene.GetNodeRefByName("rmMain");
+                if (nodeRef == NodeRef.None)
+                {
+                    nodeRef = prevNodeRef;
+                }
                 Spawn(prevPos, prevFacing, prevUp, nodeRef, respawn: false);
                 _health = prevHealth;
                 Flags1 |= PlayerFlags1.Grounded;

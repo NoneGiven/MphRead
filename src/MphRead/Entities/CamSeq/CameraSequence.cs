@@ -230,9 +230,9 @@ namespace MphRead.Formats
             if (SequenceId > 3)
             {
                 PlayerEntity.Main.CloseDialogs();
-                PlayerEntity.Main.HudEndDisrupted();
                 PlayerEntity.Main.ResetCombatVisor();
             }
+            PlayerEntity.Main.HudEndDisrupted();
         }
 
         public void Restart(ushort transitionTimer = 0, ushort transitionTime = 0)
