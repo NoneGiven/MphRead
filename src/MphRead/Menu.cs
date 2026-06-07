@@ -2593,7 +2593,6 @@ namespace MphRead
                 stream = (VoiceId)id;
             }
 
-            // sktodo
             void Stop()
             {
                 MusicPlayer.Stop();
