@@ -480,7 +480,7 @@ namespace MphRead.Sound
             }
             if (_scene.CameraMode == CameraMode.Player)
             {
-                return PlayerEntity.Main.CameraInfo.UpVector;
+                return PlayerEntity.Main.CameraInfo.TrueUp;
             }
             return _scene.ViewMatrix.Row1.Xyz.Normalized();
         }
