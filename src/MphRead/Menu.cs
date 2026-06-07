@@ -67,6 +67,26 @@ namespace MphRead
         private static decimal _musicVolume = 0.50m;
         private static int _movieId = -1;
 
+        private static void PrintSoundInfo(SoundCapability soundCapability)
+        {
+            if (soundCapability == SoundCapability.None)
+            {
+                Console.WriteLine();
+                Console.WriteLine("WARNING: Audio system could not be loaded. " +
+                    "Sound effects will not be played.");
+                Console.WriteLine("You may need to install OpenAL Soft on your system.");
+                Console.WriteLine("Music and video playback will not be affected.");
+            }
+            else if (soundCapability == SoundCapability.Unsupported)
+            {
+                Console.WriteLine();
+                Console.WriteLine("WARNING: Audio system was loaded, " +
+                    "but an unsupported version of OpenAL was used.");
+                Console.WriteLine("You may need to install OpenAL Soft on your system for sounds to play correctly.");
+                Console.WriteLine("Music and video playback will not be affected.");
+            }
+        }
+
         public static void ShowMenuPrompts()
         {
             SoundCapability soundCapability = Sfx.CheckAudioLoad();
@@ -642,7 +662,7 @@ namespace MphRead
                     }
                     else if (prompt == -4)
                     {
-                        if (!ShowSoundTest())
+                        if (!ShowSoundTest(soundCapability))
                         {
                             return;
                         }
@@ -685,20 +705,7 @@ namespace MphRead
                     s--;
                     if (prompt == 0)
                     {
-                        if (soundCapability == SoundCapability.None)
-                        {
-                            Console.WriteLine();
-                            Console.WriteLine("WARNING: Audio system could not be loaded. " +
-                                "Sound effects will not be played.");
-                            Console.WriteLine("You may need to install OpenAL Soft on your system.");
-                        }
-                        else if (soundCapability == SoundCapability.Unsupported)
-                        {
-                            Console.WriteLine();
-                            Console.WriteLine("WARNING: Audio system was loaded, " +
-                                "but an unsupported version of OpenAL was used.");
-                            Console.WriteLine("You may need to install OpenAL Soft on your system for sounds to play correctly.");
-                        }
+                        PrintSoundInfo(soundCapability);
                         ConsoleKeyInfo keyInfo = Console.ReadKey();
                         if (keyInfo.Key == ConsoleKey.Escape)
                         {
@@ -2465,7 +2472,7 @@ namespace MphRead
             (MusicType.Music,  (int)MusicId.SEQ_GOREA_2_M35,      "Oubliette (Node)") // *
         ];
 
-        private static bool ShowSoundTest()
+        private static bool ShowSoundTest(SoundCapability soundCapability)
         {
             int selection = 0;
             IReadOnlyList<MusicTrack> info = SoundRead.ReadInterMusicInfo();
@@ -2479,6 +2486,11 @@ namespace MphRead
             string seqStr = $"SEQ_{seq}";
             SeqId playingSeq = SeqId.None;
             ushort tracks = UInt16.MaxValue;
+
+            if (soundCapability != SoundCapability.None)
+            {
+                Sfx.Load(scene: null!);
+            }
 
             void UpdatePlaylist(int dir)
             {
@@ -2539,6 +2551,7 @@ namespace MphRead
             void PlayPlaylist()
             {
                 MusicPlayer.Stop();
+                Sfx.Instance?.StopAllSound(force: true);
                 playingMusic = MusicId.None;
                 playingSeq = SeqId.None;
                 if (playlist != playingPlaylist)
@@ -2548,9 +2561,10 @@ namespace MphRead
                     SeqId seqToPlay;
                     if (list.Type == MusicType.Stream)
                     {
-                        return; // sktodo
+                        Sfx.Instance?.PlayFreeStream(list.Id);
+                        return;
                     }
-                    else if (list.Type == MusicType.Seq)
+                    if (list.Type == MusicType.Seq)
                     {
                         seqToPlay = (SeqId)list.Id;
                         tracks = UInt16.MaxValue;
@@ -2574,6 +2588,7 @@ namespace MphRead
             void PlayMusic()
             {
                 MusicPlayer.Stop();
+                Sfx.Instance?.StopAllSound(force: true);
                 playingPlaylist = -1;
                 playingSeq = SeqId.None;
                 if (music != playingMusic)
@@ -2594,6 +2609,7 @@ namespace MphRead
             void PlaySeq()
             {
                 MusicPlayer.Stop();
+                Sfx.Instance?.StopAllSound(force: true);
                 playingPlaylist = -1;
                 playingMusic = MusicId.None;
                 if (seq != playingSeq)
@@ -2627,13 +2643,14 @@ namespace MphRead
                 Console.WriteLine();
                 Console.WriteLine("Sound Test");
                 Console.WriteLine();
-                Console.WriteLine($"{X(s++)} (P) MPH Playlist: {GetPlaylistString()}");
-                Console.WriteLine($"{X(s++)} (M) Music Tracks: {musicStr}");
-                Console.WriteLine($"{X(s++)} (S) Raw Sequence: {seqStr}");
+                Console.WriteLine($"{X(s++)} (P) MPH Playlist: {playlist,2} - {GetPlaylistString()}");
+                Console.WriteLine($"{X(s++)} (M) Music Tracks: {(int)music,2} - {musicStr}");
+                Console.WriteLine($"{X(s++)} (S) Raw Sequence: {(int)seq,2} - {seqStr}");
                 //Console.WriteLine($"{X(s++)} (X) Sound Effect: {sfxStr}");
                 //Console.WriteLine($"{X(s++)} (V) Voice/Stream: {voiceStr}");
                 Console.WriteLine($"{X(s++)} (B) Go Back");
                 s--;
+                PrintSoundInfo(soundCapability);
                 ConsoleKeyInfo keyInfo = Console.ReadKey();
                 if (keyInfo.Key == ConsoleKey.UpArrow)
                 {
@@ -2654,6 +2671,7 @@ namespace MphRead
                 else if (keyInfo.Key == ConsoleKey.Escape)
                 {
                     MusicPlayer.Stop();
+                    Sfx.ShutDown();
                     return false;
                 }
                 else if (keyInfo.Key == ConsoleKey.B || selection == s
@@ -2813,6 +2831,7 @@ namespace MphRead
                 }
             }
             MusicPlayer.Stop();
+            Sfx.ShutDown();
             return true;
         }
 

@@ -1341,6 +1341,19 @@ namespace MphRead.Sound
             _activeQueue.AddLast(item);
         }
 
+        public override void PlayFreeStream(int id)
+        {
+            LinkedListNode<QueueItem>? node = _activeQueue.First;
+            while (node != null)
+            {
+                _activeQueue.Remove(node);
+                _inactiveQueue.Enqueue(node.Value);
+                node = _activeQueue.First;
+            }
+            QueueStream(id, delay: 0, expiration: 0);
+            UpdateStreams(0);
+        }
+
         private void UpdateStreams(float time)
         {
             int index = 0;
@@ -1360,6 +1373,7 @@ namespace MphRead.Sound
                         AL.Source(_streamInstance, ALSourcei.Buffer, 0);
                         item.Stream = null;
                         _activeQueue.Remove(node);
+                        _inactiveQueue.Enqueue(node.Value);
                         node = next;
                         index++;
                         continue;
@@ -1401,6 +1415,7 @@ namespace MphRead.Sound
                     {
                         item.ExpirationTimer = 0;
                         _activeQueue.Remove(node);
+                        _inactiveQueue.Enqueue(node.Value);
                     }
                 }
                 node = next;
@@ -1521,6 +1536,10 @@ namespace MphRead.Sound
         }
 
         public virtual void QueueStream(int id, float delay, float expiration)
+        {
+        }
+
+        public virtual void PlayFreeStream(int id)
         {
         }
 
