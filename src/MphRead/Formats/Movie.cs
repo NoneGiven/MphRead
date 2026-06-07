@@ -483,6 +483,7 @@ namespace MphRead.Formats
         public void Reset()
         {
             _vxFrames?.Clear();
+            _framesQueued = 0;
             UseStaticBuffers = true;
             Array.Clear(_sampleBuffer);
         }
