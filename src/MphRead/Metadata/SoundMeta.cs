@@ -199,8 +199,8 @@ namespace MphRead
         VOICE_OCTO_SCORE = 7,
         VOICE_OCTO_RESET = 8,
         VOICE_MULTI_NODE = 9,
-        VOICE_EVACUATE = 10
-        // STRM_TITLE_SCREEN = 11
+        VOICE_EVACUATE = 10,
+        STRM_TITLE_SCREEN = 11
     }
 
     public enum SeqId

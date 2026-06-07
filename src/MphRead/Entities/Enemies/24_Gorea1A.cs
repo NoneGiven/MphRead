@@ -432,14 +432,16 @@ namespace MphRead.Entities.Enemies
             "ChestCore", "HeadFullLit"
         ];
 
+        // todo: bugfix: the tracks for Battlehammer and Shock Coil are swapped
+        // the Battlehammer track uses Sylux's hunter music, and Shock Coil uses Weavel's
         private readonly ImmutableArray<MusicId> _musicTracks = // 6
         [
-            MusicId.SEQ_GOREA_1_M22, // Battlehammer (Weavel)
+            MusicId.SEQ_GOREA_1_M22, // Battlehammer (Sylux)
             MusicId.SEQ_GOREA_1_M26, // Volt Driver  (Kanden)
             MusicId.SEQ_GOREA_1_M27, // Mamgmaul     (Spire)
             MusicId.SEQ_GOREA_1_M24, // Judicator    (Noxus)
             MusicId.SEQ_GOREA_1_M23, // Imperialist  (Trace)
-            MusicId.SEQ_GOREA_1_M25  // Shock Coil   (Sylux)
+            MusicId.SEQ_GOREA_1_M25  // Shock Coil   (Weavel)
         ];
 
         protected override void EnemyProcess()
