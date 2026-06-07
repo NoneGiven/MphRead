@@ -409,8 +409,6 @@ namespace MphRead.Entities
             player.StopAllSfx();
             Hunter hunter = player.Hunter;
             int recolor = player.Recolor;
-            GameState.StorySave.CheckpointRoomId = -1;
-            GameState.StorySave.CheckpointEntityId = -1;
             if (GameState.TransitionRoomId == -1)
             {
                 GameState.TransitionRoomId = _scene.RoomId;
