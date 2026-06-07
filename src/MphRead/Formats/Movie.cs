@@ -132,8 +132,6 @@ namespace MphRead
                 }
                 VxDecoder.Instance2.GetImage(frameIndex: 0, _botImageBuffer);
             }
-            Debug.Assert(!_dualScreenMovie || VxDecoder.Instance1.FrameCount == VxDecoder.Instance2.FrameCount);
-            _movieFrameTotal = VxDecoder.Instance1.FrameCount;
             if (_topMovieBinding == -1)
             {
                 _topMovieBinding = ++_textureCount;
@@ -146,6 +144,8 @@ namespace MphRead
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, _frameWidth, _frameHeight, 0,
                 PixelFormat.Rgb, PixelType.UnsignedByte, _botImageBuffer);
             GL.BindTexture(TextureTarget.Texture2D, 0);
+            Debug.Assert(!_dualScreenMovie || VxDecoder.Instance1.FrameCount == VxDecoder.Instance2.FrameCount);
+            _movieFrameTotal = VxDecoder.Instance1.FrameCount;
             _lastRenderedMovieFrameIndex = 0;
             _movieFrameIndex = 0;
             _movieFrameCount = 0;
