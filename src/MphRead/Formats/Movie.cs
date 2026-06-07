@@ -132,8 +132,8 @@ namespace MphRead
                 }
                 VxDecoder.Instance2.GetImage(frameIndex: 0, _botImageBuffer);
             }
+            Debug.Assert(!_dualScreenMovie || VxDecoder.Instance1.FrameCount == VxDecoder.Instance2.FrameCount);
             _movieFrameTotal = VxDecoder.Instance1.FrameCount;
-            Debug.Assert(!_dualScreenMovie || VxDecoder.Instance2.FrameCount == _movieFrameTotal);
             if (_topMovieBinding == -1)
             {
                 _topMovieBinding = ++_textureCount;
