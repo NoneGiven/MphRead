@@ -232,7 +232,7 @@ namespace MphRead.Entities
             bool updateSave = false;
             Flags &= ~SpawnerFlags.Active;
             GameState.StorySave.SetRoomState(_scene.RoomId, Id, state: 1);
-            if (_data.EnemyType != EnemyType.Hunter || _data.Fields.S09.EncounterType == 1)
+            if ((_data.EnemyType != EnemyType.Hunter || _data.Fields.S09.EncounterType == 1) && _scene.AreaId < 8)
             {
                 // this has an effect on music update messages
                 int type = (int)_data.EnemyType;
