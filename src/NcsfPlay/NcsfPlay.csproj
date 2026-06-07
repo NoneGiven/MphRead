@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
+    <DebugType>embedded</DebugType>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
