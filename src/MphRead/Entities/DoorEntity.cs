@@ -110,7 +110,7 @@ namespace MphRead.Entities
         public override void Initialize()
         {
             base.Initialize();
-            _scene.LoadEffect(114); // lockDefeat
+            _scene.LoadEffect(114, persistent: false); // lockDefeat
             if (_data.ConnectorId != 255 && _scene.Room != null)
             {
                 _scene.Room.AddConnector(this);

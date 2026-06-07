@@ -285,26 +285,26 @@ namespace MphRead.Entities
                 _effectNodeIds[3] = _models[0].Model.GetNodeIndexByName("R_Turret3");
                 if (_effectNodeIds[0] != -1 || _effectNodeIds[1] != -1 || _effectNodeIds[2] != -1 || _effectNodeIds[3] != -1)
                 {
-                    _scene.LoadEffect(_nozzleEffectId);
+                    _scene.LoadEffect(_nozzleEffectId, persistent: false);
                 }
             }
             if (_data.ResistEffectId != 0)
             {
-                _scene.LoadEffect(_data.ResistEffectId);
+                _scene.LoadEffect(_data.ResistEffectId, persistent: false);
             }
             if (_data.DamageEffectId != 0)
             {
-                _scene.LoadEffect(_data.DamageEffectId);
+                _scene.LoadEffect(_data.DamageEffectId, persistent: false);
             }
             if (_data.DeadEffectId != 0)
             {
-                _scene.LoadEffect(_data.DeadEffectId);
+                _scene.LoadEffect(_data.DeadEffectId, persistent: false);
             }
             if (_data.BeamId == 0 && Flags.TestFlag(PlatformFlags.BeamSpawner))
             {
-                _scene.LoadEffect(183); // syluxMissile
-                _scene.LoadEffect(184); // syluxMissileCol
-                _scene.LoadEffect(185); // syluxMissileFlash
+                _scene.LoadEffect(183, persistent: false); // syluxMissile
+                _scene.LoadEffect(184, persistent: false); // syluxMissileCol
+                _scene.LoadEffect(185, persistent: false); // syluxMissileFlash
             }
             _scene.TryGetEntity(_data.ScanMsgTarget, out _scanMessageTarget); // todo: send scan message
             _scene.TryGetEntity(_data.BeamHitMsgTarget, out _hitMessageTarget);

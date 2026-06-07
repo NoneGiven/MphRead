@@ -421,6 +421,7 @@ namespace MphRead
         public FrozenDictionary<uint, FxFuncInfo> Funcs { get; }
         public IReadOnlyList<uint> List2 { get; }
         public IReadOnlyList<EffectElement> Elements { get; }
+        public bool Persistent { get; set; }
 
         public Effect(RawEffect raw, IReadOnlyDictionary<uint, FxFuncInfo> funcs, IReadOnlyList<uint> list2,
             IReadOnlyList<EffectElement> elements, string name)

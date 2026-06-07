@@ -843,17 +843,20 @@ namespace MphRead
             return null;
         }
 
-        public static Effect LoadEffect(int id)
+        public static Effect LoadEffect(int id, bool persistent)
         {
             if (id < 1 || id > Metadata.Effects.Count)
             {
                 throw new ProgramException("Could not get particle.");
             }
             (string name, string? archive) = Metadata.Effects[id];
-            return LoadEffect(id, name, archive);
+            Effect effect = LoadEffectByName(id, name, archive, persistent);
+            effect.Persistent |= persistent;
+            return effect;
         }
 
-        public static Effect LoadEffect(int id, string name, string? archive)
+        // only public to call from testing code
+        public static Effect LoadEffectByName(int id, string name, string? archive, bool persistent)
         {
             string path;
             if (archive == null)
@@ -864,18 +867,19 @@ namespace MphRead
             {
                 path = $"_archives/{archive}/{name}_PS.bin";
             }
-            Effect effect = LoadEffect(id, path);
+            Effect effect = LoadEffectFromPath(id, path);
             foreach (EffectElement element in effect.Elements)
             {
                 if (element.ChildEffectId != 0)
                 {
-                    LoadEffect((int)element.ChildEffectId);
+                    LoadEffect((int)element.ChildEffectId, persistent);
                 }
             }
+            effect.Persistent |= persistent;
             return effect;
         }
 
-        private static Effect LoadEffect(int id, string path)
+        private static Effect LoadEffectFromPath(int id, string path)
         {
             if (id != -1 && _effects.TryGetValue(id, out Effect? cached))
             {

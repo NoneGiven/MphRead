@@ -582,16 +582,16 @@ namespace MphRead
             scene.LoadModel("octolith_simple");
             scene.LoadModel("Octolith");
             // todo?: same as above
-            scene.LoadEffect(10); // ballDeath
-            scene.LoadEffect(216); // deathAlt
-            scene.LoadEffect(187); // flamingAltForm
-            scene.LoadEffect(188); // flamingGun
-            scene.LoadEffect(189); // flamingHunter
+            scene.LoadEffect(10, persistent: true); // ballDeath
+            scene.LoadEffect(216, persistent: true); // deathAlt
+            scene.LoadEffect(187, persistent: true); // flamingAltForm
+            scene.LoadEffect(188, persistent: true); // flamingGun
+            scene.LoadEffect(189, persistent: true); // flamingHunter
             for (int i = 0; i < 9; i++)
             {
-                scene.LoadEffect(Metadata.MuzzleEffectIds[i]);
-                scene.LoadEffect(Metadata.ChargeEffectIds[i]);
-                scene.LoadEffect(Metadata.ChargeLoopEffectIds[i]);
+                scene.LoadEffect(Metadata.MuzzleEffectIds[i], persistent: true);
+                scene.LoadEffect(Metadata.ChargeEffectIds[i], persistent: true);
+                scene.LoadEffect(Metadata.ChargeLoopEffectIds[i], persistent: true);
             }
             PlayerEntity.LoadWeaponNames();
             PlayerEntity.GeneratePlayerVolumes();
@@ -613,8 +613,8 @@ namespace MphRead
             }
             if (hunter == Hunter.Samus)
             {
-                scene.LoadEffect(30); // samusFurl
-                scene.LoadEffect(136); // samusDash
+                scene.LoadEffect(30, persistent: true); // samusFurl
+                scene.LoadEffect(136, persistent: true); // samusDash
             }
             else if (hunter == Hunter.Kanden)
             {
@@ -622,11 +622,11 @@ namespace MphRead
             }
             else if (hunter == Hunter.Spire)
             {
-                scene.LoadEffect(37); // spireAltSlam
+                scene.LoadEffect(37, persistent: true); // spireAltSlam
             }
             else if (hunter == Hunter.Noxus)
             {
-                scene.LoadEffect(235); // noxHit
+                scene.LoadEffect(235, persistent: true); // noxHit
             }
         }
 
@@ -636,18 +636,18 @@ namespace MphRead
             scene.LoadModel("KandenAlt_TailBomb");
             scene.LoadModel("arcWelder");
             scene.LoadModel("arcWelder1");
-            scene.LoadEffect(9); // bombStart
-            scene.LoadEffect(113); // bombStartSylux
-            scene.LoadEffect(119); // bombStartMP
-            scene.LoadEffect(128); // bombKanden
-            scene.LoadEffect(129); // collapsingStreaks
-            scene.LoadEffect(145); // bombBlue
-            scene.LoadEffect(146); // bombSylux
-            scene.LoadEffect(149); // bombStartSyluxG
-            scene.LoadEffect(150); // bombStartSyluxO
-            scene.LoadEffect(151); // bombStartSyluxP
-            scene.LoadEffect(152); // bombStartSyluxR
-            scene.LoadEffect(153); // bombStartSyluxW
+            scene.LoadEffect(9, persistent: true); // bombStart
+            scene.LoadEffect(113, persistent: true); // bombStartSylux
+            scene.LoadEffect(119, persistent: true); // bombStartMP
+            scene.LoadEffect(128, persistent: true); // bombKanden
+            scene.LoadEffect(129, persistent: true); // collapsingStreaks
+            scene.LoadEffect(145, persistent: true); // bombBlue
+            scene.LoadEffect(146, persistent: true); // bombSylux
+            scene.LoadEffect(149, persistent: true); // bombStartSyluxG
+            scene.LoadEffect(150, persistent: true); // bombStartSyluxO
+            scene.LoadEffect(151, persistent: true); // bombStartSyluxP
+            scene.LoadEffect(152, persistent: true); // bombStartSyluxR
+            scene.LoadEffect(153, persistent: true); // bombStartSyluxW
         }
 
         private static void LoadBeamEffectResources(Scene scene)
@@ -664,83 +664,83 @@ namespace MphRead
             scene.LoadModel("trail");
             scene.LoadModel("electroTrail");
             scene.LoadModel("arcWelder");
-            scene.LoadEffect(57); // muzzleElc
-            scene.LoadEffect(58); // muzzleGst
-            scene.LoadEffect(59); // muzzleIce
-            scene.LoadEffect(60); // muzzleJak
-            scene.LoadEffect(61); // muzzleMrt
-            scene.LoadEffect(62); // muzzlePB
-            scene.LoadEffect(63); // muzzleSnp
-            scene.LoadEffect(78); // iceWave
-            scene.LoadEffect(85); // electroCharge
-            scene.LoadEffect(86); // electroHit
-            scene.LoadEffect(92); // powerBeamCharge
-            scene.LoadEffect(98); // powerBeamChargeNoSplat
-            scene.LoadEffect(99); // powerBeamHolo
-            scene.LoadEffect(100); // powerBeamLava
-            scene.LoadEffect(121); // powerBeamHoloBG
-            scene.LoadEffect(122); // powerBeamHoloB
-            scene.LoadEffect(123); // powerBeamIce
-            scene.LoadEffect(124); // powerBeamRock
-            scene.LoadEffect(125); // powerBeamSand
-            scene.LoadEffect(126); // powerBeamSnow
-            scene.LoadEffect(130); // fireProjectile
-            scene.LoadEffect(134); // hammerProjectile
-            scene.LoadEffect(137); // electroProjectile
-            scene.LoadEffect(140); // energyRippleB
-            scene.LoadEffect(141); // energyRippleBG
-            scene.LoadEffect(142); // energyRippleO
-            scene.LoadEffect(171); // electroChargeNA
-            scene.LoadEffect(211); // mortarProjectile
-            scene.LoadEffect(237); // electroProjectileUncharged
-            scene.LoadEffect(238); // enemyProjectile1
-            scene.LoadEffect(246); // enemyMortarProjectile
+            scene.LoadEffect(57, persistent: true); // muzzleElc
+            scene.LoadEffect(58, persistent: true); // muzzleGst
+            scene.LoadEffect(59, persistent: true); // muzzleIce
+            scene.LoadEffect(60, persistent: true); // muzzleJak
+            scene.LoadEffect(61, persistent: true); // muzzleMrt
+            scene.LoadEffect(62, persistent: true); // muzzlePB
+            scene.LoadEffect(63, persistent: true); // muzzleSnp
+            scene.LoadEffect(78, persistent: true); // iceWave
+            scene.LoadEffect(85, persistent: true); // electroCharge
+            scene.LoadEffect(86, persistent: true); // electroHit
+            scene.LoadEffect(92, persistent: true); // powerBeamCharge
+            scene.LoadEffect(98, persistent: true); // powerBeamChargeNoSplat
+            scene.LoadEffect(99, persistent: true); // powerBeamHolo
+            scene.LoadEffect(100, persistent: true); // powerBeamLava
+            scene.LoadEffect(121, persistent: true); // powerBeamHoloBG
+            scene.LoadEffect(122, persistent: true); // powerBeamHoloB
+            scene.LoadEffect(123, persistent: true); // powerBeamIce
+            scene.LoadEffect(124, persistent: true); // powerBeamRock
+            scene.LoadEffect(125, persistent: true); // powerBeamSand
+            scene.LoadEffect(126, persistent: true); // powerBeamSnow
+            scene.LoadEffect(130, persistent: true); // fireProjectile
+            scene.LoadEffect(134, persistent: true); // hammerProjectile
+            scene.LoadEffect(137, persistent: true); // electroProjectile
+            scene.LoadEffect(140, persistent: true); // energyRippleB
+            scene.LoadEffect(141, persistent: true); // energyRippleBG
+            scene.LoadEffect(142, persistent: true); // energyRippleO
+            scene.LoadEffect(171, persistent: true); // electroChargeNA
+            scene.LoadEffect(211, persistent: true); // mortarProjectile
+            scene.LoadEffect(237, persistent: true); // electroProjectileUncharged
+            scene.LoadEffect(238, persistent: true); // enemyProjectile1
+            scene.LoadEffect(246, persistent: true); // enemyMortarProjectile
         }
 
         private static void LoadRoomResources(Scene scene)
         {
-            scene.LoadEffect(1); // powerBeam
-            scene.LoadEffect(2); // powerBeamNoSplat
-            scene.LoadEffect(5); // missile1
-            scene.LoadEffect(6); // mortar1
-            scene.LoadEffect(7); // shotGunCol
-            scene.LoadEffect(8); // shotGunShrapnel
-            scene.LoadEffect(11); // jackHammerCol
-            scene.LoadEffect(12); // effectiveHitPB
-            scene.LoadEffect(13); // effectiveHitElectric
-            scene.LoadEffect(14); // effectiveHitMsl
-            scene.LoadEffect(15); // effectiveHitJack
-            scene.LoadEffect(16); // effectiveHitSniper
-            scene.LoadEffect(17); // effectiveHitIce
-            scene.LoadEffect(18); // effectiveHitMortar
-            scene.LoadEffect(19); // effectiveHitGhost
-            scene.LoadEffect(20); // sprEffectivePB
-            scene.LoadEffect(21); // sprEffectiveElectric
-            scene.LoadEffect(22); // sprEffectiveMsl
-            scene.LoadEffect(23); // sprEffectiveJack
-            scene.LoadEffect(24); // sprEffectiveSniper
-            scene.LoadEffect(25); // sprEffectiveIce
-            scene.LoadEffect(26); // sprEffectiveMortar
-            scene.LoadEffect(27); // sprEffectiveGhost
-            scene.LoadEffect(28); // sniperCol
-            scene.LoadEffect(31); // spawnEffect
-            scene.LoadEffect(33); // spawnEffectMP
-            scene.LoadEffect(99); // powerBeamHolo
-            scene.LoadEffect(115); // ineffectivePsycho
-            scene.LoadEffect(154); // mpEffectivePB
-            scene.LoadEffect(155); // mpEffectiveElectric
-            scene.LoadEffect(156); // mpEffectiveMsl
-            scene.LoadEffect(157); // mpEffectiveJack
-            scene.LoadEffect(158); // mpEffectiveSniper
-            scene.LoadEffect(159); // mpEffectiveIce
-            scene.LoadEffect(160); // mpEffectiveMortar
-            scene.LoadEffect(161); // mpEffectiveGhost
-            scene.LoadEffect(173); // jackHammerColNA
-            scene.LoadEffect(190); // missileCharged
-            scene.LoadEffect(191); // mortarCharged
-            scene.LoadEffect(192); // mortarChargedAffinity
-            scene.LoadEffect(231); // iceShatter
-            scene.LoadEffect(239); // enemyCol1
+            scene.LoadEffect(1, persistent: true); // powerBeam
+            scene.LoadEffect(2, persistent: true); // powerBeamNoSplat
+            scene.LoadEffect(5, persistent: true); // missile1
+            scene.LoadEffect(6, persistent: true); // mortar1
+            scene.LoadEffect(7, persistent: true); // shotGunCol
+            scene.LoadEffect(8, persistent: true); // shotGunShrapnel
+            scene.LoadEffect(11, persistent: true); // jackHammerCol
+            scene.LoadEffect(12, persistent: true); // effectiveHitPB
+            scene.LoadEffect(13, persistent: true); // effectiveHitElectric
+            scene.LoadEffect(14, persistent: true); // effectiveHitMsl
+            scene.LoadEffect(15, persistent: true); // effectiveHitJack
+            scene.LoadEffect(16, persistent: true); // effectiveHitSniper
+            scene.LoadEffect(17, persistent: true); // effectiveHitIce
+            scene.LoadEffect(18, persistent: true); // effectiveHitMortar
+            scene.LoadEffect(19, persistent: true); // effectiveHitGhost
+            scene.LoadEffect(20, persistent: true); // sprEffectivePB
+            scene.LoadEffect(21, persistent: true); // sprEffectiveElectric
+            scene.LoadEffect(22, persistent: true); // sprEffectiveMsl
+            scene.LoadEffect(23, persistent: true); // sprEffectiveJack
+            scene.LoadEffect(24, persistent: true); // sprEffectiveSniper
+            scene.LoadEffect(25, persistent: true); // sprEffectiveIce
+            scene.LoadEffect(26, persistent: true); // sprEffectiveMortar
+            scene.LoadEffect(27, persistent: true); // sprEffectiveGhost
+            scene.LoadEffect(28, persistent: true); // sniperCol
+            scene.LoadEffect(31, persistent: true); // spawnEffect
+            scene.LoadEffect(33, persistent: true); // spawnEffectMP
+            scene.LoadEffect(99, persistent: true); // powerBeamHolo
+            scene.LoadEffect(115, persistent: true); // ineffectivePsycho
+            scene.LoadEffect(154, persistent: true); // mpEffectivePB
+            scene.LoadEffect(155, persistent: true); // mpEffectiveElectric
+            scene.LoadEffect(156, persistent: true); // mpEffectiveMsl
+            scene.LoadEffect(157, persistent: true); // mpEffectiveJack
+            scene.LoadEffect(158, persistent: true); // mpEffectiveSniper
+            scene.LoadEffect(159, persistent: true); // mpEffectiveIce
+            scene.LoadEffect(160, persistent: true); // mpEffectiveMortar
+            scene.LoadEffect(161, persistent: true); // mpEffectiveGhost
+            scene.LoadEffect(173, persistent: true); // jackHammerColNA
+            scene.LoadEffect(190, persistent: true); // missileCharged
+            scene.LoadEffect(191, persistent: true); // mortarCharged
+            scene.LoadEffect(192, persistent: true); // mortarChargedAffinity
+            scene.LoadEffect(231, persistent: true); // iceShatter
+            scene.LoadEffect(239, persistent: true); // enemyCol1
             scene.LoadModel(Read.GetSingleParticle(SingleType.Death).Model);
             scene.LoadModel(Read.GetSingleParticle(SingleType.Fuzzball).Model);
             if (GameState.SinglePlayer)
@@ -748,8 +748,8 @@ namespace MphRead
                 scene.LoadModel(Read.GetModelInstance("icons", dir: MetaDir.Hud).Model);
             }
             // skdebug - the game only loads these if the Omega Cannon item is in the room
-            scene.LoadEffect(209); // ultimateProjectile
-            scene.LoadEffect(245); // ultimateCol
+            scene.LoadEffect(209, persistent: true); // ultimateProjectile
+            scene.LoadEffect(245, persistent: true); // ultimateCol
         }
 
         public static void LoadEntityResources(EntityBase entity, Scene scene)
@@ -784,7 +784,7 @@ namespace MphRead
         {
             if (obj.Data.EffectId != 0)
             {
-                scene.LoadEffect(obj.Data.EffectId);
+                scene.LoadEffect(obj.Data.EffectId, persistent: false);
             }
         }
 
@@ -800,25 +800,25 @@ namespace MphRead
         {
             if (platform.Data.ResistEffectId != 0)
             {
-                scene.LoadEffect(platform.Data.ResistEffectId);
+                scene.LoadEffect(platform.Data.ResistEffectId, persistent: false);
             }
             if (platform.Data.DamageEffectId != 0)
             {
-                scene.LoadEffect(platform.Data.DamageEffectId);
+                scene.LoadEffect(platform.Data.DamageEffectId, persistent: false);
             }
             if (platform.Data.DeadEffectId != 0)
             {
-                scene.LoadEffect(platform.Data.DeadEffectId);
+                scene.LoadEffect(platform.Data.DeadEffectId, persistent: false);
             }
             if (platform.Data.Flags.TestFlag(PlatformFlags.SamusShip))
             {
-                scene.LoadEffect(182); // nozzleJet
+                scene.LoadEffect(182, persistent: false); // nozzleJet
             }
             if (platform.Data.Flags.TestFlag(PlatformFlags.BeamSpawner) && platform.Data.BeamId == 0)
             {
-                scene.LoadEffect(183); // syluxMissile
-                scene.LoadEffect(184); // syluxMissileCol
-                scene.LoadEffect(185); // syluxMissileFlash
+                scene.LoadEffect(183, persistent: false); // syluxMissile
+                scene.LoadEffect(184, persistent: false); // syluxMissileCol
+                scene.LoadEffect(185, persistent: false); // syluxMissileFlash
             }
             if (platform.Data.ItemChance > 0)
             {
@@ -857,69 +857,69 @@ namespace MphRead
             {
             case EnemyType.Cretaphid:
                 LoadEnemy(EnemyType.CretaphidEye, scene);
-                scene.LoadEffect(65); // cylCrystalCharge
-                scene.LoadEffect(66); // cylCrystalKill
-                scene.LoadEffect(67); // cylCrystalShot
-                scene.LoadEffect(73); // cylCrystalKill2
-                scene.LoadEffect(74); // cylCrystalKill3
-                scene.LoadEffect(116); // cylCrystalProjectile
-                scene.LoadEffect(117); // cylWeakSpotShot
-                scene.LoadEffect(138); // cylHomingProjectile
-                scene.LoadEffect(139); // cylHomingKill
+                scene.LoadEffect(65, persistent: false); // cylCrystalCharge
+                scene.LoadEffect(66, persistent: false); // cylCrystalKill
+                scene.LoadEffect(67, persistent: false); // cylCrystalShot
+                scene.LoadEffect(73, persistent: false); // cylCrystalKill2
+                scene.LoadEffect(74, persistent: false); // cylCrystalKill3
+                scene.LoadEffect(116, persistent: false); // cylCrystalProjectile
+                scene.LoadEffect(117, persistent: false); // cylWeakSpotShot
+                scene.LoadEffect(138, persistent: false); // cylHomingProjectile
+                scene.LoadEffect(139, persistent: false); // cylHomingKill
                 LoadItem(ItemType.HealthMedium, scene);
                 LoadItem(ItemType.UASmall, scene);
                 LoadItem(ItemType.MissileSmall, scene);
                 break;
             case EnemyType.Gorea1A:
                 LoadEnemy(EnemyType.Gorea1B, scene);
-                scene.LoadEffect(48); // goreaChargeJak
-                scene.LoadEffect(46); // goreaChargeElc
-                scene.LoadEffect(49); // goreaChargeMrt
-                scene.LoadEffect(47); // goreaChargeIce
-                scene.LoadEffect(50); // goreaChargeSnp
-                scene.LoadEffect(41); // goreaArmChargeUp
-                scene.LoadEffect(42); // goreaBallExplode
-                scene.LoadEffect(43); // goreaShoulderDamageLoop
-                scene.LoadEffect(44); // goreaShoulderHits
-                scene.LoadEffect(45); // goreaShoulderKill
-                scene.LoadEffect(54); // goreaFireJak
-                scene.LoadEffect(51); // goreaFireElc
-                scene.LoadEffect(55); // goreaFireMrt
-                scene.LoadEffect(53); // goreaFireIce
-                scene.LoadEffect(56); // goreaFireSnp
-                scene.LoadEffect(52); // goreaFireGst
-                scene.LoadEffect(71); // goreaSlam
-                scene.LoadEffect(72); // goreaBallExplode2
-                scene.LoadEffect(104); // goreaEyeFlash
-                scene.LoadEffect(148); // grappleEnd
-                scene.LoadEffect(175); // goreaReveal
-                scene.LoadEffect(179); // goreaGrappleDamage
-                scene.LoadEffect(180); // goreaGrappleDie
+                scene.LoadEffect(48, persistent: false); // goreaChargeJak
+                scene.LoadEffect(46, persistent: false); // goreaChargeElc
+                scene.LoadEffect(49, persistent: false); // goreaChargeMrt
+                scene.LoadEffect(47, persistent: false); // goreaChargeIce
+                scene.LoadEffect(50, persistent: false); // goreaChargeSnp
+                scene.LoadEffect(41, persistent: false); // goreaArmChargeUp
+                scene.LoadEffect(42, persistent: false); // goreaBallExplode
+                scene.LoadEffect(43, persistent: false); // goreaShoulderDamageLoop
+                scene.LoadEffect(44, persistent: false); // goreaShoulderHits
+                scene.LoadEffect(45, persistent: false); // goreaShoulderKill
+                scene.LoadEffect(54, persistent: false); // goreaFireJak
+                scene.LoadEffect(51, persistent: false); // goreaFireElc
+                scene.LoadEffect(55, persistent: false); // goreaFireMrt
+                scene.LoadEffect(53, persistent: false); // goreaFireIce
+                scene.LoadEffect(56, persistent: false); // goreaFireSnp
+                scene.LoadEffect(52, persistent: false); // goreaFireGst
+                scene.LoadEffect(71, persistent: false); // goreaSlam
+                scene.LoadEffect(72, persistent: false); // goreaBallExplode2
+                scene.LoadEffect(104, persistent: false); // goreaEyeFlash
+                scene.LoadEffect(148, persistent: false); // grappleEnd
+                scene.LoadEffect(175, persistent: false); // goreaReveal
+                scene.LoadEffect(179, persistent: false); // goreaGrappleDamage
+                scene.LoadEffect(180, persistent: false); // goreaGrappleDie
                 LoadItem(ItemType.HealthBig, scene);
                 LoadItem(ItemType.UABig, scene);
                 LoadItem(ItemType.MissileBig, scene);
                 break;
             case EnemyType.Trocra:
-                scene.LoadEffect(164); // goreaCrystalHit
-                scene.LoadEffect(75); // goreaCrystalExplode
+                scene.LoadEffect(164, persistent: false); // goreaCrystalHit
+                scene.LoadEffect(75, persistent: false); // goreaCrystalExplode
                 LoadItem(ItemType.HealthSmall, scene);
                 LoadItem(ItemType.UASmall, scene);
                 LoadItem(ItemType.MissileSmall, scene);
                 break;
             case EnemyType.Gorea2:
                 LoadEnemy(EnemyType.GoreaMeteor, scene);
-                scene.LoadEffect(104); // goreaEyeFlash
-                scene.LoadEffect(224); // goreaLaserCol
-                scene.LoadEffect(79); // goreaMeteor
-                scene.LoadEffect(176); // goreaMeteorDamage
-                scene.LoadEffect(177); // goreaMeteorDestroy
-                scene.LoadEffect(178); // goreaMeteorHit
-                scene.LoadEffect(80); // goreaTeleport
-                scene.LoadEffect(225); // goreaHurt
-                scene.LoadEffect(44); // goreaShoulderHits
-                scene.LoadEffect(72); // goreaBallExplode2
-                scene.LoadEffect(174); // goreaMeteorLaunch
-                scene.LoadEffect(210); // goreaLaserCharge
+                scene.LoadEffect(104, persistent: false); // goreaEyeFlash
+                scene.LoadEffect(224, persistent: false); // goreaLaserCol
+                scene.LoadEffect(79, persistent: false); // goreaMeteor
+                scene.LoadEffect(176, persistent: false); // goreaMeteorDamage
+                scene.LoadEffect(177, persistent: false); // goreaMeteorDestroy
+                scene.LoadEffect(178, persistent: false); // goreaMeteorHit
+                scene.LoadEffect(80, persistent: false); // goreaTeleport
+                scene.LoadEffect(225, persistent: false); // goreaHurt
+                scene.LoadEffect(44, persistent: false); // goreaShoulderHits
+                scene.LoadEffect(72, persistent: false); // goreaBallExplode2
+                scene.LoadEffect(174, persistent: false); // goreaMeteorLaunch
+                scene.LoadEffect(210, persistent: false); // goreaLaserCharge
                 LoadItem(ItemType.HealthSmall, scene);
                 LoadItem(ItemType.UASmall, scene);
                 LoadItem(ItemType.MissileSmall, scene);
@@ -927,62 +927,62 @@ namespace MphRead
             case EnemyType.Slench:
                 LoadEnemy(EnemyType.SlenchNest, scene);
                 LoadEnemy(EnemyType.SlenchSynapse, scene);
-                scene.LoadEffect(64); // tear
-                scene.LoadEffect(81); // tearChargeUp
-                scene.LoadEffect(68); // tearSplat
-                scene.LoadEffect(82); // eyeShield
-                scene.LoadEffect(70); // eyeShieldHit
-                scene.LoadEffect(69); // eyeShieldCharge
-                scene.LoadEffect(83); // eyeShieldDefeat
-                scene.LoadEffect(109); // eyeTurretCharge
-                scene.LoadEffect(135); // synapseKill
-                scene.LoadEffect(201); // eyeDamageLoop
-                scene.LoadEffect(202); // eyeHit
-                scene.LoadEffect(203); // eyelKill
-                scene.LoadEffect(204); // eyeKill2
-                scene.LoadEffect(205); // eyeKill3
-                scene.LoadEffect(206); // eyeFinalKill
+                scene.LoadEffect(64, persistent: false); // tear
+                scene.LoadEffect(81, persistent: false); // tearChargeUp
+                scene.LoadEffect(68, persistent: false); // tearSplat
+                scene.LoadEffect(82, persistent: false); // eyeShield
+                scene.LoadEffect(70, persistent: false); // eyeShieldHit
+                scene.LoadEffect(69, persistent: false); // eyeShieldCharge
+                scene.LoadEffect(83, persistent: false); // eyeShieldDefeat
+                scene.LoadEffect(109, persistent: false); // eyeTurretCharge
+                scene.LoadEffect(135, persistent: false); // synapseKill
+                scene.LoadEffect(201, persistent: false); // eyeDamageLoop
+                scene.LoadEffect(202, persistent: false); // eyeHit
+                scene.LoadEffect(203, persistent: false); // eyelKill
+                scene.LoadEffect(204, persistent: false); // eyeKill2
+                scene.LoadEffect(205, persistent: false); // eyeKill3
+                scene.LoadEffect(206, persistent: false); // eyeFinalKill
                 LoadItem(ItemType.HealthMedium, scene);
                 LoadItem(ItemType.UASmall, scene);
                 LoadItem(ItemType.MissileSmall, scene);
                 break;
             case EnemyType.Blastcap:
-                scene.LoadEffect(3); // blastCapHit
-                scene.LoadEffect(4); // blastCapBlow
+                scene.LoadEffect(3, persistent: false); // blastCapHit
+                scene.LoadEffect(4, persistent: false); // blastCapBlow
                 break;
             case EnemyType.PsychoBit1:
-                scene.LoadEffect(240); // psychoCharge
+                scene.LoadEffect(240, persistent: false); // psychoCharge
                 break;
             case EnemyType.AlimbicTurret:
-                scene.LoadEffect(207); // chargeTurret
-                scene.LoadEffect(208); // flashTurret
+                scene.LoadEffect(207, persistent: false); // chargeTurret
+                scene.LoadEffect(208, persistent: false); // flashTurret
                 break;
             case EnemyType.FireSpawn:
                 if (spawner.Data.Fields.S06.EnemySubtype == 1)
                 {
-                    scene.LoadEffect(96); // iceDemonHurl
-                    scene.LoadEffect(132); // iceDemonRise
-                    scene.LoadEffect(133); // iceDemonDive
-                    scene.LoadEffect(131); // iceDemonSplat
-                    scene.LoadEffect(217); // iceDemonDeath
+                    scene.LoadEffect(96, persistent: false); // iceDemonHurl
+                    scene.LoadEffect(132, persistent: false); // iceDemonRise
+                    scene.LoadEffect(133, persistent: false); // iceDemonDive
+                    scene.LoadEffect(131, persistent: false); // iceDemonSplat
+                    scene.LoadEffect(217, persistent: false); // iceDemonDeath
                 }
                 else
                 {
-                    scene.LoadEffect(94); // lavaDemonHurl
-                    scene.LoadEffect(95); // lavaDemonRise
-                    scene.LoadEffect(93); // lavaDemonDive
-                    scene.LoadEffect(110); // lavaDemonSplat
-                    scene.LoadEffect(218); // lavaDemonDeath
+                    scene.LoadEffect(94, persistent: false); // lavaDemonHurl
+                    scene.LoadEffect(95, persistent: false); // lavaDemonRise
+                    scene.LoadEffect(93, persistent: false); // lavaDemonDive
+                    scene.LoadEffect(110, persistent: false); // lavaDemonSplat
+                    scene.LoadEffect(218, persistent: false); // lavaDemonDeath
                 }
                 break;
             case EnemyType.GreaterIthrak:
-                scene.LoadEffect(102); // hangingSpit
-                scene.LoadEffect(101); // hangingDrip
-                scene.LoadEffect(103); // hangingSplash
+                scene.LoadEffect(102, persistent: false); // hangingSpit
+                scene.LoadEffect(101, persistent: false); // hangingDrip
+                scene.LoadEffect(103, persistent: false); // hangingSplash
                 break;
             case EnemyType.Shriekbat:
-                scene.LoadEffect(29); // shriekBatTrail
-                scene.LoadEffect(108); // shriekBatCol
+                scene.LoadEffect(29, persistent: false); // shriekBatTrail
+                scene.LoadEffect(108, persistent: false); // shriekBatCol
                 break;
             case EnemyType.CarnivorousPlant:
                 ObjectMetadata meta = Metadata.GetObjectById(spawner.Data.Fields.S07.EnemySubtype);
@@ -1036,7 +1036,7 @@ namespace MphRead
             int effectId = Metadata.GetEnemyDeathEffect(enemy);
             if (effectId > 0)
             {
-                scene.LoadEffect(effectId);
+                scene.LoadEffect(effectId, persistent: false);
             }
         }
 
@@ -1077,20 +1077,20 @@ namespace MphRead
             scene.LoadModel(Metadata.Items[index]);
             if (item == ItemType.ArtifactKey)
             {
-                scene.LoadEffect(144); // artifactKeyEffect
+                scene.LoadEffect(144, persistent: false); // artifactKeyEffect
             }
             else if (item == ItemType.Deathalt)
             {
-                scene.LoadEffect(181); // deathBall
+                scene.LoadEffect(181, persistent: true); // deathBall
             }
             else if (item == ItemType.OmegaCannon)
             {
-                scene.LoadEffect(209); // ultimateProjectile
-                scene.LoadEffect(245); // ultimateCol
+                scene.LoadEffect(209, persistent: true); // ultimateProjectile
+                scene.LoadEffect(245, persistent: true); // ultimateCol
             }
             else if (item == ItemType.DoubleDamage)
             {
-                scene.LoadEffect(244); //  doubleDamageGun
+                scene.LoadEffect(244, persistent: true); //  doubleDamageGun
             }
         }
 

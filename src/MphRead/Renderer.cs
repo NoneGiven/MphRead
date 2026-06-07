@@ -1938,9 +1938,9 @@ namespace MphRead
             _inactiveParticles.Enqueue(particle);
         }
 
-        public void LoadEffect(int effectId)
+        public void LoadEffect(int effectId, bool persistent)
         {
-            Effect effect = Read.LoadEffect(effectId);
+            Effect effect = Read.LoadEffect(effectId, persistent);
             foreach (EffectElement element in effect.Elements)
             {
                 // the model may already be loaded; meshes with a ListId will be skipped

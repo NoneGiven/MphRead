@@ -134,7 +134,7 @@ namespace MphRead.Entities
             base.Initialize();
             if (_data.EffectId > 0)
             {
-                _scene.LoadEffect(_data.EffectId);
+                _scene.LoadEffect(_data.EffectId, persistent: false);
             }
             if (_scene.TryGetEntity(_data.ScanMsgTarget, out EntityBase? target))
             {
