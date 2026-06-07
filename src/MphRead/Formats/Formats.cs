@@ -422,6 +422,9 @@ namespace MphRead
         public FrozenDictionary<uint, FxFuncInfo> Funcs { get; }
         public IReadOnlyList<uint> List2 { get; }
         public IReadOnlyList<EffectElement> Elements { get; }
+        // the game tracks which effect IDs are loaded in heap 0, and skips deleting them during room transitions.
+        // heap 0 is used for players, beam projectiles/effects, and bombs. rather than maintaining a stateful heap ID value
+        // to emulate this, we just specify if the effect should be persistent when it's loaded, making it true for those entities.
         public bool Persistent { get; set; }
 
         public Effect(int id, RawEffect raw, IReadOnlyDictionary<uint, FxFuncInfo> funcs, IReadOnlyList<uint> list2,
