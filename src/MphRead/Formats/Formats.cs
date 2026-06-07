@@ -957,13 +957,11 @@ namespace MphRead
         {
             if (Type == VolumeType.Box)
             {
-                Vector3 pos = BoxDot2 * BoxVector2 + BoxPosition;
-                pos = BoxDot3 * BoxVector3 + pos;
-                return BoxDot1 * BoxVector1 + pos;
+                return BoxPosition + BoxDot1 / 2 * BoxVector1 + BoxDot2 / 2 * BoxVector2 + BoxDot3 / 2 * BoxVector3;
             }
             if (Type == VolumeType.Cylinder)
             {
-                return CylinderDot * CylinderVector + CylinderPosition;
+                return CylinderDot / 2 * CylinderVector + CylinderPosition;
             }
             if (Type == VolumeType.Sphere)
             {
