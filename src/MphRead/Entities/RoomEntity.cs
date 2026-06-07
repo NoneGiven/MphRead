@@ -495,6 +495,7 @@ namespace MphRead.Entities
                     entity.Destroy();
                 }
             }
+            _scene.ClearNonPersistentEffects();
             CamSeqEntity.Current = null;
             CameraSequence.Current = null;
             _scene.ClearMessageQueue();

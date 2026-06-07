@@ -924,7 +924,7 @@ namespace MphRead
                 }
                 elements.Add(new EffectElement(element, particles, funcs, elemFuncs));
             }
-            var newEffect = new Effect(effect, funcs, list2, elements, path);
+            var newEffect = new Effect(id, effect, funcs, list2, elements, path);
             if (id != -1)
             {
                 _effects.Add(id, newEffect);

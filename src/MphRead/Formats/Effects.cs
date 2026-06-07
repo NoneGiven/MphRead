@@ -723,6 +723,7 @@ namespace MphRead.Effects
 
     public class EffectElementEntry : EffectFuncBase
     {
+        public int EffectId { get; set; }
         public string EffectName { get; set; } = "";
         public string ElementName { get; set; } = "";
         public float CreationTime { get; set; }

@@ -415,6 +415,7 @@ namespace MphRead
 
     public class Effect
     {
+        public int Id { get; }
         public string Name { get; }
         public uint Field0 { get; }
         // the key is the file offset, which we need to keep around because e.g. fx15's parameters are themselves function pointers
@@ -423,9 +424,10 @@ namespace MphRead
         public IReadOnlyList<EffectElement> Elements { get; }
         public bool Persistent { get; set; }
 
-        public Effect(RawEffect raw, IReadOnlyDictionary<uint, FxFuncInfo> funcs, IReadOnlyList<uint> list2,
+        public Effect(int id, RawEffect raw, IReadOnlyDictionary<uint, FxFuncInfo> funcs, IReadOnlyList<uint> list2,
             IReadOnlyList<EffectElement> elements, string name)
         {
+            Id = id;
             Name = Path.GetFileNameWithoutExtension(name).Replace("_PS", "");
             Field0 = raw.Field0;
             Funcs = funcs.ToFrozenDictionary();

@@ -1857,6 +1857,7 @@ namespace MphRead
                 return null;
             }
             EffectElementEntry entry = _inactiveElements.Dequeue();
+            entry.EffectId = effect.Id;
             entry.EffectName = effect.Name;
             entry.ElementName = element.Name;
             entry.BufferTime = element.BufferTime;
@@ -2055,7 +2056,20 @@ namespace MphRead
                 EffectElementEntry element = _activeElements[i];
                 UnlinkEffectElement(element);
                 i--;
-                continue;
+            }
+        }
+
+        public void ClearNonPersistentEffects()
+        {
+            for (int i = 0; i < _activeElements.Count; i++)
+            {
+                EffectElementEntry element = _activeElements[i];
+                Effect? effect = Read.GetEffect(element.EffectId);
+                if (effect == null || !effect.Persistent)
+                {
+                    UnlinkEffectElement(element);
+                    i--;
+                }
             }
         }
 
