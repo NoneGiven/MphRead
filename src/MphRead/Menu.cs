@@ -2401,8 +2401,10 @@ namespace MphRead
         // todo?: other enemy hunter combinations
         private static readonly ImmutableArray<(MusicType Type, int Id, string Name)> _musicList =
         [
+            (MusicType.Seq,    (int)SeqId.DRONE,                  "Intro"), // *
             (MusicType.Stream, (int)VoiceId.STRM_TITLE_SCREEN,    "Title"),
             (MusicType.Seq,    (int)SeqId.CHUTNEY,                "Menu"),
+            (MusicType.Seq,    (int)SeqId.MENU1,                  "Menu (Unused)"),
             (MusicType.Seq,    (int)SeqId.RESULTS,                "Results"),
             (MusicType.Music,  (int)MusicId.SEQ_MP2_M15,          "Celestial Archives VS."), // renamed from Celestial Gateway
             (MusicType.Music,  (int)MusicId.SEQ_MP2_M40,          "Celestial Archives VS. (Octolith)"), // *
@@ -2416,7 +2418,10 @@ namespace MphRead
             (MusicType.Music,  (int)MusicId.SEQ_PEPPER_M36,       "Arcterra VS."), // renamed from Arcterra Gateway
             (MusicType.Music,  (int)MusicId.SEQ_PEPPER_M38,       "Arcterra VS. (Octolith)"), // *
             (MusicType.Music,  (int)MusicId.SEQ_PEPPER_M45,       "Arcterra VS. (Node)"), // *
-            (MusicType.Music,  (int)MusicId.SEQ_GREY_M17,         "Shadows"),
+            (MusicType.Seq,    (int)SeqId.NEW_GAME,               "Story"), // *
+            (MusicType.Seq,    (int)SeqId.SHIP,                   "Tetra Galaxy"), // *
+            (MusicType.Seq,    (int)SeqId.SHIP_LAND2,             "Ship Cockpit (Celestial Archives)"),
+            (MusicType.Music,  (int)MusicId.SEQ_GREY_M17,         "Shadows"), // *
             //(MusicType.Music,  (int)MusicId.SEQ_GREY_M52,       "Shadows (Unused)"), // identical to previous
             //(MusicType.Music,  (int)MusicId.SEQ_GREY_M58,       "Shadows (Unused)"), // identical to previous
             //(MusicType.Music,  (int)MusicId.SEQ_GREY_M61,       "Shadows (Unused)"), // identical to previous
@@ -2432,22 +2437,26 @@ namespace MphRead
             (MusicType.Music,  (int)MusicId.SEQ_OREGANO_M56,      "Escape (Alarm)"), // *
             //(MusicType.Music, (int)MusicId.SEQ_ENERGY_TIMER_M51, "Fuel Stack (Race)"), // identical to VDO VS.
             //(MusicType.Music, (int)MusicId.SEQ_ENERGY_TIMER_M57, "Fuel Stack (Failure"), // silent
+            (MusicType.Seq,    (int)SeqId.SHIP_LAND1,             "Ship Cockpit (Alinos)"),
             (MusicType.Music,  (int)MusicId.SEQ_RED_M13,          "Alinos"),
             (MusicType.Music,  (int)MusicId.SEQ_INTRO_SPIRE_M9,   "Spire Intro"), // *
             (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M37,        "Spire"),
             (MusicType.Music,  (int)MusicId.SEQ_SAFFRON_M29,      "Slench"),
+            (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M10,        "Weavel"),
+            (MusicType.Seq,    (int)SeqId.SHIP_LAND3,             "Ship Cockpit (VDO)"),
             (MusicType.Music,  (int)MusicId.SEQ_GREEN_M19,        "The Outpost"),
             (MusicType.Music,  (int)MusicId.SEQ_GREEN_M50,        "The Outpost (Race)"), // *
             (MusicType.Music,  (int)MusicId.SEQ_GUARDIAN_M18,     "Guardians"),
             (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M39,        "Sylux"),
+            (MusicType.Seq,    (int)SeqId.SHIP_LAND4,             "Ship Cockpit (Arcterra)"),
             (MusicType.Music,  (int)MusicId.SEQ_WHITE_M48,        "Desolation"),
             (MusicType.Music,  (int)MusicId.SEQ_WHITE_M54,        "Desolation (Maze)"), // *
             //(MusicType.Music,  (int)MusicId.SEQ_WHITE_M63,      "Desolation (Unused)"), // identical to previous
             (MusicType.Music,  (int)MusicId.SEQ_BLUE_M14,         "Arcterra"),
             (MusicType.Music,  (int)MusicId.SEQ_BLUE_M44,         "Arcterra (Puzzle)"), // *
+            (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M49,        "Noxus & Trace"), // *
             (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M7,         "Noxus"),
             (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M41,        "Trace"),
-            (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M49,        "Noxus & Trace"), // *
             (MusicType.Music,  (int)MusicId.SEQ_RED_M60,          "The Elders"),
             //(MusicType.Music,  (int)MusicId.SEQ_RED_M62,        "The Elders (Unused)"), // identical to previous
             (MusicType.Music,  (int)MusicId.SEQ_BRINSTAR_M67,     "Magma Drop"), // *
@@ -2456,7 +2465,6 @@ namespace MphRead
             (MusicType.Music,  (int)MusicId.SEQ_INDIGO_M59,       "Space Decay"),
             (MusicType.Music,  (int)MusicId.SEQ_BLACK_M53,        "Watching"),
             //(MusicType.Music,  (int)MusicId.SEQ_BLACK_M64,      "Watching (Unused)"), // identical to previous
-            (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M10,        "Weavel"),
             (MusicType.Music,  (int)MusicId.SEQ_GOREA_1_M20,      "Gorea"),
             (MusicType.Music,  (int)MusicId.SEQ_GOREA_1_M22,      "Gorea (Battlehammer)"),
             (MusicType.Music,  (int)MusicId.SEQ_GOREA_1_M26,      "Gorea (Volt Driver)"),
@@ -2465,11 +2473,13 @@ namespace MphRead
             (MusicType.Music,  (int)MusicId.SEQ_GOREA_1_M23,      "Gorea (Imperialist)"),
             (MusicType.Music,  (int)MusicId.SEQ_GOREA_1_M25,      "Gorea (Shock Coil)"),
             (MusicType.Music,  (int)MusicId.SEQ_GOREA_1_M21,      "Gorea (Seal Sphere)"),
-            (MusicType.Music,  (int)MusicId.SEQ_CREDITS_M65,      "Hunters"),
+            (MusicType.Music,  (int)MusicId.SEQ_CREDITS_M65,      "Hunters (Credits)"), // renamed from Hunters
             //(MusicType.Music,  (int)MusicId.SEQ_CREDITS_M66,    "Hunters (Unused)"), // identical to previous
             (MusicType.Music,  (int)MusicId.SEQ_GOREA_2_M34,      "Oubliette"), // renamed from Gorea Returns
             //(MusicType.Music,  (int)MusicId.SEQ_GOREA_2_M33,    "Oubliette (Unused)"), // identical to previous
-            (MusicType.Music,  (int)MusicId.SEQ_GOREA_2_M35,      "Oubliette (Node)") // *
+            (MusicType.Music,  (int)MusicId.SEQ_GOREA_2_M35,      "Oubliette (Node)"), // *
+            (MusicType.Seq,    (int)SeqId.GET_WEAPON,             "Get Weapon"), // *
+            (MusicType.Seq,    (int)SeqId.GET_OCTOLITH,           "Get Octolith") // *
         ];
 
         private static bool ShowSoundTest(SoundCapability soundCapability)
@@ -2483,7 +2493,7 @@ namespace MphRead
             int playlist = 0;
             MusicId music = MusicId.SEQ_YELLOW_M1;
             MusicTrack track = info[(int)music];
-            string musicStr = $"{music} (SEQ_{(SeqId)track.SeqId})";
+            string musicStr = $"{music} [SEQ_{(SeqId)track.SeqId}]";
             SeqId seq = SeqId.BRINSTAR;
             ushort tracks = UInt16.MaxValue;
             SfxId sfx = SfxId.LID_CLOSE;
@@ -2527,7 +2537,7 @@ namespace MphRead
                 }
                 music = (MusicId)id;
                 MusicTrack track = info[id];
-                musicStr = $"{music} (SEQ_{(SeqId)track.SeqId})";
+                musicStr = $"{music} [SEQ_{(SeqId)track.SeqId}]";
             }
 
             void UpdateSeq(int dir)
