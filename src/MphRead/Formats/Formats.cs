@@ -415,16 +415,22 @@ namespace MphRead
 
     public class Effect
     {
+        public int Id { get; }
         public string Name { get; }
         public uint Field0 { get; }
         // the key is the file offset, which we need to keep around because e.g. fx15's parameters are themselves function pointers
         public FrozenDictionary<uint, FxFuncInfo> Funcs { get; }
         public IReadOnlyList<uint> List2 { get; }
         public IReadOnlyList<EffectElement> Elements { get; }
+        // the game tracks which effect IDs are loaded in heap 0, and skips deleting them during room transitions.
+        // heap 0 is used for players, beam projectiles/effects, and bombs. rather than maintaining a stateful heap ID value
+        // to emulate this, we just specify if the effect should be persistent when it's loaded, making it true for those entities.
+        public bool Persistent { get; set; }
 
-        public Effect(RawEffect raw, IReadOnlyDictionary<uint, FxFuncInfo> funcs, IReadOnlyList<uint> list2,
+        public Effect(int id, RawEffect raw, IReadOnlyDictionary<uint, FxFuncInfo> funcs, IReadOnlyList<uint> list2,
             IReadOnlyList<EffectElement> elements, string name)
         {
+            Id = id;
             Name = Path.GetFileNameWithoutExtension(name).Replace("_PS", "");
             Field0 = raw.Field0;
             Funcs = funcs.ToFrozenDictionary();
@@ -957,13 +963,11 @@ namespace MphRead
         {
             if (Type == VolumeType.Box)
             {
-                Vector3 pos = BoxDot2 * BoxVector2 + BoxPosition;
-                pos = BoxDot3 * BoxVector3 + pos;
-                return BoxDot1 * BoxVector1 + pos;
+                return BoxPosition + BoxDot1 / 2 * BoxVector1 + BoxDot2 / 2 * BoxVector2 + BoxDot3 / 2 * BoxVector3;
             }
             if (Type == VolumeType.Cylinder)
             {
-                return CylinderDot * CylinderVector + CylinderPosition;
+                return CylinderDot / 2 * CylinderVector + CylinderPosition;
             }
             if (Type == VolumeType.Sphere)
             {

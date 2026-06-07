@@ -234,6 +234,7 @@ namespace MphRead
             Text.Strings.ClearCache();
             GameState.Reset();
             PlayerEntity.Construct(this);
+            Music.Init();
         }
 
         // called before load
@@ -295,6 +296,7 @@ namespace MphRead
                     player.AiData.InitializeAtLoad();
                 }
             }
+            // the game has a redundant/early call for playing room track 0 in bounty/nodes
             _cameraMode = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) ? CameraMode.Player : CameraMode.Roam;
             _inputMode = _cameraMode == CameraMode.Player ? InputMode.All : InputMode.CameraOnly;
             if (GameState.SinglePlayer && !meta.FirstHunt && PlayerEntity.PlayerCount > 0 && !Cheats.SkipPlanetIntros)
@@ -310,6 +312,8 @@ namespace MphRead
                 };
                 if (movieId != Movie.None)
                 {
+                    _playingLandingMovie = true;
+                    Music.Pause(); // set the room music to be resumed (unless a cam seq plays to overwrite it)
                     StartMovie(movieId, FadeType.FadeOutInBlack, 0, FadeType.FadeOutWhite, 5 / 30f, afterMovieAction: AfterMovie.StartGame);
                 }
             }
@@ -1172,6 +1176,8 @@ namespace MphRead
                 {
                     UpdateScene();
                 }
+                Sound.Sfx.Update(_frameTime);
+                Music.UpdateMusic();
             }
             if (ProcessFrame || CameraMode != CameraMode.Player)
             {
@@ -1851,6 +1857,7 @@ namespace MphRead
                 return null;
             }
             EffectElementEntry entry = _inactiveElements.Dequeue();
+            entry.EffectId = effect.Id;
             entry.EffectName = effect.Name;
             entry.ElementName = element.Name;
             entry.BufferTime = element.BufferTime;
@@ -1932,9 +1939,9 @@ namespace MphRead
             _inactiveParticles.Enqueue(particle);
         }
 
-        public void LoadEffect(int effectId)
+        public void LoadEffect(int effectId, bool persistent)
         {
-            Effect effect = Read.LoadEffect(effectId);
+            Effect effect = Read.LoadEffect(effectId, persistent);
             foreach (EffectElement element in effect.Elements)
             {
                 // the model may already be loaded; meshes with a ListId will be skipped
@@ -2049,7 +2056,20 @@ namespace MphRead
                 EffectElementEntry element = _activeElements[i];
                 UnlinkEffectElement(element);
                 i--;
-                continue;
+            }
+        }
+
+        public void ClearNonPersistentEffects()
+        {
+            for (int i = 0; i < _activeElements.Count; i++)
+            {
+                EffectElementEntry element = _activeElements[i];
+                Effect? effect = Read.GetEffect(element.EffectId);
+                if (effect == null || !effect.Persistent)
+                {
+                    UnlinkEffectElement(element);
+                    i--;
+                }
             }
         }
 
@@ -2650,6 +2670,10 @@ namespace MphRead
 
         private void UpdateScene()
         {
+            if (_playingLandingMovie)
+            {
+                return;
+            }
             bool playerActive = PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active);
             if (!GameState.DialogPause)
             {
@@ -2696,7 +2720,6 @@ namespace MphRead
                 }
                 GameState.UpdateFrame(this);
             }
-            Sound.Sfx.Update(_frameTime);
         }
 
         private void GetDrawItems()
@@ -4907,6 +4930,8 @@ namespace MphRead
 
         public void QueueMovie(int movieId)
         {
+            Sound.Sfx.Load(Scene);
+            GameState.Mode = GameMode.Unknown15; // avoid save prompt from 1P mode
             Scene.StartMovie((Movie)movieId, FadeType.FadeOutInBlack, 0, FadeType.FadeOutBlack, 0, afterMovieAction: AfterMovie.EndGame);
         }
 

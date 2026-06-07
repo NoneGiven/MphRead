@@ -176,26 +176,12 @@ namespace MphRead.Formats.Sound
             ExportAudio(waveData, GetSampleCount(sample), sample.SampleRate, sample.Format, id, prefix);
         }
 
-        private static void ExportAudio(ReadOnlySpan<byte> waveData, uint sampleCount, ushort sampleRate,
-            WaveFormat format, string name, string? prefix = null)
+        public static void WriteWavHeader(BinaryWriter writer, uint sampleCount, ushort sampleRate, WaveFormat format)
         {
-            if (waveData.Length == 0)
-            {
-                throw new WaveExportException($"Sample {name} contains no data.");
-            }
-            if (format != WaveFormat.ADPCM && format != WaveFormat.PCM8)
-            {
-                throw new WaveExportException($"Format {format} is unsupported.");
-            }
             uint bps = format == WaveFormat.PCM8 ? 8u : 16u;
             uint headerSize = 0x2C;
             uint waveSize = sampleCount * bps / 8 + headerSize;
             uint decodedSize = sampleCount * (bps / 8);
-            string path = Paths.Combine(Paths.Export, "_SFX");
-            Directory.CreateDirectory(path);
-            path = Paths.Combine(path, $"{prefix + name}.wav");
-            using FileStream file = File.OpenWrite(path);
-            using var writer = new BinaryWriter(file);
             writer.WriteC("RIFF");
             writer.Write4(waveSize - 8);
             writer.WriteC("WAVE");
@@ -209,6 +195,25 @@ namespace MphRead.Formats.Sound
             writer.Write2(bps);
             writer.WriteC("data");
             writer.Write4(decodedSize);
+        }
+
+        private static void ExportAudio(ReadOnlySpan<byte> waveData, uint sampleCount, ushort sampleRate,
+            WaveFormat format, string name, string? prefix = null)
+        {
+            if (waveData.Length == 0)
+            {
+                throw new WaveExportException($"Sample {name} contains no data.");
+            }
+            if (format != WaveFormat.ADPCM && format != WaveFormat.PCM8 && format != WaveFormat.PCM16)
+            {
+                throw new WaveExportException($"Format {format} is unsupported.");
+            }
+            string path = Paths.Combine(Paths.Export, "_SFX");
+            Directory.CreateDirectory(path);
+            path = Paths.Combine(path, $"{prefix + name}.wav");
+            using FileStream file = File.OpenWrite(path);
+            using var writer = new BinaryWriter(file);
+            WriteWavHeader(writer, sampleCount, sampleRate, format);
             for (int i = 0; i < waveData.Length; i++)
             {
                 writer.Write(waveData[i]);
@@ -525,28 +530,24 @@ namespace MphRead.Formats.Sound
             // SSEQ
             foreach (SeqInfo info in seqInfo)
             {
-                // mustodo: read SSEQ files
                 filesRead++;
             }
 
             // SSAR
             foreach (uint fileId in seqarcInfo)
             {
-                // mustodo: read SSAR files
                 filesRead++;
             }
 
             // SBNK
             foreach (BankInfo info in bankInfo)
             {
-                // mustodo: read SBNK files
                 filesRead++;
             }
 
             // SWAR
             foreach (uint fileId in wavearcInfo)
             {
-                // mustodo: read SWAR files
                 filesRead++;
             }
 
@@ -1128,26 +1129,26 @@ namespace MphRead.Formats.Sound
     public readonly struct RawMusicTrack
     {
         public readonly ushort SeqId;
-        public readonly ushort Field2;
+        public readonly ushort FadeOutFrames;
         public readonly ushort Tracks;
-        public readonly ushort Field6;
+        public readonly ushort FadeInFrames;
     }
 
     public class MusicTrack
     {
-        public uint Id { get; }
-        public ushort SeqId { get; }
-        public ushort Field2 { get; }
+        public MusicId MusicId { get; }
+        public SeqId SeqId { get; }
         public ushort Tracks { get; }
-        public ushort Field6 { get; }
+        public ushort FadeOutFrames { get; }
+        public ushort FadeInFrames { get; }
 
         public MusicTrack(uint id, RawMusicTrack raw)
         {
-            Id = id;
-            SeqId = raw.SeqId;
-            Field2 = raw.Field2;
+            MusicId = (MusicId)id;
+            SeqId = raw.SeqId == UInt16.MaxValue ? SeqId.None : (SeqId)raw.SeqId;
+            FadeOutFrames = raw.FadeOutFrames;
             Tracks = raw.Tracks;
-            Field6 = raw.Field6;
+            FadeInFrames = raw.FadeInFrames;
         }
     }
 

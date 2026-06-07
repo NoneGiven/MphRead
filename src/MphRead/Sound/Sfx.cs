@@ -136,6 +136,11 @@ namespace MphRead.Sound
             Sfx.Instance.StopFreeSfxScripts();
         }
 
+        public void SetPausedFreeSfxScripts(bool paused)
+        {
+            Sfx.Instance.SetPausedFreeSfxScripts(paused);
+        }
+
         public bool IsHandlePlaying(int handle)
         {
             return Sfx.Instance.IsHandlePlaying(handle);
@@ -277,6 +282,7 @@ namespace MphRead.Sound
             public SoundSource? Source { get; set; }
             public float[] Volume { get; } = new float[_maxPerInst];
             public float[] Pitch { get; } = new float[_maxPerInst];
+            public bool Paused { get; set; }
             public float PlayTime { get; set; } = -1;
             public int SfxId { get; set; } = -1;
             public bool NoUpdate { get; set; }
@@ -392,6 +398,7 @@ namespace MphRead.Sound
                     Pitch[i] = 1;
                     Loop[i] = false;
                 }
+                Paused = false;
                 PlayTime = -1;
                 SfxId = -1;
                 DgnFile = null;
@@ -597,6 +604,7 @@ namespace MphRead.Sound
             }
             inst = FindInstance(source);
             inst.Source = source;
+            inst.Paused = false;
             inst.PlayTime = 0;
             inst.Cancellable = cancellable;
             inst.SfxId = id;
@@ -849,6 +857,18 @@ namespace MphRead.Sound
             }
         }
 
+        public override void SetPausedFreeSfxScripts(bool paused)
+        {
+            for (int i = 0; i < _instances.Length; i++)
+            {
+                SoundInstance inst = _instances[i];
+                if (inst.ScriptFile != null)
+                {
+                    inst.Paused = paused;
+                }
+            }
+        }
+
         public override bool IsHandlePlaying(int handle)
         {
             if (handle >= 0)
@@ -995,6 +1015,10 @@ namespace MphRead.Sound
         private void UpdateScript(SoundInstance inst, float time)
         {
             Debug.Assert(inst.ScriptFile != null);
+            if (inst.Paused)
+            {
+                return;
+            }
             if (inst.PlayTime >= 0)
             {
                 inst.PlayTime += time;
@@ -1317,6 +1341,19 @@ namespace MphRead.Sound
             _activeQueue.AddLast(item);
         }
 
+        public override void PlayFreeStream(int id)
+        {
+            LinkedListNode<QueueItem>? node = _activeQueue.First;
+            while (node != null)
+            {
+                _activeQueue.Remove(node);
+                _inactiveQueue.Enqueue(node.Value);
+                node = _activeQueue.First;
+            }
+            QueueStream(id, delay: 0, expiration: 0);
+            UpdateStreams(0);
+        }
+
         private void UpdateStreams(float time)
         {
             int index = 0;
@@ -1336,6 +1373,7 @@ namespace MphRead.Sound
                         AL.Source(_streamInstance, ALSourcei.Buffer, 0);
                         item.Stream = null;
                         _activeQueue.Remove(node);
+                        _inactiveQueue.Enqueue(node.Value);
                         node = next;
                         index++;
                         continue;
@@ -1360,6 +1398,8 @@ namespace MphRead.Sound
                     {
                         format = item.Stream.Channels.Count == 2 ? ALFormat.Stereo8 : ALFormat.Mono8;
                     }
+                    AL.SourceStop(_streamInstance);
+                    AL.Source(_streamInstance, ALSourcei.Buffer, 0);
                     AL.BufferData(_streamBuffer, format, item.Stream.BufferData.Value, item.Stream.SampleRate);
                     AL.Source(_streamInstance, ALSourcei.Buffer, _streamBuffer);
                     AL.Source(_streamInstance, ALSourceb.Looping, item.Stream.Loop);
@@ -1377,6 +1417,7 @@ namespace MphRead.Sound
                     {
                         item.ExpirationTimer = 0;
                         _activeQueue.Remove(node);
+                        _inactiveQueue.Enqueue(node.Value);
                     }
                 }
                 node = next;
@@ -1440,6 +1481,7 @@ namespace MphRead.Sound
 
         public override void ShutDown()
         {
+            MusicPlayer.Remove(shutdown: true);
             for (int i = 0; i < _instances.Length; i++)
             {
                 SoundInstance inst = _instances[i];
@@ -1499,6 +1541,10 @@ namespace MphRead.Sound
         {
         }
 
+        public virtual void PlayFreeStream(int id)
+        {
+        }
+
         public virtual void StopSoundByHandle(int handle)
         {
         }
@@ -1549,6 +1595,10 @@ namespace MphRead.Sound
         }
 
         public virtual void StopFreeSfxScripts()
+        {
+        }
+
+        public virtual void SetPausedFreeSfxScripts(bool paused)
         {
         }
 

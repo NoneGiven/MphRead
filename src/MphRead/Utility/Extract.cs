@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using CommunityToolkit.HighPerformance.Buffers;
+using NCSFCommon.NC;
+using NCSFCommon.ReplayGain;
 
 namespace MphRead
 {
@@ -202,6 +205,10 @@ namespace MphRead
                         Read.ExtractArchive(path);
                     }
                 }
+                Console.WriteLine("Converting sound_data.sdat...");
+                string sdatDest = Paths.Combine("files", root.Name, "_seq");
+                Directory.CreateDirectory(sdatDest);
+                ConvertSdat(Paths.Combine("files", root.Name, "data", "sound", "sound_data.sdat"), sdatDest);
             }
             string ftcDir = Paths.Combine("files", root.Name, "ftc");
             Directory.CreateDirectory(ftcDir);
@@ -245,6 +252,55 @@ namespace MphRead
                 }
             }
             Nop();
+        }
+
+        private static void ConvertSdat(string inputPath, string outputDir)
+        {
+            ReadOnlySpan<byte> sdatBytes = File.ReadAllBytes(inputPath);
+            var finalSDAT = new SDAT();
+            int sdatNumber = 1;
+            var sdat = new SDAT();
+            sdat.Read(sdatNumber.ToString(), sdatBytes);
+            finalSDAT += sdat;
+            finalSDAT.FixOffsetsAndSizes();
+            using var memoryOwner = MemoryOwner<byte>.Allocate((int)finalSDAT.Size);
+            finalSDAT.Write(memoryOwner.Span);
+            var seqEntries = finalSDAT.INFOSection.SEQRecord.Entries;
+            string ncsflibFilename = "mph.ncsflib";
+            NCSFCommon.NCSF.MakeNCSF(Paths.Combine(outputDir, ncsflibFilename), [], memoryOwner.Span);
+            NCSFCommon.TagList tags = [("_lib", ncsflibFilename), ("utf8", "1"), ("ncsfby", "MphRead")];
+            AlbumGain albumGain = new();
+            Dictionary<uint, NCSFCommon.TagList> fileTags = new(seqEntries.Length);
+            for (uint i = 0, count = (uint)seqEntries.Length; i < count; ++i)
+            {
+                (uint offset, INFOEntrySEQ? entry) = seqEntries[(int)i];
+                if (offset != 0 && entry is not null)
+                {
+                    if (entry.SSEQ!.Filename!.StartsWith("SSEQ"))
+                    {
+                        entry.SSEQ!.Filename = $"{i:X4} - {entry.SSEQ!.Filename}";
+                    }
+                    string minincsfFilename = $"{entry.SSEQ!.Filename}.minincsf";
+                    var thisTags = tags.Clone();
+                    string fullFilename = entry.FullFilename(sdatNumber > 1);
+                    thisTags.AddOrReplace(("origFilename", entry.SSEQ.OriginalFilename!));
+                    if (sdatNumber > 1)
+                    {
+                        thisTags.AddOrReplace(("origSDAT", entry.SDATNumber));
+                    }
+                    fileTags[i] = thisTags;
+                }
+            }
+            for (uint i = 0, count = (uint)seqEntries.Length; i < count; ++i)
+            {
+                (uint offset, INFOEntrySEQ? entry) = seqEntries[(int)i];
+                if (offset != 0 && entry is not null)
+                {
+                    string minincsfFilename = $"{entry.SSEQ!.Filename}.minincsf";
+                    var thisTags = fileTags[i];
+                    NCSFCommon.NCSF.MakeNCSF(Paths.Combine(outputDir, minincsfFilename), BitConverter.GetBytes(i), [], thisTags);
+                }
+            }
         }
 
         private static void PrintExit(string message)

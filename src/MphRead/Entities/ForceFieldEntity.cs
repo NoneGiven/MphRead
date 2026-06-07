@@ -76,7 +76,7 @@ namespace MphRead.Entities
                     _scene.AddEntity(_lock);
                 }
             }
-            _scene.LoadEffect(77); // deathMech1
+            _scene.LoadEffect(77, persistent: false); // deathMech1
         }
 
         public override bool Process()

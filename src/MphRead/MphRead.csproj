@@ -22,6 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NcsfPlay\NcsfPlay.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="paths.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using MphRead.Effects;
@@ -399,7 +400,10 @@ namespace MphRead.Entities.Enemies
                 _weaponIndex = 0;
             }
             _colors = Metadata.Enemy24Colors[_weaponIndex];
-            // todo: update music tracks
+            if (PlayerEntity.Main.Health > 0)
+            {
+                Music.PlayMusic(_musicTracks[_weaponIndex]);
+            }
             WeaponInfo weapon = Weapons.GoreaWeapons[_weaponIndex];
             int effectiveness = Metadata.GoreaEffectiveness[_weaponIndex];
             for (int i = 0; i < 2; i++)
@@ -411,22 +415,34 @@ namespace MphRead.Entities.Enemies
             Metadata.LoadEffectiveness(effectiveness, _gorea1B.SealSphere.BeamEffectiveness);
         }
 
-        private readonly IReadOnlyList<string> _armMatNames = new string[6 * 2]
-        {
+        private readonly ImmutableArray<string> _armMatNames = // 6 * 2
+        [
             "L_Bisep", "L_GunArm", "L_GunTipBottom", "L_GunTipSide", "L_GunTipTop", "L_ShoulderTarget",
             "R_Bisep", "R_GunArm", "R_GunTipBottom", "R_GunTipSide", "R_GunTipTop", "R_ShoulderTarget"
-        };
+        ];
 
-        private readonly IReadOnlyList<string> _bodyMatNames1 = new string[10]
-        {
+        private readonly ImmutableArray<string> _bodyMatNames1 = // 10
+        [
             "ChestMembrane", "Eye", "Head1", "L_GunArm", "L_Bisep",
             "R_GunArm", "R_Bisep", "Legs", "Torso", "Shoulder"
-        };
+        ];
 
-        private readonly IReadOnlyList<string> _bodyMatNames2 = new string[2]
-        {
+        private readonly ImmutableArray<string> _bodyMatNames2 = // 2
+        [
             "ChestCore", "HeadFullLit"
-        };
+        ];
+
+        // todo: bugfix: the tracks for Battlehammer and Shock Coil are swapped
+        // the Battlehammer track uses Sylux's hunter music, and Shock Coil uses Weavel's
+        private readonly ImmutableArray<MusicId> _musicTracks = // 6
+        [
+            MusicId.SEQ_GOREA_1_M22, // Battlehammer (Sylux)
+            MusicId.SEQ_GOREA_1_M26, // Volt Driver  (Kanden)
+            MusicId.SEQ_GOREA_1_M27, // Mamgmaul     (Spire)
+            MusicId.SEQ_GOREA_1_M24, // Judicator    (Noxus)
+            MusicId.SEQ_GOREA_1_M23, // Imperialist  (Trace)
+            MusicId.SEQ_GOREA_1_M25  // Shock Coil   (Weavel)
+        ];
 
         protected override void EnemyProcess()
         {
@@ -531,7 +547,6 @@ namespace MphRead.Entities.Enemies
                     if (_gorea1B.PhasesLeft != 3)
                     {
                         ChangeWeapon();
-                        // todo: update music tracks
                     }
                     _soundSource.PlaySfx(SfxId.GOREA_ROAR_SCR);
                     _model.SetAnimation(22, 0, _animSetNoMat, AnimFlags.NoLoop);
@@ -627,29 +642,29 @@ namespace MphRead.Entities.Enemies
             CallSubroutine(Metadata.Enemy24Subroutines, this);
         }
 
-        private static readonly IReadOnlyList<int> _chargeEffects = new int[6]
-        {
+        private static readonly ImmutableArray<int> _chargeEffects = // 6
+        [
             // goreaChargeJak, goreaChargeElc, goreaChargeMrt,
             // goreaChargeIce, goreaChargeSnp, goreaArmChargeUp
             48, 46, 49, 47, 50, 41
-        };
+        ];
 
-        private static readonly IReadOnlyList<int> _shotEffects = new int[6]
-        {
+        private static readonly ImmutableArray<int> _shotEffects = // 6
+        [
             // goreaFireJak, goreaFireElc, goreaFireMrt,
             // goreaFireIce, goreaFireSnp, goreaFireGst
             54, 51, 55, 53, 56, 52
-        };
+        ];
 
-        private static readonly IReadOnlyList<BeamType> _beamTypes = new BeamType[6]
-        {
+        private static readonly ImmutableArray<BeamType> _beamTypes = // 6
+        [
             BeamType.Battlehammer,
             BeamType.VoltDriver,
             BeamType.Magmaul,
             BeamType.Judicator,
             BeamType.Imperialist,
             BeamType.PowerBeam
-        };
+        ];
 
         private void State05()
         {
@@ -798,10 +813,10 @@ namespace MphRead.Entities.Enemies
             CallSubroutine(Metadata.Enemy24Subroutines, this);
         }
 
-        private static readonly IReadOnlyList<int> _weaponAnimIds = new int[6]
-        {
+        private static readonly ImmutableArray<int> _weaponAnimIds = // 6
+        [
              11, 3, 7, 4, 12, 14
-        };
+        ];
 
         private void State07()
         {
@@ -1038,7 +1053,10 @@ namespace MphRead.Entities.Enemies
                 model.SetAnimation(anim, 0, setFlags, AnimFlags.NoLoop);
                 UpdateAnimFrames(model);
                 model.AnimInfo.Frame[0] = 5;
-                // todo: update music tracks
+                if (PlayerEntity.Main.Health > 0)
+                {
+                    Music.PlayMusic(MusicId.SEQ_GOREA_1_M21);
+                }
                 _soundSource.PlaySfx(SfxId.GOREA_TRANSFORM1_SCR);
                 return true;
             }
@@ -1093,10 +1111,10 @@ namespace MphRead.Entities.Enemies
             _field23C = 60 * 2; // todo: FPS stuff
         }
 
-        private static readonly IReadOnlyList<int> _chargeChances = new int[6]
-        {
+        private static readonly ImmutableArray<int> _chargeChances = // 6
+        [
             40, 100, 40, 30, 100, 100
-        };
+        ];
 
         private void StartShots()
         {
@@ -1478,10 +1496,10 @@ namespace MphRead.Entities.Enemies
             _speedFactor = _speedFactors[phase];
         }
 
-        private static readonly IReadOnlyList<float> _speedFactors = new float[3]
-        {
+        private static readonly ImmutableArray<float> _speedFactors = // 3
+        [
             Fixed.ToFloat(341), Fixed.ToFloat(426), Fixed.ToFloat(568)
-        };
+        ];
 
         protected override bool EnemyGetDrawInfo()
         {

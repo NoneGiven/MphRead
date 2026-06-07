@@ -1166,7 +1166,7 @@ namespace MphRead.Entities.Enemies
             if (GoreaFlags.TestFlag(Gorea2Flags.Bit11))
             {
                 SpawnEffect(72, _sealSphere.Position); // goreaBallExplode2
-                // mustodo: stop music
+                Music.Stop();
                 _soundSource.PlaySfx(SfxId.GOREA2_DEATH_SCR, sourceOnly: true);
                 return true;
             }

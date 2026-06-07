@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using MphRead.Formats.Sound;
 using MphRead.Sound;
 using MphRead.Text;
 
@@ -27,6 +29,7 @@ namespace MphRead
         public string FhVersion { get; set; } = "AMFE0";
         public string Language { get; set; } = "English";
         public string SfxVolume { get; set; } = "0.35";
+        public string MusicVolume { get; set; } = "0.50";
         public string PointGoal { get; set; } = "7";
         public string TimeLimit { get; set; } = "7:00";
         public string TimeGoal { get; set; } = "1:30";
@@ -61,13 +64,34 @@ namespace MphRead
         private static string _mode = "auto-select";
         private static Language _language = Language.English;
         private static decimal _sfxVolume = 0.35m;
+        private static decimal _musicVolume = 0.50m;
         private static int _movieId = -1;
+
+        private static void PrintSoundInfo(SoundCapability soundCapability)
+        {
+            if (soundCapability == SoundCapability.None)
+            {
+                Console.WriteLine();
+                Console.WriteLine("WARNING: Audio system could not be loaded. " +
+                    "Sound effects will not be played.");
+                Console.WriteLine("You may need to install OpenAL Soft on your system.");
+                Console.WriteLine("Music and video playback will not be affected.");
+            }
+            else if (soundCapability == SoundCapability.Unsupported)
+            {
+                Console.WriteLine();
+                Console.WriteLine("WARNING: Audio system was loaded, " +
+                    "but an unsupported version of OpenAL was used.");
+                Console.WriteLine("You may need to install OpenAL Soft on your system for sounds to play correctly.");
+                Console.WriteLine("Music and video playback will not be affected.");
+            }
+        }
 
         public static void ShowMenuPrompts()
         {
             SoundCapability soundCapability = Sfx.CheckAudioLoad();
             int prompt = 0;
-            int selection = 16;
+            int selection = 18;
             int roomId = -1;
             string room = "";
             string roomKey = "";
@@ -195,6 +219,11 @@ namespace MphRead
                     _sfxVolume = sfxVolume;
                     Sfx.Volume = (float)_sfxVolume;
                 }
+                if (Decimal.TryParse(settings.MusicVolume, out decimal musicVolume))
+                {
+                    _musicVolume = musicVolume;
+                    Music.UserVolume = (float)_musicVolume;
+                }
                 if (Int32.TryParse(settings.PointGoal, out int pointGoal))
                 {
                     _pointGoal = pointGoal;
@@ -293,7 +322,7 @@ namespace MphRead
                     input = input.Trim().ToLower();
                     if (Int32.TryParse(input, out int id))
                     {
-                        RoomMetadata? meta = Metadata.GetRoomById(id);
+                        RoomMetadata? meta = Metadata.GetRoomById(id, noThrow: true);
                         if (meta != null)
                         {
                             roomId = id;
@@ -505,6 +534,7 @@ namespace MphRead
                     FhVersion = Paths.FhKey,
                     Language = _language.ToString(),
                     SfxVolume = _sfxVolume.ToString(),
+                    MusicVolume = _musicVolume.ToString(),
                     PointGoal = _pointGoal.ToString(),
                     TimeLimit = FormatTime(_timeLimit),
                     TimeGoal = FormatTime(_timeGoal),
@@ -630,6 +660,14 @@ namespace MphRead
                         }
                         prompt = 0;
                     }
+                    else if (prompt == -4)
+                    {
+                        if (!ShowSoundTest(soundCapability))
+                        {
+                            return;
+                        }
+                        prompt = 0;
+                    }
                     string lastMode = _mode;
                     string mphKey = Paths.MphKey;
                     string fhKey = Paths.FhKey;
@@ -652,11 +690,13 @@ namespace MphRead
                     Console.WriteLine($"{X(s++)} (3) Player 3: {PrintPlayer(2)}");
                     Console.WriteLine($"{X(s++)} (4) Player 4: {PrintPlayer(3)}");
                     Console.WriteLine($"{X(s++)} (M) Models: {PrintModels()}");
-                    Console.WriteLine($"{X(s++)} (P) MPH Version: {mphKey} ({mphInfo[mphKey]})");
+                    Console.WriteLine($"{X(s++)} (H) MPH Version: {mphKey} ({mphInfo[mphKey]})");
                     Console.WriteLine($"{X(s++)} (F) FH Version: {fhKey} ({fhInfo[fhKey]})");
                     Console.WriteLine($"{X(s++)} (I) Language: {languageString}");
-                    Console.WriteLine($"{X(s++)} (V) Volume: {_sfxVolume:0.00}");
-                    Console.WriteLine($"{X(s++)} (T) Movie Player: {movieString}");
+                    Console.WriteLine($"{X(s++)} (V) SFX Volume: {_sfxVolume:0.00}");
+                    Console.WriteLine($"{X(s++)} (B) Music Volume: {_musicVolume:0.00}");
+                    Console.WriteLine($"{X(s++)} (P) Movie Player: {movieString}");
+                    Console.WriteLine($"{X(s++)} (T) Sound Test...");
                     Console.WriteLine($"{X(s++)} (A) Adventure Mode Settings...");
                     Console.WriteLine($"{X(s++)} (S) Match Settings...");
                     Console.WriteLine($"{X(s++)} (C) Features...");
@@ -665,20 +705,7 @@ namespace MphRead
                     s--;
                     if (prompt == 0)
                     {
-                        if (soundCapability == SoundCapability.None)
-                        {
-                            Console.WriteLine();
-                            Console.WriteLine("WARNING: Audio system could not be loaded. " +
-                                "Sound effects will not be played.");
-                            Console.WriteLine("You may need to install OpenAL Soft on your system.");
-                        }
-                        else if (soundCapability == SoundCapability.Unsupported)
-                        {
-                            Console.WriteLine();
-                            Console.WriteLine("WARNING: Audio system was loaded, " +
-                                "but an unsupported version of OpenAL was used.");
-                            Console.WriteLine("You may need to install OpenAL Soft on your system for sounds to play correctly.");
-                        }
+                        PrintSoundInfo(soundCapability);
                         ConsoleKeyInfo keyInfo = Console.ReadKey();
                         if (keyInfo.Key == ConsoleKey.Escape)
                         {
@@ -696,6 +723,12 @@ namespace MphRead
                         }
                         if (keyInfo.Key == ConsoleKey.Spacebar)
                         {
+                            if (selection == s - 5)
+                            {
+                                // sound test
+                                prompt = -4;
+                                continue;
+                            }
                             if (selection == s - 4)
                             {
                                 // story settings
@@ -753,7 +786,7 @@ namespace MphRead
                             selection = 6;
                             prompt = selection + 1;
                         }
-                        else if (keyInfo.Key == ConsoleKey.P)
+                        else if (keyInfo.Key == ConsoleKey.H)
                         {
                             selection = 7;
                         }
@@ -769,9 +802,19 @@ namespace MphRead
                         {
                             selection = 10;
                         }
-                        else if (keyInfo.Key == ConsoleKey.T)
+                        else if (keyInfo.Key == ConsoleKey.B)
                         {
                             selection = 11;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.P)
+                        {
+                            selection = 12;
+                        }
+                        else if (keyInfo.Key == ConsoleKey.T)
+                        {
+                            selection = s - 5;
+                            prompt = -4;
+                            continue;
                         }
                         else if (keyInfo.Key == ConsoleKey.A)
                         {
@@ -851,6 +894,11 @@ namespace MphRead
                                 Sfx.Volume = (float)_sfxVolume;
                             }
                             else if (selection == 11)
+                            {
+                                _musicVolume = 0.50m;
+                                Music.UserVolume = (float)_musicVolume;
+                            }
+                            else if (selection == 12)
                             {
                                 _movieId = -1;
                             }
@@ -983,6 +1031,11 @@ namespace MphRead
                                 Sfx.Volume = (float)_sfxVolume;
                             }
                             else if (selection == 11)
+                            {
+                                _musicVolume = Math.Min(_musicVolume + 0.05m, 1.0m);
+                                Music.UserVolume = (float)_musicVolume;
+                            }
+                            else if (selection == 12)
                             {
                                 _movieId++;
                                 if (_movieId == 13 || _movieId == 34)
@@ -1126,6 +1179,11 @@ namespace MphRead
                                 Sfx.Volume = (float)_sfxVolume;
                             }
                             else if (selection == 11)
+                            {
+                                _musicVolume = Math.Max(_musicVolume - 0.05m, 0);
+                                Music.UserVolume = (float)_musicVolume;
+                            }
+                            else if (selection == 12)
                             {
                                 _movieId--;
                                 if (_movieId == 13 || _movieId == 34)
@@ -2333,6 +2391,582 @@ namespace MphRead
             return true;
         }
 
+        private enum MusicType
+        {
+            Music = 0,
+            Seq = 1,
+            Stream = 2
+        }
+
+        // todo?: other enemy hunter combinations
+        private static readonly ImmutableArray<(MusicType Type, int Id, string Name)> _musicList =
+        [
+            (MusicType.Seq,    (int)SeqId.DRONE,                  "Intro"), // *
+            (MusicType.Stream, (int)VoiceId.STRM_TITLE_SCREEN,    "Title"),
+            (MusicType.Seq,    (int)SeqId.CHUTNEY,                "Menu"),
+            (MusicType.Seq,    (int)SeqId.MENU1,                  "Menu (Unused)"),
+            (MusicType.Seq,    (int)SeqId.RESULTS,                "Results"),
+            (MusicType.Music,  (int)MusicId.SEQ_MP2_M15,          "Celestial Archives VS."), // renamed from Celestial Gateway
+            (MusicType.Music,  (int)MusicId.SEQ_MP2_M40,          "Celestial Archives VS. (Octolith)"), // *
+            (MusicType.Music,  (int)MusicId.SEQ_MP2_M6,           "Celestial Archives VS. (Node)"), // *
+            (MusicType.Music,  (int)MusicId.SEQ_MP1_M12,          "Alinos VS."), // renamed from Alinos Gateway
+            (MusicType.Music,  (int)MusicId.SEQ_MP1_M11,          "Alinos VS. (Octolith)"), // *
+            (MusicType.Music,  (int)MusicId.SEQ_MP1_M43,          "Alinos VS. (Node)"), // *
+            (MusicType.Music,  (int)MusicId.SEQ_DILL_M33,         "VDO VS."), // renamed from Vesper Gateway
+            (MusicType.Music,  (int)MusicId.SEQ_DILL_M42,         "VDO VS. (Octolith)"), // *
+            (MusicType.Music,  (int)MusicId.SEQ_DILL_M47,         "VDO VS. (Node)"), // *
+            (MusicType.Music,  (int)MusicId.SEQ_PEPPER_M36,       "Arcterra VS."), // renamed from Arcterra Gateway
+            (MusicType.Music,  (int)MusicId.SEQ_PEPPER_M38,       "Arcterra VS. (Octolith)"), // *
+            (MusicType.Music,  (int)MusicId.SEQ_PEPPER_M45,       "Arcterra VS. (Node)"), // *
+            (MusicType.Seq,    (int)SeqId.NEW_GAME,               "Story"), // *
+            (MusicType.Seq,    (int)SeqId.SHIP,                   "Tetra Galaxy"), // *
+            (MusicType.Seq,    (int)SeqId.SHIP_LAND2,             "Ship Cockpit (Celestial Archives)"),
+            (MusicType.Music,  (int)MusicId.SEQ_GREY_M17,         "Shadows"), // *
+            //(MusicType.Music,  (int)MusicId.SEQ_GREY_M52,       "Shadows (Unused)"), // identical to previous
+            //(MusicType.Music,  (int)MusicId.SEQ_GREY_M58,       "Shadows (Unused)"), // identical to previous
+            //(MusicType.Music,  (int)MusicId.SEQ_GREY_M61,       "Shadows (Unused)"), // identical to previous
+            (MusicType.Music,  (int)MusicId.SEQ_ENEMY_1_M28,      "Enemies"),
+            //(MusicType.Music,  (int)MusicId.SEQ_ENEMY_2_M46,    "Enemies (Unused)"), // identical to previous with a delay
+            (MusicType.Music,  (int)MusicId.SEQ_YELLOW_M1,        "The Archives"),
+            (MusicType.Music,  (int)MusicId.SEQ_INTRO_KANDEN_M30, "Pursuit"),
+            (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M3,         "Kanden"),
+            (MusicType.Music,  (int)MusicId.SEQ_AMBIENT_1_M2,     "Foreboding"),
+            (MusicType.Music,  (int)MusicId.SEQ_GARLIC_M4,        "Cretaphid"),
+            (MusicType.Music,  (int)MusicId.SEQ_TELEPORT_M5,      "Aftermath"),
+            (MusicType.Music,  (int)MusicId.SEQ_OREGANO_M55,      "Escape"),
+            (MusicType.Music,  (int)MusicId.SEQ_OREGANO_M56,      "Escape (Alarm)"), // *
+            //(MusicType.Music, (int)MusicId.SEQ_ENERGY_TIMER_M51, "Fuel Stack (Race)"), // identical to VDO VS.
+            //(MusicType.Music, (int)MusicId.SEQ_ENERGY_TIMER_M57, "Fuel Stack (Failure"), // silent
+            (MusicType.Seq,    (int)SeqId.SHIP_LAND1,             "Ship Cockpit (Alinos)"),
+            (MusicType.Music,  (int)MusicId.SEQ_RED_M13,          "Alinos"),
+            (MusicType.Music,  (int)MusicId.SEQ_INTRO_SPIRE_M9,   "Spire Intro"), // *
+            (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M37,        "Spire"),
+            (MusicType.Music,  (int)MusicId.SEQ_SAFFRON_M29,      "Slench"),
+            (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M10,        "Weavel"),
+            (MusicType.Seq,    (int)SeqId.SHIP_LAND3,             "Ship Cockpit (VDO)"),
+            (MusicType.Music,  (int)MusicId.SEQ_GREEN_M19,        "The Outpost"),
+            (MusicType.Music,  (int)MusicId.SEQ_GREEN_M50,        "The Outpost (Race)"), // *
+            (MusicType.Music,  (int)MusicId.SEQ_GUARDIAN_M18,     "Guardians"),
+            (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M39,        "Sylux"),
+            (MusicType.Seq,    (int)SeqId.SHIP_LAND4,             "Ship Cockpit (Arcterra)"),
+            (MusicType.Music,  (int)MusicId.SEQ_WHITE_M48,        "Desolation"),
+            (MusicType.Music,  (int)MusicId.SEQ_WHITE_M54,        "Desolation (Maze)"), // *
+            //(MusicType.Music,  (int)MusicId.SEQ_WHITE_M63,      "Desolation (Unused)"), // identical to previous
+            (MusicType.Music,  (int)MusicId.SEQ_BLUE_M14,         "Arcterra"),
+            (MusicType.Music,  (int)MusicId.SEQ_BLUE_M44,         "Arcterra (Puzzle)"), // *
+            (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M49,        "Noxus & Trace"), // *
+            (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M7,         "Noxus"),
+            (MusicType.Music,  (int)MusicId.SEQ_GUMBO_M41,        "Trace"),
+            (MusicType.Music,  (int)MusicId.SEQ_RED_M60,          "The Elders"),
+            //(MusicType.Music,  (int)MusicId.SEQ_RED_M62,        "The Elders (Unused)"), // identical to previous
+            (MusicType.Music,  (int)MusicId.SEQ_BRINSTAR_M67,     "Magma Drop"), // *
+            (MusicType.Music,  (int)MusicId.SEQ_PARASITE_M16,     "Demon Spawn"),
+            //(MusicType.Music,  (int)MusicId.SEQ_PARASITE_X_M8,  "Demon Spawn (Unused)"), // nearly silent
+            (MusicType.Music,  (int)MusicId.SEQ_INDIGO_M59,       "Space Decay"),
+            (MusicType.Music,  (int)MusicId.SEQ_BLACK_M53,        "Watching"),
+            //(MusicType.Music,  (int)MusicId.SEQ_BLACK_M64,      "Watching (Unused)"), // identical to previous
+            (MusicType.Music,  (int)MusicId.SEQ_GOREA_1_M20,      "Gorea"),
+            (MusicType.Music,  (int)MusicId.SEQ_GOREA_1_M22,      "Gorea (Battlehammer)"),
+            (MusicType.Music,  (int)MusicId.SEQ_GOREA_1_M26,      "Gorea (Volt Driver)"),
+            (MusicType.Music,  (int)MusicId.SEQ_GOREA_1_M27,      "Gorea (Mamgmaul)"),
+            (MusicType.Music,  (int)MusicId.SEQ_GOREA_1_M24,      "Gorea (Judicator)"),
+            (MusicType.Music,  (int)MusicId.SEQ_GOREA_1_M23,      "Gorea (Imperialist)"),
+            (MusicType.Music,  (int)MusicId.SEQ_GOREA_1_M25,      "Gorea (Shock Coil)"),
+            (MusicType.Music,  (int)MusicId.SEQ_GOREA_1_M21,      "Gorea (Seal Sphere)"),
+            (MusicType.Music,  (int)MusicId.SEQ_CREDITS_M65,      "Hunters (Credits)"), // renamed from Hunters
+            //(MusicType.Music,  (int)MusicId.SEQ_CREDITS_M66,    "Hunters (Unused)"), // identical to previous
+            (MusicType.Music,  (int)MusicId.SEQ_GOREA_2_M34,      "Oubliette"), // renamed from Gorea Returns
+            //(MusicType.Music,  (int)MusicId.SEQ_GOREA_2_M33,    "Oubliette (Unused)"), // identical to previous
+            (MusicType.Music,  (int)MusicId.SEQ_GOREA_2_M35,      "Oubliette (Node)"), // *
+            (MusicType.Seq,    (int)SeqId.GET_WEAPON,             "Get Weapon"), // *
+            (MusicType.Seq,    (int)SeqId.GET_OCTOLITH,           "Get Octolith") // *
+        ];
+
+        private static bool ShowSoundTest(SoundCapability soundCapability)
+        {
+            int selection = 0;
+            IReadOnlyList<MusicTrack> info = SoundRead.ReadInterMusicInfo();
+            if (soundCapability != SoundCapability.None)
+            {
+                Sfx.Load(scene: null!);
+            }
+            int playlist = 0;
+            MusicId music = MusicId.SEQ_YELLOW_M1;
+            MusicTrack track = info[(int)music];
+            string musicStr = $"{music} [SEQ_{(SeqId)track.SeqId}]";
+            SeqId seq = SeqId.BRINSTAR;
+            ushort tracks = UInt16.MaxValue;
+            SfxId sfx = SfxId.LID_CLOSE;
+            VoiceId stream = VoiceId.VOICE_CONSECUTIVE_KILLS;
+
+            void UpdatePlaylist(int dir)
+            {
+                playlist += dir;
+                if (playlist < 0)
+                {
+                    playlist = _musicList.Length - 1;
+                }
+                else if (playlist >= _musicList.Length)
+                {
+                    playlist = 0;
+                }
+            }
+
+            string GetPlaylistString()
+            {
+                (MusicType Type, int Id, string Name) item = _musicList[playlist];
+                string id = item.Type switch
+                {
+                    MusicType.Stream => ((VoiceId)item.Id).ToString(),
+                    MusicType.Seq => $"SEQ_{((SeqId)item.Id)}",
+                    _ => ((MusicId)item.Id).ToString()
+                };
+                return $"{item.Name} [{id}]";
+            }
+
+            void UpdateMusic(int dir)
+            {
+                int id = (int)music + dir;
+                if (id < 1)
+                {
+                    id = 68;
+                }
+                else if (id > 68)
+                {
+                    id = 1;
+                }
+                music = (MusicId)id;
+                MusicTrack track = info[id];
+                musicStr = $"{music} [SEQ_{(SeqId)track.SeqId}]";
+            }
+
+            void UpdateSeq(int dir)
+            {
+                int id = (int)seq + dir;
+                if (id < 0)
+                {
+                    id = 59;
+                }
+                else if (id > 59)
+                {
+                    id = 0;
+                }
+                seq = (SeqId)id;
+            }
+
+            void UpdateSfx(int dir)
+            {
+                int id = (int)sfx + dir;
+                if (id < 0)
+                {
+                    id = 48 | 0x8000;
+                }
+                else if (id > (48 | 0x8000))
+                {
+                    id = 0;
+                }
+                else if (id == 528)
+                {
+                    id = 0 | 0x8000;
+                }
+                else if (id == (0 | 0x8000) - 1)
+                {
+                    id = 527;
+                }
+                sfx = (SfxId)id;
+            }
+
+            string GetSfxString()
+            {
+                if (((int)sfx & 0x4000) != 0)
+                {
+                    return $"Script {(int)sfx & ~0x4000,-3} - {sfx}";
+                }
+                if (((int)sfx & 0x8000) != 0)
+                {
+                    return $"DGN {(int)sfx & ~0x8000,-2} - {sfx}";
+                }
+                return $"SFX {(int)sfx,-3:0} - SFX_{sfx}";
+            }
+
+            void UpdateStream(int dir)
+            {
+                int id = (int)stream + dir;
+                if (id < 0)
+                {
+                    id = 11;
+                }
+                else if (id > 11)
+                {
+                    id = 0;
+                }
+                stream = (VoiceId)id;
+            }
+
+            void Stop()
+            {
+                MusicPlayer.Stop();
+                Sfx.Instance?.StopAllSound(force: true);
+            }
+
+            void PlayPlaylist()
+            {
+                MusicPlayer.Stop();
+                Sfx.Instance?.StopAllSound(force: true);
+                (MusicType Type, int Id, string Name) list = _musicList[playlist];
+                SeqId seqToPlay;
+                if (list.Type == MusicType.Stream)
+                {
+                    Sfx.Instance?.PlayFreeStream(list.Id);
+                    return;
+                }
+                if (list.Type == MusicType.Seq)
+                {
+                    seqToPlay = (SeqId)list.Id;
+                    tracks = UInt16.MaxValue;
+                }
+                else // if (list.Type == MusicType.Music)
+                {
+                    MusicTrack item = info[list.Id];
+                    tracks = item.Tracks;
+                    seqToPlay = item.SeqId;
+                }
+                MusicPlayer.Load(seqToPlay, tracks);
+                MusicPlayer.WaitForLoad();
+                MusicPlayer.Play((float)_musicVolume);
+            }
+
+            void PlayMusic()
+            {
+                MusicPlayer.Stop();
+                Sfx.Instance?.StopAllSound(force: true);
+                MusicTrack item = info[(int)music];
+                tracks = item.Tracks;
+                MusicPlayer.Load(item.SeqId, tracks);
+                MusicPlayer.WaitForLoad();
+                MusicPlayer.Play((float)_musicVolume);
+            }
+
+            void PlaySeq()
+            {
+                MusicPlayer.Stop();
+                Sfx.Instance?.StopAllSound(force: true);
+                tracks = UInt16.MaxValue;
+                MusicPlayer.Load(seq);
+                MusicPlayer.WaitForLoad();
+                MusicPlayer.Play((float)_musicVolume);
+            }
+
+            void PlaySfx()
+            {
+                MusicPlayer.Stop();
+                Sfx.Instance?.StopAllSound(force: true);
+                int id = (int)sfx;
+                if ((id & 0x4000) != 0)
+                {
+                    // todo?: support playing SFX scripts
+                    return;
+                }
+                if ((id & 0x8000) != 0)
+                {
+                    int amountA = Random.Shared.Next(0xFFFF);
+                    int amountB = Random.Shared.Next(0xFFFF);
+                    Sfx.Instance?.PlayDgn(id, source: null, loop: false, noUpdate: false, recency: -1, cancellable: false, amountA, amountB);
+                }
+                else
+                {
+                    Sfx.Instance?.PlaySample(id, source: null, loop: null, noUpdate: false,
+                        recency: -1, sourceOnly: false, cancellable: false);
+                }
+            }
+
+            void PlayStream()
+            {
+                MusicPlayer.Stop();
+                Sfx.Instance?.StopAllSound(force: true);
+                Sfx.Instance?.PlayFreeStream((int)stream);
+            }
+
+            string X(int index)
+            {
+                return $"[{(selection == index ? "x" : " ")}]";
+            }
+
+            while (true)
+            {
+                int s = 0;
+                Console.Clear();
+                Console.WriteLine($"MphRead Version {Program.Version}");
+                Console.WriteLine();
+                Console.WriteLine("Choose a setting using up/down or with the key indicated.");
+                Console.WriteLine("Press Space to specify, Backspace to clear, or left/right to advance the setting.");
+                Console.WriteLine("When finished, press Enter or use the last option to return. Press Escape to exit.");
+                Console.WriteLine();
+                Console.WriteLine("Sound Test");
+                Console.WriteLine();
+                Console.WriteLine($"{X(s++)} (P) MPH Playlist: {playlist,2} - {GetPlaylistString()}");
+                Console.WriteLine($"{X(s++)} (M) Music Tracks: {(int)music,2} - {musicStr}");
+                Console.WriteLine($"{X(s++)} (S) Raw Sequence: {(int)seq,2} - SEQ_{seq}");
+                Console.WriteLine($"{X(s++)} (V) Voice/Stream: {(int)stream,2} - {stream}");
+                Console.WriteLine($"{X(s++)} (X) Sound Effect: {GetSfxString()}");
+                Console.WriteLine($"{X(s++)} (C) Stop");
+                Console.WriteLine($"{X(s++)} (B) Go Back");
+                s--;
+                PrintSoundInfo(soundCapability);
+                ConsoleKeyInfo keyInfo = Console.ReadKey();
+                if (keyInfo.Key == ConsoleKey.UpArrow)
+                {
+                    selection--;
+                    if (selection < 0)
+                    {
+                        selection = s;
+                    }
+                }
+                else if (keyInfo.Key == ConsoleKey.DownArrow)
+                {
+                    selection++;
+                    if (selection > s)
+                    {
+                        selection = 0;
+                    }
+                }
+                else if (keyInfo.Key == ConsoleKey.Escape)
+                {
+                    MusicPlayer.Stop();
+                    Sfx.ShutDown();
+                    return false;
+                }
+                else if (keyInfo.Key == ConsoleKey.B || selection == s
+                    && (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Spacebar))
+                {
+                    break;
+                }
+                if (keyInfo.Key == ConsoleKey.P)
+                {
+                    selection = 0;
+                }
+                else if (keyInfo.Key == ConsoleKey.M)
+                {
+                    selection = 1;
+                }
+                else if (keyInfo.Key == ConsoleKey.S)
+                {
+                    selection = 2;
+                }
+                else if (keyInfo.Key == ConsoleKey.V)
+                {
+                    selection = 3;
+                }
+                else if (keyInfo.Key == ConsoleKey.X)
+                {
+                    selection = 4;
+                }
+                else if (keyInfo.Key == ConsoleKey.C || selection == 5 && keyInfo.Key == ConsoleKey.Spacebar)
+                {
+                    Stop();
+                }
+                else if (keyInfo.Key == ConsoleKey.Backspace)
+                {
+                    if (selection == 0)
+                    {
+                        playlist = 0;
+                        UpdatePlaylist(0);
+                    }
+                    else if (selection == 1)
+                    {
+                        music = MusicId.SEQ_YELLOW_M1;
+                        UpdateMusic(0);
+                    }
+                    else if (selection == 2)
+                    {
+                        seq = SeqId.BRINSTAR;
+                        UpdateSeq(0);
+                    }
+                    else if (selection == 3)
+                    {
+                        stream = VoiceId.VOICE_CONSECUTIVE_KILLS;
+                    }
+                    else if (selection == 4)
+                    {
+                        sfx = SfxId.LID_CLOSE;
+                    }
+                }
+                else if (keyInfo.Key == ConsoleKey.LeftArrow)
+                {
+                    if (selection == 0)
+                    {
+                        UpdatePlaylist(-1);
+                    }
+                    else if (selection == 1)
+                    {
+                        UpdateMusic(-1);
+                    }
+                    else if (selection == 2)
+                    {
+                        UpdateSeq(-1);
+                    }
+                    else if (selection == 3)
+                    {
+                        UpdateStream(-1);
+                    }
+                    else if (selection == 4)
+                    {
+                        UpdateSfx(-1);
+                    }
+                }
+                else if (keyInfo.Key == ConsoleKey.RightArrow)
+                {
+                    if (selection == 0)
+                    {
+                        UpdatePlaylist(1);
+                    }
+                    else if (selection == 1)
+                    {
+                        UpdateMusic(1);
+                    }
+                    else if (selection == 2)
+                    {
+                        UpdateSeq(1);
+                    }
+                    else if (selection == 3)
+                    {
+                        UpdateStream(1);
+                    }
+                    else if (selection == 4)
+                    {
+                        UpdateSfx(1);
+                    }
+                }
+                else if (keyInfo.Key == ConsoleKey.Spacebar)
+                {
+                    if (selection == 0)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Enter playlist index.");
+                        string? entry = Console.ReadLine();
+                        if (Int32.TryParse(entry, out int id))
+                        {
+                            if (id >= 0 && id < _musicList.Length)
+                            {
+                                playlist = id;
+                                UpdatePlaylist(0);
+                                PlayPlaylist();
+                            }
+                        }
+                    }
+                    else if (selection == 1)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Enter music name or ID.");
+                        string? entry = Console.ReadLine();
+                        if (Int32.TryParse(entry, out int id))
+                        {
+                            if (id >= 1 && id <= 68)
+                            {
+                                music = (MusicId)id;
+                                UpdateMusic(0);
+                                PlayMusic();
+                            }
+                        }
+                        else if (Enum.TryParse<MusicId>(entry?.ToUpper(), out MusicId musicId)
+                            && musicId != MusicId.Invalid && musicId != MusicId.None)
+                        {
+                            music = musicId;
+                            UpdateMusic(0);
+                            PlayMusic();
+                        }
+                    }
+                    else if (selection == 2)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Enter sequence name or ID.");
+                        string? entry = Console.ReadLine();
+                        if (Int32.TryParse(entry, out int id))
+                        {
+                            if (id >= 0 && id <= 59)
+                            {
+                                seq = (SeqId)id;
+                                PlaySeq();
+                            }
+                        }
+                        else if (Enum.TryParse<SeqId>(entry?.ToUpper()?.Replace("SEQ_", ""), out SeqId seqId) && seqId != SeqId.None)
+                        {
+                            seq = seqId;
+                            PlaySeq();
+                        }
+                    }
+                    else if (selection == 3)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Enter voice/stream name or ID.");
+                        string? entry = Console.ReadLine();
+                        if (Int32.TryParse(entry, out int id))
+                        {
+                            if (id >= 0 && id <= 11)
+                            {
+                                stream = (VoiceId)id;
+                                PlayStream();
+                            }
+                        }
+                        else if (Enum.TryParse<VoiceId>(entry?.ToUpper(), out VoiceId streamId) && streamId != VoiceId.None)
+                        {
+                            stream = streamId;
+                            PlayStream();
+                        }
+                    }
+                    else if (selection == 4)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Enter SFX name or ID.");
+                        string? entry = Console.ReadLine();
+                        if (Int32.TryParse(entry, out int id))
+                        {
+                            if (id >= 0 && id <= 527)
+                            {
+                                sfx = (SfxId)id;
+                                PlaySfx();
+                            }
+                        }
+                        else if (Enum.TryParse<SfxId>(entry?.ToUpper()?.Replace("SFX_", ""), out SfxId sfxId) && sfxId != SfxId.None)
+                        {
+                            int value = (int)sfxId;
+                            if (value < (0 | 0x4000) || value > (104 | 0x4000)) // scripts are not supported
+                            {
+                                sfx = sfxId;
+                                PlaySfx();
+                            }
+                        }
+                    }
+                }
+                else if (keyInfo.Key == ConsoleKey.Enter)
+                {
+                    if (selection == 0)
+                    {
+                        PlayPlaylist();
+                    }
+                    else if (selection == 1)
+                    {
+                        PlayMusic();
+                    }
+                    else if (selection == 2)
+                    {
+                        PlaySeq();
+                    }
+                    else if (selection == 3)
+                    {
+                        PlayStream();
+                    }
+                    else if (selection == 4)
+                    {
+                        PlaySfx();
+                    }
+                }
+            }
+            MusicPlayer.Stop();
+            Sfx.ShutDown();
+            return true;
+        }
+
         private static void ResetFeatures()
         {
             Features.NoRepeatEncounters = false;
@@ -3193,14 +3827,11 @@ namespace MphRead
                 else if (prompt == 1)
                 {
                     Console.WriteLine();
-                    if (prompt == 1)
+                    Console.WriteLine("Enter save slot from 1 to 255.");
+                    if (Int32.TryParse(Console.ReadLine(), out int slot) && slot >= 0 && slot <= 255)
                     {
-                        Console.WriteLine("Enter save slot from 1 to 255.");
-                        if (Int32.TryParse(Console.ReadLine(), out int slot) && slot >= 0 && slot <= 255)
-                        {
-                            SaveSlot = (byte)slot;
-                            UpdateSaveInfo();
-                        }
+                        SaveSlot = (byte)slot;
+                        UpdateSaveInfo();
                     }
                     prompt = 0;
                 }

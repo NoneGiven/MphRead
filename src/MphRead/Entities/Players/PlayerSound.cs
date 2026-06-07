@@ -498,7 +498,8 @@ namespace MphRead.Entities
             UpdateDoubleDamageSfx(index: 0, play: false);
             UpdateCloakSfx(index: 0, play: false);
             UpdateScanSfx(index: -1, enable: false);
-            // mustodo: update music
+            // the game doesn't stop music if a likely download play check passes
+            // todo: the game stops music here, but I think we have other cases covered, and need to not stop for teleporters
             _soundSource.StopFreeSfxScripts();
             _soundSource.StopFreeSfx(SfxId.FAST_SCROLL_UP_LOOP);
             Sfx.Instance.StopEnvironmentSfx();
@@ -608,6 +609,7 @@ namespace MphRead.Entities
                 _flagCarrySfxHandle = _soundSource.PlayFreeSfx(SfxId.FLAG_CARRIED);
             }
             // the game plays the unused WEAPON_ALARM alarm SFX here
+            MusicId musicId = MusicId.Invalid;
             for (int i = 0; i < _scene.MessageQueue.Count; i++)
             {
                 MessageInfo message = _scene.MessageQueue[i];
@@ -629,7 +631,23 @@ namespace MphRead.Entities
                 }
                 else if (message.Message == Message.UpdateMusic)
                 {
-                    // mustodo: update music
+                    musicId = CheckMusicUpdate(musicId, (int)message.Param1, (int)message.Param2);
+                }
+            }
+            if (musicId != MusicId.Invalid && PlayerEntity.Main.Health > 0
+                && (GameState.EscapeTimer == -1 || GameState.EscapeState != EscapeState.Escape))
+            {
+                if (Music.MusicEncounterSuspension != 0)
+                {
+                    Music.MusicToResume = musicId;
+                }
+                else if (Sfx.TimedSfxMute > 0)
+                {
+                    Music.UpdateMusicIdIfPaused(musicId);
+                }
+                else
+                {
+                    Music.PlayMusic(musicId);
                 }
             }
             // sfxtodo: escape sequence and pause stuff
@@ -693,6 +711,47 @@ namespace MphRead.Entities
                 }
                 _scrollSfxTimer -= _scene.FrameTime;
             }
+        }
+
+        private MusicId CheckMusicUpdate(MusicId currentMusicId, int param1, int param2)
+        {
+            MusicId newMusicId = (MusicId)param1;
+            if (param2 == 0)
+            {
+                return newMusicId;
+            }
+            int idValue = (param2 & 0x7F); // bits 0-6
+            bool negation = (param2 & 0x80) >> 7 != 0; // bit 7
+            if (idValue > 70)
+            {
+                // artifact ID (with model ID baked in)
+                bool hasArtifact = (GameState.StorySave.CheckFoundArtifact(idValue - 71, modelId: 0)) ^ negation;
+                if (hasArtifact)
+                {
+                    return newMusicId;
+                }
+            }
+            else if ((param2 & 0x100) >> 8 != 0) // bit 8
+            {
+                // entity ID
+                bool hasRoomState = (GameState.StorySave.GetRoomState(_scene.RoomId, idValue) != 0) ^ negation;
+                if (hasRoomState)
+                {
+                    return newMusicId;
+                }
+            }
+            else
+            {
+                // enemy type
+                int byteIndex = idValue >> 3;
+                int bitmask = (byte)(1 << (idValue & 7));
+                bool hasEncounterState = ((GameState.StorySave.EnemyEncounters[_scene.AreaId][byteIndex] & bitmask) == 0) ^ negation;
+                if (hasEncounterState)
+                {
+                    return newMusicId;
+                }
+            }
+            return currentMusicId;
         }
     }
 }

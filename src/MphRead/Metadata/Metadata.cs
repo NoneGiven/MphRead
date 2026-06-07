@@ -1588,10 +1588,14 @@ namespace MphRead
             return (null, -1);
         }
 
-        public static RoomMetadata? GetRoomById(int id)
+        public static RoomMetadata? GetRoomById(int id, bool noThrow = false)
         {
             if (id < 0 || id > _roomIds.Count)
             {
+                if (noThrow)
+                {
+                    return null;
+                }
                 throw new ArgumentException(nameof(id));
             }
             if (RoomMetadata.TryGetValue(_roomIds[id], out RoomMetadata? metadata))

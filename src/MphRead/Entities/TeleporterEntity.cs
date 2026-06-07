@@ -54,6 +54,8 @@ namespace MphRead.Entities
                 }
                 ModelInstance inst = SetUpModel(modelName);
                 inst.SetAnimation(2, AnimFlags.NoLoop | AnimFlags.Reverse);
+                inst.AnimInfo.Frame[0] = 0;
+                inst.AnimInfo.Flags[0] |= AnimFlags.Ended;
             }
             if (data.EntityFilename[0] != '\0')
             {
@@ -321,7 +323,7 @@ namespace MphRead.Entities
                 AnimationInfo animInfo = _models[0].AnimInfo;
                 if (animInfo.Index[0] == 2)
                 {
-                    _soundSource.PlaySfx(SfxId.TELEPORT_ACTIVATE);
+                    //_soundSource.PlaySfx(SfxId.TELEPORT_ACTIVATE);
                     animInfo.Flags[0] |= AnimFlags.NoLoop;
                     animInfo.Flags[0] |= AnimFlags.Reverse;
                     animInfo.Flags[0] &= ~AnimFlags.Ended;

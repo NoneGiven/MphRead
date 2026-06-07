@@ -409,8 +409,6 @@ namespace MphRead.Entities
             player.StopAllSfx();
             Hunter hunter = player.Hunter;
             int recolor = player.Recolor;
-            GameState.StorySave.CheckpointRoomId = -1;
-            GameState.StorySave.CheckpointEntityId = -1;
             if (GameState.TransitionRoomId == -1)
             {
                 GameState.TransitionRoomId = _scene.RoomId;
@@ -433,10 +431,15 @@ namespace MphRead.Entities
             }
             ProcessTransition(CancellationToken.None);
             EndTransition();
+            Music.TryPlayRoomMusic(_scene.RoomId, GameState.SinglePlayer && (((int)GameState.StorySave.BossFlags >> (2 * _scene.AreaId)) & 3) != 0 ? 1 : 0);
             if (!resume)
             {
                 _scene.InsertEntity(player);
-                player.Initialize();
+            }
+            player.ReloadInit = resume;
+            player.Initialize();
+            if (!resume)
+            {
                 _scene.InitEntity(player);
                 _scene.InitEntity(player.Halfturret);
             }
@@ -446,7 +449,7 @@ namespace MphRead.Entities
         {
             Debug.Assert(GameState.TransitionRoomId != -1);
             GameState.TransitionState = TransitionState.Process;
-            // mustodo: update music
+            Music.UpdateEncounterMusic(-1);
             foreach (EntityBase entity in _scene.Entities)
             {
                 if (entity.Type == EntityType.Room || entity.Type == EntityType.Model
@@ -492,6 +495,7 @@ namespace MphRead.Entities
                     entity.Destroy();
                 }
             }
+            _scene.ClearNonPersistentEffects();
             CamSeqEntity.Current = null;
             CameraSequence.Current = null;
             _scene.ClearMessageQueue();

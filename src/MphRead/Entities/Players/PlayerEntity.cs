@@ -497,8 +497,16 @@ namespace MphRead.Entities
             }
         }
 
+        // for spawning after boss intro movie
+        public bool ReloadInit { get; set; }
+
         public override void Initialize()
         {
+            Vector3 prevPos = _position;
+            Vector3 prevUp = _upVector;
+            Vector3 prevFacing = _facingVector;
+            NodeRef prevNodeRef = NodeRef;
+            int prevHealth = _health;
             _models.Clear();
             _bipedModelLods[0] = Read.GetModelInstance(Metadata.HunterModels[Hunter][0]);
             _bipedModelLods[1] = Read.GetModelInstance(Metadata.HunterModels[Hunter][1]);
@@ -630,8 +638,23 @@ namespace MphRead.Entities
             {
                 _bipedIceTransforms[i] = Matrix4.Identity;
             }
-            // todo?: some other kind of respawn?
-            if (_scene.Room == null || _scene.Room.LoadEntityId == -1)
+            if (ReloadInit)
+            {
+                // the game preserves a node name string across movie load, and there is functionality to specify it
+                // when starting the movie, but that value is ignored and rmMain is always set to be preserved instead
+                // on the other hand, we could be reloading a room without rmMain, so fall back to the previous value
+                NodeRef nodeRef = _scene.GetNodeRefByName("rmMain");
+                if (nodeRef == NodeRef.None)
+                {
+                    nodeRef = prevNodeRef;
+                }
+                Spawn(prevPos, prevFacing, prevUp, nodeRef, respawn: false);
+                _health = prevHealth;
+                Flags1 |= PlayerFlags1.Grounded;
+                Flags1 |= PlayerFlags1.GroundedPrevious;
+                ReloadInit = false;
+            }
+            else if (_scene.Room == null || _scene.Room.LoadEntityId == -1)
             {
                 int checkpointId = GameState.StorySave.CheckpointEntityId;
                 if (IsMainPlayer && GameState.Mode == GameMode.SinglePlayer
@@ -926,7 +949,7 @@ namespace MphRead.Entities
             AiData.HealthThreshold = data.HunterHealthThreshold;
             if (Hunter == Hunter.Guardian)
             {
-                // mustodo: start music
+                Music.PlayEncounterMusic(Hunter.Guardian);
             }
             // todo: update story save for multiplayer unlock
             if (data.HunterWeapon != 255)
@@ -1094,6 +1117,7 @@ namespace MphRead.Entities
             _aimPosition += offset;
             _gunDrawPos += offset;
             _muzzlePos += offset;
+            _field544 += offset;
             CameraInfo camInfo = CameraInfo;
             camInfo.Position += offset;
             camInfo.PrevPosition += offset;
@@ -1882,13 +1906,13 @@ namespace MphRead.Entities
                         else
                         {
                             _sfxStopTimer = 10 / 30f;
-                            // mustodo?: update music or something?
+                            // todo: rumble
                             _soundSource.PlayFreeSfx(SfxId.SAMUS_DEATH);
                         }
                     }
                     else
                     {
-                        // mustodo: update hunter music
+                        Music.UpdateEncounterMusic((int)Hunter);
                         PlayHunterSfx(HunterSfx.Death);
                     }
                     StopBeamChargeSfx(CurrentWeapon);
@@ -1988,7 +2012,7 @@ namespace MphRead.Entities
                         CameraInfo.SetShake(0.25f);
                         _lostOctolithEnemyIndex = -1;
                         if (GameState.StorySave.CurrentOctoliths != 0 && PlayerCount > 1
-                            && (GameState.EscapeTimer == 0 || GameState.EscapeState != EscapeState.Escape))
+                            && (GameState.EscapeTimer != 0 || GameState.EscapeState != EscapeState.Escape))
                         {
                             float minDistance = 0;
                             for (int i = 1; i < PlayerCount; i++)
@@ -2010,8 +2034,9 @@ namespace MphRead.Entities
                                 _lostOctolithDrawPos = Position.AddY(0.6f);
                                 _lostOctolithSpeed = 0.2f * 30; // frame-independent drag
                             }
-                            // mustodo: update music
                         }
+                        Music.UpdateEncounterMusic(-2);
+                        Music.Stop(fadeTime: 150 / 30f);
                     }
                     else if (attacker?.IsMainPlayer == true)
                     {
@@ -2483,7 +2508,7 @@ namespace MphRead.Entities
             }
             if (IsMainPlayer)
             {
-                // todo: do something (HUD or camera-related?)
+                // todo: rumble
             }
         }
 
