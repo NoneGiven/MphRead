@@ -1111,6 +1111,7 @@ namespace MphRead.Entities
             _aimPosition += offset;
             _gunDrawPos += offset;
             _muzzlePos += offset;
+            _field544 += offset;
             CameraInfo camInfo = CameraInfo;
             camInfo.Position += offset;
             camInfo.PrevPosition += offset;
