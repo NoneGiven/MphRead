@@ -2398,7 +2398,7 @@ namespace MphRead
             Stream = 2
         }
 
-        // todo?: other Hunter combinations
+        // todo?: other enemy hunter combinations
         private static readonly ImmutableArray<(MusicType Type, int Id, string Name)> _musicList =
         [
             (MusicType.Stream, (int)VoiceId.STRM_TITLE_SCREEN,    "Title"),
@@ -2476,21 +2476,18 @@ namespace MphRead
         {
             int selection = 0;
             IReadOnlyList<MusicTrack> info = SoundRead.ReadInterMusicInfo();
-            int playlist = 0;
-            int playingPlaylist = -1;
-            MusicId music = MusicId.SEQ_YELLOW_M1;
-            MusicTrack track = info[(int)music];
-            string musicStr = $"{music} (SEQ_{(SeqId)track.SeqId})";
-            MusicId playingMusic = MusicId.None;
-            SeqId seq = SeqId.BRINSTAR;
-            string seqStr = $"SEQ_{seq}";
-            SeqId playingSeq = SeqId.None;
-            ushort tracks = UInt16.MaxValue;
-
             if (soundCapability != SoundCapability.None)
             {
                 Sfx.Load(scene: null!);
             }
+            int playlist = 0;
+            MusicId music = MusicId.SEQ_YELLOW_M1;
+            MusicTrack track = info[(int)music];
+            string musicStr = $"{music} (SEQ_{(SeqId)track.SeqId})";
+            SeqId seq = SeqId.BRINSTAR;
+            ushort tracks = UInt16.MaxValue;
+            SfxId sfx = SfxId.LID_CLOSE;
+            VoiceId stream = VoiceId.VOICE_CONSECUTIVE_KILLS;
 
             void UpdatePlaylist(int dir)
             {
@@ -2545,85 +2542,140 @@ namespace MphRead
                     id = 0;
                 }
                 seq = (SeqId)id;
-                seqStr = $"SEQ_{seq}";
+            }
+
+            void UpdateSfx(int dir)
+            {
+                int id = (int)sfx + dir;
+                if (id < 0)
+                {
+                    id = 48 | 0x8000;
+                }
+                else if (id > (48 | 0x8000))
+                {
+                    id = 0;
+                }
+                else if (id == 528)
+                {
+                    id = 0 | 0x8000;
+                }
+                else if (id == (0 | 0x8000) - 1)
+                {
+                    id = 527;
+                }
+                sfx = (SfxId)id;
+            }
+
+            string GetSfxString()
+            {
+                if (((int)sfx & 0x4000) != 0)
+                {
+                    return $"Script {(int)sfx & ~0x4000,-3} - {sfx}";
+                }
+                if (((int)sfx & 0x8000) != 0)
+                {
+                    return $"DGN {(int)sfx & ~0x8000,-2} - {sfx}";
+                }
+                return $"SFX {(int)sfx,-3:0} - SFX_{sfx}";
+            }
+
+            void UpdateStream(int dir)
+            {
+                int id = (int)stream + dir;
+                if (id < 0)
+                {
+                    id = 11;
+                }
+                else if (id > 11)
+                {
+                    id = 0;
+                }
+                stream = (VoiceId)id;
+            }
+
+            // sktodo
+            void Stop()
+            {
+                MusicPlayer.Stop();
+                Sfx.Instance?.StopAllSound(force: true);
             }
 
             void PlayPlaylist()
             {
                 MusicPlayer.Stop();
                 Sfx.Instance?.StopAllSound(force: true);
-                playingMusic = MusicId.None;
-                playingSeq = SeqId.None;
-                if (playlist != playingPlaylist)
+                (MusicType Type, int Id, string Name) list = _musicList[playlist];
+                SeqId seqToPlay;
+                if (list.Type == MusicType.Stream)
                 {
-                    playingPlaylist = playlist;
-                    (MusicType Type, int Id, string Name) list = _musicList[playlist];
-                    SeqId seqToPlay;
-                    if (list.Type == MusicType.Stream)
-                    {
-                        Sfx.Instance?.PlayFreeStream(list.Id);
-                        return;
-                    }
-                    if (list.Type == MusicType.Seq)
-                    {
-                        seqToPlay = (SeqId)list.Id;
-                        tracks = UInt16.MaxValue;
-                    }
-                    else // if (list.Type == MusicType.Music)
-                    {
-                        MusicTrack item = info[list.Id];
-                        tracks = item.Tracks;
-                        seqToPlay = item.SeqId;
-                    }
-                    MusicPlayer.Load(seqToPlay, tracks);
-                    MusicPlayer.WaitForLoad();
-                    MusicPlayer.Play((float)_musicVolume);
+                    Sfx.Instance?.PlayFreeStream(list.Id);
+                    return;
                 }
-                else
+                if (list.Type == MusicType.Seq)
                 {
-                    playingPlaylist = -1;
+                    seqToPlay = (SeqId)list.Id;
+                    tracks = UInt16.MaxValue;
                 }
+                else // if (list.Type == MusicType.Music)
+                {
+                    MusicTrack item = info[list.Id];
+                    tracks = item.Tracks;
+                    seqToPlay = item.SeqId;
+                }
+                MusicPlayer.Load(seqToPlay, tracks);
+                MusicPlayer.WaitForLoad();
+                MusicPlayer.Play((float)_musicVolume);
             }
 
             void PlayMusic()
             {
                 MusicPlayer.Stop();
                 Sfx.Instance?.StopAllSound(force: true);
-                playingPlaylist = -1;
-                playingSeq = SeqId.None;
-                if (music != playingMusic)
-                {
-                    playingMusic = music;
-                    MusicTrack item = info[(int)music];
-                    tracks = item.Tracks;
-                    MusicPlayer.Load(item.SeqId, tracks);
-                    MusicPlayer.WaitForLoad();
-                    MusicPlayer.Play((float)_musicVolume);
-                }
-                else
-                {
-                    playingMusic = MusicId.None;
-                }
+                MusicTrack item = info[(int)music];
+                tracks = item.Tracks;
+                MusicPlayer.Load(item.SeqId, tracks);
+                MusicPlayer.WaitForLoad();
+                MusicPlayer.Play((float)_musicVolume);
             }
 
             void PlaySeq()
             {
                 MusicPlayer.Stop();
                 Sfx.Instance?.StopAllSound(force: true);
-                playingPlaylist = -1;
-                playingMusic = MusicId.None;
-                if (seq != playingSeq)
+                tracks = UInt16.MaxValue;
+                MusicPlayer.Load(seq);
+                MusicPlayer.WaitForLoad();
+                MusicPlayer.Play((float)_musicVolume);
+            }
+
+            void PlaySfx()
+            {
+                MusicPlayer.Stop();
+                Sfx.Instance?.StopAllSound(force: true);
+                int id = (int)sfx;
+                if ((id & 0x4000) != 0)
                 {
-                    playingSeq = seq;
-                    tracks = UInt16.MaxValue;
-                    MusicPlayer.Load(seq);
-                    MusicPlayer.WaitForLoad();
-                    MusicPlayer.Play((float)_musicVolume);
+                    // todo?: support playing SFX scripts
+                    return;
+                }
+                if ((id & 0x8000) != 0)
+                {
+                    int amountA = Random.Shared.Next(0xFFFF);
+                    int amountB = Random.Shared.Next(0xFFFF);
+                    Sfx.Instance?.PlayDgn(id, source: null, loop: false, noUpdate: false, recency: -1, cancellable: false, amountA, amountB);
                 }
                 else
                 {
-                    playingSeq = SeqId.None;
+                    Sfx.Instance?.PlaySample(id, source: null, loop: null, noUpdate: false,
+                        recency: -1, sourceOnly: false, cancellable: false);
                 }
+            }
+
+            void PlayStream()
+            {
+                MusicPlayer.Stop();
+                Sfx.Instance?.StopAllSound(force: true);
+                Sfx.Instance?.PlayFreeStream((int)stream);
             }
 
             string X(int index)
@@ -2645,9 +2697,10 @@ namespace MphRead
                 Console.WriteLine();
                 Console.WriteLine($"{X(s++)} (P) MPH Playlist: {playlist,2} - {GetPlaylistString()}");
                 Console.WriteLine($"{X(s++)} (M) Music Tracks: {(int)music,2} - {musicStr}");
-                Console.WriteLine($"{X(s++)} (S) Raw Sequence: {(int)seq,2} - {seqStr}");
-                //Console.WriteLine($"{X(s++)} (X) Sound Effect: {sfxStr}");
-                //Console.WriteLine($"{X(s++)} (V) Voice/Stream: {voiceStr}");
+                Console.WriteLine($"{X(s++)} (S) Raw Sequence: {(int)seq,2} - SEQ_{seq}");
+                Console.WriteLine($"{X(s++)} (V) Voice/Stream: {(int)stream,2} - {stream}");
+                Console.WriteLine($"{X(s++)} (X) Sound Effect: {GetSfxString()}");
+                Console.WriteLine($"{X(s++)} (C) Stop");
                 Console.WriteLine($"{X(s++)} (B) Go Back");
                 s--;
                 PrintSoundInfo(soundCapability);
@@ -2691,6 +2744,18 @@ namespace MphRead
                 {
                     selection = 2;
                 }
+                else if (keyInfo.Key == ConsoleKey.V)
+                {
+                    selection = 3;
+                }
+                else if (keyInfo.Key == ConsoleKey.X)
+                {
+                    selection = 4;
+                }
+                else if (keyInfo.Key == ConsoleKey.C || selection == 5 && keyInfo.Key == ConsoleKey.Spacebar)
+                {
+                    Stop();
+                }
                 else if (keyInfo.Key == ConsoleKey.Backspace)
                 {
                     if (selection == 0)
@@ -2708,6 +2773,14 @@ namespace MphRead
                         seq = SeqId.BRINSTAR;
                         UpdateSeq(0);
                     }
+                    else if (selection == 3)
+                    {
+                        stream = VoiceId.VOICE_CONSECUTIVE_KILLS;
+                    }
+                    else if (selection == 4)
+                    {
+                        sfx = SfxId.LID_CLOSE;
+                    }
                 }
                 else if (keyInfo.Key == ConsoleKey.LeftArrow)
                 {
@@ -2722,6 +2795,14 @@ namespace MphRead
                     else if (selection == 2)
                     {
                         UpdateSeq(-1);
+                    }
+                    else if (selection == 3)
+                    {
+                        UpdateStream(-1);
+                    }
+                    else if (selection == 4)
+                    {
+                        UpdateSfx(-1);
                     }
                 }
                 else if (keyInfo.Key == ConsoleKey.RightArrow)
@@ -2738,6 +2819,14 @@ namespace MphRead
                     {
                         UpdateSeq(1);
                     }
+                    else if (selection == 3)
+                    {
+                        UpdateStream(1);
+                    }
+                    else if (selection == 4)
+                    {
+                        UpdateSfx(1);
+                    }
                 }
                 else if (keyInfo.Key == ConsoleKey.Spacebar)
                 {
@@ -2752,10 +2841,7 @@ namespace MphRead
                             {
                                 playlist = id;
                                 UpdatePlaylist(0);
-                                if (playingPlaylist != -1 && playingPlaylist != playlist)
-                                {
-                                    PlayPlaylist();
-                                }
+                                PlayPlaylist();
                             }
                         }
                     }
@@ -2770,20 +2856,15 @@ namespace MphRead
                             {
                                 music = (MusicId)id;
                                 UpdateMusic(0);
-                                if (playingMusic != MusicId.None && playingMusic != music)
-                                {
-                                    PlayMusic();
-                                }
+                                PlayMusic();
                             }
                         }
-                        else if (Enum.TryParse<MusicId>(entry, out MusicId musicId) && musicId != MusicId.Invalid && musicId != MusicId.None)
+                        else if (Enum.TryParse<MusicId>(entry?.ToUpper(), out MusicId musicId)
+                            && musicId != MusicId.Invalid && musicId != MusicId.None)
                         {
                             music = musicId;
                             UpdateMusic(0);
-                            if (playingMusic != MusicId.None && playingMusic != music)
-                            {
-                                PlayMusic();
-                            }
+                            PlayMusic();
                         }
                     }
                     else if (selection == 2)
@@ -2796,20 +2877,54 @@ namespace MphRead
                             if (id >= 0 && id <= 59)
                             {
                                 seq = (SeqId)id;
-                                UpdateSeq(0);
-                                if (playingSeq != SeqId.None && playingSeq != seq)
-                                {
-                                    PlaySeq();
-                                }
+                                PlaySeq();
                             }
                         }
-                        else if (Enum.TryParse<SeqId>(entry, out SeqId seqId) && seqId != SeqId.None)
+                        else if (Enum.TryParse<SeqId>(entry?.ToUpper()?.Replace("SEQ_", ""), out SeqId seqId) && seqId != SeqId.None)
                         {
                             seq = seqId;
-                            UpdateSeq(0);
-                            if (playingSeq != SeqId.None && playingSeq != seq)
+                            PlaySeq();
+                        }
+                    }
+                    else if (selection == 3)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Enter voice/stream name or ID.");
+                        string? entry = Console.ReadLine();
+                        if (Int32.TryParse(entry, out int id))
+                        {
+                            if (id >= 0 && id <= 11)
                             {
-                                PlaySeq();
+                                stream = (VoiceId)id;
+                                PlayStream();
+                            }
+                        }
+                        else if (Enum.TryParse<VoiceId>(entry?.ToUpper(), out VoiceId streamId) && streamId != VoiceId.None)
+                        {
+                            stream = streamId;
+                            PlayStream();
+                        }
+                    }
+                    else if (selection == 4)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Enter SFX name or ID.");
+                        string? entry = Console.ReadLine();
+                        if (Int32.TryParse(entry, out int id))
+                        {
+                            if (id >= 0 && id <= 527)
+                            {
+                                sfx = (SfxId)id;
+                                PlaySfx();
+                            }
+                        }
+                        else if (Enum.TryParse<SfxId>(entry?.ToUpper()?.Replace("SFX_", ""), out SfxId sfxId) && sfxId != SfxId.None)
+                        {
+                            int value = (int)sfxId;
+                            if (value < (0 | 0x4000) || value > (104 | 0x4000)) // scripts are not supported
+                            {
+                                sfx = sfxId;
+                                PlaySfx();
                             }
                         }
                     }
@@ -2827,6 +2942,14 @@ namespace MphRead
                     else if (selection == 2)
                     {
                         PlaySeq();
+                    }
+                    else if (selection == 3)
+                    {
+                        PlayStream();
+                    }
+                    else if (selection == 4)
+                    {
+                        PlaySfx();
                     }
                 }
             }

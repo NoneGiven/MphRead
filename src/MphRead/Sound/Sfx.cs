@@ -1398,6 +1398,8 @@ namespace MphRead.Sound
                     {
                         format = item.Stream.Channels.Count == 2 ? ALFormat.Stereo8 : ALFormat.Mono8;
                     }
+                    AL.SourceStop(_streamInstance);
+                    AL.Source(_streamInstance, ALSourcei.Buffer, 0);
                     AL.BufferData(_streamBuffer, format, item.Stream.BufferData.Value, item.Stream.SampleRate);
                     AL.Source(_streamInstance, ALSourcei.Buffer, _streamBuffer);
                     AL.Source(_streamInstance, ALSourceb.Looping, item.Stream.Loop);
