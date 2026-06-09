@@ -1,5 +1,5 @@
 # MphRead
-This project is a reverse engineering and game recreation effort comprising a model viewer, scene renderer, and general parser for file formats used in the Nintendo DS game Metroid Prime Hunters. The renderer is implemented using OpenGL via the [OpenTK](https://github.com/opentk/opentk) library with audio through [OpenAL Soft](https://github.com/kcat/openal-soft). Documentation of various game features can be found in the [wiki](https://github.com/NoneGiven/MphRead/wiki).
+This project is a reverse engineering and game recreation effort comprising a model viewer, scene renderer, and general parser for file formats used in the Nintendo DS game Metroid Prime Hunters. The renderer is implemented using OpenGL via the [OpenTK](https://github.com/opentk/opentk) library with audio through [OpenAL Soft](https://github.com/kcat/openal-soft) and [SoundFlow](https://github.com/LSXPrime/SoundFlow). Documentation of various game features can be found in the [wiki](https://github.com/NoneGiven/MphRead/wiki).
 
 ## Features
 - Recreates the gameplay of the original game
