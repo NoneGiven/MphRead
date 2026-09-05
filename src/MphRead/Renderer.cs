@@ -450,6 +450,16 @@ namespace MphRead
             return Room?.GetNodeRefByName(nodeName) ?? NodeRef.None;
         }
 
+        /// <summary>
+        /// Whether a room part could hold this position at all -- false only
+        /// when the part's own geometry is nowhere near it. See
+        /// <c>RoomEntity.PartCouldContain</c>.
+        /// </summary>
+        public bool PartCouldContain(int partIndex, Vector3 position)
+        {
+            return Room?.PartCouldContain(partIndex, position, margin: 4) ?? true;
+        }
+
         public NodeRef GetNodeRefByPosition(Vector3 position)
         {
             return Room?.GetNodeRefByPosition(position) ?? NodeRef.None;
@@ -1530,6 +1540,7 @@ namespace MphRead
         /// </summary>
         public void OnDrawFrame()
         {
+            ModDrawSerial++;
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, _frameBuffer);
             // The scene's own target, which the resolution scale may have made
             // smaller than the window. Reallocated here rather than only on a
@@ -2505,8 +2516,69 @@ namespace MphRead
         /// </summary>
         private Vector3 _drawCameraPosition;
 
+        /// <summary>
+        /// Put a transform that was built during the simulation, against the
+        /// simulated camera, into the frame of the camera actually being drawn
+        /// from.
+        ///
+        /// The first-person gun is the reason this exists. It is placed in
+        /// *world* space by <c>UpdateAimVecs</c>, from
+        /// <c>CameraInfo.Position</c> -- the simulated one -- while the view it
+        /// is seen through is the interpolated one. The two disagree by
+        /// whatever the camera moved in the fraction of a step the frame falls
+        /// at, so the gun slid around the screen as the player moved and shot
+        /// off the top of it on a jump pad, where the camera moves fastest.
+        ///
+        /// Correcting the whole transform rather than just the position also
+        /// takes care of the camera *turning* between steps, which a position
+        /// fix alone would leave swinging.
+        /// </summary>
+        public Matrix4 ModAttachToDrawnView(Matrix4 transform)
+        {
+            return _drawViewCorrected ? transform * _drawViewCorrection : transform;
+        }
+
+        /// <summary>
+        /// The inverse of a view matrix, done as the rigid transform it is
+        /// rather than as a general 4x4.
+        ///
+        /// <c>Matrix4.Inverted()</c> runs cofactors over all sixteen elements,
+        /// and a LookAt matrix carries a rotation of magnitude one next to a
+        /// translation of a hundred units or more. The rotation part is
+        /// orthonormal, so its inverse is its transpose, which is exact -- no
+        /// division and nothing to cancel -- and it is cheaper besides.
+        ///
+        /// This is a correctness margin rather than a fix for anything that
+        /// was observed: the general inverse was measured against it here and
+        /// the two agreed to every digit the harness prints.
+        /// </summary>
+        private static Matrix4 InvertRigid(Matrix4 view)
+        {
+            Vector3 t = view.Row3.Xyz;
+            var inverse = new Matrix4(
+                new Vector4(view.Row0.X, view.Row1.X, view.Row2.X, 0),
+                new Vector4(view.Row0.Y, view.Row1.Y, view.Row2.Y, 0),
+                new Vector4(view.Row0.Z, view.Row1.Z, view.Row2.Z, 0),
+                new Vector4(0, 0, 0, 1)
+            );
+            // Row-vector convention: p_view = p_world * R + t, so
+            // p_world = (p_view - t) * R^T.
+            inverse.Row3.Xyz = new Vector3(
+                -(t.X * inverse.Row0.X + t.Y * inverse.Row1.X + t.Z * inverse.Row2.X),
+                -(t.X * inverse.Row0.Y + t.Y * inverse.Row1.Y + t.Z * inverse.Row2.Y),
+                -(t.X * inverse.Row0.Z + t.Y * inverse.Row1.Z + t.Z * inverse.Row2.Z)
+            );
+            return inverse;
+        }
+
+        private Matrix4 _drawViewCorrection = Matrix4.Identity;
+        private bool _drawViewCorrected;
+
         private void TransformCamera()
         {
+            // Nothing to correct unless the player's camera is what is being
+            // drawn and the frame fell between two simulated states.
+            _drawViewCorrected = false;
             // todo: only update this when the camera values change
             _viewMatrix = Matrix4.Identity;
             _viewInvRotMatrix = Matrix4.Identity;
@@ -2533,6 +2605,19 @@ namespace MphRead
                         out _viewMatrix, out _drawCameraPosition, out float camFov);
                     float fov = camFov > 0 ? camFov : 78;
                     _cameraFov = MathHelper.DegreesToRadians(fov);
+                    // ModGetDrawView hands back the simulated view unchanged
+                    // whenever it declines to blend, and then there is nothing
+                    // to correct and nothing to pay for.
+                    Matrix4 simulatedView = PlayerEntity.Main.CameraInfo.ViewMatrix;
+                    if (simulatedView != _viewMatrix)
+                    {
+                        // Row-vector convention (see Matrix.Vec3MultMtx4), so
+                        // this reads left to right: take the point into view
+                        // space with the camera the simulation has, then back
+                        // out to the world with the camera being drawn from.
+                        _drawViewCorrection = simulatedView * InvertRigid(_viewMatrix);
+                        _drawViewCorrected = true;
+                    }
                 }
                 else
                 {
@@ -3368,6 +3453,15 @@ namespace MphRead
         /// all decline would leave a picture that is merely the old one, with
         /// nothing anywhere saying so.
         /// </summary>
+        /// <summary>
+        /// Counts pictures. Anything that records what it drew, for the
+        /// harness to check, stamps this so a reading can be told from a
+        /// leftover -- the first-person gun is not drawn at all in alt form,
+        /// and its last transform would otherwise be compared against a view
+        /// that has moved on since.
+        /// </summary>
+        public ulong ModDrawSerial { get; private set; }
+
         public long ModBlendedDraws { get; private set; }
         public long ModTotalEntityDraws { get; private set; }
 
@@ -6174,9 +6268,23 @@ namespace MphRead
         /// </summary>
         private static readonly Vector2i _minimumSize = new Vector2i(1024, 720);
 
+        /// <summary>
+        /// True once <see cref="Scene"/> exists. <see cref="OnResize"/> can be
+        /// called before it does, from inside this constructor.
+        /// </summary>
+        private bool _sceneReady;
+
         public RenderWindow() : base(_gameWindowSettings, _nativeWindowSettings)
         {
-            MinimumSize = _minimumSize;
+            // The scene first, and the size floor after it: applying size
+            // limits to a window smaller than the floor makes GLFW resize it
+            // on the spot, which calls the size callback -- and that reached
+            // OnResize with Scene still null. OpenTK does not let the
+            // exception out of the callback: it stashes it and rethrows it
+            // from the first ProcessWindowEvents, so a machine whose screen
+            // could not hold a 1024x720 window died with a null reference
+            // inside Run() with the whole room already loaded and nothing
+            // near the crash to explain it.
             Scene = new Scene(Size, KeyboardState, MouseState, (string title) =>
             {
                 Title = title;
@@ -6184,6 +6292,49 @@ namespace MphRead
             {
                 Close();
             });
+            _sceneReady = true;
+            FitToScreen();
+        }
+
+        /// <summary>
+        /// The size floor, against the screen the window opened on.
+        ///
+        /// <see cref="_minimumSize"/> is 720 tall, and the work area of a
+        /// 1366x768 laptop panel is shorter than that once its taskbar and the
+        /// window's own title bar are taken off. A floor taller than the
+        /// screen is a window whose bottom is off the desktop and can never be
+        /// dragged back on -- and it is the resize GLFW performs to enforce
+        /// that floor which crashed the game outright before the guard in
+        /// <see cref="OnResize"/>. Only ever trimmed, never raised, so a
+        /// display with room for it gets exactly what it always got.
+        ///
+        /// The startup size is deliberately left alone: client sizes and a
+        /// monitor's work area are the same unit on Windows and X11 but not
+        /// on a Retina Mac, where the window is measured in pixels and the
+        /// work area in points, and clamping one against the other there
+        /// would halve a window that was never too big.
+        /// </summary>
+        private void FitToScreen()
+        {
+            Vector2i floor = _minimumSize;
+            try
+            {
+                Box2i area = Monitors.GetMonitorFromWindow(this).WorkArea;
+                // Room for the frame the window manager draws around the
+                // client area. The exact figure does not matter: it only ever
+                // applies to a screen that is already too small.
+                var room = new Vector2i(Math.Max(320, area.Size.X - 16),
+                    Math.Max(240, area.Size.Y - 64));
+                floor = new Vector2i(Math.Min(floor.X, room.X), Math.Min(floor.Y, room.Y));
+            }
+            catch (Exception ex)
+            {
+                // No monitor to ask (a headless run, a display that went away
+                // between creating the window and this line): the fixed floor
+                // is what shipped for every release before this one.
+                Mods.DebugLog.Line("window", $"could not size against the display: {ex.Message}");
+            }
+            MinimumSize = floor;
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -6329,6 +6480,14 @@ namespace MphRead
 
         protected override void OnResize(ResizeEventArgs e)
         {
+            // GLFW can call this while the window is still being built, before
+            // there is a scene to hand the new size to. Nothing is lost by
+            // ignoring it: the window's real size is read again when the scene
+            // is created, and the render target is sized at load.
+            if (!_sceneReady)
+            {
+                return;
+            }
             GL.Viewport(0, 0, e.Size.X, e.Size.Y);
             Scene.Size = e.Size;
             Scene.OnResize();

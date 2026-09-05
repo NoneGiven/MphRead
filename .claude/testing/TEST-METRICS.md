@@ -66,6 +66,27 @@ pinned at 60 Hz under a picture drawn at the display's rate.
 | Performance against the unmodified build | 1832 identical frames in **32.9 s vs 33.1 s** -- marginally faster, not slower |
 | `run-check.sh 130`, 3 clients, x3 | **0 mismatches every run**, matching the 2026-08-23 baseline |
 | `run-check.sh 150`, 6 clients, x4 | 5, 5, 3, 0 mismatches -- inside the unmodified build's own range, see below |
+| First-person gun drift in view space, AD2 ALINOS PERCH (the jump-pad map), `-drawrate 4` | **0.1308 units without the drawn-view correction (MAPFAIL), 0.0000 with it.** The negative control was run deliberately: a check for a fixed bug proves nothing until it has been shown to fail on the bug |
+| Android head | builds (`-p:AndroidSdkDirectory=$HOME/android-sdk`); **not run on a device** -- no emulator here has game files, so a match cannot be loaded |
+
+### The gun that rode the wrong camera
+
+Reported from a real build, 2026-09-05, and worth keeping as a shape: with the
+camera interpolated, the first-person gun slid around the screen while moving
+and shot off the top of it on a jump pad.
+
+`_gunDrawPos` is built in **world** space during the simulation, from
+`CameraInfo.Position`, and then viewed through the *interpolated* camera. So it
+sat where the camera was while the world was drawn from where the camera is.
+**Look for this shape anywhere something is positioned against the camera
+during the simulation and drawn through the interpolated one** -- the fix is
+`Scene.ModAttachToDrawnView`, and `.claude/render/FRAME-PACING.md` has it.
+
+One trap in measuring it, which produced a wrong diagnosis first time round:
+the gun is not drawn in alt form, so its last transform sits against a view
+that has moved on, and comparing it reads as 0.03 units of drift belonging
+entirely to the harness. Readings are stamped with `Scene.ModDrawSerial` now.
+The residual was **not** matrix precision, which is where the first hour went.
 
 ### The 6-client mismatch count on this box measures the box
 

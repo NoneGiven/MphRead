@@ -249,8 +249,8 @@ namespace MphRead.Mods.Launcher.Gui
                 Grid.SetRow(_updateBadge, 0);
                 Grid.SetColumn(_versionBox, 0);
                 Grid.SetRow(_versionBox, 0);
-                Grid.SetColumn(_debugBox, 0);
-                Grid.SetRow(_debugBox, 0);
+                Grid.SetColumn(_debugRow, 0);
+                Grid.SetRow(_debugRow, 0);
                 Grid.SetColumn(_panel, 0);
                 Grid.SetRow(_panel, 1);
                 return;
@@ -265,8 +265,8 @@ namespace MphRead.Mods.Launcher.Gui
             Grid.SetRow(_updateBadge, 0);
             Grid.SetColumn(_versionBox, 0);
             Grid.SetRow(_versionBox, 0);
-            Grid.SetColumn(_debugBox, 0);
-            Grid.SetRow(_debugBox, 0);
+            Grid.SetColumn(_debugRow, 0);
+            Grid.SetRow(_debugRow, 0);
             Grid.SetColumn(_panel, 1);
             Grid.SetRow(_panel, 0);
         }
@@ -488,9 +488,11 @@ namespace MphRead.Mods.Launcher.Gui
             {
                 bool home = ReferenceEquals(card, _homeCard);
                 _versionBox.IsVisible = home;
-                if (_debugBox != null)
+                if (_debugRow != null)
                 {
-                    _debugBox.IsVisible = home;
+                    _debugRow.IsVisible = home;
+                    // The logs may have appeared since this card was last up.
+                    RefreshShareButton();
                 }
                 if (home && _updateBadge.IsVisible)
                 {
@@ -629,6 +631,9 @@ namespace MphRead.Mods.Launcher.Gui
 
         private TextBlock _debugLine = null!;
         private Border _debugBox = null!;
+        private TextBlock _shareLine = null!;
+        private Border _shareBox = null!;
+        private StackPanel _debugRow = null!;
 
         /// <summary>
         /// The switch that turns the log file on, in the corner under the
@@ -647,7 +652,7 @@ namespace MphRead.Mods.Launcher.Gui
         /// It says where the file went once it is on, because "turn on logging
         /// and send me the file" has a second half.
         /// </summary>
-        private Border BuildDebugSwitch()
+        private StackPanel BuildDebugSwitch()
         {
             _debugLine = new TextBlock
             {
@@ -661,15 +666,6 @@ namespace MphRead.Mods.Launcher.Gui
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(8, 2, 8, 2),
-                // Directly below the version corner, sharing its right edge.
-                // The version's own margin is what it is and does not move --
-                // it is the corner people know -- so this fits into the 22
-                // points beneath it rather than pushing it up: tighter
-                // padding, and it sits 2 clear of the bottom edge.
-                Margin = new Thickness(0, 0, 24, 2),
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment = VerticalAlignment.Bottom,
-                IsVisible = false,
                 Cursor = new Cursor(StandardCursorType.Hand),
                 Child = _debugLine
             };
@@ -678,8 +674,126 @@ namespace MphRead.Mods.Launcher.Gui
                 e.Handled = true;
                 ToggleDebugLogs();
             };
+            _shareLine = new TextBlock
+            {
+                Text = "\u2197 Share logs",
+                FontSize = 10,
+                Foreground = GuiTheme.TextDimBrush
+            };
+            _shareBox = new Border
+            {
+                Background = GuiTheme.ScrimBrush,
+                BorderBrush = GuiTheme.EdgeBrush,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(8, 2, 8, 2),
+                IsVisible = false,
+                Cursor = new Cursor(StandardCursorType.Hand),
+                Child = _shareLine
+            };
+            ToolTip.SetTip(_shareBox,
+                "Zip the log files and hand them to another app.");
+            _shareBox.PointerPressed += (_, e) =>
+            {
+                e.Handled = true;
+                ShareLogs();
+            };
+            // A row rather than two placed boxes: what the switch says changes
+            // with its state ("Enable debugging logs" / "Debugging logs on"),
+            // so a Share button positioned by its own margin would sit at the
+            // wrong distance in one of them.
+            _debugRow = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                // Directly below the version corner, sharing its right edge.
+                // The version's own margin is what it is and does not move --
+                // it is the corner people know -- so this fits into the 22
+                // points beneath it rather than pushing it up: tighter
+                // padding, and it sits 2 clear of the bottom edge.
+                Margin = new Thickness(0, 0, 24, 2),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Bottom,
+                IsVisible = false
+            };
+            _debugRow.Children.Add(_shareBox);
+            _debugRow.Children.Add(_debugBox);
             RefreshDebugSwitch();
-            return _debugBox;
+            return _debugRow;
+        }
+
+        /// <summary>
+        /// Zip the logs and hand them over.
+        ///
+        /// Off the UI thread, because it reads and compresses however many
+        /// files <c>DebugLog</c> is keeping, and a front screen that stops
+        /// painting is a front screen that looks hung. The chooser itself goes
+        /// back on the UI thread: on Android it is an activity.
+        ///
+        /// Everything it can say, it says on the button, for the same reason
+        /// the update entry does -- there is nowhere else on this screen for a
+        /// sentence, and a control that greys out and reports nothing is one
+        /// people press again.
+        /// </summary>
+        private async void ShareLogs()
+        {
+            if (_sharing || Mods.LogShare.Current is not Mods.ILogShare sharer)
+            {
+                return;
+            }
+            _sharing = true;
+            _shareLine.Text = "\u2197 Zipping\u2026";
+            string name = Mods.LogArchive.FileName();
+            string path = "";
+            string error = "";
+            bool built = await Task.Run(() =>
+            {
+                try
+                {
+                    path = sharer.StagingPath(name);
+                }
+                catch (Exception ex)
+                {
+                    error = ex.Message;
+                    return false;
+                }
+                return Mods.LogArchive.Create(path, out error);
+            });
+            if (built)
+            {
+                built = sharer.Share(path, name, out error);
+            }
+            _sharing = false;
+            if (!built)
+            {
+                _shareLine.Text = $"\u2197 {error}";
+                _shareLine.Foreground = new SolidColorBrush(GuiTheme.Warm);
+                return;
+            }
+            RefreshShareButton();
+        }
+
+        private bool _sharing;
+
+        /// <summary>
+        /// Whether there is anything to send, asked every time the corner is
+        /// drawn rather than once: the first log appears the moment the switch
+        /// beside this is turned on, and a button that only checked at startup
+        /// would stay hidden for the rest of the run.
+        /// </summary>
+        private void RefreshShareButton()
+        {
+            if (_shareBox == null)
+            {
+                return;
+            }
+            if (_sharing)
+            {
+                return;
+            }
+            _shareLine.Text = "\u2197 Share logs";
+            _shareLine.Foreground = GuiTheme.TextDimBrush;
+            _shareBox.IsVisible = Mods.LogShare.Available;
         }
 
         private void ToggleDebugLogs()
@@ -708,6 +822,7 @@ namespace MphRead.Mods.Launcher.Gui
             {
                 return;
             }
+            RefreshShareButton();
             if (!LauncherPrefs.DebugLogs)
             {
                 _debugLine.Text = "\u25A2 Enable debugging logs";

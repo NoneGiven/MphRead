@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the FileProvider in AndroidManifest.xml is allowed to hand out.
+
+     Exactly one directory: the cache folder AndroidLogShare builds its zip
+     in. Not the logs directory, and not the app's files directory. A provider
+     is a door, and this one only ever has to pass one file. -->
+<paths>
+  <cache-path name="logs" path="logs-share/" />
+</paths>

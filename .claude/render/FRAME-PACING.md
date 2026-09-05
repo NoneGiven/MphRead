@@ -60,6 +60,37 @@ and render used to be one call, so a box managing 40 fps played the game in
 slow motion. The accumulator pays what it owes: `-frametimingcheck` measures
 60.000 Hz of simulation at a 40 Hz draw rate.
 
+## Android
+
+The same split, in `GameView.RenderLoop`. That head owns its own thread and its
+own EGL context rather than using `GLSurfaceView`, so it had its own pacing
+loop -- a `Thread.Sleep` to a hard `1.0 / 60.0` around one `OnUpdateFrame`,
+which is why a 120 Hz phone drew 60.
+
+It now runs the same accumulator: `FrameTiming.Advance` on the measured frame
+time, N `OnSimulationFrame`, one `OnDrawFrame`. Two things differ from the
+desktop:
+
+- **Input is inside the step loop**, not beside it. `ApplyInput` works out this
+  step's rising edges from the touch state, so running it per *picture* would
+  turn one tap on FIRE into two presses on a 120 Hz screen.
+- **In display mode the loop does not sleep at all.** `eglSwapBuffers` blocks
+  until the panel is ready, and sleeping as well is double pacing -- it would
+  halve the rate. `MinFrameSeconds` is only a floor so that a driver which does
+  *not* block (an emulator, a surface with no vsync) spins at 500 Hz rather
+  than as fast as the CPU will go.
+
+`Surface.SetFrameRate` (API 30+, best-effort, guarded and caught) tells
+SurfaceFlinger what the surface intends, because a phone that can do 120 often
+sits at 60 until something asks. Below API 30 the FPS limit still caps the
+loop; it just cannot raise the panel.
+
+**None of the Android side has run on a device.** It builds, and the shared
+code under it is the same code the desktop measurements were taken on, but the
+emulator available here has no extracted game files and so cannot load a match
+-- the gap `.claude/android/ANDROID-PORT.md` already describes. Treat the
+Android frame rate as untested rather than working.
+
 ## Interpolation
 
 A 144 Hz picture of a 60 Hz simulation is not smoother than the 60 Hz one --
@@ -188,12 +219,68 @@ clearing the override between frames makes every capture skip, and nothing ever
 interpolates, while the setting still reads "on". That is exactly the failure
 the `interpolation never engaged` assertion exists to catch, and it caught it.
 
+## Anything attached to the view has to be attached to the *drawn* view
+
+The first-person gun is the one that bit, and it is worth understanding
+because anything else camera-attached will bite the same way.
+
+`UpdateAimVecs` builds `_gunDrawPos` **in world space**, from
+`CameraInfo.Position` -- the simulated camera. The view it is seen through is
+the interpolated one. So the gun sat where the camera *was* while the world
+was drawn from where the camera *is*, and the two disagreed by whatever the
+camera moved in the fraction of a step the frame fell at. Walking, that is a
+gun sliding gently around the screen. On a jump pad, where the camera moves
+fastest, the gun leaves the top of the screen entirely.
+
+`Scene.ModAttachToDrawnView` fixes it by moving the whole transform from the
+simulated camera's frame into the drawn one:
+
+```
+correction   = simulatedView * InvertRigid(drawnView)
+gunDrawn     = gunSimulated * correction
+```
+
+Row-vector convention throughout (`Matrix.Vec3MultMtx4`), so that reads left to
+right: into view space with the camera the simulation has, back out to the
+world with the camera being drawn from. Correcting the whole transform rather
+than only the position also covers the camera *turning* between steps, which a
+position-only fix would leave swinging. `InvertRigid` transposes the rotation
+instead of running a general 4x4 inverse -- exact, and cheaper.
+
+When `ModGetDrawView` declines to blend, the drawn view *is* the simulated one,
+the correction is skipped entirely and nothing is paid for.
+
+### How it is checked
+
+`-maptest -drawrate N` measures the gun's position **in view space** and takes
+the worst change across the pictures of one simulation step. It must be zero:
+the simulation does not run between those pictures, so nothing about where the
+gun sits relative to the eye has changed. Measured on AD2 ALINOS PERCH, which
+has the jump pads:
+
+| | Worst gun drift in view |
+|---|---|
+| Without the correction | **0.1308 units** -- `MAPFAIL` |
+| With it | **0.0000 units** |
+
+The negative control matters here as much as the pass: a check for a bug that
+has been fixed proves nothing until it has been shown to fail on the bug.
+
+One trap in the measurement itself, which cost a wrong diagnosis: the gun is
+not drawn at all in alt form, so its last transform sits there while the view
+moves on, and comparing it reads as 0.03 units of drift that is entirely the
+harness's own. `ModDrawnGunSerial` stamps the reading with `Scene.ModDrawSerial`
+so a leftover can be told from a reading.
+
 ## What is not interpolated
 
 - **`PlatformEntity`**, which overrides `GetModelTransform` to build its matrix
   from its own `_curRotation` quaternion rather than from `_transform`. Moving
   platforms therefore still step at 60 Hz. They move slowly and it is not
   obvious; fixing it means giving that class its own capture.
+- **Anything else built in world space from `CameraInfo` during the
+  simulation**, if any turns up: it needs `ModAttachToDrawnView` the way the
+  gun does. The first-person gun and its smoke are the only ones found.
 - **Animations** (model, texture, material) and **particles**, which are frame
   indexed and advance once per simulation step.
 - **The HUD**, whose state is updated once per step and drawn every frame.

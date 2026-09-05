@@ -41,8 +41,13 @@ Map sweeps and probes
   back to the world would make the game behave differently on a fast monitor),
   and interpolation must have engaged at all -- "the setting is on" is not
   checkable by reading the setting, since every blend can legitimately decline.
-  The MAPTEST line itself must come out **identical** to the `-drawrate 1` run;
-  the expected blend ratio is `(N-1)/N`. `.claude/render/FRAME-PACING.md`.
+  A third: **`worst gun drift in view`** must be 0, which is what catches
+  anything attached to the camera being drawn against the simulated camera
+  instead of the interpolated one -- the fault that threw the first-person gun
+  off the top of the screen on a jump pad. Without the fix it reads 0.13 units
+  and fails; with it, 0.0000. The MAPTEST line itself must come out
+  **identical** to the `-drawrate 1` run; the expected blend ratio is
+  `(N-1)/N`. `.claude/render/FRAME-PACING.md`.
 - `-frametimingcheck` checks the accumulator alone, with no room and no window:
   60.000 Hz of simulation under 60, 144, 165, 240 Hz displays, under jitter,
   and under a 40 Hz display where the old single-rate loop played in slow

@@ -272,7 +272,18 @@ namespace MphRead.Droid
         /// </summary>
         private sealed class RenderLoop
         {
-            private const double FrameSeconds = 1.0 / 60.0;
+            /// <summary>
+            /// The shortest frame this loop will pace itself to when the
+            /// player has asked for the display's own rate.
+            ///
+            /// In that mode the pacing is <c>eglSwapBuffers</c>, which blocks
+            /// until the panel is ready -- sleeping as well would be double
+            /// pacing and would halve the rate on a phone whose swap already
+            /// blocks. This is only a floor so that a driver which does *not*
+            /// block (an emulator, a surface with no vsync) spins at 500 Hz
+            /// instead of as fast as the CPU will go.
+            /// </summary>
+            private const double MinFrameSeconds = 1.0 / FrameTiming.MaxCap;
 
             /// <summary>
             /// Density-independent pixels of drag per unit of mouse movement.
@@ -337,6 +348,8 @@ namespace MphRead.Droid
             private ISurfaceHolder? _boundTo;
             private Vector2i _size;
             private double _nextFrame;
+            private double _lastFrameStart;
+            private int _requestedFrameRate = -1;
 
             public Scene? Scene { get; private set; }
 
@@ -722,17 +735,39 @@ namespace MphRead.Droid
                 }
                 _clock.Start();
                 _nextFrame = _clock.Elapsed.TotalSeconds;
+                _lastFrameStart = _nextFrame;
+                FrameTiming.Reset();
                 _onLoaded();
             }
 
             /// <summary>One frame. False means the match is over.</summary>
+            ///
+            /// <remarks>
+            /// The same split the desktop window makes (see
+            /// <c>RenderWindow.OnRenderFrame</c>): the simulation runs on a
+            /// fixed 60 Hz accumulator whatever the picture is doing, and the
+            /// picture runs at the player's FPS limit. This used to be one
+            /// <c>OnUpdateFrame</c> paced at a hard 1/60, which is why a
+            /// 120 Hz phone drew 60.
+            ///
+            /// Input is inside the step loop rather than beside it, because
+            /// that is what it is: <see cref="ApplyInput"/> works out this
+            /// step's rising edges, and running it per *picture* would give a
+            /// tap on FIRE two presses on a 120 Hz screen.
+            /// </remarks>
             private bool DrawFrame()
             {
                 Scene scene = Scene!;
-                WaitForTick();
-                ApplyInput();
+                double elapsed = WaitForTick();
                 GameState.ApplyPause();
-                scene.OnUpdateFrame();
+                int steps = FrameTiming.Advance(elapsed);
+                for (int i = 0; i < steps; i++)
+                {
+                    ApplyInput();
+                    scene.OnSimulationFrame();
+                }
+                RequestFrameRate();
+                scene.OnDrawFrame();
                 if (!scene.OnRenderFrame())
                 {
                     End(scene);
@@ -749,6 +784,54 @@ namespace MphRead.Droid
                     ReleaseSurface();
                 }
                 return true;
+            }
+
+            /// <summary>
+            /// Tell the system what rate this surface intends to draw at, so a
+            /// 120 Hz panel actually runs at 120.
+            ///
+            /// Drawing faster than the display is otherwise wasted work: a
+            /// phone that can do 120 often sits at 60 until something asks,
+            /// and SurfaceFlinger picks the mode from what its surfaces
+            /// declare. Zero means "no preference", which is what the display
+            /// setting wants -- let the system keep whatever it chose.
+            ///
+            /// API 30. Below that there is no way to ask from a surface, and
+            /// the panel runs at whatever the framework decided; the FPS limit
+            /// still caps the loop, it just cannot raise the display.
+            /// Best-effort throughout: a device that refuses is not a reason
+            /// to end a match, and this is only ever an optimisation.
+            /// </summary>
+            private void RequestFrameRate()
+            {
+                int cap = FrameTiming.FrameRateCap;
+                if (cap == _requestedFrameRate || !OperatingSystem.IsAndroidVersionAtLeast(30))
+                {
+                    return;
+                }
+                _requestedFrameRate = cap;
+                Surface? window;
+                lock (_lock)
+                {
+                    window = _boundTo?.Surface;
+                }
+                if (window == null || !window.IsValid)
+                {
+                    // Ask again when there is a surface to ask about.
+                    _requestedFrameRate = -1;
+                    return;
+                }
+                try
+                {
+                    window.SetFrameRate(
+                        cap == FrameTiming.DisplayRate ? 0f : cap,
+                        (int)SurfaceFrameRateCompatibility.Default);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[android] the display would not be asked for "
+                        + $"{cap} fps: {ex.Message}");
+                }
             }
 
             private void End(Scene scene)
@@ -774,22 +857,36 @@ namespace MphRead.Droid
                 _onEnd();
             }
 
-            private void WaitForTick()
+            /// <summary>
+            /// Hold until the next picture is due, and answer how long the
+            /// last one actually took -- which is what the simulation's
+            /// accumulator is owed.
+            /// </summary>
+            private double WaitForTick()
             {
                 double now = _clock.Elapsed.TotalSeconds;
+                int cap = FrameTiming.FrameRateCap;
+                double interval = cap == FrameTiming.DisplayRate
+                    ? MinFrameSeconds
+                    : Math.Max(MinFrameSeconds, 1.0 / cap);
                 double wait = _nextFrame - now;
                 if (wait > 0.001)
                 {
                     Thread.Sleep((int)(wait * 1000));
+                    now = _clock.Elapsed.TotalSeconds;
                 }
-                _nextFrame += FrameSeconds;
+                _nextFrame += interval;
                 if (_nextFrame < now)
                 {
                     // A stall (a load, a garbage collection, the app coming
                     // back) must not leave the game owing frames it would then
-                    // run flat out to catch up on.
-                    _nextFrame = now + FrameSeconds;
+                    // run flat out to catch up on. The simulation's own debt is
+                    // handled separately and properly, by FrameTiming.
+                    _nextFrame = now + interval;
                 }
+                double elapsed = now - _lastFrameStart;
+                _lastFrameStart = now;
+                return elapsed;
             }
 
             /// <summary>

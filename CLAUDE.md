@@ -132,7 +132,7 @@ things you can do on the right.
 | Demos | pick a `.fpdemo` and replay it -- on Android too, where the picker cannot filter by pattern and hands back a `content://` document that has to be copied in first |
 | Settings | display, audio, controls, match rules, and profile (name, hunter, server addresses, updates, game files, credits). Also reachable from the pause menu during a match. **Pro mode HUD** is the whole HUD question in one switch -- no helmet, plain fixed crosshair, weapon list at 170%, fixed weapon, and its own energy, ammo and score readouts in place of the game's; off is the game as the DS drew it. The six settings it answers for have no rows at all, and the rows that remain have no explanations under them. Cheats, bugfixes, the leftover feature flags and the HUD-readout opacity likewise have **no UI** and no longer load from `settings.json` -- they sit at their code defaults |
 | Game files | where the .nds goes. Shown first, and everything else greyed out, when there is nothing set up yet |
-| Debugging logs | one line in the bottom right corner, under the version, on the front card only. Off; switched on it writes `logs/FruityPrime-<when>.log` beside the executable (the app's data directory on Android) with everything the program prints plus the machine, the driver, every model read and the stack of anything that kills it. What "it crashes when the map loads" is answered with. `.claude/DEBUG-LOGS.md` |
+| Debugging logs | one line in the bottom right corner, under the version, on the front card only. Off; switched on it writes `logs/FruityPrime-<when>.log` beside the executable (the app's data directory on Android) with everything the program prints plus the machine, the driver, every model read and the stack of anything that kills it. What "it crashes when the map loads" is answered with. **Share logs** sits to its left, only when logs exist, and zips them into the phone's share sheet -- the app's own directory being one no file manager will browse. `.claude/DEBUG-LOGS.md` |
 
 Gotchas worth keeping in view without opening another file:
 
@@ -246,6 +246,13 @@ changes here, because nothing about the simulation does.
   expired 2.4x early at 144 Hz), `ProcessEffects`, and the pause map's own
   animations. Frame advance is forced back to one step per picture, because the
   request to advance is consumed *after* the frame is drawn.
+- **Anything attached to the view must be attached to the *drawn* view.** The
+  first-person gun is placed in world space during the simulation, from
+  `CameraInfo.Position`, and is seen through the interpolated camera -- so it
+  slid around the screen as the player moved and left the top of it on a jump
+  pad. `Scene.ModAttachToDrawnView` moves such a transform from the simulated
+  camera's frame into the drawn one; `-maptest -drawrate N` measures the gun in
+  view space and fails if it moves at all between pictures of one step.
 - **The on-screen FPS counter reports the picture**, not the simulation. The
   simulation rate is invisible to a player, which is why it goes to the debug
   log -- every five seconds, or immediately on a dropped step or a stall.
@@ -255,8 +262,13 @@ turns VSync off, since asking for 120 on a 144 Hz screen with VSync on gets 72.
 OpenTK 4.9 no longer separates its update and render ticks, so `UpdateFrequency`
 on the window is the frame rate and `RenderFrequency` is deprecated.
 
-Full account, the interpolation rules, what is *not* interpolated, and how both
-halves are tested without a 144 Hz monitor: `.claude/render/FRAME-PACING.md`.
+Android runs the same split in `GameView.RenderLoop`, with input inside the
+step loop and no sleep in display mode (`eglSwapBuffers` is the pacing there).
+It builds but **has never run on a device**, like the rest of that head.
+
+Full account, the interpolation rules, what is *not* interpolated, the
+drawn-view attachment, Android, and how it is all tested without a 144 Hz
+monitor: `.claude/render/FRAME-PACING.md`.
 
 ## Updating
 

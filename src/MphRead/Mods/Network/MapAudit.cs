@@ -103,6 +103,34 @@ namespace MphRead.Mods.Network
         /// <summary>Five seconds of walking, which is what the report asks for.</summary>
         private const int _spawnWalkFrames = 300;
 
+        // Whether a position can be turned back into the room part it is
+        // standing in. A remote player's node ref is looked up from its
+        // position rather than walked across portals, and the room's part
+        // culling then decides whether that player is drawn at all -- so a
+        // wrong answer here is a hunter who is in the room, can be shot, and
+        // cannot be seen. The walked ref is the control: it is what the
+        // engine maintains for a player it is simulating itself.
+        private int _nodeLookupSamples;
+        private int _nodeLookupNone;
+        private int _nodeLookupWrong;
+        private int _nodeLookupHidden;
+        private int _nodeLookupShown;
+        private int _nodeLookupWalkedVisible;
+
+        // And the same question asked of the whole rule a remote player's
+        // node ref is actually maintained by (PlayerEntityNetAim), rather
+        // than of the lookup alone: a node ref per slot carried along beside
+        // the engine's own, seeded and advanced exactly as it would be on a
+        // machine that is only receiving this player's positions.
+        private readonly Formats.Culling.NodeRef[] _puppetNode =
+            new Formats.Culling.NodeRef[PlayerEntity.SlotCapacity];
+        private readonly Vector3[] _puppetPrev = new Vector3[PlayerEntity.SlotCapacity];
+        private readonly bool[] _puppetSeeded = new bool[PlayerEntity.SlotCapacity];
+        private int _puppetSamples;
+        private int _puppetNone;
+        private int _puppetWrong;
+        private int _puppetHidden;
+
         // The world probe: after the tour, stand a player on every jump pad
         // and teleporter in turn and see whether it does anything.
         private readonly List<EntityBase> _probeTargets = new();
@@ -162,6 +190,19 @@ namespace MphRead.Mods.Network
         /// which drawing must never do. Any value but 0 is a failure.
         /// </summary>
         private int _drawAdvancedTheGame;
+
+        /// <summary>
+        /// The worst distance, in units, that the first-person gun moved *in
+        /// view space* across the pictures of a single simulation step.
+        ///
+        /// It should be zero: the simulation does not run between those
+        /// pictures, so nothing about where the gun sits relative to the eye
+        /// has changed. Anything else is the gun drifting against the view,
+        /// which is what it did when the camera was interpolated and the gun
+        /// was not -- barely visible walking, and enough to throw the gun off
+        /// the top of the screen on a jump pad, where the camera moves fastest.
+        /// </summary>
+        private float _gunViewDrift;
 
         private static GameWindowSettings GameSettings() => new() { UpdateFrequency = 60 };
 
@@ -309,6 +350,8 @@ namespace MphRead.Mods.Network
             Scene.OnSimulationFrame();
             ulong frameCountBefore = Scene.FrameCount;
             int draws = Math.Max(1, DrawRate);
+            Vector3 gunInView = Vector3.Zero;
+            bool gunFresh = false;
             for (int i = 0; i < draws; i++)
             {
                 if (draws > 1)
@@ -325,6 +368,33 @@ namespace MphRead.Mods.Network
                 if (!Scene.OnRenderFrame())
                 {
                     return;
+                }
+                if (draws > 1)
+                {
+                    PlayerEntity main = PlayerEntity.Main;
+                    // Only a gun drawn on *this* picture says anything. In alt
+                    // form there is no gun, and its last transform sitting
+                    // against a view that has since moved reads as drift that
+                    // is entirely the harness's own.
+                    if (main.ModDrawnGunSerial == Scene.ModDrawSerial)
+                    {
+                        Vector3 inView = Matrix.Vec3MultMtx4(
+                            main.ModDrawnGunTransform.Row3.Xyz, Scene.ViewMatrix);
+                        if (gunFresh)
+                        {
+                            float drift = (inView - gunInView).Length;
+                            if (drift > _gunViewDrift)
+                            {
+                                _gunViewDrift = drift;
+                            }
+                        }
+                        gunInView = inView;
+                        gunFresh = true;
+                    }
+                    else
+                    {
+                        gunFresh = false;
+                    }
                 }
                 if (i < draws - 1)
                 {
@@ -771,6 +841,8 @@ namespace MphRead.Mods.Network
                 }
                 _spawned++;
                 _everSpawned[slot] = true;
+                SampleNodeLookup(player);
+                SamplePuppetNode(player);
                 if (player.IsAltForm)
                 {
                     _everAltForm[slot] = true;
@@ -813,6 +885,113 @@ namespace MphRead.Mods.Network
                 {
                     _everFired[owner.SlotIndex] = true;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Ask the room which part this player is standing in, and compare it
+        /// with the part the engine walked them into.
+        ///
+        /// Only the second is trustworthy -- it is maintained by testing the
+        /// segment between two positions against the portals it crosses --
+        /// and it is unavailable for a player whose position is written in
+        /// from the network, which is why the lookup exists at all. What this
+        /// counts is how often the lookup is wrong, and how often being wrong
+        /// would have culled the player out of the picture.
+        /// </summary>
+        private void SampleNodeLookup(PlayerEntity player)
+        {
+            Formats.Culling.NodeRef walked = player.NodeRef;
+            if (walked.PartIndex == -1)
+            {
+                return;
+            }
+            Formats.Culling.NodeRef found = Scene.GetNodeRefByPosition(player.Position);
+            _nodeLookupSamples++;
+            bool walkedVisible = Scene.IsNodeRefVisible(walked);
+            if (walkedVisible)
+            {
+                _nodeLookupWalkedVisible++;
+            }
+            if (found.PartIndex == -1)
+            {
+                _nodeLookupNone++;
+                return;
+            }
+            if (found.PartIndex == walked.PartIndex)
+            {
+                return;
+            }
+            _nodeLookupWrong++;
+            bool foundVisible = Scene.IsNodeRefVisible(found);
+            if (walkedVisible && !foundVisible)
+            {
+                _nodeLookupHidden++;
+            }
+            else if (!walkedVisible && foundVisible)
+            {
+                _nodeLookupShown++;
+            }
+        }
+
+        /// <summary>
+        /// Carry a remote player's node ref alongside the real one and
+        /// compare them.
+        ///
+        /// Every player here is simulated locally, so PlayerEntity.NodeRef is
+        /// the engine's own walked answer -- the control. Beside it this runs
+        /// the rule a machine watching this player over the wire would run:
+        /// walk when the step is one a walk can describe, look the position up
+        /// when it is not. The gap between the two is the number that decides
+        /// whether a hunter standing in front of you is drawn.
+        /// </summary>
+        private void SamplePuppetNode(PlayerEntity player)
+        {
+            int slot = player.SlotIndex;
+            if (slot < 0 || slot >= _puppetNode.Length)
+            {
+                return;
+            }
+            Vector3 position = player.Position;
+            Vector3 previous = _puppetPrev[slot];
+            _puppetPrev[slot] = position;
+            if (!_puppetSeeded[slot])
+            {
+                // How a puppet is first placed: ModNetSpawn, from the
+                // position the authority put it at.
+                _puppetSeeded[slot] = true;
+                _puppetNode[slot] = Scene.GetNodeRefByPosition(position);
+                return;
+            }
+            Formats.Culling.NodeRef next = PlayerEntity.ModWalkNodeRef(
+                Scene, _puppetNode[slot], previous, position);
+            if (next == Formats.Culling.NodeRef.None)
+            {
+                next = Scene.GetNodeRefByPosition(position);
+            }
+            if (next != Formats.Culling.NodeRef.None)
+            {
+                _puppetNode[slot] = next;
+            }
+            Formats.Culling.NodeRef walked = player.NodeRef;
+            if (walked.PartIndex == -1)
+            {
+                return;
+            }
+            _puppetSamples++;
+            if (next.PartIndex == -1)
+            {
+                _puppetNone++;
+                return;
+            }
+            if (next.PartIndex == walked.PartIndex)
+            {
+                return;
+            }
+            _puppetWrong++;
+            if (Scene.IsNodeRefVisible(walked) && !Scene.IsNodeRefVisible(next))
+            {
+                _puppetHidden++;
             }
         }
 
@@ -1072,6 +1251,22 @@ namespace MphRead.Mods.Network
             line.Append($" morphcams {morphCameras} flagbases {flagBases} nodes {nodeDefenses}");
             line.Append($" artifacts {artifacts} triggers {triggers} areas {areaVolumes}");
             line.Append($" | lowest Y {_lowestY:0.0}");
+            if (_nodeLookupSamples > 0)
+            {
+                int agreed = _nodeLookupSamples - _nodeLookupWrong - _nodeLookupNone;
+                line.Append($" | node lookup {agreed}/{_nodeLookupSamples} agreed"
+                    + $" ({_nodeLookupNone} none, {_nodeLookupWrong} wrong part,"
+                    + $" {_nodeLookupHidden} would hide the player,"
+                    + $" {_nodeLookupShown} would reveal one;"
+                    + $" {_nodeLookupWalkedVisible} samples drawable)");
+            }
+            if (_puppetSamples > 0)
+            {
+                int agreed = _puppetSamples - _puppetWrong - _puppetNone;
+                line.Append($" | remote node {agreed}/{_puppetSamples} agreed"
+                    + $" ({_puppetNone} none, {_puppetWrong} wrong part,"
+                    + $" {_puppetHidden} would hide the player)");
+            }
             if (_litSamples > 0)
             {
                 line.Append($" | lit first {_litFirst * 100:0.0}%"
@@ -1087,7 +1282,8 @@ namespace MphRead.Mods.Network
                     + $" | {_frame} steps, {Scene.FrameCount} counted"
                     + $" | entity draws {Scene.ModTotalEntityDraws}"
                     + $" ({Scene.ModBlendedDraws} blended)"
-                    + $" | draws advancing the game: {_drawAdvancedTheGame}");
+                    + $" | draws advancing the game: {_drawAdvancedTheGame}"
+                    + $" | worst gun drift in view {_gunViewDrift:0.0000} units");
             }
 
             if (_renderProbe)
@@ -1160,6 +1356,12 @@ namespace MphRead.Mods.Network
                 {
                     problems.Add($"slot {i} ({player.Hunter}) cannot be hurt by any beam");
                 }
+            }
+            if (DrawRate > 1 && _gunViewDrift > 0.01f)
+            {
+                problems.Add($"the first-person gun moved {_gunViewDrift:0.00} units in view "
+                    + "space between pictures of one simulation step: it is not riding the "
+                    + "camera the frame is actually drawn from");
             }
             if (_drawAdvancedTheGame > 0)
             {

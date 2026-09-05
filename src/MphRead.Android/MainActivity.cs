@@ -99,6 +99,11 @@ namespace MphRead.Droid
             // own download directory, and the system has an installer that
             // does the whole job. See Mods/Update/UpdateInstall.cs.
             MphRead.Mods.Update.UpdateInstall.Current = new AndroidUpdateInstaller(this);
+            // Same shape, and for the same kind of reason: the front screen's
+            // Share button exists only where something can receive a file, and
+            // on a phone that is the whole answer to "send me your logs" --
+            // the app's own directory is one no file manager will browse.
+            MphRead.Mods.LogShare.Current = new AndroidLogShare(this);
             ScreenCapture.PngWriter = AndroidPng.Write;
             return base.CustomizeAppBuilder(builder).WithInterFont();
         }

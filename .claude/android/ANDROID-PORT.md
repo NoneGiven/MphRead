@@ -5,6 +5,7 @@ project with `ANDROID` defined, and it now builds a match, not just a screen.
 Two things had to be answered to get there: the engine draws through OpenTK's
 desktop GL, and it reads a keyboard and a mouse. Neither exists on a phone.
 
+
 ## The renderer: one alias
 
 The engine calls `GL.Something` from about 250 places in files that are
@@ -164,6 +165,36 @@ buffer swaps at the display's rate, which on a modern phone is 90 or 120, and
 and cleared after the draw, so a render with no update in front of it draws
 nothing. Rendering more often than the game ticks is therefore not an option --
 the thread waits for the next 60 Hz tick instead.
+
+## Frame rate
+
+The match loop is decoupled the way the desktop's is: the simulation runs at
+exactly 60 Hz on `FrameTiming`'s accumulator and the picture runs at the FPS
+limit, up to 240. `GameView.RenderLoop` used to sleep to a hard `1.0 / 60.0`
+around one `OnUpdateFrame`, which is why a 120 Hz phone drew 60.
+
+Three things are specific to this head:
+
+- **Input goes inside the step loop**, not beside it. `ApplyInput` works out
+  this step's rising edges from the touch state, so running it once per
+  *picture* would turn one tap on FIRE into two presses at 120 Hz.
+- **In display mode the loop does not sleep.** `eglSwapBuffers` blocks until
+  the panel is ready; sleeping as well is double pacing and would halve the
+  rate. `MinFrameSeconds` is only a floor, so a driver that does not block (an
+  emulator, a surface with no vsync) spins at 500 Hz rather than flat out.
+- **`Surface.SetFrameRate`** (API 30+, guarded and caught) tells SurfaceFlinger
+  what the surface intends, because a 120 Hz phone often sits at 60 until
+  something asks. Below API 30 the FPS limit still caps the loop; it just
+  cannot raise the panel. Best-effort throughout -- a device that refuses is
+  not a reason to end a match.
+
+The setting is the launcher's own **FPS limit** row, shared with the desktop,
+so it needs nothing of its own here.
+
+**None of this has run on a device**, for the same reason nothing else in this
+head has: the emulator available here has no extracted game files and cannot
+load a match. It builds, and the code under it is the code the desktop
+measurements were taken on. Treat it as untested.
 
 ## The controls
 

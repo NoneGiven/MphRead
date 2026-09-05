@@ -45,6 +45,12 @@ namespace MphRead.Mods.Launcher.Gui
                 return 1;
             }
             Directory.CreateDirectory(directory);
+            // The front screen's Share button only exists where something can
+            // receive a file, which today is Android alone -- so without a
+            // stand-in the one corner this tool was made to check could never
+            // be photographed as a phone draws it. Same reason as SampleDemos
+            // below, and it is still only offered when real logs exist.
+            Mods.LogShare.Current ??= new CaptureLogShare();
             int written = 0;
             // On the toolkit's own thread, and drained afterwards: the views
             // post work to the dispatcher as they are built (the front screen
@@ -121,6 +127,23 @@ namespace MphRead.Mods.Launcher.Gui
             yield return ("pausemenu-small", new PauseMenuView(offerWindowMode: true),
                 new Size(560, 320));
             yield return ("serverbrowser", ServerList(), _windowSize);
+        }
+
+        /// <summary>
+        /// Somewhere for the Share button to point while it is being
+        /// photographed. Nothing is built and nothing is sent: a capture has
+        /// nobody to press it.
+        /// </summary>
+        private sealed class CaptureLogShare : Mods.ILogShare
+        {
+            public string StagingPath(string fileName) =>
+                Path.Combine(Path.GetTempPath(), fileName);
+
+            public bool Share(string path, string subject, out string error)
+            {
+                error = "there is nothing to share to on this platform";
+                return false;
+            }
         }
 
         /// <summary>
