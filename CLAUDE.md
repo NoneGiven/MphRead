@@ -101,6 +101,9 @@ export ALSOFT_DRIVERS=null PULSE_SERVER=   # else ALSA retries stall frames
 | `MphRead -mapbundle ["NAME"] [-mapdir DIR]` | cook a map into the one file it ships and is handed out as: recipe, level and baked textures in a `.fpmap`, with the level trimmed to the lumps the importer reads (376 KB for de_dust2, against 2.8 MB for the folder). What the workflow runs before it publishes -- the bundle is not committed, and the `.pk3` it is cooked from never reaches a package. `-mapdir` is resolved against the directory the command was typed in |
 | `MphRead -gamepad [-seconds N]` | what a connected pad is doing, with no match in the way: its name, its axes, and which game action each button reaches. The only thing that tells "not connected" from "connected but GLFW has no mapping for it" from "the dead zone is eating it" apart. `.claude/GAMEPAD.md` |
 | `MphRead -cel on\|off [-celbands N] [-celedge N]` / `-fog on\|off` / `-prohud on\|off` | render options for every path that never opens a launcher, which is every screenshot command. `.claude/render/CEL-SHADING.md` |
+| `MphRead -fpscap N\|display` / `-interpolation on\|off` | how fast the picture is drawn, and whether the frames between simulation steps are blended. The simulation is pinned at 60 Hz on every setting, so neither touches what the game does. `.claude/render/FRAME-PACING.md` |
+| `MphRead -frametimingcheck` | the fixed-step accumulator on its own, against frame times chosen rather than measured: does the game still run at 60.000 Hz when the screen runs at 144, at 165, at a jitter, or at 40. Needs no game files and no display |
+| `MphRead -maptest "ROOM" -drawrate N` | draw each simulation step N times, which is what a 144 Hz screen does to a 60 Hz game. Asserts that drawing did not advance the world and that interpolation actually engaged. How the decoupled loop is checked from a box with no monitor |
 | `MphRead -uishot DIR` | pictures of the launcher's own screens -- home, settings, the map picker, the pause menu -- rendered without anyone looking at a display. The one part of the program that could not otherwise be checked from a headless box |
 | `MphRead -demoinfo FILE [-replay]` | what a recorded match contains -- records, frames, a packet-type histogram, and how well it compressed. `-replay` then runs the file through the real player with no room or window and reports how the packets landed per frame, which is the measurement "the replay stutters" is about. Needs no game files. `.claude/multiplayer/NETWORK-DEMOS.md` |
 | `MphRead -netcheck ... -recorddemo` | the harness client, recording a demo as it plays |
@@ -203,6 +206,57 @@ and distinguishes "not connected" from "connected but unmapped". Layout, feel
 (radial dead zone, squared look curve, 3.5 degrees a frame at full stick), the
 four settings, and how to test one with a virtual pad on `uinput`:
 `.claude/GAMEPAD.md`.
+
+## Frame rate
+
+**The simulation runs at exactly 60 Hz. The picture runs at the display's
+rate.** They used to be the same call, which is why 60 was the whole frame
+rate; `Scene.OnUpdateFrame` is now `OnSimulationFrame` plus `OnDrawFrame`, and
+`RenderWindow` runs the first on a fixed-step accumulator
+(`Mods/Render/FrameTiming.cs`) and the second every time it draws.
+
+The simulation cannot be moved off 60 and that is not a limitation to design
+around, it is the reason the split exists: every timer in the engine is counted
+in frames -- `grep -rc "todo: FPS stuff"` finds **806** -- and an intent is sent
+per frame, a demo is a count of frames, and `NetConfig.ProtocolVersion` would
+have to move. Nothing about the wire, the demo format or the DS behaviour
+changes here, because nothing about the simulation does.
+
+- **`Scene.OnUpdateFrame()` is kept and still does one step and one picture.**
+  Every harness client calls it -- `NetCheckClient`, `MapAudit`, `WeaponDps`,
+  `ThumbnailCapture` -- and is therefore untouched by any of this. So is
+  Android, which drives the same call.
+- **Interpolation is what makes the extra frames worth having.** Without it a
+  144 Hz picture of a 60 Hz world is 60 positions a second shown twice, which
+  is judder. `EntityBase` keeps its last two transforms and the blended one is
+  *swapped into `_transform` and `_position` for the length of the
+  `GetDrawInfo` call*, which is why none of the ten `GetModelTransform`
+  overrides had to change. `CameraInfo` blends position and target and rebuilds
+  the matrix with `LookAt`, never the matrices themselves.
+- **A blend is declined whenever the two states are not two points on one
+  path**: a jump over 24 units in a step, or a step more than four times the
+  last one plus a unit. That is a teleport, a respawn, or a puppet being put
+  where its owner says it is -- all of which must be drawn where they landed.
+- **The game's speed no longer depends on the machine.** One call for both
+  meant a box managing 40 fps played in slow motion; the accumulator pays what
+  it owes, measured at 60.000 Hz with a 40 Hz draw rate.
+- **Look for timers living in the draw pass.** Three were found by audit and
+  all three are handled by counting steps owed rather than by moving code:
+  `UpdateFade` (whose delay ends cutscenes and changes rooms -- it would have
+  expired 2.4x early at 144 Hz), `ProcessEffects`, and the pause map's own
+  animations. Frame advance is forced back to one step per picture, because the
+  request to advance is consumed *after* the frame is drawn.
+- **The on-screen FPS counter reports the picture**, not the simulation. The
+  simulation rate is invisible to a player, which is why it goes to the debug
+  log -- every five seconds, or immediately on a dropped step or a stall.
+
+Default is **Display (VSync)**, the only tear-free setting; an explicit number
+turns VSync off, since asking for 120 on a 144 Hz screen with VSync on gets 72.
+OpenTK 4.9 no longer separates its update and render ticks, so `UpdateFrequency`
+on the window is the frame rate and `RenderFrequency` is deprecated.
+
+Full account, the interpolation rules, what is *not* interpolated, and how both
+halves are tested without a 144 Hz monitor: `.claude/render/FRAME-PACING.md`.
 
 ## Updating
 

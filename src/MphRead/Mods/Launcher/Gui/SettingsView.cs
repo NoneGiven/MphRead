@@ -12,6 +12,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using MphRead.Entities;
 using MphRead.Mods;
+using FrameTiming = MphRead.Mods.Render.FrameTiming;
 
 namespace MphRead.Mods.Launcher.Gui
 {
@@ -77,6 +78,62 @@ namespace MphRead.Mods.Launcher.Gui
         private ToggleRow _filteringRow = null!;
         private ToggleRow _celRow = null!;
         private ToggleRow _fpsRow = null!;
+
+        /// <summary>
+        /// The stops the FPS limit slides over, and the cap each one means.
+        ///
+        /// Stops rather than a free number, because a slider dragged across a
+        /// free range lands on 143 and 167 as easily as on 144 and 165, and a
+        /// limit that is one frame under the monitor's rate is the one number
+        /// nobody wants. Every common refresh rate is here up to 240.
+        ///
+        /// "Display" is VSync at the monitor's own rate and is the default: it
+        /// is the only tear-free setting, and on a 144 Hz screen it *is* 144.
+        /// An explicit number turns VSync off, because asking for 120 on a
+        /// 144 Hz screen with VSync on gets 72.
+        ///
+        /// None of them move the simulation, which runs at 60 Hz on every
+        /// setting -- see Mods/Render/FrameTiming.cs.
+        /// </summary>
+        private static readonly (string Label, int Cap)[] _fpsLimitStops = new[]
+        {
+            ("Display (VSync)", FrameTiming.DisplayRate),
+            ("30 fps", 30),
+            ("60 fps", 60),
+            ("75 fps", 75),
+            ("90 fps", 90),
+            ("100 fps", 100),
+            ("120 fps", 120),
+            ("144 fps", 144),
+            ("165 fps", 165),
+            ("180 fps", 180),
+            ("200 fps", 200),
+            ("240 fps", 240),
+            ("Unlimited", FrameTiming.MaxCap)
+        };
+
+        private static int FpsLimitStopIndex(int cap)
+        {
+            int index = Array.FindIndex(_fpsLimitStops, stop => stop.Cap == cap);
+            if (index >= 0)
+            {
+                return index;
+            }
+            // A settings.json written by hand, or by a build with a different
+            // table: land on the nearest stop that does not exceed what was
+            // asked for, rather than silently jumping to the default.
+            int best = 0;
+            for (int i = 1; i < _fpsLimitStops.Length; i++)
+            {
+                if (_fpsLimitStops[i].Cap <= cap)
+                {
+                    best = i;
+                }
+            }
+            return best;
+        }
+        private SliderRow _fpsLimitRow = null!;
+        private ToggleRow _interpolationRow = null!;
         private ToggleRow _proHud = null!;
         private SliderRow _sfxVolume = null!;
         private SliderRow _musicVolume = null!;
@@ -414,6 +471,16 @@ namespace MphRead.Mods.Launcher.Gui
             _resolutionScale = Add(page, new SliderRow("Render scale",
                 RenderOptions.ResolutionScale,
                 v => $"{Math.Max(RenderOptions.MinScale, v)}%"));
+            // Under the render scale because they are the same question asked
+            // from both ends -- how much picture, and how often -- and because
+            // the two of them are what somebody who is not getting a smooth
+            // game comes to this page to change.
+            _fpsLimitRow = Add(page, new SliderRow("FPS limit",
+                FpsLimitStopIndex(FrameTiming.FrameRateCap),
+                v => _fpsLimitStops[Math.Clamp(v, 0, _fpsLimitStops.Length - 1)].Label,
+                min: 0, max: _fpsLimitStops.Length - 1, keyStep: 1));
+            _interpolationRow = Add(page, new ToggleRow("Motion interpolation",
+                FrameTiming.Interpolate));
             _lightingRow = Add(page, new ToggleRow("Lighting", RenderOptions.Lighting));
             _fogRow = Add(page, new ToggleRow("Fog", RenderOptions.Fog));
             _filteringRow = Add(page, new ToggleRow("Texture filtering", RenderOptions.TextureFiltering));
@@ -724,6 +791,12 @@ namespace MphRead.Mods.Launcher.Gui
             _settings.Fog = RenderOptions.OnOff(_fogRow.On);
             _settings.TextureFiltering = RenderOptions.OnOff(_filteringRow.On);
             _settings.ShowFps = RenderOptions.OnOff(_fpsRow.On);
+            int cap = _fpsLimitStops[Math.Clamp(_fpsLimitRow.Value, 0,
+                _fpsLimitStops.Length - 1)].Cap;
+            FrameTiming.FrameRateCap = cap;
+            _settings.FrameRateCap = FrameTiming.CapString(cap);
+            FrameTiming.Interpolate = _interpolationRow.On;
+            _settings.Interpolation = RenderOptions.OnOff(_interpolationRow.On);
             _settings.CelShading = RenderOptions.OnOff(_celRow.On);
             _settings.CelBands = "8";
             _settings.CelEdge = "50";

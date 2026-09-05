@@ -31,6 +31,22 @@ Map sweeps and probes
   inventory: spawns, jump pads, teleporters, doors, afflictions, deaths.
   `./run-maps.sh 8 22` in `~/mph-net-test` sweeps every room (~15 min for 33);
   `grep MAPCRASH` / `grep MAPFAIL` the log.
+- `-maptest "ROOM" -drawrate N` draws every simulation step N times, which is
+  what a 144 Hz screen does to a 60 Hz game. It is how the decoupled frame loop
+  is checked from a box with no monitor, and it is deliberately *not* the
+  wall-clock accumulator the game uses: it steps alpha 1/N, 2/N .. 1 across the
+  draws, so a run is reproducible and visits the whole range instead of
+  whatever the machine's load produces. Two assertions, both `MAPFAIL` when
+  they trip: **`draws advancing the game`** must be 0 (a draw pass that writes
+  back to the world would make the game behave differently on a fast monitor),
+  and interpolation must have engaged at all -- "the setting is on" is not
+  checkable by reading the setting, since every blend can legitimately decline.
+  The MAPTEST line itself must come out **identical** to the `-drawrate 1` run;
+  the expected blend ratio is `(N-1)/N`. `.claude/render/FRAME-PACING.md`.
+- `-frametimingcheck` checks the accumulator alone, with no room and no window:
+  60.000 Hz of simulation under 60, 144, 165, 240 Hz displays, under jitter,
+  and under a 40 Hz display where the old single-rate loop played in slow
+  motion.
 - `-maptest -bots` runs the same rooms with **AI bots** instead of the
   scripted tour — a different code path (the tour writes `Controls` directly
   and never touches behaviour trees), and the only one that reaches bugs only

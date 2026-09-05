@@ -157,6 +157,12 @@ namespace MphRead.Mods.Network
         // it inflicts to be visible for a frame.
         private const int _afflictFrameLimit = 320;
 
+        /// <summary>
+        /// Frames on which drawing moved the simulation's own frame counter --
+        /// which drawing must never do. Any value but 0 is a failure.
+        /// </summary>
+        private int _drawAdvancedTheGame;
+
         private static GameWindowSettings GameSettings() => new() { UpdateFrequency = 60 };
 
         private static NativeWindowSettings WindowSettings() => new()
@@ -187,6 +193,22 @@ namespace MphRead.Mods.Network
 
         /// <summary>Set by -hudshots before the window is built.</summary>
         public static bool ShowWindow { get; set; }
+
+        /// <summary>
+        /// Pictures drawn per simulation step, set by <c>-maptest -drawrate
+        /// N</c>. 1 is the way this has always run.
+        ///
+        /// This is how the decoupled loop is checked without a display and
+        /// without a 144 Hz monitor. It is deliberately not the wall-clock
+        /// accumulator the game uses: the harness wants the same run every
+        /// time and wants alpha to visit its whole range, so it steps alpha
+        /// 1/N, 2/N .. 1 across the N draws instead of taking whatever the
+        /// machine's load produces. What is being checked is the half that can
+        /// actually be wrong -- that drawing more often does not change what
+        /// the simulation does -- and the accumulator arithmetic that feeds it
+        /// is checked separately by -frametimingcheck.
+        /// </summary>
+        public static int DrawRate { get; set; } = 1;
 
         /// <summary>
         /// What -size WxH asked for, before the window is built.
@@ -277,10 +299,48 @@ namespace MphRead.Mods.Network
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             GameState.ApplyPause();
-            Scene.OnUpdateFrame();
-            if (!Scene.OnRenderFrame())
+            if (DrawRate > 1 && Mods.Render.FrameTiming.ForcedAlpha == null)
             {
-                return;
+                Mods.Render.FrameTiming.ForcedAlpha = 1f;
+            }
+            // One simulation step, then however many pictures of it were
+            // asked for. _frame counts steps, not pictures, so -seconds still
+            // means seconds of game and every existing probe keeps its timing.
+            Scene.OnSimulationFrame();
+            ulong frameCountBefore = Scene.FrameCount;
+            int draws = Math.Max(1, DrawRate);
+            for (int i = 0; i < draws; i++)
+            {
+                if (draws > 1)
+                {
+                    // Set, and left set for the whole run rather than cleared
+                    // between frames: CaptureDrawState reads it at the *end of
+                    // the simulation step*, before this loop runs, to know
+                    // whether anything is going to blend against what it would
+                    // remember. Cleared each time, the capture would always be
+                    // skipped and nothing would ever interpolate.
+                    Mods.Render.FrameTiming.ForcedAlpha = (i + 1) / (float)draws;
+                }
+                Scene.OnDrawFrame();
+                if (!Scene.OnRenderFrame())
+                {
+                    return;
+                }
+                if (i < draws - 1)
+                {
+                    // Every picture but the last is finished and thrown away:
+                    // what is being measured is that making it changed nothing,
+                    // and the last one is the one the samplers below read.
+                    SwapBuffers();
+                    Scene.AfterRenderFrame();
+                }
+            }
+            // The one invariant this whole feature rests on: drawing does not
+            // advance the game. If a draw ever writes back to the world, the
+            // frame counter is where it shows up first.
+            if (Scene.FrameCount != frameCountBefore)
+            {
+                _drawAdvancedTheGame++;
             }
             _frame++;
             if (_renderProbe)
@@ -1021,6 +1081,15 @@ namespace MphRead.Mods.Network
             }
             Console.WriteLine(line.ToString());
 
+            if (DrawRate > 1)
+            {
+                Console.WriteLine($"FRAMETIMING {_room} | {DrawRate} draws per step"
+                    + $" | {_frame} steps, {Scene.FrameCount} counted"
+                    + $" | entity draws {Scene.ModTotalEntityDraws}"
+                    + $" ({Scene.ModBlendedDraws} blended)"
+                    + $" | draws advancing the game: {_drawAdvancedTheGame}");
+            }
+
             if (_renderProbe)
             {
                 Console.WriteLine($"RENDERSWEEP {_room} | {_spawnSpots.Count} spawn point(s) "
@@ -1091,6 +1160,17 @@ namespace MphRead.Mods.Network
                 {
                     problems.Add($"slot {i} ({player.Hunter}) cannot be hurt by any beam");
                 }
+            }
+            if (_drawAdvancedTheGame > 0)
+            {
+                problems.Add($"drawing advanced the simulation on {_drawAdvancedTheGame} "
+                    + "frame(s): a draw pass is writing back to the world");
+            }
+            if (DrawRate > 1 && Mods.Render.FrameTiming.Interpolate && Scene.ModBlendedDraws == 0
+                && Scene.ModTotalEntityDraws > 0)
+            {
+                problems.Add($"interpolation never engaged across {Scene.ModTotalEntityDraws} "
+                    + "entity draws, so the extra frames are duplicates");
             }
             foreach (string problem in problems)
             {

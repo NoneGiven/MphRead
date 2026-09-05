@@ -461,6 +461,145 @@ namespace MphRead.Entities
             return IsVisible(NodeRef);
         }
 
+        #region interpolation
+
+        // What the entity looked like at the end of the last two simulation
+        // steps. The simulation runs at 60 Hz whatever the picture is doing
+        // (Mods/Render/FrameTiming.cs), so drawing at 144 without these would
+        // be 60 distinct positions a second shown 2.4 times each -- judder,
+        // not motion.
+        private Matrix4 _interpPrevTransform = Matrix4.Identity;
+        private Matrix4 _interpCurTransform = Matrix4.Identity;
+        private Vector3 _interpPrevPosition;
+        private Vector3 _interpCurPosition;
+        private float _interpPrevDelta;
+        private int _interpHistory;
+
+        // What was swapped out for the interpolated one, and has to go back:
+        // the simulation reads Transform and Position too, and it must never
+        // see a value that was invented for the benefit of a frame.
+        private bool _interpApplied;
+        private Matrix4 _interpSavedTransform;
+        private Vector3 _interpSavedPosition;
+
+        /// <summary>
+        /// Nothing legitimately travels this far in one 60 Hz step
+        /// (1440 units a second). A jump to somewhere else is a teleport, a
+        /// respawn, or a puppet being put where its owner says it is -- all of
+        /// which must be drawn where they landed, never as a streak crossing
+        /// the room to get there.
+        /// </summary>
+        private const float InterpSnapDistance = 24f;
+
+        /// <summary>
+        /// Remember where this entity ended the simulation step, for the
+        /// frames drawn before the next one.
+        /// </summary>
+        public void ModCaptureDrawState()
+        {
+            _interpPrevTransform = _interpCurTransform;
+            _interpPrevPosition = _interpCurPosition;
+            _interpPrevDelta = _interpHistory > 0
+                ? (_transform.Row3.Xyz - _interpCurPosition).Length
+                : 0;
+            _interpCurTransform = _transform;
+            _interpCurPosition = _position;
+            if (_interpHistory < 3)
+            {
+                _interpHistory++;
+            }
+        }
+
+        /// <summary>
+        /// Forget the history, so the next frame draws this entity where it
+        /// actually is. For anything that moves an entity outside the ordinary
+        /// run of the simulation.
+        /// </summary>
+        public void ModResetDrawState()
+        {
+            _interpHistory = 0;
+            _interpPrevDelta = 0;
+        }
+
+        /// <summary>
+        /// Put the interpolated transform in place for the duration of one
+        /// <see cref="GetDrawInfo"/>.
+        ///
+        /// The swap is the whole trick, and it is why not one of the ten
+        /// <see cref="GetModelTransform"/> overrides had to change: they read
+        /// <c>_transform</c> and <see cref="Position"/>, so giving those the
+        /// in-between value for the length of the draw call is enough to move
+        /// every model, attached effect and shadow with it.
+        /// </summary>
+        public bool ModBeginInterpolatedDraw(float alpha)
+        {
+            if (_interpApplied || _interpHistory < 2 || alpha >= 1f || alpha <= 0f)
+            {
+                return false;
+            }
+            // Something moved it after the step was captured -- draw the truth.
+            if (_interpCurTransform != _transform)
+            {
+                return false;
+            }
+            Vector3 step = _interpCurPosition - _interpPrevPosition;
+            float delta = step.Length;
+            if (delta > InterpSnapDistance)
+            {
+                return false;
+            }
+            // A teleport that is not far enough to trip the ceiling is still a
+            // break in the motion rather than a fast piece of it: a speed that
+            // multiplied several times over in one step did not accelerate.
+            // The constant term keeps anything starting from a standstill --
+            // a jump, a jump pad, a shot leaving the barrel -- out of it.
+            if (_interpHistory >= 3 && delta > _interpPrevDelta * 4 + 1f)
+            {
+                return false;
+            }
+            _interpSavedTransform = _transform;
+            _interpSavedPosition = _position;
+            _transform = LerpTransform(_interpPrevTransform, _interpCurTransform, alpha);
+            _position = _transform.Row3.Xyz;
+            _interpApplied = true;
+            return true;
+        }
+
+        public void ModEndInterpolatedDraw()
+        {
+            if (_interpApplied)
+            {
+                _transform = _interpSavedTransform;
+                _position = _interpSavedPosition;
+                _interpApplied = false;
+            }
+        }
+
+        /// <summary>
+        /// Straight component-wise blend of the two matrices.
+        ///
+        /// Not the textbook answer -- the textbook decomposes and slerps the
+        /// rotation, because the blend of two rotation matrices is not itself
+        /// one. What it is instead is a rotation scaled by cos(half the angle
+        /// between them), and half of one 60 Hz step of turning is a fraction
+        /// of a degree for anything in this game: a pickup spinning a brisk
+        /// six degrees a step comes out 0.14% small, which is under a tenth of
+        /// a pixel on a model that size. Decomposing every entity every frame
+        /// to correct that would cost more than the extra frames are worth.
+        /// </summary>
+        private static Matrix4 LerpTransform(Matrix4 from, Matrix4 to, float alpha)
+        {
+            var result = new Matrix4(
+                Vector4.Lerp(from.Row0, to.Row0, alpha),
+                Vector4.Lerp(from.Row1, to.Row1, alpha),
+                Vector4.Lerp(from.Row2, to.Row2, alpha),
+                Vector4.Lerp(from.Row3, to.Row3, alpha)
+            );
+            return result;
+        }
+
+        #endregion
+
         public virtual void GetDrawInfo()
         {
             for (int i = 0; i < _models.Count; i++)

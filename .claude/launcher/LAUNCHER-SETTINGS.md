@@ -24,7 +24,7 @@ Sections
 
 | Section | What is on it |
 |---|---|
-| Display | window mode; performance; cel shading; **Pro mode HUD**, which is the whole of the HUD question now |
+| Display | window mode; performance (render scale, lighting, fog, filtering, FPS counter, **frame rate** and **motion interpolation**); cel shading; **Pro mode HUD**, which is the whole of the HUD question now |
 | Audio | sound-effect and music volume; the game's text language |
 | Controls | mouse sensitivity, invert either axis, and every key binding, plus reset to defaults; and a **Gamepad** section -- on/off, look sensitivity, stick dead zone, invert the stick's vertical aim. Its own section rather than more rows under Mouse, because a pad has its own sensitivity and a great many people invert one of the two and not the other. `.claude/GAMEPAD.md` |
 | Match rules | point goal, time limit, damage level, team play, friendly fire, hunter radar, affinity weapons |
@@ -48,6 +48,27 @@ Saving and applying
 
 Notable toggles
 
+- **FPS limit is the picture's rate only**, and sits directly under Render
+  scale: the two are the same question from both ends -- how much picture, and
+  how often -- and they are what somebody not getting a smooth game comes to
+  this page for. It is a `SliderRow` over a table of **stops** (Display
+  (VSync), 30, 60, 75, 90, 100, 120, 144, 165, 180, 200, 240, Unlimited)
+  rather than a free number, because a slider dragged across a free range
+  lands on 143 as easily as 144, and a limit one frame under the monitor's
+  rate is the one number nobody wants. None of the stops move the simulation,
+  which is pinned at 60 Hz whatever is chosen. Display is the default and the
+  only tear-free entry: a number turns VSync off, because 120 on a 144 Hz
+  screen with VSync on gets 72. **Motion interpolation** beneath it is what
+  makes the extra frames worth drawing; off, they are duplicates. Both save to
+  `settings.json` as `FrameRateCap` and `Interpolation`.
+  `.claude/render/FRAME-PACING.md`.
+- **`SliderRow` is no longer 0-100.** It takes `min`, `max` and `keyStep`,
+  defaulting to 0/100/5 so the five percentage rows are untouched; the FPS
+  limit slides over an index into its stop table. Its value gutter also went
+  from 64 to 112 px **for every slider**, because "Display (VSync)" is wider
+  than "100%" and at a high value the text landed on the slider's own handle.
+  Widened for all of them rather than one, since the tracks ending in a column
+  is what makes the page read as a column.
 - **Fog, lighting and texture filtering are read, not copied.** They live in
   `Mods.RenderOptions` and `Renderer` reaches them through the `FogOn`,
   `LightingOn` and `FilteringOn` properties every time it needs them. They used

@@ -52,6 +52,47 @@ Common traps
   disagree: the owner's side now counts what it *decided* (`SpectatorMode`).
 - Reading `damage pipeline` as healthy just because both ends are non-zero: `25/0` against `0/258` is a byte counter that ran backwards and nearly wrapped forward, not noise on a working pipeline — the three-digit number is the tell.
 
+## Frame pacing verification (2026-09-05)
+
+The decoupled frame loop (`.claude/render/FRAME-PACING.md`): the simulation
+pinned at 60 Hz under a picture drawn at the display's rate.
+
+| Check | Result |
+|---|---|
+| `-frametimingcheck` | all 9 cases pass. 60.000 Hz of simulation under 60 / 144 / 165 / 240 Hz displays and under jitter; **60.000 Hz under a 40 Hz display**, where the old single-rate loop played in slow motion; a 2 s stall returns 1 step, not 120; alpha visits 10/10 tenths at 144 Hz |
+| `-maptest -drawrate 1 / 3 / 4`, TEST ARENA + MP1 SANCTORUS + AD2 ALINOS PERCH | MAPTEST line **identical** at every draw rate; `draws advancing the game: 0`; blend ratio 0.666 at N=3 and 0.749 at N=4, the predicted `(N-1)/N` |
+| Real `RenderWindow`, `-fpscap display` under Mesa | sim **60.05 Hz** while the picture ran at **180 Hz** (Mesa ignores VSync here, which makes it the better test), measured over 22 s from the debug log. 0 dropped, 0 stalls |
+| Real `RenderWindow`, `-fpscap 120` / `-fpscap 144` | draw 119.9 / 143.8 Hz, sim 59.93 Hz, histogram a clean alternation of 0 and 1 step per frame |
+| Performance against the unmodified build | 1832 identical frames in **32.9 s vs 33.1 s** -- marginally faster, not slower |
+| `run-check.sh 130`, 3 clients, x3 | **0 mismatches every run**, matching the 2026-08-23 baseline |
+| `run-check.sh 150`, 6 clients, x4 | 5, 5, 3, 0 mismatches -- inside the unmodified build's own range, see below |
+
+### The 6-client mismatch count on this box measures the box
+
+Worth writing down because it cost an hour and will cost it again. Running
+`run-check.sh 150` with six clients on this WSL machine, on the **unmodified**
+build, over seven runs:
+
+```
+0, 1, 0, 2, 3, 6, 9 mismatches      clients at 39.6-44.6 fps
+```
+
+Every one of them on `zoom` or `unmorph`, plus one `damage-taken`. Those are
+frame counts of an observed state, scoped to a **server-clock phase**, and
+`NetFeatureCheck` says so itself where `alt-form-total` is defined: the
+phase-scoped count "depends on both clients agreeing where a phase boundary
+falls, and a difference there looks exactly like a replication failure."
+
+Six clients plus a server do not fit on this box: they run the tour at ~41 fps,
+so each drifts against the server clock, and the later-starting clients
+(CHARLIE, DELTA, FOXTROT) spend fewer frames inside each phase and count less.
+The mismatch count is a measurement of that starvation.
+
+**So do not read a 6-client mismatch count here as a pass or a fail without a
+same-day run of the build you are comparing against.** Three clients fit and
+give 0 reliably; that is the local instrument. Eight clients against the Pi
+(`run-remote.sh`) is the real one.
+
 ## Last verified status (2026-09-01, the hard-case batch)
 
 Full detail, including the eight faults it found, in

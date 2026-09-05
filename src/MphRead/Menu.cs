@@ -35,6 +35,8 @@ namespace MphRead
         public string Fog { get; set; } = "on";
         public string TextureFiltering { get; set; } = "off";
         public string ShowFps { get; set; } = "off";
+        public string FrameRateCap { get; set; } = "display";
+        public string Interpolation { get; set; } = "on";
         public string CelShading { get; set; } = "off";
         public string CelBands { get; set; } = "8";
         public string CelEdge { get; set; } = "50";

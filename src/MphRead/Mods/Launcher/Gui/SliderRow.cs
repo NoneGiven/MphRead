@@ -8,19 +8,28 @@ using Avalonia.Media;
 namespace MphRead.Mods.Launcher.Gui
 {
     /// <summary>
-    /// A labelled 0-100 slider, shaped like <see cref="ChoiceRow"/> so that a
-    /// column of rows lines up whatever each one is.
+    /// A labelled slider, shaped like <see cref="ChoiceRow"/> so that a column
+    /// of rows lines up whatever each one is.
     ///
     /// Drawn rather than a styled Slider for the same reason every other row
     /// here is drawn: what is wanted is a track, a fill and a value on the
     /// right, and a control template that produces exactly that is more code
     /// than the drawing.
+    ///
+    /// The range defaults to 0-100 because every row that existed before the
+    /// FPS limit was a percentage. <paramref name="min"/> and
+    /// <paramref name="max"/> let one slide over something else -- the FPS
+    /// limit slides over an index into its own table of stops, so that a drag
+    /// lands on 144 and never on 143.
     /// </summary>
     internal sealed class SliderRow : Control
     {
         private readonly string _label;
         private readonly double _labelWidth;
         private readonly Func<int, string> _format;
+        private readonly int _min;
+        private readonly int _max;
+        private readonly int _keyStep;
         private int _value;
         private bool _dragging;
         private bool _hot;
@@ -28,11 +37,14 @@ namespace MphRead.Mods.Launcher.Gui
         public event EventHandler? ValueChanged;
 
         public SliderRow(string label, int value, Func<int, string>? format = null,
-            double labelWidth = 120)
+            double labelWidth = 120, int min = 0, int max = 100, int keyStep = 5)
         {
             _label = label;
             _labelWidth = labelWidth;
-            _value = Math.Clamp(value, 0, 100);
+            _min = min;
+            _max = Math.Max(min + 1, max);
+            _keyStep = Math.Max(1, keyStep);
+            _value = Math.Clamp(value, _min, _max);
             _format = format ?? (v => $"{v.ToString(CultureInfo.InvariantCulture)}%");
             Height = 34;
             Focusable = true;
@@ -44,7 +56,7 @@ namespace MphRead.Mods.Launcher.Gui
             get => _value;
             set
             {
-                int clamped = Math.Clamp(value, 0, 100);
+                int clamped = Math.Clamp(value, _min, _max);
                 if (clamped != _value)
                 {
                     _value = clamped;
@@ -54,14 +66,27 @@ namespace MphRead.Mods.Launcher.Gui
             }
         }
 
+        /// <summary>
+        /// Room kept on the right for the value, which is drawn over the track
+        /// rather than beside it.
+        ///
+        /// This was 64, which fits "100%" and every other percentage these
+        /// rows carried before the FPS limit. That row's longest readings --
+        /// "Display (VSync)" and "Unlimited" -- are wider, and at a value near
+        /// the top of the range the text landed on the slider's own handle.
+        /// Widened for every row rather than for that one, because the tracks
+        /// ending in a column is what makes the page read as a column.
+        /// </summary>
+        private const double ValueGutter = 112;
+
         private Rect Track => new(_labelWidth, Bounds.Height / 2 - 2,
-            Math.Max(40, Bounds.Width - _labelWidth - 64), 4);
+            Math.Max(40, Bounds.Width - _labelWidth - ValueGutter), 4);
 
         private void SetFromPointer(double x)
         {
             Rect track = Track;
             double fraction = (x - track.X) / Math.Max(1, track.Width);
-            Value = (int)Math.Round(Math.Clamp(fraction, 0, 1) * 100);
+            Value = _min + (int)Math.Round(Math.Clamp(fraction, 0, 1) * (_max - _min));
         }
 
         protected override void OnPointerPressed(PointerPressedEventArgs e)
@@ -119,13 +144,13 @@ namespace MphRead.Mods.Launcher.Gui
             }
             if (e.Key == Key.Left)
             {
-                Value -= 5;
+                Value -= _keyStep;
                 e.Handled = true;
                 return;
             }
             if (e.Key == Key.Right)
             {
-                Value += 5;
+                Value += _keyStep;
                 e.Handled = true;
                 return;
             }
@@ -156,7 +181,7 @@ namespace MphRead.Mods.Launcher.Gui
 
             Rect track = Track;
             context.FillRectangle(GuiTheme.PanelLightBrush, track);
-            double filled = track.Width * (_value / 100.0);
+            double filled = track.Width * ((_value - _min) / (double)(_max - _min));
             IBrush accent = IsEnabled
                 ? new SolidColorBrush(IsFocused || _hot
                     ? GuiTheme.Shade(GuiTheme.Accent, 0.15) : GuiTheme.Accent)

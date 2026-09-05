@@ -19,6 +19,7 @@ loading everything.
 - multiplayer/NETWORK-MATCHEND.md — match end, rotation, the double-counted-kill bug
 - multiplayer/NETWORK-DIAGNOSTICS.md — the full damage-bug postmortem, traps, diagnostics
 - render/CEL-SHADING.md — flat colours in place of textures, and the depth-kink ink pass
+- render/FRAME-PACING.md — 60 Hz of simulation under a picture drawn at the display's rate: the split, interpolation, and how both halves are tested without a 144 Hz monitor
 - mapgen/MAP-PIPELINE.md — custom maps: the generator, the Quake 3 importer, the format traps
 - testing/TEST-HARNESS.md — netcheck/maptest, map sweeps, the world and affliction probes
 - testing/TEST-HARD-CASES.md — disconnects, blackouts, latency, loss, capacity, spectators, the Pi's ceiling

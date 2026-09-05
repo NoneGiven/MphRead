@@ -1376,24 +1376,33 @@ namespace MphRead
 
         public static bool BreakNextFrame { get; set; } // skdebug
 
+        /// <summary>
+        /// One simulation step and the frame drawn from it, the way this has
+        /// always worked. Every harness client -- <c>NetCheckClient</c>,
+        /// <c>MapAudit</c>, <c>WeaponDps</c>, <c>ThumbnailCapture</c> -- calls
+        /// this once per frame of its own loop and is therefore completely
+        /// unaffected by the decoupling below: same steps, same order, same
+        /// packets on the same frame numbers.
+        /// </summary>
         public void OnUpdateFrame()
         {
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, _frameBuffer);
-            // The scene's own target, which the resolution scale may have made
-            // smaller than the window. Reallocated here rather than only on a
-            // window resize, so moving the slider during a match is seen.
-            Vector2i target = RenderSize;
-            if (target != _targetSize)
-            {
-                OnResize();
-                target = _targetSize;
-            }
-            // Before the frame is drawn into it, since this swaps what the
-            // depth is drawn into.
-            UpdateDepthAttachment(target);
-            GL.Viewport(0, 0, target.X, target.Y);
-            GL.UseProgram(_shaderProgramId);
-            LoadAndUnload();
+            OnSimulationFrame();
+            OnDrawFrame();
+        }
+
+        /// <summary>
+        /// Advance the game by exactly one 60 Hz step.
+        ///
+        /// Everything that decides what the game *is* lives here and nowhere
+        /// else: input, the network session, the world, the clock, the frame
+        /// counter. <see cref="RenderWindow"/> runs this on a fixed-step
+        /// accumulator so it happens 60 times a second whatever the picture is
+        /// doing -- which is what lets the drawing run at 144 without the
+        /// 800-odd frame-counted timers in the entity code, the per-frame
+        /// intent stream or the demo format noticing anything.
+        /// </summary>
+        public void OnSimulationFrame()
+        {
             // todo: FPS stuff
             _frameTime = 1 / 60f;
             if (BreakNextFrame)
@@ -1462,19 +1471,6 @@ namespace MphRead
             }
             OnKeyHeld();
             _singleParticleCount = 0;
-            _decalItems.Clear();
-            _nonDecalItems.Clear();
-            _translucentItems.Clear();
-            while (_usedRenderItems.Count > 0)
-            {
-                RenderItem item = _usedRenderItems.Dequeue();
-                if (item.Type != RenderItemType.Mesh)
-                {
-                    ArrayPool<Vector3>.Shared.Return(item.Points);
-                }
-                _freeRenderItems.Enqueue(item);
-            }
-            _nextPolygonId = 1;
             if (ProcessFrame && _room != null)
             {
                 GameState.ProcessFrame(this);
@@ -1489,17 +1485,10 @@ namespace MphRead
                 }
                 Music.UpdateMusic();
             }
-            if (ProcessFrame || CameraMode != CameraMode.Player)
-            {
-                TransformCamera();
-                UpdateCameraPosition();
-            }
-            UpdateProjection();
             if (ProcessFrame && PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active))
             {
                 PlayerEntity.Main.UpdateHud();
             }
-            GetDrawItems();
             if (ProcessFrame)
             {
                 if (GameState.MatchState == MatchState.InProgress && !GameState.DialogPause && !GameState.MenuPause)
@@ -1518,6 +1507,65 @@ namespace MphRead
                 }
             }
             _frameAdvanceLastFrame = _frameAdvanceOn;
+            // Effects are advanced inside GetDrawItems, where their ordering
+            // against the entity draw pass is what it has always been. This is
+            // how many times it owes when the next frame gets there.
+            _pendingEffectSteps = Math.Min(_pendingEffectSteps + 1,
+                Mods.Render.FrameTiming.MaxCatchUpSteps);
+            _pendingFadeSteps = Math.Min(_pendingFadeSteps + 1,
+                Mods.Render.FrameTiming.MaxCatchUpSteps);
+            CaptureDrawState();
+        }
+
+        /// <summary>
+        /// Build and submit one picture, from wherever the simulation has got
+        /// to plus <see cref="Mods.Render.FrameTiming.Alpha"/> of the step it
+        /// is part way through.
+        ///
+        /// Nothing here may change the game. It reads the world, blends it
+        /// against the previous step and turns it into render items; a bug
+        /// that let a draw write back to an entity would make the game run
+        /// differently on a fast monitor, which is the one failure this split
+        /// must not have.
+        /// </summary>
+        public void OnDrawFrame()
+        {
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, _frameBuffer);
+            // The scene's own target, which the resolution scale may have made
+            // smaller than the window. Reallocated here rather than only on a
+            // window resize, so moving the slider during a match is seen.
+            Vector2i target = RenderSize;
+            if (target != _targetSize)
+            {
+                OnResize();
+                target = _targetSize;
+            }
+            // Before the frame is drawn into it, since this swaps what the
+            // depth is drawn into.
+            UpdateDepthAttachment(target);
+            GL.Viewport(0, 0, target.X, target.Y);
+            GL.UseProgram(_shaderProgramId);
+            LoadAndUnload();
+            _decalItems.Clear();
+            _nonDecalItems.Clear();
+            _translucentItems.Clear();
+            while (_usedRenderItems.Count > 0)
+            {
+                RenderItem item = _usedRenderItems.Dequeue();
+                if (item.Type != RenderItemType.Mesh)
+                {
+                    ArrayPool<Vector3>.Shared.Return(item.Points);
+                }
+                _freeRenderItems.Enqueue(item);
+            }
+            _nextPolygonId = 1;
+            if (ProcessFrame || CameraMode != CameraMode.Player)
+            {
+                TransformCamera();
+                UpdateCameraPosition();
+            }
+            UpdateProjection();
+            GetDrawItems();
         }
 
         public Matrix4 GetPerspectiveMatrix(float fov)
@@ -2449,6 +2497,14 @@ namespace MphRead
             Read.RemoveModel(model.Name, model.FirstHunt);
         }
 
+        /// <summary>
+        /// Where the camera is for the frame being drawn, which is not quite
+        /// where the simulation has it whenever the picture runs faster than
+        /// 60 Hz. Set by <see cref="TransformCamera"/>, which always runs
+        /// before anything reads it.
+        /// </summary>
+        private Vector3 _drawCameraPosition;
+
         private void TransformCamera()
         {
             // todo: only update this when the camera values change
@@ -2467,8 +2523,15 @@ namespace MphRead
             {
                 if (_cameraMode == CameraMode.Player)
                 {
-                    _viewMatrix = PlayerEntity.Main.CameraInfo.ViewMatrix;
-                    float fov = PlayerEntity.Main.CameraInfo.Fov > 0 ? PlayerEntity.Main.CameraInfo.Fov : 78;
+                    // The view this frame is drawn from, which is the
+                    // simulated one plus however far past it the frame falls.
+                    // CameraInfo hands back the simulated view unchanged
+                    // whenever blending would invent something -- no history
+                    // yet, a respawn, a teleport, a cutscene cut -- so the
+                    // picture never smears across a camera cut.
+                    PlayerEntity.Main.CameraInfo.ModGetDrawView(Mods.Render.FrameTiming.Alpha,
+                        out _viewMatrix, out _drawCameraPosition, out float camFov);
+                    float fov = camFov > 0 ? camFov : 78;
                     _cameraFov = MathHelper.DegreesToRadians(fov);
                 }
                 else
@@ -2508,7 +2571,7 @@ namespace MphRead
             }
             else if (_cameraMode == CameraMode.Player)
             {
-                _cameraPosition = PlayerEntity.Main.CameraInfo.Position;
+                _cameraPosition = _drawCameraPosition;
             }
         }
 
@@ -3277,6 +3340,61 @@ namespace MphRead
         private readonly Queue<RenderItem> _freeRenderItems = new Queue<RenderItem>(_renderItemAlloc);
         private readonly Queue<RenderItem> _usedRenderItems = new Queue<RenderItem>(_renderItemAlloc);
         // avoiding overhead by duplicating things in these lists
+        /// <summary>
+        /// Simulation steps taken since the last frame was drawn. Effects are
+        /// advanced once per step inside <see cref="GetDrawItems"/>, which is
+        /// where they have always been advanced, so their ordering against the
+        /// entity draw pass is unchanged; this is only how many times.
+        /// </summary>
+        private int _pendingEffectSteps;
+
+        /// <summary>
+        /// Simulation steps owed to <see cref="UpdateFade"/>, which runs in
+        /// the draw pass because the fade is drawn there, but whose delay is a
+        /// simulation timer counted in frames. Left as one per drawn frame it
+        /// would expire two and a half times too early on a 144 Hz screen, and
+        /// what waits on it is the end of a fade -- a cutscene finishing, a
+        /// room changing.
+        /// </summary>
+        private int _pendingFadeSteps;
+
+        /// <summary>
+        /// How many entity draws this scene has blended between two simulated
+        /// states, and how many it has made in total.
+        ///
+        /// The harness asserts on these. "Interpolation is on" is not a thing
+        /// a run can check by looking at the setting: every blend can decline
+        /// -- no history, a teleport, alpha at 1 -- and a bug that made them
+        /// all decline would leave a picture that is merely the old one, with
+        /// nothing anywhere saying so.
+        /// </summary>
+        public long ModBlendedDraws { get; private set; }
+        public long ModTotalEntityDraws { get; private set; }
+
+        /// <summary>
+        /// Remember where everything ended this step, so the frames drawn
+        /// before the next one can be drawn between the two.
+        /// </summary>
+        private void CaptureDrawState()
+        {
+            // Nothing to remember unless something is going to blend against
+            // it. The harness clients drive OnUpdateFrame one step per frame
+            // and never touch the accumulator, so alpha there is 1 and every
+            // blend declines -- capturing for them would be pure cost on a
+            // measurement that is sensitive to cost.
+            if (!Mods.Render.FrameTiming.Interpolate
+                || (!Mods.Render.FrameTiming.Active
+                    && !Mods.Render.FrameTiming.ForcedAlpha.HasValue))
+            {
+                return;
+            }
+            foreach (EntityBase entity in Entities)
+            {
+                entity.ModCaptureDrawState();
+            }
+            PlayerEntity.Main.CameraInfo.ModCaptureDrawState();
+        }
+
         private readonly List<RenderItem> _decalItems = new List<RenderItem>();
         private readonly List<RenderItem> _nonDecalItems = new List<RenderItem>();
         private readonly List<RenderItem> _translucentItems = new List<RenderItem>();
@@ -3598,7 +3716,21 @@ namespace MphRead
         {
             if (GameState.MenuPause)
             {
+                // The pause map's own animations -- the spinning octoliths,
+                // the dialog button -- advance from Scene.FrameTime inside the
+                // draw call, so they are handed the steps actually taken
+                // rather than one per picture. Zero on a frame with no step
+                // behind it, which simply draws them where they are.
+                //
+                // The effect steps owed are cleared for a different reason:
+                // nothing below consumes them while the menu is up, so they
+                // would pile up for as long as it is open and then all run at
+                // once when it closes.
+                float simFrameTime = _frameTime;
+                _frameTime = 1 / 60f * _pendingEffectSteps;
+                _pendingEffectSteps = 0;
                 PlayerEntity.Main.GetPauseMapRenderItems();
+                _frameTime = simFrameTime;
                 return;
             }
             if (_room != null)
@@ -3606,6 +3738,11 @@ namespace MphRead
                 _room.GetDrawInfo();
                 _room.GetDisplayVolumes();
             }
+            // How far past the last simulated step this frame falls. 1 when
+            // the picture is running at the simulation's own rate, in which
+            // case every ModBeginInterpolatedDraw below declines and the draw
+            // is byte for byte the one this engine has always made.
+            float alpha = Mods.Render.FrameTiming.Alpha;
             foreach (PlayerEntity player in GetPlayerEntities())
             {
                 if (!player.Initialized)
@@ -3614,7 +3751,17 @@ namespace MphRead
                 }
                 if (player.LoadFlags.TestFlag(LoadFlags.Active))
                 {
+                    bool blended = player.ModBeginInterpolatedDraw(alpha);
+                    ModTotalEntityDraws++;
+                    if (blended)
+                    {
+                        ModBlendedDraws++;
+                    }
                     player.Draw();
+                    if (blended)
+                    {
+                        player.ModEndInterpolatedDraw();
+                    }
                     // skdebug
                     player.GetDisplayVolumes();
                 }
@@ -3627,18 +3774,34 @@ namespace MphRead
                 }
                 if (entity.ShouldDraw)
                 {
+                    bool blended = entity.ModBeginInterpolatedDraw(alpha);
+                    ModTotalEntityDraws++;
+                    if (blended)
+                    {
+                        ModBlendedDraws++;
+                    }
                     entity.GetDrawInfo();
+                    if (blended)
+                    {
+                        entity.ModEndInterpolatedDraw();
+                    }
                 }
                 if (_showVolumes != VolumeDisplay.None)
                 {
+                    // The real position, not the drawn one: a volume is a
+                    // debug view of what the simulation thinks.
                     entity.GetDisplayVolumes();
                 }
             }
 
             if (ProcessFrame && GameState.MatchState == MatchState.InProgress && !GameState.DialogPause)
             {
-                ProcessEffects();
+                for (int i = 0; i < _pendingEffectSteps; i++)
+                {
+                    ProcessEffects();
+                }
             }
+            _pendingEffectSteps = 0;
 
             for (int i = 0; i < _activeElements.Count; i++)
             {
@@ -3783,7 +3946,7 @@ namespace MphRead
             {
                 if (_fadeDelay > 0)
                 {
-                    _fadeDelay -= _frameTime;
+                    _fadeDelay -= _frameTime * _pendingFadeSteps;
                     _fadeStart = _globalElapsedTime;
                 }
                 _fadePercent = (_globalElapsedTime - _fadeStart) / _fadeLength;
@@ -3805,6 +3968,7 @@ namespace MphRead
             {
                 _fadeEnded = false;
             }
+            _pendingFadeSteps = 0;
             GL.ClearColor(_clearColor);
         }
 
@@ -5956,9 +6120,26 @@ namespace MphRead
 
     public class RenderWindow : GameWindow
     {
+        /// <summary>
+        /// The loop is driven entirely from <see cref="OnRenderFrame"/>, which
+        /// runs the simulation on its own fixed-step accumulator
+        /// (<see cref="Mods.Render.FrameTiming"/>).
+        ///
+        /// OpenTK 4.9 no longer separates its update and render ticks -- the
+        /// two callbacks fire together and RenderFrequency is deprecated -- so
+        /// UpdateFrequency here is the *frame* rate, and 0 means "as fast as
+        /// the window will go", which with VSync on is the display's rate.
+        /// <see cref="ApplyFrameRateSettings"/> sets both from the player's
+        /// choice.
+        ///
+        /// This used to be 60, and it was the whole frame rate: one call did a
+        /// simulation step and a picture, so 60 steps a second and 60 pictures
+        /// a second were the same number and neither could move without the
+        /// other.
+        /// </summary>
         private static readonly GameWindowSettings _gameWindowSettings = new GameWindowSettings()
         {
-            UpdateFrequency = 60
+            UpdateFrequency = 0
         };
 
         private static readonly NativeWindowSettings _nativeWindowSettings = new NativeWindowSettings()
@@ -6051,6 +6232,39 @@ namespace MphRead
             base.OnLoad();
         }
 
+        private int _appliedFrameRateCap = -1;
+
+        /// <summary>
+        /// Put the player's frame rate choice on the window, and only when it
+        /// has changed: the settings window opens from the pause menu during a
+        /// match, so this is asked every frame.
+        ///
+        /// A cap of <c>DisplayRate</c> means "whatever the monitor does",
+        /// which is VSync and no cap of ours -- the right default, and the
+        /// only one that produces a tear-free 144. Any explicit number turns
+        /// VSync off, because asking for 120 on a 144 Hz screen with VSync on
+        /// gets 72.
+        /// </summary>
+        private void ApplyFrameRateSettings()
+        {
+            int cap = Mods.Render.FrameTiming.FrameRateCap;
+            if (cap == _appliedFrameRateCap)
+            {
+                return;
+            }
+            _appliedFrameRateCap = cap;
+            if (cap == Mods.Render.FrameTiming.DisplayRate)
+            {
+                VSync = VSyncMode.On;
+                UpdateFrequency = 0;
+            }
+            else
+            {
+                VSync = VSyncMode.Off;
+                UpdateFrequency = cap;
+            }
+        }
+
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             // The pause menu wants the pointer back.
@@ -6060,7 +6274,31 @@ namespace MphRead
                 ? CursorState.Grabbed
                 : CursorState.Normal;
             GameState.ApplyPause();
-            Scene.OnUpdateFrame();
+            ApplyFrameRateSettings();
+            // The simulation runs at 60 Hz and the picture runs at the
+            // display's rate, so this is 1 on a 60 Hz screen, 0 or 1 on a
+            // faster one, and 2 or more only on a frame that took longer than
+            // a step. Everything the game *is* -- input, the network session,
+            // the world, the clock -- happens in here and exactly this often.
+            int steps;
+            if (Scene.FrameAdvance)
+            {
+                // Stepping frames by hand is the one mode that must stay one
+                // step to one picture: the request to advance is consumed
+                // after the frame is drawn (AfterRenderFrame), so a picture
+                // drawn without a step would eat it before the simulation ever
+                // saw it, and the frame would never advance.
+                Mods.Render.FrameTiming.Reset();
+                steps = 1;
+            }
+            else
+            {
+                steps = Mods.Render.FrameTiming.Advance(args.Time);
+            }
+            for (int i = 0; i < steps; i++)
+            {
+                Scene.OnSimulationFrame();
+            }
             // Start, on a pad, is Escape. Consumed here rather than in the
             // scene because opening the menu is a window operation and the
             // window is this class -- the same reason the keyboard's Escape
@@ -6070,6 +6308,7 @@ namespace MphRead
             {
                 Mods.PauseMenu.HandleEscape(this);
             }
+            Scene.OnDrawFrame();
             if (!Scene.OnRenderFrame())
             {
                 return;

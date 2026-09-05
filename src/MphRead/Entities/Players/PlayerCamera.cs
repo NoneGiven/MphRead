@@ -913,6 +913,90 @@ namespace MphRead.Entities
                 Shake = value;
             }
         }
+
+        #region interpolation
+
+        // The camera is the whole screen, so it is the half of the
+        // interpolation that is actually felt: a room drawn from 144 slightly
+        // different places a second reads as smooth even when the things
+        // moving in it are still stepping at 60.
+        //
+        // Position and Target are kept rather than the view matrix, and the
+        // matrix is rebuilt from the blended pair below. Blending two LookAt
+        // matrices instead would blend the basis vectors, which is not a
+        // rotation and drifts on fast turns -- and a fast turn is exactly what
+        // a mouse does.
+        private Vector3 _interpPrevPosition;
+        private Vector3 _interpCurPosition;
+        private Vector3 _interpPrevTarget;
+        private Vector3 _interpCurTarget;
+        private Vector3 _interpPrevUp;
+        private Vector3 _interpCurUp;
+        private float _interpPrevFov;
+        private float _interpCurFov;
+        private int _interpHistory;
+
+        /// <summary>Same reasoning as <c>EntityBase.InterpSnapDistance</c>.</summary>
+        private const float InterpSnapDistance = 24f;
+
+        public void ModCaptureDrawState()
+        {
+            _interpPrevPosition = _interpCurPosition;
+            _interpPrevTarget = _interpCurTarget;
+            _interpPrevUp = _interpCurUp;
+            _interpPrevFov = _interpCurFov;
+            _interpCurPosition = Position;
+            _interpCurTarget = Target;
+            _interpCurUp = UpVector;
+            _interpCurFov = Fov;
+            if (_interpHistory < 2)
+            {
+                _interpHistory++;
+            }
+        }
+
+        public void ModResetDrawState()
+        {
+            _interpHistory = 0;
+        }
+
+        /// <summary>
+        /// The view the frame should actually be drawn from, and the field of
+        /// view to draw it with. Falls back to the simulated one whenever the
+        /// blend would be a lie: no history yet, a respawn, a teleport, or a
+        /// camera cut in a cutscene.
+        /// </summary>
+        public void ModGetDrawView(float alpha, out Matrix4 viewMatrix, out Vector3 position, out float fov)
+        {
+            if (_interpHistory < 2 || alpha >= 1f || alpha <= 0f
+                || (_interpCurPosition - _interpPrevPosition).Length > InterpSnapDistance
+                || (_interpCurTarget - _interpPrevTarget).Length > InterpSnapDistance)
+            {
+                viewMatrix = ViewMatrix;
+                position = Position;
+                fov = Fov;
+                return;
+            }
+            position = Vector3.Lerp(_interpPrevPosition, _interpCurPosition, alpha);
+            Vector3 target = Vector3.Lerp(_interpPrevTarget, _interpCurTarget, alpha);
+            Vector3 up = Vector3.Lerp(_interpPrevUp, _interpCurUp, alpha);
+            fov = _interpPrevFov + (_interpCurFov - _interpPrevFov) * alpha;
+            // Exactly what Update does with the simulated pair, so a frame at
+            // alpha 1 is the frame the engine would have drawn anyway.
+            Vector3 toTarget = target - position;
+            Vector3 camUp = Vector3.Cross(toTarget, Vector3.Cross(up, toTarget));
+            if (camUp.LengthSquared < 1e-12f || toTarget.LengthSquared < 1e-12f)
+            {
+                viewMatrix = ViewMatrix;
+                position = Position;
+                fov = Fov;
+                return;
+            }
+            viewMatrix = Matrix4.LookAt(position, target, camUp);
+        }
+
+        #endregion
+
     }
 
     public enum CameraType

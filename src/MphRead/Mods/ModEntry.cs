@@ -698,6 +698,12 @@ namespace MphRead.Mods
                 return true;
             }
 
+            if (HasFlag(args, "frametimingcheck"))
+            {
+                Environment.ExitCode = Render.FrameTimingCheck.Run();
+                return true;
+            }
+
             string? mapTest = ValueAfter(args, "maptest");
             if (mapTest != null)
             {
@@ -724,6 +730,15 @@ namespace MphRead.Mods
                 // target every other capture reads, so seeing it needs a real
                 // window and a read from its buffer.
                 Network.MapAudit.ShowWindow = HasFlag(args, "hudshots");
+                // -drawrate N draws each simulation step N times, which is
+                // what a 144 Hz screen does to a 60 Hz game. It is how the
+                // decoupled loop is checked from a box with no display.
+                string? drawRate = ValueAfter(args, "drawrate");
+                if (drawRate != null && Int32.TryParse(drawRate, out int parsedDrawRate)
+                    && parsedDrawRate > 0)
+                {
+                    Network.MapAudit.DrawRate = parsedDrawRate;
+                }
                 // -size WxH, so a HUD capture can be taken at a window shape
                 // other than the one this happens to default to.
                 string? sizeValue = ValueAfter(args, "size");
@@ -972,6 +987,27 @@ namespace MphRead.Mods
             else if (HasFlag(args, "fps"))
             {
                 RenderOptions.ShowFps = true;
+            }
+            // The frame rate, for the paths that never open a launcher --
+            // which is every screenshot command and every scripted run. The
+            // simulation is not affected by either of these: it is pinned at
+            // 60 Hz in Mods/Render/FrameTiming.cs and these only decide how
+            // often, and how smoothly, it is drawn.
+            string? fpsCap = ValueAfter(args, "fpscap");
+            if (fpsCap != null && !fpsCap.StartsWith('-'))
+            {
+                Render.FrameTiming.FrameRateCap = Render.FrameTiming.ParseCap(fpsCap,
+                    Render.FrameTiming.FrameRateCap);
+            }
+            string? interp = ValueAfter(args, "interpolation");
+            if (interp != null && !interp.StartsWith('-'))
+            {
+                Render.FrameTiming.Interpolate = RenderOptions.ParseOnOff(interp,
+                    Render.FrameTiming.Interpolate);
+            }
+            else if (HasFlag(args, "nointerpolation"))
+            {
+                Render.FrameTiming.Interpolate = false;
             }
             string? bands = ValueAfter(args, "celbands");
             if (bands != null && Int32.TryParse(bands, out int bandCount))
