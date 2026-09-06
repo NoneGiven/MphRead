@@ -517,6 +517,10 @@ namespace MphRead.Mods.Network
                     + "describe a reproduction, not a real connection");
             }
             Console.WriteLine($"  slot {local}, authority={NetSession.IsAuthority}, frames={_frame}");
+            // Only the authority rewinds anything, so on every other client
+            // this line reads "nothing to compensate" and says so honestly
+            // rather than looking like a zero.
+            Console.WriteLine($"  {NetUnlagged.Describe()}");
             Console.WriteLine($"  room: {Metadata.GetRoomById(Scene.RoomId, noThrow: true)?.Name ?? "?"} "
                 + $"(server says {NetSession.ServerMatch?.RoomKey ?? "?"}), "
                 + $"{_roomChanges} rotation(s) followed");

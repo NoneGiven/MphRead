@@ -143,6 +143,20 @@ namespace MphRead.Mods.Network
         /// </summary>
         public bool FriendlyFire { get; set; }
 
+        /// <summary>
+        /// Whether this server keeps itself on the newest release.
+        ///
+        /// Opt-in, and set by exactly one caller: the standalone
+        /// <c>-server</c> path, which is the process's whole reason for
+        /// existing. The other two <see cref="DedicatedServer"/>s in the
+        /// program must not -- a listen host is a server inside somebody's
+        /// game, and a hosted match is one of several inside the directory's
+        /// process, so a swap decided here would take down a program that was
+        /// doing something else as well, and several of them would race to
+        /// decide it.
+        /// </summary>
+        public bool AutoUpdate { get; set; }
+
         public DedicatedServer(int port = NetConfig.DefaultPort, int maxPlayers = 4,
                                MapRotation? rotation = null)
         {
@@ -209,6 +223,16 @@ namespace MphRead.Mods.Network
                         Reporter?.Beat(now, ServerName, listenPort,
                             (byte)_peers.Count, (byte)_maxPlayers,
                             (byte)_rotation.Current.Mode, _rotation.Current.RoomKey);
+                    }
+                    // Newest release, checked on a timer and applied the
+                    // moment there is nobody to interrupt. It says yes at most
+                    // once, and only with an empty server, so a busy one keeps
+                    // playing and swaps when the last person leaves.
+                    if (AutoUpdate && Update.ServerUpdate.ShouldRestart(_peers.Count))
+                    {
+                        Log("shutting down to come back on the new build");
+                        _running = false;
+                        break;
                     }
                     if (now - lastReport >= 30)
                     {

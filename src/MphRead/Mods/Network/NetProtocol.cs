@@ -839,7 +839,7 @@ namespace MphRead.Mods.Network
         /// number each one belongs to lets the receiver take each press once.
         /// </summary>
         public const int PressHistory = 8;
-        public const int Size = 4 + 4 + 12 + 1 + 4 * PressHistory + 12 + 2 + 2;
+        public const int Size = 4 + 4 + 12 + 1 + 4 * PressHistory + 12 + 2 + 2 + 4;
 
         public uint Frame;          // client's frame counter, for ordering
         public IntentButtons Buttons;
@@ -887,6 +887,26 @@ namespace MphRead.Mods.Network
         public ushort AmmoUa;
         public ushort AmmoMissiles;
 
+        /// <summary>
+        /// The newest snapshot frame this client had applied when it composed
+        /// this packet -- which is to say, the moment in the authority's
+        /// simulation that its screen was showing.
+        ///
+        /// The one number lag compensation needs. Everything else in this
+        /// packet says what the player did; this says what they were looking
+        /// at while they did it, and without it the authority can only guess
+        /// -- from a smoothed ping, which is an average of a quantity that is
+        /// not smooth, and which is measured over a path the intent did not
+        /// necessarily take.
+        ///
+        /// Zero from a client that has not received a snapshot yet, and from
+        /// the authority itself, which is never behind its own simulation.
+        /// Both mean "do not rewind": see
+        /// <see cref="Mods.Network.NetUnlagged.RewindFor"/>, which refuses an
+        /// ack it cannot serve rather than serving it approximately.
+        /// </summary>
+        public uint AckFrame;
+
         public void Write(Span<byte> dest)
         {
             BinaryPrimitives.WriteUInt32LittleEndian(dest[0..], Frame);
@@ -906,6 +926,7 @@ namespace MphRead.Mods.Network
             BinaryPrimitives.WriteSingleLittleEndian(dest[(at + 8)..], Position.Z);
             BinaryPrimitives.WriteUInt16LittleEndian(dest[(at + 12)..], AmmoUa);
             BinaryPrimitives.WriteUInt16LittleEndian(dest[(at + 14)..], AmmoMissiles);
+            BinaryPrimitives.WriteUInt32LittleEndian(dest[(at + 16)..], AckFrame);
         }
 
         public static IntentPacket Read(ReadOnlySpan<byte> src)
@@ -930,7 +951,8 @@ namespace MphRead.Mods.Network
                     BinaryPrimitives.ReadSingleLittleEndian(src[(25 + PressHistory * 4)..]),
                     BinaryPrimitives.ReadSingleLittleEndian(src[(29 + PressHistory * 4)..])),
                 AmmoUa = BinaryPrimitives.ReadUInt16LittleEndian(src[(33 + PressHistory * 4)..]),
-                AmmoMissiles = BinaryPrimitives.ReadUInt16LittleEndian(src[(35 + PressHistory * 4)..])
+                AmmoMissiles = BinaryPrimitives.ReadUInt16LittleEndian(src[(35 + PressHistory * 4)..]),
+                AckFrame = BinaryPrimitives.ReadUInt32LittleEndian(src[(37 + PressHistory * 4)..])
             };
         }
     }
@@ -1134,8 +1156,18 @@ namespace MphRead.Mods.Network
         /// first hands every one of those faults to everybody in the match.
         /// Nothing in the wire would have noticed; this is what makes the
         /// server say no.
+        ///
+        /// Version 5 grows the intent by four bytes for
+        /// <see cref="IntentPacket.AckFrame"/>, which lag compensation reads
+        /// to decide how far back a client's shot belongs. It is appended
+        /// rather than inserted, so nothing before it moved -- but the packet
+        /// is longer, and a version 4 authority handed one would read the
+        /// whole thing correctly and then resolve every remote shot against
+        /// the present, which is the fault this exists to fix. The layout
+        /// change is what forces the refusal; the behaviour is why it is
+        /// worth forcing.
         /// </summary>
-        public const int ProtocolVersion = 4;
+        public const int ProtocolVersion = 5;
         /// <summary>
         /// Frames between intent packets. One, so every frame.
         ///

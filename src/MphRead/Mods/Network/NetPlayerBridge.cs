@@ -116,6 +116,17 @@ namespace MphRead.Mods.Network
         ///
         /// A no-op whenever the two agree, which is almost always.
         /// </summary>
+        /// <summary>
+        /// <see cref="InForm"/>, for the reconciliation path. Same
+        /// conversion, same reason: a position recorded while its owner was a
+        /// morph ball and applied to a biped is out by the difference between
+        /// the two collision centres, which is most of a chest.
+        /// </summary>
+        public static Vector3 InFormFor(PlayerEntity player, Vector3 position, bool measuredInAlt)
+        {
+            return InForm(player, position, measuredInAlt);
+        }
+
         private static Vector3 InForm(PlayerEntity player, Vector3 position, bool measuredInAlt)
         {
             if (measuredInAlt == player.IsAltForm)
@@ -240,7 +251,14 @@ namespace MphRead.Mods.Network
                 // down and eventually refuses to spawn a beam at all.
                 AmmoUa = (ushort)Math.Clamp(player.ModAmmo.Ua, 0, UInt16.MaxValue),
                 AmmoMissiles = (ushort)Math.Clamp(player.ModAmmo.Missiles, 0, UInt16.MaxValue),
-                Presses = (uint[])_pressHistory.Clone()
+                Presses = (uint[])_pressHistory.Clone(),
+                // Which frame of the authority's simulation this player was
+                // looking at while they aimed and fired. The authority rewinds
+                // everybody else to it before resolving the shot -- see
+                // NetUnlagged. Zero on the authority itself, which is never
+                // behind, and on a client that has not been sent a snapshot
+                // yet; both are read as "no rewind".
+                AckFrame = NetSession.LastSnapshotFrame
             };
         }
 

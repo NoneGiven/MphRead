@@ -90,6 +90,7 @@ export ALSOFT_DRIVERS=null PULSE_SERVER=   # else ALSA retries stall frames
 | `MphRead -connect HOST -port N -name X -hunter H` | join from the command line, no launcher |
 | `MphRead -netcheck HOST -port N -name X -hunter H -seconds N [-shots DIR] [-size WxH]` | a real client driven by a script, which reports what it saw. Exit code 0 = pass. `-spectate [SEC]` makes it stop playing and watch, `-rejoin SEC` puts it back in -- the one player state the tour cannot reach on its own |
 | `MphRead -netlag MS[:JITTER]` / `-netloss PCT` | play, or run any check, over a line this client makes up: `-netlag 200` adds 200 ms to the round trip (half each way), `-netlag 200:40` gives it jitter, `-netloss 5` eats one datagram in twenty. Works against the real server, on any platform, with no proxy and no `sudo` -- and unlike `hard/run-latency.sh`'s netem it can be given to **one** client while the others stay fast, which is the case a player with a bad line actually is. Every report says so when it is on |
+| `MphRead -nounlagged` | resolve shots against the present, the way every build before lag compensation did. The control for measuring it; on by default. `.claude/multiplayer/NETWORK-UNLAGGED.md` |
 | `MphRead -debuglog` | write the file the launcher's corner switch writes, for one run. `.claude/DEBUG-LOGS.md` |
 | `~/mph-net-test/probe-chat.py [HOST] [PORT]` | what the server does with chat, asked the way no real client can: a spoofed sender, and a flood. `.claude/multiplayer/NETWORK-CHAT.md` |
 | `~/mph-net-test/run-remote.sh HOST PORT SECONDS hunter...` | the same check against a server that is not on this machine -- which is the one that matters, since eight clients on one box measure the box |
@@ -121,6 +122,7 @@ export ALSOFT_DRIVERS=null PULSE_SERVER=   # else ALSA retries stall frames
 | `FruityPrime -launcher -text` | the text front screen on a machine that has a display. What an SSH session gets anyway |
 | `FruityPrime -update` | check GitHub for a newer release and open its page. Installs nothing; the one command that answers "am I on the latest build" |
 | `FruityPrime -noupdate` | do none of that, on any command that would have |
+| `FruityPrime -server ... -noautoupdate` | keep a dedicated server on the build it was started with. It updates itself otherwise -- see Updating |
 | `FruityPrime -credits` | who this is built on and who forked it, from `Mods/Credits.cs` -- which also holds the ko-fi address the settings' Credits page offers |
 | `MphRead -fullscreen` / `-windowed` / `-nohelmet` | display choices for the paths that never open a launcher |
 
@@ -308,8 +310,10 @@ all tested without a 144 Hz monitor: `.claude/render/FRAME-PACING.md`.
 ## Updating
 
 `Mods/Update/`. The program checks GitHub for a newer release on its own, says
-so, and **installs nothing** — "Update now" opens the release page; download
-and unpacking are the player's. It checks by itself because
+so, and **installs nothing where a person could decide** — "Update now" opens
+the release page; download and unpacking are the player's. **A dedicated
+server is the exception and installs on its own**, because every part of that
+reasoning inverts when there is nobody at the keyboard. It checks by itself because
 `NetConfig.ProtocolVersion` makes a server refuse a client on a different
 build outright at Hello, so a copy one release behind can't join anything, and
 that's worth automating; it does not install because that means downloading
@@ -322,10 +326,30 @@ doing it carefully.
 | Launcher window | in the background once the window is up | opens the release page; badge shows the address if there's no browser |
 | Text launcher | at startup, waiting up to 2 s | prints the address, opens a browser if there is one |
 | `-update` | when asked | prints the address and opens it |
-| Server and directory | at startup, before binding | nothing — logs one line, keeps running (a server has no one at the keyboard to decide, and replacing its binary mid-match drops whoever is playing) |
+| Server and directory | at startup before binding, then every 6 h | **installs it**, and restarts — but only once nobody is connected (a server) or no hosted match is running (the directory), so a busy one keeps playing and swaps when the last person leaves. `-noautoupdate` opts out |
+
+A server updating itself is the one place the "no unsigned installs" rule is
+traded away, and it is traded for a bigger one: `NetConfig.ProtocolVersion`
+makes a server refuse every client on a different build at Hello, so a stale
+server is a server **nobody in the world can join**, indistinguishable from
+one that is switched off. A bad binary is a failure an operator can undo; that
+one is a failure nobody can even see.
+
+The swap is not the launcher's. `DesktopUpdate` starts a second process that
+waits for this one to exit and then copies over the installation, which is
+exactly wrong under systemd: the copier is a child, so it lives in the unit's
+control group, and the moment the main process exits systemd kills the group
+and restarts the unit — killing the copier mid-copy and bringing the old build
+back, for ever, with no error anywhere. `Mods/Update/ServerUpdate.cs` needs no
+second process: a running program on Linux holds its files by inode, so the
+new build is written over the installation by the server itself, one atomic
+rename at a time, and then it exits. Under a supervisor (`INVOCATION_ID`)
+exiting *is* the restart; with none, it starts its successor itself — **with
+the command line it was given**, since a dedicated server restarted bare opens
+a launcher on a machine with nobody at it.
 
 `launcher.txt` carries `auto_update`, on by default; `-noupdate` turns it off
-anywhere. A local build without the release workflow's version stamp reports
+anywhere, including the server's. A local build without the release workflow's version stamp reports
 itself `a local build` and stands down, since there's no way to tell it apart
 from a release either ahead or behind.
 
@@ -410,7 +434,7 @@ MPH_SERVER_HOST=net.livetek.fr MPH_SERVER_USER=livetek \
 
 The exe is often locked by a running game: write `MphRead.new.exe`, then `mv`.
 
-**`NetConfig.ProtocolVersion` is 4.** Any protocol change means server **and**
+**`NetConfig.ProtocolVersion` is 5.** Any protocol change means server **and**
 every client must be the same build — a mismatched client is refused outright
 at Hello with a line in the server log, which is the intended outcome and not
 a layout issue: the wire format doesn't move, an old client would read every
@@ -495,6 +519,22 @@ Shapes worth keeping without opening anything else:
   real-world one, and must not be reported as one** — it has none of the
   reordering, jitter or CPU load the bugs above were found under.
 
+**Shots are resolved against the world the shooter was looking at**, not the
+one that exists by the time their trigger arrives -- backwards reconciliation,
+ported from Q-Zandronum's `unlagged.cpp`. The error it removes is one-sided and
+exactly a client's round trip: the authority spawns a remote player's beam
+against the puppets it holds *now*, while that player aimed at the puppets a
+snapshot showed them a round trip ago. `IntentPacket.AckFrame` is the whole
+input -- the snapshot frame the shooter was looking at -- and the authority
+rewinds everyone else to it, spawns, and then walks the shot forward to the
+present one frame at a time, re-reconciling at each step. That second half is
+Q-Zandronum's own and is the half this game needed: almost nothing here is
+hitscan, so without it a laggy player's Missile merely leaves the muzzle late.
+The authority itself is rewound by zero, because it already aims and resolves
+against the same puppets. Measured at 156 ms of rewind against 150 ms injected,
+with 0 mismatches on the 3-client instrument. `-nounlagged` is the control.
+`.claude/multiplayer/NETWORK-UNLAGGED.md`.
+
 **Chat is T**, three lines top left in green on nothing, gone ten seconds
 after they arrive -- which is why the frame counter now sits in the right-hand
 corner. It draws with a font of its own (`Mods/Chat/ChatFont.cs`, pixel art in
@@ -527,5 +567,11 @@ re-claimed as solid either: `.claude/KNOWN-GAPS.md`.
 
 Weapons, damage multipliers, hunters, movement, states/afflictions, spawning,
 match modes, world interactions, pickups, bots, and the multiplayer protocol
-rules are in `MECHANICS.md` at the repository root, regenerated with
-`MphRead -mechanics`.
+rules are in `MECHANICS.md` at the repository root.
+
+`MphRead -mechanics` **prints** the catalogue to stdout; it writes no file.
+Do not regenerate the committed one by redirecting it over the top --
+`MECHANICS.md` carries detail the generator cannot produce (the affliction
+table's charge rules, among others), so a wholesale `> MECHANICS.md` silently
+deletes it. Change `MechanicsDump.cs` for anything derived from the game's
+tables, and edit the file directly for anything that is not.
