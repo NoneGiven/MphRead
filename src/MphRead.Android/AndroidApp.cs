@@ -49,6 +49,13 @@ namespace MphRead.Droid
         private static HomeView BuildHome()
         {
             LauncherPrefs.Load();
+            // Keys, mouse feel, pad bindings and the touch layout. The
+            // desktop reads these from ModEntry.TryHandleHeadless, which the
+            // head never runs -- so nothing here ever loaded them, and every
+            // control the player changed was back to its default the next
+            // time the app opened. After LauncherPrefs.Load, since
+            // controls.txt sits in the directory that has just been named.
+            Mods.InputSettings.Load();
             // After the load, because the head has just pointed the
             // preferences at the app's own data directory -- the package's
             // directory is read-only, and that is also where the log has to

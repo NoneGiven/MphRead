@@ -110,6 +110,33 @@ namespace MphRead.Mods.Launcher.Gui
         private const double ValueColumn = 180;
 
         /// <summary>
+        /// Drawn in a square at the right-hand end of the row, past the
+        /// forward arrow, when the answer is a thing better shown than named
+        /// -- a crosshair, at the size and shape the row has just picked.
+        /// Everything else in the row shifts left to make room for it.
+        /// </summary>
+        public Action<DrawingContext, Rect>? Preview
+        {
+            get => _preview;
+            set
+            {
+                _preview = value;
+                // Room for the picture. A crosshair at its largest is 36
+                // points across, and a row of the ordinary height cannot show
+                // that without shrinking it -- which would defeat a preview
+                // whose job is partly to answer "how big is Big".
+                Height = value == null ? 34 : 48;
+                InvalidateVisual();
+            }
+        }
+
+        private Action<DrawingContext, Rect>? _preview;
+
+        private const double PreviewWidth = 52;
+
+        private double PreviewRoom => _preview == null ? 0 : PreviewWidth;
+
+        /// <summary>
         /// Both arrows sit still.
         ///
         /// The back arrow used to be placed from the width of the *value* --
@@ -128,13 +155,14 @@ namespace MphRead.Mods.Launcher.Gui
         {
             get
             {
-                double x = Bounds.Width - ArrowWidth - ValueColumn - ArrowWidth;
+                double x = Bounds.Width - PreviewRoom - ArrowWidth - ValueColumn - ArrowWidth;
                 // Never over the label, on a card too narrow for the column.
                 return new Rect(Math.Max(110, x), 0, ArrowWidth, Bounds.Height);
             }
         }
 
-        private Rect RightArrow => new(Bounds.Width - ArrowWidth, 0, ArrowWidth, Bounds.Height);
+        private Rect RightArrow =>
+            new(Bounds.Width - PreviewRoom - ArrowWidth, 0, ArrowWidth, Bounds.Height);
 
         protected override void OnPointerMoved(PointerEventArgs e)
         {
@@ -235,6 +263,12 @@ namespace MphRead.Mods.Launcher.Gui
 
             Arrow(context, left, pointsLeft: true, _leftHot);
             Arrow(context, RightArrow, pointsLeft: false, _rightHot);
+            if (_preview != null)
+            {
+                const double inset = 3;
+                _preview(context, new Rect(Bounds.Width - PreviewWidth + inset, inset,
+                    PreviewWidth - inset * 2, Bounds.Height - inset * 2));
+            }
         }
 
         private static void Arrow(DrawingContext context, Rect area, bool pointsLeft, bool hot)

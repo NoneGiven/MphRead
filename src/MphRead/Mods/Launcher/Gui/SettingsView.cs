@@ -12,6 +12,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using MphRead.Entities;
 using MphRead.Mods;
+using MphRead.Mods.Render;
 using FrameTiming = MphRead.Mods.Render.FrameTiming;
 
 namespace MphRead.Mods.Launcher.Gui
@@ -133,8 +134,9 @@ namespace MphRead.Mods.Launcher.Gui
             return best;
         }
         private SliderRow _fpsLimitRow = null!;
-        private ToggleRow _interpolationRow = null!;
         private ToggleRow _proHud = null!;
+        private ChoiceRow _crosshairSizeRow = null!;
+        private ChoiceRow _crosshairStyleRow = null!;
         private SliderRow _sfxVolume = null!;
         private SliderRow _musicVolume = null!;
         private ChoiceRow _languageRow = null!;
@@ -479,8 +481,6 @@ namespace MphRead.Mods.Launcher.Gui
                 FpsLimitStopIndex(FrameTiming.FrameRateCap),
                 v => _fpsLimitStops[Math.Clamp(v, 0, _fpsLimitStops.Length - 1)].Label,
                 min: 0, max: _fpsLimitStops.Length - 1, keyStep: 1));
-            _interpolationRow = Add(page, new ToggleRow("Motion interpolation",
-                FrameTiming.Interpolate));
             _lightingRow = Add(page, new ToggleRow("Lighting", RenderOptions.Lighting));
             _fogRow = Add(page, new ToggleRow("Fog", RenderOptions.Fog));
             _filteringRow = Add(page, new ToggleRow("Texture filtering", RenderOptions.TextureFiltering));
@@ -502,6 +502,28 @@ namespace MphRead.Mods.Launcher.Gui
             // about here.
             Heading(page, "HUD");
             _proHud = Add(page, new ToggleRow("Pro mode HUD", Features.ProHud));
+            // The crosshair questions belong to Pro mode and nothing else --
+            // the DS HUD draws its own reticle sprite and has no use for
+            // them -- so they are only asked while it is on. Shown rather than
+            // greyed: a row that cannot be answered is still a row to read
+            // past, and this page is long enough.
+            _crosshairSizeRow = Add(page, new ChoiceRow("Crosshair size",
+                Crosshair.SizeNames, (int)Crosshair.Size));
+            _crosshairStyleRow = Add(page, new ChoiceRow("Crosshair type",
+                Crosshair.StyleNames, (int)Crosshair.Style));
+            _crosshairStyleRow.Preview = (context, area) => CrosshairPreview.Draw(context, area,
+                (CrosshairStyle)_crosshairStyleRow.Index, (CrosshairSize)_crosshairSizeRow.Index);
+            // The preview lives on the type row and answers both rows, so the
+            // size row has to ask for it to be repainted.
+            _crosshairSizeRow.Changed += (_, _) => _crosshairStyleRow.InvalidateVisual();
+            _proHud.Changed += (_, _) => ShowCrosshairRows();
+            ShowCrosshairRows();
+        }
+
+        private void ShowCrosshairRows()
+        {
+            _crosshairSizeRow.IsVisible = _proHud.On;
+            _crosshairStyleRow.IsVisible = _proHud.On;
         }
 
         // --------------------------------------------------------------- audio
@@ -540,6 +562,8 @@ namespace MphRead.Mods.Launcher.Gui
             _invertX = Add(page, new ToggleRow("Invert horizontal aim", InputSettings.InvertMouseX));
             _scrollAllWeapons = Add(page, new ToggleRow("Wheel cycles every weapon",
                 InputSettings.ScrollAllWeapons));
+
+            BuildTouchControls(page);
 
             // Its own section rather than more rows under "Mouse": a pad has
             // its own sensitivity, and somebody who inverts one of the two
@@ -598,8 +622,54 @@ namespace MphRead.Mods.Launcher.Gui
                 {
                     row.InvalidateVisual();
                 }
+                _touchButtonsRow!.On = Mods.Input.TouchSettings.ButtonsVisible;
+                foreach ((Mods.Input.TouchControl control, ToggleRow row) in _touchRows)
+                {
+                    row.On = Mods.Input.TouchSettings.IsEnabled(control);
+                }
             };
             page.Children.Add(reset);
+        }
+
+        private ToggleRow? _touchButtonsRow;
+
+        private readonly List<(Mods.Input.TouchControl Control, ToggleRow Row)> _touchRows = new();
+
+        /// <summary>
+        /// Which on-screen buttons the phone draws.
+        ///
+        /// Only on a touch screen: on the desktop these decide nothing, and a
+        /// page of eleven switches that do nothing is worse than no page. The
+        /// master switch is first and takes the rest away with it, since
+        /// "turn them all off" is the answer most people who come here want
+        /// and it should not be eleven presses.
+        /// </summary>
+        private void BuildTouchControls(StackPanel page)
+        {
+            if (!OperatingSystem.IsAndroid())
+            {
+                return;
+            }
+            Heading(page, "On-screen buttons");
+            _touchButtonsRow = Add(page, new ToggleRow("Show on-screen buttons",
+                Mods.Input.TouchSettings.ButtonsVisible));
+            Add(page, new Note("The stick, aiming, the double tap that jumps and the flick "
+                + "that boosts are not buttons, so they keep working with every one of these off."));
+            foreach ((Mods.Input.TouchControl control, string label) in Mods.Input.TouchSettings.Order)
+            {
+                ToggleRow row = Add(page, new ToggleRow(label,
+                    Mods.Input.TouchSettings.IsEnabled(control)));
+                _touchRows.Add((control, row));
+            }
+            void ShowTouchRows()
+            {
+                foreach ((_, ToggleRow row) in _touchRows)
+                {
+                    row.IsVisible = _touchButtonsRow.On;
+                }
+            }
+            _touchButtonsRow.Changed += (_, _) => ShowTouchRows();
+            ShowTouchRows();
         }
 
         private static int SensitivityToSlider(float sensitivity)
@@ -795,12 +865,12 @@ namespace MphRead.Mods.Launcher.Gui
                 _fpsLimitStops.Length - 1)].Cap;
             FrameTiming.FrameRateCap = cap;
             _settings.FrameRateCap = FrameTiming.CapString(cap);
-            FrameTiming.Interpolate = _interpolationRow.On;
-            _settings.Interpolation = RenderOptions.OnOff(_interpolationRow.On);
             _settings.CelShading = RenderOptions.OnOff(_celRow.On);
             _settings.CelBands = "8";
             _settings.CelEdge = "50";
             Features.ProHud = _proHud.On;
+            Crosshair.Size = (CrosshairSize)_crosshairSizeRow.Index;
+            Crosshair.Style = (CrosshairStyle)_crosshairStyleRow.Index;
             // Audio
             _settings.SfxVolume = (_sfxVolume.Value / 100f).ToString(CultureInfo.InvariantCulture);
             _settings.MusicVolume = (_musicVolume.Value / 100f).ToString(CultureInfo.InvariantCulture);
@@ -813,6 +883,14 @@ namespace MphRead.Mods.Launcher.Gui
             InputSettings.GamepadLookSensitivity = SliderToLook(_gamepadLook.Value);
             InputSettings.GamepadDeadZone = SliderToDeadZone(_gamepadDeadZone.Value);
             InputSettings.GamepadInvertY = _gamepadInvertY.On;
+            if (_touchButtonsRow != null)
+            {
+                Mods.Input.TouchSettings.ButtonsVisible = _touchButtonsRow.On;
+                foreach ((Mods.Input.TouchControl control, ToggleRow row) in _touchRows)
+                {
+                    Mods.Input.TouchSettings.SetEnabled(control, row.On);
+                }
+            }
             InputSettings.Save();
             // The players in the match already have their own copies of these.
             InputSettings.ApplyToPlayers();

@@ -319,26 +319,6 @@ namespace MphRead.Entities
         private Vector3 _muzzlePos;
         private Vector3 _gunDrawPos;
 
-        /// <summary>
-        /// The transform the first-person gun was last drawn with.
-        ///
-        /// Read by the harness only. The gun is placed in world space during
-        /// the simulation but seen through the interpolated camera, so it has
-        /// to be corrected into the drawn view's frame -- and whether that
-        /// correction is right is not a thing a screenshot answers, it is the
-        /// question "is this in the same place in view space on every picture
-        /// of one simulation step".
-        /// </summary>
-        public Matrix4 ModDrawnGunTransform { get; private set; } = Matrix4.Identity;
-
-        /// <summary>Which picture <see cref="ModDrawnGunTransform"/> is from.</summary>
-        public ulong ModDrawnGunSerial { get; private set; }
-
-        public void ModNoteDrawnGun(Matrix4 transform)
-        {
-            ModDrawnGunTransform = transform;
-            ModDrawnGunSerial = _scene.ModDrawSerial;
-        }
         private Vector3 _aimVec;
 
         // something alt form angle related

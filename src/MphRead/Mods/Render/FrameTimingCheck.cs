@@ -94,7 +94,6 @@ namespace MphRead.Mods.Render
                 failures += RunCase(test) ? 0 : 1;
             }
             failures += RunStallCase() ? 0 : 1;
-            failures += RunAlphaCase() ? 0 : 1;
             Console.WriteLine(failures == 0
                 ? "FRAMETIMING all cases pass"
                 : $"FRAMETIMING {failures} case(s) FAILED");
@@ -109,7 +108,6 @@ namespace MphRead.Mods.Render
             long steps = 0;
             int worstFrame = 0;
             int frame = 0;
-            bool alphaOk = true;
             while (elapsed < test.Seconds)
             {
                 double dt = test.FrameTime(frame++);
@@ -120,17 +118,11 @@ namespace MphRead.Mods.Render
                 {
                     worstFrame = taken;
                 }
-                float alpha = FrameTiming.Alpha;
-                if (alpha < 0 || alpha > 1 || Single.IsNaN(alpha))
-                {
-                    alphaOk = false;
-                }
             }
             double rate = steps / elapsed;
             double drift = Math.Abs(rate - test.ExpectedStepsPerSecond)
                 / test.ExpectedStepsPerSecond * 100;
-            bool ok = alphaOk
-                && drift <= test.TolerancePercent
+            bool ok = drift <= test.TolerancePercent
                 && worstFrame <= test.MaxStepsInOneFrame
                 && FrameTiming.DroppedSteps == 0;
             // Seconds of game per second of wall clock, which is the number a
@@ -142,8 +134,7 @@ namespace MphRead.Mods.Render
                 + $" | {steps} steps = {rate:0.000} Hz (drift {drift:0.000}%)"
                 + $" | game ran {gameSeconds / elapsed:0.0000}x real time"
                 + $" | worst frame {worstFrame} step(s)"
-                + $" | dropped {FrameTiming.DroppedSteps}"
-                + (alphaOk ? "" : " | ALPHA OUT OF RANGE"));
+                + $" | dropped {FrameTiming.DroppedSteps}");
             return ok;
         }
 
@@ -174,36 +165,5 @@ namespace MphRead.Mods.Render
             return ok;
         }
 
-        /// <summary>
-        /// Alpha has to sweep the range on a display that is not a multiple of
-        /// 60, and has to sit at a repeating pattern on one that is. Both are
-        /// correct; a value stuck at 0 or 1 is not, and would mean the extra
-        /// frames are duplicates.
-        /// </summary>
-        private static bool RunAlphaCase()
-        {
-            FrameTiming.Reset();
-            FrameTiming.ResetDiagnostics();
-            var buckets = new int[10];
-            for (int i = 0; i < 144 * 20; i++)
-            {
-                FrameTiming.Advance(1 / 144.0);
-                int bucket = Math.Clamp((int)(FrameTiming.Alpha * 10), 0, 9);
-                buckets[bucket]++;
-            }
-            int occupied = 0;
-            foreach (int count in buckets)
-            {
-                if (count > 0)
-                {
-                    occupied++;
-                }
-            }
-            bool ok = occupied >= 8;
-            Console.WriteLine($"FRAMETIMING {(ok ? "ok  " : "FAIL")} alpha coverage at 144 Hz"
-                + $" | {occupied}/10 tenths visited"
-                + $" | [{String.Join(", ", buckets)}]");
-            return ok;
-        }
     }
 }

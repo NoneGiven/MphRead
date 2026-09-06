@@ -966,6 +966,9 @@ namespace MphRead.Droid
                 _overlay.Visibility = ViewStates.Visible;
             }
             _controls.ReleaseEverything();
+            // Settings are reachable from the pause menu, and one of the pages
+            // there decides which of these buttons is on the glass.
+            _controls.ReloadSettings();
             GoImmersive(true);
         }
 

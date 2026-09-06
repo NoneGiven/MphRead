@@ -351,7 +351,7 @@ namespace MphRead.Entities
                 ? facing.Normalized()
                 : -OpenTK.Mathematics.Vector3.UnitZ;
             Spawn(position, forward, OpenTK.Mathematics.Vector3.UnitY,
-                ModSpawnNodeRef(position), respawn: true);
+                ModSpawnNodeRef(_scene, position), respawn: true);
         }
 
         /// <summary>
@@ -367,12 +367,19 @@ namespace MphRead.Entities
         /// one-hop walk that maintains it needs a part to start from -- so a
         /// client that joined a match there spent all of it with no node at
         /// all. See RoomEntity.IsNodeRefVisible for what that cost.
+        ///
+        /// Static so the harness can seed a puppet the way the game does:
+        /// MapAudit's remote-node probe carries a node ref alongside the real
+        /// one, and seeding that from the lookup measured a rule this code
+        /// stopped using -- one bad seed walks wrong for the rest of the run
+        /// and the probe reported it as the game's own behaviour.
         /// </summary>
-        private Formats.Culling.NodeRef ModSpawnNodeRef(OpenTK.Mathematics.Vector3 position)
+        internal static Formats.Culling.NodeRef ModSpawnNodeRef(Scene scene,
+            OpenTK.Mathematics.Vector3 position)
         {
             EntityBase? closest = null;
             float closestDist = 2 * 2;
-            foreach (EntityBase entity in _scene.Entities)
+            foreach (EntityBase entity in scene.Entities)
             {
                 if (entity.Type != EntityType.PlayerSpawn
                     || entity.NodeRef == Formats.Culling.NodeRef.None)
@@ -390,7 +397,7 @@ namespace MphRead.Entities
             {
                 return closest.NodeRef;
             }
-            return _scene.GetNodeRefByPosition(position);
+            return scene.GetNodeRefByPosition(position);
         }
 
         /// <summary>

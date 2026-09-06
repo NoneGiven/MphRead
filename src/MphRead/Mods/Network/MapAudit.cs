@@ -191,19 +191,6 @@ namespace MphRead.Mods.Network
         /// </summary>
         private int _drawAdvancedTheGame;
 
-        /// <summary>
-        /// The worst distance, in units, that the first-person gun moved *in
-        /// view space* across the pictures of a single simulation step.
-        ///
-        /// It should be zero: the simulation does not run between those
-        /// pictures, so nothing about where the gun sits relative to the eye
-        /// has changed. Anything else is the gun drifting against the view,
-        /// which is what it did when the camera was interpolated and the gun
-        /// was not -- barely visible walking, and enough to throw the gun off
-        /// the top of the screen on a jump pad, where the camera moves fastest.
-        /// </summary>
-        private float _gunViewDrift;
-
         private static GameWindowSettings GameSettings() => new() { UpdateFrequency = 60 };
 
         private static NativeWindowSettings WindowSettings() => new()
@@ -240,14 +227,10 @@ namespace MphRead.Mods.Network
         /// N</c>. 1 is the way this has always run.
         ///
         /// This is how the decoupled loop is checked without a display and
-        /// without a 144 Hz monitor. It is deliberately not the wall-clock
-        /// accumulator the game uses: the harness wants the same run every
-        /// time and wants alpha to visit its whole range, so it steps alpha
-        /// 1/N, 2/N .. 1 across the N draws instead of taking whatever the
-        /// machine's load produces. What is being checked is the half that can
-        /// actually be wrong -- that drawing more often does not change what
-        /// the simulation does -- and the accumulator arithmetic that feeds it
-        /// is checked separately by -frametimingcheck.
+        /// without a 144 Hz monitor. What is being checked is the half that
+        /// can actually be wrong -- that drawing more often does not change
+        /// what the simulation does -- and the accumulator arithmetic that
+        /// feeds it is checked separately by -frametimingcheck.
         /// </summary>
         public static int DrawRate { get; set; } = 1;
 
@@ -340,61 +323,18 @@ namespace MphRead.Mods.Network
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             GameState.ApplyPause();
-            if (DrawRate > 1 && Mods.Render.FrameTiming.ForcedAlpha == null)
-            {
-                Mods.Render.FrameTiming.ForcedAlpha = 1f;
-            }
             // One simulation step, then however many pictures of it were
             // asked for. _frame counts steps, not pictures, so -seconds still
             // means seconds of game and every existing probe keeps its timing.
             Scene.OnSimulationFrame();
             ulong frameCountBefore = Scene.FrameCount;
             int draws = Math.Max(1, DrawRate);
-            Vector3 gunInView = Vector3.Zero;
-            bool gunFresh = false;
             for (int i = 0; i < draws; i++)
             {
-                if (draws > 1)
-                {
-                    // Set, and left set for the whole run rather than cleared
-                    // between frames: CaptureDrawState reads it at the *end of
-                    // the simulation step*, before this loop runs, to know
-                    // whether anything is going to blend against what it would
-                    // remember. Cleared each time, the capture would always be
-                    // skipped and nothing would ever interpolate.
-                    Mods.Render.FrameTiming.ForcedAlpha = (i + 1) / (float)draws;
-                }
                 Scene.OnDrawFrame();
                 if (!Scene.OnRenderFrame())
                 {
                     return;
-                }
-                if (draws > 1)
-                {
-                    PlayerEntity main = PlayerEntity.Main;
-                    // Only a gun drawn on *this* picture says anything. In alt
-                    // form there is no gun, and its last transform sitting
-                    // against a view that has since moved reads as drift that
-                    // is entirely the harness's own.
-                    if (main.ModDrawnGunSerial == Scene.ModDrawSerial)
-                    {
-                        Vector3 inView = Matrix.Vec3MultMtx4(
-                            main.ModDrawnGunTransform.Row3.Xyz, Scene.ViewMatrix);
-                        if (gunFresh)
-                        {
-                            float drift = (inView - gunInView).Length;
-                            if (drift > _gunViewDrift)
-                            {
-                                _gunViewDrift = drift;
-                            }
-                        }
-                        gunInView = inView;
-                        gunFresh = true;
-                    }
-                    else
-                    {
-                        gunFresh = false;
-                    }
                 }
                 if (i < draws - 1)
                 {
@@ -429,6 +369,7 @@ namespace MphRead.Mods.Network
                 return;
             }
             Drive();
+            StepScoreboard();
             Observe();
             SampleRender();
             SwapBuffers();
@@ -828,6 +769,34 @@ namespace MphRead.Mods.Network
             }
         }
 
+        /// <summary>
+        /// Hold the scoreboard open for a stretch of every run.
+        ///
+        /// It is the one screen the tour could never reach -- it is opened by
+        /// holding a button, and the main player's buttons are rewritten from
+        /// the keyboard every step -- so nothing in this harness had ever
+        /// drawn it. A crash in it therefore had to be found by a person
+        /// playing, which is how the one in bot matches was found.
+        ///
+        /// Two windows rather than one, so both halves of the layout are
+        /// visited: it is drawn differently while somebody is still spawning
+        /// in than once the whole room is playing.
+        /// </summary>
+        private void StepScoreboard()
+        {
+            int total = Math.Max(60, (int)(_seconds * 60));
+            bool show = _frame > total / 6 && _frame < total / 6 + 90
+                || _frame > total * 2 / 3 && _frame < total * 2 / 3 + 90;
+            PlayerEntity.ModForceScoreboard = show;
+            if (show)
+            {
+                _scoreboardFrames++;
+            }
+        }
+
+        /// <summary>Frames the scoreboard was drawn on. 0 means it was never checked.</summary>
+        private int _scoreboardFrames;
+
         private void Observe()
         {
             _spawned = 0;
@@ -958,9 +927,15 @@ namespace MphRead.Mods.Network
             if (!_puppetSeeded[slot])
             {
                 // How a puppet is first placed: ModNetSpawn, from the
-                // position the authority put it at.
+                // position the authority put it at -- which reads the spawn
+                // point's own node ref and only falls back to the lookup.
+                // Seeding this from the lookup instead measured a rule the
+                // game stopped using, and measured it as far worse than it
+                // is: one bad seed is walked forward for the whole run, so
+                // MP4 HIGHGROUND read 36% of its samples hidden where the
+                // rule the game actually runs hides 4.5%.
                 _puppetSeeded[slot] = true;
-                _puppetNode[slot] = Scene.GetNodeRefByPosition(position);
+                _puppetNode[slot] = PlayerEntity.ModSpawnNodeRef(Scene, position);
                 return;
             }
             Formats.Culling.NodeRef next = PlayerEntity.ModWalkNodeRef(
@@ -1267,6 +1242,7 @@ namespace MphRead.Mods.Network
                     + $" ({_puppetNone} none, {_puppetWrong} wrong part,"
                     + $" {_puppetHidden} would hide the player)");
             }
+            line.Append($" | effect particles {Scene.ModEffectParticles}");
             if (_litSamples > 0)
             {
                 line.Append($" | lit first {_litFirst * 100:0.0}%"
@@ -1280,10 +1256,7 @@ namespace MphRead.Mods.Network
             {
                 Console.WriteLine($"FRAMETIMING {_room} | {DrawRate} draws per step"
                     + $" | {_frame} steps, {Scene.FrameCount} counted"
-                    + $" | entity draws {Scene.ModTotalEntityDraws}"
-                    + $" ({Scene.ModBlendedDraws} blended)"
-                    + $" | draws advancing the game: {_drawAdvancedTheGame}"
-                    + $" | worst gun drift in view {_gunViewDrift:0.0000} units");
+                    + $" | draws advancing the game: {_drawAdvancedTheGame}");
             }
 
             if (_renderProbe)
@@ -1357,22 +1330,24 @@ namespace MphRead.Mods.Network
                     problems.Add($"slot {i} ({player.Hunter}) cannot be hurt by any beam");
                 }
             }
-            if (DrawRate > 1 && _gunViewDrift > 0.01f)
+            // Effects are the half of a shot that is only ever seen. Beams
+            // that fly and hit and do damage while every muzzle flash and wall
+            // impact silently emits nothing is exactly the shape of the bug
+            // this exists for, and every other number in the run is unmoved by
+            // it.
+            if (Scene.ModEffectParticles == 0)
             {
-                problems.Add($"the first-person gun moved {_gunViewDrift:0.00} units in view "
-                    + "space between pictures of one simulation step: it is not riding the "
-                    + "camera the frame is actually drawn from");
+                problems.Add("no effect particle was spawned all run: "
+                    + "muzzle flashes, impacts and explosions are emitting nothing");
+            }
+            if (_scoreboardFrames == 0)
+            {
+                problems.Add("the scoreboard was never drawn: the check above it did not run");
             }
             if (_drawAdvancedTheGame > 0)
             {
                 problems.Add($"drawing advanced the simulation on {_drawAdvancedTheGame} "
                     + "frame(s): a draw pass is writing back to the world");
-            }
-            if (DrawRate > 1 && Mods.Render.FrameTiming.Interpolate && Scene.ModBlendedDraws == 0
-                && Scene.ModTotalEntityDraws > 0)
-            {
-                problems.Add($"interpolation never engaged across {Scene.ModTotalEntityDraws} "
-                    + "entity draws, so the extra frames are duplicates");
             }
             foreach (string problem in problems)
             {

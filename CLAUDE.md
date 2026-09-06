@@ -55,6 +55,12 @@ export ALSOFT_DRIVERS=null PULSE_SERVER=   # else ALSA retries stall frames
   with no root, at the cost of culture-aware string handling — fine for
   building and for the server checks, not something to leave set while
   testing anything that formats text for a player.
+- `dotnet publish -o DIR` does **not** copy `libSkiaSharp.so` or
+  `libHarfBuzzSharp.so` next to the binary, and without them every Avalonia
+  screen dies with *"The type initializer for 'SkiaSharp.SKImageInfo' threw an
+  exception"* -- which `-uishot` reports as "no Avalonia backend on this
+  machine", so it reads as a missing display rather than a missing file. Copy
+  them out of `~/.nuget/packages/{skiasharp,harfbuzzsharp}.nativeassets.linux/*/runtimes/linux-x64/native/`.
 - **`MESA_GL_VERSION_OVERRIDE=4.5COMPAT` is not optional.** Without it Mesa gives
   a Core profile despite the Compatability request, every `GL.Begin` fails
   silently with `InvalidOperation`, and every frame renders black. Nothing in
@@ -101,9 +107,10 @@ export ALSOFT_DRIVERS=null PULSE_SERVER=   # else ALSA retries stall frames
 | `MphRead -mapbundle ["NAME"] [-mapdir DIR]` | cook a map into the one file it ships and is handed out as: recipe, level and baked textures in a `.fpmap`, with the level trimmed to the lumps the importer reads (376 KB for de_dust2, against 2.8 MB for the folder). What the workflow runs before it publishes -- the bundle is not committed, and the `.pk3` it is cooked from never reaches a package. `-mapdir` is resolved against the directory the command was typed in |
 | `MphRead -gamepad [-seconds N]` | what a connected pad is doing, with no match in the way: its name, its axes, and which game action each button reaches. The only thing that tells "not connected" from "connected but GLFW has no mapping for it" from "the dead zone is eating it" apart. `.claude/GAMEPAD.md` |
 | `MphRead -cel on\|off [-celbands N] [-celedge N]` / `-fog on\|off` / `-prohud on\|off` | render options for every path that never opens a launcher, which is every screenshot command. `.claude/render/CEL-SHADING.md` |
-| `MphRead -fpscap N\|display` / `-interpolation on\|off` | how fast the picture is drawn, and whether the frames between simulation steps are blended. The simulation is pinned at 60 Hz on every setting, so neither touches what the game does. `.claude/render/FRAME-PACING.md` |
+| `MphRead -fpscap N\|display` | how fast the picture is drawn. The simulation is pinned at 60 Hz on every setting, so this does not touch what the game does. `.claude/render/FRAME-PACING.md` |
+| `MphRead -crosshair STYLE` / `-crosshairsize Small\|Medium\|Big` | which crosshair the pro HUD draws, for the screenshot commands that open no launcher. Styles are Cross, Dot, CrossDot, Circle, Brackets |
 | `MphRead -frametimingcheck` | the fixed-step accumulator on its own, against frame times chosen rather than measured: does the game still run at 60.000 Hz when the screen runs at 144, at 165, at a jitter, or at 40. Needs no game files and no display |
-| `MphRead -maptest "ROOM" -drawrate N` | draw each simulation step N times, which is what a 144 Hz screen does to a 60 Hz game. Asserts that drawing did not advance the world and that interpolation actually engaged. How the decoupled loop is checked from a box with no monitor |
+| `MphRead -maptest "ROOM" -drawrate N` | draw each simulation step N times, which is what a 144 Hz screen does to a 60 Hz game. Asserts that drawing did not advance the world. How the decoupled loop is checked from a box with no monitor |
 | `MphRead -uishot DIR` | pictures of the launcher's own screens -- home, settings, the map picker, the pause menu -- rendered without anyone looking at a display. The one part of the program that could not otherwise be checked from a headless box |
 | `MphRead -demoinfo FILE [-replay]` | what a recorded match contains -- records, frames, a packet-type histogram, and how well it compressed. `-replay` then runs the file through the real player with no room or window and reports how the packets landed per frame, which is the measurement "the replay stutters" is about. Needs no game files. `.claude/multiplayer/NETWORK-DEMOS.md` |
 | `MphRead -netcheck ... -recorddemo` | the harness client, recording a demo as it plays |
@@ -130,7 +137,7 @@ things you can do on the right.
 | Host | the story from a save slot, or a match: map, mode, hunter, and a `Where` row -- **Local** is an offline match with 0-7 bots and their skill, **Online** asks the directory to run it. The listen-host path (`NetHostSession`, the dedicated server in this process over the loopback) still exists and is still what `LaunchKind.Host` can do, but the card no longer offers it: the port, "let the directory run it" and "list it" rows are built and forced rather than shown, because every one of them is a question about the player's router. Running a server yourself is the dedicated server's job |
 | Join | name, hunter, `host` or `host:port`, and a live line saying what that server is running. **Find a server** opens the browser |
 | Demos | pick a `.fpdemo` and replay it -- on Android too, where the picker cannot filter by pattern and hands back a `content://` document that has to be copied in first |
-| Settings | display, audio, controls, match rules, and profile (name, hunter, server addresses, updates, game files, credits). Also reachable from the pause menu during a match. **Pro mode HUD** is the whole HUD question in one switch -- no helmet, plain fixed crosshair, weapon list at 170%, fixed weapon, and its own energy, ammo and score readouts in place of the game's; off is the game as the DS drew it. The six settings it answers for have no rows at all, and the rows that remain have no explanations under them. Cheats, bugfixes, the leftover feature flags and the HUD-readout opacity likewise have **no UI** and no longer load from `settings.json` -- they sit at their code defaults |
+| Settings | display, audio, controls, match rules, and profile (name, hunter, server addresses, updates, game files, credits). Also reachable from the pause menu during a match. **Pro mode HUD** is the whole HUD question in one switch -- no helmet, plain fixed crosshair, weapon list at 170%, fixed weapon, and its own energy, ammo and score readouts in place of the game's; off is the game as the DS drew it. Two rows appear under it while it is on and nowhere else, because they are questions only it can answer: **Crosshair size** (Small / Medium / Big) and **Crosshair type** (Cross, Dot, Cross + dot, Circle, Brackets), the type row carrying a live picture of the answer at the chosen size. The six settings pro mode answers for have no rows at all, and the rows that remain have no explanations under them. Cheats, bugfixes, the leftover feature flags and the HUD-readout opacity likewise have **no UI** and no longer load from `settings.json` -- they sit at their code defaults |
 | Game files | where the .nds goes. Shown first, and everything else greyed out, when there is nothing set up yet |
 | Debugging logs | one line in the bottom right corner, under the version, on the front card only. Off; switched on it writes `logs/FruityPrime-<when>.log` beside the executable (the app's data directory on Android) with everything the program prints plus the machine, the driver, every model read and the stack of anything that kills it. What "it crashes when the map loads" is answered with. **Share logs** sits to its left, only when logs exist, and zips them into the phone's share sheet -- the app's own directory being one no file manager will browse. `.claude/DEBUG-LOGS.md` |
 
@@ -168,6 +175,23 @@ one call site in upstream's renderer changed. Input is the same trick from the
 other end: `AndroidInput` hands the scene a keyboard and a mouse of its own and
 presses whatever the player has bound, which is why rebinding, aim sensitivity
 and the DS weapon wheel all work without touching `ProcessAllInput`.
+
+**Which on-screen buttons are drawn is the player's.** Settings → Controls →
+On-screen buttons is a master switch and one toggle per button, and it exists
+because the buttons sit on top of the thing they get in the way of: aiming is a
+drag anywhere on the right of the screen, and a drag that starts inside a
+circle presses the circle. A button turned off is drawn nowhere and takes no
+touch, so the glass it was on becomes aim. Nothing there can strand a player:
+movement is the stick, aiming is a drag, jump is a double tap and boost is a
+flick, and not one of the four is a button. Kept in `controls.txt` with the
+rest of the controls (`Mods/Input/TouchSettings.cs`).
+
+**Controls used to reset every time the app closed**, and it was two faults at
+once: `InputSettings.Load` is called from `ModEntry.TryHandleHeadless`, which
+this head never runs, and `controls.txt` was written beside the executable --
+a directory an Android package does not own, so every save was refused and the
+exception swallowed. It follows `LauncherPrefs.Directory` now, and
+`AndroidApp.BuildHome` loads it.
 
 **The front screen runs; the match has never been loaded.** An emulator (API
 30, x86_64, software CPU and GL) shows the screen and the game-files card; what
@@ -226,17 +250,16 @@ changes here, because nothing about the simulation does.
   Every harness client calls it -- `NetCheckClient`, `MapAudit`, `WeaponDps`,
   `ThumbnailCapture` -- and is therefore untouched by any of this. So is
   Android, which drives the same call.
-- **Interpolation is what makes the extra frames worth having.** Without it a
-  144 Hz picture of a 60 Hz world is 60 positions a second shown twice, which
-  is judder. `EntityBase` keeps its last two transforms and the blended one is
-  *swapped into `_transform` and `_position` for the length of the
-  `GetDrawInfo` call*, which is why none of the ten `GetModelTransform`
-  overrides had to change. `CameraInfo` blends position and target and rebuilds
-  the matrix with `LookAt`, never the matrices themselves.
-- **A blend is declined whenever the two states are not two points on one
-  path**: a jump over 24 units in a step, or a step more than four times the
-  last one plus a unit. That is a teleport, a respawn, or a puppet being put
-  where its owner says it is -- all of which must be drawn where they landed.
+- **Every picture is of the newest simulated state, and nothing is blended.**
+  There was an interpolation pass -- entity transforms and the camera blended
+  between their last two simulated states -- and it is **gone**, deliberately
+  and completely. It bought smoother motion between steps and cost visible
+  wrongness on everything that is pooled and reused: a beam projectile or an
+  impact effect taken off the free list starts its new life holding the last
+  one's transform, and a blend against that draws the shot somewhere between
+  where it used to be and where it is. That is the "artifacts de tirs" and the
+  wall impacts landing nowhere. Do not put it back without an answer for entity
+  reuse.
 - **The game's speed no longer depends on the machine.** One call for both
   meant a box managing 40 fps played in slow motion; the accumulator pays what
   it owes, measured at 60.000 Hz with a 40 Hz draw rate.
@@ -246,13 +269,26 @@ changes here, because nothing about the simulation does.
   expired 2.4x early at 144 Hz), `ProcessEffects`, and the pause map's own
   animations. Frame advance is forced back to one step per picture, because the
   request to advance is consumed *after* the frame is drawn.
-- **Anything attached to the view must be attached to the *drawn* view.** The
-  first-person gun is placed in world space during the simulation, from
-  `CameraInfo.Position`, and is seen through the interpolated camera -- so it
-  slid around the screen as the player moved and left the top of it on a jump
-  pad. `Scene.ModAttachToDrawnView` moves such a transform from the simulated
-  camera's frame into the drawn one; `-maptest -drawrate N` measures the gun in
-  view space and fails if it moves at all between pictures of one step.
+- **When a frame is split in two, look at every counter both halves read.**
+  Effect elements spawn particles on every *other* step (the DS ran effects at
+  30 Hz) and record the parity they were created with, so their **first**
+  advance is a spawning one -- which is where a burst lives. Upstream
+  incremented `_frameCount` *after* `GetDrawItems`, so a spawn and the advance
+  that followed it in the same frame saw the same number; the split moved the
+  increment into the step, before the draw, and every element's first advance
+  started failing its own check. No flash on a charging Missile, no explosion
+  on a wall, while the smoke and debris of those same effects carried on --
+  and every number the harness measured was unmoved. `_effectFrame` is a clock
+  the effect system owns, read by both halves. 776 effect particles a run
+  became 1254.
+- **Draw state must be cleared in the draw pass, not in the step.** The
+  single-particle table -- the fuzzball at the head of a shot, the scan-visor
+  markers, the death sparks -- is filled during the entity draws and emptied
+  once a frame, and the emptying stayed behind in the simulation step. A
+  picture with no step behind it, which is most of them at 144 Hz, therefore
+  drew the previous frame's particles a second time at the positions they had
+  then, and kept doing so until the 200-entry table filled and started dropping
+  the new ones. `_singleParticleCount = 0` now sits in `OnDrawFrame`.
 - **The on-screen FPS counter reports the picture**, not the simulation. The
   simulation rate is invisible to a player, which is why it goes to the debug
   log -- every five seconds, or immediately on a dropped step or a stall.
@@ -266,9 +302,8 @@ Android runs the same split in `GameView.RenderLoop`, with input inside the
 step loop and no sleep in display mode (`eglSwapBuffers` is the pacing there).
 It builds but **has never run on a device**, like the rest of that head.
 
-Full account, the interpolation rules, what is *not* interpolated, the
-drawn-view attachment, Android, and how it is all tested without a 144 Hz
-monitor: `.claude/render/FRAME-PACING.md`.
+Full account, what the draw pass may and may not touch, Android, and how it is
+all tested without a 144 Hz monitor: `.claude/render/FRAME-PACING.md`.
 
 ## Updating
 

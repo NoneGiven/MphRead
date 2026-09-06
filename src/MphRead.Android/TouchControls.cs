@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MphRead.Mods.Input;
 
 namespace MphRead.Droid
 {
@@ -432,9 +433,50 @@ namespace MphRead.Droid
                         _ => true
                     };
                 }
-                button.Visible = visible;
+                // And the player's own answer on top of the situation's: a
+                // button they have turned off is off wherever it would
+                // otherwise appear, spectating included. Hidden buttons take
+                // no touches either (see the hit test in Down), which is the
+                // point -- an aim drag that starts where ZOOM used to be is
+                // now an aim drag.
+                button.Visible = visible && TouchSettings.Shown(SettingOf(button.Action));
                 button.Relabel(label);
             }
+        }
+
+        /// <summary>
+        /// Which switch on the settings screen answers for this button.
+        /// </summary>
+        private static TouchControl SettingOf(TouchAction action)
+        {
+            return action switch
+            {
+                TouchAction.Shoot => TouchControl.Shoot,
+                TouchAction.Jump => TouchControl.Jump,
+                TouchAction.Morph => TouchControl.Morph,
+                TouchAction.ScanVisor => TouchControl.ScanVisor,
+                TouchAction.Scan => TouchControl.Scan,
+                TouchAction.Missile => TouchControl.Missile,
+                TouchAction.WeaponMenu => TouchControl.WeaponMenu,
+                TouchAction.Zoom => TouchControl.Zoom,
+                TouchAction.Pause => TouchControl.Pause,
+                TouchAction.Scoreboard => TouchControl.Scoreboard,
+                _ => TouchControl.Chat
+            };
+        }
+
+        /// <summary>
+        /// The settings screen has been closed: re-read which buttons the
+        /// player wants and repaint. Called from the game loop, which is what
+        /// knows the pause menu has just been away.
+        /// </summary>
+        public void ReloadSettings()
+        {
+            lock (_lock)
+            {
+                ApplyLayoutLocked();
+            }
+            Invalidated?.Invoke();
         }
 
         /// <summary>

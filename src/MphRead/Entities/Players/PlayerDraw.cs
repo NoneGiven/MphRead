@@ -180,19 +180,7 @@ namespace MphRead.Entities
                 }
                 else if (AttachedEnemy == null && !_field6D0 && Hunter != Hunter.Guardian)
                 {
-                    // The gun rides the view, so it has to ride the view that
-                    // is being *drawn*: _gunDrawPos was built from the
-                    // simulated camera position and this frame may be part way
-                    // past it. Without the correction the gun drifts across
-                    // the screen whenever the camera moves, and a jump pad
-                    // throws it off the top. The smoke below inherits it,
-                    // since it is placed from this same transform.
-                    Matrix4 transform = _scene.ModAttachToDrawnView(
-                        GetTransformMatrix(_aimVec, _upVector, _gunDrawPos));
-                    // Where the gun was actually put, for the harness: its
-                    // position in view space must not depend on which of a
-                    // step's pictures this is. See MapAudit's gun-drift check.
-                    ModNoteDrawnGun(transform);
+                    Matrix4 transform = GetTransformMatrix(_aimVec, _upVector, _gunDrawPos);
                     UpdateTransforms(_gunModel, transform, Recolor);
                     GetDrawItems(_gunModel, _gunModel.Model.Nodes[0], _curAlpha);
                     if (Flags1.TestFlag(PlayerFlags1.DrawGunSmoke))

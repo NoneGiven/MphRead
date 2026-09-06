@@ -297,6 +297,50 @@ reach the settings screen too, where no `GameView` exists, so that a button
 can be rebound. `GameView`'s own handlers are kept as a fallback and never see
 a pad event in this app.
 
+### The player chooses which buttons exist
+
+Settings → Controls → **On-screen buttons**: a master switch and one toggle per
+button, applied in `ApplyLayoutLocked` as an `AND` over whatever the situation
+had already decided. The state lives in core, in
+`Mods/Input/TouchSettings.cs`, because the settings screen is shared code and
+`TouchAction` is this head's own type; `TouchControls.SettingOf` maps between
+them. It is saved in `controls.txt` with the rest of the controls.
+
+It exists because of a report, and the report is the design rationale: *"the
+on-screen touch commands interfere with the aiming and it's very easy to
+accidentally hit those."* They do, and no layout fixes it -- aiming is a drag
+anywhere on the right of the screen, the buttons have to be reachable, and a
+drag that starts inside a circle presses the circle. A button turned off is
+drawn nowhere **and takes no touch** (the hit test in `Down` already skipped
+invisible buttons), so the glass it occupied becomes aim.
+
+Turning every one of them off cannot strand a player: movement is the stick,
+which appears wherever a thumb lands on the left; aiming is a drag; jump is a
+double tap on the aiming side; boost in the ball is a flick. None of the four is
+a button.
+
+`MainActivity.ClosePauseMenu` calls `TouchControls.ReloadSettings`, since the
+settings are reachable from the pause menu mid-match.
+
+### Controls no longer reset when the app closes
+
+Two faults, both of them "the desktop does this somewhere this head never runs":
+
+- **Nothing called `InputSettings.Load`.** It is called from
+  `ModEntry.TryHandleHeadless`, which is the desktop's every-invocation entry
+  point and is not on this head's path at all. `AndroidApp.BuildHome` calls it
+  now, after `LauncherPrefs.Load` names the directory.
+- **`controls.txt` was written to `AppContext.BaseDirectory`**, which an Android
+  package does not own. Every write was refused, and `InputSettings.Save`
+  swallows the exception deliberately (it runs from the pause menu, on the
+  thread the menu is on). It follows `LauncherPrefs.Directory` now — the same
+  property the head already points at the app's data directory for
+  `launcher.txt` and `paths.txt`.
+
+The symptom was "control settings still reset to default when quitting the
+game", and the shape to remember is that **a swallowed write error and a load
+that never runs look identical from the outside**.
+
 ### Spectating
 
 The spectator's screen is the same dozen circles doing different jobs, and

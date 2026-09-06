@@ -72,13 +72,11 @@ namespace MphRead.Mods
             RenderOptions.TextureFiltering = RenderOptions.ParseOnOff(settings.TextureFiltering,
                 RenderOptions.TextureFiltering);
             RenderOptions.ShowFps = RenderOptions.ParseOnOff(settings.ShowFps, RenderOptions.ShowFps);
-            // The picture's rate and whether the frames between simulation
-            // steps are blended. Neither touches the simulation, which runs at
-            // 60 Hz whatever these say -- see Mods/Render/FrameTiming.cs.
+            // How often the picture is drawn. It does not touch the
+            // simulation, which runs at 60 Hz whatever this says -- see
+            // Mods/Render/FrameTiming.cs.
             Render.FrameTiming.FrameRateCap = Render.FrameTiming.ParseCap(settings.FrameRateCap,
                 Render.FrameTiming.FrameRateCap);
-            Render.FrameTiming.Interpolate = RenderOptions.ParseOnOff(settings.Interpolation,
-                Render.FrameTiming.Interpolate);
             RenderOptions.CelShading = RenderOptions.ParseOnOff(settings.CelShading,
                 RenderOptions.CelShading);
             // Steps and outline strength are no longer player-configurable --

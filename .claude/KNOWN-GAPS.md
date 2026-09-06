@@ -3,6 +3,23 @@
 What's below is unproven or partially proven, not broken. Say so rather than
 claiming coverage that isn't there.
 
+- **The scoreboard crash reported in bot matches is not reproduced here, and
+  is therefore not fixed.** Reported from a phone, 2026-09-06: *"in bot matches
+  the game still sometimes crashes when trying to view the scoreboard."* The
+  scoreboard is now drawn on every `-maptest` run (`ModForceScoreboard`, two
+  windows per run, a `MAPFAIL` if it never drew) and it was swept over all
+  twelve game modes, 2 to 8 players, bots on, pro HUD on and off, and forced
+  into `MatchState.Ending` — no crash anywhere, on the desktop. Two real
+  defects **were** found on that path and fixed, and either could plausibly be
+  it, but neither is confirmed as the cause: `GameState.Reset` cleared every
+  per-slot array except `Nicknames` and `Stars`, so an offline match drew the
+  previous *networked* match's roster; and `DrawText2D` indexed the font's
+  width and offset tables with `ch - MinCharacter` unchecked in all four
+  alignment branches, which is a crash for any character the loaded font does
+  not cover — on a screen that draws eight names at once. What is needed to
+  close this is a debug log from the phone it happens on: the render thread
+  already catches and prints the whole exception (`GameView.Run`), so the
+  stack is one switch away.
 - **The one launcher has never run on Windows or macOS.** Same code on all
   three desktops now, but the only machine that's shown it is this WSL box
   (front screen, settings, map grid, pause menu — driven and screenshotted

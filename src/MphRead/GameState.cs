@@ -1672,8 +1672,22 @@ namespace MphRead
             TransitionRoomId = -1;
             TransitionAltForm = false;
             ActivePlayers = 0;
+            // The names too -- but only when there is no session holding
+            // them. Everything else per-slot is cleared here and these were
+            // not, so the roster of the last networked match survived into the
+            // next one, and an offline match (which never writes a name at
+            // all) drew that roster on its scoreboard: seven strangers against
+            // eight bots. The guard is not caution, it is ordering: this runs
+            // from the Scene constructor, and a client that joined a server
+            // received its roster before the scene existed.
+            bool keepNames = Mods.Network.NetSession.Active;
             for (int i = 0; i < PlayerEntity.SlotCapacity; i++)
             {
+                if (!keepNames)
+                {
+                    Nicknames[i] = $"Player{i + 1}";
+                }
+                Stars[i] = 0;
                 Standings[i] = 0;
                 TeamStandings[i] = 0;
                 ResultSlots[i] = 0;

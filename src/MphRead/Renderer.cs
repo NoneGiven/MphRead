@@ -1413,6 +1413,12 @@ namespace MphRead
         /// </summary>
         public void OnSimulationFrame()
         {
+            // The effect clock, before anything can spawn an effect. See
+            // _effectFrame: it has to be the same value for the spawn and for
+            // the ProcessEffects call that belongs to this step, and the
+            // game's own _frameCount stopped being that when the step and the
+            // picture became two calls.
+            _effectFrame++;
             // todo: FPS stuff
             _frameTime = 1 / 60f;
             if (BreakNextFrame)
@@ -1480,7 +1486,6 @@ namespace MphRead
                 _room?.UpdateTransition();
             }
             OnKeyHeld();
-            _singleParticleCount = 0;
             if (ProcessFrame && _room != null)
             {
                 GameState.ProcessFrame(this);
@@ -1524,23 +1529,18 @@ namespace MphRead
                 Mods.Render.FrameTiming.MaxCatchUpSteps);
             _pendingFadeSteps = Math.Min(_pendingFadeSteps + 1,
                 Mods.Render.FrameTiming.MaxCatchUpSteps);
-            CaptureDrawState();
         }
 
         /// <summary>
-        /// Build and submit one picture, from wherever the simulation has got
-        /// to plus <see cref="Mods.Render.FrameTiming.Alpha"/> of the step it
-        /// is part way through.
+        /// Build and submit one picture of wherever the simulation has got to.
         ///
-        /// Nothing here may change the game. It reads the world, blends it
-        /// against the previous step and turns it into render items; a bug
-        /// that let a draw write back to an entity would make the game run
-        /// differently on a fast monitor, which is the one failure this split
-        /// must not have.
+        /// Nothing here may change the game. It reads the world and turns it
+        /// into render items; a bug that let a draw write back to an entity
+        /// would make the game run differently on a fast monitor, which is the
+        /// one failure this split must not have.
         /// </summary>
         public void OnDrawFrame()
         {
-            ModDrawSerial++;
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, _frameBuffer);
             // The scene's own target, which the resolution scale may have made
             // smaller than the window. Reallocated here rather than only on a
@@ -1570,6 +1570,14 @@ namespace MphRead
                 _freeRenderItems.Enqueue(item);
             }
             _nextPolygonId = 1;
+            // Singles are filled in by the entity draws below and drawn at
+            // the end of the same pass, so they are cleared here and not in
+            // the simulation step: the picture can run faster than the
+            // simulation, and a frame with no step behind it would otherwise
+            // draw the previous frame's particles a second time, at the
+            // positions they had then, until the 200-entry table filled up and
+            // started dropping the new ones.
+            _singleParticleCount = 0;
             if (ProcessFrame || CameraMode != CameraMode.Player)
             {
                 TransformCamera();
@@ -2508,77 +2516,8 @@ namespace MphRead
             Read.RemoveModel(model.Name, model.FirstHunt);
         }
 
-        /// <summary>
-        /// Where the camera is for the frame being drawn, which is not quite
-        /// where the simulation has it whenever the picture runs faster than
-        /// 60 Hz. Set by <see cref="TransformCamera"/>, which always runs
-        /// before anything reads it.
-        /// </summary>
-        private Vector3 _drawCameraPosition;
-
-        /// <summary>
-        /// Put a transform that was built during the simulation, against the
-        /// simulated camera, into the frame of the camera actually being drawn
-        /// from.
-        ///
-        /// The first-person gun is the reason this exists. It is placed in
-        /// *world* space by <c>UpdateAimVecs</c>, from
-        /// <c>CameraInfo.Position</c> -- the simulated one -- while the view it
-        /// is seen through is the interpolated one. The two disagree by
-        /// whatever the camera moved in the fraction of a step the frame falls
-        /// at, so the gun slid around the screen as the player moved and shot
-        /// off the top of it on a jump pad, where the camera moves fastest.
-        ///
-        /// Correcting the whole transform rather than just the position also
-        /// takes care of the camera *turning* between steps, which a position
-        /// fix alone would leave swinging.
-        /// </summary>
-        public Matrix4 ModAttachToDrawnView(Matrix4 transform)
-        {
-            return _drawViewCorrected ? transform * _drawViewCorrection : transform;
-        }
-
-        /// <summary>
-        /// The inverse of a view matrix, done as the rigid transform it is
-        /// rather than as a general 4x4.
-        ///
-        /// <c>Matrix4.Inverted()</c> runs cofactors over all sixteen elements,
-        /// and a LookAt matrix carries a rotation of magnitude one next to a
-        /// translation of a hundred units or more. The rotation part is
-        /// orthonormal, so its inverse is its transpose, which is exact -- no
-        /// division and nothing to cancel -- and it is cheaper besides.
-        ///
-        /// This is a correctness margin rather than a fix for anything that
-        /// was observed: the general inverse was measured against it here and
-        /// the two agreed to every digit the harness prints.
-        /// </summary>
-        private static Matrix4 InvertRigid(Matrix4 view)
-        {
-            Vector3 t = view.Row3.Xyz;
-            var inverse = new Matrix4(
-                new Vector4(view.Row0.X, view.Row1.X, view.Row2.X, 0),
-                new Vector4(view.Row0.Y, view.Row1.Y, view.Row2.Y, 0),
-                new Vector4(view.Row0.Z, view.Row1.Z, view.Row2.Z, 0),
-                new Vector4(0, 0, 0, 1)
-            );
-            // Row-vector convention: p_view = p_world * R + t, so
-            // p_world = (p_view - t) * R^T.
-            inverse.Row3.Xyz = new Vector3(
-                -(t.X * inverse.Row0.X + t.Y * inverse.Row1.X + t.Z * inverse.Row2.X),
-                -(t.X * inverse.Row0.Y + t.Y * inverse.Row1.Y + t.Z * inverse.Row2.Y),
-                -(t.X * inverse.Row0.Z + t.Y * inverse.Row1.Z + t.Z * inverse.Row2.Z)
-            );
-            return inverse;
-        }
-
-        private Matrix4 _drawViewCorrection = Matrix4.Identity;
-        private bool _drawViewCorrected;
-
         private void TransformCamera()
         {
-            // Nothing to correct unless the player's camera is what is being
-            // drawn and the frame fell between two simulated states.
-            _drawViewCorrected = false;
             // todo: only update this when the camera values change
             _viewMatrix = Matrix4.Identity;
             _viewInvRotMatrix = Matrix4.Identity;
@@ -2595,29 +2534,9 @@ namespace MphRead
             {
                 if (_cameraMode == CameraMode.Player)
                 {
-                    // The view this frame is drawn from, which is the
-                    // simulated one plus however far past it the frame falls.
-                    // CameraInfo hands back the simulated view unchanged
-                    // whenever blending would invent something -- no history
-                    // yet, a respawn, a teleport, a cutscene cut -- so the
-                    // picture never smears across a camera cut.
-                    PlayerEntity.Main.CameraInfo.ModGetDrawView(Mods.Render.FrameTiming.Alpha,
-                        out _viewMatrix, out _drawCameraPosition, out float camFov);
-                    float fov = camFov > 0 ? camFov : 78;
+                    _viewMatrix = PlayerEntity.Main.CameraInfo.ViewMatrix;
+                    float fov = PlayerEntity.Main.CameraInfo.Fov > 0 ? PlayerEntity.Main.CameraInfo.Fov : 78;
                     _cameraFov = MathHelper.DegreesToRadians(fov);
-                    // ModGetDrawView hands back the simulated view unchanged
-                    // whenever it declines to blend, and then there is nothing
-                    // to correct and nothing to pay for.
-                    Matrix4 simulatedView = PlayerEntity.Main.CameraInfo.ViewMatrix;
-                    if (simulatedView != _viewMatrix)
-                    {
-                        // Row-vector convention (see Matrix.Vec3MultMtx4), so
-                        // this reads left to right: take the point into view
-                        // space with the camera the simulation has, then back
-                        // out to the world with the camera being drawn from.
-                        _drawViewCorrection = simulatedView * InvertRigid(_viewMatrix);
-                        _drawViewCorrected = true;
-                    }
                 }
                 else
                 {
@@ -2656,7 +2575,7 @@ namespace MphRead
             }
             else if (_cameraMode == CameraMode.Player)
             {
-                _cameraPosition = _drawCameraPosition;
+                _cameraPosition = PlayerEntity.Main.CameraInfo.Position;
             }
         }
 
@@ -2899,7 +2818,7 @@ namespace MphRead
             entry.ChildEffectId = (int)element.ChildEffectId;
             entry.Acceleration = element.Acceleration;
             entry.ParticleDefinitions.AddRange(element.Particles);
-            entry.Parity = (int)(_frameCount % 2);
+            entry.Parity = (int)(_effectFrame % 2);
             entry.EffectEntry = null;
             entry.EntityCollision = entCol;
             entry.Definition = element;
@@ -3093,7 +3012,7 @@ namespace MphRead
             }
         }
 
-        private void ProcessEffects()
+        private void ProcessEffects(ulong effectFrame)
         {
             for (int i = 0; i < _activeElements.Count; i++)
             {
@@ -3139,7 +3058,7 @@ namespace MphRead
                         element.Transform = element.OwnTransform;
                     }
                     var times = new TimeValues(_elapsedTime, _elapsedTime - element.CreationTime, element.Lifespan);
-                    if (_frameCount % 2 == (ulong)element.Parity
+                    if (effectFrame % 2 == (ulong)element.Parity
                         && element.Actions.TryGetValue(FuncAction.IncreaseParticleAmount, out FxFuncInfo? info))
                     {
                         // todo: maybe revisit this frame time hack
@@ -3159,6 +3078,7 @@ namespace MphRead
                             break;
                         }
                         element.Particles.Add(particle);
+                        ModEffectParticles++;
                         particle.Owner = element;
                         particle.SetFuncIds();
                         particle.PortionTotal = portionTotal;
@@ -3434,6 +3354,45 @@ namespace MphRead
         private int _pendingEffectSteps;
 
         /// <summary>
+        /// Which simulation step the effect system is on.
+        ///
+        /// Effects spawn particles on every *other* step -- the DS ran them at
+        /// 30 Hz and upstream's doubling to 60 is this parity check -- and an
+        /// element records the parity it was created with so that its first
+        /// advance is a spawning one. Many elements put their whole burst out
+        /// on that first advance, through a function that only returns its
+        /// value once; miss it and they emit nothing at all, ever.
+        ///
+        /// That is what happened when the step and the picture became two
+        /// calls. Both halves used to read <see cref="_frameCount"/>, which
+        /// upstream incremented *after* <c>GetDrawItems</c> -- so a spawn and
+        /// the advance that followed it in the same frame saw the same number.
+        /// Moving the increment into the simulation step put it before the
+        /// draw, every element's first advance failed its own parity check,
+        /// and the bursts stopped: no flash on a charging Missile, no
+        /// explosion on a wall. The continuous elements of the same effects --
+        /// smoke, debris -- carried on, which is why it read as "some of it is
+        /// missing" rather than as no effects at all.
+        ///
+        /// So the effect system counts its own steps here, where nothing else
+        /// can move the number, and the relationship upstream relied on is
+        /// restored exactly.
+        /// </summary>
+        private ulong _effectFrame;
+
+        /// <summary>
+        /// Every particle any effect element has spawned this run.
+        ///
+        /// The harness asserts on it. A run that fires thousands of shots and
+        /// spawns no effect particles is the failure above, and nothing else
+        /// the audit measures moves at all when it happens -- the shots still
+        /// fly, still hit, still do damage, and the pictures still come out
+        /// lit. It is invisible to every other check by construction, so it
+        /// gets one of its own.
+        /// </summary>
+        public long ModEffectParticles { get; private set; }
+
+        /// <summary>
         /// Simulation steps owed to <see cref="UpdateFade"/>, which runs in
         /// the draw pass because the fade is drawn there, but whose delay is a
         /// simulation timer counted in frames. Left as one per drawn frame it
@@ -3442,52 +3401,6 @@ namespace MphRead
         /// room changing.
         /// </summary>
         private int _pendingFadeSteps;
-
-        /// <summary>
-        /// How many entity draws this scene has blended between two simulated
-        /// states, and how many it has made in total.
-        ///
-        /// The harness asserts on these. "Interpolation is on" is not a thing
-        /// a run can check by looking at the setting: every blend can decline
-        /// -- no history, a teleport, alpha at 1 -- and a bug that made them
-        /// all decline would leave a picture that is merely the old one, with
-        /// nothing anywhere saying so.
-        /// </summary>
-        /// <summary>
-        /// Counts pictures. Anything that records what it drew, for the
-        /// harness to check, stamps this so a reading can be told from a
-        /// leftover -- the first-person gun is not drawn at all in alt form,
-        /// and its last transform would otherwise be compared against a view
-        /// that has moved on since.
-        /// </summary>
-        public ulong ModDrawSerial { get; private set; }
-
-        public long ModBlendedDraws { get; private set; }
-        public long ModTotalEntityDraws { get; private set; }
-
-        /// <summary>
-        /// Remember where everything ended this step, so the frames drawn
-        /// before the next one can be drawn between the two.
-        /// </summary>
-        private void CaptureDrawState()
-        {
-            // Nothing to remember unless something is going to blend against
-            // it. The harness clients drive OnUpdateFrame one step per frame
-            // and never touch the accumulator, so alpha there is 1 and every
-            // blend declines -- capturing for them would be pure cost on a
-            // measurement that is sensitive to cost.
-            if (!Mods.Render.FrameTiming.Interpolate
-                || (!Mods.Render.FrameTiming.Active
-                    && !Mods.Render.FrameTiming.ForcedAlpha.HasValue))
-            {
-                return;
-            }
-            foreach (EntityBase entity in Entities)
-            {
-                entity.ModCaptureDrawState();
-            }
-            PlayerEntity.Main.CameraInfo.ModCaptureDrawState();
-        }
 
         private readonly List<RenderItem> _decalItems = new List<RenderItem>();
         private readonly List<RenderItem> _nonDecalItems = new List<RenderItem>();
@@ -3832,11 +3745,6 @@ namespace MphRead
                 _room.GetDrawInfo();
                 _room.GetDisplayVolumes();
             }
-            // How far past the last simulated step this frame falls. 1 when
-            // the picture is running at the simulation's own rate, in which
-            // case every ModBeginInterpolatedDraw below declines and the draw
-            // is byte for byte the one this engine has always made.
-            float alpha = Mods.Render.FrameTiming.Alpha;
             foreach (PlayerEntity player in GetPlayerEntities())
             {
                 if (!player.Initialized)
@@ -3845,17 +3753,7 @@ namespace MphRead
                 }
                 if (player.LoadFlags.TestFlag(LoadFlags.Active))
                 {
-                    bool blended = player.ModBeginInterpolatedDraw(alpha);
-                    ModTotalEntityDraws++;
-                    if (blended)
-                    {
-                        ModBlendedDraws++;
-                    }
                     player.Draw();
-                    if (blended)
-                    {
-                        player.ModEndInterpolatedDraw();
-                    }
                     // skdebug
                     player.GetDisplayVolumes();
                 }
@@ -3868,22 +3766,10 @@ namespace MphRead
                 }
                 if (entity.ShouldDraw)
                 {
-                    bool blended = entity.ModBeginInterpolatedDraw(alpha);
-                    ModTotalEntityDraws++;
-                    if (blended)
-                    {
-                        ModBlendedDraws++;
-                    }
                     entity.GetDrawInfo();
-                    if (blended)
-                    {
-                        entity.ModEndInterpolatedDraw();
-                    }
                 }
                 if (_showVolumes != VolumeDisplay.None)
                 {
-                    // The real position, not the drawn one: a volume is a
-                    // debug view of what the simulation thinks.
                     entity.GetDisplayVolumes();
                 }
             }
@@ -3892,7 +3778,11 @@ namespace MphRead
             {
                 for (int i = 0; i < _pendingEffectSteps; i++)
                 {
-                    ProcessEffects();
+                    // Oldest owed step first, and each advanced under its own
+                    // effect frame -- so an element spawned during that step
+                    // sees the parity it was created with.
+                    ulong owed = (ulong)(_pendingEffectSteps - 1 - i);
+                    ProcessEffects(_effectFrame >= owed ? _effectFrame - owed : _effectFrame);
                 }
             }
             _pendingEffectSteps = 0;
@@ -4614,24 +4504,31 @@ namespace MphRead
         }
 
         /// <summary>
-        /// A small flat-coloured cross at the centre of the screen, drawn
-        /// with none of the game's sprite assets -- the Quake-Live-style
-        /// alternative to the reticle. Reuses the RTT shader's fade_color
-        /// path (normally the full-screen fade) as a flat-fill: with its
-        /// alpha above zero the fragment shader outputs that colour outright
-        /// instead of sampling the bound texture, which is exactly "draw a
-        /// solid shape with no asset."
+        /// The player's crosshair at the centre of the screen, drawn with none
+        /// of the game's sprite assets -- the Quake-Live-style alternative to
+        /// the reticle. Reuses the RTT shader's fade_color path (normally the
+        /// full-screen fade) as a flat-fill: with its alpha above zero the
+        /// fragment shader outputs that colour outright instead of sampling
+        /// the bound texture, which is exactly "draw a solid shape with no
+        /// asset."
+        ///
+        /// Which shape, and how big, come from
+        /// <see cref="Mods.Render.Crosshair"/> -- the same table the settings
+        /// screen draws its preview from.
         /// </summary>
         public void DrawCustomCrosshair(Vector3 color)
         {
-            const float armLength = 9f;
-            const float armThickness = 3f;
-            const float gap = 3f;
             float halfW = Size.X / 2f;
             float halfH = Size.Y / 2f;
+            Mods.Render.CrosshairStyle style = Mods.Render.Crosshair.Style;
+            float scale = Mods.Render.Crosshair.Scale;
             GL.Uniform4(_shaderLocations.FadeColor, color.X, color.Y, color.Z, 1f);
-            void DrawArm(float left, float right, float top, float bottom)
+            IReadOnlyList<Mods.Render.CrosshairBar> bars =
+                Mods.Render.Crosshair.BarsOf(style, scale);
+            for (int i = 0; i < bars.Count; i++)
             {
+                (float left, float right, float bottom, float top) =
+                    Mods.Render.Crosshair.EdgesOf(bars[i]);
                 GL.Begin(PrimitiveType.TriangleStrip);
                 GL.Vertex3(right / halfW, top / halfH, 0f);
                 GL.Vertex3(left / halfW, top / halfH, 0f);
@@ -4639,10 +4536,27 @@ namespace MphRead
                 GL.Vertex3(left / halfW, bottom / halfH, 0f);
                 GL.End();
             }
-            DrawArm(-armThickness / 2, armThickness / 2, gap + armLength, gap); // top
-            DrawArm(-armThickness / 2, armThickness / 2, -gap, -gap - armLength); // bottom
-            DrawArm(-gap - armLength, -gap, armThickness / 2, -armThickness / 2); // left
-            DrawArm(gap, gap + armLength, armThickness / 2, -armThickness / 2); // right
+            (float radius, float thickness) = Mods.Render.Crosshair.RingOf(style, scale);
+            if (thickness > 0)
+            {
+                // An annulus as one triangle strip: outer point, inner point,
+                // round the circle and back to the start. Enough segments that
+                // the flats are under a pixel at the sizes this is drawn at,
+                // and it is four dozen vertices once a frame either way.
+                const int segments = 40;
+                float inner = radius - thickness / 2;
+                float outer = radius + thickness / 2;
+                GL.Begin(PrimitiveType.TriangleStrip);
+                for (int i = 0; i <= segments; i++)
+                {
+                    float angle = MathHelper.TwoPi * i / segments;
+                    float cos = MathF.Cos(angle);
+                    float sin = MathF.Sin(angle);
+                    GL.Vertex3(outer * cos / halfW, outer * sin / halfH, 0f);
+                    GL.Vertex3(inner * cos / halfW, inner * sin / halfH, 0f);
+                }
+                GL.End();
+            }
             GL.Uniform4(_shaderLocations.FadeColor, Vector4.Zero);
         }
 

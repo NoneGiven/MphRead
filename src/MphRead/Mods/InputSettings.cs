@@ -28,7 +28,22 @@ namespace MphRead.Mods
     /// </summary>
     public static class InputSettings
     {
-        private static string Path => System.IO.Path.Combine(AppContext.BaseDirectory, "controls.txt");
+        /// <summary>
+        /// controls.txt, beside the executable -- except where the program
+        /// does not own that folder.
+        ///
+        /// It follows <see cref="Launcher.LauncherPrefs.Directory"/> rather
+        /// than <c>AppContext.BaseDirectory</c> because an Android package's
+        /// own directory is read-only: every write went to a path the app is
+        /// not allowed to create, the exception was swallowed (as it has to
+        /// be, see <see cref="Save"/>), and every rebind, every sensitivity
+        /// and every pad binding was lost the moment the game was closed.
+        /// The head points that one property at the app's data directory
+        /// before anything reads, so this lands where the rest of a player's
+        /// settings already do.
+        /// </summary>
+        private static string Path
+            => System.IO.Path.Combine(Launcher.LauncherPrefs.Directory, "controls.txt");
 
         /// <summary>Multiplier on mouse movement. 1.0 is the original feel.</summary>
         public static float MouseSensitivity { get; set; } = 1;
@@ -342,6 +357,10 @@ namespace MphRead.Mods
                     {
                         continue;
                     }
+                    if (Input.TouchSettings.ReadSetting(key, value))
+                    {
+                        continue;
+                    }
                     if (key == "gamepad_deadzone"
                         && Single.TryParse(value, NumberStyles.Float,
                             CultureInfo.InvariantCulture, out float deadZone))
@@ -437,6 +456,7 @@ namespace MphRead.Mods
                     lines.Add($"{Input.PadBindings.SettingKey(action)}="
                         + Input.PadBindings.Get(action));
                 }
+                Input.TouchSettings.WriteSettings(lines);
                 foreach (PropertyInfo property in Bindings)
                 {
                     Keybind bind = Bind(property);
@@ -472,6 +492,7 @@ namespace MphRead.Mods
             ScrollAllWeapons = true;
             ChatKey = Keys.T;
             Input.PadBindings.Reset();
+            Input.TouchSettings.Reset();
             GamepadDeadZone = 0.2f;
             GamepadLookSensitivity = 1f;
             GamepadInvertY = false;

@@ -14,12 +14,12 @@ namespace MphRead.Mods.Render
     /// per frame and a demo is a count of frames.
     ///
     /// So the simulation is not asked. It stays pinned at exactly 60 Hz here
-    /// and the *drawing* is what runs at the display's rate, with
-    /// <see cref="Alpha"/> saying how far between the last two simulated
-    /// states the frame being drawn falls. A machine holding 144 fps runs the
-    /// same 60 simulation steps a second it always did, sends the same
-    /// packets on the same frames, and records a demo another build can play
-    /// back.
+    /// and the *drawing* is what runs at the display's rate. A machine
+    /// holding 144 fps runs the same 60 simulation steps a second it always
+    /// did, sends the same packets on the same frames, and records a demo
+    /// another build can play back. Each picture is of the newest simulated
+    /// state, exactly as this engine has always drawn -- nothing is blended
+    /// between two of them.
     ///
     /// One property is worth stating plainly because it is a change, and an
     /// improvement: the game's speed no longer depends on whether the machine
@@ -76,41 +76,6 @@ namespace MphRead.Mods.Render
         /// decides what the game does and it is not moving.
         /// </summary>
         public const int MaxCap = 500;
-
-        /// <summary>
-        /// Draw entities between their last two simulated states instead of
-        /// at the newest one.
-        ///
-        /// Off, a 144 Hz picture of a 60 Hz simulation is not smoother than
-        /// the 60 Hz one -- it is the same 60 distinct positions a second,
-        /// some of them shown twice, which reads as judder rather than as
-        /// motion. Interpolation is what actually turns the extra frames into
-        /// something the eye gets anything from. It costs one frame of
-        /// latency on what is *drawn*; it costs none on what is simulated,
-        /// which is what the shot you fire is resolved against.
-        /// </summary>
-        public static bool Interpolate { get; set; } = true;
-
-        /// <summary>
-        /// How far between the previous simulated state and the current one
-        /// the frame being drawn falls, 0 to 1. Always 1 -- draw the newest
-        /// state, as the engine always did -- when interpolation is off.
-        /// </summary>
-        public static float Alpha => !Interpolate ? 1f : (ForcedAlpha ?? _alpha);
-
-        private static float _alpha = 1f;
-
-        /// <summary>
-        /// Drive <see cref="Alpha"/> directly instead of from the clock.
-        ///
-        /// For the harness only. A wall-clock accumulator on a build machine
-        /// produces whatever alphas that machine's load happens to produce,
-        /// which is neither reproducible nor a sweep of the range;
-        /// <c>-maptest -drawrate N</c> sets this to each of 1/N .. 1 in turn
-        /// so a run actually visits the whole of it and does so identically
-        /// every time.
-        /// </summary>
-        public static float? ForcedAlpha { get; set; }
 
         /// <summary>
         /// True while the loop is running the picture at a rate of its own.
@@ -170,8 +135,7 @@ namespace MphRead.Mods.Render
                 + $"{TotalSteps} steps over {TotalFrames} frames, "
                 + $"{DroppedSteps} dropped, {Stalls} stalls, "
                 + $"steps per frame [{string.Join(", ", StepHistogram)}], "
-                + $"cap {(FrameRateCap == DisplayRate ? "display" : FrameRateCap.ToString())}, "
-                + $"interpolation {(Interpolate ? "on" : "off")}";
+                + $"cap {(FrameRateCap == DisplayRate ? "display" : FrameRateCap.ToString())}";
         }
 
         #endregion
@@ -179,15 +143,13 @@ namespace MphRead.Mods.Render
         public static void Reset()
         {
             _accumulator = 0;
-            _alpha = 1f;
             StepsThisFrame = 0;
             Active = false;
         }
 
         /// <summary>
         /// Take the wall-clock time one drawn frame took and answer how many
-        /// simulation steps are owed before it is drawn, leaving
-        /// <see cref="Alpha"/> set for the drawing.
+        /// simulation steps are owed before it is drawn.
         /// </summary>
         public static int Advance(double elapsedSeconds)
         {
@@ -199,7 +161,6 @@ namespace MphRead.Mods.Render
                 // stop dead, and start the accumulator over.
                 Stalls++;
                 _accumulator = 0;
-                _alpha = 1f;
                 StepsThisFrame = 1;
                 TotalSteps++;
                 StepHistogram[1]++;
@@ -219,15 +180,6 @@ namespace MphRead.Mods.Render
                 int owed = (int)(_accumulator / StepSeconds);
                 DroppedSteps += owed;
                 _accumulator -= owed * StepSeconds;
-            }
-            _alpha = (float)(_accumulator / StepSeconds);
-            if (_alpha < 0)
-            {
-                _alpha = 0;
-            }
-            else if (_alpha > 1)
-            {
-                _alpha = 1;
             }
             StepsThisFrame = steps;
             TotalSteps += steps;

@@ -33,21 +33,18 @@ Map sweeps and probes
   `grep MAPCRASH` / `grep MAPFAIL` the log.
 - `-maptest "ROOM" -drawrate N` draws every simulation step N times, which is
   what a 144 Hz screen does to a 60 Hz game. It is how the decoupled frame loop
-  is checked from a box with no monitor, and it is deliberately *not* the
-  wall-clock accumulator the game uses: it steps alpha 1/N, 2/N .. 1 across the
-  draws, so a run is reproducible and visits the whole range instead of
-  whatever the machine's load produces. Two assertions, both `MAPFAIL` when
-  they trip: **`draws advancing the game`** must be 0 (a draw pass that writes
-  back to the world would make the game behave differently on a fast monitor),
-  and interpolation must have engaged at all -- "the setting is on" is not
-  checkable by reading the setting, since every blend can legitimately decline.
-  A third: **`worst gun drift in view`** must be 0, which is what catches
-  anything attached to the camera being drawn against the simulated camera
-  instead of the interpolated one -- the fault that threw the first-person gun
-  off the top of the screen on a jump pad. Without the fix it reads 0.13 units
-  and fails; with it, 0.0000. The MAPTEST line itself must come out
-  **identical** to the `-drawrate 1` run; the expected blend ratio is
-  `(N-1)/N`. `.claude/render/FRAME-PACING.md`.
+  is checked from a box with no monitor. One assertion, `MAPFAIL` when it
+  trips: **`draws advancing the game`** must be 0 -- a draw pass that writes
+  back to the world would make the game behave differently on a fast monitor.
+  The MAPTEST line itself must come out **identical** to the `-drawrate 1` run.
+  `.claude/render/FRAME-PACING.md`.
+- **The scoreboard is drawn on every `-maptest` run**, in two windows, and a run
+  that never drew it is a `MAPFAIL`. It needed a hook of its own
+  (`PlayerEntity.ModForceScoreboard`): the tour writes buttons into
+  `Controls`, and the main player's controls are refilled from the keyboard at
+  the top of every simulation step, so a held `Pause` never survived to be
+  read. That is why the one screen a player opens by holding a button had never
+  been drawn by a check at all.
 - `-frametimingcheck` checks the accumulator alone, with no room and no window:
   60.000 Hz of simulation under 60, 144, 165, 240 Hz displays, under jitter,
   and under a 40 Hz display where the old single-rate loop played in slow

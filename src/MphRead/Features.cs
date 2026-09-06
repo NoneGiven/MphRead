@@ -200,6 +200,19 @@ namespace MphRead
             {
                 ProHud = boolean;
             }
+            // Pro mode's crosshair: which shape, and how big. Both persist,
+            // because a crosshair is a thing a player picks once and then does
+            // not want to think about again.
+            if (values.TryGetValue("CrosshairStyle", out value))
+            {
+                Mods.Render.Crosshair.Style = Mods.Render.Crosshair.ParseStyle(value,
+                    Mods.Render.Crosshair.Style);
+            }
+            if (values.TryGetValue("CrosshairSize", out value))
+            {
+                Mods.Render.Crosshair.Size = Mods.Render.Crosshair.ParseSize(value,
+                    Mods.Render.Crosshair.Size);
+            }
         }
 
         /// <summary>
@@ -218,7 +231,9 @@ namespace MphRead
             return Frozen.Create<string, string>(
             [
                 new(nameof(ReticleOpacity), ReticleOpacity.ToString(CultureInfo.InvariantCulture)),
-                new(nameof(ProHud), ProHud.ToString().ToLower())
+                new(nameof(ProHud), ProHud.ToString().ToLower()),
+                new("CrosshairStyle", Mods.Render.Crosshair.Style.ToString()),
+                new("CrosshairSize", Mods.Render.Crosshair.Size.ToString())
             ]);
         }
     }
