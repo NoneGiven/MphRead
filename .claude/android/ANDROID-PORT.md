@@ -5,6 +5,7 @@ project with `ANDROID` defined, and it now builds a match, not just a screen.
 Two things had to be answered to get there: the engine draws through OpenTK's
 desktop GL, and it reads a keyboard and a mouse. Neither exists on a phone.
 
+
 ## The renderer: one alias
 
 The engine calls `GL.Something` from about 250 places in files that are
@@ -165,6 +166,36 @@ and cleared after the draw, so a render with no update in front of it draws
 nothing. Rendering more often than the game ticks is therefore not an option --
 the thread waits for the next 60 Hz tick instead.
 
+## Frame rate
+
+The match loop is decoupled the way the desktop's is: the simulation runs at
+exactly 60 Hz on `FrameTiming`'s accumulator and the picture runs at the FPS
+limit, up to 240. `GameView.RenderLoop` used to sleep to a hard `1.0 / 60.0`
+around one `OnUpdateFrame`, which is why a 120 Hz phone drew 60.
+
+Three things are specific to this head:
+
+- **Input goes inside the step loop**, not beside it. `ApplyInput` works out
+  this step's rising edges from the touch state, so running it once per
+  *picture* would turn one tap on FIRE into two presses at 120 Hz.
+- **In display mode the loop does not sleep.** `eglSwapBuffers` blocks until
+  the panel is ready; sleeping as well is double pacing and would halve the
+  rate. `MinFrameSeconds` is only a floor, so a driver that does not block (an
+  emulator, a surface with no vsync) spins at 500 Hz rather than flat out.
+- **`Surface.SetFrameRate`** (API 30+, guarded and caught) tells SurfaceFlinger
+  what the surface intends, because a 120 Hz phone often sits at 60 until
+  something asks. Below API 30 the FPS limit still caps the loop; it just
+  cannot raise the panel. Best-effort throughout -- a device that refuses is
+  not a reason to end a match.
+
+The setting is the launcher's own **FPS limit** row, shared with the desktop,
+so it needs nothing of its own here.
+
+**None of this has run on a device**, for the same reason nothing else in this
+head has: the emulator available here has no extracted game files and cannot
+load a match. It builds, and the code under it is the code the desktop
+measurements were taken on. Treat it as untested.
+
 ## The controls
 
 No hook in the engine's input path, and none needed. `ProcessAllInput` reads a
@@ -265,6 +296,50 @@ Pad events reach the state through `MainActivity.DispatchKeyEvent` and
 reach the settings screen too, where no `GameView` exists, so that a button
 can be rebound. `GameView`'s own handlers are kept as a fallback and never see
 a pad event in this app.
+
+### The player chooses which buttons exist
+
+Settings → Controls → **On-screen buttons**: a master switch and one toggle per
+button, applied in `ApplyLayoutLocked` as an `AND` over whatever the situation
+had already decided. The state lives in core, in
+`Mods/Input/TouchSettings.cs`, because the settings screen is shared code and
+`TouchAction` is this head's own type; `TouchControls.SettingOf` maps between
+them. It is saved in `controls.txt` with the rest of the controls.
+
+It exists because of a report, and the report is the design rationale: *"the
+on-screen touch commands interfere with the aiming and it's very easy to
+accidentally hit those."* They do, and no layout fixes it -- aiming is a drag
+anywhere on the right of the screen, the buttons have to be reachable, and a
+drag that starts inside a circle presses the circle. A button turned off is
+drawn nowhere **and takes no touch** (the hit test in `Down` already skipped
+invisible buttons), so the glass it occupied becomes aim.
+
+Turning every one of them off cannot strand a player: movement is the stick,
+which appears wherever a thumb lands on the left; aiming is a drag; jump is a
+double tap on the aiming side; boost in the ball is a flick. None of the four is
+a button.
+
+`MainActivity.ClosePauseMenu` calls `TouchControls.ReloadSettings`, since the
+settings are reachable from the pause menu mid-match.
+
+### Controls no longer reset when the app closes
+
+Two faults, both of them "the desktop does this somewhere this head never runs":
+
+- **Nothing called `InputSettings.Load`.** It is called from
+  `ModEntry.TryHandleHeadless`, which is the desktop's every-invocation entry
+  point and is not on this head's path at all. `AndroidApp.BuildHome` calls it
+  now, after `LauncherPrefs.Load` names the directory.
+- **`controls.txt` was written to `AppContext.BaseDirectory`**, which an Android
+  package does not own. Every write was refused, and `InputSettings.Save`
+  swallows the exception deliberately (it runs from the pause menu, on the
+  thread the menu is on). It follows `LauncherPrefs.Directory` now — the same
+  property the head already points at the app's data directory for
+  `launcher.txt` and `paths.txt`.
+
+The symptom was "control settings still reset to default when quitting the
+game", and the shape to remember is that **a swallowed write error and a load
+that never runs look identical from the outside**.
 
 ### Spectating
 

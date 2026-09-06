@@ -24,7 +24,7 @@ Sections
 
 | Section | What is on it |
 |---|---|
-| Display | window mode; performance (render scale, lighting, fog, filtering, FPS counter, **frame rate** and **motion interpolation**); cel shading; **Pro mode HUD**, which is the whole of the HUD question now |
+| Display | window mode; performance (render scale, lighting, fog, filtering, FPS counter, **frame rate**); cel shading; **Pro mode HUD**, which is the whole of the HUD question now, plus the two crosshair rows that appear under it |
 | Audio | sound-effect and music volume; the game's text language |
 | Controls | mouse sensitivity, invert either axis, and every key binding, plus reset to defaults; and a **Gamepad** section -- on/off, look sensitivity, stick dead zone, invert the stick's vertical aim. Its own section rather than more rows under Mouse, because a pad has its own sensitivity and a great many people invert one of the two and not the other. `.claude/GAMEPAD.md` |
 | Match rules | point goal, time limit, damage level, team play, friendly fire, hunter radar, affinity weapons |
@@ -58,10 +58,27 @@ Notable toggles
   rate is the one number nobody wants. None of the stops move the simulation,
   which is pinned at 60 Hz whatever is chosen. Display is the default and the
   only tear-free entry: a number turns VSync off, because 120 on a 144 Hz
-  screen with VSync on gets 72. **Motion interpolation** beneath it is what
-  makes the extra frames worth drawing; off, they are duplicates. Both save to
-  `settings.json` as `FrameRateCap` and `Interpolation`.
-  `.claude/render/FRAME-PACING.md`.
+  screen with VSync on gets 72. Saves to `settings.json` as `FrameRateCap`.
+  There is no motion-interpolation row any more, and no interpolation behind
+  it -- see `.claude/render/FRAME-PACING.md` for why it was taken out.
+- **The two crosshair rows are children of Pro mode HUD** and are shown only
+  while it is on: nothing else in the game draws that crosshair, and the DS HUD
+  has its own reticle sprite. **Crosshair size** (Small / Medium / Big) and
+  **Crosshair type** (Cross, Dot, Cross + dot, Circle, Brackets). The type row
+  carries a **preview**: `ChoiceRow.Preview` is an optional
+  `Action<DrawingContext, Rect>` drawn in a square past the forward arrow, and
+  setting it also raises the row's height from 34 to 48 -- a crosshair at Big is
+  36 points across and a preview that had to shrink it could not answer "how big
+  is Big". One point in the preview is one pixel in the game, and both it and
+  the renderer read their shapes from `Mods/Render/Crosshair.cs`, so the picture
+  cannot drift away from what a match draws. The size row invalidates the type
+  row, since the preview answers for both. Saved through `Features.Commit` as
+  `CrosshairStyle` and `CrosshairSize`, by name -- so the enum can gain or lose
+  a member without invalidating anyone's file, which it already has.
+- **On-screen buttons** (Controls page, Android only) is a master switch plus one
+  toggle per button, in `controls.txt` via `Mods/Input/TouchSettings.cs`. The
+  desktop does not show the group at all: eleven switches that decide nothing
+  are worse than no group.
 - **`SliderRow` is no longer 0-100.** It takes `min`, `max` and `keyStep`,
   defaulting to 0/100/5 so the five percentage rows are untouched; the FPS
   limit slides over an index into its stop table. Its value gutter also went

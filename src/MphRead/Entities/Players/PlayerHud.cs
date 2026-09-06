@@ -82,7 +82,21 @@ namespace MphRead.Entities
         /// is the one spectating skips.
         /// </summary>
         private bool ShowScoreboard => _showScoreboard
-            || Mods.SpectatorMode.ShowScoreboard && IsMainPlayer;
+            || Mods.SpectatorMode.ShowScoreboard && IsMainPlayer
+            || ModForceScoreboard && IsMainPlayer;
+
+        /// <summary>
+        /// Hold the scoreboard open, for the harness.
+        ///
+        /// It cannot be done by writing <c>Controls.Pause</c> the way the tour
+        /// writes every other button: the main player's controls are refilled
+        /// from the keyboard at the top of each simulation step, so anything
+        /// the harness puts there is gone before the input pass reads it.
+        /// Which is exactly why the scoreboard had never been drawn by a
+        /// check -- the one screen in the game that a player opens by holding
+        /// a button was the one screen nothing here could open.
+        /// </summary>
+        public static bool ModForceScoreboard { get; set; }
         private int _iceLayerBindingId = -1;
         private int _helmetBindingId = -1;
         private int _helmetDropBindingId = -1;
@@ -3104,6 +3118,32 @@ namespace MphRead.Entities
 
         private bool _usingKanjiFont = false;
 
+        /// <summary>
+        /// The glyph to draw for a character, which is never an index off the
+        /// end of the font.
+        ///
+        /// The four alignment branches below all took <c>ch - MinCharacter</c>
+        /// and indexed the width and offset tables with it unchecked, so any
+        /// character the loaded font does not cover took the game down from
+        /// inside a draw call -- and the strings the HUD is handed are not all
+        /// ours: a nickname comes off the wire, and a scoreboard is where
+        /// eight of them are drawn at once. '?' is what
+        /// <c>NetProtocol.WriteName</c> already substitutes for a byte the HUD
+        /// cannot draw, so a string that reached here by some other road reads
+        /// the same way instead.
+        /// </summary>
+        private static int GlyphIndex(Font font, int ch)
+        {
+            int index = ch - font.MinCharacter;
+            if (index >= 0 && index < font.Widths.Count && index < font.Offsets.Count)
+            {
+                return index;
+            }
+            int fallback = '?' - font.MinCharacter;
+            return fallback >= 0 && fallback < font.Widths.Count
+                && fallback < font.Offsets.Count ? fallback : 0;
+        }
+
         private Font SetUpFont(char firstChar, bool set)
         {
             Font font = Font.Normal;
@@ -3260,7 +3300,10 @@ namespace MphRead.Entities
                 {
                     int ch = text[i];
                     int orig = ch;
-                    if ((ch & 0x80) != 0)
+                    // The continuation byte, only if there is one: a string
+                    // whose last character has the high bit set ran off the
+                    // end of the span here.
+                    if ((ch & 0x80) != 0 && i + 1 < text.Length)
                     {
                         ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
                     }
@@ -3271,7 +3314,7 @@ namespace MphRead.Entities
                     }
                     else
                     {
-                        int index = ch - font.MinCharacter;
+                        int index = GlyphIndex(font, ch);
                         float offset = font.Offsets[index] * scale + y;
                         if (orig != ' ')
                         {
@@ -3312,11 +3355,11 @@ namespace MphRead.Entities
                     {
                         int ch = text[i];
                         int orig = ch;
-                        if ((ch & 0x80) != 0)
+                        if ((ch & 0x80) != 0 && i + 1 < text.Length)
                         {
                             ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
                         }
-                        int index = ch - font.MinCharacter;
+                        int index = GlyphIndex(font, ch);
                         x -= font.Widths[index] * scale * aspectFix;
                         float offset = font.Offsets[index] * scale + y;
                         if (orig != ' ')
@@ -3368,11 +3411,11 @@ namespace MphRead.Entities
                     for (int i = start; i < end; i++)
                     {
                         int ch = text[i];
-                        if ((ch & 0x80) != 0)
+                        if ((ch & 0x80) != 0 && i + 1 < text.Length)
                         {
                             ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
                         }
-                        int index = ch - font.MinCharacter;
+                        int index = GlyphIndex(font, ch);
                         width += font.Widths[index] * scale;
                     }
                     // character widths include their rightmost empty pixel, leading to a slight overestimation of the total width before the line break,
@@ -3382,11 +3425,11 @@ namespace MphRead.Entities
                     {
                         int ch = text[i];
                         int orig = ch;
-                        if ((ch & 0x80) != 0)
+                        if ((ch & 0x80) != 0 && i + 1 < text.Length)
                         {
                             ch = text[++i] & 0x3F | ((ch & 0x1F) << 6);
                         }
-                        int index = ch - font.MinCharacter;
+                        int index = GlyphIndex(font, ch);
                         float offset = font.Offsets[index] * scale + y;
                         if (orig != ' ')
                         {

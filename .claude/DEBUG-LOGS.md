@@ -17,7 +17,9 @@ a map is loading. The log is the only thing that can be read afterwards.
 | Path | What |
 |---|---|
 | `Mods/DebugLog.cs` | the whole of it: the file, the console tee, the hooks |
-| `Mods/Launcher/Gui/HomeView.cs` | `BuildDebugSwitch`, the corner control |
+| `Mods/LogShare.cs` | `LogArchive`, which zips them, and the `ILogShare` seam |
+| `MphRead.Android/AndroidLogShare.cs` | the only implementation of that seam |
+| `Mods/Launcher/Gui/HomeView.cs` | `BuildDebugSwitch`, the corner row |
 | `Mods/Launcher/Portable/LauncherPrefs.cs` | `debug_logs` in `launcher.txt` |
 | `Mods/ModEntry.cs` | `DebugLog.Attach()`, before anything else runs |
 | `logs/FruityPrime-<yyyyMMdd-HHmmss>.log` | the file, beside the executable |
@@ -26,6 +28,42 @@ On Android the file goes to the app's data directory, because
 `LauncherPrefs.Directory` is pointed there by the head before anything reads --
 a package's own directory is read-only. The switch is the same control on the
 same screen: the launcher is one Avalonia view on every platform.
+
+## Getting the file off the machine
+
+**Share logs**, immediately left of the switch, same size and same grey, and
+**only there when logs exist**. It zips every log `DebugLog` is keeping and
+hands the zip to whatever the player picks.
+
+It is on the phone that this is not a convenience. The logs sit in the app's
+own external files directory, which since Android 11 no file manager will
+browse: without this there is a file somebody has been asked for and no way
+for them to reach it. On a desktop the tooltip already names the path and a
+file manager can open it, so `LogShare.Current` is left null there and the
+button simply does not appear.
+
+Three things worth knowing before touching it:
+
+- **The live log is in the zip, and that is the point** -- the interesting run
+  is usually the one still going. `DebugLog` opens it `FileShare.ReadWrite`
+  and flushes every line, so it can be read while it is still being written,
+  but only by a reader that *also* says ReadWrite. That is why `LogArchive`
+  copies the bytes by hand instead of using `CreateEntryFromFile`, which asks
+  for `FileShare.Read` and would be refused the open.
+- **A `FileProvider` is not optional.** Handing another app a `file://` URI
+  has thrown `FileUriExposedException` since Android 7. The provider is
+  declared in `Properties/AndroidManifest.xml` with authority
+  `${applicationId}.logs` -- the placeholder *is* substituted, verified in the
+  built APK as `fr.livetek.fruityprime.logs`, which is what
+  `PackageName + ".logs"` produces at runtime. `@xml/file_paths` exposes one
+  directory, the cache folder the zip is built in, and not the logs directory
+  itself.
+- **A bad provider config crashes the app at launch**, not at the share:
+  Android instantiates providers when the process starts. So a change here is
+  checked by starting the app, not by pressing the button.
+- **`--` inside an XML comment is not valid XML** and aapt2 rejects the
+  resource with `APT2258: not well-formed`. The house comment style uses it
+  freely in C#; `Resources/xml/*.xml` cannot.
 
 ## What is in it
 

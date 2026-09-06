@@ -103,6 +103,34 @@ namespace MphRead.Mods.Network
         /// <summary>Five seconds of walking, which is what the report asks for.</summary>
         private const int _spawnWalkFrames = 300;
 
+        // Whether a position can be turned back into the room part it is
+        // standing in. A remote player's node ref is looked up from its
+        // position rather than walked across portals, and the room's part
+        // culling then decides whether that player is drawn at all -- so a
+        // wrong answer here is a hunter who is in the room, can be shot, and
+        // cannot be seen. The walked ref is the control: it is what the
+        // engine maintains for a player it is simulating itself.
+        private int _nodeLookupSamples;
+        private int _nodeLookupNone;
+        private int _nodeLookupWrong;
+        private int _nodeLookupHidden;
+        private int _nodeLookupShown;
+        private int _nodeLookupWalkedVisible;
+
+        // And the same question asked of the whole rule a remote player's
+        // node ref is actually maintained by (PlayerEntityNetAim), rather
+        // than of the lookup alone: a node ref per slot carried along beside
+        // the engine's own, seeded and advanced exactly as it would be on a
+        // machine that is only receiving this player's positions.
+        private readonly Formats.Culling.NodeRef[] _puppetNode =
+            new Formats.Culling.NodeRef[PlayerEntity.SlotCapacity];
+        private readonly Vector3[] _puppetPrev = new Vector3[PlayerEntity.SlotCapacity];
+        private readonly bool[] _puppetSeeded = new bool[PlayerEntity.SlotCapacity];
+        private int _puppetSamples;
+        private int _puppetNone;
+        private int _puppetWrong;
+        private int _puppetHidden;
+
         // The world probe: after the tour, stand a player on every jump pad
         // and teleporter in turn and see whether it does anything.
         private readonly List<EntityBase> _probeTargets = new();
@@ -199,14 +227,10 @@ namespace MphRead.Mods.Network
         /// N</c>. 1 is the way this has always run.
         ///
         /// This is how the decoupled loop is checked without a display and
-        /// without a 144 Hz monitor. It is deliberately not the wall-clock
-        /// accumulator the game uses: the harness wants the same run every
-        /// time and wants alpha to visit its whole range, so it steps alpha
-        /// 1/N, 2/N .. 1 across the N draws instead of taking whatever the
-        /// machine's load produces. What is being checked is the half that can
-        /// actually be wrong -- that drawing more often does not change what
-        /// the simulation does -- and the accumulator arithmetic that feeds it
-        /// is checked separately by -frametimingcheck.
+        /// without a 144 Hz monitor. What is being checked is the half that
+        /// can actually be wrong -- that drawing more often does not change
+        /// what the simulation does -- and the accumulator arithmetic that
+        /// feeds it is checked separately by -frametimingcheck.
         /// </summary>
         public static int DrawRate { get; set; } = 1;
 
@@ -299,10 +323,6 @@ namespace MphRead.Mods.Network
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             GameState.ApplyPause();
-            if (DrawRate > 1 && Mods.Render.FrameTiming.ForcedAlpha == null)
-            {
-                Mods.Render.FrameTiming.ForcedAlpha = 1f;
-            }
             // One simulation step, then however many pictures of it were
             // asked for. _frame counts steps, not pictures, so -seconds still
             // means seconds of game and every existing probe keeps its timing.
@@ -311,16 +331,6 @@ namespace MphRead.Mods.Network
             int draws = Math.Max(1, DrawRate);
             for (int i = 0; i < draws; i++)
             {
-                if (draws > 1)
-                {
-                    // Set, and left set for the whole run rather than cleared
-                    // between frames: CaptureDrawState reads it at the *end of
-                    // the simulation step*, before this loop runs, to know
-                    // whether anything is going to blend against what it would
-                    // remember. Cleared each time, the capture would always be
-                    // skipped and nothing would ever interpolate.
-                    Mods.Render.FrameTiming.ForcedAlpha = (i + 1) / (float)draws;
-                }
                 Scene.OnDrawFrame();
                 if (!Scene.OnRenderFrame())
                 {
@@ -359,6 +369,7 @@ namespace MphRead.Mods.Network
                 return;
             }
             Drive();
+            StepScoreboard();
             Observe();
             SampleRender();
             SwapBuffers();
@@ -758,6 +769,34 @@ namespace MphRead.Mods.Network
             }
         }
 
+        /// <summary>
+        /// Hold the scoreboard open for a stretch of every run.
+        ///
+        /// It is the one screen the tour could never reach -- it is opened by
+        /// holding a button, and the main player's buttons are rewritten from
+        /// the keyboard every step -- so nothing in this harness had ever
+        /// drawn it. A crash in it therefore had to be found by a person
+        /// playing, which is how the one in bot matches was found.
+        ///
+        /// Two windows rather than one, so both halves of the layout are
+        /// visited: it is drawn differently while somebody is still spawning
+        /// in than once the whole room is playing.
+        /// </summary>
+        private void StepScoreboard()
+        {
+            int total = Math.Max(60, (int)(_seconds * 60));
+            bool show = _frame > total / 6 && _frame < total / 6 + 90
+                || _frame > total * 2 / 3 && _frame < total * 2 / 3 + 90;
+            PlayerEntity.ModForceScoreboard = show;
+            if (show)
+            {
+                _scoreboardFrames++;
+            }
+        }
+
+        /// <summary>Frames the scoreboard was drawn on. 0 means it was never checked.</summary>
+        private int _scoreboardFrames;
+
         private void Observe()
         {
             _spawned = 0;
@@ -771,6 +810,8 @@ namespace MphRead.Mods.Network
                 }
                 _spawned++;
                 _everSpawned[slot] = true;
+                SampleNodeLookup(player);
+                SamplePuppetNode(player);
                 if (player.IsAltForm)
                 {
                     _everAltForm[slot] = true;
@@ -813,6 +854,119 @@ namespace MphRead.Mods.Network
                 {
                     _everFired[owner.SlotIndex] = true;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Ask the room which part this player is standing in, and compare it
+        /// with the part the engine walked them into.
+        ///
+        /// Only the second is trustworthy -- it is maintained by testing the
+        /// segment between two positions against the portals it crosses --
+        /// and it is unavailable for a player whose position is written in
+        /// from the network, which is why the lookup exists at all. What this
+        /// counts is how often the lookup is wrong, and how often being wrong
+        /// would have culled the player out of the picture.
+        /// </summary>
+        private void SampleNodeLookup(PlayerEntity player)
+        {
+            Formats.Culling.NodeRef walked = player.NodeRef;
+            if (walked.PartIndex == -1)
+            {
+                return;
+            }
+            Formats.Culling.NodeRef found = Scene.GetNodeRefByPosition(player.Position);
+            _nodeLookupSamples++;
+            bool walkedVisible = Scene.IsNodeRefVisible(walked);
+            if (walkedVisible)
+            {
+                _nodeLookupWalkedVisible++;
+            }
+            if (found.PartIndex == -1)
+            {
+                _nodeLookupNone++;
+                return;
+            }
+            if (found.PartIndex == walked.PartIndex)
+            {
+                return;
+            }
+            _nodeLookupWrong++;
+            bool foundVisible = Scene.IsNodeRefVisible(found);
+            if (walkedVisible && !foundVisible)
+            {
+                _nodeLookupHidden++;
+            }
+            else if (!walkedVisible && foundVisible)
+            {
+                _nodeLookupShown++;
+            }
+        }
+
+        /// <summary>
+        /// Carry a remote player's node ref alongside the real one and
+        /// compare them.
+        ///
+        /// Every player here is simulated locally, so PlayerEntity.NodeRef is
+        /// the engine's own walked answer -- the control. Beside it this runs
+        /// the rule a machine watching this player over the wire would run:
+        /// walk when the step is one a walk can describe, look the position up
+        /// when it is not. The gap between the two is the number that decides
+        /// whether a hunter standing in front of you is drawn.
+        /// </summary>
+        private void SamplePuppetNode(PlayerEntity player)
+        {
+            int slot = player.SlotIndex;
+            if (slot < 0 || slot >= _puppetNode.Length)
+            {
+                return;
+            }
+            Vector3 position = player.Position;
+            Vector3 previous = _puppetPrev[slot];
+            _puppetPrev[slot] = position;
+            if (!_puppetSeeded[slot])
+            {
+                // How a puppet is first placed: ModNetSpawn, from the
+                // position the authority put it at -- which reads the spawn
+                // point's own node ref and only falls back to the lookup.
+                // Seeding this from the lookup instead measured a rule the
+                // game stopped using, and measured it as far worse than it
+                // is: one bad seed is walked forward for the whole run, so
+                // MP4 HIGHGROUND read 36% of its samples hidden where the
+                // rule the game actually runs hides 4.5%.
+                _puppetSeeded[slot] = true;
+                _puppetNode[slot] = PlayerEntity.ModSpawnNodeRef(Scene, position);
+                return;
+            }
+            Formats.Culling.NodeRef next = PlayerEntity.ModWalkNodeRef(
+                Scene, _puppetNode[slot], previous, position);
+            if (next == Formats.Culling.NodeRef.None)
+            {
+                next = Scene.GetNodeRefByPosition(position);
+            }
+            if (next != Formats.Culling.NodeRef.None)
+            {
+                _puppetNode[slot] = next;
+            }
+            Formats.Culling.NodeRef walked = player.NodeRef;
+            if (walked.PartIndex == -1)
+            {
+                return;
+            }
+            _puppetSamples++;
+            if (next.PartIndex == -1)
+            {
+                _puppetNone++;
+                return;
+            }
+            if (next.PartIndex == walked.PartIndex)
+            {
+                return;
+            }
+            _puppetWrong++;
+            if (Scene.IsNodeRefVisible(walked) && !Scene.IsNodeRefVisible(next))
+            {
+                _puppetHidden++;
             }
         }
 
@@ -1072,6 +1226,23 @@ namespace MphRead.Mods.Network
             line.Append($" morphcams {morphCameras} flagbases {flagBases} nodes {nodeDefenses}");
             line.Append($" artifacts {artifacts} triggers {triggers} areas {areaVolumes}");
             line.Append($" | lowest Y {_lowestY:0.0}");
+            if (_nodeLookupSamples > 0)
+            {
+                int agreed = _nodeLookupSamples - _nodeLookupWrong - _nodeLookupNone;
+                line.Append($" | node lookup {agreed}/{_nodeLookupSamples} agreed"
+                    + $" ({_nodeLookupNone} none, {_nodeLookupWrong} wrong part,"
+                    + $" {_nodeLookupHidden} would hide the player,"
+                    + $" {_nodeLookupShown} would reveal one;"
+                    + $" {_nodeLookupWalkedVisible} samples drawable)");
+            }
+            if (_puppetSamples > 0)
+            {
+                int agreed = _puppetSamples - _puppetWrong - _puppetNone;
+                line.Append($" | remote node {agreed}/{_puppetSamples} agreed"
+                    + $" ({_puppetNone} none, {_puppetWrong} wrong part,"
+                    + $" {_puppetHidden} would hide the player)");
+            }
+            line.Append($" | effect particles {Scene.ModEffectParticles}");
             if (_litSamples > 0)
             {
                 line.Append($" | lit first {_litFirst * 100:0.0}%"
@@ -1085,8 +1256,6 @@ namespace MphRead.Mods.Network
             {
                 Console.WriteLine($"FRAMETIMING {_room} | {DrawRate} draws per step"
                     + $" | {_frame} steps, {Scene.FrameCount} counted"
-                    + $" | entity draws {Scene.ModTotalEntityDraws}"
-                    + $" ({Scene.ModBlendedDraws} blended)"
                     + $" | draws advancing the game: {_drawAdvancedTheGame}");
             }
 
@@ -1161,16 +1330,24 @@ namespace MphRead.Mods.Network
                     problems.Add($"slot {i} ({player.Hunter}) cannot be hurt by any beam");
                 }
             }
+            // Effects are the half of a shot that is only ever seen. Beams
+            // that fly and hit and do damage while every muzzle flash and wall
+            // impact silently emits nothing is exactly the shape of the bug
+            // this exists for, and every other number in the run is unmoved by
+            // it.
+            if (Scene.ModEffectParticles == 0)
+            {
+                problems.Add("no effect particle was spawned all run: "
+                    + "muzzle flashes, impacts and explosions are emitting nothing");
+            }
+            if (_scoreboardFrames == 0)
+            {
+                problems.Add("the scoreboard was never drawn: the check above it did not run");
+            }
             if (_drawAdvancedTheGame > 0)
             {
                 problems.Add($"drawing advanced the simulation on {_drawAdvancedTheGame} "
                     + "frame(s): a draw pass is writing back to the world");
-            }
-            if (DrawRate > 1 && Mods.Render.FrameTiming.Interpolate && Scene.ModBlendedDraws == 0
-                && Scene.ModTotalEntityDraws > 0)
-            {
-                problems.Add($"interpolation never engaged across {Scene.ModTotalEntityDraws} "
-                    + "entity draws, so the extra frames are duplicates");
             }
             foreach (string problem in problems)
             {

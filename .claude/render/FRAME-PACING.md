@@ -60,45 +60,61 @@ and render used to be one call, so a box managing 40 fps played the game in
 slow motion. The accumulator pays what it owes: `-frametimingcheck` measures
 60.000 Hz of simulation at a 40 Hz draw rate.
 
-## Interpolation
+## Android
 
-A 144 Hz picture of a 60 Hz simulation is not smoother than the 60 Hz one --
-it is the same 60 distinct positions a second, some shown twice. That reads as
-judder. `FrameTiming.Alpha` says how far past the last simulated step the frame
-falls, and two things blend across it.
+The same split, in `GameView.RenderLoop`. That head owns its own thread and its
+own EGL context rather than using `GLSurfaceView`, so it had its own pacing
+loop -- a `Thread.Sleep` to a hard `1.0 / 60.0` around one `OnUpdateFrame`,
+which is why a 120 Hz phone drew 60.
 
-**Entities.** `EntityBase` keeps the last two transforms. During the draw pass
-the interpolated one is *swapped into `_transform` and `_position` for the
-length of the `GetDrawInfo` call* and put back afterwards. That swap is why not
-one of the ten `GetModelTransform` overrides had to change, and why attached
-effects and shadows move with the model.
+It now runs the same accumulator: `FrameTiming.Advance` on the measured frame
+time, N `OnSimulationFrame`, one `OnDrawFrame`. Two things differ from the
+desktop:
 
-**The camera**, which is the half that is actually felt, since it is the whole
-screen. `CameraInfo` keeps position, target, up and fov, and `ModGetDrawView`
-rebuilds the matrix with `Matrix4.LookAt` from the blended pair. Blending two
-LookAt matrices instead would blend the basis vectors, which is not a rotation
-and drifts on fast turns -- and a fast turn is what a mouse does.
+- **Input is inside the step loop**, not beside it. `ApplyInput` works out this
+  step's rising edges from the touch state, so running it per *picture* would
+  turn one tap on FIRE into two presses on a 120 Hz screen.
+- **In display mode the loop does not sleep at all.** `eglSwapBuffers` blocks
+  until the panel is ready, and sleeping as well is double pacing -- it would
+  halve the rate. `MinFrameSeconds` is only a floor so that a driver which does
+  *not* block (an emulator, a surface with no vsync) spins at 500 Hz rather
+  than as fast as the CPU will go.
 
-### When a blend is declined
+`Surface.SetFrameRate` (API 30+, best-effort, guarded and caught) tells
+SurfaceFlinger what the surface intends, because a phone that can do 120 often
+sits at 60 until something asks. Below API 30 the FPS limit still caps the
+loop; it just cannot raise the panel.
 
-Interpolation is wrong whenever the two states are not two points on one path.
-`ModBeginInterpolatedDraw` returns false, and the entity is drawn where it
-actually is, for:
+**None of the Android side has run on a device.** It builds, and the shared
+code under it is the same code the desktop measurements were taken on, but the
+emulator available here has no extracted game files and so cannot load a match
+-- the gap `.claude/android/ANDROID-PORT.md` already describes. Treat the
+Android frame rate as untested rather than working.
 
-- fewer than two captured steps (it just spawned)
-- `alpha >= 1` -- which is every frame when the picture runs at 60
-- the transform moved after the step was captured
-- **a jump over 24 units in one step** (1440 units a second): a teleport, a
-  respawn, or a puppet being put where its owner says it is
-- **a step whose distance is more than four times the last one, plus a unit**:
-  a teleport too short to trip the ceiling. The constant keeps anything
-  starting from a standstill -- a jump, a jump pad, a shot leaving the barrel
-  -- out of it
+## There is no interpolation, and that is deliberate
 
-The matrix blend is component-wise rather than a decomposition and a slerp. The
-blend of two rotation matrices is not itself one; it is a rotation scaled by
-cos(half the angle between them), and half of one 60 Hz step is a fraction of a
-degree here. A pickup spinning a brisk six degrees a step comes out 0.14% small.
+There was. Entity transforms and the camera were blended between their last two
+simulated states across `FrameTiming.Alpha`, so that a 144 Hz picture of a
+60 Hz world showed 144 distinct positions a second rather than 60 shown twice.
+It was removed **completely** -- `EntityBase`'s capture and blend, `CameraInfo`'s
+`ModGetDrawView`, `Scene.CaptureDrawState`, `ModAttachToDrawnView`, the setting,
+the `-interpolation` switch and the harness assertions that went with it.
+
+It was removed because of what it did to **pooled entities**, which is most of
+the things a shot is made of. `BeamProjectileEntity`, `BeamEffectEntity` and the
+effect entries are taken off a free list and reused: an entity coming back into
+the world still holds the transform history of its last life, at wherever that
+one died. The blend guards catch a jump of more than 24 units, so a reuse
+*further* away than that was drawn correctly -- and a reuse nearer than that,
+which is the common case in a firefight, was drawn somewhere between the two.
+That is exactly what was reported: impact effects that did not land on the wall,
+and shot artifacts drifting about in all directions while moving and firing.
+
+Putting it back needs an answer for entity reuse first -- `ModResetDrawState`
+existed and nothing called it from the pooling paths -- and is not worth it for
+what it buys. The extra frames are still worth having without it: the camera and
+the world are sampled at 60 but the *input-to-photon* path is not, and the
+picture is still drawn at the display's rate.
 
 ## Timers that live in the draw pass
 
@@ -128,10 +144,9 @@ before the simulation ever saw it.
 
 | Where | What |
 |---|---|
-| Launcher → Settings → Performance | **FPS limit**, a slider directly under Render scale over the stops Display (VSync) / 30 / 60 / 75 / 90 / 100 / 120 / 144 / 165 / 180 / 200 / 240 / Unlimited, and **Motion interpolation** under it |
-| `settings.json` | `FrameRateCap` (`display` or a number), `Interpolation` |
+| Launcher → Settings → Performance | **FPS limit**, a slider directly under Render scale over the stops Display (VSync) / 30 / 60 / 75 / 90 / 100 / 120 / 144 / 165 / 180 / 200 / 240 / Unlimited |
+| `settings.json` | `FrameRateCap` (`display` or a number) |
 | `-fpscap N` / `-fpscap display` | for the paths that never open a launcher |
-| `-interpolation on\|off`, `-nointerpolation` | same |
 
 **Display (VSync) is the default**, and is the only tear-free setting: an
 explicit number turns VSync off, because asking for 120 on a 144 Hz screen with
@@ -154,50 +169,99 @@ arithmetic: a game running at 60.4 Hz loses a second every two and a half
 minutes, is invisible in a screenshot, and is fatal to a match clock.
 
 **`FruityPrime -maptest "ROOM" -players 8 -drawrate N`** draws each simulation
-step N times, which is what a 144 Hz screen does to a 60 Hz game. It steps
-alpha 1/N, 2/N .. 1 across the draws rather than taking a wall clock, so a run
-is reproducible and visits the whole range. It asserts:
+step N times, which is what a 144 Hz screen does to a 60 Hz game. It asserts the
+one thing that can silently be wrong: that the simulation's frame counter did
+not move during a draw (`draws advancing the game: 0` -- any other number is a
+`MAPFAIL`). Everything the MAPTEST line reports must be **identical** to the
+`-drawrate 1` run, and that is meant literally: same frame count, same
+`spawned 8/8`, same `moved`, same `deaths`, same affliction results, same lit
+percentages to a decimal. Drawing the world three or four times as often must
+change nothing about what the world did.
 
-- the simulation's frame counter did not move during a draw (`draws advancing
-  the game: 0` -- any other number is a `MAPFAIL`)
-- interpolation actually engaged, because "the setting is on" is not something
-  a run can check by looking at it: every blend can decline, and a bug that
-  made them all decline would leave the old picture with nothing saying so
+**The scoreboard is drawn on every `-maptest` run.** It is opened by *holding* a
+button, and the main player's buttons are refilled from the keyboard at the top
+of every simulation step, so nothing the tour writes to `Controls.Pause`
+survives to be read -- which is why the one screen a player opens by holding a
+button was the one screen no check had ever drawn.
+`PlayerEntity.ModForceScoreboard` is the way in, and `MapAudit.StepScoreboard`
+holds it open over two windows of each run. A run that never drew it is a
+`MAPFAIL`, so the coverage cannot quietly go away.
 
-The expected blend ratio is `(N-1)/N`, since alpha reaches exactly 1 on the
-last draw of each step and 1 declines. Measured on TEST ARENA, 8 players,
-12 seconds:
+**`FruityPrime -room "ROOM" -fpscap N -debuglog`** is how the *output* rate is
+confirmed to be what it claims. The log's `frametiming` lines carry both rates
+and the steps-per-frame histogram, and the histogram is the proof: a frame that
+ran **zero** simulation steps is a picture that a 60 Hz loop would never have
+produced. Measured here (WSL, Mesa llvmpipe, software rasteriser, `-fpscap 240`):
 
-| Draw rate | MAPTEST line | Entity draws | Blended | Ratio |
-|---|---|---|---|---|
-| 1 | reference | 43119 | 0 | — |
-| 3 | **identical** | 129357 | 86138 | 0.6659 (2/3) |
-| 4 | **identical** | 172476 | 129207 | 0.7491 (3/4) |
+```
+sim 60.14 Hz / draw 81.0 Hz, 1321 steps over 1848 frames, 2 dropped, 0 stalls,
+steps per frame [534, 1310, 3, 0, 0, 1], cap 240
+```
 
-"Identical" is the whole point and is meant literally: same 1688 frames, same
-`spawned 8/8`, same `moved 7/8 (furthest 51 units)`, same `deaths 5`, same
-`freeze ok burn ok disrupt ok`, same lit percentages to a decimal. Drawing the
-world three or four times as often changed nothing about what the world did.
+534 of 1848 frames drew without a step behind them. The simulation held 60.14 Hz
+while the picture ran at 81 -- and 81 is this box's software rasteriser, not the
+loop: the cap was 240 and dropping the render scale to a quarter only moved it
+to 88.
 
-### The forced-alpha lifetime trap
+## The rule the split actually rests on
 
-`ForcedAlpha` is set before the first simulation step and **left set** for the
-whole run. `CaptureDrawState` runs at the *end* of a simulation step and skips
-its work when nothing is going to blend against what it would remember -- so
-clearing the override between frames makes every capture skip, and nothing ever
-interpolates, while the setting still reads "on". That is exactly the failure
-the `interpolation never engaged` assertion exists to catch, and it caught it.
+**Nothing in the draw pass may change the game, and nothing the draw pass owns
+may be cleared outside it.** The first half is asserted by `-drawrate`. The
+second half is the one that bit, and it bit hard enough to be worth stating on
+its own.
 
-## What is not interpolated
+The single-particle table -- `Scene.AddSingleParticle`, filled by
+`BeamProjectileEntity.Draw*`, `PlayerScan.DrawScanModels` and `PlayerDraw`'s
+death sparks -- is written during the entity draws and read at the end of the
+same pass. Its counter was reset in `OnSimulationFrame`, where it had always
+lived when a step and a picture were the same call. Once they were not, a
+picture with no step behind it -- most of them, at any rate above 60 -- drew the
+previous frame's particles again at the positions they had *then*, and went on
+adding to a table nothing had emptied until all 200 entries were used and every
+new particle was silently dropped. On screen: shot trails doubling and drifting,
+and the first Shock Coil of a fight not appearing at all. The reset now sits at
+the top of `OnDrawFrame`, next to the render-item clear it belongs with.
 
-- **`PlatformEntity`**, which overrides `GetModelTransform` to build its matrix
-  from its own `_curRotation` quaternion rather than from `_transform`. Moving
-  platforms therefore still step at 60 Hz. They move slowly and it is not
-  obvious; fixing it means giving that class its own capture.
-- **Animations** (model, texture, material) and **particles**, which are frame
-  indexed and advance once per simulation step.
-- **The HUD**, whose state is updated once per step and drawn every frame.
-- **The fade**, whose percentage derives from `_globalElapsedTime`.
+When adding anything with per-frame draw state, ask where it is cleared. If the
+answer is "in the step", it is wrong.
 
-None of these are wrong, they are simply at 60. The camera and the entity
-transforms are where the eye actually looks.
+### The counter both halves have to agree on
+
+The same split broke effects in a way nothing about it looks like a frame-rate
+bug, and it is the more instructive of the two.
+
+Effect elements spawn particles on every *other* step -- the DS ran effects at
+30 Hz, and upstream's doubling to 60 is a parity check. An element records the
+parity it was created with (`entry.Parity`), so that **its first advance is a
+spawning one**; a great many elements put their whole burst out on that first
+advance, through a function that returns its value once and zero thereafter.
+Miss it and the element emits nothing at all, for its whole life.
+
+Both halves used to read `_frameCount`, and upstream incremented it *after*
+`GetDrawItems()`. So a spawn during step N and the `ProcessEffects` that
+followed it later in the same frame both saw N, and the parity matched. Moving
+the increment into `OnSimulationFrame` put it **before** the draw: every
+element was created at N and first advanced at N+1, every first advance failed
+its own parity check, and the bursts stopped.
+
+What that looks like from a chair: no flash on the tip of a charging Missile,
+and no explosion where a rocket hits a wall -- while the *continuous* elements
+of the same effects, the smoke and the debris, carry on exactly as before. So
+it reads as "some of the effect is missing", and every number the harness
+measured was unmoved: the shots still flew, hit, and did damage.
+
+`_effectFrame` is the fix: a counter the effect system owns, bumped once at the
+top of each simulation step, read by both the spawn and the advance, and passed
+into `ProcessEffects(effectFrame)` so a catch-up frame advances each owed step
+under its own number.
+
+Measured on MP3 PROVING GROUND, 8 players, the same deterministic tour:
+
+| | Effect particles spawned |
+|---|---|
+| Broken (parity off by one step) | **776** |
+| Fixed | **1254** |
+
+The 478 are first-advance bursts, and the rate is otherwise identical -- which
+is why nothing else moved. `-maptest` now reports `effect particles` and
+`MAPFAIL`s on zero.

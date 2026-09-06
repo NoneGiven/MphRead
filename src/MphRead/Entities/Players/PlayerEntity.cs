@@ -318,6 +318,7 @@ namespace MphRead.Entities
         private float _walkViewBob = 0;
         private Vector3 _muzzlePos;
         private Vector3 _gunDrawPos;
+
         private Vector3 _aimVec;
 
         // something alt form angle related

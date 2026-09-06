@@ -34,6 +34,34 @@ namespace MphRead.Entities
         public int RoomId { get; private set; }
         public RoomMetadata Meta => _meta;
 
+        // The world-space box each room part's geometry occupies, unioned
+        // over the nodes that part draws. Built on demand and rebuilt when
+        // the part count changes (a door adds a connector part mid-room).
+        //
+        // Its whole purpose is to say where a part is *not*. A part is
+        // bounded by the planes of the portals opening out of it and by
+        // nothing else, so a part with two portals is an unbounded wedge and
+        // several parts' wedges overlap -- which is why GetNodeRefByPosition
+        // could answer "part 5" for a point at the other end of the map. The
+        // box is a superset of the part's geometry, so a point outside it is
+        // outside the part for certain, and rejecting on it can only ever
+        // remove a wrong answer.
+        private readonly List<Vector3> _partBoundsMin = new List<Vector3>();
+        private readonly List<Vector3> _partBoundsMax = new List<Vector3>();
+        private int _partBoundsBuiltFor = -1;
+
+        /// <summary>
+        /// How far outside a part's box a position may be and still be
+        /// treated as possibly inside it, in units.
+        ///
+        /// The box covers the part's geometry, and a player stands *on* the
+        /// geometry rather than inside it -- on a part made of nothing but a
+        /// floor, an exact test puts every player above the room. A few units
+        /// is enough for that and still tens of units short of the wrong end
+        /// of a map, which is what the wedges were answering with.
+        /// </summary>
+        private const float _partBoundsMargin = 4;
+
         private readonly Dictionary<Node, Node> _nodePairs = new Dictionary<Node, Node>();
         private readonly HashSet<Node> _excludedNodes = new HashSet<Node>();
         private readonly List<Node> _morphCameraExcludeNodes = new List<Node>();
@@ -59,6 +87,7 @@ namespace MphRead.Entities
             _forceFields.Clear();
             _nodePairs.Clear();
             _morphCameraExcludeNodes.Clear();
+            _partBoundsBuiltFor = -1;
             _nextRoomPartId = 0;
             _doorPortalCount = 0;
             ModelInstance inst = Read.GetRoomModelInstance(name);
@@ -884,6 +913,26 @@ namespace MphRead.Entities
             {
                 return;
             }
+            // The camera has to actually be in the part it says it is in.
+            //
+            // Everything below walks the portal graph outwards from that part
+            // and draws what it reaches, so a camera holding somebody else's
+            // part describes a view from somewhere else in the map and the
+            // room comes out black with the gun and a few pickups floating in
+            // it. That is not hypothetical: a spectated player and every
+            // player in a demo replay is a puppet whose node ref was looked
+            // up from its position rather than walked, and a demo of a match
+            // on MP1 SANCTORUS played back as an unlit void.
+            //
+            // Returning here leaves _partVisInfoHead null, which GetDrawInfo
+            // already reads as "draw every part". The test is one-sided --
+            // outside the part's own bounding box is outside the part -- so a
+            // correct node ref never reaches it and the culling upstream does
+            // is untouched.
+            if (!PartCouldContain(curNodeRef.PartIndex, _scene.CameraPosition, _partBoundsMargin))
+            {
+                return;
+            }
             Debug.Assert(curNodeRef.NodeIndex != -1);
             RoomPartVisInfo curVisInfo = GetPartVisInfo(curNodeRef);
             curVisInfo.ViewMinX = 0;
@@ -1210,8 +1259,120 @@ namespace MphRead.Entities
             return NodeRef.None;
         }
 
+        private void EnsurePartBounds()
+        {
+            if (_partBoundsBuiltFor == _nextRoomPartId)
+            {
+                return;
+            }
+            _partBoundsBuiltFor = _nextRoomPartId;
+            _partBoundsMin.Clear();
+            _partBoundsMax.Clear();
+            for (int i = 0; i < _nextRoomPartId; i++)
+            {
+                _partBoundsMin.Add(new Vector3(Single.MaxValue));
+                _partBoundsMax.Add(new Vector3(Single.MinValue));
+            }
+            if (_models.Count > 0)
+            {
+                AddPartBounds(_models[0], Vector3.Zero);
+            }
+            for (int i = 0; i < _connectorModels.Count; i++)
+            {
+                Vector3 offset = i + 1 < _roomCollision.Count
+                    ? _roomCollision[i + 1].Translation
+                    : Vector3.Zero;
+                AddPartBounds(_connectorModels[i], offset);
+            }
+        }
+
+        private void AddPartBounds(ModelInstance inst, Vector3 offset)
+        {
+            // The same walk DrawAllNodes does: a part is a parent node, and
+            // what it draws is the chain of children hanging off it.
+            IReadOnlyList<Node> nodes = inst.Model.Nodes;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                Node pnode = nodes[i];
+                int part = pnode.RoomPartId;
+                if (part < 0 || part >= _partBoundsMin.Count)
+                {
+                    continue;
+                }
+                int nodeIndex = pnode.ChildIndex;
+                while (nodeIndex != -1)
+                {
+                    Node node = nodes[nodeIndex];
+                    // Nodes with no mesh have no bounds worth the name, and a
+                    // degenerate one would stretch the box to the origin.
+                    // Nothing is filtered on Enabled: a node switched off by
+                    // the layer mask still says where the part is, and the box
+                    // is only ever used to rule a part out.
+                    if (node.MeshCount > 0)
+                    {
+                        var min = new Vector3(node.Bounds[0], node.Bounds[1], node.Bounds[2]) + offset;
+                        var max = new Vector3(node.Bounds[3], node.Bounds[4], node.Bounds[5]) + offset;
+                        _partBoundsMin[part] = Vector3.ComponentMin(_partBoundsMin[part], min);
+                        _partBoundsMax[part] = Vector3.ComponentMax(_partBoundsMax[part], max);
+                    }
+                    nodeIndex = node.NextIndex;
+                }
+            }
+        }
+
+        /// <summary>
+        /// How far inside this part's geometry box the position is, in units.
+        /// Zero or less means outside, and <see cref="Single.MaxValue"/> means
+        /// there is no box to judge by, which is not evidence either way.
+        /// </summary>
+        private float PartBoundsDepth(int partIndex, Vector3 position)
+        {
+            EnsurePartBounds();
+            if (partIndex < 0 || partIndex >= _partBoundsMin.Count)
+            {
+                return Single.MaxValue;
+            }
+            Vector3 min = _partBoundsMin[partIndex];
+            Vector3 max = _partBoundsMax[partIndex];
+            if (min.X > max.X)
+            {
+                return Single.MaxValue;
+            }
+            float depth = MathF.Min(position.X - min.X, max.X - position.X);
+            depth = MathF.Min(depth, MathF.Min(position.Y - min.Y, max.Y - position.Y));
+            depth = MathF.Min(depth, MathF.Min(position.Z - min.Z, max.Z - position.Z));
+            return depth;
+        }
+
+        /// <summary>
+        /// Whether the part could hold this position at all. One-sided on
+        /// purpose: false means "certainly not this part", true means only
+        /// that the box does not rule it out.
+        /// </summary>
+        public bool PartCouldContain(int partIndex, Vector3 position, float margin)
+        {
+            float depth = PartBoundsDepth(partIndex, position);
+            return depth == Single.MaxValue || depth > -margin;
+        }
+
+        /// <summary>
+        /// Which room part a position is in, for the callers that cannot walk
+        /// there -- a remote player whose position arrives over the wire, a
+        /// projectile placed where it struck.
+        ///
+        /// The portal half-spaces are a necessary condition and not a
+        /// sufficient one (see <see cref="_partBoundsMin"/>), so a candidate
+        /// that passes them must also be somewhere near the part's own
+        /// geometry, and of those the part the position sits deepest inside
+        /// wins rather than the lowest-numbered one. When nothing passes both,
+        /// the answer is none: a caller that knows it has no node ref can draw
+        /// the player anyway, while a confidently wrong one culls them out of
+        /// the room.
+        /// </summary>
         public NodeRef GetNodeRefByPosition(Vector3 position)
         {
+            NodeRef best = NodeRef.None;
+            float bestDepth = 0;
             for (int i = 0; i < _portalSides.Count; i++)
             {
                 NodeRef result = NodeRef.None;
@@ -1232,12 +1393,33 @@ namespace MphRead.Entities
                     }
                     result = otherSide ? portal.NodeRef2 : portal.NodeRef1;
                 }
-                if (allInside)
+                if (!allInside || result == NodeRef.None)
                 {
-                    return result;
+                    continue;
+                }
+                float depth = PartBoundsDepth(result.PartIndex, position);
+                if (depth == Single.MaxValue)
+                {
+                    // A part with no geometry to judge by: take it only if
+                    // nothing better has been found, which is what this used
+                    // to do for every part.
+                    if (best == NodeRef.None)
+                    {
+                        best = result;
+                    }
+                    continue;
+                }
+                if (depth <= -_partBoundsMargin)
+                {
+                    continue;
+                }
+                if (best == NodeRef.None || depth > bestDepth)
+                {
+                    best = result;
+                    bestDepth = depth;
                 }
             }
-            return NodeRef.None;
+            return best;
         }
 
         public NodeRef UpdateNodeRef(NodeRef current, Vector3 prevPos, Vector3 curPos)
@@ -1279,6 +1461,28 @@ namespace MphRead.Entities
 
         public bool IsNodeRefVisible(NodeRef nodeRef)
         {
+            // Nothing was culled at all this frame, so nothing may be culled
+            // against it. This is the same test GetDrawInfo makes to decide
+            // it must draw every part of the room -- the camera had no part
+            // to walk the portal graph from -- and while it holds, the active
+            // set is empty because it was never filled in, not because
+            // everything is out of view.
+            //
+            // Read the other way round it hid every other player in the
+            // match. A client joining one in progress spawns from a snapshot,
+            // whose node ref is looked up from the spawn position and can
+            // come back as none; nothing ever recovers it, because the
+            // one-hop walk needs a part to start from. Its owner then played
+            // a whole match in a room that drew perfectly and contained
+            // nobody else -- opponents who could be shot and could not be
+            // seen, with their shadows still moving about on the floor.
+            // Straight out of a real match's log: MP6 HEADSHOT, slot 1
+            // (local) nodeRef=none for two solid minutes while slot 0 held
+            // a part the whole time.
+            if (_partVisInfoHead == null || _scene.ShowAllNodes)
+            {
+                return true;
+            }
             // workaround for unintended modes
             if (nodeRef.PartIndex == -1)
             {

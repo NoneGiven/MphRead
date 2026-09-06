@@ -24,5 +24,19 @@
   <application android:label="Fruity Prime" android:appCategory="game"
                android:allowBackup="true"
                android:supportsRtl="true" android:hardwareAccelerated="true"
-               android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon" />
+               android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon">
+    <!-- How the zipped debug logs reach another app. Handing out a file://
+         URI has thrown FileUriExposedException since Android 7, so the file
+         goes through a provider; @xml/file_paths limits it to the one cache
+         folder AndroidLogShare writes its zip into, and nothing else in this
+         app is reachable through it. Not exported: only the intents this app
+         itself starts carry the read grant. -->
+    <provider android:name="androidx.core.content.FileProvider"
+              android:authorities="${applicationId}.logs"
+              android:exported="false"
+              android:grantUriPermissions="true">
+      <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+                 android:resource="@xml/file_paths" />
+    </provider>
+  </application>
 </manifest>

@@ -124,28 +124,84 @@ namespace MphRead.Entities
         /// and disappears -- or shows only a shadow -- once the viewer is
         /// somewhere else in the room.
         /// </summary>
+        /// <summary>
+        /// The furthest one position update may move a player and still be
+        /// walked across portals rather than looked up. A player crosses a
+        /// couple of tenths of a unit in a frame; anything past this is a
+        /// respawn, a teleporter or the authority correcting a divergence,
+        /// and the straight line to it means nothing.
+        /// </summary>
+        private const float _nodeWalkStepMax = 4;
+
+        /// <summary>
+        /// The room part a step from one position to the next walks into, or
+        /// none when this is not a step a walk can describe.
+        ///
+        /// Refused for a jump no walk could make -- a respawn, a teleporter,
+        /// the authority correcting a divergence -- since the straight line
+        /// between those two points crosses whatever it happens to cross, and
+        /// for a result the part's own bounding box says is impossible, which
+        /// is what keeps one bad hop from becoming permanent.
+        ///
+        /// Static so that the map harness can run the same rule alongside the
+        /// engine's own walk and report how far the two drift apart; a copy
+        /// of it there would measure the copy.
+        /// </summary>
+        internal static Formats.Culling.NodeRef ModWalkNodeRef(Scene scene,
+            Formats.Culling.NodeRef current, Vector3 previous, Vector3 position)
+        {
+            if (current == Formats.Culling.NodeRef.None
+                || (position - previous).LengthSquared >= _nodeWalkStepMax * _nodeWalkStepMax)
+            {
+                return Formats.Culling.NodeRef.None;
+            }
+            Formats.Culling.NodeRef walked = scene.UpdateNodeRef(current, previous, position);
+            if (walked.PartIndex == -1 || !scene.PartCouldContain(walked.PartIndex, position))
+            {
+                return Formats.Culling.NodeRef.None;
+            }
+            return walked;
+        }
+
         internal void ModRefreshNodeRef(OpenTK.Mathematics.Vector3 previousPosition)
         {
             _volume = CollisionVolume.Move(_volumeUnxf, Position);
-            // Looked up from the position, not walked to from the last one.
+            // Walked from the last position first, looked up only when the
+            // walk cannot be trusted.
             //
-            // UpdateNodeRef only changes the node when the segment between
-            // two positions crosses an active portal, which is right for a
-            // player walking and wrong for one whose position is written in:
-            // a network update steps across a portal without the segment ever
-            // being tested against it, the node stays behind, and it stays
-            // behind for good, because every later step is measured from the
-            // wrong node.
+            // This used to be the other way round, on the grounds that a
+            // puppet's position is written in rather than simulated and so
+            // never crosses a portal "properly". That reasoning does not
+            // hold: UpdateNodeRef tests the *segment* between two positions
+            // against the portal planes, and it does not care how either
+            // position was arrived at -- only that they are consecutive and
+            // close, which two snapshots of the same player 1/60 s apart are
+            // exactly as much as two simulation steps of one are.
             //
-            // What that costs is invisibility. PlayerDraw culls on
-            // `IsMainPlayer || IsVisible(NodeRef)`, so a puppet holding a node
-            // the viewer cannot see is not drawn -- while its shadow, which
-            // goes another way, still is, and its hitbox, which follows the
-            // position, still works. Reported from play as a player who was
-            // there, could be shot, and could not be seen. Two logs of the
-            // same second: the same slot at the same position, node 7/110 on
-            // one machine and 5/75 on the other.
+            // What the lookup costs, measured with `-maptest ROOM -players 8`
+            // against the node the engine itself walked: on MP4 HIGHGROUND it
+            // named the wrong part for 73% of the positions players actually
+            // stood in, on MP7 PROCESSOR CORE 84%, and on MP6 HEADSHOT it had
+            // no answer at all for 86%. In more than half of those the part
+            // it named was one the viewer could not see while the real one
+            // was -- which is a hunter standing in front of you, shootable,
+            // with a shadow, and not drawn. That is the report this method
+            // was written for in the first place; it was the cure that was
+            // wrong, not the diagnosis.
             //
+            // The walk is refused for a jump no walk could make (a respawn, a
+            // teleporter, a correction from the authority) and for a result
+            // the part's own bounding box says is impossible, which is what
+            // stops one bad hop becoming permanent -- the failure the lookup
+            // was reached for.
+            Formats.Culling.NodeRef walked = ModWalkNodeRef(
+                _scene, NodeRef, previousPosition, Position);
+            if (walked != Formats.Culling.NodeRef.None)
+            {
+                NodeRef = walked;
+                ModNodeUnresolved = false;
+                return;
+            }
             // None means the position is inside no part at all -- a fraction
             // outside the geometry, which happens -- and the node it had is a
             // better answer than nothing.
@@ -295,7 +351,53 @@ namespace MphRead.Entities
                 ? facing.Normalized()
                 : -OpenTK.Mathematics.Vector3.UnitZ;
             Spawn(position, forward, OpenTK.Mathematics.Vector3.UnitY,
-                _scene.GetNodeRefByPosition(position), respawn: true);
+                ModSpawnNodeRef(_scene, position), respawn: true);
+        }
+
+        /// <summary>
+        /// The room part to spawn into, from the map's own data where the map
+        /// has any to give.
+        ///
+        /// A spawn position is a spawn point, and a spawn point is an entity
+        /// carrying the node ref the level author put on it -- which is what
+        /// the engine's own respawn passes and is not a guess.
+        /// GetNodeRefByPosition is: on MP6 HEADSHOT it answers none for 86%
+        /// of the positions a player actually stands in. That mattered
+        /// because nothing recovers a node ref of none afterwards -- the
+        /// one-hop walk that maintains it needs a part to start from -- so a
+        /// client that joined a match there spent all of it with no node at
+        /// all. See RoomEntity.IsNodeRefVisible for what that cost.
+        ///
+        /// Static so the harness can seed a puppet the way the game does:
+        /// MapAudit's remote-node probe carries a node ref alongside the real
+        /// one, and seeding that from the lookup measured a rule this code
+        /// stopped using -- one bad seed walks wrong for the rest of the run
+        /// and the probe reported it as the game's own behaviour.
+        /// </summary>
+        internal static Formats.Culling.NodeRef ModSpawnNodeRef(Scene scene,
+            OpenTK.Mathematics.Vector3 position)
+        {
+            EntityBase? closest = null;
+            float closestDist = 2 * 2;
+            foreach (EntityBase entity in scene.Entities)
+            {
+                if (entity.Type != EntityType.PlayerSpawn
+                    || entity.NodeRef == Formats.Culling.NodeRef.None)
+                {
+                    continue;
+                }
+                float dist = (entity.Position - position).LengthSquared;
+                if (dist < closestDist)
+                {
+                    closestDist = dist;
+                    closest = entity;
+                }
+            }
+            if (closest != null)
+            {
+                return closest.NodeRef;
+            }
+            return scene.GetNodeRefByPosition(position);
         }
 
         /// <summary>

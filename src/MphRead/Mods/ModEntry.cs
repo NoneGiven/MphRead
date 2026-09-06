@@ -999,16 +999,6 @@ namespace MphRead.Mods
                 Render.FrameTiming.FrameRateCap = Render.FrameTiming.ParseCap(fpsCap,
                     Render.FrameTiming.FrameRateCap);
             }
-            string? interp = ValueAfter(args, "interpolation");
-            if (interp != null && !interp.StartsWith('-'))
-            {
-                Render.FrameTiming.Interpolate = RenderOptions.ParseOnOff(interp,
-                    Render.FrameTiming.Interpolate);
-            }
-            else if (HasFlag(args, "nointerpolation"))
-            {
-                Render.FrameTiming.Interpolate = false;
-            }
             string? bands = ValueAfter(args, "celbands");
             if (bands != null && Int32.TryParse(bands, out int bandCount))
             {
@@ -1030,6 +1020,21 @@ namespace MphRead.Mods
             else if (HasFlag(args, "prohud"))
             {
                 Features.ProHud = true;
+            }
+            // Which crosshair that HUD draws, and how big. Same reason again:
+            // a screenshot command opens no launcher, and the crosshair is the
+            // one thing in the middle of every one of those pictures.
+            string? crosshair = ValueAfter(args, "crosshair");
+            if (crosshair != null && !crosshair.StartsWith('-'))
+            {
+                Render.Crosshair.Style = Render.Crosshair.ParseStyle(crosshair,
+                    Render.Crosshair.Style);
+            }
+            string? crosshairSize = ValueAfter(args, "crosshairsize");
+            if (crosshairSize != null && !crosshairSize.StartsWith('-'))
+            {
+                Render.Crosshair.Size = Render.Crosshair.ParseSize(crosshairSize,
+                    Render.Crosshair.Size);
             }
         }
 

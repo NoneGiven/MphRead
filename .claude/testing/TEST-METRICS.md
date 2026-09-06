@@ -66,6 +66,58 @@ pinned at 60 Hz under a picture drawn at the display's rate.
 | Performance against the unmodified build | 1832 identical frames in **32.9 s vs 33.1 s** -- marginally faster, not slower |
 | `run-check.sh 130`, 3 clients, x3 | **0 mismatches every run**, matching the 2026-08-23 baseline |
 | `run-check.sh 150`, 6 clients, x4 | 5, 5, 3, 0 mismatches -- inside the unmodified build's own range, see below |
+| Output frame rate, `-room "MP3 PROVING GROUND" -fpscap 240 -debuglog` (WSL, Mesa llvmpipe) | **sim 60.14 Hz / draw 81.0 Hz**, steps per frame `[534, 1310, 3, 0, 0, 1]` -- 534 of 1848 frames drew with no step behind them, which a 60 Hz loop could not produce. 81 is this box's software rasteriser, not the loop: a quarter render scale only reached 88 |
+| Scoreboard, 8 players, `-bots`, every game mode, players 2-8, pro HUD on and off | no crash and no `MAPFAIL` anywhere. The reported Android crash **was not reproduced here** |
+| Android head | builds (`-p:AndroidSdkDirectory=$HOME/android-sdk`); **not run on a device** -- no emulator here has game files, so a match cannot be loaded |
+
+### The effect bursts that failed their own parity check
+
+Reported after the first fix attempt shipped, and it is the one that mattered
+most: *"quand je charge un missile l'animation au bout du weapon ne s'affiche
+pas et les explosions sur les murs ne sont pas visibles."*
+
+Effects spawn particles on every other simulation step, and an element records
+the parity it was created with so its **first** advance spawns -- which is where
+a burst lives. Upstream incremented `_frameCount` *after* `GetDrawItems`, so the
+spawn and the advance that followed it saw the same number; the 120 fps split
+moved the increment into the step, before the draw, and every element's first
+advance began failing its own check. Bursts stopped; the continuous smoke and
+debris of the same effects did not, so it read as "part of it is missing".
+
+**Look for this shape wherever two halves of one frame read the same counter**
+-- splitting the frame moved the counter between them. `_effectFrame` is now a
+clock the effect system owns.
+
+| Same tour, MP3 PROVING GROUND, 8 players | Effect particles |
+|---|---|
+| Broken | 776 |
+| Fixed | 1254 |
+
+Confirmed visually as well, on the same frame of the same deterministic run: a
+missile kill with **no fireball at all** before, and the full explosion after.
+`-maptest` reports `effect particles` now and fails on zero, because every other
+number in the run was unmoved by this.
+
+### The particles that were cleared in the wrong pass
+
+Reported as three separate faults after the 120 fps change -- wall impacts not
+appearing, the first Shock Coil of a fight missing, and shot artifacts drifting
+in all directions while moving and firing -- and they were two causes.
+
+**Draw state cleared in the simulation step.** `_singleParticleCount = 0` stayed
+in `OnSimulationFrame` when the step and the picture stopped being one call, so
+a picture with no step behind it drew the previous frame's particles again where
+they were then, and kept appending until the 200-entry table was full and
+started dropping new ones. **Look for this shape in anything with per-frame draw
+state: ask where it is cleared, and if the answer is "in the step", it is
+wrong.**
+
+**Interpolation against a pooled entity's previous life.** Beams and impact
+effects come off a free list still holding their last life's transform history,
+and the 24-unit guard only declines a reuse *further* away than that. A reuse
+nearer -- the common case in a firefight -- was blended between two unrelated
+places. Interpolation is gone entirely; `.claude/render/FRAME-PACING.md` has
+what it would take to bring it back.
 
 ### The 6-client mismatch count on this box measures the box
 
