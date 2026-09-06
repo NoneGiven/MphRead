@@ -163,6 +163,26 @@ namespace MphRead.Entities
             return walked;
         }
 
+        /// <summary>
+        /// Put this player at a position, hitbox and room node included.
+        ///
+        /// The same three lines NetPlayerBridge.Move does, exposed because
+        /// <see cref="Mods.Network.NetUnlagged"/> needs them in the middle of
+        /// a frame rather than around the edges of one. That timing is the
+        /// whole reason it cannot just assign Position: _volume is a cached
+        /// copy of the collision sphere that PlayerProcess recomputes once a
+        /// frame, so a rewind applied after that has run would move the model
+        /// and leave the hitbox behind -- and a rewind whose hitbox does not
+        /// move is a rewind that does nothing at all.
+        /// </summary>
+        internal void ModPlaceAt(OpenTK.Mathematics.Vector3 position)
+        {
+            OpenTK.Mathematics.Vector3 previous = Position;
+            Position = position;
+            PrevPosition = position;
+            ModRefreshNodeRef(previous);
+        }
+
         internal void ModRefreshNodeRef(OpenTK.Mathematics.Vector3 previousPosition)
         {
             _volume = CollisionVolume.Move(_volumeUnxf, Position);

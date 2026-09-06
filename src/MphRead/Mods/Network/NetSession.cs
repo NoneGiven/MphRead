@@ -190,6 +190,7 @@ namespace MphRead.Mods.Network
         /// </summary>
         public static void RewindPlayback()
         {
+            NetUnlagged.Reset();
             _lastSnapshotFrame = 0;
             Array.Clear(_lastSlotIntentFrame);
             Array.Clear(RemoteStateValid);
@@ -283,6 +284,11 @@ namespace MphRead.Mods.Network
             StatesApplied = 0;
             IntentsReceived = 0;
             ServerMatch = null;
+            // The position history is indexed by frame, and the frame counter
+            // restarts here. Keeping it would let a rewind land on a cell
+            // stamped with the same number from the previous match, which is
+            // a shot resolved against a room nobody is standing in.
+            NetUnlagged.Reset();
         }
 
         /// <summary>
@@ -1156,6 +1162,11 @@ namespace MphRead.Mods.Network
             };
             header.Write(_scratch);
             SnapshotsSent++;
+            // Where everybody was, filed under the frame number this snapshot
+            // carries. It has to be recorded here rather than anywhere else in
+            // the frame: a client's ack names a snapshot, and the rewind is
+            // the claim that cell `Frame` holds the picture that client saw.
+            NetUnlagged.Record(header.Frame);
             // A demo only ever contains what this client *received*, and the
             // server forwards a snapshot to every peer except the one that
             // sent it -- so the authority's own demo had no snapshots in it

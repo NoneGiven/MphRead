@@ -402,6 +402,17 @@ namespace MphRead.Mods.Network
                 }
                 Expire(now);
                 ReapHosted(now);
+                // The directory keeps itself current too, and waits on the
+                // matches it is running rather than on the servers it lists:
+                // a listed server re-announces every fifteen seconds, so the
+                // list rebuilds itself within a restart, but a hosted match
+                // lives in this process and a restart ends it.
+                if (Update.ServerUpdate.ShouldRestart(_hosted.Count))
+                {
+                    Log("shutting down to come back on the new build");
+                    _running = false;
+                    break;
+                }
                 if (now - lastReport >= 60)
                 {
                     lastReport = now;

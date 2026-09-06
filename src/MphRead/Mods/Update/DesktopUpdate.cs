@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Formats.Tar;
 using System.IO;
@@ -39,6 +40,13 @@ namespace MphRead.Mods.Update
         private static string Staging => Path.Combine(AppContext.BaseDirectory, ".update");
 
         private static string StagedBuild => Path.Combine(Staging, "staged");
+
+        /// <summary>
+        /// Where a staged build sits, for an installer that is not this one.
+        /// <see cref="ServerUpdate"/> stages with the code here and then
+        /// applies it in a way a supervised server survives.
+        /// </summary>
+        public static string StagedBuildPath => StagedBuild;
 
         /// <summary>Why the last attempt produced nothing.</summary>
         public static string? LastError { get; private set; }
@@ -140,7 +148,18 @@ namespace MphRead.Mods.Update
         /// process to be gone before it touches anything, and a launcher that
         /// stayed open would leave it waiting until its own deadline.
         /// </summary>
-        public static bool Launch()
+        /// <param name="relaunchArgs">
+        /// What to start the updated build with, or null for nothing -- which
+        /// is right for the launcher, where a bare invocation is the front
+        /// screen and is exactly where the player was.
+        ///
+        /// It is not right for anything else. A dedicated server is the same
+        /// binary told what to be by its command line, so restarting it bare
+        /// does not restart the server: it opens a launcher, or a console
+        /// menu, on a machine with nobody at it, and the port stays shut until
+        /// somebody notices. Whatever was typed has to come back.
+        /// </param>
+        public static bool Launch(IReadOnlyList<string>? relaunchArgs = null)
         {
             try
             {
@@ -153,6 +172,18 @@ namespace MphRead.Mods.Update
                 start.ArgumentList.Add("-" + ApplyFlag);
                 start.ArgumentList.Add(AppContext.BaseDirectory);
                 start.ArgumentList.Add(Environment.ProcessId.ToString());
+                if (relaunchArgs != null)
+                {
+                    // Last, and behind a separator, because everything before
+                    // it is read by position: the copying half takes the two
+                    // values it needs and hands the rest to the build it
+                    // starts.
+                    start.ArgumentList.Add(RelaunchSeparator);
+                    for (int i = 0; i < relaunchArgs.Count; i++)
+                    {
+                        start.ArgumentList.Add(relaunchArgs[i]);
+                    }
+                }
                 return Process.Start(start) != null;
             }
             catch (Exception ex)
@@ -173,7 +204,15 @@ namespace MphRead.Mods.Update
         /// it is for is the log somebody reads when the game did not come
         /// back.
         /// </summary>
-        public static int Apply(string target, int waitFor)
+        /// <summary>
+        /// Marks the end of what <see cref="Apply"/> reads by position and the
+        /// start of what it passes on. A literal rather than a dash-flag so it
+        /// cannot collide with an argument the server was actually given.
+        /// </summary>
+        public const string RelaunchSeparator = "--relaunch";
+
+        public static int Apply(string target, int waitFor,
+            IReadOnlyList<string>? relaunchArgs = null)
         {
             Console.WriteLine($"[update] applying to {target}");
             WaitForExit(waitFor);
@@ -196,11 +235,16 @@ namespace MphRead.Mods.Update
             {
                 string binary = Path.Combine(target, BinaryName());
                 MakeExecutable(binary);
-                Process.Start(new ProcessStartInfo(binary)
+                var restart = new ProcessStartInfo(binary)
                 {
                     WorkingDirectory = target,
                     UseShellExecute = false
-                });
+                };
+                for (int i = 0; relaunchArgs != null && i < relaunchArgs.Count; i++)
+                {
+                    restart.ArgumentList.Add(relaunchArgs[i]);
+                }
+                Process.Start(restart);
             }
             catch (Exception ex)
             {

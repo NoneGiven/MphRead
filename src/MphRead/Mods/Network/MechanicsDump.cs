@@ -402,6 +402,12 @@ namespace MphRead.Mods.Network
             text.AppendLine("| Remote smoothing | remote players ease toward their reported "
                 + "position (35% of the gap per frame, 60% when it is wide) and only jump past 15 "
                 + "units, so a lost burst glides instead of popping |");
+            text.AppendLine("| Lag compensation | the authority rewinds every other player to "
+                + "the snapshot frame the shooter had acknowledged, spawns the shot into that "
+                + "world, and then walks it forward to the present one frame at a time. Bounded "
+                + "at 24 frames (400 ms) of rewind and 64 frames of history. The authority's own "
+                + "shots are rewound by zero: it already aims at the puppets it resolves "
+                + "against |");
             text.AppendLine("| Slots | `PlayerEntity.SlotCapacity` (8). Every slot-indexed array is "
                 + "sized from it |");
             text.AppendLine("| Map rotation | the server owns it; clients poll the match state and "

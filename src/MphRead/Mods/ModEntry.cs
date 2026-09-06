@@ -63,8 +63,21 @@ namespace MphRead.Mods
                 // Two values, read by position rather than by name: the first
                 // is a directory, and a directory is exactly the kind of
                 // argument that can begin with a dash.
+                //
+                // Anything after the separator is what the updated build is to
+                // be started with -- empty for a launcher, and the server's own
+                // command line for a server, which is otherwise restarted as a
+                // launcher on a machine with nobody at it.
+                var relaunch = new System.Collections.Generic.List<string>();
+                int separator = Array.IndexOf(args, Update.DesktopUpdate.RelaunchSeparator,
+                    applyAt + 3);
+                for (int i = separator + 1; separator >= 0 && i < args.Length; i++)
+                {
+                    relaunch.Add(args[i]);
+                }
                 Environment.ExitCode = Update.DesktopUpdate.Apply(args[applyAt + 1],
-                    Int32.TryParse(args[applyAt + 2], out int parsed) ? parsed : -1);
+                    Int32.TryParse(args[applyAt + 2], out int parsed) ? parsed : -1,
+                    relaunch);
                 return true;
             }
             // Whatever the last update left behind. Here rather than in the
@@ -96,6 +109,17 @@ namespace MphRead.Mods
             if (Network.NetLag.Active)
             {
                 Console.WriteLine($"[net] simulating a bad line: {Network.NetLag.Describe()}");
+            }
+
+            // Lag compensation, off. Here for the same reason -netlag is: so a
+            // run of the harness can measure the same match with and without
+            // it, which is the only way to say what it is worth. On by
+            // default, as Zandronum's sv_nounlagged is.
+            if (HasFlag(args, "nounlagged"))
+            {
+                Network.NetUnlagged.Enabled = false;
+                Console.WriteLine("[net] lag compensation off: shots resolve "
+                    + "against the present");
             }
 
             if (HasFlag(args, "credits"))
@@ -237,26 +261,35 @@ namespace MphRead.Mods
                 return true;
             }
 #endif
-            // Both servers say so at startup if they are behind, and then get
-            // on with it.
+            // Both servers keep themselves current: check before binding,
+            // check again on a timer, and swap when nobody is connected.
             //
-            // A protocol change makes a server refuse every client on an older
-            // build at Hello, so a stale server is a server nobody can join,
-            // and that is worth one line in the journal where an operator will
-            // find it. It is a line and not an install: nothing here has a
-            // person at the keyboard to decide, and a server that replaced its
-            // own binary and restarted would drop whoever was playing.
+            // This is the one place in the program that installs rather than
+            // asking. A protocol change makes a server refuse every client on
+            // a different build at Hello, so a stale server is a server nobody
+            // in the world can join, and there is no one at the keyboard to
+            // read the line that used to be printed here. -noautoupdate keeps
+            // the old behaviour, and -noupdate turns off the checking too.
+            // See Mods/Update/ServerUpdate.cs for why the swap is not the
+            // desktop's.
             if (HasFlag(args, "masterserver") || HasFlag(args, "server")
                 || HasFlag(args, "dedicated"))
             {
-                Update.UpdateInfo? update = Update.Updater.Check();
-                if (update != null)
+                Update.ServerUpdate.Enabled = !HasFlag(args, "noautoupdate");
+                // The command line this server was started with, so the build
+                // that replaces it comes back as the same server rather than
+                // as a launcher on a machine with nobody at it. Read from the
+                // environment and not from `args`, which by here has already
+                // had the update flags taken out of it.
+                string[] all = Environment.GetCommandLineArgs();
+                var typed = new System.Collections.Generic.List<string>();
+                for (int i = 1; i < all.Length; i++)
                 {
-                    Console.WriteLine($"[update] {Update.Updater.Describe(update.Value)}");
-                    Console.WriteLine($"[update] {update.Value.PageUrl}");
-                    Console.WriteLine("[update] this server keeps running on "
-                        + $"{Update.BuildVersion.Display}; clients on the new build "
-                        + "will be refused until it is updated by hand");
+                    typed.Add(all[i]);
+                }
+                if (Update.ServerUpdate.AtStartup(typed))
+                {
+                    return true;
                 }
             }
 
@@ -351,7 +384,10 @@ namespace MphRead.Mods
             {
                 ServerName = ValueAfter(args, "servername") ?? ValueAfter(args, "name")
                     ?? Environment.MachineName,
-                FriendlyFire = HasFlag(args, "friendlyfire")
+                FriendlyFire = HasFlag(args, "friendlyfire"),
+                // This process is the server, so it is the one that may
+                // replace itself. See DedicatedServer.AutoUpdate.
+                AutoUpdate = true
             };
             // Listed by default. A dedicated server exists to be found, and a
             // server that has to be told to advertise itself is a server
