@@ -6364,12 +6364,19 @@ namespace MphRead
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            // The pause menu wants the pointer back.
+            // The pause menu wants the pointer back, and so does the results
+            // screen: its hunter picker is something you click, and a grabbed
+            // cursor has no position on screen to click with.
             CursorState = (Scene.CameraMode == CameraMode.Player || Scene.IsFreeCam) && !Scene.FrameAdvance
-                && !Mods.PauseMenu.Open
+                && !Mods.PauseMenu.Open && !Mods.EndScreen.Available
                 && !Scene.ShowCursor && !GameState.DialogPause && !GameState.MenuPause
                 ? CursorState.Grabbed
                 : CursorState.Normal;
+            // Where the pointer is, for the picker to light up what it is
+            // over, and in the same units its hit boxes are kept in.
+            Mods.EndScreen.NotePointer(
+                MouseState.X / (float)Math.Max(Size.X, 1),
+                MouseState.Y / (float)Math.Max(Size.Y, 1));
             GameState.ApplyPause();
             ApplyFrameRateSettings();
             // The simulation runs at 60 Hz and the picture runs at the
@@ -6444,6 +6451,15 @@ namespace MphRead
         {
             if (e.Button == MouseButton.Button1)
             {
+                // The results screen's picker first, and only while it is up.
+                // It is the reason the cursor is released at all there, and a
+                // click that also reached the game would fire the gun of a
+                // player who is standing in an ended match.
+                if (Mods.EndScreen.HandleClick())
+                {
+                    base.OnMouseDown(e);
+                    return;
+                }
                 if (Mods.SpectatorMode.IsSpectating)
                 {
                     Mods.SpectatorMode.CycleNext();

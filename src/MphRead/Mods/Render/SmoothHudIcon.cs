@@ -18,15 +18,21 @@ namespace MphRead.Mods.Render
     /// draws the list at 170%.
     ///
     /// There is no more resolution to be had -- the source is the source --
-    /// but there is more *precision*. These frames are silhouettes: the list
-    /// draws each one in a flat colour with palette index 0 left transparent
-    /// (see <c>DrawWeaponList</c>), so the only information in a texel is
-    /// whether it is ink. A silhouette can be resampled properly, which a
-    /// photograph cannot: the mask is bilinearly resampled at four times the
-    /// size, and the coverage that comes out is pushed back through a narrow
-    /// smoothstep so an edge stays an edge rather than becoming a gradient.
-    /// The result is an anti-aliased shape at 4x, minified into the box by the
-    /// GPU -- which is why <see cref="HudObjectInstance.Smooth"/> exists, and
+    /// and this deliberately does not pretend otherwise. The frame is
+    /// replicated at a whole multiple, hard-edged, with no interpolation:
+    /// every DS pixel stays a sharp square exactly as it was drawn. What the
+    /// multiple buys is that the texture is then *larger* than the box it
+    /// lands in, so the GPU is minifying rather than magnifying, and a linear
+    /// minification of hard squares is those same squares with a hairline of
+    /// anti-aliasing along their edges. The picture stays the DS's own, and
+    /// the staircase stops being uneven -- which is what the complaint was.
+    ///
+    /// It was resampled first -- bilinear over the mask, then a smoothstep --
+    /// and that was wrong twice over. Interpolating a mask rounds every
+    /// corner, and a 4x texture is *magnified* again at 1440p with the weapon
+    /// list at 170%, so the result was a soft blob: the same word came back.
+    /// Sharp is the goal here; the anti-aliasing is only there to stop the
+    /// edge wobbling. See <see cref="HudObjectInstance.Smooth"/>, which is
     /// the one place in this program that asks for linear filtering.
     ///
     /// <para>
@@ -43,14 +49,17 @@ namespace MphRead.Mods.Render
         /// <summary>
         /// How many texels are generated per source texel, each way.
         ///
-        /// Four covers every case that matters: a weapon icon is around
-        /// twenty texels across and reaches sixty screen pixels at 1080p in
-        /// pro mode, so 4x puts the texture comfortably above the box on any
-        /// display anybody plays on and the GPU is minifying rather than
-        /// magnifying -- which is the side of the line where filtering helps.
-        /// Eight would quadruple the memory for no visible difference.
+        /// It has to stay above the largest magnification these are ever drawn
+        /// at, because below that the GPU magnifies the texture instead and
+        /// the icon goes soft -- which is exactly what four did. A weapon
+        /// icon's ink is about twenty texels across, and the box it goes in is
+        /// roughly sixty screen pixels at 1080p, ninety at 1440p and a hundred
+        /// and thirty-five at 4K with the list at 170%: under seven in the
+        /// worst case in play. Eight covers it, and costs 2.4 MB for the nine
+        /// icons once -- <c>DrawWeaponList</c> reuses the instances across a
+        /// map rotation rather than building nine more each time.
         /// </summary>
-        public const int Factor = 4;
+        public const int Factor = 8;
 
         /// <summary>
         /// An instance sized for the sheet's frames, with room for a 4x
@@ -105,37 +114,20 @@ namespace MphRead.Mods.Render
             int tilesX = width / 8;
             int image = frame * width * height;
             var transparent = new ColorRgba();
+            var ink = new ColorRgba(color.Red, color.Green, color.Blue, 255);
             for (int y = 0; y < outHeight; y++)
             {
-                // The centre of this output texel in source coordinates, half
-                // a texel back so the four samples straddle it. Without the
-                // shift the whole icon walks half a source pixel up and left.
-                float sourceY = (y + 0.5f) / Factor - 0.5f;
-                int y0 = (int)MathF.Floor(sourceY);
-                float fy = sourceY - y0;
+                // Whole squares, not samples: this row of output texels is one
+                // row of source texels repeated Factor times. No interpolation
+                // anywhere, so a corner stays a corner and the anti-aliasing
+                // is left to the minification that follows.
+                int sourceY = y / Factor;
                 for (int x = 0; x < outWidth; x++)
                 {
-                    float sourceX = (x + 0.5f) / Factor - 0.5f;
-                    int x0 = (int)MathF.Floor(sourceX);
-                    float fx = sourceX - x0;
-                    float top = Lerp(Ink(data, image, tilesX, width, height, x0, y0),
-                        Ink(data, image, tilesX, width, height, x0 + 1, y0), fx);
-                    float bottom = Lerp(Ink(data, image, tilesX, width, height, x0, y0 + 1),
-                        Ink(data, image, tilesX, width, height, x0 + 1, y0 + 1), fx);
-                    float coverage = Lerp(top, bottom, fy);
-                    // A narrow band around half coverage rather than the raw
-                    // interpolation: bilinear on its own spreads every edge
-                    // over a whole source texel, which at this magnification
-                    // is a visible halo -- the actual blur the complaint would
-                    // have been about if this had been done the lazy way. The
-                    // band is what keeps the shape crisp while still giving
-                    // the edge somewhere between two and three levels to land
-                    // on.
-                    float alpha = Smoothstep(0.30f, 0.70f, coverage);
-                    texture[y * outWidth + x] = alpha <= 0
-                        ? transparent
-                        : new ColorRgba(color.Red, color.Green, color.Blue,
-                            (byte)MathF.Round(alpha * 255));
+                    texture[y * outWidth + x] =
+                        Ink(data, image, tilesX, width, height, x / Factor, sourceY) > 0
+                            ? ink
+                            : transparent;
                 }
             }
             if (inst.BindingId == -1)
@@ -172,15 +164,5 @@ namespace MphRead.Mods.Render
             return data[index] == 0 ? 0 : 1;
         }
 
-        private static float Lerp(float first, float second, float by)
-        {
-            return first + (second - first) * by;
-        }
-
-        private static float Smoothstep(float edge0, float edge1, float value)
-        {
-            float t = Math.Clamp((value - edge0) / (edge1 - edge0), 0, 1);
-            return t * t * (3 - 2 * t);
-        }
     }
 }

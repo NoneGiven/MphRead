@@ -101,6 +101,128 @@ namespace MphRead.Mods
             }
         }
 
+        // ------------------------------------------------------- the pointer
+
+        /// <summary>
+        /// A rectangle on the window, 0-1 each way.
+        ///
+        /// Kept in the window's own coordinates rather than the HUD's 256x192
+        /// because that is what a mouse position arrives in, and because the
+        /// HUD's horizontal unit is a different size on every window shape
+        /// (see <c>HudAspectFix</c>) -- converting once, in the draw, is one
+        /// place to be wrong instead of two.
+        /// </summary>
+        public readonly struct Hit
+        {
+            public readonly float Left;
+            public readonly float Top;
+            public readonly float Right;
+            public readonly float Bottom;
+
+            public Hit(float left, float top, float right, float bottom)
+            {
+                Left = left;
+                Top = top;
+                Right = right;
+                Bottom = bottom;
+            }
+
+            public bool Contains(float x, float y)
+            {
+                return Right > Left && Bottom > Top
+                    && x >= Left && x < Right && y >= Top && y < Bottom;
+            }
+        }
+
+        /// <summary>
+        /// What the panel put where, last time it was drawn.
+        ///
+        /// Published by the draw rather than worked out again here, so the
+        /// boxes cannot drift from the picture: there is one layout, it is
+        /// computed once a frame in <c>ModDrawEndScreen</c>, and this is a
+        /// copy of it. Empty until the panel has been drawn at least once,
+        /// which is also exactly when there is nothing to click.
+        /// </summary>
+        private static Hit _hitPrev;
+        private static Hit _hitNext;
+        private static readonly Hit[] _hitSuits = new Hit[PlayerColors.Count];
+
+        public static float PointerX { get; private set; } = -1;
+        public static float PointerY { get; private set; } = -1;
+
+        /// <summary>Called once a frame by the window, in window fractions.</summary>
+        public static void NotePointer(float x, float y)
+        {
+            PointerX = x;
+            PointerY = y;
+        }
+
+        public static void NoteLayout(Hit previous, Hit next, Hit[] suits)
+        {
+            _hitPrev = previous;
+            _hitNext = next;
+            for (int i = 0; i < _hitSuits.Length && i < suits.Length; i++)
+            {
+                _hitSuits[i] = suits[i];
+            }
+        }
+
+        /// <summary>Which suit swatch the pointer is over, or -1.</summary>
+        public static int HoveredSuit()
+        {
+            if (!Available)
+            {
+                return -1;
+            }
+            for (int i = 0; i < _hitSuits.Length; i++)
+            {
+                if (_hitSuits[i].Contains(PointerX, PointerY))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        public static bool HoveredPrev => Available && _hitPrev.Contains(PointerX, PointerY);
+        public static bool HoveredNext => Available && _hitNext.Contains(PointerX, PointerY);
+
+        /// <summary>
+        /// A left click, offered before anything else sees it. Returns true
+        /// when the picker took it.
+        ///
+        /// A suit is chosen by clicking it rather than by stepping through
+        /// four of them, because there are four and they are all on screen --
+        /// arrows are for the hunter, where there are seven and only one is
+        /// shown at a time.
+        /// </summary>
+        public static bool HandleClick()
+        {
+            if (!Available)
+            {
+                return false;
+            }
+            if (_hitPrev.Contains(PointerX, PointerY))
+            {
+                Step(-1, 0);
+                return true;
+            }
+            if (_hitNext.Contains(PointerX, PointerY))
+            {
+                Step(1, 0);
+                return true;
+            }
+            for (int i = 0; i < _hitSuits.Length; i++)
+            {
+                if (_hitSuits[i].Contains(PointerX, PointerY))
+                {
+                    Choose(Hunter, i);
+                    return true;
+                }
+            }
+            return false;
+        }
+
         /// <summary>
         /// A key press, taken before the game sees it. Returns true when it
         /// was one of ours, so nothing else acts on it.
@@ -186,8 +308,13 @@ namespace MphRead.Mods
                 suit = ((suit + suitBy) % PlayerColors.Count + PlayerColors.Count)
                     % PlayerColors.Count;
             }
-            RespawnChoice.Request((Hunter)hunter, suit);
-            LauncherPrefs.LastHunter = (Hunter)hunter;
+            Choose((Hunter)hunter, suit);
+        }
+
+        private static void Choose(Hunter hunter, int suit)
+        {
+            RespawnChoice.Request(hunter, suit);
+            LauncherPrefs.LastHunter = hunter;
             LauncherPrefs.LastColor = suit;
             LauncherPrefs.Save();
         }

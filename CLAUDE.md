@@ -165,10 +165,19 @@ Gotchas worth keeping in view without opening another file:
   which draws the list at 170%), so nearest magnification gave every icon a
   staircase with two-pixel steps in some rows and three in others -- reported
   as "the icons are blurry", which it is not; it is a wobbly edge. These
-  frames are silhouettes, so the mask is resampled bilinearly at 4x and
-  pushed through a narrow smoothstep, and `HudObjectInstance.Smooth` asks
-  `DrawHudObject` for linear filtering on that one texture. Everything else
-  stays nearest, because everything else is meant to look like the DS.
+  frame is replicated **hard-edged at 8x**, no interpolation, and
+  `HudObjectInstance.Smooth` asks `DrawHudObject` for linear filtering on that
+  one texture: the GPU is then *minifying* sharp squares, which is those same
+  squares with a hairline of anti-aliasing. Everything else stays nearest,
+  because everything else is meant to look like the DS. **Two traps.** The
+  factor has to stay above the largest magnification in play (about seven, at
+  4K with the list at 170%) or the GPU magnifies instead and the icon goes
+  soft -- 4x did exactly that at 1440p and got the same word back. And
+  resampling the mask (bilinear, then a smoothstep) rounds every corner into a
+  blob: sharp is the goal, the anti-aliasing only stops the edge wobbling.
+  `DrawWeaponList` reuses the instances rather than rebuilding them, because
+  the HUD is set up again on every rotation and nine 256x256 textures a map
+  is a leak.
 - **Changing hunter is asked on the results screen, not in the pause menu.**
   The two rows that used to sit there ("Respawn as", "Suit colour") are gone:
   a pause menu is opened instead of playing, so the one screen where the
@@ -181,7 +190,12 @@ Gotchas worth keeping in view without opening another file:
   rotation was written and never read. Arrow keys or the d-pad. The answer is
   still `RespawnChoice`'s and is still cashed in at the next spawn.
   `GameState.MatchEndingSeconds` and `DedicatedServer.EndSequenceSeconds`
-  are one number in two places and have to move together.
+  are one number in two places and have to move together. The cursor is
+  released for the length of the results screen (`Renderer.OnRenderFrame`
+  reads `EndScreen.Available`) because the picker is something you click:
+  arrows for the hunter, the swatches directly for the suit. The hit boxes are
+  published by the draw (`EndScreen.NoteLayout`) rather than worked out twice,
+  so they cannot drift from the picture.
 - `PacketType.StatusQuery` answers "what map, what mode, how many players"
   without claiming a slot, which is what lets the browser poll idly. A server
   built before it falls back to a slot-taking Hello/Bye probe — redeploy the
@@ -490,6 +504,26 @@ plus a double-counted kill that could end a match early for one client and not
 another, and a transport queue that dropped the newest packets under load
 instead of the oldest. None of it was actually latency; all of it reproduced
 at single-digit-millisecond pings on loopback or the Pi.
+
+A round from real matches on 2026-09-07: **every client died on the map
+rotation, and MP2 HARVESTER's results screen came up black.** One cause.
+`CameraSequence.Intro` is a static loaded only by `SceneSetup.LoadNewRoom`,
+and **a rotation does not go through it** -- it is a room *transition* -- so
+after the first map of a session the results screen flew the sequence
+belonging to the map the session started on, and every `NodeRef` in its
+keyframes named a level no longer in memory. Out of range that is an
+`ArgumentOutOfRangeException` in `RoomEntity.DrawRoomParts` that kills every
+client in the match on the same frame; in range it is a room drawn from a
+part the camera is not in. Three changes:
+`NetRoomChange.ReloadIntroCamSeq` gives each map its own sequence and
+`Initialize`s it; `RoomEntity.ModCanPlace` refuses to cull against a ref this
+room cannot place (indices in range **and** `NodeRef.RoomName` this room or
+one of its connectors); and nothing culls at all while `MatchState` is not
+`InProgress`, because the end-of-match camera is an authored orbit that is
+free to sit outside every room part in the level -- which is the black
+results screen and is not a stale ref at all. Reproduced and confirmed fixed
+with `run-rotate.sh`: six rotations over four maps, zero crashes, and the
+backstop never fires now that the cause is gone.
 
 A second round, from reports out of real matches on 2026-09-04: a freeze that
 existed on one machine only, players who went invisible at the top of one map,

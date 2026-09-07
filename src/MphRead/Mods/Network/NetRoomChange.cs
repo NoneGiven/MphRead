@@ -1,5 +1,6 @@
 using System;
 using MphRead.Entities;
+using MphRead.Formats;
 using MphRead.Formats.Culling;
 
 namespace MphRead.Mods.Network
@@ -218,6 +219,7 @@ namespace MphRead.Mods.Network
             // A rotation is a fresh match: re-assert that nothing in the
             // cheat list is on, in case a long session had one restored.
             NetLaunch.DisableCheatsForMatch();
+            ReloadIntroCamSeq(scene);
             for (int slot = 0; slot < PlayerEntity.Players.Count; slot++)
             {
                 PlayerEntity player = PlayerEntity.Players[slot];
@@ -235,6 +237,62 @@ namespace MphRead.Mods.Network
                 scene.InitEntity(player);
                 scene.InitEntity(player.Halfturret);
                 NetLog.Event($"slot {slot} re-inserted into the new room");
+            }
+        }
+
+        /// <summary>
+        /// Give the new map its own end-of-match camera.
+        ///
+        /// <c>CameraSequence.Intro</c> is a static, and it is loaded in one
+        /// place: <c>SceneSetup.LoadNewRoom</c>, which a rotation does not go
+        /// through -- a rotation is a room *transition*, and
+        /// <c>RoomEntity.LoadRoom</c> has no reason to know about a
+        /// multiplayer intro. So after the first map of a session, every
+        /// map's results screen flew the sequence belonging to the map the
+        /// session started on: its keyframes are positions in a level that is
+        /// no longer in memory, and each one hands the main player's camera a
+        /// <c>NodeRef</c> resolved against that level. Out of range that is an
+        /// exception in <c>RoomEntity.DrawRoomParts</c> which killed every
+        /// client in the match at once; in range it is a black room. Both
+        /// were reported, and which one you got depended on which way the
+        /// rotation went.
+        ///
+        /// The same three lines <c>SceneSetup</c> runs, with the same room-id
+        /// arithmetic, so the two cannot drift. A custom map falls outside
+        /// that id range and correctly gets no intro at all -- which is
+        /// better than keeping the previous map's, and is what the null
+        /// checks in <c>GameState</c> already expect.
+        ///
+        /// <c>Initialize</c> is what re-resolves every keyframe's node
+        /// reference against the room that is loaded now; loading without it
+        /// would leave the same class of stale reference the reload is for.
+        /// </summary>
+        private static void ReloadIntroCamSeq(Scene scene)
+        {
+            CameraSequence.Current = null;
+            CameraSequence.Intro = null;
+            if (!GameState.Multiplayer || PlayerEntity.PlayerCount == 0)
+            {
+                return;
+            }
+            int seqId = scene.RoomId - 93 + 172;
+            if (seqId < 172 || seqId >= 199)
+            {
+                return;
+            }
+            try
+            {
+                CameraSequence intro = CameraSequence.Load(seqId, scene);
+                intro.Initialize();
+                intro.Flags |= CamSeqFlags.Loop;
+                CameraSequence.Intro = intro;
+            }
+            catch (Exception ex)
+            {
+                // No intro is a results screen with a still camera. A match
+                // is not worth losing over one.
+                Console.WriteLine($"[net] no intro camera for room {scene.RoomId}: {ex.Message}");
+                NetLog.Event($"no intro camera for room {scene.RoomId}: {ex.Message}");
             }
         }
 

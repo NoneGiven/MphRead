@@ -383,7 +383,20 @@ namespace MphRead.Entities
                 // icons being "blurry" actually was. See Mods.Render.SmoothHudIcon,
                 // which also explains why the instance keeps the sheet's own
                 // width and height while its texture is four times that.
-                HudObjectInstance listIcon = Mods.Render.SmoothHudIcon.Create(listSheet);
+                // Reused across a map rotation rather than rebuilt. The HUD is
+                // set up again on every Initialize -- which a rotation does --
+                // and PlayerEntity.Create hands back pooled objects, so these
+                // slots survive it. A fresh instance would bind a fresh
+                // texture every rotation and never free the last one, and at
+                // 8x supersampling that is 2.4 MB a map rather than 150 KB.
+                // Tint rebuilds the picture in place when the hunter (and so
+                // the sheet) has actually changed.
+                HudObjectInstance listIcon = _weaponListIcons[i];
+                if (listIcon == null || listIcon.Width != listSheet.Width
+                    || listIcon.Height != listSheet.Height)
+                {
+                    listIcon = Mods.Render.SmoothHudIcon.Create(listSheet);
+                }
                 Mods.Render.SmoothHudIcon.Tint(listIcon, listSheet.CharacterData, i,
                     _weaponListColors[i], _scene);
                 _weaponListIcons[i] = listIcon;

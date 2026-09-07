@@ -28,6 +28,7 @@ namespace MphRead.Entities
         private static readonly ColorRgba _endInk = new ColorRgba(235, 238, 245, 255);
         private static readonly ColorRgba _endDim = new ColorRgba(165, 174, 190, 255);
         private static readonly ColorRgba _endArrow = new ColorRgba(255, 215, 90, 255);
+        private static readonly Vector4 _endSwatchHover = new Vector4(1, 1, 1, 0.28f);
 
         /// <summary>Panel geometry, in HUD units measured off the screen's height.</summary>
         private const float EndPanelWidth = 74;
@@ -79,11 +80,15 @@ namespace MphRead.Entities
             // The arrows are the whole instruction. There is no line of text
             // saying which key to press, because there is no room for one and
             // because a left arrow beside a picture has never needed one.
-            float arrowY = portraitTop + EndPortrait / 2 - 5;
-            DrawText2D(left + 4 * aspect, arrowY, Align.Left, palette: 0, "<",
-                color: _endArrow, fontSpacing: 8, scale: 0.9f);
-            DrawText2D(right - 4 * aspect, arrowY, Align.Right, palette: 0, ">",
-                color: _endArrow, fontSpacing: 8, scale: 0.9f);
+            //
+            // Drawn on a box each rather than as bare glyphs: they are
+            // clickable now, and a target you can hit has to look like one.
+            // The box is also the hit area, published below.
+            float arrowY = portraitTop + EndPortrait / 2 - 6;
+            EndScreen.Hit prev = DrawEndArrow(left + 2 * aspect, arrowY, "<",
+                EndScreen.HoveredPrev, aspect);
+            EndScreen.Hit forward = DrawEndArrow(right - (2 + EndArrowBox) * aspect, arrowY, ">",
+                EndScreen.HoveredNext, aspect);
 
             DrawText2D(centre, portraitTop + EndPortrait + 1, Align.Center, palette: 0,
                 ((Hunter)hunter).ToString().ToUpperInvariant(),
@@ -94,6 +99,10 @@ namespace MphRead.Entities
                 color: _endDim, fontSpacing: 8, scale: 0.45f);
             int suit = EndScreen.Suit;
             DrawEndSuits((Hunter)hunter, suit, left, suitTop + 6, aspect);
+            // What was just drawn, in the window's own coordinates, so a click
+            // is tested against the picture rather than against a second copy
+            // of this arithmetic. See EndScreen.NoteLayout.
+            EndScreen.NoteLayout(prev, forward, _endSuitHits);
             DrawText2D(centre, suitTop + 16, Align.Center, palette: 0,
                 Mods.HunterSuits.Name(Mods.HunterSuits.Color((Hunter)hunter, suit)),
                 color: _endInk, fontSpacing: 8, scale: 0.45f);
@@ -106,6 +115,45 @@ namespace MphRead.Entities
                     color: _endDim, fontSpacing: 8, scale: 0.45f);
             }
         }
+
+        /// <summary>Side of an arrow's clickable box, in HUD height units.</summary>
+        private const float EndArrowBox = 12;
+
+        /// <summary>
+        /// One arrow on its own box, lit while the pointer is over it, and the
+        /// box handed back so it can be clicked.
+        /// </summary>
+        private EndScreen.Hit DrawEndArrow(float x, float y, string glyph, bool hovered, float aspect)
+        {
+            float rightEdge = x + EndArrowBox * aspect;
+            float bottomEdge = y + EndArrowBox;
+            _scene.DrawHudFlatBox(x, y, rightEdge, bottomEdge,
+                hovered ? _endArrowHover : _endArrowWell);
+            DrawText2D(x + EndArrowBox / 2 * aspect, y + 2, Align.Center, palette: 0, glyph,
+                color: _endArrow, fontSpacing: 8, scale: 0.9f);
+            return ModHudHit(x, y, rightEdge, bottomEdge);
+        }
+
+        /// <summary>
+        /// A box in HUD units turned into one in window fractions, which is
+        /// what a mouse position arrives in.
+        ///
+        /// The HUD's horizontal unit is 1/256 of the window and its vertical
+        /// unit 1/192 of it, whatever shape the window is -- the aspect
+        /// correction every measurement above carries is already baked into
+        /// the numbers by the time they reach here, so this is a plain
+        /// division and not a second correction.
+        /// </summary>
+        private static EndScreen.Hit ModHudHit(float left, float top, float right, float bottom)
+        {
+            return new EndScreen.Hit(left / 256f, top / 192f, right / 256f, bottom / 192f);
+        }
+
+        private static readonly Vector4 _endArrowWell = new Vector4(1, 1, 1, 0.10f);
+        private static readonly Vector4 _endArrowHover = new Vector4(1, 0.84f, 0.35f, 0.32f);
+
+        private readonly EndScreen.Hit[] _endSuitHits =
+            new EndScreen.Hit[Mods.Network.PlayerColors.Count];
 
         /// <summary>
         /// The four suits as four blocks of their own colour, the chosen one
@@ -121,6 +169,7 @@ namespace MphRead.Entities
             const float slot = 16;
             const float box = 11;
             const float height = 8;
+            int hoveredSuit = EndScreen.HoveredSuit();
             float startX = left + (EndPanelWidth - slot * Mods.Network.PlayerColors.Count) / 2 * aspect;
             for (int i = 0; i < Mods.Network.PlayerColors.Count; i++)
             {
@@ -138,6 +187,19 @@ namespace MphRead.Entities
                 }
                 _scene.DrawHudFlatBox(x, top, x + box * aspect, top + height,
                     new Vector4(color.Red / 255f, color.Green / 255f, color.Blue / 255f, 1));
+                if (i == hoveredSuit && i != chosen)
+                {
+                    // A wash over the swatch rather than a ring around it: the
+                    // chosen one already wears the ring, and two kinds of
+                    // outline on one row is two things to tell apart.
+                    _scene.DrawHudFlatBox(x, top, x + box * aspect, top + height,
+                        _endSwatchHover);
+                }
+                // A slot's worth, not a swatch's: the gaps between four
+                // squares are dead pixels in the middle of the one row people
+                // will aim at, and there is nothing else to hit there.
+                _endSuitHits[i] = ModHudHit(startX + i * slot * aspect, top - 1.5f,
+                    startX + (i + 1) * slot * aspect, top + height + 1.5f);
             }
         }
     }

@@ -906,10 +906,152 @@ namespace MphRead.Entities
             _partVisInfoHead = null;
         }
 
+        /// <summary>
+        /// Whether this room can place the node reference it is being asked to
+        /// cull against.
+        ///
+        /// A <see cref="NodeRef"/> is three indices into one particular room's
+        /// arrays, and nothing about it says which room. That was survivable
+        /// while a session played one map: it stopped being survivable when
+        /// the server grew a rotation, because <c>PlayerEntity.Create</c>
+        /// hands back pooled objects and <c>CameraSequence.Intro</c> is a
+        /// static, so a reference resolved against the map the session started
+        /// on outlives that map and is handed to this one. Out of range it is
+        /// an <see cref="ArgumentOutOfRangeException"/> in
+        /// <see cref="DrawRoomParts"/> that kills every client in the match at
+        /// once; in range it is a room drawn from a part the camera is not in,
+        /// which is black with every other player culled out of it.
+        ///
+        /// Both failures are the same question left unasked, so this asks it:
+        /// the indices have to address something this room actually has, and
+        /// the name the reference was resolved against has to be this room or
+        /// one of the connectors loaded into it. Refusing is cheap and safe --
+        /// <see cref="UpdateRoomParts"/> returning early leaves
+        /// <c>_partVisInfoHead</c> null, which <c>GetDrawInfo</c> already
+        /// reads as "draw every part". A room drawn uncalled is the correct
+        /// picture; the culling is an optimisation and this is the one case
+        /// where it cannot be trusted.
+        /// </summary>
+        private bool ModCanPlace(NodeRef nodeRef)
+        {
+            if (nodeRef.PartIndex < 0 || nodeRef.PartIndex >= _roomPartMax
+                || nodeRef.NodeIndex < 0 || nodeRef.ModelIndex < 0)
+            {
+                return false;
+            }
+            ModelInstance partInst;
+            if (nodeRef.ModelIndex == 0)
+            {
+                if (_models.Count == 0)
+                {
+                    return false;
+                }
+                partInst = _models[0];
+            }
+            else
+            {
+                // DrawRoomParts indexes both of these with the same reference,
+                // and they are Lists -- which is why the failure arrives as
+                // ArgumentOutOfRangeException rather than the array kind.
+                if (nodeRef.ModelIndex > _connectorModels.Count
+                    || nodeRef.ModelIndex >= _roomCollision.Count)
+                {
+                    return false;
+                }
+                partInst = _connectorModels[nodeRef.ModelIndex - 1];
+            }
+            if (nodeRef.NodeIndex >= partInst.Model.Nodes.Count)
+            {
+                return false;
+            }
+            // The half an index range cannot answer: a 27-node room's index is
+            // quietly in range in a 75-node one, and that is the black-room
+            // symptom rather than the crash. A reference built without a name
+            // is let through -- there is nothing to compare, and every one
+            // this class makes carries one.
+            if (nodeRef.RoomName != null && !ModKnowsRoom(nodeRef.RoomName))
+            {
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Whether a name is this room or something loaded into it. Connector
+        /// portals are resolved against the connector's own name (see
+        /// <c>AddDoorPortal</c>), so the room's name alone would reject
+        /// references that are perfectly good.
+        /// </summary>
+        private bool ModKnowsRoom(string name)
+        {
+            if (name == Meta.Name)
+            {
+                return true;
+            }
+            for (int i = 0; i < _roomCollision.Count; i++)
+            {
+                if (_roomCollision[i].ConnectorName == name)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Said once per room rather than sixty times a second: this fires on
+        /// every frame of whatever state produced the bad reference, and the
+        /// interesting fact is that it happened at all.
+        /// </summary>
+        private bool _modReportedStaleNodeRef;
+
+        private void ModNoteStaleNodeRef(NodeRef nodeRef, string where)
+        {
+            if (_modReportedStaleNodeRef)
+            {
+                return;
+            }
+            _modReportedStaleNodeRef = true;
+            string message = $"[room] {where}: node ref part {nodeRef.PartIndex} node "
+                + $"{nodeRef.NodeIndex} model {nodeRef.ModelIndex} from "
+                + $"'{nodeRef.RoomName ?? "?"}' does not belong to {Meta.Name}; "
+                + "drawing every part instead";
+            Console.WriteLine(message);
+            Mods.Network.NetLog.Event(message);
+        }
+
         private void UpdateRoomParts()
         {
             NodeRef curNodeRef = PlayerEntity.Main.CameraInfo.NodeRef;
             if (_scene.CameraMode != CameraMode.Player || curNodeRef.PartIndex == -1)
+            {
+                return;
+            }
+            // Before anything is indexed with it. See ModCanPlace: a map
+            // rotation hands this room references belonging to the one the
+            // session started on, and the crash they cause takes every client
+            // in the match down together.
+            if (!ModCanPlace(curNodeRef))
+            {
+                ModNoteStaleNodeRef(curNodeRef, "camera");
+                return;
+            }
+            // And no culling at all once the match is over.
+            //
+            // The end-of-match camera is the one camera in the game that is
+            // not out of somebody's eyes: it is an authored sequence that
+            // orbits the winner, and it is free to sit outside every room part
+            // in the level -- which is a portal walk that reaches nothing and
+            // a results screen that is black with a few stray polygons in the
+            // corners. That was reported on MP2 HARVESTER and it is not a
+            // stale reference; the reference is this room's and simply
+            // describes a place the geometry does not cover.
+            //
+            // Returning here draws every part, which is the correct picture
+            // and merely uncalled. It costs nothing worth having: the match is
+            // over, nobody is playing, and the ten seconds this covers are the
+            // ten seconds in a session where frame rate matters least.
+            if (GameState.Multiplayer && GameState.MatchState != MatchState.InProgress)
             {
                 return;
             }
@@ -1637,6 +1779,17 @@ namespace MphRead.Entities
             RoomPartVisInfo? roomPart = _partVisInfoHead;
             while (roomPart != null)
             {
+                // UpdateRoomParts has already refused anything this room
+                // cannot place, so this never fires -- and it is here anyway
+                // because the cost of being wrong is every client in the match
+                // dying on the same frame, and the cost of the check is three
+                // comparisons per visible part. See ModCanPlace.
+                if (!ModCanPlace(roomPart.NodeRef))
+                {
+                    ModNoteStaleNodeRef(roomPart.NodeRef, "visible part");
+                    roomPart = roomPart.Next;
+                    continue;
+                }
                 RoomFrustumItem? frustumItem = _roomFrustumLinks[roomPart.NodeRef.PartIndex];
                 int nodeIndex = roomPart.NodeRef.NodeIndex;
                 int modelIndex = roomPart.NodeRef.ModelIndex;
