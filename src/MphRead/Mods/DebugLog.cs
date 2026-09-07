@@ -166,10 +166,25 @@ namespace MphRead.Mods
                 if (String.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOTNET_DbgEnableMiniDump")))
                 {
                     // The next thing to ask for when that file turns out to
-                    // hold a fault with no stack under it.
-                    Line("crash", "for a full native dump of the next crash, start the game "
-                        + "with DOTNET_DbgEnableMiniDump=1 (and DOTNET_DbgMiniDumpType=4 "
-                        + "for a complete one)");
+                    // hold a fault with no stack under it. Written out as the
+                    // line to paste rather than as three variable names,
+                    // because the person who reads this log is not the person
+                    // who has to type it.
+                    //
+                    // Type 4 is not a preference here: createdump refuses
+                    // every other kind in a single-file app ("Only full dumps
+                    // are supported by single file apps"), which is what this
+                    // build is on every platform. Measured on the published
+                    // linux-x64 package: type 2 refused, type 4 wrote a
+                    // 113 MB core from an abort -- the same signal 6 a
+                    // `terminate called after throwing ...` ends on.
+                    string directory = System.IO.Path.GetDirectoryName(Path) ?? ".";
+                    Line("crash", "no crash dump is configured. For a native stack from the "
+                        + "next crash, start the game with these three set (type 4 is "
+                        + "required -- a single-file app supports no other kind, and the "
+                        + "file is around 110 MB, which zips well):");
+                    Line("crash", "  DOTNET_DbgEnableMiniDump=1 DOTNET_DbgMiniDumpType=4 "
+                        + $"DOTNET_DbgMiniDumpName={System.IO.Path.Combine(directory, "crash-%p.dmp")}");
                 }
             }
             catch (Exception ex)
