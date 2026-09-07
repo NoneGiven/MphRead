@@ -288,5 +288,31 @@ namespace MphRead.Mods.Update
 
         public static string PackageSuffix() =>
             IsServerBuild ? $"server-{Rid()}" : Rid();
+
+        /// <summary>
+        /// The executable inside a release package for this build, which is
+        /// not necessarily the name of the file currently running.
+        ///
+        /// Only the Windows server package renames its binary to
+        /// <c>FruityPrimeServer.exe</c> -- the Linux and ARM64 server
+        /// packages ship the plain <see cref="Mods.Branding.FileName"/>, same
+        /// as the game (see the binary table in CLAUDE.md). Getting this
+        /// wrong here once meant every non-Windows server's own staging
+        /// check rejected every release forever, since the code doing the
+        /// check *is* the code that needed the fix. One implementation,
+        /// shared by <c>DesktopUpdate</c> and <c>ServerUpdate</c>, so the two
+        /// cannot drift apart and repeat that.
+        /// </summary>
+        public static string BinaryName()
+        {
+            if (!OperatingSystem.IsWindows())
+            {
+                return Mods.Branding.FileName;
+            }
+            string name = IsServerBuild
+                ? Mods.Branding.FileName + "Server"
+                : Mods.Branding.FileName;
+            return name + ".exe";
+        }
     }
 }

@@ -124,10 +124,10 @@ namespace MphRead.Mods.Update
                     TarFile.ExtractToDirectory(plain, StagedBuild, overwriteFiles: true);
                 }
                 File.Delete(archive);
-                string binary = Path.Combine(StagedBuild, BinaryName());
+                string binary = Path.Combine(StagedBuild, UpdateCheck.BinaryName());
                 if (!File.Exists(binary))
                 {
-                    LastError = $"the package does not contain {BinaryName()}";
+                    LastError = $"the package does not contain {UpdateCheck.BinaryName()}";
                     return false;
                 }
                 MakeExecutable(binary);
@@ -163,7 +163,7 @@ namespace MphRead.Mods.Update
         {
             try
             {
-                string binary = Path.Combine(StagedBuild, BinaryName());
+                string binary = Path.Combine(StagedBuild, UpdateCheck.BinaryName());
                 var start = new ProcessStartInfo(binary)
                 {
                     WorkingDirectory = StagedBuild,
@@ -233,7 +233,7 @@ namespace MphRead.Mods.Update
             }
             try
             {
-                string binary = Path.Combine(target, BinaryName());
+                string binary = Path.Combine(target, UpdateCheck.BinaryName());
                 MakeExecutable(binary);
                 var restart = new ProcessStartInfo(binary)
                 {
@@ -345,19 +345,6 @@ namespace MphRead.Mods.Update
             {
                 // Litter, not a failure. The next stage overwrites it.
             }
-        }
-
-        /// <summary>
-        /// The executable inside the package, which is not necessarily the one
-        /// running: a server build's file has a name of its own, and this must
-        /// name the file the *release* contains for this package.
-        /// </summary>
-        private static string BinaryName()
-        {
-            string name = UpdateCheck.IsServerBuild
-                ? Branding.FileName + "Server"
-                : Branding.FileName;
-            return OperatingSystem.IsWindows() ? name + ".exe" : name;
         }
 
         private static void MakeExecutable(string path)

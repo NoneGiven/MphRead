@@ -458,7 +458,7 @@ namespace MphRead.Mods.Update
         {
             try
             {
-                string binary = Path.Combine(target, BinaryName());
+                string binary = Path.Combine(target, UpdateCheck.BinaryName());
                 var start = new ProcessStartInfo(binary)
                 {
                     WorkingDirectory = target,
@@ -475,14 +475,6 @@ namespace MphRead.Mods.Update
                 Console.WriteLine($"[update] could not restart: {ex.Message}");
                 return false;
             }
-        }
-
-        private static string BinaryName()
-        {
-            string name = UpdateCheck.IsServerBuild
-                ? Branding.FileName + "Server"
-                : Branding.FileName;
-            return OperatingSystem.IsWindows() ? name + ".exe" : name;
         }
 
         private static void MakeExecutable(string path)
