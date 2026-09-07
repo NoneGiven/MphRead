@@ -754,6 +754,26 @@ namespace MphRead.Mods.Render
             ES.GL.Viewport(x, y, width, height);
         }
 
+        /// <summary>
+        /// Scissor, which ES has and the desktop overload list here did not.
+        /// The results screen's hunter preview clears and draws inside one
+        /// rectangle of the frame; see <c>Scene.ModDrawPreview</c>.
+        /// </summary>
+        public static void Scissor(int x, int y, int width, int height)
+        {
+            ES.GL.Scissor(x, y, width, height);
+        }
+
+        /// <summary>
+        /// The four-component form. The desktop GL takes a Color4 or four
+        /// floats; only the first was mirrored here, and the preview pass
+        /// wants to put the clear colour back the way it found it.
+        /// </summary>
+        public static void ClearColor(float red, float green, float blue, float alpha)
+        {
+            ES.GL.ClearColor(red, green, blue, alpha);
+        }
+
         public static void PixelStore(PixelStoreParameter pname, int param)
         {
             ES.GL.PixelStore((ES.PixelStoreParameter)(int)pname, param);

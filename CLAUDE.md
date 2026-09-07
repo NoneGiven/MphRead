@@ -187,7 +187,20 @@ Gotchas worth keeping in view without opening another file:
   whose colours are read out of that hunter's model (`Mods/HunterSuits.cs`,
   nothing is written down), and the next map's name off
   `MatchStatePacket.NextRoomKey`, which had been on the wire since the
-  rotation was written and never read. Arrow keys or the d-pad. The answer is
+  rotation was written and never read. **The hunter is the real model, not a
+  sprite** (`Mods/Render/HunterPreview.cs`): it is an `EntityBase` that is
+  *never inserted into the scene* -- so it takes no slot, runs no Process,
+  holds no NodeRef and cannot outlive a room change -- whose items are
+  collected last and drawn in a pass of their own
+  (`Mods/Render/PreviewPass.cs`) into a scissored corner with its own camera,
+  its own fixed lighting and its own cleared depth buffer, so nothing in the
+  level can occlude, light or cull it. It stands still, facing the camera
+  (these models are authored facing -Z, hence the half turn) in the `Idle`
+  animation, because with no animation set the skeleton draws as authored,
+  which is a T-pose. The panel is drawn in four boxes with a hole where the
+  model lands, since the model reaches the frame before the HUD does. The
+  sprite portrait is still there as the fallback for a model that will not
+  load. Arrow keys or the d-pad. The answer is
   still `RespawnChoice`'s and is still cashed in at the next spawn.
   `GameState.MatchEndingSeconds` and `DedicatedServer.EndSequenceSeconds`
   are one number in two places and have to move together. The cursor is

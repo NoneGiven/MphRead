@@ -1494,6 +1494,10 @@ namespace MphRead
             if (ProcessFrame && _room != null)
             {
                 GameState.ProcessFrame(this);
+                // Turned once a step, never in a draw: a picture with no step
+                // behind it must not advance anything, or the hunter spins at
+                // the frame rate rather than at 45 degrees a second.
+                ModStepPreview();
                 if (GameState.MatchState == MatchState.InProgress && !GameState.MenuPause)
                 {
                     UpdateScene();
@@ -2303,6 +2307,10 @@ namespace MphRead
             GL.Disable(EnableCap.StencilTest);
             GL.PolygonMode(TriangleFace.FrontAndBack, OpenTK.Graphics.OpenGL.PolygonMode.Fill);
 
+            // After the world and before the window: the preview is a corner
+            // of the scene target with its own camera in it, so the HUD's own
+            // panel is drawn over it afterwards with a hole where this lands.
+            ModDrawPreview();
             if (PlayerEntity.Main.LoadFlags.TestFlag(LoadFlags.Active) && CameraMode == CameraMode.Player)
             {
                 SetHudLayerUniforms();
@@ -3635,6 +3643,15 @@ namespace MphRead
 
         private void AddRenderItem(RenderItem item)
         {
+            // The results screen's hunter preview is drawn in a pass of its
+            // own, with its own camera and its own depth buffer, so its items
+            // must not join the world's three lists. See ModCollectPreview.
+            if (_collectingPreview)
+            {
+                _previewItems.Add(item);
+                _usedRenderItems.Enqueue(item);
+                return;
+            }
             if (item.RenderMode == RenderMode.Decal)
             {
                 _decalItems.Add(item);
@@ -3827,6 +3844,9 @@ namespace MphRead
                     single.AddRenderItem(this);
                 }
             }
+            // Last, and on its own: nothing else may add an item while the
+            // preview is being collected.
+            ModCollectPreview();
         }
 
         private void UpdateUniforms()

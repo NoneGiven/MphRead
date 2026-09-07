@@ -33,8 +33,15 @@ namespace MphRead.Entities
         /// <summary>Panel geometry, in HUD units measured off the screen's height.</summary>
         private const float EndPanelWidth = 74;
         private const float EndPanelTop = 4;
-        private const float EndPanelHeight = 82;
+        private const float EndPanelHeight = 92;
         private const float EndPortrait = 26;
+
+        /// <summary>
+        /// Side of the 3D preview window. Square, because the camera behind it
+        /// is square and a hunter standing up fits a square better than the
+        /// panel's own shape does.
+        /// </summary>
+        private const float EndPreview = 38;
 
         internal void ModDrawEndScreen()
         {
@@ -47,7 +54,37 @@ namespace MphRead.Entities
             float left = right - EndPanelWidth * aspect;
             float centre = left + EndPanelWidth / 2 * aspect;
             float bottom = EndPanelTop + EndPanelHeight;
-            _scene.DrawHudFlatBox(left, EndPanelTop, right, bottom, _endPanel);
+            // Where the 3D preview goes, asked for before the panel is drawn
+            // so the hole and the model agree even on the first frame.
+            float previewTop = EndPanelTop + 8;
+            float previewBottom = previewTop + EndPreview;
+            float previewLeft = centre - EndPreview / 2 * aspect;
+            float previewRight = centre + EndPreview / 2 * aspect;
+            Scene.PreviewWanted = true;
+            Scene.PreviewLeft = previewLeft / 256f;
+            Scene.PreviewTop = previewTop / 192f;
+            Scene.PreviewRight = previewRight / 256f;
+            Scene.PreviewBottom = previewBottom / 192f;
+            bool preview = _scene.ModPreviewDrawn;
+            // The panel, in two pieces when the preview is up: the model is
+            // drawn into the frame *before* the HUD is, so a panel drawn
+            // across it would simply cover it. Leaving the slot empty is also
+            // the better picture -- the hunter stands in a window of its own
+            // rather than on a black rectangle.
+            if (preview)
+            {
+                _scene.DrawHudFlatBox(left, EndPanelTop, right, previewTop, _endPanel);
+                _scene.DrawHudFlatBox(left, previewTop, previewLeft, previewBottom, _endPanel);
+                _scene.DrawHudFlatBox(previewRight, previewTop, right, previewBottom, _endPanel);
+                _scene.DrawHudFlatBox(left, previewBottom, right, bottom, _endPanel);
+                // A frame around the window, so it reads as a viewport rather
+                // than as a hole somebody forgot to fill.
+                DrawEndFrame(previewLeft, previewTop, previewRight, previewBottom, aspect);
+            }
+            else
+            {
+                _scene.DrawHudFlatBox(left, EndPanelTop, right, bottom, _endPanel);
+            }
             // A hairline down the inside edge. What is behind this is a lit
             // room and a scoreboard, and a panel with no edge on it reads as
             // a dark patch of the map rather than as something to look at.
@@ -57,24 +94,27 @@ namespace MphRead.Entities
                 color: _endDim, fontSpacing: 8, scale: 0.5f);
 
             int hunter = Math.Clamp((int)EndScreen.Hunter, 0, Mods.Launcher.Hunters.Playable - 1);
-            float portraitTop = EndPanelTop + 9;
-            // The portraits are built with the rest of the HUD, so this is
-            // never null in a match -- and a results screen is not the place
-            // to find out that some path reached here before the HUD was set
-            // up. The rest of the panel is still worth drawing without it.
-            HudObjectInstance? portrait = hunter < _hunterInsts.Length
-                ? _hunterInsts[hunter]
-                : null;
-            if (portrait != null)
+            // The sprite portrait, only when the model could not be drawn --
+            // a hunter whose model will not load, or a frame before the
+            // preview has built its first items. It answers less than the
+            // model does (there is one per hunter and it does not know what a
+            // suit is) but it is never nothing.
+            if (!preview)
             {
-                // Mode 1 and a scale off the frame's own 32 units, so the
-                // picture keeps its shape on any window -- the same reasoning
-                // as the weapon list and the target-info portrait, see
-                // DrawOpponent.
-                portrait.Alpha = 1;
-                portrait.PositionX = (centre - EndPortrait / 2 * aspect) / 256f;
-                portrait.PositionY = portraitTop / 192f;
-                _scene.DrawHudObject(portrait, mode: 1, scale: EndPortrait / 32f);
+                HudObjectInstance? portrait = hunter < _hunterInsts.Length
+                    ? _hunterInsts[hunter]
+                    : null;
+                if (portrait != null)
+                {
+                    // Mode 1 and a scale off the frame's own 32 units, so the
+                    // picture keeps its shape on any window -- the same
+                    // reasoning as the weapon list and the target-info
+                    // portrait, see DrawOpponent.
+                    portrait.Alpha = 1;
+                    portrait.PositionX = (centre - EndPortrait / 2 * aspect) / 256f;
+                    portrait.PositionY = (previewTop + (EndPreview - EndPortrait) / 2) / 192f;
+                    _scene.DrawHudObject(portrait, mode: 1, scale: EndPortrait / 32f);
+                }
             }
 
             // The arrows are the whole instruction. There is no line of text
@@ -84,17 +124,17 @@ namespace MphRead.Entities
             // Drawn on a box each rather than as bare glyphs: they are
             // clickable now, and a target you can hit has to look like one.
             // The box is also the hit area, published below.
-            float arrowY = portraitTop + EndPortrait / 2 - 6;
+            float arrowY = previewTop + EndPreview / 2 - 6;
             EndScreen.Hit prev = DrawEndArrow(left + 2 * aspect, arrowY, "<",
                 EndScreen.HoveredPrev, aspect);
             EndScreen.Hit forward = DrawEndArrow(right - (2 + EndArrowBox) * aspect, arrowY, ">",
                 EndScreen.HoveredNext, aspect);
 
-            DrawText2D(centre, portraitTop + EndPortrait + 1, Align.Center, palette: 0,
+            DrawText2D(centre, previewBottom + 2, Align.Center, palette: 0,
                 ((Hunter)hunter).ToString().ToUpperInvariant(),
                 color: _endInk, fontSpacing: 8, scale: 0.6f);
 
-            float suitTop = portraitTop + EndPortrait + 11;
+            float suitTop = previewBottom + 12;
             DrawText2D(centre, suitTop, Align.Center, palette: 0, "SUIT",
                 color: _endDim, fontSpacing: 8, scale: 0.45f);
             int suit = EndScreen.Suit;
@@ -114,6 +154,16 @@ namespace MphRead.Entities
                     $"NEXT: {next.ToUpperInvariant()}",
                     color: _endDim, fontSpacing: 8, scale: 0.45f);
             }
+        }
+
+        /// <summary>A hairline box around the preview window.</summary>
+        private void DrawEndFrame(float left, float top, float right, float bottom, float aspect)
+        {
+            const float line = 0.7f;
+            _scene.DrawHudFlatBox(left - line * aspect, top - line, right + line * aspect, top, _endPanelEdge);
+            _scene.DrawHudFlatBox(left - line * aspect, bottom, right + line * aspect, bottom + line, _endPanelEdge);
+            _scene.DrawHudFlatBox(left - line * aspect, top, left, bottom, _endPanelEdge);
+            _scene.DrawHudFlatBox(right, top, right + line * aspect, bottom, _endPanelEdge);
         }
 
         /// <summary>Side of an arrow's clickable box, in HUD height units.</summary>
