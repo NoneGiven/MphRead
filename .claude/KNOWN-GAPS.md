@@ -20,6 +20,35 @@ claiming coverage that isn't there.
   close this is a debug log from the phone it happens on: the render thread
   already catches and prints the whole exception (`GameView.Run`), so the
   stack is one switch away.
+- **The raw gamepad fallback has never been held against a real unmapped
+  pad.** `GamepadLayout`'s two shapes are written from the layouts SDL's own
+  database uses for them, and the mapping-file path
+  (`gamecontrollerdb.txt`, `SDL_GAMECONTROLLERCONFIG`) is exercised only by
+  code inspection: this box has no `/dev/uinput` to fake a third pad with, and
+  the virtual-pad recipe in `GAMEPAD.md` needs root. What is proven is that a
+  mapped pad still takes the mapped path, since that code is unchanged. When a
+  player reports buttons in the wrong places, `-gamepad` prints the mapping
+  line to correct rather than a shrug.
+- **Disruption over the wire is implemented and unmeasured.** `FlagBurning`
+  was measured crossing (255 frames on the victim's own machine against the
+  authority's 299, Kanden vs Spire, 70 s); `FlagDisrupted` is the same
+  mechanism, the same shape and the same call site, and the scripted tour
+  simply never landed a charged Volt Driver -- 21 hits in that run and not one
+  of them disrupted anybody. The feature check counts it now, so the next run
+  that manages one will say so.
+- **Changing hunter between lives is proven offline and not in a match.** The
+  swap itself was measured in a `-maptest`: requested while alive at frame
+  241, still Samus through 500 frames of damage, dead at 781, back at 961 as
+  Sylux on 99 energy in suit 2. What that run cannot show is the other half --
+  the re-Identify, the roster, and every other client's `NetSlotManager.Sync`
+  picking up the new hunter -- which needs two real clients and somebody
+  opening the pause menu.
+- **The enemy portrait's size was fixed by measurement, not by a picture of
+  the fault.** `DrawHudObject`'s mode 0 was measured stretching a 32-unit
+  sprite to 20.7, 27.7 and 36.3 units tall at 4:3, 16:9 and 21:9 (the weapon
+  icon, three captures), which is what puts the opponent portrait over the
+  name below it; the portrait itself is drawn for two seconds after a hit and
+  the sampler never caught one.
 - **The one launcher has never run on Windows or macOS.** Same code on all
   three desktops now, but the only machine that's shown it is this WSL box
   (front screen, settings, map grid, pause menu — driven and screenshotted

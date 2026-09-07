@@ -23,7 +23,9 @@ A fork of [NoneGiven/MphRead](https://github.com/NoneGiven/MphRead).
 - **Custom maps**
 - **Bots**: 0 to 7 offline
 - **All 12 modes**: Battle, Survival, Capture, Bounty, Defender, Nodes, Prime Hunter, and teams
-- **Keyboard & mouse**
+- **Keyboard & mouse**, and **gamepads**
+- **Pick your suit colour**, and never share one with the other Samus in the match
+- **Change hunter between lives**, from the pause menu
 - **Cel shading**
 - **Modern HUD**
 - **Story mode**
@@ -70,7 +72,6 @@ map list next time you open the launcher, picture and all. **de_dust2** comes wi
 ## Not done yet
 
 - **Adventure co-op.** The launcher's toggle is a placeholder; the story is one player.
-- **Gamepads**, on any platform.
 
 ## Building
 
