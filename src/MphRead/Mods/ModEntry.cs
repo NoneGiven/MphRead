@@ -891,7 +891,11 @@ namespace MphRead.Mods
                 Environment.ExitCode = Network.NetCheckClient.Run(check, ParsePort(args),
                     ParseName(args), ParseHunter(args), seconds, shots, width, height,
                     recordDemo: HasFlag(args, "recorddemo"),
-                    spectateAt: spectateAt, rejoinAt: rejoinAt);
+                    spectateAt: spectateAt, rejoinAt: rejoinAt,
+                    // -recolor N is a suit, and the harness needs to be able to
+                    // ask for one: two clients asking for the same suit on the
+                    // same hunter is precisely the case PlayerColors exists for.
+                    color: ValueAfter(args, "recolor") != null ? ParseRecolor(args) : -1);
                 return true;
             }
 

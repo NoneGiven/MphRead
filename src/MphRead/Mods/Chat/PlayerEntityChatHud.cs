@@ -80,6 +80,41 @@ namespace MphRead.Entities
         /// </summary>
         private const float ChatMargin = 3;
 
+        /// <summary>
+        /// Where a line starts: hard left, or past the weapon column when
+        /// there is one.
+        ///
+        /// The modern HUD -- which Pro mode always turns on, at 170% -- draws
+        /// one row per weapon you are carrying down the left edge from y 46.
+        /// Nine of them at that size reach y 168, which is exactly where the
+        /// prompt sits, so a player holding a full loadout had the log written
+        /// through their own weapon list. Under it are Pro mode's energy panel
+        /// (y 170 to the bottom edge) and, in the stock HUD, the helmet's
+        /// moulding: there is no room lower down to move to, and the log
+        /// cannot climb without ending up in the middle of the screen.
+        ///
+        /// So it steps right, past the panel, by the panel's own width. A
+        /// fixed step rather than one that measures how many weapons are
+        /// actually held: the list grows as you pick things up, and a chat log
+        /// that slid sideways when somebody collected a Battlehammer would be
+        /// worse than one that sits slightly further in. Still the bottom-left
+        /// corner; just not on top of the one column that is already spoken
+        /// for.
+        /// </summary>
+        private static float ChatLeft(float aspect)
+        {
+            float margin = ChatMargin * aspect;
+            if (!Features.ModernHud)
+            {
+                return margin;
+            }
+            // DrawWeaponList's own geometry: the panel starts 2 units in and
+            // is 26 wide, both scaled and both measured off the screen's
+            // height. Kept in step with it by being the same two numbers.
+            float scale = Math.Clamp(Features.WeaponListScale, 0.6f, 2f);
+            return 2 * aspect + 26f * scale * aspect + margin;
+        }
+
         // All green, with a hierarchy inside it: who said it stands out from
         // what they said, and the game's own notices are dimmer than either.
         private static readonly ColorRgba ChatName = new ColorRgba(110, 255, 130, 255);
@@ -127,7 +162,7 @@ namespace MphRead.Entities
             }
             ChatBox.CollectVisible(_chatVisible);
             float aspect = HudAspectFix;
-            float x = ChatMargin * aspect;
+            float x = ChatLeft(aspect);
             // Up from the prompt by however many lines there actually are, so
             // a single message sits just above the prompt and a full log
             // grows towards the middle of the screen. The oldest is drawn
@@ -205,10 +240,14 @@ namespace MphRead.Entities
             return ChatFont.Measure(text) * ChatScale * aspect;
         }
 
-        /// <summary>The screen's width, less what is already spoken for.</summary>
+        /// <summary>
+        /// The screen's width, less what is already spoken for: the indent on
+        /// the left, the margin on the right, and whatever of this line has
+        /// been drawn already.
+        /// </summary>
         private static float ChatRoom(float aspect, float used)
         {
-            return 256 - ChatMargin * aspect * 2 - used;
+            return 256 - ChatLeft(aspect) - ChatMargin * aspect - used;
         }
 
         /// <summary>As much of a received line as fits, from the start.</summary>

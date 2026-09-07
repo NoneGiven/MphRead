@@ -132,7 +132,7 @@ namespace MphRead.Mods.Network
 
         private NetCheckClient(string name, string roomKey, GameMode mode, Hunter hunter,
             double seconds, string? shotDirectory, int width, int height,
-            double spectateAt = -1, double rejoinAt = -1)
+            double spectateAt = -1, double rejoinAt = -1, int color = 0)
             : base(GameSettings(), WindowSettings(width, height))
         {
             _name = name;
@@ -146,7 +146,7 @@ namespace MphRead.Mods.Network
                 _remotes[i] = new RemoteView();
             }
             Scene = new Scene(Size, KeyboardState, MouseState, _ => { }, Close);
-            NetLaunch.BuildPlayers(Scene, hunter, 0);
+            NetLaunch.BuildPlayers(Scene, hunter, color);
             Scene.AddRoom(roomKey, mode, playerCount: NetLaunch.RoomPlayerCount);
         }
 
@@ -659,9 +659,9 @@ namespace MphRead.Mods.Network
 
         public static int Run(string host, int port, string name, Hunter hunter, double seconds,
             string? shotDirectory, int width, int height, bool recordDemo = false,
-            double spectateAt = -1, double rejoinAt = -1)
+            double spectateAt = -1, double rejoinAt = -1, int color = -1)
         {
-            if (!NetLaunch.Join(host, port, name, hunter))
+            if (!NetLaunch.Join(host, port, name, hunter, color: color))
             {
                 Console.WriteLine($"[netcheck] {name} could not join");
                 NetSession.Stop();
@@ -684,7 +684,8 @@ namespace MphRead.Mods.Network
             try
             {
                 window = new NetCheckClient(name, room.RoomKey, room.Mode, hunter,
-                    seconds, shotDirectory, width, height, spectateAt, rejoinAt);
+                    seconds, shotDirectory, width, height, spectateAt, rejoinAt,
+                    NetSession.LocalColor);
                 window.Run();
                 window.Report();
                 return window.Passed && window._featureFailures == 0 ? 0 : 1;

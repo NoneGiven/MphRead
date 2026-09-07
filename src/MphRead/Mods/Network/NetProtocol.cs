@@ -624,19 +624,23 @@ namespace MphRead.Mods.Network
     {
         public const int MaxNameBytes = 16;
         public const int MaxSlots = PlayerEntity.SlotCapacity;
-        // Slot, hunter, round trip time and name per entry. The hunter travels
-        // with the name because both answer the same question -- who is in
-        // this slot -- and because a client that never learns it draws every
-        // other player as whichever hunter this machine happens to have
-        // picked. The ping rides along for the same reason: it is a property
-        // of who is in the slot, the server is the only party that can measure
-        // it for everybody, and it already sends this packet every second.
-        public const int EntrySize = 1 + 1 + 2 + MaxNameBytes;
+        // Slot, hunter, suit colour, round trip time and name per entry. The
+        // hunter travels with the name because both answer the same question
+        // -- who is in this slot -- and because a client that never learns it
+        // draws every other player as whichever hunter this machine happens to
+        // have picked. The colour is the same fact one step further: without
+        // it every client picked its own, so two people on the same hunter
+        // were the same figure in the same suit on every screen. The ping
+        // rides along for the same reason: it is a property of who is in the
+        // slot, the server is the only party that can measure it for
+        // everybody, and it already sends this packet every second.
+        public const int EntrySize = 1 + 1 + 1 + 2 + MaxNameBytes;
         public const int Size = 1 + MaxSlots * EntrySize;
 
         public byte Count;
         public byte[] Slots;      // slot index per entry
         public byte[] Hunters;    // Hunter enum value per entry
+        public byte[] Colors;     // suit palette asked for, 0-3
         public ushort[] Pings;    // round trip to the server, milliseconds
         public string[] Names;
 
@@ -647,6 +651,7 @@ namespace MphRead.Mods.Network
                 Count = 0,
                 Slots = new byte[MaxSlots],
                 Hunters = new byte[MaxSlots],
+                Colors = new byte[MaxSlots],
                 Pings = new ushort[MaxSlots],
                 Names = new string[MaxSlots]
             };
@@ -661,8 +666,9 @@ namespace MphRead.Mods.Network
             {
                 dest[offset] = Slots[i];
                 dest[offset + 1] = Hunters[i];
-                BinaryPrimitives.WriteUInt16LittleEndian(dest[(offset + 2)..], Pings[i]);
-                WriteName(dest.Slice(offset + 4, MaxNameBytes), Names[i]);
+                dest[offset + 2] = Colors[i];
+                BinaryPrimitives.WriteUInt16LittleEndian(dest[(offset + 3)..], Pings[i]);
+                WriteName(dest.Slice(offset + 5, MaxNameBytes), Names[i]);
                 offset += EntrySize;
             }
         }
@@ -676,8 +682,9 @@ namespace MphRead.Mods.Network
             {
                 roster.Slots[i] = src[offset];
                 roster.Hunters[i] = src[offset + 1];
-                roster.Pings[i] = BinaryPrimitives.ReadUInt16LittleEndian(src[(offset + 2)..]);
-                roster.Names[i] = ReadName(src.Slice(offset + 4, MaxNameBytes));
+                roster.Colors[i] = src[offset + 2];
+                roster.Pings[i] = BinaryPrimitives.ReadUInt16LittleEndian(src[(offset + 3)..]);
+                roster.Names[i] = ReadName(src.Slice(offset + 5, MaxNameBytes));
                 offset += EntrySize;
             }
             return roster;
@@ -1166,8 +1173,18 @@ namespace MphRead.Mods.Network
         /// the present, which is the fault this exists to fix. The layout
         /// change is what forces the refusal; the behaviour is why it is
         /// worth forcing.
+        ///
+        /// Version 6 puts a suit colour beside the hunter, in Identify and in
+        /// the roster, so that two people playing the same hunter are two
+        /// different figures on every screen (see
+        /// <see cref="Mods.Network.PlayerColors"/>). Both packets are
+        /// *inserted* into rather than appended to: the roster's entries grow
+        /// from 20 bytes to 21 and every name after the first moves, which a
+        /// version 5 client would read as garbage rather than notice. This is
+        /// the same shape of change version 2 was, and it is refused the same
+        /// way.
         /// </summary>
-        public const int ProtocolVersion = 5;
+        public const int ProtocolVersion = 6;
         /// <summary>
         /// Frames between intent packets. One, so every frame.
         ///

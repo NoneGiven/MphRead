@@ -30,7 +30,7 @@ namespace MphRead.Mods.Network
         /// client with no entity in its own slot.
         /// </summary>
         public static bool Join(string address, int port, string playerName, Hunter hunter,
-            int timeoutMs = 8000)
+            int timeoutMs = 8000, int color = -1)
         {
             NetSession.PlayerName = playerName;
             // Rolled here as well as in the launch plan, because joining
@@ -38,6 +38,12 @@ namespace MphRead.Mods.Network
             // Identify is what every other client draws this player as, and
             // Hunter.Random has no model for anybody to draw.
             NetSession.LocalHunter = Launcher.Hunters.Resolve(hunter);
+            // The suit travels with the hunter, and for the same reason: it is
+            // announced in Identify, before any launch plan exists. -1 means
+            // "whatever this player last chose", which is every caller but the
+            // command line's -recolor.
+            NetSession.LocalColor = PlayerColors.Clamp(
+                color < 0 ? Launcher.LauncherPrefs.LastColor : color);
             // A networked match is not limited to the four the DS could hold:
             // the server decides how many it admits, and every client has to
             // be able to hold that many slots for it to matter.
@@ -238,6 +244,15 @@ namespace MphRead.Mods.Network
                 // and two clients sharing a settings file both ended up
                 // showing the same hunter for everybody.
                 Hunter hunter = slot == resolvedSlot ? localHunter : NetSession.SlotHunter[slot];
+                // The suit is only a starting value here. Every slot's choice
+                // -- this machine's from its own preference, everybody else's
+                // from the roster -- is settled by PlayerColors.Resolve, which
+                // runs every frame and is what keeps two players of one hunter
+                // apart.
+                if (slot == resolvedSlot && slot >= 0 && slot < PlayerColors.Choice.Length)
+                {
+                    PlayerColors.Choice[slot] = PlayerColors.Clamp(localRecolor);
+                }
                 scene.AddPlayer(hunter, slot == resolvedSlot ? localRecolor : 0, teamId);
             }
             for (int slot = 0; slot < PlayerEntity.MaxPlayers; slot++)
@@ -282,6 +297,11 @@ namespace MphRead.Mods.Network
             // is available, same as it does after every subsequent cycle.
             int mainIndex = resolvedSlot >= 0 ? resolvedSlot : 0;
             PlayerEntity.MainPlayerIndex = mainIndex;
+            PlayerColors.Resolve();
+            // A hunter queued for a respawn belongs to the match it was asked
+            // in. Carried into the next one it would override the choice the
+            // launcher was just used to make.
+            RespawnChoice.Reset();
             Console.WriteLine($"[net] player slots built, main player = slot {mainIndex}");
             NetLog.Event($"player slots built, main = slot {mainIndex}");
         }

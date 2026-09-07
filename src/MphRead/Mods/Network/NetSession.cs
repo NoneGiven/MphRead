@@ -292,9 +292,14 @@ namespace MphRead.Mods.Network
         }
 
         /// <summary>
-        /// Tell the server who we are: display name and hunter. The hunter
-        /// leads so the name stays a plain trailing string, which is what the
-        /// server reads it as.
+        /// Tell the server who we are: display name, hunter and suit colour.
+        /// The two bytes lead so the name stays a plain trailing string, which
+        /// is what the server reads it as.
+        ///
+        /// Sent again whenever any of the three changes, not only at join: a
+        /// player who picks a different hunter to respawn as has changed the
+        /// answer to "who is in this slot", and everybody else learns it from
+        /// the roster this produces.
         /// </summary>
         public static void SendIdentify()
         {
@@ -305,12 +310,20 @@ namespace MphRead.Mods.Network
             byte[] name = System.Text.Encoding.ASCII.GetBytes(PlayerName);
             int count = Math.Min(name.Length, RosterPacket.MaxNameBytes);
             _scratch[0] = (byte)LocalHunter;
-            name.AsSpan(0, count).CopyTo(_scratch.AsSpan(1));
-            _transport.Send(_hostEndPoint, PacketType.Identify, _scratch.AsSpan(0, count + 1));
+            _scratch[1] = (byte)PlayerColors.Clamp(LocalColor);
+            name.AsSpan(0, count).CopyTo(_scratch.AsSpan(2));
+            _transport.Send(_hostEndPoint, PacketType.Identify, _scratch.AsSpan(0, count + 2));
         }
 
         /// <summary>The hunter this machine plays, announced in Identify.</summary>
         public static Hunter LocalHunter { get; set; } = Hunter.Samus;
+
+        /// <summary>
+        /// The suit this machine asked for, 0-3, announced with the hunter.
+        /// What is actually drawn is <see cref="PlayerColors.Resolve"/>'s
+        /// answer, which may move it to keep two players of one hunter apart.
+        /// </summary>
+        public static int LocalColor { get; set; }
 
         /// <summary>
         /// Which hunter each slot is playing, per the server's roster. A
@@ -861,6 +874,9 @@ namespace MphRead.Mods.Network
                 {
                     SlotHunter[slot] = (Hunter)roster.Hunters[i];
                 }
+                // What they asked for. PlayerColors decides what they get,
+                // every frame, from every slot's answer at once.
+                PlayerColors.Choice[slot] = PlayerColors.Clamp(roster.Colors[i]);
                 SlotPing[slot] = roster.Pings[i];
             }
         }

@@ -103,7 +103,8 @@ namespace MphRead.Mods.Launcher
 
             if (NetSession.Active)
             {
-                NetLaunch.BuildPlayers(renderer.Scene, plan.Hunter, localRecolor: 0,
+                NetLaunch.BuildPlayers(renderer.Scene, plan.Hunter,
+                    localRecolor: LauncherPrefs.LastColor,
                     teamId: teamPlay ? 0 : -1);
                 // The server's rotation decides the mode as well as the map; a
                 // client that kept its own menu choice would score a different
@@ -149,7 +150,7 @@ namespace MphRead.Mods.Launcher
                 // the same session may have raised this to eight, and the
                 // story's own setup counts on the retail number.
                 PlayerEntity.MaxPlayers = 4;
-                renderer.AddPlayer(plan.Hunter, recolor: 0, team: -1);
+                renderer.AddPlayer(plan.Hunter, recolor: LauncherPrefs.LastColor, team: -1);
                 renderer.AddRoom(roomKey, GameMode.SinglePlayer);
                 renderer.Run();
             }
@@ -238,7 +239,11 @@ namespace MphRead.Mods.Launcher
             // rather than raise: the launcher comes back between matches now,
             // and a seven-bot match must not leave the next one at eight.
             PlayerEntity.MaxPlayers = Math.Max(4, bots + 1);
-            renderer.AddPlayer(plan.Hunter, recolor: 0, team: teamPlay ? 0 : -1);
+            // The player's own suit, and the first one for each bot: they are
+            // each a different hunter (see below), so nobody collides and
+            // there is nothing for PlayerColors to resolve offline.
+            renderer.AddPlayer(plan.Hunter, recolor: LauncherPrefs.LastColor,
+                team: teamPlay ? 0 : -1);
             for (int i = 1; i <= bots; i++)
             {
                 var hunter = (Hunter)(((int)plan.Hunter + i) % 7);

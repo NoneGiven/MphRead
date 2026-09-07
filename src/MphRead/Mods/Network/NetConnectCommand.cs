@@ -18,7 +18,7 @@ namespace MphRead.Mods.Network
     {
         public static void Run(string host, int port, string playerName, Hunter hunter, int recolor)
         {
-            if (!NetLaunch.Join(host, port, playerName, hunter))
+            if (!NetLaunch.Join(host, port, playerName, hunter, color: recolor))
             {
                 Console.WriteLine("[net] could not join; giving up");
                 NetSession.Stop();

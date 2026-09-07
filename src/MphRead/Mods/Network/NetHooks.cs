@@ -246,6 +246,10 @@ namespace MphRead.Mods.Network
             // Peers join and leave mid-match; bring the scene's active slots
             // in line with the server's roster every frame.
             NetSlotManager.Sync();
+            // After the slots, because it reads which hunter each of them is
+            // playing: a player who changed hunter between lives has changed
+            // who they might collide with. See PlayerColors.
+            PlayerColors.Resolve();
             NetLog.Snapshot(NetSession.NetFrame / 60.0, scene);
             if (NetSession.IsAuthority && NetSession.ConsumeAuthorityStateSync())
             {

@@ -709,6 +709,14 @@ namespace MphRead.Entities
 
         public void Spawn(Vector3 pos, Vector3 facing, Vector3 up, NodeRef nodeRef, bool respawn)
         {
+            // Before anything below reads Hunter: a player who asked to come
+            // back as somebody else is changed here, so that the abilities,
+            // the energy tank and the HUD this call sets up are the new
+            // hunter's. See Mods.RespawnChoice.
+            if (respawn)
+            {
+                Mods.RespawnChoice.ApplyOnSpawn(this);
+            }
             LoadFlags |= LoadFlags.Spawned;
             if (IsMainPlayer)
             {

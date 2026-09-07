@@ -33,6 +33,8 @@ namespace MphRead.Mods.Network
             public uint LastIntentFrame;
             public string Name = "";
             public byte Hunter;
+            /// <summary>The suit this player asked for, 0-3. See PlayerColors.</summary>
+            public byte Color;
             /// <summary>Round trip in milliseconds, smoothed. 0 = not measured yet.</summary>
             public int Ping;
             public double PingSentAt;
@@ -663,9 +665,14 @@ namespace MphRead.Mods.Network
             {
                 return;
             }
+            if (packet.Payload.Length < 2)
+            {
+                return;
+            }
             byte hunter = packet.Payload[0];
+            byte color = packet.Payload[1];
             string name = System.Text.Encoding.ASCII
-                .GetString(packet.Payload[1..])
+                .GetString(packet.Payload[2..])
                 .TrimEnd('\0')
                 .Trim();
             if (name.Length == 0)
@@ -676,14 +683,16 @@ namespace MphRead.Mods.Network
             {
                 name = name[..RosterPacket.MaxNameBytes];
             }
-            if (peer.Name == name && peer.Hunter == hunter)
+            if (peer.Name == name && peer.Hunter == hunter && peer.Color == color)
             {
                 return;
             }
             bool firstName = peer.Name.Length == 0;
             peer.Name = name;
             peer.Hunter = hunter;
-            Log($"slot {peer.SlotIndex} is \"{name}\" playing {(Hunter)hunter}");
+            peer.Color = color;
+            Log($"slot {peer.SlotIndex} is \"{name}\" playing {(Hunter)hunter} "
+                + $"in suit {color + 1}");
             if (firstName)
             {
                 // The first line anybody sees in a match, and the only one
@@ -780,6 +789,7 @@ namespace MphRead.Mods.Network
             {
                 roster.Slots[roster.Count] = (byte)_peers[i].SlotIndex;
                 roster.Hunters[roster.Count] = _peers[i].Hunter;
+                roster.Colors[roster.Count] = _peers[i].Color;
                 roster.Pings[roster.Count] = (ushort)Math.Clamp(_peers[i].Ping, 0, 9999);
                 roster.Names[roster.Count] = _peers[i].Name.Length > 0
                     ? _peers[i].Name

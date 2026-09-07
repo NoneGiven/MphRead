@@ -53,6 +53,19 @@ namespace MphRead.Mods.Launcher
         public static string PlayerName { get; set; } = "Player";
         /// <summary>Hunter last chosen, possibly <see cref="Hunter.Random"/>.</summary>
         public static Hunter LastHunter { get; set; } = Hunter.Samus;
+
+        /// <summary>
+        /// Which of the hunter's four suits this player wears, 0-3.
+        ///
+        /// A preference rather than a per-launch question, which is why it
+        /// sits here beside the name and not on the Host and Join cards: it
+        /// is what you look like, and nobody wants to answer it twice a
+        /// session. Team modes ignore it -- the team's own two palettes are
+        /// the point there -- and a match where somebody in a lower slot has
+        /// already taken this suit on this hunter moves it along by one. See
+        /// <see cref="Network.PlayerColors"/>.
+        /// </summary>
+        public static int LastColor { get; set; }
         /// <summary>Bots in an offline match.</summary>
         public static int Bots { get; set; } = 3;
         /// <summary>0 easy, 1 normal, 2 hard -- PlayerEntity.BotLevel.</summary>
@@ -177,6 +190,13 @@ namespace MphRead.Mods.Launcher
                                 LastHunter = hunter;
                             }
                             break;
+                        case "color":
+                            if (Int32.TryParse(value, NumberStyles.Integer,
+                                CultureInfo.InvariantCulture, out int color))
+                            {
+                                LastColor = Network.PlayerColors.Clamp(color);
+                            }
+                            break;
                         case "bots":
                             if (Int32.TryParse(value, NumberStyles.Integer,
                                 CultureInfo.InvariantCulture, out int bots))
@@ -256,6 +276,7 @@ namespace MphRead.Mods.Launcher
                     $"last_role={LastRole.ToString(CultureInfo.InvariantCulture)}",
                     $"player_name={PlayerName}",
                     $"hunter={LastHunter}",
+                    $"color={LastColor.ToString(CultureInfo.InvariantCulture)}",
                     $"bots={Bots.ToString(CultureInfo.InvariantCulture)}",
                     $"bot_level={BotLevel.ToString(CultureInfo.InvariantCulture)}",
                     $"host_port={HostPort.ToString(CultureInfo.InvariantCulture)}",
