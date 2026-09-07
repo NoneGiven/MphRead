@@ -75,8 +75,9 @@ namespace MphRead.Mods.Input
             Console.WriteLine();
             if (!everConnected)
             {
-                Console.WriteLine("[gamepad] FAIL: no pad was seen. If one is plugged in or "
-                    + "paired, GLFW has no gamepad mapping for it.");
+                Console.WriteLine("[gamepad] FAIL: no pad was seen -- nothing is plugged in or "
+                    + "paired that reports itself as a joystick at all. A pad GLFW has no "
+                    + "mapping for would still have been listed above and read raw.");
                 return 1;
             }
             if (!everMoved)
@@ -98,6 +99,10 @@ namespace MphRead.Mods.Input
         /// </summary>
         private static void ReportPresence()
         {
+            // Before the listing, because a mapping file that has just been
+            // read may be the reason a pad below says "mapped".
+            GamepadMappings.EnsureLoaded();
+            Console.WriteLine($"[gamepad] {GamepadMappings.Summary}");
             int found = 0;
             for (int i = 0; i < 16; i++)
             {
@@ -110,12 +115,21 @@ namespace MphRead.Mods.Input
                 if (GLFW.JoystickIsGamepad(i))
                 {
                     Console.WriteLine($"  slot {i}: {name} -- mapped, usable");
+                    continue;
                 }
-                else
-                {
-                    Console.WriteLine($"  slot {i}: {name} -- present but NOT mapped; "
-                        + "GLFW's controller database does not know this device");
-                }
+                // Not the dead end it used to be: the game reads such a pad
+                // raw, on a guess at what its numbers mean. Which means the
+                // useful thing to print is not "unsupported" but the guess
+                // itself, and the one line that would replace it.
+                Console.WriteLine($"  slot {i}: {name} -- no mapping for this device; "
+                    + "read raw, on a guessed layout");
+                Console.WriteLine($"    axes {GLFW.GetJoystickAxes(i).Length}, "
+                    + $"buttons {GLFW.GetJoystickButtons(i).Length}, "
+                    + $"hats {GLFW.GetJoystickHats(i).Length}");
+                Console.WriteLine("    if any button below is in the wrong place, correct this "
+                    + $"line and put it in {GamepadMappings.FileName}, beside the game or "
+                    + "with your settings:");
+                Console.WriteLine($"    {GamepadMappings.Suggest(i)}");
             }
             if (found == 0)
             {

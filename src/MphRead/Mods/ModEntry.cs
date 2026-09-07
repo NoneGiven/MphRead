@@ -766,6 +766,13 @@ namespace MphRead.Mods
                 // target every other capture reads, so seeing it needs a real
                 // window and a read from its buffer.
                 Network.MapAudit.ShowWindow = HasFlag(args, "hudshots");
+                // -hunter H puts that hunter in slot 0, whose HUD every
+                // capture is taken through. Each of the eight lays its
+                // readouts out differently, so a HUD picture with no hunter
+                // named is a picture of Samus's and of nobody else's.
+                Network.MapAudit.MainHunter = ValueAfter(args, "hunter") != null
+                    ? ParseHunter(args)
+                    : null;
                 // -drawrate N draws each simulation step N times, which is
                 // what a 144 Hz screen does to a 60 Hz game. It is how the
                 // decoupled loop is checked from a box with no display.

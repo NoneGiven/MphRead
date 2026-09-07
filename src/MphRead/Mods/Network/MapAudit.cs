@@ -294,7 +294,10 @@ namespace MphRead.Mods.Network
             // collision volumes rather than eight copies of Samus.
             for (int i = 0; i < players; i++)
             {
-                Scene.AddPlayer((Hunter)(i % 7), recolor: 0, team: -1);
+                Hunter hunter = i == 0 && MainHunter.HasValue
+                    ? MainHunter.Value
+                    : (Hunter)(i % 7);
+                Scene.AddPlayer(hunter, recolor: 0, team: -1);
             }
             for (int i = 0; i < PlayerEntity.Players.Count; i++)
             {
@@ -1355,6 +1358,20 @@ namespace MphRead.Mods.Network
             }
             return problems.Count;
         }
+
+        /// <summary>
+        /// Which hunter slot 0 -- the one whose eyes and whose HUD every
+        /// capture is taken through -- plays as.
+        ///
+        /// Null cycles the hunters as every other slot does, which is the
+        /// sweep's own default and puts Samus in slot 0. It is set when a HUD
+        /// picture of a *particular* hunter is wanted, because each of the
+        /// eight lays its readouts out differently: every one of them is its
+        /// own arrangement of positions in HudElements.HunterObjects, so
+        /// "the ammo count is on top of the weapon icon" is a question that
+        /// can only be asked one hunter at a time.
+        /// </summary>
+        public static Hunter? MainHunter { get; set; }
 
         public static int Run(string room, int players, double seconds, GameMode mode,
             bool bots = false, string? shotDirectory = null, bool renderProbe = false,

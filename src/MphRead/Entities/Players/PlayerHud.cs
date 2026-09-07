@@ -1822,9 +1822,14 @@ namespace MphRead.Entities
             DrawMeter(_hudObjects.AmmoBarPosX + _objShiftX, _hudObjects.AmmoBarPosY + _objShiftY, amount, amount,
                 _ammoBarPalette, _ammoBarMeter, drawText: false, drawTanks: false, Features.HudOpacity);
             amount /= info.AmmoCost;
-            DrawText2D(_hudObjects.AmmoBarPosX + _ammoBarMeter.BarOffsetX + _objShiftX,
-                _hudObjects.AmmoBarPosY + _ammoBarMeter.BarOffsetY + _objShiftY,
-                _ammoBarMeter.Align, _ammoBarPalette, $"{amount:00}", alpha: Features.HudOpacity);
+            string ammoText = $"{amount:00}";
+            float ammoTextX = _hudObjects.AmmoBarPosX + _ammoBarMeter.BarOffsetX + _objShiftX;
+            float ammoTextY = _hudObjects.AmmoBarPosY + _ammoBarMeter.BarOffsetY + _objShiftY;
+            // Out from under the weapon icon, which is drawn after this and
+            // over the top of it on Spire. See ModAmmoTextX.
+            ammoTextX = ModAmmoTextX(ammoTextX, ammoTextY, _ammoBarMeter.Align, ammoText);
+            DrawText2D(ammoTextX, ammoTextY, _ammoBarMeter.Align, _ammoBarPalette, ammoText,
+                alpha: Features.HudOpacity);
         }
 
         /// <summary>
@@ -2608,8 +2613,7 @@ namespace MphRead.Entities
                 return;
             }
             float posX = _hudObjects.ScorePosX + _objShiftX;
-            // Below the chat log rather than under it: see ModChatClearance.
-            float posY = ModChatClearance(_hudObjects.ScorePosY) + _objShiftY;
+            float posY = _hudObjects.ScorePosY + _objShiftY;
             _textSpacingY = 8;
             string message = Strings.GetHudMessage(messageId);
             // the game wraps text here, but the text used will never wrap (and doesn't have newlines)
@@ -3062,9 +3066,25 @@ namespace MphRead.Entities
             string nickname = GameState.Nicknames[_opponentIndex];
             DrawText2D(posX, posY, Align.Center, 0, nickname);
             HudObjectInstance portrait = _hunterInsts[(int)opponent.Hunter];
-            portrait.PositionX = (posX - 16) / 256f;
+            // Mode 1, and the offset corrected across, so the portrait is 32
+            // units square on any window.
+            //
+            // The default mode 0 sizes a sprite off the window's *width* and
+            // then keeps it square in pixels, which on a 4:3 screen is the
+            // same 32x32 the DS drew and on nothing else: the portrait comes
+            // out 43 units tall on 16:9 and 56 on 21:9, growing downwards
+            // from a top edge 33 units above the name. At 16:9 it reaches
+            // y 192 -- straight over the name it is a picture of, which is
+            // exactly how it was reported ("the icon covers the name"), and
+            // on wider screens it leaves the bottom of the screen entirely.
+            // Mode 1 sizes both from the height, so the frame keeps the shape
+            // and the size it was drawn in; the half-width the offset moves
+            // it by then has to be measured across as well, or the picture no
+            // longer sits over the middle of the name. Same reasoning as the
+            // weapon list, see DrawWeaponList.
+            portrait.PositionX = (posX - 16 * HudAspectFix) / 256f;
             portrait.PositionY = (posY - 33) / 192f;
-            _scene.DrawHudObject(portrait);
+            _scene.DrawHudObject(portrait, mode: 1);
             posX += 18;
             posY -= 26;
             int remainingAmount = opponent.Health >= Values.EnergyTank ? opponent.Health - Values.EnergyTank : 0;
