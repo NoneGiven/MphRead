@@ -449,9 +449,23 @@ namespace MphRead.Mods.Network
         /// <see cref="DedicatedServer.FriendlyFire"/>.
         /// </summary>
         public const byte FlagFriendlyFire = 1 << 2;
+        /// <summary>
+        /// The shadow freeze glitch is switched **off** on this server, so an
+        /// affinity Judicator's ice wave freezes what is in front of it rather
+        /// than everything within 60 degrees at any height. Server-decided for
+        /// the same reason friendly fire is: the machine resolving a shot
+        /// decides who it hit.
+        ///
+        /// Stated as the negative deliberately. Zero is the cartridge's own
+        /// behaviour, so a packet from anything that does not know about this
+        /// rule -- a demo recorded before it, a server built before it --
+        /// plays exactly as it always did.
+        /// </summary>
+        public const byte FlagNoShadowFreeze = 1 << 3;
 
         public readonly bool Ending => (Flags & FlagEnding) != 0;
         public readonly bool FriendlyFire => (Flags & FlagFriendlyFire) != 0;
+        public readonly bool ShadowFreeze => (Flags & FlagNoShadowFreeze) == 0;
 
         public void Write(Span<byte> dest)
         {

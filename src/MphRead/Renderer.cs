@@ -6188,8 +6188,32 @@ namespace MphRead
         /// </summary>
         private bool _sceneReady;
 
+        /// <summary>
+        /// Say that the window is about to be created, before it is.
+        ///
+        /// The base constructor is where GLFW opens a window and makes a GL
+        /// context current, and on a machine whose GL or X11 libraries are
+        /// wrong that is a *native* crash: the process dies inside libglfw or
+        /// the driver, .NET reports a `PAL_SEHException` with no stack, and
+        /// nothing managed runs afterwards -- so the last line in the log is
+        /// whatever happened to be printed before. Reported from NixOS as a
+        /// crash "on joining a match", where the log ended on the join and the
+        /// [gl] lines (written in Scene.OnLoad, after the context exists)
+        /// never appeared at all.
+        ///
+        /// This line and <see cref="LogWindowCreated"/> put a boundary either
+        /// side of that, so the next such log says which side of it the
+        /// process died on rather than leaving it to be inferred.
+        /// </summary>
+        public static void LogCreatingWindow()
+        {
+            Mods.DebugLog.Line("render", "creating the game window and GL context "
+                + $"({Mods.Launcher.LauncherPrefs.WindowMode})");
+        }
+
         public RenderWindow() : base(_gameWindowSettings, _nativeWindowSettings)
         {
+            Mods.DebugLog.Line("render", $"game window created, {Size.X}x{Size.Y}");
             // The scene first, and the size floor after it: applying size
             // limits to a window smaller than the floor makes GLFW resize it
             // on the spot, which calls the size callback -- and that reached

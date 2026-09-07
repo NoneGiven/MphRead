@@ -94,6 +94,7 @@ namespace MphRead.Mods.Launcher
                 return;
             }
 
+            RenderWindow.LogCreatingWindow();
             using var renderer = new RenderWindow();
             // GameState's own list, not the mode's name: Capture is a team
             // mode that does not end in "Teams", and testing the name left
@@ -144,6 +145,7 @@ namespace MphRead.Mods.Launcher
                 return;
             }
             GameState.Mode = GameMode.SinglePlayer;
+            RenderWindow.LogCreatingWindow();
             using (var renderer = new RenderWindow())
             {
                 // Back to the four a DS game had: a previous offline match in
@@ -183,6 +185,7 @@ namespace MphRead.Mods.Launcher
                 return;
             }
             Menu.SaveSlot = 0;
+            RenderWindow.LogCreatingWindow();
             using var renderer = new RenderWindow();
             NetLaunch.BuildPlayers(renderer.Scene, Hunter.Samus, localRecolor: 0, teamId: -1, localSlot: -1);
             renderer.AddRoom(room.Value.RoomKey, room.Value.Mode, playerCount: NetLaunch.RoomPlayerCount);

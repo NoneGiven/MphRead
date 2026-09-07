@@ -49,7 +49,11 @@ namespace MphRead.Mods.Network
             // rules -- previously that only ever applied on their own
             // machine; broadcasting it here is what makes everyone else's
             // TakeDamage agree with it too.
-            var server = new DedicatedServer(port, maxPlayers, rotation) { FriendlyFire = GameState.FriendlyFire };
+            var server = new DedicatedServer(port, maxPlayers, rotation)
+            {
+                FriendlyFire = GameState.FriendlyFire,
+                ShadowFreeze = GameState.ShadowFreeze
+            };
             if (listing != null)
             {
                 server.ServerName = listing.Value.Name;

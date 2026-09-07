@@ -132,6 +132,10 @@ namespace MphRead.Mods
             GameState.FriendlyFire = settings.FriendlyFire == "on";
             GameState.RadarPlayers = settings.HunterRadar == "on";
             GameState.AffinityWeapons = settings.AffinityWeapons == "on";
+            // Anything but an explicit "off" is the cartridge's behaviour, so
+            // a settings file written before this rule existed plays exactly
+            // as it did.
+            GameState.ShadowFreeze = settings.ShadowFreeze != "off";
             GameState.OctolithReset = settings.PointGoal != "off";
             // Teams is not set here. GameState.Setup derives it from the mode,
             // and the launcher passes the choice through as the team id it

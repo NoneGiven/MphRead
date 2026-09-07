@@ -154,6 +154,7 @@ namespace MphRead.Mods.Launcher.Gui
         private ToggleRow _friendlyFire = null!;
         private ToggleRow _radar = null!;
         private ToggleRow _affinity = null!;
+        private ToggleRow _shadowFreeze = null!;
         private FieldRow _playerName = null!;
         private ChoiceRow _hunterRow = null!;
         private ChoiceRow _colorRow = null!;
@@ -725,6 +726,11 @@ namespace MphRead.Mods.Launcher.Gui
             _radar = Add(page, new ToggleRow("Hunter radar", _settings.HunterRadar == "on"));
             _affinity = Add(page, new ToggleRow("Affinity weapons",
                 _settings.AffinityWeapons == "on"));
+            // The cartridge's own behaviour is on, so the row is worded for
+            // what turning it off does rather than as a bug fix: what a player
+            // wants to say here is "no freezing me through the floor".
+            _shadowFreeze = Add(page, new ToggleRow("Shadow freeze",
+                _settings.ShadowFreeze != "off"));
         }
 
         /// <summary>
@@ -913,6 +919,7 @@ namespace MphRead.Mods.Launcher.Gui
             _settings.FriendlyFire = _friendlyFire.On ? "on" : "off";
             _settings.HunterRadar = _radar.On ? "on" : "off";
             _settings.AffinityWeapons = _affinity.On ? "on" : "off";
+            _settings.ShadowFreeze = _shadowFreeze.On ? "on" : "off";
             // Launcher preferences
             if (_playerName.Value.Trim().Length > 0)
             {

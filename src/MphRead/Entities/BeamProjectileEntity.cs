@@ -1958,14 +1958,29 @@ namespace MphRead.Entities
             // of checking in a 60 degree cone, a 60 degree wedge of a cylinder with infinite height is checked (again, where
             // "height" is rleative to the beam) -- this results in the shadow freeze glitch
             // fix: use the normalized between vector with all its components in the dot product check
-            Vector3 between = position - Position;
+            //
+            // That fix is what GameState.ShadowFreeze switches on. Off, the
+            // full vector goes into both checks and the wave freezes what is
+            // in front of it; on -- the default, and the cartridge -- the
+            // flattened one does, and it freezes anybody at any height who
+            // happens to be within 60 degrees on the map. A rule rather than a
+            // preference, and held by the server, because the machine
+            // resolving the shot is the one that decides who it hit.
+            Vector3 full = position - Position;
+            Vector3 between = full;
             float dot = Vector3.Dot(between, Up);
             between += Up * -dot;
             float mag = between.Length;
-            if (mag < MaxDistance)
+            // With the rule off, both halves of the test are done in three
+            // dimensions -- the distance as well as the angle. Correcting only
+            // the angle would still leave the wave reaching twice its range at
+            // the edge of the cone, since what it was measuring is the
+            // distance with the height taken out of it.
+            float reach = GameState.ShadowFreeze ? mag : full.Length;
+            if (reach < MaxDistance && reach > 0)
             {
-                between /= mag;
-                if (Vector3.Dot(between, Direction) > angleCos)
+                Vector3 toward = GameState.ShadowFreeze ? between / mag : full / reach;
+                if (Vector3.Dot(toward, Direction) > angleCos)
                 {
                     Vector3 dir = GetDamageDirection(Position, player.Position);
                     DamageFlags flags = DamageFlags.NoDmgInvuln;

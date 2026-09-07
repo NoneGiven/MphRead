@@ -57,6 +57,10 @@ namespace MphRead.Mods.Network
             // read only its own local Match rules setting, so a host turning
             // this on never reached anyone else's copy of TakeDamage.
             GameState.FriendlyFire = state.FriendlyFire;
+            // And the ice wave's reach, for the same reason: a client that
+            // switched the glitch off on its own would still be frozen through
+            // the floor by a server that had not.
+            GameState.ShadowFreeze = state.ShadowFreeze;
             // Not while the match is ending. MatchTime is the countdown the
             // results sequence itself runs on -- three seconds of the winner's
             // camera, then five of the scoreboard -- so adopting the server's

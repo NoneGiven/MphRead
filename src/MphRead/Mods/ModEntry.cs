@@ -385,6 +385,10 @@ namespace MphRead.Mods
                 ServerName = ValueAfter(args, "servername") ?? ValueAfter(args, "name")
                     ?? Environment.MachineName,
                 FriendlyFire = HasFlag(args, "friendlyfire"),
+                // The one rule here that is a fix rather than a preference:
+                // -noshadowfreeze makes the Judicator's ice wave a cone
+                // instead of a column, for everybody in the room.
+                ShadowFreeze = !HasFlag(args, "noshadowfreeze"),
                 // This process is the server, so it is the one that may
                 // replace itself. See DedicatedServer.AutoUpdate.
                 AutoUpdate = true

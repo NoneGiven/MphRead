@@ -146,6 +146,14 @@ namespace MphRead.Mods.Network
         public bool FriendlyFire { get; set; }
 
         /// <summary>
+        /// Whether the shadow freeze glitch is allowed here. On by default,
+        /// because it is what the cartridge does and a server that quietly
+        /// changed the game would be a surprising one; <c>-noshadowfreeze</c>
+        /// turns it off for the room. See GameState.ShadowFreeze.
+        /// </summary>
+        public bool ShadowFreeze { get; set; } = true;
+
+        /// <summary>
         /// Whether this server keeps itself on the newest release.
         ///
         /// Opt-in, and set by exactly one caller: the standalone
@@ -340,7 +348,8 @@ namespace MphRead.Mods.Network
                 TimeElapsed = elapsed,
                 PlayerCount = (byte)_peers.Count,
                 Flags = (byte)((ending ? MatchStatePacket.FlagEnding : MatchStatePacket.FlagInProgress)
-                    | (FriendlyFire ? MatchStatePacket.FlagFriendlyFire : 0)),
+                    | (FriendlyFire ? MatchStatePacket.FlagFriendlyFire : 0)
+                    | (ShadowFreeze ? 0 : MatchStatePacket.FlagNoShadowFreeze)),
                 PointGoal = (ushort)Math.Clamp(entry.PointGoal, 0, UInt16.MaxValue),
                 MatchId = _matchId,
                 RoomKey = entry.RoomKey,

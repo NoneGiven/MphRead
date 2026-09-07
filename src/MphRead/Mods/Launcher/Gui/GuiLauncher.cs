@@ -108,8 +108,44 @@ namespace MphRead.Mods.Launcher.Gui
                 // asked once, not once a frame.
                 _failed = true;
                 Console.WriteLine($"[launcher] the window toolkit could not start: {ex.Message}");
+                // The whole stack, into the debug log, because the message
+                // alone is usually a type name from inside Skia or the X11
+                // backend and says nothing about which library is missing.
+                Mods.DebugLog.Exception("launcher", ex);
+                SayWhyOnLinux();
                 return false;
             }
+        }
+
+        /// <summary>
+        /// What a Linux player who has just landed in the text launcher needs
+        /// to be told.
+        ///
+        /// Falling back is the right behaviour -- the text launcher plays the
+        /// same game -- but it is also indistinguishable from "this build has
+        /// no window on my machine", and the reason is nearly always the same
+        /// one: the graphical launcher binds a handful of desktop libraries
+        /// that the game itself does not, so a system that runs the match
+        /// perfectly well can still have no launcher. Reported from NixOS,
+        /// where a prebuilt Linux binary finds no library at the path it was
+        /// linked against at all.
+        /// </summary>
+        private static void SayWhyOnLinux()
+        {
+            if (OperatingSystem.IsWindows() || OperatingSystem.IsMacOS()
+                || OperatingSystem.IsAndroid())
+            {
+                return;
+            }
+            Console.WriteLine("[launcher] the game itself is unaffected -- the text launcher "
+                + "below starts the same matches.");
+            Console.WriteLine("[launcher] the window needs libICE, libSM and fontconfig, which "
+                + "a minimal install often lacks:");
+            Console.WriteLine("[launcher]   Debian/Ubuntu: sudo apt install libice6 libsm6 "
+                + "libfontconfig1");
+            Console.WriteLine("[launcher]   Fedora: sudo dnf install libICE libSM fontconfig");
+            Console.WriteLine("[launcher]   NixOS/Guix: run it inside an FHS environment, "
+                + "e.g. steam-run ./FruityPrime -launcher");
         }
 
         /// <summary>

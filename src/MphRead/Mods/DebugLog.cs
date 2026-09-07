@@ -193,6 +193,7 @@ namespace MphRead.Mods
                 Line("paths", $"game files could not be checked: {ex.Message}");
             }
             Line("args", String.Join(' ', Environment.GetCommandLineArgs()));
+            WriteDisplay();
             Line("render", $"cel={RenderOptions.OnOff(RenderOptions.CelShading)} "
                 + $"fog={RenderOptions.OnOff(RenderOptions.Fog)} "
                 + $"window={LauncherPrefs.WindowMode}");
@@ -200,6 +201,36 @@ namespace MphRead.Mods
             {
                 Line("net", $"simulated line: {Network.NetLag.Describe()}");
             }
+        }
+
+        /// <summary>
+        /// What kind of desktop this is, on the platforms where that is a
+        /// question.
+        ///
+        /// Every graphical failure reported from Linux so far has come down to
+        /// which display server is running and which client libraries the
+        /// binary could find: the launcher falls back to text when Avalonia
+        /// cannot bind them, and the game window is created by GLFW, which
+        /// binds a different set and dies in native code rather than throwing
+        /// when they are wrong. Neither says so, and both are answered by
+        /// these four values -- which nobody thinks to include in a report and
+        /// which cost nothing to record.
+        /// </summary>
+        private static void WriteDisplay()
+        {
+            if (OperatingSystem.IsWindows() || OperatingSystem.IsMacOS())
+            {
+                return;
+            }
+            static string Value(string name)
+            {
+                string? value = Environment.GetEnvironmentVariable(name);
+                return String.IsNullOrEmpty(value) ? "(unset)" : value;
+            }
+            Line("display", $"session={Value("XDG_SESSION_TYPE")} "
+                + $"desktop={Value("XDG_CURRENT_DESKTOP")}");
+            Line("display", $"DISPLAY={Value("DISPLAY")} "
+                + $"WAYLAND_DISPLAY={Value("WAYLAND_DISPLAY")}");
         }
 
         private static string RuntimeArchitecture()
