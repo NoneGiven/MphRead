@@ -48,6 +48,16 @@ namespace MphRead.Mods.Update
     /// installation *by the server itself*, one atomic rename at a time, and
     /// then the process exits and comes back as the new build.
     /// </para>
+    /// <para>
+    /// Windows refuses to delete a running image, and for a while that was
+    /// where this stopped: the copy failed halfway, the operator was told to
+    /// finish it by hand, and until they did, the server sat on the old build.
+    /// Harmless while a stale server merely lagged; not harmless at all once a
+    /// protocol bump made one refuse every client in the world. Windows does
+    /// allow a running image to be *renamed*, though -- the mapping follows
+    /// the file rather than the name -- so there the old build is moved aside
+    /// and swept away by the next start. See <see cref="ReplaceInPlace"/>.
+    /// </para>
     /// </summary>
     public static class ServerUpdate
     {
@@ -109,6 +119,11 @@ namespace MphRead.Mods.Update
         {
             _relaunch = new List<string>(commandLine).ToArray();
             _nextCheck = DateTime.UtcNow + Interval;
+            // Before anything else, and whether or not updating is on: what it
+            // sweeps was left by an update that has already happened, and a
+            // server switched to -noautoupdate afterwards should not keep the
+            // debris for ever.
+            SweepOld(AppContext.BaseDirectory);
             if (!Enabled || Updater.Disabled)
             {
                 return false;
@@ -297,13 +312,31 @@ namespace MphRead.Mods.Update
         /// Copy <paramref name="source"/> over <paramref name="target"/> while
         /// the target is in use.
         ///
-        /// The delete is what makes this legal. Writing into a file this
-        /// process has mapped would corrupt the running program; unlinking it
-        /// and creating a new one at the same path does not touch what is
-        /// mapped at all -- the old inode stays alive, unnamed, until the
-        /// process exits. That is a POSIX guarantee and not a Windows one, but
-        /// the Windows server is not the one running under a supervisor, and
-        /// there the delete simply fails and is reported.
+        /// Getting the running program out of the way is the whole problem,
+        /// and the two platforms solve it differently.
+        ///
+        /// **Unix**: the delete is what makes this legal. Writing into a file
+        /// this process has mapped would corrupt the running program;
+        /// unlinking it and creating a new one at the same path does not touch
+        /// what is mapped at all -- the old inode stays alive, unnamed, until
+        /// the process exits. A POSIX guarantee.
+        ///
+        /// **Windows**: deleting a running image is refused, and this used to
+        /// stop there -- the copy failed, the operator was told to finish it
+        /// by hand, and the installation was left as a mix of two builds,
+        /// since every file enumerated before the executable had already been
+        /// replaced. A Windows server therefore never updated itself, which
+        /// stopped being cosmetic the moment a protocol bump made a stale
+        /// server one that refuses every client in the world.
+        ///
+        /// But Windows *does* allow a running image to be **renamed**: the
+        /// mapping follows the file, not the name, so moving it aside and
+        /// putting the new build at the old name is legal and atomic. The
+        /// leftover is deleted by the next start (<see cref="SweepOld"/>) --
+        /// it cannot be deleted by this one, which is still running out of it.
+        ///
+        /// So: delete where deleting works, rename aside where it does not,
+        /// and rename the new file into place either way.
         /// </summary>
         private static void ReplaceInPlace(string source, string target)
         {
@@ -317,14 +350,94 @@ namespace MphRead.Mods.Update
                 {
                     Directory.CreateDirectory(directory);
                 }
-                string incoming = destination + ".incoming";
+                string incoming = destination + IncomingSuffix;
                 File.Copy(path, incoming, overwrite: true);
                 if (File.Exists(destination))
                 {
-                    File.Delete(destination);
+                    Displace(destination);
                 }
                 File.Move(incoming, destination);
                 MakeExecutable(destination);
+            }
+        }
+
+        /// <summary>
+        /// Get one file out of the way: deleted if this machine will delete
+        /// it, renamed aside if it will not.
+        ///
+        /// The rename is tried second rather than first because a delete
+        /// leaves nothing behind and a rename leaves something for the next
+        /// start to tidy. On Unix the delete always works; on Windows it works
+        /// for every file except the ones this process is running out of,
+        /// which is exactly the set that has to be renamed.
+        /// </summary>
+        private static void Displace(string destination)
+        {
+            try
+            {
+                File.Delete(destination);
+                return;
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                // In use. Fall through to the rename, and let *that* throw if
+                // this is a file nothing can do anything with -- a genuine
+                // permission problem should still reach the operator.
+            }
+            string aside = destination + OldSuffix;
+            File.Delete(aside); // no-op when it is not there; a stale one otherwise
+            File.Move(destination, aside);
+        }
+
+        /// <summary>
+        /// The two names this leaves in an installation, and neither is a name
+        /// anything else uses: a half-written incoming file if the machine
+        /// lost power mid-copy, and a displaced build that was still running
+        /// when it was replaced.
+        /// </summary>
+        private const string IncomingSuffix = ".incoming";
+        private const string OldSuffix = ".fp-old";
+
+        /// <summary>
+        /// Delete what a previous update had to leave behind.
+        ///
+        /// Called at startup, which is the first moment the old build is not
+        /// running any more -- that is the whole reason it is a separate pass
+        /// rather than the last line of the swap. Failure is nothing: a file
+        /// that will not delete is a few megabytes beside an installation, and
+        /// the next start will try again.
+        /// </summary>
+        private static void SweepOld(string target)
+        {
+            try
+            {
+                foreach (string path in Directory.EnumerateFiles(target, "*" + OldSuffix,
+                    SearchOption.AllDirectories))
+                {
+                    try
+                    {
+                        File.Delete(path);
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+                foreach (string path in Directory.EnumerateFiles(target, "*" + IncomingSuffix,
+                    SearchOption.AllDirectories))
+                {
+                    try
+                    {
+                        File.Delete(path);
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // A directory that cannot be enumerated is one this had no
+                // business tidying.
             }
         }
 

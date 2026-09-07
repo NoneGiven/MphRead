@@ -350,6 +350,15 @@ exiting *is* the restart; with none, it starts its successor itself — **with
 the command line it was given**, since a dedicated server restarted bare opens
 a launcher on a machine with nobody at it.
 
+Windows will not delete a running image, and that used to end the swap
+half-done: a Windows server downloaded every release and applied none of them,
+which stopped being cosmetic the moment a protocol bump made a stale server one
+nobody can join. It *will* rename a running image, so the old build is moved
+aside to `.fp-old` and deleted by the next start, which is the first moment
+nothing is running out of it. Both platforms now take the same path with one
+step different, and a `-server` start sweeps whatever a previous update left
+behind whether or not updating is still switched on.
+
 `launcher.txt` carries `auto_update`, on by default; `-noupdate` turns it off
 anywhere, including the server's. A local build without the release workflow's version stamp reports
 itself `a local build` and stands down, since there's no way to tell it apart

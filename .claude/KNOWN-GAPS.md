@@ -49,6 +49,13 @@ claiming coverage that isn't there.
   icon, three captures), which is what puts the opponent portrait over the
   name below it; the portrait itself is drawn for two seconds after a hit and
   the sampler never caught one.
+- **The Windows half of the server's self-update is unrun.** The rename-aside
+  path is written to Windows' own documented behaviour -- a running image
+  cannot be deleted but can be renamed, since the mapping follows the file --
+  and there is no Windows machine here to watch it happen. What *is* measured
+  on this box: the Unix path is unchanged (delete then rename, as before), and
+  the startup sweep really does delete a `.fp-old` and a `.incoming` left in an
+  installation. The first Windows server to take a release is the test.
 - **The one launcher has never run on Windows or macOS.** Same code on all
   three desktops now, but the only machine that's shown it is this WSL box
   (front screen, settings, map grid, pause menu — driven and screenshotted
