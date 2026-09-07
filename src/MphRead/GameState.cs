@@ -37,6 +37,13 @@ namespace MphRead
 
     public static class GameState
     {
+        /// <summary>
+        /// How long the results screen is left up, in seconds. Paired with
+        /// <c>Mods.Network.DedicatedServer.EndSequenceSeconds</c>, which has
+        /// to cover this and the three seconds of winner's camera before it.
+        /// </summary>
+        public const float MatchEndingSeconds = 10;
+
         public static GameMode Mode { get; set; } = GameMode.SinglePlayer;
         public static bool SinglePlayer => Mode == GameMode.SinglePlayer;
         public static bool Multiplayer => Mode != GameMode.SinglePlayer;
@@ -492,7 +499,19 @@ namespace MphRead
                 if (MatchTime == 0)
                 {
                     MatchState = MatchState.Ending;
-                    MatchTime = 150 / 30f;
+                    // Ten seconds of results, where the DS gave five.
+                    //
+                    // Five was long enough to read a scoreboard and nothing
+                    // else, and the screen now has something to do on it:
+                    // the next hunter, the next suit and the next map all
+                    // live here (see Mods.EndScreen), and a choice somebody
+                    // has to make in five seconds is a choice they make by
+                    // accident. DedicatedServer.EndSequenceSeconds is the
+                    // other half of this number -- the server holds its
+                    // intermission open for the whole sequence, and the two
+                    // have to be changed together or the map changes out
+                    // from under the screen.
+                    MatchTime = MatchEndingSeconds;
                     // todo: update license info, stop SFX
                 }
             }

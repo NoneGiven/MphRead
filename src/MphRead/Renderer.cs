@@ -1475,6 +1475,11 @@ namespace MphRead
                 // where PlayerEntity.Main is somebody else's hunter.
                 Mods.Input.GamepadDesktop.Poll();
                 Mods.Input.GamepadInput.BeginFrame();
+                // Straight after the edges are worked out and before anything
+                // consumes them. A pad has no key events to hook, so the
+                // results screen's picker has to be polled, and it takes the
+                // d-pad presses it acts on so nothing downstream sees them.
+                Mods.EndScreen.PollGamepad();
                 bool noPlayerInput = _inputMode == InputMode.CameraOnly
                     || Mods.PauseMenu.Open || Mods.Chat.ChatBox.Composing;
                 PlayerEntity.ProcessInput(_keyboardState, _mouseState, noPlayerInput);
@@ -4607,8 +4612,11 @@ namespace MphRead
             GL.Uniform1(_shaderLocations.LayerAlpha, inst.Alpha);
             GL.Uniform1(_shaderLocations.UseMask, inst.UseMask ? 1 : 0);
             GL.BindTexture(TextureTarget.Texture2D, inst.BindingId);
-            int minParameter = (int)TextureMinFilter.Nearest;
-            int magParameter = (int)TextureMagFilter.Nearest;
+            // Nearest, which is what the DS did and what every sprite in this
+            // game is drawn for -- except the supersampled ones, whose texture
+            // arrives bigger than the box it goes in. See HudObjectInstance.Smooth.
+            int minParameter = (int)(inst.Smooth ? TextureMinFilter.Linear : TextureMinFilter.Nearest);
+            int magParameter = (int)(inst.Smooth ? TextureMagFilter.Linear : TextureMagFilter.Nearest);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minParameter);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magParameter);
             GL.TexParameter(TextureTarget.Texture2D,
@@ -6494,6 +6502,15 @@ namespace MphRead
             if (Mods.Chat.ChatBox.HandleKeyDown(e,
                 canOpen: !Mods.Network.DemoPlayback.IsActive
                     && (Scene.CameraMode == CameraMode.Player || Scene.IsFreeCam)))
+            {
+                base.OnKeyDown(e);
+                return;
+            }
+            // The results screen's hunter picker, which owns the arrow keys
+            // for as long as it is up and nothing at any other time. Before
+            // the window-mode keys only because it is cheaper to ask; the two
+            // cannot want the same key.
+            if (Mods.EndScreen.HandleKeyDown(e.Key))
             {
                 base.OnKeyDown(e);
                 return;

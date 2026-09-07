@@ -176,6 +176,15 @@ Pause menu
 - Both are topmost so they clear a borderless-fullscreen game, and the menu
   steps out of the topmost band while the settings are up so the two are not
   left arguing about which is in front.
+- **The game window itself only floats while it has the focus.**
+  `WindowMode.SyncTopmost` reads `window.IsFocused` along with the fullscreen
+  and pause-menu flags, once a frame. An always-on-top borderless window
+  cannot be alt-tabbed away from in any way a person recognises -- the switch
+  happens, the other window gets the keyboard, and the game stays drawn over
+  it -- which was reported as a window that refuses to let go. Floating is
+  only ever wanted for the one thing it was added for, covering the taskbar
+  while the game is the window being used, and that is exactly the focused
+  case.
 - Its title is "<name> - paused", not the product name: the game window carries
   that, and two windows with one title is what an alt-tab list cannot tell apart.
 

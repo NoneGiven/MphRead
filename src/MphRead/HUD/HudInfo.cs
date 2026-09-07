@@ -85,6 +85,18 @@ namespace MphRead.Hud
         public bool FlipHorizontal;
         public bool FlipVertical;
         public bool UseMask;
+        /// <summary>
+        /// Sample this instance's texture linearly rather than with the DS's
+        /// nearest neighbour.
+        ///
+        /// Off for everything the game itself draws, which is meant to look
+        /// like the DS drew it. On for the supersampled weapon icons (see
+        /// <c>Mods.Render.SmoothHudIcon</c>), whose texture is *larger* than
+        /// the box it lands in -- nearest there is not the DS look, it is a
+        /// minification with no filtering, which drops texels rather than
+        /// keeping edges.
+        /// </summary>
+        public bool Smooth;
         public IReadOnlyList<byte>? CharacterData;
         public int PaletteIndex = -1;
         public IReadOnlyList<ColorRgba>? PaletteData;

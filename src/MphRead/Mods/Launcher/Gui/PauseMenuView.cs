@@ -5,8 +5,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
-using MphRead.Entities;
-
 using MphRead.Mods.Network;
 
 namespace MphRead.Mods.Launcher.Gui
@@ -76,7 +74,6 @@ namespace MphRead.Mods.Launcher.Gui
             }
             Add(stack, "Settings",
                 () => SettingsRequested?.Invoke(this, EventArgs.Empty));
-            AddRespawnChoice(stack);
             if (!DemoPlayback.IsActive)
             {
                 if (SpectatorMode.IsSpectating)
@@ -196,58 +193,6 @@ namespace MphRead.Mods.Launcher.Gui
         private static string WindowLabel()
         {
             return WindowMode.IsFullscreen ? "Windowed" : "Fullscreen";
-        }
-
-        /// <summary>
-        /// Who to come back as, and in what colour.
-        ///
-        /// Here rather than in the settings window because of when it is
-        /// asked: this is the menu somebody opens *because* the match is
-        /// going badly, and "I want to try somebody else" is one of the two
-        /// or three things anybody comes to a pause menu for. Neither row
-        /// takes effect now -- see <see cref="RespawnChoice"/>, which cashes
-        /// them in at the next respawn -- and the label says so rather than
-        /// leaving it to be discovered.
-        ///
-        /// Only in a match with other people in it: the adventure is one
-        /// hunter's story, and a demo or a spectator has no player to change.
-        /// </summary>
-        private static void AddRespawnChoice(StackPanel stack)
-        {
-            if (!GameState.Multiplayer || DemoPlayback.IsActive
-                || SpectatorMode.IsSpectating || PlayerEntity.Main == null)
-            {
-                return;
-            }
-            var hunters = new string[Hunters.Playable];
-            for (int i = 0; i < hunters.Length; i++)
-            {
-                hunters[i] = ((Hunter)i).ToString();
-            }
-            var colors = new string[PlayerColors.Count];
-            for (int i = 0; i < colors.Length; i++)
-            {
-                colors[i] = (i + 1).ToString();
-            }
-            int hunterIndex = Math.Clamp((int)RespawnChoice.Hunter, 0, hunters.Length - 1);
-            var hunterRow = new ChoiceRow("Respawn as", hunters, hunterIndex);
-            var colorRow = new ChoiceRow("Suit colour", colors,
-                PlayerColors.Clamp(RespawnChoice.Color));
-            void Requested(object? sender, EventArgs e)
-            {
-                var hunter = (Hunter)hunterRow.Index;
-                RespawnChoice.Request(hunter, colorRow.Index);
-                // Kept, so the next match starts as whoever this player has
-                // decided they are. Written now rather than on the way out:
-                // a pause menu is where somebody alt-F4s from.
-                LauncherPrefs.LastHunter = hunter;
-                LauncherPrefs.LastColor = colorRow.Index;
-                LauncherPrefs.Save();
-            }
-            hunterRow.Changed += Requested;
-            colorRow.Changed += Requested;
-            stack.Children.Add(hunterRow);
-            stack.Children.Add(colorRow);
         }
 
         private static MenuEntry Add(StackPanel stack, string text, Action action)

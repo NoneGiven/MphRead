@@ -31,6 +31,12 @@ namespace MphRead.Entities
         private readonly HudObjectInstance[] _weaponListIcons = new HudObjectInstance[9];
         /// <summary>Where the drawing actually is inside each of those frames. See ModIconBounds.</summary>
         private readonly IconBounds[] _weaponListIconBounds = new IconBounds[9];
+        /// <summary>
+        /// The weapon-select sheet these icons are cut from, kept because the
+        /// smooth build needs it again whenever a colour changes. See
+        /// <c>Mods.Render.SmoothHudIcon</c>.
+        /// </summary>
+        private IReadOnlyList<byte> _weaponListSheetData = Array.Empty<byte>();
         private HudObjectInstance _boostInst = null!;
         private HudObjectInstance _bombInst = null!;
         private HudMeter _enemyHealthMeter = null!;
@@ -368,12 +374,18 @@ namespace MphRead.Entities
             // Frame index is the BeamType either way (see the select ring
             // above, which reads _availableWeapons[inst.CurrentFrame]).
             HudObject listSheet = HudInfo.GetHudObject(_hudObjects.WeaponSelect);
+            _weaponListSheetData = listSheet.CharacterData;
             for (int i = 0; i < _weaponListIcons.Length; i++)
             {
-                var listIcon = new HudObjectInstance(listSheet.Width, listSheet.Height);
-                listIcon.SetCharacterData(listSheet.CharacterData, i, _scene);
-                listIcon.SetPaletteData(listSheet.PaletteData, _scene);
-                listIcon.Enabled = true;
+                // Supersampled rather than taken at face value: these land in
+                // a box two or three times the size they were drawn at, and a
+                // whole-texel staircase at that magnification is what the
+                // icons being "blurry" actually was. See Mods.Render.SmoothHudIcon,
+                // which also explains why the instance keeps the sheet's own
+                // width and height while its texture is four times that.
+                HudObjectInstance listIcon = Mods.Render.SmoothHudIcon.Create(listSheet);
+                Mods.Render.SmoothHudIcon.Tint(listIcon, listSheet.CharacterData, i,
+                    _weaponListColors[i], _scene);
                 _weaponListIcons[i] = listIcon;
                 // Once, here, because it is a fact about the art and never
                 // changes: which part of the frame the weapon is drawn in.
@@ -1259,6 +1271,11 @@ namespace MphRead.Entities
             // of the point, and a message that arrives while the scoreboard
             // is up has still arrived.
             ModDrawChat();
+            // With the chat and before every early return below it, for the
+            // same reason: the results screen is drawn during MatchState
+            // GameOver *and* Ending, and the block further down handles those
+            // two in separate branches. This is one panel across both.
+            ModDrawEndScreen();
             if (Mods.SpectatorMode.FreeCamera)
             {
                 // Looking at the map, not out of anybody's eyes: there is no
@@ -1993,7 +2010,7 @@ namespace MphRead.Entities
                 // Cheap to call every frame: it rebuilds the texture only when
                 // the frame or the colour has actually changed, and neither
                 // does after the first one.
-                icon.SetData(i, tint, _scene);
+                Mods.Render.SmoothHudIcon.Tint(icon, _weaponListSheetData, i, tint, _scene);
                 // Sized and placed on the *drawing*, not on the frame around
                 // it. The select sheet's frames come off the touchscreen
                 // weapon wheel, where each weapon sits wherever it sits on

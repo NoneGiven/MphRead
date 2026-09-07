@@ -199,10 +199,21 @@ namespace MphRead.Mods
         /// window the player needs to be able to press. So the game window
         /// stands down for as long as the menu is up and takes the band back
         /// when it closes.
+        ///
+        /// **And it stands down the moment the window is not the focused
+        /// one.** An always-on-top borderless window cannot be alt-tabbed away
+        /// from in any way a person would recognise: the switch happens, the
+        /// other window is given the keyboard, and the game stays drawn over
+        /// the top of it -- which reads as a window that refuses to let go,
+        /// and is how it was reported. Floating is only ever wanted for the
+        /// one thing it was added for (covering the taskbar while the game is
+        /// the window being used), and that is exactly the case where this
+        /// window has the focus. Alt-tab away and it drops out of the band on
+        /// the next frame; alt-tab back and it takes it again.
         /// </summary>
         public static void SyncTopmost(NativeWindow window)
         {
-            SetTopmost(window, IsFullscreen && !PauseMenu.Open);
+            SetTopmost(window, IsFullscreen && !PauseMenu.Open && window.IsFocused);
         }
 
         /// <summary>"borderless"/"fullscreen"/"windowed" from a settings file or a flag.</summary>

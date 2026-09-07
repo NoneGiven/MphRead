@@ -9,7 +9,7 @@ heard anybody won, kept counting down a map nobody was still playing.
 | Piece | What |
 |---|---|
 | `NetMatchEnd` | on the authority, sends `PacketType.MatchEnd` when `GameState.MatchState` leaves `InProgress`, repeating until the server's own state answers `FlagEnding`. Any client that sees `FlagEnding` while it still thinks the match is running sets `MatchTime = 0`, so results play out normally rather than cutting away |
-| `DedicatedServer` intermission | both endings (clock and score) now enter the same 9-second intermission before `AdvanceMap` -- the client's own sequence (3 s winner's camera, 5 s scoreboard) plus a second, so the fade belongs to the rotation instead of cutting the results short |
+| `DedicatedServer` intermission | both endings (clock and score) now enter the same 14-second intermission before `AdvanceMap` -- the client's own sequence (3 s winner's camera, `GameState.MatchEndingSeconds` = 10 s of results) plus a second, so the fade belongs to the rotation instead of cutting the results short. It was 9 (5 s of results) until the hunter picker moved onto that screen (`Mods/EndScreen.cs`): a choice somebody has to make in five seconds is a choice they make by accident. **The two numbers are one number in two places** -- a server that rotated early would take the question away mid-answer |
 | `MatchStatePacket.MatchId` | counts matches from the server's start. The room key alone can't answer "is this a new match" -- a one-map rotation (what **Host a game** builds) plays the same room repeatedly, and a client watching only the name sat on its results screen for the rest of the session |
 | `MatchStatePacket.PointGoal` | the score that wins, from the rotation file; belongs to the server for the same reason the clock does |
 

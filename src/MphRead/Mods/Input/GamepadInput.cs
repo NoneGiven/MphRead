@@ -185,6 +185,25 @@ namespace MphRead.Mods.Input
         }
 
         /// <summary>
+        /// True once for each press of one of these buttons, and consumed on
+        /// the way out.
+        ///
+        /// For screens that read the pad directly rather than through a
+        /// bind -- the results screen's hunter picker is the only one -- and
+        /// taken rather than read for the reason <see cref="TakeMenuPress"/>
+        /// is: a frame drawn twice must not step the choice twice.
+        /// </summary>
+        public static bool TakePress(GamepadButtons buttons)
+        {
+            if ((_pressed & buttons) == 0)
+            {
+                return false;
+            }
+            _pressed &= ~buttons;
+            return true;
+        }
+
+        /// <summary>
         /// Add the pad to what the keyboard and mouse already said, for the
         /// player this machine is driving.
         ///

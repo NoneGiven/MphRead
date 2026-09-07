@@ -90,11 +90,16 @@ namespace MphRead.Mods.Network
         /// How long the results are left on screen before the map changes.
         ///
         /// The client's own end-of-match sequence is three seconds of the
-        /// winner's camera and five of the scoreboard; a second on top of
-        /// that means the fade to black belongs to the rotation rather than
-        /// cutting the results short.
+        /// winner's camera and <see cref="GameState.MatchEndingSeconds"/> of
+        /// the results; a second on top of that means the fade to black
+        /// belongs to the rotation rather than cutting the results short.
+        ///
+        /// It has to cover the whole sequence, because the results screen is
+        /// where the next hunter and the next suit are chosen now (see
+        /// Mods.EndScreen) -- a server that rotated early would take the
+        /// question away mid-answer.
         /// </summary>
-        private const double EndSequenceSeconds = 9.0;
+        private const double EndSequenceSeconds = 3.0 + GameState.MatchEndingSeconds + 1.0;
 
         /// <summary>
         /// What this server calls itself on a browser's list. Defaults to the

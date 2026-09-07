@@ -70,13 +70,26 @@ namespace MphRead.Mods.Update
         /// <summary>
         /// How often a running server looks again.
         ///
-        /// Six hours rather than minutes. A release is a thing that happens a
-        /// few times a month, the startup check already covers every restart,
-        /// and the cost of looking is a request to GitHub's API, which is rate
-        /// limited per address -- a machine running a server and a directory
-        /// is two askers on one address already.
+        /// Ten minutes, on every platform. It used to be six hours, on the
+        /// grounds that releases are rare and GitHub's API is rate limited --
+        /// both true, and both beside the point. What decides this number is
+        /// not how often a release happens, it is how long a server is
+        /// unjoinable after one: <see cref="Mods.Network.NetConfig.ProtocolVersion"/>
+        /// makes a server on the old build refuse every client on the new one
+        /// at Hello, so the window between a release going out and a server
+        /// picking it up is a window in which that server looks, to everybody
+        /// trying to join it, switched off. Six hours of that is a server
+        /// nobody can play on for the rest of the evening; ten minutes is a
+        /// pause.
+        ///
+        /// It is affordable at that rate. GitHub allows sixty unauthenticated
+        /// requests an hour per address and this is six -- twelve on a machine
+        /// running a server and a directory, which is the busiest case here --
+        /// and a check that finds nothing new downloads nothing at all. A
+        /// server with players on it still waits for them to leave before it
+        /// swaps, so looking more often costs no interrupted matches either.
         /// </summary>
-        public static TimeSpan Interval { get; set; } = TimeSpan.FromHours(6);
+        public static TimeSpan Interval { get; set; } = TimeSpan.FromMinutes(10);
 
         /// <summary>What was staged and is waiting for an empty server.</summary>
         public static UpdateInfo? Pending { get; private set; }

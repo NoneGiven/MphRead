@@ -1,6 +1,7 @@
 using System;
 using MphRead.Formats;
 using MphRead.Hud;
+using MphRead.Mods.Render;
 using MphRead.Text;
 using OpenTK.Mathematics;
 
@@ -141,7 +142,7 @@ namespace MphRead.Entities
             float aspect = HudAspectFix;
             IconBounds bounds = _weaponListIconBounds[index];
             float scale = side / Math.Max(bounds.Width, bounds.Height);
-            icon.SetData(index, _weaponListColors[index], _scene);
+            SmoothHudIcon.Tint(icon, _weaponListSheetData, index, _weaponListColors[index], _scene);
             icon.Alpha = Features.HudOpacity;
             // The ink's centre put in the centre of a box `side` across and
             // `side` down -- across being measured off the height too, hence

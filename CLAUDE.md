@@ -159,6 +159,29 @@ Gotchas worth keeping in view without opening another file:
 - Offline matches can hold eight players; `PlayerEntity.MaxPlayers` defaults
   to four (a DS match's cap), so the launcher raises it before creating
   players or asking for seven opponents silently produces three.
+- **The weapon icons are supersampled, and they are the only thing in the
+  program that is.** `Mods/Render/SmoothHudIcon.cs`: the art is one texel per
+  DS pixel and lands in a box two or three times that size (more in pro mode,
+  which draws the list at 170%), so nearest magnification gave every icon a
+  staircase with two-pixel steps in some rows and three in others -- reported
+  as "the icons are blurry", which it is not; it is a wobbly edge. These
+  frames are silhouettes, so the mask is resampled bilinearly at 4x and
+  pushed through a narrow smoothstep, and `HudObjectInstance.Smooth` asks
+  `DrawHudObject` for linear filtering on that one texture. Everything else
+  stays nearest, because everything else is meant to look like the DS.
+- **Changing hunter is asked on the results screen, not in the pause menu.**
+  The two rows that used to sit there ("Respawn as", "Suit colour") are gone:
+  a pause menu is opened instead of playing, so the one screen where the
+  change is free was the one screen that never offered it. `Mods/EndScreen.cs`
+  puts it in the top right corner of the ten-second results screen instead --
+  the hunter's own portrait with an arrow either side, four suit swatches
+  whose colours are read out of that hunter's model (`Mods/HunterSuits.cs`,
+  nothing is written down), and the next map's name off
+  `MatchStatePacket.NextRoomKey`, which had been on the wire since the
+  rotation was written and never read. Arrow keys or the d-pad. The answer is
+  still `RespawnChoice`'s and is still cashed in at the next spawn.
+  `GameState.MatchEndingSeconds` and `DedicatedServer.EndSequenceSeconds`
+  are one number in two places and have to move together.
 - `PacketType.StatusQuery` answers "what map, what mode, how many players"
   without claiming a slot, which is what lets the browser poll idly. A server
   built before it falls back to a slot-taking Hello/Bye probe — redeploy the
@@ -328,7 +351,7 @@ doing it carefully.
 | Launcher window | in the background once the window is up | opens the release page; badge shows the address if there's no browser |
 | Text launcher | at startup, waiting up to 2 s | prints the address, opens a browser if there is one |
 | `-update` | when asked | prints the address and opens it |
-| Server and directory | at startup before binding, then every 6 h | **installs it**, and restarts — but only once nobody is connected (a server) or no hosted match is running (the directory), so a busy one keeps playing and swaps when the last person leaves. `-noautoupdate` opts out |
+| Server and directory | at startup before binding, then every 10 min | **installs it**, and restarts — but only once nobody is connected (a server) or no hosted match is running (the directory), so a busy one keeps playing and swaps when the last person leaves. `-noautoupdate` opts out |
 
 A server updating itself is the one place the "no unsigned installs" rule is
 traded away, and it is traded for a bigger one: `NetConfig.ProtocolVersion`

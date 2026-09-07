@@ -182,6 +182,16 @@ namespace MphRead.Droid
             bool alt = e?.IsAltPressed ?? false;
             if (!composing)
             {
+                // The results screen's hunter picker owns the arrow keys
+                // while it is up. The panel is drawn by the shared HUD, so it
+                // appears here whether or not this head hooks it -- and a
+                // picker that cannot be operated is worse than none. Only a
+                // real keyboard or a pad's d-pad reaches this; there is no
+                // touch control for it.
+                if (MphRead.Mods.EndScreen.HandleKeyDown(Map(keyCode)))
+                {
+                    return true;
+                }
                 // The one key that opens it, and only where there is a match
                 // to talk in. Everything else belongs to whoever asked next.
                 return MphRead.Mods.Chat.ChatBox.HandleKeyDown(Map(keyCode), control, alt,
@@ -227,6 +237,13 @@ namespace MphRead.Droid
                 Keycode.Del => Keys.Backspace,
                 Keycode.Space => Keys.Space,
                 Keycode.Tab => Keys.Tab,
+                // The arrows, which nothing here used to need: they are the
+                // results screen's picker, and a pad's d-pad arrives as these
+                // same codes on Android.
+                Keycode.DpadLeft => Keys.Left,
+                Keycode.DpadRight => Keys.Right,
+                Keycode.DpadUp => Keys.Up,
+                Keycode.DpadDown => Keys.Down,
                 _ => Keys.Unknown
             };
         }
