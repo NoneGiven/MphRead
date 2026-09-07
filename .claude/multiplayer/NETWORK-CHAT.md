@@ -1,9 +1,23 @@
 # Chat
 
 T opens a line, Enter sends it, Escape throws it away. Three messages are on
-screen at once, small, green, top left, on nothing -- no plate behind them;
+screen at once, small, green, bottom left, on nothing -- no plate behind them;
 each one is gone ten seconds after it arrived. That is Quake 3's shape and it
 was chosen because it is the one every player already knows how to read.
+
+**Bottom** left since the players said so. It was in the top-left corner
+first, which is a corner nobody looks at in a shooter: messages went by
+unread, which is the whole failure of a chat log. The block is anchored at
+y 168 -- the prompt on that row, the log stacking up from just above it -- and
+168 rather than the screen's foot because Pro mode's energy panel is drawn at
+170 and the stock HUD's own bottom-left is helmet moulding.
+
+It also steps right, past the weapon column, whenever the modern HUD is on:
+that list is one row per weapon carried, from y 46, and at Pro mode's 170% a
+full loadout of nine reaches y 168 exactly. The step is the panel's own width
+and is fixed rather than measured against how many weapons are actually held,
+because a log that slid sideways when somebody picked up a Battlehammer would
+be worse than one sitting slightly further in. See `ChatLeft`.
 
 **The chat log has its own font**, and that is the largest single piece of
 this. See `Mods/Chat/ChatFont.cs`: the game's own font is 8x8, bold, and has
@@ -17,11 +31,14 @@ chat HUD therefore does **not** go through `DrawText2D`: `ChatDraw` is that
 routine's Align.Left branch with a different font in it and the Kanji handling
 dropped, since chat is ASCII by the time it arrives.
 
-The frame-rate counter used to be in that corner and is now in the right-hand
-one. Nothing competes for the right: the ammo readout is at the foot of the
-screen and the scoreboard is drawn down the middle. On Android the chat log
-keeps the 30-unit inset the counter used to have, because the MENU button is
-drawn over the scene in that same corner.
+The frame-rate counter used to share the top-left corner and is in the
+right-hand one; it stays there. Two things came back when the log moved out of
+that corner: the mode score, which most hunters' layouts draw between 4 and 18
+units down and which used to be pushed down the screen by a log that might
+have nothing in it (`ModChatClearance`, now gone), and Android's 30-unit
+inset -- MENU, SCOREBOARD and SAY are all along the top edge, and the movement
+stick below them is drawn wherever the thumb lands rather than in a corner
+anything could be kept out of.
 
 ## Where it lives
 

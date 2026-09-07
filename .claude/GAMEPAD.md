@@ -11,10 +11,52 @@ produced them, and a paired pad is an input device like any other.
 | `Mods/Input/PadBindings.cs` | which button each action is on, and the player's changes to it |
 | `Mods/Input/GamepadInput.cs` | dead zones, the response curve, and what every button means |
 | `Mods/Input/GamepadDesktop.cs` | the desktop reader, polling GLFW |
+| `Mods/Input/GamepadMappings.cs` | extra SDL mappings, for pads GLFW has never heard of |
+| `Mods/Input/GamepadLayout.cs` | the guess used when there is no mapping at all |
 | `Mods/Input/GamepadProbe.cs` | `-gamepad`, the diagnostic |
 | `MphRead.Android/GamepadBridge.cs` | the Android reader, accumulating key and motion events |
 | `Mods/Launcher/Gui/PadRow.cs` | one rebindable button in the settings screen |
 | `Mods/InputSettings.cs` | the three settings and the bindings, saved to `controls.txt` |
+
+## Pads nothing has a mapping for
+
+GLFW carries a snapshot of SDL's controller database, frozen at whichever GLFW
+the OpenTK redist ships. Everything released since then, and everything too
+obscure to have been in it, answers `glfwJoystickIsGamepad` with false -- and a
+pad that answers false used to be skipped in silence, which from inside a match
+is indistinguishable from nothing being plugged in. That is most of what "my
+controller does nothing" means, and it was reported as exactly that.
+
+Three things now stand between a pad and that conclusion.
+
+1. **Mapping files.** `GamepadMappings` hands GLFW every mapping it can find,
+   once, before the first scan: `gamecontrollerdb.txt` beside the executable,
+   the same file in the settings directory (which wins, and is the copy that
+   survives reinstalling), and `SDL_GAMECONTROLLERCONFIG` -- SDL's own
+   environment variable, because somebody who has already made their pad work
+   in another game most likely did it there. A missing file is the normal case
+   and says nothing; a file that is read says how many lines it had.
+2. **The raw fallback.** Failing that, `GamepadDesktop` reads the pad through
+   GLFW's raw joystick API on `GamepadLayout`'s guess: two shapes, chosen by
+   counting axes. Six or more axes is the Xbox shape (sticks on 0/1 and 3/4,
+   analogue triggers on 2 and 5, buttons A B X Y LB RB Back Start Guide L3 R3);
+   four or five is the flat "USB gamepad" shape, where the shoulders and
+   triggers are four plain buttons. The d-pad is not guessed at -- GLFW reports
+   hats separately and every pad that has one reports it the same way -- and
+   the trigger axes are calibrated against the lowest value seen, since some
+   pads rest a trigger at -1 and some at 0.
+3. **Saying so.** A pad read this way is named `<pad> (unmapped)` in the
+   settings screen, the console says it is being read raw, and `-gamepad`
+   prints the axis and button counts, what each button reached, and a mapping
+   line built from the guess -- GUID and all -- ready to be corrected and
+   dropped into `gamecontrollerdb.txt`.
+
+A guess is allowed here because of what it is weighed against: every action but
+the two sticks is rebindable in Settings -> Controls, so a player whose face
+buttons come out shuffled can put them right in a minute, while a player whose
+pad is ignored has nothing to put right. Mapped pads are still preferred --
+all sixteen slots are offered to `glfwGetGamepadState` before any of them is
+read raw.
 
 ## The layout
 
@@ -262,3 +304,8 @@ stick alone. Unplugging mid-run was handled by the rescan without a stall.
   to check.
 - **One pad.** The first that answers wins, since nothing here has a second
   player to give a second pad to.
+- **The raw fallback is unmeasured against a real unmapped pad.** It is
+  written from the two layouts SDL's own database uses for those shapes, and
+  the machine this was built on has no `/dev/uinput` to fake a third with. The
+  mapping-file path is the one to reach for first when a pad comes out wrong,
+  and `-gamepad` prints the line to put in it.

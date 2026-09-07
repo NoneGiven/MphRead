@@ -346,6 +346,36 @@ namespace MphRead.Mods.Network
             // target; from there the snapshot's FlagSpectating carries it to
             // everybody else.
             player.ModSetSpectating(intent.Buttons.HasFlag(IntentButtons.SpectatingState));
+            // And which form its owner says it is in -- but only here, on the
+            // machine that answers that question for everybody else.
+            //
+            // The form was replicated by replaying the morph *press* through
+            // the engine and nothing else, which works until one of those
+            // presses does not take: a packet lost at the wrong moment, or a
+            // press that arrives while the puppet is somewhere it cannot
+            // unmorph. The authority's copy is then in the wrong form for the
+            // rest of the life -- and, since FlagAltForm in every snapshot is
+            // read off that copy, every other client agrees with it. The one
+            // machine that knows better is the owner's, and nothing was
+            // asking. Reported as "a player appears to everyone else as being
+            // in alt form when they are not".
+            //
+            // Its own answer, not an edge to rebuild, exactly like the zoom
+            // and the spectating flag above it: a state cannot be lost the way
+            // an edge can. Through ApplyForm rather than as a flag, so the
+            // grace period still protects the round trip in which a puppet is
+            // legitimately ahead of its owner's own report, and so the
+            // transition is attempted before it is forced.
+            //
+            // Only on the authority. A client that also acted on this would be
+            // taking form corrections from two sources at once -- the owner's
+            // intent and the authority's snapshot -- and the two disagree for
+            // exactly as long as it takes the authority to converge, which is
+            // long enough for the puppet to be pulled both ways.
+            if (NetSession.IsAuthority)
+            {
+                ApplyForm(player, intent.Buttons.HasFlag(IntentButtons.AltFormState));
+            }
         }
 
         /// <summary>
@@ -588,6 +618,7 @@ namespace MphRead.Mods.Network
                 // who kept walking about while the authority held them still
                 // was the whole of the "frozen players who keep moving" bug.
                 player.ModSetFrozen((state.Flags & PlayerState.FlagFrozen) != 0);
+                ApplyAfflictions(player, state);
                 return;
             }
             // Converted for the same reason the reported position is: the
@@ -607,6 +638,25 @@ namespace MphRead.Mods.Network
             // merely stopped moving.
             player.ModSetSpectating((state.Flags & PlayerState.FlagSpectating) != 0);
             player.ModSetFrozen((state.Flags & PlayerState.FlagFrozen) != 0);
+            ApplyAfflictions(player, state);
+        }
+
+        /// <summary>
+        /// The two afflictions that are shown rather than simulated: the Volt
+        /// Driver's disruption and the Magmaul's fire.
+        ///
+        /// Both are applied by <c>TakeDamage</c> from the beam entity that
+        /// landed the hit, and a beam only ever exists on the machine that
+        /// resolved it -- so before this, neither reached the victim on their
+        /// own screen, or anybody watching. Carried as state for the same
+        /// reason the freeze is, and applied to this machine's own player as
+        /// well as to the puppets: being disrupted is something you are, not
+        /// something the person who shot you can see.
+        /// </summary>
+        private static void ApplyAfflictions(PlayerEntity player, PlayerState state)
+        {
+            player.ModSetDisrupted((state.Flags & PlayerState.FlagDisrupted) != 0);
+            player.ModSetBurning((state.Flags & PlayerState.FlagBurning) != 0);
         }
 
         /// <summary>
@@ -807,6 +857,10 @@ namespace MphRead.Mods.Network
                 RejectedUpdates++;
                 return;
             }
+            if (FrozenInPlace(player))
+            {
+                return;
+            }
             if (intent.Position == Vector3.Zero)
             {
                 return; // the owner has not spawned yet
@@ -846,7 +900,7 @@ namespace MphRead.Mods.Network
         public static void RestoreReportedPosition(PlayerEntity player, in IntentPacket intent)
         {
             if (!Sane(intent.Position) || intent.Position == Vector3.Zero
-                || StaleSinceSpawn(player, intent))
+                || StaleSinceSpawn(player, intent) || FrozenInPlace(player))
             {
                 return;
             }
@@ -1023,6 +1077,31 @@ namespace MphRead.Mods.Network
         /// player kept the node it spawned in and vanished -- or showed only
         /// a shadow -- as soon as the viewer was elsewhere.
         /// </summary>
+        /// <summary>
+        /// Whether this puppet is frozen, and so must not be moved by what its
+        /// owner is still reporting.
+        ///
+        /// The other half of "frozen players who keep moving", and the half
+        /// the state flag could not reach. A freeze is resolved on the
+        /// authority, and its victim does not learn of it for a round trip --
+        /// during which they are still walking about on their own machine and
+        /// still reporting where they have got to. Every one of those reports
+        /// was applied on top of a player the authority was holding perfectly
+        /// still, so the host watched a block of ice slide across the room for
+        /// as long as the trip took. At 250 ms that is fifteen frames of
+        /// movement, which is exactly what it looks like.
+        ///
+        /// A frozen player cannot move: any position that arrives while the
+        /// timer runs describes a moment before the ice, so there is nothing
+        /// to lose by ignoring it. The local simulation still runs -- a frozen
+        /// player falls -- and whatever the two copies disagree about by the
+        /// time it thaws is what <see cref="Diverged"/> is for.
+        /// </summary>
+        private static bool FrozenInPlace(PlayerEntity player)
+        {
+            return player.ModFrozen;
+        }
+
         private static void Move(PlayerEntity player, Vector3 position)
         {
             Vector3 previous = player.Position;
@@ -1033,6 +1112,11 @@ namespace MphRead.Mods.Network
             // movement and can push the puppet away from the hitbox.
             player.PrevPosition = position;
             player.ModRefreshNodeRef(previous);
+            // And the collision volume, which the engine only recomputes
+            // inside the movement step this correction comes after. See
+            // ModRefreshVolume: the shadow and the burn effect are drawn from
+            // it, and shots are tested against it.
+            player.ModRefreshVolume();
         }
     }
 }

@@ -79,6 +79,22 @@ namespace MphRead.Mods.Network
             /// </summary>
             public int FrozenFrames;
             /// <summary>
+            /// Frames this slot was disrupted, and frames it was on fire,
+            /// counted the same way on every machine -- the entity's own
+            /// timers, set locally by the hit on the authority and by
+            /// <c>PlayerState.FlagDisrupted</c> / <c>FlagBurning</c>
+            /// everywhere else.
+            ///
+            /// The same check as the freeze's, for the same two bugs one
+            /// weapon along: both afflictions are applied inside TakeDamage
+            /// from the beam entity, the replay has no beam, and so a victim
+            /// on any machine but the authority's was disrupted and burning
+            /// nowhere -- no screen distortion for the one player it is drawn
+            /// for, and no flames on anybody.
+            /// </summary>
+            public int DisruptedFrames;
+            public int BurningFrames;
+            /// <summary>
             /// Frames this slot was flagged as watching rather than playing.
             /// Read off the entity for every slot alike -- the local player
             /// gets the flag from SpectatorMode, a puppet from the
@@ -295,6 +311,14 @@ namespace MphRead.Mods.Network
                 if (player.ModFrozen)
                 {
                     record.FrozenFrames++;
+                }
+                if (player.ModDisrupted)
+                {
+                    record.DisruptedFrames++;
+                }
+                if (player.ModBurning)
+                {
+                    record.BurningFrames++;
                 }
                 // For this machine's own player, what it *meant* to do --
                 // SpectatorMode, which is where the decision lives -- and for
@@ -733,6 +757,8 @@ namespace MphRead.Mods.Network
             ("halfturret", r => r.HalfturretFrames),
             ("zoom", r => r.ZoomFrames),
             ("frozen", r => r.FrozenFrames),
+            ("disrupted", r => r.DisruptedFrames),
+            ("burning", r => r.BurningFrames),
             ("spectating", r => r.SpectatingFrames),
             ("double-damage", r => r.DoubleDamageFrames),
             ("damage-taken", r => r.DamageEvents),

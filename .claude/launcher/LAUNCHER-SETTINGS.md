@@ -27,8 +27,8 @@ Sections
 | Display | window mode; performance (render scale, lighting, fog, filtering, FPS counter, **frame rate**); cel shading; **Pro mode HUD**, which is the whole of the HUD question now, plus the two crosshair rows that appear under it |
 | Audio | sound-effect and music volume; the game's text language |
 | Controls | mouse sensitivity, invert either axis, and every key binding, plus reset to defaults; and a **Gamepad** section -- on/off, look sensitivity, stick dead zone, invert the stick's vertical aim. Its own section rather than more rows under Mouse, because a pad has its own sensitivity and a great many people invert one of the two and not the other. `.claude/GAMEPAD.md` |
-| Match rules | point goal, time limit, damage level, team play, friendly fire, hunter radar, affinity weapons |
-| Launcher | your name and hunter, the default server, the server directory, and whether to check for updates. These live in `launcher.txt`, not `settings.json` |
+| Match rules | point goal, time limit, damage level, team play, friendly fire, hunter radar, affinity weapons, **shadow freeze**. The last is the Judicator ice wave's cone: on is the cartridge, glitch and all, and off makes it a cone rather than a column of infinite height. Server-decided in a networked match, like friendly fire, and broadcast in the match state -- what is set here is what a *hosted* game hands its own server |
+| Launcher | your name, hunter and **suit colour**, the default server, the server directory, and whether to check for updates. These live in `launcher.txt`, not `settings.json`. The suit is 1-4 (the last two of a hunter's six palettes are the team suits) and is announced with the hunter; two players who pick the same one on the same hunter are moved apart by `PlayerColors`. Answering either of those two rows during a match takes effect at the next respawn, exactly like the pause menu's own pair |
 | Features / Cheats / Bugfixes | every `public static bool` on those three classes, by reflection, so the list cannot drift |
 
 Saving and applying

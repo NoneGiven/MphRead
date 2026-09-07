@@ -835,11 +835,129 @@ namespace MphRead.Entities
             }
         }
 
+        /// <summary>
+        /// Put the collision volume back where the player now is.
+        ///
+        /// The engine recomputes it once a frame, at the end of the movement
+        /// step -- and a puppet is moved *after* that, when its owner's
+        /// reported position arrives (see NetPlayerBridge.Move). So for every
+        /// remote player the volume described where this machine's own
+        /// simulation had guessed they were, and the correction never reached
+        /// it.
+        ///
+        /// Two things are drawn from that volume rather than from the
+        /// position: the blob shadow under a hunter and the flames of a burn.
+        /// Both therefore came out at the guess while the model was drawn at
+        /// the correction -- which for anybody moving is a shadow trailing a
+        /// step behind them, on the ground they have just left. Reported as
+        /// "the shadow is behind the character instead of under them".
+        ///
+        /// It is also what shots are tested against, so a volume a correction
+        /// behind is a hitbox a correction behind.
+        /// </summary>
+        internal void ModRefreshVolume()
+        {
+            _volume = CollisionVolume.Move(_volumeUnxf, Position);
+        }
+
         /// <summary>Burning from an affinity Magmaul.</summary>
         internal bool ModBurning => _burnTimer > 0;
 
         /// <summary>Aim disrupted by an affinity Volt Driver.</summary>
         internal bool ModDisrupted => _disruptedTimer > 0;
+
+        /// <summary>
+        /// Disrupt or un-disrupt this player because the authority says so.
+        ///
+        /// The same shape as <see cref="ModSetFrozen"/>, and there for the
+        /// same reason: the affliction is applied inside <c>TakeDamage</c>
+        /// from the beam that landed the hit, and the replay that reaches
+        /// every other machine has no beam to hand it. Before this, a charged
+        /// Volt Driver disrupted its victim on the authority's copy of them
+        /// and nowhere else -- so the one player who should have seen the
+        /// screen tear apart was the one player who did not.
+        ///
+        /// Two things happen here and both matter. The timer is what the aim
+        /// path reads, so the disruption is *felt* -- and it is felt on the
+        /// machine whose aim it is, which is the only place that can apply it
+        /// to a real player's input rather than to a puppet's relayed
+        /// direction. The HUD state is the distortion itself, which is the
+        /// main player's alone.
+        ///
+        /// The countdown runs locally, like the freeze's: it starts a fraction
+        /// of a second late, which nobody can see, and it is topped up while
+        /// the flag holds so it cannot end early. Ending is the engine's --
+        /// <c>UpdateDisruptedState</c> runs the recovery out through its own
+        /// four states, and cutting it short would leave the screen mid-shift.
+        /// </summary>
+        internal void ModSetDisrupted(bool disrupted)
+        {
+            if (_health <= 0)
+            {
+                return;
+            }
+            if (disrupted)
+            {
+                if (_disruptedTimer == 0)
+                {
+                    _disruptedTimer = 60 * 2; // todo: FPS stuff
+                    if (IsMainPlayer)
+                    {
+                        HudOnDisrupted();
+                        _soundSource.PlaySfx(SfxId.LOB_DISRUPT);
+                    }
+                }
+                else if (_disruptedTimer < 2)
+                {
+                    _disruptedTimer = 2;
+                }
+            }
+            else if (_disruptedTimer > 1)
+            {
+                // One frame left rather than none, so the ordinary tick is
+                // what ends it: the recovery animation is driven from there.
+                _disruptedTimer = 1;
+            }
+        }
+
+        /// <summary>
+        /// Set this player on fire, or put them out, because the authority
+        /// says so.
+        ///
+        /// Cosmetic here and nothing more, which is the point: the burn's own
+        /// tick calls <c>TakeDamage</c> once every eight frames, and
+        /// <see cref="NetDamage.Suppress"/> drops that everywhere but on the
+        /// machine resolving the match -- so the fire burns on every screen
+        /// while the damage still travels as damage, counted once, by the one
+        /// machine entitled to count it. <c>_burnedBy</c> is deliberately left
+        /// alone for the same reason: attribution belongs to the kill the
+        /// authority resolves, not to a copy of the flames.
+        /// </summary>
+        internal void ModSetBurning(bool burning)
+        {
+            if (_health <= 0)
+            {
+                return;
+            }
+            if (burning)
+            {
+                if (_burnTimer == 0)
+                {
+                    _burnTimer = 150 * 2; // todo: FPS stuff
+                    CreateBurnEffect();
+                }
+                else if (_burnTimer < 2)
+                {
+                    _burnTimer = 2;
+                }
+            }
+            else if (_burnTimer > 1)
+            {
+                // The tick clears the effect when the timer runs out, which is
+                // where the flames should stop being drawn from.
+                _burnTimer = 1;
+            }
+        }
 
         /// <summary>Whether this player can currently be zoomed, for the test tour.</summary>
         internal bool ModCanZoom => EquipInfo.Weapon != null

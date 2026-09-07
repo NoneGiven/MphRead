@@ -1058,6 +1058,41 @@ namespace MphRead.Mods.Network
         /// and an older authority simply never sets it.
         /// </summary>
         public const byte FlagFrozen = 1 << 5;
+        /// <summary>
+        /// Disrupted by an affinity Volt Driver's charged shot.
+        ///
+        /// The same fault as the freeze, one weapon along, and the last bit of
+        /// it that was still showing: the disruption is applied inside
+        /// <c>TakeDamage</c> from the beam that landed the hit, so on every
+        /// machine but the authority's the victim was hit by a charged Volt
+        /// Driver and nothing happened at all -- no aim disruption and, above
+        /// all, none of the screen distortion the weapon is *known* by. The
+        /// shooter watched their charge land and the target play on, and the
+        /// target had no idea what had hit them. Reported as "the Volt
+        /// Driver's charged shot is missing the screen-distortion effect".
+        ///
+        /// The distortion itself was never missing: the shader, the shift
+        /// table and the four-state machine that drives it are all there in
+        /// <c>PlayerHud</c> and <c>Renderer</c>, and they work perfectly for
+        /// whoever happens to be the authority. Nothing was ever setting them
+        /// off for anybody else.
+        /// </summary>
+        public const byte FlagDisrupted = 1 << 6;
+        /// <summary>
+        /// Burning, from an affinity Magmaul's charged shot.
+        ///
+        /// Third of the same three, and the same story: the flames are spawned
+        /// in <c>TakeDamage</c> from the beam, so a victim on any machine but
+        /// the authority's took the damage over time -- which is relayed like
+        /// any other hit -- while standing there not on fire. "Hunters taking
+        /// burn damage do not display the burning visual effect".
+        ///
+        /// Cosmetic on arrival, and deliberately so: the burn's own tick calls
+        /// TakeDamage, and <see cref="NetDamage.Suppress"/> drops that on
+        /// every machine that is not resolving the match. What travels is the
+        /// fire; the damage keeps coming the way all damage does.
+        /// </summary>
+        public const byte FlagBurning = 1 << 7;
 
         public void Write(Span<byte> dest)
         {
@@ -1197,6 +1232,13 @@ namespace MphRead.Mods.Network
         /// version 5 client would read as garbage rather than notice. This is
         /// the same shape of change version 2 was, and it is refused the same
         /// way.
+        ///
+        /// Version 6 also spends the last two bits of the player state's flag
+        /// byte on <see cref="PlayerState.FlagDisrupted"/> and
+        /// <see cref="PlayerState.FlagBurning"/>, which cost no space and
+        /// would not have needed a bump of their own -- an older build ignores
+        /// a bit it does not know. They are mentioned here because the byte is
+        /// now full: the next flag needs somewhere to live.
         /// </summary>
         public const int ProtocolVersion = 6;
         /// <summary>

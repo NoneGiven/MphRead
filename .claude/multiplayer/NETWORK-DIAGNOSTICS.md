@@ -223,10 +223,107 @@ it up while the flag is still set so it cannot expire a round trip early, and
 hands the *ending* back to the ordinary tick by leaving one frame on it -- so
 the break sound and the ice-shatter effect are the game's, not an imitation.
 
-The shape to remember: **an affliction is not state until it is sent.** Burn
-(`_burnTimer`) and disrupt (`_disruptedTimer`) have exactly the same
-structure; neither has been reported, and neither is replicated. Two spare
-bits are left in the flags byte.
+The shape to remember: **an affliction is not state until it is sent.**
+
+## The other two afflictions, reported the same way (2026-09-07)
+
+The paragraph that used to end the section above said burn (`_burnTimer`) and
+disrupt (`_disruptedTimer`) have exactly the same structure, that neither had
+been reported, and that two spare bits were left in the flags byte. Both were
+then reported, in the same batch of player feedback:
+
+- *"The Volt Driver's charged shot is missing the screen-distortion effect."*
+- *"Hunters taking burn damage do not display the burning visual effect."*
+
+Neither was missing anything. The distortion is a shader, a shift table and a
+four-state machine in `PlayerHud`/`Renderer`, and it works perfectly -- for
+whoever happens to be the authority. The flames are `CreateBurnEffect`, and
+likewise. What was missing is that nothing set either of them off anywhere
+else, for the reason above: the affliction is read off the beam, and the
+replay has no beam.
+
+`PlayerState.FlagDisrupted` (bit 6) and `FlagBurning` (bit 7) carry them, with
+`ModSetDisrupted` and `ModSetBurning` shaped exactly like `ModSetFrozen` --
+the engine's own numbers, topped up while the flag holds, ending handed back
+to the ordinary tick so the recovery animation and the effect's own teardown
+are the game's. Two details worth keeping:
+
+- **Disruption is applied on the victim's own machine, and that is the point.**
+  The timer is what the aim path reads, so a disrupted player's aim is
+  disrupted where their aim is actually computed rather than on a puppet
+  reading a relayed direction; and the HUD state is the main player's alone,
+  which is the whole of what was reported missing.
+- **Burning is cosmetic on arrival, deliberately.** The burn's own tick calls
+  `TakeDamage` every eight frames and `NetDamage.Suppress` drops that
+  everywhere but on the machine resolving the match -- so the fire burns on
+  every screen while the damage still travels as damage, counted once.
+  `_burnedBy` is left alone for the same reason: attribution belongs to the
+  kill the authority resolves.
+
+The flags byte is now full. The next flag needs somewhere to live.
+
+Measured on the two-client instrument, Kanden against Spire, 70 s: Spire set
+itself on fire with its own Magmaul and counted **255 burning frames on its own
+machine** against the authority's 299 -- the difference being the round trip at
+each end. Before the change its own count was necessarily zero. Disruption is
+the same mechanism and was not exercised: the tour landed 21 hits and no
+charged Volt Driver among them.
+
+## The shadow that trailed a step behind (2026-09-07)
+
+Reported as *"a character's shadow can sometimes be rendered behind the
+character instead of directly beneath them"*.
+
+The blob shadow is cast from `_volume.SpherePosition` -- the collision volume,
+not the position. The engine recomputes that volume once a frame, at the end of
+the movement step, and a **puppet is moved after that**: `RestoreReportedPosition`
+runs post-movement, by design, so that what is drawn and what is shot at agree
+with the owner's own report rather than with this machine's guess. `Move` set
+the position, the previous position and the node ref -- and not the volume.
+
+So for every remote player, all frame, the volume described where the local
+simulation had guessed they were while the model was drawn where they actually
+are. For anybody moving, that is a shadow on the ground they have just left.
+The burn effect is positioned from the same field and lagged with it, and so
+did the hitbox, which is the half of this nobody would have reported.
+
+`ModRefreshVolume`, called from `Move`.
+
+## A frozen player who kept sliding, from the host's side
+
+The state flag above stops the *victim* moving on their own machine, but the
+authority pins puppets to their owners' reported positions -- and for one round
+trip after a freeze the victim is still walking about and still reporting where
+they have got to. Every one of those reports was applied on top of a player the
+authority was holding still: at 250 ms, fifteen frames of ice sliding across
+the room, which is exactly what it looks like.
+
+A frozen player cannot move, so any position that arrives while the timer runs
+describes a moment before the ice. `ApplyReportedPosition` and
+`RestoreReportedPosition` ignore them (`FrozenInPlace`). The local simulation
+still runs -- a frozen player falls -- and whatever the two copies disagree
+about by the time it thaws is what `Diverged` is for.
+
+## A player stuck in alt form on everybody else's screen (2026-09-07)
+
+Reported as *"a player can sometimes appear to other players as being in
+Alt-Form even though they are actually in Normal Form"*.
+
+The form was replicated by replaying the morph **press** through the engine and
+by nothing else. That works until one of those presses does not take -- a
+packet lost at the wrong moment, or a press that arrives while the puppet is
+somewhere it cannot unmorph. The authority's copy is then in the wrong form for
+the rest of the life, and since `FlagAltForm` in every snapshot is read off
+that copy, every other client faithfully agrees with it. The one machine that
+knows better is the owner's, and nothing was asking: `IntentButtons.AltFormState`
+has always been in the packet, and was used only to convert the reported
+position between forms.
+
+`ApplyIntent` now feeds it to `ApplyForm` -- the same grace period, the same
+attempt-then-force -- but **only on the authority**. A client that also acted on
+it would be taking form corrections from two sources at once, its owner's
+intent and the authority's snapshot, and the two disagree for exactly as long
+as it takes the authority to converge.
 
 ## Players invisible at the top of AD2 ALINOS PERCH
 

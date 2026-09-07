@@ -23,11 +23,59 @@ a map is loading. The log is the only thing that can be read afterwards.
 | `Mods/Launcher/Portable/LauncherPrefs.cs` | `debug_logs` in `launcher.txt` |
 | `Mods/ModEntry.cs` | `DebugLog.Attach()`, before anything else runs |
 | `logs/FruityPrime-<yyyyMMdd-HHmmss>.log` | the file, beside the executable |
+| `logs/FruityPrime-<yyyyMMdd-HHmmss>-native.txt` | the same run's **native** standard error, in a file of its own |
 
 On Android the file goes to the app's data directory, because
 `LauncherPrefs.Directory` is pointed there by the head before anything reads --
 a package's own directory is read-only. The switch is the same control on the
 same screen: the launcher is one Avalonia view on every platform.
+
+## The native half, and why it is a second file
+
+The log above is a tee of `Console.Out`. That catches everything *this program*
+prints and nothing the runtime underneath it does -- which is exactly the half
+that matters when the process does not so much crash as vanish. Reported from
+NixOS, in the player's terminal and nowhere else:
+
+```
+terminate called after throwing an instance of 'PAL_SEHException'
+```
+
+That line is libstdc++'s terminate handler writing straight to file descriptor
+2, from native code, immediately before `abort()`. Nothing managed sees it: not
+the tee, not `AppDomain.UnhandledException` (a hardware fault the PAL cannot
+unwind never becomes a managed exception), and not `ProcessExit`, which
+`abort()` does not run. The log simply stopped mid-session and the one line
+saying what had happened existed only on a screen somebody had to think to
+copy.
+
+So `DebugLog.CaptureNativeErrors` points the descriptor itself at a file --
+`dup2` on Unix, `SetStdHandle` on Windows. Everything written to stderr
+afterwards lands there whoever writes it: the C++ runtime, the CLR's own
+fatal-error text, a graphics driver, ALSA's complaints, and managed
+`Console.Error` along with them. It survives an abort because the kernel has
+already written it, with nothing to flush.
+
+Its own file rather than the main log, because two writers with independent
+offsets on one file overwrite each other -- and the whole point of the
+exercise is to still have the last line. The main log says where it went, and
+so does the console, since a player watching a terminal would otherwise notice
+this as "the errors stopped appearing".
+
+Neither file catches a fault with *no* message -- a plain segfault says
+nothing at all. The log now says what to do next time: start the game with
+`DOTNET_DbgEnableMiniDump=1` (and `DOTNET_DbgMiniDumpType=4` for a complete
+one) and the runtime writes a real dump with a native stack in it.
+
+Two more lines exist for the same class of report. The header records
+`session=`, `desktop=`, `DISPLAY=` and `WAYLAND_DISPLAY=` on Linux, because
+every graphical failure from there comes down to which display server is
+running and which client libraries the binary found -- and nobody thinks to
+include it. And `RenderWindow` says *creating the game window and GL context*
+before the base constructor asks GLFW for one, and *game window created* after:
+a native crash inside that call used to leave a log whose last line was
+whatever had been printed before it, and the only clue was the absence of the
+`[gl] vendor=` lines that `Scene.OnLoad` writes once a context exists.
 
 ## Getting the file off the machine
 

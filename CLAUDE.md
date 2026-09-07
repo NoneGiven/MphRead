@@ -82,6 +82,7 @@ export ALSOFT_DRIVERS=null PULSE_SERVER=   # else ALSA retries stall frames
 
 | Command | Use |
 |---|---|
+| `MphRead -server ... -noshadowfreeze` | run the room with the Judicator's ice wave as a cone rather than as a column of infinite height. A rule, broadcast to every client in the match state, because the machine resolving a shot decides who it hit |
 | `MphRead -server -port N -players 8` | dedicated relay server; needs no game files. `-servername "NAME"` is what a browser shows; it announces itself to `net.livetek.fr` unless `-nomaster` is passed, and `-master HOST -masterport N` points it elsewhere |
 | `MphReadServer.exe -server ...` | the same server on Windows, as its own console binary. `MphRead.exe` can also do it, but it is a GUI binary: a shell will not wait for it and its exit code never reaches `%ERRORLEVEL%`. Run with no arguments it prints what it is for |
 | `MphRead -masterserver [-port N] [-public HOST] [-hostports A-B]` | the server directory the launcher's browser asks, and the machine that runs matches for players who cannot open a port. Same binary, no game files, keeps nothing on disk. `-public` is the address to publish for servers registering from this same machine, whose heartbeats arrive over the loopback |
@@ -100,6 +101,7 @@ export ALSOFT_DRIVERS=null PULSE_SERVER=   # else ALSA retries stall frames
 | `~/mph-net-test/run-lag.sh MS SECONDS hunter...` | the same check against a loopback server behind `udp-lag.py`, which holds every datagram for `MS` before passing it on. A latency bug reproduced at a number you chose, rather than at whatever the internet is doing -- and the Pi answers in 7-17 ms, so it is the *worse* instrument for one |
 | `MphRead -maptest "ROOM" -players 8 -seconds 22` | load one room with a full house, drive every player, and report what the map holds and whether it survived |
 | `MphRead -maptest "ROOM" -players 8 -bots` | the same, but AI bots instead of the scripted tour -- a different code path, the only one that finds what only `PlayerAi` touches |
+| `MphRead -maptest "ROOM" -hunter H -hudshots` | put that hunter in slot 0, whose eyes and whose HUD every capture is taken through. Each of the eight lays its readouts out differently, so a HUD picture with no hunter named is a picture of Samus's and of nobody else's |
 | `MphRead -maptest "ROOM" -renderprobe` | stand on every spawn point in the room in turn, read the frame, walk forward five seconds, read the worst. Catches a room that draws nothing -- the failure no other check can see, because everything else about it passes. `-shots DIR` writes the PNGs, `-allnodes` draws without room-part culling (which separates "the geometry is missing" from "the cull lost it"), `-hudshots` uses a real visible window and reads *its* buffer, which is the only capture that includes the HUD, and `-size WxH` sets that window's shape -- the HUD is laid out in a 4:3 space and stretched, so how it looks is partly a question about the window. Under WSL a HUD capture needs the X11 backend: `WAYLAND_DISPLAY=` `DISPLAY=:0`, or every window read comes back black |
 | `MphRead -maptest "TEST ARENA" -players 8` | the harness's own room (`maps/arena/`): forty units square, eight spawns on a ring looking inward, nothing far from anything. Where damage, hit registration and the affliction states are actually measurable -- a real map's corridors mean most of the tour's shots land on a wall |
 | `MphRead -rooms` | list every multiplayer room, one per line, for a shell loop. **27** is the whole cartridge and the right answer with no custom map source present; anything more is a custom map |
@@ -473,7 +475,27 @@ Shapes worth keeping without opening anything else:
   walked around normally on their own screen while the machine running the
   simulation, which pins a puppet wherever its owner last said it was, drew a
   block of ice sliding across the room. `PlayerState.FlagFrozen` carries the
-  state instead of the cause, and the countdown still runs locally.
+  state instead of the cause, and the countdown still runs locally. The same
+  was then reported of the other two: the Volt Driver's screen distortion and
+  the Magmaul's flames reached nobody but the authority either
+  (`FlagDisrupted`, `FlagBurning`, and the flags byte is now full). A frozen
+  puppet also stopped taking its owner's reported positions, since those
+  describe a moment before the ice.
+- **A puppet is moved after the movement step, and only the position moved.**
+  `Move` set the position, the previous position and the node ref -- not the
+  collision volume, which the engine recomputes inside the step this
+  correction comes *after*. The blob shadow and the burn effect are drawn from
+  that volume, and shots are tested against it, so for every remote player all
+  three described where this machine had guessed they were while the model was
+  drawn where they are. "The shadow is behind the character" was the visible
+  third of it.
+- **A press can be lost; a state cannot.** The alt form was replicated by
+  replaying the morph press and nothing else, so one press that did not take
+  left the authority's copy in the wrong form for the rest of the life -- and
+  every other client agreed with it, since `FlagAltForm` is read off that
+  copy. `IntentButtons.AltFormState` had been in the packet all along, used
+  only to convert reported positions between forms; the authority now
+  reconciles against it, and only the authority does.
 - **A lookup that fails is not the same as a lookup that is stale.**
   `GetNodeRefByPosition` returns nothing for a position no room part contains
   -- the top of AD2 ALINOS PERCH, among others -- and the fallback kept the
@@ -535,9 +557,12 @@ against the same puppets. Measured at 156 ms of rewind against 150 ms injected,
 with 0 mismatches on the 3-client instrument. `-nounlagged` is the control.
 `.claude/multiplayer/NETWORK-UNLAGGED.md`.
 
-**Chat is T**, three lines top left in green on nothing, gone ten seconds
-after they arrive -- which is why the frame counter now sits in the right-hand
-corner. It draws with a font of its own (`Mods/Chat/ChatFont.cs`, pixel art in
+**Chat is T**, three lines bottom left in green on nothing, gone ten seconds
+after they arrive -- the frame counter sits in the right-hand corner, which is
+where it went when the log was still in the top-left one. Bottom left because
+that is where every game that took Quake's shape puts it and where players
+look; the block is anchored at y 168, above Pro mode's energy panel, and steps
+right past the weapon column when the modern HUD is drawing one. It draws with a font of its own (`Mods/Chat/ChatFont.cs`, pixel art in
 the file, no asset): the game's has one alphabet, so every line typed came out
 shouted and half as wide again as it needed to be. `PacketType.Chat` is additive and needs no protocol bump, so an older
 server drops it silently and chat simply does nothing there until it is
