@@ -6192,6 +6192,12 @@ namespace MphRead
         private bool _startedHidden = true;
 
         /// <summary>
+        /// Frames left before the saved window mode is applied. See where it
+        /// is set: zero means done or never asked for.
+        /// </summary>
+        private int _applyStartupIn;
+
+        /// <summary>
         /// The smallest the game window may be dragged to.
         ///
         /// Not an aesthetic floor: Escape's menu is laid over this window and
@@ -6532,6 +6538,18 @@ namespace MphRead
             {
                 IsVisible = true;
                 _startedHidden = false;
+                // Not on this frame. The window has only just been shown and
+                // the window manager has not mapped it yet, so the geometry
+                // Enter() sets is computed against a window that is not on the
+                // screen and the map that follows puts it back -- which is the
+                // startup half of the "needed a second F11" problem Enter
+                // already describes. Waiting a few frames lets the map settle
+                // first, and it is the difference between opening fullscreen
+                // and having to ask for it by hand once the game is up.
+                _applyStartupIn = 3;
+            }
+            else if (_applyStartupIn > 0 && --_applyStartupIn == 0)
+            {
                 Mods.WindowMode.ApplyStartup(this);
             }
             // What the pause menu asked for, done on the thread that owns the
