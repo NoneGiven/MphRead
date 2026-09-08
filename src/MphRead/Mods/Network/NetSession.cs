@@ -260,6 +260,10 @@ namespace MphRead.Mods.Network
             _peers.Clear();
             _hostEndPoint = null;
             Role = NetRole.Offline;
+            // Whatever the last server was being asked, it was not this one's
+            // question: a vote left standing here would draw a prompt over
+            // the next match.
+            MapVote.Reset();
             LocalSlot = 0;
             Array.Clear(RemoteStateValid);
             Array.Clear(RemoteIntentValid);
@@ -569,6 +573,12 @@ namespace MphRead.Mods.Network
                 case PacketType.Chat:
                     HandleChat(packet, time);
                     break;
+                case PacketType.VoteState when Role == NetRole.Client:
+                    if (packet.Payload.Length >= VoteStatePacket.Size)
+                    {
+                        MapVote.Apply(VoteStatePacket.Read(packet.Payload));
+                    }
+                    break;
                 case PacketType.Bye:
                     HandleBye(packet);
                     break;
@@ -661,6 +671,27 @@ namespace MphRead.Mods.Network
                 _transport.Send(_hostEndPoint, PacketType.Chat,
                     _scratch.AsSpan(0, ChatPacket.Size));
             }
+        }
+
+        /// <summary>
+        /// A proposal or a ballot, upstream.
+        ///
+        /// Client only. A listen host is its own server and its
+        /// <see cref="DedicatedServer"/> is in the same process, but nothing
+        /// routes a vote to it yet -- and a vote of one player, held by that
+        /// player, is not a vote. So this sends where there is somebody to
+        /// send to and does nothing otherwise, rather than pretending.
+        /// </summary>
+        public static void SendVote(byte kind, string roomKey)
+        {
+            if (_transport == null || _hostEndPoint == null || Role != NetRole.Client)
+            {
+                return;
+            }
+            var vote = new VotePacket { Kind = kind, RoomKey = roomKey ?? "" };
+            vote.Write(_scratch);
+            _transport.Send(_hostEndPoint, PacketType.Vote,
+                _scratch.AsSpan(0, VotePacket.Size));
         }
 
         private static void HandleHello(ReceivedPacket packet, double time)

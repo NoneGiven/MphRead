@@ -127,6 +127,7 @@ namespace MphRead.Mods.Launcher.Gui
                 Close();
             };
             _view.SettingsRequested += (_, _) => OpenSettings();
+            _view.VoteMapRequested += (_, _) => OpenMapVote();
             _view.SpectateRequested += (_, _) => { SpectatorMode.Start(); Close(); };
             _view.RejoinRequested += (_, _) => { SpectatorMode.Rejoin(); Close(); };
             _view.RecordToggleRequested += (_, _) =>
@@ -268,6 +269,69 @@ namespace MphRead.Mods.Launcher.Gui
             {
                 _openSettings = null;
                 _settingsOpen = false;
+                Topmost = wasTopmost;
+                Activate();
+            }
+        }
+
+        private bool _voteOpen;
+
+        /// <summary>
+        /// Pick a map and put it to the room.
+        ///
+        /// The same grid the front screen chooses a map from -- pictures, not
+        /// a list of names, because "which map is that" is the question a
+        /// name cannot answer and the whole reason the previews exist. What
+        /// happens after the click is the server's: this sends the proposal
+        /// and closes, and the answer arrives as a line in the chat and a
+        /// prompt on everybody's screen, this player's included.
+        /// </summary>
+        private async void OpenMapVote()
+        {
+            if (_voteOpen)
+            {
+                return;
+            }
+            string why = MapVote.WhyNotProposing();
+            if (why.Length > 0)
+            {
+                // Said in the game's own chat rather than in a dialog here:
+                // it is one sentence, the player is about to go back to the
+                // match, and a modal box for it is a second thing to dismiss.
+                Chat.ChatBox.System(why);
+                Close();
+                return;
+            }
+            _voteOpen = true;
+            bool wasTopmost = Topmost;
+            Topmost = false;
+            try
+            {
+                var rooms = ThumbnailGenerator.MultiplayerRooms();
+                if (rooms.Count == 0)
+                {
+                    Chat.ChatBox.System("no maps to vote for");
+                    return;
+                }
+                string current = NetSession.ServerMatch?.RoomKey ?? rooms[0];
+                var view = new MapPickerView(rooms, current);
+                var window = new MapPickerWindow(view);
+                view.Closed += (_, _) => window.Close();
+                CoverGameWindow(window);
+                await window.ShowDialog(this);
+                if (view.RoomKey != null)
+                {
+                    MapVote.Propose(view.RoomKey);
+                    Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[pause] the map vote could not be opened: {ex.Message}");
+            }
+            finally
+            {
+                _voteOpen = false;
                 Topmost = wasTopmost;
                 Activate();
             }

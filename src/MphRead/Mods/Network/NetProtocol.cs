@@ -42,7 +42,7 @@ namespace MphRead.Mods.Network
         HostRequest = 20,   // launcher -> master, "run a game for me"
         HostReply = 21,     // master -> launcher, the port it is on, or why not
         Refused = 22,       // server -> client, "not you, and here is why"
-        Chat = 23           // client -> server -> everyone else, one line of text
+        Chat = 23,          // client -> server -> everyone else, one line of text
         // 24 and 25 are left free for a voice channel. Speech is a stream of
         // frames rather than a line of text -- it wants its own type, its own
         // cadence and its own "who is talking" packet, and squeezing it into
@@ -50,6 +50,8 @@ namespace MphRead.Mods.Network
         // scoreboard reads. Nothing here needs to change when it arrives: the
         // server relays what it recognises and drops what it does not, so a
         // build that speaks voice and a build that does not can share a match.
+        Vote = 26,          // client -> server, propose a map or answer a proposal
+        VoteState = 27      // server -> clients, the vote in progress
     }
 
     /// <summary>
@@ -1285,5 +1287,115 @@ namespace MphRead.Mods.Network
         // it had a slot, so it never said hello again, and every packet it
         // sent afterwards was from an endpoint the server no longer knew.
         public const double TimeoutSeconds = 30.0;
+    }
+
+    /// <summary>
+    /// One player's move in a map vote: proposing one, or answering the
+    /// proposal that is on the table.
+    ///
+    /// Nothing in here says who is voting. The endpoint the datagram arrived
+    /// from is the only thing about a sender that cannot be typed into a text
+    /// box, so the server reads the slot from that and ignores anything the
+    /// packet might claim -- exactly as <see cref="ChatPacket"/> does, and for
+    /// the same reason: a ballot that can be cast on somebody else's behalf is
+    /// not a vote.
+    /// </summary>
+    public struct VotePacket
+    {
+        /// <summary>As long as the longest room key, which lives in
+        /// <see cref="MatchStatePacket.MaxNameBytes"/>.</summary>
+        public const int MaxRoomBytes = MatchStatePacket.MaxNameBytes;
+        public const int Size = 1 + MaxRoomBytes;
+
+        /// <summary>Put this map to the room.</summary>
+        public const byte KindPropose = 0;
+        public const byte KindYes = 1;
+        public const byte KindNo = 2;
+
+        public byte Kind;
+        /// <summary>The map being proposed. Empty on a ballot.</summary>
+        public string RoomKey;
+
+        public void Write(Span<byte> dest)
+        {
+            dest[..Size].Clear();
+            dest[0] = Kind;
+            ChatPacket.WriteAscii(dest.Slice(1, MaxRoomBytes), RoomKey);
+        }
+
+        public static VotePacket Read(ReadOnlySpan<byte> src)
+        {
+            return new VotePacket
+            {
+                Kind = src[0],
+                RoomKey = ChatPacket.ReadAscii(src.Slice(1, MaxRoomBytes))
+            };
+        }
+    }
+
+    /// <summary>
+    /// What the room is being asked, and how the answer is going.
+    ///
+    /// Broadcast on a timer rather than sent once per change, for the reason
+    /// <see cref="MatchStatePacket"/> is: UDP drops, and a client that missed
+    /// the one packet would show no prompt at all while everybody else voted.
+    /// A client that joins mid-vote gets the same picture from the next tick.
+    /// </summary>
+    public struct VoteStatePacket
+    {
+        public const int MaxRoomBytes = MatchStatePacket.MaxNameBytes;
+        public const int MaxNameBytes = ChatPacket.MaxNameBytes;
+        public const int Size = 1 + MaxRoomBytes + MaxNameBytes + 1 + 1 + 1 + 1 + 2;
+
+        /// <summary>Nothing on the table. The rest of the packet is cleared.</summary>
+        public const byte StateIdle = 0;
+        public const byte StateRunning = 1;
+        public const byte StatePassed = 2;
+        public const byte StateFailed = 3;
+
+        public byte State;
+        public string RoomKey;
+        /// <summary>Who called it, for the line the prompt reads.</summary>
+        public string Proposer;
+        public byte Yes;
+        public byte No;
+        /// <summary>How many players could vote when this was counted.</summary>
+        public byte Eligible;
+        /// <summary>How many yeses it takes. Sent rather than recomputed so
+        /// the number on the prompt is the number the server will act on.</summary>
+        public byte Needed;
+        /// <summary>Seconds left to vote, or -- when idle -- until the room
+        /// may call another one.</summary>
+        public ushort Seconds;
+
+        public void Write(Span<byte> dest)
+        {
+            dest[..Size].Clear();
+            dest[0] = State;
+            ChatPacket.WriteAscii(dest.Slice(1, MaxRoomBytes), RoomKey);
+            ChatPacket.WriteAscii(dest.Slice(1 + MaxRoomBytes, MaxNameBytes), Proposer);
+            int at = 1 + MaxRoomBytes + MaxNameBytes;
+            dest[at] = Yes;
+            dest[at + 1] = No;
+            dest[at + 2] = Eligible;
+            dest[at + 3] = Needed;
+            BinaryPrimitives.WriteUInt16LittleEndian(dest.Slice(at + 4, 2), Seconds);
+        }
+
+        public static VoteStatePacket Read(ReadOnlySpan<byte> src)
+        {
+            int at = 1 + MaxRoomBytes + MaxNameBytes;
+            return new VoteStatePacket
+            {
+                State = src[0],
+                RoomKey = ChatPacket.ReadAscii(src.Slice(1, MaxRoomBytes)),
+                Proposer = ChatPacket.ReadAscii(src.Slice(1 + MaxRoomBytes, MaxNameBytes)),
+                Yes = src[at],
+                No = src[at + 1],
+                Eligible = src[at + 2],
+                Needed = src[at + 3],
+                Seconds = BinaryPrimitives.ReadUInt16LittleEndian(src.Slice(at + 4, 2))
+            };
+        }
     }
 }

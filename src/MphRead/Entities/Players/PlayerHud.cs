@@ -1284,6 +1284,10 @@ namespace MphRead.Entities
             // of the point, and a message that arrives while the scoreboard
             // is up has still arrived.
             ModDrawChat();
+            // With the chat, and above the results screen for the reason the
+            // comment below gives about that one: a vote is asked during a
+            // running match and answered from wherever the player is looking.
+            ModDrawVote();
             // With the chat and before every early return below it, for the
             // same reason: the results screen is drawn during MatchState
             // GameOver *and* Ending, and the block further down handles those

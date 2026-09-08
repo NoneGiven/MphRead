@@ -37,10 +37,17 @@ namespace MphRead.Mods.Network
         private int _index;
 
         public IReadOnlyList<RotationEntry> Entries => _entries;
-        public RotationEntry Current => _entries.Count > 0 ? _entries[_index] : _fallback;
-        public RotationEntry Next => _entries.Count > 0
-            ? _entries[(_index + 1) % _entries.Count]
-            : _fallback;
+        public RotationEntry Current => _override
+            ?? (_entries.Count > 0 ? _entries[_index] : _fallback);
+
+        /// <summary>
+        /// What comes after this match. A map the room has voted in jumps the
+        /// queue; otherwise it is the cycle's own next entry, which is where
+        /// the cycle resumes after a voted map as well -- the vote borrows a
+        /// turn, it does not move the index.
+        /// </summary>
+        public RotationEntry Next => _pending
+            ?? (_entries.Count > 0 ? _entries[(_index + 1) % _entries.Count] : _fallback);
         public int Index => _index;
 
         private static readonly RotationEntry _fallback = new();
@@ -63,15 +70,61 @@ namespace MphRead.Mods.Network
             return rotation;
         }
 
+        /// <summary>
+        /// A map to play once, before the cycle carries on from where it was.
+        ///
+        /// What a passed vote leaves behind. Not an insertion into the list:
+        /// the rotation is the admin's, a vote borrows the next slot in it
+        /// rather than editing it, and a map the room voted for once should
+        /// not come round again every cycle afterwards.
+        /// </summary>
+        private RotationEntry? _pending;
+
+        public void PlayNext(string roomKey, GameMode mode)
+        {
+            // The time limit and point goal of whatever this server is
+            // already playing to. A vote is about the map; changing how long
+            // the match runs as a side effect of it is not what was asked.
+            RotationEntry current = Current;
+            _pending = new RotationEntry
+            {
+                RoomKey = roomKey,
+                Mode = mode == GameMode.None ? current.Mode : mode,
+                TimeLimit = current.TimeLimit,
+                PointGoal = current.PointGoal
+            };
+        }
+
         /// <summary>Advance to the next map, wrapping at the end of the cycle.</summary>
         public RotationEntry Advance()
         {
+            if (_pending != null)
+            {
+                // Taken rather than stepped over: the cycle's own index does
+                // not move, so the map that was coming next is still coming
+                // next once this one is done.
+                _override = _pending;
+                _pending = null;
+                return Current;
+            }
+            if (_override != null)
+            {
+                // The borrowed turn is over. Step the index as a normal
+                // advance would have: the cycle was on entry N when the vote
+                // came in, so what follows the voted map is N+1 -- not N
+                // again, which would replay the map the vote was called to
+                // get away from.
+                _override = null;
+            }
             if (_entries.Count > 0)
             {
                 _index = (_index + 1) % _entries.Count;
             }
             return Current;
         }
+
+        /// <summary>The one-off map being played right now, if any.</summary>
+        private RotationEntry? _override;
 
         /// <summary>
         /// Load a rotation file. Format, one match per line:

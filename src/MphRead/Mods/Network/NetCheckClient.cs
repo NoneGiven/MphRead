@@ -172,6 +172,7 @@ namespace MphRead.Mods.Network
             }
             _frame++;
             UpdateSpectating();
+            DriveVoteTest();
             Observe();
             _features.Observe(Scene);
             SampleScoreboardOnServerClock();
@@ -299,6 +300,43 @@ namespace MphRead.Mods.Network
         /// spawns and is immediately snapped back to the origin looks fine in
         /// a single final reading.
         /// </summary>
+        /// <summary>
+        /// Hold a map vote with nobody at a keyboard.
+        ///
+        /// MPHREAD_VOTE_TEST=ROOM makes this client propose that map once,
+        /// and every client with the variable set answers yes to whatever is
+        /// on the table. Proposing and voting are both key presses in a real
+        /// game, so without this the whole path -- packet, threshold, map
+        /// change -- has no check that does not involve two people and two
+        /// keyboards.
+        /// </summary>
+        private void DriveVoteTest()
+        {
+            string? room = Environment.GetEnvironmentVariable("MPHREAD_VOTE_TEST");
+            if (room == null)
+            {
+                return;
+            }
+            if (MapVote.Active && !MapVote.Answered)
+            {
+                Console.WriteLine($"[votetest] {_name} sees {MapVote.Proposer} propose "
+                    + $"{MapVote.RoomKey} ({MapVote.Yes}/{MapVote.Needed} of {MapVote.Eligible})");
+                MapVote.Cast(yes: true);
+                return;
+            }
+            // Long enough in that both clients are connected -- the threshold
+            // counts everybody, so a vote called before the second one
+            // arrives is a vote of one.
+            if (!_votedOnce && room.Length > 0 && _frame == 600)
+            {
+                _votedOnce = true;
+                Console.WriteLine($"[votetest] {_name} proposes {room}");
+                MapVote.Propose(room);
+            }
+        }
+
+        private bool _votedOnce;
+
         private void Observe()
         {
             _opponentInView = false;

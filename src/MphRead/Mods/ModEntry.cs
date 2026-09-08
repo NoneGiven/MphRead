@@ -389,6 +389,9 @@ namespace MphRead.Mods
                 // -noshadowfreeze makes the Judicator's ice wave a cone
                 // instead of a column, for everybody in the room.
                 ShadowFreeze = !HasFlag(args, "noshadowfreeze"),
+                // Players may change the map by voting unless the admin says
+                // otherwise. See DedicatedServer.AllowMapVotes.
+                AllowMapVotes = !HasFlag(args, "novote"),
                 // This process is the server, so it is the one that may
                 // replace itself. See DedicatedServer.AutoUpdate.
                 AutoUpdate = true

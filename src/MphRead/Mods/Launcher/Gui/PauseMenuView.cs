@@ -35,6 +35,7 @@ namespace MphRead.Mods.Launcher.Gui
         public event EventHandler? SpectateRequested;
         public event EventHandler? RejoinRequested;
         public event EventHandler? RecordToggleRequested;
+        public event EventHandler? VoteMapRequested;
 
         private readonly MenuEntry _resume;
 
@@ -88,6 +89,14 @@ namespace MphRead.Mods.Launcher.Gui
                 }
                 if (NetSession.Active)
                 {
+                    // Offered whenever there is a server to ask, rather than
+                    // only when a vote could pass right now: the reasons it
+                    // cannot -- somebody else's vote is running, the room is
+                    // still cooling down -- are things the player wants told
+                    // to them, and an entry that quietly disappears tells
+                    // them nothing. The picker says why when it opens.
+                    Add(stack, "Vote maps",
+                        () => VoteMapRequested?.Invoke(this, EventArgs.Empty));
                     Add(stack, DemoRecorder.IsRecording ? "Stop recording" : "Record demo",
                         () => RecordToggleRequested?.Invoke(this, EventArgs.Empty));
                 }

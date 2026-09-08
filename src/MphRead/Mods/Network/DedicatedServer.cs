@@ -59,7 +59,87 @@ namespace MphRead.Mods.Network
             /// match that is ending and not the one before it.
             /// </summary>
             public bool Ready;
+            /// <summary>
+            /// How this player answered the vote on the table: 0 not yet,
+            /// 1 yes, 2 no. Cleared when a vote resolves rather than when one
+            /// starts, so a ballot cast cannot be quietly re-cast by
+            /// reconnecting into the same slot mid-vote.
+            /// </summary>
+            public byte Ballot;
+            /// <summary>When this player last put a map to the room.</summary>
+            public double LastProposal = Double.NegativeInfinity;
         }
+
+        // ------------------------------------------------------------- voting
+        //
+        // Players change the map without an admin, and without anybody being
+        // able to change it on their own. The rules are the ones a Quake
+        // server has always used and are all here rather than spread between
+        // the clients: a client draws the prompt and sends a ballot, and
+        // every decision -- who may call one, when, what counts as passing --
+        // is made once, on the machine that will act on the result.
+
+        /// <summary>
+        /// The share of connected players who must say yes.
+        ///
+        /// Counted against everybody connected, not against everybody who
+        /// answered: a vote that passes 2-1 in an eight-player match is five
+        /// people having the map changed under them by two. Silence is a no,
+        /// which is what makes the threshold mean anything.
+        /// </summary>
+        private const double VoteThreshold = 0.70;
+
+        /// <summary>How long the room has to answer.</summary>
+        private const double VoteSeconds = 30.0;
+
+        /// <summary>
+        /// How long after a vote resolves before anybody may call another.
+        ///
+        /// The room-wide half of the anti-spam rule. Without it a player
+        /// whose map lost proposes it again immediately and the prompt is
+        /// never off the screen, which is the failure mode this is here to
+        /// avoid -- not the load, the nagging.
+        /// </summary>
+        private const double VoteCooldownSeconds = 90.0;
+
+        /// <summary>
+        /// And the per-player half: one proposal each per this long, so a
+        /// single player cannot use up every cooldown window in the match.
+        /// </summary>
+        private const double ProposalCooldownSeconds = 180.0;
+
+        /// <summary>
+        /// Fewer players than this and a vote is pointless -- one person
+        /// voting for their own map passes 1 of 1 every time, and they can
+        /// have the map without the ceremony.
+        /// </summary>
+        private const int VoteMinimumPlayers = 2;
+
+        /// <summary>
+        /// The loop's clock, kept where code reached from a packet can read
+        /// it. <see cref="Remove"/> is called from three places that do not
+        /// carry the time and has to be able to re-count a vote.
+        /// </summary>
+        private double _now;
+
+        private bool _voteRunning;
+        private string _voteRoom = "";
+        private GameMode _voteMode = GameMode.Battle;
+        private string _voteProposer = "";
+        private int _voteProposerSlot = -1;
+        private double _voteStartedAt;
+        private double _voteResolvedAt = Double.NegativeInfinity;
+        /// <summary>What the last vote did, for the packet clients read while
+        /// nothing is running. See VoteStatePacket.</summary>
+        private byte _voteResult = VoteStatePacket.StateIdle;
+
+        /// <summary>
+        /// Whether players may change the map by voting. On by default: a
+        /// server nobody can steer is a server people leave. <c>-novote</c>
+        /// turns it off for admins who would rather set the rotation and have
+        /// it respected.
+        /// </summary>
+        public bool AllowMapVotes { get; set; } = true;
 
         private readonly List<Peer> _peers = new();
         private readonly byte[] _scratch = new byte[NetConfig.MaxPacketSize];
@@ -246,6 +326,7 @@ namespace MphRead.Mods.Network
                 while (_running && !cancel.IsCancellationRequested)
                 {
                     double now = clock.Elapsed.TotalSeconds;
+                    _now = now;
                     foreach (ReceivedPacket packet in _transport.Drain())
                     {
                         Handle(packet, now);
@@ -276,6 +357,11 @@ namespace MphRead.Mods.Network
                         PingPeers(now);
                         BroadcastMatchState(now);
                         BroadcastRoster();
+                        // A vote nobody finishes answering has to time out,
+                        // and a client that missed a VoteState packet has to
+                        // get another one. Both are this cadence's job.
+                        Tally(now);
+                        BroadcastVoteState(now);
                         if (_authority != null)
                         {
                             NotifyAuthority(_authority);
@@ -374,6 +460,18 @@ namespace MphRead.Mods.Network
             _matchStarted = now;
             _matchEndedAt = -1;
             _matchId++;
+            // A vote about which map to play next has been answered by the
+            // match ending, whatever the room was going to say.
+            if (_voteRunning)
+            {
+                _voteRunning = false;
+                _voteResolvedAt = now;
+                _voteResult = VoteStatePacket.StateFailed;
+                for (int i = 0; i < _peers.Count; i++)
+                {
+                    _peers[i].Ballot = 0;
+                }
+            }
             // Ready describes the match that just ended. Carried into the next
             // one it would rotate the following map the moment it finished.
             for (int i = 0; i < _peers.Count; i++)
@@ -464,7 +562,317 @@ namespace MphRead.Mods.Network
                 case PacketType.Chat:
                     HandleChat(packet, now);
                     break;
+                case PacketType.Vote:
+                    HandleVote(packet, now);
+                    break;
             }
+        }
+
+        /// <summary>
+        /// A proposal or a ballot, from whoever the endpoint says sent it.
+        /// </summary>
+        private void HandleVote(ReceivedPacket packet, double now)
+        {
+            Peer? peer = Find(packet.Sender);
+            if (peer == null || peer.SlotIndex < 0 || packet.Payload.Length < VotePacket.Size)
+            {
+                return;
+            }
+            peer.LastSeen = now;
+            if (!AllowMapVotes)
+            {
+                return;
+            }
+            VotePacket vote = VotePacket.Read(packet.Payload);
+            if (vote.Kind == VotePacket.KindPropose)
+            {
+                StartVote(peer, vote.RoomKey, now);
+                return;
+            }
+            if (!_voteRunning || vote.Kind != VotePacket.KindYes && vote.Kind != VotePacket.KindNo)
+            {
+                return;
+            }
+            // First answer stands. Letting a ballot be changed turns the last
+            // second of the vote into a race, and the player who wanted to
+            // change their mind can say so out loud instead.
+            if (peer.Ballot != 0)
+            {
+                return;
+            }
+            peer.Ballot = vote.Kind;
+            BroadcastVoteState(now);
+            Tally(now);
+        }
+
+        /// <summary>
+        /// Put a map to the room, if this player is allowed to right now.
+        ///
+        /// Every refusal is answered privately rather than announced: a
+        /// "your vote was refused" line broadcast to everybody is itself a
+        /// way of spamming the room, which is what the cooldowns exist to
+        /// stop.
+        /// </summary>
+        private void StartVote(Peer peer, string roomKey, double now)
+        {
+            if (_voteRunning)
+            {
+                Tell(peer, "a vote is already running");
+                return;
+            }
+            if (_peers.Count < VoteMinimumPlayers)
+            {
+                Tell(peer, "not enough players to hold a vote");
+                return;
+            }
+            double sinceVote = now - _voteResolvedAt;
+            if (sinceVote < VoteCooldownSeconds)
+            {
+                Tell(peer, $"another vote may be called in {VoteCooldownSeconds - sinceVote:0} s");
+                return;
+            }
+            double sinceMine = now - peer.LastProposal;
+            if (sinceMine < ProposalCooldownSeconds)
+            {
+                Tell(peer, $"you may propose again in {ProposalCooldownSeconds - sinceMine:0} s");
+                return;
+            }
+            // The room key has to name a map this server can actually load.
+            // Nothing else validates it: the rotation is not the limit --
+            // voting for a map the admin did not list is the point -- but a
+            // key that loads nothing would rotate the whole match into a
+            // room that does not exist.
+            string? resolved = ResolveRoomKey(roomKey);
+            if (resolved == null)
+            {
+                Tell(peer, $"no map called \"{roomKey}\"");
+                return;
+            }
+            if (String.Equals(resolved, _rotation.Current.RoomKey, StringComparison.OrdinalIgnoreCase))
+            {
+                Tell(peer, "that is the map you are on");
+                return;
+            }
+            _voteRunning = true;
+            _voteRoom = resolved;
+            // The mode the rotation would play this map in if it lists it,
+            // and this match's own mode otherwise. A vote is about the map;
+            // silently changing the mode as well is not what was asked.
+            _voteMode = ModeForRoom(resolved);
+            _voteProposer = peer.Name.Length > 0 ? peer.Name : $"Player{peer.SlotIndex + 1}";
+            _voteProposerSlot = peer.SlotIndex;
+            _voteStartedAt = now;
+            _voteResult = VoteStatePacket.StateIdle;
+            peer.LastProposal = now;
+            for (int i = 0; i < _peers.Count; i++)
+            {
+                _peers[i].Ballot = 0;
+            }
+            // The caller's own yes. Somebody who proposes a map has said what
+            // they think of it, and making them press the key as well is a
+            // vote that can fail 0-0.
+            peer.Ballot = VotePacket.KindYes;
+            Announce($"{_voteProposer} proposes {resolved} -- F1 to accept, F2 to deny");
+            Log($"vote started by slot {peer.SlotIndex} for {resolved} ({_voteMode})");
+            BroadcastVoteState(now);
+            Tally(now);
+        }
+
+        /// <summary>
+        /// Count what has been cast, and act if the answer is already
+        /// settled. Called on every ballot and once a second, so a vote that
+        /// everybody has answered does not sit out the rest of its thirty
+        /// seconds.
+        /// </summary>
+        private void Tally(double now)
+        {
+            if (!_voteRunning)
+            {
+                return;
+            }
+            (int yes, int no, int eligible, int needed) = CountVotes();
+            if (yes >= needed)
+            {
+                ResolveVote(now, passed: true, $"{yes} of {eligible}");
+                return;
+            }
+            // Cannot be reached any more: the noes plus the people who have
+            // not answered are fewer than what is still missing.
+            if (eligible - no < needed)
+            {
+                ResolveVote(now, passed: false, $"{yes} of {eligible}");
+                return;
+            }
+            if (now - _voteStartedAt >= VoteSeconds)
+            {
+                ResolveVote(now, passed: false, $"{yes} of {eligible}");
+            }
+        }
+
+        private (int Yes, int No, int Eligible, int Needed) CountVotes()
+        {
+            int yes = 0;
+            int no = 0;
+            for (int i = 0; i < _peers.Count; i++)
+            {
+                if (_peers[i].Ballot == VotePacket.KindYes)
+                {
+                    yes++;
+                }
+                else if (_peers[i].Ballot == VotePacket.KindNo)
+                {
+                    no++;
+                }
+            }
+            int eligible = _peers.Count;
+            // Ceiling, so 70% of three players is three and not two: the
+            // threshold is a floor to clear, and rounding it down would let a
+            // vote pass on less than what was asked for.
+            int needed = Math.Max(1, (int)Math.Ceiling(eligible * VoteThreshold));
+            return (yes, no, eligible, needed);
+        }
+
+        private void ResolveVote(double now, bool passed, string count)
+        {
+            string room = _voteRoom;
+            GameMode mode = _voteMode;
+            _voteRunning = false;
+            _voteResolvedAt = now;
+            _voteResult = passed ? VoteStatePacket.StatePassed : VoteStatePacket.StateFailed;
+            for (int i = 0; i < _peers.Count; i++)
+            {
+                _peers[i].Ballot = 0;
+            }
+            if (passed)
+            {
+                Announce($"vote passed ({count}) -- changing to {room}");
+                Log($"vote passed ({count}) for {room}");
+                _rotation.PlayNext(room, mode);
+                AdvanceMap(now);
+            }
+            else
+            {
+                Announce($"vote failed ({count}) -- staying on {_rotation.Current.RoomKey}");
+                Log($"vote failed ({count}) for {room}");
+            }
+            BroadcastVoteState(now);
+        }
+
+        /// <summary>
+        /// Drop a vote that no longer has a room to be held in. Called when a
+        /// peer leaves: the thresholds are computed against who is connected,
+        /// so a vote can pass or become unreachable because somebody
+        /// disconnected rather than because anybody voted.
+        /// </summary>
+        private void ReviewVote(double now)
+        {
+            if (!_voteRunning)
+            {
+                return;
+            }
+            if (_peers.Count < VoteMinimumPlayers)
+            {
+                ResolveVote(now, passed: false, "not enough players");
+                return;
+            }
+            Tally(now);
+        }
+
+        /// <summary>
+        /// Turn what a player clicked into a room key this server can load,
+        /// or null. Case-insensitive, because the key is a display name with
+        /// spaces in it and nobody should have to match its capitals.
+        /// </summary>
+        private static string? ResolveRoomKey(string roomKey)
+        {
+            if (String.IsNullOrWhiteSpace(roomKey))
+            {
+                return null;
+            }
+            string wanted = roomKey.Trim();
+            // The compiled-in room table, which custom maps in the server's
+            // own maps folder are already part of (see CustomRooms.AppendRooms).
+            // No game files are read: a dedicated server has none, and this
+            // has to work there.
+            foreach (KeyValuePair<string, RoomMetadata> entry in Metadata.RoomMetadata)
+            {
+                if (entry.Value.Multiplayer
+                    && String.Equals(entry.Key, wanted, StringComparison.OrdinalIgnoreCase))
+                {
+                    return entry.Key;
+                }
+            }
+            return null;
+        }
+
+        private GameMode ModeForRoom(string roomKey)
+        {
+            foreach (RotationEntry entry in _rotation.Entries)
+            {
+                if (String.Equals(entry.RoomKey, roomKey, StringComparison.OrdinalIgnoreCase))
+                {
+                    return entry.Mode;
+                }
+            }
+            return _rotation.Current.Mode;
+        }
+
+        /// <summary>The vote as it stands, to everybody.</summary>
+        private void BroadcastVoteState(double now)
+        {
+            if (_peers.Count == 0)
+            {
+                return;
+            }
+            var state = new VoteStatePacket
+            {
+                State = _voteRunning ? VoteStatePacket.StateRunning : _voteResult,
+                RoomKey = _voteRunning ? _voteRoom : "",
+                Proposer = _voteRunning ? _voteProposer : ""
+            };
+            if (_voteRunning)
+            {
+                (int yes, int no, int eligible, int needed) = CountVotes();
+                state.Yes = (byte)yes;
+                state.No = (byte)no;
+                state.Eligible = (byte)eligible;
+                state.Needed = (byte)needed;
+                state.Seconds = (ushort)Math.Max(0, VoteSeconds - (now - _voteStartedAt));
+            }
+            else if (AllowMapVotes)
+            {
+                double wait = VoteCooldownSeconds - (now - _voteResolvedAt);
+                state.Seconds = (ushort)Math.Clamp(wait, 0, UInt16.MaxValue);
+            }
+            else
+            {
+                // No cooldown that will ever expire, which is how a client
+                // tells "wait a minute" from "not on this server".
+                state.Seconds = UInt16.MaxValue;
+            }
+            state.Write(_scratch);
+            for (int i = 0; i < _peers.Count; i++)
+            {
+                _transport?.Send(_peers[i].EndPoint, PacketType.VoteState,
+                    _scratch.AsSpan(0, VoteStatePacket.Size));
+            }
+        }
+
+        /// <summary>
+        /// A system line to one player. <see cref="Announce"/> for everybody.
+        /// </summary>
+        private void Tell(Peer peer, string text)
+        {
+            var chat = new ChatPacket
+            {
+                Slot = 0xFF,
+                Kind = ChatPacket.KindSystem,
+                Name = String.Empty,
+                Text = text
+            };
+            chat.Write(_scratch);
+            _transport?.Send(peer.EndPoint, PacketType.Chat,
+                _scratch.AsSpan(0, ChatPacket.Size));
         }
 
         /// <summary>
@@ -977,6 +1385,9 @@ namespace MphRead.Mods.Network
         {
             _peers.Remove(peer);
             BroadcastRoster();
+            // A vote is counted against everybody connected, so somebody
+            // leaving can decide one that nobody has voted in since.
+            ReviewVote(_now);
             Log($"{peer.EndPoint} {reason} (slot {peer.SlotIndex})");
             if (peer.Name.Length > 0)
             {

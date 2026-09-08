@@ -6579,6 +6579,14 @@ namespace MphRead
         {
             if (e.Button == MouseButton.Button1)
             {
+                // The vote buttons before anything else, for the picker's own
+                // reason below: they are drawn over a running match, so a
+                // click that landed on ACCEPT must not also fire the gun.
+                if (Mods.Network.MapVote.HandleClick())
+                {
+                    base.OnMouseDown(e);
+                    return;
+                }
                 // The results screen's picker first, and only while it is up.
                 // It is the reason the cursor is released at all there, and a
                 // click that also reached the game would fire the gun of a
@@ -6656,6 +6664,17 @@ namespace MphRead
             // cannot want the same key.
             if (Mods.EndScreen.HandleKeyDown(e.Key))
             {
+                base.OnKeyDown(e);
+                return;
+            }
+            // Answering a map vote. Ahead of the clip key and everything
+            // below it because the prompt is on screen for thirty seconds and
+            // has to be answerable in them, and after chat because a player
+            // typing has not pressed anything the game should read.
+            if ((e.Key == Keys.F1 || e.Key == Keys.F2) && !e.Alt && !e.Control
+                && Mods.Network.MapVote.Active && !Mods.Network.MapVote.Answered)
+            {
+                Mods.Network.MapVote.Cast(yes: e.Key == Keys.F1);
                 base.OnKeyDown(e);
                 return;
             }
