@@ -6242,6 +6242,10 @@ namespace MphRead
         public RenderWindow() : base(_gameWindowSettings, _nativeWindowSettings)
         {
             Mods.DebugLog.Line("render", $"game window created, {Size.X}x{Size.Y}");
+            // Before anything asks GLFW a question it may not be able to
+            // answer. GLFW is initialised by the base constructor, so this is
+            // the first point the callback can be replaced.
+            IgnoreUnavailableGlfwFeatures();
             // The scene first, and the size floor after it: applying size
             // limits to a window smaller than the floor makes GLFW resize it
             // on the spot, which calls the size callback -- and that reached
@@ -6280,9 +6284,86 @@ namespace MphRead
         /// work area in points, and clamping one against the other there
         /// would halve a window that was never too big.
         /// </summary>
+        /// <summary>
+        /// Whether this is a Wayland session, which has no window or monitor
+        /// positions to ask for.
+        ///
+        /// Read from the environment rather than from GLFW: the native library
+        /// here is 3.4 and does have glfwGetPlatform, but OpenTK 4.9.4 does not
+        /// bind it, so there is nothing to call.
+        /// </summary>
+        private static bool OnWayland()
+        {
+            if (!OperatingSystem.IsLinux())
+            {
+                return false;
+            }
+            // XDG_SESSION_TYPE and not WAYLAND_DISPLAY: the latter is set under
+            // XWayland too, where the window really is an X11 one and the work
+            // area can be read perfectly well. Keying on it would hand every
+            // XWayland session the fixed floor, which is the bug this method
+            // exists to avoid on a short screen.
+            string? session = Environment.GetEnvironmentVariable("XDG_SESSION_TYPE");
+            if (!string.Equals(session, "wayland", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+            // The documented workaround puts GLFW back on X11, and then the
+            // lookup works again: honour it rather than skipping anyway.
+            return Environment.GetEnvironmentVariable("OPENTK_4_USE_WAYLAND") != "0";
+        }
+
+        /// <summary>
+        /// GLFW's error callback, with the one error Wayland raises as a
+        /// matter of course taken off the fatal list.
+        ///
+        /// OpenTK's own callback throws, and it is called from inside native
+        /// GLFW. On Wayland, asking a monitor where it is answers
+        /// GLFW_FEATURE_UNAVAILABLE -- the protocol does not expose global
+        /// positions to clients at all -- so the throw happens on a native
+        /// frame the runtime cannot unwind, and the process dies with
+        /// "terminate called after throwing an instance of 'pal_sehexception'"
+        /// before any managed catch is reached. That is why the try/catch
+        /// around the work-area lookup below never caught it.
+        ///
+        /// Only that code is swallowed. Everything else still throws, because
+        /// a GLFW that cannot create a window or a context is a real failure
+        /// and silence there would be worse than the crash.
+        /// </summary>
+        private static GLFWCallbacks.ErrorCallback? _glfwErrorCallback;
+
+        private static void IgnoreUnavailableGlfwFeatures()
+        {
+            if (_glfwErrorCallback != null)
+            {
+                return;
+            }
+            // Held in a static: GLFW keeps the pointer, so a delegate that is
+            // only a local is collected and the next error jumps into freed
+            // memory.
+            _glfwErrorCallback = (OpenTK.Windowing.GraphicsLibraryFramework.ErrorCode code,
+                string description) =>
+            {
+                if (code == OpenTK.Windowing.GraphicsLibraryFramework.ErrorCode.FeatureUnavailable)
+                {
+                    Mods.DebugLog.Line("window", $"glfw feature unavailable, ignored: {description}");
+                    return;
+                }
+                throw new GLFWException(description, code);
+            };
+            GLFW.SetErrorCallback(_glfwErrorCallback);
+        }
+
         private void FitToScreen()
         {
             Vector2i floor = _minimumSize;
+            if (OnWayland())
+            {
+                // Nothing to ask, and asking is what used to kill the process.
+                Mods.DebugLog.Line("window", "wayland session: keeping the fixed size floor");
+                MinimumSize = floor;
+                return;
+            }
             try
             {
                 Box2i area = Monitors.GetMonitorFromWindow(this).WorkArea;
