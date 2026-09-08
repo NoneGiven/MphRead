@@ -747,6 +747,16 @@ namespace MphRead.Entities
                 SyluxBombs[0] = null;
                 SyluxBombs[1] = null;
                 SyluxBombs[2] = null;
+                // The count indexes the array above, so it has to be forgotten
+                // with it. Left behind, it describes bombs that are no longer
+                // there: SpawnBomb writes the next bomb to SyluxBombs[count]
+                // and leaves the earlier entries null, so the tether -- which
+                // needs BombIndex 0 and a count of exactly three -- can never
+                // form again, and at three or more SpawnBomb detonates a slot
+                // holding nothing instead of laying anything. Both read, in a
+                // match, as Lockjaw quietly doing no damage for the rest of
+                // the round.
+                SyluxBombCount = 0;
             }
             else if (Hunter == Hunter.Noxus)
             {
@@ -1831,7 +1841,8 @@ namespace MphRead.Entities
             }
             // todo?: something for wifi
             // else...
-            Mods.Network.NetDamage.Note(this, attacker, beam?.Beam ?? BeamType.None, flags, direction);
+            Mods.Network.NetDamage.Note(this, attacker, beam?.Beam ?? BeamType.None, flags, direction,
+                damage, bomb != null);
             bool dead = false;
             if (IsBot && GameState.SinglePlayer && AiData.Flags1 && _health <= AiData.HealthThreshold)
             {

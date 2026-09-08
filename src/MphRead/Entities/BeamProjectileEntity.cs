@@ -1767,6 +1767,18 @@ namespace MphRead.Entities
                         }
                     }
                 }
+                // A continuous homing beam with no target does nothing at all,
+                // and says nothing about it: no hit, no miss, no entry in any
+                // count this file already keeps. Recorded here, at the one
+                // moment the answer is known.
+                if (beam.Beam == BeamType.ShockCoil && owner.Type == EntityType.Player)
+                {
+                    NetDamage.ShockCoilSpawned++;
+                    if (beam.Target != null)
+                    {
+                        NetDamage.ShockCoilAcquired++;
+                    }
+                }
                 beam._soundSource.Update(beam.Position, rangeIndex: 0);
                 scene.AddEntity(beam);
             }

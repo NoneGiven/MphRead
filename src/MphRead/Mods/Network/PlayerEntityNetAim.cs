@@ -498,6 +498,23 @@ namespace MphRead.Entities
         /// </summary>
         internal void ModSetHunter(Hunter hunter)
         {
+            if (hunter != Hunter)
+            {
+                // Sylux's three bomb slots and the count that indexes them
+                // belong to the hunter, not to the player, and this is the one
+                // place a player stops being that hunter. Spawn clears them
+                // when somebody comes back *as* Sylux; leaving here is the
+                // other direction, and the one the respawn hunter picker made
+                // ordinary -- lay a bomb, come back as somebody else, and the
+                // count stayed behind describing bombs that are now nobody's.
+                // BombEntity.Destroy checks that it is still the bomb
+                // registered at its own index, so the ones left in the world
+                // pass over this cleanly rather than decrementing it.
+                SyluxBombs[0] = null;
+                SyluxBombs[1] = null;
+                SyluxBombs[2] = null;
+                SyluxBombCount = 0;
+            }
             Hunter = hunter;
         }
 

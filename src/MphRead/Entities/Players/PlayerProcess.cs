@@ -12,6 +12,44 @@ namespace MphRead.Entities
 {
     public partial class PlayerEntity
     {
+        /// <summary>
+        /// MPHREAD_BOMB_CHECK reports Sylux's bomb count disagreeing with the
+        /// three slots it indexes.
+        ///
+        /// The disagreement is the whole Lockjaw fault and it is invisible
+        /// while it happens: no exception, no missing bomb, just a tether that
+        /// never forms and a weapon that stops hurting anybody. Off by
+        /// default, because this runs once a frame for every Sylux in the
+        /// room.
+        /// </summary>
+        private static bool? _bombCountCheck;
+
+        private static bool BombCountCheck
+            => _bombCountCheck ??= Environment.GetEnvironmentVariable("MPHREAD_BOMB_CHECK") != null;
+
+        private int _lastBombCountReport = -1;
+
+        private void CheckSyluxBombCount()
+        {
+            int placed = 0;
+            for (int i = 0; i < SyluxBombs.Length; i++)
+            {
+                if (SyluxBombs[i] != null)
+                {
+                    placed++;
+                }
+            }
+            if (SyluxBombCount == placed || _lastBombCountReport == SyluxBombCount)
+            {
+                return;
+            }
+            // Once per value, not once per frame: a stuck count would otherwise
+            // print sixty identical lines a second for the rest of the match.
+            _lastBombCountReport = SyluxBombCount;
+            Console.WriteLine($"[bombcheck] slot {SlotIndex} count={SyluxBombCount} "
+                + $"but {placed} bomb(s) placed -- Lockjaw is now inert for this player");
+        }
+
         public override bool Process()
         {
             bool result = ProcessPlayer();
@@ -356,6 +394,10 @@ namespace MphRead.Entities
             }
             else if (Hunter == Hunter.Sylux)
             {
+                if (BombCountCheck)
+                {
+                    CheckSyluxBombCount();
+                }
                 if (_bombCooldown > 0)
                 {
                     _bombAmmo = 0;

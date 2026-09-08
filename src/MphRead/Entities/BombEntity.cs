@@ -116,10 +116,29 @@ namespace MphRead.Entities
                 {
                     if (player == Owner || player.Health == 0 || player.TeamIndex == Owner.TeamIndex)
                     {
+                        // Counted apart from the other two refusals: a bomb
+                        // that skips every player because it thinks they are
+                        // all team mates is indistinguishable, from the
+                        // outside, from one nobody walked into.
+                        if (player != Owner && player.Health > 0)
+                        {
+                            Mods.Network.NetDamage.BombTeamSkips++;
+                        }
                         continue;
+                    }
+                    Mods.Network.NetDamage.BombPlayerChecks++;
+                    float gap = (player.Volume.SpherePosition - Position).Length;
+                    if (gap < Mods.Network.NetDamage.BombNearest)
+                    {
+                        Mods.Network.NetDamage.BombNearest = gap;
+                    }
+                    if (Radius > Mods.Network.NetDamage.BombRadiusSeen)
+                    {
+                        Mods.Network.NetDamage.BombRadiusSeen = Radius;
                     }
                     if (player.CheckHitByBomb(this, halfturret: false))
                     {
+                        Mods.Network.NetDamage.BombHits++;
                         hitEntity = player;
                         Flags |= BombFlags.Exploding;
                     }
@@ -602,15 +621,36 @@ namespace MphRead.Entities
         public override void Destroy()
         {
             _soundSource.StopAllSfx();
-            if (BombType == BombType.Lockjaw)
+            // Only a bomb the owner still has can correct the owner's count.
+            //
+            // A respawn empties SyluxBombs, and a bomb that outlives it --
+            // laid moments before, or carried across a room change -- used to
+            // arrive here anyway and decrement a count describing a different
+            // life. On a byte at zero that subtraction wraps to 255, and the
+            // next SyluxBombs[count] is an index out of range; short of the
+            // wrap it strands the count above the bombs that exist, which is
+            // the same silent end of Lockjaw by another route. Checking that
+            // this bomb is the one registered at its own index costs nothing
+            // and makes the bookkeeping self-correcting.
+            // Bounded by the array rather than by the count, because the count
+            // is the thing that was wrong: a stale one indexes past three, and
+            // reading the shift's bounds from it is how a bookkeeping fault
+            // turns into an IndexOutOfRangeException in a live match.
+            int owned = Owner != null ? Math.Min(Owner.SyluxBombCount, Owner.SyluxBombs.Length) : 0;
+            if (BombType == BombType.Lockjaw && Owner != null
+                && BombIndex >= 0 && BombIndex < owned
+                && Owner.SyluxBombs[BombIndex] == this)
             {
-                for (int i = BombIndex; i < Owner.SyluxBombCount - 1; i++)
+                for (int i = BombIndex; i < owned - 1; i++)
                 {
                     BombEntity? bomb = Owner.SyluxBombs[i + 1];
-                    Debug.Assert(bomb != null);
                     Owner.SyluxBombs[i] = bomb;
-                    bomb.BombIndex = i;
+                    if (bomb != null)
+                    {
+                        bomb.BombIndex = i;
+                    }
                 }
+                Owner.SyluxBombs[owned - 1] = null;
                 Owner.SyluxBombCount--;
             }
             _models.Clear();

@@ -1755,6 +1755,7 @@ namespace MphRead.Entities
 
         private void SpawnBomb()
         {
+            Mods.Network.NetDamage.BombSpawnCalls++;
             // todo?: wi-fi condition and alternate function for spawning Lockjaw bombs
             Matrix4 transform = Matrix4.Identity;
             if (Hunter == Hunter.Kanden)
@@ -1766,16 +1767,44 @@ namespace MphRead.Entities
             {
                 if (Hunter == Hunter.Sylux && SyluxBombCount >= 3)
                 {
-                    SyluxBombs[2]!.Countdown = 0;
-                    SyluxBombs[1]!.Countdown = 0;
-                    SyluxBombs[0]!.Countdown = 0;
-                    return;
+                    // Detonate what is actually there, newest first.
+                    //
+                    // The three entries were dereferenced with `!` on a count
+                    // that nothing kept in step with them, so the one state
+                    // this used to reach -- a full count over an emptied array
+                    // -- was a null dereference here rather than a dud press.
+                    // The reset on respawn and the guarded decrement in
+                    // BombEntity.Destroy are what stop that state arising;
+                    // clearing a count that turns out to describe nothing is
+                    // what stops it lasting the whole match if it ever does.
+                    bool detonated = false;
+                    for (int i = SyluxBombs.Length - 1; i >= 0; i--)
+                    {
+                        BombEntity? placed = SyluxBombs[i];
+                        if (placed != null)
+                        {
+                            placed.Countdown = 0;
+                            detonated = true;
+                        }
+                    }
+                    if (detonated)
+                    {
+                        Mods.Network.NetDamage.BombSpawnDetonated++;
+                        return;
+                    }
+                    Mods.Network.NetDamage.BombSpawnStaleCount++;
+                    SyluxBombCount = 0;
                 }
                 transform = GetTransformMatrix(Vector3.UnitZ, Vector3.UnitY, Position.AddY(Fixed.ToFloat(-1000)));
             }
             var bomb = BombEntity.Spawn(this, transform, _scene);
+            if (bomb == null)
+            {
+                Mods.Network.NetDamage.BombSpawnPoolEmpty++;
+            }
             if (bomb != null)
             {
+                Mods.Network.NetDamage.BombSpawnMade++;
                 if (Hunter == Hunter.Sylux)
                 {
                     SyluxBombs[SyluxBombCount] = bomb;
