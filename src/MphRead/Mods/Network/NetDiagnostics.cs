@@ -163,6 +163,19 @@ namespace MphRead.Mods.Network
                             + "bombs and life drain will do nothing between them");
                 }
             }
+            // What form each slot is in on this machine, beside what the
+            // authority last said it was. Two clients disagreeing about a
+            // player's form is a hunter drawn as a ball that cannot be shot
+            // where it appears to be, and nothing else in this line would
+            // show it.
+            line.Append(" alt=[");
+            for (int i = 0; i < PlayerEntity.MaxPlayers; i++)
+            {
+                PlayerEntity? p = PlayerEntity.Players[i];
+                line.Append(p == null || !p.LoadFlags.TestFlag(LoadFlags.Active) ? '-'
+                    : p.IsAltForm ? 'A' : p.IsMorphing ? 'm' : p.IsUnmorphing ? 'u' : 'b');
+            }
+            line.Append("] altSaid=[").Append(NetPlayerBridge.FormSaidByAuthority()).Append(']');
             line.Append(" shockcoil=").Append(NetDamage.ShockCoilAcquired)
                 .Append('/').Append(NetDamage.ShockCoilSpawned);
             line.Append(" bomb=").Append(NetDamage.BombHits)

@@ -41,6 +41,23 @@ namespace MphRead.Mods.Network
         public static int PlacementsRefused;
 
         /// <summary>
+        /// What the last snapshot said each slot's form was, so the netdbg
+        /// line can print it beside what this machine actually has. 0 not
+        /// said, 1 biped, 2 alt.
+        /// </summary>
+        private static readonly byte[] _formSaid = new byte[PlayerEntity.SlotCapacity];
+
+        public static string FormSaidByAuthority()
+        {
+            var text = new System.Text.StringBuilder(PlayerEntity.SlotCapacity);
+            for (int i = 0; i < PlayerEntity.MaxPlayers && i < _formSaid.Length; i++)
+            {
+                text.Append(_formSaid[i] == 0 ? '-' : _formSaid[i] == 2 ? 'A' : 'b');
+            }
+            return text.ToString();
+        }
+
+        /// <summary>
         /// Beyond this a remote player is placed outright, not eased. Well
         /// past anything a lost burst of updates can account for, so what is
         /// left is a respawn or a teleporter -- where a jump is correct.
@@ -491,6 +508,10 @@ namespace MphRead.Mods.Network
             bool spawned = (state.Flags & PlayerState.FlagSpawned) != 0;
             bool wasInPlay = player.LoadFlags.TestFlag(LoadFlags.Spawned) && player.Health > 0;
             int slot = player.SlotIndex;
+            if (slot >= 0 && slot < _formSaid.Length)
+            {
+                _formSaid[slot] = (byte)((state.Flags & PlayerState.FlagAltForm) != 0 ? 2 : 1);
+            }
             // The frame the authority put this player back on the map.
             bool justPlaced = spawned && slot >= 0 && slot < _authoritySpawned.Length
                 && !_authoritySpawned[slot];
@@ -827,6 +848,7 @@ namespace MphRead.Mods.Network
             WorstSnap = 0;
             NodeLookupsUnresolved = 0;
             PlacementsRefused = 0;
+            Array.Clear(_formSaid);
             Array.Clear(_formAttempts);
             Array.Clear(_lastPressFrame);
             Array.Clear(_pressSeen);
