@@ -104,6 +104,55 @@ namespace MphRead.Entities
             /* 8 */ BeamType.OmegaCannon
         };
 
+        /// <summary>
+        /// The DS bottom screen's buttons, pressed with a pen.
+        ///
+        /// Written straight into the binds rather than synthesised as key
+        /// presses: there is no keyboard here to put a key into, and a bind
+        /// is what every one of these actions is actually read from. Only
+        /// while the tip is on a button -- everywhere else in the zone is the
+        /// map, which is to say aiming, which the ordinary pointer path
+        /// already does.
+        /// </summary>
+        private static void ApplyStylusZone(PlayerEntity player)
+        {
+            if (!Mods.Input.StylusZone.OnButton)
+            {
+                return;
+            }
+            PlayerControls controls = player.Controls;
+            // Neither aiming nor firing while the tip is on a button. On the
+            // DS the stylus aims and a shoulder button fires, so a touch on a
+            // button was never a shot; here the tip is the fire bind, and
+            // without this, choosing a weapon fires it.
+            controls.Shoot.IsDown = false;
+            controls.Shoot.IsPressed = false;
+            controls.Shoot.IsReleased = false;
+            Mods.Input.StylusRegion pressed = Mods.Input.StylusZone.Pressed;
+            if (pressed == Mods.Input.StylusRegion.None)
+            {
+                return;
+            }
+            Keybind? bind = pressed switch
+            {
+                Mods.Input.StylusRegion.PowerBeam => controls.PowerBeam,
+                Mods.Input.StylusRegion.Missile => controls.Missile,
+                // The big one is the weapon itself, which on the DS steps to
+                // the next; the small one beside it opens the select.
+                Mods.Input.StylusRegion.Weapons => controls.NextWeapon,
+                Mods.Input.StylusRegion.WeaponSelect => controls.WeaponMenu,
+                Mods.Input.StylusRegion.AltForm => controls.Morph,
+                _ => null
+            };
+            if (bind != null)
+            {
+                bind.IsDown = true;
+                bind.IsPressed = true;
+                bind.IsReleased = false;
+                player.Input.HasInput = true;
+            }
+        }
+
         private void ProcessTouchInput()
         {
             // the game explicitly checks for Samus, and doesn't check if the weapon menu is open
@@ -2374,6 +2423,14 @@ namespace MphRead.Entities
                         }
                     }
                 }
+                if (player.LoadFlags.TestFlag(LoadFlags.Active))
+                {
+                    // After the hardware has been read, because it overrides
+                    // what the hardware said: a pen tip resting on the weapon
+                    // button is the left mouse button held down, which is the
+                    // fire bind. See Mods.Input.StylusZone.
+                    ApplyStylusZone(player);
+                }
                 player._ignoreClick = false;
                 if (mouseSnap.IsButtonDown(MouseButton.Left) && prevMouseSnap?.IsButtonDown(MouseButton.Left) != true)
                 {
@@ -2437,10 +2494,10 @@ namespace MphRead.Entities
             // See Mods.Input.PointerInput: a mouse never reaches the
             // threshold, and a pen reaches it every time it is lifted off the
             // tablet and set down somewhere else.
-            public float MouseDeltaX =>
-                Mods.Input.PointerInput.Filter((MouseState?.X - PrevMouseState?.X) ?? 0);
-            public float MouseDeltaY =>
-                Mods.Input.PointerInput.Filter((MouseState?.Y - PrevMouseState?.Y) ?? 0);
+            public float MouseDeltaX => Mods.Input.StylusZone.OnButton ? 0
+                : Mods.Input.PointerInput.Filter((MouseState?.X - PrevMouseState?.X) ?? 0);
+            public float MouseDeltaY => Mods.Input.StylusZone.OnButton ? 0
+                : Mods.Input.PointerInput.Filter((MouseState?.Y - PrevMouseState?.Y) ?? 0);
             public float ClickX { get; set; } = -1;
             public float ClickY { get; set; } = -1;
 

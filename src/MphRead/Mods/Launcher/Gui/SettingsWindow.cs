@@ -27,6 +27,10 @@ namespace MphRead.Mods.Launcher.Gui
         {
             _view = view;
             _view.Closed += (_, _) => Close();
+            // Placing the pen zone happens on the game, not in here, so the
+            // settings get out of the way. The view has already put itself
+            // into placement mode; this is only the window closing.
+            _view.StylusPlacementRequested += (_, _) => Close();
 
             Title = view.WindowTitle;
             Icon = GuiTheme.AppIcon.Value;

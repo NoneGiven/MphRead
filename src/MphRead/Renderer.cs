@@ -6474,16 +6474,33 @@ namespace MphRead
             // The pause menu wants the pointer back, and so does the results
             // screen: its hunter picker is something you click, and a grabbed
             // cursor has no position on screen to click with.
+            // A pen is an absolute device -- a point on the tablet is a point
+            // on the screen -- so grabbing the cursor, which is what turns the
+            // pointer into an endless stream of deltas, takes away the one
+            // property the whole feature rests on. The zone is released for
+            // the same reason the results screen is.
             CursorState = (Scene.CameraMode == CameraMode.Player || Scene.IsFreeCam) && !Scene.FrameAdvance
                 && !Mods.PauseMenu.Open && !Mods.EndScreen.Available
+                && !Mods.Input.StylusZone.Enabled && !Mods.Input.StylusZone.Placing
                 && !Scene.ShowCursor && !GameState.DialogPause && !GameState.MenuPause
                 ? CursorState.Grabbed
                 : CursorState.Normal;
             // Where the pointer is, for the picker to light up what it is
             // over, and in the same units its hit boxes are kept in.
-            Mods.EndScreen.NotePointer(
-                MouseState.X / (float)Math.Max(Size.X, 1),
-                MouseState.Y / (float)Math.Max(Size.Y, 1));
+            float pointerX = MouseState.X / (float)Math.Max(Size.X, 1);
+            float pointerY = MouseState.Y / (float)Math.Max(Size.Y, 1);
+            Mods.EndScreen.NotePointer(pointerX, pointerY);
+            // The DS bottom screen, if the player has marked one out. The
+            // window's shape goes with it: the zone is given as a fraction of
+            // the width and has to come out the DS's shape on screen.
+            Mods.Input.StylusZone.AspectCorrection = Size.Y > 0
+                ? Size.X / (float)Size.Y : 16f / 9f;
+            Mods.Input.StylusZone.Update(pointerX, pointerY,
+                MouseState.IsButtonDown(MouseButton.Left));
+            if (Mods.Input.StylusZone.Placing)
+            {
+                Mods.Input.StylusZone.PlacementDrag(pointerX, pointerY);
+            }
             GameState.ApplyPause();
             ApplyFrameRateSettings();
             // The simulation runs at 60 Hz and the picture runs at the
@@ -6579,6 +6596,16 @@ namespace MphRead
         {
             if (e.Button == MouseButton.Button1)
             {
+                // Drawing the pen zone takes the pointer outright: the
+                // player is marking out a rectangle, not playing.
+                if (Mods.Input.StylusZone.Placing)
+                {
+                    Mods.Input.StylusZone.PlacementDown(
+                        MouseState.X / (float)Math.Max(Size.X, 1),
+                        MouseState.Y / (float)Math.Max(Size.Y, 1));
+                    base.OnMouseDown(e);
+                    return;
+                }
                 // The vote buttons before anything else, for the picker's own
                 // reason below: they are drawn over a running match, so a
                 // click that landed on ACCEPT must not also fire the gun.
@@ -6612,6 +6639,15 @@ namespace MphRead
         {
             if (e.Button == MouseButton.Button1)
             {
+                if (Mods.Input.StylusZone.Placing)
+                {
+                    // Letting go is the whole of the answer: that rectangle
+                    // is where the bottom screen is and how big it is.
+                    Mods.Input.StylusZone.PlacementUp();
+                    Mods.Chat.ChatBox.System("pen zone set");
+                    base.OnMouseUp(e);
+                    return;
+                }
                 Scene.OnMouseClick(down: false);
             }
             base.OnMouseUp(e);
@@ -6667,6 +6703,15 @@ namespace MphRead
             // cannot want the same key.
             if (Mods.EndScreen.HandleKeyDown(e.Key))
             {
+                base.OnKeyDown(e);
+                return;
+            }
+            // Escape gives up on placing the pen zone rather than leaving
+            // the match, which is what it would otherwise do.
+            if (e.Key == Keys.Escape && Mods.Input.StylusZone.Placing)
+            {
+                Mods.Input.StylusZone.CancelPlacement();
+                Mods.Chat.ChatBox.System("pen zone left as it was");
                 base.OnKeyDown(e);
                 return;
             }

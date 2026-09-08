@@ -371,6 +371,32 @@ namespace MphRead.Mods
                     {
                         Input.PointerInput.GuardJumps = guardJumps;
                     }
+                    if (key == "stylus_zone" && Boolean.TryParse(value, out bool stylusZone))
+                    {
+                        Input.StylusZone.Enabled = stylusZone;
+                    }
+                    // Three numbers for one rectangle: the height follows the
+                    // DS's shape and is not stored, so a hand-edited file
+                    // cannot produce a zone the layout does not fit.
+                    if (key == "stylus_zone_opacity" && Single.TryParse(value, NumberStyles.Float,
+                        CultureInfo.InvariantCulture, out float zoneOpacity))
+                    {
+                        Input.StylusZone.Opacity = Math.Clamp(zoneOpacity, 0.02f, 1f);
+                    }
+                    if (key == "stylus_zone_rect")
+                    {
+                        string[] parts = value.Split(',');
+                        if (parts.Length == 3
+                            && Single.TryParse(parts[0], NumberStyles.Float,
+                                CultureInfo.InvariantCulture, out float zoneLeft)
+                            && Single.TryParse(parts[1], NumberStyles.Float,
+                                CultureInfo.InvariantCulture, out float zoneTop)
+                            && Single.TryParse(parts[2], NumberStyles.Float,
+                                CultureInfo.InvariantCulture, out float zoneWidth))
+                        {
+                            Input.StylusZone.SetRect(zoneLeft, zoneTop, zoneWidth);
+                        }
+                    }
                     if (key == "scroll_all_weapons" && Boolean.TryParse(value, out bool scrollAll))
                     {
                         ScrollAllWeapons = scrollAll;
@@ -495,6 +521,13 @@ namespace MphRead.Mods
                     $"invert_x={InvertMouseX.ToString().ToLowerInvariant()}",
                     $"scroll_all_weapons={ScrollAllWeapons.ToString().ToLowerInvariant()}",
                     $"pointer_jump_guard={Input.PointerInput.GuardJumps.ToString().ToLowerInvariant()}",
+                    $"stylus_zone={Input.StylusZone.Enabled.ToString().ToLowerInvariant()}",
+                    "stylus_zone_opacity="
+                        + Input.StylusZone.Opacity.ToString("0.###", CultureInfo.InvariantCulture),
+                    "stylus_zone_rect="
+                        + Input.StylusZone.Left.ToString("0.####", CultureInfo.InvariantCulture) + ","
+                        + Input.StylusZone.Top.ToString("0.####", CultureInfo.InvariantCulture) + ","
+                        + Input.StylusZone.Width.ToString("0.####", CultureInfo.InvariantCulture),
                     $"chat_key={(ChatKey == Keys.Unknown ? "none" : ChatKey.ToString())}",
                     $"clip_key={(ClipKey == Keys.Unknown ? "none" : ClipKey.ToString())}",
                     $"clip_seconds={Network.DemoClip.Seconds.ToString(CultureInfo.InvariantCulture)}",

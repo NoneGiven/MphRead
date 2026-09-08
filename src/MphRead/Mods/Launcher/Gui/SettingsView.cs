@@ -586,6 +586,7 @@ namespace MphRead.Mods.Launcher.Gui
             // be protected. See Mods.Input.PointerInput.
             _penTablet = Add(page, new ToggleRow("Pen tablet: ignore pointer jumps",
                 Mods.Input.PointerInput.GuardJumps));
+            BuildStylusZone(page);
 
             BuildTouchControls(page);
 
@@ -651,6 +652,8 @@ namespace MphRead.Mods.Launcher.Gui
                 _invertY.On = InputSettings.InvertMouseY;
                 _invertX.On = InputSettings.InvertMouseX;
                 _penTablet.On = Mods.Input.PointerInput.GuardJumps;
+                _stylusZone.On = Mods.Input.StylusZone.Enabled;
+                _stylusOpacity.Value = (int)MathF.Round(Mods.Input.StylusZone.Opacity * 100);
                 _scrollAllWeapons.On = InputSettings.ScrollAllWeapons;
                 _gamepadLook.Value = LookToSlider(InputSettings.GamepadLookSensitivity);
                 _gamepadDeadZone.Value = DeadZoneToSlider(InputSettings.GamepadDeadZone);
@@ -687,6 +690,54 @@ namespace MphRead.Mods.Launcher.Gui
         /// "turn them all off" is the answer most people who come here want
         /// and it should not be eleven presses.
         /// </summary>
+        private ToggleRow _stylusZone = null!;
+        private SliderRow _stylusOpacity = null!;
+
+        /// <summary>
+        /// The DS's bottom screen, for a tablet.
+        ///
+        /// One button, as asked: the rest of it is done on the screen itself.
+        /// Pressing it closes the settings, shows the rectangle over the
+        /// running match and lets the player drag out where the bottom screen
+        /// should be -- which is both the position and the size, and cannot
+        /// produce a shape the layout does not fit, since the height follows
+        /// the DS's. A pair of numbers in a settings screen could do neither
+        /// of those things.
+        /// </summary>
+        private void BuildStylusZone(StackPanel page)
+        {
+            _stylusZone = Add(page, new ToggleRow("DS bottom screen for a pen tablet",
+                Mods.Input.StylusZone.Enabled));
+            // How faint. "Barely visible" is the design, but how faint that
+            // has to be to stay out of the way and still be findable depends
+            // on the screen and the eyes in front of it.
+            _stylusOpacity = Add(page, new SliderRow("Bottom screen opacity",
+                (int)MathF.Round(Mods.Input.StylusZone.Opacity * 100),
+                v => $"{v}%", min: 4, max: 60, keyStep: 2));
+            var place = new MenuEntry("Place the bottom screen", titleSize: 13)
+            {
+                Height = 30,
+                Margin = new Thickness(0, 6, 0, 0)
+            };
+            place.Click += (_, _) =>
+            {
+                Mods.Input.StylusZone.BeginPlacement();
+                StylusPlacementRequested?.Invoke(this, EventArgs.Empty);
+            };
+            page.Children.Add(place);
+            page.Children.Add(new Note(
+                "Drag a rectangle where the DS's touch screen should be, then map "
+                + "your tablet to it. Escape leaves it as it was."));
+        }
+
+        /// <summary>
+        /// The settings asking to be closed so the player can draw on the
+        /// game. Raised by the one button above; the host decides what
+        /// closing means, which is a window on the desktop and a view swap on
+        /// a phone.
+        /// </summary>
+        public event EventHandler? StylusPlacementRequested;
+
         private void BuildTouchControls(StackPanel page)
         {
             if (!OperatingSystem.IsAndroid())
@@ -944,6 +995,8 @@ namespace MphRead.Mods.Launcher.Gui
             InputSettings.InvertMouseY = _invertY.On;
             InputSettings.InvertMouseX = _invertX.On;
             Mods.Input.PointerInput.GuardJumps = _penTablet.On;
+            Mods.Input.StylusZone.Enabled = _stylusZone.On;
+            Mods.Input.StylusZone.Opacity = Math.Clamp(_stylusOpacity.Value / 100f, 0.02f, 1f);
             InputSettings.ScrollAllWeapons = _scrollAllWeapons.On;
             InputSettings.GamepadLookSensitivity = SliderToLook(_gamepadLook.Value);
             InputSettings.GamepadDeadZone = SliderToDeadZone(_gamepadDeadZone.Value);

@@ -1283,6 +1283,10 @@ namespace MphRead.Entities
             // one position where reading what the players are saying is most
             // of the point, and a message that arrives while the scoreboard
             // is up has still arrived.
+            // Under everything else, because it is a thing to reach for
+            // rather than a thing to read: it must never sit on top of the
+            // chat, the results screen or the vote prompt.
+            ModDrawStylusZone();
             ModDrawChat();
             // With the chat, and above the results screen for the reason the
             // comment below gives about that one: a vote is asked during a
