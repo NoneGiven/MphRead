@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -20,6 +21,9 @@ namespace MphRead.Mods.Network
         public IntentPacket LatestIntent;
         public uint LastIntentFrame;
         public double LastSeenTime;
+        /// <summary>Who this peer says it is, across address changes. See
+        /// <see cref="NetSession.ClientId"/>. Zero from an older client.</summary>
+        public uint ClientId;
     }
 
     /// <summary>
@@ -264,6 +268,7 @@ namespace MphRead.Mods.Network
             // question: a vote left standing here would draw a prompt over
             // the next match.
             MapVote.Reset();
+            ConnectionLost = false;
             LocalSlot = 0;
             Array.Clear(RemoteStateValid);
             Array.Clear(RemoteIntentValid);
@@ -349,6 +354,35 @@ namespace MphRead.Mods.Network
         /// </summary>
         public static readonly int[] SlotPing = new int[PlayerEntity.SlotCapacity];
 
+        /// <summary>
+        /// Who this client is, for as long as the program runs.
+        ///
+        /// A server tells its peers apart by the address a datagram came
+        /// from, and that is not stable across a dropped connection: a line
+        /// that comes back comes back through a new NAT binding, so the same
+        /// player says hello from a source port the server has never seen.
+        /// Every one of those looked like somebody new arriving -- a second
+        /// slot, a second hunter -- while the slot the player actually had
+        /// sat there receiving nothing until it timed out thirty seconds
+        /// later. That is the frozen twin standing in the room.
+        ///
+        /// So the client says who it is as well as where it is, and the
+        /// server matches on this first. Random per process rather than
+        /// derived from anything: it has to survive a reconnection and must
+        /// not survive the program, or two people sharing a settings file
+        /// would be one player.
+        /// </summary>
+        public static readonly uint ClientId = NewClientId();
+
+        private static uint NewClientId()
+        {
+            Span<byte> bytes = stackalloc byte[4];
+            System.Security.Cryptography.RandomNumberGenerator.Fill(bytes);
+            uint id = BinaryPrimitives.ReadUInt32LittleEndian(bytes);
+            // Zero means "did not say", which is what an older client sends.
+            return id == 0 ? 1u : id;
+        }
+
         private static void SendHello()
         {
             if (_transport == null || _hostEndPoint == null)
@@ -361,7 +395,12 @@ namespace MphRead.Mods.Network
             // as a different player would swap two people's scores, names and
             // hunters mid-match.
             _scratch[1] = LocalSlot >= 0 && LocalSlot < 0xFF ? (byte)LocalSlot : (byte)0xFF;
-            _transport.Send(_hostEndPoint, PacketType.Hello, _scratch.AsSpan(0, 2));
+            // Appended rather than inserted: a server built before this
+            // reads the first two bytes and ignores the rest, so a new
+            // client still joins an old server -- it simply gets the old
+            // behaviour when its connection drops.
+            BinaryPrimitives.WriteUInt32LittleEndian(_scratch.AsSpan(2, 4), ClientId);
+            _transport.Send(_hostEndPoint, PacketType.Hello, _scratch.AsSpan(0, 6));
         }
 
         /// <summary>
@@ -405,6 +444,18 @@ namespace MphRead.Mods.Network
                 // packets to a server that ignored every one of them.
                 ReAnnouncements++;
                 _reAnnounced = true;
+                // Say so on screen, once per outage rather than once per
+                // attempt. A player whose line has gone sees a match that has
+                // stopped moving and no reason for it -- and, before the peer
+                // identity fix above, a second hunter walking out of their own
+                // frozen body a moment later. Saying "this is the network, we
+                // are still trying" is the difference between a bug and a
+                // wait.
+                if (!ConnectionLost)
+                {
+                    ConnectionLost = true;
+                    Chat.ChatBox.System("Connection lost, retrying...");
+                }
                 Console.WriteLine("[net] no word from the server; re-announcing "
                     + $"(#{ReAnnouncements}, silent for {time - _lastServerPacket:0.0} s)");
                 NetLog.Event("server silent, re-announcing");
@@ -422,6 +473,15 @@ namespace MphRead.Mods.Network
                 SendIdentify();
             }
         }
+
+        /// <summary>
+        /// The server has stopped answering and this client is still trying.
+        ///
+        /// Read by the HUD, and cleared by the first packet that arrives from
+        /// the server again -- whatever it is, since anything arriving means
+        /// the line is back.
+        /// </summary>
+        public static bool ConnectionLost { get; private set; }
 
         /// <summary>Seconds of silence from the server before saying hello again.</summary>
         private const double SilenceBeforeRejoin = 5.0;
@@ -479,6 +539,11 @@ namespace MphRead.Mods.Network
                         time - _lastServerPacket);
                 }
                 _lastServerPacket = time;
+                if (ConnectionLost)
+                {
+                    ConnectionLost = false;
+                    Chat.ChatBox.System("Reconnected.");
+                }
             }
             switch (packet.Type)
             {
@@ -518,7 +583,26 @@ namespace MphRead.Mods.Network
                     }
                     if (packet.Payload.Length >= 1)
                     {
-                        LocalSlot = packet.Payload[0];
+                        int assigned = packet.Payload[0];
+                        // A different slot from the one we were playing is
+                        // the server having failed to recognise us -- an
+                        // older server, which cannot match a reconnection to
+                        // the peer that made it. The player we were is still
+                        // standing in the room from everybody's point of
+                        // view, and the one thing that must not happen is
+                        // this machine driving a second one beside it. So the
+                        // slot we left is emptied here rather than waited
+                        // out: NetSlotManager builds the player for whatever
+                        // LocalSlot says, and two live players from one
+                        // client is the frozen twin.
+                        if (LocalSlot >= 0 && assigned != LocalSlot)
+                        {
+                            Console.WriteLine($"[net] came back as slot {assigned}, "
+                                + $"was slot {LocalSlot}; releasing the old one");
+                            NetLog.Event($"reconnected into slot {assigned}, was {LocalSlot}");
+                            NetSlotManager.ReleaseSlot(LocalSlot);
+                        }
+                        LocalSlot = assigned;
                         Console.WriteLine($"[net] joined as slot {LocalSlot}");
                         NetLog.Event($"server assigned slot {LocalSlot}");
                     }
@@ -700,7 +784,25 @@ namespace MphRead.Mods.Network
             {
                 return;
             }
+            uint clientId = packet.Payload.Length >= 6
+                ? BinaryPrimitives.ReadUInt32LittleEndian(packet.Payload.Slice(2, 4))
+                : 0;
             RemotePeer? peer = FindPeer(packet.Sender);
+            if (peer == null && clientId != 0)
+            {
+                // The same player from a new address. See NetSession.ClientId.
+                for (int i = 0; i < _peers.Count; i++)
+                {
+                    if (_peers[i].ClientId == clientId)
+                    {
+                        peer = _peers[i];
+                        Console.WriteLine($"[net] slot {peer.SlotIndex} came back on "
+                            + $"{packet.Sender} (was {peer.EndPoint})");
+                        peer.EndPoint = packet.Sender;
+                        break;
+                    }
+                }
+            }
             if (peer == null)
             {
                 int slot = NextFreeSlot();
@@ -716,6 +818,7 @@ namespace MphRead.Mods.Network
                 _peers.Add(peer);
                 Console.WriteLine($"[net] peer {packet.Sender} -> slot {slot}");
             }
+            peer.ClientId = clientId;
             peer.LastSeenTime = time;
             // Re-answered on every Hello: the first Welcome may have been lost.
             _scratch[0] = (byte)peer.SlotIndex;

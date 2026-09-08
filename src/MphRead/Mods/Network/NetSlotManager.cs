@@ -154,6 +154,27 @@ namespace MphRead.Mods.Network
             return count;
         }
 
+        /// <summary>
+        /// Empty a slot this machine has stopped being.
+        ///
+        /// Only one caller, and a narrow one: a client that reconnected and
+        /// was given a different slot from the one it was playing. The player
+        /// it left behind is nobody's now -- no intent will ever arrive for
+        /// it, because the client that was sending them is this one -- and
+        /// leaving it standing is the frozen twin the reconnection bug is
+        /// named after. Everything else about slots is decided by whether
+        /// intents keep arriving, which is right for every case but this one.
+        /// </summary>
+        public static void ReleaseSlot(int slot)
+        {
+            if (slot < 0 || slot >= PlayerEntity.SlotCapacity
+                || slot >= PlayerEntity.Players.Count || !_activated[slot])
+            {
+                return;
+            }
+            Deactivate(PlayerEntity.Players[slot], slot);
+        }
+
         private static void Deactivate(PlayerEntity player, int slot)
         {
             _activated[slot] = false;

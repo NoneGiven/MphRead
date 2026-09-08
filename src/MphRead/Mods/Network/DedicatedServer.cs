@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
@@ -66,6 +67,12 @@ namespace MphRead.Mods.Network
             /// reconnecting into the same slot mid-vote.
             /// </summary>
             public byte Ballot;
+            /// <summary>
+            /// Who this peer says it is, independent of where it is. See
+            /// <see cref="NetSession.ClientId"/>. Zero from a client built
+            /// before this existed, which gets the old behaviour.
+            /// </summary>
+            public uint ClientId;
             /// <summary>When this player last put a map to the room.</summary>
             public double LastProposal = Double.NegativeInfinity;
         }
@@ -1009,7 +1016,37 @@ namespace MphRead.Mods.Network
                 SendRefusal(packet.Sender, RefusedPacket.ReasonProtocol);
                 return;
             }
+            uint clientId = packet.Payload.Length >= 6
+                ? BinaryPrimitives.ReadUInt32LittleEndian(packet.Payload.Slice(2, 4))
+                : 0;
             Peer? peer = Find(packet.Sender);
+            if (peer == null && clientId != 0)
+            {
+                // The same player, from an address this server has not seen.
+                //
+                // A connection that drops and comes back comes back through a
+                // new NAT binding, so the endpoint -- the only thing that used
+                // to identify a peer -- changes. Every reconnection therefore
+                // read as a new player: a second slot with a second hunter,
+                // while the slot the player actually held stood frozen in the
+                // room until it timed out half a minute later. Matching on
+                // who rather than on where is the whole fix; the peer keeps
+                // its slot, its name, its hunter and its score, and simply
+                // starts being spoken to at the new address.
+                for (int i = 0; i < _peers.Count; i++)
+                {
+                    if (_peers[i].ClientId == clientId)
+                    {
+                        peer = _peers[i];
+                        Log($"slot {peer.SlotIndex} ({peer.Name}) came back on "
+                            + $"{packet.Sender}, was {peer.EndPoint}");
+                        peer.EndPoint = packet.Sender;
+                        // The authority is held as a reference to this same
+                        // object, so nothing else has to be told.
+                        break;
+                    }
+                }
+            }
             if (peer == null)
             {
                 // Honour the slot the client asks for when it is free. A
@@ -1062,6 +1099,7 @@ namespace MphRead.Mods.Network
                     Log($"{packet.Sender} joined as slot {slot}");
                 }
             }
+            peer.ClientId = clientId;
             peer.LastSeen = now;
             // Re-answered on every Hello; the first Welcome may have been lost.
             _scratch[0] = (byte)peer.SlotIndex;
