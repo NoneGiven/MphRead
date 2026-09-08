@@ -73,6 +73,7 @@ namespace MphRead.Mods.Launcher.Gui
         public event EventHandler? GameFilesRequested;
 
         private ChoiceRow? _windowRow;
+        private ChoiceRow? _clipSecondsRow;
         private SliderRow _resolutionScale = null!;
         private ToggleRow _lightingRow = null!;
         private ToggleRow _fogRow = null!;
@@ -602,6 +603,16 @@ namespace MphRead.Mods.Launcher.Gui
             KeyRow chatRow = Add(page, new KeyRow("Chat",
                 () => InputSettings.ChatKey, k => InputSettings.ChatKey = k));
             rows.Add(chatRow);
+            // The clip button and how much it saves, together: the length is
+            // the only thing anybody wants to know about that key, and putting
+            // it on the far side of the settings from the bind would make them
+            // two unrelated questions.
+            rows.Add(Add(page, new KeyRow("Save clip",
+                () => InputSettings.ClipKey, k => InputSettings.ClipKey = k)));
+            _clipSecondsRow = Add(page, new ChoiceRow("Clip length",
+                Array.ConvertAll(Mods.Network.DemoClip.Lengths, n => $"{n} seconds"),
+                Math.Max(0, Array.IndexOf(Mods.Network.DemoClip.Lengths,
+                    Mods.Network.DemoClip.Seconds))));
             foreach (PropertyInfo property in InputSettings.Bindings)
             {
                 rows.Add(Add(page, new KeyRow(property)));
@@ -879,6 +890,11 @@ namespace MphRead.Mods.Launcher.Gui
                     ? WindowStartMode.BorderlessFullscreen
                     : WindowStartMode.Windowed;
                 WindowMode.Startup = LauncherPrefs.WindowMode;
+            }
+            if (_clipSecondsRow != null)
+            {
+                Mods.Network.DemoClip.Seconds = Mods.Network.DemoClip.Lengths[
+                    Math.Clamp(_clipSecondsRow.Index, 0, Mods.Network.DemoClip.Lengths.Length - 1)];
             }
             _settings.ResolutionScale = Math.Max(RenderOptions.MinScale, _resolutionScale.Value)
                 .ToString(CultureInfo.InvariantCulture);

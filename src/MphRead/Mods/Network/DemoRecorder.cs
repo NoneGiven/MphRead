@@ -61,6 +61,10 @@ namespace MphRead.Mods.Network
 
         internal static void Record(ReceivedPacket packet)
         {
+            // The clip buffer first, and whether or not a full recording is
+            // running: the two are independent, and a player recording the
+            // whole match can still cut a short out of it.
+            DemoClip.Add(packet.Data.AsSpan(0, packet.Length));
             if (_writer == null)
             {
                 return;
@@ -79,7 +83,7 @@ namespace MphRead.Mods.Network
         /// </summary>
         internal static void RecordOwnIntent(int slot, ReadOnlySpan<byte> intentBytes)
         {
-            if (_writer == null)
+            if (_writer == null && !DemoClip.Active)
             {
                 return;
             }
@@ -87,7 +91,8 @@ namespace MphRead.Mods.Network
             buffer[0] = (byte)PacketType.SlotIntent;
             buffer[1] = (byte)slot;
             intentBytes.CopyTo(buffer[2..]);
-            _writer.WriteRecord(Frame(), buffer);
+            DemoClip.Add(buffer);
+            _writer?.WriteRecord(Frame(), buffer);
         }
 
         /// <summary>
@@ -111,14 +116,15 @@ namespace MphRead.Mods.Network
         /// </summary>
         internal static void RecordOwnSnapshot(ReadOnlySpan<byte> payload)
         {
-            if (_writer == null)
+            if (_writer == null && !DemoClip.Active)
             {
                 return;
             }
             Span<byte> buffer = stackalloc byte[1 + payload.Length];
             buffer[0] = (byte)PacketType.Snapshot;
             payload.CopyTo(buffer[1..]);
-            _writer.WriteRecord(Frame(), buffer);
+            DemoClip.Add(buffer);
+            _writer?.WriteRecord(Frame(), buffer);
         }
 
         /// <summary>

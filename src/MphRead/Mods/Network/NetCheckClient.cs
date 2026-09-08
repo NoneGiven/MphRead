@@ -702,6 +702,15 @@ namespace MphRead.Mods.Network
                     Console.WriteLine($"[netcheck] {name} recorded {DemoRecorder.CurrentPath}");
                     DemoRecorder.Stop();
                 }
+                // MPHREAD_CLIP_TEST saves the rolling buffer on the way out.
+                // The button that normally does it is a key press, which this
+                // harness has no way to make, so without this the clip path
+                // has no check at all.
+                if (Environment.GetEnvironmentVariable("MPHREAD_CLIP_TEST") != null)
+                {
+                    Console.WriteLine($"[netcheck] {name} clip held {DemoClip.Held:0.0} s, "
+                        + (DemoClip.Save() ?? "nothing saved"));
+                }
                 window?.Dispose();
                 SpectatorMode.Reset();
                 NetTestScript.Enabled = false;

@@ -6659,6 +6659,21 @@ namespace MphRead
                 base.OnKeyDown(e);
                 return;
             }
+            // Save the last few seconds. After chat, which owns every key
+            // while it is up, and after the picker: a clip is worth taking
+            // during a match and there is nothing to clip on the results
+            // screen that the buffer does not already hold.
+            if (e.Key != Keys.Unknown && e.Key == Mods.InputSettings.ClipKey
+                && !e.Alt && !e.Control && Mods.Network.DemoClip.Active)
+            {
+                string? clip = Mods.Network.DemoClip.Save();
+                Mods.Chat.ChatBox.System(clip == null
+                    ? "nothing to clip yet"
+                    : $"saved the last {Mods.Network.DemoClip.Held:0} s to "
+                        + System.IO.Path.GetFileName(clip));
+                base.OnKeyDown(e);
+                return;
+            }
             // F11 and Alt+Enter switch window modes.
             if (Mods.WindowMode.HandleKey(this, e))
             {

@@ -77,6 +77,32 @@ namespace MphRead.Mods
         public static Keys ChatKey { get; set; } = Keys.T;
 
         /// <summary>
+        /// Saves the last few seconds of play (see
+        /// <see cref="Network.DemoClip"/>). Unknown means unbound, which also
+        /// switches the rolling buffer off: nothing can ask for a clip, so
+        /// there is nothing worth keeping.
+        ///
+        /// Rebinding it throws away whatever was held. Binding the button is
+        /// the moment somebody starts meaning to use it, and handing them the
+        /// seconds before that is handing them a clip of a decision they had
+        /// not made yet.
+        /// </summary>
+        public static Keys ClipKey
+        {
+            get => _clipKey;
+            set
+            {
+                if (_clipKey != value)
+                {
+                    Network.DemoClip.Purge();
+                }
+                _clipKey = value;
+            }
+        }
+
+        private static Keys _clipKey = Keys.F10;
+
+        /// <summary>
         /// How far a stick must move before it counts, 0 to 0.9.
         ///
         /// Applied radially rather than per axis -- see
@@ -357,6 +383,24 @@ namespace MphRead.Mods
                     {
                         continue;
                     }
+                    if (key == "clip_key")
+                    {
+                        // Assigned to the field, not the property: the setter
+                        // purges the buffer on a change, which is right for a
+                        // player rebinding it and wrong for loading the file
+                        // they saved it in.
+                        _clipKey = value.Equals("none", StringComparison.OrdinalIgnoreCase)
+                            ? Keys.Unknown
+                            : Enum.TryParse(value, out Keys parsedClip) ? parsedClip : _clipKey;
+                        continue;
+                    }
+                    if (key == "clip_seconds"
+                        && Int32.TryParse(value, NumberStyles.Integer,
+                            CultureInfo.InvariantCulture, out int clipSeconds))
+                    {
+                        Network.DemoClip.Seconds = clipSeconds;
+                        continue;
+                    }
                     if (Input.TouchSettings.ReadSetting(key, value))
                     {
                         continue;
@@ -447,6 +491,8 @@ namespace MphRead.Mods
                     $"invert_x={InvertMouseX.ToString().ToLowerInvariant()}",
                     $"scroll_all_weapons={ScrollAllWeapons.ToString().ToLowerInvariant()}",
                     $"chat_key={(ChatKey == Keys.Unknown ? "none" : ChatKey.ToString())}",
+                    $"clip_key={(ClipKey == Keys.Unknown ? "none" : ClipKey.ToString())}",
+                    $"clip_seconds={Network.DemoClip.Seconds.ToString(CultureInfo.InvariantCulture)}",
                     "gamepad_deadzone=" + GamepadDeadZone.ToString(CultureInfo.InvariantCulture),
                     "gamepad_look=" + GamepadLookSensitivity.ToString(CultureInfo.InvariantCulture),
                     $"gamepad_invert_y={GamepadInvertY.ToString().ToLowerInvariant()}"
@@ -491,6 +537,8 @@ namespace MphRead.Mods
             InvertMouseX = false;
             ScrollAllWeapons = true;
             ChatKey = Keys.T;
+            ClipKey = Keys.F10;
+            Network.DemoClip.Seconds = 10;
             Input.PadBindings.Reset();
             Input.TouchSettings.Reset();
             GamepadDeadZone = 0.2f;
