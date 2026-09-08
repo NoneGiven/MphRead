@@ -56,6 +56,23 @@ namespace MphRead.Mods.Network
         /// </summary>
         private int _worstShockCoilTimer;
         private int _lastAmmo = -1;
+
+        /// <summary>
+        /// Health the shooter has gained from its own weapon over the window.
+        ///
+        /// The Shock Coil drains life into whoever fired it, and "it does not
+        /// heal you any more" was half of the report about it. Nothing here
+        /// could answer that: the shooter was pinned at full health every
+        /// frame to keep it alive, and GainHealth clamps at the maximum, so
+        /// every point of drain was healed into a bar that was already full
+        /// and thrown away. It is held a little below full instead, and what
+        /// it climbs above that is the measurement.
+        /// </summary>
+        private int _healed;
+
+        /// <summary>How far below full the shooter is held. Enough room for
+        /// several seconds of drain, and not enough to be in danger.</summary>
+        private const int HealHeadroom = 50;
         private int _lastHitFrame = -1;
 
         /// <summary>
@@ -282,7 +299,7 @@ namespace MphRead.Mods.Network
                     }
                 }
                 _lastAmmo = shooter.ModAmmo.Ua;
-                shooter.Health = FullHealth(shooter);
+                HoldShooter(shooter);
                 _firingFrames++;
                 return;
             }
@@ -313,12 +330,29 @@ namespace MphRead.Mods.Network
                 }
             }
             _lastAmmo = shooter.ModAmmo.Ua;
-            // The shooter is kept alive -- splash from its own weapon, or a
-            // fall, would end the window for a reason that is not the
-            // measurement. The victim is left to die: time to kill from full
-            // health is the one number here that cannot be misread.
-            shooter.Health = FullHealth(shooter);
+            HoldShooter(shooter);
             _firingFrames++;
+        }
+
+        /// <summary>
+        /// Keep the shooter alive without hiding what its weapon gave it.
+        ///
+        /// Splash from its own weapon, or a fall, would end the window for a
+        /// reason that is not the measurement -- so it is held up. A little
+        /// below full rather than at it, so a life-drain weapon has somewhere
+        /// to heal into. Whatever it climbed since the last frame is the
+        /// drain, and it is counted before the level is restored. The victim
+        /// is left to die: time to kill from full health is the one number
+        /// here that cannot be misread.
+        /// </summary>
+        private void HoldShooter(PlayerEntity shooter)
+        {
+            int floor = Math.Max(1, FullHealth(shooter) - HealHeadroom);
+            if (shooter.Health > floor)
+            {
+                _healed += shooter.Health - floor;
+            }
+            shooter.Health = floor;
         }
 
         private int Report()
@@ -340,7 +374,8 @@ namespace MphRead.Mods.Network
                 + $"{_hits / window:0.0} hits per second | "
                 + $"beam alive on {_beamFrames} of {_firingFrames} frame(s)"
                 + $" | shockCoilTimer {_worstShockCoilTimer} (ramp needs 60 for +1, 240 for +4)"
-                + $" | victim ended on {_lastHealth} hp | shooter ammo {_lastAmmo}"
+                + $" | victim ended on {_lastHealth} hp | healed shooter {_healed} hp"
+                + $" | shooter ammo {_lastAmmo}"
                 + $" | last hit on firing frame {_lastHitFrame} of {_firingFrames}");
             return 0;
         }
