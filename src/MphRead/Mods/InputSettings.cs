@@ -367,6 +367,10 @@ namespace MphRead.Mods
                         InvertMouseX = invertX;
                         continue;
                     }
+                    if (key == "pointer_jump_guard" && Boolean.TryParse(value, out bool guardJumps))
+                    {
+                        Input.PointerInput.GuardJumps = guardJumps;
+                    }
                     if (key == "scroll_all_weapons" && Boolean.TryParse(value, out bool scrollAll))
                     {
                         ScrollAllWeapons = scrollAll;
@@ -490,6 +494,7 @@ namespace MphRead.Mods
                     $"invert_y={InvertMouseY.ToString().ToLowerInvariant()}",
                     $"invert_x={InvertMouseX.ToString().ToLowerInvariant()}",
                     $"scroll_all_weapons={ScrollAllWeapons.ToString().ToLowerInvariant()}",
+                    $"pointer_jump_guard={Input.PointerInput.GuardJumps.ToString().ToLowerInvariant()}",
                     $"chat_key={(ChatKey == Keys.Unknown ? "none" : ChatKey.ToString())}",
                     $"clip_key={(ClipKey == Keys.Unknown ? "none" : ClipKey.ToString())}",
                     $"clip_seconds={Network.DemoClip.Seconds.ToString(CultureInfo.InvariantCulture)}",

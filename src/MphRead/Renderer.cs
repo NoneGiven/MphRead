@@ -6619,7 +6619,10 @@ namespace MphRead
 
         protected override void OnMouseMove(MouseMoveEventArgs e)
         {
-            Scene.OnMouseMove(e.DeltaX, e.DeltaY);
+            // Filtered for the same reason the player's aim is: the free
+            // camera is reached from a match, with the same pointer.
+            Scene.OnMouseMove(Mods.Input.PointerInput.Filter(e.DeltaX),
+                Mods.Input.PointerInput.Filter(e.DeltaY));
             base.OnMouseMove(e);
         }
 

@@ -2433,8 +2433,14 @@ namespace MphRead.Entities
             public MouseState? PrevMouseState { get; set; }
             public MouseState? MouseState { get; set; }
 
-            public float MouseDeltaX => (MouseState?.X - PrevMouseState?.X) ?? 0;
-            public float MouseDeltaY => (MouseState?.Y - PrevMouseState?.Y) ?? 0;
+            // Filtered, so a pointer that teleports does not turn the view.
+            // See Mods.Input.PointerInput: a mouse never reaches the
+            // threshold, and a pen reaches it every time it is lifted off the
+            // tablet and set down somewhere else.
+            public float MouseDeltaX =>
+                Mods.Input.PointerInput.Filter((MouseState?.X - PrevMouseState?.X) ?? 0);
+            public float MouseDeltaY =>
+                Mods.Input.PointerInput.Filter((MouseState?.Y - PrevMouseState?.Y) ?? 0);
             public float ClickX { get; set; } = -1;
             public float ClickY { get; set; } = -1;
 

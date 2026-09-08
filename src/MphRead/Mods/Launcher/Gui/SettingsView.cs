@@ -145,6 +145,7 @@ namespace MphRead.Mods.Launcher.Gui
         private SliderRow _sensitivity = null!;
         private ToggleRow _invertY = null!;
         private ToggleRow _invertX = null!;
+        private ToggleRow _penTablet = null!;
         private ToggleRow _scrollAllWeapons = null!;
         private SliderRow _gamepadLook = null!;
         private SliderRow _gamepadDeadZone = null!;
@@ -577,6 +578,14 @@ namespace MphRead.Mods.Launcher.Gui
             _invertX = Add(page, new ToggleRow("Invert horizontal aim", InputSettings.InvertMouseX));
             _scrollAllWeapons = Add(page, new ToggleRow("Wheel cycles every weapon",
                 InputSettings.ScrollAllWeapons));
+            // On by default and worth leaving on with a mouse: no mouse
+            // movement reaches the threshold, so it does nothing at all until
+            // a pen is used. The switch is here for the one case it could get
+            // wrong -- a very high-DPI mouse flicked at a very high
+            // sensitivity -- and for anybody who would rather find out than
+            // be protected. See Mods.Input.PointerInput.
+            _penTablet = Add(page, new ToggleRow("Pen tablet: ignore pointer jumps",
+                Mods.Input.PointerInput.GuardJumps));
 
             BuildTouchControls(page);
 
@@ -641,6 +650,7 @@ namespace MphRead.Mods.Launcher.Gui
                 _sensitivity.Value = SensitivityToSlider(InputSettings.MouseSensitivity);
                 _invertY.On = InputSettings.InvertMouseY;
                 _invertX.On = InputSettings.InvertMouseX;
+                _penTablet.On = Mods.Input.PointerInput.GuardJumps;
                 _scrollAllWeapons.On = InputSettings.ScrollAllWeapons;
                 _gamepadLook.Value = LookToSlider(InputSettings.GamepadLookSensitivity);
                 _gamepadDeadZone.Value = DeadZoneToSlider(InputSettings.GamepadDeadZone);
@@ -933,6 +943,7 @@ namespace MphRead.Mods.Launcher.Gui
             InputSettings.MouseSensitivity = SliderToSensitivity(_sensitivity.Value);
             InputSettings.InvertMouseY = _invertY.On;
             InputSettings.InvertMouseX = _invertX.On;
+            Mods.Input.PointerInput.GuardJumps = _penTablet.On;
             InputSettings.ScrollAllWeapons = _scrollAllWeapons.On;
             InputSettings.GamepadLookSensitivity = SliderToLook(_gamepadLook.Value);
             InputSettings.GamepadDeadZone = SliderToDeadZone(_gamepadDeadZone.Value);
