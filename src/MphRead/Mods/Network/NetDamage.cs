@@ -96,6 +96,57 @@ namespace MphRead.Mods.Network
         public static readonly double[] AimDrift = new double[Slots];
         public static readonly double[] WorstDrift = new double[Slots];
 
+        /// <summary>
+        /// The weapons that carry their damage somewhere other than a plain
+        /// beam hit, counted where they decide whether to hurt anybody.
+        ///
+        /// A continuous homing beam does nothing at all without a target, and
+        /// a bomb walks the player list itself and skips whoever it thinks is
+        /// a team mate. Both refusals look identical from
+        /// <see cref="Resolved"/> -- zero -- and neither is distinguishable
+        /// there from a shot that simply missed, which is why the Shock Coil
+        /// and the two bomb types could be reported dead in a live match
+        /// while every count this file already kept looked healthy.
+        /// </summary>
+        public static int ShockCoilSpawned;
+        public static int ShockCoilAcquired;
+        public static int BombPlayerChecks;
+        public static int BombTeamSkips;
+        public static int BombHits;
+
+        /// <summary>
+        /// Damage the authority resolved, split by what delivered it.
+        ///
+        /// <see cref="Resolved"/> counts hits per victim, which answers
+        /// "is damage working" and nothing finer. It cannot answer the
+        /// question a player actually asks -- "does the Shock Coil hurt
+        /// anybody?" -- and neither could any check in this project, which is
+        /// why a weapon could be reported dead in a live match while every
+        /// harness run came back PASS. Indexed by <see cref="BeamType"/>;
+        /// bombs carry no beam and are counted on their own.
+        /// </summary>
+        public static readonly int[] DamageByBeam = new int[(int)BeamType.Enemy + 1];
+        public static readonly int[] HitsByBeam = new int[(int)BeamType.Enemy + 1];
+        public static int BombDamageDealt;
+        public static int BombDamageHits;
+
+        /// <summary>Why a press to lay a bomb did or did not produce one.</summary>
+        public static int BombSpawnCalls;
+        public static int BombSpawnMade;
+        public static int BombSpawnDetonated;
+        public static int BombSpawnStaleCount;
+        public static int BombSpawnPoolEmpty;
+
+        /// <summary>
+        /// The closest any bomb came to somebody it could have hurt, and the
+        /// radius it needed. Without these a run of "no bomb ever hit" cannot
+        /// be told from "no bomb was ever near anybody", which is the whole
+        /// difference between a broken weapon and a harness that never walked
+        /// onto one.
+        /// </summary>
+        public static float BombNearest = Single.MaxValue;
+        public static float BombRadiusSeen;
+
         /// <summary>Called wherever a beam is spawned, for <see cref="Fired"/>.</summary>
         public static void NoteFired(PlayerEntity shooter, Vector3 shotVec, Vector3 aimVec)
         {
@@ -167,6 +218,22 @@ namespace MphRead.Mods.Network
             Array.Clear(PlayerOverlapsByShooter);
             Array.Clear(AimDrift);
             Array.Clear(WorstDrift);
+            ShockCoilSpawned = 0;
+            ShockCoilAcquired = 0;
+            BombPlayerChecks = 0;
+            BombTeamSkips = 0;
+            BombHits = 0;
+            Array.Clear(DamageByBeam);
+            Array.Clear(HitsByBeam);
+            BombDamageDealt = 0;
+            BombDamageHits = 0;
+            BombSpawnCalls = 0;
+            BombSpawnMade = 0;
+            BombSpawnDetonated = 0;
+            BombSpawnStaleCount = 0;
+            BombSpawnPoolEmpty = 0;
+            BombNearest = Single.MaxValue;
+            BombRadiusSeen = 0;
             Replaying = false;
             ReplayBeam = BeamType.None;
         }
@@ -216,6 +283,22 @@ namespace MphRead.Mods.Network
             Array.Clear(PlayerOverlapsByShooter);
             Array.Clear(AimDrift);
             Array.Clear(WorstDrift);
+            ShockCoilSpawned = 0;
+            ShockCoilAcquired = 0;
+            BombPlayerChecks = 0;
+            BombTeamSkips = 0;
+            BombHits = 0;
+            Array.Clear(DamageByBeam);
+            Array.Clear(HitsByBeam);
+            BombDamageDealt = 0;
+            BombDamageHits = 0;
+            BombSpawnCalls = 0;
+            BombSpawnMade = 0;
+            BombSpawnDetonated = 0;
+            BombSpawnStaleCount = 0;
+            BombSpawnPoolEmpty = 0;
+            BombNearest = Single.MaxValue;
+            BombRadiusSeen = 0;
             Replaying = false;
             ReplayBeam = BeamType.None;
         }
@@ -240,11 +323,23 @@ namespace MphRead.Mods.Network
 
         /// <summary>Called by the authority for every hit it resolves.</summary>
         public static void Note(PlayerEntity victim, PlayerEntity? attacker, BeamType beam,
-            DamageFlags flags, Vector3? direction)
+            DamageFlags flags, Vector3? direction, uint amount = 0, bool fromBomb = false)
         {
             if (!NetSession.Active || Replaying)
             {
                 return;
+            }
+            // Before the slot check: what hurt somebody is worth knowing even
+            // for a victim this table cannot index.
+            if (fromBomb)
+            {
+                BombDamageDealt += (int)amount;
+                BombDamageHits++;
+            }
+            else if (beam >= 0 && (int)beam < DamageByBeam.Length)
+            {
+                DamageByBeam[(int)beam] += (int)amount;
+                HitsByBeam[(int)beam]++;
             }
             int slot = victim.SlotIndex;
             if (slot < 0 || slot >= Slots)

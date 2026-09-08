@@ -115,6 +115,67 @@ namespace MphRead.Mods.Network
                 line.Append("  !! ").Append(botRemotes).Append(" remote slot(s) still AI-driven");
             }
 
+            // The team index every weapon that refuses to hurt a team mate
+            // reads, printed as the number it actually is rather than as the
+            // mode it was supposed to come from. In a free-for-all these must
+            // all differ: a bomb and a homing beam both treat "same team" as
+            // "not a target", so one repeated value here is a whole class of
+            // weapons silently doing nothing.
+            line.Append(" team=[");
+            for (int i = 0; i < PlayerEntity.MaxPlayers; i++)
+            {
+                PlayerEntity? p = PlayerEntity.Players[i];
+                if (i > 0)
+                {
+                    line.Append(',');
+                }
+                line.Append(p == null ? "-" : p.TeamIndex.ToString());
+            }
+            line.Append(']');
+            line.Append(" shockcoil=").Append(NetDamage.ShockCoilAcquired)
+                .Append('/').Append(NetDamage.ShockCoilSpawned);
+            line.Append(" bomb=").Append(NetDamage.BombHits)
+                .Append('/').Append(NetDamage.BombPlayerChecks)
+                .Append(" bombTeamSkips=").Append(NetDamage.BombTeamSkips);
+            // What actually hurt somebody, by weapon. Only the weapons that
+            // landed anything, so the line stays readable and a name missing
+            // from it is the finding.
+            line.Append(" dmg[");
+            bool first = true;
+            for (int i = 0; i < NetDamage.HitsByBeam.Length; i++)
+            {
+                if (NetDamage.HitsByBeam[i] == 0)
+                {
+                    continue;
+                }
+                if (!first)
+                {
+                    line.Append(' ');
+                }
+                first = false;
+                line.Append((BeamType)i).Append('=').Append(NetDamage.DamageByBeam[i])
+                    .Append('/').Append(NetDamage.HitsByBeam[i]);
+            }
+            if (NetDamage.BombDamageHits > 0)
+            {
+                if (!first)
+                {
+                    line.Append(' ');
+                }
+                line.Append("Bomb=").Append(NetDamage.BombDamageDealt)
+                    .Append('/').Append(NetDamage.BombDamageHits);
+            }
+            line.Append(']');
+            line.Append(" bombSpawn=").Append(NetDamage.BombSpawnMade)
+                .Append('/').Append(NetDamage.BombSpawnCalls)
+                .Append(" det=").Append(NetDamage.BombSpawnDetonated)
+                .Append(" stale=").Append(NetDamage.BombSpawnStaleCount)
+                .Append(" poolEmpty=").Append(NetDamage.BombSpawnPoolEmpty);
+            line.Append(" bombNearest=")
+                .Append(NetDamage.BombNearest == Single.MaxValue ? "n/a"
+                    : NetDamage.BombNearest.ToString("0.00"))
+                .Append(" bombRadius=").Append(NetDamage.BombRadiusSeen.ToString("0.00"));
+
             MatchStatePacket? match = NetSession.ServerMatch;
             if (match != null)
             {
