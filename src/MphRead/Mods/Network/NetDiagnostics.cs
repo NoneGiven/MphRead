@@ -132,6 +132,37 @@ namespace MphRead.Mods.Network
                 line.Append(p == null ? "-" : p.TeamIndex.ToString());
             }
             line.Append(']');
+            // And say so when they do not. A repeated index in a free-for-all
+            // is every bomb in the room refusing to hurt anybody and the
+            // Shock Coil refusing to heal, and it is not something anybody
+            // reads out of a list of numbers unprompted.
+            if (!GameState.Teams)
+            {
+                int shared = 0;
+                for (int i = 0; i < PlayerEntity.MaxPlayers; i++)
+                {
+                    PlayerEntity? a = PlayerEntity.Players[i];
+                    if (a == null || !a.LoadFlags.TestFlag(LoadFlags.Active))
+                    {
+                        continue;
+                    }
+                    for (int j = i + 1; j < PlayerEntity.MaxPlayers; j++)
+                    {
+                        PlayerEntity? b = PlayerEntity.Players[j];
+                        if (b != null && b.LoadFlags.TestFlag(LoadFlags.Active)
+                            && a.TeamIndex == b.TeamIndex)
+                        {
+                            shared++;
+                        }
+                    }
+                }
+                if (shared > 0)
+                {
+                    line.Append("  !! ").Append(shared)
+                        .Append(" pair(s) share a team index in a free-for-all: "
+                            + "bombs and life drain will do nothing between them");
+                }
+            }
             line.Append(" shockcoil=").Append(NetDamage.ShockCoilAcquired)
                 .Append('/').Append(NetDamage.ShockCoilSpawned);
             line.Append(" bomb=").Append(NetDamage.BombHits)

@@ -108,9 +108,27 @@ namespace MphRead.Mods.Network
             // throws the moment a Battle match is actually simulated. The
             // arrays hold four entries, so free-for-all can give each slot its
             // own index, exactly as PlayerEntity.Initialize does.
-            if (player.TeamIndex < 0 || player.TeamIndex >= PlayerEntity.MaxPlayers)
+            //
+            // Corrected against the mode, not merely filled in when missing.
+            // A free-for-all in which two slots share a team index is not a
+            // cosmetic fault: "same team" is what a bomb, a homing beam and
+            // the Shock Coil's life drain all test before they do anything,
+            // so a room where everybody is on team 0 is a room where no bomb
+            // ever hurts anyone and the Shock Coil never heals its owner --
+            // which is precisely the report about those weapons doing
+            // nothing. It happened because the players were built from this
+            // machine's own menu rather than from the server's mode (see
+            // MatchStart), and a rule that only spoke up when the value was
+            // out of range had nothing to say about eight players all
+            // correctly holding zero.
+            int wanted = GameState.Teams ? slot % 2 : slot;
+            if (player.TeamIndex != wanted
+                && (GameState.Teams
+                    ? player.TeamIndex < 0 || player.TeamIndex > 1
+                    : player.TeamIndex < 0 || player.TeamIndex >= PlayerEntity.MaxPlayers
+                        || TeamIndexTaken(player.TeamIndex, slot)))
             {
-                player.TeamIndex = GameState.Teams ? slot % 2 : slot;
+                player.TeamIndex = wanted;
                 player.Team = player.TeamIndex % 2 == 0 ? Team.Orange : Team.Green;
             }
             // The hunter comes from the server's roster, not from this
@@ -173,6 +191,27 @@ namespace MphRead.Mods.Network
                 return;
             }
             Deactivate(PlayerEntity.Players[slot], slot);
+        }
+
+        /// <summary>
+        /// Whether another active slot already holds this team index. Only
+        /// asked in a free-for-all, where every player is their own team and
+        /// two slots sharing one is the fault above.
+        /// </summary>
+        private static bool TeamIndexTaken(int teamIndex, int slot)
+        {
+            for (int i = 0; i < PlayerEntity.MaxPlayers && i < PlayerEntity.Players.Count; i++)
+            {
+                if (i == slot || !_activated[i])
+                {
+                    continue;
+                }
+                if (PlayerEntity.Players[i].TeamIndex == teamIndex)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private static void Deactivate(PlayerEntity player, int slot)
