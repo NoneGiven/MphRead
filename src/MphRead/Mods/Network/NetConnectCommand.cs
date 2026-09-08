@@ -28,7 +28,8 @@ namespace MphRead.Mods.Network
             {
                 (string RoomKey, GameMode Mode) room = NetLaunch.ServerRoom()!.Value;
                 using var renderer = new RenderWindow();
-                NetLaunch.BuildPlayers(renderer.Scene, hunter, recolor);
+                NetLaunch.BuildPlayers(renderer.Scene, hunter, recolor,
+                    teams: GameState.IsTeamMode(room.Mode));
                 renderer.AddRoom(room.RoomKey, room.Mode, playerCount: NetLaunch.RoomPlayerCount);
                 Console.WriteLine($"[net] loading {room.RoomKey} ({room.Mode})");
                 renderer.Run();

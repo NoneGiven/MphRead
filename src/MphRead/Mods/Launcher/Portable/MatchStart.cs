@@ -96,24 +96,33 @@ namespace MphRead.Mods.Launcher
 
             RenderWindow.LogCreatingWindow();
             using var renderer = new RenderWindow();
+            // The server's rotation decides the mode as well as the map; a
+            // client that kept its own menu choice would score a different
+            // game from everyone else on the same level. Settled before the
+            // players are built, because who is on which team follows from
+            // it -- this used to be read afterwards, so a client joining a
+            // team server took its team decision from its own launcher.
+            GameMode mode = plan.Mode;
+            if (NetSession.Active && NetLaunch.ServerRoom() is { } serverRoom)
+            {
+                mode = serverRoom.Mode;
+            }
             // GameState's own list, not the mode's name: Capture is a team
             // mode that does not end in "Teams", and testing the name left
             // every player and bot in a Capture match on no team at all.
-            bool teamPlay = settings.TeamPlay == "on" || GameState.IsTeamMode(plan.Mode);
-            GameMode mode = plan.Mode;
+            //
+            // Online the match's own mode is the only thing that may answer
+            // this. A local "team play" preference splitting an FFA server's
+            // slots into two halves would give this client a scoreboard
+            // nobody else on the server is playing to.
+            bool teamPlay = NetSession.Active
+                ? GameState.IsTeamMode(mode)
+                : settings.TeamPlay == "on" || GameState.IsTeamMode(plan.Mode);
 
             if (NetSession.Active)
             {
                 NetLaunch.BuildPlayers(renderer.Scene, plan.Hunter,
-                    localRecolor: LauncherPrefs.LastColor,
-                    teamId: teamPlay ? 0 : -1);
-                // The server's rotation decides the mode as well as the map; a
-                // client that kept its own menu choice would score a different
-                // game from everyone else on the same level.
-                if (NetLaunch.ServerRoom() is var room && room != null)
-                {
-                    mode = room.Value.Mode;
-                }
+                    localRecolor: LauncherPrefs.LastColor, teams: teamPlay);
             }
             else
             {
@@ -187,7 +196,8 @@ namespace MphRead.Mods.Launcher
             Menu.SaveSlot = 0;
             RenderWindow.LogCreatingWindow();
             using var renderer = new RenderWindow();
-            NetLaunch.BuildPlayers(renderer.Scene, Hunter.Samus, localRecolor: 0, teamId: -1, localSlot: -1);
+            NetLaunch.BuildPlayers(renderer.Scene, Hunter.Samus, localRecolor: 0,
+                teams: GameState.IsTeamMode(room.Value.Mode), localSlot: -1);
             renderer.AddRoom(room.Value.RoomKey, room.Value.Mode, playerCount: NetLaunch.RoomPlayerCount);
             renderer.Run();
             DemoPlayback.Stop();

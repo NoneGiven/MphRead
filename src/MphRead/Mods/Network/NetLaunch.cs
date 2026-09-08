@@ -231,7 +231,7 @@ namespace MphRead.Mods.Network
         /// few lines down.
         /// </param>
         public static void BuildPlayers(Scene scene, Hunter localHunter, int localRecolor,
-            int teamId = -1, int? localSlot = null)
+            bool teams = false, int? localSlot = null)
         {
             int resolvedSlot = localSlot ?? Math.Max(NetSession.LocalSlot, 0);
             for (int slot = 0; slot < PlayerEntity.MaxPlayers; slot++)
@@ -253,7 +253,15 @@ namespace MphRead.Mods.Network
                 {
                     PlayerColors.Choice[slot] = PlayerColors.Clamp(localRecolor);
                 }
-                scene.AddPlayer(hunter, slot == resolvedSlot ? localRecolor : 0, teamId);
+                // Odd slots against even ones, which is the rule
+                // NetSlotManager already uses for a slot that arrives with no
+                // team of its own -- and it has to be the same rule, because
+                // it is what makes every client agree about who is on whose
+                // side without the server having to say. This took a single
+                // team id for every slot, so a team match built here put all
+                // eight players on Orange and none on Green.
+                scene.AddPlayer(hunter, slot == resolvedSlot ? localRecolor : 0,
+                    teams ? slot % 2 : -1);
             }
             for (int slot = 0; slot < PlayerEntity.MaxPlayers; slot++)
             {

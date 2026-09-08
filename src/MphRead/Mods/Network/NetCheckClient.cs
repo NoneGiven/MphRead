@@ -146,7 +146,7 @@ namespace MphRead.Mods.Network
                 _remotes[i] = new RemoteView();
             }
             Scene = new Scene(Size, KeyboardState, MouseState, _ => { }, Close);
-            NetLaunch.BuildPlayers(Scene, hunter, color);
+            NetLaunch.BuildPlayers(Scene, hunter, color, teams: GameState.IsTeamMode(mode));
             Scene.AddRoom(roomKey, mode, playerCount: NetLaunch.RoomPlayerCount);
         }
 
