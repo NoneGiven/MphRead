@@ -30,10 +30,11 @@ namespace MphRead.Mods
     /// what the driver calls itself, and the stack of anything that killed the
     /// process.
     ///
-    /// Off by default and never on by accident. It costs a file handle, a lock
-    /// per line and a directory that grows, which is not something to hand
-    /// somebody who did not ask -- so it is one switch in the corner of the
-    /// launcher, and it stays where they left it.
+    /// On by default, on every platform, and switchable off by the one switch
+    /// in the corner of the launcher, which stays where it is left. It costs a
+    /// file handle, a lock per line and a directory that grows; a crash report
+    /// with nothing behind it costs more. See
+    /// <see cref="Launcher.LauncherPrefs.DebugLogs"/>.
     /// </summary>
     public static class DebugLog
     {
