@@ -138,6 +138,7 @@ namespace MphRead.Mods.Launcher.Gui
         private ToggleRow _proHud = null!;
         private ChoiceRow _crosshairSizeRow = null!;
         private ChoiceRow _crosshairStyleRow = null!;
+        private ChoiceRow _weaponStyleRow = null!;
         private SliderRow _sfxVolume = null!;
         private SliderRow _musicVolume = null!;
         private ChoiceRow _languageRow = null!;
@@ -519,6 +520,16 @@ namespace MphRead.Mods.Launcher.Gui
             // The preview lives on the type row and answers both rows, so the
             // size row has to ask for it to be repainted.
             _crosshairSizeRow.Changed += (_, _) => _crosshairStyleRow.InvalidateVisual();
+            // Where the gun sits, which is the one Pro-mode question with two
+            // real answers rather than a right one. Static is Quake's: the
+            // weapon is welded to the camera and the HUD stops sliding around
+            // under the mouse. Dynamic is the DS game's: it lags behind the
+            // aim point and settles after it. Pro mode has always drawn the
+            // first, so that stays the default -- this only makes the second
+            // reachable without giving up the rest of the HUD.
+            _weaponStyleRow = Add(page, new ChoiceRow("Weapon",
+                new[] { "Static (Quake)", "Dynamic (Metroid)" },
+                Features.ProHudFixedWeapon ? 0 : 1));
             _proHud.Changed += (_, _) => ShowCrosshairRows();
             ShowCrosshairRows();
         }
@@ -527,6 +538,7 @@ namespace MphRead.Mods.Launcher.Gui
         {
             _crosshairSizeRow.IsVisible = _proHud.On;
             _crosshairStyleRow.IsVisible = _proHud.On;
+            _weaponStyleRow.IsVisible = _proHud.On;
         }
 
         // --------------------------------------------------------------- audio
@@ -912,6 +924,7 @@ namespace MphRead.Mods.Launcher.Gui
             Features.ProHud = _proHud.On;
             Crosshair.Size = (CrosshairSize)_crosshairSizeRow.Index;
             Crosshair.Style = (CrosshairStyle)_crosshairStyleRow.Index;
+            Features.ProHudFixedWeapon = _weaponStyleRow.Index == 0;
             // Audio
             _settings.SfxVolume = (_sfxVolume.Value / 100f).ToString(CultureInfo.InvariantCulture);
             _settings.MusicVolume = (_musicVolume.Value / 100f).ToString(CultureInfo.InvariantCulture);
