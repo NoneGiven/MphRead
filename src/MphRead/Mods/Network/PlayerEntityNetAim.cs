@@ -625,6 +625,29 @@ namespace MphRead.Entities
             Flags1 &= ~PlayerFlags1.Morphing;
             Flags1 &= ~PlayerFlags1.Unmorphing;
             UpdateForm(altForm);
+            // And the camera, which UpdateForm does not touch.
+            //
+            // The camera type is switched by EnterAltForm and ExitAltForm, and
+            // this path is neither: it skips the transition, so it skipped the
+            // switch too. A player put into alt form this way kept the
+            // first-person camera, and the moment anybody looked through it --
+            // spectating them, or watching a demo, where every player on
+            // screen is a puppet -- the morph ball was filmed from inside its
+            // own head instead of from the third-person camera the game uses
+            // for it. That is the "alt form does not reproduce the original
+            // view" half of the replay report.
+            //
+            // Exactly the switch the two real transitions make, so a forced
+            // form and a walked one end in the same state.
+            if (altForm)
+            {
+                SwitchCamera(Values.AltFormStrafe != 0 ? CameraType.Third2 : CameraType.Third1,
+                    new Vector3(_field70, 0, _field74));
+            }
+            else
+            {
+                SwitchCamera(CameraType.First, _facingVector);
+            }
         }
 
         /// <summary>

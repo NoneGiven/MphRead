@@ -44,6 +44,21 @@ namespace MphRead.Mods.Network
         /// active players) and does no work (PlayerProcess returns before
         /// simulating), so keeping it costs a list entry.
         /// </summary>
+        /// <summary>
+        /// Whether this player is driven from the network rather than by
+        /// whoever is at this keyboard.
+        ///
+        /// True for every other player in a live match, and for *every*
+        /// player during a demo, since LocalSlot is -1 there on purpose --
+        /// which is the case that matters: watching a recording is watching
+        /// puppets, including the one the camera is behind.
+        /// </summary>
+        public static bool IsPuppet(PlayerEntity player)
+        {
+            return (NetSession.Active || DemoPlayback.IsActive)
+                && player.SlotIndex != LocalSlot;
+        }
+
         public static bool KeepSlotAlive(PlayerEntity player)
         {
             return NetSession.Active;

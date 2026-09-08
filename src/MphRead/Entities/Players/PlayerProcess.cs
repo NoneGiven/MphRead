@@ -573,7 +573,30 @@ namespace MphRead.Entities
             {
                 Flags1 &= ~PlayerFlags1.Boosting;
             }
-            if (Flags1.TestFlag(PlayerFlags1.Walking))
+            // Whether this player is walking, for the head and gun bob only.
+            //
+            // The flag itself is the answer for anybody at a keyboard. It is
+            // not for a puppet: a puppet's position is written in from the
+            // network rather than produced by the movement step, so the
+            // ground check underneath the flag (`Standing`) is being asked
+            // about a body that teleports every frame, and it flickers. The
+            // bob ramps up and down with it, which is the weapon "moving
+            // abnormally up and down" in a replay -- where every player on
+            // screen is a puppet, the one being watched included.
+            //
+            // The owner's own movement is the stable answer, and it is
+            // already here: NetPlayerBridge derives Speed from the positions
+            // that were reported, so a puppet that is moving along the ground
+            // is walking whatever the local ground check makes of it. Only
+            // the bob reads this -- everything else the flag drives is about
+            // simulating a player, which a puppet is not doing.
+            bool bobWalking = Flags1.TestFlag(PlayerFlags1.Walking);
+            if (Mods.Network.NetHooks.IsPuppet(this))
+            {
+                bobWalking = !IsAltForm && !IsMorphing && !IsUnmorphing
+                    && Speed.X * Speed.X + Speed.Z * Speed.Z > BobWalkSpeedSquared;
+            }
+            if (bobWalking)
             {
                 _gunViewBob += 14 / 2f; // todo: FPS stuff
                 if (_gunViewBob > 450)
@@ -1932,6 +1955,14 @@ namespace MphRead.Entities
                 UpdateForm(altForm: false);
             }
         }
+
+        /// <summary>
+        /// How fast a puppet has to be going along the ground before the bob
+        /// treats it as walking, squared. Well under a walk -- the slowest
+        /// hunter covers several times this in a frame -- and well over the
+        /// jitter left by two reported positions a frame apart.
+        /// </summary>
+        private const float BobWalkSpeedSquared = 0.0004f;
 
         private void UpdateForm(bool altForm)
         {
