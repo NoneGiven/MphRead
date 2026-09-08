@@ -80,6 +80,22 @@ namespace MphRead
         public static bool AlternateHunters1P { get; set; } = true; // false
 
         /// <summary>
+        /// Whether firing the Imperialist without the scope up costs half the
+        /// damage. The cartridge says yes; this build says no.
+        ///
+        /// It is the only weapon in the game whose damage depends on whether
+        /// you were zoomed, and the penalty is what makes a quick-scope
+        /// necessary rather than optional -- on a touchscreen and on a pad,
+        /// where holding a zoom and tracking are the same thumb, that is a
+        /// tax on the input device rather than on the shot. Off by default
+        /// here: an Imperialist hit does what an Imperialist hit does.
+        ///
+        /// A damage rule, so only the machine resolving the shot reads it,
+        /// which in a networked match is the authority and nobody else.
+        /// </summary>
+        public static bool HalfDamageUnscoped { get; set; } = false; // true
+
+        /// <summary>
         /// Pro mode HUD: the whole competitive layout as one switch, instead
         /// of the seven separate questions below that had to be answered the
         /// same way to get it.

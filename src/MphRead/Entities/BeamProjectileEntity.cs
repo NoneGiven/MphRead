@@ -1544,7 +1544,7 @@ namespace MphRead.Entities
                 hsDamage = 150 * hsDamage / 100;
                 splashDmg = 150 * splashDmg / 100;
             }
-            if (weapon.Beam == BeamType.Imperialist && !equip.Zoomed)
+            if (Features.HalfDamageUnscoped && weapon.Beam == BeamType.Imperialist && !equip.Zoomed)
             {
                 damage /= 2;
                 hsDamage /= 2;
