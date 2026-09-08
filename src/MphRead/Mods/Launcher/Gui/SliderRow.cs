@@ -17,8 +17,8 @@ namespace MphRead.Mods.Launcher.Gui
     /// than the drawing.
     ///
     /// The range defaults to 0-100 because every row that existed before the
-    /// FPS limit was a percentage. <paramref name="min"/> and
-    /// <paramref name="max"/> let one slide over something else -- the FPS
+    /// FPS limit was a percentage. <c>min</c> and <c>max</c> let one slide
+    /// over something else -- the FPS
     /// limit slides over an index into its own table of stops, so that a drag
     /// lands on 144 and never on 143.
     /// </summary>

@@ -144,7 +144,9 @@ namespace MphRead.Entities
                 Mods.Input.StylusRegion.AltForm => controls.Morph,
                 _ => null
             };
-            if (bind != null)
+            // Pattern match, not "!= null": Keybind's own != dereferences both
+            // sides, so comparing one against null threw rather than answering.
+            if (bind is not null)
             {
                 bind.IsDown = true;
                 bind.IsPressed = true;

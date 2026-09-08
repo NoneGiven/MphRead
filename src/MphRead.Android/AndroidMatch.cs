@@ -48,14 +48,16 @@ namespace MphRead.Droid
             // needs -- the same reason MatchStart gives.
             Menu.SaveSlot = 0;
             var scene = new Scene(size, input.Keyboard, input.Mouse, _ => { }, close);
-            bool teamPlay = GameState.IsTeamMode(plan.Mode);
             if (NetSession.Active)
             {
-                BuildNetworkedMatch(scene, plan, teamPlay);
+                BuildNetworkedMatch(scene, plan);
             }
             else
             {
-                AddLocalPlayers(scene, plan, teamPlay);
+                // Offline the plan's mode is the match, so it is what decides
+                // teams. GameState's own list rather than the mode's name:
+                // Capture is a team mode that does not end in "Teams".
+                AddLocalPlayers(scene, plan, GameState.IsTeamMode(plan.Mode));
                 scene.AddRoom(plan.RoomKey, plan.Mode);
             }
             return scene;
@@ -69,7 +71,7 @@ namespace MphRead.Droid
         /// connection would be, so every packet handler, room transition and
         /// match-end sequence runs unchanged; what makes it a replay rather
         /// than a match is that there is no local slot (-1) and so no player
-        /// to spawn as. <see cref="SpectatorMode"/> takes the camera on the
+        /// to spawn as. <see cref="Mods.SpectatorMode"/> takes the camera on the
         /// first frame anybody recorded becomes available.
         ///
         /// The room comes from the recording itself: a demo carries the
@@ -96,7 +98,8 @@ namespace MphRead.Droid
             }
             Menu.SaveSlot = 0;
             var scene = new Scene(size, input.Keyboard, input.Mouse, _ => { }, close);
-            NetLaunch.BuildPlayers(scene, Hunter.Samus, localRecolor: 0, teamId: -1, localSlot: -1);
+            NetLaunch.BuildPlayers(scene, Hunter.Samus, localRecolor: 0,
+                teams: GameState.IsTeamMode(room.Value.Mode), localSlot: -1);
             scene.AddRoom(room.Value.RoomKey, room.Value.Mode, playerCount: NetLaunch.RoomPlayerCount);
             Console.WriteLine($"[match] demo, {room.Value.RoomKey}");
             return scene;
@@ -161,7 +164,7 @@ namespace MphRead.Droid
         /// made joining fail with "No room with this name is known" -- the
         /// empty string is not a room.
         /// </summary>
-        private static void BuildNetworkedMatch(Scene scene, LaunchPlan plan, bool teamPlay)
+        private static void BuildNetworkedMatch(Scene scene, LaunchPlan plan)
         {
             (string RoomKey, GameMode Mode)? room = NetLaunch.ServerRoom();
             string roomKey = room?.RoomKey ?? plan.RoomKey;
@@ -173,8 +176,14 @@ namespace MphRead.Droid
             {
                 throw new ProgramException("The server did not say which map it is running.");
             }
+            // The server's mode, not the plan's: online it is the only thing
+            // that may decide who is on which team, for the reason MatchStart
+            // gives -- a client splitting an FFA server's slots into two halves
+            // plays to a scoreboard nobody else on the server has. Which slot
+            // lands on which side is BuildPlayers' own rule, the one
+            // NetSlotManager uses, so every client agrees without being told.
             NetLaunch.BuildPlayers(scene, plan.Hunter, localRecolor: 0,
-                teamId: teamPlay ? 0 : -1);
+                teams: GameState.IsTeamMode(mode));
             scene.AddRoom(roomKey, mode, playerCount: NetLaunch.RoomPlayerCount);
         }
 

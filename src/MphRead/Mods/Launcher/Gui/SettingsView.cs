@@ -652,8 +652,11 @@ namespace MphRead.Mods.Launcher.Gui
                 _invertY.On = InputSettings.InvertMouseY;
                 _invertX.On = InputSettings.InvertMouseX;
                 _penTablet.On = Mods.Input.PointerInput.GuardJumps;
-                _stylusZone.On = Mods.Input.StylusZone.Enabled;
-                _stylusOpacity.Value = (int)MathF.Round(Mods.Input.StylusZone.Opacity * 100);
+                if (_stylusZone != null && _stylusOpacity != null)
+                {
+                    _stylusZone.On = Mods.Input.StylusZone.Enabled;
+                    _stylusOpacity.Value = (int)MathF.Round(Mods.Input.StylusZone.Opacity * 100);
+                }
                 _scrollAllWeapons.On = InputSettings.ScrollAllWeapons;
                 _gamepadLook.Value = LookToSlider(InputSettings.GamepadLookSensitivity);
                 _gamepadDeadZone.Value = DeadZoneToSlider(InputSettings.GamepadDeadZone);
@@ -668,7 +671,10 @@ namespace MphRead.Mods.Launcher.Gui
                 {
                     row.InvalidateVisual();
                 }
-                _touchButtonsRow!.On = Mods.Input.TouchSettings.ButtonsVisible;
+                if (_touchButtonsRow != null)
+                {
+                    _touchButtonsRow.On = Mods.Input.TouchSettings.ButtonsVisible;
+                }
                 foreach ((Mods.Input.TouchControl control, ToggleRow row) in _touchRows)
                 {
                     row.On = Mods.Input.TouchSettings.IsEnabled(control);
@@ -681,17 +687,8 @@ namespace MphRead.Mods.Launcher.Gui
 
         private readonly List<(Mods.Input.TouchControl Control, ToggleRow Row)> _touchRows = new();
 
-        /// <summary>
-        /// Which on-screen buttons the phone draws.
-        ///
-        /// Only on a touch screen: on the desktop these decide nothing, and a
-        /// page of eleven switches that do nothing is worse than no page. The
-        /// master switch is first and takes the rest away with it, since
-        /// "turn them all off" is the answer most people who come here want
-        /// and it should not be eleven presses.
-        /// </summary>
-        private ToggleRow _stylusZone = null!;
-        private SliderRow _stylusOpacity = null!;
+        private ToggleRow? _stylusZone;
+        private SliderRow? _stylusOpacity;
 
         /// <summary>
         /// The DS's bottom screen, for a tablet.
@@ -706,6 +703,17 @@ namespace MphRead.Mods.Launcher.Gui
         /// </summary>
         private void BuildStylusZone(StackPanel page)
         {
+            // A pen tablet is a desktop device, and this is only ever driven
+            // from RenderWindow's frame -- nothing on the phone updates the
+            // zone, so every row here would be inert. The button is worse
+            // than inert: only SettingsWindow answers
+            // StylusPlacementRequested, so on a phone, whose settings are a
+            // view inside HomeView, pressing it would start a placement that
+            // nothing gets out of the way for and that only Escape ends.
+            if (OperatingSystem.IsAndroid())
+            {
+                return;
+            }
             _stylusZone = Add(page, new ToggleRow("DS bottom screen for a pen tablet",
                 Mods.Input.StylusZone.Enabled));
             // How faint. "Barely visible" is the design, but how faint that
@@ -732,12 +740,21 @@ namespace MphRead.Mods.Launcher.Gui
 
         /// <summary>
         /// The settings asking to be closed so the player can draw on the
-        /// game. Raised by the one button above; the host decides what
-        /// closing means, which is a window on the desktop and a view swap on
-        /// a phone.
+        /// game. Raised by the one button above, which is built on the
+        /// desktop only, so SettingsWindow closing itself is the whole of
+        /// what answering this means.
         /// </summary>
         public event EventHandler? StylusPlacementRequested;
 
+        /// <summary>
+        /// Which on-screen buttons the phone draws.
+        ///
+        /// Only on a touch screen: on the desktop these decide nothing, and a
+        /// page of eleven switches that do nothing is worse than no page. The
+        /// master switch is first and takes the rest away with it, since
+        /// "turn them all off" is the answer most people who come here want
+        /// and it should not be eleven presses.
+        /// </summary>
         private void BuildTouchControls(StackPanel page)
         {
             if (!OperatingSystem.IsAndroid())
@@ -995,8 +1012,11 @@ namespace MphRead.Mods.Launcher.Gui
             InputSettings.InvertMouseY = _invertY.On;
             InputSettings.InvertMouseX = _invertX.On;
             Mods.Input.PointerInput.GuardJumps = _penTablet.On;
-            Mods.Input.StylusZone.Enabled = _stylusZone.On;
-            Mods.Input.StylusZone.Opacity = Math.Clamp(_stylusOpacity.Value / 100f, 0.02f, 1f);
+            if (_stylusZone != null && _stylusOpacity != null)
+            {
+                Mods.Input.StylusZone.Enabled = _stylusZone.On;
+                Mods.Input.StylusZone.Opacity = Math.Clamp(_stylusOpacity.Value / 100f, 0.02f, 1f);
+            }
             InputSettings.ScrollAllWeapons = _scrollAllWeapons.On;
             InputSettings.GamepadLookSensitivity = SliderToLook(_gamepadLook.Value);
             InputSettings.GamepadDeadZone = SliderToDeadZone(_gamepadDeadZone.Value);

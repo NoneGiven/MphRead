@@ -358,7 +358,7 @@ namespace MphRead.Entities
 
         /// <summary>
         /// Hidden and non-solid on this machine, whether this is the real
-        /// local player (set directly by <see cref="SpectatorMode"/>) or a
+        /// local player (set directly by <see cref="Mods.SpectatorMode"/>) or a
         /// puppet (set from the FlagSpectating bit in its snapshot).
         /// </summary>
         internal void ModSetSpectating(bool value)

@@ -6235,8 +6235,9 @@ namespace MphRead
         /// [gl] lines (written in Scene.OnLoad, after the context exists)
         /// never appeared at all.
         ///
-        /// This line and <see cref="LogWindowCreated"/> put a boundary either
-        /// side of that, so the next such log says which side of it the
+        /// This line and the "game window created" line the constructor writes
+        /// put a boundary either side of that, so the next such log says
+        /// which side of it the
         /// process died on rather than leaving it to be inferred.
         /// </summary>
         public static void LogCreatingWindow()

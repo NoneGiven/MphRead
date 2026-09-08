@@ -373,7 +373,13 @@ namespace MphRead.Mods
                     }
                     if (key == "stylus_zone" && Boolean.TryParse(value, out bool stylusZone))
                     {
-                        Input.StylusZone.Enabled = stylusZone;
+                        // Desktop only, and enforced here rather than only in
+                        // the settings screen: nothing on a phone updates the
+                        // zone, so a file carried over from a PC must not
+                        // switch on an overlay that cannot be aimed at,
+                        // pressed, or -- since the rows are not built there --
+                        // turned back off.
+                        Input.StylusZone.Enabled = stylusZone && !OperatingSystem.IsAndroid();
                     }
                     // Three numbers for one rectangle: the height follows the
                     // DS's shape and is not stored, so a hand-edited file

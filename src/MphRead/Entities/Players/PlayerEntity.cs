@@ -2724,7 +2724,7 @@ namespace MphRead.Entities
         SpireClimbing = 0x8000,
         NoShotsFired = 0x10000,
         UnequipOmegaCannon = 0x20000,
-        /// <summary>Quake-3-style spectating: hidden and non-solid to everyone, replicated via <see cref="Mods.Network.NetProtocol.PlayerState"/>'s FlagSpectating bit.</summary>
+        /// <summary>Quake-3-style spectating: hidden and non-solid to everyone, replicated via <see cref="Mods.Network.PlayerState"/>'s FlagSpectating bit.</summary>
         Spectating = 0x40000
     }
 

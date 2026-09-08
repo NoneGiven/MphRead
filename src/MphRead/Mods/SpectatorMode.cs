@@ -17,7 +17,7 @@ namespace MphRead.Mods
     /// makes every one of those follow them for free. The one thing that
     /// pointer does not touch is whose slot real hardware input reaches --
     /// that is <c>Network.NetHooks.LocalSlot</c>, unchanged here -- so
-    /// <see cref="PlayerInput.ProcessInput"/> checks <see cref="IsSpectating"/>
+    /// <c>Entities.PlayerEntity.ProcessInput</c> checks <see cref="IsSpectating"/>
     /// itself to stop applying input to the real local player while this is
     /// active, rather than this class reaching in to silence it.
     /// </summary>
