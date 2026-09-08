@@ -614,7 +614,10 @@ namespace MphRead.Mods
                 {
                     dpsDistance = parsedDpsDistance;
                 }
-                Environment.ExitCode = Network.WeaponDps.Run(dpsTest, dpsHunter, dpsBeam, dpsSeconds, dpsDistance);
+                // -bombs measures the alt-form bombs instead of a beam: the
+                // one damage source the scripted tour cannot aim.
+                Environment.ExitCode = Network.WeaponDps.Run(dpsTest, dpsHunter, dpsBeam, dpsSeconds,
+                    dpsDistance, HasFlag(args, "bombs"));
                 return true;
             }
             // Generate the binaries for the custom maps in `maps/`. The

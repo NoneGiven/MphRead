@@ -20,9 +20,12 @@ namespace MphRead.Mods.Network
     /// barely fires the beam at anybody, so no check in the project could
     /// confirm or deny it.
     ///
-    /// The victim's health is restored every frame after the drop is counted.
-    /// Letting it die would spend the window on respawn timers and measure the
-    /// gaps between lives rather than the weapon.
+    /// The victim is left to die and the window closes on the kill. It does
+    /// not restore the victim's health -- an older comment here said it did --
+    /// and it must not keep counting afterwards: the respawn puts the victim
+    /// somewhere else on the map, usually outside a short weapon's range, so
+    /// every second after the kill is a second of firing at nobody divided
+    /// into the damage that did land.
     /// </summary>
     public sealed class WeaponDps : GameWindow
     {
@@ -31,6 +34,7 @@ namespace MphRead.Mods.Network
         private readonly BeamType _beam;
         private readonly double _seconds;
         private readonly float _distance;
+        private readonly bool _bombs;
         private int _frame;
         private int _firingFrames;
         private int _damage;
@@ -41,6 +45,18 @@ namespace MphRead.Mods.Network
         private int _beamFrames;
         private int _placedFrame = -1;
         private bool _placed;
+
+        /// <summary>
+        /// The highest Shock Coil contact timer reached.
+        ///
+        /// The weapon's damage is almost entirely the ramp this drives:
+        /// the base is divided by 32 and dithers between 0 and 1, so a run
+        /// that never gets this above 60 is measuring a Shock Coil that has
+        /// not started working yet, however long the beam was alive.
+        /// </summary>
+        private int _worstShockCoilTimer;
+        private int _lastAmmo = -1;
+        private int _lastHitFrame = -1;
 
         /// <summary>
         /// Topped up to the player's own maximum, not to a large number. The
@@ -74,7 +90,8 @@ namespace MphRead.Mods.Network
             StartVisible = false
         };
 
-        private WeaponDps(string room, Hunter hunter, BeamType beam, double seconds, float distance)
+        private WeaponDps(string room, Hunter hunter, BeamType beam, double seconds, float distance,
+            bool bombs)
             : base(GameSettings(), WindowSettings())
         {
             _room = room;
@@ -82,6 +99,7 @@ namespace MphRead.Mods.Network
             _beam = beam;
             _seconds = seconds;
             _distance = distance;
+            _bombs = bombs;
             PlayerEntity.MaxPlayers = Math.Max(PlayerEntity.MaxPlayers, 2);
             MapAudit.ForceEveryone = true;
             Scene = new Scene(Size, KeyboardState, MouseState, _ => { }, Close);
@@ -145,6 +163,38 @@ namespace MphRead.Mods.Network
                 && player.LoadFlags.TestFlag(LoadFlags.Spawned) && player.Health > 0;
         }
 
+        /// <summary>
+        /// Take the victim's health reading for this frame, before anything
+        /// decides to stop early.
+        ///
+        /// Both halves of this used to sit below the guard that returns when
+        /// the victim is dead -- so the frame that killed them, which is the
+        /// one carrying the last and largest drop, was the one frame never
+        /// counted. A weapon that kills in stages lost its final hit; Lockjaw,
+        /// whose snare does sixty damage from each of three bombs and takes a
+        /// hunter from full to nothing in one go, had *every* hit it ever
+        /// landed fall in that gap and reported a flat zero while visibly
+        /// killing the target in under two seconds.
+        /// </summary>
+        private void Account(PlayerEntity victim)
+        {
+            if (!_placed)
+            {
+                return;
+            }
+            if (_lastHealth >= 0 && victim.Health < _lastHealth)
+            {
+                _damage += _lastHealth - victim.Health;
+                _hits++;
+                _lastHitFrame = _firingFrames;
+            }
+            if (_killFrames < 0 && _lastHealth > 0 && victim.Health == 0)
+            {
+                _killFrames = _firingFrames;
+            }
+            _lastHealth = victim.Health;
+        }
+
         private void Step()
         {
             if (PlayerEntity.Players.Count < 2)
@@ -153,13 +203,25 @@ namespace MphRead.Mods.Network
             }
             PlayerEntity victim = PlayerEntity.Players[0];
             PlayerEntity shooter = PlayerEntity.Players[1];
+            // The kill has to be recorded here, before the guard below sends
+            // the probe home for the frame.
+            //
+            // Alive() is false exactly when the victim is dead, so the check
+            // further down -- which sits after this return -- never once ran
+            // on a frame where the victim was dead, and every run reported
+            // "did not kill" however fast the weapon was. The window then kept
+            // counting while the victim respawned somewhere else on the map,
+            // out of range of a short beam, so the seconds after the kill were
+            // divided into the damage before it: the Shock Coil killed in 2.8
+            // seconds and was reported at a third of its real rate.
+            Account(victim);
             if (!Alive(shooter) || !Alive(victim))
             {
                 NetTestScript.Rest(shooter, wantBiped: true);
                 NetTestScript.Rest(victim, wantBiped: true);
                 return;
             }
-            if (shooter.IsAltForm || shooter.IsMorphing || shooter.IsUnmorphing)
+            if (!_bombs && (shooter.IsAltForm || shooter.IsMorphing || shooter.IsUnmorphing))
             {
                 NetTestScript.Rest(shooter, wantBiped: true);
                 NetTestScript.Rest(victim, wantBiped: true);
@@ -172,7 +234,7 @@ namespace MphRead.Mods.Network
                 Vector3 facing = victim.FacingVector;
                 facing = new Vector3(facing.X, 0, facing.Z);
                 facing = facing.LengthSquared < 0.001f ? Vector3.UnitZ : facing.Normalized();
-                Vector3 spot = victim.Position + facing * _distance;
+                Vector3 spot = victim.Position + facing * (_bombs ? 0.6f : _distance);
                 shooter.Teleport(spot, -facing, Scene.GetNodeRefByPosition(spot));
                 _placed = true;
                 _placedFrame = _frame;
@@ -186,6 +248,47 @@ namespace MphRead.Mods.Network
                 NetTestScript.Rest(shooter, wantBiped: true);
                 NetTestScript.Rest(victim, wantBiped: true);
                 return;
+            }
+            if (_bombs)
+            {
+                // Walk the shooter round the victim while it lays.
+                //
+                // Sylux is why. A Morph Ball bomb hurts whoever is standing on
+                // it, so laying three in one spot measures it fine; Lockjaw
+                // does its damage with the snare stretched between three
+                // bombs, and three bombs dropped on one spot make a triangle
+                // with no area, which nobody can be inside. Standing still
+                // reports Lockjaw as doing nothing whether or not it works,
+                // which is the same trap the scripted tour falls into.
+                // Sylux only. A Morph Ball or Stinglarva bomb hurts whoever
+                // stands on it, so the ring would carry every one of them out
+                // of its own radius and report a working weapon as dead --
+                // which is exactly what it did the first time this ran.
+                if (_hunter == Hunter.Sylux)
+                {
+                    float angle = MathHelper.DegreesToRadians(_firingFrames * 6f);
+                    var offset = new Vector3(MathF.Cos(angle) * 2.4f, 0, MathF.Sin(angle) * 2.4f);
+                    Vector3 ring = victim.Position + offset;
+                    shooter.Teleport(ring, -offset.Normalized(), Scene.GetNodeRefByPosition(ring));
+                }
+                NetTestScript.LayBombs(shooter, _frame);
+                NetTestScript.Rest(victim, wantBiped: true);
+                foreach (EntityBase entity in Scene.Entities)
+                {
+                    if (entity.Type == EntityType.Bomb)
+                    {
+                        _beamFrames++;
+                        break;
+                    }
+                }
+                _lastAmmo = shooter.ModAmmo.Ua;
+                shooter.Health = FullHealth(shooter);
+                _firingFrames++;
+                return;
+            }
+            if (shooter.ShockCoilTimer > _worstShockCoilTimer)
+            {
+                _worstShockCoilTimer = shooter.ShockCoilTimer;
             }
             shooter.ModArmWeapon(_beam);
             // Chest to chest. Between the two collision volumes' centres
@@ -209,22 +312,13 @@ namespace MphRead.Mods.Network
                     break;
                 }
             }
-            if (victim.Health < _lastHealth)
-            {
-                _damage += _lastHealth - victim.Health;
-                _hits++;
-            }
-            _lastHealth = victim.Health;
+            _lastAmmo = shooter.ModAmmo.Ua;
             // The shooter is kept alive -- splash from its own weapon, or a
             // fall, would end the window for a reason that is not the
             // measurement. The victim is left to die: time to kill from full
             // health is the one number here that cannot be misread.
             shooter.Health = FullHealth(shooter);
             _firingFrames++;
-            if (victim.Health == 0 && _killFrames < 0)
-            {
-                _killFrames = _firingFrames;
-            }
         }
 
         private int Report()
@@ -239,21 +333,25 @@ namespace MphRead.Mods.Network
             string kill = _killFrames > 0
                 ? $"killed {_startHealth} hp in {_killFrames / 60.0:0.00} s"
                 : $"did not kill {_startHealth} hp in {seconds:0.0} s";
-            Console.WriteLine($"DPS {_room} | {_hunter} holding {_beam} at {_distance:0.0} units | {kill} | "
+            Console.WriteLine($"DPS {_room} | {_hunter} {(_bombs ? "laying bombs" : $"holding {_beam}")} at {(_bombs ? 0.6f : _distance):0.0} units | {kill} | "
                 + $"damage {_damage} | hits {_hits} | "
                 + $"{_damage / window:0.0} per second | "
                 + $"{(_hits > 0 ? _damage / (double)_hits : 0):0.0} per hit | "
                 + $"{_hits / window:0.0} hits per second | "
-                + $"beam alive on {_beamFrames} of {_firingFrames} frame(s)");
+                + $"beam alive on {_beamFrames} of {_firingFrames} frame(s)"
+                + $" | shockCoilTimer {_worstShockCoilTimer} (ramp needs 60 for +1, 240 for +4)"
+                + $" | victim ended on {_lastHealth} hp | shooter ammo {_lastAmmo}"
+                + $" | last hit on firing frame {_lastHitFrame} of {_firingFrames}");
             return 0;
         }
 
-        public static int Run(string room, Hunter hunter, BeamType beam, double seconds, float distance)
+        public static int Run(string room, Hunter hunter, BeamType beam, double seconds, float distance,
+            bool bombs = false)
         {
             WeaponDps? window = null;
             try
             {
-                window = new WeaponDps(room, hunter, beam, seconds, Math.Clamp(distance, 0.5f, 40f));
+                window = new WeaponDps(room, hunter, beam, seconds, Math.Clamp(distance, 0.5f, 40f), bombs);
                 window.Run();
                 return window.Report();
             }

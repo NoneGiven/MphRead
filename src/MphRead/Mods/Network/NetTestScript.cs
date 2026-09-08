@@ -49,7 +49,28 @@ namespace MphRead.Mods.Network
         /// Seconds per phase. Lowered by the map audit, which visits every
         /// room and cannot afford seventy seconds each.
         /// </summary>
-        public static double PhaseSeconds { get; set; } = 5;
+        public static double PhaseSeconds { get; set; } = ReadPhaseSeconds();
+
+        /// <summary>
+        /// MPHREAD_PHASE_SECONDS shortens the tour without shortening it:
+        /// fifteen phases at five seconds is seventy-five before the last one
+        /// is reached, so a run budgeted for less than that reports
+        /// `untested` for the alt attacks and the affinity weapon -- the
+        /// three the Shock Coil and both bomb types live in -- while looking
+        /// like a clean pass. Lowering the phase covers all fifteen instead
+        /// of the first six.
+        /// </summary>
+        private static double ReadPhaseSeconds()
+        {
+            string? value = Environment.GetEnvironmentVariable("MPHREAD_PHASE_SECONDS");
+            if (value != null && Double.TryParse(value,
+                System.Globalization.CultureInfo.InvariantCulture, out double parsed)
+                && parsed > 0)
+            {
+                return parsed;
+            }
+            return 5;
+        }
 
         private static readonly TestPhase[] _order =
         {
@@ -139,6 +160,37 @@ namespace MphRead.Mods.Network
             PlayerControls c = player.Controls;
             Clear(c);
             Hold(c.Shoot, down);
+            Finish(player, c);
+        }
+
+        /// <summary>
+        /// Morph, then lay bombs where you stand.
+        ///
+        /// The one thing the tour cannot do on purpose. Its alt-attack phases
+        /// lay bombs wherever the walk happened to reach, and a bomb only
+        /// hurts somebody standing on it, so "bombs did no damage" was the
+        /// tour's answer on every map whether or not the weapon worked. This
+        /// puts the ball on the target and presses the button.
+        ///
+        /// The press has to be a press: bomb laying is edge-triggered, so a
+        /// held button lays one bomb and then nothing for the rest of the run.
+        /// </summary>
+        public static void LayBombs(PlayerEntity player, int frame)
+        {
+            PlayerControls c = player.Controls;
+            Clear(c);
+            if (player.Health == 0)
+            {
+                Hold(c.Shoot, true);
+            }
+            else if (!player.IsAltForm && Settled(player))
+            {
+                Hold(c.Morph, true);
+            }
+            else if (player.IsAltForm)
+            {
+                Hold(c.AltAttack, frame % 20 < 3);
+            }
             Finish(player, c);
         }
 
