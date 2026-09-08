@@ -805,7 +805,8 @@ namespace MphRead.Mods
                 Environment.ExitCode = Network.MapAudit.Run(mapTest, players, seconds, mapMode,
                     bots: HasFlag(args, "bots"), shotDirectory: ValueAfter(args, "shots"),
                     renderProbe: HasFlag(args, "renderprobe"),
-                    allNodes: HasFlag(args, "allnodes"));
+                    allNodes: HasFlag(args, "allnodes"),
+                    itemProbe: HasFlag(args, "itemshots"));
                 return true;
             }
 

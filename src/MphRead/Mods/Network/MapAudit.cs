@@ -90,6 +90,25 @@ namespace MphRead.Mods.Network
         // from nine of its ten spawns and not the tenth is exactly the shape
         // of thing one manual run finds by luck and misses by luck.
         private readonly bool _renderProbe;
+
+        // The pickup probe: -maptest -itemshots.
+        //
+        // "Some players see a black square on some pickups in certain maps"
+        // is a report nothing else here can answer, because every other
+        // measurement in this class reads the whole frame and a pickup is a
+        // few dozen pixels of it. So this stands the camera in front of each
+        // item spawn in turn and photographs it. Whether the box around the
+        // weapon is drawn or is a black square is then a question about a
+        // picture rather than about a number.
+        private readonly bool _itemProbe;
+        private readonly List<Vector3> _itemSpots = new();
+        private readonly List<string> _itemNames = new();
+        private int _itemIndex = -1;
+        private int _itemFrames;
+        /// <summary>How far back from a pickup the camera stands.</summary>
+        private const float _itemStandOff = 2.2f;
+        /// <summary>Frames to settle before the picture is taken.</summary>
+        private const int _itemSettleFrames = 24;
         private readonly List<Vector3> _spawnSpots = new();
         private readonly List<Vector3> _spawnFacings = new();
         private readonly List<Formats.Culling.NodeRef> _spawnNodeRefs = new();
@@ -268,10 +287,11 @@ namespace MphRead.Mods.Network
         private readonly bool _bots;
 
         private MapAudit(string room, int players, double seconds, GameMode mode, bool bots,
-            bool renderProbe)
+            bool renderProbe, bool itemProbe)
             : base(GameSettings(), WindowSettings())
         {
             _renderProbe = renderProbe;
+            _itemProbe = itemProbe;
             _bots = bots;
             _room = room;
             _players = players;
@@ -356,6 +376,21 @@ namespace MphRead.Mods.Network
                 _drawAdvancedTheGame++;
             }
             _frame++;
+            if (_itemProbe)
+            {
+                if (!StepItemShots())
+                {
+                    SwapBuffers();
+                    Scene.AfterRenderFrame();
+                    base.OnRenderFrame(args);
+                    Close();
+                    return;
+                }
+                SwapBuffers();
+                Scene.AfterRenderFrame();
+                base.OnRenderFrame(args);
+                return;
+            }
             if (_renderProbe)
             {
                 if (!StepSpawnRender())
@@ -1066,6 +1101,96 @@ namespace MphRead.Mods.Network
             return true;
         }
 
+        /// <summary>
+        /// One frame of the pickup sweep. False when every item spawn has
+        /// been photographed.
+        ///
+        /// Item spawns rather than the item instances themselves: an instance
+        /// is created by its spawner and taken away again when somebody picks
+        /// it up, so the list would change under the sweep. The spawner is
+        /// where the pickup is, and it does not move.
+        /// </summary>
+        private bool StepItemShots()
+        {
+            if (_itemIndex < 0)
+            {
+                CollectItemSpots();
+                _itemIndex = 0;
+                _itemFrames = -1;
+            }
+            if (_itemIndex >= _itemSpots.Count)
+            {
+                return false;
+            }
+            PlayerEntity player = PlayerEntity.Main;
+            if (_itemFrames < 0)
+            {
+                if (!player.LoadFlags.TestFlag(LoadFlags.Spawned) || player.Health == 0)
+                {
+                    NetTestScript.Rest(player, wantBiped: true);
+                    return true;
+                }
+                // Stand back along +Z at roughly eye height and look at it.
+                // One fixed direction rather than a search for an unobstructed
+                // one: a picture taken through a wall is obvious in the
+                // picture, and a pickup with a wall on every side of it is not
+                // the case this is looking for.
+                Vector3 item = _itemSpots[_itemIndex];
+                Vector3 stand = item + new Vector3(0, 0.4f, _itemStandOff);
+                player.ModForceForm(altForm: false);
+                player.Teleport(stand, -Vector3.UnitZ,
+                    Scene.GetNodeRefByPosition(stand));
+                _itemFrames = 0;
+                NetTestScript.Rest(player, wantBiped: true);
+                return true;
+            }
+            _itemFrames++;
+            NetTestScript.Rest(player, wantBiped: true);
+            if (_itemFrames < _itemSettleFrames)
+            {
+                return true;
+            }
+            if (_shotDirectory != null)
+            {
+                string name = _room.Replace(' ', '_').Replace('-', '_');
+                Mods.ScreenCapture.Save(Scene, System.IO.Path.Combine(_shotDirectory,
+                    $"{name}-item{_itemIndex:00}-{_itemNames[_itemIndex]}.png"));
+            }
+            Vector3 at = _itemSpots[_itemIndex];
+            Console.WriteLine($"ITEMSHOT {_room} | {_itemIndex} {_itemNames[_itemIndex]} "
+                + $"at {at.X:0.0},{at.Y:0.0},{at.Z:0.0}");
+            _itemIndex++;
+            _itemFrames = -1;
+            return true;
+        }
+
+        private void CollectItemSpots()
+        {
+            foreach (EntityBase entity in Scene.Entities)
+            {
+                string what;
+                Vector3 spot;
+                if (entity.Type == EntityType.ItemSpawn)
+                {
+                    what = ((ItemSpawnEntity)entity).Data.ItemType.ToString();
+                    // Where the spawner actually puts the pickup, which is
+                    // not where the spawner is -- see ItemSpawnEntity.
+                    spot = entity.Position.AddY(0.65f);
+                }
+                else if (entity.Type == EntityType.ItemInstance)
+                {
+                    what = ((ItemInstanceEntity)entity).ItemType.ToString();
+                    spot = entity.Position;
+                }
+                else
+                {
+                    continue;
+                }
+                _itemSpots.Add(spot);
+                _itemNames.Add(what);
+            }
+        }
+
         private void SaveSpawnShot(string what)
         {
             if (_shotDirectory == null)
@@ -1262,6 +1387,12 @@ namespace MphRead.Mods.Network
                     + $" | draws advancing the game: {_drawAdvancedTheGame}");
             }
 
+            if (_itemProbe)
+            {
+                Console.WriteLine($"ITEMSWEEP {_room} | {_itemSpots.Count} pickup(s) photographed");
+                return 0;
+            }
+
             if (_renderProbe)
             {
                 Console.WriteLine($"RENDERSWEEP {_room} | {_spawnSpots.Count} spawn point(s) "
@@ -1375,13 +1506,13 @@ namespace MphRead.Mods.Network
 
         public static int Run(string room, int players, double seconds, GameMode mode,
             bool bots = false, string? shotDirectory = null, bool renderProbe = false,
-            bool allNodes = false)
+            bool allNodes = false, bool itemProbe = false)
         {
             MapAudit? window = null;
             try
             {
                 window = new MapAudit(room, Math.Clamp(players, 1, PlayerEntity.SlotCapacity),
-                    seconds, mode, bots, renderProbe);
+                    seconds, mode, bots, renderProbe, itemProbe);
                 // Draw every node the model has, ignoring the portal-graph
                 // room-part culling. Answers one question and only one: is a
                 // frame with no room in it a culling decision or geometry that
