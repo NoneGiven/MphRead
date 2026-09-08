@@ -594,6 +594,14 @@ namespace MphRead.Mods.Launcher.Gui
 
             Heading(page, "Keys");
             var rows = new List<KeyRow>();
+            // Chat first, and by hand. It is the one key this project added
+            // rather than inherited, so it is not a Keybind on PlayerControls
+            // and the reflection below cannot find it -- which is why it was
+            // the one key in the game with no row, settable only by editing
+            // the file.
+            KeyRow chatRow = Add(page, new KeyRow("Chat",
+                () => InputSettings.ChatKey, k => InputSettings.ChatKey = k));
+            rows.Add(chatRow);
             foreach (PropertyInfo property in InputSettings.Bindings)
             {
                 rows.Add(Add(page, new KeyRow(property)));

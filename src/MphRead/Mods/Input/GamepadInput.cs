@@ -185,6 +185,24 @@ namespace MphRead.Mods.Input
         }
 
         /// <summary>
+        /// True once for each press of the chat button.
+        ///
+        /// Taken, not held, for the reason <see cref="TakeMenuPress"/> gives:
+        /// it opens a line that then swallows the keyboard, and opening it
+        /// twice from one press would open and immediately close it.
+        /// </summary>
+        public static bool TakeChatPress()
+        {
+            GamepadButtons chat = PadBindings.Get(PadAction.Chat);
+            if (chat == GamepadButtons.None || (_pressed & chat) == 0)
+            {
+                return false;
+            }
+            _pressed &= ~chat;
+            return true;
+        }
+
+        /// <summary>
         /// True once for each press of one of these buttons, and consumed on
         /// the way out.
         ///

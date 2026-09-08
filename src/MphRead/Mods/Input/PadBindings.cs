@@ -41,7 +41,14 @@ namespace MphRead.Mods.Input
         /// by whoever owns the window, through
         /// <see cref="GamepadInput.TakeMenuPress"/>.
         /// </summary>
-        Menu
+        Menu,
+        /// <summary>
+        /// Open the chat line. Like <see cref="Menu"/> and unlike the rest,
+        /// this opens something that then takes the keyboard, so it is taken
+        /// through <see cref="GamepadInput.TakeChatPress"/> rather than held
+        /// as a bind.
+        /// </summary>
+        Chat
     }
 
     /// <summary>
@@ -76,7 +83,12 @@ namespace MphRead.Mods.Input
             /* PrevWeapon */ GamepadButtons.LeftBumper | GamepadButtons.DpadLeft,
             /* Missile    */ GamepadButtons.DpadUp,
             /* PowerBeam  */ GamepadButtons.DpadDown,
-            /* Menu       */ GamepadButtons.Start
+            /* Menu       */ GamepadButtons.Start,
+            // The left stick click, which is the only button on a standard pad
+            // the defaults had not already spent. Awkward to hit by accident
+            // while aiming, which is what you want from the one that stops you
+            // playing and starts you typing.
+            /* Chat       */ GamepadButtons.LeftThumb
         };
 
         private static readonly GamepadButtons[] _current = (GamepadButtons[])_defaults.Clone();
@@ -87,7 +99,7 @@ namespace MphRead.Mods.Input
             PadAction.Shoot, PadAction.Jump, PadAction.Morph, PadAction.Zoom,
             PadAction.ScanVisor, PadAction.Scan, PadAction.NextWeapon,
             PadAction.PrevWeapon, PadAction.Missile, PadAction.PowerBeam,
-            PadAction.Scoreboard, PadAction.Menu
+            PadAction.Scoreboard, PadAction.Menu, PadAction.Chat
         };
 
         public static GamepadButtons Get(PadAction action)

@@ -24,8 +24,21 @@ namespace MphRead.Mods.Launcher.Gui
     /// </summary>
     internal sealed class KeyRow : Control
     {
-        private readonly PropertyInfo _property;
+        private readonly PropertyInfo? _property;
         private readonly double _labelWidth;
+
+        // The second mode: a plain Keys setting rather than one of
+        // PlayerControls' Keybinds.
+        //
+        // The chat key is the only one, and it is not a Keybind because it
+        // cannot be. Bindings are found by reflecting over PlayerControls,
+        // which is upstream's type, and everything this project adds lives
+        // under Mods/ so a pull stays a fast-forward -- so chat, which this
+        // project added, has nowhere in that list to be. It is a keyboard-only
+        // row: there is no sense in opening the chat line with the wheel.
+        private readonly string? _label;
+        private readonly Func<GlfwKeys>? _get;
+        private readonly Action<GlfwKeys>? _set;
         private bool _listening;
         private bool _hot;
 
@@ -34,6 +47,17 @@ namespace MphRead.Mods.Launcher.Gui
         public KeyRow(PropertyInfo property, double labelWidth = 160)
         {
             _property = property;
+            _labelWidth = labelWidth;
+            Height = 32;
+            Focusable = true;
+            Cursor = new Cursor(StandardCursorType.Hand);
+        }
+
+        public KeyRow(string label, Func<GlfwKeys> get, Action<GlfwKeys> set, double labelWidth = 160)
+        {
+            _label = label;
+            _get = get;
+            _set = set;
             _labelWidth = labelWidth;
             Height = 32;
             Focusable = true;
@@ -68,7 +92,7 @@ namespace MphRead.Mods.Launcher.Gui
                 PointerUpdateKind.XButton2Pressed => GlfwMouse.Button5,
                 _ => null
             };
-            if (button != null)
+            if (button != null && _property != null)
             {
                 InputSettings.Rebind(_property, ButtonType.Mouse, GlfwKeys.Unknown, button.Value);
                 Done();
@@ -79,7 +103,7 @@ namespace MphRead.Mods.Launcher.Gui
 
         protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
         {
-            if (_listening && e.Delta.Y != 0)
+            if (_listening && e.Delta.Y != 0 && _property != null)
             {
                 InputSettings.Rebind(_property,
                     e.Delta.Y > 0 ? ButtonType.ScrollUp : ButtonType.ScrollDown,
@@ -127,16 +151,26 @@ namespace MphRead.Mods.Launcher.Gui
             }
             if (e.Key == Key.Back || e.Key == Key.Delete)
             {
-                InputSettings.Rebind(_property, ButtonType.Key, GlfwKeys.Unknown, GlfwMouse.Left);
+                Assign(GlfwKeys.Unknown);
                 Done();
                 return;
             }
             GlfwKeys? key = Translate(e.Key);
             if (key != null)
             {
-                InputSettings.Rebind(_property, ButtonType.Key, key.Value, GlfwMouse.Left);
+                Assign(key.Value);
                 Done();
             }
+        }
+
+        private void Assign(GlfwKeys key)
+        {
+            if (_set != null)
+            {
+                _set(key);
+                return;
+            }
+            InputSettings.Rebind(_property!, ButtonType.Key, key, GlfwMouse.Left);
         }
 
         private void Done()
@@ -223,7 +257,8 @@ namespace MphRead.Mods.Launcher.Gui
             // See MenuEntry.Render: hit testing follows the drawing.
             context.FillRectangle(Brushes.Transparent,
                 new Rect(0, 0, Bounds.Width, Bounds.Height));
-            FormattedText label = TrackedText.Make(InputSettings.ActionName(_property), 12,
+            FormattedText label = TrackedText.Make(
+                _label ?? InputSettings.ActionName(_property!), 12,
                 bold: true, GuiTheme.TextBrush);
             context.DrawText(label, new Point(4, (Bounds.Height - label.Height) / 2));
 
@@ -234,8 +269,10 @@ namespace MphRead.Mods.Launcher.Gui
                 new RoundedRect(box, 4));
 
             string text = _listening
-                ? "press a key, a mouse button or the wheel"
-                : InputSettings.Describe(InputSettings.Bind(_property));
+                ? (_get != null ? "press a key" : "press a key, a mouse button or the wheel")
+                : _get != null
+                    ? (_get() == GlfwKeys.Unknown ? "none" : InputSettings.KeyName(_get()))
+                    : InputSettings.Describe(InputSettings.Bind(_property!));
             FormattedText value = TrackedText.Make(text, 12, bold: true,
                 new SolidColorBrush(_listening ? GuiTheme.Warm : GuiTheme.Text));
             // Never wider than the box: a binding nobody has heard of should

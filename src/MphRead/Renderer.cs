@@ -6513,6 +6513,15 @@ namespace MphRead
             {
                 Mods.PauseMenu.HandleEscape(this);
             }
+            // Chat from the pad, next to the menu and for the same reason: it
+            // opens something that takes the keyboard, which is the window's
+            // business and not the entity's. Nothing swallows an opening
+            // character here -- there was no character, only a button.
+            if (Mods.Input.GamepadInput.TakeChatPress()
+                && Mods.Chat.ChatBox.Available && !Mods.Chat.ChatBox.Composing)
+            {
+                Mods.Chat.ChatBox.Open(swallowOpeningChar: false);
+            }
             Scene.OnDrawFrame();
             if (!Scene.OnRenderFrame())
             {
