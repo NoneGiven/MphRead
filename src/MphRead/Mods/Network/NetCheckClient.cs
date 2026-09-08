@@ -708,7 +708,11 @@ namespace MphRead.Mods.Network
                 // has no check at all.
                 if (Environment.GetEnvironmentVariable("MPHREAD_CLIP_TEST") != null)
                 {
+                    // Twice, deliberately: two presses must make two files
+                    // rather than one overwriting the other.
                     Console.WriteLine($"[netcheck] {name} clip held {DemoClip.Held:0.0} s, "
+                        + (DemoClip.Save() ?? "nothing saved"));
+                    Console.WriteLine($"[netcheck] {name} clip again -> "
                         + (DemoClip.Save() ?? "nothing saved"));
                 }
                 window?.Dispose();

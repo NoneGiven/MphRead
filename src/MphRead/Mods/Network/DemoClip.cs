@@ -146,8 +146,19 @@ namespace MphRead.Mods.Network
                 room = room.Replace(bad, '_');
             }
             room = room.Replace(' ', '_');
-            string fileName = $"{room}_clip_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}{DemoFile.Extension}";
-            string path = Paths.Combine(Paths.Export, "_demos", fileName);
+            // Seconds are not fine enough on their own. Two presses inside the
+            // same second built the same name, and the writer opens with
+            // Create -- so the second clip silently replaced the first, which
+            // is the one case where pressing the button lost a clip instead of
+            // saving one. Every press writes: a spare file costs 25 KB and
+            // nothing else, and refusing one risks losing the moment somebody
+            // pressed the button for.
+            string stamp = $"{room}_clip_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+            string path = Paths.Combine(Paths.Export, "_demos", stamp + DemoFile.Extension);
+            for (int i = 2; File.Exists(path) && i < 1000; i++)
+            {
+                path = Paths.Combine(Paths.Export, "_demos", $"{stamp}_{i}{DemoFile.Extension}");
+            }
             try
             {
                 using var writer = new DemoWriter(path);

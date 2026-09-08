@@ -6666,11 +6666,17 @@ namespace MphRead
             if (e.Key != Keys.Unknown && e.Key == Mods.InputSettings.ClipKey
                 && !e.Alt && !e.Control && Mods.Network.DemoClip.Active)
             {
+                double held = Mods.Network.DemoClip.Held;
                 string? clip = Mods.Network.DemoClip.Save();
-                Mods.Chat.ChatBox.System(clip == null
-                    ? "nothing to clip yet"
-                    : $"saved the last {Mods.Network.DemoClip.Held:0} s to "
+                if (clip != null)
+                {
+                    Mods.Chat.ChatBox.System($"saved the last {held:0} s to "
                         + System.IO.Path.GetFileName(clip));
+                }
+                else
+                {
+                    Mods.Chat.ChatBox.System("nothing to clip yet");
+                }
                 base.OnKeyDown(e);
                 return;
             }
