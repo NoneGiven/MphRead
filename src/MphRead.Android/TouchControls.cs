@@ -344,6 +344,108 @@ namespace MphRead.Droid
         private bool _spectatorFreeCam;
 
         /// <summary>
+        /// The results screen is up, so the glass is a picker rather than a
+        /// pair of thumbsticks.
+        ///
+        /// Set once a frame from the game loop, like the spectator pair above
+        /// and for the same reason. Everything that drives a player goes away
+        /// while it is on: nothing a player presses reaches the world during
+        /// the results, so FIRE, JUMP, MORPH and the rest are twelve circles
+        /// sitting on top of the one thing on screen anybody wants to touch.
+        /// Menu, scoreboard and chat stay -- they still do what they say.
+        /// </summary>
+        public void SetEndScreen(bool active)
+        {
+            Change(() =>
+            {
+                if (_endScreen == active)
+                {
+                    return false;
+                }
+                _endScreen = active;
+                if (!active)
+                {
+                    _tapPending = false;
+                }
+                return true;
+            });
+        }
+
+        private bool _endScreen;
+
+        /// <summary>
+        /// Rectangles on the HUD that take a tap instead of the world, as
+        /// window fractions in groups of four. Pushed once a frame by the
+        /// game loop from whatever it has just drawn -- currently the map
+        /// vote's accept and deny buttons.
+        ///
+        /// Kept as a list of boxes rather than a mode, because during a
+        /// running match the player still has to be able to aim: a tap
+        /// outside these is a tap on the world, and only the two small
+        /// rectangles in the corner are the vote's.
+        /// </summary>
+        public void SetTapTargets(float[] targets)
+        {
+            lock (_lock)
+            {
+                _tapTargets = targets;
+            }
+        }
+
+        private float[] _tapTargets = Array.Empty<float>();
+        private bool _tapPending;
+        private float _tapX;
+        private float _tapY;
+
+        /// <summary>
+        /// The tap the glass captured for the HUD, in window fractions, or
+        /// nothing. Taken by the game loop, which is the thread that may act
+        /// on it -- touches arrive on the UI thread and the picker's state
+        /// belongs to the simulation.
+        /// </summary>
+        public (bool Got, float X, float Y) TakeTap()
+        {
+            lock (_lock)
+            {
+                if (!_tapPending)
+                {
+                    return (false, 0, 0);
+                }
+                _tapPending = false;
+                return (true, _tapX, _tapY);
+            }
+        }
+
+        /// <summary>
+        /// Whether a touch at this point belongs to the HUD rather than to
+        /// the world. Called with the lock held.
+        /// </summary>
+        private bool TapIsForHudLocked(float x, float y)
+        {
+            if (Width <= 0 || Height <= 0)
+            {
+                return false;
+            }
+            // The results screen takes everything the buttons did not: there
+            // is no world to aim at while it is up.
+            if (_endScreen)
+            {
+                return true;
+            }
+            float fx = x / Width;
+            float fy = y / Height;
+            for (int i = 0; i + 3 < _tapTargets.Length; i += 4)
+            {
+                if (fx >= _tapTargets[i] && fx < _tapTargets[i + 2]
+                    && fy >= _tapTargets[i + 1] && fy < _tapTargets[i + 3])
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Apply a change to what the screen shows, and repaint if it moved.
         ///
         /// The three callers used to each reach into <see cref="_buttons"/>
@@ -381,7 +483,14 @@ namespace MphRead.Droid
             {
                 bool visible;
                 string? label = null;
-                if (_spectating)
+                if (_endScreen)
+                {
+                    // The three that still mean something between matches.
+                    visible = button.Action == TouchAction.Pause
+                        || button.Action == TouchAction.Scoreboard
+                        || button.Action == TouchAction.Chat && _chatEnabled;
+                }
+                else if (_spectating)
                 {
                     // Nothing a spectator presses does anything in the world:
                     // PlayerEntity.ProcessInput skips the local player while
@@ -809,6 +918,17 @@ namespace MphRead.Droid
                     }
                     return;
                 }
+            }
+            if (TapIsForHudLocked(x, y))
+            {
+                // Straight to the game loop as a point on the screen. Not
+                // held, not dragged: what is under it is a button on the HUD,
+                // and a press and a release in the same place is the whole
+                // gesture.
+                _tapPending = true;
+                _tapX = x / Math.Max(Width, 1);
+                _tapY = y / Math.Max(Height, 1);
+                return;
             }
             if (!PointerIsAbsolute && x < Width / 2 && _stickPointer == -1)
             {

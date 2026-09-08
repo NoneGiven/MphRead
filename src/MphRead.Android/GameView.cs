@@ -1072,6 +1072,28 @@ namespace MphRead.Droid
 
             private void CollectInput(PlayerEntity main)
             {
+                // The results screen owns the glass while it is up: the
+                // hunter picker is the one thing on it that does anything,
+                // and it was being covered by a dozen buttons that did
+                // nothing. See TouchControls.SetEndScreen.
+                bool endScreen = Mods.EndScreen.Available;
+                _controls.SetEndScreen(endScreen);
+                // And the vote's two buttons, while there are any, so a tap
+                // that lands on one answers the vote instead of turning the
+                // camera.
+                _controls.SetTapTargets(Mods.Network.MapVote.TouchTargets());
+                (bool got, float tapX, float tapY) = _controls.TakeTap();
+                if (got)
+                {
+                    // Exactly what the desktop's left button does, in the
+                    // order it does it: the pointer first, because both of
+                    // these test against where it is.
+                    Mods.EndScreen.NotePointer(tapX, tapY);
+                    if (!Mods.Network.MapVote.HandleClick())
+                    {
+                        Mods.EndScreen.HandleClick();
+                    }
+                }
                 if (Mods.SpectatorMode.IsSpectating)
                 {
                     Spectate();

@@ -19,7 +19,7 @@ namespace MphRead.Mods.Network
     /// machine believes it pressed. <see cref="Answered"/> exists only to stop
     /// the key repeating.
     /// </summary>
-    internal static class MapVote
+    public static class MapVote
     {
         /// <summary>A vote is on the table right now.</summary>
         public static bool Active { get; private set; }
@@ -135,6 +135,26 @@ namespace MphRead.Mods.Network
                 return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// The two buttons, as window fractions, for a platform whose input
+        /// is a finger rather than a cursor. Eight floats -- accept then deny,
+        /// each left, top, right, bottom -- or empty when there is nothing to
+        /// press. Flat rather than a shape, because it crosses into the
+        /// Android head and one array is one thing for it to know about.
+        /// </summary>
+        public static float[] TouchTargets()
+        {
+            if (!Active || Answered || _hitAccept.Right <= _hitAccept.Left)
+            {
+                return Array.Empty<float>();
+            }
+            return new[]
+            {
+                _hitAccept.Left, _hitAccept.Top, _hitAccept.Right, _hitAccept.Bottom,
+                _hitDeny.Left, _hitDeny.Top, _hitDeny.Right, _hitDeny.Bottom
+            };
         }
 
         public static void Reset()

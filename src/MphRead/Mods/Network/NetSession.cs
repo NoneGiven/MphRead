@@ -404,6 +404,31 @@ namespace MphRead.Mods.Network
         }
 
         /// <summary>
+        /// Throw this client's socket away and open another, keeping
+        /// everything else -- the slot, the identity, the match.
+        ///
+        /// What a dropped connection does to a client that comes back: the
+        /// address the server knows it by is gone and the packets now arrive
+        /// from a port nobody has seen. It is the whole reason
+        /// <see cref="ClientId"/> exists, and it cannot be provoked from a
+        /// test machine any other way, so the harness can ask for it
+        /// (MPHREAD_NET_REBIND=seconds).
+        /// </summary>
+        public static void RebindSocket()
+        {
+            if (Role != NetRole.Client || _transport == null)
+            {
+                return;
+            }
+            int wasPort = _transport.LocalPort;
+            _transport.Dispose();
+            _transport = new NetTransport(0);
+            Console.WriteLine($"[net] rebound the socket: {wasPort} -> {_transport.LocalPort}");
+            SendHello();
+            SendIdentify();
+        }
+
+        /// <summary>
         /// Pump the network once per simulation frame. Call before input is
         /// sampled so a remote intent that arrived this frame is visible to
         /// the input step that follows.

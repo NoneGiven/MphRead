@@ -173,6 +173,7 @@ namespace MphRead.Mods.Network
             _frame++;
             UpdateSpectating();
             DriveVoteTest();
+            DriveRebindTest();
             Observe();
             _features.Observe(Scene);
             SampleScoreboardOnServerClock();
@@ -336,6 +337,35 @@ namespace MphRead.Mods.Network
         }
 
         private bool _votedOnce;
+
+        /// <summary>
+        /// MPHREAD_NET_REBIND=seconds moves this client to a new source port
+        /// at that moment, which is what a line that drops and comes back
+        /// does to it. The server should recognise the same player rather
+        /// than admit a new one -- see NetSession.ClientId.
+        /// </summary>
+        private void DriveRebindTest()
+        {
+            if (_rebound)
+            {
+                return;
+            }
+            string? at = Environment.GetEnvironmentVariable("MPHREAD_NET_REBIND");
+            if (at == null || !Double.TryParse(at,
+                System.Globalization.CultureInfo.InvariantCulture, out double seconds))
+            {
+                return;
+            }
+            if (_frame < seconds * 60)
+            {
+                return;
+            }
+            _rebound = true;
+            Console.WriteLine($"[rebindtest] {_name} was slot {NetSession.LocalSlot}");
+            NetSession.RebindSocket();
+        }
+
+        private bool _rebound;
 
         private void Observe()
         {
