@@ -50,6 +50,34 @@ namespace MphRead.Mods
             }
         }
 
+        /// <summary>
+        /// Whether this player has said they are ready for the next match.
+        ///
+        /// Read straight off the results screen by the intent packet each
+        /// frame (IntentButtons.ReadyState) and by nothing else on this
+        /// machine: the server is what shortens the wait, because it is the
+        /// server that owns the rotation. Cleared when the screen goes, so it
+        /// never carries into the next match.
+        /// </summary>
+        public static bool Ready { get; private set; }
+
+        /// <summary>
+        /// Forget the answer. Called when the results screen stops being
+        /// available, which is the start of the next match.
+        /// </summary>
+        public static void ClearReady()
+        {
+            Ready = false;
+        }
+
+        public static void ToggleReady()
+        {
+            if (Available)
+            {
+                Ready = !Ready;
+            }
+        }
+
         /// <summary>The hunter queued for the next spawn, which is what is drawn.</summary>
         public static Hunter Hunter => RespawnChoice.Hunter;
 
@@ -145,6 +173,7 @@ namespace MphRead.Mods
         /// </summary>
         private static Hit _hitPrev;
         private static Hit _hitNext;
+        private static Hit _hitReady;
         private static readonly Hit[] _hitSuits = new Hit[PlayerColors.Count];
 
         public static float PointerX { get; private set; } = -1;
@@ -157,10 +186,11 @@ namespace MphRead.Mods
             PointerY = y;
         }
 
-        public static void NoteLayout(Hit previous, Hit next, Hit[] suits)
+        public static void NoteLayout(Hit previous, Hit next, Hit[] suits, Hit ready = default)
         {
             _hitPrev = previous;
             _hitNext = next;
+            _hitReady = ready;
             for (int i = 0; i < _hitSuits.Length && i < suits.Length; i++)
             {
                 _hitSuits[i] = suits[i];
@@ -186,6 +216,7 @@ namespace MphRead.Mods
 
         public static bool HoveredPrev => Available && _hitPrev.Contains(PointerX, PointerY);
         public static bool HoveredNext => Available && _hitNext.Contains(PointerX, PointerY);
+        public static bool HoveredReady => Available && _hitReady.Contains(PointerX, PointerY);
 
         /// <summary>
         /// A left click, offered before anything else sees it. Returns true
@@ -210,6 +241,11 @@ namespace MphRead.Mods
             if (_hitNext.Contains(PointerX, PointerY))
             {
                 Step(1, 0);
+                return true;
+            }
+            if (_hitReady.Contains(PointerX, PointerY))
+            {
+                ToggleReady();
                 return true;
             }
             for (int i = 0; i < _hitSuits.Length; i++)
@@ -252,6 +288,10 @@ namespace MphRead.Mods
                 case Keys.Down:
                     Step(0, 1);
                     return true;
+                case Keys.Enter:
+                case Keys.KeyPadEnter:
+                    ToggleReady();
+                    return true;
             }
             return false;
         }
@@ -277,6 +317,11 @@ namespace MphRead.Mods
             if (Input.GamepadInput.TakePress(Input.GamepadButtons.DpadUp))
             {
                 Step(0, -1);
+            }
+            // A is the results screen's confirm, which is what Ready is.
+            if (Input.GamepadInput.TakePress(Input.GamepadButtons.A))
+            {
+                ToggleReady();
             }
             if (Input.GamepadInput.TakePress(Input.GamepadButtons.DpadDown))
             {

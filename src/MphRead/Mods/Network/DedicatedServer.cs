@@ -53,6 +53,12 @@ namespace MphRead.Mods.Network
             /// problem as well as the relay's.
             /// </summary>
             public int ChatDropped;
+            /// <summary>
+            /// Whether this player has pressed Ready on the results screen.
+            /// Cleared when a new match starts, so it always describes the
+            /// match that is ending and not the one before it.
+            /// </summary>
+            public bool Ready;
         }
 
         private readonly List<Peer> _peers = new();
@@ -100,6 +106,45 @@ namespace MphRead.Mods.Network
         /// question away mid-answer.
         /// </summary>
         private const double EndSequenceSeconds = 3.0 + GameState.MatchEndingSeconds + 1.0;
+
+        /// <summary>
+        /// How long the results screen stays up when nobody has said they are
+        /// ready, and how long when everybody has.
+        ///
+        /// The long one is a wait, not a pause: it is the time somebody needs
+        /// to read the scoreboard, pick a hunter and pick a suit without being
+        /// hurried. The short one is what that wait is for -- a room that has
+        /// all answered does not need the other twenty-five seconds, and
+        /// making them sit through it is the part people actually complain
+        /// about.
+        ///
+        /// Both are floors under the end sequence rather than replacements for
+        /// it: the winner's camera and the results screen still have to run.
+        /// </summary>
+        private const double ReadyWaitSeconds = 30.0;
+        private const double AllReadySeconds = 5.0;
+
+        /// <summary>
+        /// How long to hold the results screen, given who has said they are
+        /// ready. An empty room takes the short answer: there is nobody to
+        /// wait for.
+        /// </summary>
+        private double EndSequenceFor()
+        {
+            bool all = true;
+            int counted = 0;
+            for (int i = 0; i < _peers.Count; i++)
+            {
+                counted++;
+                if (!_peers[i].Ready)
+                {
+                    all = false;
+                    break;
+                }
+            }
+            double wait = counted == 0 || all ? AllReadySeconds : ReadyWaitSeconds;
+            return Math.Max(EndSequenceSeconds, wait);
+        }
 
         /// <summary>
         /// What this server calls itself on a browser's list. Defaults to the
@@ -217,7 +262,7 @@ namespace MphRead.Mods.Network
                     {
                         EndMatch(now, "time limit");
                     }
-                    else if (_matchEndedAt >= 0 && now - _matchEndedAt >= EndSequenceSeconds)
+                    else if (_matchEndedAt >= 0 && now - _matchEndedAt >= EndSequenceFor())
                     {
                         AdvanceMap(now);
                     }
@@ -319,7 +364,7 @@ namespace MphRead.Mods.Network
             }
             _matchEndedAt = now;
             Log($"match over on {_rotation.Current.RoomKey} ({reason}); "
-                + $"{_rotation.Next.RoomKey} in {EndSequenceSeconds:0} s");
+                + $"{_rotation.Next.RoomKey} in {EndSequenceFor():0} s");
             BroadcastMatchState(now);
         }
 
@@ -329,6 +374,12 @@ namespace MphRead.Mods.Network
             _matchStarted = now;
             _matchEndedAt = -1;
             _matchId++;
+            // Ready describes the match that just ended. Carried into the next
+            // one it would rotate the following map the moment it finished.
+            for (int i = 0; i < _peers.Count; i++)
+            {
+                _peers[i].Ready = false;
+            }
             Log($"rotating to {entry}");
             MatchStatePacket state = BuildState(now);
             state.Write(_scratch);
@@ -850,6 +901,10 @@ namespace MphRead.Mods.Network
                     return;
                 }
                 peer.LastIntentFrame = intent.Frame;
+                // Only meaningful between the end of one match and the start
+                // of the next; read unconditionally because it costs nothing
+                // and a client that sets it early is simply ready early.
+                peer.Ready = intent.Buttons.HasFlag(IntentButtons.ReadyState);
             }
             // Tag with the sender's slot. A receiver is a client with no peer
             // list, so it cannot work out who an endpoint belongs to; without

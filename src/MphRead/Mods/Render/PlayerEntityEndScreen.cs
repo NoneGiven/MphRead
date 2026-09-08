@@ -142,10 +142,14 @@ namespace MphRead.Entities
             // What was just drawn, in the window's own coordinates, so a click
             // is tested against the picture rather than against a second copy
             // of this arithmetic. See EndScreen.NoteLayout.
-            EndScreen.NoteLayout(prev, forward, _endSuitHits);
             DrawText2D(centre, suitTop + 16, Align.Center, palette: 0,
                 Mods.HunterSuits.Name(Mods.HunterSuits.Color((Hunter)hunter, suit)),
                 color: _endInk, fontSpacing: 8, scale: 0.45f);
+
+            // Under the picker, because it is the answer to everything above
+            // it: the hunter, the suit, and "I have finished reading".
+            EndScreen.Hit ready = DrawEndReady(centre, suitTop + 26, aspect);
+            EndScreen.NoteLayout(prev, forward, _endSuitHits, ready);
 
             string next = EndScreen.NextRoomName;
             if (next.Length > 0)
@@ -168,6 +172,34 @@ namespace MphRead.Entities
 
         /// <summary>Side of an arrow's clickable box, in HUD height units.</summary>
         private const float EndArrowBox = 12;
+
+        private const float EndReadyWidth = 64;
+        private const float EndReadyHeight = 14;
+
+        /// <summary>
+        /// The Ready button, lit once this player has pressed it.
+        ///
+        /// It says what it is for rather than only what it is: on a screen
+        /// where every other control changes what you will be next life, a
+        /// button that changes how long everyone waits has to say so, and
+        /// "WAITING FOR OTHERS" is the only feedback there is that the press
+        /// landed -- the countdown itself belongs to the server and this
+        /// machine only sees it get shorter.
+        /// </summary>
+        private EndScreen.Hit DrawEndReady(float centre, float top, float aspect)
+        {
+            float half = EndReadyWidth / 2 * aspect;
+            float left = centre - half;
+            float right = centre + half;
+            float bottom = top + EndReadyHeight;
+            bool on = EndScreen.Ready;
+            _scene.DrawHudFlatBox(left, top, right, bottom,
+                on ? _endReadyOn : EndScreen.HoveredReady ? _endArrowHover : _endArrowWell);
+            DrawText2D(centre, top + 3, Align.Center, palette: 0,
+                on ? "WAITING FOR OTHERS" : "READY",
+                color: on ? _endReadyInk : _endArrow, fontSpacing: 8, scale: 0.45f);
+            return ModHudHit(left, top, right, bottom);
+        }
 
         /// <summary>
         /// One arrow on its own box, lit while the pointer is over it, and the
@@ -199,6 +231,8 @@ namespace MphRead.Entities
             return new EndScreen.Hit(left / 256f, top / 192f, right / 256f, bottom / 192f);
         }
 
+        private static readonly Vector4 _endReadyOn = new Vector4(0.35f, 0.85f, 0.4f, 0.42f);
+        private static readonly ColorRgba _endReadyInk = new ColorRgba(217, 255, 222, 255);
         private static readonly Vector4 _endArrowWell = new Vector4(1, 1, 1, 0.10f);
         private static readonly Vector4 _endArrowHover = new Vector4(1, 0.84f, 0.35f, 0.32f);
 

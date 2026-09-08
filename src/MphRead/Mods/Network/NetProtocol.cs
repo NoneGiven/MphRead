@@ -623,7 +623,21 @@ namespace MphRead.Mods.Network
         /// A spare bit, deliberately: an older build ignores it and behaves
         /// exactly as it did before, so this needs no protocol bump.
         /// </summary>
-        SpectatingState = 1u << 20
+        SpectatingState = 1u << 20,
+        /// <summary>
+        /// Not a button either: the sender is ready for the next match.
+        ///
+        /// The results screen's Ready button, which shortens the wait before
+        /// the rotation when everybody has pressed it. A state and not an
+        /// edge, for the reason <see cref="ZoomedState"/> is one: the answer
+        /// has to survive a lost packet, and a player who is ready stays ready
+        /// whether or not the datagram that said so arrived.
+        ///
+        /// Another spare bit, so an older client simply never reads as ready
+        /// and the server waits the full time for it -- which is the old
+        /// behaviour exactly, and why this needs no protocol bump.
+        /// </summary>
+        ReadyState = 1u << 21
     }
 
     /// <summary>

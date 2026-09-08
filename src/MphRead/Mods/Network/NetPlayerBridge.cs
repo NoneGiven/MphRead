@@ -234,6 +234,13 @@ namespace MphRead.Mods.Network
             {
                 buttons |= IntentButtons.SpectatingState;
             }
+            // Ready for the next match. Only the server reads it, and only
+            // while the results screen is up -- see DedicatedServer's end
+            // sequence.
+            if (Mods.EndScreen.Ready)
+            {
+                buttons |= IntentButtons.ReadyState;
+            }
             return new IntentPacket
             {
                 Buttons = buttons,
@@ -281,7 +288,7 @@ namespace MphRead.Mods.Network
         /// </summary>
         private const IntentButtons PressedButtons = ~(IntentButtons.ZoomedState
             | IntentButtons.AltFormState | IntentButtons.InPlayState
-            | IntentButtons.SpectatingState);
+            | IntentButtons.SpectatingState | IntentButtons.ReadyState);
 
         /// <summary>Newest press frame already applied, per slot.</summary>
         private static readonly uint[] _lastPressFrame = new uint[PlayerEntity.SlotCapacity];

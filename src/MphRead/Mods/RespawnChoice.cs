@@ -44,6 +44,14 @@ namespace MphRead.Mods
         {
             _hunter = null;
             _color = null;
+            // The results screen's other answer, forgotten with these two and
+            // for the same reason: it describes the match that just ended.
+            EndScreen.ClearReady();
+            // And the rolling clip buffer, which holds the match that just
+            // ended. Nobody pressed the button during it, so nobody wanted it.
+            // A full recording started from the menu is untouched: that has a
+            // file of its own and was asked for deliberately.
+            Network.DemoClip.Purge();
         }
 
         /// <summary>
