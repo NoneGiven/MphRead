@@ -175,6 +175,13 @@ namespace MphRead.Mods.Network
                 .Append(NetDamage.BombNearest == Single.MaxValue ? "n/a"
                     : NetDamage.BombNearest.ToString("0.00"))
                 .Append(" bombRadius=").Append(NetDamage.BombRadiusSeen.ToString("0.00"));
+            // Zero on a healthy session. Anything else is a rotation where
+            // one machine was still loading and this client refused to be put
+            // where the previous room said. See NetPlayerBridge.
+            if (NetPlayerBridge.PlacementsRefused > 0)
+            {
+                line.Append(" placementsRefused=").Append(NetPlayerBridge.PlacementsRefused);
+            }
 
             MatchStatePacket? match = NetSession.ServerMatch;
             if (match != null)

@@ -32,6 +32,15 @@ namespace MphRead.Mods.Network
         private static readonly bool[] _authoritySpawned = new bool[PlayerEntity.SlotCapacity];
 
         /// <summary>
+        /// Placements refused because they did not belong to this room. Zero
+        /// on a healthy session; any number at all means a rotation where one
+        /// machine was still loading, which is worth seeing in the netdbg
+        /// line rather than inferring from a player's account of falling out
+        /// of the world.
+        /// </summary>
+        public static int PlacementsRefused;
+
+        /// <summary>
         /// Beyond this a remote player is placed outright, not eased. Well
         /// past anything a lost burst of updates can account for, so what is
         /// left is a respawn or a teleporter -- where a jump is correct.
@@ -603,8 +612,34 @@ namespace MphRead.Mods.Network
                     // Spawning locally first is kept: it is what makes a
                     // respawn feel immediate rather than arrive a round trip
                     // later, and it is what still works if snapshots stall.
-                    // Only the placement is handed over.
-                    Move(player, state.Position);
+                    // Only the placement is handed over -- and only when it
+                    // is a placement this room could have made.
+                    //
+                    // The settling window above covers a client that loaded
+                    // faster than the authority, but only for a second, and
+                    // loading a room is not a bounded thing: on a phone, or
+                    // off a slow disk, the authority can still be in the map
+                    // before the rotation long after that. Its snapshot then
+                    // places this player at coordinates that meant a spawn
+                    // point *there*, and here they are somewhere outside the
+                    // level -- which is the report about spawning into a
+                    // black world and falling out of it. See
+                    // ModPlacementBelongsHere.
+                    if (player.ModPlacementBelongsHere(state.Position))
+                    {
+                        Move(player, state.Position);
+                    }
+                    else
+                    {
+                        PlacementsRefused++;
+                        NetLog.Event($"slot {player.SlotIndex} kept its own spawn: the "
+                            + $"authority placed it at {state.Position}, which is not "
+                            + "near any spawn point in this room");
+                        // Keep the local spawn and let the next divergence
+                        // check settle the two, which it will as soon as the
+                        // authority is describing this room.
+                        _authoritySpawned[slot] = false;
+                    }
                     // Not the authority's speed: a player that has just been
                     // put on a spawn point is standing still, and whatever the
                     // snapshot carries here was derived across the teleport
@@ -791,6 +826,7 @@ namespace MphRead.Mods.Network
             Snaps = 0;
             WorstSnap = 0;
             NodeLookupsUnresolved = 0;
+            PlacementsRefused = 0;
             Array.Clear(_formAttempts);
             Array.Clear(_lastPressFrame);
             Array.Clear(_pressSeen);
