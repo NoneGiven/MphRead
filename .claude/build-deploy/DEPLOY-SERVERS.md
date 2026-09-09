@@ -100,14 +100,16 @@ sshpass -e ssh -o ProxyCommand="sshpass -p <pi-pass> ssh -W %h:%p livetek@net.li
   livetek@13.78.14.98
 ```
 
-**And its Azure NSG opens only 27888/UDP** -- re-tested 2026-09-09 from the
-WSL box: `-netcheck 13.78.14.98 -port 27890` gets "No answer", while the
-service on the box is listening on 0.0.0.0:27890 and stepping the simulation
-normally. Deploying to Japan therefore installs a server nobody can join
-until this is opened. The VM listens on 27890 and has no
-local firewall at all (ufw inactive, iptables empty), but nothing outside can
-reach it — 27889 was tested too and is equally closed, so the rule is a single
-port and not the 27888-28999 range it is assumed to be. Opening it is a cloud
+**27890/UDP is open on Japan now, and is the test server anybody means when
+they say "Japan"** -- `13.78.14.98:27890`, simulating. Re-checked 2026-09-09
+from the WSL box: `-netcheck 13.78.14.98 -port 27890` joins, takes a slot and
+gets snapshots, at 267-278 ms.
+
+It was not always. This file used to say the NSG opened 27888 alone, which was
+measured and was true at the time: the service was listening on 0.0.0.0:27890
+and stepping the simulation while nothing outside could reach it, and 27889
+was equally closed, so the rule was a single port and not the 27888-28999 range
+it is assumed to be. If a fourth port is ever needed the fix is the same cloud
 control-plane change, from a machine with the Azure CLI:
 
 ```bash

@@ -312,7 +312,7 @@ namespace MphRead.Mods.Network
         /// same hit twice on the scoreboard and produced kills that never
         /// happened anywhere else.
         /// </summary>
-        public static bool Suppress(PlayerEntity victim, EntityBase? source)
+        public static bool Suppress(PlayerEntity victim, EntityBase? source, DamageFlags flags)
         {
             if (!NetSession.Active || Replaying)
             {
@@ -325,7 +325,7 @@ namespace MphRead.Mods.Network
             // Except for this machine's own shots on somebody else, which are
             // resolved here and now and reconciled against the authority's
             // answer when it arrives. NetHitPrediction.
-            return !NetHitPrediction.Predicts(victim, source);
+            return !NetHitPrediction.Predicts(victim, source, flags);
         }
 
         /// <summary>Called by the authority for every hit it resolves.</summary>

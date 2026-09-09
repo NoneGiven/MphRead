@@ -18,6 +18,44 @@ claiming coverage that isn't there.
   reconcile form from the snapshot once the authority is not a player is an
   open question, and one to settle with `run-remote-lag.sh` rather than by
   reasoning. See `.claude/multiplayer/NETWORK-SERVERAUTH.md`.
+- **The damage pipeline's `Replayed` count reads zero for one slot on one
+  client, and the reason is not established.** Measured against Japan,
+  2026-09-09, four two-client runs: the first client's slot carries the same
+  `Replayed` count on both machines every time (33/32, 25/25), and the second
+  client's slot carries a non-zero count on its own machine and **exactly
+  zero** on the observer's (0/3, 0/9). No `damage sequence jumped` was logged
+  in any run.
+
+  **What makes it an open question rather than a finding**: in the
+  Weavel/Guardian run, with *no* rotation followed, the observer reports
+  `2 confirmed` non-self predictions on that slot -- and `NetDamage.Replay`
+  increments `Replayed[slot]` *before* it calls `NetHitPrediction.Confirm`, so
+  the count cannot be zero if the confirmation happened. Either the array is
+  being cleared by something other than a followed rotation
+  (`ResetForRoomChange` on a match boundary is the candidate), or the
+  reporting is reading it after that clear. Settle which before treating the
+  zero as a lost-damage bug: **the two readings cannot both be describing the
+  same counter.** A fifth run, 40 s with no rotation, then put the zero on the
+  **other** side -- the observer read 12 for that slot and the slot's own
+  machine read 0 -- so "the observer loses the other player's damage" is not
+  the shape of it either. It is not hit prediction either way -- the same shape is in
+  the reports from before this work, and it is the long-standing
+  `damage-taken` mismatch in `NETWORK-DIAGNOSTICS.md` (17 against 7) seen from
+  another angle.
+- **A continuous weapon does not resolve the same hits on two machines, and
+  nothing here makes it.** The Shock Coil's damage is divided by 32 and
+  dithered off `scene.FrameCount`, so the frame parity that produces a damaging
+  hit is a property of each machine's own counter: measured against Japan, the
+  authority landed 131 hits where the client that fired them resolved 28. The
+  totals are near enough that nobody notices the damage, and the *count* is
+  what `NetHitPrediction.Confirm` retires predictions by -- so one snapshot
+  retires everything outstanding and the hold collapses. The visible symptom,
+  a victim's health bar climbing back up when the trigger is released, is now
+  covered by the shown-health floor in `HealthFor`
+  (`.claude/multiplayer/NETWORK-PREDICTION.md`), but that is a floor on what is
+  *drawn*. The two machines still disagree about which frames landed a hit, and
+  making them agree -- dithering off a clock both sides share, or sending the
+  count rather than deriving it -- has not been attempted.
 - **The scoreboard crash reported in bot matches is not reproduced here, and
   is therefore not fixed.** Reported from a phone, 2026-09-06: *"in bot matches
   the game still sometimes crashes when trying to view the scoreboard."* The

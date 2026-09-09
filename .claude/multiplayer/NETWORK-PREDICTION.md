@@ -41,8 +41,14 @@ Without `NetUnlagged` underneath it this would mispredict as often as shots
 used to miss, and it would be worse than useless: a hit shown and then taken
 away is more confusing than a hit shown late.
 
-## Two rules
+## Two rules, and the one that came back
 
+0. **A prediction does not kill somebody else.** This was rule one, it was
+   taken out on the strength of loopback measurements, and a real line put it
+   straight back -- see *The rule that came back* below. `DeathEnabled` is
+   **off** by default; the damage is clamped to leave the victim standing on
+   one point of health and the dying waits for the authority. It does not
+   touch a **self**-kill, which is predicted whatever the switch says.
 1. **A prediction never scores and never ends a match.** The death path awards
    the kill, and on a predicting machine that award is transient: the
    scoreboard is assigned from the snapshot for every slot on every
@@ -64,14 +70,36 @@ away is more confusing than a hit shown late.
    somebody -- the arithmetic of a hit this machine has already resolved, not
    a guess about anybody else's input. See *The drain* below.
 
-There used to be a third, and it was the first: **a prediction never kills**,
-with the damage clamped at the last moment to leave the victim standing on one
-point of health. `-nodeathprediction` puts it back, and `LethalHeld` still
-counts what it holds. It went because it was visible: the prediction stopped
-exactly one point short of the thing it was predicting, and a player emptying a
-clip watched the bar stick at 1 and the body stay up until the authority
-answered. Everything the rule was protecting turned out to be either corrected
-by the snapshot (the score) or already refused (the match end).
+### The rule that came back
+
+**A prediction never kills** was rule one. It was clamped at the last moment to
+leave the victim standing on one point of health, and it went because it was
+visible: the prediction stopped exactly one point short of the thing it was
+predicting, and a player emptying a clip watched the bar stick at 1 and the
+body stay up until the authority answered. Everything the rule was protecting
+looked like it was either corrected by the snapshot (the score) or already
+refused (the match end).
+
+**What that reasoning missed is the body.** Played against Japan rather than
+measured on a loopback, a client could kill the same opponent *twice* for one
+kill on the scoreboard: the body dropped here, the authority disagreed, the
+next snapshot stood it back up, and the second kill was the only one anybody
+else ever saw. The score was corrected exactly as designed -- and the thing a
+player was actually looking at was a corpse getting up. A hit shown and taken
+away is worse than a hit shown late; a *death* shown and taken away is the
+worst case of it, and no amount of scoreboard arithmetic is the answer to it.
+
+So `DeathEnabled` is off, `LethalHeld` counts what it holds, and
+`-deathprediction` turns it back on for measuring. The killing shot still feels
+instant, because the flinch and the mark run on the frame it lands; only the
+body falling is owed a round trip.
+
+**A self-kill is the exception and is not this switch's to refuse.** A rocket
+jump at low health, a recoil, a crusher, and above all a fall into the void:
+source, target and input are all on this machine, there is no rewind to bet on
+and no other machine's opinion of where anybody was. The authority says the
+same thing a round trip later because it is running the same arithmetic on the
+same inputs. See *Your own splash, on you* below.
 
 ## What is held
 
@@ -87,8 +115,37 @@ So three things are held against the snapshot until the authority catches up:
 | Held | How | Where |
 |---|---|---|
 | the victim's health | the authority's number less the damage of every prediction still outstanding for that slot | `HealthFor`, called from `ApplyState` |
-| a victim predicted dead | the snapshot is not allowed to spawn them | `HeldDead`, checked in the `!wasInPlay` branch |
+| the victim's health, again | never above what was last drawn, while this machine is still predicting hits on that slot | `_shownHealth`, in `HealthFor` |
+| a player predicted dead | the snapshot is not allowed to spawn them. Somebody else only under `-deathprediction`; **this machine's own player always**, since a self-kill is predicted either way | `HeldDead`, checked in the `!wasInPlay` branch |
 | this machine's own drained health | the authority's number plus every drain credit still outstanding | `LocalHealthFor` |
+
+### The floor, and why the debit is not enough
+
+The debit alone does not hold a continuous beam, and the Shock Coil is where
+that is impossible to miss: **drain somebody, release the trigger, and their
+bar visibly climbs back up.** It is not a mispredicted hit.
+
+`Confirm` retires as many predictions as the snapshot says landed, and the
+authority resolves several hits of a Shock Coil for every one this machine
+resolves -- the damage is divided by 32 and dithered off the frame counter, so
+the parity that produces a damaging hit is not the same parity on two machines
+(the authority landed 131 where a client resolved 28, measured below). One
+snapshot therefore retires *everything* outstanding, the debit falls to
+nothing, and what is drawn is the authority's number: correct, and half a round
+trip behind what this machine has already shown. While the trigger is held the
+next hit covers the gap. The moment it is released nothing does.
+
+So the number is also floored by what was last drawn, for as long as this
+machine is still predicting hits on that slot (`HoldFrames` since the last
+one). The floor only ever refuses a **rise** -- it cannot hide damage, and
+every point the authority takes off still shows the moment it is reported. It
+costs at most one hold window of lag on a victim who picks up health while
+being shot at, which is the trade this file makes everywhere else too.
+
+It does not make the two machines *agree*; it stops the disagreement being
+drawn as a health bar going the wrong way. Making a continuous weapon resolve
+the same hits on both machines is a separate piece of work -- see
+`KNOWN-GAPS.md`.
 
 `HealthFor` never returns zero on its own account: assigning zero health is
 not a death -- it skips the whole death path -- so a hold that ran the bar to
@@ -132,22 +189,47 @@ What had to move with it:
 | | |
 |---|---|
 | `Predicts` | drops the victim clause; the owner clause is the rule |
-| `NoteHit` | no longer returns early on `attacker == victim`, and **always clamps a self-inflicted lethal hit**, whatever `DeathEnabled` says |
+| `NoteHit` | no longer returns early on `attacker == victim`, and a self-inflicted lethal hit **kills**, whatever `DeathEnabled` says |
 | the mark | not raised for a self-hit: the X answers "did that land on somebody" |
 | `LocalHealthFor` | subtracts the outstanding self-debit as well as adding the drain credit -- nothing calls `HealthFor` for the local slot, so without this the health came off for one frame and the next snapshot handed it back |
 | `NetDamage.Replay` | `mine` no longer excludes the local slot, or the authority's copy of a hit this machine has already applied would take the health twice |
 | `SelfPredicted` / `SelfConfirmed` | counted apart from `Predicted`/`Confirmed`: the percentage is a claim about shots aimed at other people over a wire, and a hit resolved on the machine that fired it would only flatter it |
 | `NoteRespawn` | now called for the local slot too, so a debit from the last life cannot come off the health of the new one |
 
-**A self-inflicted prediction never kills, on purpose, and this is not
-`DeathEnabled`.** The knockback is applied regardless of what the damage number
-ends up being, so the clamp costs the jump nothing -- the push lands either
-way. What it avoids is the local death path run on a guess about the machine's
-own player: the death camera, `_deathCountdown`, `PausePrevented` and the
-respawn are far more to take back than a puppet lying down, and none of it is
-what "the jump has to be instant" is asking for. Rocket-jumping at 1 HP
-therefore still dies a round trip late, which is the one case that is not
-instant and the one where nobody is waiting on the answer.
+**A self-inflicted prediction is the one that still kills, and this is not
+`DeathEnabled`.** It used to be the other way round: the lethal case was
+clamped on the grounds that the local death path -- the death camera,
+`_deathCountdown`, `PausePrevented`, the respawn -- is far more to take back
+than a puppet lying down. That is true, and it is not the question. The
+question is how often there is anything *to* take back, and for a hit whose
+source, target and input are all on this machine the answer is never: the
+authority runs the same arithmetic on the same inputs and reaches the same
+number a round trip later. Meanwhile the cost of clamping it was a player who
+had already watched themselves go over the edge and then stood there for a
+quarter of a second waiting to be told.
+
+**And the void is the case that made it worth doing.** Falling out of the map
+is `TakeDamage(0, DamageFlags.Death, direction: null, source: null)` -- no
+attacker, no projectile, nothing `OwnerOf` can resolve -- so `Predicts` refused
+it outright and every fall on every client waited a full round trip. `Predicts`
+now takes the damage flags and lets a source-less hit through **for this
+machine's own player, and only when it carries `DamageFlags.Death`**: the void,
+a kill plane, a crusher, a room sending `Message.Death`. The chip damage from
+standing in lava carries no such flag and stays with the authority, where a
+rate that depends on frame parity cannot make two machines disagree about a
+health bar.
+
+What that costs, in exchange:
+
+| | |
+|---|---|
+| `Predicts` | takes `DamageFlags`, and returns true for a source-less lethal hit on the local slot |
+| `NetDamage.Suppress` | takes and forwards them |
+| `NoteHit` | takes them too -- a fall is zero damage, so `damage >= victim.Health` would file the one death that is certainly right as a scratch. `DamageFlags.Death` is lethal whatever the number says. It also no longer returns early on a null attacker, because a fall has none |
+| `HeldDead` | consulted for the local slot as well, and ignores `DeathEnabled` there. Without it the next snapshot stands the corpse straight back up -- the resurrection this whole switch exists to stop, on the one player who is looking at it |
+| `LocalHealthFor` | returns 0 rather than the authority's number while the local player is held dead. Belt to `HeldDead`'s brace: the `ApplyState` branch that would call it returns first |
+| `NetHitPrediction.NoteDeath` | called from `ApplyState`'s `!spawned` branch when the authority reports health 0. A fall names no attacker, so nothing else retires the pending lethal entry, and `HeldDead` would go on refusing the respawn that follows it a moment later |
+| `SelfDeathsPredicted` | counted apart from `DeathsPredicted`, for the same reason `SelfPredicted` is counted apart from `Predicted` |
 
 ## The drain
 
@@ -242,17 +324,24 @@ hit prediction: 26 predicted, 24 confirmed (92.3%), 2 denied, 0 unpredicted,
   shown when it arrives, which is what every hit used to do. Weavel's
   halfturret produces these on purpose -- it picks its own targets on every
   machine, so its shots are not the same shots.
-- **kills predicted / undone** -- lethal predictions made here, and the ones
-  the authority never confirmed, counted as they expire. `undone` is the
-  number to watch: a wrongly killed player is the most visible thing this file
-  can get wrong. Under `-nodeathprediction` the line reads **kills left to the
-  authority** instead, which is `LethalHeld`.
+- **kills left to the authority** -- lethal predictions clamped to one point of
+  health, which is `LethalHeld` and is what the default reads. Under
+  `-deathprediction` the line reads **kills predicted / undone** instead:
+  lethal predictions made here and the ones the authority never confirmed,
+  counted as they expire. `undone` is the number that took the switch back
+  out -- a wrongly killed player is the most visible thing this file can get
+  wrong.
+- **self-kills predicted** -- appended whenever the run has any: deaths this
+  machine's own player died on the frame it died them. Present under either
+  switch, because `DeathEnabled` does not gate them.
 - **health drained ahead** -- points of Shock Coil drain credited before the
   authority reported them. Absent when the run never fired one.
 
-`-nohitprediction` is the control, `-nodeathprediction` the control for the
-lethal half alone, and `-nohitmarker` turns off only the mark. All three are on
-by default, as `-nounlagged` is off by default.
+`-nohitprediction` is the control and `-nohitmarker` turns off only the mark;
+both are on by default, as `-nounlagged` is off by default. `-deathprediction`
+turns predicted kills on other players back **on** -- they are off by default,
+and `-nodeathprediction` is still accepted and is what the default already
+does. Neither of them reaches a self-kill.
 
 ### Verified 2026-09-08/09 (WSL, loopback)
 
@@ -318,6 +407,88 @@ WSL machine run the tour at about 9 fps, so snapshots arrive faster than they
 are consumed (16-20k received against 2700-4200 frames) and every number above
 is a small sample. Two clients is the honest maximum here.
 
+### Verified 2026-09-09 against Japan, with predicted kills taken back out
+
+`13.78.14.98:27890`, simulating, 262-278 ms. Two scripted clients per run, a
+few seconds apart, `-netdebug`, 35 s (2100 frames) unless said otherwise.
+Every hunter, and the tour's fifteen phases, so alt forms and the whole weapon
+rotation are in each run.
+
+| Pair | Shots, own against what the other client saw | Prediction |
+|---|---|---|
+| Samus / Sylux | 20↔21 and 216↔208 | Sylux **5/5 (100%)**, 0 denied, **1 self-kill predicted**, 5 health drained ahead. Both PASS |
+| Kanden / Trace | 33↔35 and 26↔21 | one hit apiece; nothing predicted. Both PASS |
+| Noxus / Spire | 19↔20 and 6↔6 | nothing predicted. Noxus FAIL: see below |
+| Weavel / Guardian | 27↔30 and 65↔56 | Weavel **2/2**, **1 self-kill predicted**, 2 self-hits (2 confirmed); Guardian **7 predicted, 6 confirmed (85.7%), 0 denied, 1 kill left to the authority**. Deaths cross exactly, 4↔4 and 2↔2. Weavel FAIL: see below |
+
+Beam-frames track the shots (683↔660, 374↔380, 77↔77), and so do the weapon
+switches, the bombs and the alt-form frames within the tour's usual spread.
+
+**The two FAILs are the harness flagging a feature the other player never
+performed**, and both clients agree it never happened: Spire spent 1571 frames
+in alt form and unmorphed **0** times (the Kanden/Spire entry in
+`KNOWN-GAPS.md`), so "theirs 0 unmorph" is correct; Guardian's own report says
+`alt form on 0 frame(s)`, so "theirs 0 alt form" is correct too.
+
+**`1 kills left to the authority` is the change working on a real line** --
+`LethalHeld`, a killing blow clamped to leave the victim on one point of
+health, with the flinch and the mark still landing on the frame it was fired.
+**`1 self-kill predicted`**, twice, is the other half.
+
+### The lethal half both ways, 70 s each
+
+Samus and Sylux, same server, once on the new default and once with
+`-deathprediction`:
+
+| | Result |
+|---|---|
+| default | Samus 6 predicted / **0** confirmed / 6 denied; Sylux 3/1/2. **0 kills left to the authority** in both -- no killing blow was landed in that run |
+| `-deathprediction` | Samus 4/4 (100%), **0 kills predicted**; Sylux 5/4 (80%), 1 denied, **1 kill predicted, 0 undone** |
+
+**Read almost nothing into those confirmation rates.** Six predictions and
+three predictions are the sample sizes this file has always warned about, and
+one client reports `Replayed` as zero for the slot it was shooting at while
+claiming confirmations on it -- an open question in `KNOWN-GAPS.md` that has to
+be settled before any percentage measured from a first-joining client means
+anything. The numbers that *are* clean here are the ones that do not depend on
+it: deaths cross exactly on every run that had any, and `undone` is 0.
+
+**What these runs do not do is reproduce the fault that took the switch out.**
+Killing the same opponent twice for one kill was seen while playing; the
+scripted tour kills once or twice in seventy seconds and never landed a
+misprediction to undo. The case for the default is the played report and the
+argument in *The rule that came back*, not a measurement -- and the honest
+statement is that `DeathsUndone` has never been caught above zero by this
+instrument, on either setting.
+
+### The check after `NoteDeath` was made surgical
+
+40 s, Samus and Sylux, MP3 PROVING GROUND, 276-280 ms, no rotation. The point
+of it is the arithmetic: `NoteDeath` used to clear the slot outright, which
+dropped predictions nobody had answered yet and left them counting as neither
+confirmed nor denied.
+
+| Client | Result |
+|---|---|
+| Samus | **3 predicted, 3 confirmed (100%), 0 denied**, 1 kill left to the authority |
+| Sylux | **2 predicted, 2 confirmed (100%), 0 denied**, 0 kills left to the authority |
+
+`Predicted == Confirmed + Denied` on both, which is what was being checked.
+Deaths cross exactly (2↔2 and 3↔3) and shots cross 31↔37 and 368↔332. The one
+FAIL is `bombs mine 114 theirs 0`, which is the bursty-feature skew in
+`KNOWN-GAPS.md`.
+
+**And it moved the `Replayed` anomaly rather than reproducing it.** This time
+the *observer* reads 12 for the other client's slot and the slot's own machine
+reads 0 -- the opposite way round from every run above. Whatever that counter
+is doing, "the observer loses the other player's damage" is not it. See
+`KNOWN-GAPS.md`.
+
+**The box is still the limit.** Two clients run the tour at 7-12 fps here, and
+the 70 s pair took 364 s and 575 s of wall clock to play 4200 frames. Both of
+those runs also report the form-reconciliation FAIL (67 and 90 frames in a
+row), which is the open question in `KNOWN-GAPS.md`, measured there at 78.
+
 ## Traps
 
 - **`HealthFor` must never return zero.** A health assignment is not a death:
@@ -338,6 +509,23 @@ is a small sample. Two clients is the honest maximum here.
   else's -- so returning early would leave a player alive here and dead
   everywhere else. A kill this machine did predict never reaches the line; it
   is the "already down" return.
+- **`HealthFor` is called for its side effect as well as its answer.** It
+  records what it returned, in `_shownHealth`, and that record is what floors
+  the next call. A caller that skips it -- or a second caller that wants "what
+  would this be" without drawing it -- moves the floor. There is one caller,
+  in `ApplyState`, and it should stay that way.
+- **A predicted self-kill has to be released by something.** The authority's
+  report of a fall names no attacker, so `Confirm` never sees it and the
+  pending lethal entry outlives its own confirmation; `HeldDead` then refuses
+  the respawn that arrives a moment later and the player lies in the void for
+  the rest of the hold window. `NoteDeath`, from the `!spawned` branch, is what
+  releases it. `NetDamage.Replay` runs *before* that branch, so a hit the
+  authority does credit is still confirmed and counted first. **It clears the
+  lethal flags and nothing else** -- clearing the slot outright drops
+  predictions nobody has answered yet, and they then count as neither confirmed
+  nor denied, which breaks the one arithmetic that makes those numbers
+  readable (`Predicted == Confirmed + Denied`). `NoteRespawn` is what clears
+  the slot, at the respawn, where the life really has ended.
 - **The kill streak is the one part of the death path the snapshot does not
   correct.** `Points`, `Kills` and `Deaths` are assigned from every snapshot;
   `GameState.KillStreak` is not on the wire, so a mispredicted kill leaves this

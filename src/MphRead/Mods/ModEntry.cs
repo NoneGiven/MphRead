@@ -138,13 +138,26 @@ namespace MphRead.Mods
                 Network.NetHitPrediction.MarkerEnabled = false;
                 Console.WriteLine("[hud] hit marker off");
             }
-            // The lethal half of the same measurement, and the control for
-            // it: with this on, a prediction is clamped to leave the victim
-            // standing on one point of health and the dying waits for the
-            // authority, which is what every build before predicted death
-            // did.
+            // The lethal half of the same measurement. Off by default now:
+            // measured against Japan, a client could kill the same opponent
+            // twice for one kill on the scoreboard, because the authority
+            // disagreed and the next snapshot stood the body back up. A
+            // prediction is clamped to leave the victim standing on one point
+            // of health and the dying waits for the authority.
+            //
+            // A self-kill -- a rocket jump, a recoil, a fall into the void --
+            // is predicted whatever this says, and this does not turn it off:
+            // there is nothing to disagree about when the source, the target
+            // and the input are all on this machine.
+            if (HasFlag(args, "deathprediction"))
+            {
+                Network.NetHitPrediction.DeathEnabled = true;
+                Console.WriteLine("[net] death prediction on: a client's "
+                    + "kills land the frame it lands them");
+            }
             if (HasFlag(args, "nodeathprediction"))
             {
+                // Still accepted, and now what the default already does.
                 Network.NetHitPrediction.DeathEnabled = false;
                 Console.WriteLine("[net] death prediction off: a client's "
                     + "kills land when the authority says so");

@@ -151,6 +151,36 @@ namespace MphRead.Mods.Network
         private static readonly int[] _pendingHead = new int[Slots];
 
         /// <summary>
+        /// The health this machine last drew for a slot, and the frame it last
+        /// predicted a hit on them: together, the promise that a bar this
+        /// machine has already taken down does not go back up while it is
+        /// still shooting.
+        ///
+        /// The bar going up is what the Shock Coil made impossible to miss.
+        /// Releasing the trigger put a chunk of the victim's health back,
+        /// visibly, on the shooter's screen -- and it was not a mispredicted
+        /// hit. <see cref="Confirm"/> retires as many predictions as the
+        /// snapshot says landed, and the authority resolves several hits of a
+        /// continuous beam for every one this machine resolves (the damage is
+        /// divided by 32 and dithered off the frame counter, so the parity
+        /// that produces a damaging hit is not the same parity on two
+        /// machines). One snapshot therefore retires *everything* outstanding,
+        /// the debit falls to nothing, and what is drawn is the authority's
+        /// number -- which is correct, and half a round trip behind what this
+        /// machine has already shown. While the trigger is held the next hit
+        /// covers it; the moment it is released nothing does, and the bar
+        /// climbs back by exactly the drain of the last half round trip.
+        ///
+        /// So the number is floored by what was last drawn, for as long as
+        /// this machine is still predicting hits on that slot. It cannot hide
+        /// damage -- the floor only ever refuses a *rise* -- and it costs at
+        /// most one hold window of lag on a victim who picks up health while
+        /// being shot at.
+        /// </summary>
+        private static readonly int[] _shownHealth = new int[Slots];
+        private static readonly uint[] _predictedFrame = new uint[Slots];
+
+        /// <summary>
         /// How long a prediction is allowed to hold the picture: one measured
         /// round trip, a snapshot's gap, and a margin.
         ///
@@ -238,6 +268,14 @@ namespace MphRead.Mods.Network
         public static long DeathsPredicted { get; private set; }
 
         /// <summary>
+        /// Deaths this machine's own player died on the frame it died them: a
+        /// rocket jump at low health, a fall into the void, a crusher. Counted
+        /// apart from <see cref="DeathsPredicted"/> because it is not the same
+        /// claim -- there is no other machine's opinion to be wrong about.
+        /// </summary>
+        public static long SelfDeathsPredicted { get; private set; }
+
+        /// <summary>
         /// Deaths predicted here that the authority did not agree with, so the
         /// puppet was put back on the map. The number that says whether
         /// predicting death is worth having; a wrongly killed player is the
@@ -261,17 +299,31 @@ namespace MphRead.Mods.Network
         public static long SelfConfirmed { get; private set; }
 
         /// <summary>
-        /// Whether a lethal prediction is allowed to kill.
+        /// Whether a lethal prediction is allowed to kill <b>somebody
+        /// else</b>. Off, and on with <c>-deathprediction</c>.
         ///
-        /// On, and off with <c>-nodeathprediction</c>, which is the control
-        /// for measuring it the way <c>-nohitprediction</c> is for the rest.
-        /// With it off the damage is clamped to leave the victim standing on
-        /// one point of health and the dying waits for the authority, which is
-        /// what this did originally: the killing shot still *felt* instant,
-        /// because the mark and the flinch were shown, but the prediction
-        /// visibly stopped one point short of the thing it was predicting.
+        /// <b>Off because it was measured wrong on a real line.</b> Against
+        /// Japan a player could kill the same opponent twice for one kill on
+        /// the scoreboard: the body dropped here, the authority disagreed, the
+        /// next snapshot stood it back up, and the second kill was the only
+        /// one anybody else ever saw. A hit shown and taken away is worse than
+        /// a hit shown late, and a *body* shown and taken away is the worst
+        /// case of it. With this off the damage is clamped to leave the victim
+        /// standing on one point of health and the dying waits for the
+        /// authority: the killing shot still *feels* instant, because the
+        /// flinch and the mark are shown on the frame it lands, and only the
+        /// body falling is owed a round trip.
+        ///
+        /// It does not touch a <b>self</b>-kill, which is predicted whatever
+        /// this says -- see <see cref="NoteHit"/>. There is nothing to
+        /// disagree about when the source, the target and the input are all on
+        /// this machine.
+        ///
+        /// Turning it back on is the control for measuring it, the way
+        /// <c>-nohitprediction</c> is for the rest. <c>-nodeathprediction</c>
+        /// is still accepted and is now what the default already does.
         /// </summary>
-        public static bool DeathEnabled { get; set; } = true;
+        public static bool DeathEnabled { get; set; } = false;
 
         private static int _markerTimer;
 
@@ -318,7 +370,10 @@ namespace MphRead.Mods.Network
             Unpredicted = 0;
             LethalHeld = 0;
             DeathsPredicted = 0;
+            SelfDeathsPredicted = 0;
             DeathsUndone = 0;
+            Array.Clear(_shownHealth);
+            Array.Clear(_predictedFrame);
             DrainPredicted = 0;
             _markerTimer = 0;
         }
@@ -331,7 +386,7 @@ namespace MphRead.Mods.Network
         /// <c>TakeDamage</c> -- before any of the engine's feedback has run,
         /// so a "no" here costs exactly what it always cost.
         /// </summary>
-        public static bool Predicts(PlayerEntity victim, EntityBase? source)
+        public static bool Predicts(PlayerEntity victim, EntityBase? source, DamageFlags flags)
         {
             if (!Enabled || victim.Health <= 0)
             {
@@ -341,6 +396,25 @@ namespace MphRead.Mods.Network
             if (local < 0)
             {
                 return false;
+            }
+            if (source == null)
+            {
+                // Nothing fired this: the void under the map, a kill plane, a
+                // crusher, a room telling a player to die. It is dealt to
+                // whoever is standing there, on whatever machine is standing
+                // them there, so the only copy of it worth resolving early is
+                // this machine's own player -- a remote player's fall is the
+                // authority's to report, exactly as it always was.
+                //
+                // Only the lethal ones. DamageFlags.Death kills whatever the
+                // number is, which is what a fall into the void is, and it is
+                // the one case a player is actually waiting on: falling for a
+                // quarter of a second after you have already left the map is
+                // the same complaint as a rocket jump that starts late. The
+                // chip damage from standing in lava carries no such flag and
+                // stays with the authority, where a rate that depends on frame
+                // parity cannot make two machines disagree about a health bar.
+                return victim.SlotIndex == local && flags.TestFlag(DamageFlags.Death);
             }
             // Whose shot it is, and nothing about who it lands on.
             //
@@ -402,38 +476,63 @@ namespace MphRead.Mods.Network
         /// prediction can be recorded, and the only one at which the clamp
         /// that keeps it from killing still works.
         /// </summary>
-        public static void NoteHit(PlayerEntity victim, PlayerEntity? attacker, ref uint damage)
+        public static void NoteHit(PlayerEntity victim, PlayerEntity? attacker,
+            DamageFlags flags, ref uint damage)
         {
+            int local = NetHooks.LocalSlot;
+            if (local < 0)
+            {
+                return;
+            }
+            // No attacker at all is the environment, and Predicts only ever
+            // lets one of those through for this machine's own player: the
+            // void, a kill plane, a crusher. It is a self-kill with nothing
+            // holding the trigger.
+            bool self;
             if (attacker == null)
             {
-                return;
+                if (victim.SlotIndex != local)
+                {
+                    return;
+                }
+                self = true;
             }
-            int local = NetHooks.LocalSlot;
-            if (local < 0 || attacker.SlotIndex != local)
+            else
             {
-                return;
+                if (attacker.SlotIndex != local)
+                {
+                    return;
+                }
+                self = attacker == victim;
             }
-            bool self = attacker == victim;
             if (Predicting && Enabled)
             {
-                // A prediction never kills *you*, whatever DeathEnabled says.
+                // Lethal even at zero damage when the flag says so: a fall
+                // into the void is TakeDamage(0, DamageFlags.Death), and
+                // reading the number alone would file the one death that is
+                // certainly right as a scratch.
+                bool lethal = victim.Health > 0
+                    && (damage >= (uint)victim.Health || flags.TestFlag(DamageFlags.Death));
+                // A prediction does not kill somebody else. It did, and on a
+                // real line it was measured killing the same opponent twice
+                // for one kill on the scoreboard: the authority disagreed, the
+                // next snapshot stood the body back up, and the second kill
+                // was the only one anybody else saw. See DeathEnabled.
                 //
-                // The knockback is applied by TakeDamage regardless of what
-                // the number ends up being, so the clamp costs the rocket jump
-                // nothing -- the push is the whole point and it lands either
-                // way. What it avoids is the local death path run on a guess
-                // about the machine's own player: the death camera, the
-                // countdown, PausePrevented and the respawn are a great deal
-                // more to take back than a puppet lying down, and none of it
-                // is what "the jump has to be instant" is asking for.
-                bool lethal = victim.Health > 0 && damage >= (uint)victim.Health;
-                if (lethal && (!DeathEnabled || self))
+                // A self-kill is the exception and is not DeathEnabled's to
+                // refuse. Source, target and input are all on this machine;
+                // there is no rewind to bet on and no other machine's opinion
+                // of where anybody was. A rocket jump that kills, a recoil
+                // that kills, and above all a fall into the void -- the one
+                // death a player has already watched happen -- resolve on the
+                // frame they happen, and the authority says the same thing a
+                // round trip later.
+                if (lethal && !self && !DeathEnabled)
                 {
-                    // The old rule one, kept as the control. The victim is
-                    // left standing on a single point of health until the
-                    // authority says otherwise, which it will within a round
-                    // trip -- and when it does, NetDamage.Replay runs the kill
-                    // in full, with the Death flag.
+                    // The victim is left standing on a single point of health
+                    // until the authority says otherwise, which it will within
+                    // a round trip -- and when it does, NetDamage.Replay runs
+                    // the kill in full, with the Death flag.
                     damage = (uint)Math.Max(0, victim.Health - 1);
                     LethalHeld++;
                     lethal = false;
@@ -453,7 +552,14 @@ namespace MphRead.Mods.Network
                 }
                 if (lethal)
                 {
-                    DeathsPredicted++;
+                    if (self)
+                    {
+                        SelfDeathsPredicted++;
+                    }
+                    else
+                    {
+                        DeathsPredicted++;
+                    }
                 }
             }
             // Every machine, every mode: on the authority and offline this is
@@ -545,6 +651,8 @@ namespace MphRead.Mods.Network
             }
             _pendingCount[slot] = 0;
             _pendingHead[slot] = 0;
+            _shownHealth[slot] = 0;
+            _predictedFrame[slot] = 0;
         }
 
         /// <summary>
@@ -577,6 +685,41 @@ namespace MphRead.Mods.Network
                 }
             }
             ForgetSlot(slot);
+        }
+
+        /// <summary>
+        /// The authority has reported <paramref name="slot"/> dead, so
+        /// everything this machine predicted about that life is answered and
+        /// the hold is over.
+        ///
+        /// Without it a predicted self-kill outlived its own confirmation: the
+        /// authority's report of the death carries no attacker this machine
+        /// can match (a fall names nobody), so nothing retired the pending
+        /// lethal entry, and <see cref="HeldDead"/> went on refusing the
+        /// respawn that came a moment later -- a player who died in the void
+        /// and then lay there for the rest of the hold window.
+        ///
+        /// <b>It releases the hold and nothing else.</b> Clearing the slot
+        /// outright would drop predictions that have not been answered yet,
+        /// and they would leave the tally neither confirmed nor denied --
+        /// <see cref="Predicted"/> would stop equalling
+        /// <see cref="Confirmed"/> plus <see cref="Denied"/>, which is the one
+        /// arithmetic that makes those numbers readable. They stay, to be
+        /// confirmed or to age out; what they must not do is go on holding a
+        /// body down that the authority has already agreed is down.
+        /// <see cref="NoteRespawn"/> is what clears the slot, at the respawn,
+        /// where the life really has ended.
+        /// </summary>
+        public static void NoteDeath(int slot)
+        {
+            if (slot < 0 || slot >= Slots)
+            {
+                return;
+            }
+            for (int i = 0; i < PendingCapacity; i++)
+            {
+                _pendingLethal[slot, i] = false;
+            }
         }
 
         /// <summary>Everything outstanding, for a rotation into a new room.</summary>
@@ -659,12 +802,28 @@ namespace MphRead.Mods.Network
         /// </summary>
         public static int HealthFor(int slot, int authorityHealth)
         {
-            int debit = Debit(slot);
-            if (debit <= 0 || authorityHealth <= 1)
+            if (!Enabled || slot < 0 || slot >= Slots)
             {
                 return authorityHealth;
             }
-            return Math.Max(1, authorityHealth - debit);
+            int debit = Debit(slot);
+            int health = debit > 0 && authorityHealth > 1
+                ? Math.Max(1, authorityHealth - debit)
+                : authorityHealth;
+            // Nothing this machine has taken down goes back up while it is
+            // still shooting. See _shownHealth: with a continuous beam the
+            // debit is retired by the authority faster than it is built, so
+            // the honest number is the authority's -- and the authority's is
+            // half a round trip stale, which is a bar that visibly climbs the
+            // moment the trigger is released.
+            if (authorityHealth > 0 && _shownHealth[slot] > 0
+                && NetSession.NetFrame - _predictedFrame[slot] < (uint)HoldFrames)
+            {
+                health = Math.Min(health, _shownHealth[slot]);
+                health = Math.Max(1, health);
+            }
+            _shownHealth[slot] = health;
+            return health;
         }
 
         /// <summary>
@@ -697,13 +856,24 @@ namespace MphRead.Mods.Network
             // hold exists to stop, on the one player who is looking at the
             // number.
             credit -= Debit(NetHooks.LocalSlot);
+            // A self-kill this machine has already died is not undone by a
+            // snapshot that has not heard about it. The branch in ApplyState
+            // that spawns a player normally returns before this line while
+            // HeldDead is true, so this is the belt to that brace: handing
+            // back the authority's health here would stand a corpse up with
+            // the death camera still running.
+            if (player.Health <= 0 && HeldDead(NetHooks.LocalSlot))
+            {
+                return 0;
+            }
             if (credit == 0)
             {
                 return authorityHealth;
             }
             int max = player.HealthMax > 0 ? player.HealthMax : authorityHealth;
             // Floored at 1 for HealthFor's reason: an assignment is not a
-            // death, and a self-inflicted prediction is never lethal anyway.
+            // death. A self-inflicted prediction *can* be lethal now, and the
+            // line above is what keeps that one from coming through here.
             return Math.Clamp(authorityHealth + credit, 1, max);
         }
 
@@ -721,7 +891,17 @@ namespace MphRead.Mods.Network
         /// </summary>
         public static bool HeldDead(int slot)
         {
-            if (!Enabled || !DeathEnabled || slot < 0 || slot >= Slots)
+            if (!Enabled || slot < 0 || slot >= Slots)
+            {
+                return false;
+            }
+            // Somebody else is only held down when death is predicted for
+            // somebody else, which it is not by default. This machine's own
+            // player always is: a self-kill is predicted whatever DeathEnabled
+            // says, and a snapshot that has not heard about it yet would stand
+            // the body straight back up -- the resurrection this whole switch
+            // exists to stop, on the one player who is looking at it.
+            if (!DeathEnabled && slot != NetHooks.LocalSlot)
             {
                 return false;
             }
@@ -796,6 +976,7 @@ namespace MphRead.Mods.Network
                 _pendingCount[slot]--;
                 Denied++;
             }
+            _predictedFrame[slot] = frame;
             int tail = (_pendingHead[slot] + _pendingCount[slot]) % PendingCapacity;
             _pendingFrame[slot, tail] = frame;
             _pendingDamage[slot, tail] = Math.Max(0, damage);
@@ -812,13 +993,25 @@ namespace MphRead.Mods.Network
             }
             if (Predicted == 0)
             {
+                // Self-hits still say so: a run that landed nothing on
+                // anybody else can still have rocket-jumped and fallen into
+                // the void, and those are predictions too. Every self-kill is
+                // a self-hit, so this one test covers both.
+                string own = SelfPredicted > 0
+                    ? $", {SelfPredicted} self-hits predicted "
+                        + $"({SelfConfirmed} confirmed, {SelfDeathsPredicted} of them lethal)"
+                    : "";
                 return "hit prediction: on, nothing predicted here "
-                    + $"({Unpredicted} hits arrived from the authority)";
+                    + $"({Unpredicted} hits arrived from the authority)" + own;
             }
             double agreed = Confirmed * 100.0 / Predicted;
             string deaths = DeathEnabled
                 ? $"{DeathsPredicted} kills predicted, {DeathsUndone} undone"
                 : $"{LethalHeld} kills left to the authority";
+            if (SelfDeathsPredicted > 0)
+            {
+                deaths += $", {SelfDeathsPredicted} self-kills predicted";
+            }
             string drain = DrainPredicted > 0 ? $", {DrainPredicted} health drained ahead" : "";
             string self = SelfPredicted > 0
                 ? $", {SelfPredicted} self-hits predicted ({SelfConfirmed} confirmed)"

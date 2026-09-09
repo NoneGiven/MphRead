@@ -558,11 +558,20 @@ namespace MphRead.Mods.Network
                     player.ModNetDie();
                 }
                 player.Health = state.Health;
+                if (state.Health == 0)
+                {
+                    // The authority agrees this player is down, so whatever
+                    // this machine predicted about the life that just ended is
+                    // answered. Left standing, a predicted self-kill would go
+                    // on refusing the respawn that follows it a moment later.
+                    // NetHitPrediction.NoteDeath.
+                    NetHitPrediction.NoteDeath(slot);
+                }
                 return;
             }
             if (!wasInPlay)
             {
-                if (!isLocal && NetHitPrediction.HeldDead(slot))
+                if (NetHitPrediction.HeldDead(slot))
                 {
                     // Killed here a moment ago and the authority has not
                     // caught up. Its copy of this player is a round trip
