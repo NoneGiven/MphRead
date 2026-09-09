@@ -574,15 +574,14 @@ namespace MphRead.Mods.Network
                     // way it always did. NetHitPrediction.HeldDead.
                     return;
                 }
-                if (!isLocal)
-                {
-                    // A life is ending here as far as the prediction is
-                    // concerned: anything still outstanding for this slot is
-                    // about the body, not about whoever is standing up. It
-                    // also counts the kill if this machine showed one the
-                    // authority never confirmed.
-                    NetHitPrediction.NoteRespawn(slot);
-                }
+                // A life is ending here as far as the prediction is
+                // concerned: anything still outstanding for this slot is about
+                // the body, not about whoever is standing up. It also counts
+                // the kill if this machine showed one the authority never
+                // confirmed. For the local slot too, where what is outstanding
+                // is this player's own splash on themselves -- a debit from
+                // the last life must not come off the health of the new one.
+                NetHitPrediction.NoteRespawn(slot);
                 // The authority has this player on the map and this machine
                 // does not. Spawn() rather than a position write: it is what
                 // clears HideModel, so a player that skipped it tracked

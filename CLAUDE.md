@@ -680,9 +680,15 @@ same positions -- run earlier, on the machine that already has the inputs.
 Two rules keep a prediction from becoming a lie: it **never scores and never
 ends a match** -- the scoreboard is assigned from the snapshot for every slot
 and `EndIfPointGoalReached` is already refused on a machine that is not
-keeping the score -- and it is **only your own shot on somebody else**, since
-incoming damage is a question about a shot fired on another machine and this
-one has a worse answer to it than the authority does.
+keeping the score -- and it is **only your own shot**, on somebody else or on
+yourself, since incoming damage is a question about a shot fired on another
+machine and this one has a worse answer to it than the authority does. **Your
+own splash on yourself is predicted** -- a rocket jump is not damage that
+arrives late, it is a jump that does not happen, and the push comes out of
+`TakeDamage` with the damage. Source, target and input are all on this machine,
+so it is arithmetic rather than a bet on a rewind; it is counted apart from the
+rest for that reason, and it never kills whatever `-nodeathprediction` says,
+because the push lands whether the number is clamped or not.
 
 **The prediction is held rather than assigned over.** A victim's health is the
 authority's number less what this machine has landed on them and not yet had

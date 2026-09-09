@@ -106,6 +106,49 @@ authority takes to answer rather than in the time it takes to be certain it
 never will. At Japan's 270 ms that is 28 frames; with no ping measured yet it
 is the 15-frame floor.
 
+## Your own splash, on you
+
+A rocket jump is not damage that arrives late -- it is a jump that does not
+happen. The push comes out of `TakeDamage` (`Speed += direction * 0.4f`), so
+suppressing the hit suppressed the jump with it, and at Japan's 270 ms the
+player left the ground a fifth of a second after the missile went off. Same for
+a bomb jump, and for every weapon carrying `WeaponFlags.SelfDamageUncharged` --
+the Missile, the Magmaul, the Battlehammer and their charged forms.
+
+There is **no shooter-side recoil in this engine**: nothing pushes you for
+firing, and the only `Recoil` in the tree is a platform's. The push a player
+means by "recoil" is this one -- their own splash, on themselves.
+
+`Predicts` used to refuse any hit whose victim was the local player. That
+refusal is rule 2 and it is already made by the line under it: damage from
+somebody else has an owner who is not this slot. What the extra clause actually
+excluded was the one hit that is **entirely** local -- source, target and input
+all on this machine, nothing to guess about anybody, and no rewind to bet on.
+It is arithmetic, not a prediction, and it is the hit whose feedback matters
+most on the frame it happens.
+
+What had to move with it:
+
+| | |
+|---|---|
+| `Predicts` | drops the victim clause; the owner clause is the rule |
+| `NoteHit` | no longer returns early on `attacker == victim`, and **always clamps a self-inflicted lethal hit**, whatever `DeathEnabled` says |
+| the mark | not raised for a self-hit: the X answers "did that land on somebody" |
+| `LocalHealthFor` | subtracts the outstanding self-debit as well as adding the drain credit -- nothing calls `HealthFor` for the local slot, so without this the health came off for one frame and the next snapshot handed it back |
+| `NetDamage.Replay` | `mine` no longer excludes the local slot, or the authority's copy of a hit this machine has already applied would take the health twice |
+| `SelfPredicted` / `SelfConfirmed` | counted apart from `Predicted`/`Confirmed`: the percentage is a claim about shots aimed at other people over a wire, and a hit resolved on the machine that fired it would only flatter it |
+| `NoteRespawn` | now called for the local slot too, so a debit from the last life cannot come off the health of the new one |
+
+**A self-inflicted prediction never kills, on purpose, and this is not
+`DeathEnabled`.** The knockback is applied regardless of what the damage number
+ends up being, so the clamp costs the jump nothing -- the push lands either
+way. What it avoids is the local death path run on a guess about the machine's
+own player: the death camera, `_deathCountdown`, `PausePrevented` and the
+respawn are far more to take back than a puppet lying down, and none of it is
+what "the jump has to be instant" is asking for. Rocket-jumping at 1 HP
+therefore still dies a round trip late, which is the one case that is not
+instant and the one where nobody is waiting on the answer.
+
 ## The drain
 
 The Shock Coil -- `WeaponFlags.LifeDrainUncharged`, Sylux's affinity weapon --
@@ -251,6 +294,7 @@ Two scripted clients, 70 s, `MP3 PROVING GROUND`:
 | Sylux (Shock Coil) | **28 predicted, 28 confirmed (100%), 0 denied**, 103 unpredicted, **23 health drained ahead** of the authority |
 | Samus | **3 predicted, 3 confirmed (100%)**, 0 denied, 14 unpredicted |
 | three clients, 45 s, over a rotation | **1 kill predicted, 0 undone**; Sylux 3/3 and 3 health drained ahead |
+| two clients, 60 s, with self-damage predicted | Samus **3 self-hits predicted, 2 confirmed** (its own missile splash); Sylux 8/8 and 7 health drained ahead; both `PASS` |
 
 **0 denied at 270 ms, against the 86-98% the loopback instrument used to
 read.** That is the batched `Confirm` rather than the hold: retiring one

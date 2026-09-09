@@ -531,7 +531,16 @@ namespace MphRead.Mods.Network
             // both count a hit that landed as denied and hold the corpse down
             // for the whole of the hold window rather than until the answer
             // arrived. Retiring it here is the answer arriving.
-            bool mine = slot != NetHooks.LocalSlot && state.AttackerSlot == NetHooks.LocalSlot;
+            // Including a hit on this machine's own player that its own
+            // player dealt -- your splash, on you. That used to be excluded
+            // here, on the grounds that nothing was ever predicted onto the
+            // local player and asking would report every splash from one's own
+            // bomb as a prediction that had missed. Self-damage is predicted
+            // now, so the opposite is true: not asking would replay a hit this
+            // machine has already applied, and a rocket jump would cost its
+            // health twice. Damage from anybody else still names another
+            // attacker and is replayed exactly as before.
+            bool mine = state.AttackerSlot == NetHooks.LocalSlot;
             bool predicted = mine && NetHitPrediction.Confirm(slot, landed);
             if (player.Health <= 0)
             {

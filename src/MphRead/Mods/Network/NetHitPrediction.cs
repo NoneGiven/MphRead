@@ -249,6 +249,18 @@ namespace MphRead.Mods.Network
         public static long DrainPredicted { get; private set; }
 
         /// <summary>
+        /// Your own splash, on you, resolved the frame it went off -- the
+        /// rocket jump. Counted apart from <see cref="Predicted"/> because it
+        /// is not the same claim: source, target and input are all on this
+        /// machine, so it is arithmetic rather than a bet on a rewind, and
+        /// mixing the two would flatter the percentage that measures the bet.
+        /// </summary>
+        public static long SelfPredicted { get; private set; }
+
+        /// <summary>Those of them the authority went on to agree with.</summary>
+        public static long SelfConfirmed { get; private set; }
+
+        /// <summary>
         /// Whether a lethal prediction is allowed to kill.
         ///
         /// On, and off with <c>-nodeathprediction</c>, which is the control
@@ -300,6 +312,8 @@ namespace MphRead.Mods.Network
             _healHead = 0;
             Predicted = 0;
             Confirmed = 0;
+            SelfPredicted = 0;
+            SelfConfirmed = 0;
             Denied = 0;
             Unpredicted = 0;
             LethalHeld = 0;
@@ -324,12 +338,25 @@ namespace MphRead.Mods.Network
                 return false;
             }
             int local = NetHooks.LocalSlot;
-            if (local < 0 || victim.SlotIndex == local)
+            if (local < 0)
             {
                 return false;
             }
+            // Whose shot it is, and nothing about who it lands on.
+            //
+            // This used to refuse a hit whose victim was this machine's own
+            // player -- rule two, incoming damage is not predicted -- and that
+            // refusal is already made by the line below: damage arriving from
+            // somebody else has an owner who is not this slot. What the extra
+            // clause actually excluded was the one hit that is *entirely*
+            // local: your own splash, on you. Source, target and input are all
+            // on this machine, there is nothing to guess about anybody, and it
+            // is the hit whose feedback matters most on the frame it happens,
+            // because a rocket jump is not damage that arrives late -- it is a
+            // jump that does not happen. See the self-damage section in
+            // .claude/multiplayer/NETWORK-PREDICTION.md.
             PlayerEntity? owner = OwnerOf(source);
-            return owner != null && owner.SlotIndex == local && owner != victim;
+            return owner != null && owner.SlotIndex == local;
         }
 
         /// <summary>
@@ -377,7 +404,7 @@ namespace MphRead.Mods.Network
         /// </summary>
         public static void NoteHit(PlayerEntity victim, PlayerEntity? attacker, ref uint damage)
         {
-            if (attacker == null || attacker == victim)
+            if (attacker == null)
             {
                 return;
             }
@@ -386,10 +413,21 @@ namespace MphRead.Mods.Network
             {
                 return;
             }
+            bool self = attacker == victim;
             if (Predicting && Enabled)
             {
+                // A prediction never kills *you*, whatever DeathEnabled says.
+                //
+                // The knockback is applied by TakeDamage regardless of what
+                // the number ends up being, so the clamp costs the rocket jump
+                // nothing -- the push is the whole point and it lands either
+                // way. What it avoids is the local death path run on a guess
+                // about the machine's own player: the death camera, the
+                // countdown, PausePrevented and the respawn are a great deal
+                // more to take back than a puppet lying down, and none of it
+                // is what "the jump has to be instant" is asking for.
                 bool lethal = victim.Health > 0 && damage >= (uint)victim.Health;
-                if (lethal && !DeathEnabled)
+                if (lethal && (!DeathEnabled || self))
                 {
                     // The old rule one, kept as the control. The victim is
                     // left standing on a single point of health until the
@@ -401,7 +439,18 @@ namespace MphRead.Mods.Network
                     lethal = false;
                 }
                 Push(victim.SlotIndex, NetSession.NetFrame, (int)damage, lethal);
-                Predicted++;
+                // Counted apart from the rest. The confirmed percentage is a
+                // claim about shots aimed at other people over a wire; a hit
+                // on yourself, resolved on the machine that fired it, would
+                // only flatter it.
+                if (self)
+                {
+                    SelfPredicted++;
+                }
+                else
+                {
+                    Predicted++;
+                }
                 if (lethal)
                 {
                     DeathsPredicted++;
@@ -412,7 +461,11 @@ namespace MphRead.Mods.Network
             // confirmation a player gets should depend on which machine is
             // running the match. Not in the story, which is the DS's game and
             // has no such mark.
-            if (!GameState.SinglePlayer)
+            //
+            // Never for your own splash landing on you: the mark answers "did
+            // that land on somebody", and a rocket jump is not a hit anybody
+            // wants confirming.
+            if (!GameState.SinglePlayer && !self)
             {
                 _markerTimer = MarkerFrames;
             }
@@ -448,12 +501,20 @@ namespace MphRead.Mods.Network
             // confirmation by the whole of the window. Capped at what is
             // actually outstanding, so a burst that included somebody else's
             // hits cannot retire more than this machine predicted.
+            bool self = slot == NetHooks.LocalSlot;
             int take = Math.Clamp(landed, 1, _pendingCount[slot]);
             for (int i = 0; i < take; i++)
             {
                 _pendingHead[slot] = (_pendingHead[slot] + 1) % PendingCapacity;
                 _pendingCount[slot]--;
-                Confirmed++;
+                if (self)
+                {
+                    SelfConfirmed++;
+                }
+                else
+                {
+                    Confirmed++;
+                }
             }
             return true;
         }
@@ -612,7 +673,7 @@ namespace MphRead.Mods.Network
         /// </summary>
         public static int LocalHealthFor(PlayerEntity player, int authorityHealth)
         {
-            if (!Enabled || authorityHealth <= 0 || _healCount == 0)
+            if (!Enabled || authorityHealth <= 0)
             {
                 return authorityHealth;
             }
@@ -627,12 +688,23 @@ namespace MphRead.Mods.Network
                     credit += _healAmount[at];
                 }
             }
-            if (credit <= 0)
+            // And less your own splash, held the same way a victim's is. The
+            // debit is the mirror of the credit and has to be here, not in
+            // HealthFor: nothing calls HealthFor for the local slot, and
+            // without this a rocket jump would take the health off for one
+            // frame and the next snapshot would hand it straight back until
+            // the authority caught up -- the same one-frame prediction the
+            // hold exists to stop, on the one player who is looking at the
+            // number.
+            credit -= Debit(NetHooks.LocalSlot);
+            if (credit == 0)
             {
                 return authorityHealth;
             }
             int max = player.HealthMax > 0 ? player.HealthMax : authorityHealth;
-            return Math.Clamp(authorityHealth + credit, 0, max);
+            // Floored at 1 for HealthFor's reason: an assignment is not a
+            // death, and a self-inflicted prediction is never lethal anyway.
+            return Math.Clamp(authorityHealth + credit, 1, max);
         }
 
         /// <summary>
@@ -748,9 +820,12 @@ namespace MphRead.Mods.Network
                 ? $"{DeathsPredicted} kills predicted, {DeathsUndone} undone"
                 : $"{LethalHeld} kills left to the authority";
             string drain = DrainPredicted > 0 ? $", {DrainPredicted} health drained ahead" : "";
+            string self = SelfPredicted > 0
+                ? $", {SelfPredicted} self-hits predicted ({SelfConfirmed} confirmed)"
+                : "";
             return $"hit prediction: {Predicted} predicted, {Confirmed} confirmed "
                 + $"({agreed:F1}%), {Denied} denied, {Unpredicted} unpredicted, "
-                + deaths + drain;
+                + deaths + drain + self;
         }
     }
 }
