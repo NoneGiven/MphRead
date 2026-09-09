@@ -102,11 +102,32 @@ Notable toggles
 - Window modes: windowed or borderless fullscreen. `Mods.WindowMode` owns it;
   F11/Alt+Enter toggle at any time. Escape opens the pause menu instead of
   leaving fullscreen.
+- **The Weapon row is Static (Quake) or Dynamic (Metroid)**, the third child
+  of Pro mode HUD and the one Pro-mode question with two real answers rather
+  than a right one. It is `Features.ProHudFixedWeapon`, which `FixedWeapon`
+  answers with while Pro mode is on -- the only one of the six Pro mode
+  *defaults* rather than forces. It decides two things and used to decide one:
+  where the gun sits (`UpdateAimVecs`) **and** where the crosshair is drawn.
+  `UpdateReticle` asked `FixedCrosshair` for the position, which Pro mode
+  forces on for an unrelated reason -- the DS reticle animates as you fire and
+  a crosshair must not -- so answering Dynamic moved the gun and left the
+  crosshair welded to the middle of the screen, which is the whole of what
+  "Dynamic does nothing under Pro mode" was. The position now follows
+  `FixedWeapon` and the animation still follows `FixedCrosshair`;
+  `DrawCustomCrosshair` and `DrawHitMarker` both take the reticle's position,
+  since a mark that says "did that land" has to sit on the thing that was
+  aimed with. Measured with
+  `-maptest "TEST ARENA" -players 4 -seconds 10 -hudshots -hunter Samus -prohud on -weaponstyle static|dynamic -shots DIR`,
+  which is what `-weaponstyle` exists for: static puts the flat crosshair at
+  (639.5, 359.5) of a 1280x720 window in **every** frame of the run, dynamic
+  puts it at (641.5, 362.5), (616.5, 344.5) and (639.5, 406.5) as the aim
+  moves and back in the middle when it settles. Same 40x40 of ink either way --
+  it is offset, not scaled.
 - **Pro mode HUD is the only HUD control.** `Features.ProHud` makes
-  `ModernHud`, `FixedWeapon`, `FixedCrosshair`, `CustomCrosshair`,
-  `WeaponListScale` (1.7) and both helmet opacities (0) *answer* as the pro
-  layout while it is on; off, each falls back to its own code default, which is
-  the game as the DS drew it. Neither state is assembled by the player: none of
+  `ModernHud`, `FixedCrosshair`, `CustomCrosshair`, `WeaponListScale` (1.7)
+  and both helmet opacities (0) *answer* as the pro layout while it is on, and
+  `FixedWeapon` default to static; off, each falls back to its own code
+  default, which is the game as the DS drew it. Neither state is assembled by the player: none of
   the six has a row any more and none is written to `settings.json` -- only
   `ProHud` and `ReticleOpacity` are. The setters remain, because `-nohelmet`
   and upstream's console menu still write several of them. It also draws its

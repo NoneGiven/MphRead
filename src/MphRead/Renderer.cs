@@ -4691,10 +4691,24 @@ namespace MphRead
         /// <see cref="Mods.Render.Crosshair"/> -- the same table the settings
         /// screen draws its preview from.
         /// </summary>
-        public void DrawCustomCrosshair(Vector3 color)
+        /// <param name="posX">
+        /// Where the middle of the crosshair goes, as a fraction of the
+        /// window from the left; <paramref name="posY"/> is the same from the
+        /// top. 0.5, 0.5 is the middle of the screen, which is where a static
+        /// (Quake) crosshair always sits. A dynamic (Metroid) one is drawn at
+        /// the reticle's reprojected aim point instead -- the DS game's
+        /// crosshair moves around the screen and the camera follows it, and a
+        /// cross welded to the centre is not that game whatever the gun is
+        /// doing. See PlayerHud.UpdateReticle.
+        /// </param>
+        public void DrawCustomCrosshair(Vector3 color, float posX = 0.5f, float posY = 0.5f)
         {
             float halfW = Size.X / 2f;
             float halfH = Size.Y / 2f;
+            // The offset is applied in the same normalised space the bars are
+            // laid out in, so nothing below has to know the crosshair moved.
+            float offX = posX * 2f - 1f;
+            float offY = 1f - posY * 2f;
             Mods.Render.CrosshairStyle style = Mods.Render.Crosshair.Style;
             float scale = Mods.Render.Crosshair.Scale;
             GL.Uniform4(_shaderLocations.FadeColor, color.X, color.Y, color.Z, 1f);
@@ -4705,10 +4719,10 @@ namespace MphRead
                 (float left, float right, float bottom, float top) =
                     Mods.Render.Crosshair.EdgesOf(bars[i]);
                 GL.Begin(PrimitiveType.TriangleStrip);
-                GL.Vertex3(right / halfW, top / halfH, 0f);
-                GL.Vertex3(left / halfW, top / halfH, 0f);
-                GL.Vertex3(right / halfW, bottom / halfH, 0f);
-                GL.Vertex3(left / halfW, bottom / halfH, 0f);
+                GL.Vertex3(offX + right / halfW, offY + top / halfH, 0f);
+                GL.Vertex3(offX + left / halfW, offY + top / halfH, 0f);
+                GL.Vertex3(offX + right / halfW, offY + bottom / halfH, 0f);
+                GL.Vertex3(offX + left / halfW, offY + bottom / halfH, 0f);
                 GL.End();
             }
             (float radius, float thickness) = Mods.Render.Crosshair.RingOf(style, scale);
@@ -4727,8 +4741,8 @@ namespace MphRead
                     float angle = MathHelper.TwoPi * i / segments;
                     float cos = MathF.Cos(angle);
                     float sin = MathF.Sin(angle);
-                    GL.Vertex3(outer * cos / halfW, outer * sin / halfH, 0f);
-                    GL.Vertex3(inner * cos / halfW, inner * sin / halfH, 0f);
+                    GL.Vertex3(offX + outer * cos / halfW, offY + outer * sin / halfH, 0f);
+                    GL.Vertex3(offX + inner * cos / halfW, offY + inner * sin / halfH, 0f);
                 }
                 GL.End();
             }
@@ -4748,10 +4762,18 @@ namespace MphRead
         /// pixels for the same reason the crosshair is: it is read at a
         /// glance, and what matters is how big it lands on the screen.
         /// </summary>
-        public void DrawHitMarker(Vector4 color)
+        /// <param name="posX">
+        /// Where the crosshair the mark surrounds is, as a fraction of the
+        /// window; see <see cref="DrawCustomCrosshair"/>. The mark answers
+        /// "did that land", and it has to sit on the thing that was aimed
+        /// with, wherever that is on the screen.
+        /// </param>
+        public void DrawHitMarker(Vector4 color, float posX = 0.5f, float posY = 0.5f)
         {
             float halfW = Size.X / 2f;
             float halfH = Size.Y / 2f;
+            float offX = posX * 2f - 1f;
+            float offY = 1f - posY * 2f;
             float scale = Mods.Render.Crosshair.Scale;
             const float gap = 4f;
             const float length = 7f;
@@ -4773,10 +4795,10 @@ namespace MphRead
                 float hx = -dy * thickness * scale / 2;
                 float hy = dx * thickness * scale / 2;
                 GL.Begin(PrimitiveType.TriangleStrip);
-                GL.Vertex3((x0 + hx) / halfW, (y0 + hy) / halfH, 0f);
-                GL.Vertex3((x0 - hx) / halfW, (y0 - hy) / halfH, 0f);
-                GL.Vertex3((x1 + hx) / halfW, (y1 + hy) / halfH, 0f);
-                GL.Vertex3((x1 - hx) / halfW, (y1 - hy) / halfH, 0f);
+                GL.Vertex3(offX + (x0 + hx) / halfW, offY + (y0 + hy) / halfH, 0f);
+                GL.Vertex3(offX + (x0 - hx) / halfW, offY + (y0 - hy) / halfH, 0f);
+                GL.Vertex3(offX + (x1 + hx) / halfW, offY + (y1 + hy) / halfH, 0f);
+                GL.Vertex3(offX + (x1 - hx) / halfW, offY + (y1 - hy) / halfH, 0f);
                 GL.End();
             }
             GL.Uniform4(_shaderLocations.FadeColor, Vector4.Zero);

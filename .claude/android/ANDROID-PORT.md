@@ -322,6 +322,32 @@ a button.
 `MainActivity.ClosePauseMenu` calls `TouchControls.ReloadSettings`, since the
 settings are reachable from the pause menu mid-match.
 
+### A HUD rectangle beats a round button
+
+`SetTapTargets` publishes rectangles the HUD has drawn -- currently the map
+vote's ACCEPT and DENY -- and `PointerDownLocked` tests them **before** it
+tests the eleven circles, not after. That ordering is the whole of why voting
+did nothing on a phone: the vote panel was drawn in the top-left corner of the
+HUD and MENU, SCORE and CHAT are drawn in the top-left corner of the glass, so
+every tap meant for a ballot went to whichever circle was over it -- ACCEPT
+opened the pause menu, DENY opened chat. A permanent control underneath a
+rectangle that exists for thirty seconds and only while something is asking a
+question with it has not been reached for.
+
+The panel was also moved out from under them (`PlayerEntity.VoteLeft` /
+`VoteTop`: x 52, y 42 on Android against x 6, y 8 elsewhere), because a
+prompt legible only in the gaps between three circles is still a bad prompt
+even once the taps land. The row's own extent is fixed in HUD units on any
+window shape -- it is placed at 0.12 of the height with a radius of 0.06, so it
+owns everything above y 37 -- and the right-hand pair, ZOOM and WEAPON, is what
+caps the panel's width: WEAPON reaches x 216 and y 45 on a 4:3 tablet, where a
+HUD unit across is a HUD unit down. The two answers are drawn at 1.35x there,
+for the reason `EndScale` exists.
+
+The catch-all is unchanged and still sits after the buttons: while the results
+screen is up, everything the buttons did not take belongs to the HUD, because
+there is no world to aim at.
+
 ### Controls no longer reset when the app closes
 
 Two faults, both of them "the desktop does this somewhere this head never runs":

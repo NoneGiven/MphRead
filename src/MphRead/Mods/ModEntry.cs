@@ -138,6 +138,17 @@ namespace MphRead.Mods
                 Network.NetHitPrediction.MarkerEnabled = false;
                 Console.WriteLine("[hud] hit marker off");
             }
+            // The lethal half of the same measurement, and the control for
+            // it: with this on, a prediction is clamped to leave the victim
+            // standing on one point of health and the dying waits for the
+            // authority, which is what every build before predicted death
+            // did.
+            if (HasFlag(args, "nodeathprediction"))
+            {
+                Network.NetHitPrediction.DeathEnabled = false;
+                Console.WriteLine("[net] death prediction off: a client's "
+                    + "kills land when the authority says so");
+            }
 
             if (HasFlag(args, "credits"))
             {
@@ -1132,6 +1143,27 @@ namespace MphRead.Mods
             else if (HasFlag(args, "prohud"))
             {
                 Features.ProHud = true;
+            }
+            // Where the gun and the crosshair sit under it -- Quake's static
+            // pair or the DS game's drifting one. The same reason again, and a
+            // sharper one: the two answers differ mainly in what the middle of
+            // the picture is doing, so a screenshot is how the difference is
+            // checked at all.
+            string? weaponStyle = ValueAfter(args, "weaponstyle");
+            if (weaponStyle != null && !weaponStyle.StartsWith('-'))
+            {
+                if (weaponStyle.Equals("static", StringComparison.OrdinalIgnoreCase)
+                    || weaponStyle.Equals("quake", StringComparison.OrdinalIgnoreCase))
+                {
+                    Features.ProHudFixedWeapon = true;
+                    Features.FixedWeapon = true;
+                }
+                else if (weaponStyle.Equals("dynamic", StringComparison.OrdinalIgnoreCase)
+                    || weaponStyle.Equals("metroid", StringComparison.OrdinalIgnoreCase))
+                {
+                    Features.ProHudFixedWeapon = false;
+                    Features.FixedWeapon = false;
+                }
             }
             // Which crosshair that HUD draws, and how big. Same reason again:
             // a screenshot command opens no launcher, and the crosshair is the

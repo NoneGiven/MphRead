@@ -44,12 +44,46 @@ namespace MphRead.Entities
         /// nobody wants to tune the size of a screen they see for thirty
         /// seconds between matches.
         /// </summary>
-        private static float EndScale => OperatingSystem.IsAndroid() ? 1.45f : 1f;
+        private static float EndScale => OperatingSystem.IsAndroid() ? 1.3f : 1f;
 
         /// <summary>Panel geometry, in HUD units measured off the screen's height.</summary>
         private static float EndPanelWidth => 74 * EndScale;
         private const float EndPanelTop = 4;
-        private static float EndPanelHeight => 92 * EndScale;
+
+        /// <summary>
+        /// How tall the panel is, worked out from what goes in it rather than
+        /// stated on its own.
+        ///
+        /// It was a constant 92, and the stack inside it did not fit: READY
+        /// alone ran to 98 and hung out of the bottom edge, and the NEXT line
+        /// -- placed by measuring *up* from that same bottom edge -- was drawn
+        /// straight through the middle of it. At 1x that was two readouts
+        /// sharing six units; at the size the picker is drawn on a phone it
+        /// was the whole button. Deriving the height is what stops the two
+        /// from ever disagreeing again: everything below is placed by
+        /// <see cref="EndRow"/> from one running cursor, and the panel is
+        /// however tall that cursor ended up.
+        /// </summary>
+        private static float EndPanelHeight => EndStackHeight * EndScale;
+
+        /// <summary>
+        /// The vertical stack, in design units before <see cref="EndScale"/>,
+        /// as offsets from <see cref="EndPanelTop"/>. One list, read top to
+        /// bottom, so a change to any row moves everything under it and the
+        /// panel with it.
+        /// </summary>
+        private const float EndRowTitle = 3;        // "CHOOSE HUNTER", 8 tall
+        private const float EndRowPreview = 13;     // the 3D window, EndPreview tall
+        private const float EndRowName = 53.5f;     // the hunter's name, 9.6 tall
+        private const float EndRowSuits = 67.5f;    // the four swatches, 8 tall + a 1.5 ring
+        private const float EndRowSuitName = 79.5f; // "SUIT: ORANGE", 7.2 tall
+        private const float EndRowReady = 90;       // the button, EndReadyHeight tall
+        private const float EndRowNext = 107.5f;    // "NEXT: ROOM", 7.2 tall
+        private const float EndStackHeight = 118;   // and three units of floor under it
+
+        /// <summary>One row's top edge, in HUD units.</summary>
+        private static float EndRow(float offset) => EndPanelTop + offset * EndScale;
+
         private static float EndPortrait => 26 * EndScale;
 
         /// <summary>
@@ -73,7 +107,7 @@ namespace MphRead.Entities
             float bottom = EndPanelTop + EndPanelHeight;
             // Where the 3D preview goes, asked for before the panel is drawn
             // so the hole and the model agree even on the first frame.
-            float previewTop = EndPanelTop + 8 * scale;
+            float previewTop = EndRow(EndRowPreview);
             float previewBottom = previewTop + EndPreview;
             float previewLeft = centre - EndPreview / 2 * aspect;
             float previewRight = centre + EndPreview / 2 * aspect;
@@ -107,7 +141,7 @@ namespace MphRead.Entities
             // a dark patch of the map rather than as something to look at.
             _scene.DrawHudFlatBox(left, EndPanelTop, left + 0.6f * aspect, bottom, _endPanelEdge);
 
-            DrawText2D(centre, EndPanelTop + 2 * scale, Align.Center, palette: 0, "CHOOSE HUNTER",
+            DrawText2D(centre, EndRow(EndRowTitle), Align.Center, palette: 0, "CHOOSE HUNTER",
                 color: _endDim, fontSpacing: 8, scale: 0.5f * scale);
 
             int hunter = Math.Clamp((int)EndScreen.Hunter, 0, Mods.Launcher.Hunters.Playable - 1);
@@ -147,31 +181,36 @@ namespace MphRead.Entities
             EndScreen.Hit forward = DrawEndArrow(right - (2 + EndArrowBox) * aspect, arrowY, ">",
                 EndScreen.HoveredNext, aspect);
 
-            DrawText2D(centre, previewBottom + 2 * scale, Align.Center, palette: 0,
+            DrawText2D(centre, EndRow(EndRowName), Align.Center, palette: 0,
                 ((Hunter)hunter).ToString().ToUpperInvariant(),
                 color: _endInk, fontSpacing: 8, scale: 0.6f * scale);
 
-            float suitTop = previewBottom + 12 * scale;
-            DrawText2D(centre, suitTop, Align.Center, palette: 0, "SUIT",
-                color: _endDim, fontSpacing: 8, scale: 0.45f * scale);
             int suit = EndScreen.Suit;
-            DrawEndSuits((Hunter)hunter, suit, left, suitTop + 6 * scale, aspect);
-            // What was just drawn, in the window's own coordinates, so a click
-            // is tested against the picture rather than against a second copy
-            // of this arithmetic. See EndScreen.NoteLayout.
-            DrawText2D(centre, suitTop + 16 * scale, Align.Center, palette: 0,
-                Mods.HunterSuits.Name(Mods.HunterSuits.Color((Hunter)hunter, suit)),
+            DrawEndSuits((Hunter)hunter, suit, left, EndRow(EndRowSuits), aspect);
+            // One line where there were two. "SUIT" on its own row above the
+            // swatches and the colour's name on its own row below them cost
+            // ten units to say one thing, on the panel that had the least room
+            // to spare; said together they still label the row and the row
+            // above them gets to breathe.
+            DrawText2D(centre, EndRow(EndRowSuitName), Align.Center, palette: 0,
+                $"SUIT: {Mods.HunterSuits.Name(Mods.HunterSuits.Color((Hunter)hunter, suit))}",
                 color: _endInk, fontSpacing: 8, scale: 0.45f * scale);
 
             // Under the picker, because it is the answer to everything above
             // it: the hunter, the suit, and "I have finished reading".
-            EndScreen.Hit ready = DrawEndReady(centre, suitTop + 26 * scale, aspect);
+            // What was just drawn, in the window's own coordinates, so a click
+            // is tested against the picture rather than against a second copy
+            // of this arithmetic. See EndScreen.NoteLayout.
+            EndScreen.Hit ready = DrawEndReady(centre, EndRow(EndRowReady), aspect);
             EndScreen.NoteLayout(prev, forward, _endSuitHits, ready);
 
             string next = EndScreen.NextRoomName;
             if (next.Length > 0)
             {
-                DrawText2D(centre, bottom - 7 * scale, Align.Center, palette: 0,
+                // Below the button, not measured up from the panel's floor:
+                // measuring up from the floor is what put this line inside
+                // READY.
+                DrawText2D(centre, EndRow(EndRowNext), Align.Center, palette: 0,
                     $"NEXT: {next.ToUpperInvariant()}",
                     color: _endDim, fontSpacing: 8, scale: 0.45f * scale);
             }
@@ -190,7 +229,7 @@ namespace MphRead.Entities
         /// <summary>Side of an arrow's clickable box, in HUD height units.</summary>
         private static float EndArrowBox => 12 * EndScale;
 
-        private static float EndReadyWidth => 64 * EndScale;
+        private static float EndReadyWidth => 68 * EndScale;
         private static float EndReadyHeight => 14 * EndScale;
 
         /// <summary>
@@ -212,9 +251,12 @@ namespace MphRead.Entities
             bool on = EndScreen.Ready;
             _scene.DrawHudFlatBox(left, top, right, bottom,
                 on ? _endReadyOn : EndScreen.HoveredReady ? _endArrowHover : _endArrowWell);
-            DrawText2D(centre, top + 3 * EndScale, Align.Center, palette: 0,
+            // 0.42 rather than 0.45: "WAITING FOR OTHERS" is eighteen
+            // characters and at the larger size it ran out of both ends of its
+            // own box.
+            DrawText2D(centre, top + 3.5f * EndScale, Align.Center, palette: 0,
                 on ? "WAITING FOR OTHERS" : "READY",
-                color: on ? _endReadyInk : _endArrow, fontSpacing: 8, scale: 0.45f * EndScale);
+                color: on ? _endReadyInk : _endArrow, fontSpacing: 8, scale: 0.42f * EndScale);
             return ModHudHit(left, top, right, bottom);
         }
 

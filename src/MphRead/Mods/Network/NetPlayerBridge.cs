@@ -562,6 +562,27 @@ namespace MphRead.Mods.Network
             }
             if (!wasInPlay)
             {
+                if (!isLocal && NetHitPrediction.HeldDead(slot))
+                {
+                    // Killed here a moment ago and the authority has not
+                    // caught up. Its copy of this player is a round trip
+                    // behind and still walking about, so spawning them from
+                    // this snapshot would stand the corpse back up for one
+                    // snapshot and then kill it again when the confirmation
+                    // arrives. Left down until the kill is confirmed, or until
+                    // the hold expires and the next snapshot spawns them the
+                    // way it always did. NetHitPrediction.HeldDead.
+                    return;
+                }
+                if (!isLocal)
+                {
+                    // A life is ending here as far as the prediction is
+                    // concerned: anything still outstanding for this slot is
+                    // about the body, not about whoever is standing up. It
+                    // also counts the kill if this machine showed one the
+                    // authority never confirmed.
+                    NetHitPrediction.NoteRespawn(slot);
+                }
                 // The authority has this player on the map and this machine
                 // does not. Spawn() rather than a position write: it is what
                 // clears HideModel, so a player that skipped it tracked
@@ -675,7 +696,14 @@ namespace MphRead.Mods.Network
                     player.Speed = state.Speed;
                     _divergedFrames[slot] = 0;
                 }
-                player.Health = state.Health;
+                // Plus whatever this machine's own beam has drained out of
+                // somebody since the authority last spoke. Everything else
+                // about this number is the authority's, including every point
+                // of damage taken: the credit is added to what it says rather
+                // than replacing it, so a rocket that lands while the Shock
+                // Coil is running still shows up the moment it is reported.
+                // NetHitPrediction.LocalHealthFor.
+                player.Health = NetHitPrediction.LocalHealthFor(player, state.Health);
                 // Including for this machine's own player: being frozen is
                 // part of the match, like health and the score, and a victim
                 // who kept walking about while the authority held them still
@@ -691,7 +719,12 @@ namespace MphRead.Mods.Network
             Move(player, InForm(player, state.Position,
                 (state.Flags & PlayerState.FlagAltForm) != 0));
             player.Speed = state.Speed;
-            player.Health = state.Health;
+            // Less whatever this machine has already landed on them and not
+            // yet had confirmed. The authority's health is correct and a round
+            // trip old, and assigning it raw is what made a predicted hit last
+            // exactly one frame: the victim flinched instantly and their bar
+            // sprang straight back up. NetHitPrediction.HealthFor.
+            player.Health = NetHitPrediction.HealthFor(slot, state.Health);
             player.ModSetFacing(state.Facing);
             player.ModSetWeapon((BeamType)state.CurrentWeapon);
             player.EquipInfo.Zoomed = (state.Flags & PlayerState.FlagZoomed) != 0;

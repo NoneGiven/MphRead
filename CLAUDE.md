@@ -94,7 +94,7 @@ export ALSOFT_DRIVERS=null PULSE_SERVER=   # else ALSA retries stall frames
 | `MphRead -netcheck HOST -port N -name X -hunter H -seconds N [-shots DIR] [-size WxH]` | a real client driven by a script, which reports what it saw. Exit code 0 = pass. `-spectate [SEC]` makes it stop playing and watch, `-rejoin SEC` puts it back in -- the one player state the tour cannot reach on its own |
 | `MphRead -netlag MS[:JITTER]` / `-netloss PCT` | play, or run any check, over a line this client makes up: `-netlag 200` adds 200 ms to the round trip (half each way), `-netlag 200:40` gives it jitter, `-netloss 5` eats one datagram in twenty. Works against the real server, on any platform, with no proxy and no `sudo` -- and unlike `hard/run-latency.sh`'s netem it can be given to **one** client while the others stay fast, which is the case a player with a bad line actually is. Every report says so when it is on |
 | `MphRead -nounlagged` | resolve shots against the present, the way every build before lag compensation did. The control for measuring it; on by default. `.claude/multiplayer/NETWORK-UNLAGGED.md` |
-| `MphRead -nohitprediction` / `-nohitmarker` | wait for the authority before a hit lands, the way every build before instant hit registration did, and drop the mark over the crosshair that says one has. Both on by default; the first is the control for measuring it. `.claude/multiplayer/NETWORK-PREDICTION.md` |
+| `MphRead -nohitprediction` / `-nohitmarker` / `-nodeathprediction` | wait for the authority before a hit lands, the way every build before instant hit registration did; drop the mark over the crosshair that says one has; and clamp a predicted hit to leave the victim standing on one point of health, so the dying waits for the authority. All three on by default; the first and the third are the controls for measuring what they turn off. `.claude/multiplayer/NETWORK-PREDICTION.md` |
 | `MphRead -debuglog` | write the file the launcher's corner switch writes, for one run. `.claude/DEBUG-LOGS.md` |
 | `~/mph-net-test/probe-chat.py [HOST] [PORT]` | what the server does with chat, asked the way no real client can: a spoofed sender, and a flood. `.claude/multiplayer/NETWORK-CHAT.md` |
 | `~/mph-net-test/run-remote.sh HOST PORT SECONDS hunter...` | the same check against a server that is not on this machine -- which is the one that matters, since eight clients on one box measure the box |
@@ -115,6 +115,7 @@ export ALSOFT_DRIVERS=null PULSE_SERVER=   # else ALSA retries stall frames
 | `MphRead -cel on\|off [-celbands N] [-celedge N]` / `-fog on\|off` / `-prohud on\|off` | render options for every path that never opens a launcher, which is every screenshot command. `.claude/render/CEL-SHADING.md` |
 | `MphRead -fpscap N\|display` | how fast the picture is drawn. The simulation is pinned at 60 Hz on every setting, so this does not touch what the game does. `.claude/render/FRAME-PACING.md` |
 | `MphRead -crosshair STYLE` / `-crosshairsize Small\|Medium\|Big` | which crosshair the pro HUD draws, for the screenshot commands that open no launcher. Styles are Cross, Dot, CrossDot, Circle, Brackets |
+| `MphRead -weaponstyle static\|dynamic` | where the gun and the crosshair sit -- Quake's welded pair or the DS game's drifting one, which is the settings screen's Weapon row. For the same paths, and a sharper reason: the two answers differ mainly in what the middle of the picture is doing, so a screenshot is how the difference is checked at all. `quake` and `metroid` are accepted as the same two answers |
 | `MphRead -frametimingcheck` | the fixed-step accumulator on its own, against frame times chosen rather than measured: does the game still run at 60.000 Hz when the screen runs at 144, at 165, at a jitter, or at 40. Needs no game files and no display |
 | `MphRead -maptest "ROOM" -drawrate N` | draw each simulation step N times, which is what a 144 Hz screen does to a 60 Hz game. Asserts that drawing did not advance the world. How the decoupled loop is checked from a box with no monitor |
 | `MphRead -uishot DIR` | pictures of the launcher's own screens -- home, settings, the map picker, the pause menu -- rendered without anyone looking at a display. The one part of the program that could not otherwise be checked from a headless box |
@@ -211,7 +212,14 @@ Gotchas worth keeping in view without opening another file:
   reads `EndScreen.Available`) because the picker is something you click:
   arrows for the hunter, the swatches directly for the suit. The hit boxes are
   published by the draw (`EndScreen.NoteLayout`) rather than worked out twice,
-  so they cannot drift from the picture.
+  so they cannot drift from the picture. **The panel's height is derived from
+  the stack inside it** (`EndRow`/`EndStackHeight`), not stated: it was a
+  constant 92 that the content did not fit, so READY hung out of the bottom
+  edge and the "NEXT: ROOM" line -- placed by measuring *up* from that same
+  edge -- was drawn straight through the middle of it, which at the 1.45x the
+  picker used to be drawn at on a phone was the whole button. The suit caption
+  and the colour's name are one line now ("SUIT: ORANGE") rather than two on
+  either side of the swatches, and `EndScale` is 1.3 on Android.
 - `PacketType.StatusQuery` answers "what map, what mode, how many players"
   without claiming a slot, which is what lets the browser poll idly. A server
   built before it falls back to a slot-taking Hello/Bye probe — redeploy the
@@ -669,21 +677,33 @@ there: the authority puts everyone back to the snapshot frame the shooter had
 applied, which is the world the shooter's own machine is holding when it
 fires, so the local resolution and the authority's are the same test on the
 same positions -- run earlier, on the machine that already has the inputs.
-Three rules keep a prediction from becoming a lie: it **never kills** (the
-damage is clamped to leave the victim on one point of health, and the
-authority's answer does the dying a round trip later, exactly as it used to),
-it therefore **never scores**, and it is **only your own shot on somebody
-else** -- incoming damage is a question about a shot fired on another machine,
-and this one has a worse answer to it than the authority does. Nothing is
-rolled back because nothing durable is written: health comes off the next
-snapshot on the same line it always did. Confirmation is a white X around the
-crosshair, drawn on every machine and in every match, offline included --
-`.claude/multiplayer/NETWORK-PREDICTION.md`. Measured at **86-98% of
-predictions confirmed** across runs -- 86% on the largest sample, with 150 ms
-injected -- and at zero mismatches with a simulating server, where all three
-clients predict. Quote the range: the scripted tour does not fire the same
-shots twice. `-nohitprediction` is the control and `-nohitmarker` turns off
-just the mark. No protocol change.
+Two rules keep a prediction from becoming a lie: it **never scores and never
+ends a match** -- the scoreboard is assigned from the snapshot for every slot
+and `EndIfPointGoalReached` is already refused on a machine that is not
+keeping the score -- and it is **only your own shot on somebody else**, since
+incoming damage is a question about a shot fired on another machine and this
+one has a worse answer to it than the authority does.
+
+**The prediction is held rather than assigned over.** A victim's health is the
+authority's number less what this machine has landed on them and not yet had
+confirmed, a victim predicted dead stays down instead of being stood back up
+by a snapshot that has not heard about it yet, and the health this machine's
+own Shock Coil drains is credited on top of the authority's until it catches
+up. The hold lasts one measured round trip and a margin -- not the two seconds
+a prediction is kept for the statistics -- because a mispredicted hit is a
+wrong health bar and a wrong health bar has to right itself in the time the
+answer takes. **Kills are predicted** too: the body drops and the banner names
+who it was on the frame the shot lands. Nothing is rolled back because nothing
+durable is written -- health, the score and a wrongly killed puppet's spawn all
+come off the next snapshot on the lines that always carried them.
+Confirmation is a white X around the crosshair, drawn on every machine and in
+every match, offline included -- `.claude/multiplayer/NETWORK-PREDICTION.md`.
+Measured at **86-98% of predictions confirmed** across runs -- 86% on the
+largest sample, with 150 ms injected -- and at zero mismatches with a
+simulating server, where all three clients predict. Quote the range: the
+scripted tour does not fire the same shots twice. `-nohitprediction` is the
+control, `-nodeathprediction` the control for the lethal half, and
+`-nohitmarker` turns off just the mark. No protocol change.
 
 **Chat is T**, three lines bottom left in green on nothing, gone ten seconds
 after they arrive -- the frame counter sits in the right-hand corner, which is

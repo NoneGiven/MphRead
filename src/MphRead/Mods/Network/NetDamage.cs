@@ -522,6 +522,17 @@ namespace MphRead.Mods.Network
             // reporting. The health that ends up on screen is the
             // authority's, which already accounts for every one of them.
             Replayed[slot] += landed;
+            bool lethal = state.Health == 0;
+            // Consumed before the "already down" return below, not after it.
+            //
+            // A kill predicted here leaves the victim at zero health on this
+            // machine, so the authority's confirmation of that very kill would
+            // hit that return and never retire the prediction -- which would
+            // both count a hit that landed as denied and hold the corpse down
+            // for the whole of the hold window rather than until the answer
+            // arrived. Retiring it here is the answer arriving.
+            bool mine = slot != NetHooks.LocalSlot && state.AttackerSlot == NetHooks.LocalSlot;
+            bool predicted = mine && NetHitPrediction.Confirm(slot, landed);
             if (player.Health <= 0)
             {
                 return; // already down here; the respawn is what matters next
@@ -529,20 +540,25 @@ namespace MphRead.Mods.Network
             PlayerEntity? attacker = state.AttackerSlot < PlayerEntity.Players.Count
                 ? PlayerEntity.Players[state.AttackerSlot]
                 : null;
-            bool lethal = state.Health == 0;
             // Already shown here, the moment the trigger was pulled: the
             // flinch, the sound, the knockback and the mark over the
             // crosshair all ran when this machine resolved the shot for
             // itself. Only the health is still owed, and ApplyState assigns
-            // that from this same snapshot immediately after. A lethal hit is
-            // never one of these -- a prediction is not allowed to kill -- so
-            // the confirmation is consumed and the kill replayed in full.
-            // Not for a hit on this machine's own player, even one it
-            // dealt itself: nothing is ever predicted onto the local player,
-            // so asking would only report every splash from one's own bomb
-            // as a hit the prediction had missed.
-            if (slot != NetHooks.LocalSlot && state.AttackerSlot == NetHooks.LocalSlot
-                && NetHitPrediction.Confirm(slot) && !lethal)
+            // that from this same snapshot immediately after.
+            //
+            // A lethal confirmation still replays, even when the hit itself
+            // was predicted: reaching here with a lethal snapshot means this
+            // machine's prediction did *not* kill them -- either it was
+            // clamped (-nodeathprediction) or the killing blow was somebody
+            // else's -- and returning early would leave a player alive here
+            // and dead on every other screen. A kill this machine did predict
+            // never reaches this line; it is the "already down" return above.
+            //
+            // Not for a hit on this machine's own player, even one it dealt
+            // itself: nothing is ever predicted onto the local player, so
+            // asking would only report every splash from one's own bomb as a
+            // hit the prediction had missed.
+            if (predicted && !lethal)
             {
                 return;
             }

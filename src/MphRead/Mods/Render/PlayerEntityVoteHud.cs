@@ -8,9 +8,11 @@ namespace MphRead.Entities
     /// <summary>
     /// The map vote, on screen.
     ///
-    /// Top left, and small. It is a question asked in the middle of a match:
-    /// it has to be readable without stopping, and it must not sit where a
-    /// player is looking. Everything it draws is read out of
+    /// Small, and out of the way of both the middle of the screen and
+    /// whatever else the platform has put in a corner -- see
+    /// <see cref="VoteLeft"/>. It is a question asked in the middle of a
+    /// match: it has to be readable without stopping, and it must not sit
+    /// where a player is looking. Everything it draws is read out of
     /// <see cref="MapVote"/>, which is a copy of what the server last said --
     /// nothing here decides anything about the vote, including whether this
     /// player has already answered it.
@@ -25,12 +27,41 @@ namespace MphRead.Entities
     /// </summary>
     public partial class PlayerEntity
     {
-        private const float VoteLeft = 6;
-        private const float VoteTop = 8;
+        /// <summary>
+        /// Where the panel's top-left corner goes.
+        ///
+        /// The top-left corner of the HUD on a desktop, and a good way in and
+        /// down from it on a phone -- because on a phone that corner is not
+        /// free. MENU, SCORE and CHAT are drawn on the glass at 0.12 of the
+        /// height with a radius of 0.06, so the three of them own everything
+        /// above y 37 in HUD units, and the pro HUD's weapon column owns the
+        /// left edge (out to x 46) from y 46 down. The panel used to be drawn
+        /// underneath all of that: the prompt was legible only in the gaps
+        /// between three circles, and every tap meant for ACCEPT pressed MENU.
+        /// Clearing the row costs nothing on any window shape, since the row's
+        /// height is a fraction of the screen's and so is fixed in these
+        /// units.
+        ///
+        /// The right-hand edge is the other constraint, and it is what sets
+        /// <see cref="VoteButtonScale"/>: WEAPON reaches x 216 and y 45 on a
+        /// 4:3 tablet, where a HUD unit across is a HUD unit down, so the
+        /// panel has to end before it.
+        /// </summary>
+        private static float VoteLeft => OperatingSystem.IsAndroid() ? 52 : 6;
+        private static float VoteTop => OperatingSystem.IsAndroid() ? 42 : 8;
         private const float VoteLineHeight = 8;
-        private const float VoteButtonWidth = 52;
-        private const float VoteButtonHeight = 13;
-        private const float VoteButtonGap = 4;
+
+        /// <summary>
+        /// How much bigger the two answers are drawn where they are pressed
+        /// with a thumb rather than clicked. Same reasoning as
+        /// <c>EndScale</c>: a fingertip is about nine millimetres and these
+        /// were laid out for a pointer a pixel wide.
+        /// </summary>
+        private static float VoteButtonScale => OperatingSystem.IsAndroid() ? 1.35f : 1f;
+
+        private static float VoteButtonWidth => 52 * VoteButtonScale;
+        private static float VoteButtonHeight => 13 * VoteButtonScale;
+        private static float VoteButtonGap => 4 * VoteButtonScale;
 
         private static readonly Vector4 _votePanel = new Vector4(0, 0, 0, 0.42f);
         private static readonly Vector4 _voteAccept = new Vector4(0.24f, 0.78f, 0.33f, 0.40f);
@@ -69,7 +100,10 @@ namespace MphRead.Entities
             bool buttons = VoteByTouch && !MapVote.Answered;
             float height = VoteLineHeight * 2 + 4
                 + (buttons ? VoteButtonHeight + VoteButtonGap : 0);
-            float right = VoteLeft + Math.Max(118f, 0f) * aspect;
+            // Wide enough for the prompt, and never narrower than the two
+            // buttons under it plus their gap.
+            float width = Math.Max(118f, VoteButtonWidth * 2 + VoteButtonGap + 6);
+            float right = VoteLeft + width * aspect;
             _scene.DrawHudFlatBox(VoteLeft, VoteTop, right, VoteTop + height, _votePanel);
             DrawText2D(VoteLeft + 3 * aspect, VoteTop + 2, Align.Left, palette: 0,
                 prompt, color: _voteInk, fontSpacing: 8, scale: 0.42f);
@@ -94,10 +128,13 @@ namespace MphRead.Entities
                 overAccept ? _voteAcceptLit : _voteAccept);
             _scene.DrawHudFlatBox(denyLeft, top, denyRight, bottom,
                 overDeny ? _voteDenyLit : _voteDeny);
-            DrawText2D((acceptLeft + acceptRight) / 2, top + 3, Align.Center, palette: 0,
-                "ACCEPT", color: _voteInk, fontSpacing: 8, scale: 0.42f);
-            DrawText2D((denyLeft + denyRight) / 2, top + 3, Align.Center, palette: 0,
-                "DENY", color: _voteInk, fontSpacing: 8, scale: 0.42f);
+            // Centred in the box rather than a fixed drop from its top, so
+            // the label stays in the middle of a button drawn at any size.
+            float labelY = top + (VoteButtonHeight - 16 * 0.42f * VoteButtonScale) / 2;
+            DrawText2D((acceptLeft + acceptRight) / 2, labelY, Align.Center, palette: 0,
+                "ACCEPT", color: _voteInk, fontSpacing: 8, scale: 0.42f * VoteButtonScale);
+            DrawText2D((denyLeft + denyRight) / 2, labelY, Align.Center, palette: 0,
+                "DENY", color: _voteInk, fontSpacing: 8, scale: 0.42f * VoteButtonScale);
             MapVote.NoteLayout(accept, deny);
         }
 

@@ -523,11 +523,20 @@ namespace MphRead.Mods.Launcher.Gui
             _crosshairSizeRow.Changed += (_, _) => _crosshairStyleRow.InvalidateVisual();
             // Where the gun sits, which is the one Pro-mode question with two
             // real answers rather than a right one. Static is Quake's: the
-            // weapon is welded to the camera and the HUD stops sliding around
-            // under the mouse. Dynamic is the DS game's: it lags behind the
-            // aim point and settles after it. Pro mode has always drawn the
-            // first, so that stays the default -- this only makes the second
-            // reachable without giving up the rest of the HUD.
+            // weapon is welded to the camera, the crosshair sits dead centre
+            // and the HUD stops sliding around under the mouse. Dynamic is the
+            // DS game's: the gun lags behind the aim point and settles after
+            // it, and the crosshair moves around the screen with the aim while
+            // the camera follows. Pro mode has always drawn the first, so that
+            // stays the default -- this only makes the second reachable
+            // without giving up the rest of the HUD.
+            //
+            // The crosshair is the half that used not to move. It was drawn
+            // wherever Features.FixedCrosshair said, which Pro mode forces on
+            // for a different reason -- the DS reticle animates as you fire
+            // and a crosshair must not -- so answering Dynamic moved the gun
+            // and left the thing the player is actually looking at welded to
+            // the middle of the screen. See PlayerHud.UpdateReticle.
             _weaponStyleRow = Add(page, new ChoiceRow("Weapon",
                 new[] { "Static (Quake)", "Dynamic (Metroid)" },
                 Features.ProHudFixedWeapon ? 0 : 1));

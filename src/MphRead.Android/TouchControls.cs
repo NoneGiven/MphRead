@@ -398,6 +398,17 @@ namespace MphRead.Droid
         private float _tapY;
 
         /// <summary>
+        /// Remember a tap for the game loop, in window fractions. Called with
+        /// the lock held.
+        /// </summary>
+        private void NoteTapLocked(float x, float y)
+        {
+            _tapPending = true;
+            _tapX = x / Math.Max(Width, 1);
+            _tapY = y / Math.Max(Height, 1);
+        }
+
+        /// <summary>
         /// The tap the glass captured for the HUD, in window fractions, or
         /// nothing. Taken by the game loop, which is the thread that may act
         /// on it -- touches arrive on the UI thread and the picker's state
@@ -417,20 +428,23 @@ namespace MphRead.Droid
         }
 
         /// <summary>
-        /// Whether a touch at this point belongs to the HUD rather than to
-        /// the world. Called with the lock held.
+        /// Whether a touch landed on one of the rectangles the HUD published
+        /// this frame. Called with the lock held.
+        ///
+        /// Asked <i>before</i> the round buttons rather than after them, which
+        /// is the whole of why voting did nothing on a phone: the vote's
+        /// ACCEPT and DENY sat in the top-left corner of the HUD and MENU,
+        /// SCORE and CHAT sit in the top-left corner of the glass, so every
+        /// tap meant for a ballot was eaten by whichever circle was over it.
+        /// These rectangles exist for a handful of seconds and only while
+        /// something is asking a question with them; a permanent control
+        /// underneath one has not been reached for.
         /// </summary>
-        private bool TapIsForHudLocked(float x, float y)
+        private bool TapHitsTargetLocked(float x, float y)
         {
             if (Width <= 0 || Height <= 0)
             {
                 return false;
-            }
-            // The results screen takes everything the buttons did not: there
-            // is no world to aim at while it is up.
-            if (_endScreen)
-            {
-                return true;
             }
             float fx = x / Width;
             float fy = y / Height;
@@ -443,6 +457,21 @@ namespace MphRead.Droid
                 }
             }
             return false;
+        }
+
+        /// <summary>
+        /// Whether a touch the buttons did not take belongs to the HUD rather
+        /// than to the world. Called with the lock held.
+        /// </summary>
+        private bool TapIsForHudLocked(float x, float y)
+        {
+            if (Width <= 0 || Height <= 0)
+            {
+                return false;
+            }
+            // The results screen takes everything the buttons did not: there
+            // is no world to aim at while it is up.
+            return _endScreen;
         }
 
         /// <summary>
@@ -893,6 +922,16 @@ namespace MphRead.Droid
         /// <summary>Called with the lock already held.</summary>
         private void PointerDownLocked(int pointerId, float x, float y)
         {
+            if (TapHitsTargetLocked(x, y))
+            {
+                // Straight to the game loop as a point on the screen, and
+                // before the buttons get a look at it: see
+                // TapHitsTargetLocked. Not held, not dragged -- what is under
+                // it is a button on the HUD, and a press and a release in the
+                // same place is the whole gesture.
+                NoteTapLocked(x, y);
+                return;
+            }
             foreach (TouchButton button in _buttons)
             {
                 if (button.Visible && button.Contains(x, y))
@@ -921,13 +960,7 @@ namespace MphRead.Droid
             }
             if (TapIsForHudLocked(x, y))
             {
-                // Straight to the game loop as a point on the screen. Not
-                // held, not dragged: what is under it is a button on the HUD,
-                // and a press and a release in the same place is the whole
-                // gesture.
-                _tapPending = true;
-                _tapX = x / Math.Max(Width, 1);
-                _tapY = y / Math.Max(Height, 1);
+                NoteTapLocked(x, y);
                 return;
             }
             if (!PointerIsAbsolute && x < Width / 2 && _stickPointer == -1)

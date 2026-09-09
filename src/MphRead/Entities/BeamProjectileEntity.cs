@@ -603,8 +603,18 @@ namespace MphRead.Entities
                                 var ownerPlayer = (PlayerEntity)Owner;
                                 if (!ownerPlayer.IsPrimeHunter && ownerPlayer.TeamIndex != player.TeamIndex)
                                 {
+                                    int before = ownerPlayer.Health;
                                     // GainHealth checks if the player is alive
                                     ownerPlayer.GainHealth(wholeDamage);
+                                    // What it actually gained, not what it was
+                                    // offered: the halfturret splits a heal in
+                                    // two and a full tank takes none of it, and
+                                    // a credit for health that was never
+                                    // granted would float the bar above what
+                                    // the authority is about to report. See
+                                    // Mods.Network.NetHitPrediction.NoteDrain.
+                                    Mods.Network.NetHitPrediction.NoteDrain(ownerPlayer,
+                                        ownerPlayer.Health - before);
                                 }
                             }
                             if (!player.IsMainPlayer || player.IsAltForm || player.IsMorphing)

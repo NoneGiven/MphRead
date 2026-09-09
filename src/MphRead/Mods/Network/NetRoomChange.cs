@@ -200,6 +200,7 @@ namespace MphRead.Mods.Network
             NetSlotManager.Reset();
             NetPlayerSetup.Reset();
             NetDamage.ResetForRoomChange();
+            NetHitPrediction.ForgetPending();
             ResetScores();
             Console.WriteLine($"[net] player slots rebuilt for the new room, main player = slot {localSlot}");
             return PlayerEntity.Players[localSlot];

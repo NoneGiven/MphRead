@@ -28,26 +28,41 @@ namespace MphRead.Mods.Network
     /// meantime). Without <see cref="NetUnlagged"/> underneath it this would
     /// mispredict exactly as often as the shots used to miss.
     ///
-    /// Three rules keep a prediction from becoming a lie:
+    /// Two rules keep a prediction from becoming a lie:
     ///
     /// <list type="number">
-    /// <item><b>A prediction never kills.</b> Damage is clamped to leave the
-    /// victim on one point of health. Death runs the whole engine death path
-    /// -- the banner, the score, the respawn timer, and
-    /// <c>EndIfPointGoalReached</c> -- and a kill that turned out not to have
-    /// happened would have to be taken back out of all of it. The killing
-    /// shot still *feels* instant, because the marker and the flinch are
-    /// shown; only the dying waits for the authority, exactly as it does
-    /// today.</item>
-    /// <item><b>A prediction never scores.</b> It cannot: nothing but the
-    /// death path awards a point, and the death path is the one thing a
-    /// prediction is not allowed to reach.</item>
+    /// <item><b>A prediction never scores and never ends a match.</b> The
+    /// scoreboard is assigned from the snapshot for every slot, so a point
+    /// awarded by a predicted kill is overwritten by the authority's answer
+    /// within a snapshot either way; and <c>EndIfPointGoalReached</c> is
+    /// already refused on a machine that is not keeping the score, by
+    /// <c>NetMatchEnd.MayEndOnScore</c>. What the death path is allowed to do
+    /// here is the part a player is waiting for -- the body drops, the banner
+    /// says who it was, the mark lands.</item>
     /// <item><b>A prediction is only ever your own shot on somebody else.</b>
     /// Incoming damage is not predicted. Whether you were hit is a question
     /// about a shot fired on another machine, aimed at a copy of you that
     /// machine is holding, and this one has no better guess at it than the
-    /// authority's -- it has a worse one.</item>
+    /// authority's -- it has a worse one. The one thing predicted *onto* this
+    /// machine's own player is the health its own Shock Coil drains out of
+    /// somebody else, which is not a guess about anybody else's input.</item>
     /// </list>
+    ///
+    /// <para>
+    /// <b>What is held, and for how long.</b> Predicting a hit and then
+    /// letting the next snapshot assign the authority's health straight over
+    /// it is a prediction that lasts one frame: the flinch is instant and the
+    /// bar springs back up, which is the thing "it is not registering" is
+    /// actually describing. So a prediction is held -- the victim's health is
+    /// the authority's number minus whatever this machine has predicted and
+    /// not yet had confirmed, and a victim predicted dead stays down rather
+    /// than being respawned by a snapshot that has not heard about it yet.
+    /// The hold lasts one measured round trip and a margin
+    /// (<see cref="HoldFrames"/>), never the two seconds a prediction is kept
+    /// for the statistics: a mispredicted hit is a wrong health bar, and a
+    /// wrong health bar has to expire in the time it takes the authority to
+    /// answer rather than in the time it takes to be sure it never will.
+    /// </para>
     ///
     /// What the prediction is reconciled against is <see cref="NetDamage"/>'s
     /// existing replay. A hit the authority confirms for a victim this
@@ -55,7 +70,9 @@ namespace MphRead.Mods.Network
     /// one it never confirms expires quietly, and the health the snapshot
     /// carries -- which is applied every frame anyway -- puts the victim back
     /// where the authority says. Nothing has to be rolled back, because
-    /// nothing durable was ever written.
+    /// nothing durable is ever written: health is assigned from the snapshot,
+    /// the score is assigned from the snapshot, and a wrongly killed puppet is
+    /// put back on the map by the same branch that spawns everybody else.
     /// </summary>
     public static class NetHitPrediction
     {
@@ -106,13 +123,88 @@ namespace MphRead.Mods.Network
         /// Predictions outstanding for one victim at once. A burst of Judicator
         /// shots or a Battlehammer stream can put several in the air before
         /// the first is answered; beyond this the oldest is dropped, since a
-        /// prediction nobody has confirmed in eight hits is not going to be.
+        /// prediction nobody has confirmed in two dozen hits is not going to
+        /// be.
+        ///
+        /// Two dozen rather than the eight this started at, because the Shock
+        /// Coil resolves a hit every other frame for as long as the trigger is
+        /// held: at 300 ms of round trip that is nine outstanding before the
+        /// first answer arrives, and an overflow does not merely lose a
+        /// statistic any more -- it drops that hit's damage out of the health
+        /// the victim is being held at.
         /// </summary>
-        private const int PendingCapacity = 8;
+        private const int PendingCapacity = 24;
 
         private static readonly uint[,] _pendingFrame = new uint[Slots, PendingCapacity];
+
+        /// <summary>
+        /// What each outstanding prediction took off that victim, so the bar
+        /// can be drawn at the authority's health minus what this machine has
+        /// already landed on them. See <see cref="HealthFor"/>.
+        /// </summary>
+        private static readonly int[,] _pendingDamage = new int[Slots, PendingCapacity];
+
+        /// <summary>Whether that prediction was the one that killed them here.</summary>
+        private static readonly bool[,] _pendingLethal = new bool[Slots, PendingCapacity];
+
         private static readonly int[] _pendingCount = new int[Slots];
         private static readonly int[] _pendingHead = new int[Slots];
+
+        /// <summary>
+        /// How long a prediction is allowed to hold the picture: one measured
+        /// round trip, a snapshot's gap, and a margin.
+        ///
+        /// Not <see cref="PendingFrames"/>, which is how long a prediction is
+        /// kept for the *statistics* -- two seconds, deliberately generous,
+        /// because a confirmation that arrives late is still a confirmation
+        /// and counting it as a miss would flatter nothing. Holding a health
+        /// bar for two seconds is a different proposition: a hit that was
+        /// wrong is a health bar that is wrong, and it has to right itself in
+        /// about the time the authority takes to answer rather than in the
+        /// time it takes to be certain it never will.
+        ///
+        /// The ping is the server's own measurement of this client's round
+        /// trip (see <see cref="NetSession.SlotPing"/>), which is zero until
+        /// it has one -- and the clamp is what makes that read as "assume a
+        /// quarter of a second" rather than as "hold nothing".
+        /// </summary>
+        private static int HoldFrames
+        {
+            get
+            {
+                int slot = NetHooks.LocalSlot;
+                int ping = slot >= 0 && slot < NetSession.SlotPing.Length
+                    ? NetSession.SlotPing[slot]
+                    : 0;
+                // 60 Hz of simulation, plus twelve frames for the gap between
+                // snapshots and the rewind the authority may have applied.
+                return Math.Clamp((int)(ping * 0.06f) + 12, 15, 90);
+            }
+        }
+
+        /// <summary>
+        /// Health this machine's own player has drained out of somebody else
+        /// and not yet been told about, as (frame, amount).
+        ///
+        /// The Shock Coil takes what it deals and gives it to the shooter, and
+        /// that is the one heal a client can work out for itself: it is the
+        /// arithmetic of a hit this machine has already resolved, not a guess
+        /// about anybody's input. Without it the beam was the one weapon in
+        /// the game whose whole point arrived a round trip late -- the victim
+        /// flinched instantly, courtesy of the prediction, and the health it
+        /// bought did not turn up until the authority said so.
+        ///
+        /// Kept as a credit on top of the authority's number rather than as an
+        /// absolute health, so damage taken while draining still shows the
+        /// moment the authority reports it. A stale credit is worth a point or
+        /// two for a fraction of a second; a stale absolute would hide a
+        /// rocket.
+        /// </summary>
+        private const int HealCapacity = 48;
+        private static readonly uint[] _healFrame = new uint[HealCapacity];
+        private static readonly int[] _healAmount = new int[HealCapacity];
+        private static int _healCount;
+        private static int _healHead;
 
         /// <summary>Hits this machine resolved for itself, before being told.</summary>
         public static long Predicted { get; private set; }
@@ -135,8 +227,39 @@ namespace MphRead.Mods.Network
         /// </summary>
         public static long Unpredicted { get; private set; }
 
-        /// <summary>Kills held back so the authority could make them.</summary>
+        /// <summary>
+        /// Kills held back so the authority could make them -- which is what
+        /// every lethal prediction did before death was predicted, and what
+        /// one still does under <c>-nodeathprediction</c>.
+        /// </summary>
         public static long LethalHeld { get; private set; }
+
+        /// <summary>Kills this machine showed the instant it landed them.</summary>
+        public static long DeathsPredicted { get; private set; }
+
+        /// <summary>
+        /// Deaths predicted here that the authority did not agree with, so the
+        /// puppet was put back on the map. The number that says whether
+        /// predicting death is worth having; a wrongly killed player is the
+        /// most visible thing this whole file can get wrong.
+        /// </summary>
+        public static long DeathsUndone { get; private set; }
+
+        /// <summary>Health drained by this machine's own beam, ahead of the authority.</summary>
+        public static long DrainPredicted { get; private set; }
+
+        /// <summary>
+        /// Whether a lethal prediction is allowed to kill.
+        ///
+        /// On, and off with <c>-nodeathprediction</c>, which is the control
+        /// for measuring it the way <c>-nohitprediction</c> is for the rest.
+        /// With it off the damage is clamped to leave the victim standing on
+        /// one point of health and the dying waits for the authority, which is
+        /// what this did originally: the killing shot still *felt* instant,
+        /// because the mark and the flinch were shown, but the prediction
+        /// visibly stopped one point short of the thing it was predicting.
+        /// </summary>
+        public static bool DeathEnabled { get; set; } = true;
 
         private static int _markerTimer;
 
@@ -167,13 +290,22 @@ namespace MphRead.Mods.Network
         public static void Reset()
         {
             Array.Clear(_pendingFrame);
+            Array.Clear(_pendingDamage);
+            Array.Clear(_pendingLethal);
             Array.Clear(_pendingCount);
             Array.Clear(_pendingHead);
+            Array.Clear(_healFrame);
+            Array.Clear(_healAmount);
+            _healCount = 0;
+            _healHead = 0;
             Predicted = 0;
             Confirmed = 0;
             Denied = 0;
             Unpredicted = 0;
             LethalHeld = 0;
+            DeathsPredicted = 0;
+            DeathsUndone = 0;
+            DrainPredicted = 0;
             _markerTimer = 0;
         }
 
@@ -256,18 +388,24 @@ namespace MphRead.Mods.Network
             }
             if (Predicting && Enabled)
             {
-                if (victim.Health > 0 && damage >= (uint)victim.Health)
+                bool lethal = victim.Health > 0 && damage >= (uint)victim.Health;
+                if (lethal && !DeathEnabled)
                 {
-                    // Rule one. The victim is left standing on a single point
-                    // of health until the authority says otherwise, which it
-                    // will within a round trip -- and when it does,
-                    // NetDamage.Replay runs the kill in full, with the Death
-                    // flag, exactly as it did before any of this existed.
+                    // The old rule one, kept as the control. The victim is
+                    // left standing on a single point of health until the
+                    // authority says otherwise, which it will within a round
+                    // trip -- and when it does, NetDamage.Replay runs the kill
+                    // in full, with the Death flag.
                     damage = (uint)Math.Max(0, victim.Health - 1);
                     LethalHeld++;
+                    lethal = false;
                 }
-                Push(victim.SlotIndex, NetSession.NetFrame);
+                Push(victim.SlotIndex, NetSession.NetFrame, (int)damage, lethal);
                 Predicted++;
+                if (lethal)
+                {
+                    DeathsPredicted++;
+                }
             }
             // Every machine, every mode: on the authority and offline this is
             // a hit that has actually happened, and there is no reason the
@@ -287,7 +425,7 @@ namespace MphRead.Mods.Network
         /// the sound and the knockback all happened when the trigger was
         /// pulled.
         /// </summary>
-        public static bool Confirm(int slot)
+        public static bool Confirm(int slot, int landed = 1)
         {
             if (slot < 0 || slot >= Slots)
             {
@@ -298,10 +436,234 @@ namespace MphRead.Mods.Network
                 Unpredicted++;
                 return false;
             }
-            _pendingHead[slot] = (_pendingHead[slot] + 1) % PendingCapacity;
-            _pendingCount[slot]--;
-            Confirmed++;
+            // As many as the snapshot says landed, not one.
+            //
+            // A snapshot carries a *count* of hits since the last one and the
+            // slot of only the last attacker, and this used to retire a single
+            // prediction however many it was reporting. Two of this machine's
+            // own hits inside one snapshot window therefore left one of them
+            // outstanding, to time out later looking like a miss -- which is
+            // most of what the "denied" number was measuring, and, now that a
+            // prediction holds the victim's health, a hold that outlived its
+            // confirmation by the whole of the window. Capped at what is
+            // actually outstanding, so a burst that included somebody else's
+            // hits cannot retire more than this machine predicted.
+            int take = Math.Clamp(landed, 1, _pendingCount[slot]);
+            for (int i = 0; i < take; i++)
+            {
+                _pendingHead[slot] = (_pendingHead[slot] + 1) % PendingCapacity;
+                _pendingCount[slot]--;
+                Confirmed++;
+            }
             return true;
+        }
+
+        /// <summary>
+        /// Forget what is outstanding for one slot, because the slot has
+        /// changed hands or the room has.
+        ///
+        /// A prediction describes a hit on a particular player in a particular
+        /// room. Kept across either, the worst of it is a lethal one holding
+        /// the new occupant of that slot dead on this screen for the length of
+        /// the hold -- a player who has just spawned into a fresh map, lying
+        /// down because somebody else was shot before the rotation. The
+        /// statistics go with it: they are per-match, like
+        /// <c>NetDamage.ResetForRoomChange</c>'s tallies.
+        /// </summary>
+        public static void ForgetSlot(int slot)
+        {
+            if (slot < 0 || slot >= Slots)
+            {
+                return;
+            }
+            for (int i = 0; i < PendingCapacity; i++)
+            {
+                _pendingFrame[slot, i] = 0;
+                _pendingDamage[slot, i] = 0;
+                _pendingLethal[slot, i] = false;
+            }
+            _pendingCount[slot] = 0;
+            _pendingHead[slot] = 0;
+        }
+
+        /// <summary>
+        /// The authority has put <paramref name="slot"/> back on the map, so
+        /// everything this machine predicted about their last life is spent.
+        ///
+        /// Two jobs at one moment. It counts a kill this machine showed that
+        /// the authority never confirmed -- the hold expired, the next
+        /// snapshot stood them up, and that is exactly what a mispredicted
+        /// kill looks like from here. And it drops the outstanding debit,
+        /// because a prediction about the life that just ended must not come
+        /// off the health of the one that just started: without this, a
+        /// player killed and respawned inside the hold window would come back
+        /// with the last twenty points this machine had landed on them
+        /// already taken off.
+        /// </summary>
+        public static void NoteRespawn(int slot)
+        {
+            if (slot < 0 || slot >= Slots)
+            {
+                return;
+            }
+            for (int i = 0; i < _pendingCount[slot]; i++)
+            {
+                int at = (_pendingHead[slot] + i) % PendingCapacity;
+                if (_pendingLethal[slot, at])
+                {
+                    DeathsUndone++;
+                    break;
+                }
+            }
+            ForgetSlot(slot);
+        }
+
+        /// <summary>Everything outstanding, for a rotation into a new room.</summary>
+        public static void ForgetPending()
+        {
+            for (int slot = 0; slot < Slots; slot++)
+            {
+                ForgetSlot(slot);
+            }
+            _healCount = 0;
+            _healHead = 0;
+        }
+
+        /// <summary>
+        /// Health this machine's own Shock Coil has just drained, before the
+        /// authority has said so.
+        ///
+        /// Called from the beam's life-drain branch, beside the
+        /// <c>GainHealth</c> it is reporting. Only the credit is recorded here
+        /// -- the engine has already applied the heal locally, exactly as it
+        /// does offline; this is what stops the next snapshot from assigning
+        /// it straight back off again.
+        /// </summary>
+        public static void NoteDrain(PlayerEntity healer, int amount)
+        {
+            if (!Enabled || !Predicting || amount <= 0)
+            {
+                return;
+            }
+            int local = NetHooks.LocalSlot;
+            if (local < 0 || healer.SlotIndex != local)
+            {
+                return;
+            }
+            if (_healCount == HealCapacity)
+            {
+                _healHead = (_healHead + 1) % HealCapacity;
+                _healCount--;
+            }
+            int tail = (_healHead + _healCount) % HealCapacity;
+            _healFrame[tail] = NetSession.NetFrame;
+            _healAmount[tail] = amount;
+            _healCount++;
+            DrainPredicted += amount;
+        }
+
+        /// <summary>
+        /// What this machine has taken off <paramref name="slot"/> and not yet
+        /// been told about, in points of health.
+        /// </summary>
+        private static int Debit(int slot)
+        {
+            if (!Enabled || slot < 0 || slot >= Slots || _pendingCount[slot] == 0)
+            {
+                return 0;
+            }
+            uint now = NetSession.NetFrame;
+            int hold = HoldFrames;
+            int debit = 0;
+            for (int i = 0; i < _pendingCount[slot]; i++)
+            {
+                int at = (_pendingHead[slot] + i) % PendingCapacity;
+                if (now - _pendingFrame[slot, at] < (uint)hold)
+                {
+                    debit += _pendingDamage[slot, at];
+                }
+            }
+            return debit;
+        }
+
+        /// <summary>
+        /// The health to show for a puppet: the authority's number, less what
+        /// this machine has already landed on them and not yet had confirmed.
+        ///
+        /// Never zero on its own account. Assigning zero health is not a
+        /// death -- it skips the whole death path -- so a hold that ran the
+        /// bar to the bottom would produce a player who is neither alive nor
+        /// dead. A predicted kill goes through <c>TakeDamage</c> like any
+        /// other and is held by <see cref="HeldDead"/> instead.
+        /// </summary>
+        public static int HealthFor(int slot, int authorityHealth)
+        {
+            int debit = Debit(slot);
+            if (debit <= 0 || authorityHealth <= 1)
+            {
+                return authorityHealth;
+            }
+            return Math.Max(1, authorityHealth - debit);
+        }
+
+        /// <summary>
+        /// This machine's own health: the authority's number plus whatever its
+        /// beam has drained since the authority last spoke.
+        /// </summary>
+        public static int LocalHealthFor(PlayerEntity player, int authorityHealth)
+        {
+            if (!Enabled || authorityHealth <= 0 || _healCount == 0)
+            {
+                return authorityHealth;
+            }
+            uint now = NetSession.NetFrame;
+            int hold = HoldFrames;
+            int credit = 0;
+            for (int i = 0; i < _healCount; i++)
+            {
+                int at = (_healHead + i) % HealCapacity;
+                if (now - _healFrame[at] < (uint)hold)
+                {
+                    credit += _healAmount[at];
+                }
+            }
+            if (credit <= 0)
+            {
+                return authorityHealth;
+            }
+            int max = player.HealthMax > 0 ? player.HealthMax : authorityHealth;
+            return Math.Clamp(authorityHealth + credit, 0, max);
+        }
+
+        /// <summary>
+        /// Whether this machine has killed <paramref name="slot"/> and is
+        /// still waiting to hear whether it was right.
+        ///
+        /// While this is true the snapshot is not allowed to put that player
+        /// back on the map: the authority's copy of them is a round trip
+        /// behind and still walking around, and respawning the corpse every
+        /// snapshot until the kill is confirmed is worse than either answer.
+        /// It stops being true the moment the kill is confirmed -- or, if it
+        /// never is, when the hold expires and the next snapshot spawns them
+        /// as it always did.
+        /// </summary>
+        public static bool HeldDead(int slot)
+        {
+            if (!Enabled || !DeathEnabled || slot < 0 || slot >= Slots)
+            {
+                return false;
+            }
+            uint now = NetSession.NetFrame;
+            int hold = HoldFrames;
+            for (int i = 0; i < _pendingCount[slot]; i++)
+            {
+                int at = (_pendingHead[slot] + i) % PendingCapacity;
+                if (_pendingLethal[slot, at] && now - _pendingFrame[slot, at] < (uint)hold)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>
@@ -339,9 +701,18 @@ namespace MphRead.Mods.Network
                     Denied++;
                 }
             }
+            // The drain credit is aged on the same clock. It is only ever read
+            // through the hold window, so this is housekeeping rather than
+            // policy -- it keeps the ring from filling with entries nothing
+            // will ever count again.
+            while (_healCount > 0 && now - _healFrame[_healHead] >= PendingFrames)
+            {
+                _healHead = (_healHead + 1) % HealCapacity;
+                _healCount--;
+            }
         }
 
-        private static void Push(int slot, uint frame)
+        private static void Push(int slot, uint frame, int damage, bool lethal)
         {
             if (slot < 0 || slot >= Slots)
             {
@@ -355,6 +726,8 @@ namespace MphRead.Mods.Network
             }
             int tail = (_pendingHead[slot] + _pendingCount[slot]) % PendingCapacity;
             _pendingFrame[slot, tail] = frame;
+            _pendingDamage[slot, tail] = Math.Max(0, damage);
+            _pendingLethal[slot, tail] = lethal;
             _pendingCount[slot]++;
         }
 
@@ -371,9 +744,13 @@ namespace MphRead.Mods.Network
                     + $"({Unpredicted} hits arrived from the authority)";
             }
             double agreed = Confirmed * 100.0 / Predicted;
+            string deaths = DeathEnabled
+                ? $"{DeathsPredicted} kills predicted, {DeathsUndone} undone"
+                : $"{LethalHeld} kills left to the authority";
+            string drain = DrainPredicted > 0 ? $", {DrainPredicted} health drained ahead" : "";
             return $"hit prediction: {Predicted} predicted, {Confirmed} confirmed "
                 + $"({agreed:F1}%), {Denied} denied, {Unpredicted} unpredicted, "
-                + $"{LethalHeld} kills left to the authority";
+                + deaths + drain;
         }
     }
 }
