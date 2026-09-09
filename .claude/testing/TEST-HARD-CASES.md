@@ -68,6 +68,99 @@ one-sided run as a whole one.
 `netprobe.py` subcommands: `capacity`, `protocol`, `slotclaim`, `spoof`,
 `matchend`, `fuzz`, `names`, `churn`, `idle`, `statusflood`, `masterhost`.
 
+## Against a server that simulates the match
+
+`-simulate` (`.claude/multiplayer/NETWORK-SERVERAUTH.md`) moves the simulation
+authority off the first client and onto the server. Point the whole batch at
+one with `MPH_SERVER_PORT`:
+
+```bash
+MPH_SERVER_PORT=27919 ./hard/run-all.sh serverauth
+```
+
+Three things in this rig assume a *client* authority, and two of them had to
+be taught the difference. **The probes detect it rather than being told**: a
+client is made the authority by being sent `PacketType.Authority` and in no
+other way, so a first client that was not sent one is talking to a simulating
+server.
+
+| Where | What changes |
+|---|---|
+| `netprobe.py spoof` | `authority-is-first` becomes `no-client-authority`. And the watcher now receives snapshots constantly and legitimately -- from the server -- so "did any arrive" stopped being the question: it is `liar-frame-not-relayed`, whether the stream ever took the liar's frame number |
+| `netprobe.py matchend` | there is no client that *may* end the match, so the check becomes `client-cannot-end-it`: spamming `MatchEnd` must move neither the match id nor the ending flag. The rotation itself is still exercised, on the server's own clock, by `run-rotation.sh` |
+| `hard/run-authority.sh` | its premise is gone -- nobody is promoted and nothing is handed over. The run is still worth doing as "the first player leaves and comes back", and what it should now show is *no* stand-downs and *no* handover in the server's log |
+
+**And read the server's own log, which is new.** With no client simulating,
+two measurements exist only there:
+
+```
+sim: MP1 SANCTORUS (Battle), 14311 step(s), 0.86 ms mean, ... , 0 FAILED
+sim: lag compensation: 168 shots rewound, mean 7.7 frames (128 ms), ...
+```
+
+The first says whether the box is holding 60 Hz (1800 steps per 30 s, and
+`FAILED` non-zero is a bug, not a slow machine). The second is the whole of
+the lag-compensation measurement now: every `-netcheck` report correctly reads
+*"nothing to compensate"*, because no client rewinds anything any more. And
+the room named on that line must follow the rotation -- a server whose
+simulation silently stayed on the first map still produces 0 mismatches,
+because a live player's position is their own report.
+
+## What the batch found against a simulating server (2026-09-08, the Pi)
+
+`MPH_SERVER_PORT=27919 ./hard/run-all.sh serverauth`, against
+`-simulate -nomaster` on the Pi. Fifty-seven minutes.
+
+**Nothing in the server broke.** Over the whole batch, from its own log:
+
+| | |
+|---|---|
+| simulation steps | **206,739** -- 60.00 Hz held for the hour, 101 dropped (0.05%), 5 stalls |
+| steps that threw | **0** |
+| step cost | 1.63 ms mean, 48 overruns in 206k |
+| lag compensation | **24,662 shots rewound**, mean 4.4 frames (74 ms), worst 24 (the clamp, from the 300 ms clients), catch-up 48,344 steps / 3,452 hits, **0 history misses** |
+| rotations followed | 4 |
+| the box | 136 MB RSS, 19% of one core, 222 MB still free |
+
+Probe results, once the rig was repaired (see below): **42 of 42**. The three
+that are new or changed all passed --
+`spoof/no-client-authority` (nobody is promoted),
+`spoof/liar-frame-not-relayed` (the watcher took 424 snapshots and the lowest
+frame in the stream was 37856; the liar sent frame 3), and
+`matchend/client-cannot-end-it`.
+
+Scenario results, against the old client-authority baseline in the table
+further down:
+
+| Scenario | Result |
+|---|---|
+| capacity, 11 clients at 8 slots | 8/8 checks; slots 0-7 distinct, 4 refused, the eight playing undisturbed |
+| blackout, 1/3/8/40 s cuts | 7 mismatches, **all of them ALPHA's own shots** -- 345 fired into a dead line, ~145 seen. **2 position snaps** (worst 19.9 units). Scoreboards agree within 0 events. Under a client authority ALPHA *was* the authority, so its blackout forced a handover on everybody; now it is one player's problem |
+| everybody spectating | **0 mismatches**, and observers saw 6000+ frames of it each |
+| every client recording a demo | **0 mismatches, 6/6 PASS**, `dropped=0`, and `snapshots sent=0` on every client -- the architecture, visible in the numbers |
+| latency ladder 0/100/200/300 ms | mismatches 0/0/6/6 against 0/0/1/9 before; **position snaps 0 at every level, against 0/0/18/190 before**. The visible teleports are gone |
+
+The mismatch counts move around between runs (the tour does not fire the same
+number of shots twice) and should not be read as a pair; the snap counts do
+not, and 190 to 0 at 300 ms is the result worth keeping.
+
+### What the batch found in the rig, not the server
+
+Three faults, all of which made the batch report a healthy server as a broken
+one, and all of which had been there since before this work:
+
+- **`netproto.py` was two protocol versions behind** (`PROTOCOL = 4`, and an
+  `IntentPacket` with no `AckFrame`). Every probe was refused at Hello by any
+  server built since, and the batch read that as the server being down.
+- **`run-all.sh` never passed `--port` to the Python probes**, only `--host`.
+  A batch pointed at a second server with `MPH_SERVER_PORT` silently tested
+  the first one -- which is how the first run of this batch produced a page of
+  protocol failures against the production server.
+- **`parse_roster` was missing the suit-colour byte**, so every entry was read
+  one byte short of where it starts. It reported seven clients all in slot 0
+  with unprintable names: a server bug that was not one. With it fixed,
+  `names` is 4/4.
+
 ## What the first full run found (2026-08-31/09-01, against the Pi)
 
 Eight faults, every one reproduced on the real server, and three of them

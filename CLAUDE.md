@@ -84,6 +84,8 @@ export ALSOFT_DRIVERS=null PULSE_SERVER=   # else ALSA retries stall frames
 |---|---|
 | `MphRead -server ... -noshadowfreeze` | run the room with the Judicator's ice wave as a cone rather than as a column of infinite height. A rule, broadcast to every client in the match state, because the machine resolving a shot decides who it hit |
 | `MphRead -server -port N -players 8` | dedicated relay server; needs no game files. `-servername "NAME"` is what a browser shows; it announces itself to `net.livetek.fr` unless `-nomaster` is passed, and `-master HOST -masterport N` points it elsewhere |
+| `MphRead -server ... -simulate` | the same server, simulating the match itself instead of pointing the authority at the first client to connect. It is then the only machine that resolves a shot, so nobody plays at zero latency and the match survives any player leaving. Needs game files on that machine -- without them it says so and relays as before. `.claude/multiplayer/NETWORK-SERVERAUTH.md` |
+| `MphRead -simcheck "ROOM" [-players N] [-seconds N]` | what a room costs a server: peak memory, milliseconds a simulation step, and whether every slot spawned. Runs the headless engine with nobody connected. The measurement that decides whether a given box can be the authority for a given map |
 | `MphReadServer.exe -server ...` | the same server on Windows, as its own console binary. `MphRead.exe` can also do it, but it is a GUI binary: a shell will not wait for it and its exit code never reaches `%ERRORLEVEL%`. Run with no arguments it prints what it is for |
 | `MphRead -masterserver [-port N] [-public HOST] [-hostports A-B]` | the server directory the launcher's browser asks, and the machine that runs matches for players who cannot open a port. Same binary, no game files, keeps nothing on disk. `-public` is the address to publish for servers registering from this same machine, whose heartbeats arrive over the loopback |
 | `MphRead -hostgame "ROOM" [-mode M] [-master HOST]` | ask the directory to run a match and join it. No port forwarding anywhere; the only way to host from a machine with no launcher |
@@ -92,6 +94,7 @@ export ALSOFT_DRIVERS=null PULSE_SERVER=   # else ALSA retries stall frames
 | `MphRead -netcheck HOST -port N -name X -hunter H -seconds N [-shots DIR] [-size WxH]` | a real client driven by a script, which reports what it saw. Exit code 0 = pass. `-spectate [SEC]` makes it stop playing and watch, `-rejoin SEC` puts it back in -- the one player state the tour cannot reach on its own |
 | `MphRead -netlag MS[:JITTER]` / `-netloss PCT` | play, or run any check, over a line this client makes up: `-netlag 200` adds 200 ms to the round trip (half each way), `-netlag 200:40` gives it jitter, `-netloss 5` eats one datagram in twenty. Works against the real server, on any platform, with no proxy and no `sudo` -- and unlike `hard/run-latency.sh`'s netem it can be given to **one** client while the others stay fast, which is the case a player with a bad line actually is. Every report says so when it is on |
 | `MphRead -nounlagged` | resolve shots against the present, the way every build before lag compensation did. The control for measuring it; on by default. `.claude/multiplayer/NETWORK-UNLAGGED.md` |
+| `MphRead -nohitprediction` / `-nohitmarker` | wait for the authority before a hit lands, the way every build before instant hit registration did, and drop the mark over the crosshair that says one has. Both on by default; the first is the control for measuring it. `.claude/multiplayer/NETWORK-PREDICTION.md` |
 | `MphRead -debuglog` | write the file the launcher's corner switch writes, for one run. `.claude/DEBUG-LOGS.md` |
 | `~/mph-net-test/probe-chat.py [HOST] [PORT]` | what the server does with chat, asked the way no real client can: a spoofed sender, and a flood. `.claude/multiplayer/NETWORK-CHAT.md` |
 | `~/mph-net-test/run-remote.sh HOST PORT SECONDS hunter...` | the same check against a server that is not on this machine -- which is the one that matters, since eight clients on one box measure the box |
@@ -495,7 +498,7 @@ MPH_SERVER_HOST=net.livetek.fr MPH_SERVER_USER=livetek \
 
 The exe is often locked by a running game: write `MphRead.new.exe`, then `mv`.
 
-**`NetConfig.ProtocolVersion` is 5.** Any protocol change means server **and**
+**`NetConfig.ProtocolVersion` is 6.** Any protocol change means server **and**
 every client must be the same build — a mismatched client is refused outright
 at Hello with a line in the server log, which is the intended outcome and not
 a layout issue: the wire format doesn't move, an old client would read every
@@ -503,6 +506,10 @@ byte correctly and then simulate a different game (frozen in place, shooting
 from its ankles) with nothing in the protocol to notice. Deploy the server
 before handing out a client built against a new protocol. Publish commands and
 the deploy script's env vars: `.claude/build-deploy/DEPLOY-SERVERS.md`.
+
+`-simulate` is the one server option that needs game files on the server box.
+It changes nothing on the wire, so it can be turned on and off between
+restarts without touching a single client.
 
 ## Multiplayer: bugs found and fixed
 
@@ -620,6 +627,24 @@ Shapes worth keeping without opening anything else:
   real-world one, and must not be reported as one** — it has none of the
   reordering, jitter or CPU load the bugs above were found under.
 
+**The server can be the simulation authority** -- `-simulate`. The authority
+was never a property of being a player: it is the property of being the
+machine every other player's intent is pointed at, and until now that was
+whichever client joined first. The engine's simulation needs no GL context at
+all (the frame split had already put every GL call in `OnDrawFrame`), so the
+server runs the *real* engine rather than a model of it -- which is what
+answers the old objection that a reimplementation would be a second answer
+free to disagree with the first. What it buys is fairness and resilience:
+nobody is at zero latency any more, no handover when the authority leaves, and
+`HandleSnapshot` refuses every client's world outright. What it does **not**
+buy is a shorter wait for your own hit to register -- that is a round trip
+wherever the authority sits, and shortening it is client-side prediction,
+which is not implemented. The wire does not move: a client is told it is the
+authority by receiving `PacketType.Authority` and in no other way, so a
+simulating server simply never sends it. Measured at **110 MB and 0.31 ms a
+step** for an 8-player room, against 337 MB for a full client, by dropping
+work whose only output was a picture. `.claude/multiplayer/NETWORK-SERVERAUTH.md`.
+
 **Shots are resolved against the world the shooter was looking at**, not the
 one that exists by the time their trigger arrives -- backwards reconciliation,
 ported from Q-Zandronum's `unlagged.cpp`. The error it removes is one-sided and
@@ -635,6 +660,30 @@ The authority itself is rewound by zero, because it already aims and resolves
 against the same puppets. Measured at 156 ms of rewind against 150 ms injected,
 with 0 mismatches on the 3-client instrument. `-nounlagged` is the control.
 `.claude/multiplayer/NETWORK-UNLAGGED.md`.
+
+**A client's own hits land the frame it fires them**, rather than a round trip
+later -- which is the half the rewind deliberately did not buy, and the only
+thing that gives anybody an instant hit when a *server* is simulating the
+match and nobody is the authority. It is sound only because the rewind is
+there: the authority puts everyone back to the snapshot frame the shooter had
+applied, which is the world the shooter's own machine is holding when it
+fires, so the local resolution and the authority's are the same test on the
+same positions -- run earlier, on the machine that already has the inputs.
+Three rules keep a prediction from becoming a lie: it **never kills** (the
+damage is clamped to leave the victim on one point of health, and the
+authority's answer does the dying a round trip later, exactly as it used to),
+it therefore **never scores**, and it is **only your own shot on somebody
+else** -- incoming damage is a question about a shot fired on another machine,
+and this one has a worse answer to it than the authority does. Nothing is
+rolled back because nothing durable is written: health comes off the next
+snapshot on the same line it always did. Confirmation is a white X around the
+crosshair, drawn on every machine and in every match, offline included --
+`.claude/multiplayer/NETWORK-PREDICTION.md`. Measured at **86-98% of
+predictions confirmed** across runs -- 86% on the largest sample, with 150 ms
+injected -- and at zero mismatches with a simulating server, where all three
+clients predict. Quote the range: the scripted tour does not fire the same
+shots twice. `-nohitprediction` is the control and `-nohitmarker` turns off
+just the mark. No protocol change.
 
 **Chat is T**, three lines bottom left in green on nothing, gone ten seconds
 after they arrive -- the frame counter sits in the right-hand corner, which is

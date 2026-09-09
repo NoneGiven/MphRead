@@ -92,6 +92,13 @@ the `Spawn` call: the pool is picked from by exactly that test
   is no server correction to replay against. The existing `DesyncDistance`
   backstop covers corruption.
 
+  **This is about movement, and only movement.** Predicting a client's own
+  *hits* is a different question with a different answer, and it is
+  implemented — `NETWORK-PREDICTION.md`. It is possible precisely because of
+  the rewind described above: the authority resolves against the frame the
+  shooter had applied, which is the world the shooter's machine already holds,
+  so the client can run the same test itself and be right.
+
 ## Measuring it
 
 ```bash
@@ -117,6 +124,10 @@ nothing.
 
 `-nounlagged` turns it off for a controlled comparison, and is the only switch;
 it is on by default, as Zandronum's `sv_nounlagged` is.
+
+**A rewind fixes where a shot is resolved, not when the shooter is told.**
+That second half is `NETWORK-PREDICTION.md`, which is built on this one and is
+measured beside it; `-nohitprediction` is its control.
 
 ### Verified 2026-09-06 (WSL, loopback)
 

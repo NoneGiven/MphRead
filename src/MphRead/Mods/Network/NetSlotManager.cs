@@ -31,7 +31,15 @@ namespace MphRead.Mods.Network
         /// </summary>
         public static void Sync()
         {
-            if (!NetSession.Active || NetSession.LocalSlot < 0)
+            // A client waits to be told which slot is its own before it
+            // touches any of them. A server that simulates the match is never
+            // told, because none of them is: it has no player, so LocalSlot
+            // stays -1 for the whole match and this guard -- which is a
+            // client's "not admitted yet" -- would hold forever and activate
+            // nobody. That is exactly what it did, and a server that
+            // activates nobody simulates an empty room and publishes a
+            // snapshot with no players in it.
+            if (!NetSession.Active || (NetSession.LocalSlot < 0 && !NetSession.IsServer))
             {
                 return;
             }

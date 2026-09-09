@@ -27,4 +27,46 @@ dotnet publish src/MphRead/MphRead.csproj -c Release -r win-x64 \
 Notes
 
 - The exe may be locked by a running game; write `MphRead.new.exe` then `mv`.
-- Any protocol change requires server and every client to be the same build. `NetConfig.ProtocolVersion` is **4** in this build — a mismatched client is refused outright at Hello. Deploy the server before handing out a client built against a new version.
+- Any protocol change requires server and every client to be the same build. `NetConfig.ProtocolVersion` is **6** in this build (it was 5 in v0.6.0, 6 from v0.7.0) — a mismatched client is refused outright at Hello. Deploy the server before handing out a client built against a new version.
+
+## The simulation-authority servers (test, 2026-09-08)
+
+`-simulate` (`.claude/multiplayer/NETWORK-SERVERAUTH.md`) needs the game files
+beside the binary, so it is deployed by hand rather than by
+`deploy-server.sh`. Two boxes carry one, **on port 27890, unlisted, alongside
+the production relay on 27888 which is untouched**:
+
+| Box | Path | Unit |
+|---|---|---|
+| the Pi (ARM64) | `~/mphread-sim/` | `fruityprime-sim.service`, user `livetek` |
+| Japan, `13.78.14.98` (x86-64) | `/opt/fruityprime-sim/` | `fruityprime-sim.service`, user `fpserver` |
+
+Both units carry two flags that are not optional here:
+
+- **`-nomaster`** — these are test servers and must not appear in the browser.
+- **`-noautoupdate`** — the newest GitHub release does not carry the
+  server-authority code, so an auto-update would silently put the relay build
+  back. Remove it once this work is released.
+
+The 52 MB pruned file set and `paths.txt` sit beside each binary. See
+NETWORK-SERVERAUTH.md for what is in it and why.
+
+**The Japan box is only reachable through the Pi**, which is the SSH jump host
+— port 22 is not open to the internet on it:
+
+```bash
+sshpass -e ssh -o ProxyCommand="sshpass -p <pi-pass> ssh -W %h:%p livetek@net.livetek.fr" \
+  livetek@13.78.14.98
+```
+
+**And its Azure NSG opens only 27888/UDP.** The VM listens on 27890 and has no
+local firewall at all (ufw inactive, iptables empty), but nothing outside can
+reach it — 27889 was tested too and is equally closed, so the rule is a single
+port and not the 27888-28999 range it is assumed to be. Opening it is a cloud
+control-plane change, from a machine with the Azure CLI:
+
+```bash
+az network nsg rule create --resource-group <rg> --nsg-name <nsg> \
+  --name fruityprime-sim --priority 1010 --protocol Udp \
+  --destination-port-ranges 27890 --access Allow --direction Inbound
+```

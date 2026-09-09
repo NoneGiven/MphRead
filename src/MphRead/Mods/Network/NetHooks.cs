@@ -22,7 +22,17 @@ namespace MphRead.Mods.Network
         /// LocalSlot at -1 for the whole session, on purpose, because there
         /// is no local player to misidentify slot 0 as.
         /// </summary>
-        public static int LocalSlot => DemoPlayback.IsActive ? -1
+        /// <remarks>
+        /// A dedicated server that simulates the match is the second case
+        /// with no local player at all, and it needs -1 for the same reason
+        /// playback does: falling through to 0 would make slot 0 -- a real
+        /// player's slot, on somebody else's machine -- the one slot on the
+        /// server exempt from every "this one belongs to somebody else" test
+        /// in the engine. Its intent would be dropped, its keyboard read from
+        /// a keyboard nobody is holding, and its shots fired from the origin.
+        /// </remarks>
+        public static int LocalSlot => DemoPlayback.IsActive
+            || NetSession.Role == NetRole.Server ? -1
             : NetSession.Active && NetSession.LocalSlot >= 0
             ? NetSession.LocalSlot
             : 0;

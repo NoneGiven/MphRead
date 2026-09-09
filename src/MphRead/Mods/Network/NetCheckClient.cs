@@ -589,6 +589,7 @@ namespace MphRead.Mods.Network
             // this line reads "nothing to compensate" and says so honestly
             // rather than looking like a zero.
             Console.WriteLine($"  {NetUnlagged.Describe()}");
+            Console.WriteLine($"  {NetHitPrediction.Describe()}");
             Console.WriteLine($"  room: {Metadata.GetRoomById(Scene.RoomId, noThrow: true)?.Name ?? "?"} "
                 + $"(server says {NetSession.ServerMatch?.RoomKey ?? "?"}), "
                 + $"{_roomChanges} rotation(s) followed");

@@ -122,6 +122,23 @@ namespace MphRead.Mods
                     + "against the present");
             }
 
+            // Client-side hit resolution, off. The other half of the same
+            // measurement: -nounlagged asks what the authority's answer is
+            // worth, this asks what not waiting for it is worth. On by
+            // default, and inert on the machine running the match, which
+            // never waited for anybody.
+            if (HasFlag(args, "nohitprediction"))
+            {
+                Network.NetHitPrediction.Enabled = false;
+                Console.WriteLine("[net] hit prediction off: a client's hits "
+                    + "land when the authority says so");
+            }
+            if (HasFlag(args, "nohitmarker"))
+            {
+                Network.NetHitPrediction.MarkerEnabled = false;
+                Console.WriteLine("[hud] hit marker off");
+            }
+
             if (HasFlag(args, "credits"))
             {
                 Credits.Print();
@@ -394,7 +411,12 @@ namespace MphRead.Mods
                 AllowMapVotes = !HasFlag(args, "novote"),
                 // This process is the server, so it is the one that may
                 // replace itself. See DedicatedServer.AutoUpdate.
-                AutoUpdate = true
+                AutoUpdate = true,
+                // -simulate makes this server the match's simulation
+                // authority instead of pointing it at the first client to
+                // connect. It needs game files on this machine; without them
+                // it says so and relays as before. See Mods/Network/ServerSim.
+                Simulate = HasFlag(args, "simulate") || HasFlag(args, "authority")
             };
             // Listed by default. A dedicated server exists to be found, and a
             // server that has to be told to advertise itself is a server
@@ -747,6 +769,38 @@ namespace MphRead.Mods
             if (HasFlag(args, "frametimingcheck"))
             {
                 Environment.ExitCode = Render.FrameTimingCheck.Run();
+                return true;
+            }
+
+            // The headless simulation on its own, with nobody connected: what
+            // a room costs a server in memory and in milliseconds a step. The
+            // one measurement that decides whether a given box can be the
+            // authority for a given map. See Mods/Network/ServerSimCheck.cs.
+            string? simCheck = ValueAfter(args, "simcheck");
+            if (simCheck != null)
+            {
+                int simPlayers = 8;
+                string? simPlayerValue = ValueAfter(args, "players");
+                if (simPlayerValue != null && Int32.TryParse(simPlayerValue, out int parsedSimPlayers))
+                {
+                    simPlayers = parsedSimPlayers;
+                }
+                double simSeconds = 10;
+                string? simSecondsValue = ValueAfter(args, "seconds");
+                if (simSecondsValue != null && Double.TryParse(simSecondsValue,
+                    System.Globalization.CultureInfo.InvariantCulture, out double parsedSimSeconds))
+                {
+                    simSeconds = parsedSimSeconds;
+                }
+                GameMode simMode = GameMode.Battle;
+                string? simModeValue = ValueAfter(args, "mode");
+                if (simModeValue != null
+                    && Enum.TryParse(simModeValue, ignoreCase: true, out GameMode parsedSimMode))
+                {
+                    simMode = parsedSimMode;
+                }
+                Environment.ExitCode = Network.ServerSimCheck.Run(simCheck, simPlayers,
+                    simSeconds, simMode);
                 return true;
             }
 

@@ -3,6 +3,21 @@
 What's below is unproven or partially proven, not broken. Say so rather than
 claiming coverage that isn't there.
 
+- **With the server as the authority, nobody gets the snapshot-based form
+  correction any more.** `NetPlayerBridge` reconciles a puppet's alt form
+  against `IntentButtons.AltFormState` only on the authority -- deliberately,
+  because a client doing it as well would take corrections from the owner's
+  intent and the authority's snapshot at once. When the authority was a
+  player, that player's own view of everybody was corrected; now the authority
+  is not a player, so every client converges by replaying presses alone.
+  Measured against the Pi with 150 ms injected on two of three clients, this
+  shows up as one client reporting a remote player in the wrong form for 78
+  consecutive frames. It is **not new** -- the relay control does not report
+  it only because the client that would have is the authority and is exempt
+  from the check -- but it is now everybody's. Whether clients can safely
+  reconcile form from the snapshot once the authority is not a player is an
+  open question, and one to settle with `run-remote-lag.sh` rather than by
+  reasoning. See `.claude/multiplayer/NETWORK-SERVERAUTH.md`.
 - **The scoreboard crash reported in bot matches is not reproduced here, and
   is therefore not fixed.** Reported from a phone, 2026-09-06: *"in bot matches
   the game still sometimes crashes when trying to view the scoreboard."* The

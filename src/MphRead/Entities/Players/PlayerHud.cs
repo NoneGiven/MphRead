@@ -1393,6 +1393,14 @@ namespace MphRead.Entities
                                 _targetCircleInst.Alpha = Features.ReticleOpacity;
                                 _scene.DrawHudObject(_targetCircleInst);
                             }
+                            // Over whichever of the two is drawn: the mark is
+                            // the answer to "did that land", and that question
+                            // does not depend on which reticle a player picked.
+                            float hitMarker = Mods.Network.NetHitPrediction.MarkerAlpha;
+                            if (hitMarker > 0)
+                            {
+                                _scene.DrawHitMarker(new Vector4(1f, 1f, 1f, hitMarker));
+                            }
                             if (Features.ModernHud)
                             {
                                 DrawWeaponList();

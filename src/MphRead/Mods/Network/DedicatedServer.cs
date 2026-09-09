@@ -155,6 +155,11 @@ namespace MphRead.Mods.Network
         private readonly MapRotation _rotation;
         private NetTransport? _transport;
         private Peer? _authority;
+        /// <summary>
+        /// The match, simulated in this process. Null when this server is the
+        /// relay it has always been and the authority is a client.
+        /// </summary>
+        private ServerSim? _sim;
         private byte[]? _lastSnapshot;
         private volatile bool _running;
         private double _matchStarted;
@@ -304,6 +309,24 @@ namespace MphRead.Mods.Network
         /// </summary>
         public bool AutoUpdate { get; set; }
 
+        /// <summary>
+        /// Run the match here rather than pointing the authority at a client.
+        ///
+        /// Off by default and opted into with <c>-simulate</c>, because it is
+        /// the one thing a dedicated server cannot always do: it needs the
+        /// game files, which this build has never required and which no
+        /// package ships. A server without them keeps working exactly as
+        /// before, and a server that asks for this and has not got them says
+        /// so at startup and falls back rather than refusing to run.
+        ///
+        /// See <see cref="ServerSim"/> for what moving the authority here
+        /// buys and, just as important, what it does not.
+        /// </summary>
+        public bool Simulate { get; set; }
+
+        /// <summary>True when this server is the match's simulation authority.</summary>
+        public bool Simulating => _sim != null && _sim.Running;
+
         public DedicatedServer(int port = NetConfig.DefaultPort, int maxPlayers = 4,
                                MapRotation? rotation = null)
         {
@@ -317,7 +340,10 @@ namespace MphRead.Mods.Network
             _transport = new NetTransport(_port);
             _running = true;
             Log($"listening on UDP {_transport.LocalPort}, up to {_maxPlayers} players");
-            Log("relay mode: the first client to connect is the simulation authority");
+            StartSimulation();
+            Log(Simulating
+                ? "authority mode: this server simulates the match itself"
+                : "relay mode: the first client to connect is the simulation authority");
             Log($"rotation: {_rotation.Entries.Count} map(s), starting on {_rotation.Current}");
 
             // The bound port, taken once: the heartbeat has to advertise the
@@ -339,6 +365,11 @@ namespace MphRead.Mods.Network
                         Handle(packet, now);
                     }
                     DropTimedOut(now);
+                    // After the packets and before anything that reads the
+                    // world: the intents that arrived this pass are the input
+                    // to the steps this pass owes, exactly as a client applies
+                    // what arrived before it steps.
+                    _sim?.Advance(now);
 
                     // The server owns the match clock, not the authority client:
                     // that is what lets a joiner adopt a running match's timer
@@ -369,7 +400,7 @@ namespace MphRead.Mods.Network
                         // get another one. Both are this cadence's job.
                         Tally(now);
                         BroadcastVoteState(now);
-                        if (_authority != null)
+                        if (_authority != null && !Simulating)
                         {
                             NotifyAuthority(_authority);
                         }
@@ -391,11 +422,23 @@ namespace MphRead.Mods.Network
                     {
                         lastReport = now;
                         Log($"{_peers.Count} peer(s) connected"
-                            + (_authority != null ? $", authority = slot {_authority.SlotIndex}" : ", no authority")
+                            + (Simulating ? ", authority = this server"
+                                : _authority != null ? $", authority = slot {_authority.SlotIndex}"
+                                : ", no authority")
                             + $", map {_rotation.Current.RoomKey}"
                             + (limit > 0 ? $", {Math.Max(0, limit - (now - _matchStarted)):0} s left" : "")
                             + (_transport is { PacketsDropped: > 0 }
                                 ? $", {_transport.PacketsDropped} packet(s) dropped" : ""));
+                        if (_sim != null)
+                        {
+                            // The one number that decides whether this box can
+                            // host: a step is owed 16.7 ms and the worst one is
+                            // what a stutter is made of.
+                            Log($"sim: {_sim.Describe()}");
+                            // And what the rewind is doing, which nothing else
+                            // prints now that no client is the authority.
+                            Log($"sim: {_sim.DescribeUnlagged()}");
+                        }
                     }
                     // A millisecond between passes while anyone is connected --
                     // well under any sane packet interval -- and twenty while
@@ -403,7 +446,13 @@ namespace MphRead.Mods.Network
                     // core on the Pi around the clock for nothing; the only thing
                     // waiting on this loop then is the next Hello, and twenty
                     // milliseconds is not a join anybody can feel.
-                    Thread.Sleep(_peers.Count == 0 ? 20 : 1);
+                    // A simulating server owes a step every 16.7 ms whether
+                    // or not anybody is connected -- and it must wake often
+                    // enough to place them accurately, so the idle 20 ms is
+                    // not available to it. One millisecond costs the Pi a few
+                    // percent of a core and is what the busy case already
+                    // paid.
+                    Thread.Sleep(_peers.Count == 0 && !Simulating ? 20 : 1);
                 }
             }
             finally
@@ -441,6 +490,12 @@ namespace MphRead.Mods.Network
             Reporter = null;
             _transport?.Dispose();
             _transport = null;
+            // After the socket, so nothing arrives for a world that is being
+            // torn down. Stop() also ends the NetSession this process held as
+            // the authority, which is what a restarting server has to have
+            // done before it starts another.
+            _sim?.Stop();
+            _sim = null;
         }
 
         /// <summary>
@@ -487,6 +542,16 @@ namespace MphRead.Mods.Network
             }
             Log($"rotating to {entry}");
             MatchStatePacket state = BuildState(now);
+            // The simulation follows a rotation the way every client does:
+            // NetRoomChange watches the match state and loads the new room as
+            // a *transition* rather than rebuilding the scene. Reusing that
+            // path rather than restarting the sim is deliberate -- it is the
+            // one that carries the fixes for the intro camera sequence and the
+            // settling window, and a second path here would have neither.
+            if (_sim != null)
+            {
+                NetSession.ApplyMatchState(state, rotated: true);
+            }
             state.Write(_scratch);
             for (int i = 0; i < _peers.Count; i++)
             {
@@ -520,17 +585,96 @@ namespace MphRead.Mods.Network
 
         private void BroadcastMatchState(double now)
         {
+            MatchStatePacket state = BuildState(now);
+            // The simulation follows the clock, the mode and the map exactly
+            // as a client does -- including the flag that says the match is
+            // ending, which is what starts its results sequence.
+            if (_sim != null)
+            {
+                NetSession.ApplyMatchState(state, rotated: false);
+            }
             if (_peers.Count == 0)
             {
                 return;
             }
-            MatchStatePacket state = BuildState(now);
             state.Write(_scratch);
             for (int i = 0; i < _peers.Count; i++)
             {
                 _transport?.Send(_peers[i].EndPoint, PacketType.MatchState,
                     _scratch.AsSpan(0, MatchStatePacket.Size));
             }
+        }
+
+        // ------------------------------------------------- the simulation
+
+        /// <summary>
+        /// Build the world this server is about to be the authority for.
+        ///
+        /// Inert unless <see cref="Simulate"/> was asked for. A refusal is a
+        /// line and a fall back to relaying, never a server that will not
+        /// start: the operator asked for the better arrangement and this
+        /// machine cannot provide it, which is a different thing from a
+        /// misconfiguration.
+        /// </summary>
+        private void StartSimulation()
+        {
+            if (!Simulate)
+            {
+                return;
+            }
+            if (!ServerSim.Available(out string why))
+            {
+                Log($"-simulate asked for, but {why}");
+                Log("carrying on as a relay; the first client to connect will be the authority");
+                return;
+            }
+            var sim = new ServerSim();
+            RotationEntry entry = _rotation.Current;
+            if (!sim.Start(entry.RoomKey, entry.Mode, _maxPlayers, SendSnapshot,
+                () => EndMatch(_now, "score")))
+            {
+                Log("carrying on as a relay; the first client to connect will be the authority");
+                return;
+            }
+            _sim = sim;
+            SyncSimulationState(_now);
+        }
+
+        /// <summary>
+        /// A snapshot the simulation in this process just composed, out to
+        /// everybody.
+        ///
+        /// Every peer without exception, unlike the relay path, which skips
+        /// the sender: the sender here is the server, and it is in nobody's
+        /// slot.
+        /// </summary>
+        private void SendSnapshot(ReadOnlySpan<byte> payload)
+        {
+            _lastSnapshot = payload.ToArray();
+            for (int i = 0; i < _peers.Count; i++)
+            {
+                _transport?.Send(_peers[i].EndPoint, PacketType.Snapshot, payload);
+            }
+        }
+
+        /// <summary>
+        /// Tell the simulation what this server has just told everybody else.
+        ///
+        /// The roster and the match state are the two things a client follows
+        /// to know who is playing and on what; the simulation follows exactly
+        /// the same two, through exactly the same code, because it is the same
+        /// engine. Applying the packets rather than reaching into the scene is
+        /// what keeps it that way -- a second path here would be free to
+        /// disagree with every client at once.
+        /// </summary>
+        private void SyncSimulationState(double now)
+        {
+            if (_sim == null)
+            {
+                return;
+            }
+            NetSession.ApplyRoster(BuildRoster());
+            NetSession.ApplyMatchState(BuildState(now), rotated: false);
         }
 
         public void Stop() => _running = false;
@@ -1088,7 +1232,15 @@ namespace MphRead.Mods.Network
                 EverOccupied = true;
                 // Slot 0 is the authority's slot, matching what a listen host
                 // would occupy, so clients need no special case for either.
-                if (_authority == null)
+                //
+                // Unless this server is simulating, in which case no client is
+                // ever made the authority and slot 0 is an ordinary slot. A
+                // client is told it is the authority by being sent
+                // PacketType.Authority and in no other way, so simply not
+                // sending it is the whole of the change on the wire: an older
+                // client joining a simulating server behaves correctly without
+                // knowing anything has moved.
+                if (_authority == null && !Simulating)
                 {
                     _authority = peer;
                     Log($"{packet.Sender} joined as slot {slot} (authority)");
@@ -1097,6 +1249,14 @@ namespace MphRead.Mods.Network
                 else
                 {
                     Log($"{packet.Sender} joined as slot {slot}");
+                    if (Simulating && _lastSnapshot != null)
+                    {
+                        // A world to stand in before the next one is composed.
+                        // Without it a joiner sees an empty room for a frame,
+                        // which is the same gap NotifyAuthority closes for the
+                        // client it promotes.
+                        _transport?.Send(peer.EndPoint, PacketType.Snapshot, _lastSnapshot);
+                    }
                 }
             }
             peer.ClientId = clientId;
@@ -1135,7 +1295,13 @@ namespace MphRead.Mods.Network
                 return;
             }
             peer.LastSeen = now;
-            if (peer != _authority)
+            // Refused from every client while this server simulates, the same
+            // way a client's Snapshot is: the machine that decides a match is
+            // won is the machine that keeps the score, and that is this one.
+            // _authority is null then, so the test below already refuses
+            // everybody -- said out loud because "any peer can end the match"
+            // is not a thing to leave resting on a null check.
+            if (Simulating || peer != _authority)
             {
                 return;
             }
@@ -1289,12 +1455,8 @@ namespace MphRead.Mods.Network
             peer.Ping = peer.Ping == 0 ? rtt : (peer.Ping * 2 + rtt) / 3;
         }
 
-        private void BroadcastRoster()
+        private RosterPacket BuildRoster()
         {
-            if (_peers.Count == 0)
-            {
-                return;
-            }
             RosterPacket roster = RosterPacket.Create();
             for (int i = 0; i < _peers.Count && i < RosterPacket.MaxSlots; i++)
             {
@@ -1306,6 +1468,24 @@ namespace MphRead.Mods.Network
                     ? _peers[i].Name
                     : $"Player{_peers[i].SlotIndex + 1}";
                 roster.Count++;
+            }
+            return roster;
+        }
+
+        private void BroadcastRoster()
+        {
+            RosterPacket roster = BuildRoster();
+            // Before the early return below. A roster is also how the
+            // simulation learns that the last player has left, and an empty
+            // one has to reach it or it goes on simulating somebody who is no
+            // longer there.
+            if (_sim != null)
+            {
+                NetSession.ApplyRoster(roster);
+            }
+            if (_peers.Count == 0)
+            {
+                return;
             }
             roster.Write(_scratch);
             for (int i = 0; i < _peers.Count; i++)
@@ -1324,7 +1504,10 @@ namespace MphRead.Mods.Network
         private void HandleIntent(ReceivedPacket packet, double now)
         {
             Peer? peer = Find(packet.Sender);
-            if (peer == null || _authority == null)
+            // No authority and not simulating means nobody would act on this.
+            // When this server is the authority there is no client to wait
+            // for, which is the whole point.
+            if (peer == null || (_authority == null && !Simulating))
             {
                 return;
             }
@@ -1332,6 +1515,20 @@ namespace MphRead.Mods.Network
             if (packet.Payload.Length >= IntentPacket.Size)
             {
                 IntentPacket intent = IntentPacket.Read(packet.Payload);
+                if (_sim != null)
+                {
+                    // Straight into the simulation, one hop earlier than a
+                    // client authority got it -- and through the same call a
+                    // client makes when a SlotIntent arrives, so the ordering
+                    // rule that guards a rejoining player's restarted frame
+                    // counter is the one that has already been debugged.
+                    //
+                    // Before the ordering check below rather than after: that
+                    // one guards the *relay*, and its state is the peer's
+                    // LastIntentFrame, which is updated whether or not this
+                    // packet is relayed onward.
+                    NetSession.AcceptSlotIntent(peer.SlotIndex, intent);
+                }
                 // UDP reorders; an older frame must not replace a newer one.
                 //
                 // Unless it is far enough behind to be a different session
@@ -1384,8 +1581,12 @@ namespace MphRead.Mods.Network
             }
             peer.LastSeen = now;
             // Only the authority's view of the world is forwarded; anything
-            // else would let a client overwrite everyone's state.
-            if (peer != _authority)
+            // else would let a client overwrite everyone's state. When this
+            // server is the authority that is every client without exception,
+            // and _authority is null, so the test below already refuses them
+            // -- said explicitly because it is the security property the whole
+            // refactor rests on and it should not read as an accident.
+            if (Simulating || peer != _authority)
             {
                 return;
             }
@@ -1431,7 +1632,7 @@ namespace MphRead.Mods.Network
             {
                 Announce($"{peer.Name} {reason}");
             }
-            if (_authority != peer)
+            if (Simulating || _authority != peer)
             {
                 return;
             }

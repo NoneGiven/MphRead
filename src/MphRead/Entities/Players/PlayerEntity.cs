@@ -1683,7 +1683,7 @@ namespace MphRead.Entities
 
         public void TakeDamage(uint damage, DamageFlags flags, Vector3? direction, EntityBase? source)
         {
-            if (Mods.Network.NetDamage.Suppress(this))
+            if (Mods.Network.NetDamage.Suppress(this, source))
             {
                 return;
             }
@@ -1843,6 +1843,11 @@ namespace MphRead.Entities
             // else...
             Mods.Network.NetDamage.Note(this, attacker, beam?.Beam ?? BeamType.None, flags, direction,
                 damage, bomb != null);
+            // The last point at which the damage is final and the death has
+            // not been decided: a hit this machine's own player has landed is
+            // marked here, and a predicted one is clamped here so that it
+            // cannot be the hit that kills. Mods.Network.NetHitPrediction.
+            Mods.Network.NetHitPrediction.NoteHit(this, attacker, ref damage);
             bool dead = false;
             if (IsBot && GameState.SinglePlayer && AiData.Flags1 && _health <= AiData.HealthThreshold)
             {

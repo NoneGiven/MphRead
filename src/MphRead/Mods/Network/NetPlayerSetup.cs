@@ -36,7 +36,10 @@ namespace MphRead.Mods.Network
             }
             // The local slot is only known once the server's Welcome has
             // arrived; applying before that would label the wrong player.
-            if (NetSession.LocalSlot < 0)
+            // Except on a server that simulates the match, which has no local
+            // slot to wait for -- every slot there is somebody else's, which
+            // is what the loop below does with local = -1.
+            if (NetSession.LocalSlot < 0 && !NetSession.IsServer)
             {
                 return;
             }

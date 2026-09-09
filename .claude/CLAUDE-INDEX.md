@@ -18,7 +18,9 @@ loading everything.
 - multiplayer/NETWORK-DEMOS.md — recording and replaying a match: format, clocking, the gaps
 - multiplayer/NETWORK-MATCHEND.md — match end, rotation, the double-counted-kill bug
 - multiplayer/NETWORK-DIAGNOSTICS.md — the full damage-bug postmortem, traps, diagnostics
+- multiplayer/NETWORK-SERVERAUTH.md — the server as the simulation authority: the headless engine, what moved, what did not, and what a room costs a server
 - multiplayer/NETWORK-UNLAGGED.md — lag compensation: the rewind, the projectile catch-up, what was not ported from Q-Zandronum, how it is measured
+- multiplayer/NETWORK-PREDICTION.md — instant hit registration: a client resolving its own shots the frame it fires them, the three rules that keep a prediction from becoming a lie, and how it is measured
 - render/CEL-SHADING.md — flat colours in place of textures, and the depth-kink ink pass
 - render/FRAME-PACING.md — 60 Hz of simulation under a picture drawn at the display's rate: the split, why interpolation was taken back out, and how both halves are tested without a 144 Hz monitor
 - mapgen/MAP-PIPELINE.md — custom maps: the generator, the Quake 3 importer, the format traps

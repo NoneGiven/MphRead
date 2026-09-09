@@ -230,12 +230,18 @@ namespace MphRead.Sound
 
         public static void Load(Scene scene)
         {
-            if (Mods.ThumbnailMode.Active)
+            if (Mods.ThumbnailMode.Active || Mods.Headless.Active)
             {
                 // Reading and decoding every sample in the game, plus the
                 // whole stream bank, is the single most expensive thing a
                 // room load does -- and a preview is a picture. Measured at
                 // 933 ms of a 2970 ms load.
+                //
+                // A headless simulation wants the same stub for a stronger
+                // reason: there is nobody to hear it, and the samples are the
+                // largest block of memory a load reads that the simulation
+                // never once looks at. The stub answers every call the entity
+                // code makes, so nothing upstream needs a condition.
                 Instance = new SfxInstanceBase();
                 SfxMute = false;
                 ForceFieldSfxMute = 0;

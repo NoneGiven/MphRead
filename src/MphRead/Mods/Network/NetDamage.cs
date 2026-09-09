@@ -312,21 +312,33 @@ namespace MphRead.Mods.Network
         /// same hit twice on the scoreboard and produced kills that never
         /// happened anywhere else.
         /// </summary>
-        public static bool Suppress(PlayerEntity victim)
+        public static bool Suppress(PlayerEntity victim, EntityBase? source)
         {
             if (!NetSession.Active || Replaying)
             {
                 return false;
             }
-            return !NetSession.IsHost && !NetSession.IsAuthority;
+            if (NetSession.IsHost || NetSession.IsAuthority)
+            {
+                return false;
+            }
+            // Except for this machine's own shots on somebody else, which are
+            // resolved here and now and reconciled against the authority's
+            // answer when it arrives. NetHitPrediction.
+            return !NetHitPrediction.Predicts(victim, source);
         }
 
         /// <summary>Called by the authority for every hit it resolves.</summary>
         public static void Note(PlayerEntity victim, PlayerEntity? attacker, BeamType beam,
             DamageFlags flags, Vector3? direction, uint amount = 0, bool fromBomb = false)
         {
-            if (!NetSession.Active || Replaying)
+            if (!NetSession.Active || Replaying || NetHitPrediction.Predicting)
             {
+                // A predicted hit is not a resolution. Letting it through here
+                // would put a damage sequence, and a Resolved count, on a
+                // machine that decides nothing -- and the whole damage
+                // pipeline measurement is the comparison between the one
+                // machine that resolves and the ones that replay.
                 return;
             }
             // Before the slot check: what hurt somebody is worth knowing even
@@ -518,6 +530,22 @@ namespace MphRead.Mods.Network
                 ? PlayerEntity.Players[state.AttackerSlot]
                 : null;
             bool lethal = state.Health == 0;
+            // Already shown here, the moment the trigger was pulled: the
+            // flinch, the sound, the knockback and the mark over the
+            // crosshair all ran when this machine resolved the shot for
+            // itself. Only the health is still owed, and ApplyState assigns
+            // that from this same snapshot immediately after. A lethal hit is
+            // never one of these -- a prediction is not allowed to kill -- so
+            // the confirmation is consumed and the kill replayed in full.
+            // Not for a hit on this machine's own player, even one it
+            // dealt itself: nothing is ever predicted onto the local player,
+            // so asking would only report every splash from one's own bomb
+            // as a hit the prediction had missed.
+            if (slot != NetHooks.LocalSlot && state.AttackerSlot == NetHooks.LocalSlot
+                && NetHitPrediction.Confirm(slot) && !lethal)
+            {
+                return;
+            }
             // Never let the replay decide the outcome: the authority already
             // has. A non-fatal hit is clamped so local rounding cannot kill,
             // and a fatal one carries the Death flag so it cannot fail to.

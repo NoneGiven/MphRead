@@ -201,7 +201,16 @@ namespace MphRead
             var instructions = new List<IReadOnlyList<RenderInstruction>>(dlists.Count);
             foreach (DisplayList dlist in dlists)
             {
-                instructions.Add(DoRenderInstructions(initialBytes, dlist));
+                // Geometry for the picture. The simulation collides against
+                // the room's *collision* file, never against its render
+                // meshes, and the one reader of these in the engine is
+                // Scene.DoDlist -- which a headless run never reaches, since
+                // GenerateLists returns before calling it. One empty list per
+                // display list, because mesh.DlistId indexes this by
+                // position.
+                instructions.Add(Mods.Headless.Active
+                    ? Array.Empty<RenderInstruction>()
+                    : DoRenderInstructions(initialBytes, dlist));
             }
             IReadOnlyList<RawMaterial> materials = DoOffsets<RawMaterial>(initialBytes, header.MaterialOffset, header.MaterialCount);
             var recolors = new List<Recolor>(recolorMeta.Count);
@@ -306,7 +315,16 @@ namespace MphRead
                 var paletteData = new List<IReadOnlyList<PaletteData>>(palettes.Count);
                 foreach (Texture texture in textures)
                 {
-                    textureData.Add(GetTextureData(texture, textureBytes));
+                    // A headless simulation decodes no texel and uploads
+                    // none: InitTextures, the only reader of this in the
+                    // engine, returns immediately there. An empty list per
+                    // texture rather than no list at all, because Recolor
+                    // asserts one entry per Texture and the fix-ups below
+                    // index it -- what is dropped is the pixels, which on a
+                    // full room are the single largest thing a load reads.
+                    textureData.Add(Mods.Headless.Active
+                        ? Array.Empty<TextureData>()
+                        : GetTextureData(texture, textureBytes));
                 }
                 foreach (Palette palette in palettes)
                 {

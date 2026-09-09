@@ -317,7 +317,15 @@ namespace MphRead
 
         public static void ProcessFrame(Scene scene)
         {
-            if (Multiplayer && CameraSequence.Current?.IsIntro == true)
+            // Not on a headless simulation. The match intro is a camera
+            // flying round the room for the person about to play in it, and a
+            // server has neither -- PlayerEntity.Main there is slot 0, which
+            // is an arbitrary remote player, so running it would fly a camera
+            // nobody looks through and, worse, hand that one slot the
+            // BlockFormSwitch and blocked input the sequence applies to its
+            // main player. Every client still runs its own.
+            if (Multiplayer && CameraSequence.Current?.IsIntro == true
+                && !Mods.Headless.Active)
             {
                 Debug.Assert(CameraSequence.Current.CamInfoRef == PlayerEntity.Main.CameraInfo);
                 CameraSequence.Current.Process();
