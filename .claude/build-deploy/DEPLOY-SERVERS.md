@@ -29,7 +29,7 @@ Notes
 - The exe may be locked by a running game; write `MphRead.new.exe` then `mv`.
 - Any protocol change requires server and every client to be the same build. `NetConfig.ProtocolVersion` is **6** in this build (it was 5 in v0.6.0, 6 from v0.7.0) — a mismatched client is refused outright at Hello. Deploy the server before handing out a client built against a new version.
 
-## The simulation-authority servers (test, 2026-09-08)
+## The simulation-authority servers (test, deployed 2026-09-09)
 
 `-simulate` (`.claude/multiplayer/NETWORK-SERVERAUTH.md`) needs the game files
 beside the binary, so it is deployed by hand rather than by
@@ -59,7 +59,11 @@ sshpass -e ssh -o ProxyCommand="sshpass -p <pi-pass> ssh -W %h:%p livetek@net.li
   livetek@13.78.14.98
 ```
 
-**And its Azure NSG opens only 27888/UDP.** The VM listens on 27890 and has no
+**And its Azure NSG opens only 27888/UDP** -- re-tested 2026-09-09 from the
+WSL box: `-netcheck 13.78.14.98 -port 27890` gets "No answer", while the
+service on the box is listening on 0.0.0.0:27890 and stepping the simulation
+normally. Deploying to Japan therefore installs a server nobody can join
+until this is opened. The VM listens on 27890 and has no
 local firewall at all (ufw inactive, iptables empty), but nothing outside can
 reach it — 27889 was tested too and is equally closed, so the rule is a single
 port and not the 27888-28999 range it is assumed to be. Opening it is a cloud
