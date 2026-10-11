@@ -135,7 +135,7 @@ namespace MphRead.Testing
             public readonly byte Padding109;
             public readonly ushort Padding10A;
             public readonly Fixed FallDamageSpeed; // absolute value
-            public readonly uint FallDamageMax; // 80% of this is the actual max
+            public readonly uint FallDamageStep;
             public readonly uint Field114; // some kind of camera bob value for movement
             public readonly uint Field118;
             public readonly Fixed JumpPadSlideFactor;

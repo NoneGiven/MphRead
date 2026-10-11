@@ -836,8 +836,8 @@ namespace MphRead.Entities
                     if (Speed.Y <= -damageSpeed && !v163 && !v165 && !IsAltForm && !IsMorphing
                         && !IsUnmorphing && !Flags1.TestFlag(PlayerFlags1.Standing) && _timeSinceJumpPad > 5 * 2) // todo: FPS stuff
                     {
-                        // fall damage
-                        int damage = (int)(Fixed.ToFloat(Values.FallDamageMax) * -(Speed.Y + damageSpeed) / 0.8f);
+                        // fall damage (70 per each 0.8f the current speed exceeds the threshold)
+                        int damage = (int)((-Speed.Y - damageSpeed) / 0.8f * Values.FallDamageStep);
                         Debug.Assert(damage >= 0);
                         if (damage == 0)
                         {

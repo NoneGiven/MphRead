@@ -2785,7 +2785,7 @@ namespace MphRead.Entities
         public readonly byte Padding109;
         public readonly ushort Padding10A;
         public readonly int FallDamageSpeed;
-        public readonly int FallDamageMax;
+        public readonly int FallDamageStep;
         public readonly int ViewTiltIncrement;
         public readonly int ViewTiltFactor;
         public readonly int JumpPadSlideFactor;
@@ -2821,7 +2821,7 @@ namespace MphRead.Entities
             int bombRadius, int bombRadiusSquared, int bombJumpSpeed, int bombRefillTime, short bombDamage, short bombEnemyDamage,
             short lockOnSnapTime, short spawnInvulnerability, ushort aimMinTouchTime, ushort paddingE6, int autoAimFindTolerance, int autoAimHoldTolerance, int swayStartTime,
             int swayIncrement, int swayLimit, int gunIdleTime, short mpAmmoCap, byte ammoRecharge, byte padding103, ushort energyTank,
-            short ammoTank, byte altFormStrafe, byte padding109, ushort padding10A, int fallDamageSpeed, int fallDamageMax, int viewTiltIncrement,
+            short ammoTank, byte altFormStrafe, byte padding109, ushort padding10A, int fallDamageSpeed, int fallDamageStep, int viewTiltIncrement,
             int viewTiltFactor, int jumpPadSlideFactor, int altTiltAngleCap, int altMinWobble, int altMaxWobble, int altMinSpinAccel, int altMaxSpinAccel,
             int altMinSpinSpeed, int altMaxSpinSpeed, int altTiltAngleMax, int altBounceWobble, int altBounceTilt, int altBounceSpin,
             int altAttackKnockbackAccel, short altAttackKnockbackTime, ushort altAttackStartup, int field154, int field158, int lungeHSpeed,
@@ -2907,7 +2907,7 @@ namespace MphRead.Entities
             Padding109 = padding109;
             Padding10A = padding10A;
             FallDamageSpeed = fallDamageSpeed;
-            FallDamageMax = fallDamageMax;
+            FallDamageStep = fallDamageStep;
             ViewTiltIncrement = viewTiltIncrement;
             ViewTiltFactor = viewTiltFactor;
             JumpPadSlideFactor = jumpPadSlideFactor;
